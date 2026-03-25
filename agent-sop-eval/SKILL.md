@@ -1,3 +1,9 @@
+---
+name: agent-sop-eval
+description: Evaluate an agent's performance on a specific task or set of tasks, providing actionable feedback and improvement recommendations.
+disable-model-invocation: true
+---
+
 # EvalKit
 
 ## Overview
