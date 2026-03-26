@@ -147,7 +147,7 @@ Note: This command assumes a complete task breakdown exists in tasks.md. If task
 1. Using a subagent, apply the code-simplifier skill to all touched files
    - Exclude .gitignore files
 2. Launch 3 code-reviewer agents in parallel that:
-   1. Read `agents/code-reviewer.agent.md`
+   1. Read [agents/code-reviewer.agent.md](agents/code-reviewer.agent.md)
    2. Focus on different aspects: simplicity/DRY/elegance, bugs/functional correctness, project conventions/abstractions for all of the touched files
    3. Excludes .gitignore files
 3. Consolidate findings and identify highest severity issues that you recommend fixing

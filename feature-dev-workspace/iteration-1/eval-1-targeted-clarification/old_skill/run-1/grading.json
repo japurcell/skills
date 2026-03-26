@@ -1,0 +1,73 @@
+{
+  "expectations": [
+    {
+      "text": "Uses findings from the current repository and current feature-dev skill rather than generic advice.",
+      "passed": true,
+      "evidence": "The response cites skills/feature-dev/SKILL.md, feature-dev agent files, and neighboring repo skills such as research, create-plan, and implement-plan."
+    },
+    {
+      "text": "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.",
+      "passed": true,
+      "evidence": "Its questions concern the desired operating model, artifact creation, caution level in unfamiliar repos, question caps, and architecture-choice behavior."
+    },
+    {
+      "text": "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.",
+      "passed": false,
+      "evidence": "The response asks eight separate questions across operating model, artifact behavior, caution level, unfamiliar-repo signals, and approval behavior. That is a broad interview rather than a tightly prioritized set."
+    },
+    {
+      "text": "Separates current understanding, open questions, and a recommended approach.",
+      "passed": true,
+      "evidence": "It uses distinct sections for what should change, questions to ask before editing, and the recommended approach before editing anything."
+    },
+    {
+      "text": "Explains why the proposed changes would help with unfamiliar repositories.",
+      "passed": true,
+      "evidence": "It explains that unfamiliar repos need repo triage, better risk-ranked questions, and a planning path before edits because missing constraints early is the main failure mode."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_file": 11,
+      "list_dir": 3,
+      "search_subagent": 1,
+      "create_directory": 1,
+      "create_file": 3,
+      "multi_tool_parallel": 4
+    },
+    "total_tool_calls": 23,
+    "total_steps": 7,
+    "errors_encountered": 0,
+    "output_chars": 7620,
+    "transcript_chars": 9800
+  },
+  "timing": {
+    "total_duration_seconds": 0.0
+  },
+  "claims": [
+    {
+      "claim": "The repository already suggests a composition pattern using neighboring planning-oriented skills.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The response ties the recommendation to create-plan, implement-plan, and research, which are present in this repo and plausibly support the claimed composition model."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "It is still unclear whether feature-dev should be an end-to-end skill or a router into create-plan and implement-plan."
+    ],
+    "needs_review": [
+      "Confirm what counts as product-sized work in this repo so scaling rules can be written precisely."
+    ],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "overall": "No suggestions, evals look solid"
+  }
+}

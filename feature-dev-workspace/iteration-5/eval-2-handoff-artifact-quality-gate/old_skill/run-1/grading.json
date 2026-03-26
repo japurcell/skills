@@ -1,0 +1,86 @@
+{
+  "expectations": [
+    {
+      "text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+      "passed": true,
+      "evidence": "The response cites snapshot and live feature-dev files plus create-plan/create-tasks patterns from the repository."
+    },
+    {
+      "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+      "passed": true,
+      "evidence": "The run created outputs/.agents/scratchpad/feature-dev-handoff-policy-enforcement/handoff-plan.md, matching the expected path contract pattern."
+    },
+    {
+      "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+      "passed": true,
+      "evidence": "The artifact includes Implementation Slices, File-by-File Implementation Map, and Validation Plan sections with reusable template-style structure."
+    },
+    {
+      "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+      "passed": true,
+      "evidence": "Metadata fields are concrete values with no bracket placeholders: Status=ready for implementation, Track=Standard, Recommended Next Step=implement directly."
+    },
+    {
+      "text": "Each referenced file in Relevant Findings includes why that file matters.",
+      "passed": true,
+      "evidence": "Each Relevant Findings item includes file path and rationale (for example, implementation target, canonical template, or benchmark role)."
+    },
+    {
+      "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+      "passed": true,
+      "evidence": "The artifact presents one open question with explicit risk framing, keeping uncertainty bounded."
+    },
+    {
+      "text": "Provides artifact status in the response with the exact artifact path.",
+      "passed": true,
+      "evidence": "final_response.md includes Artifact Status with the exact absolute path to the created artifact."
+    },
+    {
+      "text": "Includes rationale or trade-offs for the proposed design.",
+      "passed": true,
+      "evidence": "The response discusses enforcement trade-offs and policy scope boundaries."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_file": 8,
+      "search_subagent": 2,
+      "list_dir": 3,
+      "create_directory": 1,
+      "create_file": 4,
+      "run_in_terminal": 2
+    },
+    "total_tool_calls": 20,
+    "total_steps": 8,
+    "errors_encountered": 1,
+    "output_chars": 13992,
+    "transcript_chars": 26000
+  },
+  "timing": {
+    "total_duration_seconds": 0.0
+  },
+  "claims": [
+    {
+      "claim": "Even the snapshot-guided run can satisfy strict artifact-quality checks when explicitly prompted to execute artifact creation.",
+      "type": "process",
+      "verified": true,
+      "evidence": "It created the artifact file with filled metadata, bounded questions, and response-level artifact status."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Whether to enforce same-turn Standard-track artifact creation remains unresolved."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "overall": "No suggestions, evals look solid"
+  }
+}

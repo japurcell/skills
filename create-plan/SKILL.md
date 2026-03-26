@@ -14,7 +14,7 @@ You receive these parameters in your prompt:
 
 ## Steps
 
-1. **Load context**: Read spec_file into context. Load IMPL_PLAN template from `references/plan-template.md`.
+1. **Load context**: Read spec_file into context. Load IMPL_PLAN template from [references/plan-template.md](references/plan-template.md).
 
 2. **Execute plan workflow**: Follow the structure in IMPL_PLAN template to:
    - Fill Technical Context (mark unknowns as "NEEDS CLARIFICATION")

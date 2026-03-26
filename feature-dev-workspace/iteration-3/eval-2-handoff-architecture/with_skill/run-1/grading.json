@@ -1,0 +1,73 @@
+{
+  "expectations": [
+    {
+      "text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+      "passed": true,
+      "evidence": "The response explicitly reuses patterns from feature-dev, create-plan, create-tasks, and code-architect."
+    },
+    {
+      "text": "Defines the planning artifact and what information it should contain for handoff.",
+      "passed": true,
+      "evidence": "It defines handoff-plan.md as the source of truth and specifies artifact content including findings, design, slices, implementation map, validation, and next-agent kickoff."
+    },
+    {
+      "text": "Uses a concrete file-backed handoff artifact path and points to a reusable template or schema for it.",
+      "passed": true,
+      "evidence": "It names the artifact path as .agents/scratchpad/<feature-name>/handoff-plan.md and explicitly cites skills/feature-dev/references/handoff-plan-template.md as the reusable template."
+    },
+    {
+      "text": "Provides a concrete implementation map with file-level changes.",
+      "passed": true,
+      "evidence": "It specifies edits to skills/feature-dev/SKILL.md, skills/feature-dev/references/handoff-plan-template.md, and skills/feature-dev/agents/code-architect.md."
+    },
+    {
+      "text": "Includes rationale or trade-offs for the proposed design.",
+      "passed": true,
+      "evidence": "It explains why a single handoff artifact stays lighter than plan-plus-tasks and discusses the overhead trade-off of stronger handoff gating."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_file": 15,
+      "list_dir": 2,
+      "file_search": 1,
+      "create_directory": 1,
+      "create_file": 3,
+      "run_in_terminal": 1
+    },
+    "total_tool_calls": 23,
+    "total_steps": 10,
+    "errors_encountered": 1,
+    "output_chars": 6900,
+    "transcript_chars": 20000
+  },
+  "timing": {
+    "total_duration_seconds": 0.0
+  },
+  "claims": [
+    {
+      "claim": "The current feature-dev skill already has a handoff-plan template, so the main improvement is enforcing and quality-gating its use.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The response explicitly notes that the repository already has a handoff-plan template and focuses the proposal on stronger enforcement rather than inventing a new artifact type."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Whether Handoff Mode should be mandatory for all Standard track work remains open."
+    ],
+    "needs_review": [
+      "Consider whether the validation section should use a stricter command-table format."
+    ],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "overall": "No suggestions, evals look solid"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "handoff-artifact-execution",
+  "prompt": "Use the feature-dev workflow for this request and stop before implementation: 'Prepare a handoff for adding stricter handoff-policy enforcement to feature-dev so another agent can implement next.' In your run, actually create the handoff artifact file your workflow requires (not just a proposal) and provide artifact status with the exact path.",
+  "assertions": [
+    "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+    "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+    "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+    "Provides artifact status in the response with the exact artifact path.",
+    "Includes rationale or trade-offs for the proposed design."
+  ]
+}

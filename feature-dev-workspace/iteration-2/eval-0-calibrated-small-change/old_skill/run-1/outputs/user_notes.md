@@ -1,0 +1,4 @@
+- The current live skill in [skills/feature-dev/SKILL.md](skills/feature-dev/SKILL.md#L1) already implements the requested trigger tightening and includes a `When Not To Use This Skill` section.
+- The benchmark answer treats the task as a small, analysis-only request and recommends the minimum viable change: update frontmatter description plus add the short exclusion section.
+- Trade-off: copying only those two edits keeps scope tight, but it does not bring over the broader workflow improvements in the current live skill, such as calibrated process depth and reduced mandatory questioning.
+- No blocking ambiguity found. No repo edits were made outside the output directory.

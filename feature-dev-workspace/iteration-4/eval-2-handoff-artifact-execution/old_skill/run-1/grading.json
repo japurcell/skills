@@ -1,0 +1,72 @@
+{
+  "expectations": [
+    {
+      "text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+      "passed": true,
+      "evidence": "The response references snapshot feature-dev plus live feature-dev, create-plan, create-spec, and create-tasks patterns."
+    },
+    {
+      "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+      "passed": true,
+      "evidence": "Created outputs/.agents/scratchpad/handoff-policy-enforcement/handoff-plan.md, which matches the contracted path pattern."
+    },
+    {
+      "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+      "passed": true,
+      "evidence": "The artifact includes implementation slices, file-by-file map, and validation plan in a template-like structure."
+    },
+    {
+      "text": "Provides artifact status in the response with the exact artifact path.",
+      "passed": true,
+      "evidence": "final_response.md includes an Artifact Status section and exact artifact path."
+    },
+    {
+      "text": "Includes rationale or trade-offs for the proposed design.",
+      "passed": true,
+      "evidence": "The response discusses strictness trade-offs and enforcement scope across tracks."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_file": 6,
+      "list_dir": 1,
+      "search_subagent": 1,
+      "grep_search": 1,
+      "create_directory": 1,
+      "create_file": 4,
+      "multi_tool_use.parallel": 4
+    },
+    "total_tool_calls": 18,
+    "total_steps": 7,
+    "errors_encountered": 0,
+    "output_chars": 4520,
+    "transcript_chars": 24800
+  },
+  "timing": {
+    "total_duration_seconds": 0.0
+  },
+  "claims": [
+    {
+      "claim": "Snapshot workflow can produce artifact execution behavior when explicitly prompted.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "This run produced a concrete handoff artifact and explicit artifact status despite snapshot gaps."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Whether strict enforcement should apply to Light track remains unresolved."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "overall": "No suggestions, evals look solid"
+  }
+}

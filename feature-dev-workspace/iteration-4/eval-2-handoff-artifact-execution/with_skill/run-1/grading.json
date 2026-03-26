@@ -1,0 +1,70 @@
+{
+  "expectations": [
+    {
+      "text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+      "passed": true,
+      "evidence": "The response references feature-dev, handoff template, create-plan, create-tasks, and code-architect patterns in this repo."
+    },
+    {
+      "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+      "passed": true,
+      "evidence": "Created outputs/.agents/scratchpad/feature-dev-handoff-policy-enforcement/handoff-plan.md, matching the .agents/scratchpad/<feature-name>/handoff-plan.md contract."
+    },
+    {
+      "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+      "passed": true,
+      "evidence": "The artifact includes sections for Implementation Slices, File-by-File Implementation Map, and Validation Plan, along with summary, goals, findings, assumptions, and kickoff steps."
+    },
+    {
+      "text": "Provides artifact status in the response with the exact artifact path.",
+      "passed": true,
+      "evidence": "final_response.md has an Artifact Status section with the exact absolute path to the created handoff plan."
+    },
+    {
+      "text": "Includes rationale or trade-offs for the proposed design.",
+      "passed": true,
+      "evidence": "The response includes policy trade-offs such as enforcement overhead versus reliability and questions about standard-track strictness."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_file": 6,
+      "search_subagent": 1,
+      "run_in_terminal": 1,
+      "multi_tool_use.parallel": 2,
+      "create_file": 4
+    },
+    "total_tool_calls": 14,
+    "total_steps": 7,
+    "errors_encountered": 0,
+    "output_chars": 2636,
+    "transcript_chars": 18000
+  },
+  "timing": {
+    "total_duration_seconds": 0.0
+  },
+  "claims": [
+    {
+      "claim": "Stopping before implementation should still create or update handoff-plan.md with artifact status.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The run follows this behavior and produces both file artifact and response-level artifact status."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Whether Standard track should enforce artifact creation even when implementation completes in same turn remains open."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "overall": "No suggestions, evals look solid"
+  }
+}

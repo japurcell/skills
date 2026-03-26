@@ -1,0 +1,5 @@
+- No blocking questions came up.
+- The live repo already includes the two requested changes in substance: a narrowed frontmatter description and a `When Not To Use This Skill` section.
+- The remaining inconsistency is `Light Track`, which still explicitly covers small, well-specified work. If the benchmark expects a stricter interpretation of “only medium-to-large,” removing or rewriting that track is the important follow-up.
+- Trade-off: keeping `Light Track` makes the skill more forgiving after it has already been selected, but it also weakens the routing boundary and may encourage over-invocation.
+- If the evaluation wants the smallest possible proposed patch, the answer could stop at frontmatter + `When Not To Use`. If it wants the root-cause fix, it should also address `Light Track` and related references.

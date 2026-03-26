@@ -34,7 +34,7 @@ You receive these parameters in your prompt:
    - Create parallel execution examples per user story
    - Validate task completeness (each user story has all needed tasks, independently testable)
 
-3. **Generate tasks.md**: Use `references/tasks-template.md` as structure, fill with:
+3. **Generate tasks.md**: Use [references/tasks-template.md](references/tasks-template.md) as structure, fill with:
    - Correct feature name from plan.md
    - Phase 1: Setup tasks (project initialization)
    - Phase 2: Foundational tasks (blocking prerequisites for all user stories)

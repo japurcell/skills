@@ -1,0 +1,10 @@
+[
+  "This benchmark only contains 2 total runs (1 old_skill, 1 with_skill) for eval_id 2, even though metadata says runs_per_configuration is 3; variance and stability conclusions are therefore limited.",
+  "All 5 expectations pass in both configurations (100% pass rate each), so the current assertions do not differentiate old_skill vs with_skill performance in this focused handoff eval.",
+  "Because every expectation passed in both runs, there are no assertion-level win/loss signals that isolate incremental value from the updated feature-dev skill.",
+  "with_skill uses more resources in this sample: 6900 tokens vs 6050 (+850 tokens, about 14.0% higher) and 23 tool calls vs 14 (+9 tool calls).",
+  "The run_summary delta reports tokens as '-850', which conflicts with per-run data showing with_skill uses more tokens; the delta sign or definition appears inconsistent with the run rows.",
+  "with_skill records 1 error while old_skill records 0 errors, yet both still achieve full expectation pass; this suggests at least one recoverable error path in the with_skill run.",
+  "time_seconds is 0.0 for both runs and both summaries, so this benchmark does not currently provide meaningful latency comparison for handoff-mode overhead.",
+  "This iteration is a focused single-eval benchmark (eval_id 2 only), so results are specific to handoff architecture behavior and should not be generalized to broader feature-dev tasks without additional eval coverage."
+]

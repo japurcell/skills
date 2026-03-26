@@ -1,0 +1,4 @@
+- The repo already contains a `When Not To Use This Skill` section in [skills/feature-dev/SKILL.md](skills/feature-dev/SKILL.md), so the best change is to rewrite and shorten it rather than add a new section.
+- The main over-trigger risk comes from the frontmatter `description` and the Light Track wording, not from the body structure.
+- `medium-to-large` is inherently fuzzy. The strongest practical boundary in this repo is to anchor on multi-file scope, subsystem touch points, discovery needs, and real design decisions.
+- If the maintainers want even stricter triggering, they could remove `medium` from the description entirely and say `large or cross-cutting feature work`, but that risks under-triggering on valid multi-file feature tasks.

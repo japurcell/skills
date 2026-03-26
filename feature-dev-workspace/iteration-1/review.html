@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "feature-dev", "runs": [{"id": "eval-0-calibrated-small-change-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_response.md", "type": "text", "content": "I inspected the current `feature-dev` skill in this repo and compared it with the requested change. The repo already moved in the right direction: the frontmatter description is narrowed toward larger feature work, and there is already a `When Not To Use This Skill` section. The one place that still weakens the intent is the `Light Track`, which explicitly says the skill is for small, well-specified work. If the goal is to make this skill trigger only for medium-to-large feature work, I would tighten that inconsistency rather than only tweaking the summary text.\n\nHere is exactly how I would make the change.\n\n## 1. Tighten the trigger text in frontmatter\n\nI would make the description the primary trigger control and keep it explicit about scope. The current repo version is close to correct. I would use wording in this shape:\n\n```md\n---\nname: feature-dev\ndescription: Structured feature development for medium-to-large changes in unfamiliar codebases. Use this whenever the user wants to add a feature, extend an existing subsystem, or coordinate discovery, design, implementation, and review across multiple files or moving parts. Do not use it for tiny bug fixes, isolated one-file edits, or straightforward requests that are already fully specified and ready for direct implementation.\nargument-hint: Optional feature description\ndisable-model-invocation: true\n---\n```\n\nThat does two things cleanly:\n\n- It positively names the intended scope: medium-to-large feature work.\n- It negatively names the exclusions so small direct-execution tasks do not match as easily.\n\n## 2. Remove or rewrite the `Light Track`\n\nThis is the main follow-through change I would make in the body. Right now the live skill still says:\n\n- `Light Track` is for small, well-specified feature work or skill/documentation changes.\n\nThat directly conflicts with the requested trigger boundary. I would choose one of these two options:\n\n1. Preferred: remove `Light Track` entirely and keep only `Standard Track` and `Deep Track`.\n2. Acceptable: rewrite `Light Track` so it is only for a smaller execution slice inside an already medium-sized feature effort, not for standalone small tasks.\n\nIf the goal is strict calibration, I would take option 1. That means updating:\n\n- `Process Selection`\n- the Discovery bullets that mention `Light`\n- the Exploration bullets that branch on `Light`\n- the Architecture Design bullets that branch on `Light`\n- the Quality Review bullets that branch on `Light`\n\nThe result should say, in effect: use this skill when the work is large enough to justify exploration and design, then choose between a standard-depth and deep-depth process.\n\n## 3. Keep the `When Not To Use This Skill` section short and explicit\n\nThe repo already contains this section, and it is the right shape. I would keep it short, like this:\n\n```md\n## When Not To Use This Skill\n\nDo not use this skill for:\n\n1. Tiny bug fixes or one-file edits where direct implementation is faster than process\n2. Fully specified requests that only need straightforward execution\n3. Pure code review requests with no feature development component\n4. Open-ended brainstorming that does not need codebase-guided implementation planning\n```\n\nThat is short enough to act as a routing hint without turning into policy sprawl.\n\n## 4. Make the surrounding guidance consistent with the tighter trigger\n\nI would keep the newer repo wording that reduces unnecessary ceremony, because it supports the same calibration goal:\n\n- prefer `Ask only high-leverage questions` instead of always asking clarifying questions\n- avoid artificial approval gates before implementation\n- present one recommended approach unless there is a real architectural fork\n\nThose changes are not the headline request, but they help prevent the skill from behaving like a heavyweight workflow on tasks that should never have invoked it in the first place.\n\n## Bottom line\n\nIf I were editing this skill, I would treat the change as mostly done already in the current repo and make one additional tightening pass:\n\n1. Keep the narrowed frontmatter description.\n2. Keep the short `When Not To Use This Skill` section.\n3. Remove or rewrite `Light Track`, because that is the remaining place where the skill still claims small-work scope.\n\nThat gives you a skill that is clearly aimed at medium-to-large feature development and is less likely to trigger for small, direct implementation tasks.\n"}], "grading": {"expectations": [{"text": "References the existing feature-dev skill directly rather than answering generically.", "passed": true, "evidence": "The response says it inspected the current feature-dev skill in this repo and discusses the frontmatter, When Not To Use This Skill, and Light Track sections directly."}, {"text": "Avoids asking blocking clarifying questions for this well-specified task.", "passed": true, "evidence": "It states 'No blocking questions came up' in user notes and provides direct recommendations instead of pausing."}, {"text": "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.", "passed": true, "evidence": "It proposes tightened frontmatter wording, a short When Not To Use This Skill section, and removing or rewriting Light Track."}, {"text": "Scales the workflow to the task instead of insisting on a full multi-phase approval process.", "passed": true, "evidence": "The output responds with a short direct change list and does not ask the user to go through discovery, architecture selection, or explicit approval."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"multi_tool_parallel": 2, "read_file": 2, "create_directory": 1, "create_file": 3}, "total_tool_calls": 8, "total_steps": 4, "errors_encountered": 0, "output_chars": 5390, "transcript_chars": 14000}, "timing": {"total_duration_seconds": 0.0}, "claims": [{"claim": "The live repo already includes a narrowed frontmatter description and a When Not To Use This Skill section.", "type": "factual", "verified": true, "evidence": "This matches the current skills/feature-dev/SKILL.md content inspected by the run."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": ["Focused the root-cause fix on rewriting or removing Light Track."]}, "eval_feedback": {"overall": "No suggestions, evals look solid"}}}, {"id": "eval-0-calibrated-small-change-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_response.md", "type": "text", "content": "Understanding\n\nI inspected [skills/feature-dev/SKILL.md](skills/feature-dev/SKILL.md). The main issue is not the headline intent; it already says medium-to-large feature work. The problem is that several body sections still expand the scope back down to small changes. I would tighten those sections so the skill only triggers for medium-to-large feature work, and I would shorten the existing \"When Not To Use This Skill\" section so it reinforces that boundary.\n\nRelevant Findings\n\nThe current frontmatter description is partly correct, but still too broad because it says to use the skill whenever the user wants to add a feature, extend a subsystem, or coordinate discovery/design/implementation. That can still trigger on relatively small changes.\n\nThe bigger mismatch is in the body:\n\n- Light Track currently says it is for small, well-specified feature work or skill/documentation changes.\n- Phase 1 says Light is for small, well-specified work.\n- Core Principles says small, well-specified changes should stay lightweight.\n- The skill already includes a When Not To Use This Skill section, so I would not add a brand-new section from scratch. I would replace that section with a shorter, sharper version.\n\nRecommendation\n\nI would make four targeted edits.\n\n1. Tighten the frontmatter description.\n\nI would replace the current description with this:\n\n```yaml\ndescription: Structured feature development for medium-to-large feature work in unfamiliar codebases. Use this when the request spans multiple files or subsystems, needs meaningful codebase exploration, or requires design trade-offs, implementation sequencing, and review. Do not use it for small self-contained edits, wording-only skill or documentation changes, tiny bug fixes, or fully specified requests that are ready for direct implementation.\n```\n\nWhy: this keeps the trigger centered on feature work with real coordination cost, and explicitly excludes the small-change cases that this eval is targeting.\n\n2. Re-scope the workflow language so \"light\" means smallest in-scope feature work, not genuinely small work.\n\nIn Core Principles, I would change this idea:\n\n- Current intent: small, well-specified changes should stay lightweight\n- New intent: within in-scope feature work, use the lightest process that matches the risk\n\nSuggested replacement:\n\n```md\n- **Calibrate the workflow**: Choose a light, standard, or deep process based on scope, ambiguity, and risk. Even within medium-to-large feature work, some requests are bounded and can stay lightweight, while cross-cutting or unclear features deserve a deeper process.\n```\n\nWhy: this preserves the calibration concept without implying the skill should trigger for small changes.\n\n3. Rewrite Light Track and the matching Phase 1 bullets.\n\nI would replace the Light Track intro with:\n\n```md\n### Light Track\n\nUse for the smallest in-scope feature work: well-bounded medium-sized changes where the main risk is understanding local code context rather than resolving product ambiguity.\n\n- Do focused exploration yourself or with one targeted agent.\n- Ask questions only if something is genuinely blocking.\n- Give one recommended approach rather than manufacturing multiple options.\n- Implement once you have enough context.\n```\n\nAnd in Phase 1, I would change the process selection bullets to:\n\n```md\n2. Identify the likely process track:\n   - Light for well-bounded medium-sized feature work\n   - Standard for broader feature work that touches several files or needs a non-trivial design choice\n   - Deep for large, risky, cross-cutting, or highly ambiguous work\n```\n\nWhy: this is the most important body change. Right now the skill explicitly claims small work and skill/doc changes; removing that language is what actually tightens trigger behavior.\n\n4. Replace the existing When Not To Use This Skill section with a shorter version.\n\nI would use:\n\n```md\n## When Not To Use This Skill\n\nDo not use this skill for:\n\n1. Small wording, prompt, skill, or documentation edits\n2. Tiny bug fixes or isolated one-file changes\n3. Fully specified requests that are ready for direct implementation\n4. Pure code review or brainstorming requests with no feature delivery component\n```\n\nWhy: the section already exists, so the right move is to shorten and sharpen it. This version directly names the exact classes of work that should bypass the skill.\n\nImplementation Map\n\nIf I were editing the skill, I would make the changes in this order:\n\n1. Update the frontmatter description so the trigger text is correct first.\n2. Update Core Principles and Light Track so the body no longer contradicts the description.\n3. Update the Phase 1 process-selection bullets to match the new scope.\n4. Replace the existing When Not To Use This Skill section with the shorter version above.\n5. Do a final pass for any remaining references to small, straightforward, or documentation-only work so the skill stays internally consistent.\n\nI do not have blocking questions for this task. The current file provides enough context to make the change cleanly and precisely.\n"}], "grading": {"expectations": [{"text": "References the existing feature-dev skill directly rather than answering generically.", "passed": true, "evidence": "The response opens with 'I inspected skills/feature-dev/SKILL.md' and repeatedly cites concrete sections such as the frontmatter description, Light Track, Phase 1, and When Not To Use This Skill."}, {"text": "Avoids asking blocking clarifying questions for this well-specified task.", "passed": true, "evidence": "It closes with 'I do not have blocking questions for this task' and proceeds with a concrete edit plan instead of stopping for more input."}, {"text": "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.", "passed": true, "evidence": "It proposes exact replacement text for the description, Core Principles, Light Track, Phase 1 bullets, and a revised When Not To Use This Skill section."}, {"text": "Scales the workflow to the task instead of insisting on a full multi-phase approval process.", "passed": true, "evidence": "The output gives four targeted edits and an implementation order without asking for an architecture choice, approval gate, or full multi-phase process."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_file": 2, "list_dir": 2, "create_directory": 1, "create_file": 3, "multi_tool_use.parallel": 2}, "total_tool_calls": 10, "total_steps": 4, "errors_encountered": 0, "output_chars": 5570, "transcript_chars": 7600}, "timing": {"total_duration_seconds": 0.0}, "claims": [{"claim": "The current skill already has a When Not To Use This Skill section.", "type": "factual", "verified": true, "evidence": "The final response and user notes both state this, and the edited skills/feature-dev/SKILL.md in the repo contains that section."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": ["Kept Light Track but redefined it instead of removing it entirely."]}, "eval_feedback": {"overall": "No suggestions, evals look solid"}}}, {"id": "eval-1-targeted-clarification-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_response.md", "type": "text", "content": "The current [skills/feature-dev/SKILL.md](skills/feature-dev/SKILL.md) has the right high-level instinct for feature work: explore the codebase, ask clarifying questions, design before implementation, then review. The problem is that it is still tuned more like a direct implementation workflow than a product-sized discovery workflow.\n\nIn this repo, the gaps show up pretty clearly:\n\n- [skills/feature-dev/SKILL.md](skills/feature-dev/SKILL.md) only does a light discovery pass, then moves straight from exploration to questions to architecture. There is no explicit repo-triage step, no artifact for capturing unknowns, and no gate for \"this repo is too unfamiliar to edit safely yet.\"\n- [skills/feature-dev/agents/code-explorer.md](skills/feature-dev/agents/code-explorer.md) is good at tracing code, but it does not explicitly ask for repo shape, package boundaries, build/test commands, ownership seams, or safe extension points. Those are the things that matter most in unfamiliar repos.\n- Nearby skills in this repo already have stronger patterns for larger work. [skills/research/SKILL.md](skills/research/SKILL.md) explicitly turns unknowns into research tasks. [skills/create-plan/SKILL.md](skills/create-plan/SKILL.md) uses a technical-context section with `NEEDS CLARIFICATION` markers. [skills/implement-plan/SKILL.md](skills/implement-plan/SKILL.md) assumes there is already a reusable planning artifact before coding starts.\n\nWhat I would change before touching implementation behavior is this:\n\n## What should change\n\n1. Make `feature-dev` an orchestrator for larger work, not just a code-writing workflow.\n   For product-sized work in unfamiliar repos, the default outcome should be a repo-aware plan and a clarified problem statement, not immediate code edits.\n\n2. Add an explicit `Repo Triage` phase before normal discovery.\n   That phase should answer: what kind of repo is this, what instructions govern it, what are the main modules, where are the likely extension points, how do you validate changes, and what unknowns block safe implementation.\n\n3. Add a required `Problem Framing` artifact.\n   The current skill summarizes findings conversationally, but larger work needs a durable handoff artifact. At minimum it should capture scope, affected areas, assumptions, risks, open questions, validation strategy, and recommended next phase.\n\n4. Replace generic clarifying questions with batched, risk-ranked questions.\n   The current Phase 3 says to identify ambiguities, but it does not force prioritization. In unfamiliar repos, the skill should ask only the questions that change architecture, scope, sequencing, or validation. Everything else should be treated as an assumption and called out explicitly.\n\n5. Add a size-based fork in the workflow.\n   Small or well-bounded work can stay close to the current path. Medium-to-large or cross-cutting work should branch into a planning path that borrows from [skills/create-plan/SKILL.md](skills/create-plan/SKILL.md) and [skills/research/SKILL.md](skills/research/SKILL.md).\n\n6. Tighten the subagent prompts.\n   The current explorer/architect prompts are strong on analysis, but they need repo-onboarding concerns: package boundaries, integration seams, migration risk, testing surface, operational constraints, and what must be confirmed before editing.\n\n7. Add an explicit stop condition before implementation.\n   Right now the skill says \"DO NOT START WITHOUT USER APPROVAL,\" which is good, but it still assumes approval is the main gate. For unfamiliar repos, there should also be a readiness gate: unresolved scope ambiguity, no safe validation path, unclear ownership boundaries, or missing architecture decision means stop and clarify.\n\n## Questions I\u2019d ask you before editing the skill\n\n1. When you say `product-sized`, what behavior do you actually want the skill to change: more questions, better repo mapping, a reusable plan artifact, stronger handoff to implementation, or all of the above?\n2. Should `feature-dev` remain an end-to-end skill, or should it become a front door that hands off to planning-oriented skills once the work is large or the repo is unfamiliar?\n3. Do you want the skill to create files such as `spec.md`, `research.md`, or `plan.md`, or do you want it to stay conversational until you explicitly approve artifact creation?\n4. In unfamiliar repos, how cautious should it be by default: ask more up front and avoid premature edits, or stay fast and make reasonable assumptions unless risk is high?\n5. What are the strongest signals that a repo is \"unfamiliar enough\" to require the heavier workflow: monorepo shape, multiple packages, missing docs, no obvious entry points, broad cross-cutting changes, or something else?\n6. Do you want a hard cap on clarification questions, with the skill forced to prioritize the top few that materially affect design?\n7. Should architecture mode still present multiple approaches for user choice, or should it present one recommended path plus a fallback for larger tasks?\n8. Do you want the improved skill to stop before editing when it cannot identify a credible validation strategy, even if the user is otherwise ready to proceed?\n\n## Recommended approach before editing anything\n\nI would not start by tweaking wording inside [skills/feature-dev/SKILL.md](skills/feature-dev/SKILL.md) in place. I\u2019d first align on the operating model, because the repo already suggests a better composition pattern than trying to make one giant skill do everything.\n\nMy recommendation is:\n\n1. Reframe `feature-dev` as a staged router.\n   Stage A: qualify the task and triage the repo.\n   Stage B: explore and produce a problem-framing artifact.\n   Stage C: either continue with a lightweight implementation path or hand off to planning/implementation skills.\n\n2. Reuse patterns that already exist here instead of inventing new ones.\n   Borrow `unknowns -> research tasks` from [skills/research/SKILL.md](skills/research/SKILL.md), `NEEDS CLARIFICATION` and technical-context discipline from [skills/create-plan/SKILL.md](skills/create-plan/SKILL.md), and the pre-implementation gate from [skills/implement-plan/SKILL.md](skills/implement-plan/SKILL.md).\n\n3. Update the supporting agent prompts at the same time.\n   Improving only the top-level skill will not be enough. The biggest repo-unfamiliarity gap is in what the explorer and architect agents are asked to return.\n\n4. Add explicit scaling rules.\n   The current skill over-prescribes a full multi-phase process even when a task is modest, and under-specifies the planning layer when a task is large. The fix is a decision point: small tasks stay lightweight, large or unfamiliar tasks must produce a plan before any edits.\n\n5. Validate the rewrite against the evals, especially this one and the handoff-oriented eval in [skills/feature-dev/evals/evals.json](skills/feature-dev/evals/evals.json).\n   That will tell us whether the new version is actually asking better questions and producing a better pre-edit recommendation, rather than just becoming more verbose.\n\nIf you want, the next step after you answer the questions above is for me to propose a concrete rewrite plan for [skills/feature-dev/SKILL.md](skills/feature-dev/SKILL.md) and its supporting agent prompts without editing them yet.\n"}], "grading": {"expectations": [{"text": "Uses findings from the current repository and current feature-dev skill rather than generic advice.", "passed": true, "evidence": "The response cites skills/feature-dev/SKILL.md, feature-dev agent files, and neighboring repo skills such as research, create-plan, and implement-plan."}, {"text": "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.", "passed": true, "evidence": "Its questions concern the desired operating model, artifact creation, caution level in unfamiliar repos, question caps, and architecture-choice behavior."}, {"text": "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.", "passed": false, "evidence": "The response asks eight separate questions across operating model, artifact behavior, caution level, unfamiliar-repo signals, and approval behavior. That is a broad interview rather than a tightly prioritized set."}, {"text": "Separates current understanding, open questions, and a recommended approach.", "passed": true, "evidence": "It uses distinct sections for what should change, questions to ask before editing, and the recommended approach before editing anything."}, {"text": "Explains why the proposed changes would help with unfamiliar repositories.", "passed": true, "evidence": "It explains that unfamiliar repos need repo triage, better risk-ranked questions, and a planning path before edits because missing constraints early is the main failure mode."}], "summary": {"passed": 4, "failed": 1, "total": 5, "pass_rate": 0.8}, "execution_metrics": {"tool_calls": {"read_file": 11, "list_dir": 3, "search_subagent": 1, "create_directory": 1, "create_file": 3, "multi_tool_parallel": 4}, "total_tool_calls": 23, "total_steps": 7, "errors_encountered": 0, "output_chars": 7620, "transcript_chars": 9800}, "timing": {"total_duration_seconds": 0.0}, "claims": [{"claim": "The repository already suggests a composition pattern using neighboring planning-oriented skills.", "type": "quality", "verified": true, "evidence": "The response ties the recommendation to create-plan, implement-plan, and research, which are present in this repo and plausibly support the claimed composition model."}], "user_notes_summary": {"uncertainties": ["It is still unclear whether feature-dev should be an end-to-end skill or a router into create-plan and implement-plan."], "needs_review": ["Confirm what counts as product-sized work in this repo so scaling rules can be written precisely."], "workarounds": []}, "eval_feedback": {"overall": "No suggestions, evals look solid"}}}, {"id": "eval-1-targeted-clarification-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_response.md", "type": "text", "content": "## Understanding\n\nI would treat this as a Standard Track change. It is not a tiny wording tweak, but it also does not need a deep multi-option architecture exercise. The goal is to make `feature-dev` behave better before implementation when the repo is unfamiliar and the work is product-sized.\n\n## Relevant Findings\n\n- The current `feature-dev` skill has already improved over the older snapshot in this repo: it now calibrates Light/Standard/Deep tracks, avoids mandatory approval gates, and includes a handoff artifact.\n- The main gap is in unfamiliar-repo startup behavior. Phase 2 says to explore the codebase and read files returned by agents, but it does not explicitly require a repo-orientation pass that maps entry points, similar features, integration seams, validation paths, and local constraints before questions are asked.\n- Phase 3 is directionally right, but still underspecified for product-sized work. It says to ask only material questions, yet it does not cap or prioritize them. In this repo, `create-spec` handles ambiguity more cleanly: make informed defaults, limit clarifications to the highest-impact unknowns, and prioritize by impact.\n- This repo already has adjacent skills for heavier planning: `create-spec`, `create-plan`, and `research`. That means `feature-dev` should probably get better at discovery and targeted clarification rather than turning into a second planning framework.\n- The supporting agent prompts under `skills/feature-dev/agents/` are already strong at tracing code and proposing architectures. The weak point is the orchestration in `skills/feature-dev/SKILL.md`, not the agent files.\n\n## Open Questions\n\n1. Do you want `feature-dev` to stay primarily conversational, or should Standard/Deep runs produce a required pre-edit artifact such as a short discovery brief or handoff plan?\n2. When product-sized work is still somewhat ambiguous after exploration, should the skill stop after questions and recommendation, or proceed on explicit assumptions when the remaining gaps are non-blocking?\n3. Should `feature-dev` escalate into `create-spec` / `create-plan` for larger work, or should it keep all discovery and planning inline in one response?\n4. Do you want a hard cap on clarifying questions? My recommendation is `max 3 critical questions`, then document assumptions for the rest.\n5. Is the target mostly application/product repos, or should this also optimize for unfamiliar internal tooling repos like this skills repository?\n\n## Recommendation\n\nI would keep the first change set focused on `skills/feature-dev/SKILL.md`.\n\nWhat I would change there:\n\n- Add an explicit unfamiliar-repo discovery step for Standard and Deep tracks. Before clarifying questions, require the agent to map entry points, identify 1-2 similar features or adjacent workflows, inspect validation/build/test paths, and list likely file targets plus repo-specific risks.\n- Tighten Phase 3 using the pattern already present in `create-spec`: ask only high-impact questions, cap them, group them by scope/integration/validation, and state assumptions for everything else.\n- Make the pre-edit response shape stronger for Standard and Deep work. Before touching code, require: findings, open questions, recommendation, implementation map, and validation plan.\n- Add an escalation rule instead of overloading this skill. If discovery still leaves major product ambiguity, route into `create-spec` or `create-plan` rather than forcing `feature-dev` to invent a full planning workflow.\n\nWhy this helps in unfamiliar repos: the common failure mode is not lack of architecture options; it is missing repo constraints too early. A stronger orientation pass plus capped, prioritized questions should produce better recommendations and less rework.\n\n## Implementation Map\n\nIf we decide to edit the repo next, I would start here:\n\n- `skills/feature-dev/SKILL.md`\n  - Strengthen the description and process-selection language around product-sized work in unfamiliar repos.\n  - Add a repo-orientation checklist in Phase 2.\n  - Revise Phase 3 to cap and prioritize clarifying questions.\n  - Require a pre-edit discovery brief for Standard/Deep work.\n  - Add an escalation note pointing to `create-spec`, `create-plan`, and `research` when ambiguity remains high.\n\nOptional follow-up after that:\n\n- `skills/feature-dev/evals/evals.json`\n  - Add coverage for unfamiliar-repo orientation and capped clarification behavior so the change is protected by evals.\n"}], "grading": {"expectations": [{"text": "Uses findings from the current repository and current feature-dev skill rather than generic advice.", "passed": true, "evidence": "The response grounds its analysis in skills/feature-dev/SKILL.md and adjacent repo patterns including create-spec, create-plan, research, and the feature-dev agent prompts."}, {"text": "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.", "passed": true, "evidence": "Its five questions are about artifact strategy, assumption handling, skill composition, question caps, and target repo types, each tied to specific orchestration risks."}, {"text": "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.", "passed": true, "evidence": "It asks five focused questions and recommends a cap of three critical questions for the skill itself, keeping the discussion bounded."}, {"text": "Separates current understanding, open questions, and a recommended approach.", "passed": true, "evidence": "The response uses distinct sections: Understanding, Relevant Findings, Open Questions, Recommendation, and Implementation Map."}, {"text": "Explains why the proposed changes would help with unfamiliar repositories.", "passed": true, "evidence": "It explicitly says the main failure mode in unfamiliar repos is missing constraints too early and recommends a stronger repo-orientation pass plus capped prioritized questions to reduce rework."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_file": 7, "search_subagent": 1, "list_dir": 2, "create_directory": 1, "create_file": 3}, "total_tool_calls": 14, "total_steps": 6, "errors_encountered": 0, "output_chars": 5440, "transcript_chars": 9000}, "timing": {"total_duration_seconds": 0.0}, "claims": [{"claim": "The main gap is orchestration in the parent skill rather than the specialized agent prompts.", "type": "quality", "verified": true, "evidence": "The output compares the current feature-dev skill with its agent prompts and concludes the orchestration layer is the weak point, which is consistent with the repo files read during this task."}], "user_notes_summary": {"uncertainties": ["The exact product decision between keeping feature-dev conversational versus making it a front door to heavier planning remains open."], "needs_review": [], "workarounds": []}, "eval_feedback": {"overall": "No suggestions, evals look solid"}}}, {"id": "eval-2-handoff-architecture-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_response.md", "type": "text", "content": "# Improvement design for feature-dev handoff\n\nThe strongest improvement is to make `feature-dev` produce a first-class reusable planning artifact instead of a short freeform handoff note. I would add an `implementation-brief.md` artifact at `.agents/scratchpad/<feature-name>/implementation-brief.md` and make the skill require it whenever work is likely to be handed to another agent, paused for a later turn, or promoted into deeper planning.\n\nThis fits the repo better than inventing a separate workflow. The current `feature-dev` skill already defines a concise handoff shape. `create-plan` already defines durable technical planning structure in `plan.md`, and `create-tasks` defines execution ordering in `tasks.md`. The gap is the missing bridge between exploratory architecture work and implementable execution. `implementation-brief.md` should be that bridge: lighter than the full spec/plan/tasks pipeline, but structured so another agent can implement directly or expand it into `plan.md` and `tasks.md` without repeating discovery.\n\n## Repo patterns to reuse\n\nReuse these existing patterns rather than creating a completely new format:\n\n1. From `skills/feature-dev/SKILL.md`: keep the current handoff sections as the backbone: goal, findings, open questions or assumptions, recommendation, file-by-file implementation map, validation plan.\n2. From `skills/create-plan/references/plan-template.md`: borrow `Technical Context`, `Project Structure`, and explicit constraints so the next agent does not have to rediscover stack, boundaries, and expected layout.\n3. From `skills/create-tasks/references/tasks-template.md`: borrow phased sequencing, dependency notes, and validation checkpoints so the brief is actionable instead of purely descriptive.\n4. From `skills/feature-dev/agents/code-explorer.md` and `skills/feature-dev/agents/code-architect.md`: standardize agent outputs so they can be assembled into the artifact with minimal synthesis loss.\n\n## Proposed reusable planning artifact\n\nUse `.agents/scratchpad/<feature-name>/implementation-brief.md` with these sections:\n\n1. `Summary`\n   One-paragraph restatement of the feature request, selected track (`Light`, `Standard`, or `Deep`), and whether this brief is for direct implementation or later expansion.\n2. `Goals and Non-Goals`\n   Explicit scope boundary so the implementer does not widen the task.\n3. `Relevant Findings`\n   Key repo patterns, abstractions, and source files to read first.\n4. `Technical Context`\n   Language, primary dependencies, testing approach, constraints, and any environment assumptions. This mirrors the useful parts of `plan.md` without forcing a full planning pass.\n5. `Open Questions or Assumptions`\n   Only unresolved decisions that materially affect implementation. If proceeding without answers, list the chosen assumptions.\n6. `Recommended Design`\n   The chosen approach and why it fits this codebase. This should be decisive, not a menu of options.\n7. `Implementation Map`\n   File-by-file change list with responsibilities, sequencing notes, and clear dependency edges.\n8. `Validation Plan`\n   Tests, manual checks, review checkpoints, and expected evidence of completion.\n9. `Promotion Path`\n   State whether the next step is:\n   - implement directly from this brief\n   - expand into `plan.md`\n   - expand into `tasks.md`\n   - stop for clarification\n\nThat artifact is reusable because it works in both directions: `feature-dev` can hand it to a coding agent immediately, and the same artifact can seed the repo's richer planning flow when the work turns out to be larger than expected.\n\n## Skill behavior changes\n\nI would change `feature-dev` so handoff is an explicit mode, not an optional afterthought.\n\n1. Add a `Delegated Handoff` rule near `Process Selection`.\n   - `Light`: create the brief only when implementation is deferred, another agent will continue, or the change surface spans several files.\n   - `Standard`: create or update the brief before implementation starts and keep it current if the plan changes.\n   - `Deep`: always create the brief, and recommend promotion to `plan.md` and `tasks.md` before coding.\n2. Replace the current vague `Leave reusable artifacts` guidance with a hard requirement:\n   - If the skill is not implementing immediately, it MUST produce `implementation-brief.md`.\n   - If another agent is likely to continue, responses should summarize the brief and point to it as the source of truth.\n3. Add a short `Artifact Quality Bar` section:\n   - every referenced file must have a reason to be read\n   - implementation map must name concrete files or directories\n   - validation plan must be specific enough for another agent to execute\n   - assumptions must be explicit when questions are left unresolved\n4. Update `Default Response Shape` to include `Implementation Brief Status` when relevant.\n\n## Concrete implementation map\n\nIf I were implementing this repo change, I would make these edits:\n\n1. `skills/feature-dev/SKILL.md`\n   - Add a `Delegated Handoff` subsection after `Process Selection`.\n   - Make `implementation-brief.md` a required output when implementation is deferred or delegated.\n   - Add track-specific rules for when to create only the brief versus when to recommend promotion to `plan.md` and `tasks.md`.\n   - Expand the `Handoff Artifact` section into a concrete schema aligned with the new template.\n2. `skills/feature-dev/references/implementation-brief-template.md` (new)\n   - Add the reusable artifact template with the sections listed above.\n   - Keep it compact enough for light work but structured enough to seed `create-plan` and `create-tasks`.\n3. `skills/feature-dev/agents/code-explorer.md`\n   - Require a final block with `Essential files`, `Change surface`, and `Open unknowns`.\n   - This makes explorer output directly reusable in `Relevant Findings` and `Open Questions or Assumptions`.\n4. `skills/feature-dev/agents/code-architect.md`\n   - Require a final block with `Recommended design`, `Implementation map`, `Build sequence`, and `Validation checkpoints`.\n   - This makes architect output drop cleanly into the brief with less lossy synthesis.\n5. Optional follow-up: `skills/implement-plan/SKILL.md`\n   - Add support for consuming `implementation-brief.md` directly for smaller tasks, or at minimum document that larger delegated work should promote the brief into `plan.md` plus `tasks.md` before `/implement-plan`.\n\n## Expected handoff flow\n\nThe resulting flow would be:\n\n1. `feature-dev` explores the codebase and resolves high-leverage questions.\n2. `feature-dev` chooses a recommendation and writes `.agents/scratchpad/<feature-name>/implementation-brief.md`.\n3. If the task is still medium or large, the next step is promotion into `plan.md` and optionally `tasks.md` using the existing repo patterns.\n4. Another agent starts by reading the brief, then the referenced source files, then implements against the validation plan.\n\nThis is the key improvement: the reusable planning artifact is no longer an informal summary in chat. It becomes a durable file, shaped by patterns the repo already uses, that cleanly separates discovery and architecture from implementation while preserving enough specificity for a second agent to continue without redoing the work.\n"}], "grading": {"expectations": [{"text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.", "passed": true, "evidence": "The response ties the design to create-plan, create-tasks, code-explorer, code-architect, and implement-plan rather than inventing a standalone pattern."}, {"text": "Defines the planning artifact and what information it should contain for handoff.", "passed": true, "evidence": "It proposes implementation-brief.md under .agents/scratchpad/<feature-name>/ and lists summary, goals, findings, technical context, assumptions, design, implementation map, validation plan, and promotion path."}, {"text": "Provides a concrete implementation map with file-level changes.", "passed": true, "evidence": "It names concrete edits to skills/feature-dev/SKILL.md, a new references/implementation-brief-template.md file, code-explorer.md, code-architect.md, and an optional implement-plan follow-up."}, {"text": "Includes rationale or trade-offs for the proposed design.", "passed": true, "evidence": "The output explains why a lighter bridge artifact is preferable to forcing all delegated work through plan.md and tasks.md and notes the trade-off of introducing another artifact type."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_file": 12, "search_subagent": 1, "list_dir": 1, "create_directory": 1, "create_file": 3, "run_in_terminal": 1}, "total_tool_calls": 19, "total_steps": 6, "errors_encountered": 1, "output_chars": 8800, "transcript_chars": 27000}, "timing": {"total_duration_seconds": 0.0}, "claims": [{"claim": "Another artifact type risks overlap with plan.md.", "type": "quality", "verified": true, "evidence": "The trade-off section explicitly calls out overlap with plan.md as the primary design risk."}], "user_notes_summary": {"uncertainties": ["The exact artifact path and promotion requirements still need product decisions."], "needs_review": ["One exploratory directory listing failed before the output directory existed."], "workarounds": ["Grounded the proposal with direct reads after the directory listing issue."]}, "eval_feedback": {"overall": "No suggestions, evals look solid"}}}, {"id": "eval-2-handoff-architecture-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_response.md", "type": "text", "content": "# Understanding\n\nLight track fits this task: the goal is a skill improvement for documentation/process, not a code implementation. The gap in `skills/feature-dev/SKILL.md` is not that it forgets handoff entirely; the gap is that the handoff is underspecified. The skill says to leave a handoff plan or implementation brief, but it does not define a file path, template, or consumer contract, so another agent still has to reconstruct the plan from conversational output.\n\n# Relevant Findings\n\n- `skills/feature-dev/SKILL.md` already contains the right intent: it mentions a reusable handoff plan in the description, an `Implementation Map` in the default response shape, and a `Handoff Artifact` section with the right high-level contents.\n- `skills/create-plan/references/plan-template.md` shows the repo's preferred pattern for reusable design artifacts: a deterministic scratchpad location, lightweight metadata, technical context, project structure, and explicit readiness for the next phase.\n- `skills/create-tasks/references/tasks-template.md` shows the repo's strongest implementation handoff pattern: phase-based execution, exact file paths, dependency ordering, independent checkpoints, and explicit validation.\n- `skills/feature-dev/agents/code-architect.md` already asks for most of the content needed for a clean handoff: patterns found, architecture decision, component design, implementation map, build sequence, and critical details.\n- The spec-kit agent templates in `spec-kit-template-copilot-sh-v0.4.2` use explicit handoffs and named downstream artifacts. That is the missing operational detail in `feature-dev` today.\n\n# Recommendation\n\nIntroduce a deterministic reusable planning artifact named:\n\n`.agents/scratchpad/<feature-name>/implementation-brief.md`\n\nThis should become the standard handoff output for `feature-dev` whenever discovery/design is completed by one agent and implementation will be performed by another agent or in a later turn. It should be lighter than the full `spec.md -> plan.md -> tasks.md` workflow, but structurally compatible with it.\n\nThe key change is to turn the current conversational handoff into a file-backed contract.\n\n## Reusable Planning Artifact\n\nThe reusable planning artifact should contain these sections:\n\n1. `Metadata`\n   - feature name\n   - process track\n   - status (`draft`, `ready for implementation`, `blocked`)\n   - originating skill/agent\n   - recommended next agent or command\n2. `Goal and Non-Goals`\n3. `Relevant Findings and Source Files`\n4. `Technical Context and Constraints`\n5. `Decisions and Assumptions`\n6. `Execution Slices`\n   - setup\n   - foundations\n   - feature slices or user-story slices\n   - polish\n7. `File-by-File Implementation Map`\n8. `Validation Plan`\n9. `Next-Agent Contract`\n\nThat last section is the missing piece today. It should say what the next agent reads first, what order to implement in, what commands/tests to run, and when to stop and ask for clarification.\n\n## Why this fits this repo\n\nThis proposal reuses existing patterns instead of inventing a new workflow:\n\n- From `create-plan`: reuse stable scratchpad storage, metadata, technical context, and project structure.\n- From `create-tasks`: reuse phase ordering, exact file-path discipline, checkpoints, and validation-oriented execution slices.\n- From `code-architect`: reuse the expectation of a decisive architecture blueprint and implementation map.\n- From spec-kit handoffs: reuse the idea that multi-agent continuation becomes reliable only when there is a named artifact and an explicit downstream contract.\n\nThe result is a bridge artifact: more structured than a prose answer, lighter than the full planning pipeline, and directly reusable by another agent.\n\n# Proposed Skill Behavior\n\nUpdate `feature-dev` so its handoff behavior is deterministic:\n\n- `Light track`: create `implementation-brief.md` when the work is being handed off or paused after discovery/design. If the same agent will immediately implement, the artifact remains optional.\n- `Standard track`: always create or update `implementation-brief.md` before implementation starts if another agent may take over.\n- `Deep track`: always maintain `implementation-brief.md` as the canonical summary, refreshing it after exploration, architecture, and review.\n- If `.agents/scratchpad/<feature-name>/` does not exist, create it.\n- If `spec.md`, `plan.md`, or `tasks.md` already exist, the brief should link to them and avoid duplicating detail.\n\n# Concrete Implementation Map\n\n## 1. Update `skills/feature-dev/SKILL.md`\n\nMake `implementation-brief.md` a first-class output instead of optional prose.\n\nChanges to describe in the skill:\n\n- In the description, keep the current handoff language but name the reusable planning artifact explicitly.\n- In `Default Response Shape`, add guidance that when handoff applies, the response should point to the saved `implementation-brief.md` rather than only embedding the plan in chat.\n- Replace the current `Handoff Artifact` section with a deterministic `Reusable Planning Artifact` section that defines:\n  - the file path\n  - when it is required\n  - the required sections\n  - the rule that another agent must be able to continue without repeating discovery\n- In `Phase 5: Implementation`, add a rule that if implementation is deferred or delegated, refresh `implementation-brief.md` before stopping.\n- In `Phase 7: Summary`, add a requirement to report the artifact path and readiness state.\n\n## 2. Add `skills/feature-dev/references/implementation-brief-template.md`\n\nCreate a new template file for the reusable planning artifact.\n\nThe template should be a compact hybrid of `create-plan` and `create-tasks`:\n\n- short metadata header\n- technical context and constraints\n- exact source files to read\n- execution slices with file targets\n- validation checklist\n- next-agent contract\n\nThis keeps `SKILL.md` concise while giving the agent a canonical shape to follow.\n\n## 3. Update `skills/feature-dev/agents/code-architect.md`\n\nAlign the architect agent's output with the new artifact so its result can be copied into `implementation-brief.md` with minimal cleanup.\n\nChange the output guidance to use headings that map directly to the new template:\n\n- Relevant Findings\n- Architecture Decision\n- Decisions and Assumptions\n- Execution Slices\n- File-by-File Implementation Map\n- Validation Plan\n- Next-Agent Notes\n\nThis reuses an existing agent rather than introducing a new one.\n\n## 4. Optional follow-up: teach implementation flows to consume the artifact\n\nA useful second step would be updating `skills/implement-plan/SKILL.md` so it can accept `implementation-brief.md` as a fallback input when `tasks.md` does not exist yet.\n\nThat is optional for v1. The artifact already improves handoff quality on its own because another agent can implement directly from it. But adding this fallback would complete the bridge between `feature-dev` and the repo's existing plan/tasks execution chain.\n\n# Suggested Template Shape\n\n```md\n# Implementation Brief: [FEATURE]\n\n**Status**: Ready for implementation\n**Track**: Standard\n**Origin**: feature-dev\n**Next**: implementation agent\n\n## Goal\n\n## Non-Goals\n\n## Relevant Findings and Source Files\n\n- [path]: why it matters\n\n## Technical Context and Constraints\n\n## Decisions and Assumptions\n\n## Execution Slices\n\n### Slice 1: Setup\n\n- [ ] Exact file change with path\n\n### Slice 2: Foundations\n\n- [ ] Exact file change with path\n\n### Slice 3: Feature Slice / User Story\n\n- [ ] Exact file change with path\n\n## File-by-File Implementation Map\n\n## Validation Plan\n\n- automated checks\n- manual verification\n- review focus\n\n## Next-Agent Contract\n\n- Read these files first\n- Implement slices in order\n- Stop and ask if these assumptions fail\n```\n\n# Trade-offs\n\n- This introduces some overlap with the full `create-plan` and `create-tasks` flow, but the overlap is intentional and useful: the brief is a lightweight bridge, not a replacement.\n- Requiring the artifact on every tiny handoff would add overhead, so the requirement should be track-sensitive.\n- Teaching downstream skills to consume the artifact directly is valuable, but can follow after the artifact itself is standardized.\n\n# Outcome\n\nThe root fix is not \u201ctell the model to write better handoff prose.\u201d The root fix is to give `feature-dev` a named reusable planning artifact with a stable location, a repo-native structure, and a next-agent contract. That makes handoff clean, repeatable, and compatible with the planning patterns already used elsewhere in this repository.\n"}], "grading": {"expectations": [{"text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.", "passed": true, "evidence": "The response reuses patterns from create-plan, create-tasks, code-architect, and the spec-kit templates rather than presenting an isolated design."}, {"text": "Defines the planning artifact and what information it should contain for handoff.", "passed": true, "evidence": "It names a deterministic artifact path .agents/scratchpad/<feature-name>/implementation-brief.md and defines metadata, findings, technical context, assumptions, execution slices, implementation map, validation plan, and a next-agent contract."}, {"text": "Provides a concrete implementation map with file-level changes.", "passed": true, "evidence": "It specifies edits to skills/feature-dev/SKILL.md, a new references/implementation-brief-template.md file, updates to code-architect.md, and an optional follow-up in implement-plan/SKILL.md."}, {"text": "Includes rationale or trade-offs for the proposed design.", "passed": true, "evidence": "The response explains why the bridge artifact fits the repo better than a full plan/tasks flow for every case and lists trade-offs around overlap and process overhead."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_file": 11, "search_subagent": 1, "create_directory": 1, "create_file": 3, "run_in_terminal": 1, "multi_tool_parallel": 3}, "total_tool_calls": 20, "total_steps": 6, "errors_encountered": 0, "output_chars": 10358, "transcript_chars": 30000}, "timing": {"total_duration_seconds": 0.0}, "claims": [{"claim": "The gap in feature-dev is that the handoff is underspecified rather than absent.", "type": "quality", "verified": true, "evidence": "The response notes that the skill already mentions a reusable handoff plan and implementation brief, but lacks a deterministic path, template, and consumer contract."}], "user_notes_summary": {"uncertainties": ["Artifact naming and whether downstream implementation skills should consume it directly remain open decisions."], "needs_review": ["Confirm whether Standard and Deep tracks should always write the artifact or only on explicit handoff."], "workarounds": []}, "eval_feedback": {"overall": "No suggestions, evals look solid"}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "feature-dev", "skill_path": "/home/adam/.agents/skills/feature-dev", "executor_model": "GPT-5.4", "analyzer_model": "GPT-5.4", "timestamp": "2026-03-26T19:06:55Z", "evals_run": [0, 1, 2], "runs_per_configuration": 1}, "runs": [{"eval_id": 0, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.0, "tokens": 5390, "tool_calls": 8, "errors": 0}, "expectations": [{"text": "References the existing feature-dev skill directly rather than answering generically.", "passed": true, "evidence": "The response says it inspected the current feature-dev skill in this repo and discusses the frontmatter, When Not To Use This Skill, and Light Track sections directly."}, {"text": "Avoids asking blocking clarifying questions for this well-specified task.", "passed": true, "evidence": "It states 'No blocking questions came up' in user notes and provides direct recommendations instead of pausing."}, {"text": "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.", "passed": true, "evidence": "It proposes tightened frontmatter wording, a short When Not To Use This Skill section, and removing or rewriting Light Track."}, {"text": "Scales the workflow to the task instead of insisting on a full multi-phase approval process.", "passed": true, "evidence": "The output responds with a short direct change list and does not ask the user to go through discovery, architecture selection, or explicit approval."}], "notes": ["Focused the root-cause fix on rewriting or removing Light Track."]}, {"eval_id": 1, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 4, "failed": 1, "total": 5, "time_seconds": 0.0, "tokens": 7620, "tool_calls": 23, "errors": 0}, "expectations": [{"text": "Uses findings from the current repository and current feature-dev skill rather than generic advice.", "passed": true, "evidence": "The response cites skills/feature-dev/SKILL.md, feature-dev agent files, and neighboring repo skills such as research, create-plan, and implement-plan."}, {"text": "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.", "passed": true, "evidence": "Its questions concern the desired operating model, artifact creation, caution level in unfamiliar repos, question caps, and architecture-choice behavior."}, {"text": "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.", "passed": false, "evidence": "The response asks eight separate questions across operating model, artifact behavior, caution level, unfamiliar-repo signals, and approval behavior. That is a broad interview rather than a tightly prioritized set."}, {"text": "Separates current understanding, open questions, and a recommended approach.", "passed": true, "evidence": "It uses distinct sections for what should change, questions to ask before editing, and the recommended approach before editing anything."}, {"text": "Explains why the proposed changes would help with unfamiliar repositories.", "passed": true, "evidence": "It explains that unfamiliar repos need repo triage, better risk-ranked questions, and a planning path before edits because missing constraints early is the main failure mode."}], "notes": ["It is still unclear whether feature-dev should be an end-to-end skill or a router into create-plan and implement-plan.", "Confirm what counts as product-sized work in this repo so scaling rules can be written precisely."]}, {"eval_id": 2, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.0, "tokens": 8800, "tool_calls": 19, "errors": 1}, "expectations": [{"text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.", "passed": true, "evidence": "The response ties the design to create-plan, create-tasks, code-explorer, code-architect, and implement-plan rather than inventing a standalone pattern."}, {"text": "Defines the planning artifact and what information it should contain for handoff.", "passed": true, "evidence": "It proposes implementation-brief.md under .agents/scratchpad/<feature-name>/ and lists summary, goals, findings, technical context, assumptions, design, implementation map, validation plan, and promotion path."}, {"text": "Provides a concrete implementation map with file-level changes.", "passed": true, "evidence": "It names concrete edits to skills/feature-dev/SKILL.md, a new references/implementation-brief-template.md file, code-explorer.md, code-architect.md, and an optional implement-plan follow-up."}, {"text": "Includes rationale or trade-offs for the proposed design.", "passed": true, "evidence": "The output explains why a lighter bridge artifact is preferable to forcing all delegated work through plan.md and tasks.md and notes the trade-off of introducing another artifact type."}], "notes": ["The exact artifact path and promotion requirements still need product decisions.", "One exploratory directory listing failed before the output directory existed.", "Grounded the proposal with direct reads after the directory listing issue."]}, {"eval_id": 0, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.0, "tokens": 5570, "tool_calls": 10, "errors": 0}, "expectations": [{"text": "References the existing feature-dev skill directly rather than answering generically.", "passed": true, "evidence": "The response opens with 'I inspected skills/feature-dev/SKILL.md' and repeatedly cites concrete sections such as the frontmatter description, Light Track, Phase 1, and When Not To Use This Skill."}, {"text": "Avoids asking blocking clarifying questions for this well-specified task.", "passed": true, "evidence": "It closes with 'I do not have blocking questions for this task' and proceeds with a concrete edit plan instead of stopping for more input."}, {"text": "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.", "passed": true, "evidence": "It proposes exact replacement text for the description, Core Principles, Light Track, Phase 1 bullets, and a revised When Not To Use This Skill section."}, {"text": "Scales the workflow to the task instead of insisting on a full multi-phase approval process.", "passed": true, "evidence": "The output gives four targeted edits and an implementation order without asking for an architecture choice, approval gate, or full multi-phase process."}], "notes": ["Kept Light Track but redefined it instead of removing it entirely."]}, {"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 5440, "tool_calls": 14, "errors": 0}, "expectations": [{"text": "Uses findings from the current repository and current feature-dev skill rather than generic advice.", "passed": true, "evidence": "The response grounds its analysis in skills/feature-dev/SKILL.md and adjacent repo patterns including create-spec, create-plan, research, and the feature-dev agent prompts."}, {"text": "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.", "passed": true, "evidence": "Its five questions are about artifact strategy, assumption handling, skill composition, question caps, and target repo types, each tied to specific orchestration risks."}, {"text": "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.", "passed": true, "evidence": "It asks five focused questions and recommends a cap of three critical questions for the skill itself, keeping the discussion bounded."}, {"text": "Separates current understanding, open questions, and a recommended approach.", "passed": true, "evidence": "The response uses distinct sections: Understanding, Relevant Findings, Open Questions, Recommendation, and Implementation Map."}, {"text": "Explains why the proposed changes would help with unfamiliar repositories.", "passed": true, "evidence": "It explicitly says the main failure mode in unfamiliar repos is missing constraints too early and recommends a stronger repo-orientation pass plus capped prioritized questions to reduce rework."}], "notes": ["The exact product decision between keeping feature-dev conversational versus making it a front door to heavier planning remains open."]}, {"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.0, "tokens": 10358, "tool_calls": 20, "errors": 0}, "expectations": [{"text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.", "passed": true, "evidence": "The response reuses patterns from create-plan, create-tasks, code-architect, and the spec-kit templates rather than presenting an isolated design."}, {"text": "Defines the planning artifact and what information it should contain for handoff.", "passed": true, "evidence": "It names a deterministic artifact path .agents/scratchpad/<feature-name>/implementation-brief.md and defines metadata, findings, technical context, assumptions, execution slices, implementation map, validation plan, and a next-agent contract."}, {"text": "Provides a concrete implementation map with file-level changes.", "passed": true, "evidence": "It specifies edits to skills/feature-dev/SKILL.md, a new references/implementation-brief-template.md file, updates to code-architect.md, and an optional follow-up in implement-plan/SKILL.md."}, {"text": "Includes rationale or trade-offs for the proposed design.", "passed": true, "evidence": "The response explains why the bridge artifact fits the repo better than a full plan/tasks flow for every case and lists trade-offs around overlap and process overhead."}], "notes": ["Artifact naming and whether downstream implementation skills should consume it directly remain open decisions.", "Confirm whether Standard and Deep tracks should always write the artifact or only on explicit handoff."]}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}, "tokens": {"mean": 7122.6667, "stddev": 2802.6347, "min": 5440, "max": 10358}}, "old_skill": {"pass_rate": {"mean": 0.9333, "stddev": 0.1155, "min": 0.8, "max": 1.0}, "time_seconds": {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}, "tokens": {"mean": 7270.0, "stddev": 1731.7332, "min": 5390, "max": 8800}}, "delta": {"pass_rate": "+0.07", "time_seconds": "+0.0", "tokens": "-147"}}, "notes": ["Benchmark coverage is narrow: only 1 of the 13 graded expectations differentiates the skill. All 4 eval-0 expectations and all 4 eval-2 expectations pass in both configurations, and 4 of 5 eval-1 expectations also pass in both, so most of the current benchmark measures baseline competence rather than skill-specific value.", "The only clear quality win for the current feature-dev skill is eval 1's expectation 'Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.' It passes with_skill and fails old_skill, making eval 1 the sole source of the pass-rate improvement from 93% to 100%.", "No graded expectation fails in both configurations, and none pass in old_skill while failing with_skill. In this dataset the skill never appears to hurt quality, but it also improves only one behavior.", "Difficulty is concentrated in eval 1. old_skill scores 80% there while both configurations score 100% on evals 0 and 2, so the benchmark is mostly testing targeted-clarification behavior rather than broader feature-dev behavior.", "Resource usage is mixed rather than uniformly higher with skill: token count drops sharply on eval 1 (5440 vs 7620, -2180) but rises on eval 2 (10358 vs 8800, +1558) and slightly on eval 0 (5570 vs 5390, +180). The higher token stddev for with_skill (2803 vs 1732) comes from this uneven per-eval effect.", "time_seconds is 0.0 for every run in both configurations, so the current benchmark cannot support any conclusion about latency or time tradeoffs.", "Tool-call count does not show a consistent overhead pattern: with_skill uses more calls on eval 0 (10 vs 8) and eval 2 (20 vs 19) but fewer on eval 1 (14 vs 23), suggesting the skill can either streamline or expand the workflow depending on the task.", "There is effectively no repeated-run variance to analyze yet because benchmark.json contains one recorded run per eval/configuration pair. The current stddev values reflect differences across evals, not repeated-run stability or flakiness.", "old_skill eval 2 logged 1 error while still passing all assertions, whereas with_skill logged 0 errors on every eval. If operational reliability matters, pass_rate alone is slightly understating the difference between configurations."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+- Naming choice: used the feature slug `feature-dev-handoff-policy-enforcement` so the artifact path stays specific and clearly tied to the live skill.
+- Main trade-off: stronger MUST-level artifact enforcement improves determinism and benchmarkability, but can add overhead for borderline Light-track or same-turn-complete Standard-track work.
+- Open policy decision for human review: whether Standard track should still require `handoff-plan.md` when implementation fully completes in the same turn.
+- I reused the live `feature-dev` artifact path and template contract instead of proposing a new artifact type because the repo already has a proven pattern for this.
+- I intentionally did not propose repo edits outside `skills/feature-dev/*` and its eval coverage because the request was specifically to prepare the handoff and stop before implementation.

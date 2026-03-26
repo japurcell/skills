@@ -1,0 +1,188 @@
+{
+  "metadata": {
+    "skill_name": "feature-dev",
+    "skill_path": "/home/adam/.agents/skills/feature-dev",
+    "executor_model": "GPT-5.4",
+    "analyzer_model": "GPT-5.4",
+    "timestamp": "2026-03-26T20:20:52Z",
+    "evals_run": [2],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 0.0,
+        "tokens": 13992,
+        "tool_calls": 20,
+        "errors": 1
+      },
+      "expectations": [
+        {
+          "text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+          "passed": true,
+          "evidence": "The response cites snapshot and live feature-dev files plus create-plan/create-tasks patterns from the repository."
+        },
+        {
+          "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+          "passed": true,
+          "evidence": "The run created outputs/.agents/scratchpad/feature-dev-handoff-policy-enforcement/handoff-plan.md, matching the expected path contract pattern."
+        },
+        {
+          "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+          "passed": true,
+          "evidence": "The artifact includes Implementation Slices, File-by-File Implementation Map, and Validation Plan sections with reusable template-style structure."
+        },
+        {
+          "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+          "passed": true,
+          "evidence": "Metadata fields are concrete values with no bracket placeholders: Status=ready for implementation, Track=Standard, Recommended Next Step=implement directly."
+        },
+        {
+          "text": "Each referenced file in Relevant Findings includes why that file matters.",
+          "passed": true,
+          "evidence": "Each Relevant Findings item includes file path and rationale (for example, implementation target, canonical template, or benchmark role)."
+        },
+        {
+          "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+          "passed": true,
+          "evidence": "The artifact presents one open question with explicit risk framing, keeping uncertainty bounded."
+        },
+        {
+          "text": "Provides artifact status in the response with the exact artifact path.",
+          "passed": true,
+          "evidence": "final_response.md includes Artifact Status with the exact absolute path to the created artifact."
+        },
+        {
+          "text": "Includes rationale or trade-offs for the proposed design.",
+          "passed": true,
+          "evidence": "The response discusses enforcement trade-offs and policy scope boundaries."
+        }
+      ],
+      "notes": [
+        "Whether to enforce same-turn Standard-track artifact creation remains unresolved."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 0.0,
+        "tokens": 13154,
+        "tool_calls": 23,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+          "passed": true,
+          "evidence": "The response cites feature-dev SKILL/template/architect files and related create-plan/create-tasks patterns from this repository."
+        },
+        {
+          "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+          "passed": true,
+          "evidence": "The run created outputs/.agents/scratchpad/feature-dev-handoff-policy-enforcement/handoff-plan.md, matching the expected path contract pattern."
+        },
+        {
+          "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+          "passed": true,
+          "evidence": "The artifact contains Implementation Slices, File-by-File Implementation Map, and Validation Plan sections in template-aligned structure."
+        },
+        {
+          "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+          "passed": true,
+          "evidence": "Metadata fields are concrete values: Status=ready for implementation, Track=Standard, Recommended Next Step=implement directly."
+        },
+        {
+          "text": "Each referenced file in Relevant Findings includes why that file matters.",
+          "passed": true,
+          "evidence": "Each file entry in Relevant Findings includes a reason clause after the path (for example, primary target, canonical structure, or regression coverage role)."
+        },
+        {
+          "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+          "passed": true,
+          "evidence": "The artifact has one open question and explicitly states risk if wrong, indicating bounded uncertainty and risk framing."
+        },
+        {
+          "text": "Provides artifact status in the response with the exact artifact path.",
+          "passed": true,
+          "evidence": "final_response.md includes an Artifact Status section with the exact absolute path to the created artifact file."
+        },
+        {
+          "text": "Includes rationale or trade-offs for the proposed design.",
+          "passed": true,
+          "evidence": "The response discusses trade-offs around stricter must-level enforcement versus added overhead and scope boundaries."
+        }
+      ],
+      "notes": [
+        "Standard-track same-turn completion policy remains a product choice."
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 13154.0,
+        "stddev": 0.0,
+        "min": 13154,
+        "max": 13154
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 13992.0,
+        "stddev": 0.0,
+        "min": 13992,
+        "max": 13992
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+0.0",
+      "tokens": "-838"
+    }
+  },
+  "notes": [
+    "All 8 expectations pass in both configurations, so this benchmark still does not differentiate skill value.",
+    "Metadata originally declared runs_per_configuration as 3, but only one run per configuration was recorded; summaries are effectively n=1.",
+    "time_seconds is 0.0 for all runs, so timing data is not informative.",
+    "with_skill used more tool calls (23 vs 20) but fewer tokens (13154 vs 13992), indicating mixed resource trade-offs in this single sample.",
+    "The old_skill run recorded 1 error yet still passed all assertions, suggesting current checks do not fully cover that failure mode.",
+    "Only eval_id 2 is present, so there is no cross-eval evidence of generalization."
+  ]
+}

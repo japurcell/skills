@@ -31,7 +31,7 @@ Given that feature description, do this:
      - "Implement OAuth2 integration for the API" → "oauth2-api-integration"
      - "Create a dashboard for analytics" → "analytics-dashboard"
      - "Fix payment processing timeout bug" → "fix-payment-timeout"
-2. Load `references/spec-template.md` to understand required sections.
+2. Load [references/spec-template.md](references/spec-template.md) to understand required sections.
 3. Follow this execution flow:
    1. Parse user description from Input
       If empty: ERROR "No feature description provided"
