@@ -1,0 +1,10 @@
+[
+  "The checklist-gate eval (eval_id 0) is non-discriminating in this sample: all three expectations pass in both with_skill and without_skill (3/3 each).",
+  "The expectation 'Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing' fails in both configurations for eval_id 2 (with_skill: fail, without_skill: fail), so it currently does not separate the configurations and may be testing a generally unmet requirement.",
+  "The expectation about [P] task parallelism safety (non-overlapping file paths) passes in both configurations for eval_id 2, indicating this assertion is also non-discriminating in this run.",
+  "The strongest observed separation appears in eval_id 1: with_skill passes all 3 expectations, while without_skill misses the explicit halted/blocked-before-execution behavior (2/3).",
+  "Overall pass-rate variance is higher in without_skill (stddev 0.335, min 0.33, max 1.0) than with_skill (stddev 0.1905, min 0.67, max 1.0), suggesting more consistency when the skill is enabled.",
+  "The largest per-eval gap is eval_id 2 (with_skill 0.67 vs without_skill 0.33), and the difference is driven by section-structure compliance rather than [P] parallelism guidance.",
+  "Timing data is not informative in this benchmark: time_seconds is 0.0 for every run/configuration, so runtime tradeoffs cannot be interpreted from this iteration.",
+  "Token usage is high-variance in both configurations and the means are relatively close (with_skill 1877.33 vs without_skill 1670.33); because tokens are proxied from output character count in this environment, token deltas should be treated as directional only."
+]

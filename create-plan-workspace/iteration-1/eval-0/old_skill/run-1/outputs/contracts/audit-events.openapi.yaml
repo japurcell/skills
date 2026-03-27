@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: Audit Events Schema
+  version: 1.0.0
+  description: Schema for immutable audit event logging in disputes system
+
+components:
+  schemas:
+    AuditEventPayload:
+      type: object
+      required:
+        - dispute_id
+        - action
+        - actor_id
+        - new_state
+      properties:
+        dispute_id:
+          type: string
+          format: uuid
+          description: Reference to the disputed item
+        action:
+          type: string
+          enum:
+            - created
+            - status_changed
+            - assigned
+            - notes_added
+            - override_applied
+          description: Type of action performed
+        actor_id:
+          type: string
+          format: uuid
+          description: User who performed the action
+        old_state:
+          type: object
+          description: Previous dispute state (for mutations only)
+          properties:
+            status:
+              type: string
+            assigned_to:
+              type: string
+              nullable: true
+            notes:
+              type: string
+        new_state:
+          type: object
+          description: New dispute state after action
+          properties:
+            status:
+              type: string
+            assigned_to:
+              type: string
+              nullable: true
+            notes:
+              type: string
+            manager_override:
+              type: boolean
+        reason:
+          type: string
+          nullable: true
+          description: Why this action was taken
+        created_at:
+          type: string
+          format: date-time
+          description: Server-side timestamp (immutable)

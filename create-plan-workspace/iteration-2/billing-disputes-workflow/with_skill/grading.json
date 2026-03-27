@@ -1,0 +1,54 @@
+{
+  "expectations": [
+    {
+      "text": "Output indicates an implementation plan artifact was produced",
+      "passed": true,
+      "evidence": "plan.md exists with substantive content"
+    },
+    {
+      "text": "Output includes a research artifact with decisions/rationale",
+      "passed": true,
+      "evidence": "research.md includes Decision and Rationale content"
+    },
+    {
+      "text": "Output includes a data model artifact",
+      "passed": true,
+      "evidence": "data-model.md exists with substantive model content"
+    },
+    {
+      "text": "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+      "passed": true,
+      "evidence": "Required headings, commands, and expected outcomes present"
+    },
+    {
+      "text": "Final report conforms exactly to the 5-section output contract with a concrete Next command",
+      "passed": true,
+      "evidence": "All required section labels present in correct order with actionable next command"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 17131,
+    "transcript_chars": 17131
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

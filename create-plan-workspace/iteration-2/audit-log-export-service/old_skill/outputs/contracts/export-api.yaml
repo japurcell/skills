@@ -1,0 +1,182 @@
+openapi: 3.0.3
+info:
+  title: Audit Log Export Admin API
+  version: 1.0.0
+  description: API contract for asynchronous audit-log export operations.
+servers:
+  - url: https://admin.example.internal
+paths:
+  /admin/audit-exports:
+    post:
+      summary: Request a new audit export job
+      operationId: requestAuditExport
+      security:
+        - bearerAuth: []
+      x-required-role: compliance_admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExportRequest"
+      responses:
+        "202":
+          description: Export job accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportJobResponse"
+        "400":
+          description: Invalid filter payload
+        "403":
+          description: Forbidden (missing compliance_admin role)
+
+  /admin/audit-exports/{jobId}:
+    get:
+      summary: Get export job status
+      operationId: getAuditExportJob
+      security:
+        - bearerAuth: []
+      x-required-role: compliance_admin
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Current job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportJobStatus"
+        "403":
+          description: Forbidden
+        "404":
+          description: Job not found
+
+  /admin/audit-exports/{jobId}/cancel:
+    post:
+      summary: Cancel a queued or running export job
+      operationId: cancelAuditExportJob
+      security:
+        - bearerAuth: []
+      x-required-role: compliance_admin
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "202":
+          description: Cancellation accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelResponse"
+        "409":
+          description: Job is already in terminal state and cannot be cancelled
+        "403":
+          description: Forbidden
+        "404":
+          description: Job not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    ExportRequest:
+      type: object
+      required:
+        - dateFrom
+        - dateTo
+        - actorType
+        - actionCategory
+      properties:
+        dateFrom:
+          type: string
+          format: date-time
+        dateTo:
+          type: string
+          format: date-time
+        actorType:
+          type: string
+        actionCategory:
+          type: string
+      additionalProperties: false
+
+    ExportJobResponse:
+      type: object
+      required:
+        - jobId
+        - status
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, failed, completed]
+
+    ExportArtifact:
+      type: object
+      required:
+        - format
+        - downloadUrl
+        - expiresAt
+      properties:
+        format:
+          type: string
+          enum: [csv, json]
+        downloadUrl:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+
+    ExportJobStatus:
+      type: object
+      required:
+        - jobId
+        - status
+        - progressPercent
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, failed, completed]
+        progressPercent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        failureMessage:
+          type: string
+        artifacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExportArtifact"
+
+    CancelResponse:
+      type: object
+      required:
+        - jobId
+        - status
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [failed]
+        failureMessage:
+          type: string

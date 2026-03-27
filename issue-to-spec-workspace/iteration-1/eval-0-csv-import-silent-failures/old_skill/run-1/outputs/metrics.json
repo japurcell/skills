@@ -1,0 +1,31 @@
+{
+  "eval_id": 0,
+  "eval_name": "csv-import-silent-failures",
+  "mode": "old_skill",
+  "date": "2026-03-26",
+  "status": "completed_best_effort",
+  "completed": true,
+  "issue": {
+    "repo": "acme/platform",
+    "number": 142
+  },
+  "steps": {
+    "old_skill_snapshot_loaded": true,
+    "issue_retrieval_attempted": true,
+    "issue_retrieval_succeeded": false,
+    "best_effort_spec_generated": true,
+    "assumptions_included": true,
+    "final_response_written": true,
+    "transcript_written": true,
+    "metrics_written": true
+  },
+  "failure": {
+    "command": "gh issue view 142 -R acme/platform --json number,title,body,labels,assignees,milestone,state,comments",
+    "exit_code": 1,
+    "error": "GraphQL: Could not resolve to a Repository with the name 'acme/platform'. (repository)"
+  },
+  "notes": [
+    "Issue body/comments unavailable at runtime.",
+    "Spec derived from prompt-provided issue title and baseline assumptions."
+  ]
+}

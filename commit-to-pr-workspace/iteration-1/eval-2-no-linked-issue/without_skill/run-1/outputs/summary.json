@@ -1,0 +1,11 @@
+{
+  "branch": "chore/add-audit-logs",
+  "commit_sha": "0d6436a86c57d733c7908c0d7aa8da50b8e6db6e",
+  "commit_subject": "chore: update files",
+  "commit_body": "",
+  "new_commit_count": 1,
+  "proceeded_without_issue": true,
+  "includes_summary_fields": true,
+  "push_ok": true,
+  "pr_url": "https://example.com/org/repo/pull/42"
+}

@@ -1,0 +1,9 @@
+[
+  "Pass-rate lift is entirely from eval 2: with_skill passed 3/3 while without_skill passed 2/3 because only without_skill missed the required five-section structure expectation.",
+  "Five of six expectations are non-discriminating in this sample: all eval 0 and eval 1 expectations passed in both configurations, and in eval 2 both configurations passed the [P] non-overlap and checkpoint-gating expectations.",
+  "The expectation 'Includes all five output sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation' is the only assertion that differentiated configurations in this iteration.",
+  "Timing data is not informative for performance comparison: every run reports time_seconds = 0.0, and each run note says duration_ms was unavailable in this environment.",
+  "Token comparisons are approximate rather than true model-token measurements: run notes state total_tokens was unavailable and token fields were populated via output character count proxy.",
+  "Token usage shows high spread within each configuration (with_skill stddev 1568.5861; without_skill stddev 908.4384), indicating eval-to-eval output-size variation is large relative to the +575 mean delta.",
+  "Data volume is small for stability claims: metadata lists runs_per_configuration = 3, but benchmark entries show one run per eval per configuration (3 runs total per config), so variance estimates reflect cross-eval differences more than repeated-run flakiness."
+]

@@ -1,0 +1,20 @@
+create-spec run summary
+Date: 2026-03-26
+Skill snapshot path: /home/adam/.agents/skills/create-spec-workspace/skill-snapshot
+Feature short name: shared-release-calendar-roles
+
+Produced files:
+1) Spec
+- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/old_skill/outputs/spec.md
+- Includes prioritized user stories, edge cases, functional requirements, key entities, measurable success criteria, and assumptions.
+
+2) Checklist
+- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/old_skill/outputs/requirements.md
+- Canonical workflow path also written to: /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/old_skill/outputs/checklists/requirements.md
+- Validation checklist completed with all items marked pass.
+
+3) Summary
+- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/old_skill/outputs/run_summary.txt
+
+Validation status: PASS
+Readiness: Ready for /create-plan

@@ -1,0 +1,17 @@
+{
+  "summary": {
+    "quality_delta": "no measurable pass-rate change",
+    "efficiency_delta": "with_skill uses fewer output chars on average",
+    "telemetry_limitations": "no duration_ms/total_tokens notifications available"
+  },
+  "observations": [
+    "All 6 assertions passed for both configurations across all evals; current assertion set is non-discriminating for this revision.",
+    "With-skill outputs show lower token proxy mean (10717 vs 11035, delta -318) and much lower variance (stddev 584 vs 1623).",
+    "Timing and real token telemetry were unavailable from subagent notifications in this environment; timing values are 0 and token values are proxied from output size."
+  ],
+  "recommendations": [
+    "Add stricter assertions that test instruction-specific behavior (e.g., explicit placeholder validation block in report summary, deterministic dependency references).",
+    "Add at least one adversarial eval where plan/spec mismatch forces robust fallback behavior.",
+    "Capture real timing/tokens when notification telemetry becomes available to evaluate runtime cost accurately."
+  ]
+}

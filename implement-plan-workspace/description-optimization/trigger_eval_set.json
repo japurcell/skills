@@ -1,0 +1,82 @@
+[
+  {
+    "query": "i already ran /create-plan and /create-tasks for .agents/scratchpad/feature-billing-reminders/plan.md. can you execute the implementation plan now and keep tasks.md checkboxes in sync as work finishes?",
+    "should_trigger": true
+  },
+  {
+    "query": "Please run implementation for plan_file=.agents/scratchpad/feature-inbox-sla/plan.md. Follow TDD and stop if required planning artifacts are missing.",
+    "should_trigger": true
+  },
+  {
+    "query": "continue the feature from .agents/scratchpad/feature-webhooks/plan.md and execute phases setup -> tests -> core -> integration -> polish with dependency-safe parallel tasks",
+    "should_trigger": true
+  },
+  {
+    "query": "can you take over from here: .agents/scratchpad/feature-audit-log/plan.md exists, check checklist completion first and only proceed if I confirm",
+    "should_trigger": true
+  },
+  {
+    "query": "Implement the generated task plan for .agents/scratchpad/feature-export-csv/plan.md and include code review pass before final validation",
+    "should_trigger": true
+  },
+  {
+    "query": "I need you to execute tasks.md for this plan: .agents/scratchpad/feature-notifications/plan.md. Use subagents per phase and enforce checkpoint gates before moving on.",
+    "should_trigger": true
+  },
+  {
+    "query": "we paused mid-implementation yesterday. resume /implement-plan using .agents/scratchpad/feature-session-timeout/plan.md and do not skip the checklist gate",
+    "should_trigger": true
+  },
+  {
+    "query": "run the implementation workflow against .agents/scratchpad/feature-tenant-roles/plan.md, verify ignore files from tech stack, and mark completed tasks as [X]",
+    "should_trigger": true
+  },
+  {
+    "query": "please execute this planning artifact end-to-end: .agents/scratchpad/feature-sso-enforcement/plan.md. I want explicit phase-by-phase handoffs and blockers",
+    "should_trigger": true
+  },
+  {
+    "query": "do /implement-plan for .agents/scratchpad/feature-reporting-v2/plan.md and include a final completion validation summary",
+    "should_trigger": true
+  },
+  {
+    "query": "generate a brand new implementation plan for adding scheduled exports; we only have a rough idea and no plan.md yet",
+    "should_trigger": false
+  },
+  {
+    "query": "I have tasks.md and want you to reprioritize it for faster delivery, but don't actually implement anything yet",
+    "should_trigger": false
+  },
+  {
+    "query": "review .agents/scratchpad/feature-auth/tasks.md and tell me which items can run in parallel; no code changes",
+    "should_trigger": false
+  },
+  {
+    "query": "can you write unit tests for src/auth/token_service.py? ignore the planning docs for now",
+    "should_trigger": false
+  },
+  {
+    "query": "my checklist says 2 items left. just summarize risks if we ship now; do not continue implementation",
+    "should_trigger": false
+  },
+  {
+    "query": "create missing ignore files (.dockerignore/.eslintignore/.prettierignore) based on this repo, but do not run plan execution",
+    "should_trigger": false
+  },
+  {
+    "query": "I need a code review of my latest branch focused on bugs and conventions; you can skip tasks.md status updates",
+    "should_trigger": false
+  },
+  {
+    "query": "help me debug why /implement-plan stopped at the checklist gate; I'm asking for diagnosis, not execution",
+    "should_trigger": false
+  },
+  {
+    "query": "convert .agents/scratchpad/feature-notify/plan.md into Jira tickets with estimates and owners",
+    "should_trigger": false
+  },
+  {
+    "query": "we're not ready to implement yet. compare plan.md vs data-model.md and point out mismatches",
+    "should_trigger": false
+  }
+]

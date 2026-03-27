@@ -1,0 +1,323 @@
+{
+  "metadata": {
+    "skill_name": "create-plan",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-03-26T23:25:50Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 21879,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Output indicates an implementation plan artifact was produced",
+          "passed": true,
+          "evidence": "plan.md exists with substantive content"
+        },
+        {
+          "text": "Output includes a research artifact with decisions/rationale",
+          "passed": true,
+          "evidence": "research.md includes Decision and Rationale content"
+        },
+        {
+          "text": "Output includes a data model artifact",
+          "passed": true,
+          "evidence": "data-model.md exists with substantive model content"
+        },
+        {
+          "text": "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+          "passed": false,
+          "evidence": "Missing headings: ## Prerequisites, ## 1. Implement, ## 2. Validate, ## 3. Rollout/Operate"
+        },
+        {
+          "text": "Final report conforms exactly to the 5-section output contract with a concrete Next command",
+          "passed": true,
+          "evidence": "All required section labels present in correct order with actionable next command"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 22162,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Output indicates an implementation plan artifact was produced",
+          "passed": true,
+          "evidence": "plan.md exists with substantive content"
+        },
+        {
+          "text": "Output includes a research artifact with decisions/rationale",
+          "passed": true,
+          "evidence": "research.md includes Decision and Rationale content"
+        },
+        {
+          "text": "Output includes a data model artifact",
+          "passed": true,
+          "evidence": "data-model.md exists with substantive model content"
+        },
+        {
+          "text": "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+          "passed": false,
+          "evidence": "Missing headings: ## 1. Implement, ## 2. Validate, ## 3. Rollout/Operate"
+        },
+        {
+          "text": "Gate results capture both pre-research and post-design checks with pass/fail rationale",
+          "passed": true,
+          "evidence": "Report includes pre-research and post-design gate outcomes with pass/fail language"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 22832,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Output indicates an implementation plan artifact was produced",
+          "passed": true,
+          "evidence": "plan.md exists with substantive content"
+        },
+        {
+          "text": "Output includes a research artifact with decisions/rationale",
+          "passed": true,
+          "evidence": "research.md includes Decision and Rationale content"
+        },
+        {
+          "text": "Output includes a data model artifact",
+          "passed": true,
+          "evidence": "data-model.md exists with substantive model content"
+        },
+        {
+          "text": "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+          "passed": false,
+          "evidence": "Missing headings: ## Prerequisites, ## 1. Implement, ## 2. Validate, ## 3. Rollout/Operate"
+        },
+        {
+          "text": "Final report conforms exactly to the 5-section output contract and names /create-tasks or explicit blocker in Next command",
+          "passed": true,
+          "evidence": "All required section labels present in correct order with actionable next command"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 17131,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Output indicates an implementation plan artifact was produced",
+          "passed": true,
+          "evidence": "plan.md exists with substantive content"
+        },
+        {
+          "text": "Output includes a research artifact with decisions/rationale",
+          "passed": true,
+          "evidence": "research.md includes Decision and Rationale content"
+        },
+        {
+          "text": "Output includes a data model artifact",
+          "passed": true,
+          "evidence": "data-model.md exists with substantive model content"
+        },
+        {
+          "text": "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+          "passed": true,
+          "evidence": "Required headings, commands, and expected outcomes present"
+        },
+        {
+          "text": "Final report conforms exactly to the 5-section output contract with a concrete Next command",
+          "passed": true,
+          "evidence": "All required section labels present in correct order with actionable next command"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 25532,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Output indicates an implementation plan artifact was produced",
+          "passed": true,
+          "evidence": "plan.md exists with substantive content"
+        },
+        {
+          "text": "Output includes a research artifact with decisions/rationale",
+          "passed": true,
+          "evidence": "research.md includes Decision and Rationale content"
+        },
+        {
+          "text": "Output includes a data model artifact",
+          "passed": true,
+          "evidence": "data-model.md exists with substantive model content"
+        },
+        {
+          "text": "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+          "passed": true,
+          "evidence": "Required headings, commands, and expected outcomes present"
+        },
+        {
+          "text": "Gate results capture both pre-research and post-design checks with pass/fail rationale",
+          "passed": true,
+          "evidence": "Report includes pre-research and post-design gate outcomes with pass/fail language"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 21865,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Output indicates an implementation plan artifact was produced",
+          "passed": true,
+          "evidence": "plan.md exists with substantive content"
+        },
+        {
+          "text": "Output includes a research artifact with decisions/rationale",
+          "passed": true,
+          "evidence": "research.md includes Decision and Rationale content"
+        },
+        {
+          "text": "Output includes a data model artifact",
+          "passed": true,
+          "evidence": "data-model.md exists with substantive model content"
+        },
+        {
+          "text": "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+          "passed": true,
+          "evidence": "Required headings, commands, and expected outcomes present"
+        },
+        {
+          "text": "Final report conforms exactly to the 5-section output contract and names /create-tasks or explicit blocker in Next command",
+          "passed": true,
+          "evidence": "All required section labels present in correct order with actionable next command"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.8,
+        "stddev": 0.0,
+        "min": 0.8,
+        "max": 0.8
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 22291.0,
+        "stddev": 489.4211,
+        "min": 21879,
+        "max": 22832
+      }
+    },
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 21509.3333,
+        "stddev": 4211.778,
+        "min": 17131,
+        "max": 25532
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.20",
+      "time_seconds": "+0.0",
+      "tokens": "+782"
+    }
+  },
+  "notes": []
+}

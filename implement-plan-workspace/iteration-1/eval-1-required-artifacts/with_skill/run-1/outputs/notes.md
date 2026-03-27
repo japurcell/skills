@@ -1,0 +1,5 @@
+- Scenario: /implement-plan with plan_file=.agents/scratchpad/feature-export/plan.md
+- Assumption: plan.md exists, tasks.md missing
+- Skill behavior applied: stop during context loading when required artifact is missing
+- Required instruction emitted: run /create-tasks or regenerate planning artifacts
+- Downstream steps intentionally skipped: setup verification, task parsing, phase execution, code review, completion checks

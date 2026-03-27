@@ -1,0 +1,24 @@
+Run summary - create-spec
+Date: 2026-03-26
+
+Feature description processed:
+Build a shared release calendar where PMs can create launch entries, mark confidence level, and attach dependencies. Engineering managers need a weekly view filtered by team. We are not sure whether non-PM roles should edit entries or comment only.
+
+Feature short name:
+shared-release-calendar-roles
+
+Produced files:
+1) Spec file
+   /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/with_skill/outputs/spec.md
+
+2) Checklist file
+   /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/with_skill/outputs/checklists/requirements.md
+
+3) Run summary file
+   /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/with_skill/outputs/run_summary.txt
+
+Validation status:
+pass
+
+Readiness for /create-plan:
+ready

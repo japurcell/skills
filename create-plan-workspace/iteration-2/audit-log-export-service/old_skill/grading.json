@@ -1,0 +1,54 @@
+{
+  "expectations": [
+    {
+      "text": "Output indicates an implementation plan artifact was produced",
+      "passed": true,
+      "evidence": "plan.md exists with substantive content"
+    },
+    {
+      "text": "Output includes a research artifact with decisions/rationale",
+      "passed": true,
+      "evidence": "research.md includes Decision and Rationale content"
+    },
+    {
+      "text": "Output includes a data model artifact",
+      "passed": true,
+      "evidence": "data-model.md exists with substantive model content"
+    },
+    {
+      "text": "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+      "passed": false,
+      "evidence": "Missing headings: ## 1. Implement, ## 2. Validate, ## 3. Rollout/Operate"
+    },
+    {
+      "text": "Gate results capture both pre-research and post-design checks with pass/fail rationale",
+      "passed": true,
+      "evidence": "Report includes pre-research and post-design gate outcomes with pass/fail language"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 22162,
+    "transcript_chars": 22162
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

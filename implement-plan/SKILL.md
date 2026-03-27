@@ -1,6 +1,6 @@
 ---
 name: implement-plan
-description: Implement plan tasks in order, using TDD and code review to ensure quality.
+description: Execute an existing implementation plan end-to-end from a plan file, including checklist gating, prerequisite validation, phase-by-phase task execution, TDD-first delivery, task checkbox updates, code review, and completion validation. Use this whenever the user asks to run or resume implementation from planning artifacts (such as plan.md and tasks.md), explicitly mentions /implement-plan, or wants feature work executed in ordered phases with dependency-aware parallelization and checkpoints. Prefer this skill over generic coding/review flows when the request is to execute an already-generated plan rather than create a new plan or only analyze code.
 disable-model-invocation: true
 ---
 
@@ -15,11 +15,26 @@ You receive these parameters in your prompt:
 ## Context
 
 - Read plan_file into context if it isn't already.
+- Derive the feature directory from plan_file and use it as the base for related artifacts.
+
+## Required Output Contract
+
+Use this structure in your user-facing progress and completion updates so execution is auditable:
+
+1. `Checklist Gate`
+2. `Implementation Context Loaded`
+3. `Phase Execution`
+4. `Code Review Findings`
+5. `Completion Validation`
+
+Use Markdown section headers for these exact section names so downstream evaluation can verify structure reliably.
+
+For each section, include concise evidence (files read, tasks completed, tests run, blockers).
 
 ## Outline
 
-1. **Check checklists status** (if .agents/scratchpad/<feature-name>/checklists/ exists):
-   - Scan all checklist files in the checklists/ directory
+1. **Check checklist status** (if `<feature-dir>/checklists/` exists):
+   - Scan all checklist files in that directory
    - For each checklist, count:
      - Total items: All lines matching `- [ ]` or `- [X]` or `- [x]`
      - Completed items: Lines matching `- [X]` or `- [x]`
@@ -49,16 +64,22 @@ You receive these parameters in your prompt:
      - Display the table showing all checklists passed
      - Automatically proceed to step 2
 
+   - **If checklists directory does not exist**:
+     - Report that no checklist gate is present
+     - Continue to step 2
+
 2. Load and analyze the implementation context:
-   - **REQUIRED**: Read tasks.md for the complete task list and execution plan
-   - **REQUIRED**: Read plan.md for tech stack, architecture, and file structure
-   - **IF EXISTS**: Read data-model.md for entities and relationships
-   - **IF EXISTS**: Read contracts/ for API specifications and test requirements
-   - **IF EXISTS**: Read research.md for technical decisions and constraints
-   - **IF EXISTS**: Read quickstart.md for integration scenarios
+   - **REQUIRED**: Read `tasks.md` for the complete task list and execution plan
+   - **REQUIRED**: Read `plan.md` for tech stack, architecture, and file structure
+   - **IF EXISTS**: Read `data-model.md` for entities and relationships
+   - **IF EXISTS**: Read `contracts/` for API specifications and test requirements
+   - **IF EXISTS**: Read `research.md` for technical decisions and constraints
+   - **IF EXISTS**: Read `quickstart.md` for integration scenarios
+   - If either `tasks.md` or `plan.md` is missing, stop and instruct the user to run `/create-tasks` or regenerate planning artifacts.
 
 3. **Project Setup Verification**:
-   - **REQUIRED**: Create/verify ignore files based on actual project setup:
+   - **REQUIRED**: Create/verify ignore files based on actual project setup.
+   - Only append missing critical patterns; do not overwrite user-managed ignore files.
 
    **Detection & Creation Logic**:
    - Check if the following command succeeds to determine if the repository is a git repo (create/verify .gitignore if so):
@@ -75,8 +96,8 @@ You receive these parameters in your prompt:
    - Check if terraform files (\*.tf) exist → create/verify .terraformignore
    - Check if .helmignore needed (helm charts present) → create/verify .helmignore
 
-   **If ignore file already exists**: Verify it contains essential patterns, append missing critical patterns only
-   **If ignore file missing**: Create with full pattern set for detected technology
+   **If ignore file already exists**: Verify it contains essential patterns, append missing critical patterns only.
+   **If ignore file missing**: Create with full pattern set for detected technology.
 
    **Common Patterns by Technology** (from plan.md tech stack):
    - **Node.js/JavaScript/TypeScript**: `node_modules/`, `dist/`, `build/`, `*.log`, `.env*`
@@ -107,19 +128,25 @@ You receive these parameters in your prompt:
    - **Task details**: ID, description, file paths, parallel markers [P]
    - **Execution flow**: Order and dependency requirements
 
+   If no actionable tasks are found, stop and recommend regenerating `tasks.md`.
+
 5. Implement individual phases of the task plan in the correct order using subagents. For each phase:
-   - Launch a subagent that implements the phase using the tdd skill. The subagent should:
-     - Use the tdd skill to implement test tasks before their corresponding implementation tasks
-     - Respect dependencies by running sequential tasks in order, parallel tasks [P] can run together
-     - Use file-based coordination by running tasks affecting the same files sequentially
-     - Follow <implementation_execution_rules>
-     - Report progress after each completed task
-     - Halt execution if any non-parallel task fails
-     - For parallel tasks [P], continue with successful tasks, report failed ones
-     - Provide clear error messages with context for debugging
-     - Suggest next steps if implementation cannot proceed
-     - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
-   - **Enforce validation checkpoints**: Verify phase completion with a subagent before proceeding
+   - Launch a subagent for each phase with an explicit handoff prompt that includes:
+     - Current phase name and ordered task IDs
+     - Dependency rules (`[P]` can run in parallel only when files do not overlap)
+     - Requirement to apply TDD (tests first, then implementation)
+     - Requirement to mark completed tasks as `[X]` in `tasks.md`
+     - Expected deliverable: changed files, test results, and unresolved issues
+   - The phase subagent must:
+     - Respect dependencies by running sequential tasks in order
+     - Run `[P]` tasks concurrently only when safe
+     - Halt phase execution if a non-parallel task fails
+     - Continue remaining independent parallel tasks if one `[P]` task fails
+   - After each phase, run a validation checkpoint subagent that confirms:
+     - All intended phase tasks were completed or explicitly deferred
+     - `tasks.md` status is synchronized with actual completion
+     - Required tests for that phase were executed
+   - Do not start the next phase until checkpoint passes (or user explicitly approves continuing with known failures).
 
 6. Code review: perform code review using <code_review_instructions>.
 
@@ -128,9 +155,27 @@ You receive these parameters in your prompt:
    - Check that implemented features match the original specification
    - Validate that tests pass and coverage meets requirements
    - Confirm the implementation follows the technical plan
-   - Report final status with summary of completed work
+
+- Include an explicit `Checkpoint Decision` block using this exact structure:
+
+  ```text
+  Checkpoint Decision
+  - Status: PASS | PASS WITH DEFERRED ITEMS | FAIL
+  - Evidence: <tasks completed, tests run, files changed, blockers/deferments>
+  - Next Action: <advance to next phase | resolve blockers | request user approval>
+  ```
+
+- Do not advance to the next phase unless the checkpoint decision status permits advancement or the user explicitly approves continuation.
+- Report final status with summary of completed work
 
 Note: This command assumes a complete task breakdown exists in tasks.md. If tasks are incomplete or missing, suggest running `/create-tasks` first to regenerate the task list.
+
+## Implementation Safety Rules
+
+- Never use destructive git or filesystem commands unless the user explicitly asks.
+- Do not revert unrelated changes in the working tree.
+- If unexpected unrelated changes appear during execution, pause and ask the user how to proceed.
+- Keep edits focused on files required by current tasks.
 
 <implementation_execution_rules>
 

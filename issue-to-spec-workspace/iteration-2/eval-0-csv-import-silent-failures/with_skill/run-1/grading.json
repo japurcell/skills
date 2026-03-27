@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Final response includes the exact issue identifier acme/platform#142.",
+      "passed": true,
+      "evidence": "Issue id found in final_response.md"
+    },
+    {
+      "text": "When GitHub retrieval fails, final response includes the exact gh command attempted.",
+      "passed": true,
+      "evidence": "Contains gh command"
+    },
+    {
+      "text": "When GitHub retrieval fails, final response includes repository error text from gh.",
+      "passed": true,
+      "evidence": "Contains repository resolution error"
+    },
+    {
+      "text": "When GitHub retrieval fails, final response does not claim planning-ready status.",
+      "passed": true,
+      "evidence": "No planning-ready claim"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 476,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "total_tokens": 476,
+    "duration_ms": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

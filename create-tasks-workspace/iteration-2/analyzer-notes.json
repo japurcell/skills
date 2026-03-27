@@ -1,0 +1,18 @@
+{
+  "summary": {
+    "quality_delta": "+0.07 pass_rate for with_skill over baseline",
+    "efficiency_delta": "with_skill uses +411 output-char tokens on average",
+    "telemetry_limitations": "no duration_ms/total_tokens notifications available"
+  },
+  "observations": [
+    "Iteration-2 assertions became discriminating: with_skill achieved 100% mean pass rate while without_skill dropped to 93% mean due to one failing eval.",
+    "The failing baseline case was eval-2 (audit-log-export-service), missing explicit tests section and polish phase.",
+    "Path-hygiene assertion passed for both configurations in this sample; quality lift came from structural completeness checks.",
+    "Timing/token telemetry from subagent notifications was unavailable; time is 0 and token values proxy output size."
+  ],
+  "recommendations": [
+    "Keep structural validation language in SKILL.md; it appears to improve phase/test completeness robustness.",
+    "Refine path-hygiene assertion further to detect escaped markdown in non-task sections if needed.",
+    "In a future run, capture real telemetry to validate runtime/token cost tradeoffs."
+  ]
+}

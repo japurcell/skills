@@ -1,0 +1,16 @@
+{
+  "eval_id": 0,
+  "eval_name": "csv-import-silent-failures",
+  "config": "with_skill",
+  "issue": "acme/platform#142",
+  "outcome": "gh_access_failure",
+  "attempted_gh_command": "GH_PAGER=cat gh issue view 142 --repo acme/platform --json number,title,body,labels,assignees,milestone,state,comments",
+  "gh_error": "GraphQL: Could not resolve to a Repository with the name 'acme/platform'. (repository)",
+  "assertions": {
+    "includes_exact_issue_identifier": true,
+    "includes_exact_gh_command_attempted": true,
+    "includes_gh_error_text": true,
+    "does_not_claim_planning_ready": true
+  },
+  "score": 1.0
+}

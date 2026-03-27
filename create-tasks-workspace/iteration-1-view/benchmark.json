@@ -1,0 +1,357 @@
+{
+  "metadata": {
+    "skill_name": "create-tasks",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-03-26T23:37:27Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 0.0,
+        "tokens": 11392,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+          "passed": true,
+          "evidence": "Found 42 checklist task lines."
+        },
+        {
+          "text": "Task IDs are contiguous from T001 with no duplicates or gaps",
+          "passed": true,
+          "evidence": "Parsed 42 task IDs; contiguous=True."
+        },
+        {
+          "text": "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+          "passed": true,
+          "evidence": "Setup=True, Foundational=True, UserStory=True, Polish=True."
+        },
+        {
+          "text": "Includes a Dependencies & Execution Order section",
+          "passed": true,
+          "evidence": "Dependencies section present=True."
+        },
+        {
+          "text": "Includes explicit tests section(s) for user stories",
+          "passed": true,
+          "evidence": "Tests section present=True."
+        },
+        {
+          "text": "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+          "passed": true,
+          "evidence": "No blocked placeholders found."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 0.0,
+        "tokens": 10388,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+          "passed": true,
+          "evidence": "Found 43 checklist task lines."
+        },
+        {
+          "text": "Task IDs are contiguous from T001 with no duplicates or gaps",
+          "passed": true,
+          "evidence": "Parsed 43 task IDs; contiguous=True."
+        },
+        {
+          "text": "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+          "passed": true,
+          "evidence": "Setup=True, Foundational=True, UserStory=True, Polish=True."
+        },
+        {
+          "text": "Includes a Dependencies & Execution Order section",
+          "passed": true,
+          "evidence": "Dependencies section present=True."
+        },
+        {
+          "text": "Includes explicit tests section(s) for user stories",
+          "passed": true,
+          "evidence": "Tests section present=True."
+        },
+        {
+          "text": "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+          "passed": true,
+          "evidence": "No blocked placeholders found."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 0.0,
+        "tokens": 10372,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+          "passed": true,
+          "evidence": "Found 44 checklist task lines."
+        },
+        {
+          "text": "Task IDs are contiguous from T001 with no duplicates or gaps",
+          "passed": true,
+          "evidence": "Parsed 44 task IDs; contiguous=True."
+        },
+        {
+          "text": "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+          "passed": true,
+          "evidence": "Setup=True, Foundational=True, UserStory=True, Polish=True."
+        },
+        {
+          "text": "Includes a Dependencies & Execution Order section",
+          "passed": true,
+          "evidence": "Dependencies section present=True."
+        },
+        {
+          "text": "Includes explicit tests section(s) for user stories",
+          "passed": true,
+          "evidence": "Tests section present=True."
+        },
+        {
+          "text": "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+          "passed": true,
+          "evidence": "No blocked placeholders found."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 0.0,
+        "tokens": 12594,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+          "passed": true,
+          "evidence": "Found 40 checklist task lines."
+        },
+        {
+          "text": "Task IDs are contiguous from T001 with no duplicates or gaps",
+          "passed": true,
+          "evidence": "Parsed 40 task IDs; contiguous=True."
+        },
+        {
+          "text": "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+          "passed": true,
+          "evidence": "Setup=True, Foundational=True, UserStory=True, Polish=True."
+        },
+        {
+          "text": "Includes a Dependencies & Execution Order section",
+          "passed": true,
+          "evidence": "Dependencies section present=True."
+        },
+        {
+          "text": "Includes explicit tests section(s) for user stories",
+          "passed": true,
+          "evidence": "Tests section present=True."
+        },
+        {
+          "text": "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+          "passed": true,
+          "evidence": "No blocked placeholders found."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 0.0,
+        "tokens": 11157,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+          "passed": true,
+          "evidence": "Found 42 checklist task lines."
+        },
+        {
+          "text": "Task IDs are contiguous from T001 with no duplicates or gaps",
+          "passed": true,
+          "evidence": "Parsed 42 task IDs; contiguous=True."
+        },
+        {
+          "text": "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+          "passed": true,
+          "evidence": "Setup=True, Foundational=True, UserStory=True, Polish=True."
+        },
+        {
+          "text": "Includes a Dependencies & Execution Order section",
+          "passed": true,
+          "evidence": "Dependencies section present=True."
+        },
+        {
+          "text": "Includes explicit tests section(s) for user stories",
+          "passed": true,
+          "evidence": "Tests section present=True."
+        },
+        {
+          "text": "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+          "passed": true,
+          "evidence": "No blocked placeholders found."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 0.0,
+        "tokens": 9355,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+          "passed": true,
+          "evidence": "Found 41 checklist task lines."
+        },
+        {
+          "text": "Task IDs are contiguous from T001 with no duplicates or gaps",
+          "passed": true,
+          "evidence": "Parsed 41 task IDs; contiguous=True."
+        },
+        {
+          "text": "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+          "passed": true,
+          "evidence": "Setup=True, Foundational=True, UserStory=True, Polish=True."
+        },
+        {
+          "text": "Includes a Dependencies & Execution Order section",
+          "passed": true,
+          "evidence": "Dependencies section present=True."
+        },
+        {
+          "text": "Includes explicit tests section(s) for user stories",
+          "passed": true,
+          "evidence": "Tests section present=True."
+        },
+        {
+          "text": "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+          "passed": true,
+          "evidence": "No blocked placeholders found."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 10717.3333,
+        "stddev": 584.3332,
+        "min": 10372,
+        "max": 11392
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 11035.3333,
+        "stddev": 1622.924,
+        "min": 9355,
+        "max": 12594
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+0.0",
+      "tokens": "-318"
+    }
+  },
+  "notes": [
+    "All 6 assertions passed for both configurations across all evals; current assertion set is non-discriminating for this revision.",
+    "With-skill outputs show lower token proxy mean (10717 vs 11035, delta -318) and much lower variance (stddev 584 vs 1623).",
+    "Timing and real token telemetry were unavailable from subagent notifications in this environment; timing values are 0 and token values are proxied from output size."
+  ]
+}

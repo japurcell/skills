@@ -1,0 +1,10 @@
+{
+  "branch": "feat/rate-limit-fix",
+  "commit_sha": "5c1db10a2565af925252f4b1b35679390bec32cc",
+  "commit_subject": "feat: prepare fix-rate-limit for review",
+  "commit_body": "Fixes #456",
+  "new_commit_count": 1,
+  "contains_issue_456": true,
+  "push_ok": true,
+  "pr_url": "https://example.com/org/repo/pull/42"
+}

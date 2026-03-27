@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "Includes all five output sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+      "passed": true,
+      "evidence": "Found all five required section headers."
+    },
+    {
+      "text": "Explains that [P] tasks can run in parallel only when touched file paths do not overlap",
+      "passed": true,
+      "evidence": "Found [P] non-overlap rule."
+    },
+    {
+      "text": "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+      "passed": false,
+      "evidence": "No explicit checkpoint decision or pass/fail gating found."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.67
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 3130,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Subagent duration_ms and total_tokens were not exposed in completion notifications in this environment."
+    ],
+    "needs_review": [],
+    "workarounds": [
+      "Used output character count as token proxy and set timing fields to 0."
+    ]
+  }
+}

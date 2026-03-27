@@ -1,0 +1,10 @@
+{
+  "branch": "feat/123-invoice-export",
+  "commit_sha": "9cfed0abb1f332006a6fc81f38ad9c4c03dd3155",
+  "commit_subject": "feat: prepare invoice-export for review",
+  "commit_body": "Fixes #123",
+  "new_commit_count": 1,
+  "contains_issue_123": true,
+  "push_ok": true,
+  "pr_url": "https://example.com/org/repo/pull/42"
+}

@@ -1,0 +1,41 @@
+{
+  "skill_name": "issue-to-spec",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use /issue-to-spec for issue #142 in acme/platform. The issue title is 'Bulk user import fails silently on CSV rows with trailing commas'. Build a planning-ready spec from the issue and comments. Include assumptions if comments conflict.",
+      "expected_output": "Spec and checklist paths are returned, with issue context reflected in requirements and assumptions.",
+      "files": [],
+      "expectations": [
+        "Final response includes the exact issue identifier acme/platform#142.",
+        "When GitHub retrieval fails, final response includes the exact gh command attempted.",
+        "When GitHub retrieval fails, final response includes repository error text from gh.",
+        "When GitHub retrieval fails, final response does not claim planning-ready status."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Run issue-to-spec for issue #88 in acme/platform. Issue: 'Add audit log exports filtered by actor and date range'. Comments include compliance constraints and a request to avoid implementation details in requirements.",
+      "expected_output": "Generated spec preserves compliance constraints, avoids implementation details, and reports readiness for create-plan.",
+      "files": [],
+      "expectations": [
+        "Final response includes the exact issue identifier acme/platform#88.",
+        "When GitHub retrieval fails, final response includes the exact gh command attempted.",
+        "When GitHub retrieval fails, final response includes repository error text from gh.",
+        "When GitHub retrieval fails, final response does not claim planning-ready status."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use issue-to-spec on acme/mobile issue #233: 'Offline draft sync conflicts overwrite newer edits'. There are 7 comments with contradictory suggestions; produce a clean spec handoff and clearly flag any unresolved high-impact ambiguity.",
+      "expected_output": "Output contains structured issue brief handling contradiction, then create-spec output paths with explicit unresolved blockers if any.",
+      "files": [],
+      "expectations": [
+        "Final response includes the exact issue identifier acme/mobile#233.",
+        "When GitHub retrieval fails, final response includes the exact gh command attempted.",
+        "When GitHub retrieval fails, final response includes repository error text from gh.",
+        "When GitHub retrieval fails, final response does not claim planning-ready status."
+      ]
+    }
+  ]
+}

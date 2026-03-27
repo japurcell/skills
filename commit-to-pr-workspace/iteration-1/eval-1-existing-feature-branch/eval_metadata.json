@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "existing-feature-branch",
+  "prompt": "Turn my current working tree into a PR for the bugfix spec at specs/fix-rate-limit.md. I am already on a feature branch.",
+  "assertions": [
+    "Exactly one new commit is created for the task",
+    "Existing feature branch is preserved",
+    "Commit message includes issue linkage to #456",
+    "Origin push succeeds for the working branch",
+    "A PR URL is produced"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "recurring-invoices-tax",
+  "prompt": "Run /create-spec with this feature description: Add recurring invoices to our billing workflow. Finance admins should create monthly invoices from subscription records, review generated draft invoices, and send them in batch. If customer tax data is missing, invoice send must be blocked with clear guidance. We sell in US and EU and need configurable tax rules by region.",
+  "assertions": [
+    "Spec contains all mandatory sections: User Scenarios & Testing, Requirements, Success Criteria, Assumptions",
+    "Spec has at least 8 functional requirements",
+    "Spec has at least 3 measurable success criteria",
+    "Spec contains no [NEEDS CLARIFICATION] markers",
+    "Checklist exists and has no unchecked items"
+  ]
+}

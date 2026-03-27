@@ -1,0 +1,7 @@
+[
+  "Issue-linkage assertions are the primary differentiator: with-skill passes both issue-link checks while without-skill fails those checks in eval 0 and eval 1.",
+  "All non-linkage assertions pass in both configurations (single commit, push success, PR URL present), so these checks validate baseline workflow but are weak discriminators.",
+  "No timing regression appears in this run set (0.2s mean in both configs), suggesting skill quality gains are not coming with measurable latency in this fixture.",
+  "Token usage is modestly higher with-skill (+44 mean), consistent with extra commit-body/PR-body structure rather than extra workflow steps.",
+  "Eval 2 (no linked issue) is non-discriminating in current form because both configs pass every assertion; consider adding an assertion about concise summary formatting quality if you want stronger separation there."
+]

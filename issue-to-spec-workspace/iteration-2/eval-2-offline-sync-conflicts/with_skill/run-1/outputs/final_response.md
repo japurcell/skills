@@ -1,0 +1,6 @@
+- `issue`: `acme/mobile#233`
+- `readiness`: `needs-clarification`
+- `notes`:
+   - attempted gh command: `gh issue view 233 -R acme/mobile --json number,title,body,labels,assignees,milestone,state,comments`
+   - exact gh stderr/error text: `GraphQL: Could not resolve to a Repository with the name 'acme/mobile'. (repository)`
+   - next action required from user: Confirm repository access/auth for `acme/mobile` (or provide the correct repo), then rerun.

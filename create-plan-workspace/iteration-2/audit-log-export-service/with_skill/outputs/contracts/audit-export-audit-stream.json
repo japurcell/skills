@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.internal/schemas/audit-export-event.json",
+  "title": "AuditExportEvent",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "occurredAt",
+    "actorUserId",
+    "actorRole",
+    "exportRequestId",
+    "result",
+    "metadata"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "audit_export.requested",
+        "audit_export.downloaded",
+        "audit_export.cancelled",
+        "audit_export.failed"
+      ]
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actorUserId": {
+      "type": "string"
+    },
+    "actorRole": {
+      "type": "string",
+      "const": "compliance_admin"
+    },
+    "exportRequestId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "result": {
+      "type": "string",
+      "enum": ["accepted", "denied", "success", "failure"]
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["source", "requestContext"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": ["api", "worker", "download"]
+        },
+        "requestContext": {
+          "type": "object",
+          "properties": {
+            "dateFrom": { "type": "string", "format": "date" },
+            "dateTo": { "type": "string", "format": "date" },
+            "actorType": { "type": "string" },
+            "actionCategory": { "type": "string" },
+            "format": { "type": "string", "enum": ["csv", "json"] },
+            "reason": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "network": {
+          "type": "object",
+          "properties": {
+            "clientIp": { "type": "string" },
+            "userAgent": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

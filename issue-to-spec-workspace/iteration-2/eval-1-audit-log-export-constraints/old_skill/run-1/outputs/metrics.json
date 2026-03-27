@@ -1,0 +1,26 @@
+{
+  "eval_id": 1,
+  "eval_name": "audit-log-export-constraints",
+  "mode": "old_skill",
+  "date": "2026-03-26",
+  "status": "failed_gh_access",
+  "completed": true,
+  "issue": {
+    "repo": "acme/platform",
+    "number": 88
+  },
+  "steps": {
+    "skill_loaded": true,
+    "issue_retrieval_attempted": true,
+    "issue_retrieval_succeeded": false,
+    "create_spec_invoked": false,
+    "final_response_written": true,
+    "transcript_written": true,
+    "metrics_written": true
+  },
+  "failure": {
+    "command": "gh issue view 88 -R acme/platform --json number,title,body,labels,assignees,milestone,state,comments",
+    "exit_code": 1,
+    "error": "GraphQL: Could not resolve to a Repository with the name 'acme/platform'. (repository)"
+  }
+}

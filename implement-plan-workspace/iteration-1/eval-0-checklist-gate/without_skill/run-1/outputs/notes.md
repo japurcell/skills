@@ -1,0 +1,4 @@
+- Skill behavior applied: checklist gate must stop when any checklist has incomplete items.
+- Given state: ux.md complete, test.md has 3 incomplete -> overall FAIL.
+- Required user prompt emitted exactly as specified: "Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)"
+- Continuation rule: proceed only on affirmative response; otherwise halt.

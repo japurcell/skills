@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "release-calendar-roles",
+  "prompt": "Run /create-spec with this feature description: Build a shared release calendar where PMs can create launch entries, mark confidence level, and attach dependencies. Engineering managers need a weekly view filtered by team. We are not sure whether non-PM roles should edit entries or comment only.",
+  "assertions": [
+    "Spec contains all mandatory sections: User Scenarios & Testing, Requirements, Success Criteria, Assumptions",
+    "Spec has at least 8 functional requirements",
+    "Spec has at least 3 measurable success criteria",
+    "Spec contains no [NEEDS CLARIFICATION] markers",
+    "Checklist exists and has no unchecked items"
+  ]
+}

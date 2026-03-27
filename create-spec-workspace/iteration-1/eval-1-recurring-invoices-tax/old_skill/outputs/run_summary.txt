@@ -1,0 +1,20 @@
+create-spec run summary
+Date: 2026-03-26
+Feature short name: recurring-invoice-tax
+Feature title: Recurring Invoice Tax Workflow
+
+Workflow executed:
+1) Parsed feature description for recurring invoice generation, review, and batch send with tax blocking.
+2) Generated specification using the create-spec template structure.
+3) Generated and completed the specification quality checklist.
+4) Saved outputs to the requested evaluation directory.
+
+Produced files:
+- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-1-recurring-invoices-tax/old_skill/outputs/spec.md
+- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-1-recurring-invoices-tax/old_skill/outputs/requirements.md
+- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-1-recurring-invoices-tax/old_skill/outputs/run_summary.txt
+
+Checklist result:
+- All checklist items marked pass.
+- No [NEEDS CLARIFICATION] markers remained.
+- Spec is ready for /create-plan.

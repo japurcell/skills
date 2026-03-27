@@ -1,0 +1,217 @@
+{
+  "method": "manual-analyst-scorecard",
+  "note": "Predictions are manual judgments from description text; not from automated run_loop execution.",
+  "eval_set_path": "implement-plan-workspace/description-optimization/eval_set.draft.json",
+  "baseline_description": "Implement plan tasks in order, using TDD and code review to ensure quality.",
+  "optimized_description": "Execute an existing implementation plan end-to-end from a plan file, including checklist gating, prerequisite validation, phase-by-phase task execution, TDD-first delivery, task checkbox updates, code review, and completion validation. Use this whenever the user asks to run or resume implementation from planning artifacts (such as plan.md and tasks.md), explicitly mentions /implement-plan, or wants feature work executed in ordered phases with dependency-aware parallelization and checkpoints. Prefer this skill over generic coding/review flows when the request is to execute an already-generated plan rather than create a new plan or only analyze code.",
+  "metrics": {
+    "baseline_manual": {
+      "tp": 6,
+      "fp": 0,
+      "tn": 10,
+      "fn": 4,
+      "accuracy": 0.8,
+      "precision": 1.0,
+      "recall": 0.6,
+      "f1": 0.75
+    },
+    "optimized_manual": {
+      "tp": 10,
+      "fp": 0,
+      "tn": 10,
+      "fn": 0,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "delta": {
+      "accuracy": 0.2,
+      "precision": 0.0,
+      "recall": 0.4,
+      "f1": 0.25
+    }
+  },
+  "per_query": [
+    {
+      "id": 0,
+      "query": "i already ran /create-plan and /create-tasks for .agents/scratchpad/feature-billing-reminders/plan.md. can you execute the implementation plan now and keep tasks.md checkboxes in sync as work finishes?",
+      "should_trigger": true,
+      "old_predicted_trigger": true,
+      "new_predicted_trigger": true,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 1,
+      "query": "Please run implementation for plan_file=.agents/scratchpad/feature-inbox-sla/plan.md. Follow TDD and stop if required planning artifacts are missing.",
+      "should_trigger": true,
+      "old_predicted_trigger": true,
+      "new_predicted_trigger": true,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 2,
+      "query": "continue the feature from .agents/scratchpad/feature-webhooks/plan.md and execute phases setup -> tests -> core -> integration -> polish with dependency-safe parallel tasks",
+      "should_trigger": true,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": true,
+      "old_correct": false,
+      "new_correct": true
+    },
+    {
+      "id": 3,
+      "query": "can you take over from here: .agents/scratchpad/feature-audit-log/plan.md exists, check checklist completion first and only proceed if I confirm",
+      "should_trigger": true,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": true,
+      "old_correct": false,
+      "new_correct": true
+    },
+    {
+      "id": 4,
+      "query": "Implement the generated task plan for .agents/scratchpad/feature-export-csv/plan.md and include code review pass before final validation",
+      "should_trigger": true,
+      "old_predicted_trigger": true,
+      "new_predicted_trigger": true,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 5,
+      "query": "I need you to execute tasks.md for this plan: .agents/scratchpad/feature-notifications/plan.md. Use subagents per phase and enforce checkpoint gates before moving on.",
+      "should_trigger": true,
+      "old_predicted_trigger": true,
+      "new_predicted_trigger": true,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 6,
+      "query": "we paused mid-implementation yesterday. resume /implement-plan using .agents/scratchpad/feature-session-timeout/plan.md and do not skip the checklist gate",
+      "should_trigger": true,
+      "old_predicted_trigger": true,
+      "new_predicted_trigger": true,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 7,
+      "query": "run the implementation workflow against .agents/scratchpad/feature-tenant-roles/plan.md, verify ignore files from tech stack, and mark completed tasks as [X]",
+      "should_trigger": true,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": true,
+      "old_correct": false,
+      "new_correct": true
+    },
+    {
+      "id": 8,
+      "query": "please execute this planning artifact end-to-end: .agents/scratchpad/feature-sso-enforcement/plan.md. I want explicit phase-by-phase handoffs and blockers",
+      "should_trigger": true,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": true,
+      "old_correct": false,
+      "new_correct": true
+    },
+    {
+      "id": 9,
+      "query": "do /implement-plan for .agents/scratchpad/feature-reporting-v2/plan.md and include a final completion validation summary",
+      "should_trigger": true,
+      "old_predicted_trigger": true,
+      "new_predicted_trigger": true,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 10,
+      "query": "generate a brand new implementation plan for adding scheduled exports; we only have a rough idea and no plan.md yet",
+      "should_trigger": false,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": false,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 11,
+      "query": "I have tasks.md and want you to reprioritize it for faster delivery, but don't actually implement anything yet",
+      "should_trigger": false,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": false,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 12,
+      "query": "review .agents/scratchpad/feature-auth/tasks.md and tell me which items can run in parallel; no code changes",
+      "should_trigger": false,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": false,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 13,
+      "query": "can you write unit tests for src/auth/token_service.py? ignore the planning docs for now",
+      "should_trigger": false,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": false,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 14,
+      "query": "my checklist says 2 items left. just summarize risks if we ship now; do not continue implementation",
+      "should_trigger": false,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": false,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 15,
+      "query": "create missing ignore files (.dockerignore/.eslintignore/.prettierignore) based on this repo, but do not run plan execution",
+      "should_trigger": false,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": false,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 16,
+      "query": "I need a code review of my latest branch focused on bugs and conventions; you can skip tasks.md status updates",
+      "should_trigger": false,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": false,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 17,
+      "query": "help me debug why /implement-plan stopped at the checklist gate; I'm asking for diagnosis, not execution",
+      "should_trigger": false,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": false,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 18,
+      "query": "convert .agents/scratchpad/feature-notify/plan.md into Jira tickets with estimates and owners",
+      "should_trigger": false,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": false,
+      "old_correct": true,
+      "new_correct": true
+    },
+    {
+      "id": 19,
+      "query": "we're not ready to implement yet. compare plan.md vs data-model.md and point out mismatches",
+      "should_trigger": false,
+      "old_predicted_trigger": false,
+      "new_predicted_trigger": false,
+      "old_correct": true,
+      "new_correct": true
+    }
+  ]
+}

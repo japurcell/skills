@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "Exactly one new commit is created for the task",
+      "passed": true,
+      "evidence": "new_commit_count=1"
+    },
+    {
+      "text": "Execution proceeds without requiring an issue number",
+      "passed": true,
+      "evidence": "proceeded_without_issue=True"
+    },
+    {
+      "text": "Origin push succeeds for the working branch",
+      "passed": true,
+      "evidence": "push_ok=True"
+    },
+    {
+      "text": "A PR URL is produced",
+      "passed": true,
+      "evidence": "pr_url=https://example.com/org/repo/pull/42"
+    },
+    {
+      "text": "Summary output includes branch, commit SHA, and PR URL",
+      "passed": true,
+      "evidence": "branch/commit_sha/pr_url presence checked"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1029,
+    "transcript_chars": 700
+  },
+  "timing": {
+    "executor_duration_seconds": 0.1,
+    "grader_duration_seconds": 0.1,
+    "total_duration_seconds": 0.2
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

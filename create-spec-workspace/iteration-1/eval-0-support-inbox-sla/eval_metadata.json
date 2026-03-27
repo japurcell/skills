@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "support-inbox-sla",
+  "prompt": "Run /create-spec with this feature description: We need a customer support inbox for our B2B SaaS. Agents should see all incoming emails, assign tickets to themselves, set status (open/pending/resolved), add internal notes, and reply to customers from the same view. We also need SLA tracking with alerts before breach, but only for enterprise accounts. Keep v1 web-only.",
+  "assertions": [
+    "Spec contains all mandatory sections: User Scenarios & Testing, Requirements, Success Criteria, Assumptions",
+    "Spec has at least 8 functional requirements",
+    "Spec has at least 3 measurable success criteria",
+    "Spec contains no [NEEDS CLARIFICATION] markers",
+    "Checklist exists and has no unchecked items"
+  ]
+}

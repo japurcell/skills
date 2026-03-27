@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "create-spec", "runs": [{"id": "eval-0-support-inbox-sla-old_skill", "prompt": "Run /create-spec with this feature description: We need a customer support inbox for our B2B SaaS. Agents should see all incoming emails, assign tickets to themselves, set status (open/pending/resolved), add internal notes, and reply to customers from the same view. We also need SLA tracking with alerts before breach, but only for enterprise accounts. Keep v1 web-only.", "eval_id": 0, "outputs": [{"name": "requirements.md", "type": "text", "content": "# Specification Quality Checklist: Support Inbox SLA\n\n**Purpose**: Validate specification completeness and quality before proceeding to planning  \n**Created**: 2026-03-26  \n**Feature**: [spec.md](../spec.md)\n\n## Content Quality\n\n- [x] No implementation details (languages, frameworks, APIs)\n- [x] Focused on user value and business needs\n- [x] Written for non-technical stakeholders\n- [x] All mandatory sections completed\n\n## Requirement Completeness\n\n- [x] No [NEEDS CLARIFICATION] markers remain\n- [x] Requirements are testable and unambiguous\n- [x] Success criteria are measurable\n- [x] Success criteria are technology-agnostic (no implementation details)\n- [x] All acceptance scenarios are defined\n- [x] Edge cases are identified\n- [x] Scope is clearly bounded\n- [x] Dependencies and assumptions identified\n\n## Feature Readiness\n\n- [x] All functional requirements have clear acceptance criteria\n- [x] User scenarios cover primary flows\n- [x] Feature meets measurable outcomes defined in Success Criteria\n- [x] No implementation details leak into specification\n\n## Notes\n\n- Validation iteration 1: all checklist items pass.\n- Specification is ready for `/create-plan`.\n"}, {"name": "run_summary.txt", "type": "text", "content": "Run Summary - create-spec workflow\nDate: 2026-03-26\n\nFeature short name: support-inbox-sla\nInput description processed: customer support inbox with assignment/status/notes/reply and enterprise-only SLA alerts, web-only v1.\n\nProduced artifacts:\n1) Spec document\n   - Scratchpad source: /home/adam/.agents/.agents/scratchpad/support-inbox-sla/spec.md\n   - Saved output: /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-0-support-inbox-sla/old_skill/outputs/spec.md\n\n2) Specification quality checklist\n   - Scratchpad source: /home/adam/.agents/.agents/scratchpad/support-inbox-sla/checklists/requirements.md\n   - Saved output: /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-0-support-inbox-sla/old_skill/outputs/requirements.md\n   - Validation result: all checklist items passed (iteration 1)\n\n3) Run summary\n   - Saved output: /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-0-support-inbox-sla/old_skill/outputs/run_summary.txt\n\nOutcome: create-spec execution completed; artifacts are ready for the next phase (/create-plan).\n"}, {"name": "spec.md", "type": "text", "content": "# Feature Specification: Support Inbox SLA\n\n**Created**: 2026-03-26  \n**Status**: Draft  \n**Input**: User description: \"We need a customer support inbox for our B2B SaaS. Agents should see all incoming emails, assign tickets to themselves, set status (open/pending/resolved), add internal notes, and reply to customers from the same view. We also need SLA tracking with alerts before breach, but only for enterprise accounts. Keep v1 web-only.\"\n\n## User Scenarios & Testing _(mandatory)_\n\n### User Story 1 - Process Incoming Support Requests (Priority: P1)\n\nA support agent reviews all new incoming customer emails in a unified inbox, opens a ticket, and sends a reply to the customer without leaving the same ticket view.\n\n**Why this priority**: This is the core value of the feature. If agents cannot triage and respond from one place, the inbox does not solve the primary workflow problem.\n\n**Independent Test**: Can be fully tested by receiving a new customer email, opening the created ticket, sending a reply from the ticket view, and verifying the customer receives the response.\n\n**Acceptance Scenarios**:\n\n1. **Given** a new customer email arrives, **When** an agent opens the inbox, **Then** the ticket appears with sender, subject, and received time.\n2. **Given** an open ticket, **When** an agent writes and sends a reply from that ticket view, **Then** the outgoing message is sent to the customer and recorded in the same conversation timeline.\n\n---\n\n### User Story 2 - Own and Track Ticket Progress (Priority: P2)\n\nA support agent assigns a ticket to themselves, updates ticket status as work progresses, and adds internal notes visible only to internal staff.\n\n**Why this priority**: Ownership and status management reduce duplicate work and improve handoff clarity, which is essential for team operations after core replying is in place.\n\n**Independent Test**: Can be fully tested by assigning an unassigned ticket to an agent, updating status through open/pending/resolved, and confirming internal notes are visible to agents but not customers.\n\n**Acceptance Scenarios**:\n\n1. **Given** an unassigned ticket, **When** an agent assigns it to themselves, **Then** the ticket owner updates to that agent.\n2. **Given** a ticket in progress, **When** an agent sets status to pending or resolved, **Then** the updated status is shown in inbox and ticket detail views.\n3. **Given** a ticket conversation, **When** an agent adds an internal note, **Then** the note is saved in the ticket timeline and excluded from customer-facing messages.\n\n---\n\n### User Story 3 - Monitor Enterprise SLA Risk (Priority: P3)\n\nA support manager and assigned agent can see SLA countdown and receive alerts before breach for enterprise account tickets.\n\n**Why this priority**: SLA monitoring is contract-critical for enterprise customers but can be delivered after base inbox workflows are working.\n\n**Independent Test**: Can be fully tested by creating two tickets (enterprise and non-enterprise), confirming SLA countdown and pre-breach alerts appear only on the enterprise ticket.\n\n**Acceptance Scenarios**:\n\n1. **Given** a ticket for an enterprise account, **When** the remaining SLA time reaches the alert threshold, **Then** an alert is shown to the assigned agent and support managers before breach.\n2. **Given** a ticket for a non-enterprise account, **When** time passes, **Then** no SLA countdown or breach alert is displayed.\n\n---\n\n### Edge Cases\n\n- What happens when two agents try to assign the same unassigned ticket at nearly the same time? The system should keep exactly one final assignee and show the latest assignment state to all viewers.\n- How does system handle a reply send failure? The reply should remain unsent in the ticket with clear failure feedback and allow retry.\n- What happens when an enterprise account is downgraded while tickets are open? Existing tickets retain their SLA behavior as of ticket creation unless account policy explicitly changes them.\n- How does system handle very long email threads? Agents should still be able to view full history and clearly distinguish customer messages, agent replies, and internal notes.\n\n## Requirements _(mandatory)_\n\n### Functional Requirements\n\n- **FR-001**: System MUST ingest incoming customer support emails and create or append to a corresponding ticket conversation visible in the support inbox.\n- **FR-002**: System MUST provide agents a unified inbox view listing all incoming tickets with at least ticket subject, customer identity, current status, assignee, and most recent activity time.\n- **FR-003**: Agents MUST be able to open a ticket and view the full conversation history, including incoming customer emails, agent replies, and internal notes.\n- **FR-004**: Agents MUST be able to assign any unassigned or reassigned ticket to themselves.\n- **FR-005**: Agents MUST be able to set ticket status to open, pending, or resolved.\n- **FR-006**: Agents MUST be able to add internal notes to a ticket, and those notes MUST not be visible in customer communications.\n- **FR-007**: Agents MUST be able to compose and send customer replies from within the same ticket view where they read the conversation.\n- **FR-008**: System MUST record outbound replies in the related ticket conversation with send time and sender identity.\n- **FR-009**: System MUST apply SLA tracking only to tickets associated with enterprise accounts.\n- **FR-010**: For enterprise-account tickets, system MUST display remaining SLA time and signal when the ticket is at risk of breach before the breach occurs.\n- **FR-011**: For non-enterprise tickets, system MUST not display SLA countdowns or pre-breach alerts.\n- **FR-012**: System MUST make SLA risk alerts visible to the assigned agent and designated support managers.\n- **FR-013**: System MUST ensure this feature is accessible through web interfaces for v1 and not require mobile app functionality.\n- **FR-014**: System MUST maintain an auditable timeline per ticket of assignment changes, status changes, notes, inbound messages, and outbound replies.\n\n### Key Entities _(include if feature involves data)_\n\n- **Ticket**: A support work item tied to a customer conversation, including status, assignee, timestamps, and associated account tier.\n- **Message**: A customer-visible communication item in a ticket, including inbound emails and outbound agent replies.\n- **Internal Note**: A non-customer-visible note attached to a ticket for collaboration and handoff.\n- **Account**: Customer account record with tier classification, including whether enterprise SLA policies apply.\n- **SLA Policy**: Time target and alert threshold definition that determines pre-breach risk for eligible tickets.\n- **SLA Alert**: A notification event triggered when an enterprise ticket approaches breach threshold.\n\n## Success Criteria _(mandatory)_\n\n### Measurable Outcomes\n\n- **SC-001**: 95% of new inbound support emails appear in the inbox as tickets within 1 minute of receipt during normal operating conditions.\n- **SC-002**: In usability testing, at least 90% of agents can assign, update status, add an internal note, and send a reply on a ticket without guidance on first attempt.\n- **SC-003**: 100% of enterprise-tier tickets display SLA countdown and generate a visible pre-breach alert before breach when thresholds are met.\n- **SC-004**: 0% of non-enterprise tickets display enterprise SLA countdowns or pre-breach alerts.\n- **SC-005**: At least 85% of support agents report that handling a ticket from intake to first reply is faster in the new inbox than in the previous workflow after two weeks of use.\n\n## Assumptions\n\n- v1 supports agent workflows only in web browsers; native mobile app workflows are out of scope.\n- Customer identity and account tier (including enterprise designation) are already available from existing account records.\n- Authentication and agent authorization already exist and can be reused for support staff access.\n- Support managers are a pre-defined role that can receive SLA risk visibility alongside assigned agents.\n- The business defines enterprise SLA targets and pre-breach thresholds outside this document.\n"}], "grading": null}, {"id": "eval-0-support-inbox-sla-with_skill", "prompt": "Run /create-spec with this feature description: We need a customer support inbox for our B2B SaaS. Agents should see all incoming emails, assign tickets to themselves, set status (open/pending/resolved), add internal notes, and reply to customers from the same view. We also need SLA tracking with alerts before breach, but only for enterprise accounts. Keep v1 web-only.", "eval_id": 0, "outputs": [{"name": "requirements.md", "type": "text", "content": "# Specification Quality Checklist: Support Inbox SLA\n\n**Purpose**: Validate specification completeness and quality before proceeding to planning  \n**Created**: 2026-03-26  \n**Feature**: [spec.md](./spec.md)\n\n## Content Quality\n\n- [x] No implementation details (languages, frameworks, APIs)\n- [x] Focused on user value and business needs\n- [x] Written for non-technical stakeholders\n- [x] All mandatory sections completed\n\n## Requirement Completeness\n\n- [x] No [NEEDS CLARIFICATION] markers remain\n- [x] Requirements are testable and unambiguous\n- [x] Success criteria are measurable\n- [x] Success criteria are technology-agnostic (no implementation details)\n- [x] All acceptance scenarios are defined\n- [x] Edge cases are identified\n- [x] Scope is clearly bounded\n- [x] Dependencies and assumptions identified\n\n## Feature Readiness\n\n- [x] All functional requirements have clear acceptance criteria\n- [x] User scenarios cover primary flows\n- [x] Feature meets measurable outcomes defined in Success Criteria\n- [x] No implementation details leak into specification\n\n## Notes\n\n- Validation run: pass on first iteration.\n- No unresolved clarifications.\n- Spec is ready for `/create-plan`.\n"}, {"name": "run_summary.txt", "type": "text", "content": "create-spec workflow execution summary\n\nDate: 2026-03-26\nSkill: /home/adam/.agents/skills/create-spec\nFeature short name: support-inbox-sla\n\nProduced files:\n1) /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-0-support-inbox-sla/with_skill/outputs/spec.md\n2) /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-0-support-inbox-sla/with_skill/outputs/requirements.md\n3) /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-0-support-inbox-sla/with_skill/outputs/run_summary.txt\n\nWhat was produced:\n- A full feature specification using the create-spec template sections and ordering.\n- A completed specification quality checklist with pass/fail boxes marked.\n- Validation status recorded as pass and readiness for /create-plan confirmed.\n\nValidation status: PASS\nReadiness for /create-plan: READY\n"}, {"name": "spec.md", "type": "text", "content": "# Feature Specification: Support Inbox SLA\n\n**Created**: 2026-03-26  \n**Status**: Draft  \n**Input**: User description: \"We need a customer support inbox for our B2B SaaS. Agents should see all incoming emails, assign tickets to themselves, set status (open/pending/resolved), add internal notes, and reply to customers from the same view. We also need SLA tracking with alerts before breach, but only for enterprise accounts. Keep v1 web-only.\"\n\n## User Scenarios & Testing _(mandatory)_\n\n### User Story 1 - Triage Incoming Support Email (Priority: P1)\n\nA support agent opens a unified inbox, reviews incoming customer emails as tickets, assigns a ticket to themselves, and updates ticket status so work is actively managed.\n\n**Why this priority**: This is the core operational flow required to process customer requests and prevent unowned or stalled tickets.\n\n**Independent Test**: Can be fully tested by receiving new emails into the inbox, assigning one ticket to an agent, and moving it through open and pending statuses while confirming visibility of ownership and status in the same view.\n\n**Acceptance Scenarios**:\n\n1. **Given** a new inbound customer email exists, **When** an agent opens the inbox, **Then** the email appears as a new support ticket with default status open.\n2. **Given** an unassigned ticket, **When** an agent assigns the ticket to themselves, **Then** the ticket shows that agent as the current owner.\n3. **Given** an assigned open ticket, **When** the agent changes status to pending, **Then** the ticket status updates immediately and remains visible in the ticket view.\n\n---\n\n### User Story 2 - Collaborate Internally And Respond Externally (Priority: P2)\n\nA support agent reviews full conversation context, adds internal notes for teammates, and sends a customer reply from the same ticket view.\n\n**Why this priority**: Efficient resolution requires internal collaboration and direct customer communication without switching tools.\n\n**Independent Test**: Can be fully tested by opening an existing ticket, posting an internal note, sending a customer reply, and verifying both actions are recorded correctly with clear visibility boundaries.\n\n**Acceptance Scenarios**:\n\n1. **Given** an existing ticket, **When** an agent adds an internal note, **Then** the note is stored with author and timestamp and is visible to support agents only.\n2. **Given** an existing ticket, **When** an agent sends a reply from the ticket view, **Then** the reply is added to the conversation thread and marked as customer-visible.\n3. **Given** a ticket with notes and replies, **When** another authorized agent opens it, **Then** they can view complete internal and external history in chronological order.\n\n---\n\n### User Story 3 - Monitor Enterprise SLA Risk (Priority: P3)\n\nA support lead or agent identifies enterprise-account tickets that are approaching SLA breach and receives warning alerts in time to act before breach.\n\n**Why this priority**: SLA compliance for enterprise customers is a contractual and retention-critical requirement.\n\n**Independent Test**: Can be fully tested by creating enterprise and non-enterprise tickets, simulating elapsed response/resolution time, and verifying alerts trigger only for enterprise tickets before breach thresholds.\n\n**Acceptance Scenarios**:\n\n1. **Given** an enterprise ticket with active SLA policy, **When** remaining SLA time crosses the alert threshold, **Then** the system flags the ticket as at-risk before breach.\n2. **Given** a non-enterprise ticket, **When** response time approaches equivalent threshold windows, **Then** no SLA alert is generated.\n3. **Given** an enterprise ticket that has breached SLA, **When** an agent views the ticket, **Then** the ticket is clearly marked as breached.\n\n---\n\n### Edge Cases\n\n- What happens when multiple agents attempt to assign the same unassigned ticket at nearly the same time?\n- How does system handle an inbound email that lacks a recognizable sender or has malformed metadata?\n- What happens when an agent attempts to send a reply while ticket status is resolved?\n- How does system handle enterprise account changes after ticket creation (for example, account downgraded before breach)?\n- What happens when a large volume of inbound emails arrives in a short period and queue ownership is not yet set?\n\n## Requirements _(mandatory)_\n\n### Functional Requirements\n\n- **FR-001**: System MUST present all incoming customer support emails in a web-based shared inbox as individual tickets.\n- **FR-002**: System MUST create new tickets from inbound emails with default status set to open.\n- **FR-003**: System MUST allow an agent to assign an unassigned ticket to themselves.\n- **FR-004**: System MUST allow agents to update ticket status to open, pending, or resolved.\n- **FR-005**: System MUST display current ticket owner and current status within the ticket view and inbox listing.\n- **FR-006**: System MUST allow agents to add internal notes to a ticket that are visible to internal support users only.\n- **FR-007**: System MUST allow agents to send customer replies from the same ticket view where assignment, status, and notes are managed.\n- **FR-008**: System MUST keep a chronological history of inbound messages, outbound replies, status changes, assignment changes, and internal notes for each ticket.\n- **FR-009**: System MUST apply SLA tracking only to tickets associated with enterprise accounts.\n- **FR-010**: System MUST generate a pre-breach SLA alert for enterprise tickets when remaining time reaches a configured warning threshold.\n- **FR-011**: System MUST visibly mark enterprise tickets that have breached SLA.\n- **FR-012**: System MUST NOT generate SLA alerts for non-enterprise tickets.\n- **FR-013**: System MUST restrict v1 access to web users and exclude mobile-specific workflows from scope.\n\n### Key Entities _(include if feature involves data)_\n\n- **Ticket**: A support work item created from inbound email, including subject, customer identity, current status, current owner, timestamps, and account tier.\n- **Message**: A conversation entry linked to a ticket, representing inbound customer email or outbound agent reply, with sender type, content, and timestamp.\n- **Internal Note**: A non-customer-visible annotation on a ticket, including author, note content, and timestamp.\n- **Assignment Event**: A record of ticket ownership change, including previous owner, new owner, actor, and timestamp.\n- **Status Event**: A record of ticket status transition, including previous status, new status, actor, and timestamp.\n- **SLA Policy**: Enterprise-specific timing rules and warning thresholds used to determine at-risk and breached ticket states.\n\n## Success Criteria _(mandatory)_\n\n### Measurable Outcomes\n\n- **SC-001**: 95% of new inbound support emails appear as tickets in the shared inbox within 1 minute of receipt during normal operating conditions.\n- **SC-002**: 90% of sampled support agents can assign and set status on a ticket in under 30 seconds from opening the ticket view.\n- **SC-003**: 95% of customer replies sent by agents are completed from the same ticket view without requiring navigation to a separate communication page.\n- **SC-004**: 100% of SLA alerts in validation samples are generated only for enterprise tickets and 0% are generated for non-enterprise tickets.\n- **SC-005**: For enterprise tickets that reach warning thresholds, 95% receive a visible pre-breach alert before SLA breach in test scenarios.\n- **SC-006**: 90% of support users in UAT confirm they can understand ticket state and next action from a single ticket screen.\n\n## Assumptions\n\n- Existing account records already identify whether a customer is enterprise or non-enterprise.\n- Support agents who use the inbox are authenticated internal users with permission to view tickets and internal notes.\n- The product already has an outbound email capability that can send customer-visible replies from support workflows.\n- v1 scope is web-only and excludes native mobile apps and mobile-specific interaction requirements.\n- SLA timing definitions and warning thresholds for enterprise accounts are preconfigured by business operations.\n"}], "grading": null}, {"id": "eval-1-recurring-invoices-tax-old_skill", "prompt": "Run /create-spec with this feature description: Add recurring invoices to our billing workflow. Finance admins should create monthly invoices from subscription records, review generated draft invoices, and send them in batch. If customer tax data is missing, invoice send must be blocked with clear guidance. We sell in US and EU and need configurable tax rules by region.", "eval_id": 1, "outputs": [{"name": "requirements.md", "type": "text", "content": "# Specification Quality Checklist: Recurring Invoice Tax Workflow\n\n**Purpose**: Validate specification completeness and quality before proceeding to planning  \n**Created**: 2026-03-26  \n**Feature**: [spec.md](spec.md)\n\n## Content Quality\n\n- [x] No implementation details (languages, frameworks, APIs)\n- [x] Focused on user value and business needs\n- [x] Written for non-technical stakeholders\n- [x] All mandatory sections completed\n\n## Requirement Completeness\n\n- [x] No [NEEDS CLARIFICATION] markers remain\n- [x] Requirements are testable and unambiguous\n- [x] Success criteria are measurable\n- [x] Success criteria are technology-agnostic (no implementation details)\n- [x] All acceptance scenarios are defined\n- [x] Edge cases are identified\n- [x] Scope is clearly bounded\n- [x] Dependencies and assumptions identified\n\n## Feature Readiness\n\n- [x] All functional requirements have clear acceptance criteria\n- [x] User scenarios cover primary flows\n- [x] Feature meets measurable outcomes defined in Success Criteria\n- [x] No implementation details leak into specification\n\n## Notes\n\n- Validation completed in one iteration; all checklist items pass.\n"}, {"name": "run_summary.txt", "type": "text", "content": "create-spec run summary\nDate: 2026-03-26\nFeature short name: recurring-invoice-tax\nFeature title: Recurring Invoice Tax Workflow\n\nWorkflow executed:\n1) Parsed feature description for recurring invoice generation, review, and batch send with tax blocking.\n2) Generated specification using the create-spec template structure.\n3) Generated and completed the specification quality checklist.\n4) Saved outputs to the requested evaluation directory.\n\nProduced files:\n- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-1-recurring-invoices-tax/old_skill/outputs/spec.md\n- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-1-recurring-invoices-tax/old_skill/outputs/requirements.md\n- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-1-recurring-invoices-tax/old_skill/outputs/run_summary.txt\n\nChecklist result:\n- All checklist items marked pass.\n- No [NEEDS CLARIFICATION] markers remained.\n- Spec is ready for /create-plan.\n"}, {"name": "spec.md", "type": "text", "content": "# Feature Specification: Recurring Invoice Tax Workflow\n\n**Created**: 2026-03-26  \n**Status**: Draft  \n**Input**: User description: \"Add recurring invoices to our billing workflow. Finance admins should create monthly invoices from subscription records, review generated draft invoices, and send them in batch. If customer tax data is missing, invoice send must be blocked with clear guidance. We sell in US and EU and need configurable tax rules by region.\"\n\n## User Scenarios & Testing _(mandatory)_\n\n### User Story 1 - Generate Monthly Draft Invoices (Priority: P1)\n\nFinance admins generate monthly draft invoices from active subscription records so recurring billing can be prepared at the start of each billing cycle.\n\n**Why this priority**: Without draft generation, recurring invoicing cannot happen and downstream review or sending is blocked.\n\n**Independent Test**: Can be fully tested by initiating a monthly run for a known set of active subscriptions and confirming draft invoices are created only for eligible subscriptions.\n\n**Acceptance Scenarios**:\n\n1. **Given** active subscriptions with billable monthly periods, **When** a finance admin runs monthly invoice generation for a target month, **Then** the system creates one draft invoice per eligible subscription for that month.\n2. **Given** subscriptions that are canceled or already invoiced for the target month, **When** a finance admin runs monthly invoice generation, **Then** the system excludes those subscriptions and reports the exclusion reasons.\n3. **Given** a completed generation run for a target month, **When** a finance admin reruns generation for the same month, **Then** duplicate draft invoices are not created.\n\n---\n\n### User Story 2 - Review Draft Invoice Set (Priority: P2)\n\nFinance admins review generated draft invoices before sending to ensure invoice data and tax treatment are correct.\n\n**Why this priority**: Review is the main quality control step that prevents incorrect billing before invoices are sent.\n\n**Independent Test**: Can be fully tested by opening a generated batch, filtering drafts by status or tax readiness, and verifying draft-level details and issues are visible.\n\n**Acceptance Scenarios**:\n\n1. **Given** a generated draft batch, **When** a finance admin opens the batch review view, **Then** they can see each draft invoice with subscription, customer, amount, region, and tax status.\n2. **Given** drafts with and without complete tax data, **When** a finance admin filters for blocked drafts, **Then** only drafts missing required tax data are shown with explicit remediation guidance.\n\n---\n\n### User Story 3 - Send Eligible Invoices in Batch (Priority: P3)\n\nFinance admins send invoices in batch after review, while drafts missing required tax data remain blocked and unsent.\n\n**Why this priority**: Batch send delivers operational efficiency and ensures only compliant invoices are issued.\n\n**Independent Test**: Can be fully tested by sending a mixed batch and verifying eligible drafts are sent while blocked drafts remain in draft with clear reasons.\n\n**Acceptance Scenarios**:\n\n1. **Given** a reviewed batch containing eligible and tax-blocked drafts, **When** a finance admin starts batch send, **Then** only eligible drafts are sent and blocked drafts remain unsent.\n2. **Given** a blocked draft with missing customer tax data, **When** a finance admin views send results, **Then** the system provides clear guidance on missing fields and where to update them.\n3. **Given** all drafts in a batch are tax-blocked, **When** a finance admin starts batch send, **Then** no invoices are sent and the batch is marked as blocked with actionable guidance.\n\n### Edge Cases\n\n- A customer changes billing region (US to EU or EU to US) between draft generation and send; send must re-evaluate tax eligibility using current region rules.\n- Subscription records missing billing contact or legal entity information needed for invoice issuance are flagged during generation and excluded with reason codes.\n- A batch contains drafts in multiple regions with different tax requirements; each draft is validated against its own region rule set.\n- Tax rules are updated after drafts are generated; the system applies the currently active rule set at send-time validation.\n- A finance admin retries batch send after correcting tax data; only previously blocked drafts that now pass validation are sent.\n\n## Requirements _(mandatory)_\n\n### Functional Requirements\n\n- **FR-001**: System MUST allow finance admins to generate monthly draft invoices from active subscription records for a selected billing month.\n- **FR-002**: System MUST generate at most one draft invoice per eligible subscription per billing month.\n- **FR-003**: System MUST exclude ineligible subscriptions (for example canceled, not billable for month, or already invoiced) and record exclusion reasons.\n- **FR-004**: System MUST provide a generation summary that includes total subscriptions evaluated, drafts created, exclusions, and failure counts.\n- **FR-005**: System MUST allow finance admins to review generated draft invoices before send.\n- **FR-006**: System MUST display per-draft details needed for review, including customer, subscription reference, region, line amount totals, and tax readiness state.\n- **FR-007**: System MUST evaluate tax-data completeness for each draft invoice using configurable tax rules for the customer region.\n- **FR-008**: System MUST support region-specific tax rule configuration for at least US and EU regions.\n- **FR-009**: System MUST block sending any draft invoice that fails tax-data completeness checks.\n- **FR-010**: System MUST present clear, actionable guidance for blocked drafts, including which customer tax fields are missing and where corrections are made.\n- **FR-011**: System MUST allow finance admins to send eligible draft invoices in batch.\n- **FR-012**: System MUST process batch sends as partial-success capable, where eligible drafts are sent and blocked drafts remain draft.\n- **FR-013**: System MUST provide a send result summary with counts for sent, blocked, and failed drafts and include reason codes for unsent drafts.\n- **FR-014**: System MUST maintain an auditable status history for draft creation, review readiness, send attempts, send outcomes, and block reasons.\n\n### Key Entities _(include if feature involves data)_\n\n- **Subscription Record**: Represents a recurring customer plan enrollment used as source data for monthly invoicing; includes billing cadence, active period, customer link, and billable state.\n- **Draft Invoice**: Represents a not-yet-issued invoice generated for a specific subscription and billing month; includes region, amount details, tax readiness state, and send eligibility.\n- **Invoice Batch**: Represents a group of draft invoices selected for a send operation; includes run metadata, per-draft outcomes, and aggregate result counts.\n- **Tax Rule Set**: Represents configurable regional tax requirements (for example US and EU) used to determine required customer tax data and send eligibility.\n- **Customer Tax Profile**: Represents customer tax-related attributes needed for invoicing in a region; includes required identifiers and completeness status.\n\n## Success Criteria _(mandatory)_\n\n### Measurable Outcomes\n\n- **SC-001**: 95% of monthly recurring draft generation runs for up to 10,000 eligible subscriptions complete within 10 minutes.\n- **SC-002**: 100% of invoices sent from recurring batches pass configured regional tax-data requirements at send time.\n- **SC-003**: Finance admins can complete review and initiate send for a 1,000-invoice batch in under 15 minutes in at least 90% of observed runs.\n- **SC-004**: At least 98% of blocked invoices include guidance that finance admins rate as clear and actionable in post-run feedback.\n- **SC-005**: Duplicate invoice issuance for the same subscription and billing month is reduced to 0 in recurring batch sends.\n\n## Assumptions\n\n- Finance admins already have permission to access billing workflows and perform invoice generation and sending.\n- Subscription records already contain enough billing metadata to determine monthly eligibility.\n- Existing billing workflows already support invoice draft and sent statuses; this feature extends those workflows for recurring operations.\n- US and EU regional tax rule definitions are maintained by authorized business users outside this feature and are available before monthly runs.\n- Customer tax profiles are stored in an existing customer record domain that this workflow can reference during validation.\n"}], "grading": null}, {"id": "eval-1-recurring-invoices-tax-with_skill", "prompt": "Run /create-spec with this feature description: Add recurring invoices to our billing workflow. Finance admins should create monthly invoices from subscription records, review generated draft invoices, and send them in batch. If customer tax data is missing, invoice send must be blocked with clear guidance. We sell in US and EU and need configurable tax rules by region.", "eval_id": 1, "outputs": [{"name": "requirements.md", "type": "text", "content": "# Specification Quality Checklist: Recurring Invoice Batch Send\n\n**Purpose**: Validate specification completeness and quality before proceeding to planning  \n**Created**: 2026-03-26  \n**Feature**: [Link to spec.md](spec.md)\n\n## Content Quality\n\n- [x] No implementation details (languages, frameworks, APIs)\n- [x] Focused on user value and business needs\n- [x] Written for non-technical stakeholders\n- [x] All mandatory sections completed\n\n## Requirement Completeness\n\n- [x] No [NEEDS CLARIFICATION] markers remain\n- [x] Requirements are testable and unambiguous\n- [x] Success criteria are measurable\n- [x] Success criteria are technology-agnostic (no implementation details)\n- [x] All acceptance scenarios are defined\n- [x] Edge cases are identified\n- [x] Scope is clearly bounded\n- [x] Dependencies and assumptions identified\n\n## Feature Readiness\n\n- [x] All functional requirements have clear acceptance criteria\n- [x] User scenarios cover primary flows\n- [x] Feature meets measurable outcomes defined in Success Criteria\n- [x] No implementation details leak into specification\n\n## Notes\n\n- Validation iteration 1: all checklist items pass.\n- No unresolved clarifications remain; spec is ready for `/create-plan`."}, {"name": "run_summary.txt", "type": "text", "content": "create-spec workflow run summary\nDate: 2026-03-26\n\nFeature short name: recurring-invoice-batch-send\nInput description: Add recurring invoices to billing workflow with monthly generation, draft review, batch send, tax-data blocking, and US/EU configurable regional tax rules.\n\nOutputs produced:\n1) Spec document:\n   /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-1-recurring-invoices-tax/with_skill/outputs/spec.md\n2) Checklist document:\n   /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-1-recurring-invoices-tax/with_skill/outputs/requirements.md\n\nValidation result:\n- Status: PASS\n- Checklist items passed: 16/16\n- Remaining clarifications: 0\n\nReadiness:\n- Spec is ready for /create-plan.\n"}, {"name": "spec.md", "type": "text", "content": "# Feature Specification: Recurring Invoice Batch Send\n\n**Created**: 2026-03-26  \n**Status**: Draft  \n**Input**: User description: \"Add recurring invoices to our billing workflow. Finance admins should create monthly invoices from subscription records, review generated draft invoices, and send them in batch. If customer tax data is missing, invoice send must be blocked with clear guidance. We sell in US and EU and need configurable tax rules by region.\"\n\n## User Scenarios & Testing _(mandatory)_\n\n### User Story 1 - Generate Monthly Draft Invoices (Priority: P1)\n\nAs a finance admin, I can generate monthly draft invoices from active subscription records so billing starts on time each cycle.\n\n**Why this priority**: Without reliable draft generation, there is no invoice set to review or send, which blocks the entire recurring billing process.\n\n**Independent Test**: Can be fully tested by running monthly invoice generation for a defined subscription set and verifying matching draft invoices are created for all eligible subscriptions.\n\n**Acceptance Scenarios**:\n\n1. **Given** active subscriptions with billable charges for the month, **When** a finance admin runs monthly generation, **Then** one draft invoice is created per eligible subscription for that billing period.\n2. **Given** subscriptions that are canceled or outside the billing period, **When** monthly generation runs, **Then** no draft invoice is created for those subscriptions.\n\n---\n\n### User Story 2 - Review Draft Invoice Set (Priority: P2)\n\nAs a finance admin, I can review generated draft invoices before sending so I can confirm billing readiness and identify issues.\n\n**Why this priority**: Review is the control point that prevents incorrect or incomplete invoices from being sent to customers.\n\n**Independent Test**: Can be fully tested by opening a generated batch, inspecting each draft invoice status and summary details, and confirming the batch shows which invoices are ready versus blocked.\n\n**Acceptance Scenarios**:\n\n1. **Given** a newly generated draft batch, **When** a finance admin opens the batch, **Then** each draft invoice shows its readiness status and any blocking reason.\n2. **Given** draft invoices with missing required tax data, **When** the finance admin reviews the batch, **Then** those invoices are clearly marked as blocked with actionable guidance.\n\n---\n\n### User Story 3 - Send Ready Invoices in Batch (Priority: P3)\n\nAs a finance admin, I can send all ready invoices in one batch action so monthly billing is completed efficiently while blocked invoices remain unsent.\n\n**Why this priority**: Batch send delivers the operational efficiency outcome and ensures only compliant invoices are sent.\n\n**Independent Test**: Can be fully tested by executing a batch send on a mixed-ready batch and verifying only ready invoices are sent while blocked invoices remain draft.\n\n**Acceptance Scenarios**:\n\n1. **Given** a batch containing ready and blocked draft invoices, **When** a finance admin selects send batch, **Then** only ready invoices are sent and blocked invoices remain draft.\n2. **Given** blocked invoices due to missing tax data, **When** send batch completes, **Then** the system provides clear next-step guidance for resolving and re-sending those invoices.\n\n---\n\n### Edge Cases\n\n- What happens when a subscription changes plan or price during the monthly billing window?\n- How does system handle a batch where every draft invoice is blocked by missing tax data?\n- What happens when no eligible subscriptions exist for the selected month?\n- How does system handle invoices where customer region is US or EU but no active tax rule is configured for that region?\n\n## Requirements _(mandatory)_\n\n### Functional Requirements\n\n- **FR-001**: System MUST allow finance admins to generate a monthly set of draft invoices from eligible subscription records for a selected billing period.\n- **FR-002**: System MUST create at most one draft invoice per eligible subscription for the same billing period.\n- **FR-003**: System MUST exclude ineligible subscriptions (for example, canceled or out-of-period records) from draft generation.\n- **FR-004**: System MUST apply tax calculation rules based on customer region, with separate configurable rules for US and EU regions.\n- **FR-005**: System MUST allow authorized finance admins to review generated draft invoices and view each invoice readiness status before sending.\n- **FR-006**: System MUST block invoice sending when required customer tax data is missing.\n- **FR-007**: System MUST display clear, actionable guidance describing what tax data is missing and how to resolve it before resend.\n- **FR-008**: Users MUST be able to send all sendable draft invoices in a single batch action.\n- **FR-009**: System MUST ensure blocked invoices are not sent during batch send and remain in draft state.\n- **FR-010**: System MUST provide a batch result summary that identifies invoices sent, invoices blocked, and the reason for each blocked invoice.\n\n### Key Entities _(include if feature involves data)_\n\n- **Subscription Record**: Represents an active or inactive customer subscription used as the source for recurring invoice generation, including billing period, status, region, and billable amounts.\n- **Draft Invoice**: Represents a not-yet-sent invoice generated from a subscription for a specific billing period, including totals, tax status, and send readiness state.\n- **Tax Profile**: Represents customer tax-related data required to determine invoice send eligibility and tax treatment.\n- **Regional Tax Rule**: Represents configurable tax behavior for a region (US or EU) used when calculating invoice taxes.\n- **Invoice Batch**: Represents a grouped monthly send operation with summary counts and per-invoice outcomes.\n\n## Success Criteria _(mandatory)_\n\n### Measurable Outcomes\n\n- **SC-001**: Finance admins can generate monthly draft invoices for at least 5,000 eligible subscriptions within 10 minutes per run.\n- **SC-002**: 100% of invoices missing required tax data are prevented from being sent.\n- **SC-003**: 95% of ready invoices in a monthly batch are sent successfully in one batch action without manual retry.\n- **SC-004**: 100% of blocked invoices display a specific missing-tax-data reason and at least one actionable resolution step.\n- **SC-005**: Invoice-related finance support escalations tied to tax-data omissions decrease by 30% within two billing cycles after release.\n\n## Assumptions\n\n- Only finance admins can generate, review, and send recurring invoice batches.\n- Subscription records already contain enough billing information to create draft invoices, except in cases explicitly blocked by missing tax data.\n- Customer accounts are already associated with a bill-to region of US or EU.\n- US and EU tax rules are configured by the business before monthly batch sending begins.\n- Out-of-scope for this feature: introducing new regions beyond US and EU."}], "grading": null}, {"id": "eval-2-release-calendar-roles-old_skill", "prompt": "Run /create-spec with this feature description: Build a shared release calendar where PMs can create launch entries, mark confidence level, and attach dependencies. Engineering managers need a weekly view filtered by team. We are not sure whether non-PM roles should edit entries or comment only.", "eval_id": 2, "outputs": [{"name": "requirements.md", "type": "text", "content": "# Specification Quality Checklist: Shared Release Calendar Roles\n\n**Purpose**: Validate specification completeness and quality before proceeding to planning  \n**Created**: 2026-03-26  \n**Feature**: [spec.md](spec.md)\n\n## Content Quality\n\n- [x] No implementation details (languages, frameworks, APIs)\n- [x] Focused on user value and business needs\n- [x] Written for non-technical stakeholders\n- [x] All mandatory sections completed\n\n## Requirement Completeness\n\n- [x] No [NEEDS CLARIFICATION] markers remain\n- [x] Requirements are testable and unambiguous\n- [x] Success criteria are measurable\n- [x] Success criteria are technology-agnostic (no implementation details)\n- [x] All acceptance scenarios are defined\n- [x] Edge cases are identified\n- [x] Scope is clearly bounded\n- [x] Dependencies and assumptions identified\n\n## Feature Readiness\n\n- [x] All functional requirements have clear acceptance criteria\n- [x] User scenarios cover primary flows\n- [x] Feature meets measurable outcomes defined in Success Criteria\n- [x] No implementation details leak into specification\n\n## Notes\n\n- Validation pass completed in 1 iteration.\n- Ambiguity about non-PM permissions resolved by applying least-privilege default (comment-only) and documenting it in Assumptions.\n- Ready for `/create-plan`.\n"}, {"name": "run_summary.txt", "type": "text", "content": "create-spec run summary\nDate: 2026-03-26\nSkill snapshot path: /home/adam/.agents/skills/create-spec-workspace/skill-snapshot\nFeature short name: shared-release-calendar-roles\n\nProduced files:\n1) Spec\n- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/old_skill/outputs/spec.md\n- Includes prioritized user stories, edge cases, functional requirements, key entities, measurable success criteria, and assumptions.\n\n2) Checklist\n- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/old_skill/outputs/requirements.md\n- Canonical workflow path also written to: /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/old_skill/outputs/checklists/requirements.md\n- Validation checklist completed with all items marked pass.\n\n3) Summary\n- /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/old_skill/outputs/run_summary.txt\n\nValidation status: PASS\nReadiness: Ready for /create-plan\n"}, {"name": "spec.md", "type": "text", "content": "# Feature Specification: Shared Release Calendar Roles\n\n**Created**: 2026-03-26  \n**Status**: Draft  \n**Input**: User description: \"Build a shared release calendar where PMs can create launch entries, mark confidence level, and attach dependencies. Engineering managers need a weekly view filtered by team. We are not sure whether non-PM roles should edit entries or comment only.\"\n\n## User Scenarios & Testing _(mandatory)_\n\n### User Story 1 - Create and Maintain Launch Entries (Priority: P1)\n\nAs a product manager, I can create and update launch entries with confidence level and dependencies so release plans are visible and coordinated.\n\n**Why this priority**: Without accurate launch entries, the calendar has no core value for planning and coordination.\n\n**Independent Test**: Can be fully tested by having a PM create a new launch entry, set confidence, attach dependencies, and confirm details are saved and displayed in the calendar.\n\n**Acceptance Scenarios**:\n\n1. **Given** a PM with access to the calendar, **When** they create a launch entry with title, target date, team, confidence level, and at least one dependency, **Then** the system stores the entry and shows it on the release calendar.\n2. **Given** an existing launch entry, **When** a PM updates its confidence level or dependency list, **Then** the updated values are visible in all calendar views.\n\n---\n\n### User Story 2 - Weekly Team-Filtered Planning View (Priority: P2)\n\nAs an engineering manager, I can view a weekly calendar filtered by team so I can quickly assess upcoming launches and coordination needs.\n\n**Why this priority**: Engineering managers need a focused operational view to plan staffing and risk mitigation each week.\n\n**Independent Test**: Can be fully tested by selecting a weekly date range, applying a team filter, and verifying only matching launch entries are shown.\n\n**Acceptance Scenarios**:\n\n1. **Given** multiple launch entries across teams and dates, **When** an engineering manager selects week W and team T, **Then** only team T launch entries in week W are displayed.\n2. **Given** no launches for the selected team and week, **When** filters are applied, **Then** an empty-state message is shown indicating no matching entries.\n\n---\n\n### User Story 3 - Cross-Role Collaboration Through Comments (Priority: P3)\n\nAs a non-PM stakeholder, I can comment on launch entries to provide context or risks without modifying source-of-truth planning fields.\n\n**Why this priority**: Collaboration is needed across roles, but planning data ownership should remain clear and controlled.\n\n**Independent Test**: Can be fully tested by having a non-PM add comments to an entry and verifying comments are visible while edit controls are not available.\n\n**Acceptance Scenarios**:\n\n1. **Given** a non-PM user with calendar access, **When** they open a launch entry, **Then** they can add comments but cannot edit core entry fields.\n2. **Given** an entry with existing comments, **When** stakeholders view the entry, **Then** comments are shown in chronological order with author and timestamp.\n\n---\n\n### Edge Cases\n\n- What happens when a launch entry depends on another entry that is moved outside the current week? The dependency remains attached and is still visible in entry details.\n- How does system handle duplicate launch titles on the same date for the same team? The system allows them if entries are otherwise distinct and tracks each by unique entry identity.\n- What happens when confidence level is not explicitly set? The system requires confidence level before a launch entry can be saved.\n- How does system handle dependencies that are removed or no longer valid? The system flags the dependency as unresolved and preserves historical context in entry activity.\n\n## Requirements _(mandatory)_\n\n### Functional Requirements\n\n- **FR-001**: System MUST allow PM users to create launch entries with at least: launch title, target date, owning team, confidence level, and dependency references.\n- **FR-002**: System MUST allow PM users to update launch entry details, including confidence level and dependencies, after creation.\n- **FR-003**: System MUST provide a weekly calendar view that can be filtered by team.\n- **FR-004**: System MUST display only entries that match both selected week and selected team when filters are applied.\n- **FR-005**: System MUST allow non-PM roles to add comments on launch entries.\n- **FR-006**: System MUST prevent non-PM roles from editing core launch entry fields (title, date, team, confidence level, dependencies).\n- **FR-007**: System MUST record author and timestamp metadata for all comments.\n- **FR-008**: System MUST show launch dependencies within each entry so users can identify sequencing and coordination risks.\n- **FR-009**: System MUST require confidence level selection before a launch entry can be saved.\n- **FR-010**: System MUST preserve a visible history of entry updates and comments for auditability by authorized users.\n\n### Key Entities _(include if feature involves data)_\n\n- **Launch Entry**: Represents a planned release event with attributes including title, target date, owning team, confidence level, status, and related dependencies.\n- **Dependency Link**: Represents a relationship where one launch entry depends on another and includes dependency state (active, unresolved, or removed).\n- **Comment**: Represents stakeholder discussion on a launch entry with message body, author, and timestamp.\n- **Role Permission**: Represents role-based capabilities indicating which roles can create, edit, and comment on launch entries.\n- **Team**: Represents an organizational unit used for ownership and weekly filter scoping.\n\n## Success Criteria _(mandatory)_\n\n### Measurable Outcomes\n\n- **SC-001**: 95% of PM users can create a complete launch entry (including confidence level and at least one dependency when applicable) in under 2 minutes during usability testing.\n- **SC-002**: 100% of weekly team-filtered views return only entries matching the selected team and week in acceptance tests.\n- **SC-003**: 90% of engineering managers report the weekly team-filtered calendar is sufficient for weekly planning decisions in post-rollout feedback.\n- **SC-004**: 100% of non-PM edit attempts on core entry fields are blocked while comment submission remains available in role-permission tests.\n- **SC-005**: At least 85% of launches with cross-team impact include dependency links within the first 8 weeks after rollout.\n\n## Assumptions\n\n- PMs are the owners of core release entry data and are responsible for final field accuracy.\n- Non-PM roles need collaboration capability, so comment-only access is the default for initial scope.\n- Weekly view and team filtering are available to engineering managers and other authorized roles with read access.\n- The organization already has a defined team directory that can be used for launch ownership and filtering.\n- Historical change visibility is required for coordination and accountability but not for compliance-grade legal audit in this phase.\n"}], "grading": null}, {"id": "eval-2-release-calendar-roles-with_skill", "prompt": "Run /create-spec with this feature description: Build a shared release calendar where PMs can create launch entries, mark confidence level, and attach dependencies. Engineering managers need a weekly view filtered by team. We are not sure whether non-PM roles should edit entries or comment only.", "eval_id": 2, "outputs": [{"name": "run_summary.txt", "type": "text", "content": "Run summary - create-spec\nDate: 2026-03-26\n\nFeature description processed:\nBuild a shared release calendar where PMs can create launch entries, mark confidence level, and attach dependencies. Engineering managers need a weekly view filtered by team. We are not sure whether non-PM roles should edit entries or comment only.\n\nFeature short name:\nshared-release-calendar-roles\n\nProduced files:\n1) Spec file\n   /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/with_skill/outputs/spec.md\n\n2) Checklist file\n   /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/with_skill/outputs/checklists/requirements.md\n\n3) Run summary file\n   /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-2-release-calendar-roles/with_skill/outputs/run_summary.txt\n\nValidation status:\npass\n\nReadiness for /create-plan:\nready\n"}, {"name": "spec.md", "type": "text", "content": "# Feature Specification: Shared Release Calendar Roles\n\n**Created**: 2026-03-26  \n**Status**: Draft  \n**Input**: User description: \"Build a shared release calendar where PMs can create launch entries, mark confidence level, and attach dependencies. Engineering managers need a weekly view filtered by team. We are not sure whether non-PM roles should edit entries or comment only.\"\n\n## User Scenarios & Testing _(mandatory)_\n\n### User Story 1 - Create and maintain launch entries (Priority: P1)\n\nProduct managers create and update launch entries in a shared calendar, including confidence level and dependencies, so release planning remains current and visible.\n\n**Why this priority**: Without reliable launch entry creation and maintenance, the calendar cannot provide core planning value.\n\n**Independent Test**: Can be fully tested by having a PM create, edit, and save launch entries with confidence and dependencies, then verify data persists and is visible to authorized viewers.\n\n**Acceptance Scenarios**:\n\n1. **Given** a signed-in PM, **When** they create a launch entry with title, date, confidence level, owning team, and dependencies, **Then** the entry is saved and appears on the calendar.\n2. **Given** an existing launch entry created by a PM, **When** the PM updates confidence level or dependencies, **Then** the calendar reflects the latest values immediately.\n\n---\n\n### User Story 2 - Weekly team-filtered planning view (Priority: P2)\n\nEngineering managers view releases in a weekly calendar and filter entries by team to assess near-term delivery risks and sequencing.\n\n**Why this priority**: Weekly planning visibility is required for engineering leadership coordination and staffing decisions.\n\n**Independent Test**: Can be fully tested by opening weekly view, applying a team filter, and confirming only matching entries appear for the selected week.\n\n**Acceptance Scenarios**:\n\n1. **Given** an engineering manager on the weekly calendar view, **When** they select a team filter, **Then** only entries for that team are shown for the selected week.\n2. **Given** an engineering manager with a team filter applied, **When** they navigate to the next or previous week, **Then** the same team filter remains active until changed.\n\n---\n\n### User Story 3 - Cross-role collaboration without uncontrolled edits (Priority: P3)\n\nNon-PM roles collaborate on launch entries through comments, while edit access remains restricted to PMs to protect schedule integrity.\n\n**Why this priority**: Collaboration is important, but ambiguous edit rights can create ownership conflicts and unreviewed schedule changes.\n\n**Independent Test**: Can be fully tested by verifying non-PM users can add comments but cannot change launch entry fields, while PM users can still edit.\n\n**Acceptance Scenarios**:\n\n1. **Given** a non-PM user viewing a launch entry, **When** they submit a comment, **Then** the comment is attached to the entry with author and timestamp.\n2. **Given** a non-PM user viewing a launch entry, **When** they attempt to edit entry fields, **Then** the system blocks the edit and communicates that edit permissions are PM-only.\n\n---\n\n### Edge Cases\n\n- What happens when a PM marks a dependency that does not yet exist in the calendar? The system records the dependency reference and flags it as unresolved until the referenced launch entry exists.\n- How does system handle two PMs editing the same launch entry at the same time? The system prevents silent overwrites by requiring explicit confirmation before saving conflicting changes.\n- What happens when an engineering manager applies a team filter with no launches in the selected week? The weekly view shows an empty-state message and clear action to remove or change filters.\n- How does system handle confidence level updates close to launch date? The latest confidence level is shown in the weekly view and included in entry history for auditability.\n\n## Requirements _(mandatory)_\n\n### Functional Requirements\n\n- **FR-001**: System MUST allow PM users to create launch entries with, at minimum, title, planned launch date, owning team, confidence level, and dependency references.\n- **FR-002**: System MUST allow PM users to edit and update launch entry fields, including confidence level and dependencies, after creation.\n- **FR-003**: System MUST provide a shared calendar view of launch entries visible to PMs, engineering managers, and other authorized stakeholders.\n- **FR-004**: System MUST provide a weekly calendar view that engineering managers can access.\n- **FR-005**: System MUST allow users to filter weekly view results by team and show only entries matching selected team filters.\n- **FR-006**: System MUST preserve active team filter selection while users move between weeks in the weekly view.\n- **FR-007**: System MUST allow non-PM roles to add comments to launch entries.\n- **FR-008**: System MUST prevent non-PM roles from editing launch entry fields unless they are explicitly assigned PM-equivalent edit permissions.\n- **FR-009**: System MUST display each launch entry's current confidence level in both shared and weekly views.\n- **FR-010**: System MUST record dependency links between launch entries and indicate unresolved or missing dependencies.\n- **FR-011**: System MUST maintain an entry-level history of confidence and dependency changes, including who changed what and when.\n- **FR-012**: System MUST present clear authorization feedback when a user attempts an action they are not permitted to perform.\n\n### Key Entities _(include if feature involves data)_\n\n- **Launch Entry**: A planned release item with attributes including title, launch date, owning team, confidence level, dependency references, status, and change history.\n- **Comment**: A collaboration record attached to a launch entry, including author role, timestamp, and comment text.\n- **Role Permission**: Access rules that determine whether a user can create/edit entries, view entries, filter views, or add comments.\n- **Team**: Organizational unit used to assign launch ownership and drive filtering in weekly views.\n- **Dependency Link**: Relationship between launch entries that indicates delivery order or prerequisite constraints.\n\n## Success Criteria _(mandatory)_\n\n### Measurable Outcomes\n\n- **SC-001**: 95% of PM users can create a complete launch entry (including confidence level and at least one dependency field state) in under 3 minutes during usability testing.\n- **SC-002**: 100% of engineering manager weekly-view sessions can apply a team filter and display filtered results in under 10 seconds.\n- **SC-003**: In role-permission validation tests, 100% of unauthorized edit attempts by non-PM users are blocked while 100% of comment attempts by those users succeed.\n- **SC-004**: In the first 8 weeks after launch, at least 90% of active teams maintain at least one upcoming launch entry with confidence level updated within the prior 14 days.\n\n## Assumptions\n\n- Non-PM roles are comment-only by default; edit rights are restricted to PM roles unless an organization grants PM-equivalent permissions through existing access governance.\n- Authorized users already exist in an organizational identity system and can be mapped to PM, engineering manager, and non-PM stakeholder roles.\n- Weekly planning is based on a single agreed business week definition used consistently across teams.\n- Dependency tracking is limited to relationships between launch entries within this shared calendar, not external tooling.\n- Initial release scope covers web-based access; native mobile-specific workflows are out of scope for v1.\n"}], "grading": null}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "create-spec", "skill_path": "/home/adam/.agents/skills/create-spec", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-03-26T22:01:37Z", "evals_run": [0, 1, 2], "runs_per_configuration": 1}, "runs": [{"eval_id": 0, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 9320, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Spec contains all mandatory sections: User Scenarios & Testing, Requirements, Success Criteria, Assumptions", "passed": true, "evidence": "All mandatory section headings found"}, {"text": "Spec has at least 8 functional requirements", "passed": true, "evidence": "Found 14 FR items"}, {"text": "Spec has at least 3 measurable success criteria", "passed": true, "evidence": "Found 5 SC items"}, {"text": "Spec contains no [NEEDS CLARIFICATION] markers", "passed": true, "evidence": "No clarification markers present"}, {"text": "Checklist exists and has no unchecked items", "passed": true, "evidence": "Checklist exists and all boxes are checked"}], "notes": []}, {"eval_id": 1, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 9744, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Spec contains all mandatory sections: User Scenarios & Testing, Requirements, Success Criteria, Assumptions", "passed": true, "evidence": "All mandatory section headings found"}, {"text": "Spec has at least 8 functional requirements", "passed": true, "evidence": "Found 14 FR items"}, {"text": "Spec has at least 3 measurable success criteria", "passed": true, "evidence": "Found 5 SC items"}, {"text": "Spec contains no [NEEDS CLARIFICATION] markers", "passed": true, "evidence": "No clarification markers present"}, {"text": "Checklist exists and has no unchecked items", "passed": true, "evidence": "Checklist exists and all boxes are checked"}], "notes": []}, {"eval_id": 2, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 8343, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Spec contains all mandatory sections: User Scenarios & Testing, Requirements, Success Criteria, Assumptions", "passed": true, "evidence": "All mandatory section headings found"}, {"text": "Spec has at least 8 functional requirements", "passed": true, "evidence": "Found 10 FR items"}, {"text": "Spec has at least 3 measurable success criteria", "passed": true, "evidence": "Found 5 SC items"}, {"text": "Spec contains no [NEEDS CLARIFICATION] markers", "passed": true, "evidence": "No clarification markers present"}, {"text": "Checklist exists and has no unchecked items", "passed": true, "evidence": "Checklist exists and all boxes are checked"}], "notes": []}, {"eval_id": 0, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 9361, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Spec contains all mandatory sections: User Scenarios & Testing, Requirements, Success Criteria, Assumptions", "passed": true, "evidence": "All mandatory section headings found"}, {"text": "Spec has at least 8 functional requirements", "passed": true, "evidence": "Found 13 FR items"}, {"text": "Spec has at least 3 measurable success criteria", "passed": true, "evidence": "Found 6 SC items"}, {"text": "Spec contains no [NEEDS CLARIFICATION] markers", "passed": true, "evidence": "No clarification markers present"}, {"text": "Checklist exists and has no unchecked items", "passed": true, "evidence": "Checklist exists and all boxes are checked"}], "notes": []}, {"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 8159, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Spec contains all mandatory sections: User Scenarios & Testing, Requirements, Success Criteria, Assumptions", "passed": true, "evidence": "All mandatory section headings found"}, {"text": "Spec has at least 8 functional requirements", "passed": true, "evidence": "Found 10 FR items"}, {"text": "Spec has at least 3 measurable success criteria", "passed": true, "evidence": "Found 5 SC items"}, {"text": "Spec contains no [NEEDS CLARIFICATION] markers", "passed": true, "evidence": "No clarification markers present"}, {"text": "Checklist exists and has no unchecked items", "passed": true, "evidence": "Checklist exists and all boxes are checked"}], "notes": []}, {"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 8895, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Spec contains all mandatory sections: User Scenarios & Testing, Requirements, Success Criteria, Assumptions", "passed": true, "evidence": "All mandatory section headings found"}, {"text": "Spec has at least 8 functional requirements", "passed": true, "evidence": "Found 12 FR items"}, {"text": "Spec has at least 3 measurable success criteria", "passed": true, "evidence": "Found 4 SC items"}, {"text": "Spec contains no [NEEDS CLARIFICATION] markers", "passed": true, "evidence": "No clarification markers present"}, {"text": "Checklist exists and has no unchecked items", "passed": true, "evidence": "Checklist exists and all boxes are checked"}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}, "tokens": {"mean": 8805.0, "stddev": 606.033, "min": 8159, "max": 9361}}, "old_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}, "tokens": {"mean": 9135.6667, "stddev": 718.4597, "min": 8343, "max": 9744}}, "delta": {"pass_rate": "+0.00", "time_seconds": "+0.0", "tokens": "-331"}}, "notes": ["All five assertions passed for both configurations in every eval, so the current checks are non-discriminating and cannot detect quality improvements.", "Timing and token capture from subagent completion notifications was unavailable in this execution environment; time_seconds is 0.0 for all runs and token values are derived from output size proxy.", "Qualitative output differences exist (wording/coverage), but current assertions emphasize structural completeness; add quality-sensitive assertions for ambiguity handling and assumption quality in iteration 2."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

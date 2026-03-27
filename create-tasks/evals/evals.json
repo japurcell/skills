@@ -1,0 +1,80 @@
+{
+  "skill_name": "create-tasks",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Generate tasks.md from plan_file .agents/scratchpad/release-calendar-role-controls/plan.md. Use companion docs in that folder and produce a dependency-ordered, user-story-grouped task list with concrete file paths.",
+      "expected_output": "A complete tasks.md with setup, foundational, US phases, strict checklist formatting, dependencies, and parallel examples.",
+      "files": [
+        ".agents/scratchpad/release-calendar-role-controls/plan.md",
+        ".agents/scratchpad/release-calendar-role-controls/spec.md",
+        ".agents/scratchpad/release-calendar-role-controls/data-model.md"
+      ],
+      "assertions": [
+        "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+        "Task IDs are contiguous from T001 with no duplicates or gaps",
+        "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+        "Includes a Dependencies & Execution Order section",
+        "Includes explicit tests section(s) for user stories",
+        "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+        "Task lines use concrete plain-text file paths (no markdown emphasis '**', no wildcard-only globs like '**/')"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Generate tasks.md from plan_file .agents/scratchpad/billing-disputes-workflow/plan.md and ensure task sequencing supports independent testability per user story.",
+      "expected_output": "A tasks.md where each user story includes test-first tasks and implementation tasks with concrete file paths.",
+      "files": [
+        ".agents/scratchpad/billing-disputes-workflow/plan.md",
+        ".agents/scratchpad/billing-disputes-workflow/spec.md",
+        ".agents/scratchpad/billing-disputes-workflow/data-model.md"
+      ],
+      "assertions": [
+        "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+        "Task IDs are contiguous from T001 with no duplicates or gaps",
+        "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+        "Includes a Dependencies & Execution Order section",
+        "Includes explicit tests section(s) for user stories",
+        "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+        "Task lines use concrete plain-text file paths (no markdown emphasis '**', no wildcard-only globs like '**/')"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Generate tasks.md from plan_file .agents/scratchpad/audit-log-export-service/plan.md. Include phases, dependencies, and parallel opportunities while avoiding unresolved placeholders.",
+      "expected_output": "A production-ready tasks.md with no template placeholders and complete phase coverage.",
+      "files": [
+        ".agents/scratchpad/audit-log-export-service/plan.md",
+        ".agents/scratchpad/audit-log-export-service/spec.md",
+        ".agents/scratchpad/audit-log-export-service/data-model.md"
+      ],
+      "assertions": [
+        "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+        "Task IDs are contiguous from T001 with no duplicates or gaps",
+        "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+        "Includes a Dependencies & Execution Order section",
+        "Includes explicit tests section(s) for user stories",
+        "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+        "Task lines use concrete plain-text file paths (no markdown emphasis '**', no wildcard-only globs like '**/')"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Generate tasks.md from plan_file .agents/scratchpad/access-review-reminders/plan.md where only plan.md and spec.md are available. Keep outputs concrete, avoid wildcard or markdown-decorated file paths, and keep stories independently testable.",
+      "expected_output": "A robust tasks.md that handles missing optional artifacts without placeholders and without decorated paths.",
+      "files": [
+        ".agents/scratchpad/access-review-reminders/plan.md",
+        ".agents/scratchpad/access-review-reminders/spec.md"
+      ],
+      "assertions": [
+        "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+        "Task IDs are contiguous from T001 with no duplicates or gaps",
+        "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+        "Includes a Dependencies & Execution Order section",
+        "Includes explicit tests section(s) for user stories",
+        "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+        "Task lines use concrete plain-text file paths (no markdown emphasis '**', no wildcard-only globs like '**/')"
+      ]
+    }
+  ]
+}

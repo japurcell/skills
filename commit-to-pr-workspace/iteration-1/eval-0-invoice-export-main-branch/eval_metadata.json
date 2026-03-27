@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "invoice-export-main-branch",
+  "prompt": "I finished implementing the invoice export changes from specs/invoice-export.md. Please commit the current changes and open a PR.",
+  "assertions": [
+    "Exactly one new commit is created for the task",
+    "Branch is not main/master after execution",
+    "Commit message includes issue linkage to #123",
+    "Origin push succeeds for the working branch",
+    "A PR URL is produced"
+  ]
+}

@@ -1,0 +1,329 @@
+{
+  "metadata": {
+    "skill_name": "commit-to-pr",
+    "skill_path": "skills/commit-to-pr",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-03-26T22:22:36Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.2,
+        "tokens": 1044,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Exactly one new commit is created for the task",
+          "passed": true,
+          "evidence": "new_commit_count=1"
+        },
+        {
+          "text": "Branch is not main/master after execution",
+          "passed": true,
+          "evidence": "branch=feat/123-invoice-export"
+        },
+        {
+          "text": "Commit message includes issue linkage to #123",
+          "passed": true,
+          "evidence": "contains_issue_123=True"
+        },
+        {
+          "text": "Origin push succeeds for the working branch",
+          "passed": true,
+          "evidence": "push_ok=True"
+        },
+        {
+          "text": "A PR URL is produced",
+          "passed": true,
+          "evidence": "pr_url=https://example.com/org/repo/pull/42"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.2,
+        "tokens": 1035,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Exactly one new commit is created for the task",
+          "passed": true,
+          "evidence": "new_commit_count=1"
+        },
+        {
+          "text": "Existing feature branch is preserved",
+          "passed": true,
+          "evidence": "branch=feat/rate-limit-fix"
+        },
+        {
+          "text": "Commit message includes issue linkage to #456",
+          "passed": true,
+          "evidence": "contains_issue_456=True"
+        },
+        {
+          "text": "Origin push succeeds for the working branch",
+          "passed": true,
+          "evidence": "push_ok=True"
+        },
+        {
+          "text": "A PR URL is produced",
+          "passed": true,
+          "evidence": "pr_url=https://example.com/org/repo/pull/42"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.2,
+        "tokens": 1060,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Exactly one new commit is created for the task",
+          "passed": true,
+          "evidence": "new_commit_count=1"
+        },
+        {
+          "text": "Execution proceeds without requiring an issue number",
+          "passed": true,
+          "evidence": "proceeded_without_issue=True"
+        },
+        {
+          "text": "Origin push succeeds for the working branch",
+          "passed": true,
+          "evidence": "push_ok=True"
+        },
+        {
+          "text": "A PR URL is produced",
+          "passed": true,
+          "evidence": "pr_url=https://example.com/org/repo/pull/42"
+        },
+        {
+          "text": "Summary output includes branch, commit SHA, and PR URL",
+          "passed": true,
+          "evidence": "branch/commit_sha/pr_url presence checked"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 0.2,
+        "tokens": 989,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Exactly one new commit is created for the task",
+          "passed": true,
+          "evidence": "new_commit_count=1"
+        },
+        {
+          "text": "Branch is not main/master after execution",
+          "passed": true,
+          "evidence": "branch=chore/invoice-export"
+        },
+        {
+          "text": "Commit message includes issue linkage to #123",
+          "passed": false,
+          "evidence": "contains_issue_123=False"
+        },
+        {
+          "text": "Origin push succeeds for the working branch",
+          "passed": true,
+          "evidence": "push_ok=True"
+        },
+        {
+          "text": "A PR URL is produced",
+          "passed": true,
+          "evidence": "pr_url=https://example.com/org/repo/pull/42"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 0.2,
+        "tokens": 989,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Exactly one new commit is created for the task",
+          "passed": true,
+          "evidence": "new_commit_count=1"
+        },
+        {
+          "text": "Existing feature branch is preserved",
+          "passed": true,
+          "evidence": "branch=feat/rate-limit-fix"
+        },
+        {
+          "text": "Commit message includes issue linkage to #456",
+          "passed": false,
+          "evidence": "contains_issue_456=False"
+        },
+        {
+          "text": "Origin push succeeds for the working branch",
+          "passed": true,
+          "evidence": "push_ok=True"
+        },
+        {
+          "text": "A PR URL is produced",
+          "passed": true,
+          "evidence": "pr_url=https://example.com/org/repo/pull/42"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.2,
+        "tokens": 1029,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Exactly one new commit is created for the task",
+          "passed": true,
+          "evidence": "new_commit_count=1"
+        },
+        {
+          "text": "Execution proceeds without requiring an issue number",
+          "passed": true,
+          "evidence": "proceeded_without_issue=True"
+        },
+        {
+          "text": "Origin push succeeds for the working branch",
+          "passed": true,
+          "evidence": "push_ok=True"
+        },
+        {
+          "text": "A PR URL is produced",
+          "passed": true,
+          "evidence": "pr_url=https://example.com/org/repo/pull/42"
+        },
+        {
+          "text": "Summary output includes branch, commit SHA, and PR URL",
+          "passed": true,
+          "evidence": "branch/commit_sha/pr_url presence checked"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.2,
+        "stddev": 0.0,
+        "min": 0.2,
+        "max": 0.2
+      },
+      "tokens": {
+        "mean": 1046.3333,
+        "stddev": 12.6623,
+        "min": 1035,
+        "max": 1060
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.8667,
+        "stddev": 0.1155,
+        "min": 0.8,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.2,
+        "stddev": 0.0,
+        "min": 0.2,
+        "max": 0.2
+      },
+      "tokens": {
+        "mean": 1002.3333,
+        "stddev": 23.094,
+        "min": 989,
+        "max": 1029
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.13",
+      "time_seconds": "+0.0",
+      "tokens": "+44"
+    }
+  },
+  "notes": [
+    "Issue-linkage assertions are the primary differentiator: with-skill passes both issue-link checks while without-skill fails those checks in eval 0 and eval 1.",
+    "All non-linkage assertions pass in both configurations (single commit, push success, PR URL present), so these checks validate baseline workflow but are weak discriminators.",
+    "No timing regression appears in this run set (0.2s mean in both configs), suggesting skill quality gains are not coming with measurable latency in this fixture.",
+    "Token usage is modestly higher with-skill (+44 mean), consistent with extra commit-body/PR-body structure rather than extra workflow steps.",
+    "Eval 2 (no linked issue) is non-discriminating in current form because both configs pass every assertion; consider adding an assertion about concise summary formatting quality if you want stronger separation there."
+  ]
+}

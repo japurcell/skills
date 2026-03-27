@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "Exactly one new commit is created for the task",
+      "passed": true,
+      "evidence": "new_commit_count=1"
+    },
+    {
+      "text": "Existing feature branch is preserved",
+      "passed": true,
+      "evidence": "branch=feat/rate-limit-fix"
+    },
+    {
+      "text": "Commit message includes issue linkage to #456",
+      "passed": false,
+      "evidence": "contains_issue_456=False"
+    },
+    {
+      "text": "Origin push succeeds for the working branch",
+      "passed": true,
+      "evidence": "push_ok=True"
+    },
+    {
+      "text": "A PR URL is produced",
+      "passed": true,
+      "evidence": "pr_url=https://example.com/org/repo/pull/42"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 989,
+    "transcript_chars": 700
+  },
+  "timing": {
+    "executor_duration_seconds": 0.1,
+    "grader_duration_seconds": 0.1,
+    "total_duration_seconds": 0.2
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

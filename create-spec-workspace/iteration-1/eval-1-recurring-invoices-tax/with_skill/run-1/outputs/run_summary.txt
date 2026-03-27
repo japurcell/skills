@@ -1,0 +1,19 @@
+create-spec workflow run summary
+Date: 2026-03-26
+
+Feature short name: recurring-invoice-batch-send
+Input description: Add recurring invoices to billing workflow with monthly generation, draft review, batch send, tax-data blocking, and US/EU configurable regional tax rules.
+
+Outputs produced:
+1) Spec document:
+   /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-1-recurring-invoices-tax/with_skill/outputs/spec.md
+2) Checklist document:
+   /home/adam/.agents/skills/create-spec-workspace/iteration-1/eval-1-recurring-invoices-tax/with_skill/outputs/requirements.md
+
+Validation result:
+- Status: PASS
+- Checklist items passed: 16/16
+- Remaining clarifications: 0
+
+Readiness:
+- Spec is ready for /create-plan.

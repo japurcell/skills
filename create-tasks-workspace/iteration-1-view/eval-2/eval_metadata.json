@@ -1,0 +1,13 @@
+{
+  "eval_id": 2,
+  "eval_name": "audit-log-export-service",
+  "prompt": "Generate tasks.md from plan_file .agents/scratchpad/audit-log-export-service/plan.md. Include phases, dependencies, and parallel opportunities while avoiding unresolved placeholders.",
+  "assertions": [
+    "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+    "Task IDs are contiguous from T001 with no duplicates or gaps",
+    "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+    "Includes a Dependencies & Execution Order section",
+    "Includes explicit tests section(s) for user stories",
+    "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]"
+  ]
+}

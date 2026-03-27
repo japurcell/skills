@@ -1,6 +1,6 @@
 ---
 name: create-tasks
-description: Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts.
+description: Generate an actionable, dependency-ordered tasks.md for a feature using available design artifacts. Use this skill whenever the user asks to create a task list, implementation checklist, execution plan, or phase-by-phase build steps from spec/plan documents, even if they do not explicitly mention tasks.md.
 disable-model-invocation: true
 ---
 
@@ -15,6 +15,7 @@ You receive these parameters in your prompt:
 ## Context
 
 - Read plan_file into context if it isn't already.
+- Infer `<feature-name>` from plan_file path to locate companion documents under `.agents/scratchpad/<feature-name>/`.
 
 ## Outline
 
@@ -33,6 +34,7 @@ You receive these parameters in your prompt:
    - Generate dependency graph showing user story completion order
    - Create parallel execution examples per user story
    - Validate task completeness (each user story has all needed tasks, independently testable)
+   - Validate format compliance (every task line must match required checklist format)
 
 3. **Generate tasks.md**: Use [references/tasks-template.md](references/tasks-template.md) as structure, fill with:
    - Correct feature name from plan.md
@@ -46,6 +48,7 @@ You receive these parameters in your prompt:
    - Dependencies section showing story completion order
    - Parallel execution examples per story
    - Implementation strategy section (MVP first, incremental delivery)
+   - No placeholder text (replace all bracketed examples with concrete project details)
 
 4. **Report**: Output path to generated tasks.md and summary:
    - Total task count
@@ -54,6 +57,7 @@ You receive these parameters in your prompt:
    - Independent test criteria for each story
    - Suggested MVP scope (typically just User Story 1)
    - Format validation: Confirm ALL tasks follow the checklist format (checkbox, ID, labels, file paths)
+   - Placeholder validation: Confirm no unresolved placeholders remain (e.g. `[language]`, `[endpoint]`, `[name]`)
    - Readiness for the next phase (`/implement-plan`).
 
 Context for task generation: $ARGUMENTS
@@ -83,18 +87,9 @@ Every task MUST strictly follow this format:
    - Format: [US1], [US2], [US3], etc. (maps to user stories from spec.md)
    - Setup phase: NO story label
    - Foundational phase: NO story label
-     **Format Components**:
-
-5. **Checkbox**: ALWAYS start with `- [ ]` (markdown checkbox)
-6. **Task ID**: Sequential number (T001, T002, T003...) in execution order
-7. **[P] marker**: Include ONLY if task is parallelizable (different files, no dependencies on incomplete tasks)
-8. **[Story] label**: REQUIRED for user story phase tasks only
-   - Format: [US1], [US2], [US3], etc. (maps to user stories from spec.md)
-   - Setup phase: NO story label
-   - Foundational phase: NO story label
    - User Story phases: MUST have story label
    - Polish phase: NO story label
-9. **Description**: Clear action with exact file path
+5. **Description**: Clear action with exact file path
 
 **Examples**:
 
@@ -132,6 +127,16 @@ Every task MUST strictly follow this format:
    - Foundational/blocking tasks → Foundational phase (Phase 2)
    - Story-specific setup → within that story's phase
 
+### Deterministic Generation Requirements
+
+- Assign task IDs once in final execution order; do not renumber per phase.
+- Ensure task IDs are contiguous with no gaps or duplicates.
+- Include explicit file paths for every task (directory-only paths allowed only for repo-wide chores like `docs/`).
+- Write file paths as plain text only; do not use markdown emphasis, backslash-escaped template markers, or wildcard path globs as concrete targets.
+- Use concrete technology names from plan.md instead of generic words like "framework" or "service" when possible.
+- Keep each task atomic: one clear deliverable per line.
+- Add explicit dependency references only when needed for clarity, using `(depends on T###)`.
+
 ### Phase Structure
 
 - **Phase 1**: Setup (project initialization)
@@ -140,3 +145,14 @@ Every task MUST strictly follow this format:
   - Within each story: Tests → Models → Services → Endpoints → Integration
   - Each phase should be a complete, independently testable increment
 - **Final Phase**: Polish & Cross-Cutting Concerns
+
+### Validation Checklist (Run Before Final Output)
+
+- Every task line matches `- [ ] T### ...` format.
+- Story-phase tasks include `[US#]`; setup/foundational/polish tasks do not.
+- Parallel marker `[P]` appears only where tasks are truly independent.
+- Every user story includes: independent test criteria, test tasks, implementation tasks.
+- No phase is empty.
+- Dependencies section matches actual ordering implied by task list.
+- `tasks.md` contains no sample/template placeholder strings.
+- Task file paths are concrete and plain text (no `**`, no escaped placeholder fragments, no wildcard-only paths).

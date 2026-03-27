@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "no-linked-issue",
+  "prompt": "Use specs/add-audit-logs.md and get this ready for review as a pull request. If there is no linked issue in the spec, still proceed cleanly.",
+  "assertions": [
+    "Exactly one new commit is created for the task",
+    "Execution proceeds without requiring an issue number",
+    "Origin push succeeds for the working branch",
+    "A PR URL is produced",
+    "Summary output includes branch, commit SHA, and PR URL"
+  ]
+}

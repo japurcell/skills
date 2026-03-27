@@ -1,0 +1,7 @@
+[
+  "Iteration-2 tightening improved discriminative power: quickstart-structure assertion now separates with_skill (3/3 pass) from old_skill (0/3 pass).",
+  "Strict 5-section report contract assertion passes for both configurations, indicating baseline already had report formatting discipline in these prompts.",
+  "The prior AGENTS keyword gate assertion was replaced with a pre/post gate rationale assertion; it currently passes for both configs and may need deeper semantic checks in a future iteration.",
+  "Overall pass-rate moved from 80% (old_skill) to 100% (with_skill), with gains entirely attributable to mandatory quickstart depth/structure compliance.",
+  "Timing remains non-informative in this environment; token values are derived from output size and should be treated directionally only."
+]

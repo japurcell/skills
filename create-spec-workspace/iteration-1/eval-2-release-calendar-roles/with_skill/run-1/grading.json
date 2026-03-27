@@ -1,0 +1,52 @@
+{
+  "expectations": [
+    {
+      "text": "Spec contains all mandatory sections: User Scenarios & Testing, Requirements, Success Criteria, Assumptions",
+      "passed": true,
+      "evidence": "All mandatory section headings found"
+    },
+    {
+      "text": "Spec has at least 8 functional requirements",
+      "passed": true,
+      "evidence": "Found 12 FR items"
+    },
+    {
+      "text": "Spec has at least 3 measurable success criteria",
+      "passed": true,
+      "evidence": "Found 4 SC items"
+    },
+    {
+      "text": "Spec contains no [NEEDS CLARIFICATION] markers",
+      "passed": true,
+      "evidence": "No clarification markers present"
+    },
+    {
+      "text": "Checklist exists and has no unchecked items",
+      "passed": true,
+      "evidence": "Checklist exists and all boxes are checked"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 8895,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

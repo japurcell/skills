@@ -1,0 +1,14 @@
+{
+  "eval_id": 0,
+  "eval_name": "release-calendar-role-controls",
+  "prompt": "Generate tasks.md from plan_file .agents/scratchpad/release-calendar-role-controls/plan.md. Use companion docs in that folder and produce a dependency-ordered, user-story-grouped task list with concrete file paths.",
+  "assertions": [
+    "Contains at least 20 checklist task lines in '- [ ] T### ...' format",
+    "Task IDs are contiguous from T001 with no duplicates or gaps",
+    "Includes required phases: Setup, Foundational, at least one User Story phase, and Polish",
+    "Includes a Dependencies & Execution Order section",
+    "Includes explicit tests section(s) for user stories",
+    "Contains no unresolved template placeholders like [FEATURE NAME], [language], [framework], [endpoint], [name]",
+    "Task lines use concrete plain-text file paths (no markdown emphasis '**', no wildcard-only globs like '**/')"
+  ]
+}

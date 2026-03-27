@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "csv-import-silent-failures",
+  "prompt": "Use /issue-to-spec for issue #142 in acme/platform. The issue title is 'Bulk user import fails silently on CSV rows with trailing commas'. Build a planning-ready spec from the issue and comments. Include assumptions if comments conflict.",
+  "assertions": [
+    "Final response includes the exact issue identifier acme/platform#142.",
+    "When GitHub retrieval fails, final response includes the exact gh command attempted.",
+    "When GitHub retrieval fails, final response includes repository error text from gh.",
+    "When GitHub retrieval fails, final response does not claim planning-ready status."
+  ]
+}

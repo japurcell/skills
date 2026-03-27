@@ -1,0 +1,44 @@
+{
+  "skill_name": "tdd",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I need to write a password validator in Python using TDD. The rules are: at least 8 characters, must have at least one uppercase letter, one lowercase letter, and one digit. Let's build it test-first — start with the first test, show me the red-green cycle, then keep going one behavior at a time.",
+      "expected_output": "Claude walks through TDD cycle one test at a time. Each cycle shows: (1) a failing test, (2) the failure reason, (3) minimal implementation to pass it, (4) confirmation it passes. Tests have descriptive names describing behavior. Does NOT write all tests first then all code.",
+      "files": [],
+      "assertions": [
+        "The response shows at least one complete red-green cycle (test fails, code written, test passes)",
+        "Tests are written one at a time, not all upfront before any implementation",
+        "Test names describe behavior (e.g., 'rejects', 'accepts', 'requires'), not implementation",
+        "The implementation for each test is minimal — only enough to pass the current test",
+        "Tests use the public function interface, not internal state"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "I have a shopping cart module and I want to add a discount code feature using TDD. Discount codes are strings — 'SAVE10' gives 10% off, 'SAVE20' gives 20% off, invalid codes are rejected. Here's the existing code:\n\n```python\nclass ShoppingCart:\n    def __init__(self):\n        self._items = []\n\n    def add_item(self, name, price):\n        self._items.append({'name': name, 'price': price})\n\n    def total(self):\n        return sum(item['price'] for item in self._items)\n```\n\nHelp me add the discount code feature test-first.",
+      "expected_output": "Claude builds the discount feature incrementally via TDD. First test covers the basic happy path (valid code applies discount). Subsequent tests add edge cases (invalid code, 0% codes, etc). Each cycle is explicit about red and green. Implementation grows incrementally — no preemptive code for future tests.",
+      "files": [],
+      "assertions": [
+        "Starts with a failing test for the new feature before writing any implementation",
+        "Each new test is followed by implementation — not all tests first",
+        "Tests go through the public ShoppingCart interface (not internal _items directly)",
+        "The discount feature is built incrementally — later tests build on earlier ones",
+        "At least one edge case is tested (invalid discount code or empty cart)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "My date formatting function has a bug: when the month is a single digit (like January = 1), it outputs '2024-1-15' instead of '2024-01-15'. I want to fix it using TDD — write a failing test that catches this bug first, then fix it. Here's the function:\n\n```python\ndef format_date(year, month, day):\n    return f\"{year}-{month}-{day}\"\n```",
+      "expected_output": "Claude writes a specific failing test that reproduces the exact bug (single-digit month produces non-zero-padded output). The test fails first, confirming it captures the bug. Then a minimal fix is applied (zero-padding month and day). Possibly adds a test for single-digit day too. Test name describes the bug behavior.",
+      "files": [],
+      "assertions": [
+        "Writes a failing test that reproduces the exact reported bug before fixing anything",
+        "The test fails for the right reason — shows that the current output is '2024-1-15'",
+        "The fix is applied after the test is written, not before",
+        "The test name describes the expected behavior (zero-padded month/day), not the bug mechanism",
+        "The fixed implementation is minimal — does not add unrelated features"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+[
+  "Artifact-based grading now differentiates outputs: old_skill leads with 80% mean pass rate vs with_skill at 73%.",
+  "The largest gap is eval-2 (release-calendar-role-controls) where old_skill scored 5/5 and with_skill scored 4/5 due quickstart completeness check.",
+  "Both configurations underperform on the stricter report contract requirement in eval-0 (billing), indicating inconsistent adherence to required readiness-report sections.",
+  "AGENTS.md gate expectation is met reliably in eval-1 for both configurations, so this assertion is likely non-discriminating and should be replaced with a higher-signal quality check.",
+  "Timing data remains all zeros because subagent telemetry is unavailable in this environment; treat time deltas as non-informative.",
+  "Token metric is a proxy based on output size, not true model token counts; use directionally only."
+]

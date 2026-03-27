@@ -1,0 +1,180 @@
+openapi: 3.0.3
+info:
+  title: Release Calendar Role Controls API
+  version: 1.0.0
+  description: Additive endpoints for role-aware release window workflow and pending approvals.
+servers:
+  - url: /api
+paths:
+  /release-windows/{id}/propose:
+    post:
+      summary: Move a draft or blocked window to proposed
+      tags: [ReleaseWindows]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionRequest"
+      responses:
+        "200":
+          description: Proposed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReleaseWindow"
+        "400": { description: Validation error }
+        "403": { description: Forbidden for role }
+        "409": { description: Invalid transition or version conflict }
+  /release-windows/{id}/approve:
+    post:
+      summary: Approve a proposed release window
+      tags: [ReleaseWindows]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionRequest"
+      responses:
+        "200":
+          description: Approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReleaseWindow"
+        "400": { description: Validation error }
+        "403": { description: Forbidden for role }
+        "409": { description: Invalid transition or version conflict }
+  /release-windows/{id}/reject:
+    post:
+      summary: Reject a proposed release window and move to blocked
+      tags: [ReleaseWindows]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionRequest"
+      responses:
+        "200":
+          description: Rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReleaseWindow"
+        "400": { description: Validation error }
+        "403": { description: Forbidden for role }
+        "409": { description: Invalid transition or version conflict }
+  /release-windows/approvals/pending:
+    get:
+      summary: List pending approvals grouped by product area
+      tags: [Approvals]
+      parameters:
+        - name: productArea
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        "200":
+          description: Grouped pending approvals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingApprovalsResponse"
+        "403": { description: Forbidden for role }
+components:
+  schemas:
+    TransitionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 1000
+        expectedVersion:
+          type: integer
+          minimum: 0
+          description: Optional optimistic concurrency token
+    ReleaseWindow:
+      type: object
+      required:
+        - id
+        - productArea
+        - title
+        - startAt
+        - endAt
+        - state
+        - version
+        - updatedAt
+      properties:
+        id: { type: string, format: uuid }
+        productArea: { type: string }
+        title: { type: string }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        state:
+          type: string
+          enum: [draft, proposed, approved, blocked, cancelled]
+        version: { type: integer }
+        updatedAt: { type: string, format: date-time }
+    PendingApprovalsResponse:
+      type: object
+      required: [groups]
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/PendingApprovalGroup"
+    PendingApprovalGroup:
+      type: object
+      required: [productArea, pendingCount, items]
+      properties:
+        productArea: { type: string }
+        pendingCount: { type: integer }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReleaseWindowSummary"
+    ReleaseWindowSummary:
+      type: object
+      required: [id, title, state, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        state:
+          type: string
+          enum: [proposed]
+        updatedAt: { type: string, format: date-time }

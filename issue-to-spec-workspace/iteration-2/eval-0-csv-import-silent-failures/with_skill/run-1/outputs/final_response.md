@@ -1,0 +1,6 @@
+- issue: acme/platform#142
+- readiness: needs-clarification
+- notes:
+  - attempted gh command: GH_PAGER=cat gh issue view 142 --repo acme/platform --json number,title,body,labels,assignees,milestone,state,comments
+  - exact gh stderr/error text: GraphQL: Could not resolve to a Repository with the name 'acme/platform'. (repository)
+  - next action required: Verify repository ownership/access for acme/platform (or provide the correct repo slug), then rerun issue retrieval.

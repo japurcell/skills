@@ -1,0 +1,6 @@
+- Applied checklist gate logic from implement-plan skill.
+- Assumed checklists/ contains ux.md (all complete) and test.md (3 incomplete).
+- Because at least one checklist is incomplete, overall gate is FAIL and execution must pause for explicit user confirmation.
+- Next step depends on user input:
+  - yes/proceed/continue -> move to Implementation Context Loaded.
+  - no/wait/stop -> halt execution.

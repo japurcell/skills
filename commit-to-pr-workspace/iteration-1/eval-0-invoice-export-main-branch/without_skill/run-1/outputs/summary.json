@@ -1,0 +1,10 @@
+{
+  "branch": "chore/invoice-export",
+  "commit_sha": "d1b4c6f3d24baa32adba0860810bdd598814fc79",
+  "commit_subject": "chore: update files",
+  "commit_body": "",
+  "new_commit_count": 1,
+  "contains_issue_123": false,
+  "push_ok": true,
+  "pr_url": "https://example.com/org/repo/pull/42"
+}
