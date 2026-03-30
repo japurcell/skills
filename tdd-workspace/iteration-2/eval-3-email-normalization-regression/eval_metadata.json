@@ -1,0 +1,12 @@
+{
+  "eval_id": 3,
+  "eval_name": "email-normalization-regression",
+  "prompt": "I need to fix a bug in Python using TDD, but the full test suite already has an unrelated failure. The bug is that `normalize_email(\"  Alice@Example.com  \")` returns '  alice@example.com  ' instead of 'alice@example.com'. The current code is:\n\n```python\ndef normalize_email(email):\n    return email.lower()\n```\n\nAnd when I run the full suite I already get this unrelated failure:\n\n```text\nFAILED tests/test_notifications.py::test_sends_signup_email - ConnectionError: SMTP server unavailable\n```\n\nHelp me fix only the email normalization bug with TDD. Start with the regression test, and keep the signal clean so the unrelated failure doesn't get in the way.",
+  "assertions": [
+    "Writes a regression test for the exact normalization bug before changing the implementation",
+    "Advises running a focused test target rather than the whole suite because an unrelated failure already exists",
+    "Explains that the red step should fail for the normalization behavior, not because of the SMTP failure",
+    "Applies the minimal fix after the test is written",
+    "Tests through the public normalize_email function interface"
+  ]
+}

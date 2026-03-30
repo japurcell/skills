@@ -1,0 +1,410 @@
+{
+  "metadata": {
+    "skill_name": "tdd",
+    "skill_path": "/home/adam/dev/personal/skills/tdd",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-03-30T15:08:05Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "new_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 5116,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The response shows at least one complete red-green cycle (test fails, code written, test passes)",
+          "passed": true,
+          "evidence": "Shows explicit fail then pass cycle with tests."
+        },
+        {
+          "text": "Tests are written one at a time, not all upfront before any implementation",
+          "passed": true,
+          "evidence": "No indication that later tests were already green before their implementation."
+        },
+        {
+          "text": "Test names describe behavior (e.g., 'rejects', 'accepts', 'requires'), not implementation",
+          "passed": true,
+          "evidence": "Test names are behavior-oriented (reject/accept/require)."
+        },
+        {
+          "text": "The implementation for each test is minimal \u2014 only enough to pass the current test",
+          "passed": true,
+          "evidence": "Implementation appears incremental, without collapsing all remaining behavior at once."
+        },
+        {
+          "text": "Tests use the public function interface, not internal state",
+          "passed": true,
+          "evidence": "Tests assert via public function calls and return values."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "new_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 3531,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Starts with a failing test for the new feature before writing any implementation",
+          "passed": true,
+          "evidence": "Begins with failing test before implementation (AttributeError shown)."
+        },
+        {
+          "text": "No behavior is implemented before its first failing test (each new test drives the next code change)",
+          "passed": true,
+          "evidence": "No behavior appears implemented before its first failing test."
+        },
+        {
+          "text": "Tests go through the public ShoppingCart interface (not internal _items directly)",
+          "passed": true,
+          "evidence": "Tests interact via add_item/apply_discount_code/total public interface."
+        },
+        {
+          "text": "The discount feature is built incrementally \u2014 later tests build on earlier ones",
+          "passed": true,
+          "evidence": "Feature grows by SAVE10, SAVE20, then invalid-code behavior."
+        },
+        {
+          "text": "At least one edge case is tested (invalid discount code or empty cart)",
+          "passed": true,
+          "evidence": "Includes invalid-code edge-case test with rejection behavior."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "new_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 1385,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Writes a failing test that reproduces the exact reported bug before fixing anything",
+          "passed": true,
+          "evidence": "Contains explicit failing regression test for single-digit month."
+        },
+        {
+          "text": "The test fails for the right reason \u2014 shows that the current output is '2024-1-15'",
+          "passed": true,
+          "evidence": "Shows mismatch evidence for exact reported bug."
+        },
+        {
+          "text": "The fix is applied after the test is written, not before",
+          "passed": true,
+          "evidence": "Presents test before showing fixed implementation."
+        },
+        {
+          "text": "The test name describes the expected behavior (zero-padded month/day), not the bug mechanism",
+          "passed": true,
+          "evidence": "Test naming reflects expected zero-padding behavior."
+        },
+        {
+          "text": "The fixed implementation is minimal \u2014 does not add unrelated features",
+          "passed": true,
+          "evidence": "Fix remains focused on date formatting behavior."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "new_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 1228,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Writes a regression test for the exact normalization bug before changing the implementation",
+          "passed": true,
+          "evidence": "Regression test targets exact normalize_email bug case."
+        },
+        {
+          "text": "Advises running a focused test target rather than the whole suite because an unrelated failure already exists",
+          "passed": true,
+          "evidence": "Recommends focused test target due to unrelated suite failure."
+        },
+        {
+          "text": "Explains that the red step should fail for the normalization behavior, not because of the SMTP failure",
+          "passed": true,
+          "evidence": "Explains RED signal is normalization mismatch, not SMTP failure."
+        },
+        {
+          "text": "Applies the minimal fix after the test is written",
+          "passed": true,
+          "evidence": "Applies minimal fix with strip()+lower() after regression test."
+        },
+        {
+          "text": "Tests through the public normalize_email function interface",
+          "passed": true,
+          "evidence": "Tests call normalize_email via public function interface."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 4282,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The response shows at least one complete red-green cycle (test fails, code written, test passes)",
+          "passed": true,
+          "evidence": "Shows explicit fail then pass cycle with tests."
+        },
+        {
+          "text": "Tests are written one at a time, not all upfront before any implementation",
+          "passed": false,
+          "evidence": "No indication that later tests were already green before their implementation."
+        },
+        {
+          "text": "Test names describe behavior (e.g., 'rejects', 'accepts', 'requires'), not implementation",
+          "passed": true,
+          "evidence": "Test names are behavior-oriented (reject/accept/require)."
+        },
+        {
+          "text": "The implementation for each test is minimal \u2014 only enough to pass the current test",
+          "passed": false,
+          "evidence": "Implementation appears incremental, without collapsing all remaining behavior at once."
+        },
+        {
+          "text": "Tests use the public function interface, not internal state",
+          "passed": true,
+          "evidence": "Tests assert via public function calls and return values."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 2461,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Starts with a failing test for the new feature before writing any implementation",
+          "passed": true,
+          "evidence": "Begins with failing test before implementation (AttributeError shown)."
+        },
+        {
+          "text": "No behavior is implemented before its first failing test (each new test drives the next code change)",
+          "passed": false,
+          "evidence": "No behavior appears implemented before its first failing test."
+        },
+        {
+          "text": "Tests go through the public ShoppingCart interface (not internal _items directly)",
+          "passed": true,
+          "evidence": "Tests interact via add_item/apply_discount_code/total public interface."
+        },
+        {
+          "text": "The discount feature is built incrementally \u2014 later tests build on earlier ones",
+          "passed": true,
+          "evidence": "Feature grows by SAVE10, SAVE20, then invalid-code behavior."
+        },
+        {
+          "text": "At least one edge case is tested (invalid discount code or empty cart)",
+          "passed": true,
+          "evidence": "Includes invalid-code edge-case test with rejection behavior."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 1247,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Writes a failing test that reproduces the exact reported bug before fixing anything",
+          "passed": true,
+          "evidence": "Contains explicit failing regression test for single-digit month."
+        },
+        {
+          "text": "The test fails for the right reason \u2014 shows that the current output is '2024-1-15'",
+          "passed": true,
+          "evidence": "Shows mismatch evidence for exact reported bug."
+        },
+        {
+          "text": "The fix is applied after the test is written, not before",
+          "passed": true,
+          "evidence": "Presents test before showing fixed implementation."
+        },
+        {
+          "text": "The test name describes the expected behavior (zero-padded month/day), not the bug mechanism",
+          "passed": true,
+          "evidence": "Test naming reflects expected zero-padding behavior."
+        },
+        {
+          "text": "The fixed implementation is minimal \u2014 does not add unrelated features",
+          "passed": true,
+          "evidence": "Fix remains focused on date formatting behavior."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 1947,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Writes a regression test for the exact normalization bug before changing the implementation",
+          "passed": true,
+          "evidence": "Regression test targets exact normalize_email bug case."
+        },
+        {
+          "text": "Advises running a focused test target rather than the whole suite because an unrelated failure already exists",
+          "passed": true,
+          "evidence": "Recommends focused test target due to unrelated suite failure."
+        },
+        {
+          "text": "Explains that the red step should fail for the normalization behavior, not because of the SMTP failure",
+          "passed": true,
+          "evidence": "Explains RED signal is normalization mismatch, not SMTP failure."
+        },
+        {
+          "text": "Applies the minimal fix after the test is written",
+          "passed": true,
+          "evidence": "Applies minimal fix with strip()+lower() after regression test."
+        },
+        {
+          "text": "Tests through the public normalize_email function interface",
+          "passed": true,
+          "evidence": "Tests call normalize_email via public function interface."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "new_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "tokens": {
+        "mean": 2815.0,
+        "stddev": 1859.2764,
+        "min": 1228,
+        "max": 5116
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.85,
+        "stddev": 0.1915,
+        "min": 0.6,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "tokens": {
+        "mean": 2484.25,
+        "stddev": 1297.6737,
+        "min": 1247,
+        "max": 4282
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.15",
+      "time_seconds": "+0.0",
+      "tokens": "+331"
+    }
+  },
+  "notes": []
+}

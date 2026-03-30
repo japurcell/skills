@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Writes a failing test that reproduces the exact reported bug before fixing anything",
+      "passed": true,
+      "evidence": "Contains explicit failing regression test for single-digit month."
+    },
+    {
+      "text": "The test fails for the right reason \u2014 shows that the current output is '2024-1-15'",
+      "passed": true,
+      "evidence": "Shows mismatch evidence for exact reported bug."
+    },
+    {
+      "text": "The fix is applied after the test is written, not before",
+      "passed": true,
+      "evidence": "Presents test before showing fixed implementation."
+    },
+    {
+      "text": "The test name describes the expected behavior (zero-padded month/day), not the bug mechanism",
+      "passed": true,
+      "evidence": "Test naming reflects expected zero-padding behavior."
+    },
+    {
+      "text": "The fixed implementation is minimal \u2014 does not add unrelated features",
+      "passed": true,
+      "evidence": "Fix remains focused on date formatting behavior."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "errors_encountered": 0,
+    "output_chars": 1247,
+    "transcript_chars": 1247
+  },
+  "timing": {
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

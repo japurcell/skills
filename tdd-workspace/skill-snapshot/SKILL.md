@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: Test-driven development (TDD) with an explicit red-green-refactor loop. Use this skill whenever the user wants to build or fix code test-first, mentions "TDD", "red-green-refactor", "write tests first", "write a failing test", "start with a regression test", or asks to add a feature or fix a bug while proving it with tests. Use it even when they do not say "TDD" directly but the right workflow is to reproduce a bug with a failing test, implement the smallest change that passes, and then refactor safely.
+description: Test-driven development (TDD) with red-green-refactor loop. Use this skill whenever the user wants to write code test-first, mentions "TDD", "red-green-refactor", "write tests first", "write a failing test", or asks you to "use TDD" on any feature or bug fix. Also use it when someone says "let's build this with tests", "help me write unit/integration tests as I build", or "I want to test-drive this implementation". Use it for bug fixes where the user wants to start with a failing test. Use it even if they don't say "TDD" explicitly but it's clear they want a test-first workflow.
 ---
 
 # Test-Driven Development
@@ -14,8 +14,6 @@ description: Test-driven development (TDD) with an explicit red-green-refactor l
 **Bad tests** are coupled to implementation: they mock internal collaborators, test private methods, or verify outcomes through side-channels (like querying a database directly instead of going through the interface). The warning sign is a test that breaks when you refactor but behavior hasn't changed.
 
 See [tests.md](tests.md) for concrete examples, and [mocking.md](mocking.md) for when (and when not) to mock.
-
-The point of TDD is not "have tests." The point is to use a tight feedback loop to discover the interface, prove behavior, and keep the code honest while it changes.
 
 ## The One Rule That Derails TDD: Horizontal Slices
 
@@ -36,8 +34,6 @@ RIGHT (vertical):
   ...
 ```
 
-Tiny design note: it is fine to sketch the next 2-3 behaviors in one sentence so the user sees the direction. It is not fine to write all the tests or all the implementation up front.
-
 ## Workflow
 
 ### 1. Orient (lightweight for simple tasks)
@@ -51,14 +47,6 @@ Before writing code, get oriented — but keep this proportional to the task's c
 Useful question: _"What should the caller be able to do after this is built?"_
 
 For deeper design questions, see [deep-modules.md](deep-modules.md) and [interface-design.md](interface-design.md).
-
-When the user is fixing a bug, orient around the regression:
-
-- What exact behavior is broken right now?
-- What input reproduces it most directly?
-- What public-facing assertion would fail before the fix and pass after it?
-
-For bug fixes, start with the narrowest regression test that proves the bug exists. Do not fix the code first and backfill the test later.
 
 #### If there's no test infrastructure yet
 
@@ -75,12 +63,6 @@ Don't over-engineer the setup. A single test file and a way to run it is enough 
 ### 2. Tracer Bullet (first test)
 
 Write one test that proves the path works end-to-end. It should be the simplest behavior that's actually useful — not a trivial happy path, not a complex edge case. Make it fail first, then make it pass.
-
-The first test should create traction:
-
-- For a new feature, pick the smallest user-visible success case.
-- For a bug fix, reproduce the exact bug with the smallest concrete input.
-- For an existing codebase, prefer running the narrowest relevant test target instead of the whole suite if the suite is large.
 
 **Show the cycle explicitly in conversation:**
 
@@ -102,15 +84,11 @@ def is_valid_password(password):
 
 This explicit walkthrough of the red-green cycle is part of the value. Don't skip to "here's the final code" — show the rhythm.
 
-If tools are available, actually run the relevant test command and use the real failure/output. If tools are not available, state clearly what should fail, why it fails, and what command you would run.
-
 ### 3. Incremental Loop
 
 For each remaining behavior: write the test, verify it fails for the right reason, write minimal code, verify it passes.
 
 Key discipline: only enough code to pass the current test. Don't write code for tests you haven't written yet.
-
-That includes "helpful" branches for cases you have not tested yet. If the current test only proves one happy path, do not also add invalid-input handling, extra supported values, or protective edge-case logic just because you expect to need it later.
 
 ```
 RED:   Write next test → run → should see a clean failure
@@ -119,36 +97,6 @@ REFACTOR: Clean up if needed → run → still passes
 ```
 
 When talking through each cycle with the user, it helps to narrate the reason for the failure ("fails because X hasn't been implemented") and what minimal code will fix it.
-
-Be strict about what counts as a good RED step:
-
-- The test must fail for the intended reason, not because of a typo, import error, or broken setup.
-- The next test should introduce a behavior that is not already green. If a proposed test already passes, treat it as optional verification and pick a different behavior for the next TDD slice.
-- If unrelated existing failures block progress, isolate the relevant test target and say so.
-- If the first failure shows the interface is awkward, adjust the design and rewrite the test around the better public interface.
-
-Be equally strict about GREEN: the implementation should satisfy the current behavior and nothing materially beyond it. Untested branches are usually speculation in disguise.
-
-Worked sequencing example (feature work):
-
-```python
-# Start with SAVE10 only
-def test_save10_applies_10_percent_discount(): ...
-
-# GREEN code after this test should support only SAVE10.
-# Do NOT add invalid-code handling yet.
-def apply_discount_code(code):
-  if code == "SAVE10":
-    return 10
-  raise NotImplementedError
-
-# Next RED introduces invalid-code behavior
-def test_invalid_discount_code_is_rejected(): ...
-
-# Only now add invalid-code handling.
-```
-
-If you notice a later test is already green because its behavior was implemented earlier, call that out as a sequencing mistake and reset to the last true RED point.
 
 ### 4. Refactor
 
@@ -159,30 +107,6 @@ After the tests pass, look for cleanup opportunities. See [refactoring.md](refac
 - Apply SOLID principles where they arise naturally
 
 Run the tests after each refactor step. Never refactor while RED — get to green first.
-
-Refactor in small moves. If you feel tempted to do a large rewrite, stop and add another test first.
-
-## Default Conversation Shape
-
-Use a compact structure that makes the loop obvious:
-
-1. Briefly orient on the interface and the next behavior to implement.
-2. Show the next failing test.
-3. Show or describe the failure.
-4. Add the smallest code change that makes that test pass.
-5. Re-run the relevant test.
-6. Decide whether to refactor now or move to the next behavior.
-
-For multi-cycle tasks, repeat this per behavior instead of dumping the final solution all at once.
-
-Good phrases:
-
-- "Let's start with the smallest behavior that matters."
-- "This test should fail because the feature doesn't exist yet."
-- "Now we add only enough code to make that test pass."
-- "Before adding the next case, let's make sure the current slice is green."
-
-Avoid narrating a big upfront implementation plan that skips the live loop.
 
 ## Test Naming
 
@@ -200,24 +124,6 @@ def test_password_validator_returns_false(): ...
 def test_case_1(): ...
 ```
 
-Prefer names that describe business behavior or user-visible rules. Avoid names that leak method names, helpers, or private fields unless those are themselves the public API.
-
-## Guardrails
-
-Do not do these things when following TDD:
-
-- Don't write all tests first.
-- Don't write implementation for tests that do not exist yet.
-- Don't test private methods or internal collections when a public interface can express the same behavior.
-- Don't mock code you own just to make a test easier.
-- Don't leave RED ambiguous; confirm why the test is failing.
-- Don't treat a bug fix as complete without a regression test.
-- Don't add untested branches or error handling "while you're here."
-
-If the code is hard to test through the public interface, treat that as design feedback. Improve the interface or introduce a seam at a true system boundary rather than reaching deeper into internals.
-
-When you add a "next useful test," make sure it is actually the next missing behavior. Do not present a test as part of the active red-green loop if the current implementation already satisfies it; in that case either run it as confirmation after the current slice is green or choose a test that still forces a minimal code change.
-
 ## How Many Tests?
 
 You can't test everything, and you shouldn't try. Focus on:
@@ -234,22 +140,12 @@ Skip testing:
 
 When in doubt, ask the user: "This adds 3 more tests covering edge cases. Do you want to include them or are you satisfied with coverage of the main paths?"
 
-For a bug fix, the default minimum is:
-
-- one regression test that reproduces the reported bug
-- the smallest fix that makes it pass
-- one nearby case only if it meaningfully protects against an obvious follow-on failure
-
-Bias toward stopping after the reported bug is green. Add adjacent coverage only when the prompt, existing behavior, or the format/spec strongly implies that the neighboring case is part of the same requirement.
-
 ## Quick Checklist Per Cycle
 
 ```
 [ ] Test name describes behavior, not implementation
 [ ] Test uses public interface only
-[ ] Test fails for the intended reason
 [ ] Test would survive internal refactor
 [ ] Code is minimal for this test
 [ ] No speculative features added
-[ ] Relevant tests re-run after refactor
 ```

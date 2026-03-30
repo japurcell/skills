@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Starts with a failing test for the new feature before writing any implementation",
+      "passed": true,
+      "evidence": "Begins with failing test before implementation (AttributeError shown)."
+    },
+    {
+      "text": "No behavior is implemented before its first failing test (each new test drives the next code change)",
+      "passed": false,
+      "evidence": "No behavior appears implemented before its first failing test."
+    },
+    {
+      "text": "Tests go through the public ShoppingCart interface (not internal _items directly)",
+      "passed": true,
+      "evidence": "Tests interact via add_item/apply_discount_code/total public interface."
+    },
+    {
+      "text": "The discount feature is built incrementally \u2014 later tests build on earlier ones",
+      "passed": true,
+      "evidence": "Feature grows by SAVE10, SAVE20, then invalid-code behavior."
+    },
+    {
+      "text": "At least one edge case is tested (invalid discount code or empty cart)",
+      "passed": true,
+      "evidence": "Includes invalid-code edge-case test with rejection behavior."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "errors_encountered": 0,
+    "output_chars": 2461,
+    "transcript_chars": 2461
+  },
+  "timing": {
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

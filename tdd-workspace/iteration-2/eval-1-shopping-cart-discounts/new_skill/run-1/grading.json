@@ -1,0 +1,65 @@
+{
+  "expectations": [
+    {
+      "text": "Starts with a failing test for the new feature before writing any implementation",
+      "passed": true,
+      "evidence": "The response opens with `test_save10_applies_10_percent_discount_to_total()`, then explicitly says `This should fail for the right reason: ShoppingCart has no apply_discount_code yet` before showing any production implementation."
+    },
+    {
+      "text": "Each new test is followed by implementation — not all tests first",
+      "passed": false,
+      "evidence": "The SAVE10 and SAVE20 tests are followed by implementation updates, but the invalid-code test is introduced after invalid-code rejection already exists in Slice 1 (`else: raise ValueError('Invalid discount code')`). The response also says this test `should already be a real red/green check` and may already pass, so this is not a strict test-then-new-implementation step for every new test."
+    },
+    {
+      "text": "Tests go through the public ShoppingCart interface (not internal _items directly)",
+      "passed": true,
+      "evidence": "All test snippets use the public API (`ShoppingCart()`, `add_item(...)`, `apply_discount_code(...)`, `total()`) and do not read or mutate `_items` directly."
+    },
+    {
+      "text": "The discount feature is built incrementally — later tests build on earlier ones",
+      "passed": true,
+      "evidence": "The flow is incremental: Slice 1 adds SAVE10 behavior, Slice 2 adds an explicit invalid-code test, Slice 3 adds SAVE20 support, then refactors to a `DISCOUNT_CODES` map only after core behaviors are covered."
+    },
+    {
+      "text": "At least one edge case is tested (invalid discount code or empty cart)",
+      "passed": true,
+      "evidence": "The response includes `test_invalid_discount_code_is_rejected()` and checks `pytest.raises(ValueError, match='Invalid discount code')` for `BADCODE`, satisfying the invalid-discount edge case."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "errors_encountered": 0,
+    "output_chars": 4557,
+    "transcript_chars": 5203
+  },
+  "timing": {
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "The transcript shows proposed commands and expected outcomes but not actual pytest execution output, so the grade is based on the response content and sequencing only.",
+      "The prompt does not mandate the exact public API shape; the response assumes `apply_discount_code(code)` mutates discount state used by `total()`."
+    ],
+    "needs_review": [
+      "Assertion 2 is strict: one introduced test (invalid code) is not followed by new implementation because that behavior is already implemented earlier."
+    ],
+    "workarounds": [
+      "Used transcript and final response as evidence and set telemetry-dependent fields (tool calls and timing) to zero, consistent with prior local grading files when runtime telemetry is unavailable."
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      "To satisfy strict TDD sequencing for this rubric, introduce the invalid-code test before adding invalid-code handling in implementation."
+    ],
+    "overall": "The run demonstrates clear incremental TDD guidance and strong public-API test style, with one rubric miss on strict test-then-implementation sequencing for every newly introduced test."
+  }
+}

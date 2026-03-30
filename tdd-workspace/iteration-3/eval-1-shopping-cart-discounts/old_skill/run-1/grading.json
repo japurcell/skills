@@ -1,0 +1,62 @@
+{
+  "expectations": [
+    {
+      "text": "Starts with a failing test for the new feature before writing any implementation",
+      "passed": true,
+      "evidence": "The response begins with `test_save10_applies_10_percent_discount_to_total()` and explicitly says to run it first because it should fail before any implementation changes are introduced."
+    },
+    {
+      "text": "Each new test is followed by implementation — not all tests first",
+      "passed": true,
+      "evidence": "The sequence alternates red-green steps: SAVE10 test then minimal implementation, invalid-code rejection test then implementation update, SAVE20 test then implementation update, with refactor only after tests are green."
+    },
+    {
+      "text": "Tests go through the public ShoppingCart interface (not internal _items directly)",
+      "passed": true,
+      "evidence": "All tests use `ShoppingCart()`, `add_item(...)`, `apply_discount_code(...)`, and `total()`; no test reaches into `_items` directly."
+    },
+    {
+      "text": "The discount feature is built incrementally — later tests build on earlier ones",
+      "passed": true,
+      "evidence": "Behavior is added in small slices: first SAVE10 support, then invalid-code rejection, then SAVE20 support, followed by a small refactor to a `DISCOUNT_CODES` mapping."
+    },
+    {
+      "text": "At least one edge case is tested (invalid discount code or empty cart)",
+      "passed": true,
+      "evidence": "The response includes `test_invalid_discount_code_is_rejected()` and verifies `ValueError(\"Invalid discount code\")` for an unsupported code."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "errors_encountered": 0,
+    "output_chars": 4013,
+    "transcript_chars": 4684
+  },
+  "timing": {
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "The response assumes a specific public API shape (`apply_discount_code(code)` plus discount state consumed by `total()`), which is reasonable but inferred from the prompt rather than explicitly dictated."
+    ],
+    "needs_review": [],
+    "workarounds": [
+      "Used transcript and response text as evidence, with telemetry fields retained in the same style as prior iteration grading files."
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      "Optionally call out that API details are inferred to make assumption-handling explicit in the first red test."
+    ],
+    "overall": "Strong TDD flow with clear red-green-refactor sequencing, public-interface tests, incremental behavior, and edge-case coverage."
+  }
+}

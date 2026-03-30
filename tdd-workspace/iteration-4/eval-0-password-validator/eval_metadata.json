@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "password-validator",
+  "prompt": "I need to write a password validator in Python using TDD. The rules are: at least 8 characters, must have at least one uppercase letter, one lowercase letter, and one digit. Let's build it test-first \u2014 start with the first test, show me the red-green cycle, then keep going one behavior at a time.",
+  "assertions": [
+    "The response shows at least one complete red-green cycle (test fails, code written, test passes)",
+    "Tests are written one at a time, not all upfront before any implementation",
+    "Test names describe behavior (e.g., 'rejects', 'accepts', 'requires'), not implementation",
+    "The implementation for each test is minimal \u2014 only enough to pass the current test",
+    "Tests use the public function interface, not internal state"
+  ]
+}

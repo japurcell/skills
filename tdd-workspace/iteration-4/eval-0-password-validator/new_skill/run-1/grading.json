@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "The response shows at least one complete red-green cycle (test fails, code written, test passes)",
+      "passed": true,
+      "evidence": "Shows explicit fail then pass cycle with tests."
+    },
+    {
+      "text": "Tests are written one at a time, not all upfront before any implementation",
+      "passed": true,
+      "evidence": "No indication that later tests were already green before their implementation."
+    },
+    {
+      "text": "Test names describe behavior (e.g., 'rejects', 'accepts', 'requires'), not implementation",
+      "passed": true,
+      "evidence": "Test names are behavior-oriented (reject/accept/require)."
+    },
+    {
+      "text": "The implementation for each test is minimal \u2014 only enough to pass the current test",
+      "passed": true,
+      "evidence": "Implementation appears incremental, without collapsing all remaining behavior at once."
+    },
+    {
+      "text": "Tests use the public function interface, not internal state",
+      "passed": true,
+      "evidence": "Tests assert via public function calls and return values."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "errors_encountered": 0,
+    "output_chars": 5116,
+    "transcript_chars": 5116
+  },
+  "timing": {
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}
