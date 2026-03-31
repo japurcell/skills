@@ -159,7 +159,7 @@ If the user says "whatever you think is best", provide your recommendation and g
 
 1. Read all relevant files identified in previous phases
 2. Implement following the chosen approach
-3. Use the tdd skill when the feature warrants test-first work or when tests are the safest way to drive the change
+3. Always use the tdd skill to implement with an explicit red-green-refactor loop
 4. Follow codebase conventions strictly
 5. Write clean, maintainable code
 6. Update todos as you progress
@@ -173,9 +173,9 @@ If the user says "whatever you think is best", provide your recommendation and g
 
 **Actions**:
 
-1. Scale review depth to the risk of the change:
-   - Light: do one focused review pass yourself or with one reviewer
-   - Standard or Deep: launch multiple [code-reviewer](agents/code-reviewer.md) agents in parallel with different focuses such as simplicity, correctness, and conventions
+1. Always run independent [code-reviewer](agents/code-reviewer.md) agents for quality review on every track:
+   - Light: launch at least one independent code-reviewer agent
+   - Standard or Deep: launch multiple independent code-reviewer agents in parallel with different focuses such as simplicity, correctness, and conventions
 2. Consolidate findings and prioritize the issues that matter most
 3. Fix obvious high-severity issues directly unless the user has asked to stop after review
 4. Surface remaining risks, trade-offs, and follow-up work clearly

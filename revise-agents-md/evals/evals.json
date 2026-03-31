@@ -1,0 +1,38 @@
+{
+  "skill_name": "revise-agents-md",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Please update AGENTS.md based on what we learned today. We discovered that rg is faster than grep in this repo, that we should use apply_patch for single-file edits, and that we should run get_errors after edits. Show me proposed additions first; do not apply yet.",
+      "expected_output": "Proposes concise, file-targeted AGENTS.md updates and asks for approval before editing.",
+      "files": [],
+      "expectations": [
+        "Includes a proposed diff block rather than immediately applying edits",
+        "Contains an explicit approval question before any file change",
+        "Captures at least two durable, actionable learnings from the prompt"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Wrap up this session by capturing durable guidance in AGENTS.md. Important: this repo currently has no AGENTS.md file yet, so handle that case cleanly and keep it brief.",
+      "expected_output": "Recognizes missing AGENTS.md and proposes creating a root file with concise, high-signal entries pending approval.",
+      "files": [],
+      "expectations": [
+        "Explicitly states that no AGENTS.md files were found",
+        "Proposes creating ./AGENTS.md instead of failing silently",
+        "Requests approval before creating the file"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Do a retrospective AGENTS update, but only include recurring rules. Ignore one-off incidents. Present findings and grouped proposed updates by file path.",
+      "expected_output": "Returns a structured, concise response with findings and grouped proposed updates, filtering out noisy one-off items.",
+      "files": [],
+      "expectations": [
+        "Response includes a Findings section",
+        "Proposed updates are grouped by AGENTS.md file path",
+        "Avoids one-off/non-durable guidance"
+      ]
+    }
+  ]
+}

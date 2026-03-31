@@ -1,0 +1,13 @@
+{
+  "expectations": [
+    {"text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.", "passed": true, "evidence": "References feature-dev skill, template, and eval files."},
+    {"text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.", "passed": true, "evidence": "Created outputs/.agents/scratchpad/feature-dev-handoff-policy-enforcement/handoff-plan.md."},
+    {"text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.", "passed": true, "evidence": "Artifact includes slices, file map, and validation sections."},
+    {"text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.", "passed": true, "evidence": "Metadata includes concrete Status/Track/Origin/Next Step."},
+    {"text": "Each referenced file in Relevant Findings includes why that file matters.", "passed": true, "evidence": "Relevant Findings contains file-specific purpose statements."},
+    {"text": "Open questions are tightly bounded to truly blocking items and include risk framing.", "passed": true, "evidence": "Keeps uncertainty bounded; risk-aware framing present."},
+    {"text": "Provides artifact status in the response with the exact artifact path.", "passed": true, "evidence": "Final response includes Artifact Status with exact path."},
+    {"text": "Includes rationale or trade-offs for the proposed design.", "passed": true, "evidence": "Mentions tightening must-level policy and benchmark reliability rationale."}
+  ],
+  "summary": {"passed": 8, "failed": 0, "total": 8, "pass_rate": 1.0}
+}

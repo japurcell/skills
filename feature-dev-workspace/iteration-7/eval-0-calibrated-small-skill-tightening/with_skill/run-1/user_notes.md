@@ -1,0 +1,3 @@
+- Used the skill structure (Understanding, Findings, Recommendation, Implementation Map).
+- Avoided blocking questions because task is concrete.
+- Kept scope to precise changes in `skills/feature-dev/SKILL.md`.

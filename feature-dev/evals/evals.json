@@ -11,6 +11,12 @@
         "Avoids asking blocking clarifying questions for this well-specified task.",
         "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.",
         "Scales the workflow to the task instead of insisting on a full multi-phase approval process."
+      ],
+      "assertions": [
+        "References the existing feature-dev skill directly rather than answering generically.",
+        "Avoids asking blocking clarifying questions for this well-specified task.",
+        "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.",
+        "Scales the workflow to the task instead of insisting on a full multi-phase approval process."
       ]
     },
     {
@@ -25,6 +31,14 @@
         "Chooses a calibrated standard-level process for this request instead of defaulting to a deep planning workflow.",
         "Separates current understanding, open questions, and a recommended approach.",
         "Explains why the proposed changes would help with unfamiliar repositories."
+      ],
+      "assertions": [
+        "Uses findings from the current repository and current feature-dev skill rather than generic advice.",
+        "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.",
+        "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.",
+        "Chooses a calibrated standard-level process for this request instead of defaulting to a deep planning workflow.",
+        "Separates current understanding, open questions, and a recommended approach.",
+        "Explains why the proposed changes would help with unfamiliar repositories."
       ]
     },
     {
@@ -33,6 +47,16 @@
       "expected_output": "A repo-aware handoff result that actually creates a reusable artifact file with concrete implementation guidance, not just prose about one.",
       "files": [],
       "expectations": [
+        "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+        "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+        "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+        "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+        "Each referenced file in Relevant Findings includes why that file matters.",
+        "Open questions are tightly bounded to truly blocking items and include risk framing.",
+        "Provides artifact status in the response with the exact artifact path.",
+        "Includes rationale or trade-offs for the proposed design."
+      ],
+      "assertions": [
         "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
         "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
         "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",

@@ -1,0 +1,38 @@
+{
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "expectations": [
+    {
+      "text": "Response includes a Findings section",
+      "passed": true,
+      "evidence": "Findings heading present"
+    },
+    {
+      "text": "Proposed updates are grouped by AGENTS.md file path",
+      "passed": true,
+      "evidence": "Path-grouped update heading found"
+    },
+    {
+      "text": "Avoids one-off/non-durable guidance",
+      "passed": true,
+      "evidence": "Durability filtering language present"
+    }
+  ],
+  "timing": {
+    "total_duration_seconds": 0.0
+  },
+  "execution_metrics": {
+    "total_tool_calls": 0,
+    "output_chars": 1892,
+    "errors_encountered": 0
+  },
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

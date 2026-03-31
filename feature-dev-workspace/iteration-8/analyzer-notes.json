@@ -1,0 +1,8 @@
+[
+  "Quality separation remains strong across all evals: with_skill is 100% pass-rate on evals 0/1/2 versus old_skill at 75%, 33.33%, and 25%.",
+  "The strict handoff-quality scenario (eval 2) remains the most discriminating test and drives the largest quality gap.",
+  "Live duration telemetry (wall-clock per subagent call) is now captured for this iteration and shows with_skill slower on average: 26.0s vs 23.9s (+2.0s).",
+  "Timing variance is comparable across configs (with_skill stddev 5.4s, old_skill stddev 4.8s), indicating both prompts have heterogeneous runtime complexity.",
+  "Token telemetry remains unavailable from this platform's subagent completion interface in this session, so benchmark token fields are 0/0 and should be ignored.",
+  "Interpretation: stronger process guidance still clearly improves quality, with a modest measured wall-clock overhead in this live timing pass."
+]

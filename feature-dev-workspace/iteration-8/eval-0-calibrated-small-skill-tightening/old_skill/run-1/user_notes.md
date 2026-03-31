@@ -1,0 +1,1 @@
+- Generic recommendation, not deeply tied to repository structure.

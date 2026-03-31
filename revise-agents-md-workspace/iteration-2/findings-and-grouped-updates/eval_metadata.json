@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "findings-and-grouped-updates",
+  "prompt": "Do a retrospective AGENTS update, but only include recurring rules. Ignore one-off incidents. Present findings and grouped proposed updates by file path.",
+  "assertions": [
+    "Response includes a Findings section",
+    "Proposed updates are grouped by AGENTS.md file path",
+    "Avoids one-off/non-durable guidance"
+  ]
+}

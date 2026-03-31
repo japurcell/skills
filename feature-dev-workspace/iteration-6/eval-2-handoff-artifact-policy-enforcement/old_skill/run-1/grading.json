@@ -1,0 +1,13 @@
+{
+  "expectations": [
+    {"text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.", "passed": false, "evidence": "No explicit repository pattern analysis."},
+    {"text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.", "passed": true, "evidence": "Artifact file exists at expected outputs path."},
+    {"text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.", "passed": false, "evidence": "Artifact is minimal and lacks required sections."},
+    {"text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.", "passed": false, "evidence": "Metadata is incomplete and not template-concrete."},
+    {"text": "Each referenced file in Relevant Findings includes why that file matters.", "passed": false, "evidence": "No Relevant Findings with per-file rationale."},
+    {"text": "Open questions are tightly bounded to truly blocking items and include risk framing.", "passed": false, "evidence": "No bounded open-question risk framing provided."},
+    {"text": "Provides artifact status in the response with the exact artifact path.", "passed": true, "evidence": "Response includes exact artifact path."},
+    {"text": "Includes rationale or trade-offs for the proposed design.", "passed": false, "evidence": "No meaningful trade-off discussion."}
+  ],
+  "summary": {"passed": 2, "failed": 6, "total": 8, "pass_rate": 0.25}
+}

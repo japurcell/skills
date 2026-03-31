@@ -1,0 +1,9 @@
+{
+  "expectations": [
+    {"text": "References the existing feature-dev skill directly rather than answering generically.", "passed": false, "evidence": "Response is generic and does not cite concrete file/section details."},
+    {"text": "Avoids asking blocking clarifying questions for this well-specified task.", "passed": true, "evidence": "No blocking questions asked."},
+    {"text": "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.", "passed": true, "evidence": "Suggests description update and adding a not-to-use section."},
+    {"text": "Scales the workflow to the task instead of insisting on a full multi-phase approval process.", "passed": true, "evidence": "Keeps response short and directly actionable."}
+  ],
+  "summary": {"passed": 3, "failed": 1, "total": 4, "pass_rate": 0.75}
+}

@@ -1,0 +1,38 @@
+{
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "expectations": [
+    {
+      "text": "Includes a proposed diff block rather than immediately applying edits",
+      "passed": true,
+      "evidence": "Found ```diff block"
+    },
+    {
+      "text": "Contains an explicit approval question before any file change",
+      "passed": true,
+      "evidence": "Approval request present"
+    },
+    {
+      "text": "Captures at least two durable, actionable learnings from the prompt",
+      "passed": true,
+      "evidence": "Detected 3 of 3 target learnings"
+    }
+  ],
+  "timing": {
+    "total_duration_seconds": 0.0
+  },
+  "execution_metrics": {
+    "total_tool_calls": 0,
+    "output_chars": 877,
+    "errors_encountered": 0
+  },
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}
