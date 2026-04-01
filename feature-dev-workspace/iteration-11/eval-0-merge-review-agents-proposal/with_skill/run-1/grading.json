@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.",
+      "passed": true,
+      "evidence": "Response opens with 'This is an evaluation question about the structure of Phase 6 (Quality Review)' and quotes the skill's Phase 6 steps verbatim: 'Always launch an independent code-simplifier subagent...' and 'Always run independent code-reviewer agents...'"
+    },
+    {
+      "text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.",
+      "passed": true,
+      "evidence": "Explicitly lists both as separate numbered steps: '1. Always launch an independent code-simplifier subagent to identify refactoring opportunities after implementation. 2. Always run independent code-reviewer agents for quality review on every track.'"
+    },
+    {
+      "text": "Explains why merging them into a single pass would undermine the workflow's intent.",
+      "passed": true,
+      "evidence": "Three reasons given: merging removes independence (agents approach code without pre-shaping by the other's framing), eliminates parallel execution capability, and compresses depth per quality dimension. Also introduces 'cognitive contamination risk' — a simplifying agent is anchored to the state it created."
+    },
+    {
+      "text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+      "passed": true,
+      "evidence": "Lists code-simplifier as step 1 and code-reviewer as step 2, indicating code-simplifier runs first; also notes parallelism is an explicit feature for standard and deep tracks, supporting 'alongside' framing."
+    },
+    {
+      "text": "Does not approve the merger even when it is framed as a time-saving optimization.",
+      "passed": true,
+      "evidence": "'The proposal is not acceptable.' The response directly reframes the 'saves time' argument: 'The overhead of two subagents is real but small. The value those agents protect... is high.' Includes a summary table showing the proposed merger fails on all key concerns."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

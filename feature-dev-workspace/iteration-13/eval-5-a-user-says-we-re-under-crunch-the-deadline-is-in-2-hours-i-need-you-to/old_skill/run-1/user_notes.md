@@ -1,0 +1,4 @@
+- Rejected request to bypass TDD despite urgency.
+- Explicitly stated TDD is mandatory across tracks in Phase 5.
+- Proposed deadline-friendly Light track with minimal targeted tests.
+- Included pragmatic scope/timeboxing strategy while preserving required quality gates.

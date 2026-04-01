@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Uses findings from the current repository and current feature-dev skill rather than generic advice.",
+      "passed": true,
+      "evidence": "Explicitly reads 'skills/feature-dev/SKILL.md (current iteration-11 version)' and cites four specific, numbered gaps tied to exact phases (Phase 2 agent prompt templates, Phase 3 question categories, Phase 4 track criteria, Phase 5/6 enforcement). References the actual description text from the frontmatter."
+    },
+    {
+      "text": "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.",
+      "passed": true,
+      "evidence": "Three questions each tied to a specific design decision: (1) most common failure mode, which disambiguates which phase to fix; (2) scope vs. context framing of 'product-sized', which determines whether existing Deep track is sufficient; (3) additive changes vs. new track, which determines structural scope of the fix."
+    },
+    {
+      "text": "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.",
+      "passed": true,
+      "evidence": "Exactly three questions under 'Open Questions', introduced as 'Three questions that materially affect which changes to make and how far to go.'"
+    },
+    {
+      "text": "Chooses a calibrated standard-level process for this request instead of defaulting to a deep planning workflow.",
+      "passed": true,
+      "evidence": "First line: 'Track: Standard. Improving one well-scoped skill file against a specific use-case gap is bounded enough to avoid the overhead of the Deep track.'"
+    },
+    {
+      "text": "Separates current understanding, open questions, and a recommended approach.",
+      "passed": true,
+      "evidence": "Response has distinct sections: 'Understanding', 'Relevant Findings', 'Open Questions', 'Recommendation', and 'Next Step'. Understanding, open questions, and approach are clearly delineated."
+    },
+    {
+      "text": "Explains why the proposed changes would help with unfamiliar repositories.",
+      "passed": true,
+      "evidence": "Each of the three proposed changes includes an explicit 'Why this specifically helps unfamiliar repos' paragraph, e.g. Change 1: 'Without it, exploration can produce plans like run pytest in a repo that uses a custom test runner'; Change 2: 'A technically complete plan that ignores a two-week code freeze or a migration policy creates rework.'"
+    },
+    {
+      "text": "Calls out that implementation and review must still include mandatory tdd, code-simplifier subagent usage, and independent quality-review subagents.",
+      "passed": true,
+      "evidence": "'What to Keep Unchanged' section explicitly lists all three: 'Phase 5 TDD requirement', 'Phase 6, Step 1: code-simplifier subagent — already required as the first independent pass after implementation', and 'Phase 6, Step 2: independent code-reviewer subagents — already required on every track'. Each is called non-negotiable."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

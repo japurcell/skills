@@ -1,0 +1,4 @@
+- Issued clear NO-GO on skipping exploration in unfamiliar repo.
+- Added concrete minimum checklist with specific outputs (trace, touchpoint map, test/CI mapping).
+- Mapped risks to workflow phases and kept clarifying questions bounded.
+- Reaffirmed mandatory downstream gates: TDD, code-simplifier, independent code-reviewer.

@@ -1,0 +1,5 @@
+- Completed WITH_SKILL response for eval 3.
+- Calibrated to Standard track for medium-sized feature.
+- Explicitly enforced TDD red-green-refactor in Phase 5.
+- Explicitly named quality-review subagents: code-simplifier and independent code-reviewer.
+- Clarified that gates are mandatory across tracks.

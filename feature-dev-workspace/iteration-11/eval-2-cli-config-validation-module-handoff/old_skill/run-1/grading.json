@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+      "passed": true,
+      "evidence": "Response states 'No live codebase was provided. The handoff plan is written against conventional Python CLI project structure (src-layout, Click or argparse, pyproject.toml). All file paths in the plan are placeholders that the implementing agent must verify.' References conventional structural patterns rather than inventing arbitrary design."
+    },
+    {
+      "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+      "passed": true,
+      "evidence": "Artifact written to outputs/.agents/scratchpad/cli-config-validation/handoff-plan.md with full absolute path provided in response's Artifact Status section. File exists on disk."
+    },
+    {
+      "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+      "passed": true,
+      "evidence": "Artifact contains ## Implementation Slices (4 slices), ## File-by-File Implementation Map (file-by-file bullet list), and ## Validation Plan with automated and manual steps."
+    },
+    {
+      "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+      "passed": true,
+      "evidence": "Status: 'ready for implementation'; Track: 'Standard'; Recommended Next Step: 'implement directly' — all concrete, no bracket placeholders."
+    },
+    {
+      "text": "Each referenced file in Relevant Findings includes why that file matters.",
+      "passed": true,
+      "evidence": "All entries in Relevant Findings include reasons: cli.py ('the CLI entry-point where the validator must be invoked; pattern assumed to use Click...'), config.py ('likely home for env-var names as constants'), tests/ ('existing test suite location; new test_config_validator.py must be added alongside'), pyproject.toml/setup.cfg ('no new runtime dependencies are needed')."
+    },
+    {
+      "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+      "passed": true,
+      "evidence": "Three assumptions and one minor open question listed. One assumption carries explicit 'Risk if wrong (startup-gate assumption): If validation fires during --help, it may confuse users...' Risk framing is present; questions are bounded in scope."
+    },
+    {
+      "text": "Provides artifact status in the response with the exact artifact path.",
+      "passed": true,
+      "evidence": "Artifact Status section shows 'Status: **ready for implementation**' and the full absolute path to the artifact."
+    },
+    {
+      "text": "Includes rationale or trade-offs for the proposed design.",
+      "passed": true,
+      "evidence": "Recommended Design section states 'This is preferred over the main alternative (raising a custom exception and catching it in main()) because:' and lists three concrete reasons."
+    },
+    {
+      "text": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps — not buried solely in the Implementation Slices section.",
+      "passed": false,
+      "evidence": "The ## Validation Plan section contains: pytest command for the new tests, run of existing test suite, two manual invocation checks, and a 'Review focus' about sys.exit and listing all vars. TDD completion, code-simplifier refactor pass, and code-reviewer review do not appear as named discrete steps in the Validation Plan."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 1,
+    "total": 9,
+    "pass_rate": 0.8889
+  }
+}

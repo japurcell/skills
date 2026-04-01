@@ -1,0 +1,4 @@
+- Calibrated to Standard track for medium-sized (3-file) feature.
+- Explicitly required TDD red-green-refactor during implementation.
+- Named code-simplifier and independent code-reviewer as separate quality roles.
+- Described cross-track enforcement without over-escalating process.

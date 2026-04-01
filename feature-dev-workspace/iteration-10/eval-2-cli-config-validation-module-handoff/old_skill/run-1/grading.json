@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+      "passed": true,
+      "evidence": "Both final response and handoff artifact explicitly acknowledge there is no real codebase to explore and ground design in 'reasonable defaults for a standard Python CLI tool.' Design decisions (inject env as parameter, sys.exit vs raise, REQUIRED_ENV_VARS in entry point) are each explained by reference to testability conventions and CLI patterns. TDD, code-simplifier, and code-reviewer are named by their skill workflow names rather than invented structures."
+    },
+    {
+      "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+      "passed": true,
+      "evidence": "Artifact physically exists at outputs/.agents/scratchpad/cli-config-validation/handoff-plan.md and was successfully read. Final response cites the relative path and notes it is stored at 'outputs/.agents/scratchpad/cli-config-validation/handoff-plan.md in this eval run.'"
+    },
+    {
+      "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+      "passed": true,
+      "evidence": "Handoff artifact contains: Summary, Goal/Non-Goals, Relevant Findings, Technical Context and Constraints, Assumptions/Open Questions, Recommended Design (with full code sample), Implementation Slices (4 slices), File-by-File Implementation Map, Validation Plan, and Next-Agent Kickoff — a complete reusable template shape."
+    },
+    {
+      "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+      "passed": true,
+      "evidence": "Artifact header: **Status**: ready for implementation | **Track**: Standard | **Origin**: feature-dev | **Feature Area**: startup / configuration | **Recommended Next Step**: implement directly. All fields are filled with concrete prose; no unfilled bracket placeholders present."
+    },
+    {
+      "text": "Each referenced file in Relevant Findings includes why that file matters.",
+      "passed": true,
+      "evidence": "Artifact Relevant Findings lists five entries with inline reasons: cli.py/main.py ('the validation call belongs here, before main() executes any logic'), config/ ('target home for the new module; create __init__.py if absent'), tests/ or tests/unit/ ('new test file goes here'), pyproject.toml ('check for any linting or test configuration that constrains file placement'), requirements.txt / pyproject.toml dependencies ('no new runtime dependencies are needed; pytest is assumed available for tests')."
+    },
+    {
+      "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+      "passed": true,
+      "evidence": "Artifact Assumptions section has three assumptions each with 'Risk if wrong' framing (e.g., 'Risk if wrong: Minor; exit code is a one-line change'). One explicit open question ('Does the project already have a config/ sub-package?') is bounded to a single verifiable file check. The items are discovery-level, not design-blocking, and are scoped appropriately."
+    },
+    {
+      "text": "Provides artifact status in the response with the exact artifact path.",
+      "passed": true,
+      "evidence": "Final response 'Artifact Status' section states: 'Handoff artifact written to: .agents/scratchpad/cli-config-validation/handoff-plan.md' and clarifies '(Stored at: outputs/.agents/scratchpad/cli-config-validation/handoff-plan.md in this eval run)'. The path is exact and matches the actual artifact location."
+    },
+    {
+      "text": "Includes rationale or trade-offs for the proposed design.",
+      "passed": true,
+      "evidence": "Final response 'Architecture Decision' section explains injecting env as a parameter: 'Injecting env keeps os.environ out of the function body and makes the function testable without monkeypatching.' Artifact 'Recommended Design' section expands: 'This fits the codebase better than a class-based solution because the feature is purely functional.' Review focus also notes trade-off around empty-string env vars ('Current design: present. Confirm this is correct')."
+    },
+    {
+      "text": "Validation plan explicitly names the TDD red-green-refactor loop, a code-simplifier subagent refactor pass, and an independent code-reviewer subagent review as discrete checkpoints.",
+      "passed": true,
+      "evidence": "Slice 1 contains a named 'Red-green-refactor loop for Slice 1' with numbered Red/Green/Refactor steps. Slice 3 is titled 'Code-simplifier refactor pass' with explicit instruction: 'invoke the code-simplifier skill on the two files listed above.' Slice 4 is titled 'Independent code-reviewer review' with instruction: 'launch an independent code-reviewer agent.' All three are numbered discrete slices. Final response 'Recommendation' section also enumerates them as steps 1, 3, and 4."
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  }
+}

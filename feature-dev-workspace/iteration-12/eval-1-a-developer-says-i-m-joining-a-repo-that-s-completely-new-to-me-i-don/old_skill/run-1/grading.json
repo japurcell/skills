@@ -1,0 +1,54 @@
+{
+  "expectations": [
+    {
+      "text": "Explicitly names Phase 2 (codebase exploration) as critical when the repository is unfamiliar.",
+      "passed": true,
+      "evidence": "Response has a dedicated section titled 'Codebase Exploration (architecture before edits)' and states it should happen before implementation: 'Trace existing flows related to your feature ... Result: your design aligns with how this repo already works.' It also ties this to being in a new repo context."
+    },
+    {
+      "text": "Identifies concrete risks of skipping exploration: e.g., implementing against wrong architectural patterns, using non-standard testing approach, unintended side effects, breaking assumptions.",
+      "passed": true,
+      "evidence": "Response includes a specific 'What Goes Wrong If You Skip Exploration' list with concrete risks: wrong layer optimization, violating implicit architecture contracts, wrong test strategy, breaking cross-cutting concerns, underestimating blast radius, and avoidable rework."
+    },
+    {
+      "text": "Explains that Phase 2 agent(s) should trace through existing similar features to understand the repo's patterns before designing.",
+      "passed": false,
+      "evidence": "Response says to 'Trace existing flows related to your feature' and find existing patterns, but it does not explicitly instruct tracing 'existing similar features' or explicitly reference Phase 2 agents performing that task."
+    },
+    {
+      "text": "States that Phase 3 (clarifying questions) becomes more important in unfamiliar repos, not less, because assumptions about conventions cannot be made.",
+      "passed": false,
+      "evidence": "Response includes a clarifying questions section but does not explicitly state that Phase 3 is 'more important in unfamiliar repos' nor explicitly contrast it with being less important."
+    },
+    {
+      "text": "Emphasizes that all three mandatory workflow requirements (TDD, code-simplifier, independent code-reviewer) are non-negotiable AND that Phase 2 discovery shapes how to apply them in this specific repo's conventions.",
+      "passed": false,
+      "evidence": "Response mentions TDD ('red-green-refactor loops') and an independent review pass, but does not mention code-simplifier as mandatory, does not call all three non-negotiable, and does not explicitly tie Phase 2 findings to adapting all three requirements to repo conventions."
+    }
+  ],
+  "summary": {
+    "total": 5,
+    "passed": 2,
+    "failed": 3,
+    "pass_rate": 0.4
+  },
+  "claims": [
+    {
+      "claim": "Skipping exploration in unfamiliar repos introduces high regression and rework risk.",
+      "supported_by_response": true,
+      "evidence": "Multiple concrete failure modes are listed under 'What Goes Wrong If You Skip Exploration And Jump To Coding'."
+    },
+    {
+      "claim": "The response follows a phased feature-dev flow appropriate for a medium feature.",
+      "supported_by_response": true,
+      "evidence": "It presents a 6-step process from discovery to quality review and maps medium feature work to a standard track approach."
+    },
+    {
+      "claim": "The response fully satisfies mandatory explicitness requirements around phase naming and mandatory tools.",
+      "supported_by_response": false,
+      "evidence": "Missing explicit 'similar features' instruction, missing explicit 'Phase 3 is more important in unfamiliar repos' statement, and missing explicit mention of code-simplifier/non-negotiable triad."
+    }
+  ],
+  "user_notes_summary": "User notes indicate this was a conceptual workflow explanation task, not a live repository analysis, and assume 'medium-sized feature' maps to Standard Track. This context explains why no file-level exploration output exists, but does not remove the requirement to explicitly name mandatory workflow elements in the narrative.",
+  "eval_feedback": "Strong conceptual structure and practical risk framing, but misses several assertion-critical explicit requirements. To pass this eval fully, add direct language: (1) explicitly call Phase 2 critical in unfamiliar repos and direct Phase 2 agents to inspect similar existing features; (2) explicitly state Phase 3 is more important (not less) when conventions are unknown; (3) explicitly name TDD, code-simplifier, and independent code-reviewer as non-negotiable and explain that Phase 2 findings determine how each is applied in this repo's conventions."
+}

@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "a-developer-says-i-m-joining-a-repo-that-s-completely-new-to-me-i-don",
+  "prompt": "A developer says: 'I'm joining a repo that's completely new to me \u2014 I don't know the architecture, the testing strategy, or how the team structures things. Walk me through how the feature-dev workflow would guide me to safely implement a medium-sized feature here. Specifically, what would go *wrong* if I skipped the exploration phase and jumped straight to implementation?' Use the feature-dev skill to answer.",
+  "assertions": [
+    "Explicitly names Phase 2 (codebase exploration) as critical when the repository is unfamiliar.",
+    "Identifies concrete risks of skipping exploration: e.g., implementing against wrong architectural patterns, using non-standard testing approach, unintended side effects, breaking assumptions.",
+    "Explains that Phase 2 agent(s) should trace through existing similar features to understand the repo's patterns before designing.",
+    "States that Phase 3 (clarifying questions) becomes more important in unfamiliar repos, not less, because assumptions about conventions cannot be made.",
+    "Emphasizes that all three mandatory workflow requirements (TDD, code-simplifier, independent code-reviewer) are non-negotiable AND that Phase 2 discovery shapes how to apply them in this specific repo's conventions."
+  ]
+}

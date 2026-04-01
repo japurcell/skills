@@ -1,0 +1,57 @@
+{
+  "eval_id": 2,
+  "run": "old_skill/run-1",
+  "expectations": [
+    {
+      "text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+      "passed": false,
+      "evidence": "Response cites workflow contract and generic likely paths, but does not provide direct evidence of concrete repo pattern lookup (no specific discovered file paths from exploration output)."
+    },
+    {
+      "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+      "passed": true,
+      "evidence": "Artifact created at '.agents/scratchpad/config-validation-module/handoff-plan.md' with exact absolute path provided in Artifact Status."
+    },
+    {
+      "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+      "passed": true,
+      "evidence": "`handoff-plan.md` includes 'Ordered Implementation Slices', 'File-By-File Implementation Map', and 'Validation Plan' sections."
+    },
+    {
+      "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+      "passed": true,
+      "evidence": "Metadata has concrete values: 'Status: Ready for implementation handoff', 'Track: Standard', 'Next Step: Begin Phase 5 implementation via TDD (red-green-refactor)'."
+    },
+    {
+      "text": "Each referenced file in Relevant Findings includes why that file matters.",
+      "passed": true,
+      "evidence": "Artifact includes 'Relevant Findings And Source Files' plus a dedicated 'Why these matter' mapping each referenced area to rationale."
+    },
+    {
+      "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+      "passed": true,
+      "evidence": "Lists 2 blocking questions and explicit risk statements ('Risk if unresolved: ...') for each."
+    },
+    {
+      "text": "Provides artifact status in the response with the exact artifact path.",
+      "passed": true,
+      "evidence": "Final response includes Artifact Status with exact absolute path and copied output path."
+    },
+    {
+      "text": "Includes rationale or trade-offs for the proposed design.",
+      "passed": true,
+      "evidence": "Artifact section 'Recommended Design And Trade-Offs' explains static-list simplicity vs flexibility and startup overhead trade-off."
+    },
+    {
+      "text": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps - not buried solely in the Implementation Slices section.",
+      "passed": true,
+      "evidence": "Validation Plan explicitly names discrete steps: 'TDD completion', 'Code-simplifier pass', and 'Independent code-reviewer review'."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 1,
+    "total": 9,
+    "pass_rate": 0.8889
+  }
+}

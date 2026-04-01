@@ -1,0 +1,1 @@
+OLD skill eval-1: Clear no-go grounded in Core Principles ("Understand before acting"). Three-item pre-implementation checklist tied to specific workflow phases. Downstream gates named: TDD (Phase 5 "Always") and independent code-reviewer (Phase 6). Note old skill does not mention code-simplifier in downstream gates — only code-reviewer.

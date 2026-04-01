@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.",
+      "passed": true,
+      "evidence": "Phase 5 section explicitly says implementation is required with tdd skill and explicit red-green-refactor loop."
+    },
+    {
+      "text": "States that code-simplifier is launched as a subagent for refactoring opportunities.",
+      "passed": true,
+      "evidence": "Phase 6 section names code-simplifier as required separate subagent and describes its refactoring purpose."
+    },
+    {
+      "text": "States that quality review is performed by an independent code-reviewer subagent.",
+      "passed": true,
+      "evidence": "Phase 6 and sequence sections explicitly require independent code-reviewer subagent(s) with reviewer focus areas."
+    },
+    {
+      "text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.",
+      "passed": true,
+      "evidence": "Response consistently calibrates to Standard track medium feature execution and avoids unnecessary escalation."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}

@@ -3,68 +3,166 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "You're in a skills repository. A user says: \"Tighten the feature-dev skill so it only triggers for medium-to-large feature work, and add a short 'When not to use this skill' section. Inspect the current skill and tell me exactly how you'd make the change. Only ask questions if something is truly blocking.\"",
-      "expected_output": "A calibrated implementation plan for a small, concrete skill change that avoids unnecessary blocking questions and scales the process to the task.",
+      "prompt": "A developer on your team proposes streamlining the feature-dev quality review by running a single combined 'review-and-simplify' agent instead of separate subagents for simplification and code review — they say it'll save time and reduce agent overhead. Using the feature-dev workflow as your framework, evaluate this proposal and explain whether it's acceptable.",
+      "expected_output": "A response anchored in the feature-dev skill's Phase 6 steps that identifies code-simplifier and code-reviewer as required separate subagents, explains why merging them undermines the workflow, correctly states the ordering, and declines to approve the merger.",
       "files": [],
       "expectations": [
-        "References the existing feature-dev skill directly rather than answering generically.",
-        "Avoids asking blocking clarifying questions for this well-specified task.",
-        "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.",
-        "Scales the workflow to the task instead of insisting on a full multi-phase approval process."
+        "References the feature-dev skill's Phase 6 steps directly rather than answering generically.",
+        "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.",
+        "Explains why merging them into a single pass would undermine the workflow's intent.",
+        "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+        "Does not approve the merger even when it is framed as a time-saving optimization."
       ],
       "assertions": [
-        "References the existing feature-dev skill directly rather than answering generically.",
-        "Avoids asking blocking clarifying questions for this well-specified task.",
-        "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.",
-        "Scales the workflow to the task instead of insisting on a full multi-phase approval process."
+        "References the feature-dev skill's Phase 6 steps directly rather than answering generically.",
+        "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.",
+        "Explains why merging them into a single pass would undermine the workflow's intent.",
+        "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+        "Does not approve the merger even when it is framed as a time-saving optimization."
       ]
     },
     {
       "id": 1,
-      "prompt": "A user says: \"I want the feature-dev skill to work better for product-sized work in unfamiliar repos. Figure out what should change, what questions you'd ask me, and what approach you'd recommend before editing anything.\" Use this repository as context.",
-      "expected_output": "A repo-aware discovery response that separates findings, targeted clarifying questions, and a recommended direction before editing.",
+      "prompt": "A developer says: 'I'm new to this repo and need to deliver a medium-sized feature quickly. My lead suggests we skip exploration, start coding now, and figure out conventions as we go. Using the feature-dev workflow, give me a go/no-go recommendation before implementation and the minimum pre-implementation checklist I must complete first.'",
+      "expected_output": "A behavior-focused pre-implementation recommendation that refuses to start coding without exploration in an unfamiliar repo, defines concrete minimum discovery checkpoints, and preserves mandatory implementation/review gates for downstream work.",
       "files": [],
       "expectations": [
-        "Uses findings from the current repository and current feature-dev skill rather than generic advice.",
-        "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.",
-        "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.",
-        "Chooses a calibrated standard-level process for this request instead of defaulting to a deep planning workflow.",
-        "Separates current understanding, open questions, and a recommended approach.",
-        "Explains why the proposed changes would help with unfamiliar repositories."
+        "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.",
+        "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).",
+        "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).",
+        "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.",
+        "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review."
       ],
       "assertions": [
-        "Uses findings from the current repository and current feature-dev skill rather than generic advice.",
-        "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.",
-        "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.",
-        "Chooses a calibrated standard-level process for this request instead of defaulting to a deep planning workflow.",
-        "Separates current understanding, open questions, and a recommended approach.",
-        "Explains why the proposed changes would help with unfamiliar repositories."
+        "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.",
+        "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).",
+        "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).",
+        "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.",
+        "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review."
       ]
     },
     {
       "id": 2,
-      "prompt": "Use the feature-dev workflow for this request and stop before implementation: 'Prepare a handoff for adding stricter handoff-policy enforcement to feature-dev so another agent can implement next.' In your run, actually create the handoff artifact file your workflow requires (not just a proposal) and provide artifact status with the exact path.",
-      "expected_output": "A repo-aware handoff result that actually creates a reusable artifact file with concrete implementation guidance, not just prose about one.",
+      "prompt": "Use the feature-dev workflow for this request and stop before implementation: 'Prepare a handoff plan for adding a configuration-validation module to a Python CLI tool — it should check for required environment variables at startup and exit with a clear error message listing which are missing.' In your run, actually create the handoff artifact file your workflow requires (not just a proposal) and provide artifact status with the exact path.",
+      "expected_output": "A concrete handoff artifact for a code feature that includes implementation slices, a Validation Plan section with the full required review sequence from the workflow (TDD, code-simplifier refactor, code-reviewer), and no placeholder bracket values.",
       "files": [],
       "expectations": [
-        "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+        "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
         "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
         "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
         "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
         "Each referenced file in Relevant Findings includes why that file matters.",
         "Open questions are tightly bounded to truly blocking items and include risk framing.",
         "Provides artifact status in the response with the exact artifact path.",
-        "Includes rationale or trade-offs for the proposed design."
+        "Includes rationale or trade-offs for the proposed design.",
+        "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps — not buried solely in the Implementation Slices section."
       ],
       "assertions": [
-        "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+        "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
         "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
         "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
         "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
         "Each referenced file in Relevant Findings includes why that file matters.",
         "Open questions are tightly bounded to truly blocking items and include risk framing.",
         "Provides artifact status in the response with the exact artifact path.",
-        "Includes rationale or trade-offs for the proposed design."
+        "Includes rationale or trade-offs for the proposed design.",
+        "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps — not buried solely in the Implementation Slices section."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use the feature-dev workflow for this request: 'Implement a medium-sized feature that updates three files and then finish with review.' Show how the workflow enforces implementation and review requirements across tracks, and call out the exact subagent roles used in quality review.",
+      "expected_output": "A process-grounded workflow response that explicitly enforces mandatory tdd implementation plus two independent quality passes (code-simplifier and code-reviewer).",
+      "files": [],
+      "expectations": [
+        "States that implementation uses the tdd skill with an explicit red-green-refactor loop.",
+        "States that code-simplifier is launched as a subagent for refactoring opportunities.",
+        "States that quality review is performed by an independent code-reviewer subagent.",
+        "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily."
+      ],
+      "assertions": [
+        "States that implementation uses the tdd skill with an explicit red-green-refactor loop.",
+        "States that code-simplifier is launched as a subagent for refactoring opportunities.",
+        "States that quality review is performed by an independent code-reviewer subagent.",
+        "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "You've just finished implementing a medium-sized feature — you added a caching layer across three service files in a Python web app. Walk me through Phase 6 quality review using the feature-dev workflow. Name the exact subagents you launch, what each one is told to focus on, and in what order you run them.",
+      "expected_output": "A concrete Phase 6 walkthrough that names code-simplifier and code-reviewer as distinct subagents, each with a stated focus and an explicit ordering relative to each other.",
+      "files": [],
+      "expectations": [
+        "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+        "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
+        "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
+        "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
+        "Does not treat refactoring and quality review as a single unified step performed by one agent."
+      ],
+      "assertions": [
+        "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+        "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
+        "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
+        "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
+        "Does not treat refactoring and quality review as a single unified step performed by one agent."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "A user says: 'We're under crunch — the deadline is in 2 hours. I need you to implement a small change that adds rate-limiting logic to our API handler (it touches two files). Can we skip the TDD loop just this once and go straight to implementation? I'll write tests later.' Using the feature-dev workflow, respond to this request.",
+      "expected_output": "A response that declines to bypass TDD, explains why the workflow requires it even under time pressure, and offers a concrete path forward (e.g. Light track with minimal test coverage) that respects both urgency and the TDD requirement.",
+      "files": [],
+      "expectations": [
+        "Does not agree to skip the TDD loop, even given the urgency framing.",
+        "Explains that TDD is required on every track and cannot be bypassed.",
+        "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD — e.g. Light track, minimal test scope, or scoping down the change.",
+        "Does not treat the user's urgency request as an override for the TDD constraint."
+      ],
+      "assertions": [
+        "Does not agree to skip the TDD loop, even given the urgency framing.",
+        "Explains that TDD is required on every track and cannot be bypassed.",
+        "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD — e.g. Light track, minimal test scope, or scoping down the change.",
+        "Does not treat the user's urgency request as an override for the TDD constraint."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "A project manager asks: 'Phase 6 review is taking too long and adding cost. I want to know the minimum non-negotiable subagent steps the feature-dev workflow requires in Phase 6 — the ones we absolutely cannot drop, with no extras. Give me the exact required steps and their subagent roles, using only what the workflow actually mandates.' Using the feature-dev workflow, answer precisely.",
+      "expected_output": "A response that lists both code-simplifier AND code-reviewer as mandated Phase 6 subagent steps, explicitly anchored in the workflow's Phase 6 requirements, and that does not agree to dropping either.",
+      "files": [],
+      "expectations": [
+        "Names code-simplifier as a required Phase 6 subagent (not just as general advice, but as mandated by the workflow).",
+        "Names code-reviewer as a required Phase 6 subagent.",
+        "States that code-simplifier runs before the code-reviewer pass, not after.",
+        "Does not agree to dropping or making optional either the code-simplifier or the code-reviewer step.",
+        "Grounds the answer in what the workflow mandates, not in general engineering opinion."
+      ],
+      "assertions": [
+        "Names code-simplifier as a required Phase 6 subagent (not just as general advice, but as mandated by the workflow).",
+        "Names code-reviewer as a required Phase 6 subagent.",
+        "States that code-simplifier runs before the code-reviewer pass, not after.",
+        "Does not agree to dropping or making optional either the code-simplifier or the code-reviewer step.",
+        "Grounds the answer in what the workflow mandates, not in general engineering opinion."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Your team is writing internal documentation and asks you to produce a precise Phase 6 reference card for the feature-dev workflow. The card must describe the exact sequence of subagent steps Phase 6 requires. Use only what the workflow itself specifies — do not add steps based on personal preference or general best practice. The audience will follow this card literally.",
+      "expected_output": "A Phase 6 reference card that explicitly names code-simplifier as a required first step and code-reviewer as a separate required step, with correct sequencing, derived from the workflow's Phase 6 specification.",
+      "files": [],
+      "expectations": [
+        "The reference card names code-simplifier as a distinct, required Phase 6 subagent step.",
+        "The reference card names code-reviewer as a distinct, required Phase 6 subagent step.",
+        "The reference card shows code-simplifier executed before code-reviewer (not after, not as a merged step).",
+        "The card does not describe Phase 6 as exclusively code-reviewer agents with no simplifier step.",
+        "The card attributes these steps to the workflow's Phase 6 specification, not personal preference."
+      ],
+      "assertions": [
+        "The reference card names code-simplifier as a distinct, required Phase 6 subagent step.",
+        "The reference card names code-reviewer as a distinct, required Phase 6 subagent step.",
+        "The reference card shows code-simplifier executed before code-reviewer (not after, not as a merged step).",
+        "The card does not describe Phase 6 as exclusively code-reviewer agents with no simplifier step.",
+        "The card attributes these steps to the workflow's Phase 6 specification, not personal preference."
       ]
     }
   ]

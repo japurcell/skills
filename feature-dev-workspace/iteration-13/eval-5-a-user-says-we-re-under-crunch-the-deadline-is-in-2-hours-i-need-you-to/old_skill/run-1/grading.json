@@ -1,0 +1,32 @@
+{
+  "eval_id": 5,
+  "run": "old_skill/run-1",
+  "expectations": [
+    {
+      "text": "Does not agree to skip the TDD loop, even given the urgency framing.",
+      "passed": true,
+      "evidence": "Starts with 'No, we should not skip TDD, even under the 2-hour deadline.'"
+    },
+    {
+      "text": "Explains that TDD is required on every track and cannot be bypassed.",
+      "passed": true,
+      "evidence": "States 'Phase 5 requires using `tdd` ... on every track' and urgency only changes scope/depth."
+    },
+    {
+      "text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD - e.g. Light track, minimal test scope, or scoping down the change.",
+      "passed": true,
+      "evidence": "Provides Light-track fast path with minimal 1-2 critical tests, smallest implementation, and scoped deferrals/timeboxing."
+    },
+    {
+      "text": "Does not treat the user's urgency request as an override for the TDD constraint.",
+      "passed": true,
+      "evidence": "Bottom line explicitly says urgency is not an override for TDD in this workflow."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}

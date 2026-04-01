@@ -1,0 +1,37 @@
+{
+  "eval_id": 1,
+  "run": "old_skill/run-1",
+  "expectations": [
+    {
+      "text": "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.",
+      "passed": true,
+      "evidence": "States 'No-go on immediate implementation' and ties it to skipping Phase 2 in an unfamiliar codebase."
+    },
+    {
+      "text": "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).",
+      "passed": true,
+      "evidence": "Checklist includes specific outputs: similar-feature trace, architecture touchpoint map, and test/CI convention mapping (plus boundary check and approach selection)."
+    },
+    {
+      "text": "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).",
+      "passed": true,
+      "evidence": "Risk mapping explicitly references skipping Phases 2, 3, and 4 and associated impacts."
+    },
+    {
+      "text": "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.",
+      "passed": true,
+      "evidence": "Provides exactly 3 high-leverage questions focused on non-goals/scope, integration anchor, and compatibility constraints."
+    },
+    {
+      "text": "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review.",
+      "passed": true,
+      "evidence": "Downstream Mandatory Gates section lists all three by name with phase linkage."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

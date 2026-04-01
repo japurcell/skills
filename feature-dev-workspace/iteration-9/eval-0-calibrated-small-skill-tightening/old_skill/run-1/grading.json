@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "References the existing feature-dev skill directly rather than answering generically.",
+      "passed": true,
+      "evidence": "Quotes actual skill content verbatim: \"Always use the tdd skill to implement with an explicit red-green-refactor loop\" (Phase 5 step 3) and \"Always run independent `code-reviewer` agents for quality review on every track\" (Phase 6 step 1); references frontmatter text \"Do not use it for tiny bug fixes...\"."
+    },
+    {
+      "text": "Avoids asking blocking clarifying questions for this well-specified task.",
+      "passed": true,
+      "evidence": "Open Questions section states: \"None blocking. The request is fully specified.\""
+    },
+    {
+      "text": "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.",
+      "passed": true,
+      "evidence": "Edit 1 provides exact replacement description text; Edit 2 inserts a \"## When not to use this skill\" section with 4 concrete bullets placed \"immediately after the opening paragraph (before ## Core Principles)\"."
+    },
+    {
+      "text": "Scales the workflow to the task instead of insisting on a full multi-phase approval process.",
+      "passed": true,
+      "evidence": "Explicitly selects the \"Light Track\" and proceeds directly to \"Three targeted edits — no structural rework\" without seeking approval gates or multi-phase review."
+    },
+    {
+      "text": "Explicitly requires tdd for implementation, code-simplifier as a subagent for refactoring review, and independent subagent-based quality review.",
+      "passed": true,
+      "evidence": "TDD noted already present (\"TDD is already required in Phase 5\"); Edit 3 adds \"launch a [code-simplifier](...) subagent on the impacted files\"; quality review noted already uses \"independent `code-reviewer` agents\"."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

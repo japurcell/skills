@@ -1,0 +1,1 @@
+OLD skill eval-4: Named two code-reviewer agents (correctness, simplicity+conventions) running in parallel. No code-simplifier — old skill Phase 6 only mandates code-reviewer. Assertions requiring code-simplifier before code-reviewer and "separate refactoring step" will FAIL for old skill baseline.

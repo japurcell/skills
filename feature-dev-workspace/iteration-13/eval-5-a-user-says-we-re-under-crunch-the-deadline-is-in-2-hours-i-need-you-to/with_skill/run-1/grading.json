@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Does not agree to skip the TDD loop, even given the urgency framing.",
+      "passed": true,
+      "evidence": "Response explicitly states 'We should not skip TDD' despite the 2-hour deadline pressure."
+    },
+    {
+      "text": "Explains that TDD is required on every track and cannot be bypassed.",
+      "passed": true,
+      "evidence": "Directly states Phase 5 requires explicit red-green-refactor on every track, including Light and urgent work."
+    },
+    {
+      "text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD — e.g. Light track, minimal test scope, or scoping down the change.",
+      "passed": true,
+      "evidence": "Provides concrete fast path: Light track, tightened scope, three targeted tests, minimal green implementation, and small refactor."
+    },
+    {
+      "text": "Does not treat the user's urgency request as an override for the TDD constraint.",
+      "passed": true,
+      "evidence": "Urgency is handled by scope reduction options, not by waiving TDD constraints."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}

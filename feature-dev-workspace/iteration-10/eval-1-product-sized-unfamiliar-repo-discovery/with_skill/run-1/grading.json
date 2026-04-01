@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Uses findings from the current repository and current feature-dev skill rather than generic advice.",
+      "passed": true,
+      "evidence": "Explicitly cites specific phases of skills/feature-dev/SKILL.md: Phase 2 agent prompt templates (quoting them verbatim), Phase 3 question categories, Phase 5 TDD language ('do not bypass it'), and Phase 6 code-simplifier + code-reviewer steps with track-specific cardinality. No generic advice present."
+    },
+    {
+      "text": "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.",
+      "passed": true,
+      "evidence": "Three questions, each tied to a specific design fork: Q1 (failure mode → determines which phase to fix), Q2 (scope vs. context → determines whether Deep track is sufficient or a new axis is needed), Q3 (additive vs. new track → determines structural impact of changes). Each question explains the risk it resolves."
+    },
+    {
+      "text": "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.",
+      "passed": true,
+      "evidence": "Exactly 3 questions. Framed as 'Three questions that materially affect which changes to make.' The final paragraph also explains how to act on subsets of answers, showing prioritization discipline."
+    },
+    {
+      "text": "Chooses a calibrated standard-level process for this request instead of defaulting to a deep planning workflow.",
+      "passed": true,
+      "evidence": "Opens with 'Track: Standard' and gives an explicit rationale: 'There's meaningful ambiguity about what product-sized means — enough to warrant a handful of targeted questions — but the scope is bounded. Deep is unwarranted here.'"
+    },
+    {
+      "text": "Separates current understanding, open questions, and a recommended approach.",
+      "passed": true,
+      "evidence": "Response has distinct labeled sections: Understanding, Relevant Findings, Open Questions, Recommendation, and What to Keep Unchanged. The three dimensions (understanding / questions / approach) are cleanly separated."
+    },
+    {
+      "text": "Explains why the proposed changes would help with unfamiliar repositories.",
+      "passed": true,
+      "evidence": "Each of the three changes has a dedicated 'Why this specifically helps unfamiliar repos' or 'Why this specifically helps product-sized work' subsection, e.g. Change 1: 'Without it, exploration is technically accurate but can produce plans like run pytest in a repo that uses a custom test runner.'"
+    },
+    {
+      "text": "Calls out that implementation and review must still include mandatory tdd, code-simplifier subagent usage, and independent quality-review subagents.",
+      "passed": true,
+      "evidence": "Has a dedicated 'What to Keep Unchanged' section explicitly naming: Phase 5 TDD requirement ('do not bypass it'), Phase 6 Step 1 code-simplifier subagent ('mandatory after implementation on every track'), and Phase 6 Step 2 independent code-reviewer subagents with track-specific cardinality (Light: at least one; Standard/Deep: multiple in parallel)."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

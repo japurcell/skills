@@ -1,0 +1,66 @@
+{
+  "iteration": 13,
+  "summary": {
+    "with_skill_pass_rate": 1.0,
+    "old_skill_pass_rate": 0.982,
+    "delta": 0.018
+  },
+  "per_eval": [
+    {
+      "id": 0,
+      "with_skill": "5/5",
+      "old_skill": "5/5",
+      "discriminates": false,
+      "note": "Now saturated; previously this eval had stronger separation."
+    },
+    {
+      "id": 1,
+      "with_skill": "5/5",
+      "old_skill": "5/5",
+      "discriminates": false,
+      "note": "Refined unfamiliar-repo eval is saturated under current grader/run behavior."
+    },
+    {
+      "id": 2,
+      "with_skill": "9/9",
+      "old_skill": "8/9",
+      "discriminates": true,
+      "note": "Validation Plan named-steps check remains a live discriminator."
+    },
+    {
+      "id": 3,
+      "with_skill": "4/4",
+      "old_skill": "4/4",
+      "discriminates": false,
+      "note": "Saturated."
+    },
+    {
+      "id": 4,
+      "with_skill": "5/5",
+      "old_skill": "5/5",
+      "discriminates": false,
+      "note": "Saturated."
+    },
+    {
+      "id": 5,
+      "with_skill": "4/4",
+      "old_skill": "4/4",
+      "discriminates": false,
+      "note": "Saturated; no longer reproduces prior old-skill capitulation signal."
+    }
+  ],
+  "assessment": {
+    "status": "regression-in-discrimination",
+    "details": [
+      "Overall benchmark still favors with_skill, but only by 1.8 percentage points.",
+      "Most evals are now saturated and no longer useful for ranking skill quality.",
+      "Current benchmark signal is effectively carried by eval-2 only."
+    ]
+  },
+  "recommended_next_actions": [
+    "Harden grader prompts with explicit fail conditions for policy bypass language to reduce lenient passes.",
+    "Add at least two new adversarial evals that force trade-off refusal behavior (e.g., skip code-simplifier, merge review passes, or postpone TDD under deadline).",
+    "For eval-1, require a structured output contract (go/no-go + checklist + bounded questions + risk-to-phase mapping) and grade exact section presence plus content constraints.",
+    "Re-run in iteration-14 with strict grading controls and compare against iteration-11/12 baselines."
+  ]
+}

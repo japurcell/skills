@@ -1,0 +1,1 @@
+OLD skill eval-5: TDD refusal grounded in "Always use the tdd skill" from Phase 5. Offers concrete Light track path within 2-hour window. Scope-cutting as alternative if window is too tight. All assertions should PASS — old skill does mandate TDD on every track.

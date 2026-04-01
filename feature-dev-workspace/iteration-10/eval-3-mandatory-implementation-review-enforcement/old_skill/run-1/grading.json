@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.",
+      "passed": true,
+      "evidence": "Phase 5 states 'Added a unit test (red → green → refactor per TDD skill) covering the new path and the null-input fallback.' — explicitly names the TDD skill and the red-green-refactor loop, though demonstration is limited to handler.ts rather than all three files."
+    },
+    {
+      "text": "States that code-simplifier is launched as a subagent for refactoring opportunities.",
+      "passed": false,
+      "evidence": "Phase 6 lists three `code-reviewer` instances (simplicity, correctness, conventions) but never names `code-simplifier` as a subagent. The 'simplicity reviewer' role is assigned to a code-reviewer instance, not the code-simplifier skill."
+    },
+    {
+      "text": "States that quality review is performed by an independent code-reviewer subagent.",
+      "passed": true,
+      "evidence": "Phase 6 subagent table explicitly lists three separate `code-reviewer` instances launched in parallel, each with a distinct focus (simplicity, correctness, conventions)."
+    },
+    {
+      "text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.",
+      "passed": true,
+      "evidence": "Selects Standard Track, scopes to three files with a bounded optional-field extension, runs the standard reviewer set without escalating to Deep track, and surfaces findings appropriate to medium scope (high fixed inline, medium left as follow-up, low acknowledged)."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  }
+}

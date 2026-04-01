@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+      "passed": true,
+      "evidence": "Runbook step 1 launches code-simplifier first in Phase 6 with explicit refactoring targets (duplication, helpers, fallback branches)."
+    },
+    {
+      "text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
+      "passed": true,
+      "evidence": "Defines two independent code-reviewer passes with distinct foci: correctness/risk and conventions/maintainability."
+    },
+    {
+      "text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
+      "passed": true,
+      "evidence": "Ordering is explicit: simplifier pass first, then reviewer passes, with rationale that reviewers inspect near-final refactored code."
+    },
+    {
+      "text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
+      "passed": true,
+      "evidence": "Each subagent receives concrete prompt scopes (cache-key duplication, TTL handling, invalidation/staleness/concurrency, Python conventions/operability)."
+    },
+    {
+      "text": "Does not treat refactoring and quality review as a single unified step performed by one agent.",
+      "passed": true,
+      "evidence": "Response separates refactoring and quality review into distinct ordered steps with different subagent roles and outputs."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

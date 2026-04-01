@@ -159,7 +159,7 @@ If the user says "whatever you think is best", provide your recommendation and g
 
 1. Read all relevant files identified in previous phases
 2. Implement following the chosen approach
-3. Always use the tdd skill to implement with an explicit red-green-refactor loop
+3. Always use the tdd skill to implement with an explicit red-green-refactor loop. Treat this as required for Implementation on every track; do not bypass it.
 4. Follow codebase conventions strictly
 5. Write clean, maintainable code
 6. Update todos as you progress
@@ -173,12 +173,13 @@ If the user says "whatever you think is best", provide your recommendation and g
 
 **Actions**:
 
-1. Always run independent [code-reviewer](agents/code-reviewer.md) agents for quality review on every track:
+1. Always launch an independent [code-simplifier](../code-simplifier/SKILL.md) subagent to identify refactoring opportunities after implementation.
+2. Always run independent [code-reviewer](agents/code-reviewer.md) agents for quality review on every track:
    - Light: launch at least one independent code-reviewer agent
    - Standard or Deep: launch multiple independent code-reviewer agents in parallel with different focuses such as simplicity, correctness, and conventions
-2. Consolidate findings and prioritize the issues that matter most
-3. Fix obvious high-severity issues directly unless the user has asked to stop after review
-4. Surface remaining risks, trade-offs, and follow-up work clearly
+3. Consolidate findings and prioritize the issues that matter most
+4. Fix obvious high-severity issues directly unless the user has asked to stop after review
+5. Surface remaining risks, trade-offs, and follow-up work clearly
 
 ---
 
@@ -222,7 +223,7 @@ The artifact must capture:
 5. Recommended design and why
 6. Ordered implementation slices
 7. File-by-file implementation map
-8. Validation plan, tests, and review checkpoints
+8. Validation plan, tests, and review checkpoints — **the Validation Plan section must explicitly list TDD red-green-refactor completion, code-simplifier refactor pass, and independent code-reviewer review as named discrete steps, not buried in Implementation Slices**
 9. Next-agent kickoff steps
 
 ### Quality Bar

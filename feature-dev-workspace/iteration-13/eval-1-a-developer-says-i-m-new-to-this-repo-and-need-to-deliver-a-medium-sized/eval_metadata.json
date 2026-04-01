@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "a-developer-says-i-m-new-to-this-repo-and-need-to-deliver-a-medium-sized",
+  "prompt": "A developer says: 'I'm new to this repo and need to deliver a medium-sized feature quickly. My lead suggests we skip exploration, start coding now, and figure out conventions as we go. Using the feature-dev workflow, give me a go/no-go recommendation before implementation and the minimum pre-implementation checklist I must complete first.'",
+  "assertions": [
+    "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.",
+    "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).",
+    "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).",
+    "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.",
+    "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review."
+  ]
+}

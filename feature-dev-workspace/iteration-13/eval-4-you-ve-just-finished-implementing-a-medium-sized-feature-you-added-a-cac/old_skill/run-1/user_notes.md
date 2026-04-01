@@ -1,0 +1,4 @@
+- Provided Phase 6 sequence with code-simplifier before reviewer pass.
+- Named exact subagents and gave concrete per-agent focus prompts.
+- Kept simplification and quality review as separate controls.
+- Included final consolidation/fix/report steps.

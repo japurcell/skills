@@ -1,0 +1,1 @@
+OLD skill eval-3: Standard track. Phase 5 correctly cites TDD. Phase 6 correctly names code-reviewer subagents (independent, multiple for Standard). No code-simplifier mentioned — old skill does not include it as a Phase 6 subagent. Assertion "States that code-simplifier is launched as a subagent" will FAIL for old skill baseline.

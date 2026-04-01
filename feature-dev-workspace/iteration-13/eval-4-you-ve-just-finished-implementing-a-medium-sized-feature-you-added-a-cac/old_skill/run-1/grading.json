@@ -1,0 +1,37 @@
+{
+  "eval_id": 4,
+  "run": "old_skill/run-1",
+  "expectations": [
+    {
+      "text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+      "passed": true,
+      "evidence": "Order section says 'Launch `code-simplifier` first' and details a dedicated refactor focus."
+    },
+    {
+      "text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
+      "passed": true,
+      "evidence": "Lists two `code-reviewer` agents with concrete focus: correctness/edge cases and conventions/maintainability."
+    },
+    {
+      "text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
+      "passed": true,
+      "evidence": "Explicit sequence is simplifier first, then independent reviewers."
+    },
+    {
+      "text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
+      "passed": true,
+      "evidence": "Each subagent has concrete bullet focus areas (duplication, key/invalidation complexity, stale-data/race risks, conventions/coupling)."
+    },
+    {
+      "text": "Does not treat refactoring and quality review as a single unified step performed by one agent.",
+      "passed": true,
+      "evidence": "Response explicitly separates controls and explains why the split matters."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "text": "Looks for relevant patterns elsewhere in this repository instead of inventing the design in isolation.",
+      "passed": true,
+      "evidence": "Relevant Findings quotes specific existing patterns with line numbers from SKILL.md (e.g., lines ~62–66, ~145–149, ~191–209, ~211–221) and notes 'No changes needed' to handoff-plan-template.md after examining it."
+    },
+    {
+      "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+      "passed": true,
+      "evidence": "File exists at outputs/.agents/scratchpad/handoff-policy-enforcement/handoff-plan.md, matching the workflow's required shape .agents/scratchpad/<feature-name>/handoff-plan.md."
+    },
+    {
+      "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+      "passed": true,
+      "evidence": "Artifact contains 'Implementation Slices' (Slice 1–3), 'File-by-File Implementation Map' (with before/after edits), and 'Validation Plan' sections."
+    },
+    {
+      "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+      "passed": true,
+      "evidence": "Status: 'ready for implementation'; Track: 'Standard'; Recommended Next Step: 'implement directly (all decisions resolved, no blockers)'. No bracket placeholders present."
+    },
+    {
+      "text": "Each referenced file in Relevant Findings includes why that file matters.",
+      "passed": true,
+      "evidence": "Each bullet in the artifact's Relevant Findings explains the relevance, e.g., 'lines 62–66: Artifact Status listed as conditional — makes creation feel optional'; 'references/handoff-plan-template.md: Well-structured. No changes needed.'"
+    },
+    {
+      "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+      "passed": true,
+      "evidence": "Response states 'Open Questions: None — the task is fully specified.' Artifact states 'Open question: None'. No spurious unbounded questions; two explicit assumptions are documented instead."
+    },
+    {
+      "text": "Provides artifact status in the response with the exact artifact path.",
+      "passed": true,
+      "evidence": "Response includes an 'Artifact Status' section with exact path: '.agents/scratchpad/handoff-policy-enforcement/handoff-plan.md' and workspace-relative full path."
+    },
+    {
+      "text": "Includes rationale or trade-offs for the proposed design.",
+      "passed": true,
+      "evidence": "Response states 'Why not per-phase stop checks at phases 3 and 4: avoids repeating the same rule twice across the file; a single authoritative gate is easier to follow.' Artifact expands this under 'Recommended Design'."
+    },
+    {
+      "text": "Validation and review checkpoints explicitly include tdd implementation flow, a code-simplifier refactor pass in a subagent, and independent code-reviewer subagent review.",
+      "passed": false,
+      "evidence": "Validation Plan mentions only 're-run eval 2 after edits' and manual checks. No mention of TDD implementation flow, code-simplifier refactor pass, or code-reviewer subagent review anywhere in the response or artifact."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 1,
+    "total": 9,
+    "pass_rate": 0.889
+  }
+}

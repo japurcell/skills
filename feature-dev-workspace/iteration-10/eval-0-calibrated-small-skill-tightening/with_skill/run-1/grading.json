@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "References the existing feature-dev skill directly rather than answering generically.",
+      "passed": true,
+      "evidence": "Quotes specific Phase 5 step 3 and Phase 6 steps 1–2 content verbatim from the current skill, and notes exact wording ('Always launch an independent [code-simplifier] subagent', 'Always run independent [code-reviewer] agents')."
+    },
+    {
+      "text": "Avoids asking blocking clarifying questions for this well-specified task.",
+      "passed": true,
+      "evidence": "Opens with 'No blocking questions.' in the Track line; proceeds directly to findings and recommendations with no gating questions."
+    },
+    {
+      "text": "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.",
+      "passed": true,
+      "evidence": "Change 1 provides a full before/after rewrite of the frontmatter description. Change 2 inserts a dedicated 'When Not to Use This Skill' section with a scoped bullet list between Core Principles and Process Selection."
+    },
+    {
+      "text": "Scales the workflow to the task instead of insisting on a full multi-phase approval process.",
+      "passed": true,
+      "evidence": "Selects 'Light' track explicitly; presents an implementation map and ends with 'Ready to apply whenever you confirm or say just do it' — no phased sign-off or multi-step approval loop."
+    },
+    {
+      "text": "Explicitly requires tdd for implementation, code-simplifier as a subagent for refactoring review, and independent subagent-based quality review.",
+      "passed": true,
+      "evidence": "Change 3 adds 'TDD is non-optional' as a Core Principles bullet. Code-simplifier is acknowledged as already required in Phase 6 step 1 ('Always launch an independent [code-simplifier] subagent'). Independent quality review is acknowledged as already required in Phase 6 step 2 ('Always run independent [code-reviewer] agents')."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

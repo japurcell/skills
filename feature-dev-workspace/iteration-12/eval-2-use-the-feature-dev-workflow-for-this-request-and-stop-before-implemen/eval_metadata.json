@@ -1,0 +1,16 @@
+{
+  "eval_id": 2,
+  "eval_name": "use-the-feature-dev-workflow-for-this-request-and-stop-before-implemen",
+  "prompt": "Use the feature-dev workflow for this request and stop before implementation: 'Prepare a handoff plan for adding a configuration-validation module to a Python CLI tool \u2014 it should check for required environment variables at startup and exit with a clear error message listing which are missing.' In your run, actually create the handoff artifact file your workflow requires (not just a proposal) and provide artifact status with the exact path.",
+  "assertions": [
+    "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+    "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+    "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+    "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+    "Each referenced file in Relevant Findings includes why that file matters.",
+    "Open questions are tightly bounded to truly blocking items and include risk framing.",
+    "Provides artifact status in the response with the exact artifact path.",
+    "Includes rationale or trade-offs for the proposed design.",
+    "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps \u2014 not buried solely in the Implementation Slices section."
+  ]
+}

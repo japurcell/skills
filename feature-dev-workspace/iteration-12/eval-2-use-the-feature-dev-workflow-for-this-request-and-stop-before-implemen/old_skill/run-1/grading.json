@@ -1,0 +1,94 @@
+{
+  "expectations": [
+    {
+      "expectation": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+      "result": "fail",
+      "evidence": "The response states: 'Assumed a conventional Python CLI layout ... because repository-specific app files were not provided', and does not cite any inspected repository files or skill-instruction excerpts as grounding evidence."
+    },
+    {
+      "expectation": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+      "result": "pass",
+      "evidence": "Artifact status includes concrete created and copied paths, and the file exists at outputs/handoff-plan.md."
+    },
+    {
+      "expectation": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+      "result": "pass",
+      "evidence": "The artifact contains sections 'Implementation Slices', 'File-by-File Implementation Map', and 'Validation Plan'."
+    },
+    {
+      "expectation": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+      "result": "pass",
+      "evidence": "Header fields are concretely set: 'Status: ready for implementation', 'Track: Standard', 'Recommended Next Step: implement directly'."
+    },
+    {
+      "expectation": "Each referenced file in Relevant Findings includes why that file matters.",
+      "result": "pass",
+      "evidence": "Each listed file in 'Relevant Findings' includes purpose text (entrypoint ordering, config constants, startup tests, tooling constraints, docs impact)."
+    },
+    {
+      "expectation": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+      "result": "pass",
+      "evidence": "Only one open question is listed (exit code choice), with explicit risk framing: automation behavior may be inconsistent if wrong."
+    },
+    {
+      "expectation": "Provides artifact status in the response with the exact artifact path.",
+      "result": "pass",
+      "evidence": "Final response has an 'Artifact Status' section with exact absolute paths for created and copied artifacts."
+    },
+    {
+      "expectation": "Includes rationale or trade-offs for the proposed design.",
+      "result": "pass",
+      "evidence": "Recommended design explains separation-of-concerns trade-off: pure validator + CLI wiring for testability, decoupling, and reuse."
+    },
+    {
+      "expectation": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps — not buried solely in the Implementation Slices section.",
+      "result": "fail",
+      "evidence": "Validation Plan lists tests/lint/manual/review focus but does not explicitly name 'TDD completion', a 'code-simplifier refactor pass', or an independent 'code-reviewer review' step."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 2,
+    "total": 9,
+    "score": 0.778,
+    "overall": "partial"
+  },
+  "claims": [
+    {
+      "claim": "A concrete handoff artifact was produced and is file-backed.",
+      "supported": true,
+      "evidence": "outputs/handoff-plan.md exists and is referenced in Artifact Status."
+    },
+    {
+      "claim": "The artifact follows a reusable handoff structure with slices/map/validation.",
+      "supported": true,
+      "evidence": "Artifact includes named sections for implementation slices, file map, and validation plan."
+    },
+    {
+      "claim": "The run grounded design in discovered codebase/skill patterns.",
+      "supported": false,
+      "evidence": "Run explicitly notes assumptions due to missing repository-specific files and provides no inspected-pattern citations."
+    },
+    {
+      "claim": "Validation plan includes all mandated named workflow gates.",
+      "supported": false,
+      "evidence": "Missing explicit named steps for TDD completion, code-simplifier refactor pass, and independent code-reviewer review."
+    }
+  ],
+  "user_notes_summary": "The runner intentionally stopped pre-implementation, assumed a conventional Python CLI layout due to absent repo-specific file context, and left one product decision open (exit code 1 vs 2).",
+  "eval_feedback": {
+    "strengths": [
+      "Produced a concrete, reusable handoff artifact with clear sections and sequencing.",
+      "Provided specific artifact status paths and concrete metadata values.",
+      "Kept open questions narrow and risk-framed."
+    ],
+    "gaps": [
+      "Did not demonstrate grounding in inspected repository or skill patterns.",
+      "Validation Plan omitted explicitly named TDD completion, code-simplifier refactor pass, and independent code-reviewer review steps."
+    ],
+    "next_improvements": [
+      "Add a brief Evidence/Discovery subsection citing exact files or skill lines consulted.",
+      "Expand Validation Plan into discrete gate steps explicitly naming TDD completion, code-simplifier pass, and independent code-reviewer review."
+    ]
+  }
+}

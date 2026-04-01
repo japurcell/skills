@@ -1,0 +1,4 @@
+- Completed WITH_SKILL response for eval 5.
+- Explicitly refused skipping TDD despite urgency.
+- Stated TDD is mandatory on every track in feature-dev.
+- Offered concrete time-constrained Light-track path: minimal scope + targeted tests + required Phase 6 gates.

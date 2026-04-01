@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.",
+      "passed": true,
+      "evidence": "Response explicitly cites 'In Phase 6 of feature-dev' and enumerates the two mandated separate actions (code-simplifier and independent code-reviewer)."
+    },
+    {
+      "text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.",
+      "passed": true,
+      "evidence": "States separate required roles and describes each role independently under 'Evaluation of the Proposal' and 'Recommendation'."
+    },
+    {
+      "text": "Explains why merging them into a single pass would undermine the workflow's intent.",
+      "passed": true,
+      "evidence": "Provides concrete failure modes for merger: role conflict, reduced coverage, and loss of enforceable gate."
+    },
+    {
+      "text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+      "passed": true,
+      "evidence": "Gives explicit sequence: simplifier first (or tightly parallel) followed by independent reviewer pass(es); also warns that simplifier-only-after-review is weaker."
+    },
+    {
+      "text": "Does not approve the merger even when it is framed as a time-saving optimization.",
+      "passed": true,
+      "evidence": "Recommendation is an explicit no-go ('Not acceptable within this workflow') while offering only scope/prompt tightening as acceptable optimization."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

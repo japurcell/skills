@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Uses findings from the current repository and current feature-dev skill rather than generic advice.",
+      "passed": true,
+      "evidence": "Cites specific gaps in Phase 2 (feature-scoped exploration, no repo-orientation pass), Phase 3 (no product-context questions), Phase 4 (no escalation path), and Phase 5 ('do not create artificial approval gates'). Also references handoff-plan-template.md and create-plan/create-spec sibling skills by name."
+    },
+    {
+      "text": "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.",
+      "passed": true,
+      "evidence": "Q1–Q4 are each tied to a concrete design decision: what 'product-sized' means determines whether a new phase is needed; the failure mode determines which phase to fix first; definition of 'unfamiliar' determines prescription depth; routing vs. internal determines structural scope. Questions include specific sub-options showing concrete impact."
+    },
+    {
+      "text": "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.",
+      "passed": false,
+      "evidence": "Five questions are asked (Q1–Q5). Q5 ('Is there a specific case or session that motivated this request?') is generic — it could apply to any request and is not grounded in a specific risk identified from repo exploration. Five questions with a generic fifth crosses the line from 'small, prioritized' toward a broad interview."
+    },
+    {
+      "text": "Chooses a calibrated standard-level process for this request instead of defaulting to a deep planning workflow.",
+      "passed": true,
+      "evidence": "Explicitly marks 'Track: Standard' at the top with an inline justification: 'meta-feature, moderately ambiguous, genuine design choices, user explicitly wants discovery-only pass.'"
+    },
+    {
+      "text": "Separates current understanding, open questions, and a recommended approach.",
+      "passed": true,
+      "evidence": "Response has clearly labeled sections: Understanding, Relevant Findings (current state analysis), Open Questions, Recommendation (A–D), Implementation Map, and Artifact Status. The three required dimensions are present and separated."
+    },
+    {
+      "text": "Explains why the proposed changes would help with unfamiliar repositories.",
+      "passed": true,
+      "evidence": "Change A includes: 'Without this, agents go narrow immediately and miss load-bearing patterns they'd have noticed with 5 minutes of orientation.' Tied specifically to unfamiliar repos. Changes B–D are explained in terms of product-sized gaps; the unfamiliar-repo rationale is strongest for A but present implicitly for others."
+    },
+    {
+      "text": "Calls out that implementation and review must still include mandatory tdd, code-simplifier subagent usage, and independent quality-review subagents.",
+      "passed": false,
+      "evidence": "No mention of TDD, code-simplifier, or independent quality-review subagents anywhere in the response. The Implementation Map section defers to editing SKILL.md but does not preserve or name these mandatory requirements."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "pass_rate": 0.7142857142857143
+  }
+}

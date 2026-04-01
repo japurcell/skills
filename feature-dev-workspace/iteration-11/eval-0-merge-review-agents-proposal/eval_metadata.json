@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "merge-review-agents-proposal",
+  "prompt": "A developer on your team proposes streamlining the feature-dev quality review by running a single combined 'review-and-simplify' agent instead of separate subagents for simplification and code review — they say it'll save time and reduce agent overhead. Using the feature-dev workflow as your framework, evaluate this proposal and explain whether it's acceptable.",
+  "assertions": [
+    "References the feature-dev skill's Phase 6 steps directly rather than answering generically.",
+    "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.",
+    "Explains why merging them into a single pass would undermine the workflow's intent.",
+    "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+    "Does not approve the merger even when it is framed as a time-saving optimization."
+  ]
+}

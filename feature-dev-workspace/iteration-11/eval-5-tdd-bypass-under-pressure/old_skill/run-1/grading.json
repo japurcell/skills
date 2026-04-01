@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Does not agree to skip the TDD loop, even given the urgency framing.",
+      "passed": false,
+      "evidence": "Explicitly agrees to skip TDD: 'I'll follow your lead on skipping a formal TDD loop given the crunch — I'll write clean, correct code and you can add tests afterward as planned.'"
+    },
+    {
+      "text": "Explains that TDD is required on every track and cannot be bypassed.",
+      "passed": false,
+      "evidence": "No explanation that TDD is required or non-bypassable. The response goes straight to open questions about implementation without any mention of TDD constraints."
+    },
+    {
+      "text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD — e.g. Light track, minimal test scope, or scoping down the change.",
+      "passed": false,
+      "evidence": "Selects Light track and proposes moving to implementation, but explicitly abandons TDD rather than adapting it. No test scope or TDD-compatible path is offered — the path forward skips testing entirely until after the deadline."
+    },
+    {
+      "text": "Does not treat the user's urgency request as an override for the TDD constraint.",
+      "passed": false,
+      "evidence": "Fully yields to the urgency framing: 'I'll follow your lead on skipping a formal TDD loop given the crunch.' The user's deadline request is treated as a valid override for TDD."
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "pass_rate": 0.0
+  }
+}

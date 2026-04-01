@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+      "passed": true,
+      "evidence": "Step 1 explicitly launches a `code-simplifier` subagent targeting the three modified service files with a detailed prompt focused on simplification and refactoring opportunities."
+    },
+    {
+      "text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
+      "passed": true,
+      "evidence": "Step 2 launches two `code-reviewer` agents in parallel: Reviewer A (Correctness & Cache Behavior) and Reviewer B (Security & Conventions), each with a distinct named focus."
+    },
+    {
+      "text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
+      "passed": true,
+      "evidence": "The simplifier is explicitly Step 1 (run first, alone); the reviewers are Step 2 (run after the simplifier returns). The response states the simplifier must return before reviewers start."
+    },
+    {
+      "text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
+      "passed": true,
+      "evidence": "Each subagent receives a multi-item quoted prompt: the simplifier lists redundant abstractions, naming clarity, consolidation opportunities; Reviewer A lists key uniqueness, TTL, invalidation, degraded-mode behavior, thread safety; Reviewer B lists PII exposure, cache poisoning, namespace isolation, naming, error handling, test coverage."
+    },
+    {
+      "text": "Does not treat refactoring and quality review as a single unified step performed by one agent.",
+      "passed": true,
+      "evidence": "Refactoring (code-simplifier) and quality review (two code-reviewer agents) are explicitly separate steps with a sequential dependency: Step 1 must complete before Step 2 launches. Three distinct agents are used."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

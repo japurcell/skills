@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Names code-simplifier as a required Phase 6 subagent (not just as general advice, but as mandated by the workflow).",
+      "passed": false,
+      "evidence": "Code-simplifier is never mentioned in the transcript. The mandated minimum table lists only 'code-reviewer' as the subagent role. The entire response treats code-reviewer as the sole Phase 6 mandatory step."
+    },
+    {
+      "text": "Names code-reviewer as a required Phase 6 subagent.",
+      "passed": true,
+      "evidence": "Table row: 'Independent quality review | code-reviewer | Light: at least one agent; Standard/Deep: multiple agents in parallel'. Explicitly mandated as non-removable."
+    },
+    {
+      "text": "States that code-simplifier runs before the code-reviewer pass, not after.",
+      "passed": false,
+      "evidence": "Code-simplifier is absent from the response entirely. No ordering statement is possible for a step that does not appear."
+    },
+    {
+      "text": "Does not agree to dropping or making optional either the code-simplifier or the code-reviewer step.",
+      "passed": false,
+      "evidence": "Code-reviewer is defended as non-droppable. Code-simplifier is not mentioned as a required step at all, so it is implicitly excluded from the 'cannot drop' list. The assertion requires both steps to be defended."
+    },
+    {
+      "text": "Grounds the answer in what the workflow mandates, not in general engineering opinion.",
+      "passed": true,
+      "evidence": "Response opens with 'Reading the feature-dev workflow's Phase 6 directly:' and quotes the workflow verbatim. Cost-reduction advice references track selection within the workflow, not personal engineering preference."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.4
+  }
+}

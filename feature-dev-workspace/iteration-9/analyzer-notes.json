@@ -1,0 +1,21 @@
+{
+  "iteration": 9,
+  "skill": "feature-dev",
+  "summary": {
+    "with_skill_pass_rate": 0.97,
+    "old_skill_pass_rate": 0.8,
+    "absolute_improvement": 0.17,
+    "time_comparison_note": "No reliable timing telemetry in this environment; timing recorded as 0 for all runs.",
+    "token_comparison_note": "No reliable token telemetry in this environment; tokens recorded as 0 for all runs."
+  },
+  "observations": [
+    "Largest gain came from eval-1 and eval-3 where new assertions explicitly check mandatory tdd/code-simplifier/independent-review language.",
+    "Eval-2 remains non-discriminating for the new requirements: both configurations scored 8/9 and both missed the same validation-checkpoint assertion.",
+    "Eval-0 is now saturated (both 5/5), so it validates baseline hygiene but contributes little to separation.",
+    "New eval-3 is discriminating and directly measures the code-simplifier requirement gap between versions."
+  ],
+  "recommendations": [
+    "In the next iteration, revise eval-2 prompt and assertion 9 so the task explicitly asks for validation checkpoints tied to implementation/review workflow, reducing ambiguity.",
+    "Add a second medium-feature implementation eval focused on post-implementation review sequencing to increase sensitivity to quality-phase behavior changes."
+  ]
+}

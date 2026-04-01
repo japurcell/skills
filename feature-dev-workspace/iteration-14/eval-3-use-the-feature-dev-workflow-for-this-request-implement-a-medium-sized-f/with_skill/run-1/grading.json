@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.",
+      "passed": true,
+      "evidence": "Phase 5 section quotes workflow: 'Always use the tdd skill to implement with an explicit red-green-refactor loop. Treat this as required for Implementation on every track; do not bypass it.' Three explicit steps described: Red (write failing tests), Green (write minimum production code), Refactor (clean up with tests passing)."
+    },
+    {
+      "text": "States that code-simplifier is launched as a subagent for refactoring opportunities.",
+      "passed": true,
+      "evidence": "'Step 1: Launch code-simplifier subagent (runs first). Focus: Identify refactoring opportunities across the three modified files. Look for duplication, over-engineering, unnecessary abstraction...'"
+    },
+    {
+      "text": "States that quality review is performed by an independent code-reviewer subagent.",
+      "passed": true,
+      "evidence": "'Step 2: Launch code-reviewer agents (Standard track: multiple in parallel)' — three independent agents with distinct focuses: correctness, conventions, simplicity. Described as 'independent' explicitly."
+    },
+    {
+      "text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.",
+      "passed": true,
+      "evidence": "Track chosen: Standard (not Deep). Phase 7 summary confirms work is scoped as a 'three-file feature update' on Standard track. No escalation to Deep track despite the three-file change."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}

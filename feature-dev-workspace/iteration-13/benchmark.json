@@ -1,0 +1,604 @@
+{
+  "metadata": {
+    "skill_name": "feature-dev",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-01T18:40:43Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.",
+          "passed": true,
+          "evidence": "States 'In the feature-dev workflow, Phase 6 requires independent `code-reviewer` agents for quality review on every track.'"
+        },
+        {
+          "text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.",
+          "passed": true,
+          "evidence": "Names distinct roles and focuses: '`code-simplifier` is optimization-oriented' and '`code-reviewer` is risk-detection-oriented.'"
+        },
+        {
+          "text": "Explains why merging them into a single pass would undermine the workflow's intent.",
+          "passed": true,
+          "evidence": "Explains that merging 'collapses two controls into one opinionated pass' and weakens independent challenge of missed/introduced issues."
+        },
+        {
+          "text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+          "passed": true,
+          "evidence": "Explicitly says '`code-simplifier` should run before or alongside `code-reviewer` passes, not after final review sign-off.'"
+        },
+        {
+          "text": "Does not approve the merger even when it is framed as a time-saving optimization.",
+          "passed": true,
+          "evidence": "Recommendation section says 'No-go on the single merged agent' and proposes parallelization without role merging."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.",
+          "passed": true,
+          "evidence": "States 'No-go on immediate implementation' and ties it to skipping Phase 2 in an unfamiliar codebase."
+        },
+        {
+          "text": "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).",
+          "passed": true,
+          "evidence": "Checklist includes specific outputs: similar-feature trace, architecture touchpoint map, and test/CI convention mapping (plus boundary check and approach selection)."
+        },
+        {
+          "text": "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).",
+          "passed": true,
+          "evidence": "Risk mapping explicitly references skipping Phases 2, 3, and 4 and associated impacts."
+        },
+        {
+          "text": "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.",
+          "passed": true,
+          "evidence": "Provides exactly 3 high-leverage questions focused on non-goals/scope, integration anchor, and compatibility constraints."
+        },
+        {
+          "text": "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review.",
+          "passed": true,
+          "evidence": "Downstream Mandatory Gates section lists all three by name with phase linkage."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8889,
+        "passed": 8,
+        "failed": 1,
+        "total": 9,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+          "passed": false,
+          "evidence": "Response cites workflow contract and generic likely paths, but does not provide direct evidence of concrete repo pattern lookup (no specific discovered file paths from exploration output)."
+        },
+        {
+          "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+          "passed": true,
+          "evidence": "Artifact created at '.agents/scratchpad/config-validation-module/handoff-plan.md' with exact absolute path provided in Artifact Status."
+        },
+        {
+          "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+          "passed": true,
+          "evidence": "`handoff-plan.md` includes 'Ordered Implementation Slices', 'File-By-File Implementation Map', and 'Validation Plan' sections."
+        },
+        {
+          "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+          "passed": true,
+          "evidence": "Metadata has concrete values: 'Status: Ready for implementation handoff', 'Track: Standard', 'Next Step: Begin Phase 5 implementation via TDD (red-green-refactor)'."
+        },
+        {
+          "text": "Each referenced file in Relevant Findings includes why that file matters.",
+          "passed": true,
+          "evidence": "Artifact includes 'Relevant Findings And Source Files' plus a dedicated 'Why these matter' mapping each referenced area to rationale."
+        },
+        {
+          "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+          "passed": true,
+          "evidence": "Lists 2 blocking questions and explicit risk statements ('Risk if unresolved: ...') for each."
+        },
+        {
+          "text": "Provides artifact status in the response with the exact artifact path.",
+          "passed": true,
+          "evidence": "Final response includes Artifact Status with exact absolute path and copied output path."
+        },
+        {
+          "text": "Includes rationale or trade-offs for the proposed design.",
+          "passed": true,
+          "evidence": "Artifact section 'Recommended Design And Trade-Offs' explains static-list simplicity vs flexibility and startup overhead trade-off."
+        },
+        {
+          "text": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps - not buried solely in the Implementation Slices section.",
+          "passed": true,
+          "evidence": "Validation Plan explicitly names discrete steps: 'TDD completion', 'Code-simplifier pass', and 'Independent code-reviewer review'."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.",
+          "passed": true,
+          "evidence": "Explicitly states Phase 5 uses `tdd` with 'red-green-refactor' and repeats that sequence in execution plan."
+        },
+        {
+          "text": "States that code-simplifier is launched as a subagent for refactoring opportunities.",
+          "passed": true,
+          "evidence": "Execution plan includes launching `code-simplifier` with focus on duplication/readability/complexity."
+        },
+        {
+          "text": "States that quality review is performed by an independent code-reviewer subagent.",
+          "passed": true,
+          "evidence": "Calls for independent `code-reviewer` subagent(s) and assigns distinct reviewer focus areas."
+        },
+        {
+          "text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.",
+          "passed": true,
+          "evidence": "Classifies as Standard track for three-file medium change and avoids escalation to Deep track."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+          "passed": true,
+          "evidence": "Order section says 'Launch `code-simplifier` first' and details a dedicated refactor focus."
+        },
+        {
+          "text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
+          "passed": true,
+          "evidence": "Lists two `code-reviewer` agents with concrete focus: correctness/edge cases and conventions/maintainability."
+        },
+        {
+          "text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
+          "passed": true,
+          "evidence": "Explicit sequence is simplifier first, then independent reviewers."
+        },
+        {
+          "text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
+          "passed": true,
+          "evidence": "Each subagent has concrete bullet focus areas (duplication, key/invalidation complexity, stale-data/race risks, conventions/coupling)."
+        },
+        {
+          "text": "Does not treat refactoring and quality review as a single unified step performed by one agent.",
+          "passed": true,
+          "evidence": "Response explicitly separates controls and explains why the split matters."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does not agree to skip the TDD loop, even given the urgency framing.",
+          "passed": true,
+          "evidence": "Starts with 'No, we should not skip TDD, even under the 2-hour deadline.'"
+        },
+        {
+          "text": "Explains that TDD is required on every track and cannot be bypassed.",
+          "passed": true,
+          "evidence": "States 'Phase 5 requires using `tdd` ... on every track' and urgency only changes scope/depth."
+        },
+        {
+          "text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD - e.g. Light track, minimal test scope, or scoping down the change.",
+          "passed": true,
+          "evidence": "Provides Light-track fast path with minimal 1-2 critical tests, smallest implementation, and scoped deferrals/timeboxing."
+        },
+        {
+          "text": "Does not treat the user's urgency request as an override for the TDD constraint.",
+          "passed": true,
+          "evidence": "Bottom line explicitly says urgency is not an override for TDD in this workflow."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.",
+          "passed": true,
+          "evidence": "Response explicitly cites 'In Phase 6 of feature-dev' and enumerates the two mandated separate actions (code-simplifier and independent code-reviewer)."
+        },
+        {
+          "text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.",
+          "passed": true,
+          "evidence": "States separate required roles and describes each role independently under 'Evaluation of the Proposal' and 'Recommendation'."
+        },
+        {
+          "text": "Explains why merging them into a single pass would undermine the workflow's intent.",
+          "passed": true,
+          "evidence": "Provides concrete failure modes for merger: role conflict, reduced coverage, and loss of enforceable gate."
+        },
+        {
+          "text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+          "passed": true,
+          "evidence": "Gives explicit sequence: simplifier first (or tightly parallel) followed by independent reviewer pass(es); also warns that simplifier-only-after-review is weaker."
+        },
+        {
+          "text": "Does not approve the merger even when it is framed as a time-saving optimization.",
+          "passed": true,
+          "evidence": "Recommendation is an explicit no-go ('Not acceptable within this workflow') while offering only scope/prompt tightening as acceptable optimization."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.",
+          "passed": true,
+          "evidence": "Recommendation section states 'No-go on starting implementation immediately' and ties it to required Phase 2 exploration first."
+        },
+        {
+          "text": "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).",
+          "passed": true,
+          "evidence": "Includes five-item checklist with explicit outputs: similar-feature trace, architecture touchpoint map, conventions baseline, test/CI mapping, and scope/ambiguity checkpoint."
+        },
+        {
+          "text": "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).",
+          "passed": true,
+          "evidence": "Risk section maps specific consequences to skipped phases: Phase 2 integration errors, Phase 3 requirement mismatches, and weak Phase 4 decisioning debt."
+        },
+        {
+          "text": "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.",
+          "passed": true,
+          "evidence": "Provides exactly three prioritized questions, each with parenthetical impact explaining how the answer changes scope/design/tests."
+        },
+        {
+          "text": "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review.",
+          "passed": true,
+          "evidence": "Final section enumerates all three mandatory gates explicitly and labels them as required after checklist completion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 9,
+        "failed": 0,
+        "total": 9,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+          "passed": true,
+          "evidence": "Relevant Findings cites feature-dev workflow instructions and handoff template as grounding sources, rather than freehand design only."
+        },
+        {
+          "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+          "passed": true,
+          "evidence": "Response reports artifact creation at /home/adam/.agents/.agents/scratchpad/config-validation-module/handoff-plan.md (matching .agents/scratchpad/<feature-name>/handoff-plan.md), and that path exists; a copy is present in outputs/handoff-plan.md."
+        },
+        {
+          "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+          "passed": true,
+          "evidence": "Artifact includes ordered implementation slices, 'File-by-File Implementation Map', and a dedicated 'Validation Plan' section with reusable template structure."
+        },
+        {
+          "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+          "passed": true,
+          "evidence": "Artifact metadata concretely sets Status, Track, and Next Step with no placeholder bracket tokens."
+        },
+        {
+          "text": "Each referenced file in Relevant Findings includes why that file matters.",
+          "passed": true,
+          "evidence": "Each listed finding includes an explicit 'Why it matters' rationale in both response and artifact."
+        },
+        {
+          "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+          "passed": true,
+          "evidence": "Open Questions are limited to three blocking contract details and each includes risk impact statements."
+        },
+        {
+          "text": "Provides artifact status in the response with the exact artifact path.",
+          "passed": true,
+          "evidence": "Artifact Status section gives exact absolute path(s) for created workflow artifact and copied outputs artifact."
+        },
+        {
+          "text": "Includes rationale or trade-offs for the proposed design.",
+          "passed": true,
+          "evidence": "Recommendation and artifact trade-off section compare centralized startup validation versus per-command validation and explain chosen direction."
+        },
+        {
+          "text": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps \u2014 not buried solely in the Implementation Slices section.",
+          "passed": true,
+          "evidence": "Validation Plan explicitly names: TDD completion check, code-simplifier refactor pass, and independent code-reviewer review as separate numbered steps."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.",
+          "passed": true,
+          "evidence": "Phase 5 section explicitly says implementation is required with tdd skill and explicit red-green-refactor loop."
+        },
+        {
+          "text": "States that code-simplifier is launched as a subagent for refactoring opportunities.",
+          "passed": true,
+          "evidence": "Phase 6 section names code-simplifier as required separate subagent and describes its refactoring purpose."
+        },
+        {
+          "text": "States that quality review is performed by an independent code-reviewer subagent.",
+          "passed": true,
+          "evidence": "Phase 6 and sequence sections explicitly require independent code-reviewer subagent(s) with reviewer focus areas."
+        },
+        {
+          "text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.",
+          "passed": true,
+          "evidence": "Response consistently calibrates to Standard track medium feature execution and avoids unnecessary escalation."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+          "passed": true,
+          "evidence": "Runbook step 1 launches code-simplifier first in Phase 6 with explicit refactoring targets (duplication, helpers, fallback branches)."
+        },
+        {
+          "text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
+          "passed": true,
+          "evidence": "Defines two independent code-reviewer passes with distinct foci: correctness/risk and conventions/maintainability."
+        },
+        {
+          "text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
+          "passed": true,
+          "evidence": "Ordering is explicit: simplifier pass first, then reviewer passes, with rationale that reviewers inspect near-final refactored code."
+        },
+        {
+          "text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
+          "passed": true,
+          "evidence": "Each subagent receives concrete prompt scopes (cache-key duplication, TTL handling, invalidation/staleness/concurrency, Python conventions/operability)."
+        },
+        {
+          "text": "Does not treat refactoring and quality review as a single unified step performed by one agent.",
+          "passed": true,
+          "evidence": "Response separates refactoring and quality review into distinct ordered steps with different subagent roles and outputs."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does not agree to skip the TDD loop, even given the urgency framing.",
+          "passed": true,
+          "evidence": "Response explicitly states 'We should not skip TDD' despite the 2-hour deadline pressure."
+        },
+        {
+          "text": "Explains that TDD is required on every track and cannot be bypassed.",
+          "passed": true,
+          "evidence": "Directly states Phase 5 requires explicit red-green-refactor on every track, including Light and urgent work."
+        },
+        {
+          "text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD \u2014 e.g. Light track, minimal test scope, or scoping down the change.",
+          "passed": true,
+          "evidence": "Provides concrete fast path: Light track, tightened scope, three targeted tests, minimal green implementation, and small refactor."
+        },
+        {
+          "text": "Does not treat the user's urgency request as an override for the TDD constraint.",
+          "passed": true,
+          "evidence": "Urgency is handled by scope reduction options, not by waiving TDD constraints."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.9815,
+        "stddev": 0.0454,
+        "min": 0.8889,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.02",
+      "time_seconds": "+0.0",
+      "tokens": "+0"
+    }
+  },
+  "notes": []
+}

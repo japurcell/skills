@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.",
+      "passed": true,
+      "evidence": "Phase 5 quotes: 'Always use the tdd skill to implement with an explicit red-green-refactor loop' and enumerates the three steps: Red (write failing test), Green (implement minimum code to pass), Refactor (clean up). States 'This applies on all tracks — there is no escape hatch that allows skipping TDD.'"
+    },
+    {
+      "text": "States that code-simplifier is launched as a subagent for refactoring opportunities.",
+      "passed": false,
+      "evidence": "The response does not mention code-simplifier anywhere. Phase 6 discusses only code-reviewer agents (simplicity, correctness, conventions). The enforcement table lists 'Quality review on every track: Always run independent code-reviewer agents' but omits code-simplifier. The exact subagent roles summary names only 'agents/code-reviewer.md × 3'."
+    },
+    {
+      "text": "States that quality review is performed by an independent code-reviewer subagent.",
+      "passed": true,
+      "evidence": "Phase 6 quotes 'Always run independent code-reviewer agents for quality review on every track' and names three parallel code-reviewer subagents with distinct focuses (simplicity, correctness, conventions). States agents are independent and run in parallel to prevent confirmation bias."
+    },
+    {
+      "text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.",
+      "passed": true,
+      "evidence": "Track chosen is Standard with rationale: 'touches three files... fits Standard Track because well-defined scope... Requires non-trivial coordination across multiple files.' Does not escalate to Deep. Applies standard-track reviewer scaling only."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  }
+}

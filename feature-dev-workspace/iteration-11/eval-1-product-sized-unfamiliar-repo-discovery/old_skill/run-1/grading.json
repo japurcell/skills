@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Uses findings from the current repository and current feature-dev skill rather than generic advice.",
+      "passed": true,
+      "evidence": "Explicitly says 'Explored skills/feature-dev/SKILL.md and the repo structure' with specific line references (e.g., 'lines ~30–55', 'lines ~101–115', 'lines ~119–135') and identifies a specific gap in 'references/handoff-plan-template.md'."
+    },
+    {
+      "text": "Asks targeted clarifying questions that are grounded in concrete risks or ambiguities.",
+      "passed": true,
+      "evidence": "Three questions each address a concrete design risk: (1) what 'product-sized' scopes to, determining whether product-context questions are a side note or need a phase section; (2) the actual observed failure mode, shaping which fix has most leverage; (3) whether orientation should produce a reusable artifact, which is 'a bigger change to the skill'."
+    },
+    {
+      "text": "Caps clarifying questions to a small, prioritized set rather than turning discovery into a broad interview.",
+      "passed": true,
+      "evidence": "Exactly three questions under 'Open Questions', introduced as 'Three questions that would materially change the design of the fix.'"
+    },
+    {
+      "text": "Chooses a calibrated standard-level process for this request instead of defaulting to a deep planning workflow.",
+      "passed": true,
+      "evidence": "First line: 'Track: Standard — the request has a clear goal... but meaningful ambiguity... It touches several files/sections but doesn't require speculative architecture choices.'"
+    },
+    {
+      "text": "Separates current understanding, open questions, and a recommended approach.",
+      "passed": true,
+      "evidence": "Response is divided into: 'Understanding', 'Relevant Findings', 'Open Questions', 'Recommendation', and 'Artifact Status'. Understanding, open questions, and recommended approach are all clearly delineated sections."
+    },
+    {
+      "text": "Explains why the proposed changes would help with unfamiliar repositories.",
+      "passed": true,
+      "evidence": "Change 1: 'code-explorer agents produce higher-signal summaries when they already know the lay of the land. Without orientation, they often surface the wrong abstraction level.' Change 2: prevents the skill from 'optimizing purely for code correctness on work where product correctness is the actual bar.'"
+    },
+    {
+      "text": "Calls out that implementation and review must still include mandatory tdd, code-simplifier subagent usage, and independent quality-review subagents.",
+      "passed": true,
+      "evidence": "'What stays the same: Implementation (Phase 5) and review (Phase 6) keep their current mandatory requirements: TDD with explicit red-green-refactor loop via the tdd skill, independent code-reviewer agents for every track, and code-simplifier subagent usage. These are non-negotiable regardless of how discovery and questions change.'"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

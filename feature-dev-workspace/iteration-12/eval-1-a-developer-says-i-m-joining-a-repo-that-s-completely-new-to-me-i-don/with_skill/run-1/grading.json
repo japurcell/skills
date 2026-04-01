@@ -1,0 +1,63 @@
+{
+  "expectations": [
+    {
+      "expectation": "Explicitly names Phase 2 (codebase exploration) as critical when the repository is unfamiliar.",
+      "result": "pass",
+      "evidence": [
+        "Response includes a dedicated section: \"2. Codebase exploration\".",
+        "Response frames the scenario as onboarding to an unfamiliar repo and spends substantial content on why skipping exploration causes failures."
+      ]
+    },
+    {
+      "expectation": "Identifies concrete risks of skipping exploration: e.g., implementing against wrong architectural patterns, using non-standard testing approach, unintended side effects, breaking assumptions.",
+      "result": "pass",
+      "evidence": [
+        "Lists concrete failure modes: wrong layer implementation, hidden invariants, non-standard team patterns, cross-cutting regressions, brittle/misaligned tests, scope underestimation, rollback risk.",
+        "Each risk includes consequence statements (e.g., regressions, rework, flaky tests, incident windows)."
+      ]
+    },
+    {
+      "expectation": "Explains that Phase 2 agent(s) should trace through existing similar features to understand the repo's patterns before designing.",
+      "result": "fail",
+      "evidence": [
+        "Response says to \"Find similar features and copy proven patterns\" and \"Read real source files\".",
+        "But it does not explicitly mention Phase 2 agent(s) or describe agent-driven tracing before design."
+      ]
+    },
+    {
+      "expectation": "States that Phase 3 (clarifying questions) becomes more important in unfamiliar repos, not less, because assumptions about conventions cannot be made.",
+      "result": "fail",
+      "evidence": [
+        "Response includes \"3. Clarifying questions\" with useful guidance.",
+        "However, it does not explicitly state that Phase 3 is more important in unfamiliar repos, nor the explicit \"not less\" contrast tied to avoiding convention assumptions."
+      ]
+    },
+    {
+      "expectation": "Emphasizes that all three mandatory workflow requirements (TDD, code-simplifier, independent code-reviewer) are non-negotiable AND that Phase 2 discovery shapes how to apply them in this specific repo's conventions.",
+      "result": "fail",
+      "evidence": [
+        "Response mentions TDD, a simplification/refactor pass, and an independent code review pass.",
+        "But it does not explicitly call these non-negotiable or clearly connect Phase 2 findings to how each requirement is adapted to repo conventions."
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "overall": "fail"
+  },
+  "claims": [
+    {
+      "claim": "The answer correctly identifies multiple concrete risks of skipping exploration.",
+      "supported": true,
+      "evidence": "Seven specific risk categories are enumerated with outcomes."
+    },
+    {
+      "claim": "The answer fully satisfies the feature-dev phase-specific emphasis requested by assertions.",
+      "supported": false,
+      "evidence": "Missing explicit Phase 2 agent framing, missing explicit Phase 3 'more important' statement, and missing 'non-negotiable + Phase 2 shapes application' linkage."
+    }
+  ],
+  "user_notes_summary": "User notes indicate the response intentionally stayed conceptual/process-focused and did not perform repo-specific exploration. This aligns with the prompt framing but also explains why some phase/agent-specific rigor was not explicit.",
+  "eval_feedback": "Strong high-level workflow guidance and concrete risk articulation. To pass all assertions, the response should explicitly reference Phase 2 agent behavior (trace similar features before design), explicitly state that Phase 3 becomes more important in unfamiliar repos due to inability to assume conventions, and explicitly mark TDD + code-simplifier + independent code-reviewer as non-negotiable while tying their application to Phase 2 discoveries."
+}

@@ -1,0 +1,4 @@
+- Assumption: The eval expects a conceptual, workflow-based explanation rather than repository-specific file analysis.
+- Assumption: "Medium-sized feature" maps to the feature-dev Standard track.
+- Limitation: No live exploration of a target product codebase was performed because the prompt asked for guidance on process/risk, not implementation in a specific app.
+- Limitation: Time-split percentages are heuristic guidance, not strict policy.

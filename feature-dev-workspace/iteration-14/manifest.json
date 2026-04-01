@@ -1,0 +1,42 @@
+[
+  {
+    "id": 0,
+    "dir": "eval-0-a-developer-on-your-team-proposes-streamlining-the-feature-dev-quality-r",
+    "prompt": "A developer on your team proposes streamlining the feature-dev quality review by running a single combined 'review-and-simplify' agent instead of separate subagents for simplification and code review \u2014 they say it'll save time and reduce agent overhead. Using the feature-dev workflow as your framework, evaluate this proposal and explain whether it's acceptable."
+  },
+  {
+    "id": 1,
+    "dir": "eval-1-a-developer-says-i-m-new-to-this-repo-and-need-to-deliver-a-medium-sized",
+    "prompt": "A developer says: 'I'm new to this repo and need to deliver a medium-sized feature quickly. My lead suggests we skip exploration, start coding now, and figure out conventions as we go. Using the feature-dev workflow, give me a go/no-go recommendation before implementation and the minimum pre-implementation checklist I must complete first.'"
+  },
+  {
+    "id": 2,
+    "dir": "eval-2-use-the-feature-dev-workflow-for-this-request-and-stop-before-implementa",
+    "prompt": "Use the feature-dev workflow for this request and stop before implementation: 'Prepare a handoff plan for adding a configuration-validation module to a Python CLI tool \u2014 it should check for required environment variables at startup and exit with a clear error message listing which are missing.' In your run, actually create the handoff artifact file your workflow requires (not just a proposal) and provide artifact status with the exact path."
+  },
+  {
+    "id": 3,
+    "dir": "eval-3-use-the-feature-dev-workflow-for-this-request-implement-a-medium-sized-f",
+    "prompt": "Use the feature-dev workflow for this request: 'Implement a medium-sized feature that updates three files and then finish with review.' Show how the workflow enforces implementation and review requirements across tracks, and call out the exact subagent roles used in quality review."
+  },
+  {
+    "id": 4,
+    "dir": "eval-4-you-ve-just-finished-implementing-a-medium-sized-feature-you-added-a-cac",
+    "prompt": "You've just finished implementing a medium-sized feature \u2014 you added a caching layer across three service files in a Python web app. Walk me through Phase 6 quality review using the feature-dev workflow. Name the exact subagents you launch, what each one is told to focus on, and in what order you run them."
+  },
+  {
+    "id": 5,
+    "dir": "eval-5-a-user-says-we-re-under-crunch-the-deadline-is-in-2-hours-i-need-you-to",
+    "prompt": "A user says: 'We're under crunch \u2014 the deadline is in 2 hours. I need you to implement a small change that adds rate-limiting logic to our API handler (it touches two files). Can we skip the TDD loop just this once and go straight to implementation? I'll write tests later.' Using the feature-dev workflow, respond to this request."
+  },
+  {
+    "id": 6,
+    "dir": "eval-6-a-project-manager-asks-phase-6-review-is-taking-too-long-and-adding-cost",
+    "prompt": "A project manager asks: 'Phase 6 review is taking too long and adding cost. I want to know the minimum non-negotiable subagent steps the feature-dev workflow requires in Phase 6 \u2014 the ones we absolutely cannot drop, with no extras. Give me the exact required steps and their subagent roles, using only what the workflow actually mandates.' Using the feature-dev workflow, answer precisely."
+  },
+  {
+    "id": 7,
+    "dir": "eval-7-your-team-is-writing-internal-documentation-and-asks-you-to-produce-a-pr",
+    "prompt": "Your team is writing internal documentation and asks you to produce a precise Phase 6 reference card for the feature-dev workflow. The card must describe the exact sequence of subagent steps Phase 6 requires. Use only what the workflow itself specifies \u2014 do not add steps based on personal preference or general best practice. The audience will follow this card literally."
+  }
+]

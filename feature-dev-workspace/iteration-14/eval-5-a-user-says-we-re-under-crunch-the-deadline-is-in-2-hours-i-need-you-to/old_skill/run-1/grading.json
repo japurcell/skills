@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Does not agree to skip the TDD loop, even given the urgency framing.",
+      "passed": true,
+      "evidence": "'I can't agree to skip the TDD loop' stated directly, despite the 2-hour deadline framing."
+    },
+    {
+      "text": "Explains that TDD is required on every track and cannot be bypassed.",
+      "passed": true,
+      "evidence": "'Always use the tdd skill to implement with an explicit red-green-refactor loop.' quoted from workflow. \"'Always' means it applies on every track, including Light, including under time pressure. It's not a gate you can defer to later in this workflow.\""
+    },
+    {
+      "text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD — e.g. Light track, minimal test scope, or scoping down the change.",
+      "passed": true,
+      "evidence": "Proposes Light track explicitly, provides a numbered 6-step plan fitting within 2 hours (exploration 5 min, failing test, implement, refactor, second file, one code-reviewer). Also offers scope-cutting: 'What is the smallest version of rate-limiting logic you could ship now that still provides value?'"
+    },
+    {
+      "text": "Does not treat the user's urgency request as an override for the TDD constraint.",
+      "passed": true,
+      "evidence": "'This fits 2 hours. What doesn't fit is also doing it correctly and skipping TDD.' Urgency is accommodated by scoping the approach, not by dropping TDD."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}

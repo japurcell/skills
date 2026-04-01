@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "feature-dev", "runs": [{"id": "eval-0-a-developer-on-your-team-proposes-streamlining-the-feature-dev-quality-r-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.", "passed": true, "evidence": "Response quotes Phase 6 mandates directly: 'Phase 6 mandates independent code-reviewer agents' and 'Phase 6 calls for multiple agents in parallel covering different focuses \u2014 simplicity, correctness, conventions.'"}, {"text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.", "passed": false, "evidence": "Response mentions only code-reviewer agents as Phase 6 requirements. Code-simplifier is never mentioned anywhere in the transcript. The proposal is rejected solely on independence/parallel-coverage grounds, not because code-simplifier is a separate required subagent."}, {"text": "Explains why merging them into a single pass would undermine the workflow's intent.", "passed": true, "evidence": "'A single combined agent collapses that to one opinionated pass.' and 'A single combined review-and-simplify agent can't replicate parallel independent perspectives; it will deprioritize coverage in at least one area.'"}, {"text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.", "passed": false, "evidence": "Code-simplifier is never mentioned in the transcript. No ordering statement about code-simplifier is possible."}, {"text": "Does not approve the merger even when it is framed as a time-saving optimization.", "passed": true, "evidence": "'Verdict: Not acceptable.' is given at the top, and 'Saving time by merging agents is not an approved optimization' is stated explicitly."}], "summary": {"passed": 3, "failed": 2, "total": 5, "pass_rate": 0.6}}}, {"id": "eval-0-a-developer-on-your-team-proposes-streamlining-the-feature-dev-quality-r-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.", "passed": true, "evidence": "Response opens: 'The feature-dev workflow's Phase 6 explicitly requires two separate, independent subagents in a specific order.' Phase 6 Actions 1 and 2 are quoted directly by name and content."}, {"text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.", "passed": true, "evidence": "Lists Phase 6 required actions: '1. Always launch an independent code-simplifier subagent' and '2. Always run independent code-reviewer agents' \u2014 both named as separate items with the 'always' qualifier."}, {"text": "Explains why merging them into a single pass would undermine the workflow's intent.", "passed": true, "evidence": "Section 'Why Merging Them Undermines the Workflow' explains that code-simplifier and code-reviewer serve 'distinct, non-overlapping purposes' and that 'running a single combined agent collapses these lenses.' Also explains that merging destroys the ordering guarantee."}, {"text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.", "passed": true, "evidence": "'The code-simplifier runs before the code-reviewer pass.' Sequence shown explicitly: 'Implementation \u2192 code-simplifier (refactor pass) \u2192 code-reviewer(s) (quality review)'."}, {"text": "Does not approve the merger even when it is framed as a time-saving optimization.", "passed": true, "evidence": "'Reject the proposal.' and 'collapsing the code-simplifier and code-reviewer into a single agent is not among the acceptable reductions' \u2014 stated explicitly despite the time-saving framing. Acceptable alternatives listed do not include merging."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "eval-1-a-developer-says-i-m-new-to-this-repo-and-need-to-deliver-a-medium-sized-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.", "passed": true, "evidence": "'Recommendation: NO-GO on immediate implementation.' stated explicitly at the top. Grounded in Core Principles: 'Understand before acting.'"}, {"text": "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).", "passed": true, "evidence": "Three named items: '1. Similar-feature trace', '2. Architecture touchpoint map', '3. Test and CI convention mapping' \u2014 each with concrete description of what must be produced."}, {"text": "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).", "passed": true, "evidence": "Risk table explicitly maps each risk to a phase: 'Phase 2 (Exploration)', 'Phase 2 + Phase 3', 'Phase 4 design is uninformed; Phase 5 code diverges from codebase', 'Phase 6 review; rework required'."}, {"text": "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.", "passed": true, "evidence": "Three questions only, each explicitly tied to a concrete uncertainty: scope boundary (where the feature lives), integration point (existing interfaces), urgency tier (track selection)."}, {"text": "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review.", "passed": false, "evidence": "Downstream gates listed are 'TDD loop (red-green-refactor) on every implementation track' and 'Independent code-reviewer agent in Phase 6 \u2014 at minimum one'. Code-simplifier is not mentioned. Only two of the three required gates are named."}], "summary": {"passed": 4, "failed": 1, "total": 5, "pass_rate": 0.8}}}, {"id": "eval-1-a-developer-says-i-m-new-to-this-repo-and-need-to-deliver-a-medium-sized-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.", "passed": true, "evidence": "Section header: 'Recommendation: NO-GO on Skipping Exploration. Do not start implementation without first completing the exploration phase.'"}, {"text": "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).", "passed": true, "evidence": "Checklist contains exactly these three: 'Similar-feature trace', 'Architecture and touchpoint map', 'Test and CI convention mapping', plus a fourth item 'Read key files directly'."}, {"text": "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).", "passed": true, "evidence": "Risk table maps each risk to a phase: 'Phase 2: miss similar-feature patterns', 'Phase 2: miss architecture and convention mapping', 'Phase 3: cannot ask targeted questions without findings', 'Phase 4: architecture design is based on guesswork', 'Phase 5: test conventions not known'."}, {"text": "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.", "passed": true, "evidence": "Three questions only, each tied to a concrete uncertainty: scope boundary (could affect out-of-scope work), error/edge case handling ('implementation could go in two very different directions'), backward compatibility ('preserve any existing interface, configuration key, or behavior'). Each includes framing for when to ask vs. assume."}, {"text": "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review.", "passed": true, "evidence": "'Mandatory Gates Before You Hand Back Work' explicitly lists all three: '1. TDD red-green-refactor loop', '2. Independent code-simplifier pass', '3. Independent code-reviewer review' \u2014 each described as non-optional and required on every track."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "eval-2-use-the-feature-dev-workflow-for-this-request-and-stop-before-implementa-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "handoff-plan.md", "type": "text", "content": "# Handoff Plan: config-validation\n\n**Status**: ready for implementation\n**Track**: Light\n**Origin**: feature-dev\n**Feature Area**: CLI startup / configuration loading\n**Recommended Next Step**: implement directly\n\n## Summary\n\nThe request is to add a `config-validation` module to a Python CLI tool that checks for required environment variables at startup and exits with a clear, actionable error message listing every missing variable. This is a Standard track feature because it touches the startup path (a cross-cutting concern), involves a design choice around where validation is invoked, and will require tests that cover both happy-path and partial/total-failure cases. The goal is a self-contained module that the CLI's entrypoint imports and calls before any other logic runs.\n\n## Goal / Non-Goals\n\n- Goal: Validate that all required environment variables are present at CLI startup\n- Goal: Exit with a non-zero status and print a human-readable message listing every missing variable\n- Non-goal: Fetching, defaulting, or transforming environment variable values \u2014 only presence checking\n- Non-goal: Runtime re-validation after startup (single startup check only)\n- Non-goal: Support for `.env` file loading (separate responsibility)\n\n## Relevant Findings\n\nSince this is a hypothetical Python CLI without a concrete codebase to explore, the following identifies the canonical files any well-structured Python CLI would have at these locations. A next agent must read the actual versions.\n\n- `src/cli.py` or `src/__main__.py`: The entrypoint. This is where the validation call is inserted \u2014 before argument parsing or any command dispatch.\n- `src/config.py` or `src/settings.py`: Any existing configuration loading module. Validation should be co-located or called from here to respect existing patterns.\n- `tests/test_config.py` or `tests/test_startup.py`: Existing test file for configuration. The new tests go here, following the existing test framework and fixture conventions.\n- `requirements.txt` or `pyproject.toml`: Dependency manifest. Confirms no third-party validation library is already in use (e.g., `pydantic`, `environs`) that should be extended rather than duplicated.\n- `README.md` or `docs/configuration.md`: May specify which environment variables are already documented as required \u2014 the canonical source for the required-variable list.\n\n## Technical Context and Constraints\n\n- Language / framework: Python 3 CLI (assumed `argparse` or `click` entrypoint)\n- Runtime or platform constraints: Must work with standard library only (`os.environ`) unless the codebase already uses a config library\n- Existing conventions to preserve: Follow the existing module naming, import style, and test fixture pattern found during exploration\n- Dependencies or interfaces affected: CLI entrypoint (`main()` or `cli()`) \u2014 the validation call is inserted there\n- Validation surface: Unit tests covering: all variables present (pass), one missing (fail with message), multiple missing (fail, all listed), empty string values treated as missing if the convention is strict presence\n\n## Assumptions / Open Questions\n\n- Assumption: Empty string (`\"\"`) values are treated as missing, since an empty env var set but not populated would bypass the check silently. If the convention is that empty is acceptable, the filtering logic changes.\n  - Risk if wrong: Startup passes with empty vars that later cause runtime errors elsewhere\n- Assumption: The required variable list is a static constant defined in the validation module, not loaded from a file. If it needs to be dynamically configured, the design changes to accept a parameter.\n  - Risk if wrong: The module cannot adapt to different deployment profiles without a code change\n- Open question: Should the module be importable and callable from non-CLI contexts (e.g., a test harness or background worker)? If yes, the `sys.exit()` call must be wrapped so callers can catch raised exceptions instead.\n  - Risk if wrong: Hard `sys.exit()` inside a library function breaks any consumer that needs graceful handling\n\n## Recommended Design\n\n**Module-based validator with hard exit at the entrypoint boundary.**\n\nCreate `src/config_validation.py` with a single public function `validate_env(required: list[str]) -> None`. The function collects all missing variables, and if any are missing, prints a formatted error message to `stderr` and calls `sys.exit(1)`. The function is called from the CLI entrypoint before any command dispatch. The required variable list is defined as a constant in the same module or passed in from the entrypoint.\n\nThis approach is preferred over alternatives because:\n- It is a single, testable function with no side effects when all vars are present\n- Using `sys.exit()` at the entrypoint boundary (not inside the library function directly) keeps the validator reusable \u2014 the caller decides whether to exit or raise\n- No third-party dependencies required; `os.environ` is sufficient\n- It co-locates the validation logic where it can be easily extended if the required-var list grows\n\nAlternative considered: adding validation inline in the entrypoint. Rejected because it cannot be unit-tested in isolation and scatters logic.\n\n## Implementation Slices\n\n### Slice 1: Create `src/config_validation.py`\n\n- Outcome: A standalone, importable module with `validate_env(required: list[str]) -> list[str]` that returns the list of missing variables (does not exit itself)\n- Files: `src/config_validation.py` (new file)\n- Dependencies: None\n\n### Slice 2: Add entrypoint integration\n\n- Outcome: CLI startup calls `validate_env(REQUIRED_VARS)` and exits with a clear error if the return value is non-empty\n- Files: `src/cli.py` or `src/__main__.py` (add 3\u20135 lines before argument parsing)\n- Dependencies: Slice 1 complete\n\n### Slice 3: Add unit tests\n\n- Outcome: Tests cover pass case, single missing var, and multiple missing vars; test the message format\n- Files: `tests/test_config_validation.py` (new file)\n- Dependencies: Slice 1 complete (tests can be written before Slice 2 per TDD loop)\n\n## File-by-File Implementation Map\n\n- `src/config_validation.py`: New file. Define `REQUIRED_ENV_VARS: list[str]` constant and `validate_env(required: list[str]) -> list[str]` function. Function returns sorted list of missing variable names.\n- `src/cli.py` (or `__main__.py`): In the `main()` function, add `missing = validate_env(REQUIRED_ENV_VARS); if missing: print(f\"Missing required environment variables: {', '.join(missing)}\", file=sys.stderr); sys.exit(1)` before any other logic.\n- `tests/test_config_validation.py`: New file. Three test cases using `monkeypatch.setenv` / `monkeypatch.delenv` (pytest) or `unittest.mock.patch.dict(os.environ, ...)`: all present, one missing, multiple missing.\n\n## Validation Plan\n\n1. **TDD red-green-refactor**: Write `tests/test_config_validation.py` first (red), implement `config_validation.py` to pass (green), then refactor for clarity (refactor). Run `pytest tests/test_config_validation.py` at each stage.\n2. **Independent code-reviewer review**: Launch at least one independent `code-reviewer` subagent to review correctness (edge cases: empty string, var set to whitespace), conventions (matches existing test style), and simplicity (no over-engineering for a three-function module).\n3. **Manual smoke test**: Run the CLI with one required var unset and confirm: exit code is 1, stderr message lists the missing var by name, no traceback.\n4. **Full test suite**: Run `pytest` to confirm no regressions in unrelated tests.\n\n## Next-Agent Kickoff\n\n1. Read the actual files at the paths listed in Relevant Findings \u2014 specifically the entrypoint, any existing config module, and the test directory structure.\n2. Confirm the required environment variable list with the codebase owner or README (do not invent it).\n3. Resolve the open question about `sys.exit()` vs. raising an exception before implementing Slice 2, if the CLI is also used programmatically.\n4. Execute the implementation slices in order: Slice 1 (TDD, write test first) \u2192 Slice 2 (entrypoint integration) \u2192 Slice 3 (tests complete).\n5. Re-run the full Validation Plan before handing work back.\n"}], "grading": {"expectations": [{"text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.", "passed": true, "evidence": "Response acknowledges no live codebase available and references canonical Python CLI patterns. States 'The implementing agent must verify actual paths via Phase 2 exploration.' Design is grounded in standard conventions, not invented arbitrarily."}, {"text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.", "passed": true, "evidence": "'Artifact Status: Handoff artifact created at: .agents/scratchpad/config-validation/handoff-plan.md'. File confirmed present in outputs/handoff-plan.md."}, {"text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.", "passed": true, "evidence": "handoff-plan.md contains: 'Implementation Slices' (3 slices), 'File-by-File Implementation Map', and 'Validation Plan' sections \u2014 all present and populated."}, {"text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.", "passed": true, "evidence": "Status: 'ready for implementation', Track: 'Light', Recommended Next Step: 'implement directly' \u2014 all concretely filled with no bracket placeholders."}, {"text": "Each referenced file in Relevant Findings includes why that file matters.", "passed": true, "evidence": "Each entry in Relevant Findings includes a colon-separated explanation, e.g. 'src/cli.py or src/__main__.py: The entrypoint. This is where the validation call is inserted \u2014 before argument parsing or any command dispatch.'"}, {"text": "Open questions are tightly bounded to truly blocking items and include risk framing.", "passed": true, "evidence": "Three open items, each with 'Risk if wrong:' framing. All are genuinely blocking design decisions (empty string treatment, static vs. dynamic var list, sys.exit vs. raise)."}, {"text": "Provides artifact status in the response with the exact artifact path.", "passed": true, "evidence": "final_response.md ends with 'Artifact Status: Handoff artifact created at: .agents/scratchpad/config-validation/handoff-plan.md' \u2014 exact path provided."}, {"text": "Includes rationale or trade-offs for the proposed design.", "passed": true, "evidence": "handoff-plan.md 'Recommended Design' section includes rationale ('preferred because: It is a single, testable function...') and an alternative considered and rejected ('adding validation inline in the entrypoint. Rejected because...')."}, {"text": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps \u2014 not buried solely in the Implementation Slices section.", "passed": false, "evidence": "handoff-plan.md Validation Plan contains: Step 1 (TDD red-green-refactor), Step 2 (Independent code-reviewer review), Step 3 (Manual smoke test), Step 4 (Full test suite). No code-simplifier refactor pass is present as a discrete step anywhere in the Validation Plan."}], "summary": {"passed": 8, "failed": 1, "total": 9, "pass_rate": 0.89}}}, {"id": "eval-2-use-the-feature-dev-workflow-for-this-request-and-stop-before-implementa-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "handoff-plan.md", "type": "text", "content": "# Handoff Plan: config-validation\n\n**Status**: ready for implementation\n**Track**: Light\n**Origin**: feature-dev\n**Feature Area**: CLI startup / configuration loading\n**Recommended Next Step**: implement directly\n\n## Summary\n\nThe request is to add a `config-validation` module to a Python CLI tool that checks for required environment variables at startup and exits with a clear, actionable error message listing every missing variable. This is a Standard track feature because it touches the startup path (a cross-cutting concern), involves a design choice around where validation is invoked, and will require tests that cover both happy-path and partial/total-failure cases. The goal is a self-contained module that the CLI's entrypoint imports and calls before any other logic runs.\n\n## Goal / Non-Goals\n\n- Goal: Validate that all required environment variables are present at CLI startup\n- Goal: Exit with a non-zero status and print a human-readable message listing every missing variable\n- Non-goal: Fetching, defaulting, or transforming environment variable values \u2014 only presence checking\n- Non-goal: Runtime re-validation after startup (single startup check only)\n- Non-goal: Support for `.env` file loading (separate responsibility)\n\n## Relevant Findings\n\nSince this is a hypothetical Python CLI without a concrete codebase to explore, the following identifies the canonical files any well-structured Python CLI would have at these locations. A next agent must read the actual versions.\n\n- `src/cli.py` or `src/__main__.py`: The entrypoint. This is where the validation call is inserted \u2014 before argument parsing or any command dispatch.\n- `src/config.py` or `src/settings.py`: Any existing configuration loading module. Validation should be co-located or called from here to respect existing patterns.\n- `tests/test_config.py` or `tests/test_startup.py`: Existing test file for configuration. The new tests go here, following the existing test framework and fixture conventions.\n- `requirements.txt` or `pyproject.toml`: Dependency manifest. Confirms no third-party validation library is already in use (e.g., `pydantic`, `environs`) that should be extended rather than duplicated.\n- `README.md` or `docs/configuration.md`: May specify which environment variables are already documented as required \u2014 the canonical source for the required-variable list.\n\n## Technical Context and Constraints\n\n- Language / framework: Python 3 CLI (assumed `argparse` or `click` entrypoint)\n- Runtime or platform constraints: Must work with standard library only (`os.environ`) unless the codebase already uses a config library\n- Existing conventions to preserve: Follow the existing module naming, import style, and test fixture pattern found during exploration\n- Dependencies or interfaces affected: CLI entrypoint (`main()` or `cli()`) \u2014 the validation call is inserted there\n- Validation surface: Unit tests covering: all variables present (pass), one missing (fail with message), multiple missing (fail, all listed), empty string values treated as missing if the convention is strict presence\n\n## Assumptions / Open Questions\n\n- Assumption: Empty string (`\"\"`) values are treated as missing, since an empty env var set but not populated would bypass the check silently. If the convention is that empty is acceptable, the filtering logic changes.\n  - Risk if wrong: Startup passes with empty vars that later cause runtime errors elsewhere\n- Assumption: The required variable list is a static constant defined in the validation module, not loaded from a file. If it needs to be dynamically configured, the design changes to accept a parameter.\n  - Risk if wrong: The module cannot adapt to different deployment profiles without a code change\n- Open question: Should the module be importable and callable from non-CLI contexts (e.g., a test harness or background worker)? If yes, the `sys.exit()` call must be wrapped so callers can catch raised exceptions instead.\n  - Risk if wrong: Hard `sys.exit()` inside a library function breaks any consumer that needs graceful handling\n\n## Recommended Design\n\n**Module-based validator with hard exit at the entrypoint boundary.**\n\nCreate `src/config_validation.py` with a single public function `validate_env(required: list[str]) -> None`. The function collects all missing variables, and if any are missing, prints a formatted error message to `stderr` and calls `sys.exit(1)`. The function is called from the CLI entrypoint before any command dispatch. The required variable list is defined as a constant in the same module or passed in from the entrypoint.\n\nThis approach is preferred over alternatives because:\n- It is a single, testable function with no side effects when all vars are present\n- Using `sys.exit()` at the entrypoint boundary (not inside the library function directly) keeps the validator reusable \u2014 the caller decides whether to exit or raise\n- No third-party dependencies required; `os.environ` is sufficient\n- It co-locates the validation logic where it can be easily extended if the required-var list grows\n\nAlternative considered: adding validation inline in the entrypoint. Rejected because it cannot be unit-tested in isolation and scatters logic.\n\n## Implementation Slices\n\n### Slice 1: Create `src/config_validation.py`\n\n- Outcome: A standalone, importable module with `validate_env(required: list[str]) -> list[str]` that returns the list of missing variables (does not exit itself)\n- Files: `src/config_validation.py` (new file)\n- Dependencies: None\n\n### Slice 2: Add entrypoint integration\n\n- Outcome: CLI startup calls `validate_env(REQUIRED_VARS)` and exits with a clear error if the return value is non-empty\n- Files: `src/cli.py` or `src/__main__.py` (add 3\u20135 lines before argument parsing)\n- Dependencies: Slice 1 complete\n\n### Slice 3: Add unit tests\n\n- Outcome: Tests cover pass case, single missing var, and multiple missing vars; test the message format\n- Files: `tests/test_config_validation.py` (new file)\n- Dependencies: Slice 1 complete (tests can be written before Slice 2 per TDD loop)\n\n## File-by-File Implementation Map\n\n- `src/config_validation.py`: New file. Define `REQUIRED_ENV_VARS: list[str]` constant and `validate_env(required: list[str]) -> list[str]` function. Function returns sorted list of missing variable names.\n- `src/cli.py` (or `__main__.py`): In the `main()` function, add `missing = validate_env(REQUIRED_ENV_VARS); if missing: print(f\"Missing required environment variables: {', '.join(missing)}\", file=sys.stderr); sys.exit(1)` before any other logic.\n- `tests/test_config_validation.py`: New file. Three test cases using `monkeypatch.setenv` / `monkeypatch.delenv` (pytest) or `unittest.mock.patch.dict(os.environ, ...)`: all present, one missing, multiple missing.\n\n## Validation Plan\n\n1. **TDD red-green-refactor**: Write `tests/test_config_validation.py` first (red), implement `config_validation.py` to pass (green), then refactor for clarity (refactor). Run `pytest tests/test_config_validation.py` at each stage.\n2. **Independent code-reviewer review**: Launch at least one independent `code-reviewer` subagent to review correctness (edge cases: empty string, var set to whitespace), conventions (matches existing test style), and simplicity (no over-engineering for a three-function module).\n3. **Manual smoke test**: Run the CLI with one required var unset and confirm: exit code is 1, stderr message lists the missing var by name, no traceback.\n4. **Full test suite**: Run `pytest` to confirm no regressions in unrelated tests.\n\n## Next-Agent Kickoff\n\n1. Read the actual files at the paths listed in Relevant Findings \u2014 specifically the entrypoint, any existing config module, and the test directory structure.\n2. Confirm the required environment variable list with the codebase owner or README (do not invent it).\n3. Resolve the open question about `sys.exit()` vs. raising an exception before implementing Slice 2, if the CLI is also used programmatically.\n4. Execute the implementation slices in order: Slice 1 (TDD, write test first) \u2192 Slice 2 (entrypoint integration) \u2192 Slice 3 (tests complete).\n5. Re-run the full Validation Plan before handing work back.\n"}], "grading": {"expectations": [{"text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.", "passed": true, "evidence": "Final response: 'exploration focused on the canonical patterns a Python CLI would use for this kind of validation.' Artifact acknowledges no concrete codebase was provided and identifies canonical file locations for a next agent to verify, following established CLI patterns rather than inventing ad hoc design."}, {"text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.", "passed": true, "evidence": "Final response: 'Handoff artifact created: .agents/scratchpad/config-validation/handoff-plan.md'. File exists at outputs/handoff-plan.md (copied there). User notes confirm both paths."}, {"text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.", "passed": true, "evidence": "Artifact contains '## Implementation Slices' (3 slices), '## File-by-File Implementation Map', and '## Validation Plan' \u2014 all present and populated with concrete content."}, {"text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.", "passed": true, "evidence": "Artifact header: 'Status: ready for implementation', 'Track: Light', 'Recommended Next Step: implement directly' \u2014 all concrete values, no placeholder brackets."}, {"text": "Each referenced file in Relevant Findings includes why that file matters.", "passed": true, "evidence": "Each entry includes a reason: 'cli.py \u2014 This is where the validation call is inserted \u2014 before argument parsing or any command dispatch'; 'config.py \u2014 Validation should be co-located or called from here to respect existing patterns'; 'test_config.py \u2014 The new tests go here'; 'requirements.txt \u2014 Confirms no third-party validation library is already in use'; 'README.md \u2014 May specify which environment variables are already documented as required'."}, {"text": "Open questions are tightly bounded to truly blocking items and include risk framing.", "passed": true, "evidence": "Three items each with explicit 'Risk if wrong:' framing: empty string convention ('Startup passes with empty vars that later cause runtime errors'), static vs. dynamic variable list ('module cannot adapt to different deployment profiles'), sys.exit vs. raise ('Hard sys.exit() inside a library function breaks any consumer that needs graceful handling')."}, {"text": "Provides artifact status in the response with the exact artifact path.", "passed": true, "evidence": "Final response includes 'Artifact Status' section: 'Handoff artifact created: .agents/scratchpad/config-validation/handoff-plan.md' with exact path."}, {"text": "Includes rationale or trade-offs for the proposed design.", "passed": true, "evidence": "Recommended Design section lists four reasons this approach is preferred and explicitly rejects an alternative: 'Alternative considered: adding validation inline in the entrypoint. Rejected because it cannot be unit-tested in isolation and scatters logic.'"}, {"text": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps \u2014 not buried solely in the Implementation Slices section.", "passed": false, "evidence": "The Validation Plan in handoff-plan.md lists: (1) TDD red-green-refactor, (2) Independent code-reviewer review, (3) Manual smoke test, (4) Full test suite. A code-simplifier refactor pass is absent as a named discrete step in the Validation Plan. The final_response.md incorrectly claims it is present; the actual artifact does not contain it."}], "summary": {"passed": 8, "failed": 1, "total": 9, "pass_rate": 0.89}}}, {"id": "eval-3-use-the-feature-dev-workflow-for-this-request-implement-a-medium-sized-f-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.", "passed": true, "evidence": "Directly quotes the workflow: 'Always use the tdd skill to implement with an explicit red-green-refactor loop.' and describes the three steps: failing test, minimum implementation, refactor."}, {"text": "States that code-simplifier is launched as a subagent for refactoring opportunities.", "passed": false, "evidence": "Code-simplifier is never mentioned anywhere in the transcript. Phase 6 subagents listed in the table are only code-reviewer instances. No refactoring subagent step exists."}, {"text": "States that quality review is performed by an independent code-reviewer subagent.", "passed": true, "evidence": "Quotes: 'Always run independent code-reviewer agents for quality review on every track.' Phase 6 table names 'code-reviewer' (instance 1 and 2) as the subagents launched."}, {"text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.", "passed": true, "evidence": "Standard track selected for a three-file medium feature. Two parallel code-reviewers used (appropriate for Standard, not over-scaled to Deep). No unnecessary escalation."}], "summary": {"passed": 3, "failed": 1, "total": 4, "pass_rate": 0.75}}}, {"id": "eval-3-use-the-feature-dev-workflow-for-this-request-implement-a-medium-sized-f-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.", "passed": true, "evidence": "Phase 5 section quotes workflow: 'Always use the tdd skill to implement with an explicit red-green-refactor loop. Treat this as required for Implementation on every track; do not bypass it.' Three explicit steps described: Red (write failing tests), Green (write minimum production code), Refactor (clean up with tests passing)."}, {"text": "States that code-simplifier is launched as a subagent for refactoring opportunities.", "passed": true, "evidence": "'Step 1: Launch code-simplifier subagent (runs first). Focus: Identify refactoring opportunities across the three modified files. Look for duplication, over-engineering, unnecessary abstraction...'"}, {"text": "States that quality review is performed by an independent code-reviewer subagent.", "passed": true, "evidence": "'Step 2: Launch code-reviewer agents (Standard track: multiple in parallel)' \u2014 three independent agents with distinct focuses: correctness, conventions, simplicity. Described as 'independent' explicitly."}, {"text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.", "passed": true, "evidence": "Track chosen: Standard (not Deep). Phase 7 summary confirms work is scoped as a 'three-file feature update' on Standard track. No escalation to Deep track despite the three-file change."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}}}, {"id": "eval-4-you-ve-just-finished-implementing-a-medium-sized-feature-you-added-a-cac-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.", "passed": false, "evidence": "Code-simplifier is never mentioned in the transcript. Phase 6 walkthrough lists only two code-reviewer agents. No dedicated refactoring subagent step exists."}, {"text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).", "passed": true, "evidence": "Step 1 table names 'code-reviewer (instance 1)' with focus 'Correctness: cache invalidation correctness, concurrency safety, edge cases' and 'code-reviewer (instance 2)' with focus 'Simplicity and conventions: unnecessary complexity, Python patterns, abstraction level.'"}, {"text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.", "passed": false, "evidence": "Code-simplifier is not mentioned anywhere. No ordering relationship can exist for a step that is absent."}, {"text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.", "passed": true, "evidence": "Both code-reviewer agents have specific, non-generic focus instructions covering distinct concerns (correctness: cache invalidation, concurrency safety, failure modes; simplicity: complexity, matching Python patterns across three service files, abstraction level)."}, {"text": "Does not treat refactoring and quality review as a single unified step performed by one agent.", "passed": true, "evidence": "Two separate code-reviewer agents run in parallel (Step 1), not a single unified agent. The response explicitly states 'Both agents receive the three modified service files...They run independently and in parallel \u2014 neither sees the other's output.'"}], "summary": {"passed": 3, "failed": 2, "total": 5, "pass_rate": 0.6}}}, {"id": "eval-4-you-ve-just-finished-implementing-a-medium-sized-feature-you-added-a-cac-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.", "passed": true, "evidence": "'Step 1: Launch code-simplifier subagent. When: Immediately after implementation is complete.' Focus: 'identifying refactoring opportunities \u2014 duplication between the cache integration points, over-engineered abstraction in the cache key construction, or any logic that can be flattened without changing behavior.'"}, {"text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).", "passed": true, "evidence": "Three named subagents with distinct focuses: code-reviewer-1 \u2014 Correctness (cache invalidation, thread safety, error handling, TTL edge cases); code-reviewer-2 \u2014 Conventions (naming patterns, abstraction match, import organization, type annotation style); code-reviewer-3 \u2014 Simplicity (smallest, most direct implementation)."}, {"text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.", "passed": true, "evidence": "'The code-simplifier always runs first, before code review begins.' Table row: 'code-simplifier runs before code-reviewer | Source in skill: listed as Action 1 in Phase 6'. Step 2 states: 'After code-simplifier returns findings. Apply obvious improvements, then launch reviewers against the updated code.'"}, {"text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.", "passed": true, "evidence": "Each subagent receives a quoted instruction block with specific file names and specific concerns. code-simplifier: 'Focus exclusively on identifying refactoring opportunities \u2014 duplication between the cache integration points...' Reviewers: each has a named focus area with concrete sub-questions (e.g., 'are stale entries evicted properly?', 'thread safety if these services share state')."}, {"text": "Does not treat refactoring and quality review as a single unified step performed by one agent.", "passed": true, "evidence": "Table row explicitly: 'Refactoring and quality review are not the same step | code-simplifier = refactoring opportunities; code-reviewer = quality review \u2014 distinct mandates'. Steps 1 and 2 are sequenced and described separately."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "eval-5-a-user-says-we-re-under-crunch-the-deadline-is-in-2-hours-i-need-you-to-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "Does not agree to skip the TDD loop, even given the urgency framing.", "passed": true, "evidence": "'I can't agree to skip the TDD loop' stated directly, despite the 2-hour deadline framing."}, {"text": "Explains that TDD is required on every track and cannot be bypassed.", "passed": true, "evidence": "'Always use the tdd skill to implement with an explicit red-green-refactor loop.' quoted from workflow. \"'Always' means it applies on every track, including Light, including under time pressure. It's not a gate you can defer to later in this workflow.\""}, {"text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD \u2014 e.g. Light track, minimal test scope, or scoping down the change.", "passed": true, "evidence": "Proposes Light track explicitly, provides a numbered 6-step plan fitting within 2 hours (exploration 5 min, failing test, implement, refactor, second file, one code-reviewer). Also offers scope-cutting: 'What is the smallest version of rate-limiting logic you could ship now that still provides value?'"}, {"text": "Does not treat the user's urgency request as an override for the TDD constraint.", "passed": true, "evidence": "'This fits 2 hours. What doesn't fit is also doing it correctly and skipping TDD.' Urgency is accommodated by scoping the approach, not by dropping TDD."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}}}, {"id": "eval-5-a-user-says-we-re-under-crunch-the-deadline-is-in-2-hours-i-need-you-to-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "Does not agree to skip the TDD loop, even given the urgency framing.", "passed": true, "evidence": "'But no, we cannot skip the TDD loop.' Summary: 'No on skipping TDD. The workflow requires it on every track, and the urgency framing does not override that.'"}, {"text": "Explains that TDD is required on every track and cannot be bypassed.", "passed": true, "evidence": "Quotes workflow directly: 'Always use the tdd skill to implement with an explicit red-green-refactor loop. Treat this as required for Implementation on every track; do not bypass it.' Adds: 'This is not a guideline or preference \u2014 it is a workflow-level constraint that applies on the Light track too.'"}, {"text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD \u2014 e.g. Light track, minimal test scope, or scoping down the change.", "passed": true, "evidence": "Concrete accommodation: 'Write 2\u20133 focused tests that cover the core contract: request allowed when under limit, request rejected when at limit, counter resets after the window expires. Skip edge cases for now... This is a 30\u201345 minute investment, not a full TDD ceremony.' Light track assigned."}, {"text": "Does not treat the user's urgency request as an override for the TDD constraint.", "passed": true, "evidence": "Summary: 'the urgency framing does not override that.' Acknowledges the 2-hour window as 'tight' and 'genuinely bounded' but still refuses the TDD bypass. Urgency is accommodated through scoping, not constraint removal."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}}}, {"id": "eval-6-a-project-manager-asks-phase-6-review-is-taking-too-long-and-adding-cost-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "Names code-simplifier as a required Phase 6 subagent (not just as general advice, but as mandated by the workflow).", "passed": false, "evidence": "Code-simplifier is never mentioned in the transcript. The mandated minimum table lists only 'code-reviewer' as the subagent role. The entire response treats code-reviewer as the sole Phase 6 mandatory step."}, {"text": "Names code-reviewer as a required Phase 6 subagent.", "passed": true, "evidence": "Table row: 'Independent quality review | code-reviewer | Light: at least one agent; Standard/Deep: multiple agents in parallel'. Explicitly mandated as non-removable."}, {"text": "States that code-simplifier runs before the code-reviewer pass, not after.", "passed": false, "evidence": "Code-simplifier is absent from the response entirely. No ordering statement is possible for a step that does not appear."}, {"text": "Does not agree to dropping or making optional either the code-simplifier or the code-reviewer step.", "passed": false, "evidence": "Code-reviewer is defended as non-droppable. Code-simplifier is not mentioned as a required step at all, so it is implicitly excluded from the 'cannot drop' list. The assertion requires both steps to be defended."}, {"text": "Grounds the answer in what the workflow mandates, not in general engineering opinion.", "passed": true, "evidence": "Response opens with 'Reading the feature-dev workflow's Phase 6 directly:' and quotes the workflow verbatim. Cost-reduction advice references track selection within the workflow, not personal engineering preference."}], "summary": {"passed": 2, "failed": 3, "total": 5, "pass_rate": 0.4}}}, {"id": "eval-6-a-project-manager-asks-phase-6-review-is-taking-too-long-and-adding-cost-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "Names code-simplifier as a required Phase 6 subagent (not just as general advice, but as mandated by the workflow).", "passed": true, "evidence": "'Step 1 \u2014 code-simplifier subagent. Mandated by: Phase 6, Action 1: Always launch an independent code-simplifier subagent to identify refactoring opportunities after implementation.' Uses the 'Mandated by' framing explicitly."}, {"text": "Names code-reviewer as a required Phase 6 subagent.", "passed": true, "evidence": "'Step 2 \u2014 code-reviewer subagent(s). Mandated by: Phase 6, Action 2: Always run independent code-reviewer agents for quality review on every track.'"}, {"text": "States that code-simplifier runs before the code-reviewer pass, not after.", "passed": true, "evidence": "'This step runs first, before any code-reviewer agents.' Ordering Constraint section: 'code-simplifier BEFORE code-reviewer (Actions listed in this sequence)'. Sequence shown: 'implementation \u2192 code-simplifier \u2192 code-reviewer(s)'."}, {"text": "Does not agree to dropping or making optional either the code-simplifier or the code-reviewer step.", "passed": true, "evidence": "'Neither step can be dropped \u2014 workflow uses always for both.' and 'Neither step can be made optional.' Acceptable optimizations listed (scope, parallelism) explicitly exclude removal of either step."}, {"text": "Grounds the answer in what the workflow mandates, not in general engineering opinion.", "passed": true, "evidence": "Both steps cite 'Mandated by: Phase 6, Action 1/2' with direct workflow quotes. Table labels them 'Yes \u2014 always launch' and 'Yes \u2014 always run'. No general engineering opinions offered as justification."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "eval-7-your-team-is-writing-internal-documentation-and-asks-you-to-produce-a-pr-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "The reference card names code-simplifier as a distinct, required Phase 6 subagent step.", "passed": false, "evidence": "The Required Sequence table lists only 'code-reviewer' as a subagent role across all four steps. Code-simplifier does not appear anywhere in the card. The 'What this card does not include' section states 'Steps not specified in Phase 6 of the workflow are not listed here', implicitly excluding it."}, {"text": "The reference card names code-reviewer as a distinct, required Phase 6 subagent step.", "passed": true, "evidence": "Required Sequence Step 1: 'Launch independent quality review agent(s) | code-reviewer | Light: at least 1 agent; Standard/Deep: multiple agents in parallel with differentiated focuses.' Explicitly named as required."}, {"text": "The reference card shows code-simplifier executed before code-reviewer (not after, not as a merged step).", "passed": false, "evidence": "Code-simplifier is completely absent from the reference card. No ordering for it is possible."}, {"text": "The card does not describe Phase 6 as exclusively code-reviewer agents with no simplifier step.", "passed": false, "evidence": "The card describes Phase 6 exclusively in terms of code-reviewer agents. The Required Sequence table contains only code-reviewer as a subagent role. The 'Subagent mandate by track' section lists only code-reviewer for all three tracks. No simplifier step appears anywhere."}, {"text": "The card attributes these steps to the workflow's Phase 6 specification, not personal preference.", "passed": true, "evidence": "Card header states 'Source: feature-dev skill, Phase 6 specification'. Final section says 'This card reflects the workflow as written.' and 'Steps not specified in Phase 6 of the workflow are not listed here.'"}], "summary": {"passed": 2, "failed": 3, "total": 5, "pass_rate": 0.4}}}, {"id": "eval-7-your-team-is-writing-internal-documentation-and-asks-you-to-produce-a-pr-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [], "grading": {"expectations": [{"text": "The reference card names code-simplifier as a distinct, required Phase 6 subagent step.", "passed": true, "evidence": "'Step 1 \u2014 Launch code-simplifier subagent (always required, runs first)' \u2014 named as a discrete step, marked required, with workflow language quoted: 'Always launch an independent code-simplifier subagent to identify refactoring opportunities after implementation.'"}, {"text": "The reference card names code-reviewer as a distinct, required Phase 6 subagent step.", "passed": true, "evidence": "'Step 2 \u2014 Launch code-reviewer agent(s) (always required, runs after Step 1)' with workflow language: 'Always run independent code-reviewer agents for quality review on every track.' Track-specific minimums table included."}, {"text": "The reference card shows code-simplifier executed before code-reviewer (not after, not as a merged step).", "passed": true, "evidence": "Sequence diagram: '[code-simplifier] \u2190 Step 1: always, first \u2192 [code-reviewer(s)] \u2190 Step 2: always, after simplifier'. Step markers '(always required, runs first)' and '(always required, runs after Step 1)' make order explicit. Non-negotiable constraint 2: 'code-simplifier always runs before code-reviewer \u2014 the order is not flexible.'"}, {"text": "The card does not describe Phase 6 as exclusively code-reviewer agents with no simplifier step.", "passed": true, "evidence": "code-simplifier is prominently Step 1. Non-negotiable constraint 1: 'code-simplifier and code-reviewer are separate, independent subagents \u2014 they cannot be merged into a single combined pass.'"}, {"text": "The card attributes these steps to the workflow's Phase 6 specification, not personal preference.", "passed": true, "evidence": "Card header: 'Source: feature-dev workflow, Phase 6 specification'. Footer: 'This card describes only what Phase 6 of the feature-dev workflow specifies. No steps have been added from general engineering practice.' Workflow language is quoted for each step."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}], "previous_feedback": {}, "previous_outputs": {"eval-2-use-the-feature-dev-workflow-for-this-request-and-stop-before-implementa-old_skill-run-1": [{"name": "handoff-plan.md", "type": "text", "content": "# Handoff Plan - Configuration Validation Module For Python CLI\n\n## Artifact Metadata\n- Status: Ready for implementation handoff\n- Track: Standard\n- Next Step: Begin Phase 5 implementation via TDD (red-green-refactor)\n\n## Goal And Non-Goals\nGoal\n- Add a configuration-validation module that runs at CLI startup, checks required environment variables, and exits with a clear error listing missing variables.\n\nNon-Goals\n- No secrets-manager integration in this iteration.\n- No dynamic schema engine; use a static required-variable list.\n- No runtime auto-reload of environment configuration.\n\n## Relevant Findings And Source Files\n- `cli/` entrypoint module: startup hook location where validation should run before command dispatch.\n- `config/` or settings loader module: best location for required-env declaration and parsing helpers.\n- Existing error/exit utility (if present): ensures consistent terminal messaging and non-zero exit behavior.\n- Current tests for startup/config path: template for TDD placement and assertion style.\n\nWhy these matter\n- Entry point determines where to fail fast.\n- Config module centralizes environment concerns and avoids duplication.\n- Shared error utility keeps user-facing failure messages consistent.\n- Existing tests reduce style drift and speed up implementation.\n\n## Technical Context And Constraints\n- Language/runtime: Python CLI application.\n- Validation timing: must execute before core command logic.\n- Failure behavior: clear human-readable list of missing vars; exit non-zero.\n- Compatibility: do not break existing optional env var behavior.\n\n## Open Questions (Blocking Only)\n1. Which environment variables are strictly required in production vs local development?\n- Risk if unresolved: false-positive failures in dev/CI or missing production safeguards.\n\n2. Is there an existing standardized error formatter for CLI failures?\n- Risk if unresolved: inconsistent UX and duplicated formatting logic.\n\nAssumptions if unanswered\n- Required vars are defined in a single constant list.\n- Exit code `1` and stderr output are acceptable defaults.\n\n## Recommended Design And Trade-Offs\nRecommended design\n- Introduce a `validate_required_env()` function in config-validation module.\n- Invoke it from CLI startup path before command routing.\n- On missing vars, raise/return a structured validation error consumed by CLI error handler to print:\n  - \"Missing required environment variables: VAR_A, VAR_B\"\n  - Exit code 1.\n\nTrade-offs\n- Static required list is simple and reliable now, but less flexible than schema-driven config.\n- Startup validation adds tiny boot overhead, but prevents deeper runtime failures.\n\n## Ordered Implementation Slices\n1. Add tests for startup failure when required vars missing (red).\n2. Add tests for successful startup when vars exist (red).\n3. Implement validation module and startup integration (green).\n4. Refactor message formatting and reuse shared error utility (refactor).\n5. Add edge-case tests (empty string values, duplicate names, deterministic ordering).\n\n## File-By-File Implementation Map\n- `cli/main.py` (or equivalent): call validation at startup before command execution.\n- `config/validation.py` (new): required-vars list + `validate_required_env()`.\n- `config/__init__.py` or settings module: export wiring if needed.\n- `tests/test_cli_startup.py`: startup fail/success paths.\n- `tests/test_config_validation.py` (new/updated): unit tests for missing-var detection and message output.\n\n## Validation Plan\n1. TDD completion\n- Execute explicit red-green-refactor loop for validation and startup integration tests.\n\n2. Code-simplifier pass\n- Run `code-simplifier` to reduce duplication in env parsing/error formatting.\n\n3. Independent code-reviewer review\n- Run independent `code-reviewer` focusing on correctness, edge cases, and conventions.\n\n4. Final checks\n- Run full affected test subset and lint/static checks required by repo CI.\n\n## Review Checkpoints\n- After red tests are written and failing as expected.\n- After green implementation passes.\n- After simplifier/refactor pass.\n- After independent review findings are triaged/fixed.\n\n## Next-Agent Kickoff Steps\n1. Confirm concrete required-env variable list with owner.\n2. Implement first failing tests in startup + validation modules.\n3. Implement minimal validation logic to satisfy tests.\n4. Run simplifier and independent reviewer passes before merge.\n"}], "eval-2-use-the-feature-dev-workflow-for-this-request-and-stop-before-implementa-with_skill-run-1": [{"name": "handoff-plan.md", "type": "text", "content": "# Handoff Plan: Configuration Validation Module for Python CLI\n\n## Artifact Metadata\n- Status: Ready for implementation\n- Track: Standard\n- Next Step: Begin Phase 5 implementation using TDD (red-green-refactor)\n- Owner: Next implementation agent\n\n## Goal and Non-Goals\nGoal\n- Add a startup configuration-validation module to a Python CLI tool that checks required environment variables and exits with a clear error listing missing variables.\n\nNon-Goals\n- No remote config backends or secrets-manager integration in this slice.\n- No runtime hot-reload of environment variables.\n- No broad CLI redesign.\n\n## Relevant Findings and Source Files\n1. /home/adam/.agents/skills/feature-dev/SKILL.md\n- Why it matters: Defines mandatory workflow constraints for implementation and review, including TDD and Phase 6 gates.\n2. /home/adam/.agents/skills/feature-dev/references/handoff-plan-template.md\n- Why it matters: Provides canonical handoff structure and required sections for reuse.\n\n## Technical Context and Constraints\n- Target runtime: Python CLI process with a single startup entry path.\n- Behavior requirement: validate required env vars before command execution.\n- Failure mode: if any required vars are missing, print explicit error containing complete missing list and exit non-zero.\n- Maintainability: required var list should be centralized, not duplicated across commands.\n\n## Open Questions (Blocking Only)\n1. Which exact environment variable names are required in production vs local dev?\n- Risk if unresolved: false failures or missing protection in real deployments.\n2. Should empty-string values count as missing?\n- Risk if unresolved: inconsistent validation behavior across environments.\n3. Preferred error channel: stderr only, or stderr + structured logging?\n- Risk if unresolved: observability mismatch with current CLI diagnostics.\n\n## Assumptions (If Questions Are Unanswered)\n- Required vars will be provided as a single authoritative list.\n- Empty string is treated as missing.\n- Errors are printed to stderr and process exits with code 1.\n\n## Recommended Design and Trade-offs\nRecommended\n- Introduce a dedicated `config_validation` module with:\n1. `find_missing_env_vars(required_vars) -> list[str]`\n2. `validate_required_env_vars(required_vars)` that raises a custom error when missing.\n- Call validation once at CLI startup before command dispatch.\n- Catch the validation error at top-level CLI entry to print a single user-friendly message and exit 1.\n\nTrade-offs\n- Centralized startup check is simple and consistent, but it validates variables even for commands that might not use all of them.\n- Per-command validation is more precise but adds duplication and behavior drift risk.\n- Recommendation favors centralized validation first; command-specific refinement can be a later enhancement.\n\n## Ordered Implementation Slices\n1. Red: add tests for success path (all vars present), missing subset, all missing, empty-string handling.\n2. Green: implement validation functions and custom error object.\n3. Refactor: improve naming and message formatting while keeping tests green.\n4. Integrate startup hook in CLI entrypoint and add integration-style test for exit behavior.\n5. Final polish for error wording and deterministic ordering of missing variable names.\n\n## File-by-File Implementation Map\n1. `src/config_validation.py`\n- New module with missing-var detection and validator entrypoint.\n2. `src/cli.py`\n- Wire startup validation before command execution; catch/print/exit behavior.\n3. `tests/test_config_validation.py`\n- Unit tests for validation logic and message content.\n4. `tests/test_cli_startup_validation.py`\n- Integration test for startup failure behavior and exit code.\n\n## Validation Plan\n1. TDD completion check\n- Demonstrate explicit red-green-refactor loop for validation logic and CLI startup integration.\n2. code-simplifier refactor pass\n- Launch independent code-simplifier subagent after implementation to identify simplification/refactor opportunities.\n3. independent code-reviewer review\n- Launch independent code-reviewer subagent(s) to assess correctness, conventions, and risk.\n4. Test and quality commands\n- Run unit/integration tests and project lint checks required by repo CI.\n5. Runtime sanity check\n- Execute CLI locally with missing env vars and confirm exact error formatting + non-zero exit.\n\n## Review Checkpoints\n- Missing variable list is complete, deterministic, and human-readable.\n- Error path is consistent across commands.\n- No command runs before validation gate.\n- Tests cover both presence and absence scenarios.\n\n## Next-Agent Kickoff Steps\n1. Confirm authoritative required-var list with maintainer.\n2. Implement tests first (red).\n3. Implement minimum logic for green.\n4. Perform refactor pass.\n5. Run quality review subagents and address high-severity findings.\n"}]}, "benchmark": {"metadata": {"skill_name": "feature-dev", "skill_path": "<path/to/skill>", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-04-01T19:00:15Z", "evals_run": [0, 1, 2, 3, 4, 5, 6, 7], "runs_per_configuration": 3}, "runs": [{"eval_id": 0, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 0.6, "passed": 3, "failed": 2, "total": 5, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.", "passed": true, "evidence": "Response quotes Phase 6 mandates directly: 'Phase 6 mandates independent code-reviewer agents' and 'Phase 6 calls for multiple agents in parallel covering different focuses \u2014 simplicity, correctness, conventions.'"}, {"text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.", "passed": false, "evidence": "Response mentions only code-reviewer agents as Phase 6 requirements. Code-simplifier is never mentioned anywhere in the transcript. The proposal is rejected solely on independence/parallel-coverage grounds, not because code-simplifier is a separate required subagent."}, {"text": "Explains why merging them into a single pass would undermine the workflow's intent.", "passed": true, "evidence": "'A single combined agent collapses that to one opinionated pass.' and 'A single combined review-and-simplify agent can't replicate parallel independent perspectives; it will deprioritize coverage in at least one area.'"}, {"text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.", "passed": false, "evidence": "Code-simplifier is never mentioned in the transcript. No ordering statement about code-simplifier is possible."}, {"text": "Does not approve the merger even when it is framed as a time-saving optimization.", "passed": true, "evidence": "'Verdict: Not acceptable.' is given at the top, and 'Saving time by merging agents is not an approved optimization' is stated explicitly."}], "notes": []}, {"eval_id": 1, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 4, "failed": 1, "total": 5, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.", "passed": true, "evidence": "'Recommendation: NO-GO on immediate implementation.' stated explicitly at the top. Grounded in Core Principles: 'Understand before acting.'"}, {"text": "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).", "passed": true, "evidence": "Three named items: '1. Similar-feature trace', '2. Architecture touchpoint map', '3. Test and CI convention mapping' \u2014 each with concrete description of what must be produced."}, {"text": "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).", "passed": true, "evidence": "Risk table explicitly maps each risk to a phase: 'Phase 2 (Exploration)', 'Phase 2 + Phase 3', 'Phase 4 design is uninformed; Phase 5 code diverges from codebase', 'Phase 6 review; rework required'."}, {"text": "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.", "passed": true, "evidence": "Three questions only, each explicitly tied to a concrete uncertainty: scope boundary (where the feature lives), integration point (existing interfaces), urgency tier (track selection)."}, {"text": "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review.", "passed": false, "evidence": "Downstream gates listed are 'TDD loop (red-green-refactor) on every implementation track' and 'Independent code-reviewer agent in Phase 6 \u2014 at minimum one'. Code-simplifier is not mentioned. Only two of the three required gates are named."}], "notes": []}, {"eval_id": 2, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 0.89, "passed": 8, "failed": 1, "total": 9, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.", "passed": true, "evidence": "Response acknowledges no live codebase available and references canonical Python CLI patterns. States 'The implementing agent must verify actual paths via Phase 2 exploration.' Design is grounded in standard conventions, not invented arbitrarily."}, {"text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.", "passed": true, "evidence": "'Artifact Status: Handoff artifact created at: .agents/scratchpad/config-validation/handoff-plan.md'. File confirmed present in outputs/handoff-plan.md."}, {"text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.", "passed": true, "evidence": "handoff-plan.md contains: 'Implementation Slices' (3 slices), 'File-by-File Implementation Map', and 'Validation Plan' sections \u2014 all present and populated."}, {"text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.", "passed": true, "evidence": "Status: 'ready for implementation', Track: 'Light', Recommended Next Step: 'implement directly' \u2014 all concretely filled with no bracket placeholders."}, {"text": "Each referenced file in Relevant Findings includes why that file matters.", "passed": true, "evidence": "Each entry in Relevant Findings includes a colon-separated explanation, e.g. 'src/cli.py or src/__main__.py: The entrypoint. This is where the validation call is inserted \u2014 before argument parsing or any command dispatch.'"}, {"text": "Open questions are tightly bounded to truly blocking items and include risk framing.", "passed": true, "evidence": "Three open items, each with 'Risk if wrong:' framing. All are genuinely blocking design decisions (empty string treatment, static vs. dynamic var list, sys.exit vs. raise)."}, {"text": "Provides artifact status in the response with the exact artifact path.", "passed": true, "evidence": "final_response.md ends with 'Artifact Status: Handoff artifact created at: .agents/scratchpad/config-validation/handoff-plan.md' \u2014 exact path provided."}, {"text": "Includes rationale or trade-offs for the proposed design.", "passed": true, "evidence": "handoff-plan.md 'Recommended Design' section includes rationale ('preferred because: It is a single, testable function...') and an alternative considered and rejected ('adding validation inline in the entrypoint. Rejected because...')."}, {"text": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps \u2014 not buried solely in the Implementation Slices section.", "passed": false, "evidence": "handoff-plan.md Validation Plan contains: Step 1 (TDD red-green-refactor), Step 2 (Independent code-reviewer review), Step 3 (Manual smoke test), Step 4 (Full test suite). No code-simplifier refactor pass is present as a discrete step anywhere in the Validation Plan."}], "notes": []}, {"eval_id": 3, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 0.75, "passed": 3, "failed": 1, "total": 4, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.", "passed": true, "evidence": "Directly quotes the workflow: 'Always use the tdd skill to implement with an explicit red-green-refactor loop.' and describes the three steps: failing test, minimum implementation, refactor."}, {"text": "States that code-simplifier is launched as a subagent for refactoring opportunities.", "passed": false, "evidence": "Code-simplifier is never mentioned anywhere in the transcript. Phase 6 subagents listed in the table are only code-reviewer instances. No refactoring subagent step exists."}, {"text": "States that quality review is performed by an independent code-reviewer subagent.", "passed": true, "evidence": "Quotes: 'Always run independent code-reviewer agents for quality review on every track.' Phase 6 table names 'code-reviewer' (instance 1 and 2) as the subagents launched."}, {"text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.", "passed": true, "evidence": "Standard track selected for a three-file medium feature. Two parallel code-reviewers used (appropriate for Standard, not over-scaled to Deep). No unnecessary escalation."}], "notes": []}, {"eval_id": 4, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 0.6, "passed": 3, "failed": 2, "total": 5, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.", "passed": false, "evidence": "Code-simplifier is never mentioned in the transcript. Phase 6 walkthrough lists only two code-reviewer agents. No dedicated refactoring subagent step exists."}, {"text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).", "passed": true, "evidence": "Step 1 table names 'code-reviewer (instance 1)' with focus 'Correctness: cache invalidation correctness, concurrency safety, edge cases' and 'code-reviewer (instance 2)' with focus 'Simplicity and conventions: unnecessary complexity, Python patterns, abstraction level.'"}, {"text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.", "passed": false, "evidence": "Code-simplifier is not mentioned anywhere. No ordering relationship can exist for a step that is absent."}, {"text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.", "passed": true, "evidence": "Both code-reviewer agents have specific, non-generic focus instructions covering distinct concerns (correctness: cache invalidation, concurrency safety, failure modes; simplicity: complexity, matching Python patterns across three service files, abstraction level)."}, {"text": "Does not treat refactoring and quality review as a single unified step performed by one agent.", "passed": true, "evidence": "Two separate code-reviewer agents run in parallel (Step 1), not a single unified agent. The response explicitly states 'Both agents receive the three modified service files...They run independently and in parallel \u2014 neither sees the other's output.'"}], "notes": []}, {"eval_id": 5, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Does not agree to skip the TDD loop, even given the urgency framing.", "passed": true, "evidence": "'I can't agree to skip the TDD loop' stated directly, despite the 2-hour deadline framing."}, {"text": "Explains that TDD is required on every track and cannot be bypassed.", "passed": true, "evidence": "'Always use the tdd skill to implement with an explicit red-green-refactor loop.' quoted from workflow. \"'Always' means it applies on every track, including Light, including under time pressure. It's not a gate you can defer to later in this workflow.\""}, {"text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD \u2014 e.g. Light track, minimal test scope, or scoping down the change.", "passed": true, "evidence": "Proposes Light track explicitly, provides a numbered 6-step plan fitting within 2 hours (exploration 5 min, failing test, implement, refactor, second file, one code-reviewer). Also offers scope-cutting: 'What is the smallest version of rate-limiting logic you could ship now that still provides value?'"}, {"text": "Does not treat the user's urgency request as an override for the TDD constraint.", "passed": true, "evidence": "'This fits 2 hours. What doesn't fit is also doing it correctly and skipping TDD.' Urgency is accommodated by scoping the approach, not by dropping TDD."}], "notes": []}, {"eval_id": 6, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 0.4, "passed": 2, "failed": 3, "total": 5, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Names code-simplifier as a required Phase 6 subagent (not just as general advice, but as mandated by the workflow).", "passed": false, "evidence": "Code-simplifier is never mentioned in the transcript. The mandated minimum table lists only 'code-reviewer' as the subagent role. The entire response treats code-reviewer as the sole Phase 6 mandatory step."}, {"text": "Names code-reviewer as a required Phase 6 subagent.", "passed": true, "evidence": "Table row: 'Independent quality review | code-reviewer | Light: at least one agent; Standard/Deep: multiple agents in parallel'. Explicitly mandated as non-removable."}, {"text": "States that code-simplifier runs before the code-reviewer pass, not after.", "passed": false, "evidence": "Code-simplifier is absent from the response entirely. No ordering statement is possible for a step that does not appear."}, {"text": "Does not agree to dropping or making optional either the code-simplifier or the code-reviewer step.", "passed": false, "evidence": "Code-reviewer is defended as non-droppable. Code-simplifier is not mentioned as a required step at all, so it is implicitly excluded from the 'cannot drop' list. The assertion requires both steps to be defended."}, {"text": "Grounds the answer in what the workflow mandates, not in general engineering opinion.", "passed": true, "evidence": "Response opens with 'Reading the feature-dev workflow's Phase 6 directly:' and quotes the workflow verbatim. Cost-reduction advice references track selection within the workflow, not personal engineering preference."}], "notes": []}, {"eval_id": 7, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 0.4, "passed": 2, "failed": 3, "total": 5, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "The reference card names code-simplifier as a distinct, required Phase 6 subagent step.", "passed": false, "evidence": "The Required Sequence table lists only 'code-reviewer' as a subagent role across all four steps. Code-simplifier does not appear anywhere in the card. The 'What this card does not include' section states 'Steps not specified in Phase 6 of the workflow are not listed here', implicitly excluding it."}, {"text": "The reference card names code-reviewer as a distinct, required Phase 6 subagent step.", "passed": true, "evidence": "Required Sequence Step 1: 'Launch independent quality review agent(s) | code-reviewer | Light: at least 1 agent; Standard/Deep: multiple agents in parallel with differentiated focuses.' Explicitly named as required."}, {"text": "The reference card shows code-simplifier executed before code-reviewer (not after, not as a merged step).", "passed": false, "evidence": "Code-simplifier is completely absent from the reference card. No ordering for it is possible."}, {"text": "The card does not describe Phase 6 as exclusively code-reviewer agents with no simplifier step.", "passed": false, "evidence": "The card describes Phase 6 exclusively in terms of code-reviewer agents. The Required Sequence table contains only code-reviewer as a subagent role. The 'Subagent mandate by track' section lists only code-reviewer for all three tracks. No simplifier step appears anywhere."}, {"text": "The card attributes these steps to the workflow's Phase 6 specification, not personal preference.", "passed": true, "evidence": "Card header states 'Source: feature-dev skill, Phase 6 specification'. Final section says 'This card reflects the workflow as written.' and 'Steps not specified in Phase 6 of the workflow are not listed here.'"}], "notes": []}, {"eval_id": 0, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.", "passed": true, "evidence": "Response opens: 'The feature-dev workflow's Phase 6 explicitly requires two separate, independent subagents in a specific order.' Phase 6 Actions 1 and 2 are quoted directly by name and content."}, {"text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.", "passed": true, "evidence": "Lists Phase 6 required actions: '1. Always launch an independent code-simplifier subagent' and '2. Always run independent code-reviewer agents' \u2014 both named as separate items with the 'always' qualifier."}, {"text": "Explains why merging them into a single pass would undermine the workflow's intent.", "passed": true, "evidence": "Section 'Why Merging Them Undermines the Workflow' explains that code-simplifier and code-reviewer serve 'distinct, non-overlapping purposes' and that 'running a single combined agent collapses these lenses.' Also explains that merging destroys the ordering guarantee."}, {"text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.", "passed": true, "evidence": "'The code-simplifier runs before the code-reviewer pass.' Sequence shown explicitly: 'Implementation \u2192 code-simplifier (refactor pass) \u2192 code-reviewer(s) (quality review)'."}, {"text": "Does not approve the merger even when it is framed as a time-saving optimization.", "passed": true, "evidence": "'Reject the proposal.' and 'collapsing the code-simplifier and code-reviewer into a single agent is not among the acceptable reductions' \u2014 stated explicitly despite the time-saving framing. Acceptable alternatives listed do not include merging."}], "notes": []}, {"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.", "passed": true, "evidence": "Section header: 'Recommendation: NO-GO on Skipping Exploration. Do not start implementation without first completing the exploration phase.'"}, {"text": "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).", "passed": true, "evidence": "Checklist contains exactly these three: 'Similar-feature trace', 'Architecture and touchpoint map', 'Test and CI convention mapping', plus a fourth item 'Read key files directly'."}, {"text": "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).", "passed": true, "evidence": "Risk table maps each risk to a phase: 'Phase 2: miss similar-feature patterns', 'Phase 2: miss architecture and convention mapping', 'Phase 3: cannot ask targeted questions without findings', 'Phase 4: architecture design is based on guesswork', 'Phase 5: test conventions not known'."}, {"text": "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.", "passed": true, "evidence": "Three questions only, each tied to a concrete uncertainty: scope boundary (could affect out-of-scope work), error/edge case handling ('implementation could go in two very different directions'), backward compatibility ('preserve any existing interface, configuration key, or behavior'). Each includes framing for when to ask vs. assume."}, {"text": "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review.", "passed": true, "evidence": "'Mandatory Gates Before You Hand Back Work' explicitly lists all three: '1. TDD red-green-refactor loop', '2. Independent code-simplifier pass', '3. Independent code-reviewer review' \u2014 each described as non-optional and required on every track."}], "notes": []}, {"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 0.89, "passed": 8, "failed": 1, "total": 9, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.", "passed": true, "evidence": "Final response: 'exploration focused on the canonical patterns a Python CLI would use for this kind of validation.' Artifact acknowledges no concrete codebase was provided and identifies canonical file locations for a next agent to verify, following established CLI patterns rather than inventing ad hoc design."}, {"text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.", "passed": true, "evidence": "Final response: 'Handoff artifact created: .agents/scratchpad/config-validation/handoff-plan.md'. File exists at outputs/handoff-plan.md (copied there). User notes confirm both paths."}, {"text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.", "passed": true, "evidence": "Artifact contains '## Implementation Slices' (3 slices), '## File-by-File Implementation Map', and '## Validation Plan' \u2014 all present and populated with concrete content."}, {"text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.", "passed": true, "evidence": "Artifact header: 'Status: ready for implementation', 'Track: Light', 'Recommended Next Step: implement directly' \u2014 all concrete values, no placeholder brackets."}, {"text": "Each referenced file in Relevant Findings includes why that file matters.", "passed": true, "evidence": "Each entry includes a reason: 'cli.py \u2014 This is where the validation call is inserted \u2014 before argument parsing or any command dispatch'; 'config.py \u2014 Validation should be co-located or called from here to respect existing patterns'; 'test_config.py \u2014 The new tests go here'; 'requirements.txt \u2014 Confirms no third-party validation library is already in use'; 'README.md \u2014 May specify which environment variables are already documented as required'."}, {"text": "Open questions are tightly bounded to truly blocking items and include risk framing.", "passed": true, "evidence": "Three items each with explicit 'Risk if wrong:' framing: empty string convention ('Startup passes with empty vars that later cause runtime errors'), static vs. dynamic variable list ('module cannot adapt to different deployment profiles'), sys.exit vs. raise ('Hard sys.exit() inside a library function breaks any consumer that needs graceful handling')."}, {"text": "Provides artifact status in the response with the exact artifact path.", "passed": true, "evidence": "Final response includes 'Artifact Status' section: 'Handoff artifact created: .agents/scratchpad/config-validation/handoff-plan.md' with exact path."}, {"text": "Includes rationale or trade-offs for the proposed design.", "passed": true, "evidence": "Recommended Design section lists four reasons this approach is preferred and explicitly rejects an alternative: 'Alternative considered: adding validation inline in the entrypoint. Rejected because it cannot be unit-tested in isolation and scatters logic.'"}, {"text": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps \u2014 not buried solely in the Implementation Slices section.", "passed": false, "evidence": "The Validation Plan in handoff-plan.md lists: (1) TDD red-green-refactor, (2) Independent code-reviewer review, (3) Manual smoke test, (4) Full test suite. A code-simplifier refactor pass is absent as a named discrete step in the Validation Plan. The final_response.md incorrectly claims it is present; the actual artifact does not contain it."}], "notes": []}, {"eval_id": 3, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.", "passed": true, "evidence": "Phase 5 section quotes workflow: 'Always use the tdd skill to implement with an explicit red-green-refactor loop. Treat this as required for Implementation on every track; do not bypass it.' Three explicit steps described: Red (write failing tests), Green (write minimum production code), Refactor (clean up with tests passing)."}, {"text": "States that code-simplifier is launched as a subagent for refactoring opportunities.", "passed": true, "evidence": "'Step 1: Launch code-simplifier subagent (runs first). Focus: Identify refactoring opportunities across the three modified files. Look for duplication, over-engineering, unnecessary abstraction...'"}, {"text": "States that quality review is performed by an independent code-reviewer subagent.", "passed": true, "evidence": "'Step 2: Launch code-reviewer agents (Standard track: multiple in parallel)' \u2014 three independent agents with distinct focuses: correctness, conventions, simplicity. Described as 'independent' explicitly."}, {"text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.", "passed": true, "evidence": "Track chosen: Standard (not Deep). Phase 7 summary confirms work is scoped as a 'three-file feature update' on Standard track. No escalation to Deep track despite the three-file change."}], "notes": []}, {"eval_id": 4, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.", "passed": true, "evidence": "'Step 1: Launch code-simplifier subagent. When: Immediately after implementation is complete.' Focus: 'identifying refactoring opportunities \u2014 duplication between the cache integration points, over-engineered abstraction in the cache key construction, or any logic that can be flattened without changing behavior.'"}, {"text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).", "passed": true, "evidence": "Three named subagents with distinct focuses: code-reviewer-1 \u2014 Correctness (cache invalidation, thread safety, error handling, TTL edge cases); code-reviewer-2 \u2014 Conventions (naming patterns, abstraction match, import organization, type annotation style); code-reviewer-3 \u2014 Simplicity (smallest, most direct implementation)."}, {"text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.", "passed": true, "evidence": "'The code-simplifier always runs first, before code review begins.' Table row: 'code-simplifier runs before code-reviewer | Source in skill: listed as Action 1 in Phase 6'. Step 2 states: 'After code-simplifier returns findings. Apply obvious improvements, then launch reviewers against the updated code.'"}, {"text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.", "passed": true, "evidence": "Each subagent receives a quoted instruction block with specific file names and specific concerns. code-simplifier: 'Focus exclusively on identifying refactoring opportunities \u2014 duplication between the cache integration points...' Reviewers: each has a named focus area with concrete sub-questions (e.g., 'are stale entries evicted properly?', 'thread safety if these services share state')."}, {"text": "Does not treat refactoring and quality review as a single unified step performed by one agent.", "passed": true, "evidence": "Table row explicitly: 'Refactoring and quality review are not the same step | code-simplifier = refactoring opportunities; code-reviewer = quality review \u2014 distinct mandates'. Steps 1 and 2 are sequenced and described separately."}], "notes": []}, {"eval_id": 5, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Does not agree to skip the TDD loop, even given the urgency framing.", "passed": true, "evidence": "'But no, we cannot skip the TDD loop.' Summary: 'No on skipping TDD. The workflow requires it on every track, and the urgency framing does not override that.'"}, {"text": "Explains that TDD is required on every track and cannot be bypassed.", "passed": true, "evidence": "Quotes workflow directly: 'Always use the tdd skill to implement with an explicit red-green-refactor loop. Treat this as required for Implementation on every track; do not bypass it.' Adds: 'This is not a guideline or preference \u2014 it is a workflow-level constraint that applies on the Light track too.'"}, {"text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD \u2014 e.g. Light track, minimal test scope, or scoping down the change.", "passed": true, "evidence": "Concrete accommodation: 'Write 2\u20133 focused tests that cover the core contract: request allowed when under limit, request rejected when at limit, counter resets after the window expires. Skip edge cases for now... This is a 30\u201345 minute investment, not a full TDD ceremony.' Light track assigned."}, {"text": "Does not treat the user's urgency request as an override for the TDD constraint.", "passed": true, "evidence": "Summary: 'the urgency framing does not override that.' Acknowledges the 2-hour window as 'tight' and 'genuinely bounded' but still refuses the TDD bypass. Urgency is accommodated through scoping, not constraint removal."}], "notes": []}, {"eval_id": 6, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Names code-simplifier as a required Phase 6 subagent (not just as general advice, but as mandated by the workflow).", "passed": true, "evidence": "'Step 1 \u2014 code-simplifier subagent. Mandated by: Phase 6, Action 1: Always launch an independent code-simplifier subagent to identify refactoring opportunities after implementation.' Uses the 'Mandated by' framing explicitly."}, {"text": "Names code-reviewer as a required Phase 6 subagent.", "passed": true, "evidence": "'Step 2 \u2014 code-reviewer subagent(s). Mandated by: Phase 6, Action 2: Always run independent code-reviewer agents for quality review on every track.'"}, {"text": "States that code-simplifier runs before the code-reviewer pass, not after.", "passed": true, "evidence": "'This step runs first, before any code-reviewer agents.' Ordering Constraint section: 'code-simplifier BEFORE code-reviewer (Actions listed in this sequence)'. Sequence shown: 'implementation \u2192 code-simplifier \u2192 code-reviewer(s)'."}, {"text": "Does not agree to dropping or making optional either the code-simplifier or the code-reviewer step.", "passed": true, "evidence": "'Neither step can be dropped \u2014 workflow uses always for both.' and 'Neither step can be made optional.' Acceptable optimizations listed (scope, parallelism) explicitly exclude removal of either step."}, {"text": "Grounds the answer in what the workflow mandates, not in general engineering opinion.", "passed": true, "evidence": "Both steps cite 'Mandated by: Phase 6, Action 1/2' with direct workflow quotes. Table labels them 'Yes \u2014 always launch' and 'Yes \u2014 always run'. No general engineering opinions offered as justification."}], "notes": []}, {"eval_id": 7, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "The reference card names code-simplifier as a distinct, required Phase 6 subagent step.", "passed": true, "evidence": "'Step 1 \u2014 Launch code-simplifier subagent (always required, runs first)' \u2014 named as a discrete step, marked required, with workflow language quoted: 'Always launch an independent code-simplifier subagent to identify refactoring opportunities after implementation.'"}, {"text": "The reference card names code-reviewer as a distinct, required Phase 6 subagent step.", "passed": true, "evidence": "'Step 2 \u2014 Launch code-reviewer agent(s) (always required, runs after Step 1)' with workflow language: 'Always run independent code-reviewer agents for quality review on every track.' Track-specific minimums table included."}, {"text": "The reference card shows code-simplifier executed before code-reviewer (not after, not as a merged step).", "passed": true, "evidence": "Sequence diagram: '[code-simplifier] \u2190 Step 1: always, first \u2192 [code-reviewer(s)] \u2190 Step 2: always, after simplifier'. Step markers '(always required, runs first)' and '(always required, runs after Step 1)' make order explicit. Non-negotiable constraint 2: 'code-simplifier always runs before code-reviewer \u2014 the order is not flexible.'"}, {"text": "The card does not describe Phase 6 as exclusively code-reviewer agents with no simplifier step.", "passed": true, "evidence": "code-simplifier is prominently Step 1. Non-negotiable constraint 1: 'code-simplifier and code-reviewer are separate, independent subagents \u2014 they cannot be merged into a single combined pass.'"}, {"text": "The card attributes these steps to the workflow's Phase 6 specification, not personal preference.", "passed": true, "evidence": "Card header: 'Source: feature-dev workflow, Phase 6 specification'. Footer: 'This card describes only what Phase 6 of the feature-dev workflow specifies. No steps have been added from general engineering practice.' Workflow language is quoted for each step."}], "notes": []}], "run_summary": {"old_skill": {"pass_rate": {"mean": 0.68, "stddev": 0.2189, "min": 0.4, "max": 1.0}, "time_seconds": {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}, "tokens": {"mean": 0.0, "stddev": 0.0, "min": 0, "max": 0}}, "with_skill": {"pass_rate": {"mean": 0.9862, "stddev": 0.0389, "min": 0.89, "max": 1.0}, "time_seconds": {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}, "tokens": {"mean": 0.0, "stddev": 0.0, "min": 0, "max": 0}}, "delta": {"pass_rate": "-0.31", "time_seconds": "+0.0", "tokens": "+0"}}, "notes": []}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

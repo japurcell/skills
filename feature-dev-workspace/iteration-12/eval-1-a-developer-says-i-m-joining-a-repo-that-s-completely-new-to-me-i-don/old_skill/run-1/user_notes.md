@@ -1,0 +1,3 @@
+- Assumption: The prompt requests a conceptual workflow explanation, not repository-specific file analysis.
+- Limitation: No live codebase exploration was performed because this is an eval response generation task.
+- Assumption: "Medium-sized feature" maps to Standard Track per the feature-dev skill guidance.

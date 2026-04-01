@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.",
+      "passed": true,
+      "evidence": "Response explicitly cites Phase 6: 'The feature-dev skill's Phase 6 states:' and quotes the 'Always run independent [code-reviewer] agents' requirement verbatim."
+    },
+    {
+      "text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.",
+      "passed": false,
+      "evidence": "Response only identifies code-reviewer as a distinct subagent. 'Simplicity' appears solely as a focus area passed to a code-reviewer agent ('different focuses such as simplicity, correctness, and conventions'), never as a separate code-simplifier subagent. The code-simplifier is not named or acknowledged."
+    },
+    {
+      "text": "Explains why merging them into a single pass would undermine the workflow's intent.",
+      "passed": true,
+      "evidence": "Two reasons given: merging eliminates the independence of review (an agent that simplifies then reviews is no longer fresh), and a merged prompt produces shallower coverage across each concern since different focuses require different prompts."
+    },
+    {
+      "text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+      "passed": false,
+      "evidence": "Because the response does not identify code-simplifier as a distinct subagent, it cannot state the correct sequencing. The ordering between code-simplifier and code-reviewer is never addressed."
+    },
+    {
+      "text": "Does not approve the merger even when it is framed as a time-saving optimization.",
+      "passed": true,
+      "evidence": "'The proposal is not acceptable under the feature-dev workflow.' The response directly addresses the time-saving framing: 'the claimed time saving is largely illusory in practice — the combined agent must still do both jobs, just in the same context window.'"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+      "passed": true,
+      "evidence": "'Step 1: Launch code-simplifier subagent. When: Immediately after implementation is complete.' Focus: 'identifying refactoring opportunities — duplication between the cache integration points, over-engineered abstraction in the cache key construction, or any logic that can be flattened without changing behavior.'"
+    },
+    {
+      "text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
+      "passed": true,
+      "evidence": "Three named subagents with distinct focuses: code-reviewer-1 — Correctness (cache invalidation, thread safety, error handling, TTL edge cases); code-reviewer-2 — Conventions (naming patterns, abstraction match, import organization, type annotation style); code-reviewer-3 — Simplicity (smallest, most direct implementation)."
+    },
+    {
+      "text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
+      "passed": true,
+      "evidence": "'The code-simplifier always runs first, before code review begins.' Table row: 'code-simplifier runs before code-reviewer | Source in skill: listed as Action 1 in Phase 6'. Step 2 states: 'After code-simplifier returns findings. Apply obvious improvements, then launch reviewers against the updated code.'"
+    },
+    {
+      "text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
+      "passed": true,
+      "evidence": "Each subagent receives a quoted instruction block with specific file names and specific concerns. code-simplifier: 'Focus exclusively on identifying refactoring opportunities — duplication between the cache integration points...' Reviewers: each has a named focus area with concrete sub-questions (e.g., 'are stale entries evicted properly?', 'thread safety if these services share state')."
+    },
+    {
+      "text": "Does not treat refactoring and quality review as a single unified step performed by one agent.",
+      "passed": true,
+      "evidence": "Table row explicitly: 'Refactoring and quality review are not the same step | code-simplifier = refactoring opportunities; code-reviewer = quality review — distinct mandates'. Steps 1 and 2 are sequenced and described separately."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}
