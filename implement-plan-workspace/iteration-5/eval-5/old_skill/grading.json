@@ -1,0 +1,30 @@
+{
+  "run_id": "eval-5-old_skill",
+  "summary": {
+    "passed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  },
+  "expectations": [
+    {
+      "text": "Materializes mixed-state scope",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    },
+    {
+      "text": "Prevents independent scope narrowing",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    },
+    {
+      "text": "Reports missing files for subset review",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "Applies INCOMPLETE completion gate",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    }
+  ]
+}

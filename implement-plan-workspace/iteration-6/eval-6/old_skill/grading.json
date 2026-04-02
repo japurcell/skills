@@ -1,0 +1,30 @@
+{
+  "run_id": "eval-6-old_skill",
+  "summary": {
+    "passed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  },
+  "expectations": [
+    {
+      "text": "Uses controller review_scope_files as authoritative",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "Detects reviewer file-list mismatch",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    },
+    {
+      "text": "Reports missing and extra files",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "Marks completion INCOMPLETE until reconciled",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    }
+  ]
+}

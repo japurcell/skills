@@ -189,40 +189,12 @@ Note: This command assumes a complete task breakdown exists in tasks.md. If task
 
 <codereview_instructions>
 
-1. Define the review scope before any review work:
-
-- Build the candidate file set from all changed files that are not yet committed (staged, unstaged, and untracked implementation files).
-- Prefer git-based discovery (for example, `git status --porcelain`) so the scope reflects the actual working tree.
-- Exclude deleted files and exclude all `.gitignore` files from review/simplification.
-
-2. Materialize the computed review file list and pass it to every review subagent:
-
-- Create a deterministic `review_scope_files` list (one path per line, stable sorted order).
-- Include that exact list in each subagent handoff so each agent reviews the same scope.
-- Do not let subagents recompute or narrow scope independently.
-- If any reviewer reports a file list that differs from `review_scope_files`, treat it as a scope conflict and keep status INCOMPLETE until reconciled against the controller list.
-
-3. Using a subagent, apply the code-simplifier skill to all files in the review scope.
-4. Launch 3 code-reviewer agents in parallel that:
-5. Read [agents/code-reviewer.agent.md](agents/code-reviewer.agent.md)
-6. Focus on different aspects: simplicity/DRY/elegance, bugs/functional correctness, project conventions/abstractions for all files in the review scope
-7. Exclude `.gitignore` files
-8. Use this exact mini-template inside `Code Review Findings` so coverage can be checked deterministically:
-
-```text
-Review Scope Coverage
-- Total Changed (Uncommitted) Files: <count>
-- Total Reviewed Files: <count>
-- Missing Files: <count>
-- Missing File List: <paths or none>
-- Excluded Files: <paths including .gitignore and deleted files, or none>
-- Completion Gate: Missing Files > 0 => INCOMPLETE (requires explicit deferment/approval)
-```
-
-6. Enforce gating from the coverage block:
-
-- If `Missing Files > 0`, treat code review as incomplete and do not report review completion without explicit deferment/approval.
-
-7. Consolidate findings and identify highest severity issues that you recommend fixing.
+1. Using a subagent, apply the code-simplifier skill to all touched files
+   - Exclude .gitignore files
+2. Launch 3 code-reviewer agents in parallel that:
+   1. Read [agents/code-reviewer.agent.md](agents/code-reviewer.agent.md)
+   2. Focus on different aspects: simplicity/DRY/elegance, bugs/functional correctness, project conventions/abstractions for all of the touched files
+   3. Excludes .gitignore files
+3. Consolidate findings and identify highest severity issues that you recommend fixing
 
 </codereview_instructions>

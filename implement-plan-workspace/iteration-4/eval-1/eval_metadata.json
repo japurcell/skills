@@ -1,0 +1,10 @@
+{
+  "eval_id": 1,
+  "eval_name": "missing-tasks-md-fails-fast",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-export/plan.md. Assume plan.md exists but tasks.md is missing. Show the exact handling behavior after context loading begins.",
+  "assertions": [
+    "Explicitly states tasks.md is missing",
+    "Instructs user to run /create-tasks or regenerate planning artifacts",
+    "Execution halts before phase execution"
+  ]
+}

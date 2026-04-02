@@ -1,0 +1,25 @@
+{
+  "run_id": "eval-4-old_skill",
+  "summary": {
+    "passed": 1,
+    "total": 3,
+    "pass_rate": 0.3333333333333333
+  },
+  "expectations": [
+    {
+      "text": "Excludes deleted files and .gitignore in scope",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    },
+    {
+      "text": "Uses Review Scope Coverage template",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "Coverage counts review-target files only",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    }
+  ]
+}

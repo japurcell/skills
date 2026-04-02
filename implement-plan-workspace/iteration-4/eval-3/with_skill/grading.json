@@ -1,0 +1,40 @@
+{
+  "run_id": "eval-3-with_skill",
+  "summary": {
+    "passed": 5,
+    "total": 6,
+    "pass_rate": 0.8333333333333334
+  },
+  "expectations": [
+    {
+      "text": "Uses all uncommitted changed files scope",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    },
+    {
+      "text": "Excludes .gitignore and deleted files",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    },
+    {
+      "text": "Materializes review scope file list",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "Includes Review Scope Coverage metrics",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    },
+    {
+      "text": "Includes Excluded Files and Completion Gate lines",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    },
+    {
+      "text": "States Missing Files > 0 gating",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    }
+  ]
+}

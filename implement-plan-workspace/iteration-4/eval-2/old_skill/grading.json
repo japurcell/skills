@@ -1,0 +1,25 @@
+{
+  "run_id": "eval-2-old_skill",
+  "summary": {
+    "passed": 2,
+    "total": 3,
+    "pass_rate": 0.6666666666666666
+  },
+  "expectations": [
+    {
+      "text": "Includes all five required output sections",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "Explains [P] parallelization only for non-overlapping files",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    },
+    {
+      "text": "Defines checkpoint decision criteria",
+      "passed": true,
+      "evidence": "Matched expected pattern in output."
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "run_id": "eval-3-old_skill",
+  "summary": {
+    "passed": 0,
+    "total": 6,
+    "pass_rate": 0.0
+  },
+  "expectations": [
+    {
+      "text": "Uses all uncommitted changed files scope",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "Excludes .gitignore and deleted files",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "Materializes review scope file list",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "Includes Review Scope Coverage metrics",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "Includes Excluded Files and Completion Gate lines",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    },
+    {
+      "text": "States Missing Files > 0 gating",
+      "passed": false,
+      "evidence": "Expected pattern not found in output."
+    }
+  ]
+}
