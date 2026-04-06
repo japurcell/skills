@@ -1,0 +1,2 @@
+Loaded and followed `/home/adam/.agents/skills/implement-plan/SKILL.md` as the controlling workflow.
+Applied the skill's code review scope rule: controller-generated `review_scope_files` is authoritative, out-of-scope reviewer files do not count, and any missing in-scope file keeps the review gate INCOMPLETE.

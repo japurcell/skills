@@ -1,0 +1,2 @@
+Generated from the controlling workflow at `/home/adam/.agents/skills/implement-plan-workspace/iteration-7/skill-snapshot/SKILL.md` and the eval metadata for iteration-7/eval-5.
+Response used the prompt-provided changed-file assumptions to materialize `review_scope_files`, rejected the reviewer's narrowed scope, and marked review completion INCOMPLETE/FAIL because 3 changed files were omitted.

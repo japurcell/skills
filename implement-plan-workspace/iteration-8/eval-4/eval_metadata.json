@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "deleted-and-gitignore-exclusions",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-delete-edge/plan.md. Uncommitted git status includes: M src/a.ts, D src/legacy.ts, ?? docs/new.md, M .gitignore. Produce only the Code Review Findings section and ensure deleted and .gitignore handling are correctly represented.",
+  "assertions": [
+    "Lists deleted files under exclusions rather than review scope",
+    "Lists .gitignore under exclusions rather than review scope",
+    "Uses the Review Scope Coverage block including Completion Gate",
+    "Coverage counts reflect only the non-excluded review target files"
+  ]
+}

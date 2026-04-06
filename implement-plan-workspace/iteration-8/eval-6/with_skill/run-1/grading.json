@@ -1,0 +1,48 @@
+{
+  "run_id": "eval-6-with_skill",
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "expectations": [
+    {
+      "text": "Uses controller review_scope_files as authoritative",
+      "passed": true,
+      "evidence": "Authoritative controller list found."
+    },
+    {
+      "text": "Detects reviewer file-list mismatch",
+      "passed": true,
+      "evidence": "Reviewer mismatch detected."
+    },
+    {
+      "text": "Reports missing and extra files after reconciliation",
+      "passed": true,
+      "evidence": "Missing and extra files are reported."
+    },
+    {
+      "text": "Keeps completion status INCOMPLETE until reconciled or explicitly deferred",
+      "passed": true,
+      "evidence": "INCOMPLETE gating found."
+    }
+  ],
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1689,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,3 @@
+- Controlling workflow read from `/home/adam/.agents/skills/implement-plan/SKILL.md`.
+- Eval scenario confirmed from `/home/adam/.agents/skills/implement-plan/evals/evals.json` and `eval_metadata.json` for eval 1.
+- Response stops at required artifact validation because `plan.md` exists and `tasks.md` is missing, which the skill treats as a hard blocker before phase execution.

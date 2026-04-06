@@ -8,18 +8,11 @@ disable-model-invocation: true
 
 ## Inputs
 
-You receive these parameters in your prompt:
-
 - **plan_file** (required): The path to the plan file to implement.
-
-## Context
-
-- Read plan_file into context if it isn't already.
-- Derive the feature directory from plan_file and use it as the base for related artifacts.
 
 ## Required Output Contract
 
-Use this structure in your user-facing progress and completion updates so execution is auditable:
+Use these exact Markdown section headers in progress and completion updates:
 
 1. `Checklist Gate`
 2. `Implementation Context Loaded`
@@ -27,202 +20,101 @@ Use this structure in your user-facing progress and completion updates so execut
 4. `Code Review Findings`
 5. `Completion Validation`
 
-Use Markdown section headers for these exact section names so downstream evaluation can verify structure reliably.
+Each section should include concise evidence: files read, tasks completed, tests run, blockers, and deferments.
 
-For each section, include concise evidence (files read, tasks completed, tests run, blockers).
+## Workflow
 
-## Outline
+1. Load `plan_file` and derive the feature directory from it.
 
-1. **Check checklist status** (if `<feature-dir>/checklists/` exists):
-   - Scan all checklist files in that directory
-   - For each checklist, count:
-     - Total items: All lines matching `- [ ]` or `- [X]` or `- [x]`
-     - Completed items: Lines matching `- [X]` or `- [x]`
-     - Incomplete items: Lines matching `- [ ]`
-   - Create a status table:
+2. Run the checklist gate when `<feature-dir>/checklists/` exists:
+   - Scan each checklist file.
+   - Count total items (`- [ ]`, `- [X]`, `- [x]`), completed items (`- [X]`, `- [x]`), and incomplete items (`- [ ]`).
+   - Show a status table with these exact columns:
 
      ```text
      | Checklist | Total | Completed | Incomplete | Status |
      |-----------|-------|-----------|------------|--------|
      | ux.md     | 12    | 12        | 0          | ✓ PASS |
      | test.md   | 8     | 5         | 3          | ✗ FAIL |
-     | security.md | 6   | 6         | 0          | ✓ PASS |
      ```
 
-   - Calculate overall status:
-     - **PASS**: All checklists have 0 incomplete items
-     - **FAIL**: One or more checklists have incomplete items
+   - If any checklist is incomplete, show the table, ask exactly `Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)`, and stop until the user replies. `no`, `wait`, or `stop` means halt; `yes`, `proceed`, or `continue` means continue.
+   - If all checklists pass, report that and continue automatically.
+   - If there is no checklists directory, report that no checklist gate is present and continue.
 
-   - **If any checklist is incomplete**:
-     - Display the table with incomplete item counts
-     - **STOP** and ask: "Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)"
-     - Wait for user response before continuing
-     - If user says "no" or "wait" or "stop", halt execution
-     - If user says "yes" or "proceed" or "continue", proceed to step 2
+3. Load implementation context:
+   - Required: `tasks.md`, `plan.md`.
+   - If present: `data-model.md`, `contracts/`, `research.md`, `quickstart.md`.
+   - If `tasks.md` or `plan.md` is missing, stop and instruct the user to run `/create-tasks` or regenerate planning artifacts.
 
-   - **If all checklists are complete**:
-     - Display the table showing all checklists passed
-     - Automatically proceed to step 2
+4. Verify setup artifacts before implementation:
+   - Create or update ignore files only when the project setup calls for them.
+   - Never overwrite user-managed ignore files; only append missing critical patterns.
+   - Detect repo and tooling with concrete signals:
+     - `git rev-parse --git-dir 2>/dev/null` for `.gitignore`
+     - `Dockerfile*` or Docker mentioned in `plan.md` for `.dockerignore`
+     - `.eslintrc*` for `.eslintignore`
+     - `eslint.config.*` for config-level `ignores`
+     - `.prettierrc*` for `.prettierignore`
+     - `.npmrc` or `package.json` for `.npmignore` when publishing
+     - `*.tf` for `.terraformignore`
+     - Helm charts for `.helmignore`
+   - Read [references/ignore-patterns.md](references/ignore-patterns.md) when choosing the technology-specific and tool-specific patterns to add.
 
-   - **If checklists directory does not exist**:
-     - Report that no checklist gate is present
-     - Continue to step 2
+5. Parse `tasks.md` into:
+   - phases: Setup, Tests, Core, Integration, Polish
+   - task IDs, descriptions, file paths, `[P]` markers
+   - dependency and execution order rules
+   - If no actionable tasks are found, stop and recommend regenerating `tasks.md`.
 
-2. Load and analyze the implementation context:
-   - **REQUIRED**: Read `tasks.md` for the complete task list and execution plan
-   - **REQUIRED**: Read `plan.md` for tech stack, architecture, and file structure
-   - **IF EXISTS**: Read `data-model.md` for entities and relationships
-   - **IF EXISTS**: Read `contracts/` for API specifications and test requirements
-   - **IF EXISTS**: Read `research.md` for technical decisions and constraints
-   - **IF EXISTS**: Read `quickstart.md` for integration scenarios
-   - If either `tasks.md` or `plan.md` is missing, stop and instruct the user to run `/create-tasks` or regenerate planning artifacts.
+6. Execute phases in order: Setup, Tests, Core, Integration, Polish.
+   - For each phase, hand off the ordered task IDs, dependency rules, touched file paths, TDD requirement, and the requirement to mark completed tasks as `[X]` in `tasks.md`.
+   - `[P]` tasks may run in parallel only when their touched file paths do not overlap.
+   - Sequential tasks must run in order. If a non-parallel task fails, halt the phase. If one parallel task fails, continue only the still-independent parallel work.
+   - After each phase, run a checkpoint that verifies completed or deferred tasks, `tasks.md` sync, and the tests required for that phase.
+   - Include this exact block before moving on:
 
-3. **Project Setup Verification**:
-   - **REQUIRED**: Create/verify ignore files based on actual project setup.
-   - Only append missing critical patterns; do not overwrite user-managed ignore files.
-
-   **Detection & Creation Logic**:
-   - Check if the following command succeeds to determine if the repository is a git repo (create/verify .gitignore if so):
-
-     ```sh
-     git rev-parse --git-dir 2>/dev/null
+     ```text
+     Checkpoint Decision
+     - Status: PASS | PASS WITH DEFERRED ITEMS | FAIL
+     - Evidence: <tasks completed, tests run, files changed, blockers/deferments>
+     - Next Action: <advance to next phase | resolve blockers | request user approval>
      ```
 
-   - Check if Dockerfile\* exists or Docker in plan.md → create/verify .dockerignore
-   - Check if .eslintrc\* exists → create/verify .eslintignore
-   - Check if eslint.config.\* exists → ensure the config's `ignores` entries cover required patterns
-   - Check if .prettierrc\* exists → create/verify .prettierignore
-   - Check if .npmrc or package.json exists → create/verify .npmignore (if publishing)
-   - Check if terraform files (\*.tf) exist → create/verify .terraformignore
-   - Check if .helmignore needed (helm charts present) → create/verify .helmignore
+   - Do not advance unless the checkpoint status permits it or the user explicitly approves continuation.
 
-   **If ignore file already exists**: Verify it contains essential patterns, append missing critical patterns only.
-   **If ignore file missing**: Create with full pattern set for detected technology.
+7. Run code review after implementation:
+   - Build review scope from all uncommitted changed implementation files: staged, unstaged, and untracked.
+   - Prefer git-based discovery such as `git status --porcelain` when available.
+   - Exclude deleted files and every `.gitignore` file from review and simplification, but list them under excluded files.
+   - Materialize a deterministic, stable-sorted `review_scope_files` list and pass that exact list to every review subagent.
+   - Review subagents must not recompute or narrow scope. If a reviewer reports a different file list, explicitly call it a `scope conflict` or `reviewer file-list mismatch`, then reconcile missing files and extra files against the controller list and keep status INCOMPLETE until the conflict is resolved or explicitly deferred.
+   - First apply the code-simplifier skill to files in `review_scope_files`.
+   - Then launch 3 review agents in parallel using [agents/code-reviewer.agent.md](agents/code-reviewer.agent.md), covering simplicity/DRY, bugs/correctness, and project conventions/abstractions.
+   - Inside `Code Review Findings`, use this exact coverage block:
 
-   **Common Patterns by Technology** (from plan.md tech stack):
-   - **Node.js/JavaScript/TypeScript**: `node_modules/`, `dist/`, `build/`, `*.log`, `.env*`
-   - **Python**: `__pycache__/`, `*.pyc`, `.venv/`, `venv/`, `dist/`, `*.egg-info/`
-   - **Java**: `target/`, `*.class`, `*.jar`, `.gradle/`, `build/`
-   - **C#/.NET**: `bin/`, `obj/`, `*.user`, `*.suo`, `packages/`
-   - **Go**: `*.exe`, `*.test`, `vendor/`, `*.out`
-   - **Ruby**: `.bundle/`, `log/`, `tmp/`, `*.gem`, `vendor/bundle/`
-   - **PHP**: `vendor/`, `*.log`, `*.cache`, `*.env`
-   - **Rust**: `target/`, `debug/`, `release/`, `*.rs.bk`, `*.rlib`, `*.prof*`, `.idea/`, `*.log`, `.env*`
-   - **Kotlin**: `build/`, `out/`, `.gradle/`, `.idea/`, `*.class`, `*.jar`, `*.iml`, `*.log`, `.env*`
-   - **C++**: `build/`, `bin/`, `obj/`, `out/`, `*.o`, `*.so`, `*.a`, `*.exe`, `*.dll`, `.idea/`, `*.log`, `.env*`
-   - **C**: `build/`, `bin/`, `obj/`, `out/`, `*.o`, `*.a`, `*.so`, `*.exe`, `*.dll`, `autom4te.cache/`, `config.status`, `config.log`, `.idea/`, `*.log`, `.env*`
-   - **Swift**: `.build/`, `DerivedData/`, `*.swiftpm/`, `Packages/`
-   - **R**: `.Rproj.user/`, `.Rhistory`, `.RData`, `.Ruserdata`, `*.Rproj`, `packrat/`, `renv/`
-   - **Universal**: `.DS_Store`, `Thumbs.db`, `*.tmp`, `*.swp`, `.vscode/`, `.idea/`
+     ```text
+     Review Scope Coverage
+     - Total Changed (Uncommitted) Files: <count>
+     - Total Reviewed Files: <count>
+     - Missing Files: <count>
+     - Missing File List: <paths or none>
+     - Excluded Files: <paths including .gitignore and deleted files, or none>
+     - Completion Gate: Missing Files > 0 => INCOMPLETE (requires explicit deferment/approval)
+     ```
 
-   **Tool-Specific Patterns**:
-   - **Docker**: `node_modules/`, `.git/`, `Dockerfile*`, `.dockerignore`, `*.log*`, `.env*`, `coverage/`
-   - **ESLint**: `node_modules/`, `dist/`, `build/`, `coverage/`, `*.min.js`
-   - **Prettier**: `node_modules/`, `dist/`, `build/`, `coverage/`, `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`
-   - **Terraform**: `.terraform/`, `*.tfstate*`, `*.tfvars`, `.terraform.lock.hcl`
-   - **Kubernetes/k8s**: `*.secret.yaml`, `secrets/`, `.kube/`, `kubeconfig*`, `*.key`, `*.crt`
+   - If `Missing Files > 0`, code review is incomplete until the gap is reviewed or explicitly deferred.
+   - Consolidate findings and call out the highest-severity issues to fix.
 
-4. Parse tasks.md structure and extract:
-   - **Task phases**: Setup, Tests, Core, Integration, Polish
-   - **Task dependencies**: Sequential vs parallel execution rules
-   - **Task details**: ID, description, file paths, parallel markers [P]
-   - **Execution flow**: Order and dependency requirements
+8. Finish with completion validation:
+   - verify all required tasks are complete
+   - confirm the delivered work matches the specification and technical plan
+   - confirm tests pass and coverage expectations are met
+   - report final status with completed work, blockers, and any deferred items
 
-   If no actionable tasks are found, stop and recommend regenerating `tasks.md`.
-
-5. Implement individual phases of the task plan in the correct order using subagents. For each phase:
-   - Launch a subagent for each phase with an explicit handoff prompt that includes:
-     - Current phase name and ordered task IDs
-     - Dependency rules (`[P]` can run in parallel only when files do not overlap)
-     - Requirement to apply TDD (tests first, then implementation)
-     - Requirement to mark completed tasks as `[X]` in `tasks.md`
-     - Expected deliverable: changed files, test results, and unresolved issues
-   - The phase subagent must:
-     - Respect dependencies by running sequential tasks in order
-     - Run `[P]` tasks concurrently only when safe
-     - Halt phase execution if a non-parallel task fails
-     - Continue remaining independent parallel tasks if one `[P]` task fails
-   - After each phase, run a validation checkpoint subagent that confirms:
-     - All intended phase tasks were completed or explicitly deferred
-     - `tasks.md` status is synchronized with actual completion
-     - Required tests for that phase were executed
-   - Do not start the next phase until checkpoint passes (or user explicitly approves continuing with known failures).
-
-6. Code review: perform code review using <code_review_instructions>.
-
-7. Completion validation:
-   - Verify all required tasks are completed
-   - Check that implemented features match the original specification
-   - Validate that tests pass and coverage meets requirements
-   - Confirm the implementation follows the technical plan
-
-- Include an explicit `Checkpoint Decision` block using this exact structure:
-
-  ```text
-  Checkpoint Decision
-  - Status: PASS | PASS WITH DEFERRED ITEMS | FAIL
-  - Evidence: <tasks completed, tests run, files changed, blockers/deferments>
-  - Next Action: <advance to next phase | resolve blockers | request user approval>
-  ```
-
-- Do not advance to the next phase unless the checkpoint decision status permits advancement or the user explicitly approves continuation.
-- Report final status with summary of completed work
-
-Note: This command assumes a complete task breakdown exists in tasks.md. If tasks are incomplete or missing, suggest running `/create-tasks` first to regenerate the task list.
-
-## Implementation Safety Rules
+## Safety Rules
 
 - Never use destructive git or filesystem commands unless the user explicitly asks.
-- Do not revert unrelated changes in the working tree.
-- If unexpected unrelated changes appear during execution, pause and ask the user how to proceed.
-- Keep edits focused on files required by current tasks.
-
-<implementation_execution_rules>
-
-1.  **Setup first**: Initialize project structure, dependencies, configuration
-2.  **Tests before code**: If you need to write tests for contracts, entities, and integration scenarios
-3.  **Core development**: Implement models, services, CLI commands, endpoints
-4.  **Integration work**: Database connections, middleware, logging, external services
-5.  **Polish and validation**: Unit tests, performance optimization, documentation
-
-</implementation_execution_rules>
-
-<codereview_instructions>
-
-1. Define the review scope before any review work:
-
-- Build the candidate file set from all changed files that are not yet committed (staged, unstaged, and untracked implementation files).
-- Prefer git-based discovery (for example, `git status --porcelain`) so the scope reflects the actual working tree.
-- Exclude deleted files and exclude all `.gitignore` files from review/simplification.
-
-2. Materialize the computed review file list and pass it to every review subagent:
-
-- Create a deterministic `review_scope_files` list (one path per line, stable sorted order).
-- Include that exact list in each subagent handoff so each agent reviews the same scope.
-- Do not let subagents recompute or narrow scope independently.
-- If any reviewer reports a file list that differs from `review_scope_files`, treat it as a scope conflict and keep status INCOMPLETE until reconciled against the controller list.
-
-3. Using a subagent, apply the code-simplifier skill to all files in the review scope.
-4. Launch 3 code-reviewer agents in parallel that:
-5. Read [agents/code-reviewer.agent.md](agents/code-reviewer.agent.md)
-6. Focus on different aspects: simplicity/DRY/elegance, bugs/functional correctness, project conventions/abstractions for all files in the review scope
-7. Exclude `.gitignore` files
-8. Use this exact mini-template inside `Code Review Findings` so coverage can be checked deterministically:
-
-```text
-Review Scope Coverage
-- Total Changed (Uncommitted) Files: <count>
-- Total Reviewed Files: <count>
-- Missing Files: <count>
-- Missing File List: <paths or none>
-- Excluded Files: <paths including .gitignore and deleted files, or none>
-- Completion Gate: Missing Files > 0 => INCOMPLETE (requires explicit deferment/approval)
-```
-
-6. Enforce gating from the coverage block:
-
-- If `Missing Files > 0`, treat code review as incomplete and do not report review completion without explicit deferment/approval.
-
-7. Consolidate findings and identify highest severity issues that you recommend fixing.
-
-</codereview_instructions>
+- Do not revert unrelated working-tree changes.
+- If unrelated changes appear and conflict with the current phase, pause and ask how to proceed.
+- Keep edits focused on the files required by the active tasks.

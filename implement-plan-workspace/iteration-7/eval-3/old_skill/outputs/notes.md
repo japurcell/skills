@@ -1,0 +1,4 @@
+- Controlling workflow read from `/home/adam/.agents/skills/implement-plan-workspace/iteration-7/skill-snapshot/SKILL.md`.
+- Code review scope rules also checked against `/home/adam/.agents/skills/implement-plan-workspace/iteration-7/skill-snapshot/agents/code-reviewer.agent.md` and the eval metadata assertions.
+- The referenced `plan_file` artifacts were not present in the workspace, so the response was derived from the prompt-provided uncommitted file list and the skill's code review contract.
+- Materialized `review_scope_files` in stable sorted order, excluding `.gitignore` and with no deleted files in scope.

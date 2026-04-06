@@ -1,0 +1,7 @@
+[
+  "All non-review-scope evals pass in both configurations; the measurable advantage is concentrated in the newer code-review scope-control behaviors.",
+  "The snapshot still drops assertions in eval-5 and eval-6, both of which exercise authoritative review_scope_files handling and reviewer scope drift.",
+  "The concise skill reaches 25/25 passed assertions while using a lower output-size token proxy than the snapshot (1526.6 vs 1713.4 mean tokens).",
+  "Time stayed flat at 0.0s in both configurations because this environment did not expose subagent timing telemetry; token proxy is the only meaningful performance signal in this benchmark.",
+  "Pass-rate variability is now entirely on the baseline side; the concise skill is stable across the current eval set."
+]

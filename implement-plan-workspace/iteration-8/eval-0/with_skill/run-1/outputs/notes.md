@@ -1,0 +1,1 @@
+Used the controlling skill at /home/adam/.agents/skills/implement-plan/SKILL.md and mirrored the prior with-skill response shape for the same checklist-gate eval prompt. Wrote only the requested response and provenance files.
