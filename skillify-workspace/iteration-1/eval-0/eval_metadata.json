@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "repo-hotfix-release",
+  "prompt": "Turn the confirmed session summary in evals/files/repo-hotfix-release.md into a reusable skill. This is a benchmark run with no live user, so treat the file contents as already-confirmed answers and do not ask follow-up questions. Save the generated skill to outputs/SKILL.md and write outputs/output.md describing the recommended save path, invocation command, and any assumptions.",
+  "assertions": [
+    "Frontmatter includes name, description, and allowed-tools entries inferred from the session",
+    "The generated skill is inline or user-interactive rather than forked for the hotfix workflow",
+    "Every major step includes explicit success criteria",
+    "The merge or deploy step includes a human checkpoint",
+    "Frontmatter includes argument metadata for pr_number and target_environment"
+  ]
+}

@@ -1,1 +1,0 @@
-- Provided a brief handoff summary with artifact status.

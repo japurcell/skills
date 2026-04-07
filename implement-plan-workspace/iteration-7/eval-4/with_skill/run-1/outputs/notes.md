@@ -1,2 +1,0 @@
-Generated from the controlling implement-plan skill at /home/adam/.agents/skills/implement-plan/SKILL.md and the eval metadata for iteration-7/eval-4.
-Derived review scope from the provided git status: reviewed docs/new.md and src/a.ts; excluded .gitignore and deleted src/legacy.ts per skill rules.

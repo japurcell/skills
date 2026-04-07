@@ -1,3 +1,0 @@
-- Grounded findings in repository files and phase structure.
-- Asked a small, prioritized set of clarifying questions.
-- Recommended concrete phase-level edits before implementation.

@@ -1,7 +1,0 @@
-- Completed WITH_SKILL response for eval 4.
-- Provided explicit Phase 6 sequence and ordering.
-- Named required subagents and distinct focuses:
-  - code-simplifier
-  - code-reviewer (correctness/risk)
-  - code-reviewer (conventions/maintainability)
-- Kept simplifier before reviewer passes per workflow intent.

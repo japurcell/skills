@@ -1,4 +1,0 @@
-- Skill loaded from /home/adam/.agents/skills/implement-plan/SKILL.md.
-- Applied checklist gate fail path because test.md has 3 incomplete items.
-- Included exact gate prompt text required by skill.
-- Included explicit next-step branching based on user response.

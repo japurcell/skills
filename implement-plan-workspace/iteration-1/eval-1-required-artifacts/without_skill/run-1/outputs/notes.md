@@ -1,5 +1,0 @@
-- Skill source used: /home/adam/.agents/skills/implement-plan-workspace/skill-snapshot/SKILL.md
-- Applied branch: Step 2 (Load and analyze implementation context)
-- Required artifact missing: .agents/scratchpad/feature-export/tasks.md
-- Expected behavior: stop execution and suggest /create-tasks first
-- No project setup verification, phase parsing, implementation, or code review should run after this failure

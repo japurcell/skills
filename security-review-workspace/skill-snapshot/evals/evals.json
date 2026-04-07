@@ -1,0 +1,38 @@
+{
+  "skill_name": "security-review",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Review the pending changes in /home/adam/.agents/skills/security-review/evals/files/command-injection-export as a security engineer. Write markdown findings to findings.md. If there are no HIGH or MEDIUM findings, write exactly 'No HIGH or MEDIUM findings.'",
+      "expected_output": "A markdown report that identifies the command injection introduced in app.py, uses High severity, and ignores documentation-only bait.",
+      "files": [],
+      "expectations": [
+        "Report identifies a command injection issue in app.py",
+        "Report marks the command injection finding as High severity",
+        "Report does not flag the README.md example token"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Review the pending changes in /home/adam/.agents/skills/security-review/evals/files/path-traversal-download as a security engineer. Write markdown findings to findings.md. If there are no HIGH or MEDIUM findings, write exactly 'No HIGH or MEDIUM findings.'",
+      "expected_output": "A markdown report that identifies the path traversal risk in files.py, uses Medium or High severity, and ignores excluded regex/logging bait.",
+      "files": [],
+      "expectations": [
+        "Report identifies a path traversal issue in files.py",
+        "Report marks the path traversal finding as Medium or High severity",
+        "Report does not flag regex or logging bait in audit.py"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Review the pending changes in /home/adam/.agents/skills/security-review/evals/files/excluded-patterns-only as a security engineer. Write markdown findings to findings.md. If there are no HIGH or MEDIUM findings, write exactly 'No HIGH or MEDIUM findings.'",
+      "expected_output": "A markdown report that returns no findings because the changes only contain excluded patterns such as documentation examples, test-only shell injection, regex injection, and unsanitized logging.",
+      "files": [],
+      "expectations": [
+        "Report states that there are no HIGH or MEDIUM findings",
+        "Report does not flag README.md examples",
+        "Report does not flag tests or logging-only changes"
+      ]
+    }
+  ]
+}

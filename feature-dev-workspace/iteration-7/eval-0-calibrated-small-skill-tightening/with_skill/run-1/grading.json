@@ -1,9 +1,0 @@
-{
-  "expectations": [
-    {"text": "References the existing feature-dev skill directly rather than answering generically.", "passed": true, "evidence": "Mentions `skills/feature-dev/SKILL.md` and proposes specific edits there."},
-    {"text": "Avoids asking blocking clarifying questions for this well-specified task.", "passed": true, "evidence": "States no blocking questions are needed."},
-    {"text": "Proposes concrete description and body changes, including a scoped 'When not to use this skill' addition.", "passed": true, "evidence": "Calls out tightening description and improving the 'When Not To Use' section."},
-    {"text": "Scales the workflow to the task instead of insisting on a full multi-phase approval process.", "passed": true, "evidence": "Uses Light/targeted recommendation rather than deep gated flow."}
-  ],
-  "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}
-}

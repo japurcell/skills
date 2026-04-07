@@ -1,0 +1,54 @@
+{
+  "expectations": [
+    {
+      "text": "Frontmatter includes context: fork",
+      "passed": true,
+      "evidence": "context=fork"
+    },
+    {
+      "text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation",
+      "passed": true,
+      "evidence": "Found **Execution**: Task agent annotation on a representative deep-dive step"
+    },
+    {
+      "text": "Every major step includes explicit success criteria",
+      "passed": true,
+      "evidence": "major_steps=4, success_criteria=4"
+    },
+    {
+      "text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary",
+      "passed": true,
+      "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Write', 'Bash(python:*)', 'Task']"
+    },
+    {
+      "text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests",
+      "passed": true,
+      "evidence": "arguments=['benchmark_path'], argument-hint=['benchmark-path'], when_to_use=Use when the user wants a quick triage of benchmark or eval results, asks to review a benchmark.json or iteration directory, or says things like \"triage this benchmark\", \"review these eval failures\", or \"summarize what the benchmark says to fix next\"."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 4,
+    "errors_encountered": 0,
+    "output_chars": 5009,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "skillify", "runs": [{"id": "eval-0-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: ship-hotfix\ndescription: Ship an already-reviewed hotfix PR onto the release branch, require explicit approval before merge and deployment, and finish with a Slack-ready release summary.\nallowed-tools:\n  - Bash(git:*)\n  - Bash(gh:*)\n  - Read\n  - Edit\n  - Write\nargument-hint: \"<pr_number> [target_environment]\"\narguments:\n  - pr_number\n  - target_environment\nwhen_to_use: Use when you need to ship an already-reviewed hotfix from an existing pull request to the repo's release branch, want the workflow driven through `gh` CLI and `git`, and need an explicit approval checkpoint before merge or deployment. Trigger phrases: \"ship hotfix\", \"release this hotfix PR\", \"cut a hotfix release from PR\", or \"promote reviewed hotfix\".\n---\n\n# Ship Hotfix\n\nRelease a reviewed hotfix from an existing pull request onto the correct release branch, verify it is safe to ship, pause for approval before irreversible actions, then return the merged release PR URL, deployment outcome, and a Slack-ready summary.\n\n## Inputs\n\n- `$pr_number`: Pull request number for the already-reviewed hotfix.\n- `$target_environment`: Optional environment label such as `staging` or `production`.\n\n## Goal\n\nCreate or update the correct release branch from the proper base, cherry-pick the reviewed hotfix commit(s), verify smoke tests and CI are green, open or update the release PR, require explicit user approval before merge and deployment, and finish with the merged release PR URL, deployment status, and a paste-ready release summary.\n\n## Steps\n\n### 1. Inspect the source PR\n\nUse `gh pr view $pr_number` and related `gh` queries to collect the source PR title, URL, linked issue, commit SHAs, base branch, review state, and current CI status. Confirm this is the already-reviewed hotfix that should be promoted and identify the correct release base branch using the repo's naming rules.\n\n**Success criteria**:\n\n- The source PR URL, commit SHA list, linked issue, and current CI state are captured.\n- The correct release base branch is identified before any branch creation begins.\n\n**Artifacts**: Source PR URL, commit SHAs, linked issue, release base branch.\n\n**Rules**:\n\n- Prefer `gh` CLI and `git`; do not switch to browser-only instructions.\n- Do not assume the release base branch; verify it from repo rules or branch conventions.\n\n### 2. Create or update the release branch\n\nFetch the latest refs, then create or refresh the release branch from the verified base branch using the repo's branch naming rules. If the release branch already exists, update it instead of creating a duplicate branch.\n\n**Success criteria**:\n\n- The release branch exists locally from the correct base branch.\n- The branch name matches repo conventions and is ready for cherry-picks.\n\n**Artifacts**: Release branch name.\n\n**Rules**:\n\n- The release branch must originate from the verified base branch.\n- Do not continue if the branch base is ambiguous.\n\n### 3. Cherry-pick the reviewed hotfix commits\n\nCherry-pick the reviewed hotfix commit(s) from the source PR onto the release branch in order. Resolve conflicts carefully, verify the resulting diff only contains intended hotfix changes, then push the branch.\n\n**Success criteria**:\n\n- All intended hotfix commits are applied to the release branch in the right order.\n- Any conflicts are resolved and the branch pushes successfully.\n\n**Rules**:\n\n- Cherry-pick only the reviewed hotfix commit(s); do not pull in unrelated changes.\n- Stop and surface conflicts clearly if they cannot be resolved safely.\n\n### 4. Validate smoke tests and CI\n\nRun the repo's expected smoke tests for the release branch and confirm the required CI checks for the release branch or release PR are green. Record anything unusual that a reviewer should know.\n\n**Success criteria**:\n\n- Required smoke tests complete successfully or their outcome is explicitly documented.\n- Required CI checks are green before merge is considered.\n\n**Artifacts**: Smoke test outcome, CI status.\n\n**Rules**:\n\n- Do not proceed to merge or deployment while CI is failing, pending, or unknown.\n\n### 5. Open or update the release PR\n\nUse `gh` CLI to create or update the release PR with a concise summary of the hotfix, linked issue, cherry-picked commits, and target environment if one was provided.\n\n**Success criteria**:\n\n- A release PR exists for the branch.\n- The PR description is concise and includes the information reviewers need.\n\n**Artifacts**: Release PR URL.\n\n**Rules**:\n\n- Reuse the existing release PR when appropriate instead of opening duplicates.\n- Keep the summary concise and operationally useful.\n\n### 6. Approval checkpoint [human]\n\nPresent the release PR URL, cherry-picked commit list, CI status, and intended target environment, then pause for explicit approval before any merge or deployment action.\n\n**Success criteria**:\n\n- Explicit user approval is received before continuing.\n- If approval is not granted, the workflow stops with the current status summarized.\n\n**Human checkpoint**: Required before merge and deployment.\n\n**Rules**:\n\n- No merge happens without explicit approval.\n- No deployment happens without explicit approval.\n\n### 7. Merge the release PR and trigger deployment\n\nAfter approval and green CI, merge the release PR using the repo's standard merge method and trigger the deployment using the repo's standard deployment mechanism for `$target_environment` when provided.\n\n**Success criteria**:\n\n- The release PR is merged.\n- Deployment is triggered or completed, and its current outcome is captured.\n\n**Artifacts**: Merged release PR URL, deployment status.\n\n**Rules**:\n\n- This is irreversible; do not proceed without the human checkpoint.\n- If CI changes from green to failing, stop and re-evaluate before merging.\n\n### 8. Return the release summary\n\nPrepare a Slack-ready summary block that includes the source PR, merged release PR URL, linked issue, target environment, and deployment outcome.\n\n**Success criteria**:\n\n- The final output includes the merged release PR URL.\n- The final output includes the deployment outcome.\n- The final output includes a paste-ready Slack summary.\n"}, {"name": "output.md", "type": "text", "content": "# Skill Benchmark Output\n\nRecommended save path: `.agents/skills/ship-hotfix/SKILL.md`\n\nInvocation command: `/ship-hotfix <pr_number> [target_environment]`\n\nAssumptions:\n\n- The confirmed session summary was treated as a completed interview, so no follow-up questions were asked.\n- The skill stays inline because merge and deployment require an explicit human checkpoint.\n- The workflow is repo-specific and should prefer `gh` CLI plus `git` over browser-driven GitHub instructions.\n- Smoke-test commands, release-branch naming rules, and deployment commands are repo-standard details to resolve at execution time.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": true, "evidence": "allowed-tools=['Bash(git:*)', 'Bash(gh:*)', 'Read', 'Edit', 'Write']"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=(omitted)"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=8, success_criteria=8"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": true, "evidence": "Found Human checkpoint annotation"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": true, "evidence": "arguments=['pr_number', 'target_environment'], argument-hint=<pr_number> [target_environment]"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 8, "errors_encountered": 0, "output_chars": 6718, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-0-with_skill-run-2", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: ship-hotfix\ndescription: Ship an already-reviewed hotfix PR onto the release branch, require explicit approval before merge and deployment, and finish with a Slack-ready release summary.\nallowed-tools:\n  - Bash(git:*)\n  - Bash(gh:*)\n  - Read\n  - Edit\n  - Write\nargument-hint: \"<pr_number> [target_environment]\"\narguments:\n  - pr_number\n  - target_environment\nwhen_to_use: Use when you need to ship an already-reviewed hotfix from an existing pull request to the repo's release branch, want the workflow driven through `gh` CLI and `git`, and need an explicit approval checkpoint before merge or deployment. Trigger phrases: \"ship hotfix\", \"release this hotfix PR\", \"cut a hotfix release from PR\", or \"promote reviewed hotfix\".\n---\n\n# Ship Hotfix\n\nRelease a reviewed hotfix from an existing pull request onto the correct release branch, verify it is safe to ship, pause for approval before irreversible actions, then return the merged release PR URL, deployment outcome, and a Slack-ready summary.\n\n## Inputs\n\n- `$pr_number`: Pull request number for the already-reviewed hotfix.\n- `$target_environment`: Optional environment label such as `staging` or `production`.\n\n## Goal\n\nCreate or update the correct release branch from the proper base, cherry-pick the reviewed hotfix commit(s), verify smoke tests and CI are green, open or update the release PR, require explicit user approval before merge and deployment, and finish with the merged release PR URL, deployment status, and a paste-ready release summary.\n\n## Steps\n\n### 1. Inspect the source PR\n\nUse `gh pr view $pr_number` and related `gh` queries to collect the source PR title, URL, linked issue, commit SHAs, base branch, review state, and current CI status. Confirm this is the already-reviewed hotfix that should be promoted and identify the correct release base branch using the repo's naming rules.\n\n**Success criteria**:\n\n- The source PR URL, commit SHA list, linked issue, and current CI state are captured.\n- The correct release base branch is identified before any branch creation begins.\n\n**Artifacts**: Source PR URL, commit SHAs, linked issue, release base branch.\n\n**Rules**:\n\n- Prefer `gh` CLI and `git`; do not switch to browser-only instructions.\n- Do not assume the release base branch; verify it from repo rules or branch conventions.\n\n### 2. Create or update the release branch\n\nFetch the latest refs, then create or refresh the release branch from the verified base branch using the repo's branch naming rules. If the release branch already exists, update it instead of creating a duplicate branch.\n\n**Success criteria**:\n\n- The release branch exists locally from the correct base branch.\n- The branch name matches repo conventions and is ready for cherry-picks.\n\n**Artifacts**: Release branch name.\n\n**Rules**:\n\n- The release branch must originate from the verified base branch.\n- Do not continue if the branch base is ambiguous.\n\n### 3. Cherry-pick the reviewed hotfix commits\n\nCherry-pick the reviewed hotfix commit(s) from the source PR onto the release branch in order. Resolve conflicts carefully, verify the resulting diff only contains intended hotfix changes, then push the branch.\n\n**Success criteria**:\n\n- All intended hotfix commits are applied to the release branch in the right order.\n- Any conflicts are resolved and the branch pushes successfully.\n\n**Rules**:\n\n- Cherry-pick only the reviewed hotfix commit(s); do not pull in unrelated changes.\n- Stop and surface conflicts clearly if they cannot be resolved safely.\n\n### 4. Validate smoke tests and CI\n\nRun the repo's expected smoke tests for the release branch and confirm the required CI checks for the release branch or release PR are green. Record anything unusual that a reviewer should know.\n\n**Success criteria**:\n\n- Required smoke tests complete successfully or their outcome is explicitly documented.\n- Required CI checks are green before merge is considered.\n\n**Artifacts**: Smoke test outcome, CI status.\n\n**Rules**:\n\n- Do not proceed to merge or deployment while CI is failing, pending, or unknown.\n\n### 5. Open or update the release PR\n\nUse `gh` CLI to create or update the release PR with a concise summary of the hotfix, linked issue, cherry-picked commits, and target environment if one was provided.\n\n**Success criteria**:\n\n- A release PR exists for the branch.\n- The PR description is concise and includes the information reviewers need.\n\n**Artifacts**: Release PR URL.\n\n**Rules**:\n\n- Reuse the existing release PR when appropriate instead of opening duplicates.\n- Keep the summary concise and operationally useful.\n\n### 6. Approval checkpoint [human]\n\nPresent the release PR URL, cherry-picked commit list, CI status, and intended target environment, then pause for explicit approval before any merge or deployment action.\n\n**Success criteria**:\n\n- Explicit user approval is received before continuing.\n- If approval is not granted, the workflow stops with the current status summarized.\n\n**Human checkpoint**: Required before merge and deployment.\n\n**Rules**:\n\n- No merge happens without explicit approval.\n- No deployment happens without explicit approval.\n\n### 7. Merge the release PR and trigger deployment\n\nAfter approval and green CI, merge the release PR using the repo's standard merge method and trigger the deployment using the repo's standard deployment mechanism for `$target_environment` when provided.\n\n**Success criteria**:\n\n- The release PR is merged.\n- Deployment is triggered or completed, and its current outcome is captured.\n\n**Artifacts**: Merged release PR URL, deployment status.\n\n**Rules**:\n\n- This is irreversible; do not proceed without the human checkpoint.\n- If CI changes from green to failing, stop and re-evaluate before merging.\n\n### 8. Return the release summary\n\nPrepare a Slack-ready summary block that includes the source PR, merged release PR URL, linked issue, target environment, and deployment outcome.\n\n**Success criteria**:\n\n- The final output includes the merged release PR URL.\n- The final output includes the deployment outcome.\n- The final output includes a paste-ready Slack summary.\n"}, {"name": "output.md", "type": "text", "content": "# Skill Benchmark Output\n\nRecommended save path: `.agents/skills/ship-hotfix/SKILL.md`\n\nInvocation command: `/ship-hotfix <pr_number> [target_environment]`\n\nAssumptions:\n\n- The confirmed session summary was treated as a completed interview, so no follow-up questions were asked.\n- The skill stays inline because merge and deployment require an explicit human checkpoint.\n- The workflow is repo-specific and should prefer `gh` CLI plus `git` over browser-driven GitHub instructions.\n- Smoke-test commands, release-branch naming rules, and deployment commands are repo-standard details to resolve at execution time.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": true, "evidence": "allowed-tools=['Bash(git:*)', 'Bash(gh:*)', 'Read', 'Edit', 'Write']"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=(omitted)"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=8, success_criteria=8"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": true, "evidence": "Found Human checkpoint annotation"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": true, "evidence": "arguments=['pr_number', 'target_environment'], argument-hint=<pr_number> [target_environment]"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 8, "errors_encountered": 0, "output_chars": 6718, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-0-with_skill-run-3", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: ship-hotfix\ndescription: Ship a reviewed hotfix from an existing PR onto the release branch, pause for approval, then merge, deploy, and produce a Slack-ready summary.\nallowed-tools:\n  - Bash(git:*)\n  - Bash(gh:*)\n  - Read\n  - Edit\n  - Write\nargument-hint: \"$pr_number [$target_environment]\"\narguments:\n  - pr_number\n  - target_environment\ncontext: inline\nwhen_to_use: Use when the user wants to release an already-reviewed hotfix PR to a release branch, especially for requests like \"ship this hotfix,\" \"cut a release PR from PR 123,\" or \"deploy this reviewed fix to production.\"\n---\n\n# Ship Hotfix\n\nRelease a reviewed hotfix from an existing pull request by creating or updating the release branch, cherry-picking the approved commit set, verifying CI, pausing for approval before irreversible actions, and finishing with a Slack-ready release summary.\n\n## Inputs\n\n- `$pr_number`: Pull request number for the already-reviewed hotfix.\n- `$target_environment`: Optional deployment target such as `staging` or `production`.\n\n## Goal\n\nProduce a merged release PR URL, a recorded deployment outcome, and a concise Slack-ready summary block without merging or deploying until the user explicitly approves those actions.\n\n## Steps\n\n### 1. Inspect the source PR\n\nUse `gh pr view $pr_number` and any needed git inspection commands to collect the source branch, reviewed commit SHAs, linked issue, and current CI status. Confirm the hotfix PR is already reviewed and identify the correct release base branch using the repo's branching rules.\n\n**Artifacts**: Reviewed commit SHA list, linked issue reference, release base branch, source PR URL.\n\n**Rules**: Prefer `gh` CLI and `git` over browser-driven workflows. Do not proceed if the PR is unreviewed, ambiguous, or missing the required base-branch information.\n\n**Success criteria**: You have the exact commit set to ship, the correct release base branch, and the current CI state for the source PR.\n\n### 2. Create or update the release branch\n\nCreate the release branch from the confirmed base branch, or update the existing release branch if one already exists for this hotfix. Keep the branch state clean and verify it points at the expected base before applying any changes.\n\n**Artifacts**: Release branch name.\n\n**Rules**: The release branch must be created from the correct base branch. If the existing branch is based on the wrong branch or contains unrelated commits, stop and surface the problem instead of repairing it implicitly.\n\n**Success criteria**: The release branch exists locally and remotely, and its base matches the confirmed branch rule for this release.\n\n### 3. Cherry-pick the reviewed hotfix commits\n\nCherry-pick only the reviewed hotfix commit SHAs onto the release branch, preserving the intended order. Resolve conflicts carefully and verify the resulting diff matches the expected hotfix scope before continuing.\n\n**Artifacts**: Release branch commit range ready for validation.\n\n**Rules**: Only include the reviewed hotfix commits. Do not add opportunistic fixes or unrelated cleanup. If conflict resolution changes behavior materially, stop and ask for guidance.\n\n**Success criteria**: The release branch contains the intended hotfix changes only, with conflicts resolved and the branch in a clean state.\n\n### 4. Validate locally and confirm CI readiness\n\nRun the repo's smoke tests or other minimal release validation expected for hotfixes, then verify the branch is ready for CI. If the repository already has remote CI checks for the release PR, make sure they are green before merge.\n\n**Rules**: Do not continue with failing smoke tests. Do not merge while CI is red or missing required checks.\n\n**Success criteria**: Local smoke validation passes, and the release branch is ready for or already showing green CI results.\n\n### 5. Open or update the release PR\n\nCreate the release PR if it does not exist, or update the existing one with a concise summary that explains the hotfix, links the source PR and issue, and captures the target environment when provided.\n\n**Artifacts**: Release PR URL.\n\n**Rules**: Keep the PR description concise and operationally useful. Reuse an existing release PR when appropriate instead of creating duplicates.\n\n**Success criteria**: There is a release PR with the correct branch mapping, a concise summary, and green or actively running CI attached to it.\n\n### 6. Approval checkpoint [human]\n\nPause and present the release PR URL, current CI status, and intended deployment target. Ask for explicit approval before any merge or deployment action.\n\n**Human checkpoint**: Required before merge and before deployment if they are separate actions.\n\n**Rules**: No irreversible action happens without explicit approval from the user.\n\n**Success criteria**: The user explicitly approves proceeding with merge and deployment.\n\n### 7. Merge the release PR and trigger deployment\n\nAfter approval, merge the release PR using the repo's normal release practice and trigger the deployment for `$target_environment` if provided, or for the default production path if not. Track deployment status until there is a clear success or failure result.\n\n**Artifacts**: Merge commit or merged PR state, deployment status link or identifier.\n\n**Rules**: If CI turns red or required checks regress before merge, stop and report that the checkpoint is no longer valid. If deployment fails, capture the failure state and do not claim release success.\n\n**Success criteria**: The release PR is merged, deployment has been triggered, and the deployment outcome is known.\n\n### 8. Produce the release summary\n\nPrepare a Slack-ready summary block that includes the release PR URL, source PR reference, linked issue if available, deployment target, and final deployment outcome.\n\n**Artifacts**: Slack-ready release summary block.\n\n**Success criteria**: The final output includes the merged release PR URL, deployment outcome, and a concise summary ready to paste into Slack."}, {"name": "output.md", "type": "text", "content": "Recommended save path: `.agents/skills/ship-hotfix/SKILL.md`\n\nInvocation command: `/ship-hotfix $pr_number [$target_environment]`\n\nAssumptions:\n\n- The source pull request is already reviewed and ready to release.\n- The repository has established release branch naming and base-branch rules that the operator can determine during step 1.\n- The repository has a known smoke-test or minimal validation command, but the exact command is intentionally left repo-specific.\n- `gh` CLI authentication and git remote access are already configured.\n- Merge and deployment require explicit human approval because the workflow stays inline."}], "grading": {"expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": true, "evidence": "allowed-tools=['Bash(git:*)', 'Bash(gh:*)', 'Read', 'Edit', 'Write']"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=inline"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=8, success_criteria=8"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": true, "evidence": "Found Human checkpoint annotation"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": true, "evidence": "arguments=['pr_number', 'target_environment'], argument-hint=$pr_number [$target_environment]"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 8, "errors_encountered": 0, "output_chars": 6591, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-0-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: ship-hotfix\ndescription: Ship an already-reviewed hotfix from an existing pull request to the release branch, with explicit human approval before merge and deploy.\n---\n\n# Ship Hotfix\n\nYou are a code agent helping ship a reviewed hotfix from an existing pull request to the release branch.\n\nPrefer `gh` CLI and `git` for GitHub and branch operations. Do not switch to browser-style instructions unless the repository workflow makes CLI execution impossible.\n\n## When To Use\n\nUse this skill when:\n\n- The hotfix work already exists in an open, reviewed pull request.\n- You need to move the approved change onto a release branch.\n- The user wants a controlled release workflow with a human checkpoint before any irreversible action.\n\nDo not use this skill for building a hotfix from scratch or for speculative release planning.\n\n## Invocation\n\nUse:\n\n```text\n/ship-hotfix $pr_number $target_environment\n```\n\nArguments:\n\n- `$pr_number`: pull request number for the already-reviewed hotfix.\n- `$target_environment`: optional environment label such as `staging` or `production`.\n\n## Inputs\n\nGather or confirm the following before acting:\n\n- The already-open source pull request.\n- The repository's release branch naming rules.\n- The correct base branch for the release branch.\n- The target environment, if deployment is expected.\n\n## Success Criteria\n\nThe task is successful only if all of the following are true:\n\n- The release branch is created from the correct base.\n- The reviewed hotfix commit(s) are applied to the release branch.\n- Smoke tests and CI are green before merge.\n- No merge happens without explicit human approval.\n- No deployment happens without explicit human approval.\n- The final response includes the merged release PR URL.\n- The final response includes the deployment outcome.\n- The final response includes a Slack-ready summary block.\n\n## Tooling Expectations\n\nPrefer these tools:\n\n- `Bash(git:*)`\n- `Bash(gh:*)`\n- `Read`\n- `Edit`\n- `Write`\n\nNo subagent is required for the standard flow.\n\n## Guardrails\n\n- Use `gh` CLI and `git` as the default path for inspection, PR updates, merge operations, and status checks.\n- Record permissions and tool usage narrowly. Do not describe capabilities more broadly than needed.\n- Treat merge and deployment as irreversible actions that require an explicit user checkpoint.\n- If CI is failing, stop and report the failure instead of forcing the release forward.\n- If the source PR contains multiple candidate commits, identify the exact commit SHAs before cherry-picking.\n- If the base branch or release naming rule is unclear from repository context, stop and surface the ambiguity before creating the release branch.\n\n## Workflow\n\n1. Inspect the source PR.\n   - Read the PR summary, linked issue, commit list, and current CI state.\n   - Capture the reviewed hotfix commit SHA or SHAs that must be released.\n\n2. Prepare the release branch.\n   - Determine the correct base branch using the repository's release rules.\n   - Create the release branch from that base, or update the existing release branch if one already exists for this hotfix.\n\n3. Apply the hotfix.\n   - Cherry-pick the reviewed hotfix commit or commits onto the release branch.\n   - Resolve conflicts carefully and verify that only the intended changes are included.\n\n4. Validate the branch.\n   - Run the repository's smoke tests.\n   - Push the branch and verify CI status.\n   - Do not proceed to merge while tests or CI are failing.\n\n5. Open or update the release PR.\n   - Create or refresh the release PR using a concise description of the hotfix, linked issue, and validation status.\n   - Keep the PR text short and operationally useful.\n\n6. Pause for explicit approval.\n   - Present the release PR link, branch details, CI status, and deployment target.\n   - Ask for explicit approval before merge.\n   - Ask for explicit approval before deployment if deployment is a separate step.\n\n7. Merge and deploy after approval.\n   - Merge the release PR only after the human checkpoint is satisfied.\n   - Trigger the deployment using the repository's normal release path.\n   - Monitor deployment status until a clear outcome is available.\n\n8. Deliver the final release summary.\n   - Return the merged release PR URL.\n   - Return the deployment status or deployed environment result.\n   - Return a Slack-ready summary block that can be pasted without rewriting.\n\n## Final Response Format\n\nInclude these three parts:\n\n1. Release PR URL.\n2. Deployment outcome.\n3. Slack-ready summary.\n\nExample structure:\n\n```text\nRelease PR: <url>\nDeployment: <status>\n\nSlack summary:\nHotfix shipped from PR #<number> to <environment>.\nRelease PR: <url>\nDeploy status: <status>\nLinked issue: <issue or none>\n```\n"}, {"name": "output.md", "type": "text", "content": "# Output Note\n\nRecommended save path: `.agents/skills/ship-hotfix/SKILL.md`\n\nInvocation command:\n\n```text\n/ship-hotfix $pr_number $target_environment\n```\n\nAssumptions:\n\n- The source pull request already exists and has been reviewed.\n- The repository has an established release branch naming rule and a known base branch for hotfix releases.\n- The agent should prefer `gh` CLI and `git` over browser-driven GitHub steps.\n- Merge and deployment require explicit human approval and must not happen automatically.\n- The expected deliverables are the merged release PR URL, deployment outcome, and a Slack-ready summary.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=(omitted)"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": false, "evidence": "No Human checkpoint annotation found"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": false, "evidence": "arguments=[], argument-hint=None"}], "summary": {"passed": 1, "failed": 4, "total": 5, "pass_rate": 0.2}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 0, "errors_encountered": 0, "output_chars": 5335, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-0-without_skill-run-2", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: ship-hotfix\ndescription: Create or update a release branch from an already-reviewed hotfix PR, pause for explicit approval before merge and deploy, and return the release PR URL, deployment status, and a Slack-ready summary.\n---\n\n# Ship Hotfix\n\nUse this skill when a reviewed hotfix already exists in a pull request and the goal is to promote it onto the correct release branch, verify it, and ship it with an explicit human checkpoint before any irreversible action.\n\n## Invocation\n\n`/ship-hotfix $pr_number $target_environment`\n\nArguments:\n\n- `$pr_number`: pull request number for the already-reviewed hotfix.\n- `$target_environment`: optional environment label such as `staging` or `production`.\n\n## Required Inputs\n\nBefore executing the workflow, confirm or discover:\n\n- The source hotfix pull request.\n- The correct release base branch.\n- The repository's release branch naming rules.\n- The deployment target or environment, if one was supplied.\n\nIf a required repo-specific detail is missing and cannot be derived from the repository, stop and ask for it before making changes.\n\n## Tooling And Permissions\n\nPrefer command-line workflows over browser instructions.\n\n- `Bash(git:*)`\n- `Bash(gh:*)`\n- `Read`\n- `Edit`\n- `Write`\n\nDo not broaden permissions unless the repository clearly requires more.\n\n## Success Criteria\n\nThe workflow is only complete when all of the following are true:\n\n- The release branch was created from the correct base.\n- Only the reviewed hotfix commit set was applied.\n- Smoke tests and CI are green before merge.\n- No merge or deployment happened without an explicit human checkpoint.\n- The final response includes the release PR URL and deployment outcome.\n\n## Workflow\n\n1. Inspect the source PR with `gh pr view` and collect the commit SHAs, linked issue, branch information, reviewers, and current check status.\n2. Verify the PR is already reviewed and identify the exact hotfix commit set to promote.\n3. Determine the correct release base branch and compute the release branch name according to repository rules.\n4. Create the release branch from the correct base, or update it if it already exists.\n5. Cherry-pick the reviewed hotfix commit(s) onto the release branch. Resolve conflicts carefully and stop if the intended commit set becomes ambiguous.\n6. Run the repository's smoke tests or other lightweight release validation.\n7. Push the release branch and open or update the release PR with a concise summary that links back to the source PR and issue.\n8. Check PR status and CI with `gh pr checks` or equivalent until the release PR is ready for human review.\n9. Present a checkpoint summary and stop for explicit approval before merge or deployment.\n10. After approval, merge the release PR using the repository's normal release method.\n11. Trigger or confirm deployment for the target environment.\n12. Publish a final summary that includes the merged release PR URL, deployment status, and a Slack-ready release note block.\n\n## Mandatory Human Checkpoint\n\nBefore merge or deployment, stop and present:\n\n- Source PR number and title.\n- Release branch name.\n- Release PR URL.\n- Current CI or smoke-test status.\n- Target environment.\n- The exact next irreversible actions.\n\nDo not merge. Do not deploy. Wait for explicit approval.\n\n## Command Guidance\n\nPrefer patterns like these, adapted to the repository:\n\n```bash\ngh pr view \"$pr_number\" --json number,title,body,headRefName,baseRefName,commits,reviewDecision,statusCheckRollup\ngit fetch --all --prune\ngit checkout -B \"$release_branch\" \"origin/$release_base\"\ngit cherry-pick <commit_sha>\ngh pr create --base \"$release_base\" --head \"$release_branch\" --title \"$release_title\" --body \"$release_body\"\ngh pr checks \"$release_pr_number\" --watch\ngh pr merge \"$release_pr_number\" --merge\n```\n\nUse repository-specific commands for testing and deployment. If the repository has an existing release script or documented flow, prefer that over inventing a new one.\n\n## Guardrails\n\n- Prefer `gh` CLI and `git`; do not switch to browser-only instructions unless explicitly requested.\n- Keep the workflow inline. Do not hide approval steps inside automation.\n- Do not merge unrelated commits into the release branch.\n- Do not proceed if the release base branch is uncertain.\n- Do not proceed if CI is failing, unless the human explicitly approves an exception.\n- Do not deploy before the release PR is merged and approved.\n\n## Final Output\n\nReturn a concise summary containing:\n\n- Merged release PR URL.\n- Deployment status and target environment.\n- Any manual follow-up still required.\n- A Slack-ready summary block.\n\nExample Slack-ready block:\n\n```text\nHotfix shipped\n- Source PR: #123\n- Release PR: https://github.com/org/repo/pull/456\n- Environment: production\n- Status: deployed successfully\n- Summary: Cherry-picked reviewed hotfix for <issue/customer impact>\n```\n"}, {"name": "output.md", "type": "text", "content": "# Benchmark Output Note\n\nRecommended save path: `.agents/skills/ship-hotfix/SKILL.md`\n\nInvocation command: `/ship-hotfix $pr_number $target_environment`\n\nAssumptions:\n\n- The source pull request is already open and already reviewed.\n- The repository has an established release base branch and release branch naming convention.\n- The repository exposes smoke tests, CI checks, and a deployment mechanism the agent can invoke or verify.\n- Merge and deployment require an explicit human checkpoint.\n- `gh` CLI and `git` are the preferred interfaces for the workflow.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=(omitted)"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": false, "evidence": "No Human checkpoint annotation found"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": false, "evidence": "arguments=[], argument-hint=None"}], "summary": {"passed": 1, "failed": 4, "total": 5, "pass_rate": 0.2}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 0, "errors_encountered": 0, "output_chars": 5421, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-0-without_skill-run-3", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "# ship-hotfix\n\n## Purpose\n\nUse this skill to ship an already-reviewed hotfix from an existing pull request onto the release branch, stop for explicit human approval before irreversible actions, and finish with a merged release PR URL, deployment status, and a Slack-ready release summary.\n\n## When To Use\n\n- The hotfix code has already been reviewed in an existing pull request.\n- A release branch must be created or updated from the correct base branch.\n- The hotfix must be cherry-picked onto that release branch.\n- The workflow must use `gh` CLI and `git`, not browser-only GitHub steps.\n- Merge and deployment require an explicit human checkpoint.\n\n## Invocation\n\n`/ship-hotfix $pr_number $target_environment`\n\n## Arguments\n\n- `$pr_number`: pull request number for the already-reviewed hotfix.\n- `$target_environment`: optional environment label such as `staging` or `production`.\n\n## Required Inputs\n\n- The already-open source pull request number.\n- The repository's release branch naming and base branch rules.\n- The target environment if deployment is environment-specific.\n\n## Success Criteria\n\n- The release branch is created from the correct base branch.\n- The reviewed hotfix commit(s) are cherry-picked cleanly onto the release branch.\n- Smoke tests pass and CI is green before merge.\n- No merge or deployment happens without explicit human approval.\n- The final response includes the release PR URL, deployment outcome, and a Slack-ready summary block.\n\n## Tooling\n\n- `Bash(git:*)`\n- `Bash(gh:*)`\n- `Read`\n- `Edit`\n- `Write`\n\n## Workflow\n\n1. Inspect the source pull request with `gh` and collect the commit SHAs, linked issue, title, branch details, and current CI status.\n2. Identify the correct release base branch and derive the release branch name using the repository's naming rules.\n3. Create the release branch from the correct base if it does not exist, or update it safely if it already exists.\n4. Cherry-pick the reviewed hotfix commit(s) onto the release branch and resolve conflicts carefully if they occur.\n5. Run the repository's smoke tests and any lightweight validation needed before opening or updating the release pull request.\n6. Open or update the release pull request with a concise summary that references the source pull request, the linked issue, and the target environment when provided.\n7. Check CI for the release pull request and do not proceed until required checks are green.\n8. Pause and ask for explicit human approval before merge and before deployment. Treat both as irreversible checkpoints.\n9. After approval, merge the release pull request using `gh` or the repository's approved CLI flow.\n10. Trigger or confirm deployment using the repository's standard CLI-safe process.\n11. Report the merged release pull request URL, deployment result, and a Slack-ready summary block.\n\n## Operating Rules\n\n- Prefer `gh` CLI and `git` for repository operations.\n- Do not switch to browser-driven instructions unless the repository workflow explicitly requires it and the user approves.\n- Record tool use narrowly and concretely.\n- Treat merge and deployment as human-gated actions.\n- If CI is failing, the cherry-pick does not apply cleanly, or the base branch is unclear, stop and surface the blocker before proceeding.\n\n## Final Output Format\n\nProvide:\n\n- The merged release pull request URL.\n- The deployment status or blocker.\n- A Slack-ready summary block that includes the hotfix PR reference, release PR link, environment, and outcome.\n\nExample summary block:\n\n```text\nHotfix shipped\nSource PR: #123\nRelease PR: https://github.com/org/repo/pull/456\nEnvironment: production\nDeployment: succeeded\nNotes: Cherry-picked reviewed hotfix and merged after green CI and explicit approval.\n```"}, {"name": "output.md", "type": "text", "content": "Recommended save path: `.agents/skills/ship-hotfix/SKILL.md`\n\nInvocation command: `/ship-hotfix $pr_number $target_environment`\n\nAssumptions:\n\n- The confirmed session summary in `repo-hotfix-release.md` is authoritative and already reflects user-approved answers.\n- The workflow is repository-specific and should not be framed as a personal habit or generic release guide.\n- Merge and deployment remain human-gated actions that require explicit approval at execution time.\n- The repository has an established release branch naming rule, smoke-test command, and deployment path that the agent can inspect when the skill is used."}], "grading": {"expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=(omitted)"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": false, "evidence": "No Human checkpoint annotation found"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": false, "evidence": "arguments=[], argument-hint=None"}], "summary": {"passed": 1, "failed": 4, "total": 5, "pass_rate": 0.2}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 0, "errors_encountered": 0, "output_chars": 4357, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-1-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: doc-to-sop\ndescription: Turn a source document into a concise reusable SOP skill for a specific audience.\nallowed-tools:\n  - Read\n  - Grep\n  - Glob\n  - Edit\n  - Write\nargument-hint: \"$source_doc $audience\"\narguments:\n  - source_doc\n  - audience\nwhen_to_use: Use when you want to convert an existing document, notes file, or confirmed workflow summary into a reusable SOP-style skill for a specific audience such as support, onboarding, or engineering. Trigger on requests like \"turn this doc into a skill\", \"make an SOP skill from these notes\", or \"convert this workflow into a reusable skill\".\n---\n\n# Doc To SOP\n\nCreate a reusable SOP-style skill from existing documentation or notes, keeping the result concise, audience-specific, and portable across repositories.\n\n## Inputs\n\n- `$source_doc`: Path to the source document, notes file, or confirmed summary to transform.\n- `$audience`: Intended audience for the SOP, such as support, onboarding, or engineering.\n\n## Goal\n\nProduce a complete `SKILL.md` derived from `$source_doc`, tailored to `$audience`, with a recommended save path, invocation command, and any necessary assumptions.\n\n## Steps\n\n### 1. Read the source material\n\nOpen `$source_doc` and identify the core workflow, recurring actions, inputs, outputs, decision points, and hard constraints that should survive in a reusable skill.\n\n**Artifacts**: Working notes covering the workflow, inputs, outputs, constraints, and audience-specific wording.\n**Success criteria**:\n\n- The source has been fully reviewed.\n- The workflow's purpose, required inputs, and completion artifact are clear.\n- Any audience-specific tone or scope constraints are captured.\n\n### 2. Extract the reusable workflow\n\nReduce the material into the smallest repeatable process that still preserves the real task. Separate durable workflow steps from one-off context, and infer only the minimum argument set needed to run the workflow again.\n\n**Rules**:\n\n- Do not invent shell commands, package installation steps, or automation that do not appear in the source workflow.\n- Prefer cross-repo wording unless the source is explicitly repo-specific.\n- Keep the argument list small and obvious.\n  **Artifacts**: Ordered step list, inferred argument list, success artifact, and hard rules.\n  **Success criteria**:\n- The workflow is expressed as a clear ordered sequence.\n- Inputs, outputs, and decision points are explicit.\n- Non-reusable details have been removed or reframed as assumptions.\n\n### 3. Define the generated skill\n\nChoose a concise skill name, one-line description, and default save scope based on the source. Default to a personal skill path when the workflow should follow the user across repositories; use a repo-local path only when the source is clearly project-specific.\n\n**Artifacts**: Generated skill name, description, and recommended save path.\n**Success criteria**:\n\n- The generated skill has a clear name and purpose.\n- The recommended save path matches the workflow scope.\n- The choice of personal versus repo-local placement is justified by the source material.\n\n### 4. Draft the `SKILL.md`\n\nWrite a complete `SKILL.md` with frontmatter, inputs, goal, and numbered steps. Tailor wording and examples to `$audience` so the procedure is immediately usable for that group.\n\n**Rules**:\n\n- Every step must include success criteria.\n- Emphasize reading, extracting, and writing over shell automation.\n- Keep the description concise and the scope clear.\n  **Artifacts**: Draft `SKILL.md`.\n  **Success criteria**:\n- The draft includes frontmatter with name, description, allowed tools, and arguments when needed.\n- The steps are concrete and audience-appropriate.\n- The generated skill can be used across repositories unless the source explicitly requires repo-local behavior.\n\n### 5. Trim and validate\n\nReview the draft for unnecessary filler, missing edge notes, or invented complexity. Add an example invocation only when it helps execution and is supported by the source material.\n\n**Rules**:\n\n- Do not pad the skill with generic advice.\n- Do not add extra arguments for hypothetical cases.\n- Keep assumptions explicit instead of silently expanding scope.\n  **Success criteria**:\n- The final draft covers the real workflow without unnecessary detail.\n- Any examples or edge notes improve execution clarity.\n- The output remains concise.\n\n### 6. Present final output [human]\n\nPresent the completed `SKILL.md`, the recommended save path, the invocation command, and any assumptions. When a live user is present, pause here so they can tweak naming or wording before the file is written.\n\n**Human checkpoint**: Let the user adjust naming, scope, or wording before saving when they want changes.\n**Success criteria**:\n\n- The final `SKILL.md` is complete and ready to save.\n- The recommended save path is explicit.\n- The invocation command is shown in a copyable form.\n- Assumptions are listed separately from confirmed facts.\n"}, {"name": "output.md", "type": "text", "content": "# Output Notes\n\n- Recommended save path: `~/.agents/skills/doc-to-sop/SKILL.md`\n- Invocation command: `/doc-to-sop $source_doc $audience`\n\n## Assumptions\n\n- The confirmed session summary is treated as final interview input, so no follow-up review round was required for this benchmark run.\n- The generated skill runs inline because the confirmed preference was to allow wording tweaks before saving.\n- Personal skill placement is the default because the workflow is intended to work across repositories.\n- No shell or package-install steps were included because the source workflow only used reading, extraction, drafting, and file-writing actions.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": true, "evidence": "arguments=['source_doc', 'audience'], argument-hint=$source_doc $audience"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": true, "evidence": "when_to_use=Use when you want to convert an existing document, notes file, or confirmed workflow summary into a reusable SOP-style skill for a specific audience such as support, onboarding, or engineering. Trigger on requests like \"turn this doc into a skill\", \"make an SOP skill from these notes\", or \"convert this workflow into a reusable skill\"."}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=6, success_criteria=6"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write']"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 6, "errors_encountered": 0, "output_chars": 5582, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-1-with_skill-run-2", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: doc-to-sop\ndescription: Turn a source document or notes file into a concise, reusable SOP-style skill for a specific audience.\nallowed-tools:\n  - Read\n  - Grep\n  - Glob\n  - Edit\n  - Write\nargument-hint: \"$source_doc $audience\"\narguments:\n  - source_doc\n  - audience\nwhen_to_use: Use when the user wants to convert an existing document, notes file, or internal process write-up into a reusable SOP-style skill for a specific audience, with prompts like \"turn this doc into an SOP skill\" or \"make a reusable SOP from these notes\".\n---\n\n# Doc To SOP\n\nTurn a source document or notes file into a reusable SOP-style skill that can be used across repositories.\n\n## Inputs\n\n- `$source_doc`: Path to the source document, notes file, or workflow write-up.\n- `$audience`: The target audience for the SOP, such as support, onboarding, or engineering.\n\n## Goal\n\nProduce a clean, portable SKILL.md draft that captures the repeatable workflow from `$source_doc` for `$audience`, keeps the argument list small and obvious, and ends with clear save and invocation instructions.\n\n## Steps\n\n### 1. Read the source material\n\nRead `$source_doc` closely and identify the actual workflow it describes, including prerequisites, inputs, outputs, decision points, and any audience-specific terminology that should be preserved or simplified for `$audience`.\n\n**Success criteria**: You have a concise set of notes that captures the workflow scope, required inputs, final outputs, and the places where the wording or detail level should change for `$audience`.\n\n### 2. Distill the repeatable workflow\n\nConvert the source material into a short ordered workflow.\n\n- Keep the workflow focused on reading, extracting, and writing.\n- Keep the argument list minimal and obvious.\n- Do not add shell commands, package installation steps, or tooling steps unless they are clearly part of the source workflow.\n- Remove one-off context that would make the result specific to a single repository unless the source explicitly requires it.\n\n**Artifacts**: A draft outline of the SOP skill, including inputs, major steps, output artifact, and hard rules.\n\n**Rules**: Preserve the actual workflow from the source material. Do not inflate it with generic automation or extra operational steps.\n\n**Success criteria**: You have an ordered workflow with explicit inputs, a clear completion artifact, and a short list of rules or constraints that must carry into the final skill.\n\n### 3. Draft the skill\n\nWrite the reusable skill in SKILL.md format.\n\n- Add frontmatter with a clear skill name, a one-line description, the minimum required tools, argument metadata, and a strong `when_to_use` trigger description.\n- Include `Inputs`, `Goal`, and `Steps` sections.\n- Give every step explicit success criteria.\n- Keep the instructions portable across repositories unless the source document proves that repo-specific behavior is required.\n- Tailor the language and examples so the skill is understandable for `$audience`.\n\n**Artifacts**: Complete SKILL.md draft text.\n\n**Success criteria**: The draft is complete, reusable across repositories, and specific enough that another agent can follow it without needing the original source document open for interpretation.\n\n### 4. Add examples and edge guidance only when needed\n\nCheck whether the workflow needs a brief invocation example, audience-specific wording notes, or one or two edge-case constraints.\n\n- Add examples only if they clarify how to use the skill.\n- Add edge guidance only if the source material contains real decision points or common failure modes.\n- Keep the final skill concise; do not pad it with generic advice.\n\n**Success criteria**: Any added examples or notes make the skill easier to use without distracting from the main workflow.\n\n### 5. Present the final result and save instructions\n\nReturn the finished SKILL.md content and include the recommended save path plus the invocation command.\n\n- Recommend a personal skill path when the workflow should work across repositories.\n- Show the exact command format needed to invoke the skill.\n- Make it easy for the user to tweak wording before saving if they want to refine the final text.\n\n**Success criteria**: The user has the final skill content, knows where to save it, and has an exact invocation command they can use immediately.\n"}, {"name": "output.md", "type": "text", "content": "# Benchmark Output Note\n\nRecommended save path: `~/.agents/skills/doc-to-sop/SKILL.md`\n\nInvocation command: `/doc-to-sop $source_doc $audience`\n\nAssumptions:\n\n- The confirmed session summary already represents completed interview rounds and approved answers.\n- The workflow should remain portable across repositories, so the recommended destination is a personal skill path.\n- The skill should stay focused on reading, extracting, and drafting an SOP-style skill from source material rather than adding shell automation that was not present in the source session.\n- The skill runs inline so the user can tweak wording before saving if desired.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": true, "evidence": "arguments=['source_doc', 'audience'], argument-hint=$source_doc $audience"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": true, "evidence": "when_to_use=Use when the user wants to convert an existing document, notes file, or internal process write-up into a reusable SOP-style skill for a specific audience, with prompts like \"turn this doc into an SOP skill\" or \"make a reusable SOP from these notes\"."}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=5, success_criteria=5"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write']"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 5, "errors_encountered": 0, "output_chars": 4962, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-1-with_skill-run-3", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: doc-to-sop\ndescription: Turn a source document or notes file into a reusable SOP-style skill tailored to a specific audience.\nallowed-tools:\n  - Read\n  - Grep\n  - Glob\n  - Edit\n  - Write\nargument-hint: \"$source_doc $audience\"\narguments:\n  - source_doc\n  - audience\nwhen_to_use: Use when the user wants to convert a document, notes file, or repeatable documentation workflow into a reusable SOP-style skill for a specific audience, with trigger phrases like \"turn this doc into a skill\", \"make an SOP from these notes\", or \"convert this workflow into a reusable skill\".\n---\n\n# Doc To SOP\n\nTurn an existing document or notes file into a reusable skill that captures a repeatable workflow for a specific audience.\n\n## Inputs\n\n- `$source_doc`: Path to the source document or notes file that describes the workflow.\n- `$audience`: The intended audience for the SOP, such as support, onboarding, or engineering.\n\n## Goal\n\nProduce a reusable skill draft from `$source_doc` for `$audience`, keeping the workflow focused on reading, extracting, and writing. The result should be easy to reuse across repositories and should end with a clear save path and invocation command.\n\n## Steps\n\n### 1. Read the source material\n\nOpen `$source_doc` and identify the parts that describe the actual repeatable process rather than background context. Pull out the recurring tasks, inputs, outputs, and any decision points that affect how the workflow should run.\n\n**Artifacts**: Extracted workflow notes, candidate inputs, outputs, and decision points.\n\n**Success criteria**:\n\n- The source material has been read closely enough to separate the repeatable workflow from surrounding context.\n- The key inputs, outputs, and decision points are captured in working notes.\n\n### 2. Extract the SOP structure for the audience\n\nTranslate the source workflow into a concise SOP structure for `$audience`. Keep the argument list small and obvious, and adapt terminology or examples so the instructions are clear for the intended audience.\n\n**Artifacts**: Audience-shaped workflow outline and confirmed argument list.\n\n**Rules**:\n\n- Keep the argument list limited to the inputs that are clearly required.\n- Do not add shell commands, package installation steps, or automation that the source workflow did not actually use.\n\n**Success criteria**:\n\n- The workflow is expressed as a short, ordered outline that fits `$audience`.\n- The required arguments are clear, minimal, and justified by the source material.\n\n### 3. Draft the skill\n\nWrite the SKILL.md content with a clear description, inputs, goal, and ordered steps. Each step should be actionable and include success criteria so the workflow is easy to execute and verify.\n\n**Artifacts**: Complete SKILL.md draft.\n\n**Rules**:\n\n- Preserve the confirmed arguments `$source_doc` and `$audience`.\n- Keep the skill centered on reading, extracting, and writing rather than shell automation.\n\n**Success criteria**:\n\n- The draft is complete and usable as a standalone skill.\n- Each major step includes success criteria.\n- The skill remains general enough to reuse across repositories.\n\n### 4. Add examples or edge notes only when they help\n\nDecide whether the workflow needs a short invocation example or a brief note about edge cases. Add them only if they clarify how to use the skill or prevent likely confusion.\n\n**Rules**:\n\n- Keep extra guidance concise.\n- Do not pad the skill with examples or caveats that the source material does not support.\n\n**Success criteria**:\n\n- Any added example or note makes the skill easier to reuse.\n- Unnecessary detail has been left out.\n\n### 5. Present the final skill and save instructions\n\nFinish by providing the completed skill content together with the recommended save path and invocation command so the user can keep it as a personal skill.\n\n**Execution**: Terminate\n\n**Success criteria**:\n\n- The final output includes the completed skill content.\n- The output states the recommended save path for a personal skill.\n- The output includes the invocation command `/doc-to-sop $source_doc $audience`."}, {"name": "output.md", "type": "text", "content": "# Benchmark Run Output\n\nRecommended save path: `~/.agents/skills/doc-to-sop/SKILL.md`\n\nInvocation command: `/doc-to-sop $source_doc $audience`\n\nAssumptions:\n\n- The confirmed session summary in `/home/adam/.agents/skills/skillify/evals/files/personal-docs-to-sop.md` is treated as the completed interview and source of truth for this benchmark run.\n- This workflow should be a personal skill because it is intended to follow the user across repositories.\n- The skill should run inline, so no `context` frontmatter field is included.\n- Allowed tools were kept narrow to match the observed workflow: `Read`, `Grep`, `Glob`, `Edit`, and `Write`.\n- No shell automation, package installation, or extra arguments were added because the confirmed summary explicitly kept the workflow focused on reading, extracting, and writing."}], "grading": {"expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": true, "evidence": "arguments=['source_doc', 'audience'], argument-hint=$source_doc $audience"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": true, "evidence": "when_to_use=Use when the user wants to convert a document, notes file, or repeatable documentation workflow into a reusable SOP-style skill for a specific audience, with trigger phrases like \"turn this doc into a skill\", \"make an SOP from these notes\", or \"convert this workflow into a reusable skill\"."}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=5, success_criteria=5"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write']"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 5, "errors_encountered": 0, "output_chars": 4885, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-1-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "# doc-to-sop\n\nCreate a reusable SOP-style skill from an existing source document or notes file.\n\n## Use When\n\nUse this skill when you have a document that captures a repeated workflow and you want to convert it into a concise, reusable skill for a specific audience.\n\n## Arguments\n\n- `$source_doc`: Path to the source document or notes file.\n- `$audience`: Intended audience for the SOP, such as support, onboarding, or engineering.\n\n## Inputs\n\nYou will receive:\n\n- A source document to read.\n- The target audience.\n\n## Goal\n\nProduce a short, reusable SOP skill that:\n\n- Preserves the real workflow from the source material.\n- Clearly states inputs, outputs, and decision points.\n- Stays focused on reading, extracting, and writing.\n- Avoids adding shell commands, package installation steps, or automation unless the source material explicitly requires them.\n\n## Instructions\n\n1. Read the source document carefully.\n2. Extract the repeatable workflow, required inputs, expected outputs, and any key decision points.\n3. Identify the minimum set of steps needed for the audience to follow the workflow reliably.\n4. Draft a reusable skill in concise markdown.\n5. Keep the argument list small and explicit.\n6. Include examples or edge-case notes only when they materially improve correct use.\n7. End with clear save and invocation guidance.\n\n## Output Requirements\n\nReturn a complete `SKILL.md` draft that includes:\n\n- The skill name.\n- A short description of what the skill does.\n- When to use it.\n- The confirmed arguments.\n- Step-by-step instructions.\n- Success criteria or output expectations.\n- A final note that tells the user where to save the skill and how to invoke it.\n\n## Success Criteria\n\nThe result is successful when:\n\n- The skill is reusable across repositories.\n- The instructions remain concise and operational.\n- The skill exposes exactly the confirmed arguments unless the source material requires more.\n- The final output tells the user exactly where to save the skill and how to invoke it.\n\n## Final Response Format\n\nProvide:\n\n1. The finished `SKILL.md` content.\n2. A short note stating:\n   - Save path: `~/.agents/skills/doc-to-sop/SKILL.md`\n   - Invocation: `/doc-to-sop $source_doc $audience`\n"}, {"name": "output.md", "type": "text", "content": "Recommended save path: `~/.agents/skills/doc-to-sop/SKILL.md`\n\nInvocation command: `/doc-to-sop $source_doc $audience`\n\nAssumptions:\n\n- The confirmed session summary already captures the final user-approved requirements.\n- The skill should be reusable across repositories, so the recommended destination is a personal skills directory.\n- The workflow should stay focused on reading, extracting, and writing, without adding shell or package-install steps unless the source material explicitly includes them.\n- Inline output is acceptable because the user prefers to tweak wording before saving.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": false, "evidence": "arguments=None, argument-hint=None"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": false, "evidence": "when_to_use=None"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "summary": {"passed": 1, "failed": 4, "total": 5, "pass_rate": 0.2}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 0, "errors_encountered": 0, "output_chars": 2808, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-1-without_skill-run-2", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "# doc-to-sop\n\nTurn a confirmed documentation workflow into a concise, reusable SOP skill for a specific audience.\n\n## Invocation\n\n`/doc-to-sop $source_doc $audience`\n\n## Arguments\n\n- `$source_doc`: Path to the source document or notes file.\n- `$audience`: The intended audience for the SOP, such as support, onboarding, or engineering.\n\n## Use This When\n\n- You have a source document that describes a repeatable process.\n- You need to extract the stable workflow and rewrite it as a reusable SOP.\n- You want the output tailored to a specific audience without adding unrelated tooling steps.\n\n## Inputs\n\n- The source document content.\n- The intended audience.\n\n## Output\n\nProduce a reusable SOP skill draft that:\n\n- Captures the repeatable workflow from the source material.\n- States the inputs, outputs, and decision points clearly.\n- Stays focused on reading, extracting, and writing.\n- Avoids shell commands, package installation steps, or automation unless they are explicitly present in the source material.\n- Keeps the workflow concise and easy to reuse across repositories.\n\n## Workflow\n\n1. Read the source document carefully.\n2. Extract the repeatable workflow, required inputs, expected outputs, and decision points.\n3. Remove repo-specific or one-off details unless they are essential to the workflow.\n4. Rewrite the workflow as a concise SOP for the specified audience.\n5. Add examples or edge-case notes only if they materially improve correct reuse.\n6. Present the finished SOP skill content and include the recommended save path and invocation command.\n\n## Quality Bar\n\n- The result should be reusable across repositories.\n- The argument list should stay limited to `$source_doc` and `$audience` unless the source material proves more are required.\n- The wording should be easy to tweak before saving.\n- The final output should make clear where to save the skill and how to invoke it.\n\n## Final Response Format\n\nProvide:\n\n1. The completed skill content.\n2. The recommended save path: `~/.agents/skills/doc-to-sop/SKILL.md`\n3. The invocation command: `/doc-to-sop $source_doc $audience`\n4. Any assumptions you made while translating the source document into the SOP.\n"}, {"name": "output.md", "type": "text", "content": "Recommended save path: `~/.agents/skills/doc-to-sop/SKILL.md`\n\nInvocation command: `/doc-to-sop $source_doc $audience`\n\nAssumptions:\n\n- The confirmed session summary is the only required source for this benchmark run.\n- The user wants a portable personal skill rather than a repository-scoped skill.\n- Inline wording is preferred so the user can tweak the final text before saving.\n- Shell automation and installation steps should be excluded unless the source workflow explicitly includes them.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": false, "evidence": "arguments=None, argument-hint=None"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": false, "evidence": "when_to_use=None"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "summary": {"passed": 1, "failed": 4, "total": 5, "pass_rate": 0.2}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 0, "errors_encountered": 0, "output_chars": 2675, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-1-without_skill-run-3", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: doc-to-sop\ndescription: Turn a source document or notes file into a concise, reusable SOP-style skill for a specific audience by extracting the repeatable workflow, inputs, outputs, and guardrails.\n---\n\n# doc-to-sop\n\nUse this skill when you need to turn an internal document, notes file, or session summary into a reusable SOP-style skill for a specific audience such as support, onboarding, or engineering.\n\n## Arguments\n\n- `$source_doc`: Path to the source document or notes file.\n- `$audience`: Intended audience for the SOP, such as support, onboarding, or engineering.\n\n## Inputs\n\n- The source document at `$source_doc`.\n- The intended audience described by `$audience`.\n\n## Success Criteria\n\n- The resulting skill is reusable across repositories.\n- The instructions stay focused on reading, extracting, and writing rather than shell automation.\n- The resulting skill exposes the two confirmed arguments and no unnecessary extras.\n- The final response tells the user where to save the generated skill and how to invoke it.\n\n## Workflow\n\n1. Read `$source_doc` closely.\n2. Extract the repeatable workflow, required inputs, expected outputs, decision points, and constraints.\n3. Adapt the wording and emphasis for `$audience` without changing the underlying process.\n4. Reduce the workflow to the smallest stable set of steps that can be reused across repositories.\n5. Draft a complete `SKILL.md` for the derived SOP skill.\n6. Keep the instructions concrete and focused on the real workflow. Do not add shell commands, package installation steps, or environment setup unless the source material explicitly depends on them.\n7. Keep the argument list small and obvious. Prefer only the inputs that are clearly necessary.\n8. If the source leaves minor gaps, make conservative assumptions and state them explicitly instead of inventing extra process.\n9. Present the result inline so the user can tweak wording before saving.\n\n## Output Format\n\nReturn the following in one response:\n\n1. A ready-to-save `SKILL.md` for the derived SOP skill.\n2. A short note that states:\n   - the recommended save path for the generated skill,\n   - the invocation command,\n   - any assumptions made while drafting.\n\n## Style Rules\n\n- Write for `$audience`.\n- Prefer short sections and direct instructions.\n- Preserve real decision points from the source material.\n- Avoid repository-specific references unless the source material requires them.\n- Do not add extra tooling, automation, or ceremony."}, {"name": "output.md", "type": "text", "content": "Recommended save path: `~/.agents/skills/doc-to-sop/SKILL.md`\n\nInvocation command: `/doc-to-sop $source_doc $audience`\n\nAssumptions:\n\n- The confirmed session summary is authoritative, so no follow-up questions were needed for this benchmark run.\n- A standard markdown skill file with frontmatter is an acceptable output format for the personal skill.\n- Audience-specific tailoring should be handled through wording and emphasis, not by adding more arguments.\n- The generated skill should return the derived `SKILL.md` inline for review before the user saves it."}], "grading": {"expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": false, "evidence": "arguments=None, argument-hint=None"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": false, "evidence": "when_to_use=None"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "summary": {"passed": 1, "failed": 4, "total": 5, "pass_rate": 0.2}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 0, "errors_encountered": 0, "output_chars": 3047, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-2-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: benchmark-triage\ndescription: Triage a completed benchmark run into clustered failure patterns and concrete next edits.\nallowed-tools:\n  - Read\n  - Grep\n  - Glob\n  - Edit\n  - Write\n  - \"Bash(python:*)\"\nargument-hint: \"$benchmark_path\"\narguments:\n  - benchmark_path\ncontext: fork\nwhen_to_use: Use when you have a completed benchmark run to inspect, want a triage report from a benchmark.json or iteration directory, or ask to \"triage benchmark results\", \"analyze this benchmark run\", or \"review eval failures\".\n---\n\n# Benchmark Triage\n\nAnalyze a completed benchmark run, inspect representative failing evals, and produce a short triage report with concrete next edits to try.\n\n## Inputs\n\n- `$benchmark_path`: Path to a `benchmark.json` file or an iteration directory that contains benchmark results and nearby eval artifacts.\n\n## Goal\n\nProduce a self-contained triage report that clusters repeated failures, identifies flaky or noisy assertions, highlights representative deep dives, and recommends the next edits to the evaluated skill or workflow.\n\n## Steps\n\n### 1. Resolve benchmark scope\n\nLocate the benchmark summary from `$benchmark_path`. If the input is a directory, find the relevant `benchmark.json` and the nearby eval folders or transcripts that support deeper inspection.\n\n**Artifacts**: Resolved benchmark file path, related eval directories, and any supporting transcripts or outputs to inspect later.\n\n**Rules**: Accept either a direct `benchmark.json` path or an iteration directory. Stay within local benchmark artifacts and do not assume missing files exist.\n\n**Success criteria**: The benchmark summary is located, the inspectable eval artifacts are identified, and the available evidence set is clear enough to continue.\n\n### 2. Cluster failures and choose deep dives\n\nRead the benchmark summary to identify the weakest assertions, the most frequent failure groups, and the highest-variance or otherwise representative evals. Use local Python helpers only if they materially speed up grouping or counting.\n\n**Artifacts**: Failure clusters, a shortlist of representative evals to inspect, and any benchmark-level counts worth citing.\n\n**Rules**: Preserve the benchmark-analysis tool mix narrowly. Prefer direct reading and grep/glob first; use `Bash(python:*)` only when structured analysis is genuinely useful.\n\n**Success criteria**: The main failure buckets are identified and a justified shortlist of representative evals is ready for detailed inspection.\n\n### 3. Inspect representative evals\n\nReview the selected failing evals and their outputs or transcripts. When multiple deep dives are independent, run them in parallel using task agents rather than handling every eval serially in the parent agent.\n\n**Execution**: Task agent\n\n**Artifacts**: Per-eval notes covering what failed, what evidence supports the failure classification, and any signs of flakiness or prompt mismatch.\n\n**Rules**: Preserve the per-eval deep-dive pattern from the source workflow. Favor representative outliers and recurring failures over exhaustive inspection of every eval.\n\n**Success criteria**: Representative evals have been inspected closely enough to explain the failure modes with concrete evidence.\n\n### 4. Synthesize root causes\n\nCombine the benchmark-level patterns with the deep-dive findings to separate repeated root causes from one-off noise. Call out flaky assertions, brittle wording, missing instructions, or tool-usage mismatches where supported by the evidence.\n\n**Artifacts**: A root-cause summary mapped to the main failure clusters.\n\n**Rules**: Distinguish confidence levels clearly. Do not overstate conclusions when the evidence is thin or contradictory.\n\n**Success criteria**: The repeated failure patterns are explained, likely root causes are stated, and flaky or noisy assertions are explicitly identified when present.\n\n### 5. Write the triage report\n\nProduce a short report that summarizes the failure clusters, cites representative eval observations, flags flaky assertions, and recommends the next edits to try on the skill or workflow under evaluation.\n\n**Rules**: Keep the report concise and action-oriented. Recommendations should be concrete enough that a follow-up editor can implement them without redoing the full analysis.\n\n**Success criteria**: The final report clusters failures, highlights representative evidence, identifies likely flaky checks, and proposes concrete next edits.\n"}, {"name": "output.md", "type": "text", "content": "Recommended save path: `.agents/skills/benchmark-triage/SKILL.md`\n\nInvocation command: `/benchmark-triage $benchmark_path`\n\nAssumptions:\n\n- The confirmed session summary at `/home/adam/.agents/skills/skillify/evals/files/forked-benchmark-triage.md` is treated as the completed interview record for this benchmark run.\n- `$benchmark_path` may point either to a `benchmark.json` file or to an iteration directory that contains one.\n- The skill should run in `fork` context and stay self-contained unless required benchmark artifacts are missing.\n- Per-eval deep dives should use task agents when reviews are independent.\n- The benchmark-analysis tool mix is intentionally narrow: `Read`, `Grep`, `Glob`, `Edit`, `Write`, and `Bash(python:*)` when structured analysis is useful.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes context: fork", "passed": true, "evidence": "context=fork"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": true, "evidence": "Found **Execution**: Task agent annotation on a representative deep-dive step"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=5, success_criteria=5"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write', 'Bash(python:*)']"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": true, "evidence": "arguments=['benchmark_path'], argument-hint=$benchmark_path, when_to_use=Use when you have a completed benchmark run to inspect, want a triage report from a benchmark.json or iteration directory, or ask to \"triage benchmark results\", \"analyze this benchmark run\", or \"review eval failures\"."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 5, "errors_encountered": 0, "output_chars": 5213, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-2-with_skill-run-2", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: benchmark-triage\ndescription: Triage a skill benchmark run by clustering failing expectations, reviewing representative evals, and recommending the next edits to try.\nallowed-tools:\n  - Read\n  - Grep\n  - Glob\n  - Edit\n  - Write\n  - \"Bash(python:*)\"\nargument-hint: \"$benchmark_path\"\narguments:\n  - benchmark_path\ncontext: fork\nwhen_to_use: Use when the user wants a benchmark run triaged into reusable findings and next edits, with trigger phrases like \"triage this benchmark\", \"analyze benchmark results\", or \"review this skill eval benchmark\".\n---\n\n# Benchmark Triage\n\nReview a benchmark run, inspect representative failing evals, and produce a concise triage report that explains repeated failure patterns, likely root causes, and the next skill edits to try.\n\n## Inputs\n\n- `$benchmark_path`: Path to a `benchmark.json` file or an iteration directory that contains benchmark results and nearby eval folders.\n\n## Goal\n\nProduce a short triage report that clusters the benchmark's failures, calls out flaky or weak assertions, preserves the per-eval deep-dive pattern from the source workflow, and recommends concrete edits for the next iteration of the skill.\n\n## Steps\n\n### 1. Load the benchmark context\n\nResolve `$benchmark_path` to the benchmark summary and identify the nearby eval directories, configs, and artifacts available for inspection. Read the benchmark summary first so the later deep dives stay targeted.\n\n**Artifacts**: Candidate failure clusters, notable eval IDs, nearby artifact paths.\n\n**Success criteria**:\n\n- You have located the benchmark summary and any nearby eval outputs needed for inspection.\n- You have a short list of the weakest assertions, worst-performing checks, or highest-variance evals to investigate further.\n\n### 2. Prioritize the failures that matter most\n\nGroup failing expectations by repeated pattern, frequency, and impact. Separate obvious one-off noise from repeated issues that should drive changes to the skill. Highlight outliers that deserve a direct transcript or output review.\n\n**Artifacts**: Ranked set of failure groups and representative evals.\n\n**Rules**:\n\n- Prefer repeated failures over isolated anomalies.\n- Call out potentially flaky assertions instead of treating them as confirmed product issues.\n\n**Success criteria**:\n\n- Failures are grouped into clear clusters rather than a flat list.\n- You have selected representative evals for each important cluster.\n\n### 3. Run per-eval deep dives where they help\n\nInspect representative failing outputs, transcripts, or grading artifacts for the highest-value clusters. When there are multiple independent evals to inspect, split that work into parallel deep dives using a Task agent so the parent flow stays concise.\n\n**Execution**: Task agent\n\n**Artifacts**: Per-eval notes tying raw outputs back to each failure cluster.\n\n**Rules**:\n\n- Use parallel deep dives when eval reviews are independent.\n- Keep each deep dive focused on evidence that explains why the benchmark assertion failed.\n\n**Success criteria**:\n\n- Each important failure cluster has at least one representative eval reviewed in detail.\n- The notes capture concrete evidence from outputs or transcripts, not just restated benchmark labels.\n\n### 4. Synthesize root causes and likely fixes\n\nCombine the benchmark-level patterns with the per-eval evidence to identify likely root causes. Distinguish between instruction gaps, assertion weaknesses, environment/tooling issues, and output-format mismatches.\n\n**Artifacts**: Root-cause summary and candidate edits.\n\n**Rules**:\n\n- Keep benchmark-tooling observations accurate, including local Python helpers when they were part of the analysis.\n- Preserve the distinction between weak grading logic and genuine skill behavior failures.\n\n**Success criteria**:\n\n- Each major failure cluster is paired with a plausible root cause.\n- The analysis separates flaky checks from changes that should actually be made to the skill.\n\n### 5. Write the triage report\n\nProduce a concise report that summarizes the benchmark, lists the main failure clusters, cites representative evidence, flags flaky assertions, and recommends the next edits to try. Make the output directly useful for the next skill iteration.\n\n**Execution**: Terminate\n\n**Success criteria**:\n\n- The report is short, actionable, and organized by repeated pattern.\n- The report includes concrete next edits to try, not just diagnosis.\n- The output is sufficient for a follow-up editing pass without rerunning the entire investigation.\n"}, {"name": "output.md", "type": "text", "content": "# Benchmark Run Output\n\nRecommended save path: `.agents/skills/benchmark-triage/SKILL.md`\n\nInvocation command: `/benchmark-triage $benchmark_path`\n\nAssumptions:\n\n- The confirmed session summary in `/home/adam/.agents/skills/skillify/evals/files/forked-benchmark-triage.md` is treated as the completed interview and source of truth.\n- `$benchmark_path` may point either to a `benchmark.json` file or to an iteration directory that contains benchmark results plus nearby eval artifacts.\n- The workflow should run as a forked, self-contained skill and use Task-agent deep dives for independent per-eval inspections.\n- Allowed tools were captured narrowly from the confirmed session: `Read`, `Grep`, `Glob`, `Edit`, `Write`, and `Bash(python:*)`.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes context: fork", "passed": true, "evidence": "context=fork"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": true, "evidence": "Found **Execution**: Task agent annotation on a representative deep-dive step"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=5, success_criteria=5"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write', 'Bash(python:*)']"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": true, "evidence": "arguments=['benchmark_path'], argument-hint=$benchmark_path, when_to_use=Use when the user wants a benchmark run triaged into reusable findings and next edits, with trigger phrases like \"triage this benchmark\", \"analyze benchmark results\", or \"review this skill eval benchmark\"."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 5, "errors_encountered": 0, "output_chars": 5258, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-2-with_skill-run-3", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: benchmark-triage\ndescription: Review a skill benchmark run, inspect representative failing evals, and produce a concise triage report with concrete next edits.\nallowed-tools: Read, Grep, Glob, Write, Bash(python:*), Task\nargument-hint: [benchmark-path]\narguments:\n  - benchmark_path\ncontext: fork\nwhen_to_use: Use when the user wants a quick triage of benchmark or eval results, asks to review a benchmark.json or iteration directory, or says things like \"triage this benchmark\", \"review these eval failures\", or \"summarize what the benchmark says to fix next\".\n---\n\n# Benchmark Triage\n\nReview a benchmark run, inspect representative failing evals, and produce a short report that clusters failures, flags likely flaky assertions, and recommends the next skill edits to try.\n\n## Inputs\n\n- `$benchmark_path`: Path to a `benchmark.json` file or an iteration directory that contains benchmark outputs and nearby eval artifacts.\n\n## Goal\n\nProduce a triage report that explains the main failure clusters, calls out the most informative outliers, and recommends concrete next edits. The workflow is complete when the report is grounded in the benchmark data and representative eval evidence, not just aggregate counts.\n\n## Steps\n\n### 1. Locate benchmark inputs and map the failure surface\n\nResolve `$benchmark_path` to the benchmark file and identify any nearby eval directories, transcripts, or review artifacts that can support deeper inspection. Read the benchmark summary to find the weakest expectations, highest-variance cases, and the evals most worth inspecting.\n\n**Success criteria**:\n- The benchmark source is resolved correctly.\n- The most important failing expectations or unstable evals are listed.\n- Candidate eval artifacts for deeper review are identified.\n\n**Artifacts**: Resolved benchmark path, shortlist of failing expectations, shortlist of representative evals.\n\n**Rules**:\n- Prefer the existing benchmark structure instead of guessing file locations.\n- Focus first on failures that combine frequency with signal, not just raw count.\n\n### 2. Deep-dive representative evals\n\nInspect the most representative failing evals and any notable outliers. When several evals can be reviewed independently, use Task agents to analyze them in parallel. For each deep dive, extract the failure mode, what the model did instead, and whether the issue looks like a missing instruction, poor trigger guidance, formatting drift, or a potentially flaky expectation.\n\n**Success criteria**:\n- At least a few representative failing evals or outliers have been inspected directly.\n- Each inspected eval has a short explanation of the failure mode.\n- Parallel deep dives are used when that improves coverage without losing clarity.\n\n**Execution**: Task agent\n\n**Artifacts**: Per-eval notes on failure modes, candidate root causes, flaky-or-not assessment.\n\n**Rules**:\n- Preserve the per-eval deep-dive pattern rather than relying only on aggregate benchmark numbers.\n- Use local Python helpers only when they materially speed up inspection or summarization.\n\n### 3. Synthesize recurring patterns and likely causes\n\nGroup the observed failures into repeated patterns. Distinguish between issues caused by unclear instructions, missing constraints, poor skill structure, brittle wording, or benchmark assertions that may be too strict. Note which patterns appear to explain multiple eval failures.\n\n**Success criteria**:\n- Repeated failure clusters are clearly named.\n- Likely root causes are tied to direct evidence from benchmark data or inspected evals.\n- Potentially flaky assertions are separated from real workflow gaps.\n\n**Artifacts**: Failure clusters, likely root causes, flaky assertion candidates.\n\n### 4. Write the triage report\n\nProduce a concise report that includes: the main failure clusters, a few representative examples, any flaky assertion concerns, and the next edits to try on the skill or benchmark. Keep the recommendations concrete and ordered by expected impact.\n\n**Success criteria**:\n- The report is short, actionable, and evidence-based.\n- Recommended edits are concrete enough to implement next.\n- The report makes clear which findings are high-confidence versus tentative.\n\n**Execution**: Direct\n\n**Artifacts**: Final triage report.\n\n**Rules**:\n- Do not stop at describing failures; propose the next edits to try.\n- Keep the final output concise enough to use as an iteration handoff.\n"}, {"name": "output.md", "type": "text", "content": "Recommended save path: `.agents/skills/benchmark-triage/SKILL.md`\n\nInvocation command: `/benchmark-triage $benchmark_path`\n\nAssumptions:\n- The confirmed session summary in `forked-benchmark-triage.md` is authoritative and replaces the normal interview rounds.\n- The skill should run as a forked, self-contained workflow.\n- `$benchmark_path` may point either to a `benchmark.json` file or to an iteration directory that contains benchmark outputs.\n- The tool mix should stay narrow to benchmark analysis, including local Python helpers and Task agents for parallel per-eval review when useful."}], "grading": {"expectations": [{"text": "Frontmatter includes context: fork", "passed": true, "evidence": "context=fork"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": true, "evidence": "Found **Execution**: Task agent annotation on a representative deep-dive step"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=4, success_criteria=4"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Write', 'Bash(python:*)', 'Task']"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": true, "evidence": "arguments=['benchmark_path'], argument-hint=['benchmark-path'], when_to_use=Use when the user wants a quick triage of benchmark or eval results, asks to review a benchmark.json or iteration directory, or says things like \"triage this benchmark\", \"review these eval failures\", or \"summarize what the benchmark says to fix next\"."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 4, "errors_encountered": 0, "output_chars": 5009, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-2-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "# benchmark-triage\n\nUse this skill when you need to triage the results of a completed skill benchmark run and turn the results into a short, actionable report. This skill is designed to run as a forked, self-contained subagent once the benchmark path is known.\n\n## Invocation\n\n`/benchmark-triage $benchmark_path`\n\nArguments:\n\n- `$benchmark_path`: Path to a `benchmark.json` file or to an iteration directory that contains benchmark outputs and nearby eval artifacts.\n\n## Goals\n\n- Cluster repeated failures instead of describing evals one-by-one.\n- Identify the weakest assertions and the highest-variance evals.\n- Deep-dive representative failing evals to separate repeated root causes from noise.\n- Call out flaky assertions explicitly.\n- End with concrete next edits to try on the skill under evaluation.\n\n## Inputs\n\n- Benchmark summary data from `benchmark.json`.\n- Nearby eval directories, transcripts, prompts, outputs, or artifacts needed to explain representative failures.\n\n## Required Behavior\n\n- Run as a forked, self-contained workflow. Do not interrupt the parent conversation for follow-up questions once `$benchmark_path` is available.\n- Preserve a per-eval deep-dive pattern, but only for representative failures and outliers.\n- Prefer parallel per-eval review when several failing cases need inspection.\n- Capture the benchmark-analysis tool mix accurately when reporting what was used.\n- Keep the final report short, concrete, and oriented toward the next skill edits.\n\n## Recommended Tooling\n\n- `Read` for benchmark summaries, transcripts, prompts, and outputs.\n- `Grep` and `Glob` for locating repeated patterns and nearby eval artifacts.\n- `Bash(python:*)` for lightweight local analysis when the benchmark data needs custom grouping or counting.\n- Task agent for per-eval deep dives when multiple failing evals can be reviewed in parallel.\n- `Edit` and `Write` only if the triage workflow is also expected to save a report artifact.\n\n## Workflow\n\n1. Resolve the benchmark input.\n   - If `$benchmark_path` is a file, treat it as the benchmark summary.\n   - If `$benchmark_path` is a directory, locate `benchmark.json` and identify the nearby eval directories that correspond to the reported failures.\n\n2. Read the benchmark summary first.\n   - Identify the weakest assertions, the largest failure clusters, and any high-variance or outlier evals.\n   - Build a short candidate list of failures worth deeper inspection.\n\n3. Group failures before drilling in.\n   - Cluster failures by repeated symptom, assertion, or output pattern.\n   - Separate likely systemic issues from single-eval anomalies.\n   - Flag anything that already looks flaky or under-specified.\n\n4. Deep-dive representative evals.\n   - Inspect a small set of representative failures from each important cluster.\n   - Include outliers when they could reveal a distinct root cause.\n   - Review transcripts, outputs, and prompts closely enough to explain why the assertion failed.\n\n5. Use parallel review when helpful.\n   - If several evals need inspection, split them into parallel per-eval deep dives.\n   - Keep the parent synthesis focused on comparing patterns across those deep dives.\n\n6. Synthesize root causes.\n   - Distinguish between prompt gaps, workflow gaps, missing constraints, poor decomposition, tool misuse, and flaky evaluation logic.\n   - Prefer explanations that account for multiple failures at once.\n\n7. Propose the next edits.\n   - Recommend a short list of concrete skill changes to try next.\n   - Tie each proposed edit to the failure clusters it is meant to address.\n   - If a failure looks like evaluator flakiness rather than a skill problem, say so directly.\n\n## Output Format\n\nProduce a short triage report with these sections:\n\n### Failure Clusters\n\n- List the main repeated failure patterns.\n- Note which assertions or eval groups they affect.\n\n### Representative Deep Dives\n\n- Summarize the few evals inspected in detail.\n- Explain what each one reveals about the broader pattern.\n\n### Flaky Or Questionable Assertions\n\n- Call out any assertions that appear unstable, ambiguous, or mismatched to the intended behavior.\n\n### Recommended Next Edits\n\n- Provide concrete skill changes or evaluation changes to try next.\n- Keep this list short and prioritized.\n\n### Tool Mix Used\n\n- Record the tools used for the analysis, including local Python helpers or task agents if they were used.\n\n### Save And Invoke\n\n- End by stating the recommended save path for the skill and the invocation command:\n  - `.agents/skills/benchmark-triage/SKILL.md`\n  - `/benchmark-triage $benchmark_path`\n\n## Quality Bar\n\n- Do not stop at raw benchmark counts; explain patterns.\n- Do not inspect every failing eval if a representative sample is enough.\n- Do not present vague advice such as \"improve the prompt\" without naming the concrete missing behavior.\n- Keep the report concise, but specific enough that the next editor knows what to change.\n- Prefer evidence-backed conclusions over speculation.\n"}, {"name": "output.md", "type": "text", "content": "Recommended save path: `.agents/skills/benchmark-triage/SKILL.md`\n\nInvocation command: `/benchmark-triage $benchmark_path`\n\nAssumptions:\n\n- The benchmark input is either a `benchmark.json` file or an iteration directory containing one.\n- The skill should run as a forked, self-contained subagent with no follow-up questions once the benchmark path is known.\n- Nearby eval artifacts such as transcripts, outputs, and prompts are available for representative deep dives.\n- The final deliverable from the skill is a short triage report that clusters failures, flags flaky assertions, and recommends concrete next edits.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes context: fork", "passed": false, "evidence": "context=(omitted)"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": false, "evidence": "No explicit **Execution**: Task agent annotation found"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=6, success_criteria=0"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": false, "evidence": "arguments=[], argument-hint=None, when_to_use=None"}], "summary": {"passed": 0, "failed": 5, "total": 5, "pass_rate": 0.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 6, "errors_encountered": 0, "output_chars": 5606, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-2-without_skill-run-2", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: benchmark-triage\ndescription: Triage skill-evaluation benchmark results and turn them into concrete next edits. Use this whenever the user has a benchmark.json file, an iteration directory with benchmark artifacts, failing assertions, flaky evals, regressions, or wants a fast diagnosis of what to change next in a skill benchmark. Treat the benchmark path as the main input and drive the analysis with minimal back-and-forth.\n---\n\n# Benchmark Triage\n\nUse this skill as a self-contained, fork-friendly workflow for analyzing benchmark results after a skill evaluation run. Keep the analysis focused on repeated failure patterns, representative evidence, and the next edits most likely to improve the benchmark.\n\n## Inputs\n\n- Required: a benchmark path supplied as `$benchmark_path`\n- Accepted forms:\n  - a `benchmark.json` file\n  - an iteration directory that contains `benchmark.json`\n- Expected nearby artifacts: eval directories, grading files, output files, and any run metadata that help explain failures or outliers\n\nIf the path is missing, ask once for it. Otherwise proceed without follow-up questions.\n\n## Working Mode\n\n- Prefer running this as a forked, self-contained subagent so the parent conversation stays concise.\n- Use task agents for representative per-eval deep dives when multiple failing or high-variance evals need inspection.\n- Keep the final report short, specific, and evidence-driven.\n\n## Tooling\n\nUse the benchmark-analysis tool mix from the original workflow:\n\n- `Read` for benchmark summaries, grading files, transcripts, and output artifacts\n- `Grep` for locating repeated failures, assertion names, and error strings\n- `Glob` for finding eval directories and related run files quickly\n- `Bash(python:*)` for lightweight local analysis when a small Python helper is faster than manual inspection\n- Task agents for parallel per-eval deep dives\n- `Edit` and `Write` only if the user asks you to save the triage report or follow-up notes\n\n## Workflow\n\n1. Resolve the input path.\n   - If `$benchmark_path` is a directory, locate `benchmark.json` inside it.\n   - If `$benchmark_path` is a file, infer the surrounding iteration directory from its parent path.\n   - Identify the nearby eval directories and run artifacts you may need for follow-up inspection.\n\n2. Read the benchmark summary first.\n   - Identify the weakest assertions by pass rate.\n   - Note the largest deltas between compared configurations.\n   - Call out high-variance evals and clear time or token outliers.\n\n3. Group failures before diving deep.\n   - Cluster failing expectations by repeated pattern, not by eval order.\n   - Separate likely skill logic problems from likely eval-quality problems.\n   - Mark assertions that look flaky, non-discriminating, or too broad.\n\n4. Select representative evals for deeper inspection.\n   - Pick a small set of representative failures or outliers from each major cluster.\n   - When helpful, fork task agents to inspect these evals in parallel.\n   - In each deep dive, inspect the relevant grading files, outputs, transcripts, and metadata rather than skimming every eval.\n\n5. Use local Python helpers when they materially speed up the analysis.\n   - Summarize failure frequency.\n   - Rank assertions by instability.\n   - Compare outlier timing or token usage.\n   - Prefer short, purpose-built scripts over manual counting.\n\n6. Synthesize the root causes.\n   - Explain the repeated patterns behind failures.\n   - Distinguish signal from noise.\n   - State clearly when evidence is tentative or when more instrumentation would be needed.\n\n7. Recommend the next edits.\n   - Propose the smallest set of concrete skill changes most likely to improve the next run.\n   - Include eval or assertion changes when the benchmark itself is the limiting factor.\n   - Tie every recommendation to evidence from the benchmark or deep dives.\n\n## Report Structure\n\nUse this structure unless the user asked for a different format:\n\n# Benchmark Triage\n\n## Snapshot\n\n- Benchmark path\n- Compared configurations\n- Largest regressions or improvements\n\n## Failure Clusters\n\n- Repeated failure pattern\n- Affected evals or assertions\n- Likely root cause\n\n## Flaky Or Low-Signal Checks\n\n- Assertions that appear unstable, non-discriminating, or poorly targeted\n\n## Suggested Next Edits\n\n- Concrete changes to the skill\n- Concrete changes to evals or assertions if needed\n\n## Evidence\n\n- Representative files, outputs, or benchmark facts that support the diagnosis\n\n## Heuristics\n\n- Prefer repeated patterns over one-off anomalies.\n- Do not overfit to a single noisy eval.\n- Call out assertions that pass regardless of configuration or fail for reasons unrelated to the skill.\n- Treat benchmark triage as decision support, not just a dump of statistics.\n- End with actionable edits, not only observations.\n"}, {"name": "output.md", "type": "text", "content": "# Output Note\n\nRecommended save path: `/home/adam/.agents/skills/benchmark-triage/SKILL.md`\n\nInvocation command: `/benchmark-triage $benchmark_path`\n\nAssumptions:\n\n- `$benchmark_path` can point to either a `benchmark.json` file or an iteration directory containing that file.\n- The benchmark lives beside eval directories and run artifacts that can be inspected during per-eval deep dives.\n- The workflow should run as a forked, self-contained analysis and may use task agents plus small local Python helpers when useful.\n"}], "grading": {"expectations": [{"text": "Frontmatter includes context: fork", "passed": false, "evidence": "context=(omitted)"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": false, "evidence": "No explicit **Execution**: Task agent annotation found"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": false, "evidence": "arguments=[], argument-hint=None, when_to_use=None"}], "summary": {"passed": 0, "failed": 5, "total": 5, "pass_rate": 0.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 0, "errors_encountered": 0, "output_chars": 5340, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}, {"id": "eval-2-without_skill-run-3", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "SKILL.md", "type": "text", "content": "---\nname: benchmark-triage\ndescription: Triage skill benchmark results and turn them into concrete next edits. Use this whenever the user wants help reviewing benchmark.json, an iteration directory, failing evals, flaky assertions, or high-variance benchmark outcomes. If a benchmark path is provided, proceed without follow-up questions and produce a short triage report with failure clusters, representative deep dives, and recommended skill changes.\ncompatibility:\n  tools:\n    - Read\n    - Grep\n    - Glob\n    - Edit\n    - Write\n    - Bash\n  agents:\n    - Task\n---\n\n# Benchmark Triage\n\nUse this skill as a self-contained fork. Once the benchmark path is known, do not stop to ask the user clarifying questions unless the path is missing or unreadable.\n\n## Inputs\n\nAccept one argument:\n\n- `$benchmark_path`: path to `benchmark.json` or to an iteration directory that contains it\n\nTreat nearby eval directories, grading files, and saved outputs as the source of truth.\n\n## Outcome\n\nProduce a short triage report that:\n\n- clusters the main failure modes\n- calls out flaky or high-variance assertions and evals\n- cites representative deep dives with concrete evidence\n- proposes the next skill edits to try\n\n## Workflow\n\n1. Resolve the benchmark target.\n   - If `$benchmark_path` is a directory, look for `benchmark.json` inside it.\n   - Derive the iteration root from the benchmark location.\n   - Confirm which run pairs are present, such as `with_skill`, `without_skill`, or `old_skill`.\n\n2. Read the benchmark summary before opening individual evals.\n   - Inspect aggregate pass rates, token usage, duration, and deltas.\n   - Identify the weakest expectations and the evals with the largest variance or most surprising regressions.\n   - Do not deep-dive every eval by default. Start with the patterns that can change the next iteration.\n\n3. Select representative evals for deeper inspection.\n   - Pick examples that cover repeated failures, not just a single noisy outlier.\n   - Include at least one suspicious high-variance case when the benchmark suggests flakiness.\n   - Prefer evals whose outputs or transcripts make the root cause legible.\n\n4. Fork per-eval deep dives when that will speed up review.\n   - Use Task agents for independent eval investigations instead of handling each one serially in the parent agent.\n   - Give each task agent a narrow brief: inspect one eval pair, summarize what failed, quote the evidence, and suggest the most likely root cause.\n   - Keep the parent agent focused on synthesis across evals.\n\n5. Inspect the local artifacts for each chosen eval.\n   - Read `eval_metadata.json`, `grading.json`, outputs, and any nearby transcripts or notes.\n   - Use `Read`, `Grep`, and `Glob` first.\n   - Use small local Python helpers through `Bash(python:*)` when parsing JSON or grouping failures is faster than manual inspection.\n   - Use `Edit` or `Write` only if the user asks for a saved report or follow-on artifact.\n\n6. Synthesize patterns, not just symptoms.\n   - Group repeated failures by likely cause such as missing instruction coverage, over-specific wording, bad decomposition, formatting drift, or flaky assertions.\n   - Separate true skill problems from weak benchmarks.\n   - Call out assertions that always pass, always fail, or depend on noisy evidence.\n\n7. Recommend the next edits.\n   - Suggest the smallest set of skill changes most likely to improve the next iteration.\n   - Distinguish between skill-body changes, eval changes, and grader or assertion changes.\n   - If the benchmark is too weak to support a confident edit, say so and recommend how to strengthen it.\n\n## Deep-Dive Checklist\n\nFor each representative eval, answer these questions:\n\n1. What exact expectation failed or varied?\n2. What evidence in the saved output or transcript explains the result?\n3. Is this failure likely caused by the skill, by the eval design, or by the grader?\n4. Does the same pattern appear in other evals?\n5. What concrete change would most likely fix it?\n\n## Report Structure\n\nUse this exact structure:\n\n```markdown\n# Benchmark Triage Report\n## Overall signal\n## Failure clusters\n## Flaky or high-variance findings\n## Representative deep dives\n## Recommended next edits\n## Save and invoke\n```\n\nKeep the report short and decision-oriented. Favor grouped patterns and concrete edits over exhaustive narration.\n\n## Save And Invoke\n\nAlways end the report with these two lines, adjusted only if the user explicitly asks for a different location or command:\n\n- Recommended save path: `.agents/skills/benchmark-triage/SKILL.md`\n- Invocation command: `/benchmark-triage $benchmark_path`\n\n## Assumptions\n\n- The workflow runs as a forked, self-contained subagent.\n- The benchmark artifacts already exist; this skill triages them rather than generating them.\n- Nearby eval directories contain enough evidence to inspect representative failures."}, {"name": "output.md", "type": "text", "content": "# Output Note\n\nRecommended save path: `.agents/skills/benchmark-triage/SKILL.md`\n\nInvocation command: `/benchmark-triage $benchmark_path`\n\nAssumptions:\n\n- `$benchmark_path` points to either `benchmark.json` or an iteration directory that contains it.\n- The skill should run as a forked, self-contained subagent.\n- Nearby eval artifacts are available for representative per-eval deep dives.\n- The confirmed session summary was treated as final, already-confirmed input with no follow-up questions."}], "grading": {"expectations": [{"text": "Frontmatter includes context: fork", "passed": false, "evidence": "context=(omitted)"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": false, "evidence": "No explicit **Execution**: Task agent annotation found"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": false, "evidence": "arguments=[], argument-hint=None, when_to_use=None"}], "summary": {"passed": 0, "failed": 5, "total": 5, "pass_rate": 0.0}, "execution_metrics": {"tool_calls": {}, "total_tool_calls": 0, "total_steps": 0, "errors_encountered": 0, "output_chars": 5371, "transcript_chars": 0}, "timing": {"executor_duration_seconds": 0.0, "grader_duration_seconds": 0.0, "total_duration_seconds": 0.0}, "claims": [], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "skillify", "skill_path": "/home/adam/.agents/skills/skillify", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-04-07T19:10:58Z", "evals_run": [0, 1, 2], "runs_per_configuration": 3}, "runs": [{"eval_id": 0, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 6718, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": true, "evidence": "allowed-tools=['Bash(git:*)', 'Bash(gh:*)', 'Read', 'Edit', 'Write']"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=(omitted)"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=8, success_criteria=8"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": true, "evidence": "Found Human checkpoint annotation"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": true, "evidence": "arguments=['pr_number', 'target_environment'], argument-hint=<pr_number> [target_environment]"}], "notes": []}, {"eval_id": 0, "configuration": "with_skill", "run_number": 2, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 6718, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": true, "evidence": "allowed-tools=['Bash(git:*)', 'Bash(gh:*)', 'Read', 'Edit', 'Write']"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=(omitted)"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=8, success_criteria=8"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": true, "evidence": "Found Human checkpoint annotation"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": true, "evidence": "arguments=['pr_number', 'target_environment'], argument-hint=<pr_number> [target_environment]"}], "notes": []}, {"eval_id": 0, "configuration": "with_skill", "run_number": 3, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 6591, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": true, "evidence": "allowed-tools=['Bash(git:*)', 'Bash(gh:*)', 'Read', 'Edit', 'Write']"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=inline"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=8, success_criteria=8"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": true, "evidence": "Found Human checkpoint annotation"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": true, "evidence": "arguments=['pr_number', 'target_environment'], argument-hint=$pr_number [$target_environment]"}], "notes": []}, {"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 5582, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": true, "evidence": "arguments=['source_doc', 'audience'], argument-hint=$source_doc $audience"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": true, "evidence": "when_to_use=Use when you want to convert an existing document, notes file, or confirmed workflow summary into a reusable SOP-style skill for a specific audience such as support, onboarding, or engineering. Trigger on requests like \"turn this doc into a skill\", \"make an SOP skill from these notes\", or \"convert this workflow into a reusable skill\"."}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=6, success_criteria=6"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write']"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "notes": []}, {"eval_id": 1, "configuration": "with_skill", "run_number": 2, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 4962, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": true, "evidence": "arguments=['source_doc', 'audience'], argument-hint=$source_doc $audience"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": true, "evidence": "when_to_use=Use when the user wants to convert an existing document, notes file, or internal process write-up into a reusable SOP-style skill for a specific audience, with prompts like \"turn this doc into an SOP skill\" or \"make a reusable SOP from these notes\"."}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=5, success_criteria=5"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write']"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "notes": []}, {"eval_id": 1, "configuration": "with_skill", "run_number": 3, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 4885, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": true, "evidence": "arguments=['source_doc', 'audience'], argument-hint=$source_doc $audience"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": true, "evidence": "when_to_use=Use when the user wants to convert a document, notes file, or repeatable documentation workflow into a reusable SOP-style skill for a specific audience, with trigger phrases like \"turn this doc into a skill\", \"make an SOP from these notes\", or \"convert this workflow into a reusable skill\"."}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=5, success_criteria=5"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write']"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "notes": []}, {"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 5213, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes context: fork", "passed": true, "evidence": "context=fork"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": true, "evidence": "Found **Execution**: Task agent annotation on a representative deep-dive step"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=5, success_criteria=5"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write', 'Bash(python:*)']"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": true, "evidence": "arguments=['benchmark_path'], argument-hint=$benchmark_path, when_to_use=Use when you have a completed benchmark run to inspect, want a triage report from a benchmark.json or iteration directory, or ask to \"triage benchmark results\", \"analyze this benchmark run\", or \"review eval failures\"."}], "notes": []}, {"eval_id": 2, "configuration": "with_skill", "run_number": 2, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 5258, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes context: fork", "passed": true, "evidence": "context=fork"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": true, "evidence": "Found **Execution**: Task agent annotation on a representative deep-dive step"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=5, success_criteria=5"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write', 'Bash(python:*)']"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": true, "evidence": "arguments=['benchmark_path'], argument-hint=$benchmark_path, when_to_use=Use when the user wants a benchmark run triaged into reusable findings and next edits, with trigger phrases like \"triage this benchmark\", \"analyze benchmark results\", or \"review this skill eval benchmark\"."}], "notes": []}, {"eval_id": 2, "configuration": "with_skill", "run_number": 3, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.0, "tokens": 5009, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes context: fork", "passed": true, "evidence": "context=fork"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": true, "evidence": "Found **Execution**: Task agent annotation on a representative deep-dive step"}, {"text": "Every major step includes explicit success criteria", "passed": true, "evidence": "major_steps=4, success_criteria=4"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": true, "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Write', 'Bash(python:*)', 'Task']"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": true, "evidence": "arguments=['benchmark_path'], argument-hint=['benchmark-path'], when_to_use=Use when the user wants a quick triage of benchmark or eval results, asks to review a benchmark.json or iteration directory, or says things like \"triage this benchmark\", \"review these eval failures\", or \"summarize what the benchmark says to fix next\"."}], "notes": []}, {"eval_id": 0, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.2, "passed": 1, "failed": 4, "total": 5, "time_seconds": 0.0, "tokens": 5335, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=(omitted)"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": false, "evidence": "No Human checkpoint annotation found"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": false, "evidence": "arguments=[], argument-hint=None"}], "notes": []}, {"eval_id": 0, "configuration": "without_skill", "run_number": 2, "result": {"pass_rate": 0.2, "passed": 1, "failed": 4, "total": 5, "time_seconds": 0.0, "tokens": 5421, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=(omitted)"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": false, "evidence": "No Human checkpoint annotation found"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": false, "evidence": "arguments=[], argument-hint=None"}], "notes": []}, {"eval_id": 0, "configuration": "without_skill", "run_number": 3, "result": {"pass_rate": 0.2, "passed": 1, "failed": 4, "total": 5, "time_seconds": 0.0, "tokens": 4357, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow", "passed": true, "evidence": "context=(omitted)"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "The merge or deploy step includes a human checkpoint", "passed": false, "evidence": "No Human checkpoint annotation found"}, {"text": "Frontmatter includes argument metadata for pr_number and target_environment", "passed": false, "evidence": "arguments=[], argument-hint=None"}], "notes": []}, {"eval_id": 1, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.2, "passed": 1, "failed": 4, "total": 5, "time_seconds": 0.0, "tokens": 2808, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": false, "evidence": "arguments=None, argument-hint=None"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": false, "evidence": "when_to_use=None"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "notes": []}, {"eval_id": 1, "configuration": "without_skill", "run_number": 2, "result": {"pass_rate": 0.2, "passed": 1, "failed": 4, "total": 5, "time_seconds": 0.0, "tokens": 2675, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": false, "evidence": "arguments=None, argument-hint=None"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": false, "evidence": "when_to_use=None"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "notes": []}, {"eval_id": 1, "configuration": "without_skill", "run_number": 3, "result": {"pass_rate": 0.2, "passed": 1, "failed": 4, "total": 5, "time_seconds": 0.0, "tokens": 3047, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes arguments and argument-hint for the confirmed inputs", "passed": false, "evidence": "arguments=None, argument-hint=None"}, {"text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests", "passed": false, "evidence": "when_to_use=None"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "allowed-tools stays within document-oriented tools and does not add Bash", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them", "passed": true, "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"}], "notes": []}, {"eval_id": 2, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.0, "passed": 0, "failed": 5, "total": 5, "time_seconds": 0.0, "tokens": 5606, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes context: fork", "passed": false, "evidence": "context=(omitted)"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": false, "evidence": "No explicit **Execution**: Task agent annotation found"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=6, success_criteria=0"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": false, "evidence": "arguments=[], argument-hint=None, when_to_use=None"}], "notes": []}, {"eval_id": 2, "configuration": "without_skill", "run_number": 2, "result": {"pass_rate": 0.0, "passed": 0, "failed": 5, "total": 5, "time_seconds": 0.0, "tokens": 5340, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes context: fork", "passed": false, "evidence": "context=(omitted)"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": false, "evidence": "No explicit **Execution**: Task agent annotation found"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": false, "evidence": "arguments=[], argument-hint=None, when_to_use=None"}], "notes": []}, {"eval_id": 2, "configuration": "without_skill", "run_number": 3, "result": {"pass_rate": 0.0, "passed": 0, "failed": 5, "total": 5, "time_seconds": 0.0, "tokens": 5371, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Frontmatter includes context: fork", "passed": false, "evidence": "context=(omitted)"}, {"text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation", "passed": false, "evidence": "No explicit **Execution**: Task agent annotation found"}, {"text": "Every major step includes explicit success criteria", "passed": false, "evidence": "major_steps=0, success_criteria=0"}, {"text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary", "passed": false, "evidence": "allowed-tools=[]"}, {"text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests", "passed": false, "evidence": "arguments=[], argument-hint=None, when_to_use=None"}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}, "tokens": {"mean": 5659.5556, "stddev": 789.3521, "min": 4885, "max": 6718}}, "without_skill": {"pass_rate": {"mean": 0.1333, "stddev": 0.1, "min": 0.0, "max": 0.2}, "time_seconds": {"mean": 0.0, "stddev": 0.0, "min": 0.0, "max": 0.0}, "tokens": {"mean": 4440.0, "stddev": 1251.2838, "min": 2675, "max": 5606}}, "delta": {"pass_rate": "+0.87", "time_seconds": "+0.0", "tokens": "+1220"}}, "notes": ["with_skill passed all 45 structural assertions across three runs for each eval, while without_skill passed 6 of 45 and averages 13% \u00b1 10% pass rate.", "The previously weak companion-note checks have been replaced with frontmatter and workflow assertions, and those new checks cleanly separate with_skill from baseline across evals 0, 1, and 2.", "The tightened eval-2 task-agent assertion remains discriminative across all three runs: every with_skill run uses an explicit **Execution**: Task agent annotation and every baseline run fails it.", "The eval-2 allowed-tools check is more stable when graded against the benchmark-analysis core tool mix instead of an exact tool list; one successful with_skill variant used `Task` instead of `Edit` while preserving the intended workflow.", "Per-step Success criteria remains the strongest suite-wide signal: every with_skill run satisfied it and every baseline run failed it.", "Timing is still non-informative in this environment because subagent duration and token notifications were unavailable; time remains zeroed and token values are directional proxies from output size."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

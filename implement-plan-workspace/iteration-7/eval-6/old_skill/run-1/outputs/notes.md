@@ -1,3 +1,0 @@
-- Source workflow: /home/adam/.agents/skills/implement-plan-workspace/iteration-7/skill-snapshot/SKILL.md
-- Applied the required five-section output contract and the Code Review Findings coverage template.
-- Resolved the conflict safely by treating controller review_scope_files as authoritative, excluding scripts/helper.sh from accepted coverage, and failing completion because docs/notes.md is still missing review.

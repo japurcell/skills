@@ -1,3 +1,0 @@
-Subagent run using baseline skill snapshot at /home/adam/.agents/skills/revise-agents-md-workspace/skill-snapshot/SKILL.md.
-Prompt: Please update AGENTS.md based on what we learned today...
-Captured final response only.

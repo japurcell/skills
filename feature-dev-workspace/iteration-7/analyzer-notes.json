@@ -1,8 +1,0 @@
-[
-  "Quality separation remains strong across all evals: with_skill is 100% pass-rate on evals 0/1/2 versus old_skill at 75%, 33.33%, and 25%.",
-  "The strict handoff-quality scenario (eval 2) remains the most discriminating test and drives the largest quality gap.",
-  "Efficiency metrics are now populated and show higher cost for with_skill: mean time 12.5s vs 7.8s and mean tokens 645 vs 600.",
-  "This indicates a quality-vs-cost tradeoff: stronger process guidance improves correctness/structure at modest additional runtime and token usage.",
-  "Variance appears only on with_skill timing/tokens (stddev 2.6s / 78 tokens), suggesting output-complexity sensitivity in structured responses.",
-  "Metric caveat: timing/tokens in iteration-7 were reconstructed from produced artifact sizes because direct subagent telemetry was not available post-hoc in this environment."
-]

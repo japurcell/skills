@@ -1,0 +1,44 @@
+{
+  "skill_name": "skillify",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Turn the confirmed session summary in evals/files/repo-hotfix-release.md into a reusable skill. This is a benchmark run with no live user, so treat the file contents as already-confirmed answers and do not ask follow-up questions. Save the generated skill to outputs/SKILL.md and write outputs/output.md describing the recommended save path, invocation command, and any assumptions.",
+      "expected_output": "A repo-scoped ship-hotfix skill with explicit allowed-tools, step success criteria, and a human checkpoint before merge/deploy.",
+      "files": ["evals/files/repo-hotfix-release.md"],
+      "expectations": [
+        "Frontmatter includes name, description, and allowed-tools entries inferred from the session",
+        "The generated skill is inline or user-interactive rather than forked for the hotfix workflow",
+        "Every major step includes explicit success criteria",
+        "The merge or deploy step includes a human checkpoint",
+        "Frontmatter includes argument metadata for pr_number and target_environment"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Turn the confirmed session summary in evals/files/personal-docs-to-sop.md into a reusable skill. This is a benchmark run with no live user, so treat the file contents as already-confirmed answers and do not ask follow-up questions. Save the generated skill to outputs/SKILL.md and write outputs/output.md describing the recommended save path, invocation command, and any assumptions.",
+      "expected_output": "A personal doc-to-sop skill with arguments, argument hint, minimal non-shell tools, and clear invocation guidance.",
+      "files": ["evals/files/personal-docs-to-sop.md"],
+      "expectations": [
+        "Frontmatter includes arguments and argument-hint for the confirmed inputs",
+        "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests",
+        "Every major step includes explicit success criteria",
+        "allowed-tools stays within document-oriented tools and does not add Bash",
+        "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Turn the confirmed session summary in evals/files/forked-benchmark-triage.md into a reusable skill. This is a benchmark run with no live user, so treat the file contents as already-confirmed answers and do not ask follow-up questions. Save the generated skill to outputs/SKILL.md and write outputs/output.md describing the recommended save path, invocation command, and any assumptions.",
+      "expected_output": "A repo-scoped forked benchmark-triage skill that preserves the task-agent execution pattern and documents self-contained execution.",
+      "files": ["evals/files/forked-benchmark-triage.md"],
+      "expectations": [
+        "Frontmatter includes context: fork",
+        "The skill assigns representative deep dives to task agents via an explicit Execution annotation",
+        "Every major step includes explicit success criteria",
+        "allowed-tools includes the benchmark-analysis core tool mix from the session summary",
+        "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests"
+      ]
+    }
+  ]
+}

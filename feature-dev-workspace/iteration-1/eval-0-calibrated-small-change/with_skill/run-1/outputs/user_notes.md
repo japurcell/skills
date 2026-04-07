@@ -1,4 +1,0 @@
-- The current skill already contains a When Not To Use This Skill section. The repo-specific recommendation is to tighten and shorten it, not add a second section.
-- I did not modify [skills/feature-dev/SKILL.md](skills/feature-dev/SKILL.md); this benchmark run only writes output artifacts.
-- The main trade-off is whether to keep a Light Track at all. I kept it, but redefined it as the smallest in-scope medium-sized feature work so the skill can still scale down without triggering on trivial edits.
-- If maintainers want even stricter triggering, they could also remove Light Track entirely and position the skill as Standard/Deep only, but that is a bigger behavioral change than the prompt requires.

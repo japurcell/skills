@@ -1,6 +1,0 @@
-- Date: 2026-04-06
-- Controlling skill: `/home/adam/.agents/skills/implement-plan-workspace/iteration-7/skill-snapshot/SKILL.md`
-- Prompt executed: `/implement-plan` for `plan_file=.agents/scratchpad/feature-notify/plan.md`
-- Assumptions applied: all checklists pass; `tasks.md` includes Setup, Tests, Core, Integration, Polish; `[P]` markers are mixed and some file paths overlap.
-- Output intent: concise user-facing handoff for one phase plus checkpoint criteria, using the skill's required section headers.
-- Files written: `response.md`, `notes.md`

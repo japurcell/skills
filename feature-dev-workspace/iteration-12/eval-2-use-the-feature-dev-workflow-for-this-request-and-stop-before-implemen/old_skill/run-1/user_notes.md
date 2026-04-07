@@ -1,3 +1,0 @@
-- Assumed a conventional Python CLI layout (entrypoint, config module, tests directory) because repository-specific app files were not provided in this eval prompt.
-- Stopped before implementation by design; produced a reusable handoff artifact with implementation slices and validation steps.
-- Left one explicit product decision open: exact exit code for missing environment variables.

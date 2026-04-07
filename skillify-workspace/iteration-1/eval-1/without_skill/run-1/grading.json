@@ -1,0 +1,54 @@
+{
+  "expectations": [
+    {
+      "text": "Frontmatter includes arguments and argument-hint for the confirmed inputs",
+      "passed": false,
+      "evidence": "arguments=None, argument-hint=None"
+    },
+    {
+      "text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests",
+      "passed": false,
+      "evidence": "when_to_use=None"
+    },
+    {
+      "text": "Every major step includes explicit success criteria",
+      "passed": false,
+      "evidence": "major_steps=0, success_criteria=0"
+    },
+    {
+      "text": "allowed-tools stays within document-oriented tools and does not add Bash",
+      "passed": false,
+      "evidence": "allowed-tools=[]"
+    },
+    {
+      "text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them",
+      "passed": true,
+      "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 4,
+    "total": 5,
+    "pass_rate": 0.2
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2808,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

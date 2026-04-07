@@ -1,0 +1,842 @@
+{
+  "metadata": {
+    "skill_name": "skillify",
+    "skill_path": "/home/adam/.agents/skills/skillify",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-07T19:10:58Z",
+    "evals_run": [0, 1, 2],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 6718,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session",
+          "passed": true,
+          "evidence": "allowed-tools=['Bash(git:*)', 'Bash(gh:*)', 'Read', 'Edit', 'Write']"
+        },
+        {
+          "text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow",
+          "passed": true,
+          "evidence": "context=(omitted)"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": true,
+          "evidence": "major_steps=8, success_criteria=8"
+        },
+        {
+          "text": "The merge or deploy step includes a human checkpoint",
+          "passed": true,
+          "evidence": "Found Human checkpoint annotation"
+        },
+        {
+          "text": "Frontmatter includes argument metadata for pr_number and target_environment",
+          "passed": true,
+          "evidence": "arguments=['pr_number', 'target_environment'], argument-hint=<pr_number> [target_environment]"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 6718,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session",
+          "passed": true,
+          "evidence": "allowed-tools=['Bash(git:*)', 'Bash(gh:*)', 'Read', 'Edit', 'Write']"
+        },
+        {
+          "text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow",
+          "passed": true,
+          "evidence": "context=(omitted)"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": true,
+          "evidence": "major_steps=8, success_criteria=8"
+        },
+        {
+          "text": "The merge or deploy step includes a human checkpoint",
+          "passed": true,
+          "evidence": "Found Human checkpoint annotation"
+        },
+        {
+          "text": "Frontmatter includes argument metadata for pr_number and target_environment",
+          "passed": true,
+          "evidence": "arguments=['pr_number', 'target_environment'], argument-hint=<pr_number> [target_environment]"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 6591,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session",
+          "passed": true,
+          "evidence": "allowed-tools=['Bash(git:*)', 'Bash(gh:*)', 'Read', 'Edit', 'Write']"
+        },
+        {
+          "text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow",
+          "passed": true,
+          "evidence": "context=inline"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": true,
+          "evidence": "major_steps=8, success_criteria=8"
+        },
+        {
+          "text": "The merge or deploy step includes a human checkpoint",
+          "passed": true,
+          "evidence": "Found Human checkpoint annotation"
+        },
+        {
+          "text": "Frontmatter includes argument metadata for pr_number and target_environment",
+          "passed": true,
+          "evidence": "arguments=['pr_number', 'target_environment'], argument-hint=$pr_number [$target_environment]"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 5582,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes arguments and argument-hint for the confirmed inputs",
+          "passed": true,
+          "evidence": "arguments=['source_doc', 'audience'], argument-hint=$source_doc $audience"
+        },
+        {
+          "text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests",
+          "passed": true,
+          "evidence": "when_to_use=Use when you want to convert an existing document, notes file, or confirmed workflow summary into a reusable SOP-style skill for a specific audience such as support, onboarding, or engineering. Trigger on requests like \"turn this doc into a skill\", \"make an SOP skill from these notes\", or \"convert this workflow into a reusable skill\"."
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": true,
+          "evidence": "major_steps=6, success_criteria=6"
+        },
+        {
+          "text": "allowed-tools stays within document-oriented tools and does not add Bash",
+          "passed": true,
+          "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write']"
+        },
+        {
+          "text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them",
+          "passed": true,
+          "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 4962,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes arguments and argument-hint for the confirmed inputs",
+          "passed": true,
+          "evidence": "arguments=['source_doc', 'audience'], argument-hint=$source_doc $audience"
+        },
+        {
+          "text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests",
+          "passed": true,
+          "evidence": "when_to_use=Use when the user wants to convert an existing document, notes file, or internal process write-up into a reusable SOP-style skill for a specific audience, with prompts like \"turn this doc into an SOP skill\" or \"make a reusable SOP from these notes\"."
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": true,
+          "evidence": "major_steps=5, success_criteria=5"
+        },
+        {
+          "text": "allowed-tools stays within document-oriented tools and does not add Bash",
+          "passed": true,
+          "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write']"
+        },
+        {
+          "text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them",
+          "passed": true,
+          "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 4885,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes arguments and argument-hint for the confirmed inputs",
+          "passed": true,
+          "evidence": "arguments=['source_doc', 'audience'], argument-hint=$source_doc $audience"
+        },
+        {
+          "text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests",
+          "passed": true,
+          "evidence": "when_to_use=Use when the user wants to convert a document, notes file, or repeatable documentation workflow into a reusable SOP-style skill for a specific audience, with trigger phrases like \"turn this doc into a skill\", \"make an SOP from these notes\", or \"convert this workflow into a reusable skill\"."
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": true,
+          "evidence": "major_steps=5, success_criteria=5"
+        },
+        {
+          "text": "allowed-tools stays within document-oriented tools and does not add Bash",
+          "passed": true,
+          "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write']"
+        },
+        {
+          "text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them",
+          "passed": true,
+          "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 5213,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes context: fork",
+          "passed": true,
+          "evidence": "context=fork"
+        },
+        {
+          "text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation",
+          "passed": true,
+          "evidence": "Found **Execution**: Task agent annotation on a representative deep-dive step"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": true,
+          "evidence": "major_steps=5, success_criteria=5"
+        },
+        {
+          "text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary",
+          "passed": true,
+          "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write', 'Bash(python:*)']"
+        },
+        {
+          "text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests",
+          "passed": true,
+          "evidence": "arguments=['benchmark_path'], argument-hint=$benchmark_path, when_to_use=Use when you have a completed benchmark run to inspect, want a triage report from a benchmark.json or iteration directory, or ask to \"triage benchmark results\", \"analyze this benchmark run\", or \"review eval failures\"."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 5258,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes context: fork",
+          "passed": true,
+          "evidence": "context=fork"
+        },
+        {
+          "text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation",
+          "passed": true,
+          "evidence": "Found **Execution**: Task agent annotation on a representative deep-dive step"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": true,
+          "evidence": "major_steps=5, success_criteria=5"
+        },
+        {
+          "text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary",
+          "passed": true,
+          "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Edit', 'Write', 'Bash(python:*)']"
+        },
+        {
+          "text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests",
+          "passed": true,
+          "evidence": "arguments=['benchmark_path'], argument-hint=$benchmark_path, when_to_use=Use when the user wants a benchmark run triaged into reusable findings and next edits, with trigger phrases like \"triage this benchmark\", \"analyze benchmark results\", or \"review this skill eval benchmark\"."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 5009,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes context: fork",
+          "passed": true,
+          "evidence": "context=fork"
+        },
+        {
+          "text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation",
+          "passed": true,
+          "evidence": "Found **Execution**: Task agent annotation on a representative deep-dive step"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": true,
+          "evidence": "major_steps=4, success_criteria=4"
+        },
+        {
+          "text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary",
+          "passed": true,
+          "evidence": "allowed-tools=['Read', 'Grep', 'Glob', 'Write', 'Bash(python:*)', 'Task']"
+        },
+        {
+          "text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests",
+          "passed": true,
+          "evidence": "arguments=['benchmark_path'], argument-hint=['benchmark-path'], when_to_use=Use when the user wants a quick triage of benchmark or eval results, asks to review a benchmark.json or iteration directory, or says things like \"triage this benchmark\", \"review these eval failures\", or \"summarize what the benchmark says to fix next\"."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.2,
+        "passed": 1,
+        "failed": 4,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 5335,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session",
+          "passed": false,
+          "evidence": "allowed-tools=[]"
+        },
+        {
+          "text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow",
+          "passed": true,
+          "evidence": "context=(omitted)"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": false,
+          "evidence": "major_steps=0, success_criteria=0"
+        },
+        {
+          "text": "The merge or deploy step includes a human checkpoint",
+          "passed": false,
+          "evidence": "No Human checkpoint annotation found"
+        },
+        {
+          "text": "Frontmatter includes argument metadata for pr_number and target_environment",
+          "passed": false,
+          "evidence": "arguments=[], argument-hint=None"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.2,
+        "passed": 1,
+        "failed": 4,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 5421,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session",
+          "passed": false,
+          "evidence": "allowed-tools=[]"
+        },
+        {
+          "text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow",
+          "passed": true,
+          "evidence": "context=(omitted)"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": false,
+          "evidence": "major_steps=0, success_criteria=0"
+        },
+        {
+          "text": "The merge or deploy step includes a human checkpoint",
+          "passed": false,
+          "evidence": "No Human checkpoint annotation found"
+        },
+        {
+          "text": "Frontmatter includes argument metadata for pr_number and target_environment",
+          "passed": false,
+          "evidence": "arguments=[], argument-hint=None"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.2,
+        "passed": 1,
+        "failed": 4,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 4357,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session",
+          "passed": false,
+          "evidence": "allowed-tools=[]"
+        },
+        {
+          "text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow",
+          "passed": true,
+          "evidence": "context=(omitted)"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": false,
+          "evidence": "major_steps=0, success_criteria=0"
+        },
+        {
+          "text": "The merge or deploy step includes a human checkpoint",
+          "passed": false,
+          "evidence": "No Human checkpoint annotation found"
+        },
+        {
+          "text": "Frontmatter includes argument metadata for pr_number and target_environment",
+          "passed": false,
+          "evidence": "arguments=[], argument-hint=None"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.2,
+        "passed": 1,
+        "failed": 4,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 2808,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes arguments and argument-hint for the confirmed inputs",
+          "passed": false,
+          "evidence": "arguments=None, argument-hint=None"
+        },
+        {
+          "text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests",
+          "passed": false,
+          "evidence": "when_to_use=None"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": false,
+          "evidence": "major_steps=0, success_criteria=0"
+        },
+        {
+          "text": "allowed-tools stays within document-oriented tools and does not add Bash",
+          "passed": false,
+          "evidence": "allowed-tools=[]"
+        },
+        {
+          "text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them",
+          "passed": true,
+          "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.2,
+        "passed": 1,
+        "failed": 4,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 2675,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes arguments and argument-hint for the confirmed inputs",
+          "passed": false,
+          "evidence": "arguments=None, argument-hint=None"
+        },
+        {
+          "text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests",
+          "passed": false,
+          "evidence": "when_to_use=None"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": false,
+          "evidence": "major_steps=0, success_criteria=0"
+        },
+        {
+          "text": "allowed-tools stays within document-oriented tools and does not add Bash",
+          "passed": false,
+          "evidence": "allowed-tools=[]"
+        },
+        {
+          "text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them",
+          "passed": true,
+          "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.2,
+        "passed": 1,
+        "failed": 4,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 3047,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes arguments and argument-hint for the confirmed inputs",
+          "passed": false,
+          "evidence": "arguments=None, argument-hint=None"
+        },
+        {
+          "text": "Frontmatter includes a when_to_use trigger description tailored to doc-to-sop requests",
+          "passed": false,
+          "evidence": "when_to_use=None"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": false,
+          "evidence": "major_steps=0, success_criteria=0"
+        },
+        {
+          "text": "allowed-tools stays within document-oriented tools and does not add Bash",
+          "passed": false,
+          "evidence": "allowed-tools=[]"
+        },
+        {
+          "text": "The workflow explicitly avoids inventing shell commands or package installation steps unless the source requires them",
+          "passed": true,
+          "evidence": "Checked body for an explicit rule against inventing shell or package-install steps"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 5,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 5606,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes context: fork",
+          "passed": false,
+          "evidence": "context=(omitted)"
+        },
+        {
+          "text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation",
+          "passed": false,
+          "evidence": "No explicit **Execution**: Task agent annotation found"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": false,
+          "evidence": "major_steps=6, success_criteria=0"
+        },
+        {
+          "text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary",
+          "passed": false,
+          "evidence": "allowed-tools=[]"
+        },
+        {
+          "text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests",
+          "passed": false,
+          "evidence": "arguments=[], argument-hint=None, when_to_use=None"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 5,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 5340,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes context: fork",
+          "passed": false,
+          "evidence": "context=(omitted)"
+        },
+        {
+          "text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation",
+          "passed": false,
+          "evidence": "No explicit **Execution**: Task agent annotation found"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": false,
+          "evidence": "major_steps=0, success_criteria=0"
+        },
+        {
+          "text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary",
+          "passed": false,
+          "evidence": "allowed-tools=[]"
+        },
+        {
+          "text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests",
+          "passed": false,
+          "evidence": "arguments=[], argument-hint=None, when_to_use=None"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 5,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 5371,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Frontmatter includes context: fork",
+          "passed": false,
+          "evidence": "context=(omitted)"
+        },
+        {
+          "text": "The skill assigns representative deep dives to task agents via an explicit Execution annotation",
+          "passed": false,
+          "evidence": "No explicit **Execution**: Task agent annotation found"
+        },
+        {
+          "text": "Every major step includes explicit success criteria",
+          "passed": false,
+          "evidence": "major_steps=0, success_criteria=0"
+        },
+        {
+          "text": "allowed-tools includes the benchmark-analysis core tool mix from the session summary",
+          "passed": false,
+          "evidence": "allowed-tools=[]"
+        },
+        {
+          "text": "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests",
+          "passed": false,
+          "evidence": "arguments=[], argument-hint=None, when_to_use=None"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 5659.5556,
+        "stddev": 789.3521,
+        "min": 4885,
+        "max": 6718
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.1333,
+        "stddev": 0.1,
+        "min": 0.0,
+        "max": 0.2
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 4440.0,
+        "stddev": 1251.2838,
+        "min": 2675,
+        "max": 5606
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.87",
+      "time_seconds": "+0.0",
+      "tokens": "+1220"
+    }
+  },
+  "notes": [
+    "with_skill passed all 45 structural assertions across three runs for each eval, while without_skill passed 6 of 45 and averages 13% ± 10% pass rate.",
+    "The previously weak companion-note checks have been replaced with frontmatter and workflow assertions, and those new checks cleanly separate with_skill from baseline across evals 0, 1, and 2.",
+    "The tightened eval-2 task-agent assertion remains discriminative across all three runs: every with_skill run uses an explicit **Execution**: Task agent annotation and every baseline run fails it.",
+    "The eval-2 allowed-tools check is more stable when graded against the benchmark-analysis core tool mix instead of an exact tool list; one successful with_skill variant used `Task` instead of `Edit` while preserving the intended workflow.",
+    "Per-step Success criteria remains the strongest suite-wide signal: every with_skill run satisfied it and every baseline run failed it.",
+    "Timing is still non-informative in this environment because subagent duration and token notifications were unavailable; time remains zeroed and token values are directional proxies from output size."
+  ]
+}

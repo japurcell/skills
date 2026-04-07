@@ -1,0 +1,54 @@
+{
+  "expectations": [
+    {
+      "text": "Frontmatter includes name, description, and allowed-tools entries inferred from the session",
+      "passed": true,
+      "evidence": "allowed-tools=['Bash(git:*)', 'Bash(gh:*)', 'Read', 'Edit', 'Write']"
+    },
+    {
+      "text": "The generated skill is inline or user-interactive rather than forked for the hotfix workflow",
+      "passed": true,
+      "evidence": "context=inline"
+    },
+    {
+      "text": "Every major step includes explicit success criteria",
+      "passed": true,
+      "evidence": "major_steps=8, success_criteria=8"
+    },
+    {
+      "text": "The merge or deploy step includes a human checkpoint",
+      "passed": true,
+      "evidence": "Found Human checkpoint annotation"
+    },
+    {
+      "text": "Frontmatter includes argument metadata for pr_number and target_environment",
+      "passed": true,
+      "evidence": "arguments=['pr_number', 'target_environment'], argument-hint=$pr_number [$target_environment]"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 8,
+    "errors_encountered": 0,
+    "output_chars": 6591,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

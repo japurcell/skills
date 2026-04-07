@@ -1,3 +1,0 @@
-- Controller skill used: /home/adam/.agents/skills/implement-plan-workspace/iteration-7/skill-snapshot/SKILL.md
-- Response content derived from the skill's checklist-gate rules plus iteration-7 eval assertions in eval-0/eval_metadata.json.
-- Wrote only the two requested output files under eval-0/old_skill/outputs/.

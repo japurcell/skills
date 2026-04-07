@@ -1,0 +1,10 @@
+{
+  "eval_id": 1,
+  "eval_name": "path-traversal-download",
+  "prompt": "Review the pending changes in /home/adam/.agents/skills/security-review/evals/files/path-traversal-download as a security engineer. Write markdown findings to findings.md. If there are no HIGH or MEDIUM findings, write exactly 'No HIGH or MEDIUM findings.'",
+  "assertions": [
+    "Report identifies a path traversal issue in files.py",
+    "Report marks the path traversal finding as Medium or High severity",
+    "Report does not flag regex or logging bait in audit.py"
+  ]
+}

@@ -1,6 +1,0 @@
-- Skill loaded from: /home/adam/.agents/skills/implement-plan-workspace/iteration-2/skill-snapshot/SKILL.md
-- Applied behavior from context-loading step:
-  - tasks.md is REQUIRED
-  - if missing/incomplete, instruct user to run /create-tasks
-  - halt before implementation phase execution
-- Eval assertions covered explicitly in final-response.md

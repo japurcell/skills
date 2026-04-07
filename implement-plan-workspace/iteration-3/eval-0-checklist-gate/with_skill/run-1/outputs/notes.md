@@ -1,9 +1,0 @@
-- Scenario assumptions applied:
-  - checklists/ exists
-  - ux.md is fully complete
-  - test.md has 3 incomplete items
-- Checklist gate result: FAIL
-- Required behavior triggered: stop and ask user whether to proceed.
-- Next step after user reply:
-  - if yes/proceed/continue: move to "Implementation Context Loaded" and read tasks.md + plan.md (+ optional artifacts)
-  - if no/wait/stop: halt execution

@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "forked-benchmark-triage",
+  "prompt": "Turn the confirmed session summary in evals/files/forked-benchmark-triage.md into a reusable skill. This is a benchmark run with no live user, so treat the file contents as already-confirmed answers and do not ask follow-up questions. Save the generated skill to outputs/SKILL.md and write outputs/output.md describing the recommended save path, invocation command, and any assumptions.",
+  "assertions": [
+    "Frontmatter includes context: fork",
+    "The skill assigns representative deep dives to task agents via an explicit Execution annotation",
+    "Every major step includes explicit success criteria",
+    "allowed-tools includes the benchmark-analysis core tool mix from the session summary",
+    "Frontmatter includes argument metadata and trigger language for benchmark_path triage requests"
+  ]
+}

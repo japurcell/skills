@@ -1,5 +1,0 @@
-- I used the snapshot skill as the operating workflow, but the recommended implementation target is the live `skills/feature-dev/*` surface because that is where the maintained handoff contract and evals live.
-- Main trade-off: stronger MUST-level artifact enforcement improves determinism and benchmarkability, but it adds some overhead for borderline Light-track or same-turn-complete Standard-track work.
-- The only materially open policy question is whether Standard-track work that fully implements in one turn should still require `handoff-plan.md`; the handoff assumes the answer is no unless the work is explicitly deferred or delegated.
-- I kept `handoff-plan.md` as the single continuity artifact rather than proposing `plan.md` or `tasks.md` because the repo already has a proven feature-dev handoff contract.
-- I referenced `create-plan` and `create-tasks` only for quality-bar calibration, not as a proposal to merge those workflows into feature-dev.

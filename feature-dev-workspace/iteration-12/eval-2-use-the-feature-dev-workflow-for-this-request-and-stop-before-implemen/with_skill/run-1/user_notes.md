@@ -1,4 +1,0 @@
-- Assumed a generic Python CLI layout and used `<cli_package>` placeholders because repository-specific paths were not provided in the eval prompt.
-- Stopped before implementation per instruction; produced handoff-only outputs.
-- Included one blocking decision point: final non-zero exit code convention for missing env vars.
-- Copied the handoff artifact into `outputs` for grading visibility.

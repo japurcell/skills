@@ -1,4 +1,0 @@
-- Skill loaded: /home/adam/.agents/skills/implement-plan/SKILL.md
-- Scenario executed as requested: plan.md assumed present, tasks.md missing.
-- Behavior applied exactly from skill Step 2 context loading rule: stop when required tasks.md/plan.md missing and instruct user to run /create-tasks or regenerate planning artifacts.
-- No code changes or phase execution performed.

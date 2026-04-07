@@ -259,6 +259,12 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
         for config in results.values()
         for r in config
     ))
+    runs_per_configuration = 0
+    if results:
+        runs_per_configuration = max(
+            len({run["run_number"] for run in config_runs})
+            for config_runs in results.values()
+        )
 
     benchmark = {
         "metadata": {
@@ -268,7 +274,7 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
             "analyzer_model": "<model-name>",
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "evals_run": eval_ids,
-            "runs_per_configuration": 3
+            "runs_per_configuration": runs_per_configuration
         },
         "runs": runs,
         "run_summary": run_summary,

@@ -1,9 +1,0 @@
-[
-  "All 8 expectations pass in both configurations for the recorded runs, so this benchmark currently does not differentiate skill value.",
-  "Every expectation is 100% pass for both old_skill and with_skill, which suggests the assertions may be too coarse or the eval is too easy to detect regressions or improvements.",
-  "Metadata declares runs_per_configuration as 3, but benchmark.json contains only one recorded run for old_skill and one for with_skill, so the aggregate summaries are effectively based on n=1 and do not support stability claims.",
-  "time_seconds is 0.0 for every run and both summary blocks, so the benchmark cannot be used to reason about runtime trade-offs and timing capture appears to be missing.",
-  "with_skill used more tool calls than old_skill (23 vs 20) while consuming fewer tokens (13154 vs 13992), indicating a mixed resource trade-off that would need more runs to interpret confidently.",
-  "The old_skill run recorded 1 error but still achieved a 100% pass rate, which implies either successful recovery or that the current expectations do not cover that failure mode.",
-  "Only eval_id 2 appears in the benchmark, so there is no cross-eval evidence yet about whether this behavior generalizes to other task types or difficulty levels."
-]

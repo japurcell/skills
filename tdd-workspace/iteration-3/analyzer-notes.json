@@ -1,6 +1,0 @@
-[
-  "Performance gap is concentrated in one place: only eval 1 / new_skill misses exactly one expectation ('Each new test is followed by implementation'), while all other 39 expectation checks across both configurations pass.",
-  "The pass-rate delta (-0.05) is driven by a single sequencing expectation rather than broad regressions; every other eval (0, 2, 3) is 100% for both configurations.",
-  "Token impact is eval-dependent, not uniform: new_skill uses fewer tokens on evals 0, 1, and 3 (-1084, -635, -51), but uses more on eval 2 (+202), indicating mixed efficiency by task type.",
-  "Two data-quality signals affect confidence: metadata says runs_per_configuration=3 but only 4 runs per config are present (one per eval), and all time/tool telemetry is zero, so throughput/tool-usage comparisons are not informative in this iteration."
-]

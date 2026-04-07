@@ -1,8 +1,0 @@
-[
-  "Pass-rate separation is strong across all evals: with_skill passed 100% on evals 0/1/2 while old_skill achieved 75%, 33.33%, and 25% respectively.",
-  "Eval 2 is the most discriminating scenario: strict artifact-quality assertions expose large quality differences between configurations (1.0 vs 0.25 pass rate).",
-  "Eval 0 still gives old_skill a relatively high score (0.75), suggesting this prompt may be easier and less sensitive to nuanced process-quality differences.",
-  "Most old_skill failures cluster on repository-grounding and structure-quality assertions, not on superficial output presence checks.",
-  "Resource metrics are non-informative in this iteration (all timing/tokens/tool_calls are zero), so performance conclusions should be interpreted as quality-only, not efficiency-aware.",
-  "No variance is measurable within each configuration because only one run per eval was recorded in this iteration."
-]
