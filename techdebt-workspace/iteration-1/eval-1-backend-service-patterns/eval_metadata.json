@@ -1,0 +1,10 @@
+{
+  "eval_id": 1,
+  "eval_name": "backend-service-patterns",
+  "prompt": "Analyze backend-oriented duplication patterns (services, handlers, repositories, data validation, and error handling) based on this repository's current change context. Return a concise markdown report with prioritized fixes and risk notes.",
+  "assertions": [
+    "Report includes backend-oriented pattern categories and does not require JSX/TSX context.",
+    "At least two prioritized deduplication actions are listed with rationale.",
+    "Risk notes mention behavior-preservation concerns for refactors."
+  ]
+}

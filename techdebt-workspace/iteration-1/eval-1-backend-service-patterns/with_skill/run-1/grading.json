@@ -1,0 +1,47 @@
+{
+  "expectations": [
+    {
+      "text": "Report includes backend-oriented pattern categories and does not require JSX/TSX context.",
+      "passed": true,
+      "evidence": "Checked backend category terms and absence of JSX/TSX dependency framing."
+    },
+    {
+      "text": "At least two prioritized deduplication actions are listed with rationale.",
+      "passed": true,
+      "evidence": "Counted prioritized actions and rationale marker."
+    },
+    {
+      "text": "Risk notes mention behavior-preservation concerns for refactors.",
+      "passed": true,
+      "evidence": "Checked risk notes for behavior preservation wording."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 921,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 24.5,
+    "total_duration_seconds": 24.5
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

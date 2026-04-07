@@ -1,0 +1,10 @@
+{
+  "eval_id": 0,
+  "eval_name": "polyglot-session-scan",
+  "prompt": "Run a technical-debt dedup pass for the current session changes in this repository. Produce a markdown report that is language/framework agnostic and includes scope analyzed, duplicate findings, refactor actions, and validation plan.",
+  "assertions": [
+    "Report includes sections: Scope Analyzed, Findings, Refactor Actions, Validation Plan.",
+    "Findings classify duplication into exact duplicate, near duplicate, or reimplementation.",
+    "Validation plan is repository-agnostic and does not hardcode Next.js-only commands."
+  ]
+}

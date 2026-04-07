@@ -1,0 +1,38 @@
+{
+  "skill_name": "techdebt",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Run a technical-debt dedup pass for the current session changes in this repository. Produce a markdown report that is language/framework agnostic and includes scope analyzed, duplicate findings, refactor actions, and validation plan.",
+      "expected_output": "A structured dedup report that does not assume a single framework.",
+      "files": [],
+      "expectations": [
+        "Report includes sections: Scope Analyzed, Findings, Refactor Actions, Validation Plan.",
+        "Findings classify duplication into exact duplicate, near duplicate, or reimplementation.",
+        "Validation plan is repository-agnostic and does not hardcode Next.js-only commands."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Analyze backend-oriented duplication patterns (services, handlers, repositories, data validation, and error handling) based on this repository's current change context. Return a concise markdown report with prioritized fixes and risk notes.",
+      "expected_output": "A backend-pattern dedupe report with prioritization and risk discussion.",
+      "files": [],
+      "expectations": [
+        "Report includes backend-oriented pattern categories and does not require JSX/TSX context.",
+        "At least two prioritized deduplication actions are listed with rationale.",
+        "Risk notes mention behavior-preservation concerns for refactors."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Review technical debt from duplicated script/config/test setup patterns in this repository and propose consolidations. Return markdown with concrete consolidation actions and how to verify safety after changes.",
+      "expected_output": "A script/config/test dedupe report with concrete consolidation and verification steps.",
+      "files": [],
+      "expectations": [
+        "Report addresses script/config/test duplication, not only UI components.",
+        "Report proposes concrete consolidation actions tied to repository structure.",
+        "Verification steps include at least one targeted check and one broader check."
+      ]
+    }
+  ]
+}

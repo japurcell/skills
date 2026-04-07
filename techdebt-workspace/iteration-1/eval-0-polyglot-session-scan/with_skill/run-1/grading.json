@@ -1,0 +1,47 @@
+{
+  "expectations": [
+    {
+      "text": "Report includes sections: Scope Analyzed, Findings, Refactor Actions, Validation Plan.",
+      "passed": true,
+      "evidence": "Checked required section headers in report."
+    },
+    {
+      "text": "Findings classify duplication into exact duplicate, near duplicate, or reimplementation.",
+      "passed": true,
+      "evidence": "Checked presence of all three duplication classes."
+    },
+    {
+      "text": "Validation plan is repository-agnostic and does not hardcode Next.js-only commands.",
+      "passed": true,
+      "evidence": "Checked validation content for framework-specific Next.js-only commands."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1070,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 22.0,
+    "total_duration_seconds": 22.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

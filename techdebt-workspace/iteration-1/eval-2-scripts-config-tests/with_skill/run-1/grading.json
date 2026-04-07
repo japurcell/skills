@@ -1,0 +1,47 @@
+{
+  "expectations": [
+    {
+      "text": "Report addresses script/config/test duplication, not only UI components.",
+      "passed": true,
+      "evidence": "Checked mention of script, config, and test duplication patterns."
+    },
+    {
+      "text": "Report proposes concrete consolidation actions tied to repository structure.",
+      "passed": true,
+      "evidence": "Checked for concrete consolidation proposals tied to structure."
+    },
+    {
+      "text": "Verification steps include at least one targeted check and one broader check.",
+      "passed": true,
+      "evidence": "Checked for both targeted and broad verification steps."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 739,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 27.0,
+    "total_duration_seconds": 27.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}
