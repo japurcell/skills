@@ -1,0 +1,12 @@
+{
+  "eval_id": 9,
+  "eval_name": "scaling-threshold-comparison-3-vs-12-files",
+  "prompt": "You are planning Phase 6 quality review for two scenarios: (A) a change that modified 3 files, and (B) a change that modified 12 files spread across two packages. Using the feature-dev workflow, explain how the code-simplifier step differs between these two scenarios and why.",
+  "assertions": [
+    "For scenario A (3 files), correctly uses 1 code-simplifier agent.",
+    "For scenario B (12 files), uses multiple code-simplifier agents rather than 1.",
+    "Explains that the difference stems from the file count crossing the scaling threshold defined in the workflow.",
+    "For scenario B, describes partitioning the 12 files into non-overlapping groups assigned to separate agents.",
+    "For scenario B, explains that non-overlapping partitioning is required to prevent conflicting writes."
+  ]
+}

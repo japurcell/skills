@@ -1,0 +1,95 @@
+{
+  "expectations": [
+    {
+      "text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.",
+      "passed": true,
+      "evidence": "Response opens: 'Phase 6 of the feature-dev skill specifies the quality review structure with two explicit and distinct mandates' and quotes Step 1 and Step 2 verbatim from the skill. Confirmed accurate against SKILL.md lines 176–184."
+    },
+    {
+      "text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.",
+      "passed": true,
+      "evidence": "Response explicitly labels them 'code-simplifier (Step 1)' and 'code-reviewer (Step 2)', distinguishes their roles (writing agent vs. reading/reporting agent), and concludes 'The proposal is not acceptable' because it merges them."
+    },
+    {
+      "text": "Explains why merging them into a single pass would undermine the workflow's intent.",
+      "passed": true,
+      "evidence": "Five distinct reasons given: (1) sequential dependency collapses, (2) role conflict between editor and auditor, (3) write-conflict risk reintroduced, (4) parallelism overhead savings are illusory, (5) simplicity-as-finding vs. simplicity-as-fix are different lenses that get muddled."
+    },
+    {
+      "text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+      "passed": true,
+      "evidence": "Section 1 'Sequential dependency — simplify must precede review' states: 'The code-simplifier edits the code; the code-reviewer should evaluate the post-simplification state' and 'the whole point of running simplification first is so the reviewer sees the final, cleaned-up form.' This matches SKILL.md which lists code-simplifier as Step 1 and code-reviewer as Step 2."
+    },
+    {
+      "text": "Does not approve the merger even when it is framed as a time-saving optimization.",
+      "passed": true,
+      "evidence": "Section 4 directly engages the framing: 'The perceived "overhead" the developer wants to eliminate is largely illusory; what they would actually eliminate is the correctness guarantee.' Final line: 'The proposal should be declined.'"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "total_tool_calls": 4,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 4418,
+    "transcript_chars": null
+  },
+  "timing": {
+    "executor_duration_seconds": 70.0,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 70.0
+  },
+  "claims": [
+    {
+      "claim": "Phase 6 Step 1 quotes: 'Launch independent code-simplifier subagents to identify refactoring opportunities after implementation'",
+      "type": "factual",
+      "verified": true,
+      "evidence": "SKILL.md line 176 matches verbatim."
+    },
+    {
+      "claim": "'since each agent applies edits directly and overlapping scopes would produce conflicting writes'",
+      "type": "factual",
+      "verified": true,
+      "evidence": "SKILL.md line 180 matches verbatim."
+    },
+    {
+      "claim": "Phase 6 Step 2 quotes: 'Always run independent code-reviewer agents for quality review on every track'",
+      "type": "factual",
+      "verified": true,
+      "evidence": "SKILL.md line 182 matches verbatim."
+    },
+    {
+      "claim": "The word 'independent' appears for both agents in the skill",
+      "type": "factual",
+      "verified": true,
+      "evidence": "SKILL.md line 176: 'independent code-simplifier subagents'; line 182: 'independent code-reviewer agents'."
+    },
+    {
+      "claim": "The skill partitions files across multiple code-simplifier agents to prevent conflicting writes",
+      "type": "factual",
+      "verified": true,
+      "evidence": "SKILL.md line 180: 'assign each file to exactly one agent — no file may appear in more than one agent's scope'."
+    },
+    {
+      "claim": "code-reviewer is a reading/reporting agent that does not apply edits",
+      "type": "quality",
+      "verified": true,
+      "evidence": "SKILL.md describes code-reviewer as providing 'quality review' with no mention of applying edits; the write-safety warning (line 180) applies only to code-simplifier agents."
+    }
+  ],
+  "user_notes_summary": null,
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+        "reason": "The 'or alongside' hedge in this expectation is slightly weaker than the skill actually mandates. The skill sequences them strictly (Step 1 then Step 2), and the response correctly takes the stronger position (simplify must precede). A response that said 'they can run in parallel' would technically satisfy this expectation but would be inaccurate. Consider tightening to 'correctly states that code-simplifier must precede code-reviewer'."
+      }
+    ],
+    "overall": "Evals are well-targeted and discriminating — all five probe genuinely distinct aspects of the skill's intent. The one suggestion above is a minor precision issue rather than a meaningful gap."
+  }
+}

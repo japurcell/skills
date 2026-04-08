@@ -1,0 +1,33 @@
+{
+  "eval": "eval-6-minimum-nonnegotiable-phase6-steps",
+  "iteration": 15,
+  "skill": "feature-dev",
+  "phase_evaluated": "Phase 6: Quality Review",
+  "question_type": "minimum required subagent steps",
+  "subagent_steps_identified": 2,
+  "subagent_roles": [
+    {
+      "step": 1,
+      "role": "code-simplifier",
+      "mandate_strength": "required",
+      "mandate_keyword": "Launch independent … subagents",
+      "minimum_agents": 1,
+      "scaling": "1 agent if ≤5 changed files; 1 agent per partition if >5 changed files"
+    },
+    {
+      "step": 2,
+      "role": "code-reviewer",
+      "mandate_strength": "required",
+      "mandate_keyword": "Always run … agents … on every track",
+      "minimum_agents": 1,
+      "scaling": "≥1 on Light; multiple on Standard/Deep"
+    }
+  ],
+  "non_subagent_phase6_actions": [
+    "Consolidate findings and prioritize issues",
+    "Fix obvious high-severity issues directly",
+    "Surface remaining risks and follow-up work"
+  ],
+  "grounded_in_skill": true,
+  "verbatim_quotes_used": true
+}

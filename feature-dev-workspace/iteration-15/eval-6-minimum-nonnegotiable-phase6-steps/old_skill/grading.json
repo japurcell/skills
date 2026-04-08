@@ -1,0 +1,84 @@
+{
+  "expectations": [
+    {
+      "text": "Names code-simplifier as a required Phase 6 subagent (not just as general advice, but as mandated by the workflow).",
+      "passed": true,
+      "evidence": "Response Step 1 reads: 'Mandate: \"Always launch an independent code-simplifier subagent to identify refactoring opportunities after implementation.\"' Summary table marks it 'Always (all tracks)'. Grounding is explicitly the workflow language, not general advice."
+    },
+    {
+      "text": "Names code-reviewer as a required Phase 6 subagent.",
+      "passed": true,
+      "evidence": "Response Step 2 reads: 'Mandate: \"Always run independent code-reviewer agents for quality review on every track.\"' Summary table marks it 'Always (all tracks); ≥1 on Light, multiple on Standard/Deep'."
+    },
+    {
+      "text": "States that code-simplifier runs before the code-reviewer pass, not after.",
+      "passed": true,
+      "evidence": "Response explicitly numbers them Step 1 (code-simplifier) and Step 2 (code-reviewer), and the summary table preserves that order. No ambiguity about sequencing."
+    },
+    {
+      "text": "Does not agree to dropping or making optional either the code-simplifier or the code-reviewer step.",
+      "passed": true,
+      "evidence": "The response never hedges, qualifies, or suggests either step is optional. It calls them 'the floor' and states 'Nothing else in Phase 6 is a mandated subagent invocation', reinforcing both as non-negotiable. However, see eval_feedback — no adversarial challenge was posed."
+    },
+    {
+      "text": "Grounds the answer in what the workflow mandates, not in general engineering opinion.",
+      "passed": true,
+      "evidence": "Response directly quotes mandate language from the skill ('Always launch...', 'Always run...') and notes both use the word 'Always' in the SKILL.md Phase 6 section. metrics.json grounding field confirms: 'Both steps use the word Always in the SKILL.md Phase 6 section and apply on every track'."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "eval_id": "eval-6-minimum-nonnegotiable-phase6-steps",
+    "skill_version": "iteration-15-skill-snapshot",
+    "track": "N/A (meta-question about workflow)",
+    "phases_executed": ["skill-read"],
+    "subagents_launched": 0,
+    "mandatory_phase6_subagent_steps": 2,
+    "mandatory_phase6_subagent_roles": ["code-simplifier", "code-reviewer"],
+    "response_word_count": 198
+  },
+  "timing": {
+    "executor_duration_seconds": 71.0,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 71.0
+  },
+  "claims": [
+    {
+      "claim": "The feature-dev workflow mandates exactly two subagent steps in Phase 6",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Response and metrics.json both confirm exactly two mandatory subagent roles: code-simplifier and code-reviewer. The response also clarifies that Actions 3–5 are orchestrator actions, not subagent steps."
+    },
+    {
+      "claim": "Both steps are marked 'Always' in the SKILL.md Phase 6 section",
+      "type": "factual",
+      "verified": true,
+      "evidence": "metrics.json grounding field: 'Both steps use the word Always in the SKILL.md Phase 6 section and apply on every track'. Response quotes 'Always launch' and 'Always run' for each step respectively."
+    },
+    {
+      "claim": "Actions 3–5 in Phase 6 are performed by the orchestrating agent, not subagents",
+      "type": "process",
+      "verified": true,
+      "evidence": "Response explicitly states: 'Actions 3–5 in Phase 6 (consolidate findings, fix high-severity issues, surface remaining risks) are performed by the orchestrating agent itself — not by subagents.'"
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Does not agree to dropping or making optional either the code-simplifier or the code-reviewer step.",
+        "reason": "The eval prompt never challenged the agent to drop or skip a step. Since no adversarial pressure was applied, passing this expectation only proves the agent described the workflow faithfully — not that it would hold the line when pushed. A stronger eval would include a follow-up like 'Can we skip the code-simplifier to save time?' and then check whether the agent refuses. As written, this expectation is trivially satisfied."
+      }
+    ],
+    "overall": "Four of five assertions are well-targeted and discriminating. Expectation 4 is the weak link — it tests for the absence of capitulation that was never solicited. Consider adding an adversarial prompt variant to genuinely test it."
+  }
+}

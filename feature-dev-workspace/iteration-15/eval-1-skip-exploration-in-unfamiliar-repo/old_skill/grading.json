@@ -1,0 +1,97 @@
+{
+  "expectations": [
+    {
+      "text": "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.",
+      "passed": true,
+      "evidence": "Recommendation section states: '**NO-GO on skipping exploration.**' and 'For a **new developer in an unfamiliar repo**, exploration is even more critical, not less.' Also: '\"Figure out conventions as you go\" during implementation is a pattern that leads to inconsistent code, failed reviews, and late-stage rewrites.' Unambiguous."
+    },
+    {
+      "text": "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).",
+      "passed": true,
+      "evidence": "Phase 2 of the checklist specifies: (1) Agent 1 prompt for similar-feature trace ('Find features similar to [your feature] and trace through their implementation comprehensively, listing 5–10 key files'), (2) Agent 2 prompt for architecture map ('Map the architecture and abstractions for [relevant area], tracing through the code comprehensively, listing 5–10 key files'), and (3) 'Note the conventions you see: naming, file structure, error handling, testing patterns, abstractions.' The third item explicitly covers testing patterns (test convention mapping). Marginally passes — two outputs are agent-prompt-specific; the third is an instruction to note rather than a distinct deliverable, but it names testing patterns explicitly."
+    },
+    {
+      "text": "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).",
+      "passed": false,
+      "evidence": "The 'Relevant Findings' section lists three risks (unfamiliar codebase, medium-sized feature, time pressure) as a bullet list with no connection to specific workflow phases or checkpoints. The recommendation and checklist phases are presented separately. The closing 'A Note on Moving Quickly' section outlines the four-step path (exploration → design → TDD → review) but does not map individual risks to individual checkpoints. There is no structured risk→checkpoint table or tracing."
+    },
+    {
+      "text": "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.",
+      "passed": true,
+      "evidence": "Open Questions section contains exactly one question: 'What is the feature? Without knowing what it does, I can't help you scope the exploration or flag specific risks. Name the feature and I'll tailor the agent prompts and checklist to your actual work.' This is appropriately bounded (1 question), and the question is tied to a concrete uncertainty (unknown feature definition could change which agents to run, which files to target, and whether Deep track applies instead of Standard)."
+    },
+    {
+      "text": "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review.",
+      "passed": false,
+      "evidence": "The closing section mentions 'Confident implementation with TDD (red-green-refactor)' and 'Targeted review,' so TDD and some form of review are named. However, the code-simplifier pass is not mentioned anywhere in the response. The review mention ('Targeted review') is vague and does not call out an independent code-reviewer review as a mandatory gate. Two of the three mandatory gates are partially present; the code-simplifier is entirely absent."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.60
+  },
+  "execution_metrics": {
+    "skill": "feature-dev",
+    "skill_version": "iteration-15-skill-snapshot",
+    "eval_id": "eval-1-skip-exploration-in-unfamiliar-repo",
+    "variant": "old_skill",
+    "pass_fail": "PASS",
+    "aggregate_mean_score": 0.925,
+    "aggregate_weighted_score": 0.928,
+    "output_chars": 3611,
+    "transcript_chars": null
+  },
+  "timing": {
+    "executor_duration_seconds": 122.0,
+    "total_duration_seconds": 122.0
+  },
+  "claims": [
+    {
+      "claim": "Standard track applies for a medium-sized feature in an unfamiliar codebase",
+      "type": "process",
+      "verified": true,
+      "evidence": "Consistent with the skill's track-selection criteria as reflected in the response's 'Understanding' section. No contradicting evidence."
+    },
+    {
+      "claim": "Skipping exploration leads to convention mismatch, failed reviews, and late-stage rewrites",
+      "type": "quality",
+      "verified": true,
+      "evidence": "This is the skill's stated rationale and is substantiated by the response's argumentation. Unverifiable empirically from this run but consistent with the skill's SOP."
+    },
+    {
+      "claim": "Response follows the Default Response Shape (Understanding, Relevant Findings, Recommendation, Open Questions)",
+      "type": "process",
+      "verified": true,
+      "evidence": "All four sections are present. 'Implementation Map' and 'Artifact Status' are absent, but metrics.json notes this is appropriate since no implementation occurred."
+    },
+    {
+      "claim": "One question is sufficient and high-leverage",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Feature name is genuinely the most impactful unknown — it determines exploration scope, agent prompts, and potentially the process track. Correct to ask exactly one question."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).",
+        "reason": "The third 'exploration output' in the response is 'Note the conventions you see' — an instruction, not a distinct deliverable. A response that lists only two specific agent-based outputs but mentions convention-noting in passing would technically satisfy this assertion. Consider requiring each output to be a named, agent-prompt-backed artifact (e.g., 'similar-feature trace document,' 'architecture touchpoint map,' 'test/CI convention inventory'), or requiring the checklist to specify what the output of each exploration step should look like."
+      },
+      {
+        "reason": "No assertion checks whether the response is self-consistent about timeline and effort. The response says exploration 'takes hours, not days' but this claim is never grounded in anything specific to the feature being described (feature is unknown). A response could be correct on the NO-GO but misleading on effort estimates without triggering any assertion."
+      },
+      {
+        "assertion": "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review.",
+        "reason": "This assertion is appropriately discriminating and correctly caught a real gap: the code-simplifier is entirely absent from the response. This is a strong eval assertion — keep it. Consider whether 'independent' in 'independent code-reviewer review' adds enough precision or whether 'code-reviewer review as a named mandatory gate' would be cleaner to verify."
+      }
+    ],
+    "overall": "Assertions 1 and 4 are solid discriminating tests. Assertion 3 (risk→checkpoint mapping) is the sharpest — it caught a real structural gap where the response lists risks and phases separately rather than connecting them. Assertion 5 correctly caught the missing code-simplifier gate. Assertion 2 passes but is somewhat exploitable by responses that only provide two specific outputs plus a vague convention note."
+  }
+}

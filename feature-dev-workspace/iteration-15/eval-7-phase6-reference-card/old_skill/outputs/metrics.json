@@ -1,0 +1,17 @@
+{
+  "skill": "feature-dev",
+  "skill_version": "iteration-15-snapshot",
+  "eval_id": "eval-7-phase6-reference-card",
+  "variant": "old_skill",
+  "task": "Produce a Phase 6 reference card describing the exact sequence of subagent steps",
+  "phase_covered": "Phase 6: Quality Review",
+  "steps_identified": 5,
+  "subagents_referenced": [
+    "code-simplifier (../code-simplifier/SKILL.md)",
+    "code-reviewer (agents/code-reviewer.md)"
+  ],
+  "fidelity": "strict — all content sourced exclusively from SKILL.md Phase 6 section",
+  "additions_from_best_practice": false,
+  "response_file": "response.md",
+  "timestamp": "2025-07-17"
+}

@@ -1,0 +1,106 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies this as a large change (18 files, >5) and scales to multiple code-simplifier agents rather than a single agent.",
+      "passed": false,
+      "evidence": "The response correctly identifies the scope ('Eighteen files across three directories') but explicitly commits to exactly ONE code-simplifier agent: 'The skill mandates exactly one independent code-simplifier subagent.' metrics.json confirms code_simplifier: 1. The response even argues against splitting the simplifier, claiming fragmentation would 'miss DRY violations between directories.'"
+    },
+    {
+      "text": "Partitions the 18 files into non-overlapping groups — e.g., one agent per directory (auth/, middleware/, tests/) — so each file goes to exactly one agent.",
+      "passed": false,
+      "evidence": "File coverage is heavily overlapping: Reviewer 1 covers auth/ (7 files) + middleware/ (6 files), Reviewer 2 covers 'all 18 files', Reviewer 3 covers 'tests/ (5 files) + auth/ + middleware/ for coverage verification.' The simplifier also covers all 18 files. No file is exclusive to one agent; virtually all files appear in 2–4 agents' scopes."
+    },
+    {
+      "text": "Explicitly states that no file may appear in more than one agent's scope to prevent conflicting edits.",
+      "passed": false,
+      "evidence": "The response not only fails to state this — it explicitly designs for overlapping file coverage. The conflict-prevention strategy (Step 3) is about sequencing fix *application* by directory, not restricting which files each agent analyzes. The response argues overlapping read-only scope is intentional and safe."
+    },
+    {
+      "text": "Launches the multiple code-simplifier agents in parallel (not sequentially).",
+      "passed": false,
+      "evidence": "Only one code-simplifier agent is launched (metrics.json: code_simplifier: 1), so the premise of 'multiple code-simplifier agents' is never established. There is nothing to parallelize within the simplifier step."
+    },
+    {
+      "text": "Still launches code-reviewer agents as a separate step after the code-simplifier pass.",
+      "passed": false,
+      "evidence": "The response explicitly runs all agents concurrently: 'All four agents (1 simplifier + 3 reviewers) perform read-only analysis in parallel.' The timing note says the simplifier is 'Launched first (or concurrently with reviewers).' Code-reviewers are not a separate subsequent step — they overlap with the simplifier pass."
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 5,
+    "total": 5,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "agents_launched": {
+      "code_simplifier": 1,
+      "code_reviewer": 3,
+      "total": 4
+    },
+    "partitioning_strategy": {
+      "simplifier": "all 18 files (holistic, cross-directory view)",
+      "reviewer_1": "correctness and security — auth/ (7 files) + middleware/ (6 files)",
+      "reviewer_2": "conventions and DRY — all 18 files",
+      "reviewer_3": "test quality and coverage — tests/ (5 files) + auth/ + middleware/ for coverage verification"
+    },
+    "parallelism": {
+      "analysis_phase": "all 4 agents run in parallel (read-only, no conflicts)",
+      "fix_phase": "sequential by directory (auth/ → middleware/ → tests/)"
+    },
+    "output_chars": 4445,
+    "transcript_chars": 4445
+  },
+  "timing": {
+    "executor_duration_seconds": 118.0,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 118.0
+  },
+  "claims": [
+    {
+      "claim": "The skill mandates exactly one independent code-simplifier subagent",
+      "type": "process",
+      "verified": true,
+      "evidence": "metrics.json confirms code_simplifier: 1. The response explicitly argues for this design choice and against splitting the simplifier."
+    },
+    {
+      "claim": "Splitting the simplifier across multiple agents would fragment its view and miss DRY violations",
+      "type": "quality",
+      "verified": false,
+      "evidence": "Unverifiable design assertion. May be correct reasoning, but it is a justification for deviating from expected behavior rather than an observable outcome."
+    },
+    {
+      "claim": "All four agents run in parallel during analysis, then fixes are applied sequentially by directory",
+      "type": "process",
+      "verified": true,
+      "evidence": "Response Step 3 states this explicitly; metrics.json parallelism field confirms the same structure."
+    },
+    {
+      "claim": "Three reviewers map to three natural concern axes (correctness, conventions, test quality)",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Reviewer scopes are clearly differentiated in the table and metrics.json partitioning_strategy. The three focuses are distinct and non-redundant."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "Expectations 1 and 4 test for 'multiple code-simplifier agents', but the skill's actual design philosophy (one holistic simplifier, multiple focused reviewers) is coherent and defensible. If the intended behavior is truly multiple simplifiers, the eval should clarify WHY splitting the simplifier is correct (e.g., 'each agent handles at most N files') rather than just asserting it. As written, the expectation may be testing the wrong thing — a single holistic simplifier that sees all 18 files is arguably more correct for DRY detection than fragmented simplifiers."
+      },
+      {
+        "assertion": "Partitions the 18 files into non-overlapping groups — e.g., one agent per directory (auth/, middleware/, tests/) — so each file goes to exactly one agent.",
+        "reason": "This expectation conflates two concerns: (a) preventing write conflicts and (b) parallelizing analysis. Overlapping read-only analysis scopes are not inherently wrong — conflicts only arise during write. The expectation would be stronger if scoped specifically to write agents or fix-application steps, not read-only analysis agents."
+      },
+      {
+        "assertion": "Still launches code-reviewer agents as a separate step after the code-simplifier pass.",
+        "reason": "For read-only agents, sequential vs. concurrent execution is a latency/efficiency choice, not a correctness concern. The expectation may be more meaningful if it checks that simplifier OUTPUT is considered BEFORE reviewer findings are applied — which this skill does correctly (simplifier refactors applied before reviewer fixes). Consider rephrasing to test that outcome."
+      }
+    ],
+    "overall": "All five expectations fail, but the skill's actual behavior is coherent and internally consistent: one holistic simplifier, three focused reviewers in parallel, conflict prevention deferred to sequential fix application. The expectations appear to be testing a different design (multiple partitioned simplifiers) that the skill intentionally rejects. The eval set would benefit from clarifying whether the 'multiple simplifiers' behavior is a hard requirement or just one valid approach, and from separating read-only analysis scope from write-conflict prevention."
+  }
+}

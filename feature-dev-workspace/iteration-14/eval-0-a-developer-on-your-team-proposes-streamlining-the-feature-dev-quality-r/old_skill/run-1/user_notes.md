@@ -1,1 +1,0 @@
-OLD skill eval-0: Phase 6 only mandates code-reviewer agents (no code-simplifier). Verdict of "not acceptable" grounded in the independence and multi-focus parallelism requirements. The proposal breaks independence even if the old skill doesn't mention a code-simplifier step.

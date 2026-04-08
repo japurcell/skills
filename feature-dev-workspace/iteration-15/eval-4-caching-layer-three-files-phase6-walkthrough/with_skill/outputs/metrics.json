@@ -1,0 +1,41 @@
+{
+  "skill": "feature-dev",
+  "phase_evaluated": 6,
+  "scenario": "caching layer across 3 service files in a Python web app",
+  "track": "standard",
+  "subagents_launched": 4,
+  "subagent_breakdown": {
+    "code_simplifier": {
+      "count": 1,
+      "parallelism": "sequential_first",
+      "files_covered": 3,
+      "reason": "3 files <= 5 threshold; single agent; runs before reviewers because it applies edits directly"
+    },
+    "code_reviewer": {
+      "count": 3,
+      "parallelism": "parallel",
+      "focuses": ["correctness", "simplicity_and_design", "conventions"],
+      "reason": "standard track requires multiple independent reviewers; launched after simplifier completes"
+    }
+  },
+  "ordering": [
+    {"step": 1, "agent": "code-simplifier", "mode": "sequential"},
+    {"step": 2, "agent": "code-reviewer (correctness)", "mode": "parallel"},
+    {"step": 2, "agent": "code-reviewer (simplicity+design)", "mode": "parallel"},
+    {"step": 2, "agent": "code-reviewer (conventions)", "mode": "parallel"}
+  ],
+  "skill_rules_applied": [
+    "small_change_threshold: <=5 files => 1 code-simplifier agent",
+    "standard_track: multiple independent code-reviewer agents in parallel",
+    "simplifier_runs_first: applies edits directly so reviewers see clean code",
+    "no_file_overlap: single simplifier agent prevents conflicting writes",
+    "fix_high_severity_directly: no approval gate after review"
+  ],
+  "response_completeness": {
+    "names_exact_subagents": true,
+    "specifies_focus_per_agent": true,
+    "specifies_ordering": true,
+    "explains_parallelism_rationale": true,
+    "covers_post_review_steps": true
+  }
+}

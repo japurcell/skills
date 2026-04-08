@@ -1,0 +1,98 @@
+{
+  "expectations": [
+    {
+      "text": "Gives a clear no-go on starting implementation immediately in an unfamiliar repo without first doing exploration.",
+      "passed": true,
+      "evidence": "Response has an explicit bolded section: '### **NO-GO on skipping exploration.**' and a summary table row: 'Should you skip exploration? | **No.**' with reasoning: 'Skipping it violates the core principle \"understand before acting.\"'"
+    },
+    {
+      "text": "Provides a concrete pre-implementation checklist with at least three specific exploration outputs (for example: similar-feature trace, architecture touchpoint map, test/CI convention mapping).",
+      "passed": true,
+      "evidence": "Phase 2 checklist includes: (A) 'Similar features' trace — 'Trace their full implementation: entry point → business logic → persistence/output → tests'; (B) Architecture & conventions map — 'Map the high-level structure. Identify: directory layout, naming conventions, abstraction layers, error handling patterns, dependency injection approach, and test patterns'; plus a Gate Check requiring the developer to name key files and know testing patterns. Three distinct exploration outputs are present."
+    },
+    {
+      "text": "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).",
+      "passed": false,
+      "evidence": "Risks are listed as a generic bullet list under 'Relevant Findings' (mismatched naming, duplicated utilities, integration failures, test setup mismatch) with no explicit mapping to any specific phase or checkpoint. The phases are described separately in the checklist. The connection is implicit at best — e.g., the Gate Check mentions testing patterns but doesn't tie back to the 'test setup mismatch' risk. The expectation requires per-risk phase/checkpoint linkage, which is absent."
+    },
+    {
+      "text": "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.",
+      "passed": false,
+      "evidence": "The response contains zero actual clarifying questions. Phase 3 provides meta-guidance ('List only the questions that would change your design') but no questions about the specific scenario. metrics.json confirms 'open_questions: false'. The expectation requires actual bounded questions tied to concrete uncertainties — nothing to assess."
+    },
+    {
+      "text": "States that downstream execution still requires all three mandatory gates: TDD implementation, a separate code-simplifier pass, and independent code-reviewer review.",
+      "passed": false,
+      "evidence": "The 'Implementation Note' section mentions only TDD: 'the skill requires TDD (red-green-refactor loop) — write a failing test first, then implement. This is required on every track, not optional.' No mention of a code-simplifier pass or independent code-reviewer review anywhere in the response or metrics.json. Two of three mandatory gates are absent."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.40
+  },
+  "execution_metrics": {
+    "eval_id": "eval-1-skip-exploration-in-unfamiliar-repo",
+    "iteration": 15,
+    "variant": "with_skill",
+    "skill": "feature-dev",
+    "process_track_selected": "Standard",
+    "recommendation": "NO-GO on skipping exploration",
+    "open_questions": false,
+    "tdd_mentioned": true,
+    "output_chars": 3600,
+    "transcript_chars": null
+  },
+  "timing": {
+    "executor_duration_seconds": 84.0,
+    "total_duration_seconds": 84.0
+  },
+  "claims": [
+    {
+      "claim": "Exploration is Phase 2 of the workflow and is required on Standard track",
+      "type": "process",
+      "verified": true,
+      "evidence": "Response explicitly states this and frames the checklist as Phases 1–4 aligned with skill structure. metrics.json confirms skill_principles_applied includes 'Phase 2 Codebase Exploration is required on Standard track'."
+    },
+    {
+      "claim": "TDD is required on every track, not optional",
+      "type": "process",
+      "verified": true,
+      "evidence": "Response states: 'the skill requires TDD (red-green-refactor loop) — write a failing test first, then implement. This is required on every track, not optional.' Consistent with metrics.json 'tdd_mentioned: true'."
+    },
+    {
+      "claim": "This checklist typically takes 30–90 minutes for a medium-sized feature",
+      "type": "quality",
+      "verified": false,
+      "evidence": "Time estimate is plausible but unverifiable — no source cited and no benchmark data available. The summary table also says '~1–2 hours for Standard track exploration + design,' which slightly conflicts with '30–90 min' stated earlier."
+    },
+    {
+      "claim": "Speed gained by skipping exploration is routinely lost to rework",
+      "type": "quality",
+      "verified": false,
+      "evidence": "General SE wisdom, consistent with skill principles, but not verifiable from available outputs."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Connects each major skip-exploration risk to a corresponding workflow phase or checkpoint (not just a generic risk list).",
+        "reason": "The assertion is well-targeted but needs to be more explicit about what 'connects' means. A response that lists risks in one paragraph and phases in the next could superficially satisfy this — the assertion should require an explicit linkage (e.g., a risk→phase table, inline callouts, or structured format that ties each risk to a specific mitigation checkpoint). As written, it's hard to draw a clear pass/fail line."
+      },
+      {
+        "assertion": "Keeps clarifying questions prioritized and bounded (small set), with each question tied to a concrete uncertainty that could change design or scope.",
+        "reason": "This expectation becomes untestable when the response provides zero questions. Consider adding an alternative branch: 'OR explicitly states which blockers were resolved by assumption and what those assumptions are.' Zero questions could be correct behavior (if nothing is blocking) or a miss — the eval doesn't distinguish these cases."
+      },
+      {
+        "reason": "No assertion checks whether the response correctly references the three-phase execution model downstream (code-simplifier + code-reviewer + TDD) as a complete set. Expectation 5 catches the gap, but the fact that only 1 of 3 gates was mentioned despite TDD being mentioned suggests the skill SOP may not be making the three-gate requirement prominent enough — worth flagging as a skill improvement signal, not just a grading signal."
+      }
+    ],
+    "overall": "Expectations 1 and 2 are well-calibrated and discriminating. Expectation 5 is the strongest assertion — it requires specific named artifacts and caught a real gap. Expectations 3 and 4 need tighter operationalization: 3 needs to define what 'connects' means structurally; 4 needs to handle the zero-questions case."
+  }
+}

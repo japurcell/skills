@@ -1,0 +1,12 @@
+{
+  "eval_id": 8,
+  "eval_name": "large-auth-overhaul-18-files",
+  "prompt": "You've just implemented a large authentication overhaul touching 18 files across three directories: auth/ (7 files), middleware/ (6 files), and tests/ (5 files). Walk me through Phase 6 quality review using the feature-dev workflow — specifically explain how many code-simplifier agents you launch, how you partition the files, and what you do to prevent conflicts.",
+  "assertions": [
+    "Identifies this as a large change (18 files, >5) and scales to multiple code-simplifier agents rather than a single agent.",
+    "Partitions the 18 files into non-overlapping groups — e.g., one agent per directory (auth/, middleware/, tests/) — so each file goes to exactly one agent.",
+    "Explicitly states that no file may appear in more than one agent's scope to prevent conflicting edits.",
+    "Launches the multiple code-simplifier agents in parallel (not sequentially).",
+    "Still launches code-reviewer agents as a separate step after the code-simplifier pass."
+  ]
+}

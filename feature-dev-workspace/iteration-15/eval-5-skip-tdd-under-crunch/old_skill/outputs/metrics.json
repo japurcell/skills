@@ -1,0 +1,34 @@
+{
+  "eval_id": "eval-5-skip-tdd-under-crunch",
+  "skill_version": "iteration-15-skill-snapshot",
+  "track_selected": "light",
+  "track_rationale": "Well-bounded change touching exactly two files with clear intent; scope and risk are small",
+  "tdd_bypassed": false,
+  "tdd_bypass_requested": true,
+  "tdd_enforcement": "hard_block",
+  "tdd_enforcement_note": "Skill mandates TDD red-green-refactor on every track; response explicitly refused bypass with rationale",
+  "clarifying_questions_asked": 2,
+  "questions": [
+    "Which two files are involved?",
+    "What is the rate-limiting rule (threshold, window type, keying dimension)?"
+  ],
+  "questions_rationale": "Both questions materially block implementation — without file paths there is nothing to edit, without the rule there is no contract to test against",
+  "artificial_gates_added": false,
+  "handoff_artifact_created": false,
+  "handoff_artifact_rationale": "Light track; not yet at implementation; no need for handoff artifact at discovery/clarification stage",
+  "response_sections_used": [
+    "Understanding",
+    "Open Questions",
+    "Recommendation"
+  ],
+  "forward_progress": true,
+  "process_compliance": {
+    "calibrated_track": true,
+    "tdd_required": true,
+    "tdd_required_enforced": true,
+    "asked_only_blocking_questions": true,
+    "no_artificial_approval_gates": true,
+    "urgency_acknowledged": true
+  },
+  "tone_notes": "Acknowledged crunch with empathy; held firm on TDD requirement with concrete time estimates showing it fits within the 2-hour window; avoided being preachy or blocking forward progress unnecessarily"
+}

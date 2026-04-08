@@ -1,0 +1,97 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies this as a large change (18 files, >5) and scales to multiple code-simplifier agents rather than a single agent.",
+      "passed": true,
+      "evidence": "response.md: '18 files > 5, so the large path applies.' and 'Total: 3 code-simplifier agents launched in parallel.' metrics.json confirms: change_size_classification='Large (18 files > 5 threshold)', code_simplifier_agents_launched=3."
+    },
+    {
+      "text": "Partitions the 18 files into non-overlapping groups — e.g., one agent per directory (auth/, middleware/, tests/) — so each file goes to exactly one agent.",
+      "passed": true,
+      "evidence": "response.md table: Agent 1=auth/(7 files), Agent 2=middleware/(6 files), Agent 3=tests/(5 files). 7+6+5=18, perfectly covering all 18 files with no overlap. metrics.json partition_details confirms the same three-way split."
+    },
+    {
+      "text": "Explicitly states that no file may appear in more than one agent's scope to prevent conflicting edits.",
+      "passed": true,
+      "evidence": "response.md 'Preventing Conflicts' section quotes the skill rule verbatim: 'assign each file to exactly one agent — no file may appear in more than one agent's scope, since each agent applies edits directly and overlapping scopes would produce conflicting writes.' and lists three concrete enforcement mechanisms."
+    },
+    {
+      "text": "Launches the multiple code-simplifier agents in parallel (not sequentially).",
+      "passed": true,
+      "evidence": "response.md 'Full Phase 6 Sequence': '1. Launch 3 code-simplifier agents in parallel (one per directory)'. The word 'parallel' is explicit and the sequence shows all three fire at step 1, not one-at-a-time."
+    },
+    {
+      "text": "Still launches code-reviewer agents as a separate step after the code-simplifier pass.",
+      "passed": true,
+      "evidence": "response.md sequence shows step 2 as 'Launch independent code-reviewer agents in parallel (Deep track → multiple reviewers)' explicitly after step 1 (code-simplifier). Three distinct reviewer focuses are listed (correctness/security, conventions/simplicity, cross-cutting concerns). metrics.json confirms code_reviewer_agents_launched=3."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "eval_id": "eval-8-large-auth-overhaul-18-files",
+    "skill": "feature-dev",
+    "iteration": 15,
+    "variant": "with_skill",
+    "process_track": "Deep",
+    "change_size_classification": "Large (18 files > 5 threshold)",
+    "code_simplifier_agents_launched": 3,
+    "code_reviewer_agents_launched": 3,
+    "partition_strategy": "by directory (auth/, middleware/, tests/)"
+  },
+  "timing": {
+    "total_duration_seconds": 105.0,
+    "executor_duration_seconds": 105.0,
+    "grader_duration_seconds": null
+  },
+  "claims": [
+    {
+      "claim": "18 files span three directories: auth/ (7), middleware/ (6), tests/ (5)",
+      "type": "factual",
+      "verified": true,
+      "evidence": "7+6+5=18 matches the stated total; both response.md and metrics.json report the same counts consistently."
+    },
+    {
+      "claim": "This qualifies as a Deep Track feature",
+      "type": "process",
+      "verified": true,
+      "evidence": "response.md opens: 'This is a Deep Track feature: 18 files across three directories with cross-cutting changes.' metrics.json confirms process_track='Deep'."
+    },
+    {
+      "claim": "Code-reviewer agents run after code-simplifier agents complete (sequential between phases, parallel within each phase)",
+      "type": "process",
+      "verified": true,
+      "evidence": "response.md sequence shows numbered steps: simplifiers are step 1, reviewers are step 2. Step 3 is 'Consolidate findings from all agents', confirming both phases must complete before consolidation."
+    },
+    {
+      "claim": "Directory boundaries make it impossible for an agent to accidentally touch a sibling directory's files",
+      "type": "quality",
+      "verified": false,
+      "evidence": "This is an architectural claim about how agent prompts would be written, but the response is a planning document — no actual agent prompts are shown, so we cannot verify the prompts truly restrict scope to a single directory."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "All five expectations pass cleanly, but the response is a planning document that describes what 'would' happen — no agents are actually launched. Expectations 4 ('Launches … in parallel') and 5 ('Still launches code-reviewer agents') are satisfied by text descriptions of intent, not by observing actual parallel invocations. A stronger assertion would require evidence of actual tool calls (e.g., multiple task-tool invocations with no sequential dependency). Consider adding: 'The transcript shows concurrent task-tool calls for the code-simplifier agents, not separate sequential calls.'"
+      },
+      {
+        "reason": "No expectation checks the reviewer-agent parallelism. The response specifies three reviewers launched in parallel (Deep track rule), but the evals only check that reviewer agents appear 'as a separate step after the code-simplifier pass'. Adding 'Launches the code-reviewer agents in parallel with each other (not sequentially)' would close this gap symmetrically with expectation 4."
+      },
+      {
+        "assertion": "Partitions the 18 files into non-overlapping groups — e.g., one agent per directory (auth/, middleware/, tests/) — so each file goes to exactly one agent.",
+        "reason": "The assertion is satisfied by the count arithmetic (7+6+5=18) but does not verify that the actual file lists provided to each agent are non-overlapping. A planning document could claim disjoint groups while listing a shared utility file in two agents' scopes. The eval cannot catch that without requiring the response to enumerate the actual file paths per agent."
+      }
+    ],
+    "overall": "Evals cover the right conceptual bases but are satisfied by planning prose rather than observable execution evidence. The key gap is distinguishing 'describes parallel launches' from 'actually launches in parallel'."
+  }
+}

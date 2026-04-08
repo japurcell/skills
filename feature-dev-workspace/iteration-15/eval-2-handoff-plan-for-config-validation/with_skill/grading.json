@@ -1,0 +1,122 @@
+{
+  "expectations": [
+    {
+      "text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+      "passed": true,
+      "evidence": "No codebase was provided; the agent explicitly flagged 'exploration_skipped_no_codebase' (metrics.json) and grounded the design in canonical Python CLI conventions (Click, src/ layout, pytest). The Relevant Findings section and Next-Agent Kickoff explicitly tell the implementing agent to verify paths and check for existing config.py/settings.py/pydantic-settings patterns before writing code — demonstrating pattern-awareness rather than pure invention. The recommended design (sys.exit + stderr) is justified by referencing the standard CLI idiom. Marginal pass: no skill-instruction citations are visible, but codebase absence was correctly acknowledged and documented."
+    },
+    {
+      "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+      "passed": true,
+      "evidence": "Artifact confirmed at /Users/adam/.agents/scratchpad/config-validation-module/handoff-plan.md (9,770 chars per metrics.json). File was read and contains complete content. metrics.json records 'created: true' with the matching path."
+    },
+    {
+      "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+      "passed": true,
+      "evidence": "handoff-plan.md contains: three Implementation Slices (Core module, CLI integration, Integration test); File-by-File Implementation Map covering four files with action column; and a Validation Plan with TDD, code-simplifier, independent reviewer, automated test commands, manual steps, and review focus. metrics.json confirms all 10 template sections populated."
+    },
+    {
+      "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+      "passed": true,
+      "evidence": "Header fields in handoff-plan.md: Status='ready for implementation', Track='Standard', Recommended Next Step='implement directly'. All three are concrete values. Note: '<package>' placeholders appear throughout file paths in other sections, but those are in implementation details, not the three metadata fields named by this assertion."
+    },
+    {
+      "text": "Each referenced file in Relevant Findings includes why that file matters.",
+      "passed": true,
+      "evidence": "All five entries include explicit rationale: cli.py ('CLI entry point where the validator call should be inserted'); package root ('new module goes here as config_validator.py'); tests/ dir ('location for test_config_validator.py'); pyproject.toml etc. ('check for existing test runner config and package name'); requirements.txt ('no new runtime deps needed (stdlib only)')."
+    },
+    {
+      "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+      "passed": true,
+      "evidence": "Exactly one open question is raised: required-vars declaration strategy (hard-coded vs. caller-passed vs. config file). It includes explicit risk framing: 'Risk if wrong: If required vars are managed elsewhere (e.g., pydantic-settings), inserting a duplicate check creates drift and confusion.' No trivial or hypothetical questions included."
+    },
+    {
+      "text": "Provides artifact status in the response with the exact artifact path.",
+      "passed": true,
+      "evidence": "response.md 'Artifact Status' section states: 'Handoff plan created at: .agents/scratchpad/config-validation-module/handoff-plan.md' and 'Full path: /Users/adam/.agents/scratchpad/config-validation-module/handoff-plan.md'. Both relative and absolute paths provided."
+    },
+    {
+      "text": "Includes rationale or trade-offs for the proposed design.",
+      "passed": true,
+      "evidence": "Recommended Design section in handoff-plan.md has 'Why this fits better than the main alternative (raising an exception)' with three explicit trade-off bullets: (1) sys.exit is the standard CLI convention vs. exceptions requiring callers to catch; (2) accepting `required` as parameter enables unit-testing without monkeypatching; (3) list co-location makes it a single source of truth."
+    },
+    {
+      "text": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps — not buried solely in the Implementation Slices section.",
+      "passed": true,
+      "evidence": "handoff-plan.md Validation Plan has three clearly named subsections: '### TDD Red-Green-Refactor (required — explicit step)', '### code-simplifier Refactor Pass (required — explicit step)', and '### Independent code-reviewer Review (required — explicit step)'. All three appear as top-level headers in the Validation Plan, not embedded in Implementation Slices."
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "skill": "feature-dev",
+    "eval": "eval-2-handoff-plan-for-config-validation",
+    "iteration": 15,
+    "track_chosen": "Standard",
+    "phases_completed": ["discovery", "exploration_skipped_no_codebase", "clarifying_questions", "architecture_design"],
+    "phases_skipped": ["implementation", "quality_review"],
+    "handoff_artifact_size_chars": 9770,
+    "template_sections_populated": 10,
+    "implementation_slices_count": 3,
+    "new_files_mapped": 4,
+    "open_questions_count": 1,
+    "output_chars": 9770,
+    "transcript_chars": 3120
+  },
+  "timing": {
+    "executor_duration_seconds": 161.0,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 161.0
+  },
+  "claims": [
+    {
+      "claim": "An implementing agent can proceed directly from the handoff artifact without repeating discovery.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The artifact contains: goal/non-goals, path assumptions, technical constraints, design recommendation with code sketch, ordered slices with file lists, file-by-file map with actions, full validation plan, and a 7-step next-agent kickoff checklist. The <package> placeholders are flagged as requiring verification — step 2 of the kickoff explicitly says 'Check pyproject.toml or setup.cfg for the package name to fill in <package>'."
+    },
+    {
+      "claim": "Standard track is appropriate for this request.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The feature touches a new module (config_validator.py), the CLI entry point (cli.py), and two test files — multiple files with a genuine design decision. Standard track selection is well-justified."
+    },
+    {
+      "claim": "The recommended sys.exit + stderr pattern is the correct CLI convention.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "sys.exit(1) with print to stderr is the POSIX-standard convention for CLI configuration errors. The alternative (raising an exception) is correctly identified as requiring callers to catch it, adding boilerplate risk."
+    },
+    {
+      "claim": "The four test cases listed are sufficient for unit coverage.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Tests cover: all vars present (happy path), one var missing, multiple vars missing (batch listing), and empty required list (edge case). This covers the core behavioral surface of the function."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+        "reason": "When no codebase is provided, this assertion becomes untestable for the 'codebase' half. A run that fabricates an architecture with no grounding could still nominally pass. Consider splitting into two assertions: one for codebase-present runs (checks referenced paths against actual files) and one for codebase-absent runs (checks that the plan explicitly documents its assumptions and instructs the implementing agent to verify them before writing code)."
+      },
+      {
+        "assertion": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+        "reason": "The artifact contains '<package>' placeholders throughout the file paths in the Implementation Map and other sections. The assertion as written only checks status/track/next-step metadata fields — so it passes — but a reader scanning the artifact sees angle-bracket placeholders everywhere. Consider adding a separate assertion: 'Any placeholders in the artifact are explicitly documented as requiring resolution by the implementing agent, not silently left for the reader to infer.' This run handles it correctly (Next-Agent Kickoff step 2 calls this out), but the eval doesn't check for it."
+      },
+      {
+        "reason": "No assertion verifies the code sketch in the Recommended Design section is syntactically valid and semantically correct Python. In this run the sketch is correct, but a future run could produce broken code that passes all current assertions."
+      }
+    ],
+    "overall": "Strong eval set that catches the meaningful outcomes. Two structural gaps worth addressing: the codebase-absent case for expectation 1, and the tolerance for undocumented placeholders in expectation 4."
+  }
+}

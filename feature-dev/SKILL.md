@@ -7,18 +7,16 @@ disable-model-invocation: true
 
 # Feature Development
 
-You are helping a developer deliver a feature with the right amount of process for the task. Understand the codebase, identify the decisions that actually matter, and move the work forward without turning every request into a long gated workflow.
+Help a developer deliver a feature with the right amount of process for the task. Understand the codebase, identify the decisions that actually matter, and move work forward without gating every request on an elaborate workflow.
 
 ## Core Principles
 
-- **Calibrate the workflow**: Choose a light, standard, or deep process based on scope, ambiguity, and risk. Even within in-scope feature work, some requests are bounded and can stay lightweight, while broad or unclear features deserve a deeper process.
-- **Ask only high-leverage questions**: Ask clarifying questions when the answers would materially change the design, implementation, or user-facing behavior. If something is minor and you can state a reasonable assumption, do that and keep moving.
-- **Understand before acting**: Read and comprehend existing code patterns first
-- **Read files identified by agents**: When launching agents, ask them to return lists of the most important files to read. After agents complete, read those files to build detailed context before proceeding.
-- **Prefer forward progress when intent is clear**: If the user is plainly asking for implementation and the requirements are sufficiently specified, proceed after focused exploration instead of asking for redundant approval.
-- **Simple and elegant**: Prioritize readable, maintainable, architecturally sound code
-- **Leave reusable artifacts**: When the work spans multiple phases or may be handed to another agent, write a concrete handoff artifact rather than leaving only prose in chat.
-- **Use TodoWrite**: Track all progress throughout
+- **Calibrate the workflow**: Choose Light, Standard, or Deep based on scope, ambiguity, and risk. Even in-scope features vary — bounded work stays lightweight; broad or unclear features deserve deeper process.
+- **Ask only high-leverage questions**: Ask when answers would materially change the design or user-facing behavior. If something is minor, state a reasonable assumption and keep moving.
+- **Read files identified by agents**: After agents complete, read the files they flag — your understanding should be grounded in source, not just agent summaries.
+- **Prefer forward progress**: If the user plainly wants implementation and requirements are sufficiently specified, proceed after focused exploration.
+- **Leave reusable artifacts**: When work spans multiple phases or may be handed to another agent, write a concrete handoff artifact.
+- **Use TodoWrite**: Track all progress throughout.
 
 ---
 
@@ -28,106 +26,79 @@ Choose one track up front and say which you chose.
 
 ### Light Track
 
-Use for the smallest in-scope feature work: well-bounded medium-sized changes where the main risk is understanding local code context rather than resolving product ambiguity.
+Well-bounded, medium-sized changes where the main risk is understanding local code context.
 
-- Do focused exploration yourself or with one targeted agent.
+- Focused self-exploration or 1 targeted [code-explorer](agents/code-explorer.md) agent.
 - Ask questions only if something is genuinely blocking.
-- Give one recommended approach rather than manufacturing multiple options.
-- Implement once you have enough context.
+- One recommended approach; implement once you have enough context.
 
 ### Standard Track
 
-Use for medium-sized feature work that touches several files, has some ambiguity, or needs a non-trivial design choice.
+Medium-sized work touching several files, with some ambiguity or a non-trivial design choice.
 
-- Explore the codebase in depth.
-- Ask targeted clarifying questions after exploration.
-- Present a recommendation and note the most important trade-offs.
-- Implement after blockers are resolved.
+- 2 [code-explorer](agents/code-explorer.md) agents in parallel.
+- Targeted clarifying questions after exploration.
+- Present a recommendation with key trade-offs; implement after blockers are resolved.
 
 ### Deep Track
 
-Use for large, risky, cross-cutting, or highly ambiguous work.
+Large, risky, cross-cutting, or highly ambiguous work.
 
-- Run broad exploration across architecture, similar features, and constraints.
+- 2–3 code-explorer agents in parallel covering different angles.
 - Gather and organize all blocking questions.
-- Present multiple implementation approaches when the trade-offs are meaningful.
-- Confirm direction before major implementation.
+- Present multiple approaches when trade-offs are meaningful; confirm direction before major implementation.
 
 ---
 
 ## Default Response Shape
 
-Unless the user asks for a different format, structure your response using the sections that fit the current stage:
+Structure your response using the sections that fit the current stage:
 
-1. `Understanding` - current interpretation of the request and the chosen process track
-2. `Relevant Findings` - codebase patterns, files, and constraints that matter
-3. `Open Questions` - only the questions that materially affect the outcome
-4. `Recommendation` - the proposed path forward and why it fits this task
-5. `Implementation Map` - files, sequencing, and validation steps when useful
-6. `Artifact Status` - the path to the handoff artifact when one is created or updated
+1. `Understanding` — current interpretation of the request and the chosen process track
+2. `Relevant Findings` — codebase patterns, files, and constraints that matter
+3. `Open Questions` — only questions that materially affect the outcome
+4. `Recommendation` — the proposed path forward and why
+5. `Implementation Map` — files, sequencing, and validation steps when useful
+6. `Artifact Status` — path to the handoff artifact when created or updated
 
 ---
 
 ## Phase 1: Discovery
 
-**Goal**: Understand what needs to be built
+**Goal**: Understand what needs to be built.
 
 Initial request: $ARGUMENTS
 
-**Actions**:
-
-1. Create a todo list scaled to the actual work rather than blindly listing every phase
-2. Identify the likely process track:
-   - Light for well-bounded medium-sized feature work
-   - Standard for medium feature work
-   - Deep for large or ambiguous work
-3. If the feature is unclear, ask the user for:
-   - What problem are they solving?
-   - What should the feature do?
-   - Any constraints or requirements?
-4. Summarize understanding and confirm only when there is meaningful uncertainty
+1. Create a todo list scaled to the actual work.
+2. Choose the process track based on scope, ambiguity, and risk.
+3. If the feature is unclear, ask: What problem are they solving? What should it do? Any constraints?
+4. Summarize understanding and confirm only when there is meaningful uncertainty.
 
 ---
 
 ## Phase 2: Codebase Exploration
 
-**Goal**: Understand relevant existing code and patterns at both high and low levels
+**Goal**: Understand relevant existing code and patterns at both high and low levels.
 
-**Actions**:
+1. Scale exploration to the chosen track:
+   - Light: direct exploration or 1 [code-explorer](agents/code-explorer.md) agent
+   - Standard: 2 code-explorer agents in parallel
+   - Deep: 2–3 code-explorer agents in parallel covering different angles
 
-1. Scale exploration depth to the chosen track:
-   - Light: do direct exploration or launch 1 focused [code-explorer](agents/code-explorer.md) agent
-   - Standard: launch 2 focused code-explorer agents in parallel
-   - Deep: launch 2-3 code-explorer agents in parallel covering different angles
-2. Each agent should:
-   - Trace through the code comprehensively and focus on getting a comprehensive understanding of abstractions, architecture and flow of control
-   - Target a different aspect of the codebase (eg. similar features, high level understanding, architectural understanding, user experience, etc)
-   - Include a list of 5-10 key files to read
+2. Each agent should trace through the code comprehensively, focus on abstractions and flow of control, target a different aspect of the codebase (e.g., similar features, architecture, UX, testing, extension points), and return a list of 5–10 key files to read.
 
-   **Example agent prompts**:
-   - "Find features similar to [feature] and trace through their implementation comprehensively"
-   - "Map the architecture and abstractions for [feature area], tracing through the code comprehensively"
-   - "Analyze the current implementation of [existing feature/area], tracing through the code comprehensively"
-   - "Identify UI patterns, testing approaches, or extension points relevant to [feature]"
+3. After agents complete, read the files they identify.
+4. Present only findings that will influence implementation or questioning.
 
-3. Once the agents return, read the files they identify so your understanding is grounded in source, not only agent summaries
-4. Present the findings that will actually influence implementation or questioning. Avoid dumping low-signal details.
+When explaining why exploration cannot be skipped, connect each exploration gap to the specific downstream phase where it causes damage — don't just list generic risks. For example: missing conventions → mid-Phase 5 implementation rework; missing integration points → incorrect Phase 4 design; unknown architecture patterns → implementation gaps in Phase 5 implementation.
 
 ---
 
 ## Phase 3: Clarifying Questions
 
-**Goal**: Fill in gaps and resolve all ambiguities before designing
+**Goal**: Fill gaps and resolve ambiguities before designing.
 
-**CRITICAL**: Ask clarifying questions when they matter. Do not force this phase when the task is already concrete enough to proceed.
-
-**Actions**:
-
-1. Review the codebase findings and original feature request
-2. Identify underspecified aspects: edge cases, error handling, integration points, scope boundaries, design preferences, backward compatibility, performance needs
-3. Present only the questions that materially affect the approach, grouped clearly
-4. If no blocking questions remain, state your assumptions and move forward
-5. Wait for answers before design or implementation only when the missing information is truly blocking or likely to cause rework
+Ask only questions that materially affect the approach — edge cases, error handling, integration points, scope boundaries, design preferences, backward compatibility, performance. Present a small, bounded list (3 or fewer where possible), with each question phrased concretely and tied to a specific uncertainty that would change the design or scope. Avoid listing categories of concerns — pose the actual questions. If no blocking questions remain, state your assumptions and move forward. Wait for answers only when missing information is truly blocking or likely to cause rework.
 
 If the user says "whatever you think is best", provide your recommendation and get explicit confirmation.
 
@@ -135,133 +106,85 @@ If the user says "whatever you think is best", provide your recommendation and g
 
 ## Phase 4: Architecture Design
 
-**Goal**: Design multiple implementation approaches with different trade-offs
+**Goal**: Design implementation approaches with different trade-offs.
 
-**Actions**:
-
-1. Scale architecture work to the task:
-   - Light: propose one concrete approach with brief rationale
-   - Standard: compare 1-2 viable approaches if there is a real decision to make
-   - Deep: launch 2-3 [code-architect](agents/code-architect.md) agents in parallel with different focuses such as minimal changes, clean architecture, and pragmatic balance
-2. Review the approaches and decide which fits the task best based on complexity, urgency, maintainability, and existing patterns
-3. Present a recommendation with concrete implementation differences and only include multiple options when the choice is meaningful
-4. Ask the user to choose only when there is a real product or architectural fork. Otherwise recommend the best path and proceed.
+1. Scale to the chosen track:
+   - Light: one concrete approach with brief rationale
+   - Standard: compare 1–2 viable approaches if there is a real decision to make
+   - Deep: 2–3 [code-architect](agents/code-architect.md) agents in parallel (e.g., minimal changes, clean architecture, pragmatic balance)
+2. Present a recommendation; include multiple options only when the choice is meaningful.
+3. Ask the user to choose only when there is a real product or architectural fork; otherwise recommend the best path and proceed.
 
 ---
 
 ## Phase 5: Implementation
 
-**Goal**: Build the feature
+**Goal**: Build the feature.
 
 **Do not create artificial approval gates.** If the user already asked for implementation and the important unknowns are resolved, proceed.
 
-**Actions**:
-
-1. Read all relevant files identified in previous phases
-2. Implement following the chosen approach
-3. Always use the tdd skill to implement with an explicit red-green-refactor loop. Treat this as required for Implementation on every track; do not bypass it.
-4. Follow codebase conventions strictly
-5. Write clean, maintainable code
-6. Update todos as you progress
-7. If you are not implementing yet, produce or update the handoff artifact before stopping
+1. Read all relevant files identified in previous phases.
+2. **Always use the tdd skill** with an explicit red-green-refactor loop. This is required on every track; do not bypass it.
+3. Follow codebase conventions strictly and write clean, maintainable code.
+4. Update todos as you progress.
+5. If not implementing yet, produce or update the handoff artifact before stopping. When providing a pre-implementation recommendation or go/no-go checklist, always state that downstream execution still requires all three mandatory gates: TDD implementation (Phase 5), a separate code-simplifier refactor pass, and independent code-reviewer review (Phase 6).
 
 ---
 
 ## Phase 6: Quality Review
 
-**Goal**: Ensure code is simple, DRY, elegant, easy to read, and functionally correct
+**Goal**: Ensure code is simple, DRY, elegant, easy to read, and functionally correct.
 
-**Actions**:
+1. Launch independent [code-simplifier](../code-simplifier/SKILL.md) subagents to identify refactoring opportunities. Scale based on the number of changed files:
+   - **≤5 files**: launch 1 agent covering all changed files
+   - **>5 files**: partition files into non-overlapping groups (by module, directory, or logical area) and launch one agent per group in parallel. Each file must appear in exactly one agent's scope — overlapping scopes cause conflicting writes.
 
-1. Always launch an independent [code-simplifier](../code-simplifier/SKILL.md) subagent to identify refactoring opportunities after implementation.
-2. Always run independent [code-reviewer](agents/code-reviewer.md) agents for quality review on every track:
-   - Light: launch at least one independent code-reviewer agent
-   - Standard or Deep: launch multiple independent code-reviewer agents in parallel with different focuses such as simplicity, correctness, and conventions
-3. Consolidate findings and prioritize the issues that matter most
-4. Fix obvious high-severity issues directly unless the user has asked to stop after review
-5. Surface remaining risks, trade-offs, and follow-up work clearly
+2. **Always** run independent [code-reviewer](agents/code-reviewer.md) agents for quality review on every track:
+   - Light: at least one code-reviewer agent
+   - Standard or Deep: multiple code-reviewer agents in parallel with different focuses (e.g., simplicity, correctness, conventions)
+
+3. Consolidate findings, prioritize the issues that matter most, fix obvious high-severity issues directly, and surface remaining risks and follow-up work.
 
 ---
 
 ## Handoff Artifact
 
-When another agent or later turn is likely to continue the work, write a file-backed handoff artifact instead of leaving only a conversational summary.
+When another agent or later turn is likely to continue the work, write a file-backed handoff artifact.
 
-### Required Path
-
-Write the artifact to:
-
-`.agents/scratchpad/<feature-name>/handoff-plan.md`
-
-If the feature name is not explicit, choose a short slug from the request.
-
-### Template
+**Path**: `.agents/scratchpad/<feature-name>/handoff-plan.md`
 
 Read and follow [references/handoff-plan-template.md](references/handoff-plan-template.md).
 
-Use the template structure directly unless the repository already has a stronger established artifact for the same purpose.
-
-### When It Is Required
-
 Create or update `handoff-plan.md` when any of these are true:
 
-1. The work is on the Standard or Deep track and implementation may continue in another turn.
+1. Work is on the Standard or Deep track and implementation may continue in another turn.
 2. Another agent is likely to implement or review the change.
-3. You stop after discovery, design, or review instead of completing implementation in the same turn.
+3. You stop after discovery, design, or review instead of completing implementation.
 4. The user asks for a plan, handoff, or reusable implementation guidance.
 
-For Light track work that you complete in the same turn, the artifact is optional.
+For Light track work completed in the same turn, the artifact is optional.
 
-### Minimum Content
-
-The artifact must capture:
+**Required content**:
 
 1. Goal and non-goals
-2. Relevant findings and source files
+2. Relevant findings and source files (each with a reason to be read)
 3. Technical context and constraints
 4. Open questions or stated assumptions
 5. Recommended design and why
 6. Ordered implementation slices
 7. File-by-file implementation map
-8. Validation plan, tests, and review checkpoints — **the Validation Plan section must explicitly list TDD red-green-refactor completion, code-simplifier refactor pass, and independent code-reviewer review as named discrete steps, not buried in Implementation Slices**
+8. Validation plan — **the Validation Plan section must explicitly list TDD red-green-refactor completion, code-simplifier refactor pass, and independent code-reviewer review as named discrete steps, not buried in Implementation Slices**
 9. Next-agent kickoff steps
-
-### Quality Bar
-
-Before you stop, check that:
-
-1. Every referenced file has a reason to be read.
-2. The implementation map names concrete files or directories.
-3. The validation plan is specific enough for another agent to run.
-4. Open questions are limited to issues that materially affect the work.
-5. Another agent could continue without repeating discovery.
 
 In your user-facing response, summarize the handoff briefly and point to `handoff-plan.md` as the source of truth.
 
 ---
 
-## When Not To Use This Skill
-
-Do not use this skill for:
-
-1. Tiny bug fixes or one-file edits where direct implementation is faster than process
-2. Fully specified requests that only need straightforward execution
-3. Pure code review requests with no feature development component
-4. Open-ended brainstorming that does not need codebase-guided implementation planning
-
----
-
 ## Phase 7: Summary
 
-**Goal**: Document what was accomplished
+**Goal**: Document what was accomplished.
 
-**Actions**:
-
-1. Mark all todos complete
-2. Summarize:
-   - What was built
-   - Key decisions made
-   - Files modified
-   - Suggested next steps or handoff notes
+1. Mark all todos complete.
+2. Summarize: what was built, key decisions made, files modified, suggested next steps or handoff notes.
 
 ---

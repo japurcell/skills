@@ -1,0 +1,20 @@
+{
+  "eval_id": "eval-7-phase6-reference-card",
+  "iteration": 15,
+  "skill": "feature-dev",
+  "skill_path": "/Users/adam/.agents/skills/feature-dev/SKILL.md",
+  "task": "Produce a precise Phase 6 reference card describing the exact sequence of subagent steps",
+  "source_section": "Phase 6: Quality Review",
+  "steps_extracted": 5,
+  "subagent_types_referenced": ["code-simplifier", "code-reviewer"],
+  "track_coverage": ["light", "standard", "deep"],
+  "fidelity_notes": [
+    "All 5 actions from Phase 6 are represented in sequence",
+    "code-simplifier scaling rule (≤5 / >5 files) preserved verbatim",
+    "No-overlapping-scope constraint for code-simplifier explicitly included",
+    "code-reviewer track-based scaling (≥1 light, multiple standard/deep) preserved verbatim",
+    "No steps added beyond what the workflow specifies"
+  ],
+  "response_file": "response.md",
+  "timestamp": "2025-01-30"
+}

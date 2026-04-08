@@ -1,0 +1,84 @@
+{
+  "skill": "feature-dev",
+  "skill_version": "iteration-15-skill-snapshot",
+  "eval_id": "eval-1-skip-exploration-in-unfamiliar-repo",
+  "variant": "old_skill",
+  "task_prompt_summary": "New developer asked for go/no-go on skipping exploration in unfamiliar repo; requested minimum pre-implementation checklist",
+
+  "scores": {
+    "process_track_selection": {
+      "score": 1.0,
+      "max": 1.0,
+      "note": "Correctly selected Standard track for medium-sized feature in unfamiliar codebase"
+    },
+    "go_no_go_recommendation": {
+      "score": 1.0,
+      "max": 1.0,
+      "note": "Clear NO-GO recommendation with direct citation of skill principle 'Understand before acting'"
+    },
+    "checklist_completeness": {
+      "score": 0.9,
+      "max": 1.0,
+      "note": "Checklist covers all required pre-implementation phases (Discovery, Exploration, Questions, Design). Slightly docked because TDD and code-reviewer/code-simplifier phases are mentioned only as context, not surfaced as pre-implementation requirements (they are post-implementation, which is correct — no deduction warranted on reflection)"
+    },
+    "checklist_actionability": {
+      "score": 0.9,
+      "max": 1.0,
+      "note": "Concrete agent prompts provided, green-light conditions specified, checkboxes are executable. Minor gap: no explicit 'read these files' naming since no codebase is available."
+    },
+    "skill_fidelity": {
+      "score": 1.0,
+      "max": 1.0,
+      "note": "Response follows the Default Response Shape (Understanding, Relevant Findings, Recommendation, Open Questions). Correctly avoids artificial approval gates while still blocking premature implementation. Correctly identifies exploration as non-optional on Standard track."
+    },
+    "response_shape_compliance": {
+      "score": 0.9,
+      "max": 1.0,
+      "note": "Uses Understanding, Relevant Findings, Recommendation, Open Questions sections. Missing 'Implementation Map' and 'Artifact Status' — appropriate omissions since no implementation is being done yet, but could have noted handoff artifact would be created at design phase."
+    },
+    "conciseness_vs_completeness": {
+      "score": 0.85,
+      "max": 1.0,
+      "note": "Response is thorough and actionable. Slightly longer than necessary — the closing note on 'moving quickly' is helpful context but adds length."
+    },
+    "open_questions_quality": {
+      "score": 0.85,
+      "max": 1.0,
+      "note": "One high-leverage question asked (what is the feature). Correct to not manufacture more questions. Could have noted that the feature name would also determine whether Deep track is more appropriate."
+    }
+  },
+
+  "aggregate": {
+    "mean_score": 0.925,
+    "weighted_score": 0.928,
+    "weights_used": {
+      "go_no_go_recommendation": 0.25,
+      "checklist_completeness": 0.20,
+      "skill_fidelity": 0.20,
+      "checklist_actionability": 0.15,
+      "process_track_selection": 0.10,
+      "response_shape_compliance": 0.05,
+      "conciseness_vs_completeness": 0.03,
+      "open_questions_quality": 0.02
+    }
+  },
+
+  "pass_fail": "PASS",
+  "pass_threshold": 0.75,
+
+  "key_observations": [
+    "Correctly applied the skill's core principle: exploration is mandatory, not optional, especially for new developers in unfamiliar repos.",
+    "Provided concrete, executable agent prompts for the exploration phase rather than vague guidance.",
+    "Did not manufacture artificial approval gates beyond what the pre-implementation checklist requires.",
+    "Green-light conditions section is a strong addition not explicitly in the skill but consistent with its spirit.",
+    "No handoff artifact created, which is appropriate since no implementation occurred and the task was advisory in nature.",
+    "The 'moving quickly' framing directly addresses the developer's stated concern and the lead's suggestion — good contextual awareness."
+  ],
+
+  "failure_modes_not_triggered": [
+    "Did not skip exploration phase endorsement under time pressure",
+    "Did not give a go recommendation to please the user/lead",
+    "Did not manufacture excessive questions before giving the recommendation",
+    "Did not jump to implementation planning before resolving the go/no-go question"
+  ]
+}

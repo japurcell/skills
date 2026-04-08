@@ -1,0 +1,100 @@
+{
+  "expectations": [
+    {
+      "text": "The reference card names code-simplifier as a distinct, required Phase 6 subagent step.",
+      "passed": true,
+      "evidence": "response.md Step 1 is explicitly titled 'Launch `code-simplifier` subagent(s)' as a numbered, distinct step. The notes confirm it applies on 'all tracks', making it required."
+    },
+    {
+      "text": "The reference card names code-reviewer as a distinct, required Phase 6 subagent step.",
+      "passed": true,
+      "evidence": "response.md Step 2 is explicitly titled 'Launch independent `code-reviewer` agent(s)' with the note 'Run always, on every track' — making it a distinct, required step."
+    },
+    {
+      "text": "The reference card shows code-simplifier executed before code-reviewer (not after, not as a merged step).",
+      "passed": true,
+      "evidence": "code-simplifier is Step 1, code-reviewer is Step 2 — numbered sequentially in that order, with distinct headings. They are not merged. Note: the Notes section says 'Steps 1 and 2 may run concurrently', which slightly complicates the 'before' framing, but the structural ordering and specification intent is preserved (simplifier first in the sequence)."
+    },
+    {
+      "text": "The card does not describe Phase 6 as exclusively code-reviewer agents with no simplifier step.",
+      "passed": true,
+      "evidence": "code-simplifier is the first and prominently featured step with its own scaling rules and constraint table. There is no description of Phase 6 as reviewer-only."
+    },
+    {
+      "text": "The card attributes these steps to the workflow's Phase 6 specification, not personal preference.",
+      "passed": true,
+      "evidence": "The card uses mandatory, policy-language throughout ('Run after implementation completes', 'Run always, on every track', 'Critical constraint', 'This phase applies on all tracks'). None of the language is hedged as opinion or preference. metrics.json fidelity_notes confirm 'All 5 actions from Phase 6 are represented in sequence' with no steps added beyond what the workflow specifies."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "eval_id": "eval-7-phase6-reference-card",
+    "iteration": 15,
+    "skill": "feature-dev",
+    "steps_extracted": 5,
+    "subagent_types_referenced": ["code-simplifier", "code-reviewer"],
+    "track_coverage": ["light", "standard", "deep"],
+    "response_file": "response.md",
+    "output_chars": 2150,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 95.0,
+    "total_duration_seconds": 95.0
+  },
+  "claims": [
+    {
+      "claim": "All 5 actions from Phase 6 are represented in sequence",
+      "type": "factual",
+      "verified": false,
+      "evidence": "The card has 5 steps (simplifier, reviewer, consolidate, fix, surface). Plausible for Phase 6, but the SKILL.md source was not read during grading — cannot independently verify the canonical 5-action count."
+    },
+    {
+      "claim": "No steps added beyond what the workflow specifies",
+      "type": "quality",
+      "verified": false,
+      "evidence": "Metrics assert this, but without reading the SKILL.md source directly it cannot be confirmed. The card content looks coherent and well-scoped."
+    },
+    {
+      "claim": "code-simplifier scaling rule (≤5 / >5 files) preserved verbatim",
+      "type": "factual",
+      "verified": false,
+      "evidence": "The card includes the table with this rule, but 'verbatim' accuracy cannot be confirmed without the source SKILL.md."
+    },
+    {
+      "claim": "Steps 1 and 2 may run concurrently",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Stated explicitly in the Notes section of response.md: 'Steps 1 and 2 may run concurrently (code-simplifier agents and code-reviewer agents are independent of each other...)'"
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "The reference card shows code-simplifier executed before code-reviewer (not after, not as a merged step).",
+        "reason": "The card's Notes section explicitly says 'Steps 1 and 2 may run concurrently', which is technically in tension with 'before'. A skill that produced a card allowing code-reviewer to run before code-simplifier (but concurrently) would still pass this assertion. Consider tightening to: 'The card does not show code-reviewer as a prerequisite or prior step to code-simplifier, and treats them as distinct steps.'"
+      },
+      {
+        "assertion": "The card attributes these steps to the workflow's Phase 6 specification, not personal preference.",
+        "reason": "This assertion is very easy to pass — any structured reference card in imperative language would satisfy it. A card that hallucinated entirely different steps would still pass this assertion if it used mandatory-sounding language. Consider testing attribution more concretely: e.g., 'The card accurately reflects the Phase 6 source content' (verified by cross-referencing SKILL.md)."
+      },
+      {
+        "reason": "No assertion checks that the card correctly represents the track-based scaling rules (e.g., 'light track = 1 reviewer, standard/deep = multiple'). This is a specific, meaningful detail that a weak output might omit or misstate."
+      },
+      {
+        "reason": "No assertion checks whether the no-overlapping-scope constraint for code-simplifier is present. The card includes it, and it's a critical correctness detail — worth asserting explicitly."
+      }
+    ],
+    "overall": "All 5 expectations pass with clear evidence. The eval covers the essential structural requirements well. Main gaps: assertion 3 is slightly imprecise around concurrency, assertion 5 is too easy to satisfy without genuine fidelity, and two important content details (track-based scaling, no-overlapping-scope) go unchecked."
+  }
+}

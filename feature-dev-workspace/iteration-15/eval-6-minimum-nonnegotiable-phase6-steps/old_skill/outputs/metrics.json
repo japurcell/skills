@@ -1,0 +1,15 @@
+{
+  "eval_id": "eval-6-minimum-nonnegotiable-phase6-steps",
+  "skill_version": "iteration-15-skill-snapshot",
+  "track": "N/A (meta-question about workflow)",
+  "phases_executed": ["skill-read"],
+  "subagents_launched": 0,
+  "mandatory_phase6_subagent_steps": 2,
+  "mandatory_phase6_subagent_roles": [
+    "code-simplifier",
+    "code-reviewer"
+  ],
+  "grounding": "Both steps use the word 'Always' in the SKILL.md Phase 6 section and apply on every track",
+  "response_word_count": 198,
+  "response_file": "response.md"
+}

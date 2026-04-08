@@ -1,0 +1,95 @@
+{
+  "expectations": [
+    {
+      "text": "States that implementation uses the tdd skill with an explicit red-green-refactor loop.",
+      "passed": true,
+      "evidence": "response.md Phase 5: 'The skill requires the `tdd` skill on every track with an explicit red-green-refactor loop. This cannot be bypassed.' Also in Recommendation: 'Implement with TDD: write a failing test first, make it pass, then refactor.' metrics.json confirms tdd subagent listed under implementation with purpose 'Red-green-refactor loop for each file changed'."
+    },
+    {
+      "text": "States that code-simplifier is launched as a subagent for refactoring opportunities.",
+      "passed": true,
+      "evidence": "response.md Phase 6 table: '`code-simplifier` | `../code-simplifier/SKILL.md` | Identifies refactoring opportunities — DRY violations, unnecessary complexity, readability gaps | Always run exactly once, independently, after implementation'. Reinforced in Phase 7 Summary and metrics.json subagents_invoked.quality_review."
+    },
+    {
+      "text": "States that quality review is performed by an independent code-reviewer subagent.",
+      "passed": true,
+      "evidence": "response.md describes three parallel `code-reviewer` agents with distinct focuses (simplicity, correctness, conventions), all referencing `agents/code-reviewer.md`. The Summary explicitly states 'Three parallel `code-reviewer` agents...plus one `code-simplifier` agent'. metrics.json confirms code-reviewer count=3 with parallelism=true."
+    },
+    {
+      "text": "Keeps recommendations calibrated to medium-sized feature work instead of escalating unnecessarily.",
+      "passed": true,
+      "evidence": "Standard track selected (not Deep). Track selection rationale: 'Medium-sized feature, three files, explicit review requested.' The response avoids over-engineering language and frames the work as extending existing patterns rather than inventing new ones. One open question is raised rather than blocking with multiple unknowns. No unnecessary architectural redesign proposed."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "eval_id": "eval-3-medium-feature-implementation-with-review",
+    "skill_version": "iteration-15-skill-snapshot",
+    "track_selected": "standard",
+    "phases_covered": 7,
+    "subagents_invoked": {
+      "exploration": 2,
+      "implementation": 1,
+      "quality_review": 4
+    },
+    "open_questions_count": 1,
+    "output_chars": 4371,
+    "transcript_chars": 4371
+  },
+  "timing": {
+    "executor_duration_seconds": 97.0,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 97.0
+  },
+  "claims": [
+    {
+      "claim": "Standard track is appropriate for a three-file feature with explicit review requested.",
+      "type": "process",
+      "verified": true,
+      "evidence": "Consistent with skill's stated track-selection criteria. The response does not escalate to Deep track without justification."
+    },
+    {
+      "claim": "The tdd skill is required on every track and cannot be bypassed.",
+      "type": "factual",
+      "verified": false,
+      "evidence": "The response asserts this as a skill enforcement rule, but no actual skill definition was cited in the transcript to confirm it applies to Lite track as well. Unverifiable from available outputs alone."
+    },
+    {
+      "claim": "Three parallel code-reviewer agents with distinct focuses are the exact subagent roles mandated for Standard/Deep tracks.",
+      "type": "factual",
+      "verified": false,
+      "evidence": "The response attributes this mandate to the skill, but no skill SKILL.md content is shown in the outputs. The claim is internally consistent but cannot be cross-checked against the actual skill definition from these outputs."
+    },
+    {
+      "claim": "A handoff artifact at `.agents/scratchpad/three-file-feature/handoff-plan.md` is required.",
+      "type": "process",
+      "verified": false,
+      "evidence": "Stated as a requirement and listed in metrics.json as handoff_artifact_path, but the artifact itself was not created (no real codebase). Plausible given Standard track description but unverifiable."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "All four assertions check only what the response 'states' — not whether the skill was actually invoked or produced real implementation artifacts. A response that merely mentions 'tdd' and 'code-simplifier' in passing would pass all four. Consider adding an assertion that verifies the handoff artifact was produced, or that the TDD loop structure appears concretely per file, not just as a general claim."
+      },
+      {
+        "assertion": "States that quality review is performed by an independent code-reviewer subagent.",
+        "reason": "The assertion uses 'an independent code-reviewer subagent' (singular), but the skill mandates three parallel reviewers for Standard track. The response correctly describes three reviewers — the assertion would also pass if only one reviewer was described, missing the multi-reviewer enforcement detail."
+      },
+      {
+        "reason": "No assertion covers whether the track selection itself is correct — only that recommendations are 'calibrated'. A deeper check would verify that the Standard track (not Lite, not Deep) was selected and that the rationale explicitly cited the multi-file scope and explicit review request."
+      }
+    ],
+    "overall": "The evals catch major structural claims but are weak on verification depth — any response that mentions the right keywords passes. Adding at least one assertion about artifact production or correct track selection rationale would make the eval more discriminating."
+  }
+}

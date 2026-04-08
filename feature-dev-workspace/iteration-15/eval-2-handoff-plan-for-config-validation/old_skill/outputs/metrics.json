@@ -1,0 +1,36 @@
+{
+  "track": "Standard",
+  "phases_completed": ["discovery", "codebase_context", "clarifying_questions", "architecture_design"],
+  "phases_skipped": ["implementation", "quality_review"],
+  "stop_reason": "user_requested_stop_before_implementation",
+  "handoff_artifact_created": true,
+  "handoff_artifact_path": "/Users/adam/.agents/skills/.agents/scratchpad/config-validation/handoff-plan.md",
+  "template_sections_present": {
+    "summary": true,
+    "goal_non_goals": true,
+    "relevant_findings": true,
+    "technical_context_constraints": true,
+    "assumptions_open_questions": true,
+    "recommended_design": true,
+    "implementation_slices": true,
+    "file_by_file_implementation_map": true,
+    "validation_plan": true,
+    "next_agent_kickoff": true
+  },
+  "validation_plan_explicit_steps": {
+    "tdd_red_green_refactor": true,
+    "code_simplifier_pass": true,
+    "independent_code_reviewer": true
+  },
+  "open_questions_count": 1,
+  "assumptions_count": 3,
+  "implementation_slices_count": 3,
+  "files_in_implementation_map": 4,
+  "quality_bar_checks": {
+    "every_referenced_file_has_reason": true,
+    "implementation_map_names_concrete_files": true,
+    "validation_plan_specific_enough_for_another_agent": true,
+    "open_questions_limited_to_material_issues": true,
+    "another_agent_could_continue_without_repeating_discovery": true
+  }
+}

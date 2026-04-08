@@ -1,0 +1,105 @@
+{
+  "expectations": [
+    {
+      "text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+      "passed": true,
+      "evidence": "Step 1 explicitly names a `code-simplifier` agent with focus: 'Identify and apply refactoring opportunities: collapse duplicated cache get/set patterns across the three services into shared helpers, remove unnecessary indirection, ensure cache key construction is DRY and readable, verify no dead code was left from the implementation pass.'"
+    },
+    {
+      "text": "Recognizes the small file count (3 files) and launches exactly 1 code-simplifier agent rather than multiple.",
+      "passed": true,
+      "evidence": "'1 agent, covering all three changed files. Because 3 files ≤ 5, a single agent handles everything.' metrics.json confirms: code_simplifier.count = 1."
+    },
+    {
+      "text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
+      "passed": true,
+      "evidence": "Three code-reviewer agents are named in Step 2 with distinct focuses: 'Correctness', 'Simplicity & Design', and 'Conventions'. Each has multiple sub-bullets detailing what to look for."
+    },
+    {
+      "text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
+      "passed": true,
+      "evidence": "Step 1 = code-simplifier (sequential), Step 2 = code-reviewers (parallel, after). Response states: 'Running this before code-reviewer agents matters: the simplifier applies edits directly, so reviewers should see the cleaned-up code, not the raw first-pass implementation.' Summary table confirms order: simplifier 1st, reviewers 2nd."
+    },
+    {
+      "text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
+      "passed": true,
+      "evidence": "code-simplifier: multi-point focus on DRY cache patterns, dead code, indirection. Correctness reviewer: cache key collision, invalidation coverage, fail-open behavior, TTL values. Simplicity & Design reviewer: abstraction layer, over-engineering, decorator vs inline, consistency. Conventions reviewer: PEP 8, type annotations, naming, test coverage, module-level constants. All are specific and actionable."
+    },
+    {
+      "text": "Does not treat refactoring and quality review as a single unified step performed by one agent.",
+      "passed": true,
+      "evidence": "Refactoring (code-simplifier) and quality review (code-reviewers) are explicitly separate steps with separate agents: Step 1 vs Step 2. The summary table lists them with different agent types, different parallelism modes, and distinct rationales."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "skill": "feature-dev",
+    "phase_evaluated": 6,
+    "scenario": "caching layer across 3 service files in a Python web app",
+    "track": "standard",
+    "subagents_launched": 4,
+    "subagent_breakdown": {
+      "code_simplifier": {
+        "count": 1,
+        "parallelism": "sequential_first",
+        "files_covered": 3
+      },
+      "code_reviewer": {
+        "count": 3,
+        "parallelism": "parallel",
+        "focuses": ["correctness", "simplicity_and_design", "conventions"]
+      }
+    }
+  },
+  "timing": {
+    "executor_duration_seconds": 104.0,
+    "total_duration_seconds": 104.0
+  },
+  "claims": [
+    {
+      "claim": "3 files qualifies as 'small change' (≤5 threshold), warranting exactly 1 code-simplifier agent",
+      "type": "process",
+      "verified": true,
+      "evidence": "Transcript states 'Because 3 files ≤ 5, a single agent handles everything.' metrics.json confirms code_simplifier.count = 1 and lists the rule 'small_change_threshold: <=5 files => 1 code-simplifier agent'."
+    },
+    {
+      "claim": "Simplifier must run sequentially before reviewers because it applies edits directly",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Transcript explicitly states the rationale: 'the simplifier applies edits directly, so reviewers should see the cleaned-up code, not the raw first-pass implementation.' metrics.json confirms parallelism: 'sequential_first'."
+    },
+    {
+      "claim": "Standard track requires multiple independent reviewers",
+      "type": "process",
+      "verified": true,
+      "evidence": "Transcript Step 2: 'Standard track requires multiple independent reviewers with different focuses.' metrics.json lists 'standard_track: multiple independent code-reviewer agents in parallel' as a skill rule applied."
+    },
+    {
+      "claim": "This is a Standard track scenario",
+      "type": "factual",
+      "verified": true,
+      "evidence": "metrics.json: track = 'standard'. Transcript rationale: 'touches several files, involves real design decisions (cache key strategy, TTL policy, invalidation), and has meaningful correctness risk.'"
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "Expectations 1 and 5 overlap significantly — exp 1 checks that code-simplifier is named with a refactoring role, and exp 5 checks that each agent has a concrete focus. A response could satisfy exp 1 with a vague description ('find refactoring opportunities') and still pass both. Consider splitting: exp 1 could focus purely on naming/identification, while exp 5 enforces specificity of the focus text (e.g., 'includes at least two concrete refactoring targets in the simplifier prompt')."
+      },
+      {
+        "reason": "No assertion checks that the simplifier is instructed to APPLY edits (not just report findings). A walkthrough that names code-simplifier as a 'reporter' rather than an 'editor' would pass all current expectations but miss a key behavioral requirement of the skill."
+      }
+    ],
+    "overall": "Evals are solid and well-targeted. The two suggestions above address minor overlap and one behavioral gap; the core structure — separate agents, ordering, file-count awareness, focus specificity — is well covered."
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "eval_id": "eval-5-skip-tdd-under-crunch",
+  "iteration": 15,
+  "skill": "feature-dev",
+  "task_summary": "User requests skipping TDD under a 2-hour deadline for a 2-file rate-limiting change",
+  "process_track": "light",
+  "track_rationale": "Well-bounded 2-file change with clear intent; Light track is correct",
+  "tdd_bypass_requested": true,
+  "tdd_bypass_granted": false,
+  "tdd_bypass_reasoning": "Skill mandates TDD as non-negotiable for every track ('do not bypass it'); rate-limiting logic specifically benefits from test-first specification; argued TDD adds ~15-20 min not hours",
+  "skill_compliance": {
+    "chose_process_track": true,
+    "tdd_required": true,
+    "tdd_honored": true,
+    "artificial_approval_gates_avoided": true,
+    "only_high_leverage_questions_asked": true,
+    "questions_asked": 2,
+    "forward_progress_preferred": true,
+    "default_response_shape_used": true
+  },
+  "response_sections": [
+    "Understanding",
+    "Relevant Findings",
+    "Open Questions",
+    "Recommendation",
+    "Implementation Map",
+    "Next Step"
+  ],
+  "key_behaviors": [
+    "Declined TDD skip with clear rationale specific to rate-limiting risk",
+    "Acknowledged deadline pressure without capitulating to workflow bypass",
+    "Showed TDD is time-efficient (~15-20 min) not a blocker for 2-hour deadline",
+    "Limited open questions to 2 genuinely blocking items",
+    "Provided concrete implementation map and time estimates",
+    "Avoided extra phases or staged approvals per Light track"
+  ],
+  "estimated_time_to_implement": "45-55 minutes",
+  "handoff_artifact_created": false,
+  "handoff_artifact_rationale": "Light track, single-turn completion expected; artifact optional per skill",
+  "word_count_response": 620,
+  "tone": "direct, urgent, empathetic but firm on TDD requirement"
+}

@@ -1,0 +1,94 @@
+{
+  "expectations": [
+    {
+      "text": "Names code-simplifier as a required Phase 6 subagent (not just as general advice, but as mandated by the workflow).",
+      "passed": true,
+      "evidence": "response.md Step 1 heading: 'Step 1 — code-simplifier subagent(s)' with mandate_strength 'required' and verbatim mandate: 'Launch independent code-simplifier subagents to identify refactoring opportunities after implementation.' The intro also states 'Both are required on every track; neither can be dropped.'"
+    },
+    {
+      "text": "Names code-reviewer as a required Phase 6 subagent.",
+      "passed": true,
+      "evidence": "response.md Step 2 heading: 'Step 2 — code-reviewer subagent(s)' with verbatim mandate: 'Always run independent code-reviewer agents for quality review on every track.' metrics.json confirms mandate_strength: 'required'."
+    },
+    {
+      "text": "States that code-simplifier runs before the code-reviewer pass, not after.",
+      "passed": true,
+      "evidence": "response.md explicitly labels code-simplifier as 'Step 1' and code-reviewer as 'Step 2', establishing a clear before/after ordering. The summary table also lists them in this sequence: row 1 = code-simplifier, row 2 = code-reviewer."
+    },
+    {
+      "text": "Does not agree to dropping or making optional either the code-simplifier or the code-reviewer step.",
+      "passed": true,
+      "evidence": "response.md opening: 'Both are required on every track; neither can be dropped.' No conditional language or optionality is introduced for either step."
+    },
+    {
+      "text": "Grounds the answer in what the workflow mandates, not in general engineering opinion.",
+      "passed": true,
+      "evidence": "Both mandates are presented as verbatim quotes from the skill (marked '(verbatim):'), and the summary table cites the exact keyword phrases ('Launch … subagents', 'Always run … agents'). metrics.json confirms grounded_in_skill: true and verbatim_quotes_used: true. No general engineering rationale is offered."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "eval": "eval-6-minimum-nonnegotiable-phase6-steps",
+    "iteration": 15,
+    "skill": "feature-dev",
+    "phase_evaluated": "Phase 6: Quality Review",
+    "question_type": "minimum required subagent steps",
+    "subagent_steps_identified": 2,
+    "grounded_in_skill": true,
+    "verbatim_quotes_used": true,
+    "output_chars": 1667,
+    "transcript_chars": 1667
+  },
+  "timing": {
+    "executor_duration_seconds": 71.0,
+    "total_duration_seconds": 71.0
+  },
+  "claims": [
+    {
+      "claim": "Phase 6 mandates exactly two subagent steps",
+      "type": "factual",
+      "verified": true,
+      "evidence": "response.md enumerates exactly two steps (code-simplifier, code-reviewer) and the 'What Is NOT a Separate Required Subagent Step' section correctly excludes orchestrator-level work."
+    },
+    {
+      "claim": "Neither step can be dropped on any track",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Opening sentence: 'Both are required on every track; neither can be dropped.' Supported by the verbatim mandate wording ('on every track') cited for code-reviewer."
+    },
+    {
+      "claim": "Verbatim quotes from the skill are used",
+      "type": "process",
+      "verified": true,
+      "evidence": "Both mandate descriptions are marked '(verbatim):' and reproduce specific imperative phrases from the skill document."
+    },
+    {
+      "claim": "Scaling rules change agent count, not the requirement itself",
+      "type": "factual",
+      "verified": true,
+      "evidence": "response.md explicitly labels scaling sections with 'Scaling rule (changes the count, not the requirement)' for both steps."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "States that code-simplifier runs before the code-reviewer pass, not after.",
+        "reason": "Sequential numbering (Step 1 / Step 2) satisfies this assertion, but a response could list them in order without ever explicitly stating that simplification must complete before review begins. A stronger check would require a direct statement of dependency (e.g., 'code-simplifier must finish before code-reviewer runs') rather than inferring order from list position."
+      },
+      {
+        "reason": "No assertion covers whether the scaling rules are correctly described (≤5 files → 1 agent, >5 → partitioned agents; Light → ≥1 reviewer, Standard/Deep → 2+ reviewers). The response reproduces these accurately, but a wrong answer could pass all five assertions while mangling the scaling details."
+      }
+    ],
+    "overall": "Assertions are well-targeted for the core question. The ordering assertion could be tightened to require an explicit dependency statement rather than positional inference. Adding a scaling-rule assertion would catch responses that get the headline right but misstate the count rules."
+  }
+}

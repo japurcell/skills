@@ -1,0 +1,119 @@
+{
+  "expectations": [
+    {
+      "text": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+      "passed": true,
+      "evidence": "No repository was provided, so codebase exploration was impossible. The agent explicitly acknowledged this ('No existing codebase was provided, so exploration is based on standard Python CLI conventions') and grounded the design in standard Python conventions rather than arbitrary invention. The design pattern — pure function with injectable `env` param, stderr + sys.exit(1), formatted error listing all missing vars — is idiomatic Python, not novel. The artifact structure mirrors a clearly defined template (all 10 template sections present per metrics.json). Notably, there is no explicit evidence in the transcript of the agent reading skill instruction files, which slightly weakens this verdict; however, the design is clearly convention-based rather than invented."
+    },
+    {
+      "text": "Creates a concrete file-backed handoff artifact at a path matching the workflow's handoff contract.",
+      "passed": true,
+      "evidence": "Artifact confirmed to exist at `/Users/adam/.agents/skills/.agents/scratchpad/config-validation/handoff-plan.md` with 144 lines of substantive content. Response.md states the exact path explicitly. metrics.json field `handoff_artifact_created: true` and `handoff_artifact_path` match the actual file location."
+    },
+    {
+      "text": "The artifact content follows a reusable template shape and includes implementation slices, file-level map, and validation plan.",
+      "passed": true,
+      "evidence": "handoff-plan.md contains: 3 named Implementation Slices (core module, entry-point integration, docs/constants), a File-by-File Implementation Map table with 4 concrete files and specific actions, and a 5-step Validation Plan. metrics.json confirms all 10 template sections are present. The structure is clearly template-shaped with named section headers."
+    },
+    {
+      "text": "Artifact metadata fields are concretely filled (no placeholder bracket values) for status, track, and next step.",
+      "passed": true,
+      "evidence": "handoff-plan.md header: `**Status**: ready for implementation`, `**Track**: Standard`, `**Recommended Next Step**: implement directly`. None of these are placeholder brackets. All three fields contain concrete, actionable values."
+    },
+    {
+      "text": "Each referenced file in Relevant Findings includes why that file matters.",
+      "passed": true,
+      "evidence": "All 5 file references in the Relevant Findings section include explicit rationale: cli.py/main.py — 'the entry point where the validation hook belongs—read this first to understand startup order'; src/<package>/ — 'confirms where to place config_validation.py'; tests/ — 'establishes the existing test style (pytest vs unittest, fixture patterns)'; pyproject.toml/setup.cfg — 'confirms packaging layout and any declared dependencies'; README.md/CONTRIBUTING.md — 'may document environment variable expectations or configuration conventions already in use'."
+    },
+    {
+      "text": "Open questions are tightly bounded to truly blocking items and include risk framing.",
+      "passed": true,
+      "evidence": "The Assumptions / Open Questions section lists 3 assumptions each with 'Risk if wrong:' framing (e.g., 'Risk if wrong: The list may need to come from a config file or plugin registry; revisit module interface if so'). The single open question (constant placement: call-site list vs centralized constants.py) is genuinely blocking for implementation style. metrics.json confirms `open_questions_count: 1`. response.md also surfaces an exit-code convention question. Both are bounded to real design decisions, not speculative concerns."
+    },
+    {
+      "text": "Provides artifact status in the response with the exact artifact path.",
+      "passed": true,
+      "evidence": "response.md under 'Artifact Status' section states: 'Handoff artifact created at: /Users/adam/.agents/skills/.agents/scratchpad/config-validation/handoff-plan.md' — the exact path, formatted in a code block. The artifact exists at that path."
+    },
+    {
+      "text": "Includes rationale or trade-offs for the proposed design.",
+      "passed": true,
+      "evidence": "handoff-plan.md Recommended Design section includes explicit rationale: 'Keeping the required-vars list at the call site (entry point) makes the dependency visible without indirection. A pure function validate_env_vars(required, env=None) with an optional env parameter (defaulting to os.environ) is trivially testable without environment mutation.' It also names and rejects an alternative: 'Alternative considered: A class-based ConfigValidator that holds state—rejected because the validation is stateless and a function is simpler and easier to test.'"
+    },
+    {
+      "text": "The Validation Plan section of the handoff artifact contains TDD completion, a code-simplifier refactor pass, and independent code-reviewer review as named discrete steps — not buried solely in the Implementation Slices section.",
+      "passed": true,
+      "evidence": "handoff-plan.md Validation Plan section contains exactly these three as named discrete steps: 'Step 1 — TDD red-green-refactor (required)', 'Step 2 — code-simplifier refactor pass (required)', 'Step 3 — Independent code-reviewer review (required)'. Each is a top-level step with its own sub-content, not buried in Implementation Slices. metrics.json confirms `validation_plan_explicit_steps: {tdd_red_green_refactor: true, code_simplifier_pass: true, independent_code_reviewer: true}`."
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "track": "Standard",
+    "phases_completed": ["discovery", "codebase_context", "clarifying_questions", "architecture_design"],
+    "phases_skipped": ["implementation", "quality_review"],
+    "stop_reason": "user_requested_stop_before_implementation",
+    "handoff_artifact_created": true,
+    "open_questions_count": 1,
+    "assumptions_count": 3,
+    "implementation_slices_count": 3,
+    "files_in_implementation_map": 4,
+    "output_chars": 2850,
+    "transcript_chars": 2850
+  },
+  "timing": {
+    "executor_duration_seconds": 143.0,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 143.0
+  },
+  "claims": [
+    {
+      "claim": "The artifact contains a validation plan with explicit TDD red-green-refactor, code-simplifier, and code-reviewer steps named as discrete checkpoints.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "All three appear as numbered top-level steps in the Validation Plan section of handoff-plan.md, each labeled '(required)' with specific instructions."
+    },
+    {
+      "claim": "No existing codebase was provided, so exploration is based on standard Python CLI conventions.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Eval prompt and artifact both confirm no repository was supplied. Design choices (os.environ, sys.exit(1), pytest, argparse/click) are standard Python CLI conventions."
+    },
+    {
+      "claim": "The implementing agent's first step is to read the actual entry point and test files before coding.",
+      "type": "process",
+      "verified": true,
+      "evidence": "Confirmed in both the Next-Agent Kickoff section of handoff-plan.md (steps 1-3 are all read steps before implementation) and in response.md Relevant Findings."
+    },
+    {
+      "claim": "metrics.json self-reports quality_bar_checks as all true, including 'another_agent_could_continue_without_repeating_discovery'.",
+      "type": "quality",
+      "verified": false,
+      "evidence": "This is self-reported by the executor and cannot be independently verified from the outputs alone. The handoff artifact is substantive and well-structured, but whether a different agent could actually continue without repeating discovery is an empirical claim not testable from transcript alone."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Looks for relevant patterns in the codebase or skill instructions instead of inventing the design in isolation.",
+        "reason": "This assertion is hard to discriminate when no codebase is provided. A skill that purely invented the design from training data would produce the same output as one that actively 'looked for patterns' in skill instructions. The assertion passes here because the design is convention-based, but it would also pass for a skill that hallucinated plausible-sounding conventions. Consider adding: 'When no codebase is available, the agent explicitly reads skill instruction files to ground the design' or checking whether the transcript shows file reads of skill docs."
+      },
+      {
+        "reason": "No assertion checks whether the file paths in the Implementation Map are plausible/grounded (they use placeholder `<package>` tokens throughout). A weaker skill could satisfy all assertions with even more vague placeholders. Consider: 'File paths in the implementation map are specific enough for the implementing agent to act on without requiring re-specification.'"
+      },
+      {
+        "reason": "No assertion checks the Next-Agent Kickoff section, which is arguably the most operationally important part of a handoff artifact — it determines whether the next agent can start work immediately. The section here is high quality (concrete ordered steps, conditional stop point for the open question), but nothing grades it."
+      }
+    ],
+    "overall": "Assertions are well-targeted and appropriately specific. Expectation 1 has a discrimination weakness when no codebase is provided. The other gaps (no kickoff section check, no file-path specificity check) are worth adding for future eval iterations."
+  }
+}

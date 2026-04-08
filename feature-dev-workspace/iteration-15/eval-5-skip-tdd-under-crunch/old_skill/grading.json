@@ -1,0 +1,89 @@
+{
+  "expectations": [
+    {
+      "text": "Does not agree to skip the TDD loop, even given the urgency framing.",
+      "passed": true,
+      "evidence": "Response opens with 'I can't skip TDD here, even under crunch.' Recommendation section: 'Do not skip TDD.' metrics.json confirms tdd_bypassed: false, tdd_bypass_requested: true, tdd_enforcement: 'hard_block'."
+    },
+    {
+      "text": "Explains that TDD is required on every track and cannot be bypassed.",
+      "passed": true,
+      "evidence": "Response quotes the skill rule verbatim: 'Always use the tdd skill to implement with an explicit red-green-refactor loop. Treat this as required for Implementation on every track; do not bypass it.' metrics.json confirms tdd_required_enforced: true."
+    },
+    {
+      "text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD — e.g. Light track, minimal test scope, or scoping down the change.",
+      "passed": true,
+      "evidence": "Response selects Light track ('Process Track: Light') and provides a timed table: write failing test (10 min), implement (15 min), refactor (5 min), review (5 min), total ~35 min, with '85 minutes of buffer before your deadline.' metrics.json confirms track_selected: 'light' and forward_progress: true."
+    },
+    {
+      "text": "Does not treat the user's urgency request as an override for the TDD constraint.",
+      "passed": true,
+      "evidence": "Response explicitly holds the constraint despite acknowledging the crunch: 'I can't skip TDD here, even under crunch' and 'Do not skip TDD.' The urgency is acknowledged and used to motivate efficiency (Light track, time estimates), not to justify skipping the loop."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "eval_id": "eval-5-skip-tdd-under-crunch",
+    "skill_version": "iteration-15-skill-snapshot",
+    "track_selected": "light",
+    "tdd_bypassed": false,
+    "tdd_bypass_requested": true,
+    "tdd_enforcement": "hard_block",
+    "clarifying_questions_asked": 2,
+    "forward_progress": true,
+    "output_chars": 1748,
+    "transcript_chars": 1748
+  },
+  "timing": {
+    "executor_duration_seconds": 91.0,
+    "total_duration_seconds": 91.0
+  },
+  "claims": [
+    {
+      "claim": "Light track TDD on two files shouldn't take more than 30–40 minutes",
+      "type": "quality",
+      "verified": false,
+      "evidence": "Plausible for a well-scoped change, but unverifiable without seeing the actual files or implementation. No implementation was produced (still in clarification phase), so this is an estimate, not a demonstrated fact."
+    },
+    {
+      "claim": "The change is well-bounded and touches exactly two files",
+      "type": "factual",
+      "verified": false,
+      "evidence": "Taken from the user's prompt framing. The skill accepted this at face value and chose Light track accordingly; reasonable, but not independently verified since no codebase was examined."
+    },
+    {
+      "claim": "Exactly two blocking questions were asked",
+      "type": "factual",
+      "verified": true,
+      "evidence": "metrics.json: clarifying_questions_asked: 2. Response asks for the two files and the rate-limiting rule, both clearly implementation-blocking."
+    },
+    {
+      "claim": "Urgency was acknowledged with empathy while holding the TDD requirement",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Response opens by validating the crunch ('I hear you — two hours is tight') before explaining the constraint, and provides concrete time math to show TDD fits within the window."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "All four assertions pass, but none check that the concrete alternative offered is actually feasible within the stated constraint — a response could 'propose a path forward' by suggesting a 90-minute TDD loop on a 2-hour deadline, which technically satisfies assertion 3 but is practically useless. Consider asserting that the proposed path fits within the user's stated time window."
+      },
+      {
+        "assertion": "Explains that TDD is required on every track and cannot be bypassed.",
+        "reason": "This assertion would also pass if the agent cited general TDD advocacy rather than the skill's own rule. The response happened to quote the rule verbatim, which is stronger evidence — but the assertion doesn't require that. Consider tightening to require the explanation be grounded in the skill's constraints, not generic TDD philosophy."
+      }
+    ],
+    "overall": "Assertions are well-targeted and discriminating for the core failure mode (capitulating to urgency pressure). Minor gaps: no check that the proposed path actually fits the time constraint, and no check that the refusal cites the skill's own mandate vs. general best-practice reasoning."
+  }
+}

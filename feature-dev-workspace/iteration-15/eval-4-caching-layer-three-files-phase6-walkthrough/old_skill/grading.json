@@ -1,0 +1,107 @@
+{
+  "expectations": [
+    {
+      "text": "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+      "passed": true,
+      "evidence": "Step 1 of the walkthrough is titled 'Launch `code-simplifier` (first, independent)' with the focus: 'Identify refactoring opportunities: repeated cache read/write patterns that could be extracted into a shared decorator or utility, duplicated TTL configuration, inconsistent cache key construction across services, and any over-engineered logic that could be simplified.' metrics.json confirms code_simplifier_launched: true."
+    },
+    {
+      "text": "Recognizes the small file count (3 files) and launches exactly 1 code-simplifier agent rather than multiple.",
+      "passed": true,
+      "evidence": "metrics.json lists exactly 1 code-simplifier in subagents_launched and reports total_subagents: 4 (1 simplifier + 3 reviewers). The summary table in the response also shows exactly one code-simplifier row. Note: the response classifies 3 files as 'medium-sized' (Standard Track), not 'small' — so the premise of the assertion is slightly off, but the behavioral outcome (exactly 1 code-simplifier) is clearly met."
+    },
+    {
+      "text": "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
+      "passed": true,
+      "evidence": "Three code-reviewer agents are named with distinct focuses: '#1 — Correctness' (invalidation, race conditions, key collisions, degradation, TTL), '#2 — Simplicity & DRY' (pattern consistency, shared abstractions, configuration centralization), and '#3 — Conventions & Project Patterns' (Python style, project patterns, error handling, documentation). Each has a multi-sentence detailed focus prompt."
+    },
+    {
+      "text": "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
+      "passed": true,
+      "evidence": "Step 1 is code-simplifier; Step 2 is three code-reviewers. The response explicitly states reviewers launch 'once the code-simplifier has returned.' metrics.json records code-simplifier order: 1 and all reviewers order: 2, with concurrency 'sequential (before reviewers)' for the simplifier."
+    },
+    {
+      "text": "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
+      "passed": true,
+      "evidence": "Each subagent receives a multi-bullet focus prompt. For example, the correctness reviewer is told to look for 'cache invalidation logic (are stale entries evicted at the right times?), race conditions or thread-safety issues (double-check/set problems), cache key collisions between services, behavior when the cache backend is unavailable, and TTL edge cases.' All four subagents have equivalently specific prompts."
+    },
+    {
+      "text": "Does not treat refactoring and quality review as a single unified step performed by one agent.",
+      "passed": true,
+      "evidence": "The response explicitly separates code-simplifier (Step 1, structural refactoring focus) from three distinct code-reviewer agents (Step 2, quality review). The summary table shows four separate agents with different types. metrics.json confirms multiple_code_reviewers_launched: true and code_simplifier_launched: true as independent fields."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "eval_id": "eval-4-caching-layer-three-files-phase6-walkthrough",
+    "skill_version": "iteration-15-skill-snapshot",
+    "track_selected": "Standard",
+    "subagents_launched": 4,
+    "total_subagents": 4,
+    "skill_compliance": {
+      "code_simplifier_launched": true,
+      "multiple_code_reviewers_launched": true,
+      "reviewers_run_in_parallel": true,
+      "different_focuses_per_reviewer": true,
+      "consolidation_step_included": true,
+      "high_severity_fixes_mentioned": true,
+      "remaining_risks_surfaced": true
+    },
+    "response_completeness_score": 0.95,
+    "output_chars": 3850,
+    "transcript_chars": 3850
+  },
+  "timing": {
+    "executor_duration_seconds": 110.0,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 110.0
+  },
+  "claims": [
+    {
+      "claim": "Standard Track is the correct classification for a caching layer across 3 files",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The response justifies Standard Track: 'medium-sized, involves a non-trivial design surface (cache keys, invalidation, TTL, error handling), and spans multiple files.' This is a reasonable and internally consistent classification."
+    },
+    {
+      "claim": "Running code-simplifier before reviewers means its output can inform the reviewers",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The 'Why first' section states: 'Running it first means its output can inform whether the reviewers are seeing a clean or cluttered implementation.' This is a reasonable rationale."
+    },
+    {
+      "claim": "Total of 4 subagents launched",
+      "type": "factual",
+      "verified": true,
+      "evidence": "metrics.json total_subagents: 4. Response summary table lists exactly 4 rows (1 code-simplifier + 3 code-reviewers)."
+    },
+    {
+      "claim": "All 5 Phase 6 actions from the skill are covered",
+      "type": "process",
+      "verified": true,
+      "evidence": "metrics.json skill_instructions_followed lists all 5 Phase 6 actions. The response includes: Step 1 (code-simplifier), Step 2 (3 reviewers in parallel), Step 3 (consolidate findings), Step 4 (fix high-severity issues), Step 5 (surface remaining risks)."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Recognizes the small file count (3 files) and launches exactly 1 code-simplifier agent rather than multiple.",
+        "reason": "The assertion calls 3 files a 'small file count' but the response correctly classifies this as a medium-sized feature on the Standard Track — meaning the response doesn't actually 'recognize small file count,' it recognizes medium complexity. The assertion passes only on the behavioral half (exactly 1 simplifier). Consider rephrasing to 'launches exactly 1 code-simplifier agent (not 0, not multiple) regardless of track classification' to make the discriminating criterion explicit and avoid the misleading 'small' framing."
+      },
+      {
+        "reason": "No assertion checks whether the code-reviewer agents are launched in parallel (a meaningful skill requirement for Standard Track). A response that launched 3 sequential reviewers would pass all current assertions but violate the skill's intent. Consider adding: 'On Standard Track, code-reviewer agents are launched concurrently/in parallel rather than sequentially.'"
+      }
+    ],
+    "overall": "The assertions cover the most important structural behaviors well. The main gaps are: (1) the 'small file count' framing in assertion 2 doesn't match what the response actually does (it uses Standard Track for medium complexity), and (2) no assertion tests whether the code-reviewers run in parallel vs. sequentially, which is a meaningful Standard Track requirement."
+  }
+}

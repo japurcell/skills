@@ -90,10 +90,11 @@
     {
       "id": 4,
       "prompt": "You've just finished implementing a medium-sized feature — you added a caching layer across three service files in a Python web app. Walk me through Phase 6 quality review using the feature-dev workflow. Name the exact subagents you launch, what each one is told to focus on, and in what order you run them.",
-      "expected_output": "A concrete Phase 6 walkthrough that names code-simplifier and code-reviewer as distinct subagents, each with a stated focus and an explicit ordering relative to each other.",
+      "expected_output": "A concrete Phase 6 walkthrough that names code-simplifier and code-reviewer as distinct subagents, each with a stated focus and an explicit ordering relative to each other. Since only 3 files changed, a single code-simplifier agent is used.",
       "files": [],
       "expectations": [
         "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+        "Recognizes the small file count (3 files) and launches exactly 1 code-simplifier agent rather than multiple.",
         "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
         "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
         "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
@@ -101,6 +102,7 @@
       ],
       "assertions": [
         "Names code-simplifier as a dedicated subagent launched after implementation to find refactoring opportunities.",
+        "Recognizes the small file count (3 files) and launches exactly 1 code-simplifier agent rather than multiple.",
         "Names one or more code-reviewer subagents launched for quality review, each with a stated focus (e.g. simplicity, correctness, conventions).",
         "Places the code-simplifier pass before or alongside the code-reviewer pass, not after it.",
         "Gives each subagent a concrete focus description, not just a generic 'review the code' instruction.",
@@ -163,6 +165,46 @@
         "The reference card shows code-simplifier executed before code-reviewer (not after, not as a merged step).",
         "The card does not describe Phase 6 as exclusively code-reviewer agents with no simplifier step.",
         "The card attributes these steps to the workflow's Phase 6 specification, not personal preference."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "You've just implemented a large authentication overhaul touching 18 files across three directories: auth/ (7 files), middleware/ (6 files), and tests/ (5 files). Walk me through Phase 6 quality review using the feature-dev workflow — specifically explain how many code-simplifier agents you launch, how you partition the files, and what you do to prevent conflicts.",
+      "expected_output": "A Phase 6 walkthrough that correctly identifies this as a large change (>5 files), launches multiple code-simplifier agents with non-overlapping file partitions (one per directory or logical cluster), and explicitly states the no-overlap constraint to prevent conflicting writes.",
+      "files": [],
+      "expectations": [
+        "Identifies this as a large change (18 files, >5) and scales to multiple code-simplifier agents rather than a single agent.",
+        "Partitions the 18 files into non-overlapping groups — e.g., one agent per directory (auth/, middleware/, tests/) — so each file goes to exactly one agent.",
+        "Explicitly states that no file may appear in more than one agent's scope to prevent conflicting edits.",
+        "Launches the multiple code-simplifier agents in parallel (not sequentially).",
+        "Still launches code-reviewer agents as a separate step after the code-simplifier pass."
+      ],
+      "assertions": [
+        "Identifies this as a large change (18 files, >5) and scales to multiple code-simplifier agents rather than a single agent.",
+        "Partitions the 18 files into non-overlapping groups — e.g., one agent per directory (auth/, middleware/, tests/) — so each file goes to exactly one agent.",
+        "Explicitly states that no file may appear in more than one agent's scope to prevent conflicting edits.",
+        "Launches the multiple code-simplifier agents in parallel (not sequentially).",
+        "Still launches code-reviewer agents as a separate step after the code-simplifier pass."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "You are planning Phase 6 quality review for two scenarios: (A) a change that modified 3 files, and (B) a change that modified 12 files spread across two packages. Using the feature-dev workflow, explain how the code-simplifier step differs between these two scenarios and why.",
+      "expected_output": "A comparison showing 1 code-simplifier agent for scenario A (≤5 files) and multiple non-overlapping agents for scenario B (>5 files), with the threshold explained and conflict-prevention reasoning given for scenario B.",
+      "files": [],
+      "expectations": [
+        "For scenario A (3 files), correctly uses 1 code-simplifier agent.",
+        "For scenario B (12 files), uses multiple code-simplifier agents rather than 1.",
+        "Explains that the difference stems from the file count crossing the scaling threshold defined in the workflow.",
+        "For scenario B, describes partitioning the 12 files into non-overlapping groups assigned to separate agents.",
+        "For scenario B, explains that non-overlapping partitioning is required to prevent conflicting writes."
+      ],
+      "assertions": [
+        "For scenario A (3 files), correctly uses 1 code-simplifier agent.",
+        "For scenario B (12 files), uses multiple code-simplifier agents rather than 1.",
+        "Explains that the difference stems from the file count crossing the scaling threshold defined in the workflow.",
+        "For scenario B, describes partitioning the 12 files into non-overlapping groups assigned to separate agents.",
+        "For scenario B, explains that non-overlapping partitioning is required to prevent conflicting writes."
       ]
     }
   ]

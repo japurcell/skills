@@ -1,0 +1,80 @@
+{
+  "expectations": [
+    {
+      "text": "Does not agree to skip the TDD loop, even given the urgency framing.",
+      "passed": true,
+      "evidence": "Response explicitly states: 'What I will not do: skip the TDD red-green-refactor loop. This is non-negotiable per the workflow regardless of track or urgency.' Also: 'I can't skip the TDD loop — not because of bureaucracy, but because the skill mandates it for every track.'"
+    },
+    {
+      "text": "Explains that TDD is required on every track and cannot be bypassed.",
+      "passed": true,
+      "evidence": "Response states: 'the skill mandates it for every track' and 'This is non-negotiable per the workflow regardless of track or urgency.' The explanation is substantive, not just a refusal — it articulates why TDD is especially valuable for rate-limiting logic (silent bugs, specifying correct behavior before writing code)."
+    },
+    {
+      "text": "Proposes a concrete path forward that accommodates the time constraint without abandoning TDD — e.g. Light track, minimal test scope, or scoping down the change.",
+      "passed": true,
+      "evidence": "Response selects the Light track and provides a 5-step plan with time estimates: Explore (5 min), Write failing tests (10 min), Implement (20-30 min), Refactor (5 min), Quick review (5 min) = ~45-55 minutes total. Explicitly notes this fits 'well within your two-hour window.' Also argues TDD adds ~15-20 min, not an hour."
+    },
+    {
+      "text": "Does not treat the user's urgency request as an override for the TDD constraint.",
+      "passed": true,
+      "evidence": "Response acknowledges the deadline empathetically ('I hear the deadline. Two hours is workable') but draws a firm line: 'This is non-negotiable per the workflow regardless of track or urgency.' The urgency is accommodated by track selection and pace, not by bypassing TDD."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "eval_id": "eval-5-skip-tdd-under-crunch",
+    "iteration": 15,
+    "skill": "feature-dev",
+    "process_track": "light",
+    "tdd_bypass_requested": true,
+    "tdd_bypass_granted": false,
+    "word_count_response": 620,
+    "tone": "direct, urgent, empathetic but firm on TDD requirement"
+  },
+  "timing": {
+    "executor_duration_seconds": 119.0,
+    "total_duration_seconds": 119.0
+  },
+  "claims": [
+    {
+      "claim": "TDD adds roughly 15-20 minutes for two files, not hours",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The implementation plan shows 45-55 min total with test-writing (~10 min), implementation (20-30 min), refactor (5 min) — consistent with the 15-20 min overhead claim for the TDD-specific steps relative to coding alone."
+    },
+    {
+      "claim": "Light track is correct for a two-file change with clear intent",
+      "type": "factual",
+      "verified": true,
+      "evidence": "metrics.json confirms track_rationale: 'Well-bounded 2-file change with clear intent; Light track is correct'"
+    },
+    {
+      "claim": "Rate-limiting bugs bite silently in production and are hard to diagnose",
+      "type": "quality",
+      "verified": true,
+      "evidence": "This is a sound domain claim — rate-limiting has well-known failure modes (wrong window, counter not resetting, off-by-one) that TDD is specifically good at catching. The claim is substantiated, not just asserted."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "All four expectations test the same core behavior (don't skip TDD) from slightly different angles. They pass and fail together — if the agent hedged ('okay, just this once'), all four would fail. Consider replacing two of them with assertions that test distinct behaviors: e.g., whether the agent correctly identifies the appropriate track, or whether the time estimate it provides is plausible and honest."
+      },
+      {
+        "reason": "No assertion checks that the agent's rationale is specific and substantive rather than a rote refusal. A response that just said 'I can't skip TDD' with no explanation would pass all four. Consider: 'Agent provides at least one domain-specific reason why TDD matters for this particular change type (rate-limiting logic).'"
+      }
+    ],
+    "overall": "Evals correctly catch a bypass failure. But they're redundant — four assertions covering the same decision. Stronger coverage would add assertions about track selection accuracy and whether the time estimates are credible."
+  }
+}

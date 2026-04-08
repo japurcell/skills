@@ -1,0 +1,87 @@
+{
+  "expectations": [
+    {
+      "text": "References the feature-dev skill's Phase 6 steps directly rather than answering generically.",
+      "passed": true,
+      "evidence": "The response explicitly names 'Phase 6 of the feature-dev skill' multiple times and quotes its verbatim instructions: 'Action 1: Always launch an independent code-simplifier subagent...' and 'Action 2: Always run independent code-reviewer agents...'. The verdict is grounded entirely in Phase 6, not generic advice."
+    },
+    {
+      "text": "Identifies that code-simplifier and code-reviewer are required as separate, distinct subagents.",
+      "passed": true,
+      "evidence": "The response states both in the setup ('two distinct subagent steps') and the conclusion ('Continue running code-simplifier and code-reviewer as separate, independent steps per Phase 6'). The 'always independent' mandate is cited explicitly as the basis for rejection."
+    },
+    {
+      "text": "Explains why merging them into a single pass would undermine the workflow's intent.",
+      "passed": true,
+      "evidence": "The response gives three concrete reasons: (1) weakened focus — 'one agent serving two masters'; (2) lost parallelism on Standard/Deep tracks; (3) direct violation of the 'always independent' mandate. It also distinguishes the cognitive modes of each role (elegance/DRY vs correctness/security)."
+    },
+    {
+      "text": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+      "passed": true,
+      "evidence": "The response quotes Phase 6's ordering with code-simplifier as Action 1 and code-reviewer as Action 2, clearly establishing that code-simplifier precedes code-reviewer. The ordering is structurally implied through the quoted phase steps, though the response never explicitly says 'not after'. This is sufficient to satisfy the expectation since the Action 1/Action 2 structure unambiguously shows the sequence."
+    },
+    {
+      "text": "Does not approve the merger even when it is framed as a time-saving optimization.",
+      "passed": true,
+      "evidence": "The response directly engages the time-saving framing and rejects it: 'The time savings are real but misapplied.' The final verdict is unambiguous: 'Reject the proposal as written.' It even suggests the correct alternative (track-level selection) rather than conceding any ground to the merger."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "total_tool_calls": 4,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 3223
+  },
+  "timing": {
+    "total_duration_seconds": 63.0
+  },
+  "claims": [
+    {
+      "claim": "Phase 6 uses the word 'independent' deliberately in both steps",
+      "type": "factual",
+      "verified": true,
+      "evidence": "The quoted Phase 6 text includes 'independent' in both Action 1 ('independent code-simplifier subagent') and Action 2 ('independent code-reviewer agents'), consistent with the claim."
+    },
+    {
+      "claim": "Standard/Deep tracks run multiple parallel code-reviewer agents with different focus areas",
+      "type": "factual",
+      "verified": true,
+      "evidence": "The response states 'The skill explicitly instructs launching multiple independent code-reviewer agents in parallel on Standard and Deep tracks, each with a different focus (simplicity, correctness, conventions).' This is consistent with the feature-dev skill structure and is cited as a specific reason the merger causes harm."
+    },
+    {
+      "claim": "Phase 6 opens with 'Always launch' and 'Always run' — no conditional paths allow skipping or merging",
+      "type": "factual",
+      "verified": true,
+      "evidence": "The quoted text from Phase 6 uses exactly 'Always launch' and 'Always run', consistent with the claim of non-negotiability."
+    },
+    {
+      "claim": "A combined agent must trade off depth in one area to cover the other",
+      "type": "quality",
+      "verified": true,
+      "evidence": "This is a reasonable quality claim about cognitive specialization that follows logically from the two agents having different mandates; it is not contradicted by any observable output."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Correctly states that code-simplifier runs before or alongside code-reviewer, not after.",
+        "reason": "This expectation passes here because the Action 1/Action 2 ordering implies sequence, but the response never explicitly says 'code-simplifier must not run after code-reviewer.' A weaker answer that just listed both agents in reverse order would likely also pass this assertion. Consider requiring the response to explicitly address the temporal constraint."
+      },
+      {
+        "reason": "No assertion checks whether the response correctly handles track-level nuance — e.g., whether it recognizes that Light track behavior differs from Standard/Deep with respect to parallelism. The response handled this well, but it went unverified by any assertion."
+      }
+    ],
+    "overall": "The evals are well-targeted and cover the core rejection requirements. The ordering assertion (expectation 4) is the weakest — it would pass for any response that quotes Phase 6 in order, even without explicitly addressing the 'not after' constraint."
+  }
+}
