@@ -22,7 +22,7 @@ You receive these parameters in your prompt:
    - Find relevant version-specific guidance and migration concerns.
    - Capture common pitfalls, performance considerations, and security implications.
 3. Launch 2-3 code-explorer agents in parallel. Each agent should:
-   - Read `agents/code-explorer.agent.md`.
+   - Read [agents/code-explorer.agent.md](agents/code-explorer.agent.md).
    - Trace abstractions and flow of control end-to-end.
    - Focus on different angles (similar features, architecture boundaries, data flow, testing patterns, UX behavior, etc.).
    - Return a list of 5-10 key files and symbols.

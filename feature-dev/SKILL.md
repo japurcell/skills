@@ -28,7 +28,7 @@ Choose one track up front and say which you chose.
 
 Well-bounded, medium-sized changes where the main risk is understanding local code context.
 
-- Focused self-exploration or 1 targeted [code-explorer](agents/code-explorer.md) agent.
+- Focused self-exploration or 1 targeted [code-explorer](agents/code-explorer.agent.md) agent.
 - Ask questions only if something is genuinely blocking.
 - One recommended approach; implement once you have enough context.
 
@@ -36,7 +36,7 @@ Well-bounded, medium-sized changes where the main risk is understanding local co
 
 Medium-sized work touching several files, with some ambiguity or a non-trivial design choice.
 
-- 2 [code-explorer](agents/code-explorer.md) agents in parallel.
+- 2 [code-explorer](agents/code-explorer.agent.md) agents in parallel.
 - Targeted clarifying questions after exploration.
 - Present a recommendation with key trade-offs; implement after blockers are resolved.
 
@@ -44,7 +44,7 @@ Medium-sized work touching several files, with some ambiguity or a non-trivial d
 
 Large, risky, cross-cutting, or highly ambiguous work.
 
-- 2–3 code-explorer agents in parallel covering different angles.
+- 2–3 [code-explorer](agents/code-explorer.agent.md) agents in parallel covering different angles.
 - Gather and organize all blocking questions.
 - Present multiple approaches when trade-offs are meaningful; confirm direction before major implementation.
 
@@ -81,9 +81,9 @@ Initial request: $ARGUMENTS
 **Goal**: Understand relevant existing code and patterns at both high and low levels.
 
 1. Scale exploration to the chosen track:
-   - Light: direct exploration or 1 [code-explorer](agents/code-explorer.md) agent
-   - Standard: 2 code-explorer agents in parallel
-   - Deep: 2–3 code-explorer agents in parallel covering different angles
+   - Light: direct exploration or 1 [code-explorer](agents/code-explorer.agent.md) agent
+   - Standard: 2 [code-explorer](agents/code-explorer.agent.md) agents in parallel
+   - Deep: 2–3 [code-explorer](agents/code-explorer.agent.md) agents in parallel covering different angles
 
 2. Each agent should trace through the code comprehensively, focus on abstractions and flow of control, target a different aspect of the codebase (e.g., similar features, architecture, UX, testing, extension points), and return a list of 5–10 key files to read.
 
@@ -111,7 +111,7 @@ If the user says "whatever you think is best", provide your recommendation and g
 1. Scale to the chosen track:
    - Light: one concrete approach with brief rationale
    - Standard: compare 1–2 viable approaches if there is a real decision to make
-   - Deep: 2–3 [code-architect](agents/code-architect.md) agents in parallel (e.g., minimal changes, clean architecture, pragmatic balance)
+   - Deep: 2–3 [code-architect](agents/code-architect.agent.md) agents in parallel (e.g., minimal changes, clean architecture, pragmatic balance)
 2. Present a recommendation; include multiple options only when the choice is meaningful.
 3. Ask the user to choose only when there is a real product or architectural fork; otherwise recommend the best path and proceed.
 
@@ -139,7 +139,7 @@ If the user says "whatever you think is best", provide your recommendation and g
    - **≤5 files**: launch 1 agent covering all changed files
    - **>5 files**: partition files into non-overlapping groups (by module, directory, or logical area) and launch one agent per group in parallel. Each file must appear in exactly one agent's scope — overlapping scopes cause conflicting writes.
 
-2. **Always** run independent [code-reviewer](agents/code-reviewer.md) agents for quality review on every track:
+2. **Always** run independent [code-reviewer](agents/code-reviewer.agent.md) agents for quality review on every track:
    - Light: at least one code-reviewer agent
    - Standard or Deep: multiple code-reviewer agents in parallel with different focuses (e.g., simplicity, correctness, conventions)
 
