@@ -26,7 +26,7 @@ Reduce technical debt by removing duplicated logic and consolidating repeated pa
 
 ## Step 2: Find Duplication Across the Codebase
 
-Spawn three subagents to search for duplication against the shortlist, using patterns appropriate to the repository language mix.
+Spawn three [agents/code-explorer.agent.md](agents/code-explorer.agent.md) subagents to search for duplication against the shortlist, using patterns appropriate to the repository language mix.
 
 1. Use fast textual search (`rg`) to find repeated literals, conditionals, SQL snippets, HTTP request patterns, serialization/parsing logic, validation branches, and error handling blocks.
 2. Compare nearby architecture patterns by file role, not framework name:
