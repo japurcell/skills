@@ -1,2 +1,0 @@
-Generated using the controlling workflow in /home/adam/.agents/skills/implement-plan/SKILL.md.
-Derived a stable review scope from the provided git status: reviewed docs/new.md and src/a.ts; excluded deleted src/legacy.ts and .gitignore per the skill's code review rules.

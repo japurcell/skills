@@ -1,3 +1,0 @@
-- Controlling workflow source: `/home/adam/.agents/skills/implement-plan-workspace/iteration-8/skill-snapshot/SKILL.md`
-- Evaluated scenario: `/implement-plan` with `plan_file=.agents/scratchpad/feature-export/plan.md`, assuming `plan.md` exists and `tasks.md` is missing.
-- Response follows the skill's required section contract and stops at the prerequisite-validation failure triggered during implementation context loading.

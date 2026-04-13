@@ -1,3 +1,0 @@
-- Controlling workflow read from /home/adam/.agents/skills/implement-plan-workspace/iteration-8/skill-snapshot/SKILL.md.
-- Reviewer handoff read from /home/adam/.agents/skills/implement-plan-workspace/iteration-8/skill-snapshot/agents/code-reviewer.agent.md.
-- Response treats controller review_scope_files as authoritative, flags docs/notes.md as missing, flags scripts/helper.sh as extra, and keeps review status INCOMPLETE/FAIL pending reconciliation or explicit deferment.

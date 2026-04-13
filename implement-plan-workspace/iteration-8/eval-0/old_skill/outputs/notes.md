@@ -1,3 +1,0 @@
-- Loaded the controlling workflow from iteration-8 skill-snapshot SKILL.md.
-- Used the incomplete-checklist gate path for feature-auth: ux.md passes, test.md has 3 incomplete items.
-- Emitted the exact required gate question and a paused-until-reply next-step note.

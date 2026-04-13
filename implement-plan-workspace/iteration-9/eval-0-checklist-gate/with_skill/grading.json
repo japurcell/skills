@@ -1,0 +1,25 @@
+{
+  "expectations": [
+    {
+      "text": "Includes a checklist status table with columns Checklist, Total, Completed, Incomplete, and Status",
+      "passed": true,
+      "evidence": "Found checklist status table with required columns"
+    },
+    {
+      "text": "Includes the exact gate question: Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)",
+      "passed": true,
+      "evidence": "Found exact gate question text"
+    },
+    {
+      "text": "States that execution pauses or halts pending user confirmation",
+      "passed": true,
+      "evidence": "Response halts with yes/no prompt (implicit or explicit pause)"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  }
+}

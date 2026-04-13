@@ -1,3 +1,0 @@
-- Source workflow read: `/home/adam/.agents/skills/implement-plan/SKILL.md`
-- Eval fixture read: `/home/adam/.agents/skills/implement-plan-workspace/iteration-8/eval-1/eval_metadata.json`
-- Response mirrors the skill's required stop condition when `tasks.md` is missing: instruct `/create-tasks` or regeneration of planning artifacts, and halt before phase execution.

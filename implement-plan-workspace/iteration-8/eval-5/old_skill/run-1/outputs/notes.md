@@ -1,3 +1,0 @@
-- Generated from `/home/adam/.agents/skills/implement-plan-workspace/iteration-8/skill-snapshot/SKILL.md` for eval `prevent-review-scope-drift`.
-- Used `eval_metadata.json` prompt assumptions for staged, unstaged, and untracked files because `.agents/scratchpad/feature-scope-drift/plan.md` and related artifacts were not present in the workspace.
-- Response enforces authoritative `review_scope_files`, rejects subagent scope narrowing, reports missing files, and marks review completion incomplete/fail.

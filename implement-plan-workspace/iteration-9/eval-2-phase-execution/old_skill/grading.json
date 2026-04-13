@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+      "passed": false,
+      "evidence": "Only found 1/5 sections"
+    },
+    {
+      "text": "Explains that [P] tasks can run in parallel only when touched file paths do not overlap",
+      "passed": true,
+      "evidence": "Found parallel task explanation"
+    },
+    {
+      "text": "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+      "passed": true,
+      "evidence": "Found checkpoint decision format"
+    },
+    {
+      "text": "References TDD-first ordering where test tasks run before their corresponding implementation tasks",
+      "passed": true,
+      "evidence": "Found TDD-first ordering reference"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  }
+}
