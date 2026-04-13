@@ -1,6 +1,7 @@
 ---
 name: issue-to-spec
 description: Convert a GitHub issue into a planning-ready spec and requirements checklist by collecting issue context (including comments), extracting problem/constraints, and delegating spec drafting to create-spec. Use this whenever a user asks to turn an issue/ticket into a spec, PRD-style requirements, or planning input, even if they do not explicitly say "spec".
+argument-hint: "github_issue: 123, repo: owner/repo"
 disable-model-invocation: true
 ---
 
