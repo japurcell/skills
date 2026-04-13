@@ -26,12 +26,13 @@
     {
       "id": 2,
       "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-notify/plan.md. Assume all checklists pass, tasks.md has Setup, Tests, Core, Integration, Polish phases with mixed [P] markers and overlapping file paths. Produce a concise execution handoff format for one phase plus the checkpoint criteria before moving to the next phase.",
-      "expected_output": "The run provides explicit phase handoff details, safe parallelization rules, and checkpoint validation requirements before advancing.",
+      "expected_output": "The run provides explicit phase handoff details, safe parallelization rules, TDD ordering, and checkpoint validation requirements before advancing.",
       "files": [],
       "expectations": [
-        "Includes all five output sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+        "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
         "Explains that [P] tasks can run in parallel only when touched file paths do not overlap",
-        "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing"
+        "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+        "References TDD-first ordering where test tasks run before their corresponding implementation tasks"
       ]
     },
     {
@@ -81,6 +82,29 @@
         "Identifies mismatch between reviewer-reported lists and authoritative scope",
         "Reports missing and extra files based on reconciliation",
         "Marks completion as INCOMPLETE until mismatch is resolved or explicitly deferred/approved"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-dashboard/plan.md. Assume all checklists pass. tasks.md has 15 tasks across Setup, Tests, Core, Integration, and Polish phases. Tasks T001-T006 are already marked [X] (complete) — these cover all of Setup and the first two tasks of Tests phase. Show how you handle resuming from this partially completed state.",
+      "expected_output": "The run detects completed tasks, skips them, reports a resumption summary with completed vs remaining counts, and begins execution from the first incomplete task.",
+      "files": [],
+      "expectations": [
+        "Identifies that tasks T001-T006 are already marked complete",
+        "Reports a count or summary of completed vs remaining tasks",
+        "Does not re-execute already completed tasks",
+        "Begins execution from the first incomplete task in the current phase"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-api/plan.md. Assume all checklists pass. In the Core phase, tasks.md lists T007 (write API endpoint tests in tests/api_test.py) and T008 (implement API endpoint in src/api/routes.py). Both are sequential tasks in the Core phase. Show the execution plan for this phase, specifically explaining the ordering of these two tasks.",
+      "expected_output": "The run executes the test task T007 before the implementation task T008, following the TDD-first approach where tests are written before the code they verify.",
+      "files": [],
+      "expectations": [
+        "Executes or plans to execute test task T007 before implementation task T008",
+        "References TDD-first or test-first approach as the reason for this ordering",
+        "Does not execute T008 before its corresponding test task T007 completes"
       ]
     }
   ]
