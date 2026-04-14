@@ -1,6 +1,6 @@
 ---
 name: commit-to-pr
-description: Finalize local repository work into a reviewable pull request: inspect git status, create or reuse the right branch, commit with an issue-linked conventional message, push to origin, and open a PR with `gh pr create`. Use this whenever the user asks to "commit and open a PR", "turn this into a PR", "push and make a pull request", or any equivalent wording even if they do not explicitly mention git/gh command details.
+description: 'Finalize local repository work into a reviewable pull request: inspect git status, create or reuse the right branch, commit with an issue-linked conventional message, push to origin, and open a PR with `gh pr create`. Use this whenever the user asks to "commit and open a PR", "turn this into a PR", "push and make a pull request", or any equivalent wording even if they do not explicitly mention git/gh command details.'
 argument-hint: "spec_file: path/to/spec.yaml, issue_numbers: [123, 456], base_branch: main, feature_branch: feat/123-new-feature"
 disable-model-invocation: true
 ---

@@ -1,6 +1,7 @@
 ---
 name: create-tasks
 description: Generate an actionable, dependency-ordered tasks.md for a feature using available design artifacts. Use this skill whenever the user asks to create a task list, implementation checklist, execution plan, or phase-by-phase build steps from spec/plan documents, even if they do not explicitly mention tasks.md.
+argument-hint: "plan_file: .agents/scratchpad/<feature>/plan.md"
 disable-model-invocation: true
 ---
 
@@ -10,7 +11,16 @@ disable-model-invocation: true
 
 You receive these parameters in your prompt:
 
-- **plan_file** (required): The path to the plan file to implement.
+- **plan_file** (optional): The path to the plan file to implement.
+
+### Inferring plan_file
+
+When `plan_file` is not explicitly provided, resolve it from context before proceeding:
+
+1. **Conversation context**: Check whether a plan file was recently created or mentioned in the current session (e.g., output from `create-plan`). Use that path if found.
+2. **Ask the user**: If no candidate is found after the steps above, ask which plan file to use.
+
+If the resolved file is unreadable or does not contain actionable planning content, stop and return a blocking error.
 
 ## Context
 

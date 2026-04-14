@@ -1,6 +1,7 @@
 ---
 name: create-plan
 description: Build complete implementation plans from a feature spec using the plan template, producing phase artifacts and a readiness report. Use this whenever the user asks for implementation planning, architecture planning, research-before-build, or preparation for task breakdown (even if they do not explicitly say "create-plan").
+argument-hint: "spec_file: .agents/scratchpad/<feature>/spec.md"
 ---
 
 # Create implementation plan
@@ -12,9 +13,16 @@ The goal is to reduce ambiguity before coding and produce outputs that can be co
 
 You receive these parameters in your prompt:
 
-- **spec_file** (required): The path to the spec file that contains the requirements.
+- **spec_file** (optional): The path to the spec file that contains the requirements.
 
-If `spec_file` is missing, unreadable, or does not contain actionable requirements, stop and return a blocking error.
+### Inferring spec_file
+
+When `spec_file` is not explicitly provided, resolve it from context before proceeding:
+
+1. **Conversation context**: Check whether a spec file was recently created or mentioned in the current session (e.g., output from `create-spec` or `issue-to-spec`). Use that path if found.
+2. **Ask the user**: If no candidate is found after the steps above, ask which spec file to use.
+
+If the resolved file is unreadable or does not contain actionable requirements, stop and return a blocking error.
 
 ## Steps
 

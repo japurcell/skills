@@ -1,6 +1,7 @@
 ---
 name: implement-plan
 description: Execute or resume an existing implementation plan end-to-end. Use this skill whenever the user wants to implement, build, or start coding from an already-created plan — common phrases include "implement the plan", "execute it", "build the thing", "run through the tasks", "pick up where I left off", or "continue implementing from tasks.md". Triggers on references to plan.md or tasks.md combined with action intent, or when the user says they ran create-plan / create-tasks and now want execution. Handles checklist gating, phase-by-phase task execution with dependency-aware parallelization, TDD-first delivery, progress checkboxes, code review orchestration, and completion validation. Do NOT use when the user wants to create or revise a plan (use create-plan), generate task breakdowns (use create-tasks), or do standalone code review, refactoring, or debugging without a plan.
+argument-hint: "plan_file: .agents/scratchpad/<feature>/plan.md"
 disable-model-invocation: true
 ---
 
@@ -12,7 +13,16 @@ The pipeline is **resumable** — if execution was interrupted, already-complete
 
 ## Inputs
 
-- **plan_file** (required): The path to the plan file to implement.
+- **plan_file** (optional): The path to the plan file to implement.
+
+### Inferring plan_file
+
+When `plan_file` is not explicitly provided, resolve it from context before proceeding:
+
+1. **Conversation context**: Check whether a plan file was recently created or mentioned in the current session (e.g., output from `create-plan` or `create-tasks`). Use that path if found.
+2. **Ask the user**: If no candidate is found after the steps above, ask which plan file to use.
+
+If the resolved file is unreadable or does not contain actionable planning content, stop and return a blocking error.
 
 ## Progress reporting
 
@@ -87,14 +97,14 @@ A `[X]` checkmark in `tasks.md` is a permanent promise that the task's work is d
 
 Before marking any task `[X]`, run a concrete verification step that matches the task type:
 
-| Task type | Verification | What counts as success |
-|---|---|---|
-| **Code implementation** | Build/compile/lint the changed files, then run related tests | No errors from build/lint, and any pre-existing tests for the touched code pass |
-| **TDD test writing** (RED step) | Run the new tests | Tests fail for the intended reason — a clean RED result. In TDD-first (Tests phase before Core), module-not-found errors are expected and count as clean RED because the implementation doesn't exist yet. A test that errors out due to syntax problems *in the test file itself* is not a clean RED. |
-| **Bug-fix / regression tests** | Run the tests after the fix is applied | Tests pass |
-| **Config / infra / schema** | Validate the artifact parses and applies | Config loads without errors, schema is valid, service starts |
-| **Docs / non-code** | Confirm the file exists and is non-empty | File is present with substantive content |
-| **Refactor** | Run the existing test suite for the affected area | All previously-passing tests still pass |
+| Task type                       | Verification                                                 | What counts as success                                                                                                                                                                                                                                                                                 |
+| ------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Code implementation**         | Build/compile/lint the changed files, then run related tests | No errors from build/lint, and any pre-existing tests for the touched code pass                                                                                                                                                                                                                        |
+| **TDD test writing** (RED step) | Run the new tests                                            | Tests fail for the intended reason — a clean RED result. In TDD-first (Tests phase before Core), module-not-found errors are expected and count as clean RED because the implementation doesn't exist yet. A test that errors out due to syntax problems _in the test file itself_ is not a clean RED. |
+| **Bug-fix / regression tests**  | Run the tests after the fix is applied                       | Tests pass                                                                                                                                                                                                                                                                                             |
+| **Config / infra / schema**     | Validate the artifact parses and applies                     | Config loads without errors, schema is valid, service starts                                                                                                                                                                                                                                           |
+| **Docs / non-code**             | Confirm the file exists and is non-empty                     | File is present with substantive content                                                                                                                                                                                                                                                               |
+| **Refactor**                    | Run the existing test suite for the affected area            | All previously-passing tests still pass                                                                                                                                                                                                                                                                |
 
 If none of these categories fit, use the **fallback rule**: find the nearest concrete validation command or artifact check for the task. If no validation exists at all, do NOT mark `[X]` — instead leave the task `[ ]`, report it as "completed but unverified" in the phase checkpoint, and let the user decide.
 
