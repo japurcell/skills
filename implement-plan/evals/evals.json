@@ -130,6 +130,54 @@
         "Explains the scaling rule that >5 files triggers multiple code-simplifier agents",
         "Also launches code-reviewer subagents (3 with distinct lenses)"
       ]
+    },
+    {
+      "id": 11,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-search/plan.md. All checklists pass. You are in the Core phase executing task T005: 'Implement full-text search endpoint in src/api/search.ts'. You wrote the code, but when you run `npm run build`, the TypeScript compiler reports: 'error TS2345: Argument of type string is not assignable to parameter of type SearchQuery' in src/api/search.ts line 42. The build fails. Show exactly how you handle this task's status in tasks.md and what you report.",
+      "expected_output": "The task stays [ ] because build verification failed. The response reports the error, does not mark the task [X], and enters error recovery.",
+      "files": [],
+      "expectations": [
+        "Does NOT mark task T005 as [X] or completed in tasks.md",
+        "Explicitly states the task remains [ ] or unchecked because verification failed",
+        "Reports the TypeScript compilation error with context",
+        "Enters error recovery: halts the phase and suggests next steps (fix the type error, etc.)"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-auth/plan.md. All checklists pass. You are in the Tests phase executing task T003: 'Write unit tests for JWT token validation in tests/auth/jwt.test.ts' (this is a TDD RED step — the implementation doesn't exist yet). You wrote 4 test cases. When you run `npm test -- tests/auth/jwt.test.ts`, the tests execute and all 4 fail with 'Error: Cannot find module src/auth/jwt'. This is the expected TDD RED result — the tests are correct but the implementation doesn't exist yet. Show how you handle this task's completion status.",
+      "expected_output": "The task IS marked [X] because this is a TDD test-writing task and the tests correctly fail (clean RED). The response explains TDD-first verification.",
+      "files": [],
+      "expectations": [
+        "Marks task T003 as [X] or completed because a clean TDD RED failure is a successful test-writing outcome",
+        "Distinguishes between a clean RED failure (tests fail for the intended reason) and a broken test (syntax errors, import crashes)",
+        "References TDD-first or RED-GREEN workflow as the reason this counts as success",
+        "Does NOT treat the test failures as an error that blocks progress"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-export/plan.md. All checklists pass. You are in the Core phase. Task T006 is 'Implement CSV export in src/export/csv.ts'. You wrote the code. The build passes. But when you run the existing tests with `npm test -- tests/export/csv.test.ts`, 2 out of 5 tests fail: 'Expected header row to include column Timestamp' and 'Expected delimiter to be semicolon for EU locale'. You think these test failures are probably from edge cases you can fix later. Show how you handle this task's status.",
+      "expected_output": "The task stays [ ] because test verification failed, regardless of whether the failures seem minor. No speculative completion.",
+      "files": [],
+      "expectations": [
+        "Does NOT mark task T006 as [X] because related tests are failing",
+        "Does not rationalize or minimize the test failures as 'minor' or 'fixable later'",
+        "Reports the specific test failures with context",
+        "Enters error recovery or suggests fixing the failing tests before marking complete"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-notifications/plan.md. All checklists pass. You just finished the Core phase. Tasks T004 (implement notification service), T005 (implement email adapter), and T006 (implement push adapter) are all marked [X]. At the phase checkpoint, you run the test suite and discover that tests/notifications/push.test.ts has 2 failures: 'Expected push notification to include title field' and 'Expected retry count to be 3'. Show exactly what happens at this checkpoint.",
+      "expected_output": "The checkpoint catches the discrepancy — T006 was marked [X] but its tests are now failing. The checkpoint reverts T006 to [ ] and reports the integrity error.",
+      "files": [],
+      "expectations": [
+        "Detects that task T006's associated tests are now failing despite being marked [X]",
+        "Reverts or flags T006 as no longer complete (removes the [X] or reports it as a checkpoint integrity error)",
+        "Reports the specific test failures tied to T006",
+        "Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not a clean PASS"
+      ]
     }
   ]
 }

@@ -81,22 +81,43 @@ Execute phases in order: Setup → Tests → Core → Integration → Polish. Ea
 - Sequential tasks run in declared order. If a non-parallel task fails, halt the phase.
 - If one parallel task fails, continue the still-independent parallel work and report the failure.
 
-**Task tracking:** Mark each completed task as `[X]` in `tasks.md` immediately after it succeeds. These checkmarks are the source of truth for resumption — if execution is interrupted, they tell the next run what's already done.
+**Task tracking — verify then mark:**
 
-**Error recovery:** When a task fails:
+A `[X]` checkmark in `tasks.md` is a permanent promise that the task's work is done and verified. Since checkmarks are the source of truth for resumption, a premature `[X]` on a broken task means the next run will skip it and build on a broken foundation. This makes verification before marking essential — not optional, not deferrable.
+
+Before marking any task `[X]`, run a concrete verification step that matches the task type:
+
+| Task type | Verification | What counts as success |
+|---|---|---|
+| **Code implementation** | Build/compile/lint the changed files, then run related tests | No errors from build/lint, and any pre-existing tests for the touched code pass |
+| **TDD test writing** (RED step) | Run the new tests | Tests fail for the intended reason — a clean RED result. In TDD-first (Tests phase before Core), module-not-found errors are expected and count as clean RED because the implementation doesn't exist yet. A test that errors out due to syntax problems *in the test file itself* is not a clean RED. |
+| **Bug-fix / regression tests** | Run the tests after the fix is applied | Tests pass |
+| **Config / infra / schema** | Validate the artifact parses and applies | Config loads without errors, schema is valid, service starts |
+| **Docs / non-code** | Confirm the file exists and is non-empty | File is present with substantive content |
+| **Refactor** | Run the existing test suite for the affected area | All previously-passing tests still pass |
+
+If none of these categories fit, use the **fallback rule**: find the nearest concrete validation command or artifact check for the task. If no validation exists at all, do NOT mark `[X]` — instead leave the task `[ ]`, report it as "completed but unverified" in the phase checkpoint, and let the user decide.
+
+**Never mark speculative completion.** If a task hit errors that you worked around, partially completed, or deferred for later — it stays `[ ]`. Only clean, verified outcomes earn the checkmark. When in doubt, leave it unchecked; a false `[ ]` is cheap to fix on the next run, but a false `[X]` silently corrupts the resumption state.
+
+**Error recovery:** When a task fails verification or encounters errors during execution:
 
 - Report the failure with context (error message, file, what was attempted).
+- Leave the task as `[ ]` in `tasks.md` — do not mark it `[X]`.
 - For non-parallel tasks, halt the phase and suggest concrete next steps (fix the error, skip the task, or ask the user).
-- For parallel tasks, continue independent work and collect all failures for a consolidated report at the phase checkpoint.
+- For parallel tasks, continue independent work and collect all failures for a consolidated report at the phase checkpoint. Mark a parallel task `[X]` only after its own task-local verification passes. If verification depends on a shared test suite that other parallel tasks also affect, defer marking until the shared validation passes at the phase checkpoint.
 
-**Phase checkpoints:** After each phase, verify the work before moving on:
+**Phase checkpoints:** After each phase, verify the work before moving on. This is a backstop that catches any tasks that were incorrectly marked:
 
 ```text
 Checkpoint Decision
 - Status: PASS | PASS WITH DEFERRED ITEMS | FAIL
 - Evidence: <tasks completed, tests run, files changed, blockers/deferments>
+- Integrity check: <any [X] tasks whose expected outputs are missing or whose tests now fail>
 - Next Action: <advance to next phase | resolve blockers | request user approval>
 ```
+
+Run the full test suite for the phase's scope. If any task marked `[X]` has failing tests or missing expected outputs, flag it as a checkpoint integrity error — revert its `[X]` back to `[ ]` and report the discrepancy before proceeding.
 
 Do not advance unless the checkpoint passes or the user explicitly approves.
 
@@ -140,6 +161,7 @@ After review, consolidate findings and call out the highest-severity issues to f
 Verify the delivered work is complete and correct:
 
 - All required tasks are marked `[X]` in `tasks.md`
+- Cross-check: for each `[X]` task, confirm its expected output files exist and its associated tests pass. If any `[X]` task fails this cross-check, revert it to `[ ]` and report the discrepancy.
 - Delivered features match the specification and technical plan
 - Tests pass and coverage expectations are met
 - Report final status with completed work, blockers, and any deferred items
