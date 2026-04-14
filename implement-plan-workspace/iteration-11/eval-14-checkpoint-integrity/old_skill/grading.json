@@ -1,0 +1,64 @@
+{
+  "expectations": [
+    {
+      "text": "Detects that task T006's associated tests are failing despite being marked [X]",
+      "passed": true,
+      "evidence": "Transcript clearly shows initial test run with 'FAIL tests/notifications/push.test.ts (5 tests, 2 failures)' and states 'Both failures map directly to T006 (implement push adapter)'. The agent explicitly detected that T006 was marked [X] but its tests were failing."
+    },
+    {
+      "text": "Reverts or flags T006 as no longer complete",
+      "passed": true,
+      "evidence": "Transcript explicitly shows: 'T006's mark is reverted from `[X]` to `[ ]`' in tasks.md. The agent changes T006 from checked to unchecked status, with updated tasks.md showing '- [ ] T006 · Implement push adapter' after detecting test failures."
+    },
+    {
+      "text": "Reports the specific test failures tied to T006",
+      "passed": true,
+      "evidence": "Transcript provides detailed failure analysis: (1) 'Push notification payload missing required \"title\" field' with specific error message showing property is missing, and (2) 'Retry logic executing only 1 attempt instead of configured 3' with Expected: 3, Received: 1. Both failures are explicitly tied to T006 with line numbers from tests/notifications/push.test.ts."
+    },
+    {
+      "text": "Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not clean PASS",
+      "passed": false,
+      "evidence": "Transcript initially shows 'Status: FAIL' in the first Checkpoint Decision, which is correct. However, the agent then fixes T006 and re-runs tests, ultimately setting the final checkpoint status to 'Status: PASS' (clean pass with no deferred items). The expectation asks for the checkpoint to end in FAIL or PASS WITH DEFERRED ITEMS, but the transcript shows a clean PASS after fixes."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": null,
+  "timing": null,
+  "claims": [
+    {
+      "claim": "T006 initially had a checkmark despite failing tests",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Transcript states 'T006 was marked `[X]` after implementation' and shows initial test output with 2 failures in push.test.ts"
+    },
+    {
+      "claim": "The checkpoint integrity check detected and reverted T006",
+      "type": "process",
+      "verified": true,
+      "evidence": "Transcript shows detection logic: checkpoint ran tests, found 2 failures mapped to T006, then reverted the checkmark before attempting fix"
+    },
+    {
+      "claim": "Failures were resolved and checkpoint was upgraded to PASS",
+      "type": "quality",
+      "verified": true,
+      "evidence": "After applying fixes to push.ts, the transcript shows 'PASS tests/notifications/push.test.ts (5 tests passed)' and final checkpoint status is PASS with all 15 tests passing"
+    }
+  ],
+  "user_notes_summary": null,
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "The test for 'Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not clean PASS' is ambiguous about whether the agent should *end* in that state or just *reach* that state. The transcript shows the agent correctly identifies a FAIL state and reverts T006, but then proceeds to fix the issue and upgrades to clean PASS. This is arguably more thorough than the expectation asks for. The assertion may have intended to test whether the agent leaves failing tests unresolved, but the skill actually goes further by fixing them."
+      },
+      {
+        "reason": "No assertion checks whether the agent re-validates the full test suite after reverting T006. The transcript shows this was done ('Running full notification test suite to confirm no regressions'), which is good practice but wasn't explicitly required. A stronger eval might include this as a checkpoint integrity requirement."
+      }
+    ],
+    "overall": "The evals test the core checkpoint integrity function well (detecting mismatches between marks and test results), but the final expectation creates ambiguity about whether fixing the issue is in scope or should result in a deferred status."
+  }
+}

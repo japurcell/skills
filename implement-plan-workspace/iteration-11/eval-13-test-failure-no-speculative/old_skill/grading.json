@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "text": "Does NOT mark task T006 as [X] because related tests are failing",
+      "passed": true,
+      "evidence": "Transcript explicitly states 'Status: **FAIL — task NOT marked `[X]`**' and 'T006 cannot be marked complete.' The task is correctly left unmarked despite the implementation being written."
+    },
+    {
+      "text": "Does not rationalize or minimize the test failures as minor or fixable later",
+      "passed": true,
+      "evidence": "Transcript explicitly rejects deferring failures: 'Deferring known test failures to \"fix later\" would violate two guarantees' and then explains why (task tracking integrity and phase checkpoints). The failures are treated as blocking issues, not minor edge cases."
+    },
+    {
+      "text": "Reports the specific test failures with context",
+      "passed": true,
+      "evidence": "Transcript includes a detailed table with specific test names and error messages: 'Header row contents' (Expected header row to include column Timestamp) and 'EU locale delimiter' (Expected delimiter to be semicolon for EU locale). Summary states '2 of 5 tests fail' with exact failure reasons."
+    },
+    {
+      "text": "Enters error recovery or suggests fixing the failing tests before marking complete",
+      "passed": true,
+      "evidence": "Transcript enters error recovery with 'Error recovery (non-parallel task — halt phase)' section. Provides three concrete next steps: (1) Fix the Timestamp header, (2) Fix the EU locale delimiter, (3) Re-run tests. Ends with proactive offer: 'Would you like me to proceed with fixing these two failures now?'"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": null,
+  "timing": null,
+  "claims": [
+    {
+      "claim": "Build passes",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Transcript states 'Build passes ✓'"
+    },
+    {
+      "claim": "2 of 5 tests fail",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Transcript summary: '**2 of 5 tests fail** ✗' and detailed table showing 2 failures"
+    },
+    {
+      "claim": "T006 is a non-parallel task in the Core phase",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Transcript states 'Since T006 is a non-parallel task in the Core phase, **the phase is halted** pending resolution'"
+    }
+  ],
+  "user_notes_summary": null,
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions. The expectations are well-designed and discriminating — they test whether the skill correctly handles test failures (refusing to skip over them, providing concrete details, and entering recovery mode) rather than just checking surface-level compliance. All expectations require genuine understanding of test results and appropriate error recovery behavior."
+  }
+}

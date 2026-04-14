@@ -1,0 +1,135 @@
+{
+  "skill_name": "implement-plan",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-auth/plan.md. Assume checklists/ exists with ux.md (all complete) and test.md (3 incomplete items). Produce the exact user-facing response for the checklist gate step and what happens next.",
+      "expected_output": "The run reports checklist table with failing checklist, asks whether to proceed, and halts pending user confirmation.",
+      "files": [],
+      "expectations": [
+        "Includes a checklist status table with columns Checklist, Total, Completed, Incomplete, and Status",
+        "Includes the exact gate question: Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)",
+        "States that execution pauses or halts pending user confirmation"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-export/plan.md. Assume plan.md exists but tasks.md is missing. Show the exact handling behavior after context loading begins.",
+      "expected_output": "The run fails fast with a clear message that tasks.md is required and recommends /create-tasks before proceeding.",
+      "files": [],
+      "expectations": [
+        "Explicitly states that tasks.md is missing",
+        "Instructs the user to run /create-tasks (or regenerate planning artifacts)",
+        "States that execution is halted or blocked before phase execution"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-notify/plan.md. Assume all checklists pass, tasks.md has Setup, Tests, Core, Integration, Polish phases with mixed [P] markers and overlapping file paths. Produce a concise execution handoff format for one phase plus the checkpoint criteria before moving to the next phase.",
+      "expected_output": "The run provides explicit phase handoff details, safe parallelization rules, TDD ordering, and checkpoint validation requirements before advancing.",
+      "files": [],
+      "expectations": [
+        "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+        "Explains that [P] tasks can run in parallel only when touched file paths do not overlap",
+        "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+        "References TDD-first ordering where test tasks run before their corresponding implementation tasks"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-review-scope/plan.md. The implementation changed these uncommitted files: src/api/routes.ts, src/core/service.ts, docs/notes.md, and .gitignore. Produce the Code Review Findings section, including scope definition and completion gating.",
+      "expected_output": "Code review scope is derived from uncommitted changed files (staged/unstaged/untracked), excludes .gitignore, reviews all remaining files, and reports measurable coverage counts with missing-file gating.",
+      "files": [],
+      "expectations": [
+        "Defines review scope using all uncommitted changed files rather than only phase-touched files",
+        "Explicitly excludes .gitignore from review scope",
+        "Includes a Review Scope Coverage block with Total Changed (Uncommitted) Files, Total Reviewed Files, Missing Files, and Missing File List",
+        "Includes Excluded Files and Completion Gate lines in the Review Scope Coverage template",
+        "States that Missing Files > 0 means code review is incomplete unless explicitly deferred/approved"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-delete-edge/plan.md. Uncommitted git status includes: M src/a.ts, D src/legacy.ts, ?? docs/new.md, M .gitignore. Produce only the Code Review Findings section and ensure deleted and .gitignore handling are correctly represented.",
+      "expected_output": "The response computes scope from uncommitted changes, excludes deleted files and .gitignore, includes deterministic coverage metrics, and reports the completion gate line exactly.",
+      "files": [],
+      "expectations": [
+        "Excludes deleted files from review scope while still accounting for them in Excluded Files",
+        "Excludes .gitignore from review scope and reports it under Excluded Files",
+        "Uses Review Scope Coverage template fields including Completion Gate",
+        "Shows Missing Files and Missing File List consistent with reviewed non-excluded files"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-scope-drift/plan.md. Assume staged files are src/staged_api.ts and docs/staged_notes.md, unstaged files are src/unstaged_service.ts, and untracked file is scripts/new_check.sh. A reviewer subagent proposes reviewing only src/staged_api.ts. Produce Code Review Findings that prevents scope drift.",
+      "expected_output": "The response enforces a single materialized review_scope_files list across all review subagents, rejects narrower per-agent recomputation, and marks completion as incomplete when files are omitted.",
+      "files": [],
+      "expectations": [
+        "Materializes review_scope_files from staged + unstaged + untracked files",
+        "States subagents must not recompute or narrow scope independently",
+        "Reports missing files when only a subset is reviewed",
+        "Applies Completion Gate with INCOMPLETE status when Missing Files > 0"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-controller-conflict/plan.md. The controller generated review_scope_files as: src/api.ts, src/service.ts, docs/notes.md. Reviewer-A reports reviewing src/api.ts and src/service.ts. Reviewer-B reports reviewing src/api.ts and scripts/helper.sh. Produce Code Review Findings that resolves this conflict safely.",
+      "expected_output": "The response treats reviewer list mismatch as a scope conflict, reconciles against controller review_scope_files, reports missing/extra files, and keeps completion status INCOMPLETE until reconciled or explicitly deferred.",
+      "files": [],
+      "expectations": [
+        "References controller review_scope_files as the authoritative source",
+        "Identifies mismatch between reviewer-reported lists and authoritative scope",
+        "Reports missing and extra files based on reconciliation",
+        "Marks completion as INCOMPLETE until mismatch is resolved or explicitly deferred/approved"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-dashboard/plan.md. Assume all checklists pass. tasks.md has 15 tasks across Setup, Tests, Core, Integration, and Polish phases. Tasks T001-T006 are already marked [X] (complete) — these cover all of Setup and the first two tasks of Tests phase. Show how you handle resuming from this partially completed state.",
+      "expected_output": "The run detects completed tasks, skips them, reports a resumption summary with completed vs remaining counts, and begins execution from the first incomplete task.",
+      "files": [],
+      "expectations": [
+        "Identifies that tasks T001-T006 are already marked complete",
+        "Reports a count or summary of completed vs remaining tasks",
+        "Does not re-execute already completed tasks",
+        "Begins execution from the first incomplete task in the current phase"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-api/plan.md. Assume all checklists pass. In the Core phase, tasks.md lists T007 (write API endpoint tests in tests/api_test.py) and T008 (implement API endpoint in src/api/routes.py). Both are sequential tasks in the Core phase. Show the execution plan for this phase, specifically explaining the ordering of these two tasks.",
+      "expected_output": "The run executes the test task T007 before the implementation task T008, following the TDD-first approach where tests are written before the code they verify.",
+      "files": [],
+      "expectations": [
+        "Executes or plans to execute test task T007 before implementation task T008",
+        "References TDD-first or test-first approach as the reason for this ordering",
+        "Does not execute T008 before its corresponding test task T007 completes"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-payments/plan.md. All phases are complete. The implementation produced these uncommitted changed files: src/payments/processor.ts, src/payments/validator.ts, src/payments/types.ts, tests/payments/processor.test.ts. No deleted files, no .gitignore changes. Produce the full Code Review Findings section, showing exactly which subagents you would launch and how you partition the work.",
+      "expected_output": "The response launches code-simplifier subagent(s) AND code-reviewer subagents, shows the review_scope_files list, partitions work appropriately, and tracks coverage.",
+      "files": [],
+      "expectations": [
+        "Explicitly launches or describes launching code-simplifier subagent(s) for the changed files",
+        "Launches 3 code-reviewer subagents with distinct review lenses (simplicity/DRY, bugs/correctness, conventions/abstractions)",
+        "Uses a single materialized review_scope_files list shared across all subagents",
+        "Shows a Review Scope Coverage block with file counts and Completion Gate"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-dashboard/plan.md. All phases are complete. The implementation produced 8 uncommitted changed files across two modules: src/charts/bar.tsx, src/charts/line.tsx, src/charts/pie.tsx, src/charts/utils.ts, src/data/fetcher.ts, src/data/transformer.ts, src/data/cache.ts, tests/charts/bar.test.tsx. Produce the Code Review Findings section, explaining how you scale the code-simplifier agents for this file count.",
+      "expected_output": "With >5 files, the response partitions files into multiple code-simplifier agents (e.g., charts vs data modules) and explains the scaling rationale.",
+      "files": [],
+      "expectations": [
+        "Launches more than one code-simplifier subagent since there are >5 changed files",
+        "Partitions files into non-overlapping groups (e.g., by module or directory) so each file appears in exactly one agent's scope",
+        "Explains the scaling rule that >5 files triggers multiple code-simplifier agents",
+        "Also launches code-reviewer subagents (3 with distinct lenses)"
+      ]
+    }
+  ]
+}

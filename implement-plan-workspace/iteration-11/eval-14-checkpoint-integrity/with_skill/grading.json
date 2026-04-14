@@ -1,0 +1,69 @@
+{
+  "expectations": [
+    {
+      "text": "Detects that task T006's associated tests are failing despite being marked [X]",
+      "passed": true,
+      "evidence": "Transcript explicitly states 'Checkpoint integrity error detected on T006.' and shows test results: 'Tests: 2 failed, 13 passed, 15 total' with specific failures in tests/notifications/push.test.ts. Table shows T006 'Implement push adapter | tests/notifications/push.test.ts | ✗ **2 failures**'"
+    },
+    {
+      "text": "Reverts or flags T006 as no longer complete",
+      "passed": true,
+      "evidence": "Transcript explicitly documents the revert: 'Because a [X] mark is a permanent promise that the task's work is done and verified, and these failures prove T006's work is **not** verified, the checkmark must be reverted.' Shows 'T006: [X] → [ ] (checkpoint integrity failure — 2 test failures in push.test.ts)'"
+    },
+    {
+      "text": "Reports the specific test failures tied to T006",
+      "passed": true,
+      "evidence": "Transcript provides detailed test failure descriptions: '1. **\"Expected push notification to include title field\"** — The push notification payload is missing the `title` field... 2. **\"Expected retry count to be 3\"** — The retry mechanism is only attempting 1 retry instead of the expected 3.' Each failure includes the test file location (tests/notifications/push.test.ts) and line numbers (34:28, 58:22)."
+    },
+    {
+      "text": "Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not clean PASS",
+      "passed": true,
+      "evidence": "Checkpoint Decision section explicitly sets 'Status: FAIL' with detailed evidence of test failures. States 'T006 implementation does not satisfy its test expectations' and 'The Core phase cannot advance to Integration.' This is a clean FAIL, not a PASS."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "note": "No metrics.json or timing.json found in outputs directory"
+  },
+  "claims": [
+    {
+      "claim": "15 total tests were run in the Core phase",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Transcript reports: 'Tests: 2 failed, 13 passed, 15 total'"
+    },
+    {
+      "claim": "T006 has exactly 2 failing tests",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Transcript shows failure count '2 failures' in the result table and lists exactly two specific failures in the detailed section"
+    },
+    {
+      "claim": "The push adapter is missing the title field implementation",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Specific test failure documented: 'The push notification payload is missing the `title` field. The adapter likely does not propagate `title` from the notification input to the push payload.'"
+    },
+    {
+      "claim": "The retry mechanism is incorrectly configured at 1 instead of 3",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Detailed failure: 'The retry mechanism is only attempting 1 retry instead of the expected 3. The retry configuration or loop logic in the push adapter is incorrect.'"
+    },
+    {
+      "claim": "The checkpoint process correctly identifies integrity violations",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The transcript demonstrates proper checkpoint integrity validation by running tests and cross-checking against task completion marks, finding and reporting the discrepancy"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Evals are well-designed and discriminating. All four expectations require substantive work: detecting test failures, analyzing their root causes, understanding the implications for task completion status, and making a principled decision about checkpoint advancement. The expectations are tightly coupled to the actual quality and correctness of the skill's output."
+  }
+}

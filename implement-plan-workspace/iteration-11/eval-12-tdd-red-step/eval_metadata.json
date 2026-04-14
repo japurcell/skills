@@ -1,0 +1,23 @@
+{
+  "eval_id": 12,
+  "eval_name": "tdd-red-step",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-auth/plan.md. All checklists pass. You are in the Tests phase executing task T003: Write unit tests for JWT token validation in tests/auth/jwt.test.ts (this is a TDD RED step the implementation does not exist yet). You wrote 4 test cases. When you run npm test -- tests/auth/jwt.test.ts, the tests execute and all 4 fail with Error: Cannot find module src/auth/jwt. This is the expected TDD RED result the tests are correct but the implementation does not exist yet. Show how you handle this tasks completion status.",
+  "assertions": [
+    {
+      "text": "Marks task T003 as [X] or completed because a clean TDD RED failure is successful",
+      "type": "semantic"
+    },
+    {
+      "text": "Distinguishes between clean RED failure and broken tests",
+      "type": "semantic"
+    },
+    {
+      "text": "References TDD-first or RED-GREEN workflow",
+      "type": "semantic"
+    },
+    {
+      "text": "Does NOT treat the test failures as an error that blocks progress",
+      "type": "semantic"
+    }
+  ]
+}

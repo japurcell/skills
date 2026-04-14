@@ -1,0 +1,373 @@
+{
+  "metadata": {
+    "skill_name": "implement-plan",
+    "skill_path": "/Users/adam/.agents/skills/implement-plan",
+    "timestamp": "2026-04-14T19:55:00Z",
+    "evals_run": [
+      11,
+      12,
+      13,
+      14
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 11,
+      "eval_name": "Build Failure Handling",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does NOT mark task T005 as [X] or completed in tasks.md",
+          "passed": true,
+          "evidence": "Transcript explicitly states: 'T005 stays `[ ]` in `tasks.md`.  It is NOT marked `[X]`.' The tasks.md line shown remains unchanged with `[ ]` status: '- [ ] T005 \u00b7 Implement full-text search endpoint in `src/api/search.ts`'"
+        },
+        {
+          "text": "Explicitly states the task remains [ ] or unchecked because verification failed",
+          "passed": true,
+          "evidence": "Transcript clearly explains under 'Task Status Decision': 'The build **failed** \u2014 verification did not pass. Per the skill rules: **Never mark speculative completion.** If a task hit errors... it stays `[ ]`. **T005 stays `[ ]` in `tasks.md`.** It is NOT marked `[X]`.' The reasoning directly links the unchecked status to the failed verification."
+        },
+        {
+          "text": "Reports the TypeScript compilation error with context",
+          "passed": true,
+          "evidence": "Transcript reports the error with full context: 'Build failed. TypeScript compiler output: src/api/search.ts:42: error TS2345: Argument of type 'string' is not assignable to parameter of type 'SearchQuery''. The Error Analysis section provides additional context explaining the type mismatch and even includes example code showing the likely fix pattern."
+        },
+        {
+          "text": "Enters error recovery: halts the phase and suggests next steps",
+          "passed": true,
+          "evidence": "Transcript explicitly enters error recovery under 'Error Recovery Action': '**\u26d4 Core phase HALTED at T005.**' Then provides 'Concrete Next Steps' section with four detailed steps: (1) Fix the type error with inspection guidance, (2) Re-run verification, (3) Mark complete only on clean verification, (4) Resume phase. This demonstrates proper error recovery protocol."
+        }
+      ]
+    },
+    {
+      "eval_id": 11,
+      "eval_name": "Build Failure Handling",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does NOT mark task T005 as [X] or completed in tasks.md",
+          "passed": true,
+          "evidence": "Transcript clearly states: 'Task T005 is **NOT** marked `[X]`. It remains `[ ]` because the build failed \u2014 only tasks that succeed get checked off.' The updated tasks.md shown in the response uses `- [ ] T005:` (unchecked), not `[X]`."
+        },
+        {
+          "text": "Explicitly states the task remains [ ] or unchecked because verification failed",
+          "passed": true,
+          "evidence": "Transcript explicitly states: 'Task T005 is **NOT** marked `[X]`. It remains `[ ]` because the build failed \u2014 only tasks that succeed get checked off. The `[X]` checkmark is the source of truth for resumption, so marking a broken task as done would silently skip it on the next run.'"
+        },
+        {
+          "text": "Reports the TypeScript compilation error with context",
+          "passed": true,
+          "evidence": "Transcript reports the specific error with context: 'npm run build' followed by the error code 'TS2345: Argument of type 'string' is not assignable to parameter of type 'SearchQuery'' at line 42 in src/api/search.ts. The response includes the file location, line number, and type mismatch details."
+        },
+        {
+          "text": "Enters error recovery: halts the phase and suggests next steps",
+          "passed": true,
+          "evidence": "Transcript explicitly states: 'This is a sequential (non-`[P]`) task. Per the error recovery rules, the Core phase is **halted**.' It then provides a Checkpoint Decision with Status: FAIL, followed by concrete next steps: (1) Fix the type error, (2) Re-run `/implement-plan`, and (3) Skip the task with deferral note as alternatives."
+        }
+      ]
+    },
+    {
+      "eval_id": 12,
+      "eval_name": "TDD RED Step",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Marks task T003 as [X] or completed because a clean TDD RED failure is successful",
+          "passed": true,
+          "evidence": "Transcript explicitly marks T003 as complete: 'Marking T003 as `[X]` \u2014 COMPLETE.' with reasoning: 'This is a **TDD test writing (RED step)** in the **Tests phase**, executed before the Core phase where `src/auth/jwt` will be implemented.' Shows the task was properly marked complete with updated task list: '- [X] T003: Write unit tests for JWT token validation in tests/auth/jwt.test.ts'"
+        },
+        {
+          "text": "Distinguishes between clean RED failure and broken tests",
+          "passed": true,
+          "evidence": "Transcript explicitly distinguishes: 'The skill's verification criteria for this task type states: Tests fail for the intended reason \u2014 a clean RED result. In TDD-first (Tests phase before Core), module-not-found errors are expected and count as clean RED because the implementation doesn't exist yet. A test that errors out due to syntax problems in the test file itself is not a clean RED.' Verification table confirms: 'No syntax errors in the test file itself \u2713 All 4 tests loaded and ran; failures are import-resolution errors, not test syntax problems'"
+        },
+        {
+          "text": "References TDD-first or RED-GREEN workflow",
+          "passed": true,
+          "evidence": "Transcript uses terminology: 'This is a **TDD test writing (RED step)** in the **Tests phase**, executed before the Core phase' and 'In TDD-first (Tests phase before Core), module-not-found errors are expected' and explicitly states 'which is the entire point of the TDD RED step.' Also references 'the skill's verification criteria for this task type' confirming TDD-RED-GREEN workflow context."
+        },
+        {
+          "text": "Does NOT treat the test failures as an error that blocks progress",
+          "passed": true,
+          "evidence": "Transcript concludes with 'Proceeding to next task in Tests phase.' and marks the task as complete despite all 4 tests failing. The failures are characterized as 'a **clean RED result**' and explicitly not blocking: 'The tests correctly import from the module that will be created in the Core phase, and they fail precisely because that module doesn't exist yet \u2014 which is the entire point of the TDD RED step.'"
+        }
+      ]
+    },
+    {
+      "eval_id": 12,
+      "eval_name": "TDD RED Step",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Marks task T003 as [X] or completed because a clean TDD RED failure is successful",
+          "passed": true,
+          "evidence": "Transcript explicitly marks task T003 as COMPLETE with a checkmark: 'Marking T003 as `[X]` in `tasks.md`. A clean TDD RED result \u2014 where all failures trace to the not-yet-implemented module \u2014 is a successful outcome for a test-authoring task.' The tasks.md update shows: '- [X] T003: Write unit tests for JWT token validation in tests/auth/jwt.test.ts'"
+        },
+        {
+          "text": "Distinguishes between clean RED failure and broken tests",
+          "passed": true,
+          "evidence": "The transcript provides explicit technical distinction: 'This is critically different from a *broken test* failure, where tests fail due to incorrect test logic, wrong assertions, syntax errors, or unexpected runtime exceptions. Here, the tests are structurally sound \u2014 they import the module they intend to test, set up valid expectations, and fail *only* because the production code doesn't exist. That's a clean RED.' This demonstrates clear understanding of the difference."
+        },
+        {
+          "text": "References TDD-first or RED-GREEN workflow",
+          "passed": true,
+          "evidence": "Transcript references TDD workflow multiple times: 'In the RED-GREEN-Refactor cycle, RED means the tests are correctly written and failing for the right reason', 'The skill's TDD-first workflow requires test tasks to run *before* their corresponding implementation tasks', 'The corresponding implementation task (in the Core phase) will make these tests pass \u2014 the GREEN step', and 'Proceeding to next task in the Tests phase.'"
+        },
+        {
+          "text": "Does NOT treat the test failures as an error that blocks progress",
+          "passed": true,
+          "evidence": "The transcript explicitly states test failures do not block progress: 'Blocking on RED failures would defeat the entire TDD workflow.' The task is marked complete despite 4 test failures, and the reasoning is clear that these failures are expected and necessary: 'A clean TDD RED result \u2014 where all failures trace to the not-yet-implemented module \u2014 is a successful outcome for a test-authoring task. The tests are correct, runnable, and ready to gate the implementation in the Core phase.'"
+        }
+      ]
+    },
+    {
+      "eval_id": 13,
+      "eval_name": "No Speculative Completion",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does NOT mark task T006 as [X] because related tests are failing",
+          "passed": true,
+          "evidence": "Transcript line 21: '### Task Status: \u274c NOT MARKED DONE \u2014 stays `[ ]`'. Line 23: 'T006 remains `[ ]` in `tasks.md`. I am not marking it `[X]`.' The agent explicitly did not mark the task as complete despite implementation being done."
+        },
+        {
+          "text": "Does not rationalize or minimize the test failures as minor or fixable later",
+          "passed": true,
+          "evidence": "Transcript lines 29-33 explicitly reject minimization: 'It does not matter that these look like edge cases that could be \"fixed later\" \u2014 the skill is explicit' and 'Never mark speculative completion.' The agent actively counters the temptation to defer failures."
+        },
+        {
+          "text": "Reports the specific test failures with context",
+          "passed": true,
+          "evidence": "Transcript lines 15-19 show test output with specific failures: 'FAIL: Expected header row to include column Timestamp' and 'FAIL: Expected delimiter to be semicolon for EU locale'. Lines 38-42 provide a detailed failure analysis table with test name, error, and likely cause for each failure."
+        },
+        {
+          "text": "Enters error recovery or suggests fixing the failing tests before marking complete",
+          "passed": true,
+          "evidence": "Transcript lines 36-50 contain explicit 'Error Recovery' section with 'Failure context' analysis table. Lines 46-50 list 'Suggested Next Steps' with three specific action items: (1) Fix Timestamp header, (2) Fix EU locale delimiter, (3) Re-run tests. Line 52 commits to action: 'I will proceed to fix these two issues now before attempting to advance the phase.'"
+        }
+      ]
+    },
+    {
+      "eval_id": 13,
+      "eval_name": "No Speculative Completion",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does NOT mark task T006 as [X] because related tests are failing",
+          "passed": true,
+          "evidence": "Transcript explicitly states 'Status: **FAIL \u2014 task NOT marked `[X]`**' and 'T006 cannot be marked complete.' The task is correctly left unmarked despite the implementation being written."
+        },
+        {
+          "text": "Does not rationalize or minimize the test failures as minor or fixable later",
+          "passed": true,
+          "evidence": "Transcript explicitly rejects deferring failures: 'Deferring known test failures to \"fix later\" would violate two guarantees' and then explains why (task tracking integrity and phase checkpoints). The failures are treated as blocking issues, not minor edge cases."
+        },
+        {
+          "text": "Reports the specific test failures with context",
+          "passed": true,
+          "evidence": "Transcript includes a detailed table with specific test names and error messages: 'Header row contents' (Expected header row to include column Timestamp) and 'EU locale delimiter' (Expected delimiter to be semicolon for EU locale). Summary states '2 of 5 tests fail' with exact failure reasons."
+        },
+        {
+          "text": "Enters error recovery or suggests fixing the failing tests before marking complete",
+          "passed": true,
+          "evidence": "Transcript enters error recovery with 'Error recovery (non-parallel task \u2014 halt phase)' section. Provides three concrete next steps: (1) Fix the Timestamp header, (2) Fix the EU locale delimiter, (3) Re-run tests. Ends with proactive offer: 'Would you like me to proceed with fixing these two failures now?'"
+        }
+      ]
+    },
+    {
+      "eval_id": 14,
+      "eval_name": "Checkpoint Integrity",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Detects that task T006's associated tests are failing despite being marked [X]",
+          "passed": true,
+          "evidence": "Transcript explicitly states 'Checkpoint integrity error detected on T006.' and shows test results: 'Tests: 2 failed, 13 passed, 15 total' with specific failures in tests/notifications/push.test.ts. Table shows T006 'Implement push adapter | tests/notifications/push.test.ts | \u2717 **2 failures**'"
+        },
+        {
+          "text": "Reverts or flags T006 as no longer complete",
+          "passed": true,
+          "evidence": "Transcript explicitly documents the revert: 'Because a [X] mark is a permanent promise that the task's work is done and verified, and these failures prove T006's work is **not** verified, the checkmark must be reverted.' Shows 'T006: [X] \u2192 [ ] (checkpoint integrity failure \u2014 2 test failures in push.test.ts)'"
+        },
+        {
+          "text": "Reports the specific test failures tied to T006",
+          "passed": true,
+          "evidence": "Transcript provides detailed test failure descriptions: '1. **\"Expected push notification to include title field\"** \u2014 The push notification payload is missing the `title` field... 2. **\"Expected retry count to be 3\"** \u2014 The retry mechanism is only attempting 1 retry instead of the expected 3.' Each failure includes the test file location (tests/notifications/push.test.ts) and line numbers (34:28, 58:22)."
+        },
+        {
+          "text": "Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not clean PASS",
+          "passed": true,
+          "evidence": "Checkpoint Decision section explicitly sets 'Status: FAIL' with detailed evidence of test failures. States 'T006 implementation does not satisfy its test expectations' and 'The Core phase cannot advance to Integration.' This is a clean FAIL, not a PASS."
+        }
+      ]
+    },
+    {
+      "eval_id": 14,
+      "eval_name": "Checkpoint Integrity",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Detects that task T006's associated tests are failing despite being marked [X]",
+          "passed": true,
+          "evidence": "Transcript clearly shows initial test run with 'FAIL tests/notifications/push.test.ts (5 tests, 2 failures)' and states 'Both failures map directly to T006 (implement push adapter)'. The agent explicitly detected that T006 was marked [X] but its tests were failing."
+        },
+        {
+          "text": "Reverts or flags T006 as no longer complete",
+          "passed": true,
+          "evidence": "Transcript explicitly shows: 'T006's mark is reverted from `[X]` to `[ ]`' in tasks.md. The agent changes T006 from checked to unchecked status, with updated tasks.md showing '- [ ] T006 \u00b7 Implement push adapter' after detecting test failures."
+        },
+        {
+          "text": "Reports the specific test failures tied to T006",
+          "passed": true,
+          "evidence": "Transcript provides detailed failure analysis: (1) 'Push notification payload missing required \"title\" field' with specific error message showing property is missing, and (2) 'Retry logic executing only 1 attempt instead of configured 3' with Expected: 3, Received: 1. Both failures are explicitly tied to T006 with line numbers from tests/notifications/push.test.ts."
+        },
+        {
+          "text": "Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not clean PASS",
+          "passed": false,
+          "evidence": "Transcript initially shows 'Status: FAIL' in the first Checkpoint Decision, which is correct. However, the agent then fixes T006 and re-runs tests, ultimately setting the final checkpoint status to 'Status: PASS' (clean pass with no deferred items). The expectation asks for the checkpoint to end in FAIL or PASS WITH DEFERRED ITEMS, but the transcript shows a clean PASS after fixes."
+        }
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      },
+      "tokens": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.938,
+        "stddev": 0.125,
+        "min": 0.75,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      },
+      "tokens": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "delta": {
+      "pass_rate": "0.062",
+      "time_seconds": "0",
+      "tokens": "0"
+    }
+  },
+  "notes": [
+    "Eval 12 with_skill uses v2 (after TDD RED fix); v1 scored 50% due to overly strict import-error rejection",
+    "Evals 11 and 13 (build failure, test failure) pass equally for both skill versions - the old skill already handled obvious failures well",
+    "Eval 14 (checkpoint integrity) is where the improved skill adds clear value - the old skill fixed the issue inline and reported PASS instead of FAIL",
+    "The improved skill adds explicit verification-before-marking rules and checkpoint integrity checks as new defensive layers"
+  ]
+}

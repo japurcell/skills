@@ -1,0 +1,44 @@
+{
+  "expectations": [
+    {
+      "text": "Does NOT mark task T006 as [X] because related tests are failing",
+      "passed": true,
+      "evidence": "Transcript line 21: '### Task Status: ❌ NOT MARKED DONE — stays `[ ]`'. Line 23: 'T006 remains `[ ]` in `tasks.md`. I am not marking it `[X]`.' The agent explicitly did not mark the task as complete despite implementation being done."
+    },
+    {
+      "text": "Does not rationalize or minimize the test failures as minor or fixable later",
+      "passed": true,
+      "evidence": "Transcript lines 29-33 explicitly reject minimization: 'It does not matter that these look like edge cases that could be \"fixed later\" — the skill is explicit' and 'Never mark speculative completion.' The agent actively counters the temptation to defer failures."
+    },
+    {
+      "text": "Reports the specific test failures with context",
+      "passed": true,
+      "evidence": "Transcript lines 15-19 show test output with specific failures: 'FAIL: Expected header row to include column Timestamp' and 'FAIL: Expected delimiter to be semicolon for EU locale'. Lines 38-42 provide a detailed failure analysis table with test name, error, and likely cause for each failure."
+    },
+    {
+      "text": "Enters error recovery or suggests fixing the failing tests before marking complete",
+      "passed": true,
+      "evidence": "Transcript lines 36-50 contain explicit 'Error Recovery' section with 'Failure context' analysis table. Lines 46-50 list 'Suggested Next Steps' with three specific action items: (1) Fix Timestamp header, (2) Fix EU locale delimiter, (3) Re-run tests. Line 52 commits to action: 'I will proceed to fix these two issues now before attempting to advance the phase.'"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "output_chars": 2778,
+    "transcript_chars": 2778,
+    "files_examined": 1
+  },
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "All expectations passed. The agent properly recognized that test failures block task completion, refused to rationalize or defer the failures, reported specific test errors with context, and committed to error recovery. The skill's rules were correctly applied. No improvements needed to the evaluation itself."
+  }
+}
