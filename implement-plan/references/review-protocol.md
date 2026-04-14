@@ -1,42 +1,6 @@
 # Code review protocol
 
-This document describes how to orchestrate the code review step. The goal is comprehensive coverage with no files slipping through the cracks.
-
-## Building review scope
-
-Materialize a deterministic, stable-sorted `review_scope_files` list from all uncommitted changed implementation files:
-
-```bash
-git status --porcelain
-```
-
-Include staged, unstaged, and untracked files. Exclude:
-
-- Deleted files (shown with `D` status in `git status`)
-- Every `.gitignore` file
-
-List excluded files separately so there's a clear audit trail.
-
-## Dispatching review subagents
-
-Pass the exact `review_scope_files` list to every review subagent. Subagents must not recompute or narrow this scope — when each reviewer works from a different file list, gaps and overlaps creep in.
-
-If a reviewer reports a different file list than what it was given, treat it as a **scope conflict**: reconcile missing files (in scope but not reviewed) and extra files (reviewed but not in scope) against the controller list. Keep the review status INCOMPLETE until the conflict is resolved or explicitly deferred.
-
-### Code simplifier
-
-Launch independent subagents to apply the [code-simplifier](../../code-simplifier/SKILL.md) skill to the files in `review_scope_files`:
-
-- **≤5 files**: 1 agent covering all files
-- **>5 files**: partition into non-overlapping groups by module, directory, or logical area — each file appears in exactly one agent's scope to prevent conflicting writes
-
-### Code reviewers
-
-Launch 3 review agents in parallel using [agents/code-reviewer.agent.md](../agents/code-reviewer.agent.md), each focusing on a different lens:
-
-1. **Simplicity & DRY** — duplication, unnecessary complexity, dead code
-2. **Bugs & correctness** — logic errors, null handling, race conditions, security
-3. **Conventions & abstractions** — project patterns, naming, architecture alignment
+This document covers coverage tracking and scope conflict resolution for the code review step. Subagent dispatch (code-simplifier and code-reviewer agents) is defined in the main SKILL.md.
 
 ## Coverage tracking
 

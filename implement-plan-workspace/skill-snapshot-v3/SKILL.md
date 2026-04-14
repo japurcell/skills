@@ -106,32 +106,7 @@ After implementation, review all changed code. The review catches issues that te
 
 Build the review scope from all uncommitted changed files (staged, unstaged, and untracked via `git status --porcelain`). Exclude deleted files and `.gitignore` files from review but list them under excluded files.
 
-#### Launch code-simplifier subagents
-
-Launch [code-simplifier](../code-simplifier/SKILL.md) subagents to identify refactoring opportunities in the changed code. This is not optional — every implementation run that produces changed files must include code-simplifier review. Scale the agents based on the number of changed files:
-
-- **≤5 files**: 1 code-simplifier agent covering all changed files
-- **>5 files**: partition into non-overlapping groups by module, directory, or logical area — each file appears in exactly one agent's scope to prevent conflicting writes
-
-Pass each code-simplifier agent the exact `review_scope_files` list (or its partition). The agents run independently and can be launched in parallel with the code-reviewer agents below.
-
-#### Launch code-reviewer subagents
-
-Launch 3 code-reviewer agents in parallel using [agents/code-reviewer.agent.md](agents/code-reviewer.agent.md), each focusing on a different lens:
-
-1. **Simplicity & DRY** — duplication, unnecessary complexity, dead code
-2. **Bugs & correctness** — logic errors, null handling, race conditions, security
-3. **Conventions & abstractions** — project patterns, naming, architecture alignment
-
-Pass each reviewer the same `review_scope_files` list. Subagents must not recompute or narrow the scope.
-
-#### Coverage tracking and scope conflicts
-
-Read [references/review-protocol.md](references/review-protocol.md) for the full coverage tracking template (Review Scope Coverage block) and scope conflict resolution rules. Key points:
-
-- Report Total Changed Files, Total Reviewed Files, Missing Files, Excluded Files, and Completion Gate
-- If `Missing Files > 0`, review status is INCOMPLETE until gaps are reviewed or the user explicitly defers
-- If a reviewer reports a different file list than what it was given, treat it as a scope conflict and reconcile
+Read [references/review-protocol.md](references/review-protocol.md) for the full review orchestration, including how to dispatch code-simplifier and code-reviewer subagents, enforce a stable scope across all reviewers, track coverage, and handle scope conflicts.
 
 After review, consolidate findings and call out the highest-severity issues to fix.
 

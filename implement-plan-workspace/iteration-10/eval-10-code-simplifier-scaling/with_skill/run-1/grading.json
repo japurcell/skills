@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Launches more than one code-simplifier subagent since there are >5 changed files",
+      "passed": true,
+      "evidence": "Found multiple code-simplifier agents"
+    },
+    {
+      "text": "Partitions files into non-overlapping groups (e.g., by module or directory) so each file appears in exactly one agent's scope",
+      "passed": true,
+      "evidence": "Found partitioning by module/directory"
+    },
+    {
+      "text": "Explains the scaling rule that >5 files triggers multiple code-simplifier agents",
+      "passed": true,
+      "evidence": "Found scaling rule explanation"
+    },
+    {
+      "text": "Also launches code-reviewer subagents (3 with distinct lenses)",
+      "passed": true,
+      "evidence": "Found 3 code-reviewer agents"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}

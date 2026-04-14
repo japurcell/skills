@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Defines review scope using all uncommitted changed files rather than only phase-touched files",
+      "passed": true,
+      "evidence": "Found uncommitted scope definition"
+    },
+    {
+      "text": "Explicitly excludes .gitignore from review scope",
+      "passed": true,
+      "evidence": "Found .gitignore exclusion"
+    },
+    {
+      "text": "Includes a Review Scope Coverage block with Total Changed (Uncommitted) Files, Total Reviewed Files, Missing Files, and Missing File List",
+      "passed": true,
+      "evidence": "Found coverage block fields"
+    },
+    {
+      "text": "Includes Excluded Files and Completion Gate lines in the Review Scope Coverage template",
+      "passed": true,
+      "evidence": "Found Excluded Files and Completion Gate"
+    },
+    {
+      "text": "States that Missing Files > 0 means code review is incomplete unless explicitly deferred/approved",
+      "passed": false,
+      "evidence": "No incompleteness rule"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  }
+}
