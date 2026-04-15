@@ -30,7 +30,7 @@ Workspace directories whose names end with `-workspace` are skipped during insta
 - `docs/agent-guides/`: repo-specific guidance for layout, authoring, and validation
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts
 - `scripts/copilot-install.sh`: installs repo assets into local Copilot directories
-- `scripts/addy-install.sh`: imports addy agents and skills into this repository with `addy-` prefixes; pass `--skills foo,bar` to copy specific source skill names and their referenced skills
+- `scripts/addy-install.sh`: imports addy agents, skills, and top-level references into this repository, prefixing imported addy agent and skill names with `addy-`; pass `--skills foo,bar` to copy specific source skill names and their referenced skills
 
 ## Working in this repo
 

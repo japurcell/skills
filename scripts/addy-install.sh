@@ -8,11 +8,14 @@ readonly DEFAULT_DEST_ROOT="${REPO_ROOT}"
 readonly PREFIX="${ADDY_PREFIX:-addy-}"
 readonly AGENTS_SRC="${ADDY_AGENTS_SRC:-${DEFAULT_SOURCE_ROOT}/agents}"
 readonly SKILLS_SRC="${ADDY_SKILLS_SRC:-${DEFAULT_SOURCE_ROOT}/skills}"
+readonly REFERENCES_SRC="${ADDY_REFERENCES_SRC:-${DEFAULT_SOURCE_ROOT}/references}"
 readonly AGENTS_DEST="${ADDY_AGENTS_DEST:-${DEFAULT_DEST_ROOT}/agents}"
 readonly SKILLS_DEST="${ADDY_SKILLS_DEST:-${DEFAULT_DEST_ROOT}/skills}"
+readonly REFERENCES_DEST="${ADDY_REFERENCES_DEST:-${DEFAULT_DEST_ROOT}/references}"
 
 declare -a COPIED_AGENT_FILES=()
 declare -a COPIED_SKILL_DIRS=()
+declare -a COPIED_REFERENCE_DIRS=()
 declare -a SELECTED_SKILLS=()
 
 usage() {
@@ -154,17 +157,20 @@ build_name_map() {
 rewrite_references() {
   local map_file="$1"
 
-  ((${#COPIED_AGENT_FILES[@]} + ${#COPIED_SKILL_DIRS[@]} > 0)) || return 0
+  ((${#COPIED_AGENT_FILES[@]} + ${#COPIED_SKILL_DIRS[@]} + ${#COPIED_REFERENCE_DIRS[@]} > 0)) || return 0
 
-  python3 - "$map_file" \
+  python3 - "$map_file" "$REFERENCES_DEST" \
     ${COPIED_AGENT_FILES[@]+"${COPIED_AGENT_FILES[@]}"} \
-    ${COPIED_SKILL_DIRS[@]+"${COPIED_SKILL_DIRS[@]}"} <<'PY'
+    ${COPIED_SKILL_DIRS[@]+"${COPIED_SKILL_DIRS[@]}"} \
+    ${COPIED_REFERENCE_DIRS[@]+"${COPIED_REFERENCE_DIRS[@]}"} <<'PY'
+import os
 from pathlib import Path
 import re
 import sys
 
 map_path = Path(sys.argv[1])
-targets = [Path(arg) for arg in sys.argv[2:]]
+references_root = Path(sys.argv[2]).resolve()
+targets = [Path(arg) for arg in sys.argv[3:]]
 
 mappings = []
 for line in map_path.read_text(encoding="utf-8").splitlines():
@@ -185,6 +191,20 @@ def iter_files(target: Path):
         yield target
 
 
+def rewrite_reference_paths(content: str, path: Path) -> str:
+    try:
+        path.resolve().relative_to(references_root)
+    except ValueError:
+        relative_references_dir = os.path.relpath(references_root, start=path.resolve().parent)
+        return re.sub(
+            r"(?<![A-Za-z0-9._/-])references/",
+            f"{relative_references_dir}/",
+            content,
+        )
+
+    return content
+
+
 for target in targets:
     for path in iter_files(target):
         try:
@@ -199,6 +219,8 @@ for target in targets:
                 prefixed_name,
                 updated_content,
             )
+
+        updated_content = rewrite_reference_paths(updated_content, path)
 
         if updated_content != content:
             path.write_text(updated_content, encoding="utf-8")
@@ -357,6 +379,12 @@ copy_skills() {
   done < <(iter_skill_source_dirs)
 }
 
+copy_references() {
+  rm -rf "$REFERENCES_DEST"
+  cp -Rp "$REFERENCES_SRC" "$REFERENCES_DEST"
+  COPIED_REFERENCE_DIRS+=("$REFERENCES_DEST")
+}
+
 parse_args "$@"
 
 [[ -n "$PREFIX" ]] || {
@@ -374,19 +402,26 @@ parse_args "$@"
   exit 1
 }
 
+[[ -d "$REFERENCES_SRC" ]] || {
+  echo "Missing references source directory: $REFERENCES_SRC" >&2
+  exit 1
+}
+
 validate_selected_skills
 resolve_selected_skills
 
 readonly NAME_MAP_FILE="$(mktemp)"
 trap 'rm -f "$NAME_MAP_FILE"' EXIT
 
-mkdir -p "$AGENTS_DEST" "$SKILLS_DEST"
+mkdir -p "$AGENTS_DEST" "$SKILLS_DEST" "$(dirname "$REFERENCES_DEST")"
 
 build_name_map "$NAME_MAP_FILE"
 copy_agents
 prune_unselected_skills
 copy_skills
+copy_references
 rewrite_references "$NAME_MAP_FILE"
 
 echo "Installed addy agents to $AGENTS_DEST"
 echo "Installed addy skills to $SKILLS_DEST"
+echo "Installed addy references to $REFERENCES_DEST"

@@ -10,7 +10,7 @@
 ## Key files
 
 - `scripts/copilot-install.sh`: installs `skills/` → `~/.agents/skills`, `agents/` → `~/.copilot/agents`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
-- `scripts/addy-install.sh`: imports agents and skills from the addy repository into this repository with `addy-` prefixes, with optional `--skills foo,bar` filtering that also pulls in referenced skills
+- `scripts/addy-install.sh`: imports agents, skills, and top-level references from the addy repository into this repository; imported addy agent and skill names get `addy-` prefixes, and optional `--skills foo,bar` filtering also pulls in referenced skills
 - `.nvmrc`: Node version hint (`lts/*`)
 - `skills/skill-creator/scripts/quick_validate.py`: validates `SKILL.md` frontmatter and structure
 - `skills/skill-creator/scripts/package_skill.py`: packages a skill directory into a distributable `.skill` archive
