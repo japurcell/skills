@@ -1,9 +1,9 @@
 ---
-name: agents-md-refresh
+name: agents-md-upfactor
 description: Capture session learnings into AGENTS.md and reorganize all AGENTS.md files for clarity. Use this skill whenever the user asks to update AGENTS.md with lessons learned, capture session discoveries, clean up or reorganize AGENTS.md files, do a retrospective update, or refresh agent instructions. Also use it when the user mentions "revise agents", "refactor agents.md", "codify learnings", or wants to improve future-agent context in any way — even if they don't explicitly say "refresh".
 ---
 
-# AGENTS.md Refresh
+# AGENTS.md Upfactor
 
 Capture durable session learnings into AGENTS.md, then conditionally reorganize all AGENTS.md files into a clean, minimal structure — all in one pass.
 
