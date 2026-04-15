@@ -14,6 +14,8 @@ readonly REFERENCES_SRC="${ADDY_REFERENCES_SRC:-${SOURCE_ROOT}/references}"
 readonly AGENTS_DEST="${ADDY_AGENTS_DEST:-${DEFAULT_DEST_ROOT}/agents}"
 readonly SKILLS_DEST="${ADDY_SKILLS_DEST:-${DEFAULT_DEST_ROOT}/skills}"
 readonly REFERENCES_DEST="${ADDY_REFERENCES_DEST:-${DEFAULT_DEST_ROOT}/references}"
+readonly DEFAULT_SKILLS_STATE_FILE="${REPO_ROOT}/.addy-skills"
+readonly SKILLS_STATE_FILE="${ADDY_SKILLS_STATE_FILE:-${DEFAULT_SKILLS_STATE_FILE}}"
 
 declare -a COPIED_AGENT_FILES=()
 declare -a COPIED_SKILL_DIRS=()
@@ -22,11 +24,12 @@ declare -a SELECTED_SKILLS=()
 
 usage() {
   cat <<'EOF'
-Usage: scripts/addy-install.sh [--skills name1,name2] [--skills name3]
+Usage: scripts/addy-install.sh [--skills name1,name2] [--skills-file path] [--skills name3]
 
 Copies addy agents and skills into this repository with the configured prefix.
 If --skills is omitted, all skills are copied.
 Referenced skills are copied automatically.
+Successful runs update .addy-skills in the repo root for reuse with --skills-file.
 EOF
 }
 
@@ -52,6 +55,25 @@ add_selected_skills() {
       SELECTED_SKILLS+=("$skill_name")
     fi
   done
+}
+
+add_selected_skills_from_file() {
+  local skills_file="$1"
+  local raw_names
+
+  [[ -f "$skills_file" ]] || {
+    echo "Missing skills file: $skills_file" >&2
+    exit 1
+  }
+
+  while IFS= read -r raw_names || [[ -n "$raw_names" ]]; do
+    raw_names="${raw_names%$'\r'}"
+    raw_names="${raw_names#"${raw_names%%[![:space:]]*}"}"
+    raw_names="${raw_names%"${raw_names##*[![:space:]]}"}"
+
+    [[ -n "$raw_names" && "${raw_names:0:1}" != "#" ]] || continue
+    add_selected_skills "$raw_names"
+  done < "$skills_file"
 }
 
 has_selected_skill() {
@@ -84,6 +106,26 @@ parse_args() {
         ;;
       --skills=*)
         value="${1#--skills=}"
+        add_selected_skills "$value"
+        shift
+        continue
+        ;;
+      --skills-file)
+        shift
+        [[ $# -gt 0 && "$1" != --* ]] || {
+          echo "Missing value for --skills-file" >&2
+          exit 1
+        }
+        value="$1"
+        add_selected_skills_from_file "$value"
+        shift
+        continue
+        ;;
+      --skills-file=*)
+        value="${1#--skills-file=}"
+        add_selected_skills_from_file "$value"
+        shift
+        continue
         ;;
       -h|--help)
         usage
@@ -435,6 +477,23 @@ copy_references() {
   COPIED_REFERENCE_DIRS+=("$REFERENCES_DEST")
 }
 
+write_skills_state_file() {
+  local source_dir
+  local base_name
+
+  mkdir -p "$(dirname "$SKILLS_STATE_FILE")"
+
+  if ((${#SELECTED_SKILLS[@]} > 0)); then
+    printf '%s\n' "${SELECTED_SKILLS[@]}" | sort -u > "$SKILLS_STATE_FILE"
+    return 0
+  fi
+
+  while IFS= read -r -d '' source_dir; do
+    base_name="$(basename "$source_dir")"
+    printf '%s\n' "$base_name"
+  done < <(find "$SKILLS_SRC" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z) > "$SKILLS_STATE_FILE"
+}
+
 parse_args "$@"
 
 [[ -n "$PREFIX" ]] || {
@@ -473,7 +532,9 @@ prune_unselected_skills
 copy_skills
 copy_references
 rewrite_references "$NAME_MAP_FILE"
+write_skills_state_file
 
 echo "Installed addy agents to $AGENTS_DEST"
 echo "Installed addy skills to $SKILLS_DEST"
 echo "Installed addy references to $REFERENCES_DEST"
+echo "Updated addy skills state file at $SKILLS_STATE_FILE"

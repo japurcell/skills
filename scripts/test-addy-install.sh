@@ -67,6 +67,7 @@ test_copies_referenced_skills_transitively() {
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
     ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
     bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
 
   installed_skills="$(
@@ -101,6 +102,7 @@ test_copies_referenced_skills_without_agents() {
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
     ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
     bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
 
   installed_skills="$(
@@ -111,6 +113,79 @@ test_copies_referenced_skills_without_agents() {
     "addy-alpha,addy-beta" \
     "$installed_skills" \
     "Expected dependency copying to work even when no agent files exist."
+}
+
+test_copies_skills_selected_from_file() {
+  local workdir="$1"
+  local installed_skills
+
+  mkdir -p \
+    "$workdir/src/agents" \
+    "$workdir/src/references" \
+    "$workdir/src/skills/alpha" \
+    "$workdir/src/skills/beta" \
+    "$workdir/dest/agents" \
+    "$workdir/dest/skills" \
+    "$workdir/dest/references"
+
+  printf '%s\n' '---' 'name: alpha' '---' 'Use beta for follow-up work.' > "$workdir/src/skills/alpha/SKILL.md"
+  printf '%s\n' '---' 'name: beta' '---' 'Standalone.' > "$workdir/src/skills/beta/SKILL.md"
+  printf '%s\n' 'alpha' > "$workdir/skills.txt"
+
+  ADDY_AGENTS_SRC="$workdir/src/agents" \
+    ADDY_SKILLS_SRC="$workdir/src/skills" \
+    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+    ADDY_SKILLS_DEST="$workdir/dest/skills" \
+    ADDY_REFERENCES_SRC="$workdir/src/references" \
+    ADDY_REFERENCES_DEST="$workdir/dest/references" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
+    bash "$REPO_ROOT/scripts/addy-install.sh" --skills-file "$workdir/skills.txt" >/dev/null
+
+  installed_skills="$(
+    find "$workdir/dest/skills" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort | paste -sd ',' -
+  )"
+
+  assert_equals \
+    "addy-alpha,addy-beta" \
+    "$installed_skills" \
+    "Expected --skills-file to install listed skills and their referenced dependencies."
+}
+
+test_writes_skills_state_file_for_current_install() {
+  local workdir="$1"
+  local installed_skills_file="$workdir/installed-skills.txt"
+  local installed_skills
+
+  mkdir -p \
+    "$workdir/src/agents" \
+    "$workdir/src/references" \
+    "$workdir/src/skills/alpha" \
+    "$workdir/src/skills/beta" \
+    "$workdir/src/skills/gamma" \
+    "$workdir/dest/agents" \
+    "$workdir/dest/skills" \
+    "$workdir/dest/references"
+
+  printf '%s\n' '---' 'name: alpha' '---' 'Use beta for follow-up work.' > "$workdir/src/skills/alpha/SKILL.md"
+  printf '%s\n' '---' 'name: beta' '---' 'Standalone.' > "$workdir/src/skills/beta/SKILL.md"
+  printf '%s\n' '---' 'name: gamma' '---' 'Standalone.' > "$workdir/src/skills/gamma/SKILL.md"
+  printf '%s\n' 'gamma' > "$installed_skills_file"
+
+  ADDY_AGENTS_SRC="$workdir/src/agents" \
+    ADDY_SKILLS_SRC="$workdir/src/skills" \
+    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+    ADDY_SKILLS_DEST="$workdir/dest/skills" \
+    ADDY_REFERENCES_SRC="$workdir/src/references" \
+    ADDY_REFERENCES_DEST="$workdir/dest/references" \
+    ADDY_SKILLS_STATE_FILE="$installed_skills_file" \
+    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+
+  installed_skills="$(<"$installed_skills_file")"
+
+  assert_equals \
+    $'alpha\nbeta' \
+    "$installed_skills" \
+    "Expected the installer to update the skills state file to match the current installed source skills."
 }
 
 test_copies_root_references_directory() {
@@ -136,6 +211,7 @@ test_copies_root_references_directory() {
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
     ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
     bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
 
   copied_reference="$(<"$workdir/dest/references/testing-patterns.md")"
@@ -179,6 +255,7 @@ test_rewrites_root_reference_links_for_copied_skills() {
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
     ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
     bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
 
   copied_skill="$(<"$workdir/dest/skills/addy-alpha/SKILL.md")"
@@ -198,6 +275,7 @@ test_clones_addy_repo_before_copying() {
 
   ADDY_REPO_ROOT="$workdir/repo-root" \
     ADDY_REMOTE_URL="$workdir/remote" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
     bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
 
   cloned_skill="$(<"$workdir/repo-root/skills/addy-alpha/SKILL.md")"
@@ -221,6 +299,7 @@ test_pulls_latest_addy_repo_before_copying() {
 
   ADDY_REPO_ROOT="$workdir/repo-root" \
     ADDY_REMOTE_URL="$workdir/remote" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
     bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
 
   copied_skill="$(<"$workdir/repo-root/skills/addy-alpha/SKILL.md")"
@@ -239,6 +318,8 @@ main() {
 
   test_copies_referenced_skills_transitively "$workdir/transitive"
   test_copies_referenced_skills_without_agents "$workdir/no-agents"
+  test_copies_skills_selected_from_file "$workdir/skills-file"
+  test_writes_skills_state_file_for_current_install "$workdir/skills-state-file"
   test_copies_root_references_directory "$workdir/references"
   test_rewrites_root_reference_links_for_copied_skills "$workdir/skill-reference-links"
   test_clones_addy_repo_before_copying "$workdir/clone"
