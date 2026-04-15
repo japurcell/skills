@@ -17,6 +17,7 @@ Install or refresh the locally loaded copies with:
 The installer copies:
 
 - `skills/` entries into `~/.agents/skills`
+- top-level `references/` entries into `~/.agents/references` when that directory exists
 - `agents/` files into `~/.copilot/agents`
 - `.copilot/copilot-instructions.md` into `~/.copilot/copilot-instructions.md`
 
@@ -26,10 +27,11 @@ Workspace directories whose names end with `-workspace` are skipped during insta
 
 - `skills/`: one directory per skill, centered on `SKILL.md`
 - `agents/`: standalone custom agent prompt files
+- `references/`: optional shared reference material installed to `~/.agents/references`
 - `scripts/`: repo helper and installation scripts
 - `docs/agent-guides/`: repo-specific guidance for layout, authoring, and validation
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts
-- `scripts/copilot-install.sh`: installs repo assets into local Copilot directories
+- `scripts/copilot-install.sh`: installs `skills/` → `~/.agents/skills`, optional top-level `references/` → `~/.agents/references`, `agents/` → `~/.copilot/agents`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
 - `scripts/addy-install.sh`: imports addy agents, skills, and top-level references into this repository, prefixing imported addy agent and skill names with `addy-`; pass `--skills foo,bar` to copy specific source skill names and their referenced skills
 
 ## Working in this repo
