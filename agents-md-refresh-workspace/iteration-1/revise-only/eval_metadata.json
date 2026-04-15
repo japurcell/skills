@@ -1,0 +1,32 @@
+{
+  "eval_id": 1,
+  "eval_name": "revise-only",
+  "prompt": "Quick AGENTS.md update — we found out that running `cargo clippy --all-targets` before pushing catches most CI failures, and that the integration tests need Docker running. Don't need a big reorg, just add the learnings.",
+  "assertions": [
+    {
+      "id": "a1-clippy-captured",
+      "text": "The updated AGENTS.md includes guidance about running `cargo clippy --all-targets` before pushing",
+      "type": "content_check"
+    },
+    {
+      "id": "a1-docker-captured",
+      "text": "The updated AGENTS.md includes guidance that integration tests need Docker running",
+      "type": "content_check"
+    },
+    {
+      "id": "a1-no-unnecessary-reorg",
+      "text": "The file structure was NOT reorganized into multiple files — only the existing AGENTS.md was updated with new learnings",
+      "type": "structure_check"
+    },
+    {
+      "id": "a1-existing-preserved",
+      "text": "Existing content (project description, build commands, style rules) is preserved, not removed or substantially rewritten",
+      "type": "content_check"
+    },
+    {
+      "id": "a1-concise-additions",
+      "text": "New additions are concise (one-liners or short entries), not verbose multi-paragraph explanations",
+      "type": "format_check"
+    }
+  ]
+}

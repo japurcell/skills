@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "Includes cargo clippy --all-targets guidance",
+      "passed": true,
+      "evidence": "Found clippy --all-targets: True"
+    },
+    {
+      "text": "Includes Docker requirement for integration tests",
+      "passed": true,
+      "evidence": "Found Docker mention: True"
+    },
+    {
+      "text": "No unnecessary reorganization \u2014 only existing AGENTS.md updated",
+      "passed": true,
+      "evidence": "Found 1 AGENTS.md files (expected 1): ['AGENTS.md']"
+    },
+    {
+      "text": "Existing content preserved",
+      "passed": true,
+      "evidence": "project_desc=True, build_cmds=True, style_rules=True"
+    },
+    {
+      "text": "New additions are concise",
+      "passed": true,
+      "evidence": "Total AGENTS.md is 25 lines (original was ~14)"
+    }
+  ]
+}

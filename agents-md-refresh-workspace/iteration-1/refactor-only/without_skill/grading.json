@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "Root AGENTS.md significantly shortened, ideally under 120 lines",
+      "passed": true,
+      "evidence": "Root is 62 lines (original was ~125)"
+    },
+    {
+      "text": "Specialized content moved into topic-specific files",
+      "passed": true,
+      "evidence": "Found 3 files: ['AGENTS.md', 'src/frontend/AGENTS.md', 'src/backend/AGENTS.md']"
+    },
+    {
+      "text": "Duplicate content between root and subdirectory files eliminated",
+      "passed": true,
+      "evidence": "Frontend-specific content still in root: False"
+    },
+    {
+      "text": "No substantial guidance lost in reorganization",
+      "passed": true,
+      "evidence": "Found 6/6 key concepts across all files: ['postgresql', 'pytest', 'react', 'django', 'structlog', 'bandit']"
+    },
+    {
+      "text": "Response identifies deletion candidates with reasons",
+      "passed": true,
+      "evidence": "Deletion/removal discussion found in response: True"
+    }
+  ]
+}

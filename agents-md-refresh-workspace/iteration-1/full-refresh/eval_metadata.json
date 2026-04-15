@@ -1,0 +1,32 @@
+{
+  "eval_id": 0,
+  "eval_name": "full-refresh",
+  "prompt": "Refresh my AGENTS.md — capture what we learned this session and clean things up. During this session we discovered that `npm run test:unit` is much faster than `npm test` for iterating, that the API client in src/api/ expects a BASE_URL env var (not documented anywhere), and that the ESLint config ignores the generated/ folder. The current AGENTS.md is getting long and has some frontend-specific rules mixed in with backend stuff.",
+  "assertions": [
+    {
+      "id": "a0-learnings-captured",
+      "text": "All three session learnings are present in the output files (test:unit command, BASE_URL env var, ESLint ignores generated/)",
+      "type": "content_check"
+    },
+    {
+      "id": "a0-structural-split",
+      "text": "Content is split into multiple files (root AGENTS.md plus at least one topic file) rather than keeping everything in one file",
+      "type": "structure_check"
+    },
+    {
+      "id": "a0-root-concise",
+      "text": "Root AGENTS.md is under 120 lines and contains only essential project-wide guidance",
+      "type": "content_check"
+    },
+    {
+      "id": "a0-frontend-backend-separated",
+      "text": "Frontend-specific rules and backend-specific rules are in separate files or sections, not mixed together in root",
+      "type": "structure_check"
+    },
+    {
+      "id": "a0-response-structured",
+      "text": "The response.md follows a structured format with clearly labeled sections (findings/learnings, structural changes, combined preview or similar)",
+      "type": "format_check"
+    }
+  ]
+}

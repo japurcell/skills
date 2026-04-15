@@ -1,0 +1,253 @@
+{
+  "metadata": {
+    "skill_name": "agents-md-refresh",
+    "timestamp": "2026-04-15T02:00:00Z",
+    "evals_run": [
+      "full-refresh",
+      "revise-only",
+      "refactor-only"
+    ],
+    "runs_per_configuration": 3
+  },
+  "configurations": {
+    "with_skill": {
+      "avg_pass_rate": 1.0,
+      "avg_time": 189.0
+    },
+    "without_skill": {
+      "avg_pass_rate": 0.867,
+      "avg_time": 137.0
+    }
+  },
+  "runs": [
+    {
+      "eval_id": "full-refresh",
+      "configuration": "with_skill",
+      "pass_rate": 1.0,
+      "passed": 5,
+      "total": 5,
+      "time_seconds": 295.0,
+      "tokens": 0,
+      "expectations": [
+        {
+          "text": "All three session learnings present (test:unit, BASE_URL, ESLint ignores generated/)",
+          "passed": true,
+          "evidence": "test:unit=True, BASE_URL=True, eslint+generated=True"
+        },
+        {
+          "text": "Content split into multiple files",
+          "passed": true,
+          "evidence": "Found 3 AGENTS.md files: ['AGENTS.md', 'src/components/AGENTS.md', 'src/api/AGENTS.md']"
+        },
+        {
+          "text": "Root AGENTS.md under 120 lines",
+          "passed": true,
+          "evidence": "Root AGENTS.md is 38 lines"
+        },
+        {
+          "text": "Frontend and backend rules separated",
+          "passed": true,
+          "evidence": "Separate frontend/backend files exist: True"
+        },
+        {
+          "text": "Response follows structured format with labeled sections",
+          "passed": true,
+          "evidence": "Has findings/learnings section + structural section: True"
+        }
+      ]
+    },
+    {
+      "eval_id": "full-refresh",
+      "configuration": "without_skill",
+      "pass_rate": 0.6,
+      "passed": 3,
+      "total": 5,
+      "time_seconds": 166.0,
+      "tokens": 0,
+      "expectations": [
+        {
+          "text": "All three session learnings present (test:unit, BASE_URL, ESLint ignores generated/)",
+          "passed": true,
+          "evidence": "test:unit=True, BASE_URL=True, eslint+generated=True"
+        },
+        {
+          "text": "Content split into multiple files",
+          "passed": false,
+          "evidence": "Found 1 AGENTS.md files: ['AGENTS.md']"
+        },
+        {
+          "text": "Root AGENTS.md under 120 lines",
+          "passed": true,
+          "evidence": "Root AGENTS.md is 97 lines"
+        },
+        {
+          "text": "Frontend and backend rules separated",
+          "passed": false,
+          "evidence": "Separate frontend/backend files exist: False"
+        },
+        {
+          "text": "Response follows structured format with labeled sections",
+          "passed": true,
+          "evidence": "Has findings/learnings section + structural section: True"
+        }
+      ]
+    },
+    {
+      "eval_id": "revise-only",
+      "configuration": "with_skill",
+      "pass_rate": 1.0,
+      "passed": 5,
+      "total": 5,
+      "time_seconds": 64.0,
+      "tokens": 0,
+      "expectations": [
+        {
+          "text": "Includes cargo clippy --all-targets guidance",
+          "passed": true,
+          "evidence": "Found clippy --all-targets: True"
+        },
+        {
+          "text": "Includes Docker requirement for integration tests",
+          "passed": true,
+          "evidence": "Found Docker mention: True"
+        },
+        {
+          "text": "No unnecessary reorganization \u2014 only existing AGENTS.md updated",
+          "passed": true,
+          "evidence": "Found 1 AGENTS.md files (expected 1): ['AGENTS.md']"
+        },
+        {
+          "text": "Existing content preserved",
+          "passed": true,
+          "evidence": "project_desc=True, build_cmds=True, style_rules=True"
+        },
+        {
+          "text": "New additions are concise",
+          "passed": true,
+          "evidence": "Total AGENTS.md is 16 lines (original was ~14)"
+        }
+      ]
+    },
+    {
+      "eval_id": "revise-only",
+      "configuration": "without_skill",
+      "pass_rate": 1.0,
+      "passed": 5,
+      "total": 5,
+      "time_seconds": 114.0,
+      "tokens": 0,
+      "expectations": [
+        {
+          "text": "Includes cargo clippy --all-targets guidance",
+          "passed": true,
+          "evidence": "Found clippy --all-targets: True"
+        },
+        {
+          "text": "Includes Docker requirement for integration tests",
+          "passed": true,
+          "evidence": "Found Docker mention: True"
+        },
+        {
+          "text": "No unnecessary reorganization \u2014 only existing AGENTS.md updated",
+          "passed": true,
+          "evidence": "Found 1 AGENTS.md files (expected 1): ['AGENTS.md']"
+        },
+        {
+          "text": "Existing content preserved",
+          "passed": true,
+          "evidence": "project_desc=True, build_cmds=True, style_rules=True"
+        },
+        {
+          "text": "New additions are concise",
+          "passed": true,
+          "evidence": "Total AGENTS.md is 25 lines (original was ~14)"
+        }
+      ]
+    },
+    {
+      "eval_id": "refactor-only",
+      "configuration": "with_skill",
+      "pass_rate": 1.0,
+      "passed": 5,
+      "total": 5,
+      "time_seconds": 208.0,
+      "tokens": 0,
+      "expectations": [
+        {
+          "text": "Root AGENTS.md significantly shortened, ideally under 120 lines",
+          "passed": true,
+          "evidence": "Root is 45 lines (original was ~125)"
+        },
+        {
+          "text": "Specialized content moved into topic-specific files",
+          "passed": true,
+          "evidence": "Found 3 files: ['AGENTS.md', 'src/frontend/AGENTS.md', 'src/backend/AGENTS.md']"
+        },
+        {
+          "text": "Duplicate content between root and subdirectory files eliminated",
+          "passed": true,
+          "evidence": "Frontend-specific content still in root: False"
+        },
+        {
+          "text": "No substantial guidance lost in reorganization",
+          "passed": true,
+          "evidence": "Found 6/6 key concepts across all files: ['postgresql', 'pytest', 'react', 'django', 'structlog', 'bandit']"
+        },
+        {
+          "text": "Response identifies deletion candidates with reasons",
+          "passed": true,
+          "evidence": "Deletion/removal discussion found in response: True"
+        }
+      ]
+    },
+    {
+      "eval_id": "refactor-only",
+      "configuration": "without_skill",
+      "pass_rate": 1.0,
+      "passed": 5,
+      "total": 5,
+      "time_seconds": 131.0,
+      "tokens": 0,
+      "expectations": [
+        {
+          "text": "Root AGENTS.md significantly shortened, ideally under 120 lines",
+          "passed": true,
+          "evidence": "Root is 62 lines (original was ~125)"
+        },
+        {
+          "text": "Specialized content moved into topic-specific files",
+          "passed": true,
+          "evidence": "Found 3 files: ['AGENTS.md', 'src/frontend/AGENTS.md', 'src/backend/AGENTS.md']"
+        },
+        {
+          "text": "Duplicate content between root and subdirectory files eliminated",
+          "passed": true,
+          "evidence": "Frontend-specific content still in root: False"
+        },
+        {
+          "text": "No substantial guidance lost in reorganization",
+          "passed": true,
+          "evidence": "Found 6/6 key concepts across all files: ['postgresql', 'pytest', 'react', 'django', 'structlog', 'bandit']"
+        },
+        {
+          "text": "Response identifies deletion candidates with reasons",
+          "passed": true,
+          "evidence": "Deletion/removal discussion found in response: True"
+        }
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": "100% pass rate, 189s avg",
+    "without_skill": "87% pass rate, 137s avg",
+    "delta": {
+      "pass_rate": "+13.3%",
+      "time_seconds": "+52s"
+    }
+  },
+  "notes": [
+    "Skill advantage most visible on eval 0 (full-refresh): skill properly split into topic files (5/5), baseline kept single file (3/5)",
+    "Eval 1 (revise-only): both performed equally well \u2014 simple additions don't need the skill's structure",
+    "Eval 2 (refactor-only): both passed all assertions, but with_skill produced more aggressive root reduction (45 vs 62 lines)"
+  ]
+}

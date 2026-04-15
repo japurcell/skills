@@ -1,0 +1,20 @@
+[
+  {"query": "ok we're wrapping up, let's capture what we learned into AGENTS.md and while we're at it the root file is getting a bit bloated, can you clean it up too", "should_trigger": true},
+  {"query": "refresh my agents.md files — add the session learnings and reorganize things so the root stays small", "should_trigger": true},
+  {"query": "I just spent 2 hours debugging the test runner and it turns out you need REDIS_URL set locally. Can you update AGENTS.md with that and also the files are kind of a mess with frontend stuff mixed into the root", "should_trigger": true},
+  {"query": "codify what we discovered this session into the agents docs. We learned that `make lint-fix` auto-corrects most issues and that the e2e tests are flaky on CI so always retry once. Also simplify the agents files if they need it", "should_trigger": true},
+  {"query": "Do a retrospective AGENTS update — pull out the key learnings from this session and reorganize the instruction files so they make more sense for future agents", "should_trigger": true},
+  {"query": "my AGENTS.md has gotten to like 300 lines and half of it is frontend-specific rules that should be in a separate file. Can you split it up and also add the pytest discovery we found today", "should_trigger": true},
+  {"query": "revise agents md with what we learned and then refactor the structure", "should_trigger": true},
+  {"query": "let's improve the agent context files. During this session we figured out that trunk check is way faster than running eslint directly, and the AGENTS files themselves could use some tidying", "should_trigger": true},
+  {"query": "update my AGENTS.md — we discovered the docker compose setup needs --build flag on first run, and also there are some duplicate rules between the root and backend AGENTS that should be consolidated", "should_trigger": true},
+  {"query": "Can you write a Python script that reads a CSV file and generates a summary report with charts? The CSV has columns for date, revenue, and expenses", "should_trigger": false},
+  {"query": "Help me set up a new React project with TypeScript, Tailwind CSS, and a basic routing structure", "should_trigger": false},
+  {"query": "I need to write unit tests for the UserService class in src/services/user.ts. It handles CRUD operations and talks to a PostgreSQL database", "should_trigger": false},
+  {"query": "create a new AGENTS.md from scratch for this repo — there isn't one yet and I want to document the build commands and code style", "should_trigger": false},
+  {"query": "Review my pull request and check for any security issues, especially around the new auth middleware in src/middleware/auth.ts", "should_trigger": false},
+  {"query": "Can you add a pre-commit hook that runs eslint and prettier? I keep forgetting to lint before pushing", "should_trigger": false},
+  {"query": "I want to refactor the database module to use connection pooling instead of creating a new connection per request. The current code is in src/db/connection.ts", "should_trigger": false},
+  {"query": "help me debug why my Next.js API route at /api/users is returning 500. The error log says something about prisma client not being initialized", "should_trigger": false},
+  {"query": "Can you read through the AGENTS.md and explain what conventions this project follows? I'm new to the codebase", "should_trigger": false}
+]

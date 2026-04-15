@@ -1,0 +1,32 @@
+{
+  "eval_id": 2,
+  "eval_name": "refactor-only",
+  "prompt": "My AGENTS.md files are a mess — there's a 200-line root file with everything jammed in, plus two subdirectory AGENTS files that duplicate half the root content. Please reorganize them. I don't think there are specific session learnings to capture, just clean up what's there.",
+  "assertions": [
+    {
+      "id": "a2-root-shortened",
+      "text": "Root AGENTS.md is significantly shorter than the original (~200 lines) — ideally under 120 lines",
+      "type": "content_check"
+    },
+    {
+      "id": "a2-topic-files-created",
+      "text": "Specialized content is moved into topic-specific files (e.g., testing, frontend, backend, security, or similar groupings)",
+      "type": "structure_check"
+    },
+    {
+      "id": "a2-duplication-reduced",
+      "text": "Duplicate content between root and subdirectory AGENTS files is eliminated or significantly reduced",
+      "type": "content_check"
+    },
+    {
+      "id": "a2-no-content-lost",
+      "text": "No substantial guidance is lost — all important rules from the original files appear somewhere in the reorganized structure",
+      "type": "content_check"
+    },
+    {
+      "id": "a2-deletion-candidates",
+      "text": "Response identifies deletion candidates — redundant, non-actionable, or boilerplate content that could be removed",
+      "type": "format_check"
+    }
+  ]
+}

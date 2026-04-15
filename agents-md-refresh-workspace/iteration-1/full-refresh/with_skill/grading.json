@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "All three session learnings present (test:unit, BASE_URL, ESLint ignores generated/)",
+      "passed": true,
+      "evidence": "test:unit=True, BASE_URL=True, eslint+generated=True"
+    },
+    {
+      "text": "Content split into multiple files",
+      "passed": true,
+      "evidence": "Found 3 AGENTS.md files: ['AGENTS.md', 'src/components/AGENTS.md', 'src/api/AGENTS.md']"
+    },
+    {
+      "text": "Root AGENTS.md under 120 lines",
+      "passed": true,
+      "evidence": "Root AGENTS.md is 38 lines"
+    },
+    {
+      "text": "Frontend and backend rules separated",
+      "passed": true,
+      "evidence": "Separate frontend/backend files exist: True"
+    },
+    {
+      "text": "Response follows structured format with labeled sections",
+      "passed": true,
+      "evidence": "Has findings/learnings section + structural section: True"
+    }
+  ]
+}
