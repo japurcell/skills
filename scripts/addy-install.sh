@@ -13,6 +13,88 @@ readonly SKILLS_DEST="${ADDY_SKILLS_DEST:-${DEFAULT_DEST_ROOT}/skills}"
 
 declare -a COPIED_AGENT_FILES=()
 declare -a COPIED_SKILL_DIRS=()
+declare -a SELECTED_SKILLS=()
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/addy-install.sh [--skills name1,name2] [--skills name3]
+
+Copies addy agents and skills into this repository with the configured prefix.
+If --skills is omitted, all skills are copied.
+Referenced skills are copied automatically.
+EOF
+}
+
+add_selected_skills() {
+  local raw_names="$1"
+  local skill_name
+  local parsed_names=()
+
+  [[ -n "$raw_names" ]] || {
+    echo "Skill names must not be empty" >&2
+    exit 1
+  }
+
+  IFS=',' read -r -a parsed_names <<< "$raw_names"
+
+  for skill_name in "${parsed_names[@]}"; do
+    [[ -n "$skill_name" ]] || {
+      echo "Skill names must not be empty" >&2
+      exit 1
+    }
+
+    if ! has_selected_skill "$skill_name"; then
+      SELECTED_SKILLS+=("$skill_name")
+    fi
+  done
+}
+
+has_selected_skill() {
+  local skill_name="$1"
+  local selected_skill
+
+  ((${#SELECTED_SKILLS[@]} > 0)) || return 1
+
+  for selected_skill in "${SELECTED_SKILLS[@]}"; do
+    if [[ "$selected_skill" == "$skill_name" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+parse_args() {
+  local value
+
+  while (($# > 0)); do
+    case "$1" in
+      --skills)
+        shift
+        [[ $# -gt 0 && "$1" != --* ]] || {
+          echo "Missing value for --skills" >&2
+          exit 1
+        }
+        value="$1"
+        ;;
+      --skills=*)
+        value="${1#--skills=}"
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        echo "Unknown argument: $1" >&2
+        usage >&2
+        exit 1
+        ;;
+    esac
+
+    add_selected_skills "$value"
+    shift
+  done
+}
 
 rewrite_name_field() {
   local file="$1"
@@ -64,7 +146,7 @@ build_name_map() {
   while IFS= read -r -d '' source_dir; do
     base_name="$(basename "$source_dir")"
     printf '%s\t%s%s\n' "$base_name" "$PREFIX" "$base_name" >> "$map_file"
-  done < <(find "$SKILLS_SRC" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
+  done < <(iter_skill_source_dirs)
 
   sort -u "$map_file" -o "$map_file"
 }
@@ -74,7 +156,9 @@ rewrite_references() {
 
   ((${#COPIED_AGENT_FILES[@]} + ${#COPIED_SKILL_DIRS[@]} > 0)) || return 0
 
-  python3 - "$map_file" "${COPIED_AGENT_FILES[@]}" "${COPIED_SKILL_DIRS[@]}" <<'PY'
+  python3 - "$map_file" \
+    ${COPIED_AGENT_FILES[@]+"${COPIED_AGENT_FILES[@]}"} \
+    ${COPIED_SKILL_DIRS[@]+"${COPIED_SKILL_DIRS[@]}"} <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -136,6 +220,125 @@ copy_agents() {
   done < <(find "$AGENTS_SRC" -mindepth 1 -maxdepth 1 -type f -name '*.md' -print0 | sort -z)
 }
 
+iter_skill_source_dirs() {
+  local source_dir
+  local base_name
+
+  while IFS= read -r -d '' source_dir; do
+    base_name="$(basename "$source_dir")"
+
+    if ((${#SELECTED_SKILLS[@]} > 0)) && ! has_selected_skill "$base_name"; then
+      continue
+    fi
+
+    printf '%s\0' "$source_dir"
+  done < <(find "$SKILLS_SRC" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
+}
+
+validate_selected_skills() {
+  local skill_name
+  local missing=0
+
+  ((${#SELECTED_SKILLS[@]} == 0)) && return 0
+
+  for skill_name in "${SELECTED_SKILLS[@]}"; do
+    if [[ ! -d "${SKILLS_SRC}/${skill_name}" ]]; then
+      echo "Missing skill source directory: ${SKILLS_SRC}/${skill_name}" >&2
+      missing=1
+    fi
+  done
+
+  ((missing == 0)) || exit 1
+}
+
+resolve_selected_skills() {
+  local resolved_skill
+
+  ((${#SELECTED_SKILLS[@]} == 0)) && return 0
+
+  while IFS= read -r resolved_skill; do
+    [[ -n "$resolved_skill" ]] || continue
+    add_selected_skills "$resolved_skill"
+  done < <(
+    python3 - "$SKILLS_SRC" "${SELECTED_SKILLS[@]}" <<'PY'
+from collections import deque
+from pathlib import Path
+import re
+import sys
+
+skills_src = Path(sys.argv[1])
+selected = sys.argv[2:]
+skill_dirs = {
+    path.name: path
+    for path in sorted(skills_src.iterdir())
+    if path.is_dir()
+}
+skill_names = sorted(skill_dirs)
+patterns = {
+    name: re.compile(rf"(?<![A-Za-z0-9_-]){re.escape(name)}(?![A-Za-z0-9_-])")
+    for name in skill_names
+}
+
+
+def iter_text_files(skill_dir: Path):
+    for path in sorted(skill_dir.rglob("*")):
+        if not path.is_file():
+            continue
+        try:
+            yield path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+
+
+def referenced_skills(skill_name: str):
+    found = set()
+    for content in iter_text_files(skill_dirs[skill_name]):
+        for candidate in skill_names:
+            if candidate == skill_name or candidate in found:
+                continue
+            if patterns[candidate].search(content):
+                found.add(candidate)
+    return sorted(found)
+
+
+resolved = []
+seen = set(selected)
+queue = deque(selected)
+
+while queue:
+    skill_name = queue.popleft()
+    for dependency in referenced_skills(skill_name):
+        if dependency in seen:
+            continue
+        seen.add(dependency)
+        resolved.append(dependency)
+        queue.append(dependency)
+
+for skill_name in resolved:
+    print(skill_name)
+PY
+  )
+}
+
+prune_unselected_skills() {
+  local source_dir
+  local base_name
+  local target_dir
+
+  ((${#SELECTED_SKILLS[@]} == 0)) && return 0
+
+  while IFS= read -r -d '' source_dir; do
+    base_name="$(basename "$source_dir")"
+
+    if has_selected_skill "$base_name"; then
+      continue
+    fi
+
+    target_dir="${SKILLS_DEST}/${PREFIX}${base_name}"
+    rm -rf "$target_dir"
+  done < <(find "$SKILLS_SRC" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
+}
+
 copy_skills() {
   local source_dir
   local base_name
@@ -151,8 +354,10 @@ copy_skills() {
     cp -Rp "$source_dir" "$target_dir"
     rewrite_name_field "$skill_file" "$base_name" "${PREFIX}${base_name}"
     COPIED_SKILL_DIRS+=("$target_dir")
-  done < <(find "$SKILLS_SRC" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
+  done < <(iter_skill_source_dirs)
 }
+
+parse_args "$@"
 
 [[ -n "$PREFIX" ]] || {
   echo "Prefix must not be empty" >&2
@@ -169,6 +374,9 @@ copy_skills() {
   exit 1
 }
 
+validate_selected_skills
+resolve_selected_skills
+
 readonly NAME_MAP_FILE="$(mktemp)"
 trap 'rm -f "$NAME_MAP_FILE"' EXIT
 
@@ -176,6 +384,7 @@ mkdir -p "$AGENTS_DEST" "$SKILLS_DEST"
 
 build_name_map "$NAME_MAP_FILE"
 copy_agents
+prune_unselected_skills
 copy_skills
 rewrite_references "$NAME_MAP_FILE"
 

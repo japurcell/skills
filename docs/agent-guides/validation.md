@@ -9,6 +9,7 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 
 ## Other targeted checks
 
+- `bash scripts/test-addy-install.sh`: exercise the addy importer’s skill-selection and dependency-copying behavior
 - `bash skills/agent-sop-author/validate-sop.sh path/to/file.sop.md`: validate an Agent SOP file
 - `python3 skills/security-review/evals/grade_reports.py <run-dir>`: grade a `security-review` eval run
 

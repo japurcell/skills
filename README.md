@@ -30,7 +30,7 @@ Workspace directories whose names end with `-workspace` are skipped during insta
 - `docs/agent-guides/`: repo-specific guidance for layout, authoring, and validation
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts
 - `scripts/copilot-install.sh`: installs repo assets into local Copilot directories
-- `scripts/addy-install.sh`: imports addy agents and skills into this repository with `addy-` prefixes
+- `scripts/addy-install.sh`: imports addy agents and skills into this repository with `addy-` prefixes; pass `--skills foo,bar` to copy specific source skill names and their referenced skills
 
 ## Working in this repo
 
@@ -63,6 +63,7 @@ Run the narrowest command that covers your change:
 # Installer changes
 bash -n scripts/copilot-install.sh
 bash -n scripts/addy-install.sh
+bash scripts/test-addy-install.sh
 
 # Skill validation
 python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>
