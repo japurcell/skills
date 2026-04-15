@@ -5,7 +5,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILLS_SRC="${SCRIPT_DIR}/skills"
 AGENTS_SRC="${SCRIPT_DIR}/agents"
+COPILOT_INSTRUCTIONS_SRC="${SCRIPT_DIR}/.copilot/copilot-instructions.md"
 SKILLS_DEST="${HOME}/.agents/skills"
+COPILOT_DEST="${HOME}/.copilot"
 AGENTS_DEST="${HOME}/.copilot/agents"
 
 copy_skills() {
@@ -31,6 +33,10 @@ copy_agents() {
   done < <(find "$AGENTS_SRC" -mindepth 1 -maxdepth 1 -type f -print0)
 }
 
+copy_copilot_instructions() {
+  cp -p "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_DEST/"
+}
+
 [[ -d "$SKILLS_SRC" ]] || {
   echo "Missing skills source directory: $SKILLS_SRC" >&2
   exit 1
@@ -41,10 +47,17 @@ copy_agents() {
   exit 1
 }
 
-mkdir -p "$SKILLS_DEST" "$AGENTS_DEST"
+[[ -f "$COPILOT_INSTRUCTIONS_SRC" ]] || {
+  echo "Missing Copilot instructions file: $COPILOT_INSTRUCTIONS_SRC" >&2
+  exit 1
+}
 
-# copy_skills
+mkdir -p "$SKILLS_DEST" "$COPILOT_DEST" "$AGENTS_DEST"
+
+copy_skills
 copy_agents
+copy_copilot_instructions
 
 echo "Installed skills to $SKILLS_DEST"
 echo "Installed agents to $AGENTS_DEST"
+echo "Installed Copilot instructions to $COPILOT_DEST/copilot-instructions.md"
