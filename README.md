@@ -11,7 +11,7 @@ This repository publishes custom GitHub Copilot assets:
 Install or refresh the locally loaded copies with:
 
 ```bash
-./copilot-install.sh
+./scripts/copilot-install.sh
 ```
 
 The installer copies:
@@ -26,14 +26,16 @@ Workspace directories whose names end with `-workspace` are skipped during insta
 
 - `skills/`: one directory per skill, centered on `SKILL.md`
 - `agents/`: standalone custom agent prompt files
+- `scripts/`: repo helper and installation scripts
 - `docs/agent-guides/`: repo-specific guidance for layout, authoring, and validation
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts
-- `copilot-install.sh`: installs repo assets into local Copilot directories
+- `scripts/copilot-install.sh`: installs repo assets into local Copilot directories
+- `scripts/addy-install.sh`: imports addy agents and skills into this repository with `addy-` prefixes
 
 ## Working in this repo
 
 1. Edit source files in `skills/`, `agents/`, or `.copilot/`.
-2. Rerun `./copilot-install.sh` to refresh the installed local copies.
+2. Rerun `./scripts/copilot-install.sh` to refresh the installed local copies.
 3. Use targeted checks for the area you changed; there is no single repo-wide test runner.
 
 Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews. Those files are benchmark fixtures, not maintained source.
@@ -59,7 +61,8 @@ Run the narrowest command that covers your change:
 
 ```bash
 # Installer changes
-bash -n copilot-install.sh
+bash -n scripts/copilot-install.sh
+bash -n scripts/addy-install.sh
 
 # Skill validation
 python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>

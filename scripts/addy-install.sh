@@ -2,9 +2,9 @@
 
 set -euo pipefail
 
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly DEFAULT_SOURCE_ROOT="${SCRIPT_DIR}/../addy-agent-skills"
-readonly DEFAULT_DEST_ROOT="${SCRIPT_DIR}/skills"
+readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly DEFAULT_SOURCE_ROOT="${REPO_ROOT}/../addy-agent-skills"
+readonly DEFAULT_DEST_ROOT="${REPO_ROOT}"
 readonly PREFIX="${ADDY_PREFIX:-addy-}"
 readonly AGENTS_SRC="${ADDY_AGENTS_SRC:-${DEFAULT_SOURCE_ROOT}/agents}"
 readonly SKILLS_SRC="${ADDY_SKILLS_SRC:-${DEFAULT_SOURCE_ROOT}/skills}"

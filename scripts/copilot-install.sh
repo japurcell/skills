@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SKILLS_SRC="${SCRIPT_DIR}/skills"
-AGENTS_SRC="${SCRIPT_DIR}/agents"
-COPILOT_INSTRUCTIONS_SRC="${SCRIPT_DIR}/.copilot/copilot-instructions.md"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SKILLS_SRC="${REPO_ROOT}/skills"
+AGENTS_SRC="${REPO_ROOT}/agents"
+COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
 SKILLS_DEST="${HOME}/.agents/skills"
 COPILOT_DEST="${HOME}/.copilot"
 AGENTS_DEST="${HOME}/.copilot/agents"
