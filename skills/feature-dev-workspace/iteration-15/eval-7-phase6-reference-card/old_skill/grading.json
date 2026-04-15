@@ -1,0 +1,90 @@
+{
+  "expectations": [
+    {
+      "text": "The reference card names code-simplifier as a distinct, required Phase 6 subagent step.",
+      "passed": true,
+      "evidence": "response.md Step 1 is titled 'Launch `code-simplifier` subagent (always required)' and the Notes section states 'Steps 1 and 2 are mandatory on every track — there are no exceptions.'"
+    },
+    {
+      "text": "The reference card names code-reviewer as a distinct, required Phase 6 subagent step.",
+      "passed": true,
+      "evidence": "response.md Step 2 is titled 'Launch `code-reviewer` subagent(s) (always required)' with a breakdown by track showing it is mandatory for Light, Standard, and Deep."
+    },
+    {
+      "text": "The reference card shows code-simplifier executed before code-reviewer (not after, not as a merged step).",
+      "passed": true,
+      "evidence": "Step 1 is code-simplifier, Step 2 is code-reviewer — explicitly numbered and separated. The Notes section reinforces: 'The code-simplifier (Step 1) and code-reviewer agents (Step 2) are independent subagents — do not conflate them or skip either.'"
+    },
+    {
+      "text": "The card does not describe Phase 6 as exclusively code-reviewer agents with no simplifier step.",
+      "passed": true,
+      "evidence": "Both agents are given dedicated numbered steps. The simplifier appears as Step 1 and the Notes explicitly warn against conflating or skipping either one."
+    },
+    {
+      "text": "The card attributes these steps to the workflow's Phase 6 specification, not personal preference.",
+      "passed": true,
+      "evidence": "Steps are framed as unconditional requirements ('always required', 'mandatory on every track — there are no exceptions'). metrics.json confirms: 'fidelity: strict — all content sourced exclusively from SKILL.md Phase 6 section' and 'additions_from_best_practice: false', establishing the card as a faithful transcription of the spec rather than personal opinion."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "skill": "feature-dev",
+    "skill_version": "iteration-15-snapshot",
+    "eval_id": "eval-7-phase6-reference-card",
+    "variant": "old_skill",
+    "steps_identified": 5,
+    "subagents_referenced": [
+      "code-simplifier (../code-simplifier/SKILL.md)",
+      "code-reviewer (code-reviewer)"
+    ],
+    "fidelity": "strict — all content sourced exclusively from SKILL.md Phase 6 section",
+    "additions_from_best_practice": false
+  },
+  "timing": {
+    "executor_duration_seconds": null,
+    "grader_duration_seconds": null,
+    "total_duration_seconds": 72.0
+  },
+  "claims": [
+    {
+      "claim": "All content sourced exclusively from SKILL.md Phase 6 section",
+      "type": "process",
+      "verified": false,
+      "evidence": "Stated in metrics.json but SKILL.md was not available to cross-check; the claim cannot be independently confirmed from available outputs."
+    },
+    {
+      "claim": "code-simplifier and code-reviewer are independent subagents (not the same agent)",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Different skill paths cited: code-simplifier at '../code-simplifier/SKILL.md' and code-reviewer at 'code-reviewer'."
+    },
+    {
+      "claim": "Steps 1 and 2 are mandatory on every track with no exceptions",
+      "type": "quality",
+      "verified": false,
+      "evidence": "Asserted in both the card body and Notes section, but verifying against the actual SKILL.md was not possible with available files."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "The card attributes these steps to the workflow's Phase 6 specification, not personal preference.",
+        "reason": "This passes based on mandatory-language framing and metrics.json fidelity claims, but a card that simply adopted the correct structure without any 'best practice' additions would also pass. A stronger check might verify the card contains no advisory language that exceeds the spec (e.g., 'I recommend...' or 'as a best practice...')."
+      },
+      {
+        "reason": "No assertion checks the correctness of the skill paths cited (e.g., '../code-simplifier/SKILL.md' and 'code-reviewer'). An incorrect path would still satisfy all five current assertions."
+      }
+    ],
+    "overall": "The five assertions are well-targeted at the key discriminating outcomes for this eval. The output is a clean, accurate reference card. Minor gap: no assertion validates the skill paths or guards against spec-exceeding additions."
+  }
+}
