@@ -17,6 +17,31 @@ assert_equals() {
   fi
 }
 
+commit_repo() {
+  local repo="$1"
+  local message="$2"
+
+  git -C "$repo" add .
+  git -C "$repo" commit -q -m "$message"
+}
+
+init_addy_remote_repo() {
+  local repo="$1"
+  local skill_body="$2"
+
+  mkdir -p "$repo/agents" "$repo/skills/alpha" "$repo/references"
+
+  git -C "$repo" init -q -b main
+  git -C "$repo" config user.name "Test User"
+  git -C "$repo" config user.email "test@example.com"
+
+  printf '%s\n' '---' 'name: helper' '---' 'Use alpha.' > "$repo/agents/helper.md"
+  printf '%s\n' '---' 'name: alpha' '---' "$skill_body" > "$repo/skills/alpha/SKILL.md"
+  printf '%s\n' 'Reference.' > "$repo/references/testing.md"
+
+  commit_repo "$repo" "Initial addy repo"
+}
+
 test_copies_referenced_skills_transitively() {
   local workdir="$1"
   local installed_skills
@@ -164,6 +189,48 @@ test_rewrites_root_reference_links_for_copied_skills() {
     "Expected copied skill reference links to point to the repository references directory."
 }
 
+test_clones_addy_repo_before_copying() {
+  local workdir="$1"
+  local cloned_skill
+
+  mkdir -p "$workdir/remote" "$workdir/repo-root"
+  init_addy_remote_repo "$workdir/remote" "Fresh from clone."
+
+  ADDY_REPO_ROOT="$workdir/repo-root" \
+    ADDY_REMOTE_URL="$workdir/remote" \
+    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+
+  cloned_skill="$(<"$workdir/repo-root/skills/addy-alpha/SKILL.md")"
+
+  assert_equals \
+    $'---\nname: addy-alpha\n---\nFresh from clone.' \
+    "$cloned_skill" \
+    "Expected the installer to clone the addy repository before copying skills."
+}
+
+test_pulls_latest_addy_repo_before_copying() {
+  local workdir="$1"
+  local copied_skill
+
+  mkdir -p "$workdir/remote" "$workdir/repo-root"
+  init_addy_remote_repo "$workdir/remote" "Stale version."
+  git clone -q "$workdir/remote" "$workdir/addy-agent-skills"
+
+  printf '%s\n' '---' 'name: alpha' '---' 'Latest version.' > "$workdir/remote/skills/alpha/SKILL.md"
+  commit_repo "$workdir/remote" "Update alpha skill"
+
+  ADDY_REPO_ROOT="$workdir/repo-root" \
+    ADDY_REMOTE_URL="$workdir/remote" \
+    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+
+  copied_skill="$(<"$workdir/repo-root/skills/addy-alpha/SKILL.md")"
+
+  assert_equals \
+    $'---\nname: addy-alpha\n---\nLatest version.' \
+    "$copied_skill" \
+    "Expected the installer to pull the latest addy repository changes before copying skills."
+}
+
 main() {
   local workdir
 
@@ -174,6 +241,8 @@ main() {
   test_copies_referenced_skills_without_agents "$workdir/no-agents"
   test_copies_root_references_directory "$workdir/references"
   test_rewrites_root_reference_links_for_copied_skills "$workdir/skill-reference-links"
+  test_clones_addy_repo_before_copying "$workdir/clone"
+  test_pulls_latest_addy_repo_before_copying "$workdir/pull"
 }
 
 main "$@"

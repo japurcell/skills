@@ -2,13 +2,15 @@
 
 set -euo pipefail
 
-readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly REPO_ROOT="${ADDY_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 readonly DEFAULT_SOURCE_ROOT="${REPO_ROOT}/../addy-agent-skills"
+readonly SOURCE_ROOT="${ADDY_SOURCE_ROOT:-${DEFAULT_SOURCE_ROOT}}"
+readonly SOURCE_REMOTE_URL="${ADDY_REMOTE_URL:-https://github.com/addyosmani/agent-skills}"
 readonly DEFAULT_DEST_ROOT="${REPO_ROOT}"
 readonly PREFIX="${ADDY_PREFIX:-addy-}"
-readonly AGENTS_SRC="${ADDY_AGENTS_SRC:-${DEFAULT_SOURCE_ROOT}/agents}"
-readonly SKILLS_SRC="${ADDY_SKILLS_SRC:-${DEFAULT_SOURCE_ROOT}/skills}"
-readonly REFERENCES_SRC="${ADDY_REFERENCES_SRC:-${DEFAULT_SOURCE_ROOT}/references}"
+readonly AGENTS_SRC="${ADDY_AGENTS_SRC:-${SOURCE_ROOT}/agents}"
+readonly SKILLS_SRC="${ADDY_SKILLS_SRC:-${SOURCE_ROOT}/skills}"
+readonly REFERENCES_SRC="${ADDY_REFERENCES_SRC:-${SOURCE_ROOT}/references}"
 readonly AGENTS_DEST="${ADDY_AGENTS_DEST:-${DEFAULT_DEST_ROOT}/agents}"
 readonly SKILLS_DEST="${ADDY_SKILLS_DEST:-${DEFAULT_DEST_ROOT}/skills}"
 readonly REFERENCES_DEST="${ADDY_REFERENCES_DEST:-${DEFAULT_DEST_ROOT}/references}"
@@ -97,6 +99,54 @@ parse_args() {
     add_selected_skills "$value"
     shift
   done
+}
+
+should_sync_source_root() {
+  if [[ -n "${ADDY_SOURCE_ROOT:-}" ]]; then
+    return 0
+  fi
+
+  if [[ -n "${ADDY_AGENTS_SRC:-}" || -n "${ADDY_SKILLS_SRC:-}" || -n "${ADDY_REFERENCES_SRC:-}" ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+sync_source_root() {
+  local current_branch
+
+  should_sync_source_root || return 0
+
+  mkdir -p "$(dirname "$SOURCE_ROOT")"
+
+  if [[ ! -e "$SOURCE_ROOT" ]]; then
+    git clone --quiet "$SOURCE_REMOTE_URL" "$SOURCE_ROOT"
+    return 0
+  fi
+
+  [[ -d "$SOURCE_ROOT" ]] || {
+    echo "Existing addy source path is not a directory: $SOURCE_ROOT" >&2
+    exit 1
+  }
+
+  [[ -d "$SOURCE_ROOT/.git" ]] || {
+    echo "Existing addy source path is not a git repository: $SOURCE_ROOT" >&2
+    exit 1
+  }
+
+  if git -C "$SOURCE_ROOT" remote get-url origin >/dev/null 2>&1; then
+    git -C "$SOURCE_ROOT" remote set-url origin "$SOURCE_REMOTE_URL"
+  else
+    git -C "$SOURCE_ROOT" remote add origin "$SOURCE_REMOTE_URL"
+  fi
+
+  current_branch="$(git -C "$SOURCE_ROOT" symbolic-ref --quiet --short HEAD)" || {
+    echo "Unable to determine current branch for $SOURCE_ROOT" >&2
+    exit 1
+  }
+
+  git -C "$SOURCE_ROOT" pull --ff-only --quiet origin "$current_branch"
 }
 
 rewrite_name_field() {
@@ -391,6 +441,8 @@ parse_args "$@"
   echo "Prefix must not be empty" >&2
   exit 1
 }
+
+sync_source_root
 
 [[ -d "$AGENTS_SRC" ]] || {
   echo "Missing agents source directory: $AGENTS_SRC" >&2
