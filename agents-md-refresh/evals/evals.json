@@ -1,0 +1,89 @@
+{
+  "skill_name": "agents-md-refresh",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Refresh my AGENTS.md — capture what we learned this session and clean things up. During this session we discovered that `npm run test:unit` is much faster than `npm test` for iterating, that the API client in src/api/ expects a BASE_URL env var (not documented anywhere), and that the ESLint config ignores the generated/ folder. The current AGENTS.md is getting long and has some frontend-specific rules mixed in with backend stuff.",
+      "expected_output": "Runs all three phases: discovers current AGENTS.md state, drafts new learnings targeting appropriate files, proposes structural reorganization since the root file is long with mixed scopes, and presents a combined preview for approval.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "a0-learnings-captured",
+          "text": "All three session learnings are present in output files (test:unit, BASE_URL, ESLint ignores generated/)"
+        },
+        {
+          "id": "a0-structural-split",
+          "text": "Content is split into multiple files rather than keeping everything in one file"
+        },
+        {
+          "id": "a0-root-concise",
+          "text": "Root AGENTS.md is under 120 lines with only essential project-wide guidance"
+        },
+        {
+          "id": "a0-frontend-backend-separated",
+          "text": "Frontend and backend rules are separated, not mixed in root"
+        },
+        {
+          "id": "a0-response-structured",
+          "text": "Response follows structured format with clearly labeled sections"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Quick AGENTS.md update — we found out that running `cargo clippy --all-targets` before pushing catches most CI failures, and that the integration tests need Docker running. Don't need a big reorg, just add the learnings.",
+      "expected_output": "Discovers current state, drafts concise learnings, detects refactor not needed, presents additions for approval.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "a1-clippy-captured",
+          "text": "Updated AGENTS.md includes cargo clippy --all-targets guidance"
+        },
+        {
+          "id": "a1-docker-captured",
+          "text": "Updated AGENTS.md includes Docker requirement for integration tests"
+        },
+        {
+          "id": "a1-no-unnecessary-reorg",
+          "text": "File structure NOT reorganized — only existing AGENTS.md updated"
+        },
+        {
+          "id": "a1-existing-preserved",
+          "text": "Existing content preserved, not removed or substantially rewritten"
+        },
+        {
+          "id": "a1-concise-additions",
+          "text": "New additions are concise one-liners, not verbose paragraphs"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "My AGENTS.md files are a mess — there's a 200-line root file with everything jammed in, plus two subdirectory AGENTS files that duplicate half the root content. Please reorganize them. I don't think there are specific session learnings to capture, just clean up what's there.",
+      "expected_output": "Full refactor: discovers structural problems, extracts root essentials, groups/splits content, flags deletion candidates.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "a2-root-shortened",
+          "text": "Root AGENTS.md significantly shorter than original, ideally under 120 lines"
+        },
+        {
+          "id": "a2-topic-files-created",
+          "text": "Specialized content moved into topic-specific files"
+        },
+        {
+          "id": "a2-duplication-reduced",
+          "text": "Duplicate content between root and subdirectory files eliminated"
+        },
+        {
+          "id": "a2-no-content-lost",
+          "text": "No substantial guidance lost in reorganization"
+        },
+        {
+          "id": "a2-deletion-candidates",
+          "text": "Response identifies deletion candidates with reasons"
+        }
+      ]
+    }
+  ]
+}
