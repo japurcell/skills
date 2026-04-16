@@ -24,6 +24,21 @@ The installer copies:
 
 Workspace directories whose names end with `-workspace` are skipped during installation.
 
+### [Notify Hook](./hooks/notify.json)
+
+For the notify hook to work, add these lines to your vscode settings.json file:
+
+```json
+{
+  "terminal.integrated.enableVisualBell": true,
+  "terminal.integrated.bellDuration": 500,
+  "accessibility.signalOptions.volume": 100,
+  "accessibility.signals.terminalBell": {
+    "sound": "on"
+  }
+}
+```
+
 ## Repository layout
 
 - `skills/`: one directory per skill, centered on `SKILL.md`
