@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: Test-driven development (TDD) with an explicit red-green-refactor loop. Use this skill whenever the user wants to build or fix code test-first, mentions "TDD", "red-green-refactor", "write tests first", "write a failing test", "start with a regression test", or asks to add a feature or fix a bug while proving it with tests. Use it even when they do not say "TDD" directly but the right workflow is to reproduce a bug with a failing test, implement the smallest change that passes, and then refactor safely.
+description: Test-driven development (TDD) with an explicit red-green-refactor loop. Use this skill whenever the user asks to implement, create, change, fix, or refactor application or library code, even if they never mention tests or TDD. This includes adding features, fixing bugs, writing or updating functions, handlers, components, controllers, modules, API endpoints, scripts, validation, error handling, or CLI commands. The default workflow for any source-code change should be to write a failing test first, make the smallest code change that passes, then refactor safely. Do not use for documentation or explanations only, code review, config or dependency setup, git operations, Docker/infra work, or standalone database queries.
 ---
 
 # Test-Driven Development
