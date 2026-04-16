@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "echo -e '\\a'",
+        "cwd": ".",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}
