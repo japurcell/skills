@@ -1,8 +1,8 @@
 # Skill Benchmark: commit-to-pr
 
 **Model**: <model-name>
-**Date**: 2026-03-26T22:22:36Z
-**Evals**: 0, 1, 2 (3 runs each per configuration)
+**Date**: 2026-04-20T15:04:42Z
+**Evals**: 0, 1, 2 (1 runs each per configuration)
 
 ## Summary
 

@@ -1,0 +1,39 @@
+{
+  "expectations": [
+    {
+      "text": "Exactly one new commit is created for the task",
+      "passed": true,
+      "evidence": "Commit info: 5e34628740a3831e885a6bd155a99f869cb60953 feat: add invoice export with CSV suppo"
+    },
+    {
+      "text": "Branch is not main/master after execution",
+      "passed": true,
+      "evidence": "Branch: feat/123-add-invoice-export"
+    },
+    {
+      "text": "Commit message includes issue linkage to #123",
+      "passed": true,
+      "evidence": "Found '#123' in commit message"
+    },
+    {
+      "text": "Commit message contains a Co-authored-by trailer matching Co-authored-by: NAME <EMAIL>",
+      "passed": true,
+      "evidence": "Found 1 Co-authored-by line(s): Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+    },
+    {
+      "text": "Co-authored-by trailer is separated from the commit body by a blank line",
+      "passed": true,
+      "evidence": "Found 1 Co-authored-by line(s): Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+    },
+    {
+      "text": "Origin push succeeds for the working branch",
+      "passed": true,
+      "evidence": "Push mentioned in summary"
+    },
+    {
+      "text": "A PR URL is produced or gh pr create was attempted",
+      "passed": true,
+      "evidence": "PR creation mentioned in summary"
+    }
+  ]
+}

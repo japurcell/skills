@@ -1,0 +1,9 @@
+feat: add audit logging for admin actions
+
+Add structured audit logging to track all admin actions as specified
+in specs/add-audit-logs.md.
+
+- Add logAction utility for recording admin actions
+- Include spec document for audit logging requirements
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>

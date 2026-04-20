@@ -1,0 +1,13 @@
+{
+  "eval_id": 1,
+  "eval_name": "fix-rate-limit",
+  "prompt": "Turn my current working tree into a PR for the bugfix spec at specs/fix-rate-limit.md. I am already on a feature branch.",
+  "assertions": [
+    {"text": "Exactly one new commit is created for the task"},
+    {"text": "Existing feature branch fix/456-rate-limit is preserved"},
+    {"text": "Commit message includes issue linkage to #456"},
+    {"text": "Commit message contains a Co-authored-by trailer matching the format Co-authored-by: NAME <EMAIL>"},
+    {"text": "Origin push succeeds for the working branch"},
+    {"text": "A PR URL is produced or gh pr create was attempted"}
+  ]
+}

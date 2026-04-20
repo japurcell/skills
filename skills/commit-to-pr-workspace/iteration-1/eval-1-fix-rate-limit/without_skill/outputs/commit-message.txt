@@ -1,0 +1,8 @@
+fix: respect rate limit headers in retry logic
+
+Add handleRateLimit function that processes rate limit response
+headers so retry logic correctly backs off when rate-limited.
+
+Fixes #456
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>

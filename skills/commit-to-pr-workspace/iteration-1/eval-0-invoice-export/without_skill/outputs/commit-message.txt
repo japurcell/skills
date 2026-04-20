@@ -1,0 +1,9 @@
+feat: add invoice export with CSV support and date range filtering
+
+Implement the invoice export feature as specified in specs/invoice-export.md:
+- Add exportInvoices function for CSV export
+- Support date range filtering for invoice queries
+
+Closes #123
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>

@@ -1,0 +1,18 @@
+## Summary
+
+1. **Inspected repo state**: Confirmed on branch `fix/456-rate-limit` with two staged files (`rate-limit.js` and `specs/fix-rate-limit.md`).
+
+2. **Read spec**: `specs/fix-rate-limit.md` describes fixing retry logic that doesn't respect rate limit headers (GitHub Issue #456).
+
+3. **Reviewed staged diff**: New `handleRateLimit` function in `rate-limit.js` and the spec file.
+
+4. **Committed**: Created conventional commit with message:
+   - Title: `fix: respect rate limit headers in retry logic`
+   - Body describing the change
+   - `Fixes #456` trailer
+   - `Co-authored-by: Copilot` trailer
+
+5. **PR creation (not executed — no GitHub remote)**:
+   Would run: `gh pr create --title "fix: respect rate limit headers in retry logic" --body "Add handleRateLimit function that processes rate limit response headers so retry logic correctly backs off when rate-limited.\n\nFixes #456" --base main`
+
+6. **Saved outputs**: commit-message.txt, commit-info.txt, branch.txt, summary.txt

@@ -1,0 +1,34 @@
+{
+  "expectations": [
+    {
+      "text": "Exactly one new commit is created for the task",
+      "passed": true,
+      "evidence": "Commit info: 222c0fd6c8e2b33c11fae37774d3eb2b6ccad620 fix: resolve rate-limit retry logic"
+    },
+    {
+      "text": "Existing feature branch fix/456-rate-limit is preserved",
+      "passed": true,
+      "evidence": "Branch: fix/456-rate-limit"
+    },
+    {
+      "text": "Commit message includes issue linkage to #456",
+      "passed": true,
+      "evidence": "Found '#456' in commit message"
+    },
+    {
+      "text": "Commit message contains a Co-authored-by trailer matching Co-authored-by: NAME <EMAIL>",
+      "passed": true,
+      "evidence": "Found 2 Co-authored-by line(s): Co-authored-by: TestBot <testbot@example.com>; Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+    },
+    {
+      "text": "Origin push succeeds for the working branch",
+      "passed": true,
+      "evidence": "Push mentioned in summary"
+    },
+    {
+      "text": "A PR URL is produced or gh pr create was attempted",
+      "passed": true,
+      "evidence": "PR creation mentioned in summary"
+    }
+  ]
+}

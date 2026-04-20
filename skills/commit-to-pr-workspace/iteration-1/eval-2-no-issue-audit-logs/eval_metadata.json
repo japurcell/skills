@@ -1,0 +1,13 @@
+{
+  "eval_id": 2,
+  "eval_name": "no-issue-audit-logs",
+  "prompt": "Use specs/add-audit-logs.md and get this ready for review as a pull request. If there is no linked issue in the spec, still proceed cleanly.",
+  "assertions": [
+    {"text": "Exactly one new commit is created for the task"},
+    {"text": "Execution proceeds without requiring an issue number"},
+    {"text": "Commit message contains a Co-authored-by trailer matching the format Co-authored-by: NAME <EMAIL>"},
+    {"text": "Origin push succeeds for the working branch"},
+    {"text": "A PR URL is produced or gh pr create was attempted"},
+    {"text": "Summary output includes branch and commit SHA"}
+  ]
+}

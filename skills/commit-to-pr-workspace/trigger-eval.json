@@ -1,0 +1,82 @@
+[
+  {
+    "query": "I need to add a /api/users/:id/preferences endpoint to our Express app. It should accept PATCH requests with a JSON body and update the user's notification settings in postgres. The preferences table already exists with columns user_id, email_notifications, push_notifications, and digest_frequency.",
+    "should_trigger": true
+  },
+  {
+    "query": "hey so the calculateShipping function in src/orders/shipping.ts is returning negative values when the cart weight is exactly 0. my coworker noticed it in prod this morning and our PM is freaking out",
+    "should_trigger": true
+  },
+  {
+    "query": "the auth middleware in middleware/auth.js is getting really gnarly — it's like 200 lines with nested if/else blocks. can you clean it up? maybe extract the token validation and role checking into separate functions",
+    "should_trigger": true
+  },
+  {
+    "query": "I want to build a rate limiter for our API. Should use a sliding window algorithm, store counts in Redis, and return 429 with a Retry-After header when the limit is hit. We're using fastify btw",
+    "should_trigger": true
+  },
+  {
+    "query": "can you update the search function in lib/search.py to support fuzzy matching? right now it only does exact matches on the title field but users keep complaining they can't find things when they misspell words. we're using elasticsearch under the hood",
+    "should_trigger": true
+  },
+  {
+    "query": "write a python script that takes a CSV file path as input, validates that all rows have the required columns (name, email, department), flags rows with invalid email formats, and outputs a cleaned version. this is for our HR team's quarterly data import",
+    "should_trigger": true
+  },
+  {
+    "query": "I need to implement retry logic with exponential backoff for our HTTP client wrapper in src/utils/http-client.ts. Right now if an API call fails it just throws immediately but we want it to retry 3 times with increasing delays for 5xx errors and network timeouts",
+    "should_trigger": true
+  },
+  {
+    "query": "ok so I have this React component (UserDashboard.tsx) that's supposed to show a user's recent activity, but the useEffect hook is firing on every render and making duplicate API calls. Also the loading state isn't working right — it shows the old data while fetching new data instead of a spinner",
+    "should_trigger": true
+  },
+  {
+    "query": "add input validation to the createProject controller in src/controllers/projects.go — right now it accepts any garbage and writes it straight to the database. Need to check that name is 3-50 chars, description is optional but max 500 chars, and status is one of draft/active/archived",
+    "should_trigger": true
+  },
+  {
+    "query": "I'm working on a CLI tool in rust and need to add a subcommand called 'migrate' that reads a config file, connects to the target database, and runs any pending migration scripts from the migrations/ directory in order. Similar to how diesel or sqlx migrations work",
+    "should_trigger": true
+  },
+  {
+    "query": "Can you update the README to document the new environment variables we added last sprint? They're DATABASE_URL, REDIS_URL, and JWT_SECRET. Also add a section about the docker-compose setup for local development",
+    "should_trigger": false
+  },
+  {
+    "query": "Can you walk me through how the event sourcing pattern works in our order processing pipeline? I'm trying to understand the flow from when a user clicks 'Place Order' to when the order confirmation email gets sent",
+    "should_trigger": false
+  },
+  {
+    "query": "set up eslint and prettier for this project. We want to use the airbnb config with typescript support, and prettier should use single quotes, no semicolons, and 2-space indent. Also add a pre-commit hook with husky",
+    "should_trigger": false
+  },
+  {
+    "query": "I need to review the changes in PR #247 before we merge it. It touches the payment processing module and I want to make sure there aren't any security issues with how we're handling credit card tokens",
+    "should_trigger": false
+  },
+  {
+    "query": "squash the last 4 commits on this branch into one with the message 'feat: add user preferences API' and then rebase onto main. there's a merge conflict in package-lock.json but just take theirs",
+    "should_trigger": false
+  },
+  {
+    "query": "We're trying to decide between using a monorepo with turborepo vs separate repos for our microservices. We have 4 services (auth, billing, notifications, core-api) and 2 shared libraries. What would you recommend and why?",
+    "should_trigger": false
+  },
+  {
+    "query": "upgrade our project from Next.js 13 to Next.js 14. I know there are breaking changes around the app router and server actions. Can you handle the dependency updates and check if anything in our next.config.js needs to change?",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a Dockerfile for our Node.js API service. It should use node:20-alpine as the base, do a multi-stage build with a builder stage for npm ci and a production stage that copies only node_modules and dist/. Expose port 3000 and use a non-root user",
+    "should_trigger": false
+  },
+  {
+    "query": "I'm getting a weird error in production — 'ECONNREFUSED 127.0.0.1:5432' — but only on the staging server, not locally. Can you help me figure out what's going on? Here's the docker-compose.yml and the connection config...",
+    "should_trigger": false
+  },
+  {
+    "query": "write a SQL query that joins the users, orders, and products tables to find the top 10 customers by total spend in Q1 2025, broken down by product category. The schema has users.id, orders.user_id, orders.total, order_items.product_id, products.category",
+    "should_trigger": false
+  }
+]

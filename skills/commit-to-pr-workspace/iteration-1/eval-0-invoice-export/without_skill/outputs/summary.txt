@@ -1,0 +1,26 @@
+## Workflow Summary
+
+1. **Inspected staged changes**: Two files staged — `invoice-export.js` (export function) and `specs/invoice-export.md` (feature spec referencing issue #123).
+
+2. **Created feature branch**: `feat/123-add-invoice-export` — named after the issue number and feature.
+
+3. **Committed changes**: Wrote a conventional-commit-style message:
+   - Subject: `feat: add invoice export with CSV support and date range filtering`
+   - Body: references the spec, lists key changes, closes #123
+   - Includes Co-authored-by trailer for Copilot
+
+4. **Pushed branch** to remote origin.
+
+5. **PR creation (would run)**:
+   ```
+   gh pr create \
+     --base main \
+     --head feat/123-add-invoice-export \
+     --title "feat: add invoice export with CSV support and date range filtering" \
+     --body "Implement the invoice export feature as specified in specs/invoice-export.md:
+   - Add exportInvoices function for CSV export
+   - Support date range filtering for invoice queries
+
+   Closes #123"
+   ```
+   This was not executed because the remote is a local bare repo (no GitHub API).

@@ -4,11 +4,13 @@
     {
       "id": 0,
       "prompt": "I finished implementing the invoice export changes from specs/invoice-export.md. Please commit the current changes and open a PR.",
-      "expected_output": "Creates or reuses an appropriate branch, creates one conventional commit linked to issue in the spec, pushes to origin, and opens a PR with a URL.",
+      "expected_output": "Creates or reuses an appropriate branch, creates one conventional commit linked to issue in the spec, pushes to origin, and opens a PR with a URL. Commit message includes a Co-authored-by trailer.",
       "assertions": [
         "Exactly one new commit is created for the task",
         "Branch is not main/master after execution",
         "Commit message includes issue linkage to #123",
+        "Commit message contains a Co-authored-by trailer matching the format Co-authored-by: NAME <EMAIL>",
+        "Co-authored-by trailer is separated from the commit body by a blank line",
         "Origin push succeeds for the working branch",
         "A PR URL is produced"
       ],
@@ -17,11 +19,12 @@
     {
       "id": 1,
       "prompt": "Turn my current working tree into a PR for the bugfix spec at specs/fix-rate-limit.md. I am already on a feature branch.",
-      "expected_output": "Keeps current non-main branch, creates a single atomic commit, includes issue linkage when available, pushes, and creates PR non-interactively.",
+      "expected_output": "Keeps current non-main branch, creates a single atomic commit, includes issue linkage when available, pushes, and creates PR non-interactively. Commit message includes a Co-authored-by trailer.",
       "assertions": [
         "Exactly one new commit is created for the task",
         "Existing feature branch is preserved",
         "Commit message includes issue linkage to #456",
+        "Commit message contains a Co-authored-by trailer matching the format Co-authored-by: NAME <EMAIL>",
         "Origin push succeeds for the working branch",
         "A PR URL is produced"
       ],
@@ -30,10 +33,11 @@
     {
       "id": 2,
       "prompt": "Use specs/add-audit-logs.md and get this ready for review as a pull request. If there is no linked issue in the spec, still proceed cleanly.",
-      "expected_output": "Handles missing issue reference gracefully, still creates conventional commit and PR with concise summary and returns branch/sha/url.",
+      "expected_output": "Handles missing issue reference gracefully, still creates conventional commit and PR with concise summary and returns branch/sha/url. Commit message still includes a Co-authored-by trailer even without issues.",
       "assertions": [
         "Exactly one new commit is created for the task",
         "Execution proceeds without requiring an issue number",
+        "Commit message contains a Co-authored-by trailer matching the format Co-authored-by: NAME <EMAIL>",
         "Origin push succeeds for the working branch",
         "A PR URL is produced",
         "Summary output includes branch, commit SHA, and PR URL"

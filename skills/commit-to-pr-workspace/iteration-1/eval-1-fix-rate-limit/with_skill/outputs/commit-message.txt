@@ -1,0 +1,6 @@
+fix: resolve rate-limit retry logic
+
+Fixes #456
+
+Co-authored-by: TestBot <testbot@example.com>
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>

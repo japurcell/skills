@@ -1,0 +1,34 @@
+{
+  "expectations": [
+    {
+      "text": "Exactly one new commit is created for the task",
+      "passed": true,
+      "evidence": "Commit info: ce90a00feac914176c1a8fe0fdb28002950ab88d feat: add audit logging for admin actio"
+    },
+    {
+      "text": "Execution proceeds without requiring an issue number",
+      "passed": true,
+      "evidence": "PR creation mentioned in summary"
+    },
+    {
+      "text": "Commit message contains a Co-authored-by trailer matching Co-authored-by: NAME <EMAIL>",
+      "passed": true,
+      "evidence": "Found 2 Co-authored-by line(s): Co-authored-by: TestBot <testbot@example.com>; Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+    },
+    {
+      "text": "Origin push succeeds for the working branch",
+      "passed": true,
+      "evidence": "Push mentioned in summary"
+    },
+    {
+      "text": "A PR URL is produced or gh pr create was attempted",
+      "passed": true,
+      "evidence": "PR creation mentioned in summary"
+    },
+    {
+      "text": "Summary output includes branch and commit SHA",
+      "passed": true,
+      "evidence": "Branch: feat/add-audit-logs, SHA in output: True"
+    }
+  ]
+}

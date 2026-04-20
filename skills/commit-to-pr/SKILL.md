@@ -1,8 +1,7 @@
 ---
 name: commit-to-pr
-description: 'Finalize local repository work into a reviewable pull request: inspect git status, create or reuse the right branch, commit with an issue-linked conventional message, push to origin, and open a PR with `gh pr create`. Use this whenever the user asks to "commit and open a PR", "turn this into a PR", "push and make a pull request", or any equivalent wording even if they do not explicitly mention git/gh command details.'
+description: 'Commit local changes and open a GitHub pull request in one workflow: stage files, create or reuse the appropriate branch, write a conventional commit message with issue linkage, push to origin, and open a PR with `gh pr create`. Use this whenever the user asks to commit and open a PR, turn current work into a PR, push and make a pull request, open/raise/cut a PR, get this up for review, put this up for review, wrap this up as a PR, submit as a pull request, or any equivalent phrasing implying "take my local changes and turn them into a PR" — even if they omit git or gh details. Do not use for rebasing, cherry-picking, amending existing commits, resolving merge conflicts, or reviewing an existing PR.'
 argument-hint: "spec_file: path/to/spec.yaml, issue_numbers: [123, 456], base_branch: main, feature_branch: feat/123-new-feature"
-disable-model-invocation: true
 ---
 
 # Commit to PR
@@ -15,6 +14,7 @@ You receive these parameters in your prompt:
 - **issue_numbers** (optional): A list of issue numbers to link in the commit message and PR body. If not provided, attempt to extract from `spec_file`.
 - **base_branch** (optional, default: "main"): The base branch for the pull request.
 - **feature_branch** (optional): The feature branch for the pull request.
+- **co_author** (optional): One or more `Co-authored-by` trailer lines to attribute collaborators. Each line must follow the format `Co-authored-by: NAME <EMAIL>`. When multiple co-authors are needed, separate each trailer with a newline. If omitted, you (the executing agent) should add your own known co-author identity. If you don't have a known identity, ask the user to provide one.
 
 ## Context
 
@@ -48,6 +48,37 @@ Based on the above changes:
    - Create exactly one atomic commit.
    - Use a conventional commit subject when possible (for example `feat: add invoice export flow`).
    - If issue numbers exist, include `Fixes #<issue>` for each issue number in the commit message body separated by newlines.
+   - Always append a `Co-authored-by` trailer block at the end of the commit message. Use the `co_author` input if provided; otherwise use your own known co-author identity. Each trailer line must match the format `Co-authored-by: NAME <EMAIL>`. Separate the trailer block from the preceding body with a blank line.
+
+   **Commit message format:**
+
+   ```
+   feat: add invoice export flow
+
+   Fixes #123
+
+   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+   ```
+
+   When there are multiple co-authors, place each on its own line with no blank lines between them:
+
+   ```
+   fix: resolve rate-limit retry logic
+
+   Fixes #456
+
+   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+   Co-authored-by: Jane <jane@example.com>
+   ```
+
+   When there are no linked issues, the trailer still applies:
+
+   ```
+   chore: update audit-log schema
+
+   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+   ```
+
 5. Push to origin:
    - Push the branch with upstream tracking when needed (`-u origin <branch>`).
 6. Create the pull request:
