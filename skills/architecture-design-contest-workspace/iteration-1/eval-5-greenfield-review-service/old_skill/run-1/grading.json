@@ -1,0 +1,64 @@
+{
+  "expectations": [
+    {
+      "text": "Response produces multiple structurally different architectures even without repository files",
+      "passed": true,
+      "evidence": "Detected 3 structurally different options."
+    },
+    {
+      "text": "Response uses current official references or stack guidance when making stack-specific claims",
+      "passed": true,
+      "evidence": "Found current stack guidance or external reference anchors."
+    },
+    {
+      "text": "Comparison covers operational complexity, failure modes, and extensibility",
+      "passed": false,
+      "evidence": "Comparison missed operational complexity, failure modes, or extensibility."
+    },
+    {
+      "text": "Recommendation is opinionated and names the next constraint or assumption to validate",
+      "passed": true,
+      "evidence": "Recommendation is opinionated and names a next constraint/assumption to validate."
+    },
+    {
+      "text": "Response does not jump into implementation",
+      "passed": true,
+      "evidence": "No implementation markers found."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 1,
+      "Write": 2,
+      "Bash": 0
+    },
+    "total_tool_calls": 3,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 12237,
+    "transcript_chars": 1262
+  },
+  "timing": {
+    "total_tokens": 0,
+    "duration_ms": 302000,
+    "total_duration_seconds": 302.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "No existing codebase or explicit input files were provided beyond the governing SKILL.md.",
+      "The service is greenfield, internal-facing, and expected to operate at moderate scale.",
+      "A GitHub App and webhook-based intake model are preferred over PAT-based integrations.",
+      "Each review run is immutable and tied to a specific repository, pull request, and head SHA.",
+      "Evaluators can run independently in parallel and produce structured, versioned results for later comparison."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

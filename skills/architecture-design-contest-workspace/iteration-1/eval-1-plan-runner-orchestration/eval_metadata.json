@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "plan-runner-orchestration",
+  "prompt": "Before we touch code, I want a few serious architecture options for a feature that can execute a saved plan, keep progress state, and coordinate code-review agents at the right checkpoints. It needs to work in this skills repo and build on the existing plan/task workflow without becoming a monolith. Please compare alternatives and tell me which direction you'd bet on.",
+  "assertions": [
+    "Response treats the request as an architecture comparison task even without an explicit skill name",
+    "Response grounds the designs in the existing plan and task workflow files",
+    "The architecture options differ in orchestration or state ownership, not just naming",
+    "Comparison covers testing or migration implications in addition to feature shape",
+    "Recommendation is explicit and opinionated"
+  ]
+}

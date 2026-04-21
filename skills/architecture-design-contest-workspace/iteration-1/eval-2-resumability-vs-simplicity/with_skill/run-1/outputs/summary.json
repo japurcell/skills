@@ -1,0 +1,14 @@
+{
+  "skill_path": "/home/adam/dev/personal/skills/skills/architecture-design-contest/SKILL.md",
+  "prompt": "I'm stuck between a single orchestrator, a state-machine-driven workflow, and a set of thin skills coordinated by handoffs for a new repository-maintenance feature. I haven't decided whether resumability or simplicity matters more yet. Help me figure out the architecture options before we commit to implementation.",
+  "files_considered": [
+    "/home/adam/dev/personal/skills/skills/architecture-design-contest/SKILL.md"
+  ],
+  "assumptions": [
+    "No existing codebase or stack constraints were provided, so the design was treated as greenfield.",
+    "The repository-maintenance feature may include external side effects such as inspection, file edits, issue/PR creation, CI waits, and human approval.",
+    "The main unresolved trade-off is between coarse step-boundary resumability and full workflow-state durability/auditability.",
+    "Thin skills can be useful execution modules even if they are not chosen as the primary control-plane architecture."
+  ],
+  "output_file": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/iteration-1/eval-2-resumability-vs-simplicity/with_skill/run-1/outputs/final_response.md"
+}

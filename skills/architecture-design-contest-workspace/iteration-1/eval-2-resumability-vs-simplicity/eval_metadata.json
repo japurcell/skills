@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "resumability-vs-simplicity",
+  "prompt": "I'm stuck between a single orchestrator, a state-machine-driven workflow, and a set of thin skills coordinated by handoffs for a new repository-maintenance feature. I haven't decided whether resumability or simplicity matters more yet. Help me figure out the architecture options before we commit to implementation.",
+  "assertions": [
+    "Response asks a small number of high-leverage clarifying questions or states explicit assumptions",
+    "Response produces multiple architectures shaped by the resumability versus simplicity trade-off",
+    "Response explains how the recommendation changes if resumability or simplicity becomes the top priority",
+    "Response does not stop at a neutral menu of options"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "skill_path": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/skill-snapshot/SKILL.md",
+  "prompt": "Before we touch code, I want a few serious architecture options for a feature that can execute a saved plan, keep progress state, and coordinate code-review agents at the right checkpoints. It needs to work in this skills repo and build on the existing plan/task workflow without becoming a monolith. Please compare alternatives and tell me which direction you'd bet on.",
+  "files_considered": [
+    "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/skill-snapshot/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/create-plan/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/create-tasks/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/create-plan/references/plan-template.md",
+    "/home/adam/dev/personal/skills/skills/create-tasks/references/tasks-template.md",
+    "/home/adam/dev/personal/skills/skills/implement-plan/references/review-protocol.md",
+    "/home/adam/dev/personal/skills/agents/code-reviewer.md",
+    "/home/adam/dev/personal/skills/skills/feature-dev/references/handoff-plan-template.md",
+    "/home/adam/dev/personal/skills/docs/agent-guides/repo-layout.md"
+  ],
+  "assumptions": [
+    "Saved plan means the existing .agents/scratchpad/<feature>/ artifact set centered on plan.md and tasks.md.",
+    "Resume state must survive agent/session interruption and be stored in repo-local or workspace-local artifacts.",
+    "Existing skills should remain independently runnable rather than being folded into a single orchestrator.",
+    "Review checkpoints should happen after Foundational, after each User Story phase, and at final Polish.",
+    "The repo should avoid introducing an external service for execution state at the first step."
+  ],
+  "output_file": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/iteration-1/eval-1-plan-runner-orchestration/old_skill/run-1/outputs/final_response.md"
+}

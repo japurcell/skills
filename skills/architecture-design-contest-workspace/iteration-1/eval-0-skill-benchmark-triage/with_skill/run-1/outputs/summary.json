@@ -1,0 +1,26 @@
+{
+  "skill_path": "/home/adam/dev/personal/skills/skills/architecture-design-contest/SKILL.md",
+  "prompt": "Design it twice before we build anything. I want to add a new `/benchmark-triage` skill to this repo that reads a skill benchmark iteration directory and tells me what to change next. It needs to fit the patterns already used by `skill-creator`, `create-plan`, and `implement-plan`. Don't implement it yet \u2014 I want competing architectures first, and I care about reusability vs keeping the workflow lightweight.",
+  "files_considered": [
+    "/home/adam/dev/personal/skills/skills/architecture-design-contest/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/skill-creator/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/create-plan/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md",
+    "/home/adam/dev/personal/skills/docs/agent-guides/authoring.md",
+    "/home/adam/dev/personal/skills/docs/agent-guides/repo-layout.md",
+    "/home/adam/dev/personal/skills/skills/create-tasks/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/skill-creator/scripts/aggregate_benchmark.py",
+    "/home/adam/dev/personal/skills/skills/skill-creator/eval-viewer/generate_review.py",
+    "/home/adam/dev/personal/skills/skills/skill-creator/references/schemas.md",
+    "/home/adam/dev/personal/skills/agents/analyzer.md",
+    "/home/adam/dev/personal/skills/skills/cleanup-skill-workspaces/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/skillify/evals/files/forked-benchmark-triage.md"
+  ],
+  "assumptions": [
+    "The planned skill should accept either an iteration directory or benchmark.json path.",
+    "The first version should recommend edits but not apply them.",
+    "The first version only needs to analyze one benchmark iteration at a time, not compare multiple iterations.",
+    "The desired output is a concise triage report suitable for human action, with optional future saved artifacts."
+  ],
+  "output_file": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/iteration-1/eval-0-skill-benchmark-triage/with_skill/run-1/outputs/final_response.md"
+}

@@ -1,0 +1,28 @@
+{
+  "skill_path": "/home/adam/dev/personal/skills/skills/architecture-design-contest/SKILL.md",
+  "prompt": "Before we touch code, I want a few serious architecture options for a feature that can execute a saved plan, keep progress state, and coordinate code-review agents at the right checkpoints. It needs to work in this skills repo and build on the existing plan/task workflow without becoming a monolith. Please compare alternatives and tell me which direction you'd bet on.",
+  "files_considered": [
+    "/home/adam/dev/personal/skills/skills/architecture-design-contest/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/create-plan/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/create-tasks/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/create-spec/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/feature-dev/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/feature-dev/references/handoff-plan-template.md",
+    "/home/adam/dev/personal/skills/skills/create-plan/references/plan-template.md",
+    "/home/adam/dev/personal/skills/skills/create-tasks/references/tasks-template.md",
+    "/home/adam/dev/personal/skills/skills/implement-plan/references/review-protocol.md",
+    "/home/adam/dev/personal/skills/skills/implement-plan/evals/evals.json",
+    "/home/adam/dev/personal/skills/agents/code-reviewer.md",
+    "/home/adam/dev/personal/skills/skills/code-simplifier/SKILL.md",
+    "/home/adam/dev/personal/skills/AGENTS.md",
+    "/home/adam/dev/personal/skills/scripts/copilot-install.sh"
+  ],
+  "assumptions": [
+    "A saved plan means the normal scratchpad artifact set rooted at .agents/scratchpad/<feature>/, especially plan.md and tasks.md.",
+    "tasks.md remains the authoritative completion and resumption ledger; any new execution state is derived and must reconcile back to tasks.md.",
+    "Checkpoint reviews should reuse the existing code-simplifier and code-reviewer agents and preserve the current controller-owned review-scope rules.",
+    "Durable progress state should live next to scratchpad artifacts, not in workspace outputs or a new database layer."
+  ],
+  "output_file": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/iteration-1/eval-1-plan-runner-orchestration/with_skill/run-1/outputs/final_response.md"
+}

@@ -1,0 +1,31 @@
+{
+  "skill_path": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/skill-snapshot/SKILL.md",
+  "prompt": "Design it twice before we build anything. I want to add a new `/benchmark-triage` skill to this repo that reads a skill benchmark iteration directory and tells me what to change next. It needs to fit the patterns already used by `skill-creator`, `create-plan`, and `implement-plan`. Don't implement it yet \u2014 I want competing architectures first, and I care about reusability vs keeping the workflow lightweight.",
+  "files_considered": [
+    "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/skill-snapshot/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/skill-creator/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/create-plan/SKILL.md",
+    "/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md",
+    "/home/adam/dev/personal/skills/docs/agent-guides/authoring.md",
+    "/home/adam/dev/personal/skills/docs/agent-guides/repo-layout.md",
+    "/home/adam/dev/personal/skills/skills/skill-creator/scripts/aggregate_benchmark.py",
+    "/home/adam/dev/personal/skills/skills/skill-creator/references/schemas.md",
+    "/home/adam/dev/personal/skills/agents/analyzer.md",
+    "/home/adam/dev/personal/skills/agents/grader.md",
+    "/home/adam/dev/personal/skills/skills/skillify/evals/files/forked-benchmark-triage.md",
+    "/home/adam/dev/personal/skills/skills/architecture-design-contest/evals/evals.json",
+    "/home/adam/dev/personal/skills/skills/create-plan/evals/evals.json",
+    "/home/adam/dev/personal/skills/skills/implement-plan/evals/evals.json",
+    "/home/adam/dev/personal/skills/skills/create-spec-workspace/iteration-1/benchmark.json",
+    "/home/adam/dev/personal/skills/skills/skillify-workspace/iteration-1/analyzer-notes.json",
+    "/home/adam/dev/personal/skills/skills/agents-md-upfactor-workspace/iteration-1/feedback.json"
+  ],
+  "assumptions": [
+    "The new skill should run as a forked, self-contained workflow rather than an interactive one.",
+    "The skill should accept either an iteration directory or benchmark.json and may inspect nearby grading and eval artifacts.",
+    "The skill should produce actionable next-change recommendations, not only descriptive benchmark notes.",
+    "The desired architecture should align with create-plan and implement-plan by using explicit phases/gates and a strict final report contract.",
+    "No repository source files should be modified during this benchmark run."
+  ],
+  "output_file": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/iteration-1/eval-0-skill-benchmark-triage/old_skill/run-1/outputs/final_response.md"
+}

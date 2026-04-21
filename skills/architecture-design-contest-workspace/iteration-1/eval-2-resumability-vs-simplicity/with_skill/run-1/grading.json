@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "Response asks a small number of high-leverage clarifying questions or states explicit assumptions",
+      "passed": true,
+      "evidence": "Used only 1 questions or made explicit assumptions."
+    },
+    {
+      "text": "Response produces multiple architectures shaped by the resumability versus simplicity trade-off",
+      "passed": true,
+      "evidence": "Detected 4 options and both resumability/simplicity themes."
+    },
+    {
+      "text": "Response explains how the recommendation changes if resumability or simplicity becomes the top priority",
+      "passed": true,
+      "evidence": "Output explains how the recommendation changes under different priorities."
+    },
+    {
+      "text": "Response does not stop at a neutral menu of options",
+      "passed": true,
+      "evidence": "Found an opinionated recommendation."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 1,
+      "Write": 2,
+      "Bash": 0
+    },
+    "total_tool_calls": 3,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 12542,
+    "transcript_chars": 1220
+  },
+  "timing": {
+    "total_tokens": 0,
+    "duration_ms": 325000,
+    "total_duration_seconds": 325.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "No existing codebase or stack constraints were provided, so the design was treated as greenfield.",
+      "The repository-maintenance feature may include external side effects such as inspection, file edits, issue/PR creation, CI waits, and human approval.",
+      "The main unresolved trade-off is between coarse step-boundary resumability and full workflow-state durability/auditability.",
+      "Thin skills can be useful execution modules even if they are not chosen as the primary control-plane architecture."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "eval_id": 5,
+  "eval_name": "greenfield-review-service",
+  "prompt": "I need an architecture recommendation for a new internal service that ingests design-review requests from GitHub, runs parallel evaluators, and stores feedback for later comparison. The likely stack is FastAPI + PostgreSQL + GitHub webhooks, but we haven't built anything yet. Give me multiple serious designs and recommend one.",
+  "assertions": [
+    "Response produces multiple structurally different architectures even without repository files",
+    "Response uses current official references or stack guidance when making stack-specific claims",
+    "Comparison covers operational complexity, failure modes, and extensibility",
+    "Recommendation is opinionated and names the next constraint or assumption to validate",
+    "Response does not jump into implementation"
+  ]
+}

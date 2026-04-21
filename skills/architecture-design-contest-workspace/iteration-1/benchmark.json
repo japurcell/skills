@@ -1,0 +1,629 @@
+{
+  "metadata": {
+    "skill_name": "architecture-design-contest",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-21T16:13:55Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 1336.0,
+        "tokens": 12241,
+        "tool_calls": 15,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response starts with focused framing or a small set of high-leverage questions instead of a long interview",
+          "passed": true,
+          "evidence": "Focused framing detected without a long interview."
+        },
+        {
+          "text": "Response uses the referenced repository patterns or files to ground the designs",
+          "passed": true,
+          "evidence": "files_considered includes all referenced repo skills: ['/home/adam/dev/personal/skills/skills/architecture-design-contest/SKILL.md', '/home/adam/dev/personal/skills/skills/skill-creator/SKILL.md', '/home/adam/dev/personal/skills/skills/create-plan/SKILL.md', '/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md', '/home/adam/dev/personal/skills/docs/agent-guides/authoring.md', '/home/adam/dev/personal/skills/docs/agent-guides/repo-layout.md', '/home/adam/dev/personal/skills/skills/create-tasks/SKILL.md', '/home/adam/dev/personal/skills/skills/skill-creator/scripts/aggregate_benchmark.py', '/home/adam/dev/personal/skills/skills/skill-creator/eval-viewer/generate_review.py', '/home/adam/dev/personal/skills/skills/skill-creator/references/schemas.md', '/home/adam/dev/personal/skills/agents/analyzer.md', '/home/adam/dev/personal/skills/skills/cleanup-skill-workspaces/SKILL.md', '/home/adam/dev/personal/skills/skills/skillify/evals/files/forked-benchmark-triage.md']"
+        },
+        {
+          "text": "Response presents at least three materially different architecture options",
+          "passed": true,
+          "evidence": "Detected 3 option/design sections."
+        },
+        {
+          "text": "Response compares reusability versus workflow weight in prose and ends with a recommendation",
+          "passed": false,
+          "evidence": "Missing reuse/workflow-weight discussion or recommendation near the end."
+        },
+        {
+          "text": "Response does not implement files, code, or patches",
+          "passed": true,
+          "evidence": "No implementation markers found."
+        }
+      ],
+      "notes": [
+        "The planned skill should accept either an iteration directory or benchmark.json path.",
+        "The first version should recommend edits but not apply them.",
+        "The first version only needs to analyze one benchmark iteration at a time, not compare multiple iterations.",
+        "The desired output is a concise triage report suitable for human action, with optional future saved artifacts."
+      ]
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 1167.0,
+        "tokens": 7277,
+        "tool_calls": 19,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response starts with focused framing or a small set of high-leverage questions instead of a long interview",
+          "passed": true,
+          "evidence": "Focused framing detected without a long interview."
+        },
+        {
+          "text": "Response uses the referenced repository patterns or files to ground the designs",
+          "passed": true,
+          "evidence": "files_considered includes all referenced repo skills: ['/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/skill-snapshot/SKILL.md', '/home/adam/dev/personal/skills/skills/skill-creator/SKILL.md', '/home/adam/dev/personal/skills/skills/create-plan/SKILL.md', '/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md', '/home/adam/dev/personal/skills/docs/agent-guides/authoring.md', '/home/adam/dev/personal/skills/docs/agent-guides/repo-layout.md', '/home/adam/dev/personal/skills/skills/skill-creator/scripts/aggregate_benchmark.py', '/home/adam/dev/personal/skills/skills/skill-creator/references/schemas.md', '/home/adam/dev/personal/skills/agents/analyzer.md', '/home/adam/dev/personal/skills/agents/grader.md', '/home/adam/dev/personal/skills/skills/skillify/evals/files/forked-benchmark-triage.md', '/home/adam/dev/personal/skills/skills/architecture-design-contest/evals/evals.json', '/home/adam/dev/personal/skills/skills/create-plan/evals/evals.json', '/home/adam/dev/personal/skills/skills/implement-plan/evals/evals.json', '/home/adam/dev/personal/skills/skills/create-spec-workspace/iteration-1/benchmark.json', '/home/adam/dev/personal/skills/skills/skillify-workspace/iteration-1/analyzer-notes.json', '/home/adam/dev/personal/skills/skills/agents-md-upfactor-workspace/iteration-1/feedback.json']"
+        },
+        {
+          "text": "Response presents at least three materially different architecture options",
+          "passed": true,
+          "evidence": "Detected 3 option/design sections."
+        },
+        {
+          "text": "Response compares reusability versus workflow weight in prose and ends with a recommendation",
+          "passed": false,
+          "evidence": "Missing reuse/workflow-weight discussion or recommendation near the end."
+        },
+        {
+          "text": "Response does not implement files, code, or patches",
+          "passed": true,
+          "evidence": "No implementation markers found."
+        }
+      ],
+      "notes": [
+        "The new skill should run as a forked, self-contained workflow rather than an interactive one.",
+        "The skill should accept either an iteration directory or benchmark.json and may inspect nearby grading and eval artifacts.",
+        "The skill should produce actionable next-change recommendations, not only descriptive benchmark notes.",
+        "The desired architecture should align with create-plan and implement-plan by using explicit phases/gates and a strict final report contract.",
+        "No repository source files should be modified during this benchmark run."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 1080.0,
+        "tokens": 10316,
+        "tool_calls": 17,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response treats the request as an architecture comparison task even without an explicit skill name",
+          "passed": true,
+          "evidence": "Detected 3 option/design sections for an implicit architecture request."
+        },
+        {
+          "text": "Response grounds the designs in the existing plan and task workflow files",
+          "passed": true,
+          "evidence": "files_considered includes create-plan/create-tasks/implement-plan: ['/home/adam/dev/personal/skills/skills/architecture-design-contest/SKILL.md', '/home/adam/dev/personal/skills/skills/create-plan/SKILL.md', '/home/adam/dev/personal/skills/skills/create-tasks/SKILL.md', '/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md', '/home/adam/dev/personal/skills/skills/create-spec/SKILL.md', '/home/adam/dev/personal/skills/skills/feature-dev/SKILL.md', '/home/adam/dev/personal/skills/skills/feature-dev/references/handoff-plan-template.md', '/home/adam/dev/personal/skills/skills/create-plan/references/plan-template.md', '/home/adam/dev/personal/skills/skills/create-tasks/references/tasks-template.md', '/home/adam/dev/personal/skills/skills/implement-plan/references/review-protocol.md', '/home/adam/dev/personal/skills/skills/implement-plan/evals/evals.json', '/home/adam/dev/personal/skills/agents/code-reviewer.md', '/home/adam/dev/personal/skills/skills/code-simplifier/SKILL.md', '/home/adam/dev/personal/skills/AGENTS.md', '/home/adam/dev/personal/skills/scripts/copilot-install.sh']"
+        },
+        {
+          "text": "The architecture options differ in orchestration or state ownership, not just naming",
+          "passed": true,
+          "evidence": "Detected 3 distinct strategy families."
+        },
+        {
+          "text": "Comparison covers testing or migration implications in addition to feature shape",
+          "passed": true,
+          "evidence": "Comparison covers testing/review and migration/resume implications."
+        },
+        {
+          "text": "Recommendation is explicit and opinionated",
+          "passed": true,
+          "evidence": "Found an explicit recommendation."
+        }
+      ],
+      "notes": [
+        "A saved plan means the normal scratchpad artifact set rooted at .agents/scratchpad/<feature>/, especially plan.md and tasks.md.",
+        "tasks.md remains the authoritative completion and resumption ledger; any new execution state is derived and must reconcile back to tasks.md.",
+        "Checkpoint reviews should reuse the existing code-simplifier and code-reviewer agents and preserve the current controller-owned review-scope rules.",
+        "Durable progress state should live next to scratchpad artifacts, not in workspace outputs or a new database layer."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 897.0,
+        "tokens": 8356,
+        "tool_calls": 12,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response treats the request as an architecture comparison task even without an explicit skill name",
+          "passed": true,
+          "evidence": "Detected 4 option/design sections for an implicit architecture request."
+        },
+        {
+          "text": "Response grounds the designs in the existing plan and task workflow files",
+          "passed": true,
+          "evidence": "files_considered includes create-plan/create-tasks/implement-plan: ['/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/skill-snapshot/SKILL.md', '/home/adam/dev/personal/skills/skills/create-plan/SKILL.md', '/home/adam/dev/personal/skills/skills/create-tasks/SKILL.md', '/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md', '/home/adam/dev/personal/skills/skills/create-plan/references/plan-template.md', '/home/adam/dev/personal/skills/skills/create-tasks/references/tasks-template.md', '/home/adam/dev/personal/skills/skills/implement-plan/references/review-protocol.md', '/home/adam/dev/personal/skills/agents/code-reviewer.md', '/home/adam/dev/personal/skills/skills/feature-dev/references/handoff-plan-template.md', '/home/adam/dev/personal/skills/docs/agent-guides/repo-layout.md']"
+        },
+        {
+          "text": "The architecture options differ in orchestration or state ownership, not just naming",
+          "passed": true,
+          "evidence": "Detected 5 distinct strategy families."
+        },
+        {
+          "text": "Comparison covers testing or migration implications in addition to feature shape",
+          "passed": true,
+          "evidence": "Comparison covers testing/review and migration/resume implications."
+        },
+        {
+          "text": "Recommendation is explicit and opinionated",
+          "passed": true,
+          "evidence": "Found an explicit recommendation."
+        }
+      ],
+      "notes": [
+        "Saved plan means the existing .agents/scratchpad/<feature>/ artifact set centered on plan.md and tasks.md.",
+        "Resume state must survive agent/session interruption and be stored in repo-local or workspace-local artifacts.",
+        "Existing skills should remain independently runnable rather than being folded into a single orchestrator.",
+        "Review checkpoints should happen after Foundational, after each User Story phase, and at final Polish.",
+        "The repo should avoid introducing an external service for execution state at the first step."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 325.0,
+        "tokens": 12542,
+        "tool_calls": 3,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response asks a small number of high-leverage clarifying questions or states explicit assumptions",
+          "passed": true,
+          "evidence": "Used only 1 questions or made explicit assumptions."
+        },
+        {
+          "text": "Response produces multiple architectures shaped by the resumability versus simplicity trade-off",
+          "passed": true,
+          "evidence": "Detected 4 options and both resumability/simplicity themes."
+        },
+        {
+          "text": "Response explains how the recommendation changes if resumability or simplicity becomes the top priority",
+          "passed": true,
+          "evidence": "Output explains how the recommendation changes under different priorities."
+        },
+        {
+          "text": "Response does not stop at a neutral menu of options",
+          "passed": true,
+          "evidence": "Found an opinionated recommendation."
+        }
+      ],
+      "notes": [
+        "No existing codebase or stack constraints were provided, so the design was treated as greenfield.",
+        "The repository-maintenance feature may include external side effects such as inspection, file edits, issue/PR creation, CI waits, and human approval.",
+        "The main unresolved trade-off is between coarse step-boundary resumability and full workflow-state durability/auditability.",
+        "Thin skills can be useful execution modules even if they are not chosen as the primary control-plane architecture."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 487.0,
+        "tokens": 14535,
+        "tool_calls": 3,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response asks a small number of high-leverage clarifying questions or states explicit assumptions",
+          "passed": true,
+          "evidence": "Used only 6 questions or made explicit assumptions."
+        },
+        {
+          "text": "Response produces multiple architectures shaped by the resumability versus simplicity trade-off",
+          "passed": true,
+          "evidence": "Detected 3 options and both resumability/simplicity themes."
+        },
+        {
+          "text": "Response explains how the recommendation changes if resumability or simplicity becomes the top priority",
+          "passed": true,
+          "evidence": "Output explains how the recommendation changes under different priorities."
+        },
+        {
+          "text": "Response does not stop at a neutral menu of options",
+          "passed": true,
+          "evidence": "Found an opinionated recommendation."
+        }
+      ],
+      "notes": [
+        "No repository or implementation code was provided, so the response stays at architecture level.",
+        "The feature includes both read-only analysis and some mutating repository actions.",
+        "Exact resumability may matter later, but is not yet confirmed as a hard requirement.",
+        "Auditability and safe retries matter, but likely below full compliance-workflow levels for v1."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 751.0,
+        "tokens": 12119,
+        "tool_calls": 13,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response explores the existing installer entry points before finalizing the designs",
+          "passed": true,
+          "evidence": "Both installer entry points were considered."
+        },
+        {
+          "text": "The proposed designs differ in module boundaries or migration strategy, not just script names",
+          "passed": true,
+          "evidence": "Designs differ by boundaries or migration strategy."
+        },
+        {
+          "text": "Comparison addresses change safety and future maintenance in addition to code duplication",
+          "passed": true,
+          "evidence": "Comparison covers duplication, change safety, and maintenance."
+        },
+        {
+          "text": "Recommendation preserves current behavior while reducing duplication",
+          "passed": false,
+          "evidence": "Recommendation did not clearly preserve behavior while reducing duplication."
+        },
+        {
+          "text": "Response does not implement shell changes",
+          "passed": true,
+          "evidence": "No implementation markers found."
+        }
+      ],
+      "notes": [
+        "Convergence means converging entrypoints and/or implementation around one canonical pipeline, not merging the local Copilot installer into scripts/addy-install.sh.",
+        "Current overlay behavior should be preserved: copy current repo content into ~/.agents and ~/.copilot without introducing pruning or rewrites.",
+        "./scripts/copilot-install.sh should remain the documented canonical invocation unless a root-level compatibility shim is intentionally restored."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 1390.0,
+        "tokens": 11065,
+        "tool_calls": 14,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response explores the existing installer entry points before finalizing the designs",
+          "passed": true,
+          "evidence": "Both installer entry points were considered."
+        },
+        {
+          "text": "The proposed designs differ in module boundaries or migration strategy, not just script names",
+          "passed": false,
+          "evidence": "Did not find enough structurally different convergence strategies."
+        },
+        {
+          "text": "Comparison addresses change safety and future maintenance in addition to code duplication",
+          "passed": true,
+          "evidence": "Comparison covers duplication, change safety, and maintenance."
+        },
+        {
+          "text": "Recommendation preserves current behavior while reducing duplication",
+          "passed": false,
+          "evidence": "Recommendation did not clearly preserve behavior while reducing duplication."
+        },
+        {
+          "text": "Response does not implement shell changes",
+          "passed": true,
+          "evidence": "No implementation markers found."
+        }
+      ],
+      "notes": [
+        "The requested root-level file /home/adam/dev/personal/skills/copilot-install.sh is intentionally part of the design problem even though it does not exist in the current checkout.",
+        "Preserving current behavior means keeping ./scripts/copilot-install.sh as the canonical supported entrypoint because all live repo docs already standardize on it.",
+        "Any convergence plan should also account for overlapping install mechanics inside scripts/addy-install.sh, since that is where the meaningful duplication risk now lives."
+      ]
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 944.0,
+        "tokens": 8748,
+        "tool_calls": 10,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response treats the two user-supplied ideas as inputs rather than the only possible answers",
+          "passed": true,
+          "evidence": "Output treated both user-supplied ideas as live inputs."
+        },
+        {
+          "text": "Response introduces at least one additional architecture or hybrid if warranted",
+          "passed": true,
+          "evidence": "Detected 4 options and/or an explicit hybrid."
+        },
+        {
+          "text": "Comparison discusses separation of concerns, reuse, and operator experience",
+          "passed": true,
+          "evidence": "Comparison discusses separation of concerns, reuse, and operator experience."
+        },
+        {
+          "text": "Final recommendation says what should stay separate versus what should be combined",
+          "passed": false,
+          "evidence": "Recommendation did not clearly split separate versus combined responsibilities."
+        }
+      ],
+      "notes": [
+        "Description optimization should preserve the existing run_loop anti-overfitting behavior rather than replace it.",
+        "The main architecture choice is how to expose the capability, since a working optimization pipeline already exists inside skill-creator scripts.",
+        "A dedicated peer skill for description optimization is possible but not yet justified by current reuse pressure."
+      ]
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 819.0,
+        "tokens": 10890,
+        "tool_calls": 13,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response treats the two user-supplied ideas as inputs rather than the only possible answers",
+          "passed": true,
+          "evidence": "Output treated both user-supplied ideas as live inputs."
+        },
+        {
+          "text": "Response introduces at least one additional architecture or hybrid if warranted",
+          "passed": true,
+          "evidence": "Detected 3 options and/or an explicit hybrid."
+        },
+        {
+          "text": "Comparison discusses separation of concerns, reuse, and operator experience",
+          "passed": true,
+          "evidence": "Comparison discusses separation of concerns, reuse, and operator experience."
+        },
+        {
+          "text": "Final recommendation says what should stay separate versus what should be combined",
+          "passed": false,
+          "evidence": "Recommendation did not clearly split separate versus combined responsibilities."
+        }
+      ],
+      "notes": [
+        "No interactive clarification was possible during this benchmark run, so requirements were inferred from the prompt and repository context.",
+        "The goal is architectural recommendation only; no repository source changes should be proposed as already implemented.",
+        "Description optimization must remain usable in both guided skill-authoring sessions and non-interactive/scripted contexts.",
+        "Headless/shared-environment support matters because the current documented flow relies on browser and temporary-file behavior."
+      ]
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 459.0,
+        "tokens": 11573,
+        "tool_calls": 2,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response produces multiple structurally different architectures even without repository files",
+          "passed": true,
+          "evidence": "Detected 3 structurally different options."
+        },
+        {
+          "text": "Response uses current official references or stack guidance when making stack-specific claims",
+          "passed": true,
+          "evidence": "Found current stack guidance or external reference anchors."
+        },
+        {
+          "text": "Comparison covers operational complexity, failure modes, and extensibility",
+          "passed": true,
+          "evidence": "Comparison covers operational complexity, failure modes, and extensibility."
+        },
+        {
+          "text": "Recommendation is opinionated and names the next constraint or assumption to validate",
+          "passed": true,
+          "evidence": "Recommendation is opinionated and names a next constraint/assumption to validate."
+        },
+        {
+          "text": "Response does not jump into implementation",
+          "passed": true,
+          "evidence": "No implementation markers found."
+        }
+      ],
+      "notes": [
+        "Internal-only service with moderate volume.",
+        "FastAPI and PostgreSQL are acceptable default choices.",
+        "Evaluators may run for seconds to minutes and fail independently.",
+        "Feedback must be stored durably for comparison across evaluators and reruns."
+      ]
+    },
+    {
+      "eval_id": 5,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 302.0,
+        "tokens": 12237,
+        "tool_calls": 3,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Response produces multiple structurally different architectures even without repository files",
+          "passed": true,
+          "evidence": "Detected 3 structurally different options."
+        },
+        {
+          "text": "Response uses current official references or stack guidance when making stack-specific claims",
+          "passed": true,
+          "evidence": "Found current stack guidance or external reference anchors."
+        },
+        {
+          "text": "Comparison covers operational complexity, failure modes, and extensibility",
+          "passed": false,
+          "evidence": "Comparison missed operational complexity, failure modes, or extensibility."
+        },
+        {
+          "text": "Recommendation is opinionated and names the next constraint or assumption to validate",
+          "passed": true,
+          "evidence": "Recommendation is opinionated and names a next constraint/assumption to validate."
+        },
+        {
+          "text": "Response does not jump into implementation",
+          "passed": true,
+          "evidence": "No implementation markers found."
+        }
+      ],
+      "notes": [
+        "No existing codebase or explicit input files were provided beyond the governing SKILL.md.",
+        "The service is greenfield, internal-facing, and expected to operate at moderate scale.",
+        "A GitHub App and webhook-based intake model are preferred over PAT-based integrations.",
+        "Each review run is immutable and tied to a specific repository, pull request, and head SHA.",
+        "Evaluators can run independently in parallel and produce structured, versioned results for later comparison."
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.8917,
+        "stddev": 0.1201,
+        "min": 0.75,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 815.8333,
+        "stddev": 381.8992,
+        "min": 325.0,
+        "max": 1336.0
+      },
+      "tokens": {
+        "mean": 11256.5,
+        "stddev": 1458.9682,
+        "min": 8748,
+        "max": 12542
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.825,
+        "stddev": 0.1541,
+        "min": 0.6,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 843.6667,
+        "stddev": 406.7164,
+        "min": 302.0,
+        "max": 1390.0
+      },
+      "tokens": {
+        "mean": 10726.6667,
+        "stddev": 2624.7254,
+        "min": 7277,
+        "max": 14535
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.07",
+      "time_seconds": "-27.8",
+      "tokens": "+530"
+    }
+  },
+  "notes": [
+    "with_skill improves mean pass rate from 82.5% to 89.2% (+6.7 percentage points).",
+    "with_skill wins outright on eval 3 and eval 5, and ties the baseline on evals 0, 1, 2, and 4.",
+    "with_skill is slightly faster on average (815.8s vs 843.7s, 27.8s faster) but uses modestly more output tokens/chars on average (+530).",
+    "No measured eval regressed versus the baseline."
+  ]
+}

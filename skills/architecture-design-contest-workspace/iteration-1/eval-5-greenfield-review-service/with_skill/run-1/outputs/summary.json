@@ -1,0 +1,12 @@
+{
+  "skill_path": "/home/adam/dev/personal/skills/skills/architecture-design-contest/SKILL.md",
+  "prompt": "I need an architecture recommendation for a new internal service that ingests design-review requests from GitHub, runs parallel evaluators, and stores feedback for later comparison. The likely stack is FastAPI + PostgreSQL + GitHub webhooks, but we haven't built anything yet. Give me multiple serious designs and recommend one.",
+  "files_considered": [],
+  "assumptions": [
+    "Internal-only service with moderate volume.",
+    "FastAPI and PostgreSQL are acceptable default choices.",
+    "Evaluators may run for seconds to minutes and fail independently.",
+    "Feedback must be stored durably for comparison across evaluators and reruns."
+  ],
+  "output_file": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/iteration-1/eval-5-greenfield-review-service/with_skill/run-1/outputs/final_response.md"
+}

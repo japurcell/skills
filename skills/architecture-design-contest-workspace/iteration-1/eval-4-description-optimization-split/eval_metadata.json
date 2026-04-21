@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "description-optimization-split",
+  "prompt": "I already have two rough ideas for adding description-optimization support to a skill: one is a standalone `scripts/optimize_description.py`, the other is to fold it into `skill-creator` as another workflow step. I want you to run an architecture contest over those ideas and anything better you see, then recommend whether we should keep them separate, merge them, or use a hybrid.",
+  "assertions": [
+    "Response treats the two user-supplied ideas as inputs rather than the only possible answers",
+    "Response introduces at least one additional architecture or hybrid if warranted",
+    "Comparison discusses separation of concerns, reuse, and operator experience",
+    "Final recommendation says what should stay separate versus what should be combined"
+  ]
+}

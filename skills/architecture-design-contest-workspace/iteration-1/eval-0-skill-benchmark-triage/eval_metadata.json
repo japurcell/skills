@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "skill-benchmark-triage",
+  "prompt": "Design it twice before we build anything. I want to add a new `/benchmark-triage` skill to this repo that reads a skill benchmark iteration directory and tells me what to change next. It needs to fit the patterns already used by `skill-creator`, `create-plan`, and `implement-plan`. Don't implement it yet \u2014 I want competing architectures first, and I care about reusability vs keeping the workflow lightweight.",
+  "assertions": [
+    "Response starts with focused framing or a small set of high-leverage questions instead of a long interview",
+    "Response uses the referenced repository patterns or files to ground the designs",
+    "Response presents at least three materially different architecture options",
+    "Response compares reusability versus workflow weight in prose and ends with a recommendation",
+    "Response does not implement files, code, or patches"
+  ]
+}

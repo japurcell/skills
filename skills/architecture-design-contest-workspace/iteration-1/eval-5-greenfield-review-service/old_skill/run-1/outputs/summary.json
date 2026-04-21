@@ -1,0 +1,15 @@
+{
+  "skill_path": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/skill-snapshot/SKILL.md",
+  "prompt": "I need an architecture recommendation for a new internal service that ingests design-review requests from GitHub, runs parallel evaluators, and stores feedback for later comparison. The likely stack is FastAPI + PostgreSQL + GitHub webhooks, but we haven't built anything yet. Give me multiple serious designs and recommend one.",
+  "files_considered": [
+    "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/skill-snapshot/SKILL.md"
+  ],
+  "assumptions": [
+    "No existing codebase or explicit input files were provided beyond the governing SKILL.md.",
+    "The service is greenfield, internal-facing, and expected to operate at moderate scale.",
+    "A GitHub App and webhook-based intake model are preferred over PAT-based integrations.",
+    "Each review run is immutable and tied to a specific repository, pull request, and head SHA.",
+    "Evaluators can run independently in parallel and produce structured, versioned results for later comparison."
+  ],
+  "output_file": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/iteration-1/eval-5-greenfield-review-service/old_skill/run-1/outputs/final_response.md"
+}

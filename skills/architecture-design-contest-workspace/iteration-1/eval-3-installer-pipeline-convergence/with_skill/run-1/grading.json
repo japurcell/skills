@@ -1,0 +1,62 @@
+{
+  "expectations": [
+    {
+      "text": "Response explores the existing installer entry points before finalizing the designs",
+      "passed": true,
+      "evidence": "Both installer entry points were considered."
+    },
+    {
+      "text": "The proposed designs differ in module boundaries or migration strategy, not just script names",
+      "passed": true,
+      "evidence": "Designs differ by boundaries or migration strategy."
+    },
+    {
+      "text": "Comparison addresses change safety and future maintenance in addition to code duplication",
+      "passed": true,
+      "evidence": "Comparison covers duplication, change safety, and maintenance."
+    },
+    {
+      "text": "Recommendation preserves current behavior while reducing duplication",
+      "passed": false,
+      "evidence": "Recommendation did not clearly preserve behavior while reducing duplication."
+    },
+    {
+      "text": "Response does not implement shell changes",
+      "passed": true,
+      "evidence": "No implementation markers found."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 11,
+      "Write": 2,
+      "Bash": 0
+    },
+    "total_tool_calls": 13,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 12119,
+    "transcript_chars": 1830
+  },
+  "timing": {
+    "total_tokens": 0,
+    "duration_ms": 751000,
+    "total_duration_seconds": 751.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Convergence means converging entrypoints and/or implementation around one canonical pipeline, not merging the local Copilot installer into scripts/addy-install.sh.",
+      "Current overlay behavior should be preserved: copy current repo content into ~/.agents and ~/.copilot without introducing pruning or rewrites.",
+      "./scripts/copilot-install.sh should remain the documented canonical invocation unless a root-level compatibility shim is intentionally restored."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

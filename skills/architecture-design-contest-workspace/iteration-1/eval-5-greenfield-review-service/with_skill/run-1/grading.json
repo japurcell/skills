@@ -1,0 +1,63 @@
+{
+  "expectations": [
+    {
+      "text": "Response produces multiple structurally different architectures even without repository files",
+      "passed": true,
+      "evidence": "Detected 3 structurally different options."
+    },
+    {
+      "text": "Response uses current official references or stack guidance when making stack-specific claims",
+      "passed": true,
+      "evidence": "Found current stack guidance or external reference anchors."
+    },
+    {
+      "text": "Comparison covers operational complexity, failure modes, and extensibility",
+      "passed": true,
+      "evidence": "Comparison covers operational complexity, failure modes, and extensibility."
+    },
+    {
+      "text": "Recommendation is opinionated and names the next constraint or assumption to validate",
+      "passed": true,
+      "evidence": "Recommendation is opinionated and names a next constraint/assumption to validate."
+    },
+    {
+      "text": "Response does not jump into implementation",
+      "passed": true,
+      "evidence": "No implementation markers found."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 0,
+      "Write": 2,
+      "Bash": 0
+    },
+    "total_tool_calls": 2,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 11573,
+    "transcript_chars": 911
+  },
+  "timing": {
+    "total_tokens": 0,
+    "duration_ms": 459000,
+    "total_duration_seconds": 459.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Internal-only service with moderate volume.",
+      "FastAPI and PostgreSQL are acceptable default choices.",
+      "Evaluators may run for seconds to minutes and fail independently.",
+      "Feedback must be stored durably for comparison across evaluators and reruns."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

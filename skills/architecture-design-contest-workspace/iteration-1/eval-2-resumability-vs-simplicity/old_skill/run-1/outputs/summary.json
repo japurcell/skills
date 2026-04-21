@@ -1,0 +1,14 @@
+{
+  "skill_path": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/skill-snapshot/SKILL.md",
+  "prompt": "I'm stuck between a single orchestrator, a state-machine-driven workflow, and a set of thin skills coordinated by handoffs for a new repository-maintenance feature. I haven't decided whether resumability or simplicity matters more yet. Help me figure out the architecture options before we commit to implementation.",
+  "files_considered": [
+    "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/skill-snapshot/SKILL.md"
+  ],
+  "assumptions": [
+    "No repository or implementation code was provided, so the response stays at architecture level.",
+    "The feature includes both read-only analysis and some mutating repository actions.",
+    "Exact resumability may matter later, but is not yet confirmed as a hard requirement.",
+    "Auditability and safe retries matter, but likely below full compliance-workflow levels for v1."
+  ],
+  "output_file": "/home/adam/dev/personal/skills/skills/architecture-design-contest-workspace/iteration-1/eval-2-resumability-vs-simplicity/old_skill/run-1/outputs/final_response.md"
+}

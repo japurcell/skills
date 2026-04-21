@@ -1,0 +1,62 @@
+{
+  "expectations": [
+    {
+      "text": "Response explores the existing installer entry points before finalizing the designs",
+      "passed": true,
+      "evidence": "Both installer entry points were considered."
+    },
+    {
+      "text": "The proposed designs differ in module boundaries or migration strategy, not just script names",
+      "passed": false,
+      "evidence": "Did not find enough structurally different convergence strategies."
+    },
+    {
+      "text": "Comparison addresses change safety and future maintenance in addition to code duplication",
+      "passed": true,
+      "evidence": "Comparison covers duplication, change safety, and maintenance."
+    },
+    {
+      "text": "Recommendation preserves current behavior while reducing duplication",
+      "passed": false,
+      "evidence": "Recommendation did not clearly preserve behavior while reducing duplication."
+    },
+    {
+      "text": "Response does not implement shell changes",
+      "passed": true,
+      "evidence": "No implementation markers found."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 12,
+      "Write": 2,
+      "Bash": 0
+    },
+    "total_tool_calls": 14,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 11065,
+    "transcript_chars": 2070
+  },
+  "timing": {
+    "total_tokens": 0,
+    "duration_ms": 1390000,
+    "total_duration_seconds": 1390.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "The requested root-level file /home/adam/dev/personal/skills/copilot-install.sh is intentionally part of the design problem even though it does not exist in the current checkout.",
+      "Preserving current behavior means keeping ./scripts/copilot-install.sh as the canonical supported entrypoint because all live repo docs already standardize on it.",
+      "Any convergence plan should also account for overlapping install mechanics inside scripts/addy-install.sh, since that is where the meaningful duplication risk now lives."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}
