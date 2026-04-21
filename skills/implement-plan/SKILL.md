@@ -83,9 +83,18 @@ If no actionable tasks are found, stop and recommend regenerating `tasks.md`.
 
 Execute phases in order: Setup → Tests → Core → Integration → Polish. Each phase builds on the previous one, so this ordering catches foundation problems before they cascade into later work.
 
-**TDD-first:** Within each phase, run test tasks before their corresponding implementation tasks. Writing tests first clarifies intent and catches regressions immediately. When a test task and its implementation counterpart are both in the same phase, the test runs first regardless of task ID ordering.
+**Controller/subagent split:**
 
-**Parallelization:**
+- The main agent is the controller. It decides which phase is next, gathers the relevant planning context, and launches a dedicated implementation subagent for that phase. Do not execute phase work inline in the controller.
+- Use at least one implementation subagent per phase. Do not collapse multiple phases into one long-running implementation subagent.
+- The controller prompt must include the phase name, ordered task list, dependency rules, touched file paths, resumption state, relevant planning artifacts, and the verification expectations for that phase.
+- The phase subagent must load the `tdd` skill before it starts implementing. Treat that as the first implementation step for the phase so every behavioral change follows an explicit red-green-refactor loop rather than ad hoc coding.
+- The phase subagent must return a concrete execution report: tasks attempted, RED/GREEN/REFACTOR progress where applicable, files changed, validations run, failures, deferments, and which tasks are ready to be marked `[X]`.
+- The controller owns `tasks.md` checkmark updates and the checkpoint decision. Only mark a task `[X]` after the subagent provides verification evidence that satisfies the rules below.
+
+**TDD-first inside the phase subagent:** Within each phase, run test tasks before their corresponding implementation tasks. Writing tests first clarifies intent and catches regressions immediately. When a test task and its implementation counterpart are both in the same phase, the test runs first regardless of task ID ordering.
+
+**Parallelization inside the phase subagent:**
 
 - `[P]` tasks may run in parallel only when their touched file paths do not overlap — this prevents conflicting writes.
 - Sequential tasks run in declared order. If a non-parallel task fails, halt the phase.
