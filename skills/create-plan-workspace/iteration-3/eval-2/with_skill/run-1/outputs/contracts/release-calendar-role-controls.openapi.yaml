@@ -1,0 +1,256 @@
+openapi: 3.1.0
+info:
+  title: Release Calendar Role Controls API
+  version: 1.0.0
+  description: |
+    Additive workflow contract for release calendar role controls. This contract
+    introduces grouped pending approvals and a single transition endpoint while
+    preserving existing read behavior for one compatibility quarter.
+servers:
+  - url: https://example.internal
+paths:
+  /api/release-windows/approvals/pending:
+    get:
+      summary: List pending approvals grouped by product area
+      operationId: listPendingReleaseWindowApprovals
+      tags: [ReleaseWindows]
+      parameters:
+        - in: query
+          name: productArea
+          required: false
+          schema:
+            type: string
+          description: Optional product-area filter.
+        - in: query
+          name: pageSize
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - in: query
+          name: cursor
+          required: false
+          schema:
+            type: string
+          description: Opaque pagination cursor.
+      responses:
+        '200':
+          description: Pending approvals grouped by product area.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingApprovalGroupsResponse'
+        '403':
+          description: Caller lacks release-manager privileges for the requested scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/release-windows/{releaseWindowId}/transitions:
+    post:
+      summary: Apply a workflow transition to a release window
+      operationId: transitionReleaseWindow
+      tags: [ReleaseWindows]
+      parameters:
+        - in: path
+          name: releaseWindowId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionRequest'
+      responses:
+        '200':
+          description: Transition accepted and persisted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseWindowTransitionResponse'
+        '400':
+          description: Validation failure such as missing reason or invalid payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Caller lacks permission for the requested transition.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Release window not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Transition conflict due to illegal state change or stale version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    PendingApprovalGroupsResponse:
+      type: object
+      required: [groups]
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/PendingApprovalGroup'
+    PendingApprovalGroup:
+      type: object
+      required: [productAreaId, productArea, pendingCount, items]
+      properties:
+        productAreaId:
+          type: string
+        productArea:
+          type: string
+        pendingCount:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PendingApprovalItem'
+        nextCursor:
+          type: string
+          nullable: true
+    PendingApprovalItem:
+      type: object
+      required:
+        [id, title, productAreaId, productArea, startAt, endAt, requestedBy, requestedAt, latestReason, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        productAreaId:
+          type: string
+        productArea:
+          type: string
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        requestedBy:
+          type: string
+        requestedAt:
+          type: string
+          format: date-time
+        latestReason:
+          type: string
+        version:
+          type: integer
+          minimum: 1
+    TransitionRequest:
+      type: object
+      required: [targetState, reason]
+      properties:
+        targetState:
+          type: string
+          enum: [proposed, approved, blocked, cancelled]
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 1000
+        expectedVersion:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    ReleaseWindowTransitionResponse:
+      type: object
+      required: [releaseWindow, transition]
+      properties:
+        releaseWindow:
+          $ref: '#/components/schemas/ReleaseWindow'
+        transition:
+          $ref: '#/components/schemas/ReleaseWindowTransition'
+    ReleaseWindow:
+      type: object
+      required:
+        [id, productAreaId, title, startAt, endAt, state, version, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        productAreaId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        state:
+          type: string
+          enum: [draft, proposed, approved, blocked, cancelled]
+        version:
+          type: integer
+          minimum: 1
+        updatedAt:
+          type: string
+          format: date-time
+        availableTransitions:
+          type: array
+          items:
+            type: string
+            enum: [proposed, approved, blocked, cancelled]
+          description: Additive compatibility field for new clients.
+        canApprove:
+          type: boolean
+          description: Additive compatibility field for new clients.
+    ReleaseWindowTransition:
+      type: object
+      required: [id, fromState, toState, reason, actorId, actorRole, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        fromState:
+          type: string
+          enum: [draft, proposed, approved, blocked, cancelled]
+        toState:
+          type: string
+          enum: [draft, proposed, approved, blocked, cancelled]
+        reason:
+          type: string
+        actorId:
+          type: string
+        actorRole:
+          type: string
+          enum: [viewer, editor, release_manager]
+        actorDisplayName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true

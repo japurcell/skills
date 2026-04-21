@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Audit Log Export Audit Stream Event",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "occurredAt",
+    "actorUserId",
+    "actorRole",
+    "result"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "audit_export.requested",
+        "audit_export.request_denied",
+        "audit_export.downloaded",
+        "audit_export.cancelled",
+        "audit_export.failed"
+      ]
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actorUserId": {
+      "type": "string"
+    },
+    "actorRole": {
+      "type": "string"
+    },
+    "exportJobId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "result": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "denied",
+        "success",
+        "failure"
+      ]
+    },
+    "requestFilters": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "dateFrom": {
+          "type": "string",
+          "format": "date"
+        },
+        "dateTo": {
+          "type": "string",
+          "format": "date"
+        },
+        "actorType": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "actionCategory": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "downloadFormat": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "csv",
+        "json",
+        null
+      ]
+    },
+    "clientIp": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "userAgent": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "eventId": "6f28e1bc-3ad4-4c56-bc91-dc8d49f86147",
+      "eventType": "audit_export.requested",
+      "occurredAt": "2026-04-21T12:00:00Z",
+      "actorUserId": "u-123",
+      "actorRole": "compliance_admin",
+      "exportJobId": "f7a08dd9-4b60-4543-92f3-d4e446f59aa7",
+      "result": "accepted",
+      "requestFilters": {
+        "dateFrom": "2026-01-01",
+        "dateTo": "2026-03-31",
+        "actorType": "human",
+        "actionCategory": "auth"
+      },
+      "downloadFormat": null,
+      "clientIp": "10.0.0.5",
+      "userAgent": "compliance-ui/1.0",
+      "reason": null
+    }
+  ]
+}

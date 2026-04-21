@@ -49,20 +49,13 @@ If the resolved file is unreadable or does not contain actionable requirements, 
    - Otherwise continue to Phase 0.
 
 4. **Phase 0: Research (research.md)**
-    - Convert each `NEEDS CLARIFICATION` item into a concrete research question.
-    - For every external language, framework, library, platform, infrastructure service, protocol, or contract standard that influences Technical Context or design choices, check the latest official documentation available on the web before finalizing the decision.
-    - Treat official/vendor/framework documentation as the primary source for technical context and best-practice guidance; use repository context and secondary sources only to adapt those recommendations to the project.
-    - Whenever you reference official documentation in a decision, rationale, trade-off, risk, or best-practice claim, cite the latest official source retrieved from the web during this run.
-    - Resolve each unknown with an explicit decision.
-    - Record each decision in this format:
-      - Decision
-      - Rationale
-      - Official docs reviewed
-      - Version/context checked
-      - Alternatives considered
-    - Ensure every Technical Context unknown is resolved or marked with a justified follow-up.
-    - Do not treat locally installed docs, cached references, or whatever happens to be present in the local environment as sufficient proof of current best practices unless they are verified against the latest official web documentation during this run and cited where referenced.
-    - If plan-critical official documentation cannot be reached on the web, stop and report a blocker instead of claiming the outcome reflects latest best practices.
+   - Convert each `NEEDS CLARIFICATION` item into a concrete research question.
+   - Resolve each unknown with an explicit decision.
+   - Record each decision in this format:
+     - Decision
+     - Rationale
+     - Alternatives considered
+   - Ensure every Technical Context unknown is resolved or marked with a justified follow-up.
 
 5. **Phase 1: Design outputs**
    - Create `data-model.md` from entities, invariants, relationships, and lifecycle/state transitions in `spec_file`.
@@ -109,36 +102,26 @@ Formatting rules for this report:
 ### Phase 0: Outline & Research
 
 1. **Extract unknowns from Technical Context**
-    - For each `NEEDS CLARIFICATION` item, create one research task.
-    - For each major dependency choice, create one best-practice check.
-    - For each integration, create one implementation pattern check.
-    - Build an explicit list of technologies, standards, and services from the spec/repository context that require an official-documentation pass.
+   - For each `NEEDS CLARIFICATION` item, create one research task.
+   - For each major dependency choice, create one best-practice check.
+   - For each integration, create one implementation pattern check.
 
 2. **Generate and dispatch research agents (or equivalent direct research)**:
 
-    ```text
-    For each unknown in Technical Context:
-      Task: "Research {unknown} for {feature context}. Check the latest official documentation on the web for every relevant technology first, cite the official web sources you rely on, then summarize current best-practice implications."
-    For each technology choice:
-      Task: "Check the latest official documentation on the web for {tech}, cite the official web sources you rely on, and identify current best practices for {domain}"
-    ```
-
-    - When researching directly instead of dispatching agents, follow the same documentation-first workflow and fetch the official sources from the web.
-    - Prefer official docs that match the version already used in the repository or the version most appropriate for the proposed implementation.
-    - Do not rely on local environment artifacts alone (installed packages, vendored docs, copied references, cached files) as the source of truth for "latest" guidance.
-    - Every referenced official-doc claim must map to an explicit citation in `Official docs reviewed`; do not mention official guidance without a corresponding cited web source.
-    - If official web docs are unavailable, capture that as a blocker or explicit risk; do not present uncited guidance as current best practice.
+   ```text
+   For each unknown in Technical Context:
+     Task: "Research {unknown} for {feature context}"
+   For each technology choice:
+     Task: "Find best practices for {tech} in {domain}"
+   ```
 
 3. **Consolidate findings** in `research.md` using format:
-    - Decision: [what was chosen]
-    - Rationale: [why chosen]
-    - Official docs reviewed: [one bullet per cited official web source, with doc title + URL]
-    - Version/context checked: [version, release, or current-doc context that informed the decision]
-    - Alternatives considered: [what else evaluated]
+   - Decision: [what was chosen]
+   - Rationale: [why chosen]
+   - Alternatives considered: [what else evaluated]
 
 4. **Close the loop back to plan.md**
-    - Update Technical Context in `plan.md` so resolved unknowns are no longer marked unclear.
-    - Propagate version-specific or best-practice findings from official docs into Technical Context, contracts, quickstart commands, and any notable constraints/risk notes, while keeping the underlying web citations in `research.md`.
+   - Update Technical Context in `plan.md` so resolved unknowns are no longer marked unclear.
 
 **Output**: `research.md` with all important unknowns resolved
 
@@ -176,6 +159,5 @@ Formatting rules for this report:
 - Use absolute paths in reports and when writing output locations.
 - Return `ERROR` on gate failures that are not justified.
 - Do not invent repository structure; read existing paths and align with current layout.
-- Do not claim that a decision reflects latest/current best practices unless the relevant official documentation was checked during this run and captured in `research.md`.
 - Prefer explicit trade-offs over vague recommendations.
 - Keep artifacts implementation-oriented; avoid abstract prose with no engineering actionability.

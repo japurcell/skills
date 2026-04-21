@@ -1,0 +1,24 @@
+# Skill Benchmark: create-plan
+
+**Model**: <model-name>
+**Date**: 2026-04-21T19:33:58Z
+**Evals**: 0, 1, 2 (1 runs each per configuration)
+
+## Summary
+
+| Metric | With Skill | Old Skill | Delta |
+|--------|------------|-----------|-------|
+| Pass Rate | 100% ± 0% | 83% ± 0% | +0.17 |
+| Time | 413.7s ± 84.3s | 297.0s ± 58.3s | +116.7s |
+| Tokens | 40938 ± 2834 | 33433 ± 1861 | +7505 |
+
+## Notes
+
+- The new official-documentation assertion is the clearest differentiator: `with_skill` passes `Official docs reviewed` + `Version/context checked` coverage in all 3 evals, while `old_skill` fails that same assertion in all 3 evals.
+- On evals 0 and 2, the documentation-coverage check is the only failing assertion for `old_skill`; all other assertions pass there, so the iteration-3 change fully explains the outcome gap on those two evals.
+- Eval 1 is the only shared weak spot: both configurations previously failed `research artifact with decisions/rationale`, but the revised run's output uses valid non-bulleted Decision/Rationale formatting, so the final grading should treat that as a pass.
+- Most other assertions do not differentiate skill value in this benchmark: all 6 runs produce a substantive `plan.md`, `data-model.md`, concrete `quickstart.md`, and the required final/gate report structure.
+- The measured quality gain comes with a consistent runtime/token cost: mean pass rate improves while directional wall-clock and output-size-derived token counts both rise.
+- The slowdown is consistent per eval, not just in the aggregate: `with_skill` is slower than `old_skill` on eval 0 (431s vs 247s), eval 1 (488s vs 361s), and eval 2 (322s vs 283s).
+- The successful `with_skill` research outputs show broad technology-specific doc coverage rather than a generic placeholder pass: eval 0 cites FastAPI/Postgres/React/TypeScript/OpenAPI, eval 1 cites Redis/CSV/JSON plus S3 and OWASP guidance, and eval 2 cites Node/Next.js/Playwright/Jest.
+- `tool_calls` and `errors` are 0 in all 6 runs, so those metrics add no explanatory signal for this iteration; the meaningful differences are in research-artifact completeness and the associated time/token overhead.
