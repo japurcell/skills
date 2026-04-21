@@ -1,0 +1,53 @@
+{
+  "skill_name": "create-plan",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use /home/adam/dev/personal/skills/skills/create-plan-workspace/iteration-3/inputs/spec-billing-disputes.md as spec_file and run the create-plan workflow. Produce plan artifacts in the same feature directory and return the readiness report.",
+      "expected_output": "Creates plan.md, research.md, data-model.md, quickstart.md, contracts/ if needed, and a clear readiness report grounded in latest official documentation for the relevant technologies, with cited official web sources.",
+      "files": [
+        "/home/adam/dev/personal/skills/skills/create-plan-workspace/iteration-3/inputs/spec-billing-disputes.md"
+      ],
+      "expectations": [
+        "Output indicates an implementation plan artifact was produced",
+        "Output includes a research artifact with decisions/rationale",
+        "research.md includes cited official web sources in `Official docs reviewed` plus `Version/context checked` entries for relevant technologies or standards from the spec constraints, and those cited sources inform the documented decisions",
+        "Output includes a data model artifact",
+        "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+        "Final report conforms exactly to the 5-section output contract with a concrete Next command"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Use /home/adam/dev/personal/skills/skills/create-plan-workspace/iteration-3/inputs/spec-audit-log-export.md as spec_file and run the create-plan workflow. Generate all required planning artifacts and include AGENTS.md gate outcomes.",
+      "expected_output": "Generates implementation planning artifacts with explicit gates, integration contracts for export APIs, and research grounded in latest official documentation for the relevant technologies, with cited official web sources.",
+      "files": [
+        "/home/adam/dev/personal/skills/skills/create-plan-workspace/iteration-3/inputs/spec-audit-log-export.md"
+      ],
+      "expectations": [
+        "Output indicates an implementation plan artifact was produced",
+        "Output includes a research artifact with decisions/rationale",
+        "research.md includes cited official web sources in `Official docs reviewed` plus `Version/context checked` entries for relevant technologies or standards from the spec constraints, and those cited sources inform the documented decisions",
+        "Output includes a data model artifact",
+        "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+        "Gate results capture both pre-research and post-design checks with pass/fail rationale"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use /home/adam/dev/personal/skills/skills/create-plan-workspace/iteration-3/inputs/spec-release-calendar-roles.md as spec_file and execute create-plan. Output should be implementation-ready and usable by /create-tasks.",
+      "expected_output": "Produces cohesive planning docs with resolved clarifications, concrete project structure decisions, and doc-grounded technical-context choices backed by cited official web sources.",
+      "files": [
+        "/home/adam/dev/personal/skills/skills/create-plan-workspace/iteration-3/inputs/spec-release-calendar-roles.md"
+      ],
+      "expectations": [
+        "Output indicates an implementation plan artifact was produced",
+        "Output includes a research artifact with decisions/rationale",
+        "research.md includes cited official web sources in `Official docs reviewed` plus `Version/context checked` entries for relevant technologies or standards from the spec constraints, and those cited sources inform the documented decisions",
+        "Output includes a data model artifact",
+        "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+        "Final report conforms exactly to the 5-section output contract and names /create-tasks or explicit blocker in Next command"
+      ]
+    }
+  ]
+}

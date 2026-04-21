@@ -1,0 +1,13 @@
+{
+  "eval_id": 1,
+  "eval_name": "audit-log-export",
+  "prompt": "Use /home/adam/dev/personal/skills/skills/create-plan-workspace/iteration-3/inputs/spec-audit-log-export.md as spec_file and run the create-plan workflow. Generate all required planning artifacts and include AGENTS.md gate outcomes.",
+  "assertions": [
+    "Output indicates an implementation plan artifact was produced",
+    "Output includes a research artifact with decisions/rationale",
+    "research.md includes cited official web sources in `Official docs reviewed` plus `Version/context checked` entries for relevant technologies or standards from the spec constraints, and those cited sources inform the documented decisions",
+    "Output includes a data model artifact",
+    "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+    "Gate results capture both pre-research and post-design checks with pass/fail rationale"
+  ]
+}

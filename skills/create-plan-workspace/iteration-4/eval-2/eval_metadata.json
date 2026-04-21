@@ -1,0 +1,13 @@
+{
+  "eval_id": 2,
+  "eval_name": "release-calendar-roles",
+  "prompt": "Use /home/adam/dev/personal/skills/skills/create-plan-workspace/iteration-3/inputs/spec-release-calendar-roles.md as spec_file and execute create-plan. Output should be implementation-ready and usable by /create-tasks.",
+  "assertions": [
+    "Output indicates an implementation plan artifact was produced",
+    "Output includes a research artifact with decisions/rationale",
+    "research.md includes cited official web sources in `Official docs reviewed` plus `Version/context checked` entries for relevant technologies or standards from the spec constraints, and those cited sources inform the documented decisions",
+    "Output includes a data model artifact",
+    "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+    "Final report conforms exactly to the 5-section output contract and names /create-tasks or explicit blocker in Next command"
+  ]
+}

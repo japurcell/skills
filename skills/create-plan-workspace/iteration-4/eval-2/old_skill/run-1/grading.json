@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "text": "Output indicates an implementation plan artifact was produced",
+      "passed": true,
+      "evidence": "plan.md exists with substantive content"
+    },
+    {
+      "text": "Output includes a research artifact with decisions/rationale",
+      "passed": false,
+      "evidence": "research.md is missing Decision and/or Rationale entries"
+    },
+    {
+      "text": "research.md includes cited official web sources in `Official docs reviewed` plus `Version/context checked` entries for relevant technologies or standards from the spec constraints, and those cited sources inform the documented decisions",
+      "passed": false,
+      "evidence": "missing `Official docs reviewed` entries; missing `Version/context checked` entries"
+    },
+    {
+      "text": "Output includes a data model artifact",
+      "passed": true,
+      "evidence": "data-model.md exists with substantive content"
+    },
+    {
+      "text": "quickstart.md includes required headings (Prerequisites, Implement, Validate, Rollout/Operate) with concrete commands and expected outcomes",
+      "passed": true,
+      "evidence": "Required headings, commands, and expected outcomes present"
+    },
+    {
+      "text": "Final report conforms exactly to the 5-section output contract and names /create-tasks or explicit blocker in Next command",
+      "passed": true,
+      "evidence": "All required section labels present in correct order with actionable next command"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 2,
+    "total": 6,
+    "pass_rate": 0.67
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 36761,
+    "transcript_chars": 660
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 322.0,
+    "total_tokens": 0,
+    "duration_ms": 322000
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

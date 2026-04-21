@@ -1,0 +1,205 @@
+openapi: 3.1.0
+info:
+  title: Audit Log Export API
+  version: 1.0.0-plan
+  summary: Async compliance export endpoints for audit-log exports
+servers:
+  - url: https://example.internal
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CreateAuditExportRequest:
+      type: object
+      additionalProperties: false
+      required: [startDate, endDate, actorType]
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        actorType:
+          type: string
+          description: Product-defined actor classification filter.
+        actionCategory:
+          type: string
+          nullable: true
+    ExportArtifact:
+      type: object
+      additionalProperties: false
+      required: [format, contentType, expiresAt]
+      properties:
+        format:
+          type: string
+          enum: [csv, json]
+        contentType:
+          type: string
+          enum: [text/csv, application/json]
+        url:
+          type: string
+          format: uri
+          nullable: true
+          description: Present only when the job is completed and the caller is authorized.
+        expiresAt:
+          type: string
+          format: date-time
+        checksum:
+          type: string
+          nullable: true
+    AuditExportJob:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - status
+        - cancellationRequested
+        - filters
+        - createdAt
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, failed, completed]
+        cancellationRequested:
+          type: boolean
+        failureCode:
+          type: string
+          nullable: true
+        progressPercent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        filters:
+          $ref: '#/components/schemas/CreateAuditExportRequest'
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExportArtifact'
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastHeartbeatAt:
+          type: string
+          format: date-time
+          nullable: true
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+security:
+  - bearerAuth: []
+paths:
+  /admin/audit-exports:
+    post:
+      summary: Request a new audit-log export job
+      description: Creates an asynchronous export job for the authenticated compliance admin.
+      x-required-role: compliance_admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuditExportRequest'
+      responses:
+        '202':
+          description: Export job accepted for asynchronous processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditExportJob'
+        '403':
+          description: Caller lacks the compliance_admin role.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/audit-exports/{jobId}:
+    get:
+      summary: Get export-job status and artifact links
+      description: Returns progress for an export job and signed download links when completed.
+      x-required-role: compliance_admin
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current job status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditExportJob'
+        '403':
+          description: Caller lacks the compliance_admin role.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Job not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/audit-exports/{jobId}/cancel:
+    post:
+      summary: Request cancellation for a queued or running export job
+      description: Marks cancellationRequested=true; workers stop safely and the terminal failureCode becomes cancelled_by_admin.
+      x-required-role: compliance_admin
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Cancellation accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditExportJob'
+        '403':
+          description: Caller lacks the compliance_admin role.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Job not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Job is already terminal and cannot be cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

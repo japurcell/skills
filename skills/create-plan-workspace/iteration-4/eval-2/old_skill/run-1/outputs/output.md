@@ -1,0 +1,5 @@
+- Read the baseline `SKILL.md`, `references/plan-template.md`, the provided spec, and in-scope AGENTS/instruction files.
+- Researched current official documentation on the web for TypeScript, Next.js, React, OpenAPI, Node.js, Jest, and Playwright.
+- Produced `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, and `contracts/release-calendar-role-controls.openapi.yaml` in the required outputs directory.
+- Wrote the final five-section readiness report to `report.md` and this concise execution log to `output.md`.
+- Blockers: none. Remaining implementation risk is repository-specific command/path confirmation in the real release-calendar monorepo.

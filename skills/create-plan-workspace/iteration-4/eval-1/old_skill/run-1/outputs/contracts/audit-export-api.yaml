@@ -1,0 +1,188 @@
+openapi: 3.1.0
+info:
+  title: Audit Log Export Admin API
+  version: 1.0.0
+  description: Compliance-admin API for asynchronous audit log export jobs.
+servers:
+  - url: https://api.example.internal
+security:
+  - roleAuth: []
+paths:
+  /admin/audit-exports:
+    post:
+      summary: Create an audit log export job
+      operationId: createAuditExport
+      tags: [AuditExport]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExportRequest'
+      responses:
+        '202':
+          description: Export accepted and queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJobResponse'
+        '400':
+          description: Invalid filters or export window
+        '403':
+          description: Missing compliance_admin role
+  /admin/audit-exports/{exportId}:
+    get:
+      summary: Get export job status
+      operationId: getAuditExport
+      tags: [AuditExport]
+      parameters:
+        - $ref: '#/components/parameters/ExportId'
+      responses:
+        '200':
+          description: Export status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJobResponse'
+        '403':
+          description: Missing compliance_admin role
+        '404':
+          description: Export not found
+  /admin/audit-exports/{exportId}/cancel:
+    post:
+      summary: Cancel a queued or running export job
+      operationId: cancelAuditExport
+      tags: [AuditExport]
+      parameters:
+        - $ref: '#/components/parameters/ExportId'
+      responses:
+        '202':
+          description: Cancellation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelExportResponse'
+        '403':
+          description: Missing compliance_admin role
+        '404':
+          description: Export not found
+        '409':
+          description: Export cannot be cancelled in the current state
+  /admin/audit-exports/{exportId}/downloads:
+    get:
+      summary: Get signed download URLs for completed export artifacts
+      operationId: getAuditExportDownloads
+      tags: [AuditExport]
+      parameters:
+        - $ref: '#/components/parameters/ExportId'
+      responses:
+        '200':
+          description: Signed URLs issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadLinksResponse'
+        '403':
+          description: Missing compliance_admin role
+        '404':
+          description: Export or artifact not found
+        '410':
+          description: Export artifacts expired
+components:
+  securitySchemes:
+    roleAuth:
+      type: apiKey
+      in: header
+      name: X-Role
+  parameters:
+    ExportId:
+      name: exportId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    CreateExportRequest:
+      type: object
+      required: [dateFrom, dateTo]
+      additionalProperties: false
+      properties:
+        dateFrom:
+          type: string
+          format: date
+        dateTo:
+          type: string
+          format: date
+        actorType:
+          type: [string, 'null']
+        actionCategory:
+          type: [string, 'null']
+    ExportJobResponse:
+      type: object
+      required: [id, status, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, failed, completed, cancelled]
+        progressPct:
+          type: integer
+          minimum: 0
+          maximum: 100
+        recordsProcessed:
+          type: integer
+          minimum: 0
+        recordsExported:
+          type: integer
+          minimum: 0
+        failureReason:
+          type: [string, 'null']
+        downloadExpiresAt:
+          type: [string, 'null']
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CancelExportResponse:
+      type: object
+      required: [id, status, message]
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, cancelled]
+        message:
+          type: string
+    DownloadLink:
+      type: object
+      required: [url, expiresAt]
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+    DownloadLinksResponse:
+      type: object
+      required: [exportId, csv, json]
+      additionalProperties: false
+      properties:
+        exportId:
+          type: string
+          format: uuid
+        csv:
+          $ref: '#/components/schemas/DownloadLink'
+        json:
+          $ref: '#/components/schemas/DownloadLink'

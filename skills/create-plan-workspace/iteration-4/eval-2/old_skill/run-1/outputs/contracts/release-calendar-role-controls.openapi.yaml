@@ -1,0 +1,325 @@
+openapi: 3.1.0
+info:
+  title: Release Calendar Role Controls API
+  version: 0.1.0
+  summary: Additive API contract for release-calendar role controls and approvals
+  description: |
+    Contract for role-aware release-window workflow operations. Existing read endpoints
+    remain backward compatible while new workflow metadata and mutation routes are added.
+servers:
+  - url: https://release-calendar.internal
+security:
+  - bearerAuth: []
+tags:
+  - name: release-windows
+    description: Release calendar workflow and approval operations
+paths:
+  /api/release-windows:
+    get:
+      tags: [release-windows]
+      summary: List release windows
+      parameters:
+        - in: query
+          name: productArea
+          schema:
+            type: string
+        - in: query
+          name: state
+          schema:
+            $ref: '#/components/schemas/ReleaseWindowState'
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        '200':
+          description: Paginated release windows with additive permission metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedReleaseWindows'
+  /api/release-windows/{releaseWindowId}:
+    get:
+      tags: [release-windows]
+      summary: Get release window detail
+      parameters:
+        - $ref: '#/components/parameters/ReleaseWindowId'
+      responses:
+        '200':
+          description: Release window detail including transition history and additive workflow metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseWindowDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/release-windows/{releaseWindowId}/transitions:
+    post:
+      tags: [release-windows]
+      summary: Propose, approve, block, or cancel a release window
+      parameters:
+        - $ref: '#/components/parameters/ReleaseWindowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionReleaseWindowRequest'
+      responses:
+        '200':
+          description: Updated release window detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseWindowDetail'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/release-windows/approvals/pending:
+    get:
+      tags: [release-windows]
+      summary: List pending approvals grouped by product area
+      parameters:
+        - in: query
+          name: productArea
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        '200':
+          description: Grouped pending approvals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingApprovalsResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ReleaseWindowId:
+      in: path
+      name: releaseWindowId
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Forbidden:
+      description: Authenticated user lacks permission for this action
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Release window not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Invalid state transition or stale version
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ReleaseWindowRole:
+      type: string
+      enum: [viewer, editor, release_manager]
+    ReleaseWindowState:
+      type: string
+      enum: [draft, proposed, approved, blocked, cancelled]
+    TransitionType:
+      type: string
+      enum: [propose, approve, block, cancel, resubmit]
+    ReleaseWindowSummary:
+      type: object
+      required:
+        [id, productArea, title, startAt, endAt, state, version, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        productArea:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        state:
+          $ref: '#/components/schemas/ReleaseWindowState'
+        version:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        availableTransitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransitionType'
+        canApprove:
+          type: boolean
+          description: Additive compatibility field for manager affordances
+    ReleaseWindowTransition:
+      type: object
+      required: [id, fromState, toState, reason, actorId, actorRole, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        fromState:
+          $ref: '#/components/schemas/ReleaseWindowState'
+        toState:
+          $ref: '#/components/schemas/ReleaseWindowState'
+        reason:
+          type: string
+        actorId:
+          type: string
+        actorRole:
+          $ref: '#/components/schemas/ReleaseWindowRole'
+        actorDisplayName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+    ReleaseWindowDetail:
+      allOf:
+        - $ref: '#/components/schemas/ReleaseWindowSummary'
+        - type: object
+          required: [transitions]
+          properties:
+            transitions:
+              type: array
+              items:
+                $ref: '#/components/schemas/ReleaseWindowTransition'
+    PaginatedReleaseWindows:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReleaseWindowSummary'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+    TransitionReleaseWindowRequest:
+      type: object
+      required: [targetState, reason]
+      properties:
+        targetState:
+          $ref: '#/components/schemas/ReleaseWindowState'
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 1000
+        expectedVersion:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties: true
+    PendingApprovalItem:
+      type: object
+      required:
+        [id, title, productArea, startAt, endAt, requestedBy, requestedAt, latestReason, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        productArea:
+          type: string
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        requestedBy:
+          type: string
+        requestedAt:
+          type: string
+          format: date-time
+        latestReason:
+          type: string
+        version:
+          type: integer
+    PendingApprovalGroup:
+      type: object
+      required: [productArea, pendingCount, items]
+      properties:
+        productArea:
+          type: string
+        pendingCount:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PendingApprovalItem'
+    PendingApprovalsResponse:
+      type: object
+      required: [groups, page, pageSize, totalGroups]
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/PendingApprovalGroup'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalGroups:
+          type: integer
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string

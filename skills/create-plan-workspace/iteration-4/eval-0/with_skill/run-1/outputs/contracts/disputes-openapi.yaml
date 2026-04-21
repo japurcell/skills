@@ -1,0 +1,338 @@
+openapi: 3.1.0
+info:
+  title: Billing Disputes API
+  version: 0.1.0
+  description: >-
+    Contract for the internal billing portal dispute workflow covering list, detail,
+    creation, status transitions, assignment changes, and monthly CSV export.
+servers:
+  - url: https://billing-portal.internal
+    description: Internal production host
+security:
+  - bearerAuth: []
+paths:
+  /api/disputes:
+    get:
+      operationId: listDisputes
+      summary: List disputes
+      tags: [Disputes]
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/DisputeStatus'
+        - in: query
+          name: assigneeUserId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        '200':
+          description: Paginated dispute list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeListResponse'
+    post:
+      operationId: createDispute
+      summary: Create a dispute
+      tags: [Disputes]
+      description: Requires `agent` role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisputeCreateRequest'
+      responses:
+        '201':
+          description: Dispute created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeDetail'
+        '403':
+          description: Caller lacks required role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/disputes/{disputeId}:
+    get:
+      operationId: getDispute
+      summary: Get dispute detail
+      tags: [Disputes]
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      responses:
+        '200':
+          description: Dispute detail with timeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeDetail'
+        '404':
+          description: Dispute not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/disputes/{disputeId}/transitions:
+    post:
+      operationId: transitionDispute
+      summary: Change dispute status
+      tags: [Disputes]
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisputeTransitionRequest'
+      responses:
+        '200':
+          description: Updated dispute detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeDetail'
+        '409':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/disputes/{disputeId}/assignments:
+    post:
+      operationId: changeDisputeAssignment
+      summary: Change dispute assignee
+      tags: [Disputes]
+      description: Requires `manager` role.
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisputeAssignmentRequest'
+      responses:
+        '200':
+          description: Updated dispute detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputeDetail'
+        '403':
+          description: Caller lacks required role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/disputes/exports/monthly:
+    get:
+      operationId: exportMonthlyDisputeOutcomes
+      summary: Export monthly dispute outcomes as CSV
+      tags: [Disputes]
+      parameters:
+        - in: query
+          name: month
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+          description: Resolution month in YYYY-MM format.
+      responses:
+        '200':
+          description: CSV export of resolved/rejected disputes for the requested month
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid month value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    DisputeId:
+      in: path
+      name: disputeId
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    DisputeStatus:
+      type: string
+      enum: [open, investigating, waiting_on_customer, resolved, rejected]
+    SlaState:
+      type: string
+      enum: [healthy, warning, breached]
+    DisputeSummary:
+      type: object
+      required:
+        - id
+        - invoiceId
+        - customerId
+        - reasonCode
+        - status
+        - assigneeUserId
+        - createdAt
+        - slaState
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoiceId:
+          type: string
+        customerId:
+          type: string
+        reasonCode:
+          type: string
+        status:
+          $ref: '#/components/schemas/DisputeStatus'
+        assigneeUserId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        slaState:
+          $ref: '#/components/schemas/SlaState'
+    TimelineEvent:
+      type: object
+      required:
+        - id
+        - activityType
+        - actorUserId
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        activityType:
+          type: string
+          enum: [created, comment_added, status_changed, assignment_changed, outcome_overridden]
+        actorUserId:
+          type: string
+          format: uuid
+        fromStatus:
+          $ref: '#/components/schemas/DisputeStatus'
+          nullable: true
+        toStatus:
+          $ref: '#/components/schemas/DisputeStatus'
+          nullable: true
+        fromAssigneeUserId:
+          type: string
+          format: uuid
+          nullable: true
+        toAssigneeUserId:
+          type: string
+          format: uuid
+          nullable: true
+        comment:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    DisputeDetail:
+      allOf:
+        - $ref: '#/components/schemas/DisputeSummary'
+        - type: object
+          required:
+            - notes
+            - timeline
+          properties:
+            notes:
+              type: string
+            resolvedAt:
+              type: string
+              format: date-time
+              nullable: true
+            managerOverrideUserId:
+              type: string
+              format: uuid
+              nullable: true
+            timeline:
+              type: array
+              items:
+                $ref: '#/components/schemas/TimelineEvent'
+    DisputeListResponse:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisputeSummary'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+    DisputeCreateRequest:
+      type: object
+      required: [invoiceId, customerId, reasonCode, notes]
+      properties:
+        invoiceId:
+          type: string
+        customerId:
+          type: string
+        reasonCode:
+          type: string
+        notes:
+          type: string
+    DisputeTransitionRequest:
+      type: object
+      required: [toStatus]
+      properties:
+        toStatus:
+          $ref: '#/components/schemas/DisputeStatus'
+        comment:
+          type: string
+          nullable: true
+        managerOverride:
+          type: boolean
+          default: false
+    DisputeAssignmentRequest:
+      type: object
+      required: [assigneeUserId]
+      properties:
+        assigneeUserId:
+          type: string
+          format: uuid
+        comment:
+          type: string
+          nullable: true
+    Problem:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string

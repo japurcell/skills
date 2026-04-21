@@ -1,0 +1,234 @@
+openapi: 3.1.0
+info:
+  title: Release Calendar Role Controls API
+  version: 1.0.0-plan
+  summary: Additive approval and role-capability contract for release calendar workflow
+servers:
+  - url: https://example.internal
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Role:
+      type: string
+      enum: [viewer, editor, release_manager]
+    ReleaseWindowState:
+      type: string
+      enum: [draft, proposed, approved, blocked, cancelled]
+    CapabilitySet:
+      type: object
+      additionalProperties: false
+      required: [canEdit, canPropose, canApprove, canReject, canBlock, canCancel]
+      properties:
+        canEdit:
+          type: boolean
+        canPropose:
+          type: boolean
+        canApprove:
+          type: boolean
+        canReject:
+          type: boolean
+        canBlock:
+          type: boolean
+        canCancel:
+          type: boolean
+    ReleaseWindowSummary:
+      type: object
+      additionalProperties: false
+      required: [id, productAreaId, title, startAt, endAt, state]
+      properties:
+        id:
+          type: string
+        productAreaId:
+          type: string
+        title:
+          type: string
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        state:
+          $ref: '#/components/schemas/ReleaseWindowState'
+        capabilities:
+          $ref: '#/components/schemas/CapabilitySet'
+          description: Optional additive field during the compatibility window.
+    TransitionRequest:
+      type: object
+      additionalProperties: false
+      required: [targetState, reason]
+      properties:
+        targetState:
+          $ref: '#/components/schemas/ReleaseWindowState'
+        decisionType:
+          type: string
+          enum: [propose, approve, reject, block, cancel, reopen]
+          nullable: true
+        reason:
+          type: string
+          minLength: 1
+    TransitionRecord:
+      type: object
+      additionalProperties: false
+      required: [id, fromState, toState, reason, actorUserId, actorRole, occurredAt]
+      properties:
+        id:
+          type: string
+        fromState:
+          $ref: '#/components/schemas/ReleaseWindowState'
+        toState:
+          $ref: '#/components/schemas/ReleaseWindowState'
+        decisionType:
+          type: string
+        reason:
+          type: string
+        actorUserId:
+          type: string
+        actorRole:
+          $ref: '#/components/schemas/Role'
+        occurredAt:
+          type: string
+          format: date-time
+    ReleaseWindowDetail:
+      allOf:
+        - $ref: '#/components/schemas/ReleaseWindowSummary'
+        - type: object
+          additionalProperties: false
+          required: [transitionHistory]
+          properties:
+            transitionHistory:
+              type: array
+              items:
+                $ref: '#/components/schemas/TransitionRecord'
+    PendingApprovalGroup:
+      type: object
+      additionalProperties: false
+      required: [productAreaId, productAreaName, pendingCount, windows]
+      properties:
+        productAreaId:
+          type: string
+        productAreaName:
+          type: string
+        pendingCount:
+          type: integer
+          minimum: 0
+        windows:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReleaseWindowSummary'
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+security:
+  - bearerAuth: []
+paths:
+  /api/release-approvals/pending:
+    get:
+      summary: List pending approvals grouped by product area
+      description: Returns only release windows in the `proposed` state that the caller may review.
+      x-required-role: release_manager
+      parameters:
+        - name: groupBy
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [productArea]
+      responses:
+        '200':
+          description: Pending approvals grouped by product area.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [groups]
+                properties:
+                  groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PendingApprovalGroup'
+        '403':
+          description: Caller lacks approval privileges.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/release-windows/{windowId}:
+    get:
+      summary: Fetch release window details with additive capability metadata
+      parameters:
+        - name: windowId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Release window details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseWindowDetail'
+        '404':
+          description: Release window not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/release-windows/{windowId}/transitions:
+    post:
+      summary: Apply an approval-workflow transition to a release window
+      description: Editors can propose; release managers can approve, reject, block, or cancel according to the workflow state machine.
+      parameters:
+        - name: windowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionRequest'
+      responses:
+        '200':
+          description: Transition accepted and persisted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseWindowDetail'
+        '400':
+          description: Invalid transition or missing reason.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Caller lacks permission for the requested transition.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Current state revision changed or transition is no longer valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
