@@ -1,0 +1,99 @@
+{
+  "skill_name": "architecture-design-contest",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Design it twice before we build anything. I want to add a new `/benchmark-triage` skill to this repo that reads a skill benchmark iteration directory and tells me what to change next. It needs to fit the patterns already used by `skill-creator`, `create-plan`, and `implement-plan`. Don't implement it yet — I want competing architectures first, and I care about reusability vs keeping the workflow lightweight.",
+      "expected_output": "A design contest that frames the problem, explores the referenced skill patterns, produces multiple materially different architectures, compares the trade-offs in prose, and recommends one direction without implementing code.",
+      "files": [
+        "/home/adam/dev/personal/skills/skills/skill-creator/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/create-plan/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md"
+      ],
+      "assertions": [
+        "Response starts with focused framing or a small set of high-leverage questions instead of a long interview",
+        "Response uses the referenced repository patterns or files to ground the designs",
+        "Response presents at least three materially different architecture options",
+        "Response compares reusability versus workflow weight in prose and ends with a recommendation",
+        "Response does not implement files, code, or patches"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Before we touch code, I want a few serious architecture options for a feature that can execute a saved plan, keep progress state, and coordinate code-review agents at the right checkpoints. It needs to work in this skills repo and build on the existing plan/task workflow without becoming a monolith. Please compare alternatives and tell me which direction you'd bet on.",
+      "expected_output": "A design review that triggers even without the phrase 'design it twice', explores the current plan/task workflow, presents structurally different orchestration designs, and gives an opinionated recommendation.",
+      "files": [
+        "/home/adam/dev/personal/skills/skills/create-plan/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/create-tasks/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md"
+      ],
+      "assertions": [
+        "Response treats the request as an architecture comparison task even without an explicit skill name",
+        "Response grounds the designs in the existing plan and task workflow files",
+        "The architecture options differ in orchestration or state ownership, not just naming",
+        "Comparison covers testing or migration implications in addition to feature shape",
+        "Recommendation is explicit and opinionated"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I'm stuck between a single orchestrator, a state-machine-driven workflow, and a set of thin skills coordinated by handoffs for a new repository-maintenance feature. I haven't decided whether resumability or simplicity matters more yet. Help me figure out the architecture options before we commit to implementation.",
+      "expected_output": "A design contest that handles ambiguity well by resolving only the most important missing constraints, then compares options that reflect the resumability-versus-simplicity trade-off and recommends a path or a clear decision rule.",
+      "files": [],
+      "assertions": [
+        "Response asks a small number of high-leverage clarifying questions or states explicit assumptions",
+        "Response produces multiple architectures shaped by the resumability versus simplicity trade-off",
+        "Response explains how the recommendation changes if resumability or simplicity becomes the top priority",
+        "Response does not stop at a neutral menu of options"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Can you propose several architecture directions for making `copilot-install.sh` and `scripts/copilot-install.sh` converge into one maintainable installation pipeline? I want something that preserves current behavior but removes duplication and makes future agent/skill sync changes safer. Explore the repo first and then give me competing designs; no code yet.",
+      "expected_output": "A codebase-grounded comparison that reads both installer paths and related docs, proposes different convergence strategies, evaluates change-safety and duplication reduction, and recommends a migration path without implementing it.",
+      "files": [
+        "/home/adam/dev/personal/skills/copilot-install.sh",
+        "/home/adam/dev/personal/skills/scripts/copilot-install.sh",
+        "/home/adam/dev/personal/skills/README.md",
+        "/home/adam/dev/personal/skills/docs/agent-guides/validation.md"
+      ],
+      "assertions": [
+        "Response explores the existing installer entry points before finalizing the designs",
+        "The proposed designs differ in module boundaries or migration strategy, not just script names",
+        "Comparison addresses change safety and future maintenance in addition to code duplication",
+        "Recommendation preserves current behavior while reducing duplication",
+        "Response does not implement shell changes"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I already have two rough ideas for adding description-optimization support to a skill: one is a standalone `scripts/optimize_description.py`, the other is to fold it into `skill-creator` as another workflow step. I want you to run an architecture contest over those ideas and anything better you see, then recommend whether we should keep them separate, merge them, or use a hybrid.",
+      "expected_output": "A design comparison that treats the two supplied ideas as candidate directions, considers at least one additional architecture or hybrid, compares separation-of-concerns and UX trade-offs, and recommends a concrete split of responsibilities.",
+      "files": [
+        "/home/adam/dev/personal/skills/skills/skill-creator/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/skill-creator/scripts/run_loop.py",
+        "/home/adam/dev/personal/skills/skills/skill-creator/scripts/run_eval.py",
+        "/home/adam/dev/personal/skills/skills/skill-creator/scripts/improve_description.py"
+      ],
+      "assertions": [
+        "Response treats the two user-supplied ideas as inputs rather than the only possible answers",
+        "Response introduces at least one additional architecture or hybrid if warranted",
+        "Comparison discusses separation of concerns, reuse, and operator experience",
+        "Final recommendation says what should stay separate versus what should be combined"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I need an architecture recommendation for a new internal service that ingests design-review requests from GitHub, runs parallel evaluators, and stores feedback for later comparison. The likely stack is FastAPI + PostgreSQL + GitHub webhooks, but we haven't built anything yet. Give me multiple serious designs and recommend one.",
+      "expected_output": "A greenfield architecture contest that still produces materially different designs, cites current stack guidance when necessary, compares operational and failure-mode trade-offs, and ends with an opinionated recommendation plus the next constraint to validate.",
+      "files": [],
+      "assertions": [
+        "Response produces multiple structurally different architectures even without repository files",
+        "Response uses current official references or stack guidance when making stack-specific claims",
+        "Comparison covers operational complexity, failure modes, and extensibility",
+        "Recommendation is opinionated and names the next constraint or assumption to validate",
+        "Response does not jump into implementation"
+      ]
+    }
+  ]
+}
