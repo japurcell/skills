@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "text": "Does NOT mark task T005 as [X] or completed in tasks.md",
+      "passed": true,
+      "evidence": "The `tasks.md update` section says `Leave T005 as [ ]` and `Do not mark T005 as [X]`."
+    },
+    {
+      "text": "Explicitly states the task remains [ ] or unchecked because verification failed",
+      "passed": true,
+      "evidence": "The response explicitly ties the unchecked status to failed verification: `Result: FAIL` and `Leave T005 as [ ]`."
+    },
+    {
+      "text": "Reports the TypeScript compilation error with context",
+      "passed": true,
+      "evidence": "It reports `error TS2345: Argument of type string is not assignable to parameter of type SearchQuery` at `src/api/search.ts:42`."
+    },
+    {
+      "text": "Enters error recovery: halts the phase and suggests next steps (fix the type error, etc.)",
+      "passed": true,
+      "evidence": "The `Phase status` section says the phase `halts here` and instructs the user to fix the type mismatch before rerunning verification."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "output_chars": 655,
+    "transcript_chars": 655,
+    "output_files": [
+      "response.md"
+    ]
+  },
+  "timing": {},
+  "claims": [
+    {
+      "claim": "`npm run build` failed for `T005`.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "The verification line says `Result: FAIL` after `npm run build`."
+    },
+    {
+      "claim": "The task cannot be completed until the type error is fixed and verification is rerun.",
+      "type": "process",
+      "verified": true,
+      "evidence": "The next action says exactly that before marking `T005` `[X]`."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid."
+  }
+}

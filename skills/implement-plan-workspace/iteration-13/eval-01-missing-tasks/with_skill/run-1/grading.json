@@ -1,0 +1,51 @@
+{
+  "expectations": [
+    {
+      "text": "Explicitly states that tasks.md is missing",
+      "passed": true,
+      "evidence": "Response lists `- tasks.md: missing` under Implementation Context Loaded."
+    },
+    {
+      "text": "Instructs the user to run /create-tasks (or regenerate planning artifacts)",
+      "passed": true,
+      "evidence": "Response says `Run `/create-tasks` for this feature, or regenerate the planning artifacts, then rerun `/implement-plan`.`"
+    },
+    {
+      "text": "States that execution is halted or blocked before phase execution",
+      "passed": true,
+      "evidence": "Response says `Not started.` for Phase Execution and `Stopped because required planning artifacts are incomplete.`"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": null,
+    "total_steps": null,
+    "errors_encountered": 0,
+    "output_chars": 526,
+    "transcript_chars": 526
+  },
+  "timing": {},
+  "claims": [
+    {
+      "claim": "/implement-plan halts before phase execution if tasks.md is missing.",
+      "type": "process",
+      "verified": true,
+      "evidence": "The response reports a blocking error for missing tasks.md and shows Phase Execution as `Not started.`"
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

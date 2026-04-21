@@ -1,0 +1,23 @@
+{
+  "eval_id": 6,
+  "eval_name": "review-scope-conflict",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-controller-conflict/plan.md. The controller generated review_scope_files as: src/api.ts, src/service.ts, docs/notes.md. Reviewer-A reports reviewing src/api.ts and src/service.ts. Reviewer-B reports reviewing src/api.ts and scripts/helper.sh. Produce Code Review Findings that resolves this conflict safely.",
+  "assertions": [
+    {
+      "text": "References controller review_scope_files as the authoritative source",
+      "type": "semantic"
+    },
+    {
+      "text": "Identifies mismatch between reviewer-reported lists and authoritative scope",
+      "type": "semantic"
+    },
+    {
+      "text": "Reports missing and extra files based on reconciliation",
+      "type": "semantic"
+    },
+    {
+      "text": "Marks completion as INCOMPLETE until mismatch is resolved or explicitly deferred/approved",
+      "type": "semantic"
+    }
+  ]
+}

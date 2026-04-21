@@ -7,19 +7,26 @@ disable-model-invocation: true
 
 # Implement plan
 
-Turn planning artifacts into working code through a resumable pipeline: validate readiness → prepare the project → execute phases → review the result → confirm completion. Tasks already marked `[X]` in `tasks.md` are skipped on resume.
+Turn planning artifacts into working code through a disciplined pipeline: validate readiness → prepare the project → execute phases → review the result → confirm completion. Each stage gates the next, catching problems before they compound.
+
+The pipeline is **resumable** — if execution was interrupted, already-completed tasks (marked `[X]` in tasks.md) are skipped automatically so you pick up where you left off.
 
 ## Inputs
 
 - **plan_file** (optional): The path to the plan file to implement.
 
-### Resolving plan_file
+### Inferring plan_file
 
-If `plan_file` is omitted, first use a recent plan path mentioned or created in the current session (for example by `create-plan` or `create-tasks`). If none is available, ask the user which plan file to use. If the resolved file is unreadable or does not contain actionable planning content, stop with a blocking error.
+When `plan_file` is not explicitly provided, resolve it from context before proceeding:
+
+1. **Conversation context**: Check whether a plan file was recently created or mentioned in the current session (e.g., output from `create-plan` or `create-tasks`). Use that path if found.
+2. **Ask the user**: If no candidate is found after the steps above, ask which plan file to use.
+
+If the resolved file is unreadable or does not contain actionable planning content, stop and return a blocking error.
 
 ## Progress reporting
 
-Always structure updates with these five sections:
+Structure updates around these five sections so the user can quickly orient themselves:
 
 1. `Checklist Gate` — readiness check results
 2. `Implementation Context Loaded` — what artifacts were found and read
@@ -58,7 +65,7 @@ Load `plan_file` and derive the feature directory from it.
 
 ### 2. Prepare the project
 
-Before writing feature code, make sure housekeeping files are in order. Create or update ignore files only when the project actually uses the relevant tooling.
+Before writing feature code, make sure housekeeping files are in order. Create or update ignore files only when the project actually uses the relevant tooling — detect this through concrete signals like config files and directory structures, not assumptions.
 
 - Never overwrite user-managed ignore files; only append missing critical patterns.
 - Detect what's needed from real signals (e.g., `git rev-parse --git-dir` for .gitignore, `Dockerfile*` for .dockerignore, `.eslintrc*` / `eslint.config.*` for eslint ignores, `.prettierrc*` for .prettierignore, `*.tf` for .terraformignore, Helm charts for .helmignore).
@@ -74,17 +81,18 @@ If no actionable tasks are found, stop and recommend regenerating `tasks.md`.
 
 ### 4. Execute phases
 
-Execute phases in order: Setup → Tests → Core → Integration → Polish.
+Execute phases in order: Setup → Tests → Core → Integration → Polish. Each phase builds on the previous one, so this ordering catches foundation problems before they cascade into later work.
 
 **Controller/subagent split:**
 
-- The main agent is the controller: choose the next phase, gather planning context, and launch implementation subagents. Do not execute phase work inline.
-- Use at least one implementation subagent per phase; do not collapse multiple phases into one long-running subagent.
-- The controller prompt must include the phase name, ordered task list, TDD ordering rule, dependency rules, touched file paths, resumption state, relevant planning artifacts, and verification expectations.
-- Each phase subagent must load the `tdd` skill first and return tasks attempted, RED/GREEN/REFACTOR progress, files changed, validations run, failures, deferments, and tasks ready to be marked `[X]`.
-- The controller alone updates `tasks.md` and checkpoint decisions. Only mark `[X]` after the subagent provides verification evidence that satisfies the rules below.
+- The main agent is the controller. It decides which phase is next, gathers the relevant planning context, and launches a dedicated implementation subagent for that phase. Do not execute phase work inline in the controller.
+- Use at least one implementation subagent per phase. Do not collapse multiple phases into one long-running implementation subagent.
+- The controller prompt must include the phase name, ordered task list, dependency rules, touched file paths, resumption state, relevant planning artifacts, and the verification expectations for that phase.
+- The phase subagent must load the `tdd` skill before it starts implementing. Treat that as the first implementation step for the phase so every behavioral change follows an explicit red-green-refactor loop rather than ad hoc coding.
+- The phase subagent must return a concrete execution report: tasks attempted, RED/GREEN/REFACTOR progress where applicable, files changed, validations run, failures, deferments, and which tasks are ready to be marked `[X]`.
+- The controller owns `tasks.md` checkmark updates and the checkpoint decision. Only mark a task `[X]` after the subagent provides verification evidence that satisfies the rules below.
 
-**TDD-first inside the phase subagent:** Run test tasks before their corresponding implementation tasks, even when task IDs would otherwise place the implementation first.
+**TDD-first inside the phase subagent:** Within each phase, run test tasks before their corresponding implementation tasks. Writing tests first clarifies intent and catches regressions immediately. When a test task and its implementation counterpart are both in the same phase, the test runs first regardless of task ID ordering.
 
 **Parallelization inside the phase subagent:**
 
@@ -92,7 +100,9 @@ Execute phases in order: Setup → Tests → Core → Integration → Polish.
 - Sequential tasks run in declared order. If a non-parallel task fails, halt the phase.
 - If one parallel task fails, continue the still-independent parallel work and report the failure.
 
-**Task tracking — verify then mark:** `[X]` means done and verified. Never mark speculative completion.
+**Task tracking — verify then mark:**
+
+A `[X]` checkmark in `tasks.md` is a permanent promise that the task's work is done and verified. Since checkmarks are the source of truth for resumption, a premature `[X]` on a broken task means the next run will skip it and build on a broken foundation. This makes verification before marking essential — not optional, not deferrable.
 
 Before marking any task `[X]`, run a concrete verification step that matches the task type:
 
@@ -105,16 +115,18 @@ Before marking any task `[X]`, run a concrete verification step that matches the
 | **Docs / non-code**             | Confirm the file exists and is non-empty                     | File is present with substantive content                                                                                                                                                                                                                                                               |
 | **Refactor**                    | Run the existing test suite for the affected area            | All previously-passing tests still pass                                                                                                                                                                                                                                                                |
 
-If none of these categories fit, use the **fallback rule**: choose the nearest concrete validation command or artifact check. If no validation exists, do NOT mark `[X]` — leave the task `[ ]`, report it as "completed but unverified" in the phase checkpoint, and let the user decide.
+If none of these categories fit, use the **fallback rule**: find the nearest concrete validation command or artifact check for the task. If no validation exists at all, do NOT mark `[X]` — instead leave the task `[ ]`, report it as "completed but unverified" in the phase checkpoint, and let the user decide.
+
+**Never mark speculative completion.** If a task hit errors that you worked around, partially completed, or deferred for later — it stays `[ ]`. Only clean, verified outcomes earn the checkmark. When in doubt, leave it unchecked; a false `[ ]` is cheap to fix on the next run, but a false `[X]` silently corrupts the resumption state.
 
 **Error recovery:** When a task fails verification or encounters errors during execution:
 
 - Report the failure with context (error message, file, what was attempted).
 - Leave the task as `[ ]` in `tasks.md` — do not mark it `[X]`.
 - For non-parallel tasks, halt the phase and suggest concrete next steps (fix the error, skip the task, or ask the user).
-- For parallel tasks, continue independent work and collect failures for the phase checkpoint. Mark a parallel task `[X]` only after its own task-local verification passes. If verification depends on shared validation, defer marking until the phase checkpoint.
+- For parallel tasks, continue independent work and collect all failures for a consolidated report at the phase checkpoint. Mark a parallel task `[X]` only after its own task-local verification passes. If verification depends on a shared test suite that other parallel tasks also affect, defer marking until the shared validation passes at the phase checkpoint.
 
-**Phase checkpoints:** After each phase, verify the work before moving on:
+**Phase checkpoints:** After each phase, verify the work before moving on. This is a backstop that catches any tasks that were incorrectly marked:
 
 ```text
 Checkpoint Decision
@@ -124,13 +136,13 @@ Checkpoint Decision
 - Next Action: <advance to next phase | resolve blockers | request user approval>
 ```
 
-Run the full test suite for the phase's scope. If any task marked `[X]` has failing tests or missing expected outputs, flag it as a checkpoint integrity error, revert its `[X]` back to `[ ]`, and report the discrepancy before proceeding.
+Run the full test suite for the phase's scope. If any task marked `[X]` has failing tests or missing expected outputs, flag it as a checkpoint integrity error — revert its `[X]` back to `[ ]` and report the discrepancy before proceeding.
 
 Do not advance unless the checkpoint passes or the user explicitly approves.
 
 ### 5. Code review
 
-After implementation, review all changed code.
+After implementation, review all changed code. The review catches issues that tests miss — duplication, convention violations, security problems, and unnecessary complexity.
 
 Build the review scope from all uncommitted changed files (staged, unstaged, and untracked via `git status --porcelain`). Exclude deleted files and `.gitignore` files from review but list them under excluded files.
 
@@ -155,7 +167,7 @@ Pass each reviewer the same `review_scope_files` list. Subagents must not recomp
 
 #### Coverage tracking and scope conflicts
 
-Read [references/review-protocol.md](references/review-protocol.md) for the full coverage template and scope-conflict rules. Key points:
+Read [references/review-protocol.md](references/review-protocol.md) for the full coverage tracking template (Review Scope Coverage block) and scope conflict resolution rules. Key points:
 
 - Report Total Changed Files, Total Reviewed Files, Missing Files, Excluded Files, and Completion Gate
 - If `Missing Files > 0`, review status is INCOMPLETE until gaps are reviewed or the user explicitly defers

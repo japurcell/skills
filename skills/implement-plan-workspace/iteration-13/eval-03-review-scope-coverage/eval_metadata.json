@@ -1,0 +1,27 @@
+{
+  "eval_id": 3,
+  "eval_name": "review-scope-coverage",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-review-scope/plan.md. The implementation changed these uncommitted files: src/api/routes.ts, src/core/service.ts, docs/notes.md, and .gitignore. Produce the Code Review Findings section, including scope definition and completion gating.",
+  "assertions": [
+    {
+      "text": "Defines review scope using all uncommitted changed files rather than only phase-touched files",
+      "type": "semantic"
+    },
+    {
+      "text": "Explicitly excludes .gitignore from review scope",
+      "type": "semantic"
+    },
+    {
+      "text": "Includes a Review Scope Coverage block with Total Changed (Uncommitted) Files, Total Reviewed Files, Missing Files, and Missing File List",
+      "type": "semantic"
+    },
+    {
+      "text": "Includes Excluded Files and Completion Gate lines in the Review Scope Coverage template",
+      "type": "semantic"
+    },
+    {
+      "text": "States that Missing Files > 0 means code review is incomplete unless explicitly deferred/approved",
+      "type": "semantic"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Does NOT mark task T006 as [X] because related tests are failing",
+      "passed": true,
+      "evidence": "Response says `Leave T006 as [ ]` and `Do not mark speculative completion`."
+    },
+    {
+      "text": "Does not rationalize or minimize the test failures as 'minor' or 'fixable later'",
+      "passed": true,
+      "evidence": "Response does not minimize the failures; instead it says `Because this is a non-parallel task with failed verification, halt the phase`."
+    },
+    {
+      "text": "Reports the specific test failures with context",
+      "passed": true,
+      "evidence": "Response reports the specific failing tests: `Expected header row to include column Timestamp` and `Expected delimiter to be semicolon for EU locale`."
+    },
+    {
+      "text": "Enters error recovery or suggests fixing the failing tests before marking complete",
+      "passed": true,
+      "evidence": "Response gives recovery steps: `fix the failing CSV export behavior, rerun npm test -- tests/export/csv.test.ts, and only then mark T006 [X]`."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": null,
+    "total_steps": null,
+    "errors_encountered": 0,
+    "output_chars": 936,
+    "transcript_chars": 936
+  },
+  "timing": {},
+  "claims": [
+    {
+      "claim": "Passing the build is insufficient when related tests still fail.",
+      "type": "process",
+      "verified": true,
+      "evidence": "The response keeps T006 incomplete even though the build passed because the task-specific tests failed."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

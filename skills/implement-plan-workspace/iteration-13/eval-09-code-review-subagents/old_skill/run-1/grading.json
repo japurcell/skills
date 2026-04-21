@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "text": "Explicitly launches or describes launching code-simplifier subagent(s) for the changed files",
+      "passed": true,
+      "evidence": "The `Subagent Dispatch` section explicitly includes `code-simplifier-1` with the changed files in scope."
+    },
+    {
+      "text": "Launches 3 code-reviewer subagents with distinct review lenses (simplicity/DRY, bugs/correctness, conventions/abstractions)",
+      "passed": true,
+      "evidence": "The response launches `code-reviewer-1`, `code-reviewer-2`, and `code-reviewer-3` with the lenses `Simplicity & DRY`, `Bugs & correctness`, and `Conventions & abstractions`."
+    },
+    {
+      "text": "Uses a single materialized review_scope_files list shared across all subagents",
+      "passed": true,
+      "evidence": "Each subagent scope is described as the same four files listed under `review_scope_files`."
+    },
+    {
+      "text": "Shows a Review Scope Coverage block with file counts and Completion Gate",
+      "passed": true,
+      "evidence": "A `Review Scope Coverage` block is present with counts and a `Completion Gate` line."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "output_chars": 1149,
+    "transcript_chars": 1149,
+    "output_files": [
+      "response.md"
+    ]
+  },
+  "timing": {},
+  "claims": [
+    {
+      "claim": "All review subagents share the same four-file review scope.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Each scope repeats the four files listed in `review_scope_files`."
+    },
+    {
+      "claim": "Review coverage is complete.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The coverage block reports `Missing Files: 0` and current status `COMPLETE`."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid."
+  }
+}

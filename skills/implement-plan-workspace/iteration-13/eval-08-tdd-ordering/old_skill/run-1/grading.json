@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Executes or plans to execute test task T007 before implementation task T008",
+      "passed": true,
+      "evidence": "The ordered task list puts `T007` before `T008`."
+    },
+    {
+      "text": "References TDD-first or test-first approach as the reason for this ordering",
+      "passed": true,
+      "evidence": "The `Ordering rule applied` section says `T007 runs before T008 because test tasks execute before their implementation counterparts`."
+    },
+    {
+      "text": "Does not execute T008 before its corresponding test task T007 completes",
+      "passed": true,
+      "evidence": "The response says `Only after T007 is verified does T008 begin.`"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "output_chars": 608,
+    "transcript_chars": 608,
+    "output_files": [
+      "response.md"
+    ]
+  },
+  "timing": {},
+  "claims": [
+    {
+      "claim": "`T007` is verified with a RED test run before implementation starts.",
+      "type": "process",
+      "verified": true,
+      "evidence": "The response says `T007 is verified first with a RED test run`."
+    },
+    {
+      "claim": "`T008` cannot be marked complete until verification passes.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The response says `T008 is marked [X] only after the related build/lint checks and test run pass.`"
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid."
+  }
+}

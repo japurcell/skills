@@ -1,0 +1,1197 @@
+{
+  "metadata": {
+    "skill_name": "implement-plan",
+    "skill_path": "/home/adam/dev/personal/skills/skills/implement-plan",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-21T18:36:58Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 568,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Includes a checklist status table with columns Checklist, Total, Completed, Incomplete, and Status",
+          "passed": true,
+          "evidence": "Response includes the table header `| Checklist | Total | Completed | Incomplete | Status |` and rows for `ux.md` and `test.md`."
+        },
+        {
+          "text": "Includes the exact gate question: Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)",
+          "passed": true,
+          "evidence": "Response line states exactly: `Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)`."
+        },
+        {
+          "text": "States that execution pauses or halts pending user confirmation",
+          "passed": true,
+          "evidence": "Response says `Paused pending your reply. No additional implementation artifacts are loaded yet.` and `Blocked at the checklist gate until you reply `yes` or `no`.`"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 500,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Includes a checklist status table with columns Checklist, Total, Completed, Incomplete, and Status",
+          "passed": true,
+          "evidence": "Response includes the table header `| Checklist | Total | Completed | Incomplete | Status |`."
+        },
+        {
+          "text": "Includes the exact gate question: Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)",
+          "passed": true,
+          "evidence": "Response contains the exact line `Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)`."
+        },
+        {
+          "text": "States that execution pauses or halts pending user confirmation",
+          "passed": true,
+          "evidence": "Response states `Implementation is paused here until you reply. 'no' / 'wait' / 'stop' halts execution.`"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 526,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Explicitly states that tasks.md is missing",
+          "passed": true,
+          "evidence": "Response lists `- tasks.md: missing` under Implementation Context Loaded."
+        },
+        {
+          "text": "Instructs the user to run /create-tasks (or regenerate planning artifacts)",
+          "passed": true,
+          "evidence": "Response says `Run `/create-tasks` for this feature, or regenerate the planning artifacts, then rerun `/implement-plan`.`"
+        },
+        {
+          "text": "States that execution is halted or blocked before phase execution",
+          "passed": true,
+          "evidence": "Response says `Not started.` for Phase Execution and `Stopped because required planning artifacts are incomplete.`"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 412,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Explicitly states that tasks.md is missing",
+          "passed": true,
+          "evidence": "Response explicitly lists `tasks.md: missing`."
+        },
+        {
+          "text": "Instructs the user to run /create-tasks (or regenerate planning artifacts)",
+          "passed": true,
+          "evidence": "Response instructs: `Run /create-tasks ... or regenerate the planning artifacts`."
+        },
+        {
+          "text": "States that execution is halted or blocked before phase execution",
+          "passed": true,
+          "evidence": "Response labels the situation `Blocking error` and says `tasks.md` `is required to execute this plan`, which means execution is blocked before phase execution."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1722,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+          "passed": true,
+          "evidence": "Response contains all five section headings: `Checklist Gate`, `Implementation Context Loaded`, `Phase Execution`, `Code Review Findings`, and `Completion Validation`."
+        },
+        {
+          "text": "Explains that [P] tasks can run in parallel only when touched file paths do not overlap",
+          "passed": true,
+          "evidence": "Response says `only run [P] tasks in parallel when touched file paths do not overlap` and explains that `T004 and T005 ... must run sequentially` because both touch `tests/notify/delivery.test.ts`."
+        },
+        {
+          "text": "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+          "passed": true,
+          "evidence": "Response defines `Checkpoint Decision` with `Status: PASS | PASS WITH DEFERRED ITEMS | FAIL` plus evidence and next-action fields."
+        },
+        {
+          "text": "References TDD-first ordering where test tasks run before their corresponding implementation tasks",
+          "passed": true,
+          "evidence": "Response says `TDD Rule: execute test-writing tasks before related implementation tasks`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1715,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+          "passed": false,
+          "evidence": "The response only includes a `## Phase Execution` section. It does not include the other named sections `Checklist Gate`, `Implementation Context Loaded`, `Code Review Findings`, or `Completion Validation`."
+        },
+        {
+          "text": "Explains that [P] tasks can run in parallel only when touched file paths do not overlap",
+          "passed": true,
+          "evidence": "Response says `[P] tasks may run in parallel only when their touched file paths do not overlap.`"
+        },
+        {
+          "text": "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+          "passed": true,
+          "evidence": "The `Checkpoint Decision` block defines `Status: PASS | PASS WITH DEFERRED ITEMS | FAIL` and required evidence fields before advancing."
+        },
+        {
+          "text": "References TDD-first ordering where test tasks run before their corresponding implementation tasks",
+          "passed": true,
+          "evidence": "Response says `run any test-writing work before its paired implementation work` and lists `TDD RED tasks` under verification expectations."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 847,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Defines review scope using all uncommitted changed files rather than only phase-touched files",
+          "passed": true,
+          "evidence": "Response says `Review scope is built from all uncommitted changed files` and lists `src/api/routes.ts`, `src/core/service.ts`, and `docs/notes.md` from the changed-file set."
+        },
+        {
+          "text": "Explicitly excludes .gitignore from review scope",
+          "passed": true,
+          "evidence": "Response explicitly says `excluding `.gitignore` from review` and lists `Excluded Files: `.gitignore``."
+        },
+        {
+          "text": "Includes a Review Scope Coverage block with Total Changed (Uncommitted) Files, Total Reviewed Files, Missing Files, and Missing File List",
+          "passed": true,
+          "evidence": "Response includes a `Review Scope Coverage` block with `Total Changed (Uncommitted) Files`, `Total Reviewed Files`, `Missing Files`, and `Missing File List`."
+        },
+        {
+          "text": "Includes Excluded Files and Completion Gate lines in the Review Scope Coverage template",
+          "passed": true,
+          "evidence": "The same block includes `Excluded Files: `.gitignore`` and `Completion Gate: Missing Files > 0 => INCOMPLETE (requires explicit deferment/approval)`."
+        },
+        {
+          "text": "States that Missing Files > 0 means code review is incomplete unless explicitly deferred/approved",
+          "passed": true,
+          "evidence": "The completion gate explicitly states that `Missing Files > 0 => INCOMPLETE` unless deferred or approved."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0.0,
+        "tokens": 838,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Defines review scope using all uncommitted changed files rather than only phase-touched files",
+          "passed": true,
+          "evidence": "The response defines `review_scope_files` and separately reports `Total Changed (Uncommitted) Files: 4`, showing scope is based on uncommitted changes rather than phase-touched files."
+        },
+        {
+          "text": "Explicitly excludes .gitignore from review scope",
+          "passed": true,
+          "evidence": "`.gitignore` appears under `Excluded Files`."
+        },
+        {
+          "text": "Includes a Review Scope Coverage block with Total Changed (Uncommitted) Files, Total Reviewed Files, Missing Files, and Missing File List",
+          "passed": true,
+          "evidence": "The `Review Scope Coverage` block includes `Total Changed (Uncommitted) Files`, `Total Reviewed Files`, `Missing Files`, and `Missing File List`."
+        },
+        {
+          "text": "Includes Excluded Files and Completion Gate lines in the Review Scope Coverage template",
+          "passed": true,
+          "evidence": "The same coverage block includes `Excluded Files` and `Completion Gate` lines."
+        },
+        {
+          "text": "States that Missing Files > 0 means code review is incomplete unless explicitly deferred/approved",
+          "passed": true,
+          "evidence": "The response says `Missing Files > 0 => INCOMPLETE (requires explicit deferment/approval)`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 583,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Excludes deleted files from review scope while still accounting for them in Excluded Files",
+          "passed": true,
+          "evidence": "Response says review scope `excludes deleted files and `.gitignore` files from review` and lists only `src/a.ts` and `docs/new.md` under `review_scope_files`."
+        },
+        {
+          "text": "Excludes .gitignore from review scope and reports it under Excluded Files",
+          "passed": true,
+          "evidence": "Response lists `Excluded Files: `src/legacy.ts` (deleted), `.gitignore``."
+        },
+        {
+          "text": "Uses Review Scope Coverage template fields including Completion Gate",
+          "passed": true,
+          "evidence": "Response includes `Review Scope Coverage` fields including `Completion Gate: Missing Files > 0 => INCOMPLETE (requires explicit deferment/approval)`."
+        },
+        {
+          "text": "Shows Missing Files and Missing File List consistent with reviewed non-excluded files",
+          "passed": true,
+          "evidence": "`Missing Files: 2` and `Missing File List: `src/a.ts`, `docs/new.md`` match the two non-excluded files still awaiting review."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 722,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Excludes deleted files from review scope while still accounting for them in Excluded Files",
+          "passed": true,
+          "evidence": "`src/legacy.ts` is absent from `review_scope_files` and appears in `Excluded Files` as `(deleted)`."
+        },
+        {
+          "text": "Excludes .gitignore from review scope and reports it under Excluded Files",
+          "passed": true,
+          "evidence": "`.gitignore` appears under `Excluded Files`."
+        },
+        {
+          "text": "Uses Review Scope Coverage template fields including Completion Gate",
+          "passed": true,
+          "evidence": "The `Review Scope Coverage` block includes the requested template fields including `Completion Gate`."
+        },
+        {
+          "text": "Shows Missing Files and Missing File List consistent with reviewed non-excluded files",
+          "passed": true,
+          "evidence": "Counts are internally consistent: 4 changed files = 2 reviewed + 2 excluded, so `Missing Files: 0` and `Missing File List: none` match the non-excluded scope."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 978,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Materializes review_scope_files from staged + unstaged + untracked files",
+          "passed": true,
+          "evidence": "Response materializes `review_scope_files` as `src/staged_api.ts`, `docs/staged_notes.md`, `src/unstaged_service.ts`, and `scripts/new_check.sh`, covering staged, unstaged, and untracked files."
+        },
+        {
+          "text": "States subagents must not recompute or narrow scope independently",
+          "passed": true,
+          "evidence": "Response says `Do not narrow or recompute the controller-defined scope` and rejects the proposed narrowed review as `not accepted`."
+        },
+        {
+          "text": "Reports missing files when only a subset is reviewed",
+          "passed": true,
+          "evidence": "Response reports `Missing Files: 3` and lists the three unreviewed in-scope files."
+        },
+        {
+          "text": "Applies Completion Gate with INCOMPLETE status when Missing Files > 0",
+          "passed": true,
+          "evidence": "Response includes `Completion Gate: Missing Files > 0 => INCOMPLETE (requires explicit deferment/approval)`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 889,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Materializes review_scope_files from staged + unstaged + untracked files",
+          "passed": true,
+          "evidence": "The response materializes a concrete `review_scope_files` list containing staged-style files (`src/staged_api.ts`, `docs/staged_notes.md`), an unstaged-style file (`src/unstaged_service.ts`), and an additional new file (`scripts/new_check.sh`)."
+        },
+        {
+          "text": "States subagents must not recompute or narrow scope independently",
+          "passed": true,
+          "evidence": "Response states a narrowed reviewer scope `cannot be accepted as complete review coverage` and instructs to `keep the full review_scope_files list`, so subagents may not narrow scope independently."
+        },
+        {
+          "text": "Reports missing files when only a subset is reviewed",
+          "passed": true,
+          "evidence": "The `Review Scope Coverage` block reports `Missing Files: 3` and lists the omitted files."
+        },
+        {
+          "text": "Applies Completion Gate with INCOMPLETE status when Missing Files > 0",
+          "passed": true,
+          "evidence": "The completion gate line says `Missing Files > 0 => INCOMPLETE` and current status is `INCOMPLETE`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1093,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "References controller review_scope_files as the authoritative source",
+          "passed": true,
+          "evidence": "Response says `The controller-defined review_scope_files are authoritative` and lists the three in-scope files."
+        },
+        {
+          "text": "Identifies mismatch between reviewer-reported lists and authoritative scope",
+          "passed": true,
+          "evidence": "Response states `Reviewer file-list mismatch detected` and contrasts Reviewer-A and Reviewer-B reports with the controller scope."
+        },
+        {
+          "text": "Reports missing and extra files based on reconciliation",
+          "passed": true,
+          "evidence": "Response reports `Missing File List: `docs/notes.md`` and `Extra out-of-scope file: `scripts/helper.sh``."
+        },
+        {
+          "text": "Marks completion as INCOMPLETE until mismatch is resolved or explicitly deferred/approved",
+          "passed": true,
+          "evidence": "Response keeps the gate at `INCOMPLETE` and says to `Keep review status INCOMPLETE until the conflict is resolved or explicitly deferred`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 907,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "References controller review_scope_files as the authoritative source",
+          "passed": true,
+          "evidence": "The response centers reconciliation on `review_scope_files` and tells the reviewer to return to the `controller-defined scope`."
+        },
+        {
+          "text": "Identifies mismatch between reviewer-reported lists and authoritative scope",
+          "passed": true,
+          "evidence": "It explicitly says `Reviewer file-list mismatch detected` and compares reviewer-reported lists against the scope."
+        },
+        {
+          "text": "Reports missing and extra files based on reconciliation",
+          "passed": true,
+          "evidence": "The reconciliation block reports `Missing in-scope files: docs/notes.md` and `Extra out-of-scope files: scripts/helper.sh`."
+        },
+        {
+          "text": "Marks completion as INCOMPLETE until mismatch is resolved or explicitly deferred/approved",
+          "passed": true,
+          "evidence": "The coverage block marks status `INCOMPLETE` and the next action says to finish review before closing unless explicitly deferred/approved."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 942,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies that tasks T001-T006 are already marked complete",
+          "passed": true,
+          "evidence": "Response states `Already completed: 6 (`T001`-`T006`)`."
+        },
+        {
+          "text": "Reports a count or summary of completed vs remaining tasks",
+          "passed": true,
+          "evidence": "Response gives `Total tasks: 15`, `Already completed: 6`, and `Remaining: 9`."
+        },
+        {
+          "text": "Does not re-execute already completed tasks",
+          "passed": true,
+          "evidence": "Response says `Skip every task already marked [X]; do not re-run Setup or the completed Tests tasks`."
+        },
+        {
+          "text": "Begins execution from the first incomplete task in the current phase",
+          "passed": true,
+          "evidence": "Response says `Resume at the first unchecked task in Tests`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 804,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies that tasks T001-T006 are already marked complete",
+          "passed": true,
+          "evidence": "The response says `Already completed and skipped: T001-T006 (6 tasks)`."
+        },
+        {
+          "text": "Reports a count or summary of completed vs remaining tasks",
+          "passed": true,
+          "evidence": "It gives both counts and status: `6 tasks` completed and `Remaining tasks: 9`."
+        },
+        {
+          "text": "Does not re-execute already completed tasks",
+          "passed": true,
+          "evidence": "It says `Do not re-run or re-mark T001-T006 during normal resumption.`"
+        },
+        {
+          "text": "Begins execution from the first incomplete task in the current phase",
+          "passed": true,
+          "evidence": "The `Resume point` says `Start at the first unchecked task in the Tests phase (T007).`"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 963,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Executes or plans to execute test task T007 before implementation task T008",
+          "passed": true,
+          "evidence": "Response orders the tasks as `1. T007 \u2014 write API endpoint tests` then `2. T008 \u2014 implement API endpoint`."
+        },
+        {
+          "text": "References TDD-first or test-first approach as the reason for this ordering",
+          "passed": true,
+          "evidence": "Response says `TDD-first applies inside each phase, so the test task runs before the implementation task`."
+        },
+        {
+          "text": "Does not execute T008 before its corresponding test task T007 completes",
+          "passed": true,
+          "evidence": "Response says `T008 does not start until T007 has finished and been validated as a proper RED step`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 608,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Executes or plans to execute test task T007 before implementation task T008",
+          "passed": true,
+          "evidence": "The ordered task list puts `T007` before `T008`."
+        },
+        {
+          "text": "References TDD-first or test-first approach as the reason for this ordering",
+          "passed": true,
+          "evidence": "The `Ordering rule applied` section says `T007 runs before T008 because test tasks execute before their implementation counterparts`."
+        },
+        {
+          "text": "Does not execute T008 before its corresponding test task T007 completes",
+          "passed": true,
+          "evidence": "The response says `Only after T007 is verified does T008 begin.`"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 9,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1277,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Explicitly launches or describes launching code-simplifier subagent(s) for the changed files",
+          "passed": true,
+          "evidence": "Response launches `code-simplifier (1 agent; \u22645 files)` over all 4 changed files."
+        },
+        {
+          "text": "Launches 3 code-reviewer subagents with distinct review lenses (simplicity/DRY, bugs/correctness, conventions/abstractions)",
+          "passed": true,
+          "evidence": "Response launches `code-reviewer (3 agents in parallel; same scope for each)` with the lenses `Simplicity & DRY`, `Bugs & correctness`, and `Conventions & abstractions`."
+        },
+        {
+          "text": "Uses a single materialized review_scope_files list shared across all subagents",
+          "passed": true,
+          "evidence": "Response materializes one shared `review_scope_files` list and each subagent scope references that same 4-file list."
+        },
+        {
+          "text": "Shows a Review Scope Coverage block with file counts and Completion Gate",
+          "passed": true,
+          "evidence": "Response includes a `Review Scope Coverage` block with counts, missing-file list, and `Completion Gate: Missing Files > 0 => INCOMPLETE (requires explicit deferment/approval)`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 9,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1149,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Explicitly launches or describes launching code-simplifier subagent(s) for the changed files",
+          "passed": true,
+          "evidence": "The `Subagent Dispatch` section explicitly includes `code-simplifier-1` with the changed files in scope."
+        },
+        {
+          "text": "Launches 3 code-reviewer subagents with distinct review lenses (simplicity/DRY, bugs/correctness, conventions/abstractions)",
+          "passed": true,
+          "evidence": "The response launches `code-reviewer-1`, `code-reviewer-2`, and `code-reviewer-3` with the lenses `Simplicity & DRY`, `Bugs & correctness`, and `Conventions & abstractions`."
+        },
+        {
+          "text": "Uses a single materialized review_scope_files list shared across all subagents",
+          "passed": true,
+          "evidence": "Each subagent scope is described as the same four files listed under `review_scope_files`."
+        },
+        {
+          "text": "Shows a Review Scope Coverage block with file counts and Completion Gate",
+          "passed": true,
+          "evidence": "A `Review Scope Coverage` block is present with counts and a `Completion Gate` line."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 10,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1441,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Launches more than one code-simplifier subagent since there are >5 changed files",
+          "passed": true,
+          "evidence": "Response says `Launch 2 code-simplifier agents` because of `code-simplifier scaling (>5 files)`."
+        },
+        {
+          "text": "Partitions files into non-overlapping groups (e.g., by module or directory) so each file appears in exactly one agent's scope",
+          "passed": true,
+          "evidence": "Response partitions the files into a `Charts module scope` and a `Data module scope`, then says `Each file appears in exactly one code-simplifier scope`."
+        },
+        {
+          "text": "Explains the scaling rule that >5 files triggers multiple code-simplifier agents",
+          "passed": true,
+          "evidence": "Response explicitly explains the scaling rule with the heading `code-simplifier scaling (>5 files)` and the launch of multiple agents."
+        },
+        {
+          "text": "Also launches code-reviewer subagents (3 with distinct lenses)",
+          "passed": true,
+          "evidence": "Response also says `Launch 3 code-reviewer agents in parallel` with the three distinct lenses."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 10,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1244,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Launches more than one code-simplifier subagent since there are >5 changed files",
+          "passed": true,
+          "evidence": "The response launches `code-simplifier-1` and `code-simplifier-2`, so more than one code-simplifier agent is used."
+        },
+        {
+          "text": "Partitions files into non-overlapping groups (e.g., by module or directory) so each file appears in exactly one agent's scope",
+          "passed": true,
+          "evidence": "The scopes are non-overlapping: one covers the charts module plus its test file, the other covers the data module files."
+        },
+        {
+          "text": "Explains the scaling rule that >5 files triggers multiple code-simplifier agents",
+          "passed": true,
+          "evidence": "The `Code-simplifier scaling` section explicitly says `More than 5 changed files were produced, so the code-simplifier review is partitioned`."
+        },
+        {
+          "text": "Also launches code-reviewer subagents (3 with distinct lenses)",
+          "passed": true,
+          "evidence": "The response also launches three code-reviewer subagents with distinct lenses."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 11,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 919,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does NOT mark task T005 as [X] or completed in tasks.md",
+          "passed": true,
+          "evidence": "Response says `Leave T005 as [ ]` and `Do not mark speculative completion`."
+        },
+        {
+          "text": "Explicitly states the task remains [ ] or unchecked because verification failed",
+          "passed": true,
+          "evidence": "The same `tasks.md` handling block explicitly states the task remains unchecked because verification failed."
+        },
+        {
+          "text": "Reports the TypeScript compilation error with context",
+          "passed": true,
+          "evidence": "Response reports `error TS2345: Argument of type string is not assignable to parameter of type SearchQuery` at `src/api/search.ts:42` after `npm run build`."
+        },
+        {
+          "text": "Enters error recovery: halts the phase and suggests next steps (fix the type error, etc.)",
+          "passed": true,
+          "evidence": "Response says `halt the Core phase here` and gives next steps: `fix the type error ... rerun npm run build, then rerun the related tests before marking T005 [X]`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 11,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 655,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does NOT mark task T005 as [X] or completed in tasks.md",
+          "passed": true,
+          "evidence": "The `tasks.md update` section says `Leave T005 as [ ]` and `Do not mark T005 as [X]`."
+        },
+        {
+          "text": "Explicitly states the task remains [ ] or unchecked because verification failed",
+          "passed": true,
+          "evidence": "The response explicitly ties the unchecked status to failed verification: `Result: FAIL` and `Leave T005 as [ ]`."
+        },
+        {
+          "text": "Reports the TypeScript compilation error with context",
+          "passed": true,
+          "evidence": "It reports `error TS2345: Argument of type string is not assignable to parameter of type SearchQuery` at `src/api/search.ts:42`."
+        },
+        {
+          "text": "Enters error recovery: halts the phase and suggests next steps (fix the type error, etc.)",
+          "passed": true,
+          "evidence": "The `Phase status` section says the phase `halts here` and instructs the user to fix the type mismatch before rerunning verification."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 12,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 932,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Marks task T003 as [X] or completed because a clean TDD RED failure is a successful test-writing outcome",
+          "passed": true,
+          "evidence": "Response says `Mark T003 as [X]` and `This counts as a verified TDD RED step`."
+        },
+        {
+          "text": "Distinguishes between a clean RED failure (tests fail for the intended reason) and a broken test (syntax errors, import crashes)",
+          "passed": true,
+          "evidence": "Response distinguishes the outcome as `clean RED; the implementation does not exist yet, and the failures are for the intended reason`."
+        },
+        {
+          "text": "References TDD-first or RED-GREEN workflow as the reason this counts as success",
+          "passed": true,
+          "evidence": "Response explicitly references the `TDD RED step` and verified RED outcome as the basis for success."
+        },
+        {
+          "text": "Does NOT treat the test failures as an error that blocks progress",
+          "passed": true,
+          "evidence": "Response says `Continue to the next task; the implementation work remains for a later phase/task`, so the failures do not block progress."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 12,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 582,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Marks task T003 as [X] or completed because a clean TDD RED failure is a successful test-writing outcome",
+          "passed": true,
+          "evidence": "The `tasks.md update` section says `Mark T003 as [X]`, and the response explains this follows a `clean RED` outcome for intended missing implementation."
+        },
+        {
+          "text": "Distinguishes between a clean RED failure (tests fail for the intended reason) and a broken test (syntax errors, import crashes)",
+          "passed": true,
+          "evidence": "The response says the failures are expected because implementation does not exist yet and `not because of syntax errors in the test file`."
+        },
+        {
+          "text": "References TDD-first or RED-GREEN workflow as the reason this counts as success",
+          "passed": true,
+          "evidence": "The response references the RED/GREEN workflow by saying `Move to the implementation task ... and drive the tests from RED to GREEN.`"
+        },
+        {
+          "text": "Does NOT treat the test failures as an error that blocks progress",
+          "passed": true,
+          "evidence": "The response does not halt on the failing tests; instead it marks the test-writing task complete and proceeds to the implementation next action."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 13,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 936,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does NOT mark task T006 as [X] because related tests are failing",
+          "passed": true,
+          "evidence": "Response says `Leave T006 as [ ]` and `Do not mark speculative completion`."
+        },
+        {
+          "text": "Does not rationalize or minimize the test failures as 'minor' or 'fixable later'",
+          "passed": true,
+          "evidence": "Response does not minimize the failures; instead it says `Because this is a non-parallel task with failed verification, halt the phase`."
+        },
+        {
+          "text": "Reports the specific test failures with context",
+          "passed": true,
+          "evidence": "Response reports the specific failing tests: `Expected header row to include column Timestamp` and `Expected delimiter to be semicolon for EU locale`."
+        },
+        {
+          "text": "Enters error recovery or suggests fixing the failing tests before marking complete",
+          "passed": true,
+          "evidence": "Response gives recovery steps: `fix the failing CSV export behavior, rerun npm test -- tests/export/csv.test.ts, and only then mark T006 [X]`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 13,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 635,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does NOT mark task T006 as [X] because related tests are failing",
+          "passed": true,
+          "evidence": "The `tasks.md update` section says `Leave T006 as [ ]` and `Do not mark T006 as [X]`."
+        },
+        {
+          "text": "Does not rationalize or minimize the test failures as 'minor' or 'fixable later'",
+          "passed": true,
+          "evidence": "The response does not minimize the failures; it says `Verification failed, so this task is not complete.`"
+        },
+        {
+          "text": "Reports the specific test failures with context",
+          "passed": true,
+          "evidence": "It reports the failing tests `Expected header row to include column Timestamp` and `Expected delimiter to be semicolon for EU locale`."
+        },
+        {
+          "text": "Enters error recovery or suggests fixing the failing tests before marking complete",
+          "passed": true,
+          "evidence": "The phase stops and the next action is to `fix the CSV export behavior, rerun the failing test file, and only mark T006 [X] after the tests pass`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 14,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1185,
+        "tool_calls": null,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Detects that task T006's associated tests are now failing despite being marked [X]",
+          "passed": true,
+          "evidence": "Response says `Previously marked [X]: T004, T005, T006` and then identifies failures in `tests/notifications/push.test.ts`, tying the checkpoint integrity issue to the push-adapter task."
+        },
+        {
+          "text": "Reverts or flags T006 as no longer complete (removes the [X] or reports it as a checkpoint integrity error)",
+          "passed": true,
+          "evidence": "Response says `Revert T006 from [X] back to [ ]` and explains that its completion mark is removed."
+        },
+        {
+          "text": "Reports the specific test failures tied to T006",
+          "passed": true,
+          "evidence": "Response reports the specific failures `Expected push notification to include title field` and `Expected retry count to be 3`."
+        },
+        {
+          "text": "Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not a clean PASS",
+          "passed": true,
+          "evidence": "Response sets `Checkpoint Decision - Status: FAIL`, not a clean pass."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 14,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 776,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Detects that task T006's associated tests are now failing despite being marked [X]",
+          "passed": true,
+          "evidence": "The checkpoint says `T004`, `T005`, and `T006` were marked `[X]`, but `T006` fails checkpoint validation because related tests are now failing."
+        },
+        {
+          "text": "Reverts or flags T006 as no longer complete (removes the [X] or reports it as a checkpoint integrity error)",
+          "passed": true,
+          "evidence": "The integrity check says `Revert T006 from [X] to [ ] in tasks.md` and the `tasks.md update` section repeats `Revert T006 to [ ]`."
+        },
+        {
+          "text": "Reports the specific test failures tied to T006",
+          "passed": true,
+          "evidence": "The checkpoint details report `Expected push notification to include title field` and `Expected retry count to be 3`, tied to the failing `tests/notifications/push.test.ts`."
+        },
+        {
+          "text": "Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not a clean PASS",
+          "passed": true,
+          "evidence": "The `Checkpoint Decision` sets `Status: FAIL`, not a clean PASS."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 994.1333,
+        "stddev": 323.3693,
+        "min": 526,
+        "max": 1722
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.9833,
+        "stddev": 0.0645,
+        "min": 0.75,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 829.0667,
+        "stddev": 332.1102,
+        "min": 412,
+        "max": 1715
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.02",
+      "time_seconds": "+0.0",
+      "tokens": "+165"
+    }
+  },
+  "notes": []
+}

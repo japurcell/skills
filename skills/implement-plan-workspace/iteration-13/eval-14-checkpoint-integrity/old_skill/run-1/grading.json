@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "text": "Detects that task T006's associated tests are now failing despite being marked [X]",
+      "passed": true,
+      "evidence": "The checkpoint says `T004`, `T005`, and `T006` were marked `[X]`, but `T006` fails checkpoint validation because related tests are now failing."
+    },
+    {
+      "text": "Reverts or flags T006 as no longer complete (removes the [X] or reports it as a checkpoint integrity error)",
+      "passed": true,
+      "evidence": "The integrity check says `Revert T006 from [X] to [ ] in tasks.md` and the `tasks.md update` section repeats `Revert T006 to [ ]`."
+    },
+    {
+      "text": "Reports the specific test failures tied to T006",
+      "passed": true,
+      "evidence": "The checkpoint details report `Expected push notification to include title field` and `Expected retry count to be 3`, tied to the failing `tests/notifications/push.test.ts`."
+    },
+    {
+      "text": "Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not a clean PASS",
+      "passed": true,
+      "evidence": "The `Checkpoint Decision` sets `Status: FAIL`, not a clean PASS."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "output_chars": 776,
+    "transcript_chars": 776,
+    "output_files": [
+      "response.md"
+    ]
+  },
+  "timing": {},
+  "claims": [
+    {
+      "claim": "Checkpoint validation found two failures in `tests/notifications/push.test.ts`.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "The `Checkpoint Decision` evidence says the test run found `2 failures` in that file."
+    },
+    {
+      "claim": "`T006` can no longer be treated as complete at this checkpoint.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Both the integrity check and `tasks.md update` instruct reverting `T006` to `[ ]`."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid."
+  }
+}

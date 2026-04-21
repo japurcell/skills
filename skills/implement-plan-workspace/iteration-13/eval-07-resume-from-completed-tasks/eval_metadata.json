@@ -1,0 +1,23 @@
+{
+  "eval_id": 7,
+  "eval_name": "resume-from-completed-tasks",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-dashboard/plan.md. Assume all checklists pass. tasks.md has 15 tasks across Setup, Tests, Core, Integration, and Polish phases. Tasks T001-T006 are already marked [X] (complete) \u2014 these cover all of Setup and the first two tasks of Tests phase. Show how you handle resuming from this partially completed state.",
+  "assertions": [
+    {
+      "text": "Identifies that tasks T001-T006 are already marked complete",
+      "type": "semantic"
+    },
+    {
+      "text": "Reports a count or summary of completed vs remaining tasks",
+      "type": "semantic"
+    },
+    {
+      "text": "Does not re-execute already completed tasks",
+      "type": "semantic"
+    },
+    {
+      "text": "Begins execution from the first incomplete task in the current phase",
+      "type": "semantic"
+    }
+  ]
+}

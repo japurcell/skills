@@ -1,0 +1,19 @@
+{
+  "eval_id": 8,
+  "eval_name": "tdd-ordering",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-api/plan.md. Assume all checklists pass. In the Core phase, tasks.md lists T007 (write API endpoint tests in tests/api_test.py) and T008 (implement API endpoint in src/api/routes.py). Both are sequential tasks in the Core phase. Show the execution plan for this phase, specifically explaining the ordering of these two tasks.",
+  "assertions": [
+    {
+      "text": "Executes or plans to execute test task T007 before implementation task T008",
+      "type": "semantic"
+    },
+    {
+      "text": "References TDD-first or test-first approach as the reason for this ordering",
+      "type": "semantic"
+    },
+    {
+      "text": "Does not execute T008 before its corresponding test task T007 completes",
+      "type": "semantic"
+    }
+  ]
+}
