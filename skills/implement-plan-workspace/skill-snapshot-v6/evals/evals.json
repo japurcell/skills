@@ -25,14 +25,12 @@
     },
     {
       "id": 2,
-      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-notify/plan.md. Assume all checklists pass. In the Tests phase, the remaining tasks are T003 [P] write parser tests in tests/notify/parser.test.ts, T004 [P] write ranking tests in tests/notify/ranking.test.ts, T005 [P] write suggestions tests in tests/notify/suggestions.test.ts, T006 [ ] update shared test helpers in tests/notify/helpers.ts, and T007 implement parser in src/notify/parser.ts after T003. Produce a concise execution handoff format for this phase plus the checkpoint criteria before moving to the next phase.",
-      "expected_output": "The run provides controller-owned wave planning, launches separate parallel implementation subagents for the independent [P] test tasks, keeps sequential and TDD-dependent work out of that wave, and defines checkpoint validation requirements before advancing.",
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-notify/plan.md. Assume all checklists pass, tasks.md has Setup, Tests, Core, Integration, Polish phases with mixed [P] markers and overlapping file paths. Produce a concise execution handoff format for one phase plus the checkpoint criteria before moving to the next phase.",
+      "expected_output": "The run provides explicit phase handoff details, safe parallelization rules, TDD ordering, and checkpoint validation requirements before advancing.",
       "files": [],
       "expectations": [
         "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
-        "States that the controller owns the wave plan rather than delegating phase-wide scheduling to one subagent",
-        "Launches separate implementation subagents in parallel for T003, T004, and T005 (or equivalent explicit same-wave dispatch)",
-        "Keeps T006 sequential and keeps T007 after T003 because TDD or dependency ordering still applies",
+        "Explains that [P] tasks can run in parallel only when touched file paths do not overlap",
         "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
         "References TDD-first ordering where test tasks run before their corresponding implementation tasks"
       ]
@@ -179,30 +177,6 @@
         "Reverts or flags T006 as no longer complete (removes the [X] or reports it as a checkpoint integrity error)",
         "Reports the specific test failures tied to T006",
         "Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not a clean PASS"
-      ]
-    },
-    {
-      "id": 15,
-      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-search/plan.md. All checklists pass. In the Core phase, the ready tasks are T010 [P] implement query parser in src/search/service.ts, T011 [P] implement ranking logic in src/search/service.ts, and T012 [P] implement telemetry in src/search/metrics.ts. Produce only the Phase Execution section, showing exactly how you schedule these tasks.",
-      "expected_output": "The response treats [P] as permission rather than an override, keeps the two service.ts tasks out of the same parallel wave, and still parallelizes safe work.",
-      "files": [],
-      "expectations": [
-        "Explicitly states that T010 and T011 cannot run in parallel because both touch src/search/service.ts",
-        "Schedules T012 in a wave that only includes non-overlapping work",
-        "Shows an explicit wave boundary or wait point before launching the next wave",
-        "Assigns work to specific subagents or wave slots instead of saying one phase-wide subagent will figure it out"
-      ]
-    },
-    {
-      "id": 16,
-      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-webhooks/plan.md. All checklists pass. In the Integration phase, the controller launches a parallel wave with T020 [P] add webhook contract tests in tests/webhooks/contract.test.ts, T021 [P] implement webhook retry policy in src/webhooks/retry.ts, and T022 [P] implement webhook signature verifier in src/webhooks/signature.ts. T020 fails verification because the new test file has a syntax error. T021 passes verification. T022 is still running when T020 reports failure. Show exactly how the controller handles this wave and tasks.md.",
-      "expected_output": "The response lets the already-started independent tasks finish, leaves the failed task unchecked, marks only independently verified tasks complete, and stops before launching another wave.",
-      "files": [],
-      "expectations": [
-        "Leaves T020 as [ ] or otherwise explicitly not complete because verification failed",
-        "Allows the already-running independent work for T022 to finish or be collected before deciding the next step",
-        "Marks T021 complete only if its own verification passed",
-        "States that the controller does not launch another wave until the failure is reported and resolved"
       ]
     }
   ]

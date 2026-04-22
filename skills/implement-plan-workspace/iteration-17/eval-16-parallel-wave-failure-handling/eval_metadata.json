@@ -1,0 +1,23 @@
+{
+  "eval_id": 16,
+  "eval_name": "parallel-wave-failure-handling",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-webhooks/plan.md. All checklists pass. In the Integration phase, the controller launches a parallel wave with T020 [P] add webhook contract tests in tests/webhooks/contract.test.ts, T021 [P] implement webhook retry policy in src/webhooks/retry.ts, and T022 [P] implement webhook signature verifier in src/webhooks/signature.ts. T020 fails verification because the new test file has a syntax error. T021 passes verification. T022 is still running when T020 reports failure. Show exactly how the controller handles this wave and tasks.md.",
+  "assertions": [
+    {
+      "text": "Leaves T020 as [ ] or otherwise explicitly not complete because verification failed",
+      "type": "semantic"
+    },
+    {
+      "text": "Allows the already-running independent work for T022 to finish or be collected before deciding the next step",
+      "type": "semantic"
+    },
+    {
+      "text": "Marks T021 complete only if its own verification passed",
+      "type": "semantic"
+    },
+    {
+      "text": "States that the controller does not launch another wave until the failure is reported and resolved",
+      "type": "semantic"
+    }
+  ]
+}
