@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Materializes review_scope_files from staged + unstaged + untracked files",
+      "passed": true,
+      "evidence": "Response materializes review_scope_files from staged, unstaged, and untracked files"
+    },
+    {
+      "text": "States subagents must not recompute or narrow scope independently",
+      "passed": true,
+      "evidence": "Response states that review subagents must not narrow scope"
+    },
+    {
+      "text": "Reports missing files when only a subset is reviewed",
+      "passed": true,
+      "evidence": "Response reports omitted files as missing"
+    },
+    {
+      "text": "Applies Completion Gate with INCOMPLETE status when Missing Files > 0",
+      "passed": true,
+      "evidence": "Response applies an INCOMPLETE completion gate"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1823,
+    "transcript_chars": 1823
+  },
+  "timing": {
+    "executor_duration_seconds": 50.0,
+    "grader_duration_seconds": 0.1,
+    "total_duration_seconds": 50.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

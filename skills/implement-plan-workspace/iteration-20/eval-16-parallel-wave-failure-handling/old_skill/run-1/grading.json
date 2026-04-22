@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Leaves T020 as [ ] or otherwise explicitly not complete because verification failed",
+      "passed": true,
+      "evidence": "Response keeps T020 incomplete after verification failure"
+    },
+    {
+      "text": "Allows the already-running independent work for T022 to finish or be collected before deciding the next step",
+      "passed": true,
+      "evidence": "Response allows the already-running T022 work to finish or be collected"
+    },
+    {
+      "text": "Marks T021 complete only if its own verification passed",
+      "passed": true,
+      "evidence": "Response marks T021 complete only after successful verification"
+    },
+    {
+      "text": "States that the controller does not launch another wave until the failure is reported and resolved",
+      "passed": true,
+      "evidence": "Response blocks the next wave until failure handling completes"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 3007,
+    "transcript_chars": 3007
+  },
+  "timing": {
+    "executor_duration_seconds": 74.0,
+    "grader_duration_seconds": 0.1,
+    "total_duration_seconds": 74.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

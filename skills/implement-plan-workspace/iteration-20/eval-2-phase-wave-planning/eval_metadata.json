@@ -1,0 +1,31 @@
+{
+  "eval_id": 2,
+  "eval_name": "phase-wave-planning",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-notify/plan.md. Assume all checklists pass. In the Tests phase, the remaining tasks are T003 [P] write parser tests in tests/notify/parser.test.ts, T004 [P] write ranking tests in tests/notify/ranking.test.ts, T005 [P] write suggestions tests in tests/notify/suggestions.test.ts, T006 [ ] update shared test helpers in tests/notify/helpers.ts, and T007 implement parser in src/notify/parser.ts after T003. Produce a concise execution handoff format for this phase plus the checkpoint criteria before moving to the next phase.",
+  "assertions": [
+    {
+      "text": "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+      "type": "semantic"
+    },
+    {
+      "text": "States that the controller owns the wave plan rather than delegating phase-wide scheduling to one subagent",
+      "type": "semantic"
+    },
+    {
+      "text": "Launches separate implementation subagents in parallel for T003, T004, and T005 (or equivalent explicit same-wave dispatch)",
+      "type": "semantic"
+    },
+    {
+      "text": "Keeps T006 sequential and keeps T007 after T003 because TDD or dependency ordering still applies",
+      "type": "semantic"
+    },
+    {
+      "text": "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+      "type": "semantic"
+    },
+    {
+      "text": "References TDD-first ordering where test tasks run before their corresponding implementation tasks",
+      "type": "semantic"
+    }
+  ]
+}

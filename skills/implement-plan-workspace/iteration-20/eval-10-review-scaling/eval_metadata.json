@@ -1,0 +1,19 @@
+{
+  "eval_id": 10,
+  "eval_name": "review-scaling",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-dashboard/plan.md. All phases are complete. The implementation produced 8 uncommitted changed files across two modules: src/charts/bar.tsx, src/charts/line.tsx, src/charts/pie.tsx, src/charts/utils.ts, src/data/fetcher.ts, src/data/transformer.ts, src/data/cache.ts, tests/charts/bar.test.tsx. Produce the Code Review Findings section, explaining how you scale the code-simplifier agents for this file count.",
+  "assertions": [
+    {
+      "text": "Launches more than one code-simplifier subagent since there are >5 changed files",
+      "type": "semantic"
+    },
+    {
+      "text": "Partitions files into non-overlapping groups (e.g., by module or directory) so each file appears in exactly one agent's scope",
+      "type": "semantic"
+    },
+    {
+      "text": "Also launches code-reviewer subagents (3 with distinct lenses)",
+      "type": "semantic"
+    }
+  ]
+}

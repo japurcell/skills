@@ -1,0 +1,23 @@
+{
+  "eval_id": 15,
+  "eval_name": "wave-file-overlap",
+  "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-search/plan.md. All checklists pass. In the Core phase, the ready tasks are T010 [P] implement query parser in src/search/service.ts, T011 [P] implement ranking logic in src/search/service.ts, and T012 [P] implement telemetry in src/search/metrics.ts. Produce only the Phase Execution section, showing exactly how you schedule these tasks.",
+  "assertions": [
+    {
+      "text": "Explicitly states that T010 and T011 cannot run in parallel because both touch src/search/service.ts",
+      "type": "semantic"
+    },
+    {
+      "text": "Schedules T012 in a wave that only includes non-overlapping work",
+      "type": "semantic"
+    },
+    {
+      "text": "Shows an explicit wave boundary or wait point before launching the next wave",
+      "type": "semantic"
+    },
+    {
+      "text": "Assigns work to specific subagents or wave slots instead of saying one phase-wide subagent will figure it out",
+      "type": "semantic"
+    }
+  ]
+}

@@ -1,0 +1,209 @@
+{
+  "skill_name": "implement-plan",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-auth/plan.md. Assume checklists/ exists with ux.md (all complete) and test.md (3 incomplete items). Produce the exact user-facing response for the checklist gate step and what happens next.",
+      "expected_output": "The run reports checklist table with failing checklist, asks whether to proceed, and halts pending user confirmation.",
+      "files": [],
+      "expectations": [
+        "Includes a checklist status table with columns Checklist, Total, Completed, Incomplete, and Status",
+        "Includes the exact gate question: Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)",
+        "States that execution pauses or halts pending user confirmation"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-export/plan.md. Assume plan.md exists but tasks.md is missing. Show the exact handling behavior after context loading begins.",
+      "expected_output": "The run fails fast with a clear message that tasks.md is required and recommends /create-tasks before proceeding.",
+      "files": [],
+      "expectations": [
+        "Explicitly states that tasks.md is missing",
+        "Instructs the user to run /create-tasks (or regenerate planning artifacts)",
+        "States that execution is halted or blocked before phase execution"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-notify/plan.md. Assume all checklists pass. In the Tests phase, the remaining tasks are T003 [P] write parser tests in tests/notify/parser.test.ts, T004 [P] write ranking tests in tests/notify/ranking.test.ts, T005 [P] write suggestions tests in tests/notify/suggestions.test.ts, T006 [ ] update shared test helpers in tests/notify/helpers.ts, and T007 implement parser in src/notify/parser.ts after T003. Produce a concise execution handoff format for this phase plus the checkpoint criteria before moving to the next phase.",
+      "expected_output": "The run provides controller-owned wave planning, launches separate parallel implementation subagents for the independent [P] test tasks, keeps sequential and TDD-dependent work out of that wave, and defines checkpoint validation requirements before advancing.",
+      "files": [],
+      "expectations": [
+        "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+        "States that the controller owns the wave plan rather than delegating phase-wide scheduling to one subagent",
+        "Launches separate implementation subagents in parallel for T003, T004, and T005 (or equivalent explicit same-wave dispatch)",
+        "Keeps T006 sequential and keeps T007 after T003 because TDD or dependency ordering still applies",
+        "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+        "References TDD-first ordering where test tasks run before their corresponding implementation tasks"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-review-scope/plan.md. The implementation changed these uncommitted files: src/api/routes.ts, src/core/service.ts, docs/notes.md, and .gitignore. Produce the Code Review Findings section, including scope definition and completion gating.",
+      "expected_output": "Code review scope is derived from uncommitted changed files (staged/unstaged/untracked), excludes .gitignore, reviews all remaining files, and reports measurable coverage counts with missing-file gating.",
+      "files": [],
+      "expectations": [
+        "Defines review scope using all uncommitted changed files rather than only phase-touched files",
+        "Explicitly excludes .gitignore from review scope",
+        "Includes a Review Scope Coverage block with Total Changed (Uncommitted) Files, Total Reviewed Files, Missing Files, and Missing File List",
+        "Includes Excluded Files and Completion Gate lines in the Review Scope Coverage template",
+        "States that Missing Files > 0 means code review is incomplete unless explicitly deferred/approved"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-delete-edge/plan.md. Uncommitted git status includes: M src/a.ts, D src/legacy.ts, ?? docs/new.md, M .gitignore. Produce only the Code Review Findings section and ensure deleted and .gitignore handling are correctly represented.",
+      "expected_output": "The response computes scope from uncommitted changes, excludes deleted files and .gitignore, includes deterministic coverage metrics, and reports the completion gate line exactly.",
+      "files": [],
+      "expectations": [
+        "Excludes deleted files from review scope while still accounting for them in Excluded Files",
+        "Excludes .gitignore from review scope and reports it under Excluded Files",
+        "Uses Review Scope Coverage template fields including Completion Gate",
+        "Shows Missing Files and Missing File List consistent with reviewed non-excluded files"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-scope-drift/plan.md. Assume staged files are src/staged_api.ts and docs/staged_notes.md, unstaged files are src/unstaged_service.ts, and untracked file is scripts/new_check.sh. A reviewer subagent proposes reviewing only src/staged_api.ts. Produce Code Review Findings that prevents scope drift.",
+      "expected_output": "The response enforces a single materialized review_scope_files list across all review subagents, rejects narrower per-agent recomputation, and marks completion as incomplete when files are omitted.",
+      "files": [],
+      "expectations": [
+        "Materializes review_scope_files from staged + unstaged + untracked files",
+        "States subagents must not recompute or narrow scope independently",
+        "Reports missing files when only a subset is reviewed",
+        "Applies Completion Gate with INCOMPLETE status when Missing Files > 0"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-controller-conflict/plan.md. The controller generated review_scope_files as: src/api.ts, src/service.ts, docs/notes.md. Reviewer-A reports reviewing src/api.ts and src/service.ts. Reviewer-B reports reviewing src/api.ts and scripts/helper.sh. Produce Code Review Findings that resolves this conflict safely.",
+      "expected_output": "The response treats reviewer list mismatch as a scope conflict, reconciles against controller review_scope_files, reports missing/extra files, and keeps completion status INCOMPLETE until reconciled or explicitly deferred.",
+      "files": [],
+      "expectations": [
+        "References controller review_scope_files as the authoritative source",
+        "Identifies mismatch between reviewer-reported lists and authoritative scope",
+        "Reports missing and extra files based on reconciliation",
+        "Marks completion as INCOMPLETE until mismatch is resolved or explicitly deferred/approved"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-dashboard/plan.md. Assume all checklists pass. tasks.md has 15 tasks across Setup, Tests, Core, Integration, and Polish phases. Tasks T001-T006 are already marked [X] (complete) — these cover all of Setup and the first two tasks of Tests phase. Show how you handle resuming from this partially completed state.",
+      "expected_output": "The run detects completed tasks, skips them, reports a resumption summary with completed vs remaining counts, and begins execution from the first incomplete task.",
+      "files": [],
+      "expectations": [
+        "Identifies that tasks T001-T006 are already marked complete",
+        "Reports a count or summary of completed vs remaining tasks",
+        "Does not re-execute already completed tasks",
+        "Begins execution from the first incomplete task in the current phase"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-api/plan.md. Assume all checklists pass. In the Core phase, tasks.md lists T007 (write API endpoint tests in tests/api_test.py) and T008 (implement API endpoint in src/api/routes.py). Both are sequential tasks in the Core phase. Show the execution plan for this phase, specifically explaining the ordering of these two tasks.",
+      "expected_output": "The run executes the test task T007 before the implementation task T008, following the TDD-first approach where tests are written before the code they verify.",
+      "files": [],
+      "expectations": [
+        "Executes or plans to execute test task T007 before implementation task T008",
+        "References TDD-first or test-first approach as the reason for this ordering",
+        "Does not execute T008 before its corresponding test task T007 completes"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-payments/plan.md. All phases are complete. The implementation produced these uncommitted changed files: src/payments/processor.ts, src/payments/validator.ts, src/payments/types.ts, tests/payments/processor.test.ts. No deleted files, no .gitignore changes. Produce the full Code Review Findings section, showing exactly which subagents you would launch and how you partition the work.",
+      "expected_output": "The response launches code-simplifier subagent(s) AND code-reviewer subagents, shows the review_scope_files list, partitions work appropriately, and tracks coverage.",
+      "files": [],
+      "expectations": [
+        "Explicitly launches or describes launching code-simplifier subagent(s) for the changed files",
+        "Launches 3 code-reviewer subagents with distinct review lenses (simplicity/DRY, bugs/correctness, conventions/abstractions)",
+        "Uses a single materialized review_scope_files list shared across all subagents",
+        "Shows a Review Scope Coverage block with file counts and Completion Gate"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-dashboard/plan.md. All phases are complete. The implementation produced 8 uncommitted changed files across two modules: src/charts/bar.tsx, src/charts/line.tsx, src/charts/pie.tsx, src/charts/utils.ts, src/data/fetcher.ts, src/data/transformer.ts, src/data/cache.ts, tests/charts/bar.test.tsx. Produce the Code Review Findings section, explaining how you scale the code-simplifier agents for this file count.",
+      "expected_output": "With >5 files, the response partitions files into multiple code-simplifier agents (e.g., charts vs data modules) and explains the scaling rationale.",
+      "files": [],
+      "expectations": [
+        "Launches more than one code-simplifier subagent since there are >5 changed files",
+        "Partitions files into non-overlapping groups (e.g., by module or directory) so each file appears in exactly one agent's scope",
+        "Explains the scaling rule that >5 files triggers multiple code-simplifier agents",
+        "Also launches code-reviewer subagents (3 with distinct lenses)"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-search/plan.md. All checklists pass. You are in the Core phase executing task T005: 'Implement full-text search endpoint in src/api/search.ts'. You wrote the code, but when you run `npm run build`, the TypeScript compiler reports: 'error TS2345: Argument of type string is not assignable to parameter of type SearchQuery' in src/api/search.ts line 42. The build fails. Show exactly how you handle this task's status in tasks.md and what you report.",
+      "expected_output": "The task stays [ ] because build verification failed. The response reports the error, does not mark the task [X], and enters error recovery.",
+      "files": [],
+      "expectations": [
+        "Does NOT mark task T005 as [X] or completed in tasks.md",
+        "Explicitly states the task remains [ ] or unchecked because verification failed",
+        "Reports the TypeScript compilation error with context",
+        "Enters error recovery: halts the phase and suggests next steps (fix the type error, etc.)"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-auth/plan.md. All checklists pass. You are in the Tests phase executing task T003: 'Write unit tests for JWT token validation in tests/auth/jwt.test.ts' (this is a TDD RED step — the implementation doesn't exist yet). You wrote 4 test cases. When you run `npm test -- tests/auth/jwt.test.ts`, the tests execute and all 4 fail with 'Error: Cannot find module src/auth/jwt'. This is the expected TDD RED result — the tests are correct but the implementation doesn't exist yet. Show how you handle this task's completion status.",
+      "expected_output": "The task IS marked [X] because this is a TDD test-writing task and the tests correctly fail (clean RED). The response explains TDD-first verification.",
+      "files": [],
+      "expectations": [
+        "Marks task T003 as [X] or completed because a clean TDD RED failure is a successful test-writing outcome",
+        "Distinguishes between a clean RED failure (tests fail for the intended reason) and a broken test (syntax errors, import crashes)",
+        "References TDD-first or RED-GREEN workflow as the reason this counts as success",
+        "Does NOT treat the test failures as an error that blocks progress"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-export/plan.md. All checklists pass. You are in the Core phase. Task T006 is 'Implement CSV export in src/export/csv.ts'. You wrote the code. The build passes. But when you run the existing tests with `npm test -- tests/export/csv.test.ts`, 2 out of 5 tests fail: 'Expected header row to include column Timestamp' and 'Expected delimiter to be semicolon for EU locale'. You think these test failures are probably from edge cases you can fix later. Show how you handle this task's status.",
+      "expected_output": "The task stays [ ] because test verification failed, regardless of whether the failures seem minor. No speculative completion.",
+      "files": [],
+      "expectations": [
+        "Does NOT mark task T006 as [X] because related tests are failing",
+        "Does not rationalize or minimize the test failures as 'minor' or 'fixable later'",
+        "Reports the specific test failures with context",
+        "Enters error recovery or suggests fixing the failing tests before marking complete"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-notifications/plan.md. All checklists pass. You just finished the Core phase. Tasks T004 (implement notification service), T005 (implement email adapter), and T006 (implement push adapter) are all marked [X]. At the phase checkpoint, you run the test suite and discover that tests/notifications/push.test.ts has 2 failures: 'Expected push notification to include title field' and 'Expected retry count to be 3'. Show exactly what happens at this checkpoint.",
+      "expected_output": "The checkpoint catches the discrepancy — T006 was marked [X] but its tests are now failing. The checkpoint reverts T006 to [ ] and reports the integrity error.",
+      "files": [],
+      "expectations": [
+        "Detects that task T006's associated tests are now failing despite being marked [X]",
+        "Reverts or flags T006 as no longer complete (removes the [X] or reports it as a checkpoint integrity error)",
+        "Reports the specific test failures tied to T006",
+        "Sets checkpoint status to FAIL or PASS WITH DEFERRED ITEMS, not a clean PASS"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-search/plan.md. All checklists pass. In the Core phase, the ready tasks are T010 [P] implement query parser in src/search/service.ts, T011 [P] implement ranking logic in src/search/service.ts, and T012 [P] implement telemetry in src/search/metrics.ts. Produce only the Phase Execution section, showing exactly how you schedule these tasks.",
+      "expected_output": "The response treats [P] as permission rather than an override, keeps the two service.ts tasks out of the same parallel wave, and still parallelizes safe work.",
+      "files": [],
+      "expectations": [
+        "Explicitly states that T010 and T011 cannot run in parallel because both touch src/search/service.ts",
+        "Schedules T012 in a wave that only includes non-overlapping work",
+        "Shows an explicit wave boundary or wait point before launching the next wave",
+        "Assigns work to specific subagents or wave slots instead of saying one phase-wide subagent will figure it out"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "You are executing /implement-plan for plan_file=.agents/scratchpad/feature-webhooks/plan.md. All checklists pass. In the Integration phase, the controller launches a parallel wave with T020 [P] add webhook contract tests in tests/webhooks/contract.test.ts, T021 [P] implement webhook retry policy in src/webhooks/retry.ts, and T022 [P] implement webhook signature verifier in src/webhooks/signature.ts. T020 fails verification because the new test file has a syntax error. T021 passes verification. T022 is still running when T020 reports failure. Show exactly how the controller handles this wave and tasks.md.",
+      "expected_output": "The response lets the already-started independent tasks finish, leaves the failed task unchecked, marks only independently verified tasks complete, and stops before launching another wave.",
+      "files": [],
+      "expectations": [
+        "Leaves T020 as [ ] or otherwise explicitly not complete because verification failed",
+        "Allows the already-running independent work for T022 to finish or be collected before deciding the next step",
+        "Marks T021 complete only if its own verification passed",
+        "States that the controller does not launch another wave until the failure is reported and resolved"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "expectations": [
+    {
+      "text": "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+      "passed": true,
+      "evidence": "All five required progress sections are present"
+    },
+    {
+      "text": "States that the controller owns the wave plan rather than delegating phase-wide scheduling to one subagent",
+      "passed": true,
+      "evidence": "Response explicitly assigns scheduling to the controller and describes wave/subagent planning"
+    },
+    {
+      "text": "Launches separate implementation subagents in parallel for T003, T004, and T005 (or equivalent explicit same-wave dispatch)",
+      "passed": true,
+      "evidence": "Response groups T003/T004/T005 into an explicit parallel subagent dispatch"
+    },
+    {
+      "text": "Keeps T006 sequential and keeps T007 after T003 because TDD or dependency ordering still applies",
+      "passed": true,
+      "evidence": "Response keeps T006 sequential and places T007 after T003/TDD dependency work"
+    },
+    {
+      "text": "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+      "passed": true,
+      "evidence": "Checkpoint Decision block includes explicit pass/fail status language"
+    },
+    {
+      "text": "References TDD-first ordering where test tasks run before their corresponding implementation tasks",
+      "passed": true,
+      "evidence": "Response cites TDD/test-first ordering"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2558,
+    "transcript_chars": 2558
+  },
+  "timing": {
+    "executor_duration_seconds": 74.0,
+    "grader_duration_seconds": 0.1,
+    "total_duration_seconds": 74.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}

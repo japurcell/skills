@@ -1,0 +1,534 @@
+{
+  "metadata": {
+    "skill_name": "implement-plan",
+    "skill_path": "/home/adam/dev/personal/skills/skills/implement-plan",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-22T22:49:35Z",
+    "evals_run": [
+      2,
+      5,
+      10,
+      12,
+      15,
+      16
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 10,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 95.1,
+        "tokens": 1237,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Launches more than one code-simplifier subagent since there are >5 changed files",
+          "passed": true,
+          "evidence": "Response ties code-simplifier scaling to the >5-file rule"
+        },
+        {
+          "text": "Partitions files into non-overlapping groups (e.g., by module or directory) so each file appears in exactly one agent's scope",
+          "passed": true,
+          "evidence": "Response partitions changed files into non-overlapping groups"
+        },
+        {
+          "text": "Also launches code-reviewer subagents (3 with distinct lenses)",
+          "passed": true,
+          "evidence": "Response also launches the required code-reviewer agents"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 12,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 51.1,
+        "tokens": 1046,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Marks task T003 as [X] or completed because a clean TDD RED failure is a successful test-writing outcome",
+          "passed": true,
+          "evidence": "Response marks T003 complete or successful despite RED-state failures"
+        },
+        {
+          "text": "Distinguishes between a clean RED failure (tests fail for the intended reason) and a broken test (syntax errors, import crashes)",
+          "passed": true,
+          "evidence": "Response distinguishes clean RED from broken tests"
+        },
+        {
+          "text": "References TDD-first or RED-GREEN workflow as the reason this counts as success",
+          "passed": true,
+          "evidence": "Response references TDD/RED-GREEN workflow"
+        },
+        {
+          "text": "Does NOT treat the test failures as an error that blocks progress",
+          "passed": true,
+          "evidence": "Response does not treat the expected RED state as a blocking error"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 15,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 57.1,
+        "tokens": 1725,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Explicitly states that T010 and T011 cannot run in parallel because both touch src/search/service.ts",
+          "passed": true,
+          "evidence": "Response explicitly serializes T010/T011 because both touch src/search/service.ts"
+        },
+        {
+          "text": "Schedules T012 in a wave that only includes non-overlapping work",
+          "passed": true,
+          "evidence": "Response places T012 into an explicit wave with non-overlapping work"
+        },
+        {
+          "text": "Shows an explicit wave boundary or wait point before launching the next wave",
+          "passed": true,
+          "evidence": "Response shows multiple waves or an explicit wait point between them"
+        },
+        {
+          "text": "Assigns work to specific subagents or wave slots instead of saying one phase-wide subagent will figure it out",
+          "passed": true,
+          "evidence": "Response assigns work by subagent/wave slot"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 16,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 74.1,
+        "tokens": 3007,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Leaves T020 as [ ] or otherwise explicitly not complete because verification failed",
+          "passed": true,
+          "evidence": "Response keeps T020 incomplete after verification failure"
+        },
+        {
+          "text": "Allows the already-running independent work for T022 to finish or be collected before deciding the next step",
+          "passed": true,
+          "evidence": "Response allows the already-running T022 work to finish or be collected"
+        },
+        {
+          "text": "Marks T021 complete only if its own verification passed",
+          "passed": true,
+          "evidence": "Response marks T021 complete only after successful verification"
+        },
+        {
+          "text": "States that the controller does not launch another wave until the failure is reported and resolved",
+          "passed": true,
+          "evidence": "Response blocks the next wave until failure handling completes"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 108.1,
+        "tokens": 2571,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+          "passed": true,
+          "evidence": "All five required progress sections are present"
+        },
+        {
+          "text": "States that the controller owns the wave plan rather than delegating phase-wide scheduling to one subagent",
+          "passed": true,
+          "evidence": "Response explicitly assigns scheduling to the controller and describes wave/subagent planning"
+        },
+        {
+          "text": "Launches separate implementation subagents in parallel for T003, T004, and T005 (or equivalent explicit same-wave dispatch)",
+          "passed": true,
+          "evidence": "Response groups T003/T004/T005 into an explicit parallel subagent dispatch"
+        },
+        {
+          "text": "Keeps T006 sequential and keeps T007 after T003 because TDD or dependency ordering still applies",
+          "passed": true,
+          "evidence": "Response keeps T006 sequential and places T007 after T003/TDD dependency work"
+        },
+        {
+          "text": "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+          "passed": true,
+          "evidence": "Checkpoint Decision block includes explicit pass/fail status language"
+        },
+        {
+          "text": "References TDD-first ordering where test tasks run before their corresponding implementation tasks",
+          "passed": true,
+          "evidence": "Response cites TDD/test-first ordering"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 69.1,
+        "tokens": 1145,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Materializes review_scope_files from staged + unstaged + untracked files",
+          "passed": true,
+          "evidence": "Response materializes review_scope_files from staged, unstaged, and untracked files"
+        },
+        {
+          "text": "States subagents must not recompute or narrow scope independently",
+          "passed": true,
+          "evidence": "Response states that review subagents must not narrow scope"
+        },
+        {
+          "text": "Reports missing files when only a subset is reviewed",
+          "passed": true,
+          "evidence": "Response reports omitted files as missing"
+        },
+        {
+          "text": "Applies Completion Gate with INCOMPLETE status when Missing Files > 0",
+          "passed": true,
+          "evidence": "Response applies an INCOMPLETE completion gate"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 10,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 72.1,
+        "tokens": 1418,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Launches more than one code-simplifier subagent since there are >5 changed files",
+          "passed": true,
+          "evidence": "Response ties code-simplifier scaling to the >5-file rule"
+        },
+        {
+          "text": "Partitions files into non-overlapping groups (e.g., by module or directory) so each file appears in exactly one agent's scope",
+          "passed": true,
+          "evidence": "Response partitions changed files into non-overlapping groups"
+        },
+        {
+          "text": "Also launches code-reviewer subagents (3 with distinct lenses)",
+          "passed": true,
+          "evidence": "Response also launches the required code-reviewer agents"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 12,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 50.1,
+        "tokens": 1331,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Marks task T003 as [X] or completed because a clean TDD RED failure is a successful test-writing outcome",
+          "passed": true,
+          "evidence": "Response marks T003 complete or successful despite RED-state failures"
+        },
+        {
+          "text": "Distinguishes between a clean RED failure (tests fail for the intended reason) and a broken test (syntax errors, import crashes)",
+          "passed": true,
+          "evidence": "Response distinguishes clean RED from broken tests"
+        },
+        {
+          "text": "References TDD-first or RED-GREEN workflow as the reason this counts as success",
+          "passed": true,
+          "evidence": "Response references TDD/RED-GREEN workflow"
+        },
+        {
+          "text": "Does NOT treat the test failures as an error that blocks progress",
+          "passed": true,
+          "evidence": "Response does not treat the expected RED state as a blocking error"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 15,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 40.1,
+        "tokens": 1078,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Explicitly states that T010 and T011 cannot run in parallel because both touch src/search/service.ts",
+          "passed": true,
+          "evidence": "Response explicitly serializes T010/T011 because both touch src/search/service.ts"
+        },
+        {
+          "text": "Schedules T012 in a wave that only includes non-overlapping work",
+          "passed": true,
+          "evidence": "Response places T012 into an explicit wave with non-overlapping work"
+        },
+        {
+          "text": "Shows an explicit wave boundary or wait point before launching the next wave",
+          "passed": true,
+          "evidence": "Response shows multiple waves or an explicit wait point between them"
+        },
+        {
+          "text": "Assigns work to specific subagents or wave slots instead of saying one phase-wide subagent will figure it out",
+          "passed": true,
+          "evidence": "Response assigns work by subagent/wave slot"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 16,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 53.1,
+        "tokens": 2783,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Leaves T020 as [ ] or otherwise explicitly not complete because verification failed",
+          "passed": true,
+          "evidence": "Response keeps T020 incomplete after verification failure"
+        },
+        {
+          "text": "Allows the already-running independent work for T022 to finish or be collected before deciding the next step",
+          "passed": true,
+          "evidence": "Response allows the already-running T022 work to finish or be collected"
+        },
+        {
+          "text": "Marks T021 complete only if its own verification passed",
+          "passed": true,
+          "evidence": "Response marks T021 complete only after successful verification"
+        },
+        {
+          "text": "States that the controller does not launch another wave until the failure is reported and resolved",
+          "passed": true,
+          "evidence": "Response blocks the next wave until failure handling completes"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 74.1,
+        "tokens": 2558,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Includes all five progress reporting sections: Checklist Gate, Implementation Context Loaded, Phase Execution, Code Review Findings, Completion Validation",
+          "passed": true,
+          "evidence": "All five required progress sections are present"
+        },
+        {
+          "text": "States that the controller owns the wave plan rather than delegating phase-wide scheduling to one subagent",
+          "passed": true,
+          "evidence": "Response explicitly assigns scheduling to the controller and describes wave/subagent planning"
+        },
+        {
+          "text": "Launches separate implementation subagents in parallel for T003, T004, and T005 (or equivalent explicit same-wave dispatch)",
+          "passed": true,
+          "evidence": "Response groups T003/T004/T005 into an explicit parallel subagent dispatch"
+        },
+        {
+          "text": "Keeps T006 sequential and keeps T007 after T003 because TDD or dependency ordering still applies",
+          "passed": true,
+          "evidence": "Response keeps T006 sequential and places T007 after T003/TDD dependency work"
+        },
+        {
+          "text": "Defines a checkpoint decision format or equivalent explicit pass/fail criteria before advancing",
+          "passed": true,
+          "evidence": "Checkpoint Decision block includes explicit pass/fail status language"
+        },
+        {
+          "text": "References TDD-first ordering where test tasks run before their corresponding implementation tasks",
+          "passed": true,
+          "evidence": "Response cites TDD/test-first ordering"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 50.1,
+        "tokens": 1823,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Materializes review_scope_files from staged + unstaged + untracked files",
+          "passed": true,
+          "evidence": "Response materializes review_scope_files from staged, unstaged, and untracked files"
+        },
+        {
+          "text": "States subagents must not recompute or narrow scope independently",
+          "passed": true,
+          "evidence": "Response states that review subagents must not narrow scope"
+        },
+        {
+          "text": "Reports missing files when only a subset is reviewed",
+          "passed": true,
+          "evidence": "Response reports omitted files as missing"
+        },
+        {
+          "text": "Applies Completion Gate with INCOMPLETE status when Missing Files > 0",
+          "passed": true,
+          "evidence": "Response applies an INCOMPLETE completion gate"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "old_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 75.7667,
+        "stddev": 22.0151,
+        "min": 51.1,
+        "max": 108.1
+      },
+      "tokens": {
+        "mean": 1788.5,
+        "stddev": 821.0519,
+        "min": 1046,
+        "max": 3007
+      }
+    },
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 56.6,
+        "stddev": 13.5314,
+        "min": 40.1,
+        "max": 74.1
+      },
+      "tokens": {
+        "mean": 1831.8333,
+        "stddev": 696.0562,
+        "min": 1078,
+        "max": 2783
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+19.2",
+      "tokens": "-43"
+    }
+  },
+  "notes": []
+}

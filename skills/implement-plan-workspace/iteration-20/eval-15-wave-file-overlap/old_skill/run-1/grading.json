@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Explicitly states that T010 and T011 cannot run in parallel because both touch src/search/service.ts",
+      "passed": true,
+      "evidence": "Response explicitly serializes T010/T011 because both touch src/search/service.ts"
+    },
+    {
+      "text": "Schedules T012 in a wave that only includes non-overlapping work",
+      "passed": true,
+      "evidence": "Response places T012 into an explicit wave with non-overlapping work"
+    },
+    {
+      "text": "Shows an explicit wave boundary or wait point before launching the next wave",
+      "passed": true,
+      "evidence": "Response shows multiple waves or an explicit wait point between them"
+    },
+    {
+      "text": "Assigns work to specific subagents or wave slots instead of saying one phase-wide subagent will figure it out",
+      "passed": true,
+      "evidence": "Response assigns work by subagent/wave slot"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1725,
+    "transcript_chars": 1725
+  },
+  "timing": {
+    "executor_duration_seconds": 57.0,
+    "grader_duration_seconds": 0.1,
+    "total_duration_seconds": 57.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid"
+  }
+}
