@@ -1,0 +1,99 @@
+---
+name: commit
+description: 'Commit current local changes into one clean git commit and push the working branch to origin: stage intended files, create or reuse the appropriate branch, write a conventional commit with issue linkage and Co-authored-by trailers, and return branch and commit details. Use this whenever the user asks to commit changes, save the current worktree, make a git commit, push a branch, or get work ready to share without opening a PR, even if they only say "commit this", "push my changes", or "save this work". Do not use for pull request creation, rebasing, cherry-picking, amending existing commits, resolving merge conflicts, or reviewing an existing PR.'
+---
+
+# Commit
+
+## Inputs
+
+You receive these parameters in your prompt:
+
+- **spec_file** (optional): The path to the spec file that contains the linked GitHub issue.
+- **issue_numbers** (optional): A list of issue numbers to link in the commit message. If not provided, attempt to extract from `spec_file`.
+- **base_branch** (optional, default: "main"): The branch name that should be treated as the protected base branch when deciding whether to create a new feature branch.
+- **feature_branch** (optional): The feature branch to create and use for the commit.
+- **co_author** (optional): One or more `Co-authored-by` trailer lines to attribute collaborators. Each line must follow the format `Co-authored-by: NAME <EMAIL>`. When multiple co-authors are needed, separate each trailer with a newline. If omitted, you (the executing agent) should add your own known co-author identity. If you don't have a known identity, ask the user to provide one.
+
+## Context
+
+- Current git status: !`git status`
+- Current git diff (staged and unstaged changes): !`git diff HEAD`
+- Current branch: !`git branch --show-current`
+
+## Objective
+
+Convert the current local changes into one clean pushed commit with minimal user back-and-forth.
+
+## Workflow
+
+Based on the above changes:
+
+1. Load `issue_numbers` and extract, when available:
+   - Linked issue numbers (for example `#123`)
+   - Feature title or short slug candidate
+   - Any acceptance criteria that should influence the commit summary
+2. Validate repository readiness:
+   - Confirm there are local changes to commit.
+   - Confirm you are inside a git repository.
+   - Confirm a push target is available, or be prepared to stop with a precise blocker if `origin` push fails.
+   - If there are no changes, stop and clearly report that there is nothing to commit.
+3. Determine branch strategy:
+   - If `feature_branch` input is specified, create a new branch with that name.
+   - If the current branch is `base_branch`, `main`, or `master`, create a new feature branch.
+   - If already on a non-base branch, reuse it unless `feature_branch` input is specified.
+   - Branch names should be concise, kebab-case, and derived from the spec or issue context (for example `feat/123-add-invoice-export`).
+4. Stage and commit once:
+   - Stage all intended changes for this task.
+   - Create exactly one atomic commit.
+   - Use a conventional commit subject when possible (for example `feat: add invoice export flow`).
+   - If issue numbers exist, include `Fixes #<issue>` for each issue number in the commit message body separated by newlines.
+   - Always append a `Co-authored-by` trailer block at the end of the commit message. Use the `co_author` input if provided; otherwise use your own known co-author identity. Each trailer line must match the format `Co-authored-by: NAME <EMAIL>`. Separate the trailer block from the preceding body with a blank line.
+
+   **Commit message format:**
+
+   ```
+   feat: add invoice export flow
+
+   Fixes #123
+
+   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+   ```
+
+   When there are multiple co-authors, place each on its own line with no blank lines between them:
+
+   ```
+   fix: resolve rate-limit retry logic
+
+   Fixes #456
+
+   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+   Co-authored-by: Jane <jane@example.com>
+   ```
+
+   When there are no linked issues, the trailer still applies:
+
+   ```
+   chore: update audit-log schema
+
+   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+   ```
+
+5. Push to origin:
+   - Push the branch with upstream tracking when needed (`-u origin <branch>`).
+6. Return a concise execution summary including:
+   - Branch name
+   - Commit SHA and subject
+   - Push result or remote tracking branch
+
+## Guardrails
+
+- Prefer non-interactive commands to avoid hanging.
+- Do not create multiple commits for this flow.
+- Do not rewrite history (no force-push) unless the user explicitly requests it.
+- Do not open a pull request or invoke `gh pr create` as part of this skill.
+- If a required step fails (repo readiness, commit creation, or push), stop and report the exact blocker plus next corrective action.
+
+## Execution Mode
+
+You have the capability to call multiple tools in a single response. Complete the full workflow in one response when possible. Avoid unrelated actions.
