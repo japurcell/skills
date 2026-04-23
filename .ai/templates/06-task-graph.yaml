@@ -1,0 +1,27 @@
+work_id: <work-id>
+version: 1
+tasks:
+  - id: T01
+    title: Add failing tests for behavior X
+    stage: red
+    depends_on: []
+    parallelizable: false
+    verification: "Run targeted tests and confirm failure reason"
+  - id: T02
+    title: Add failing tests for behavior Y
+    stage: red
+    depends_on: []
+    parallelizable: true
+    verification: "Run targeted tests and confirm failure reason"
+  - id: T03
+    title: Implement minimal production change
+    stage: green
+    depends_on: [T01, T02]
+    parallelizable: false
+    verification: "Run targeted tests and confirm pass"
+  - id: T04
+    title: Refactor implementation and tests
+    stage: refactor
+    depends_on: [T03]
+    parallelizable: false
+    verification: "Run tests/lint and confirm no behavior change"

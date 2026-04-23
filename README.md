@@ -5,6 +5,7 @@ This repository publishes custom GitHub Copilot assets:
 - **Skills** in `skills/` for reusable task workflows such as `tdd`, `security-review`, `frontend-design`, and `create-plan`
 - **Custom agents** in `agents/` such as `code-architect`, `code-explorer`, `code-reviewer`, and `grader`
 - **Local Copilot instructions** in `.copilot/copilot-instructions.md`
+- **AI workflow starter kit** in `.ai/` for deterministic, artifact-driven coding-task execution
 
 ## Installation
 
@@ -47,6 +48,7 @@ For the notify hook to work, add these lines to your vscode settings.json file:
 - `scripts/`: repo helper and installation scripts
 - `docs/agent-guides/`: repo-specific guidance for layout, authoring, and validation
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts
+- `.ai/`: reusable deterministic AI workflow policy, templates, scripts, and run artifacts
 - `scripts/copilot-install.sh`: installs `skills/` → `~/.agents/skills`, optional top-level `references/` → `~/.agents/references`, `agents/` → `~/.copilot/agents`, optional top-level `hooks/` → `~/.copilot/hooks`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
 - `scripts/addy-install.sh`: syncs `../addy-agent-skills` from `https://github.com/addyosmani/agent-skills` by cloning or fast-forward pulling, then imports addy agents, skills, and top-level references into this repository, prefixing imported addy agent and skill names with `addy-`; pass `--skills foo,bar` or `--skills-file path` to copy specific source skill names and their referenced skills, and each successful run refreshes `.addy-skills` with the installed source skill names
 

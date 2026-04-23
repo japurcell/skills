@@ -1,0 +1,44 @@
+name: Agent parent issue
+about: Parent issue for deterministic AI workflow execution
+title: "[agent-parent] <work-id>: <summary>"
+labels: ["agent:parent"]
+body:
+  - type: input
+    id: work_id
+    attributes:
+      label: Work ID
+      description: Stable slug used in `.ai/artifacts/<work-id>/`
+      placeholder: feat-example
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: machine_data
+    attributes:
+      label: Machine metadata (YAML)
+      value: |
+        ```yaml
+        work_id: <work-id>
+        kind: parent
+        phase: "00"
+        parallelizable: false
+        depends_on_issue_numbers: []
+        artifact_paths:
+          - .ai/artifacts/<work-id>/00-intake.md
+        status: open
+        ```
+    validations:
+      required: true

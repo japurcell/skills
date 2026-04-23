@@ -1,0 +1,60 @@
+name: Agent task issue
+about: Task-level issue mapped to TDD DAG task
+title: "[agent-task][<task-id>] <work-id>: <summary>"
+labels: ["agent:task"]
+body:
+  - type: input
+    id: work_id
+    attributes:
+      label: Work ID
+      placeholder: feat-example
+    validations:
+      required: true
+  - type: input
+    id: task_id
+    attributes:
+      label: Task ID from 06-task-graph.yaml
+      placeholder: T01
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: TDD stage
+      options:
+        - red
+        - green
+        - refactor
+    validations:
+      required: true
+  - type: dropdown
+    id: parallelizable
+    attributes:
+      label: Parallelizable
+      options:
+        - "true"
+        - "false"
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Depends on task IDs / issue numbers
+  - type: textarea
+    id: machine_data
+    attributes:
+      label: Machine metadata (YAML)
+      value: |
+        ```yaml
+        work_id: <work-id>
+        kind: task
+        phase: "06"
+        task_id: T01
+        stage: red
+        parallelizable: false
+        depends_on_issue_numbers: []
+        artifact_paths: []
+        status: open
+        ```
+    validations:
+      required: true

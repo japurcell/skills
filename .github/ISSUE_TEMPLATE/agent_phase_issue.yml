@@ -1,0 +1,48 @@
+name: Agent phase issue
+about: Phase-level issue for deterministic AI workflow
+title: "[agent-phase][<phase>] <work-id>: <summary>"
+labels: ["agent:phase"]
+body:
+  - type: input
+    id: work_id
+    attributes:
+      label: Work ID
+      placeholder: feat-example
+    validations:
+      required: true
+  - type: input
+    id: phase
+    attributes:
+      label: Phase
+      placeholder: "02"
+    validations:
+      required: true
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Required deliverables
+      value: |
+        - .ai/artifacts/<work-id>/<phase-artifact>
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependency issue numbers
+      placeholder: "#123, #124"
+  - type: textarea
+    id: machine_data
+    attributes:
+      label: Machine metadata (YAML)
+      value: |
+        ```yaml
+        work_id: <work-id>
+        kind: phase
+        phase: "<00-10>"
+        parallelizable: false
+        depends_on_issue_numbers: []
+        artifact_paths: []
+        status: open
+        ```
+    validations:
+      required: true
