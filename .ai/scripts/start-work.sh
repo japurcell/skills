@@ -12,8 +12,11 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ARTIFACT_DIR="$REPO_ROOT/.ai/artifacts/$WORK_ID"
 TEMPLATES_DIR="$REPO_ROOT/.ai/templates"
 
-WORKTREE_PATH="$REPO_ROOT/.ai/scripts/create-worktree.sh"
-WORKTREE_PATH="$($WORKTREE_PATH "$WORK_ID" "$BASE_BRANCH")"
+CREATE_WORKTREE_SCRIPT="$REPO_ROOT/.ai/scripts/create-worktree.sh"
+if ! WORKTREE_PATH="$($CREATE_WORKTREE_SCRIPT "$WORK_ID" "$BASE_BRANCH")"; then
+  echo "Failed to create worktree for '$WORK_ID' from base '$BASE_BRANCH'." >&2
+  exit 1
+fi
 
 mkdir -p "$ARTIFACT_DIR"
 cp "$TEMPLATES_DIR/00-intake.md" "$ARTIFACT_DIR/00-intake.md"

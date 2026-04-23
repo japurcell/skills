@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import List
 
 REQUIRED_FILES = [
     "00-intake.md",
@@ -68,7 +69,7 @@ def main() -> int:
         print(f"ERROR: missing artifact directory: {artifact_dir}")
         return 1
 
-    errors: list[str] = []
+    errors: List[str] = []
 
     for file_name in REQUIRED_FILES:
         path = artifact_dir / file_name
