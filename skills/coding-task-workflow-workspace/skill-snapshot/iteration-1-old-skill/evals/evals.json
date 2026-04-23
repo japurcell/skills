@@ -1,0 +1,53 @@
+{
+  "skill_name": "coding-task-workflow",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use the coding-task-workflow skill for this handoff: Gate E already passed for work item `2026-04-23-add-rate-limit-logs`, and I want you to continue directly into Phase 8 right now in this same session. Do not tell me to resume later. Explain exactly what the workflow requires next.",
+      "expected_output": "Refuses to continue into Phase 8 in the same session, names the hard stop after Phase 7, and instructs the user to resume with RESUME=2026-04-23-add-rate-limit-logs in a fresh session.",
+      "files": [],
+      "expectations": [
+        "States that the workflow hard-stops after Phase 7 once Gate E passes",
+        "Does not agree to continue into Phase 8 in the same session",
+        "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent",
+        "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Run only Phase 1 Intake for coding-task-workflow with `ISSUE: 42`. I also typed `WORK_ITEM: maybe clean up auth later`, but the GitHub issue body actually describes a CSV import bug that silently drops rows. Tell me what Intake should do and what it should use as the work item.",
+      "expected_output": "Uses the GitHub issue title/body as the authoritative work item, treats the separately typed WORK_ITEM as supplemental or conflicting context, and records the supplied issue as the parent issue for later sub-issue creation.",
+      "files": [],
+      "expectations": [
+        "Says Intake should fetch/read the GitHub issue title or body before classification",
+        "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+        "Does not treat `maybe clean up auth later` as the primary work item",
+        "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Using coding-task-workflow, explain exactly how the workflow should create the Phase 6 plan issue and Phase 7 implementation-task issues under the parent issue from Phase 1. Include the concrete GitHub commands or command shapes the workflow expects.",
+      "expected_output": "Explains that child issues are created normally, their node IDs are resolved, and `gh api graphql` with `addSubIssue` is used to attach them as true GitHub sub-issues of the Phase 1 parent issue.",
+      "files": [],
+      "expectations": [
+        "Describes creating the child issue first and then linking it to the parent issue",
+        "Mentions resolving parent and child issue node IDs before linking",
+        "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation",
+        "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Phase 11 is ready for work item `2026-04-23-add-retry-mechanism` on parent issue `#42`. Show the required commit message shape that coding-task-workflow expects, including any trailer formatting rules.",
+      "expected_output": "Shows a conventional-commits message with a body that links the work-item slug and parent issue, followed by a blank-line-separated Co-authored-by trailer using Copilot's known identity.",
+      "files": [],
+      "expectations": [
+        "Shows a conventional-commits subject line",
+        "Includes a body that references the work-item slug or parent issue `#42`",
+        "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+        "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "eval_id": 2,
+  "eval_name": "github-subissue-linkage",
+  "prompt": "Using coding-task-workflow, explain exactly how the workflow should create the Phase 6 plan issue and Phase 7 implementation-task issues under the parent issue from Phase 1. Include the concrete GitHub commands or command shapes the workflow expects.",
+  "assertions": [
+    {
+      "text": "Describes creating the child issue first and then linking it to the parent issue"
+    },
+    {
+      "text": "Mentions resolving parent and child issue node IDs before linking"
+    },
+    {
+      "text": "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation"
+    },
+    {
+      "text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable"
+    }
+  ]
+}

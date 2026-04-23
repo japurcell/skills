@@ -1,247 +1,201 @@
 ---
 name: coding-task-workflow
-description: Deterministic end-to-end workflow for coding tasks — feature additions, bug fixes, or spec-driven changes. Use this skill whenever the user wants to implement something non-trivial, start from a feature description, bug report, or spec, follow a structured multi-phase approach, or ensure all work is tracked via GitHub issues and PR-backed artifacts. This skill combines deep codebase exploration, parallel online research, clarification, TDD-based implementation, multi-role review, and a bootstrap phase that can generate repo-local override files for any target repository.
+description: Deterministic workflow for non-trivial coding work. Use this whenever the user wants to implement a feature, bug fix, refactor, or spec from a ticket, bug report, or requirements doc and wants a structured multi-phase flow with bootstrap, parallel exploration and research, TDD execution, review, verification, and issue/PR tracking.
 ---
 
 # Coding Task Workflow
 
-A portable, deterministic workflow for coding tasks. Covers everything from intake to merged PR, with an optional repo-bootstrap phase that synthesises repo-local override files from existing documentation and signals.
+Use this skill to take a coding task from intake to PR with durable artifacts in the target repo.
 
-See [README.md](README.md) for installation, usage examples, and an overview of all generated artefacts.
+Read [references/workflow.md](references/workflow.md) for the full phase specification. Read [references/stop-gates.md](references/stop-gates.md) for gate definitions and exit criteria. Use [references/templates/](references/templates/) and [references/artifact-schema.md](references/artifact-schema.md) when writing artifacts.
 
----
+## Mandatory Phase 7 session boundary
 
-## Quick Reference — Phases
+If Gate E has already passed in the current session, **do not continue into Phase 8 in the same session**. Explain that the workflow hard-stops after Phase 7, then hand off:
 
-| # | Phase | Parallelism | Human gate |
-|---|-------|-------------|------------|
-| 0 | **Bootstrap** *(optional)* | parallel | – |
-| 1 | **Intake** | – | – |
-| 2 | **Worktree setup** | – | – |
-| 3 | **Codebase exploration** | parallel | Gate A |
-| 4 | **Online research** | parallel | Gate B |
-| 5 | **Clarification** | – | Gate C |
-| 6 | **Plan** | – | Gate D |
-| 7 | **TDD task graph** | – | Gate E |
-| 8 | **Implementation** | sequential + parallel | – |
-| 9 | **Review** | parallel | – |
-| 10 | **Verification** | – | Gate F |
-| 11 | **Commit / Push / PR** | – | – |
+```text
+coding-task-workflow RESUME=<slug>
+```
 
-Read [references/workflow.md](references/workflow.md) for full phase specifications.
-Read [references/stop-gates.md](references/stop-gates.md) for gate definitions and exit criteria.
+Resume from a **fresh session** with that command. **Phase 8 is the next phase after the resume.** Do not restart earlier phases unless the saved artifacts say they are incomplete.
 
----
+## Priority rules
+
+These rules override user requests to skip or compress the workflow:
+
+1. If `ISSUE` is provided, fetch it before classification with `gh issue view <ISSUE> --json number,title,body,url,id`, infer `WORK_ITEM` from the issue title/body, and treat that issue as the authoritative parent issue for the full workflow.
+2. Every child issue is created first, then linked to the Phase 1 parent issue by resolving parent/child node IDs and calling `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
+3. After Gate E passes, stop and hand off `coding-task-workflow RESUME=<slug>` for a fresh session. Never begin Phase 8 in the same invocation.
+4. Phase 11 commit messages use a conventional-commits subject, a body that references the work-item slug and parent issue, then a blank-line-separated trailer block. For GitHub Copilot CLI, include `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`.
+
+## Response style for workflow-rule questions
+
+When the user asks what the workflow requires, answer tersely and lead with the governing rule before adding details. Reuse the exact rule text when it fits.
+
+- For Phase 7 resume handoffs, start with this exact three-sentence handoff and stop unless the user explicitly asks for more detail: `Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with coding-task-workflow RESUME=<slug>. Phase 8 is the next phase after the resume.`
+- For Intake authority questions, say this almost verbatim: `The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue.`
+- For sub-issue questions, say this almost verbatim: `Create the child issue first, resolve both node IDs, then attach it with gh api graphql ... addSubIssue. Parent: #N is fallback-only when GitHub sub-issues are unavailable.`
+
+Keep these explanations compact: rule, command shape, and fallback only. Do not invent issue-template prose, sample issue bodies, or extra artifact structure unless the user explicitly asks for them.
 
 ## Invocation
 
-```
+```text
 coding-task-workflow
 
-Arguments (all optional — gather interactively if not provided):
-  WORK_ITEM   Feature description, bug report, spec text, or path to a spec file
-  ISSUE       GitHub issue number to track this work item (created if absent)
-  WORKTREE    Worktree path (defaults to ../worktrees/<slug>)
-  BRANCH      Branch name (defaults to feat/<slug> or fix/<slug>)
-  BOOTSTRAP   Set to "only" to run only the repo bootstrap phase
-  RESUME      Work-item ID to resume from last recorded phase
+Arguments (all optional; gather interactively when missing):
+  WORK_ITEM   Feature description, bug report, spec text, spec path, or text inferred from ISSUE
+  ISSUE       GitHub issue number to track this work item
+  WORKTREE    Worktree path (default: ../worktrees/<slug>)
+  BRANCH      Branch name (default: feat/<slug> or fix/<slug>)
+  BOOTSTRAP   Set to "only" to run only Phase 0
+  RESUME      Work-item ID to resume from the last recorded phase
 ```
 
-The skill determines the correct starting phase automatically.
+Routing:
 
----
+- `BOOTSTRAP=only` runs only Phase 0.
+- `RESUME=<slug>` reads `.coding-workflow/work/<slug>/` and continues from the next incomplete phase.
+- Otherwise start at Phase 1. If `ISSUE` is present, fetch it before doing anything else.
 
-## Phase 0 — Bootstrap *(optional)*
+## Quick reference
 
-Run this phase alone on a new or poorly-documented repository, or automatically if override files are missing or stale.
+| #   | Phase                      | Parallelism           | Gate |
+| --- | -------------------------- | --------------------- | ---- |
+| 0   | **Bootstrap** _(optional)_ | parallel              | –    |
+| 1   | **Intake**                 | –                     | –    |
+| 2   | **Worktree setup**         | –                     | –    |
+| 3   | **Codebase exploration**   | parallel              | A    |
+| 4   | **Online research**        | parallel              | B    |
+| 5   | **Clarification**          | –                     | C    |
+| 6   | **Plan**                   | –                     | D    |
+| 7   | **TDD task graph**         | –                     | E    |
+| 8   | **Implementation**         | sequential + parallel | –    |
+| 9   | **Review**                 | parallel              | –    |
+| 10  | **Verification**           | –                     | F    |
+| 11  | **Commit / Push / PR**     | –                     | –    |
 
-```
-coding-task-workflow BOOTSTRAP=only
-```
+## Phase checklist
 
-What it does:
-1. Inspects `README.md`, `AGENTS.md`, `CONTRIBUTING.md`, `docs/`, `.github/`, manifests, lockfiles, and CI workflow files.
-2. Infers tech stack, tooling, test/lint/typecheck commands, architecture notes, and repo policies.
-3. Writes or updates repo-local override files only where necessary (never duplicates existing canonical docs).
-4. Records provenance, confidence, and evidence in each generated file.
+### Phase 0 — Bootstrap _(optional)_
 
-Generated override files (stored in `.coding-workflow/` in the **target** repo):
+Run this on a new repo, when `.coding-workflow/overrides/` is missing or stale, or when the user passes `BOOTSTRAP=only`.
 
-| File | Purpose |
-|------|---------|
-| `repo-inventory.yaml` | Tech stack, languages, frameworks, key paths |
-| `doc-sources.md` | Links to existing docs rather than duplicating content |
-| `test-commands.yaml` | Test, lint, typecheck, and build commands |
-| `repo-policy.md` | Contribution rules, branch naming, PR process |
-| `architecture-notes.md` | High-level architecture, key modules, patterns |
-| `agent-hints.md` | Gotchas, known traps, agent-specific guidance |
+1. Inspect repo docs, manifests, lockfiles, and CI workflows.
+2. Infer stack, commands, architecture notes, and repo policies.
+3. Write or update only the needed files in `.coding-workflow/overrides/`: `repo-inventory.yaml`, `doc-sources.md`, `test-commands.yaml`, `repo-policy.md`, `architecture-notes.md`, `agent-hints.md`.
+4. Record provenance, confidence, and evidence in generated files.
 
-See [references/bootstrap.md](references/bootstrap.md) for full bootstrap specification.
+See [references/bootstrap.md](references/bootstrap.md) for the full signal list and merge rules.
 
----
+### Phase 1 — Intake
 
-## Phase 1 — Intake
+Create a structured record before touching code.
 
-Capture the work item in a structured artefact before any code is touched.
+1. If `ISSUE` is provided, fetch it first and infer `WORK_ITEM` from the issue title/body before classification. The GitHub issue title/body is the authoritative `WORK_ITEM`; separately supplied `WORK_ITEM` text is supplemental only.
+2. Classify the work item as `feature | bug | refactor | spec | chore`.
+3. Assign slug `YYYY-MM-DD-<kebab-title>` and create `.coding-workflow/work/<slug>/`.
+4. Write `00-intake.md`.
+5. If `ISSUE` is provided, keep it as the **Phase 1 parent issue**, record its number and node ID, and do **not** create a new parent issue.
+6. Otherwise create the parent issue, apply labels from [references/issue-hierarchy.md](references/issue-hierarchy.md), and record its number and node ID.
 
-1. Collect `WORK_ITEM` (ask if not provided — one prompt only).
-2. Classify: `feature | bug | refactor | spec | chore`.
-3. Assign a deterministic slug: `YYYY-MM-DD-<kebab-title>`.
-4. Create artefact directory: `.coding-workflow/work/<slug>/`.
-5. Write `00-intake.md` from the [intake template](references/templates/intake.md).
-6. Create GitHub parent issue if `ISSUE` is not provided. Apply labels per [references/issue-hierarchy.md](references/issue-hierarchy.md).
+### Phase 2 — Worktree setup
 
----
+1. Create a dedicated worktree: `git worktree add <WORKTREE> -b <BRANCH>`.
+2. Write `01-worktree.md` with worktree path, branch, and base commit.
+3. Link the worktree artifact to the parent issue.
 
-## Phase 2 — Worktree Setup
+### Phase 3 — Codebase exploration
 
-Isolate the work before any files are modified.
-
-1. Create a git worktree: `git worktree add <WORKTREE> -b <BRANCH>`.
-2. Write `01-worktree.md` recording the worktree path, branch, and base commit.
-3. Link worktree artefact to the parent GitHub issue.
-
----
-
-## Phase 3 — Codebase Exploration
-
-Understand the relevant parts of the codebase using parallel subagents.
-
-1. Launch 2–3 code-explorer subagents in parallel, each covering a different angle (e.g., similar features, architecture, test patterns, extension points).
-2. Read all key files surfaced by agents.
+1. Launch 2-3 `code-explorer` subagents in parallel, each covering a different angle such as similar features, architecture, tests, or extension points.
+2. Read the key files they surface; do not rely only on summaries.
 3. Write `02-exploration/summary.md`, `files.csv`, and `open-questions.md`.
-4. **Gate A**: exploration artefact must exist before proceeding.
+4. **Gate A**: the exploration summary must exist before Phase 4.
 
-See [references/delegation-rules.md](references/delegation-rules.md) for explorer agent instructions.
+See [references/delegation-rules.md](references/delegation-rules.md) for explorer prompts.
 
----
+### Phase 4 — Online research
 
-## Phase 4 — Online Research
+1. Read `open-questions.md` and group unresolved questions by topic.
+2. Launch 1-3 research subagents in parallel, each answering a distinct question set from official sources.
+3. Write `03-research/findings.md` and `sources.md` with URL, question, date checked, finding, confidence, applicability, and decision.
+4. **Gate B**: the research artifact must exist before Phase 5.
 
-Fill remaining gaps using parallel research subagents.
+### Phase 5 — Clarification
 
-1. Identify open questions from Phase 3.
-2. Launch 1–3 research subagents in parallel, each targeting a distinct question or topic.
-3. Write `03-research/findings.md` and `sources.md` — one row per source: question, URL, date, finding, confidence, applicability, decision.
-4. **Gate B**: research artefact must exist before proceeding.
+1. Review remaining questions and resolve as many as possible from existing artifacts.
+2. Ask the human only for the minimum blocking set (no more than three per prompt).
+3. Record answers and assumptions in `04-clarifications.md`.
+4. **Gate C**: no unresolved blocking questions remain before Phase 6.
 
----
+### Phase 6 — Plan
 
-## Phase 5 — Clarification
+1. Read the Phase 3-5 artifacts and the affected source files.
+2. Write `05-plan.md` with goal, non-goals, approach, file-by-file map, and verification guidance.
+3. Present the plan summary and wait for explicit approval.
+4. Create the child issue first, resolve both parent and child node IDs, then attach it with `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
+5. **Gate D**: the plan must be approved before Phase 7.
 
-Resolve any questions that remain after exploration and research.
+See [references/templates/plan.md](references/templates/plan.md) for the plan shape.
 
-1. Review `open-questions.md`. Mark each as `resolved` or `blocking`.
-2. If no `blocking: true` questions remain, proceed automatically.
-3. If blocking questions remain, present them to the human (minimum viable set only — ≤3 per prompt).
-4. Record answers in `04-clarifications.md`.
-5. **Gate C**: no unresolved blocking questions may remain before Phase 6.
+### Phase 7 — TDD task graph
 
----
-
-## Phase 6 — Plan
-
-Design the implementation with full context in hand.
-
-1. Read all artefacts from Phases 3–5 plus relevant source files.
-2. Write `05-plan.md` — goal, non-goals, approach, file-by-file map, verification guidance.
-3. Present plan summary to human; gate on explicit approval.
-4. Create GitHub sub-issue for the plan. Link to parent.
-5. **Gate D**: plan must be approved before Phase 7.
-
-See [references/templates/plan.md](references/templates/plan.md) for the plan template.
-
----
-
-## Phase 7 — TDD Task Graph
-
-Break the plan into TDD phases with explicit sequencing.
-
-1. Decompose into vertical slices, each: `red → green → refactor`.
+1. Break the plan into vertical slices: `red -> green -> refactor`.
 2. Mark each task `sequential` or `parallelizable`.
-3. Write `06-task-graph.yaml` — id, name, stage (red/green/refactor), depends_on, parallelizable.
-4. Create GitHub sub-issues for major implementation tasks.
-5. **Gate E**: task graph must exist and all RED tasks must be defined before implementation starts.
+3. Write `06-task-graph.yaml`.
+4. Create each child issue first, resolve both node IDs, then attach it as a true sub-issue with `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
+5. **Gate E**: once the task graph exists and RED tasks are defined, stop the current session and hand off `coding-task-workflow RESUME=<slug>`.
 
 See [references/templates/task-graph.yaml](references/templates/task-graph.yaml) for the schema.
 
----
+### Phase 8 — Implementation
 
-## Phase 8 — Implementation
+This phase begins only after the mandatory fresh-session resume from Phase 7.
 
-Execute the task graph using the tdd skill.
-
-1. Process tasks in dependency order; run parallelizable groups concurrently.
-2. For each slice: write failing test → confirm failure → write minimal code → confirm green → refactor.
+1. Execute tasks in dependency order; run parallelizable groups concurrently when dependencies allow.
+2. For each slice: write a failing test, confirm failure, write minimal code, confirm green, then refactor.
 3. Update `07-implementation-log.md` after each slice.
 4. Never implement code for a test that has not yet been written.
 
 Follow the [tdd skill](../tdd/SKILL.md) for the full red-green-refactor protocol.
 
----
+### Phase 9 — Review
 
-## Phase 9 — Review
+1. Launch review subagents in parallel for code review, security review, and tech-debt review.
+2. Write `08-review/code-review.md`, `security-review.md`, and `tech-debt.md`.
+3. Fix all high-severity findings before Phase 10; turn the rest into follow-up issues.
 
-Run specialised review subagents in parallel.
+### Phase 10 — Verification
 
-1. Launch three review subagents concurrently:
-   - **Code review**: conventions, correctness, clarity.
-   - **Security review**: OWASP Top 10, injection, secrets, auth.
-   - **Tech-debt review**: duplication, coupling, complexity.
-2. Write `08-review/code-review.md`, `security-review.md`, `tech-debt.md`.
-3. Fix all High-severity findings before Phase 10; record Low/Medium as follow-up issues.
-
-See [references/delegation-rules.md](references/delegation-rules.md) for reviewer agent prompts.
-
----
-
-## Phase 10 — Verification
-
-Confirm the implementation is correct and complete.
-
-1. Run the test suite, linter, type-checker, and build commands from `test-commands.yaml`.
-2. Verify each acceptance criterion in `05-plan.md`.
-3. Write `09-verification.md` — pass/fail per criterion plus commands run.
+1. Run the commands from `test-commands.yaml`.
+2. Verify each acceptance criterion from `05-plan.md`.
+3. Write `09-verification.md` with pass/fail by criterion plus commands run.
 4. **Gate F**: all verification checks must pass before Phase 11.
 
----
+### Phase 11 — Commit / Push / PR
 
-## Phase 11 — Commit / Push / PR
+1. Stage the intended files.
+2. Write a conventional-commits message whose body links the work-item slug and parent issue.
+3. Append a blank-line-separated trailer block containing `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`.
+4. Push the branch, open the PR, and link the parent issue plus artifact directory.
+5. Write `10-pr.md` with the PR number, URL, and remaining follow-ups.
 
-Land the work.
+## Artifact layout
 
-1. Stage changed files; write a conventional-commits message referencing the work item.
-2. Push the branch to the remote.
-3. Open a pull request; link to the parent GitHub issue and the artefact directory.
-4. Write `10-pr.md` recording PR number, URL, and open follow-up items.
-5. Close completed sub-issues; leave open items as labelled issues.
+All workflow artifacts live in the target repo under:
 
----
-
-## Artefact Directory Layout
-
-All artefacts for a work item live in the **target repo** at:
-
-```
+```text
 .coding-workflow/
   work/<slug>/
     00-intake.md
     01-worktree.md
     02-exploration/
-      summary.md
-      files.csv
-      open-questions.md
     03-research/
-      findings.md
-      sources.md
     04-clarifications.md
     05-plan.md
     06-task-graph.yaml
     07-implementation-log.md
     08-review/
-      code-review.md
-      security-review.md
-      tech-debt.md
     09-verification.md
     10-pr.md
   overrides/
@@ -252,6 +206,3 @@ All artefacts for a work item live in the **target repo** at:
     architecture-notes.md
     agent-hints.md
 ```
-
-Artefact frontmatter schema: see [references/artifact-schema.md](references/artifact-schema.md).
-Full template set: see [references/templates/](references/templates/).

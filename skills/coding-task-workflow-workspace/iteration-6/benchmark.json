@@ -1,0 +1,370 @@
+{
+  "metadata": {
+    "skill_name": "<skill-name>",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-23T22:29:45Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 643,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the workflow hard-stops after Phase 7 once Gate E passes",
+          "passed": true,
+          "evidence": "Response names a hard stop after Phase 7 / Gate E."
+        },
+        {
+          "text": "Does not agree to continue into Phase 8 in the same session",
+          "passed": false,
+          "evidence": "Response does not clearly refuse same-session Phase 8 execution."
+        },
+        {
+          "text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent",
+          "passed": true,
+          "evidence": "Response gives a fresh-session resume handoff with the expected slug."
+        },
+        {
+          "text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases",
+          "passed": false,
+          "evidence": "Response does not clearly identify Phase 8 as the post-resume continuation point."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 694,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says Intake should fetch/read the GitHub issue title or body before classification",
+          "passed": true,
+          "evidence": "Response says Intake reads the issue title/body first."
+        },
+        {
+          "text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+          "passed": false,
+          "evidence": "Response does not clearly make the issue body authoritative."
+        },
+        {
+          "text": "Does not treat `maybe clean up auth later` as the primary work item",
+          "passed": true,
+          "evidence": "Response demotes the typed WORK_ITEM text to supplemental/conflicting context."
+        },
+        {
+          "text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue",
+          "passed": true,
+          "evidence": "Response uses the supplied issue as the parent issue."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 2617,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Describes creating the child issue first and then linking it to the parent issue",
+          "passed": true,
+          "evidence": "Response describes create-first, link-second child issue flow."
+        },
+        {
+          "text": "Mentions resolving parent and child issue node IDs before linking",
+          "passed": true,
+          "evidence": "Response mentions resolving parent/child node IDs."
+        },
+        {
+          "text": "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation",
+          "passed": true,
+          "evidence": "Response includes/describes the addSubIssue GraphQL mutation."
+        },
+        {
+          "text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable",
+          "passed": true,
+          "evidence": "Response treats plain parent-body references as fallback-only."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 826,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Shows a conventional-commits subject line",
+          "passed": true,
+          "evidence": "Response includes a conventional-commits style subject line."
+        },
+        {
+          "text": "Includes a body that references the work-item slug or parent issue `#42`",
+          "passed": true,
+          "evidence": "Response body references the work-item slug or parent issue."
+        },
+        {
+          "text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+          "passed": true,
+          "evidence": "Response includes the required Copilot trailer line."
+        },
+        {
+          "text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line",
+          "passed": true,
+          "evidence": "Response shows or states a blank line before the trailer block."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.25,
+        "passed": 1,
+        "failed": 3,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 781,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the workflow hard-stops after Phase 7 once Gate E passes",
+          "passed": true,
+          "evidence": "Response names a hard stop after Phase 7 / Gate E."
+        },
+        {
+          "text": "Does not agree to continue into Phase 8 in the same session",
+          "passed": false,
+          "evidence": "Response does not clearly refuse same-session Phase 8 execution."
+        },
+        {
+          "text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent",
+          "passed": false,
+          "evidence": "Missing explicit fresh-session resume handoff with the expected slug."
+        },
+        {
+          "text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases",
+          "passed": false,
+          "evidence": "Response does not clearly identify Phase 8 as the post-resume continuation point."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 579,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says Intake should fetch/read the GitHub issue title or body before classification",
+          "passed": true,
+          "evidence": "Response says Intake reads the issue title/body first."
+        },
+        {
+          "text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+          "passed": true,
+          "evidence": "Response treats the issue body as the authoritative WORK_ITEM source."
+        },
+        {
+          "text": "Does not treat `maybe clean up auth later` as the primary work item",
+          "passed": true,
+          "evidence": "Response demotes the typed WORK_ITEM text to supplemental/conflicting context."
+        },
+        {
+          "text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue",
+          "passed": true,
+          "evidence": "Response uses the supplied issue as the parent issue."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 2791,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Describes creating the child issue first and then linking it to the parent issue",
+          "passed": true,
+          "evidence": "Response describes create-first, link-second child issue flow."
+        },
+        {
+          "text": "Mentions resolving parent and child issue node IDs before linking",
+          "passed": true,
+          "evidence": "Response mentions resolving parent/child node IDs."
+        },
+        {
+          "text": "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation",
+          "passed": true,
+          "evidence": "Response includes/describes the addSubIssue GraphQL mutation."
+        },
+        {
+          "text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable",
+          "passed": true,
+          "evidence": "Response treats plain parent-body references as fallback-only."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 535,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Shows a conventional-commits subject line",
+          "passed": true,
+          "evidence": "Response includes a conventional-commits style subject line."
+        },
+        {
+          "text": "Includes a body that references the work-item slug or parent issue `#42`",
+          "passed": true,
+          "evidence": "Response body references the work-item slug or parent issue."
+        },
+        {
+          "text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+          "passed": true,
+          "evidence": "Response includes the required Copilot trailer line."
+        },
+        {
+          "text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line",
+          "passed": true,
+          "evidence": "Response shows or states a blank line before the trailer block."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.8125,
+        "stddev": 0.2394,
+        "min": 0.5,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 1195.0,
+        "stddev": 951.1309,
+        "min": 643,
+        "max": 2617
+      }
+    },
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.8125,
+        "stddev": 0.375,
+        "min": 0.25,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 1171.5,
+        "stddev": 1084.9668,
+        "min": 535,
+        "max": 2791
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+0.0",
+      "tokens": "+24"
+    }
+  },
+  "notes": []
+}

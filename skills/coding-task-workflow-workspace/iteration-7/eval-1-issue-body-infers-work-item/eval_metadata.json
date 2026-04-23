@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-1-issue-body-infers-work-item",
+  "prompt": "Run only Phase 1 Intake for coding-task-workflow with `ISSUE: 42`. I also typed `WORK_ITEM: maybe clean up auth later`, but the GitHub issue body actually describes a CSV import bug that silently drops rows. Tell me what Intake should do and what it should use as the work item.",
+  "assertions": [
+    "Says Intake should fetch/read the GitHub issue title or body before classification",
+    "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+    "Does not treat `maybe clean up auth later` as the primary work item",
+    "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue"
+  ]
+}

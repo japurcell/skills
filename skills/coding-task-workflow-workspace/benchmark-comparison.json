@@ -1,0 +1,96 @@
+{
+  "iteration_1": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.3125,
+        "stddev": 0.4732,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 54.0,
+        "stddev": 20.8167,
+        "min": 31.0,
+        "max": 77.0
+      },
+      "tokens": {
+        "mean": 755.0,
+        "stddev": 350.3627,
+        "min": 499,
+        "max": 1270
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.3125,
+        "stddev": 0.3146,
+        "min": 0.0,
+        "max": 0.75
+      },
+      "time_seconds": {
+        "mean": 54.0,
+        "stddev": 12.7017,
+        "min": 43.0,
+        "max": 65.0
+      },
+      "tokens": {
+        "mean": 728.75,
+        "stddev": 272.6247,
+        "min": 485,
+        "max": 1117
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+0.0",
+      "tokens": "+26"
+    }
+  },
+  "iteration_2": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.75,
+        "stddev": 0.5,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 589.75,
+        "stddev": 215.2415,
+        "min": 409,
+        "max": 901
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.25,
+        "stddev": 0.2041,
+        "min": 0.0,
+        "max": 0.5
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 604.25,
+        "stddev": 226.9499,
+        "min": 403,
+        "max": 923
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.50",
+      "time_seconds": "+0.0",
+      "tokens": "-14"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "expectations": [
+    {
+      "text": "States that the workflow hard-stops after Phase 7 once Gate E passes",
+      "passed": false,
+      "evidence": "Does not name a hard stop; instead offers generic Phase-8 integration steps."
+    },
+    {
+      "text": "Does not agree to continue into Phase 8 in the same session",
+      "passed": false,
+      "evidence": "Offers to 'execute' generic Phase 8 steps in the current session as option 3."
+    },
+    {
+      "text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent",
+      "passed": false,
+      "evidence": "Never mentions RESUME= or a fresh session handoff."
+    },
+    {
+      "text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases",
+      "passed": false,
+      "evidence": "Discusses Phase 8 generically with no mention of resume continuation point."
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2708,
+    "transcript_chars": 2708
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}
