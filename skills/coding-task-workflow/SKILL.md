@@ -88,6 +88,8 @@ Routing:
 
 ## Phase checklist
 
+When a phase says to create and link a child issue, use the `addSubIssue` flow from [references/issue-hierarchy.md](references/issue-hierarchy.md).
+
 ### Phase 0 — Bootstrap _(optional)_
 
 Run this on a new repo, when `.coding-workflow/overrides/` is missing or stale, or when the user passes `BOOTSTRAP=only`.
@@ -123,7 +125,7 @@ Create a structured record before touching code.
    - Use 3 only when it is cross-cutting across product code plus tests/build/docs, or when the area is unfamiliar enough that you need distinct architecture, similarity, and test-infrastructure passes.
 2. Read the key files they surface; do not rely only on summaries.
 3. Write `02-exploration/summary.md`, `files.csv`, and `open-questions.md`.
-4. Create and attach the exploration child issue under the Phase 1 parent issue.
+4. Create and link the exploration child issue under the Phase 1 parent issue.
 5. **Gate A**: the exploration summary must exist before Phase 4.
 
 See [references/delegation-rules.md](references/delegation-rules.md) for explorer prompts.
@@ -133,7 +135,7 @@ See [references/delegation-rules.md](references/delegation-rules.md) for explore
 1. Read `open-questions.md` and group unresolved questions by topic.
 2. Launch 1-3 research subagents in parallel, each answering a distinct question set from official sources.
 3. Write `03-research/findings.md` and `sources.md`.
-4. Create and attach the research child issue under the Phase 1 parent issue.
+4. Create and link the research child issue under the Phase 1 parent issue.
 5. **Gate B**: the research artifact must exist before Phase 5.
 
 ### Phase 5 — Clarification
@@ -148,7 +150,7 @@ See [references/delegation-rules.md](references/delegation-rules.md) for explore
 1. Read the Phase 3-5 artifacts and the affected source files.
 2. Write `05-plan.md` with goal, non-goals, approach, file-by-file map, and verification guidance.
 3. Present the plan summary and wait for explicit approval.
-4. Create and attach the plan child issue under the Phase 1 parent issue.
+4. Create and link the plan child issue under the Phase 1 parent issue.
 5. **Gate D**: the plan must be approved before Phase 7.
 
 See [references/templates/plan.md](references/templates/plan.md) for the plan shape.
@@ -158,7 +160,7 @@ See [references/templates/plan.md](references/templates/plan.md) for the plan sh
 1. Break the plan into vertical slices: `red -> green -> refactor`.
 2. Mark each task `sequential` or `parallelizable`.
 3. Write `06-task-graph.yaml`.
-4. Create and attach the implementation child issues under the Phase 1 parent issue.
+4. Create and link the implementation child issues under the Phase 1 parent issue.
 5. **Gate E**: once the task graph exists and RED tasks are defined, stop the current session and hand off `coding-task-workflow RESUME=<slug>`.
 
 See [references/templates/task-graph.yaml](references/templates/task-graph.yaml) for the schema.
@@ -179,14 +181,14 @@ Follow the [tdd skill](../tdd/SKILL.md) for the full red-green-refactor protocol
 1. Launch review subagents in parallel for code review, security review, and tech-debt review.
 2. Write `08-review/code-review.md`, `security-review.md`, and `tech-debt.md`.
 3. Fix all high-severity findings before Phase 10; turn the rest into follow-up issues.
-4. Create and attach the review child issue under the Phase 1 parent issue.
+4. Create and link the review child issue under the Phase 1 parent issue.
 
 ### Phase 10 — Verification
 
 1. Run the commands from `test-commands.yaml`.
 2. Verify each acceptance criterion from `05-plan.md`.
 3. Write `09-verification.md` with pass/fail by criterion plus commands run.
-4. Create and attach the verification child issue under the Phase 1 parent issue.
+4. Create and link the verification child issue under the Phase 1 parent issue.
 5. **Gate F**: all verification checks must pass before Phase 11.
 
 ### Phase 11 — Commit / Push / PR
