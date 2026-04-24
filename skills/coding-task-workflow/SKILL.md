@@ -16,6 +16,8 @@ Read references just in time:
 - Read [references/issue-hierarchy.md](references/issue-hierarchy.md) only when creating or linking GitHub issues.
 - Read [references/templates/](references/templates/) and [references/artifact-schema.md](references/artifact-schema.md) only when writing or updating artifacts.
 
+If more than one condition applies, read the matching references together and still keep the scope to only what the current step needs.
+
 For exact phase contracts, issue-linking details, and artifact templates, follow the referenced docs instead of expanding the instructions inline.
 
 ## Mandatory Phase 7 session boundary
@@ -116,9 +118,9 @@ Create a structured record before touching code.
 ### Phase 3 — Codebase exploration
 
 1. Launch 1-3 `code-explorer` subagents in parallel with non-overlapping scopes:
-   - Use 1 when the change stays within one familiar component and the pattern is already obvious.
-   - Use 2 when it spans several files or one integration boundary.
-   - Use 3 only when it is cross-cutting, touches tests/build plus product code, or the area is unfamiliar.
+   - Use 1 when the change stays within one familiar module or feature area.
+   - Use 2 when it spans two or more related modules or crosses one integration boundary.
+   - Use 3 only when it is cross-cutting across product code plus tests/build/docs, or when the area is unfamiliar enough that you need distinct architecture, similarity, and test-infrastructure passes.
 2. Read the key files they surface; do not rely only on summaries.
 3. Write `02-exploration/summary.md`, `files.csv`, and `open-questions.md`.
 4. Create and attach the exploration child issue under the Phase 1 parent issue.
