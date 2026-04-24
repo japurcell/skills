@@ -115,7 +115,10 @@ Create a structured record before touching code.
 
 ### Phase 3 — Codebase exploration
 
-1. Launch 1-3 `code-explorer` subagents in parallel with non-overlapping scopes: use 1 when the change stays within one familiar component and the pattern is already obvious, 2 when it spans several files or one integration boundary, and 3 only when it is cross-cutting, touches tests/build plus product code, or the area is unfamiliar.
+1. Launch 1-3 `code-explorer` subagents in parallel with non-overlapping scopes:
+   - Use 1 when the change stays within one familiar component and the pattern is already obvious.
+   - Use 2 when it spans several files or one integration boundary.
+   - Use 3 only when it is cross-cutting, touches tests/build plus product code, or the area is unfamiliar.
 2. Read the key files they surface; do not rely only on summaries.
 3. Write `02-exploration/summary.md`, `files.csv`, and `open-questions.md`.
 4. Create and attach the exploration child issue under the Phase 1 parent issue.
@@ -194,4 +197,13 @@ Follow the [tdd skill](../tdd/SKILL.md) for the full red-green-refactor protocol
 
 ## Artifact layout
 
-Store per-work-item artifacts under `.coding-workflow/work/<slug>/` and repo-level bootstrap overrides under `.coding-workflow/overrides/`. Use the templates in [references/templates/](references/templates/) for exact filenames and structure.
+Store per-work-item artifacts under `.coding-workflow/work/<slug>/` and repo-level bootstrap overrides under `.coding-workflow/overrides/`.
+
+High-level work-item structure:
+
+- `00-intake.md`, `01-worktree.md`, `04-clarifications.md`, `05-plan.md`, `06-task-graph.yaml`, `07-implementation-log.md`, `09-verification.md`, `10-pr.md`
+- `02-exploration/` for summary, file inventory, and open questions
+- `03-research/` for findings and source tracking
+- `08-review/` for code, security, and tech-debt reviews
+
+Use the templates in [references/templates/](references/templates/) for exact filenames and structure.
