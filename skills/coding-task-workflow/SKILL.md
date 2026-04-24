@@ -113,7 +113,7 @@ Create a structured record before touching code.
 
 ### Phase 3 — Codebase exploration
 
-1. Launch 1-3 `code-explorer` subagents in parallel, scaled to task complexity, with non-overlapping scopes.
+1. Launch 1-3 `code-explorer` subagents in parallel with non-overlapping scopes: use 1 for well-bounded familiar work, 2 for multi-file work with some ambiguity, and 3 only for cross-cutting or unfamiliar work.
 2. Read the key files they surface; do not rely only on summaries.
 3. Write `02-exploration/summary.md`, `files.csv`, and `open-questions.md`.
 4. Create and attach the exploration child issue under the Phase 1 parent issue.
