@@ -16,6 +16,8 @@ Read references just in time:
 - Read [references/issue-hierarchy.md](references/issue-hierarchy.md) only when creating or linking GitHub issues.
 - Read [references/templates/](references/templates/) and [references/artifact-schema.md](references/artifact-schema.md) only when writing or updating artifacts.
 
+For exact phase contracts, issue-linking details, and artifact templates, follow the referenced docs instead of expanding the instructions inline.
+
 ## Mandatory Phase 7 session boundary
 
 If Gate E has already passed in the current session, **do not continue into Phase 8 in the same session**. Explain that the workflow hard-stops after Phase 7, then hand off:
@@ -113,7 +115,7 @@ Create a structured record before touching code.
 
 ### Phase 3 — Codebase exploration
 
-1. Launch 1-3 `code-explorer` subagents in parallel with non-overlapping scopes: use 1 for well-bounded familiar work, 2 for multi-file work with some ambiguity, and 3 only for cross-cutting or unfamiliar work.
+1. Launch 1-3 `code-explorer` subagents in parallel with non-overlapping scopes: use 1 when the change stays within one familiar component and the pattern is already obvious, 2 when it spans several files or one integration boundary, and 3 only when it is cross-cutting, touches tests/build plus product code, or the area is unfamiliar.
 2. Read the key files they surface; do not rely only on summaries.
 3. Write `02-exploration/summary.md`, `files.csv`, and `open-questions.md`.
 4. Create and attach the exploration child issue under the Phase 1 parent issue.
@@ -189,8 +191,6 @@ Follow the [tdd skill](../tdd/SKILL.md) for the full red-green-refactor protocol
 3. Append a blank-line-separated trailer block containing `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`.
 4. Push the branch, open the PR, and link the parent issue plus artifact directory.
 5. Write `10-pr.md` with the PR number, URL, and remaining follow-ups.
-
-For exact phase contracts, issue-linking details, and artifact templates, follow the referenced docs instead of expanding the instructions inline.
 
 ## Artifact layout
 
