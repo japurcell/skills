@@ -7,7 +7,14 @@ description: Deterministic workflow for non-trivial coding work. Use this whenev
 
 Use this skill to take a coding task from intake to PR with durable artifacts in the target repo.
 
-Read [references/workflow.md](references/workflow.md) for the full phase specification. Read [references/stop-gates.md](references/stop-gates.md) for gate definitions and exit criteria. Use [references/templates/](references/templates/) and [references/artifact-schema.md](references/artifact-schema.md) when writing artifacts.
+Read references just in time:
+
+- Read [references/workflow.md](references/workflow.md) only for the current phase, resume handling, or when you need the full phase contract.
+- Read [references/stop-gates.md](references/stop-gates.md) only when checking a gate or answering a gate-rule question.
+- Read [references/bootstrap.md](references/bootstrap.md) only for Phase 0.
+- Read [references/delegation-rules.md](references/delegation-rules.md) only before launching subagents.
+- Read [references/issue-hierarchy.md](references/issue-hierarchy.md) only when creating or linking GitHub issues.
+- Read [references/templates/](references/templates/) and [references/artifact-schema.md](references/artifact-schema.md) only when writing or updating artifacts.
 
 ## Mandatory Phase 7 session boundary
 
@@ -82,9 +89,8 @@ Routing:
 Run this on a new repo, when `.coding-workflow/overrides/` is missing or stale, or when the user passes `BOOTSTRAP=only`.
 
 1. Inspect repo docs, manifests, lockfiles, and CI workflows.
-2. Infer stack, commands, architecture notes, and repo policies.
-3. Write or update only the needed files in `.coding-workflow/overrides/`: `repo-inventory.yaml`, `doc-sources.md`, `test-commands.yaml`, `repo-policy.md`, `architecture-notes.md`, `agent-hints.md`.
-4. Record provenance, confidence, and evidence in generated files.
+2. Write or update only the needed files in `.coding-workflow/overrides/`.
+3. Record provenance, confidence, and evidence in generated files.
 
 See [references/bootstrap.md](references/bootstrap.md) for the full signal list and merge rules.
 
@@ -96,8 +102,8 @@ Create a structured record before touching code.
 2. Classify the work item as `feature | bug | refactor | spec | chore`.
 3. Assign slug `YYYY-MM-DD-<kebab-title>` and create `.coding-workflow/work/<slug>/`.
 4. Write `00-intake.md`.
-5. If `ISSUE` is provided, keep it as the **Phase 1 parent issue**, record its number and node ID, and do **not** create a new parent issue.
-6. Otherwise create the parent issue, apply labels from [references/issue-hierarchy.md](references/issue-hierarchy.md), and record its number and node ID.
+5. If `ISSUE` is provided, keep it as the **Phase 1 parent issue** and do **not** create a new parent issue.
+6. Otherwise create the parent issue and record its number and node ID.
 
 ### Phase 2 — Worktree setup
 
@@ -107,10 +113,11 @@ Create a structured record before touching code.
 
 ### Phase 3 — Codebase exploration
 
-1. Launch 2-3 `code-explorer` subagents in parallel, each covering a different angle such as similar features, architecture, tests, or extension points.
+1. Launch 1-3 `code-explorer` subagents in parallel, scaled to task complexity, with non-overlapping scopes.
 2. Read the key files they surface; do not rely only on summaries.
 3. Write `02-exploration/summary.md`, `files.csv`, and `open-questions.md`.
-4. **Gate A**: the exploration summary must exist before Phase 4.
+4. Create and attach the exploration child issue under the Phase 1 parent issue.
+5. **Gate A**: the exploration summary must exist before Phase 4.
 
 See [references/delegation-rules.md](references/delegation-rules.md) for explorer prompts.
 
@@ -118,8 +125,9 @@ See [references/delegation-rules.md](references/delegation-rules.md) for explore
 
 1. Read `open-questions.md` and group unresolved questions by topic.
 2. Launch 1-3 research subagents in parallel, each answering a distinct question set from official sources.
-3. Write `03-research/findings.md` and `sources.md` with URL, question, date checked, finding, confidence, applicability, and decision.
-4. **Gate B**: the research artifact must exist before Phase 5.
+3. Write `03-research/findings.md` and `sources.md`.
+4. Create and attach the research child issue under the Phase 1 parent issue.
+5. **Gate B**: the research artifact must exist before Phase 5.
 
 ### Phase 5 — Clarification
 
@@ -133,7 +141,7 @@ See [references/delegation-rules.md](references/delegation-rules.md) for explore
 1. Read the Phase 3-5 artifacts and the affected source files.
 2. Write `05-plan.md` with goal, non-goals, approach, file-by-file map, and verification guidance.
 3. Present the plan summary and wait for explicit approval.
-4. Create the child issue first, resolve both parent and child node IDs, then attach it with `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
+4. Create and attach the plan child issue under the Phase 1 parent issue.
 5. **Gate D**: the plan must be approved before Phase 7.
 
 See [references/templates/plan.md](references/templates/plan.md) for the plan shape.
@@ -143,7 +151,7 @@ See [references/templates/plan.md](references/templates/plan.md) for the plan sh
 1. Break the plan into vertical slices: `red -> green -> refactor`.
 2. Mark each task `sequential` or `parallelizable`.
 3. Write `06-task-graph.yaml`.
-4. Create each child issue first, resolve both node IDs, then attach it as a true sub-issue with `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
+4. Create and attach the implementation child issues under the Phase 1 parent issue.
 5. **Gate E**: once the task graph exists and RED tasks are defined, stop the current session and hand off `coding-task-workflow RESUME=<slug>`.
 
 See [references/templates/task-graph.yaml](references/templates/task-graph.yaml) for the schema.
@@ -164,13 +172,15 @@ Follow the [tdd skill](../tdd/SKILL.md) for the full red-green-refactor protocol
 1. Launch review subagents in parallel for code review, security review, and tech-debt review.
 2. Write `08-review/code-review.md`, `security-review.md`, and `tech-debt.md`.
 3. Fix all high-severity findings before Phase 10; turn the rest into follow-up issues.
+4. Create and attach the review child issue under the Phase 1 parent issue.
 
 ### Phase 10 — Verification
 
 1. Run the commands from `test-commands.yaml`.
 2. Verify each acceptance criterion from `05-plan.md`.
 3. Write `09-verification.md` with pass/fail by criterion plus commands run.
-4. **Gate F**: all verification checks must pass before Phase 11.
+4. Create and attach the verification child issue under the Phase 1 parent issue.
+5. **Gate F**: all verification checks must pass before Phase 11.
 
 ### Phase 11 — Commit / Push / PR
 
@@ -180,29 +190,8 @@ Follow the [tdd skill](../tdd/SKILL.md) for the full red-green-refactor protocol
 4. Push the branch, open the PR, and link the parent issue plus artifact directory.
 5. Write `10-pr.md` with the PR number, URL, and remaining follow-ups.
 
+For exact phase contracts, issue-linking details, and artifact templates, follow the referenced docs instead of expanding the instructions inline.
+
 ## Artifact layout
 
-All workflow artifacts live in the target repo under:
-
-```text
-.coding-workflow/
-  work/<slug>/
-    00-intake.md
-    01-worktree.md
-    02-exploration/
-    03-research/
-    04-clarifications.md
-    05-plan.md
-    06-task-graph.yaml
-    07-implementation-log.md
-    08-review/
-    09-verification.md
-    10-pr.md
-  overrides/
-    repo-inventory.yaml
-    doc-sources.md
-    test-commands.yaml
-    repo-policy.md
-    architecture-notes.md
-    agent-hints.md
-```
+Store per-work-item artifacts under `.coding-workflow/work/<slug>/` and repo-level bootstrap overrides under `.coding-workflow/overrides/`. Use the templates in [references/templates/](references/templates/) for exact filenames and structure.
