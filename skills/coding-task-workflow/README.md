@@ -31,9 +31,9 @@ A portable, reusable skill that gives any AI agent a **deterministic end-to-end 
 - **Parallel specialised review**: code review, security review, and tech-debt review run concurrently.
 - **Verified landing**: tests must pass and acceptance criteria must be verified before the PR is opened.
 - **Commit hygiene**: the final commit message ends with a blank-line-separated `Co-authored-by: NAME <EMAIL>` trailer block using the agent's own co-author identity.
-- **Persistent artifacts**: every phase produces a structured file committed alongside the code, making work resumable and auditable.
+- **Persistent artifacts**: Phase 0 writes repo-local override files; Phases 1–11 persist durable workflow state in GitHub issues and comments, making work resumable and auditable across agents.
 
-The skill is **tool- and model-agnostic**: it is written in plain Markdown and YAML. Any agent that can read files in a repository can follow it.
+The skill is **tool- and model-agnostic**: it is written in plain Markdown and YAML. Any agent that can read the repo and update GitHub issues can follow it.
 
 ---
 
@@ -74,7 +74,7 @@ Use the coding-task-workflow skill to implement [feature/bug/spec].
 
 ## How the workflow works
 
-The workflow has 12 phases (Phase 0 is optional). Each phase produces at least one artifact file. Gates between phases are explicit — the agent must not proceed until a gate condition is satisfied.
+The workflow has 12 phases (Phase 0 is optional). Phase 0 produces repo-local override files; Phases 1–11 produce GitHub-native artifacts. Gates between phases are explicit — the agent must not proceed until a gate condition is satisfied.
 
 ```
 Phase 0  Bootstrap (optional)       — generates repo-local override files
@@ -147,30 +147,29 @@ Located at `.coding-workflow/overrides/`:
 | `architecture-notes.md` | High-level architecture, key modules, data-flow, patterns         |
 | `agent-hints.md`        | Gotchas, known traps, environment quirks, agent-specific guidance |
 
-### Per-work-item artifacts
+### Phase artifacts
 
-Located at `.coding-workflow/work/<slug>/`:
+Phase 0 still writes repo-local overrides. After that, the workflow keeps its durable per-work-item state in GitHub:
 
-| File                               | Phase | Purpose                                                    |
-| ---------------------------------- | ----- | ---------------------------------------------------------- |
-| `00-intake.md`                     | 1     | Work-item description, classification, acceptance criteria |
-| `01-worktree.md`                   | 2     | Worktree path, branch, base commit                         |
-| `02-exploration/summary.md`        | 3     | Codebase findings and patterns                             |
-| `02-exploration/files.csv`         | 3     | Relevant files with reasons                                |
-| `02-exploration/open-questions.md` | 3     | Questions for research/clarification                       |
-| `03-research/findings.md`          | 4     | Research answers with sources                              |
-| `03-research/sources.md`           | 4     | One row per source checked                                 |
-| `04-clarifications.md`             | 5     | Human answers to blocking questions                        |
-| `05-plan.md`                       | 6     | Implementation plan with file map                          |
-| `06-task-graph.yaml`               | 7     | TDD task DAG with phases                                   |
-| `07-implementation-log.md`         | 8     | Slice-by-slice implementation log                          |
-| `08-review/code-review.md`         | 9     | Code review findings                                       |
-| `08-review/security-review.md`     | 9     | Security review findings                                   |
-| `08-review/tech-debt.md`           | 9     | Tech-debt findings                                         |
-| `09-verification.md`               | 10    | Pass/fail per acceptance criterion                         |
-| `10-pr.md`                         | 11    | PR number, URL, follow-up items                            |
+| Artifact | Phase | Durable location | Purpose |
+| -------- | ----- | ---------------- | ------- |
+| Parent issue | 1 | Parent issue body | Lightweight work-item index and current phase |
+| Intake artifact | 1 | `phase:intake` child issue | Summary, classification, acceptance criteria, constraints |
+| Worktree artifact | 2 | `phase:worktree` child issue | Worktree path, branch, base commit |
+| Exploration summary | 3 | `phase:exploration` child issue | Codebase findings and anti-patterns |
+| `files.csv` artifact | 3 | Artifact subissue under exploration | `files.csv` content in fenced `csv` |
+| Open questions | 3–5 | Artifact subissue under exploration | Durable question ledger across research and clarification |
+| Research findings | 4 | `phase:research` child issue | Research answers and decisions |
+| `sources.md` artifact | 4 | Artifact subissue under research | One row per URL checked |
+| Clarifications | 5 | `phase:clarification` child issue | Human answers and assumptions |
+| Plan | 6 | `phase:plan` child issue | Approved implementation plan |
+| Task graph | 7 | `phase:task-graph` child issue | YAML task graph in fenced `yaml` |
+| Implementation progress | 8 | Comments on task issues | RED / GREEN / REFACTOR execution log |
+| Review findings | 9 | `phase:review` child issue | Combined code / security / tech-debt review |
+| Verification | 10 | `phase:verify` child issue | Automated checks and acceptance results |
+| PR metadata | 11 | `phase:pr` child issue | PR number, URL, follow-up items |
 
-Templates for all artifacts: [`references/templates/`](references/templates/)
+Templates for GitHub issue artifacts: [`references/templates/`](references/templates/)
 
 ---
 
@@ -180,18 +179,26 @@ The skill uses a parent-issue / sub-issue hierarchy to make the order of operati
 
 ```
 Parent issue: #N  [agent:parent]  Feature / bug / spec
-  Sub-issue:  #N+1 [phase:exploration]  Codebase exploration
-  Sub-issue:  #N+2 [phase:research]     Online research
-  Sub-issue:  #N+3 [phase:plan]         Implementation plan
-  Sub-issue:  #N+4 [phase:implement]    Task: <slice name>
-  Sub-issue:  #N+5 [phase:implement]    Task: <slice name>
-  Sub-issue:  #N+6 [phase:review]       Code / security / tech-debt review
-  Sub-issue:  #N+7 [phase:verify]       Verification
+  Sub-issue:  #N+1 [phase:intake]         Intake artifact
+  Sub-issue:  #N+2 [phase:worktree]       Worktree metadata
+  Sub-issue:  #N+3 [phase:exploration]    Exploration summary
+    Sub-issue: #N+3a [artifact]           files.csv
+    Sub-issue: #N+3b [artifact]           open-questions
+  Sub-issue:  #N+4 [phase:research]       Research findings
+    Sub-issue: #N+4a [artifact]           sources.md
+  Sub-issue:  #N+5 [phase:clarification]  Human answers and assumptions
+  Sub-issue:  #N+6 [phase:plan]           Implementation plan
+  Sub-issue:  #N+7 [phase:task-graph]     YAML task graph in issue body
+    Sub-issue: #N+7a [phase:implement]    Task: <slice name>
+    Sub-issue: #N+7b [phase:implement]    Task: <slice name>
+  Sub-issue:  #N+8 [phase:review]         Code / security / tech-debt review
+  Sub-issue:  #N+9 [phase:verify]         Verification
+  Sub-issue:  #N+10 [phase:pr]            PR metadata
 ```
 
 Labels applied automatically: see [`references/issue-hierarchy.md`](references/issue-hierarchy.md).
 
-The PR body links to the parent issue and to the artifact directory so reviewers can trace every decision.
+The PR body fixes the parent issue and leaves the GitHub issue tree as the durable decision record.
 
 ---
 
@@ -219,7 +226,7 @@ WORK_ITEM: Bug: pagination returns duplicate records when total_count is a multi
               Reproducible with page_size=10, total_count=20.
 ```
 
-What happens: classified as `bug`, Light track exploration (one agent focused on the pagination logic), research phase checks for known off-by-one patterns, no clarification needed, plan proposes adding a regression test first, task graph has one RED slice (failing regression test), one GREEN slice (fix), one REFACTOR slice (clean up pagination helper), review agents check for similar bugs elsewhere, verification confirms reproduction script no longer fails.
+What happens: classified as `bug`, Light track exploration (one agent focused on the pagination logic), research phase checks for known off-by-one patterns, no clarification needed, plan proposes adding a regression test first, task graph creates one vertical slice for the bugfix, Phase 8 records the RED regression test result, GREEN fix, and REFACTOR cleanup as comments on that same task issue, review agents check for similar bugs elsewhere, and verification confirms the reproduction script no longer fails.
 
 ---
 
@@ -252,7 +259,7 @@ Use the coding-task-workflow skill.
 RESUME: 2026-04-23-add-retry-mechanism
 ```
 
-What happens: agent reads the artifact directory for that slug, determines the last completed phase from artifact existence and frontmatter status fields, resumes from the next incomplete phase. Useful after an interrupted session or when handing off to a different agent.
+What happens: agent finds the parent issue and descendant phase/task issues by `work_id`, determines the last completed phase from issue closure state plus approval / implementation-log comments, and resumes from the next incomplete phase. Useful after an interrupted session or when handing off to a different agent.
 
 ---
 
@@ -288,11 +295,11 @@ ISSUE: 42
 WORK_ITEM: (read from issue body)
 ```
 
-What happens: agent reads the GitHub issue body, extracts the description and any structured `## Machine Data` block, and treats that content as the authoritative `WORK_ITEM`. All later child issues are created as actual GitHub sub-issues of #42 (using the GitHub sub-issue mutation, not just a body reference). PR references `Closes #42`.
+What happens: agent reads the GitHub issue body, extracts the description and any structured `## Machine Data` block, and treats that content as the authoritative `WORK_ITEM`. A separate `phase:intake` child issue is still created under #42 so the structured intake artifact stays distinct from the lightweight parent issue. All later child issues are created as actual GitHub sub-issues of #42 (using the GitHub sub-issue mutation, not just a body reference). PR references `Fixes #42`.
 
 ---
 
-### 9 — Workflow without GitHub issue creation
+### 9 — Repository without GitHub issue creation
 
 ```
 Use the coding-task-workflow skill.
@@ -300,7 +307,7 @@ WORK_ITEM: Refactor the UserService to use the repository pattern.
 ISSUE: none
 ```
 
-What happens: all artifacts are written to `.coding-workflow/work/<slug>/` as usual. No GitHub issues or sub-issues are created. PR body includes the artifact path instead of issue links. Useful in repos where issue tracking is managed externally.
+What happens: Bootstrap can still run, but the workflow stops before Phase 1. This version of the skill requires GitHub issues for Phases 1–11 because they are the durable cross-agent record. The agent explains the blocker instead of silently falling back to local per-work-item markdown files.
 
 ---
 
@@ -311,7 +318,7 @@ Use the coding-task-workflow skill.
 RESUME: 2026-05-01-repository-pattern-refactor
 ```
 
-The artifact directory already contains `05-plan.md` with status `approved`. Agent detects Gate D is already satisfied, jumps directly to Phase 7 (task graph), then hard-stops and tells the human to resume in a fresh session for implementation.
+The plan issue is already approved and closed. Agent detects Gate D is already satisfied, jumps directly to Phase 7 (task graph), then hard-stops and tells the human to resume in a fresh session for implementation.
 
 ---
 
@@ -344,7 +351,7 @@ What happens: Deep track exploration (3 agents covering controllers, serialisers
 | [`references/workflow.md`](references/workflow.md)                 | Full phase-by-phase workflow specification                              |
 | [`references/stop-gates.md`](references/stop-gates.md)             | Gate conditions, exit criteria, and failure handling                    |
 | [`references/delegation-rules.md`](references/delegation-rules.md) | When and how to use subagents for each phase                            |
-| [`references/artifact-schema.md`](references/artifact-schema.md)   | YAML frontmatter schema and artifact format rules                       |
+| [`references/artifact-schema.md`](references/artifact-schema.md)   | GitHub issue/comment machine-data schema and artifact format rules      |
 | [`references/issue-hierarchy.md`](references/issue-hierarchy.md)   | GitHub issue hierarchy, labels, and body format                         |
 | [`references/bootstrap.md`](references/bootstrap.md)               | Full bootstrap / override-synthesis specification                       |
 | [`references/templates/`](references/templates/)                   | Templates for all per-work-item artifacts and repo-local override files |

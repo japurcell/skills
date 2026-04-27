@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Places the exploration summary in the `phase:exploration` issue body",
+      "passed": false,
+      "evidence": "Missing clear `phase:exploration` issue-body placement"
+    },
+    {
+      "text": "Places `files.csv` in an artifact subissue under the Phase 3 issue",
+      "passed": true,
+      "evidence": "Matched files.csv + artifact subissue + exploration context"
+    },
+    {
+      "text": "Places open questions in a durable GitHub artifact issue rather than `02-exploration/open-questions.md`",
+      "passed": true,
+      "evidence": "Matched open-questions artifact phrasing with explicit non-local contrast"
+    },
+    {
+      "text": "Makes clear that these artifacts exist in GitHub so another agent can resume without local files",
+      "passed": false,
+      "evidence": "Missing GitHub-only resume explanation"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 690,
+    "transcript_chars": 1042
+  },
+  "timing": {
+    "executor_duration_seconds": 123.0,
+    "grader_duration_seconds": 0.1,
+    "total_duration_seconds": 123.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Deterministic text grading against the eval expectations."
+  }
+}

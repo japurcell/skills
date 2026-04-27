@@ -1,0 +1,69 @@
+{
+  "expectations": [
+    {
+      "text": "Places the exploration summary in the `phase:exploration` issue body",
+      "passed": true,
+      "evidence": "Phase 0 keeps repo-local overrides, but Phases 1\u201311 persist durable state in GitHub issues and comments instead of local per-work-item markdown files. For Phase 3, the consolidated exploration summary lives in the `phase:exploration` issue "
+    },
+    {
+      "text": "Places `files.csv` in an artifact subissue under the Phase 3 issue",
+      "passed": true,
+      "evidence": "ues and comments instead of local per-work-item markdown files. For Phase 3, the consolidated exploration summary lives in the `phase:exploration` issue body. `files.csv` lives in a closed artifact subissue under that exploration issue, sto"
+    },
+    {
+      "text": "Places open questions in a durable GitHub artifact issue rather than `02-exploration/open-questions.md`",
+      "passed": true,
+      "evidence": "arkdown files. For Phase 3, the consolidated exploration summary lives in the `phase:exploration` issue body. `files.csv` lives in a closed artifact subissue under that exploration issue, stored in a fenced `csv` block. Open questions live "
+    },
+    {
+      "text": "Makes clear that these artifacts exist in GitHub so another agent can resume without local files",
+      "passed": true,
+      "evidence": "fact subissue under that exploration issue, stored in a fenced `csv` block. Open questions live in a separate `open-questions` artifact subissue under the exploration issue, kept durable in GitHub so another agent can resume without local `"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "report_intent": 4,
+      "view(eval_metadata.json)": 1,
+      "view(SKILL.md)": 1,
+      "view(issue-hierarchy.md)": 1,
+      "rg(storage rules)": 1,
+      "view(workflow.md:106-121)": 1,
+      "view(issue-hierarchy.md:1-40)": 1,
+      "view(exploration-summary.md:20-35)": 1,
+      "bash(write outputs)": 1
+    },
+    "total_tool_calls": 12,
+    "total_steps": 6,
+    "files_created": [
+      "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/iteration-2/eval-5-exploration-artifact-subissues/with_skill/run-1/outputs/final.md",
+      "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/iteration-2/eval-5-exploration-artifact-subissues/with_skill/run-1/transcript.md",
+      "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/iteration-2/eval-5-exploration-artifact-subissues/with_skill/run-1/outputs/user_notes.md",
+      "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/iteration-2/eval-5-exploration-artifact-subissues/with_skill/run-1/outputs/metrics.json"
+    ],
+    "errors_encountered": 0,
+    "output_chars": 544,
+    "transcript_chars": 368
+  },
+  "timing": {
+    "total_tokens": 544,
+    "duration_ms": 90000,
+    "total_duration_seconds": 90.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Deterministic text grading against the eval expectations."
+  }
+}

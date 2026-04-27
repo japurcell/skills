@@ -1,6 +1,6 @@
 # Workflow Specification
 
-This document specifies each phase of the `coding-task-workflow` skill in detail. Follow this document exactly; do not improvise phase ordering or skip phases without satisfying the stated gate.
+This document specifies each phase of the `coding-task-workflow` skill. Follow it exactly. Phase 0 writes repo-local override files; Phases 1–11 use GitHub issues and comments as the canonical durable workflow record.
 
 ---
 
@@ -9,9 +9,10 @@ This document specifies each phase of the `coding-task-workflow` skill in detail
 These rules override user requests to skip or compress the workflow:
 
 1. If `ISSUE` is supplied, fetch it before classification with `gh issue view <ISSUE> --json number,title,body,url,id`, infer `WORK_ITEM` from that issue title/body, and keep that issue as the parent issue for the full workflow.
-2. Every child issue must be created first, then linked to the Phase 1 parent issue with the `addSubIssue` GraphQL mutation. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
-3. After Gate E passes, stop and hand off `coding-task-workflow RESUME=<slug>`. Do not begin Phase 8 in the same session even if the user explicitly asks for it.
-4. Phase 11 commit messages end with a blank-line-separated `Co-authored-by: NAME <EMAIL>` trailer block using the agent's own known identity.
+2. After Bootstrap, do **not** create local per-work-item artifacts under `.coding-workflow/work/<slug>/`. Persist durable state in GitHub parent issues, phase issues, artifact subissues, and issue comments.
+3. Every child issue must be created first, then linked to its parent with the `addSubIssue` GraphQL mutation. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
+4. After Gate E passes, stop and hand off `coding-task-workflow RESUME=<slug>`. Do not begin Phase 8 in the same session even if the user explicitly asks for it.
+5. Phase 11 commit messages end with a blank-line-separated `Co-authored-by: NAME <EMAIL>` trailer block using the agent's own known identity.
 
 ---
 
@@ -40,22 +41,22 @@ These rules override user requests to skip or compress the workflow:
 
 ## Phase 1 — Intake
 
-**Objective**: create a structured, machine-readable record of the work item before any code is touched.
+**Objective**: capture the work item in GitHub before any code is touched.
 
 **Inputs**: `WORK_ITEM` text or file path; optional `ISSUE` number.
 
 **Steps**:
 
-1. If `ISSUE` is provided, fetch the GitHub issue with `gh issue view <ISSUE> --json number,title,body,url,id` and infer `WORK_ITEM` from the issue title/body before classification. Treat separately supplied `WORK_ITEM` text as supplemental context only, and do not let it override the issue.
+1. If `ISSUE` is provided, fetch the GitHub issue with `gh issue view <ISSUE> --json number,title,body,url,id` and infer `WORK_ITEM` from the issue title/body before classification. Treat separately supplied `WORK_ITEM` text as supplemental context only.
 2. If `WORK_ITEM` is a file path, read the file.
-3. Classify the work item as: `feature | bug | refactor | spec | chore`.
+3. Classify the work item as `feature | bug | refactor | spec | chore`.
 4. Assign a deterministic slug: `YYYY-MM-DD-<kebab-title>` (max 50 chars).
-5. Create `.coding-workflow/work/<slug>/`.
-6. Write `00-intake.md` using the [intake template](templates/intake.md). Include: summary, classification, acceptance criteria (initial draft), known constraints, and links to any referenced issues or specs.
-7. If `ISSUE` is provided, treat that issue as the Phase 1 parent issue, record its number and node ID, add a comment linking to `00-intake.md`, and do not create another parent issue.
-8. If `ISSUE` is not provided, create a GitHub parent issue with label `agent:parent`, capture its node ID, and link `00-intake.md` in the issue body.
+5. If `ISSUE` is provided, treat that issue as the lightweight parent issue. Refresh its body so it matches the parent template in [issue-hierarchy.md](issue-hierarchy.md), preserving any useful existing summary text. If `ISSUE` is not provided, create a new parent issue labelled `agent:parent`.
+6. Create a separate GitHub child issue labelled `agent:phase` and `phase:intake`. Its body is the structured intake artifact based on [templates/intake.md](templates/intake.md).
+7. Attach the intake issue to the parent issue with `addSubIssue`.
+8. Close the intake issue once the body contains the accepted summary, classification, acceptance criteria, known constraints, references, and `## Machine Data`.
 
-**Outputs**: `00-intake.md`, GitHub parent issue.
+**Outputs**: lightweight parent issue, closed intake child issue.
 
 **Gate**: none — intake always runs.
 
@@ -73,9 +74,11 @@ These rules override user requests to skip or compress the workflow:
 
 1. Run `git worktree add <WORKTREE> -b <BRANCH>`.
 2. Confirm the worktree was created successfully.
-3. Write `01-worktree.md` recording: worktree path, branch name, base commit SHA, and timestamp.
+3. Create a GitHub child issue labelled `agent:phase` and `phase:worktree`. Record the worktree path, branch name, base commit SHA, and timestamp in the issue body.
+4. Attach the worktree issue to the parent issue with `addSubIssue`.
+5. Close the worktree issue once the worktree details are complete.
 
-**Outputs**: `01-worktree.md`, git worktree.
+**Outputs**: closed worktree child issue, git worktree.
 
 **Gate**: none — worktree setup always runs immediately after intake.
 
@@ -87,7 +90,7 @@ These rules override user requests to skip or compress the workflow:
 
 **Objective**: understand the relevant parts of the codebase deeply enough to produce a well-grounded implementation plan.
 
-**Inputs**: `00-intake.md`, `01-worktree.md`, override files (if present).
+**Inputs**: intake issue, worktree issue, override files.
 
 **Track selection** (choose one before launching agents):
 
@@ -106,16 +109,17 @@ These rules override user requests to skip or compress the workflow:
    - Agent C _(Deep only)_: test infrastructure, build system, integration points.
 3. Each agent returns: a list of 5–10 key files with reasons, observed patterns, and open questions.
 4. Read all files surfaced by agents (do not rely on summaries alone).
-5. Write `02-exploration/summary.md`: consolidated findings, patterns to follow, anti-patterns to avoid.
-6. Write `02-exploration/files.csv`: path, reason, phase-relevance.
-7. Write `02-exploration/open-questions.md`: one row per question with `id`, `question`, `status: open`.
-8. Create a GitHub child issue labelled `phase:exploration`, then attach it as a true sub-issue of the Phase 1 parent issue using the `addSubIssue` GraphQL mutation described in [issue-hierarchy.md](issue-hierarchy.md). The sequence is: `gh issue create` → resolve both node IDs → `gh api graphql ... addSubIssue`. Link to `02-exploration/summary.md`.
+5. Create a GitHub child issue labelled `agent:phase` and `phase:exploration`. Its body uses [templates/exploration-summary.md](templates/exploration-summary.md) for the consolidated exploration summary.
+6. Create a `files.csv` artifact subissue under the exploration issue. Store the file list in a fenced `csv` block so other agents can resume from GitHub alone.
+7. Close the `files.csv` artifact subissue as soon as the file ledger is complete.
+8. Create an `open-questions` artifact subissue under the exploration issue. Store each question with `id`, `question`, `status: open`, `resolved_by`, and `answer`.
+9. Close the exploration phase issue once the summary is complete. Leave the `open-questions` artifact issue open until every question is resolved or explicitly marked `needs-human`.
 
-**Outputs**: `02-exploration/summary.md`, `files.csv`, `open-questions.md`, GitHub sub-issue.
+**Outputs**: closed exploration phase issue, closed `files.csv` artifact subissue, open `open-questions` artifact subissue.
 
-**Gate A**: `02-exploration/summary.md` must exist with `status: complete` in frontmatter before Phase 4 begins.
+**Gate A**: the exploration phase issue is closed, the `files.csv` artifact issue is closed, and the `open-questions` artifact issue exists before Phase 4 begins.
 
-**Parallelism**: explorer agents run in parallel; step 4 (reading files) runs after all agents complete.
+**Parallelism**: explorer agents run in parallel; file reading happens after all agents complete.
 
 ---
 
@@ -123,24 +127,23 @@ These rules override user requests to skip or compress the workflow:
 
 **Objective**: answer open questions and verify up-to-date best practices through targeted research.
 
-**Inputs**: `02-exploration/open-questions.md`, override files.
+**Inputs**: `open-questions` artifact issue, override files.
 
 **Steps**:
 
-1. Read `open-questions.md`. Group questions by domain (e.g., framework docs, security standards, algorithm choices).
+1. Read the open-questions artifact issue. Group questions by domain (framework docs, security standards, algorithm choices, and so on).
 2. Launch 1–3 research subagents in parallel, each assigned a distinct group of questions.
-3. Each research agent must:
-   - State the question being answered.
-   - Check the official documentation for the relevant framework/library version in use.
-   - Record: question, source URL, date checked, finding, confidence (`high | medium | low`), applicability to repo, decision.
-4. Write `03-research/findings.md`: one section per question, structured per the above.
-5. Write `03-research/sources.md`: one row per URL checked (even if not ultimately useful).
-6. Update `open-questions.md`: mark each question `resolved` or escalate with `status: needs-human`.
-7. Create a GitHub child issue labelled `phase:research`, then attach it as a true sub-issue of the Phase 1 parent issue using the `addSubIssue` GraphQL mutation described in [issue-hierarchy.md](issue-hierarchy.md). The sequence is: `gh issue create` → resolve both node IDs → `gh api graphql ... addSubIssue`. Link to `03-research/findings.md`.
+3. Each research agent must return: question, source URL, date checked, finding, confidence, applicability to the repo, and decision.
+4. Create a GitHub child issue labelled `agent:phase` and `phase:research`. Its body uses [templates/research-findings.md](templates/research-findings.md).
+5. Create a `sources.md` artifact subissue under the research issue. Store the source ledger as a Markdown table.
+6. Close the `sources.md` artifact subissue as soon as the source ledger is complete.
+7. Update the `open-questions` artifact issue: mark each question `resolved` or `needs-human`, and include the answer or escalation note.
+8. If the `open-questions` artifact issue has no question left at `status: open`, close it here; otherwise leave it open for Phase 5.
+9. Close the research issue once the findings and sources are recorded.
 
-**Outputs**: `03-research/findings.md`, `sources.md`, updated `open-questions.md`, GitHub sub-issue.
+**Outputs**: closed research phase issue, closed `sources.md` artifact subissue, updated `open-questions` artifact issue (closed here when research fully resolves it; otherwise left open for clarification).
 
-**Gate B**: `03-research/findings.md` must exist with `status: complete` in frontmatter before Phase 5 begins.
+**Gate B**: the research phase issue is closed, the `sources.md` artifact issue is closed, and the `open-questions` artifact issue has no question left at `status: open` before Phase 5 begins.
 
 **Parallelism**: research agents run in parallel.
 
@@ -150,21 +153,24 @@ These rules override user requests to skip or compress the workflow:
 
 **Objective**: resolve any blocking questions that remain after exploration and research, with minimum burden on the human.
 
-**Inputs**: `02-exploration/open-questions.md` (updated by Phase 4), `03-research/findings.md`.
+**Inputs**: updated `open-questions` artifact issue, research issue.
 
 **Steps**:
 
-1. Review all questions with `status: needs-human`.
-2. Attempt to resolve each using artifacts already available. Mark any newly resolved questions `resolved`.
-3. Classify remaining questions as `blocking: true` (implementation cannot proceed without an answer) or `blocking: false` (a reasonable assumption can be stated).
-4. For `blocking: false` questions, record the assumption in `04-clarifications.md` and proceed.
-5. For `blocking: true` questions: collect all into a single, minimal prompt (≤3 questions per batch). Present to the human.
-6. Record human answers in `04-clarifications.md`.
-7. Repeat step 5 only if new `blocking: true` questions surface from answers (rare).
+1. Review all questions marked `needs-human`.
+2. Attempt to resolve each using artifacts already available. Update the `open-questions` issue when a question can now be marked `resolved`.
+3. Classify remaining questions as `blocking: true` or `blocking: false`.
+4. Create a GitHub child issue labelled `agent:phase` and `phase:clarification`.
+5. For `blocking: false` questions, record the assumption in the clarification issue and update the question entry accordingly.
+6. For `blocking: true` questions, batch them into the smallest prompt that will unblock the work. Add `needs-human` to the parent issue while waiting.
+7. Record human answers or assumptions in the clarification issue body using [templates/clarifications.md](templates/clarifications.md). Update the `open-questions` issue to reflect the final status for each question.
+8. Close the `open-questions` artifact issue once every entry is either resolved or explicitly finalized as `needs-human`; do not leave it open after clarification completes.
+9. Remove `needs-human` from the parent issue once every blocking question is answered.
+10. Close the clarification issue once no entry remains with `blocking: true` and `status: unanswered`.
 
-**Outputs**: `04-clarifications.md`.
+**Outputs**: closed clarification phase issue, closed `open-questions` artifact issue.
 
-**Gate C**: `04-clarifications.md` must exist and contain no entry with `blocking: true` and `status: unanswered` before Phase 6 begins.
+**Gate C**: the clarification issue is closed, the `open-questions` artifact issue is closed, and no entry contains both `blocking: true` and `status: unanswered` before Phase 6 begins.
 
 **Parallelism**: none.
 
@@ -174,25 +180,20 @@ These rules override user requests to skip or compress the workflow:
 
 **Objective**: produce a written, approved implementation plan that Phase 8 can execute without further design work.
 
-**Inputs**: all artifacts from Phases 1–5, relevant source files.
+**Inputs**: intake issue, exploration issue, `files.csv` artifact subissue, research issue, clarification issue, relevant source files.
 
 **Steps**:
 
-1. Re-read `00-intake.md` (acceptance criteria), `02-exploration/summary.md`, `03-research/findings.md`, and `04-clarifications.md`.
-2. Read the key source files from `files.csv` that are directly affected by the work item.
-3. Write `05-plan.md` using the [plan template](templates/plan.md). Required sections:
-   - Goal and non-goals.
-   - Recommended approach and rationale.
-   - Alternatives considered (if meaningful trade-off exists).
-   - File-by-file implementation map (exact paths, exact changes).
-   - Verification guidance (test commands, manual checks, acceptance criteria mapping).
-4. Present a concise summary of the plan to the human. Gate on explicit approval.
-5. Create a GitHub child issue labelled `phase:plan`, then attach it as a true sub-issue of the Phase 1 parent issue using the `addSubIssue` GraphQL mutation described in [issue-hierarchy.md](issue-hierarchy.md). The sequence is: `gh issue create` → resolve both node IDs → `gh api graphql ... addSubIssue`. Link to `05-plan.md`.
-6. Update `00-intake.md` frontmatter: `plan_approved: true`, `plan_path: .coding-workflow/work/<slug>/05-plan.md`.
+1. Re-read the intake issue (acceptance criteria), exploration summary, research findings, and clarifications.
+2. Read the key source files from the `files.csv` artifact issue that are directly affected by the work item.
+3. Create a GitHub child issue labelled `agent:phase` and `phase:plan`. Its body uses [templates/plan.md](templates/plan.md) and includes goal / non-goals, approach and rationale, alternatives, file-by-file implementation map, and verification guidance.
+4. Present a concise plan summary to the human. Gate on explicit approval.
+5. Record approval as an explicit comment on the plan issue.
+6. Close the plan issue immediately after approval. If the human requests changes, edit the issue body and repeat the approval step.
 
-**Outputs**: `05-plan.md`, updated `00-intake.md`, GitHub sub-issue.
+**Outputs**: closed plan phase issue with an explicit approval comment.
 
-**Gate D**: `05-plan.md` must exist and `00-intake.md` must have `plan_approved: true` before Phase 7 begins.
+**Gate D**: the plan issue is closed and contains an explicit approval comment before Phase 7 begins.
 
 **Parallelism**: none.
 
@@ -202,20 +203,21 @@ These rules override user requests to skip or compress the workflow:
 
 **Objective**: decompose the approved plan into a DAG of TDD vertical slices with explicit sequencing.
 
-**Inputs**: `05-plan.md`.
+**Inputs**: plan issue.
 
 **Steps**:
 
 1. Identify distinct behaviours to implement. Each behaviour becomes one vertical slice: RED → GREEN → REFACTOR.
-2. For each slice, determine: id, name, stage (`red | green | refactor`), depends_on (list of prior slice ids), parallelizable (`true | false`).
+2. For each slice, determine: `id`, `name`, `depends_on`, `parallelizable`, and `files`. Each slice starts at `stage: red` and advances on the same task issue as work progresses.
 3. **Do not write all RED slices before any GREEN slices.** Each vertical slice is independent.
-4. Write `06-task-graph.yaml` using the [task-graph template](templates/task-graph.yaml).
-5. Create GitHub child issues for each major implementation task (group minor slices if >8 tasks to avoid issue noise), then attach each one as a true sub-issue of the Phase 1 parent issue using the `addSubIssue` GraphQL mutation described in [issue-hierarchy.md](issue-hierarchy.md). The sequence is: `gh issue create` → resolve both node IDs → `gh api graphql ... addSubIssue`. Label each `phase:implement` plus `parallel` or `sequential` as appropriate.
-6. After Gate E is satisfied, stop the current session and hand off a resume command: `coding-task-workflow RESUME=<slug>`. Do not proceed to Phase 8 in the same invocation, even if the user explicitly asks you to continue immediately.
+4. Create a GitHub child issue labelled `agent:phase` and `phase:task-graph`. Put the task graph in a fenced `yaml` block using [templates/task-graph.yaml](templates/task-graph.yaml) as the content shape.
+5. Create one GitHub child issue per vertical slice and attach it under the Phase 7 task-graph issue. Label each `agent:task`, `phase:implement`, plus `parallel` or `sequential` as appropriate. Initialize each task issue with `stage: red`; RED, GREEN, and REFACTOR progress stays on that same issue as comments rather than separate issues.
+6. Close the task-graph issue once the YAML and implementation task issues are complete.
+7. After Gate E is satisfied, stop the current session and hand off a resume command: `coding-task-workflow RESUME=<slug>`. Do not proceed to Phase 8 in the same invocation.
 
-**Outputs**: `06-task-graph.yaml`, GitHub sub-issues for implementation tasks.
+**Outputs**: closed task-graph phase issue, open implementation task issues.
 
-**Gate E**: `06-task-graph.yaml` must exist and at least one RED task must be defined before Phase 8 begins.
+**Gate E**: the task-graph issue is closed, at least one implementation task issue has `stage: red`, and every task issue records an explicit dependency list before Phase 8 begins.
 
 **Parallelism**: none for authoring the graph; execution in Phase 8 follows the graph's parallelism rules.
 
@@ -225,22 +227,22 @@ These rules override user requests to skip or compress the workflow:
 
 **Objective**: execute the task graph using a strict TDD red→green→refactor loop.
 
-**Inputs**: `06-task-graph.yaml`, `05-plan.md`, source files from `files.csv`, fresh session resumed after the Phase 7 hard stop.
+**Inputs**: task-graph issue, open implementation task issues, relevant source files, fresh session resumed after the Phase 7 hard stop.
 
 **Steps**:
 
-1. Process tasks in dependency order. Run tasks marked `parallelizable: true` concurrently when their dependencies are satisfied.
-2. For each sequential task:
-   a. **RED**: write a failing test that captures the behaviour. Run it; confirm it fails for the expected reason.
-   b. **GREEN**: write the minimal code to make the test pass. Run it; confirm it passes.
-   c. **REFACTOR**: clean up if needed; run tests again; confirm still green.
-3. For parallel task groups, launch one implementation subagent per task. Each agent follows the same RED→GREEN→REFACTOR loop.
-4. After each slice, append an entry to `07-implementation-log.md`: slice id, status, files changed, test result.
-5. Never add untested code paths. If a useful branch is not yet covered by a test, do not add it.
+1. Resolve `RESUME=<slug>` by loading the parent issue and descendant phase/task issues for that `work_id`. Do not rely on local phase files.
+2. Process implementation task issues in dependency order. Run tasks labelled `parallel` concurrently when their dependencies are satisfied and they do not overlap on files.
+3. For each task issue:
+   a. **RED**: write a failing test that captures the behaviour. Run it and confirm it fails for the expected reason. Record the result as a comment on the task issue while the issue remains at `stage: red`.
+   b. **GREEN**: update the same task issue to `stage: green`, write the minimal code to make the test pass, run it, and record the result as a comment on that issue.
+   c. **REFACTOR**: update the same task issue to `stage: refactor`, clean up if needed, rerun the relevant tests, and record the outcome as another comment on that issue.
+4. Never add untested code paths. If a useful branch is not yet covered by a test, do not add it.
+5. Close each task issue when its slice is complete. The task issue comments replace `07-implementation-log.md`, and the issue body remains the durable record of the slice's current/final stage.
 
-**Outputs**: modified source files, tests, `07-implementation-log.md`.
+**Outputs**: modified source files and tests, implementation task issue comments, updated task issue stage fields, closed implementation task issues.
 
-**Gate**: none (the task graph itself is the gate structure).
+**Gate**: none — the task graph itself is the gate structure.
 
 **Parallelism**: parallelizable task groups run concurrently; sequential tasks run in order.
 
@@ -252,32 +254,23 @@ Strict TDD rules: see [../tdd/SKILL.md](../tdd/SKILL.md).
 
 **Objective**: catch defects, security issues, and tech debt before the code is committed.
 
-**Inputs**: changed source files and tests, `05-plan.md`, `06-task-graph.yaml`.
+**Inputs**: changed source files and tests, plan issue, task-graph issue, implementation task issue comments.
 
 **Steps**:
 
 1. Determine the scope of changed files.
 2. Partition files into non-overlapping groups by module or directory.
-3. Launch three specialised review subagents in parallel (one per review type):
+3. Launch three specialised review subagents in parallel:
+   - **Code review**: conventions, logic, clarity, DRY, dead code.
+   - **Security review**: OWASP Top 10, injection, auth, secrets, unsafe defaults, data exposure.
+   - **Tech-debt review**: duplication, coupling, complexity, missing abstractions, test gaps.
+4. Create a GitHub child issue labelled `agent:phase` and `phase:review`. Record the combined findings in that issue body, using repeated sections based on [templates/review.md](templates/review.md).
+5. Classify each finding as `High | Medium | Low | Info`.
+6. Fix all `High` findings immediately and update the review issue before closing it.
+7. Record `Medium` and `Low` findings as follow-up GitHub issues labelled `tech-debt` or `security`.
+8. Close the review issue once no `High` finding remains open.
 
-   **Code review agent**:
-   - Check: conventions match the codebase, no dead code, no obvious logic errors, clear naming, DRY.
-   - Write findings to `08-review/code-review.md`.
-
-   **Security review agent**:
-   - Check: OWASP Top 10, injection risks, hardcoded secrets, insecure defaults, over-privileged access, unvalidated input, broken auth.
-   - Write findings to `08-review/security-review.md`.
-
-   **Tech-debt review agent**:
-   - Check: duplication, high coupling, complex functions (cyclomatic complexity), missing abstraction opportunities, known anti-patterns for the language/framework.
-   - Write findings to `08-review/tech-debt.md`.
-
-4. Each finding is classified: `severity: High | Medium | Low | Info`.
-5. Consolidate results. Fix all `High` severity findings immediately (re-run Phase 8 slices as needed).
-6. Record `Medium` and `Low` findings as labelled follow-up GitHub issues: `tech-debt` or `security`.
-7. Create a GitHub child issue labelled `phase:review`, then attach it as a true sub-issue of the Phase 1 parent issue using the `addSubIssue` GraphQL mutation described in [issue-hierarchy.md](issue-hierarchy.md).
-
-**Outputs**: `08-review/code-review.md`, `08-review/security-review.md`, `08-review/tech-debt.md`.
+**Outputs**: closed review phase issue, follow-up issues for deferred findings.
 
 **Gate**: none — review always runs after implementation.
 
@@ -289,43 +282,44 @@ Strict TDD rules: see [../tdd/SKILL.md](../tdd/SKILL.md).
 
 **Objective**: confirm the implementation satisfies every acceptance criterion and all automated checks pass.
 
-**Inputs**: `00-intake.md` (acceptance criteria), `05-plan.md` (verification guidance), `test-commands.yaml` (if available).
+**Inputs**: intake issue (acceptance criteria), plan issue (verification guidance), `.coding-workflow/overrides/test-commands.yaml` if available, review issue.
 
 **Steps**:
 
-1. Run the test suite, linter, type-checker, and build commands from `.coding-workflow/overrides/test-commands.yaml`. If the file does not exist, run the commands inferred during bootstrap or from `package.json` / `Makefile`.
-2. For each acceptance criterion in `00-intake.md`: record `pass` or `fail` with evidence (command output, screenshot, log excerpt).
-3. Verify that no `High` severity issues remain from Phase 9 review.
-4. Write `09-verification.md` using the [verification template](templates/verification.md).
+1. Run the test suite, linter, type-checker, and build commands from `.coding-workflow/overrides/test-commands.yaml`. If the file does not exist, run the commands inferred during bootstrap or from repo scripts.
+2. For each acceptance criterion captured in the intake issue, record `pass` or `fail` with evidence.
+3. Verify that no `High` severity issue remains open from Phase 9 review.
+4. Create a GitHub child issue labelled `agent:phase` and `phase:verify`. Its body uses [templates/verification.md](templates/verification.md).
 5. If any criterion fails: return to Phase 8 to fix the failing behaviour, then re-run verification.
-6. Create a GitHub child issue labelled `phase:verify`, then attach it as a true sub-issue of the Phase 1 parent issue using the `addSubIssue` GraphQL mutation described in [issue-hierarchy.md](issue-hierarchy.md).
+6. Close the verification issue only when every acceptance criterion passes and every required automated check exits 0.
 
-**Outputs**: `09-verification.md`.
+**Outputs**: closed verification phase issue.
 
-**Gate F**: all acceptance criteria must be `pass` and all automated checks must exit 0 before Phase 11 begins.
+**Gate F**: the verification issue is closed, every acceptance criterion is marked `pass`, all automated checks exit 0, and no `High` review finding remains open before Phase 11 begins.
 
-**Parallelism**: test suite steps may run in parallel subagents if the test framework supports it.
+**Parallelism**: test-suite steps may run in parallel subagents if the test framework supports it.
 
 ---
 
 ## Phase 11 — Commit / Push / PR
 
-**Objective**: land the verified work into a PR.
+**Objective**: land the verified work into a PR while leaving only the top-level parent issue open.
 
-**Inputs**: all changed files, `09-verification.md`, parent GitHub issue number.
+**Inputs**: all changed files, verification issue, parent GitHub issue number.
 
 **Steps**:
 
 1. Stage all changed files.
-2. Write a conventional-commits message: `<type>(<scope>): <subject>`. Include a body linking to the work-item slug and parent issue, then append a `Co-authored-by: NAME <EMAIL>` trailer block separated from that body by a blank line using your own known co-author identity. For GitHub Copilot CLI, use `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`. If more than one trailer is present, keep them together in that final trailer block.
+2. Write a conventional-commits message: `<type>(<scope>): <subject>`. Include a body linking to the work-item slug and parent issue, then append a `Co-authored-by: NAME <EMAIL>` trailer block separated from that body by a blank line using your own known co-author identity. For GitHub Copilot CLI, use `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`.
 3. Push the branch to the remote.
 4. Open a pull request:
    - Title: conventional-commits subject.
-   - Body: links to parent issue (`Closes #N`), link to `.coding-workflow/work/<slug>/`, summary of changes, open follow-up items.
-5. Write `10-pr.md`: PR number, URL, list of follow-up issues created during review.
-6. Close completed sub-issues. Leave open items as labelled issues for future sprints.
+   - Body: `Fixes #<parent issue number>`, summary of changes, and any open follow-up items.
+5. Create a GitHub child issue labelled `agent:phase` and `phase:pr`. Record the PR number, URL, commit subject, and follow-up issues in the issue body.
+6. Close the Phase 11 issue immediately after the PR is opened.
+7. Ensure every completed child issue is closed. Leave only the top-level parent issue open so the PR can close it on merge.
 
-**Outputs**: `10-pr.md`, PR, closed sub-issues.
+**Outputs**: closed Phase 11 PR issue, PR, closed child issues.
 
 **Gate**: none after Gate F.
 

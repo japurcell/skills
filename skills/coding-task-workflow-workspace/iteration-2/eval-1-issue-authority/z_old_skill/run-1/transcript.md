@@ -1,0 +1,4 @@
+- Read eval metadata: iteration-2/eval-1-issue-authority/eval_metadata.json
+- Read skill entrypoint: skill-snapshot/SKILL.md
+- Read supporting Intake rules: skill-snapshot/references/workflow.md (Priority rules, Phase 1)
+- Wrote final answer, user notes, and metrics to iteration-2/eval-1-issue-authority/z_old_skill/run-1

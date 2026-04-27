@@ -1,19 +1,12 @@
----
-work_id: WORK_ID
-phase: exploration
-status: complete | partial
-updated_at: ISO8601_TIMESTAMP
-depends_on: [worktree]
-track: light | standard | deep
-agents_launched: 0
----
+## Summary
 
-# Exploration Summary: TITLE
+One paragraph describing the exploration outcome and why these findings matter for planning.
 
 ## Track Selected
 
-**Track**: light | standard | deep
-**Rationale**: One sentence explaining why this track was chosen (scope, ambiguity, familiarity with codebase).
+- **Track**: light | standard | deep
+- **Rationale**: One sentence explaining why this track was chosen.
+- **Agents launched**: N
 
 ## Key Findings
 
@@ -21,25 +14,28 @@ agents_launched: 0
 - **Finding 2**: Description.
 - **Finding 3**: Description.
 
-*Focus on findings that will influence the plan or implementation. Omit obvious or irrelevant observations.*
-
 ## Anti-patterns to Avoid
 
-- **Anti-pattern 1**: What to avoid and why (e.g., "Do not use the legacy UserManager class — it is deprecated in favour of UserService").
+- **Anti-pattern 1**: What to avoid and why.
 - **Anti-pattern 2**: Description.
 
-## Relevant Files
+## Relevant Files Snapshot
 
-Top 5–10 files most relevant to this work item. Full list is in `files.csv`.
+List the 3–5 most important files here. Put the full `files.csv` payload in the artifact subissue.
 
-| File | Relevance |
-|------|-----------|
-| `src/example/file.ts` | Existing similar feature; follow its patterns |
-| `src/example/file.test.ts` | Test pattern to follow |
+## Open Questions Snapshot
 
-## Open Questions
+List the unresolved questions at a high level here. Put the durable ledger in the `open-questions` artifact subissue.
 
-Questions that could not be answered from codebase exploration alone. Full details in `open-questions.md`.
+## Machine Data
 
-- **q1**: Question text.
-- **q2**: Question text.
+```yaml
+work_id: WORK_ID
+kind: phase
+phase: exploration
+status: open
+track: light | standard | deep
+agents_launched: 0
+depends_on:
+  - worktree
+```

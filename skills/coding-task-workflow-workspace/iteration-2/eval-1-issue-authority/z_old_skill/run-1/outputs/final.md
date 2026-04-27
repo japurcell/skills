@@ -1,0 +1,3 @@
+The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue.
+
+For Phase 1 Intake with `ISSUE: 42`, Intake should first fetch the issue with `gh issue view 42 --json number,title,body,url,id`, read the title/body, and classify from that. The work item should therefore be the CSV import bug that silently drops rows, inferred from the issue body/title. `WORK_ITEM: maybe clean up auth later` is only supplemental/conflicting context and must not replace the issue-derived work item. Issue #42 stays the Phase 1 parent issue for later sub-issue creation.

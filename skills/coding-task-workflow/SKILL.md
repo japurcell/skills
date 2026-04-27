@@ -5,7 +5,7 @@ description: Deterministic workflow for non-trivial coding work. Use this whenev
 
 # Coding Task Workflow
 
-Use this skill to take non-trivial coding work from intake to PR with durable artifacts in the target repo.
+Use this skill to take non-trivial coding work from intake to PR with durable artifacts in GitHub and repo-local Bootstrap overrides.
 
 ## Read only what you need
 
@@ -23,9 +23,10 @@ Do not duplicate those references in your response. Follow them exactly and keep
 These rules override user requests to skip or compress the workflow:
 
 1. If `ISSUE` is provided, fetch it before classification with `gh issue view <ISSUE> --json number,title,body,url,id`. The GitHub issue title/body is the authoritative `WORK_ITEM`, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue.
-2. Every child issue is created first, then linked to the Phase 1 parent issue by resolving parent/child node IDs and calling `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
-3. After Gate E passes, hard-stop the session and hand off `coding-task-workflow RESUME=<slug>`. Do not begin Phase 8 in the same session. Resume from a fresh session; Phase 8 is the next phase after the resume. Do not restart earlier phases unless the saved artifacts say they are incomplete.
-4. Phase 11 commit messages use a conventional-commits subject, a body that references the work-item slug and parent issue, then a blank-line-separated trailer block. For GitHub Copilot CLI, include `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`.
+2. Phase 0 is the only phase that writes durable repo-local workflow artifacts. For Phases 1–11, GitHub parent issues, phase issues, artifact subissues, and issue comments are the canonical workflow record; do not create `.coding-workflow/work/<slug>/...` artifacts.
+3. Every child issue is created first, then linked to the appropriate parent issue by resolving parent/child node IDs and calling `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
+4. After Gate E passes, hard-stop the session and hand off `coding-task-workflow RESUME=<slug>`. Do not begin Phase 8 in the same session. Resume from a fresh session; Phase 8 is the next phase after the resume. Do not restart earlier phases unless the GitHub artifact state says they are incomplete.
+5. Phase 11 commit messages use a conventional-commits subject, a body that references the work-item slug and parent issue, then a blank-line-separated trailer block. For GitHub Copilot CLI, include `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`.
 
 ## Response style for workflow-rule questions
 
@@ -34,6 +35,7 @@ When the user asks what the workflow requires, answer tersely and lead with the 
 - For Phase 7 resume handoffs, start with this exact three-sentence handoff and stop unless the user explicitly asks for more detail: `Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with coding-task-workflow RESUME=<slug>. Phase 8 is the next phase after the resume.`
 - For Intake authority questions, say this almost verbatim: `The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue.`
 - For sub-issue questions, say this almost verbatim: `Create the child issue first, resolve both node IDs, then attach it with gh api graphql ... addSubIssue. Parent: #N is fallback-only when GitHub sub-issues are unavailable.`
+- For workflow-record questions, say this almost verbatim: `Phase 0 keeps repo-local overrides, but Phases 1–11 persist durable state in GitHub issues and comments instead of local per-work-item markdown files.`
 
 Keep these explanations compact: rule, command shape, and fallback only. Do not invent issue-template prose, sample issue bodies, or extra artifact structure unless the user explicitly asks for them.
 
@@ -54,7 +56,7 @@ Arguments (all optional; gather interactively when missing):
 Routing:
 
 - `BOOTSTRAP=only` runs only Phase 0.
-- `RESUME=<slug>` reads `.coding-workflow/work/<slug>/` and continues from the next incomplete phase.
+- `RESUME=<slug>` rebuilds state from the GitHub issue hierarchy for that `work_id` and continues from the next incomplete phase.
 - Otherwise start at Phase 1. If `ISSUE` is present, fetch it before doing anything else.
 - Do not improvise phase order or skip a gate unless the canonical references explicitly allow it.
 
@@ -75,4 +77,4 @@ Routing:
 | 10  | **Verification**           | –                     | F    |
 | 11  | **Commit / Push / PR**     | –                     | –    |
 
-For phase mechanics, artifact paths, issue sequencing, delegation rules, and gate criteria, follow the reference docs exactly rather than restating them.
+For phase mechanics, GitHub artifact hierarchy, issue sequencing, delegation rules, and gate criteria, follow the reference docs exactly rather than restating them.

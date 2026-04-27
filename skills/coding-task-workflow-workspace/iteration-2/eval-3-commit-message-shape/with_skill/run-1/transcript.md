@@ -1,0 +1,7 @@
+- Read eval_metadata.json for the prompt and assertions.
+- Read SKILL.md for the governing workflow rule.
+- Read references/workflow.md Phase 11 lines for exact commit-message formatting.
+- Wrote outputs/final.md with the user-facing answer.
+- Wrote outputs/user_notes.md with review sections.
+- Wrote outputs/metrics.json with best-effort counts.
+- Wrote transcript.md with this action log.

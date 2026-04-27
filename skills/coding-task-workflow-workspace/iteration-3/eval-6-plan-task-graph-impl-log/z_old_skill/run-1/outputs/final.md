@@ -1,0 +1,1 @@
+Record Gate D as an explicit approval comment on the Phase 6 plan issue, then close that plan issue. Put the Phase 7 task graph in the task-graph issue body as a fenced YAML block instead of `06-task-graph.yaml`. Record Phase 8 implementation progress as comments on the related implementation task issues instead of `07-implementation-log.md`.

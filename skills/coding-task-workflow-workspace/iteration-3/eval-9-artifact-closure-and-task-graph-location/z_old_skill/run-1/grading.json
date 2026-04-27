@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Closes `files.csv` after the exploration file ledger is complete",
+      "passed": true,
+      "evidence": "Matched files.csv closure in exploration"
+    },
+    {
+      "text": "Closes `sources.md` after the research source ledger is complete",
+      "passed": true,
+      "evidence": "Matched sources.md closure in research"
+    },
+    {
+      "text": "Keeps `open-questions` open only while unresolved questions remain and closes it once every entry is finalized",
+      "passed": true,
+      "evidence": "Matched open-questions lifecycle across research/clarification"
+    },
+    {
+      "text": "Places the Phase 7 task graph YAML in the `phase:task-graph` issue body rather than a separate artifact subissue",
+      "passed": false,
+      "evidence": "Missing clear task-graph issue-body placement"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 891,
+    "transcript_chars": 1164
+  },
+  "timing": {
+    "executor_duration_seconds": 138.0,
+    "grader_duration_seconds": 0.1,
+    "total_duration_seconds": 138.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Deterministic text grading against the eval expectations."
+  }
+}

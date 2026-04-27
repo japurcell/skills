@@ -1,14 +1,3 @@
----
-work_id: WORK_ID
-phase: verification
-status: complete
-updated_at: ISO8601_TIMESTAMP
-depends_on: [review]
-all_criteria_pass: false
----
-
-# Verification: TITLE
-
 ## Automated Checks
 
 | Command | Exit code | Notes |
@@ -22,7 +11,7 @@ all_criteria_pass: false
 
 | # | Criterion | Result | Evidence |
 |---|-----------|--------|----------|
-| 1 | Criterion text from 00-intake.md | pass | TestName: PASS |
+| 1 | Criterion text from the intake issue | pass | TestName: PASS |
 | 2 | Criterion text | pass | Manual check: description |
 | 3 | Criterion text | pass | TestName: PASS |
 
@@ -39,4 +28,15 @@ all_criteria_pass: false
 *(Omit this section if none.)*
 
 - Description of any verification that could not be performed and why.
-- Example: "Integration tests against staging skipped — no staging environment available."
+
+## Machine Data
+
+```yaml
+work_id: WORK_ID
+kind: phase
+phase: verify
+status: open
+depends_on:
+  - review
+all_criteria_pass: false
+```

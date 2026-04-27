@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "text": "Says Intake should fetch/read the GitHub issue title or body before classification",
+      "passed": true,
+      "evidence": "upplied issue remains the Phase 1 parent issue; do not create a new parent issue.  For Phase 1 Intake with `ISSUE: 42`, Intake should first fetch the issue with `gh issue view 42 --json number,title,body,url,id`, read the title/body, and cl"
+    },
+    {
+      "text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+      "passed": true,
+      "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue.  For Phase 1 Intake with `I"
+    },
+    {
+      "text": "Does not treat `maybe clean up auth later` as the primary work item",
+      "passed": true,
+      "evidence": "number,title,body,url,id`, read the title/body, and classify from that. The work item should therefore be the CSV import bug that silently drops rows, inferred from the issue body/title. `WORK_ITEM: maybe clean up auth later` is only supple"
+    },
+    {
+      "text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue",
+      "passed": true,
+      "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue.  For Phase 1 Intake with `ISSUE: 42`, Intake should first fetch the issue with `gh issue "
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "report_intent": 3,
+      "view eval_metadata.json": 1,
+      "view SKILL.md": 1,
+      "glob skill-snapshot/**": 1,
+      "view references/workflow.md": 1,
+      "bash write outputs": 1
+    },
+    "total_tool_calls": 8,
+    "total_steps": 4,
+    "files_created": [],
+    "errors_encountered": 0,
+    "output_chars": 642,
+    "transcript_chars": 323
+  },
+  "timing": {
+    "total_tokens": 642,
+    "duration_ms": 71000,
+    "total_duration_seconds": 71.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Deterministic text grading against the eval expectations."
+  }
+}

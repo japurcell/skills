@@ -1,0 +1,3 @@
+Rule: in this older skill snapshot, Phase 1 still creates a local intake artifact and only one GitHub issue when no `ISSUE` already exists.
+
+It writes `.coding-workflow/work/<slug>/00-intake.md` using the intake template, then creates a GitHub parent issue labeled `agent:parent` whose body links that file. It does **not** create a separate `phase:intake` child issue in Phase 1. The parent issue is the top-level tracker, and later phases create child issues under it.

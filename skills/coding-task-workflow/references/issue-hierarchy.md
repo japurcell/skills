@@ -1,26 +1,35 @@
 # Issue Hierarchy
 
-This document defines how GitHub issues and sub-issues are used to track work items and make the order of operations visible in GitHub.
+This document defines how GitHub issues and sub-issues are used to track work items. For this workflow, GitHub is the durable record for Phases 1–11; local per-work-item markdown files are intentionally not used after Bootstrap.
 
 ---
 
 ## Hierarchy Structure
 
-Every work item has one **parent issue** and a set of **sub-issues**, one per phase that produces a discrete deliverable.
+Every work item has one lightweight **parent issue** plus descendant issues that hold the actual phase artifacts.
 
-```
+```text
 Parent issue: #N  [agent:parent]  <work-item title>
-  ├── Sub-issue: [phase:exploration]   Codebase exploration — <slug>
-  ├── Sub-issue: [phase:research]      Online research — <slug>
-  ├── Sub-issue: [phase:plan]          Implementation plan — <slug>
-  ├── Sub-issue: [phase:implement]     Task: <t1 name>
-  ├── Sub-issue: [phase:implement]     Task: <t2 name>
-  ├── ...
-  ├── Sub-issue: [phase:review]        Code / security / tech-debt review — <slug>
-  └── Sub-issue: [phase:verify]        Verification and PR — <slug>
+├── Intake issue:          [phase:intake]         Structured intake artifact
+├── Worktree issue:        [phase:worktree]       Worktree / branch metadata
+├── Exploration issue:     [phase:exploration]    Exploration summary
+│   ├── Artifact issue:    files.csv              files.csv content
+│   └── Artifact issue:    open-questions         open/resolved research questions
+├── Research issue:        [phase:research]       Research findings
+│   └── Artifact issue:    sources.md             sources ledger
+├── Clarification issue:   [phase:clarification]  Human answers and assumptions
+├── Plan issue:            [phase:plan]           Approved implementation plan
+├── Task-graph issue:      [phase:task-graph]     YAML task graph in issue body
+│   ├── Task issue:        [phase:implement]      RED/GREEN/REFACTOR slice
+│   └── Task issue:        [phase:implement]      RED/GREEN/REFACTOR slice
+├── Review issue:          [phase:review]         Combined review findings
+├── Verification issue:    [phase:verify]         Acceptance and checks
+└── PR issue:              [phase:pr]             PR metadata and follow-ups
 ```
 
-When GitHub sub-issues are available, child issues must be linked with GitHub's actual sub-issue relationship. A plain `Parent: #N` body reference is only a fallback when the repository cannot create GitHub sub-issues.
+Use artifact subissues only when a phase has multiple named outputs that need durable status or separate resume context. Otherwise, keep the phase output in the phase issue body.
+
+When GitHub sub-issues are available, link child issues with GitHub's actual sub-issue relationship. A plain `Parent: #N` body reference is only a fallback when the repository cannot create GitHub sub-issues.
 
 ### Required sub-issue linking flow
 
@@ -28,7 +37,7 @@ When GitHub sub-issues are available, child issues must be linked with GitHub's 
 2. Create each child issue normally, for example:
 
    ```bash
-   gh issue create --title "Child Task" --body "Sub-issue details"
+   gh issue create --title "Exploration — 2026-04-27-add-retry-mechanism" --body-file /tmp/exploration_issue.md
    ```
 
 3. Resolve both node IDs:
@@ -53,6 +62,8 @@ When GitHub sub-issues are available, child issues must be linked with GitHub's 
 
 5. Treat the GraphQL mutation as the success criterion. Only if the repository cannot use GitHub sub-issues should the workflow fall back to a body reference such as `Parent: #N`.
 
+Nested artifact issues use the same flow: create the artifact issue first, then attach it to the phase issue.
+
 ---
 
 ## Labels
@@ -61,29 +72,35 @@ Apply the following labels consistently. Create them in the repository if they d
 
 ### Role labels
 
-| Label          | Color     | Meaning                           |
-| -------------- | --------- | --------------------------------- |
-| `agent:parent` | `#0075ca` | Top-level work-item issue         |
-| `agent:phase`  | `#cfd3d7` | A workflow phase sub-issue        |
-| `agent:task`   | `#e4e669` | An individual implementation task |
+| Label          | Color     | Meaning                                      |
+| -------------- | --------- | -------------------------------------------- |
+| `agent:parent` | `#0075ca` | Top-level work-item issue                    |
+| `agent:phase`  | `#cfd3d7` | A workflow phase issue                       |
+| `agent:task`   | `#e4e669` | An individual implementation task issue      |
+| `agent:artifact` | `#bfdadc` | A non-task artifact subissue under a phase |
 
 ### Phase labels
 
-| Label               | Color     | Phase    |
-| ------------------- | --------- | -------- |
-| `phase:exploration` | `#84b6eb` | Phase 3  |
-| `phase:research`    | `#84b6eb` | Phase 4  |
-| `phase:plan`        | `#0e8a16` | Phase 6  |
-| `phase:implement`   | `#fbca04` | Phase 8  |
-| `phase:review`      | `#d93f0b` | Phase 9  |
-| `phase:verify`      | `#0075ca` | Phase 10 |
+| Label                 | Color     | Phase      |
+| --------------------- | --------- | ---------- |
+| `phase:intake`        | `#84b6eb` | Phase 1    |
+| `phase:worktree`      | `#84b6eb` | Phase 2    |
+| `phase:exploration`   | `#84b6eb` | Phase 3    |
+| `phase:research`      | `#84b6eb` | Phase 4    |
+| `phase:clarification` | `#84b6eb` | Phase 5    |
+| `phase:plan`          | `#0e8a16` | Phase 6    |
+| `phase:task-graph`    | `#fbca04` | Phase 7    |
+| `phase:implement`     | `#fbca04` | Phase 8    |
+| `phase:review`        | `#d93f0b` | Phase 9    |
+| `phase:verify`        | `#0075ca` | Phase 10   |
+| `phase:pr`            | `#5319e7` | Phase 11   |
 
 ### Status labels
 
 | Label         | Color     | Meaning                               |
 | ------------- | --------- | ------------------------------------- |
 | `needs-human` | `#e11d48` | Waiting for human input               |
-| `blocked`     | `#b60205` | Cannot proceed; reason in body        |
+| `blocked`     | `#b60205` | Cannot proceed; reason is in the body |
 | `parallel`    | `#bfd4f2` | Task can run concurrently with others |
 | `sequential`  | `#d4c5f9` | Task must run in order                |
 
@@ -105,27 +122,30 @@ Every issue created by the workflow must contain both a human-readable summary a
 ````markdown
 ## Summary
 
-<One paragraph describing the work item, source (feature request / bug / spec), and expected outcome.>
+<One paragraph describing the work item, source, and expected outcome.>
 
-## Inputs
+## Current Phase
 
-- Spec / description: `.coding-workflow/work/<slug>/00-intake.md`
-- Source issue or spec: <link if applicable>
+<Name the next phase that should run or the blocker that is waiting on input.>
 
-## Acceptance Criteria
+## Acceptance Snapshot
 
-<Copied from 00-intake.md — numbered list.>
+<Short numbered list copied from the intake issue. Keep it compact; the intake issue holds the full artifact.>
 
 ## Sub-issues
 
-<!-- Created automatically as each phase begins -->
+<!-- Maintained as phases begin -->
 
-- [ ] #N+1 Codebase exploration
-- [ ] #N+2 Online research
-- [ ] #N+3 Implementation plan
-- [ ] #N+4 Task: ...
-- [ ] #N+M Review
-- [ ] #N+M+1 Verification
+- [ ] #N+1 Intake
+- [ ] #N+2 Worktree setup
+- [ ] #N+3 Codebase exploration
+- [ ] #N+4 Online research
+- [ ] #N+5 Clarification
+- [ ] #N+6 Implementation plan
+- [ ] #N+7 TDD task graph
+- [ ] #N+8 Review
+- [ ] #N+9 Verification
+- [ ] #N+10 PR / landing
 
 ## Machine Data
 
@@ -133,87 +153,145 @@ Every issue created by the workflow must contain both a human-readable summary a
 work_id: <slug>
 kind: parent
 classification: feature | bug | refactor | spec | chore
-artifact_dir: .coding-workflow/work/<slug>/
 status: open
+current_phase: intake | worktree | exploration | research | clarification | plan | task-graph | implement | review | verify | pr
+source_issue: <number-or-null>
 ```
 ````
 
-````
+### Phase issue template
 
-### Phase sub-issue template
-
-```markdown
+````markdown
 ## Summary
 
-<One sentence describing what this phase does.>
+<One sentence describing what this phase produced.>
 
 ## Inputs
 
 - Parent: #N
-- artifact: `.coding-workflow/work/<slug>/<artifact-path>`
+- Depends on: #<prior phase or artifact issues>
 
-## Deliverables
+## Deliverable
 
-- `.coding-workflow/work/<slug>/<output-path>`
+<The phase artifact itself. Use prose, tables, or fenced code blocks as appropriate. If the phase has secondary durable artifacts, list them here and create artifact subissues for them.>
 
 ## Exit Criteria
 
-<Copied from the gate definition in stop-gates.md for this phase.>
-
-## Dependencies
-
-- Depends on: #<prior sub-issue number>
+<Copied from the relevant gate or phase definition in workflow.md / stop-gates.md.>
 
 ## Machine Data
 
 ```yaml
 work_id: <slug>
 kind: phase
-phase: exploration | research | plan | implement | review | verify
-sequence: <number>
-parallelizable: true | false
-depends_on: [<prior issue numbers>]
-artifact: .coding-workflow/work/<slug>/<artifact-path>
-status: open
+phase: intake | worktree | exploration | research | clarification | plan | task-graph | review | verify | pr
+depends_on: [<issue numbers or artifact keys>]
+status: open | closed
+```
 ````
 
-````
+For Phase 7 specifically, keep the task graph YAML in the phase issue body. Do not create a separate `task-graph.yaml` artifact subissue.
 
-### Implementation task sub-issue template
+### Artifact subissue template
 
-```markdown
+````markdown
 ## Summary
 
-<One sentence describing what this task implements.>
+<Describe the secondary durable artifact.>
+
+## Parent
+
+- Phase issue: #N
+
+## Artifact
+
+<Render the artifact directly in the issue body. For file-like artifacts, preserve the original format in a fenced block, e.g. `csv`, `yaml`, or `markdown`.>
+
+## Machine Data
+
+```yaml
+work_id: <slug>
+kind: artifact
+phase: exploration | research | clarification | review | verify | pr
+artifact_name: files.csv | open-questions | sources.md | <custom>
+format: csv | yaml | markdown | table | checklist
+status: open | closed
+```
+````
+
+### Implementation task issue template
+
+````markdown
+## Summary
+
+<One sentence describing the vertical slice this task issue owns.>
 
 ## Task Details
 
-- **Stage**: red | green | refactor
-- **Task ID**: <id from task-graph.yaml>
+- **Current stage**: red | green | refactor
+- **Task ID**: <id from the task graph YAML>
 - **Depends on tasks**: <ids>
 
 ## Files
 
 <List of files this task may write to.>
 
-## Parent
+## Progress Log
 
-#N (work-item parent issue)
-#N+3 (plan sub-issue)
+<!-- This issue owns one full vertical slice. Add RED / GREEN / REFACTOR comments here instead of creating stage-specific issues or writing 07-implementation-log.md. -->
 
 ## Machine Data
 
 ```yaml
 work_id: <slug>
 kind: task
+phase: implement
 task_id: <id>
 stage: red | green | refactor
 parallelizable: true | false
 depends_on: [<task ids>]
 files: [<paths>]
-status: open
+status: open | closed
+```
 ````
 
+### Plan approval comment template
+
+````markdown
+Approved. Proceed with the implementation plan captured in this issue.
+
+## Machine Data
+
+```yaml
+work_id: <slug>
+kind: approval
+phase: plan
+status: approved
+approved_by: human
+approved_at: <ISO8601>
+```
+````
+
+### Implementation log comment template
+
+````markdown
+## Slice Update — <task_id> / <stage>
+
+- **status**: complete | blocked
+- **files_changed**: <paths>
+- **test_result**: pass | fail
+- **notes**: <short explanation>
+
+## Machine Data
+
+```yaml
+work_id: <slug>
+kind: implementation-log
+task_id: <id>
+stage: red | green | refactor
+status: complete | blocked
+updated_at: <ISO8601>
+```
 ````
 
 ---
@@ -222,41 +300,48 @@ status: open
 
 | Event | Action |
 |-------|--------|
-| Phase begins | Create child issue, attach it to the Phase 1 parent with `addSubIssue`, and label it with the phase label |
-| Phase's gate condition is satisfied | Close sub-issue |
-| Blocking question raised | Add `needs-human` label to parent issue |
-| Blocking question answered | Remove `needs-human` label |
-| High-severity review finding | Open separate labelled issue (`security` or `tech-debt`) |
-| PR opened | Link PR to parent issue with `Closes #N` |
-| PR merged | Close parent issue |
-| Follow-up items | Leave as open labelled issues |
+| Phase begins | Create the phase issue, attach it to the correct parent, and apply the phase label |
+| Secondary durable artifact appears | Create an artifact subissue under the phase issue |
+| `files.csv` ledger is complete | Close the `files.csv` artifact subissue |
+| `sources.md` ledger is complete | Close the `sources.md` artifact subissue |
+| `open-questions` still has unresolved entries | Keep the `open-questions` artifact issue open across phases 3–5 |
+| Every open question is finalized | Close the `open-questions` artifact issue |
+| Phase artifact is complete | Close the phase issue |
+| Artifact remains active across phases | Keep its subissue open until the tracked status is resolved |
+| Blocking question raised | Add `needs-human` to the parent issue |
+| Blocking question answered | Remove `needs-human` from the parent issue |
+| Implementation slice begins | Create one task issue for the slice and initialize it with `stage: red` |
+| Implementation slice progresses | Add RED / GREEN / REFACTOR comments to the same task issue and update its `stage` field in place |
+| Implementation slice finishes | Close the task issue |
+| High-severity review finding | Fix it before closing the review issue |
+| Medium/Low review finding | Open a follow-up issue labelled `security` or `tech-debt` |
+| PR opened | Create and then close the `phase:pr` issue; keep the parent issue open |
+| PR merged | The PR body closes the parent issue via `Fixes #N` |
 
 ---
 
 ## When GitHub Issues Are Not Available
 
-If the repository does not use GitHub or issue creation is disabled:
-
-1. Skip all GitHub issue creation steps.
-2. Record the work-item hierarchy in `.coding-workflow/work/<slug>/issue-hierarchy.md` using the same structure as the issue templates above.
-3. Reference artifact files directly in the PR body instead of issue links.
-4. All artifact files still exist and the workflow proceeds identically.
+This GitHub-native workflow depends on GitHub issues for Phases 1–11. If the repository cannot create issues, stop after any requested Bootstrap work and tell the human that the workflow cannot continue without GitHub issue support.
 
 If GitHub issues are available but the sub-issue mutation is disabled for the repository:
 
 1. Create the child issue normally.
 2. Add `Parent: #N` in the child issue body as an explicit fallback marker.
-3. Record the failed mutation attempt and reason in `.coding-workflow/work/<slug>/issue-hierarchy.md`.
+3. Record the failed mutation attempt in the child issue body or a comment.
+
+Do **not** fall back to local per-work-item markdown artifacts.
 
 ---
 
 ## Relationship to PR
 
 The final PR:
-- Title matches the parent issue title.
-- Body includes `Closes #N` (the parent issue number).
-- Body links to `.coding-workflow/work/<slug>/` for artifact access.
-- PR description includes a checklist mirroring the sub-issues.
+
+- Title matches the conventional-commits subject.
+- Body includes `Fixes #N` for the parent issue.
+- Describes follow-up issues created during review.
+- Leaves only the top-level parent issue open until merge.
 
 Example PR body:
 
@@ -265,22 +350,10 @@ Example PR body:
 
 Implements retry mechanism with exponential backoff and jitter for the HTTP client.
 
-Closes #42
+Fixes #42
 
-## artifacts
+## Follow-ups
 
-See `.coding-workflow/work/2026-04-23-add-retry-mechanism/` for full decision history.
-
-## Checklist
-
-- [x] #43 Codebase exploration
-- [x] #44 Online research
-- [x] #45 Implementation plan (approved)
-- [x] #46 Implementation tasks
-- [x] #47 Review (0 High findings)
-- [x] #48 Verification (all criteria pass)
-
-## Follow-up
-
-- #49 [tech-debt] Extract retry policy into config struct
-````
+- #61 Tech-debt: extract retry configuration helper
+- #62 Security: review retry logging redaction
+```

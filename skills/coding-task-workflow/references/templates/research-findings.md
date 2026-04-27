@@ -1,12 +1,6 @@
----
-work_id: WORK_ID
-phase: research
-status: complete
-updated_at: ISO8601_TIMESTAMP
-depends_on: [exploration]
----
+## Summary
 
-# Research Findings: TITLE
+One paragraph summarising the research pass and the decisions it unlocked.
 
 ## q1 — QUESTION_TEXT
 
@@ -30,4 +24,13 @@ depends_on: [exploration]
 
 ---
 
-<!-- Add one section per question. Copy the block above for each additional question. -->
+## Machine Data
+
+```yaml
+work_id: WORK_ID
+kind: phase
+phase: research
+status: open
+depends_on:
+  - exploration
+```

@@ -92,5 +92,52 @@
       "time_seconds": "+0.0",
       "tokens": "-14"
     }
+  },
+  "iteration_3": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 83.35,
+        "stddev": 18.7683,
+        "min": 67.1,
+        "max": 109.1
+      },
+      "tokens": {
+        "mean": 623.0,
+        "stddev": 152.9793,
+        "min": 531,
+        "max": 851
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.75,
+        "stddev": 0.2041,
+        "min": 0.5,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 130.85,
+        "stddev": 6.6018,
+        "min": 123.1,
+        "max": 138.1
+      },
+      "tokens": {
+        "mean": 585.25,
+        "stddev": 252.5224,
+        "min": 344,
+        "max": 891
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.25",
+      "time_seconds": "-47.5",
+      "tokens": "+38"
+    }
   }
 }

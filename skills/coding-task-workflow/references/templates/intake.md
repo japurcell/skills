@@ -1,24 +1,11 @@
----
-work_id: WORK_ID
-phase: intake
-status: open
-updated_at: ISO8601_TIMESTAMP
-depends_on: []
-classification: feature | bug | refactor | spec | chore
-github_issue: 0
-plan_approved: false
----
-
-# Work Item: TITLE
-
 ## Summary
 
 One paragraph describing the work item: what it is, why it matters, and what the expected outcome is.
 
 ## Classification
 
-**Type**: feature | bug | refactor | spec | chore
-**Rationale**: One sentence explaining why this classification was chosen.
+- **Type**: feature | bug | refactor | spec | chore
+- **Rationale**: One sentence explaining why this classification was chosen.
 
 ## Acceptance Criteria
 
@@ -37,7 +24,18 @@ One paragraph describing the work item: what it is, why it matters, and what the
 
 ## References
 
-- Parent issue: #GITHUB_ISSUE_NUMBER
+- Parent issue: #PARENT_ISSUE_NUMBER
+- Source issue or spec: *(link if applicable)*
 - Related issues: *(if any)*
-- Spec file: *(path if spec was provided as a file)*
 - Prior art: *(links to related PRs or issues)*
+
+## Machine Data
+
+```yaml
+work_id: WORK_ID
+kind: phase
+phase: intake
+classification: feature | bug | refactor | spec | chore
+status: open
+source_issue: PARENT_ISSUE_NUMBER_OR_NULL
+```

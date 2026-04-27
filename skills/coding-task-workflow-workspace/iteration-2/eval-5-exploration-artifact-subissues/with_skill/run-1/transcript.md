@@ -1,0 +1,10 @@
+- Read eval metadata: eval_metadata.json
+- Read skill rules: SKILL.md
+- Searched repo skill docs for Phase 3 GitHub artifact storage rules
+- Read workflow.md Phase 3 section
+- Read issue-hierarchy.md hierarchy section
+- Read exploration-summary template snippet
+- Wrote outputs/final.md
+- Wrote outputs/user_notes.md
+- Wrote outputs/metrics.json
+- Wrote transcript.md

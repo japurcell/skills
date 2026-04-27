@@ -1,0 +1,65 @@
+{
+  "expectations": [
+    {
+      "text": "Says Intake should fetch/read the GitHub issue title or body before classification",
+      "passed": true,
+      "evidence": "thoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, first fetch issue 42 with `gh issue view 42 --json number,title,body,url,id`, then classify the work from "
+    },
+    {
+      "text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+      "passed": true,
+      "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, first f"
+    },
+    {
+      "text": "Does not treat `maybe clean up auth later` as the primary work item",
+      "passed": true,
+      "evidence": "rst fetch issue 42 with `gh issue view 42 --json number,title,body,url,id`, then classify the work from that issue. Use the CSV import bug that silently drops rows as the work item; treat `WORK_ITEM: maybe clean up auth later` as supplement"
+    },
+    {
+      "text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue",
+      "passed": true,
+      "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, first fetch issue 42 with `gh issue view 42 --json number,title,body,"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "report_intent": 3,
+      "skill(coding-task-workflow)": 1,
+      "view(eval_metadata.json)": 1,
+      "view(SKILL.md)": 1,
+      "bash(write outputs)": 1
+    },
+    "total_tool_calls": 7,
+    "total_steps": 5,
+    "files_created": [
+      "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/iteration-2/eval-1-issue-authority/with_skill/run-1/outputs/final.md",
+      "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/iteration-2/eval-1-issue-authority/with_skill/run-1/transcript.md",
+      "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/iteration-2/eval-1-issue-authority/with_skill/run-1/outputs/user_notes.md",
+      "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/iteration-2/eval-1-issue-authority/with_skill/run-1/outputs/metrics.json"
+    ],
+    "errors_encountered": 0,
+    "output_chars": 441,
+    "transcript_chars": 240
+  },
+  "timing": {
+    "total_tokens": 441,
+    "duration_ms": 57000,
+    "total_duration_seconds": 57.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Deterministic text grading against the eval expectations."
+  }
+}

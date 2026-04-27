@@ -1,0 +1,8 @@
+- Read eval_metadata.json for the prompt and assertions.
+- Read SKILL.md for the governing resume and workflow-record rules.
+- Read workflow.md sections covering RESUME handling and Phase 8 inputs/steps.
+- Read stop-gates.md sections describing GitHub-backed gate state and Gate E prerequisites.
+- Wrote outputs/final.md with the user-facing workflow-rule answer.
+- Wrote outputs/user_notes.md with review sections.
+- Wrote outputs/metrics.json with best-effort counts.
+- Wrote transcript.md with this action log.

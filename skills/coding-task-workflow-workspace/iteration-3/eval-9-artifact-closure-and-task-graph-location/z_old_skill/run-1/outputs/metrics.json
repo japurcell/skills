@@ -1,0 +1,7 @@
+{
+  "variant": "baseline",
+  "total_steps": 5,
+  "total_tool_calls": 33,
+  "files_created": 4,
+  "errors_encountered": 0
+}

@@ -1,0 +1,12 @@
+{
+  "eval_id": 6,
+  "eval_name": "plan-task-graph-impl-log",
+  "prompt": "Gate D passed and I want to understand the new GitHub-native flow. How should coding-task-workflow record the Phase 6 approval, the Phase 7 task graph, and the Phase 8 implementation log now that `05-plan.md`, `06-task-graph.yaml`, and `07-implementation-log.md` are gone?",
+  "assertions": [
+    "Records Gate D approval as an explicit comment on the Phase 6 plan issue",
+    "Says the plan issue is closed after approval",
+    "Stores the Phase 7 task graph in the issue body as YAML rather than a physical `06-task-graph.yaml` file",
+    "Stores implementation progress as comments on task issues instead of `07-implementation-log.md`"
+  ],
+  "expected_output": "Explains that Phase 6 approval is an explicit comment on the plan issue, the Phase 7 task graph lives in a fenced YAML block in the task-graph issue body, and implementation progress is recorded as comments on the related task issues."
+}

@@ -1,0 +1,9 @@
+- Read eval_metadata.json for the prompt and assertions.
+- Read snapshot SKILL.md for the governing Phase 1 rules.
+- Read snapshot references/workflow.md Phase 1 section.
+- Read snapshot references/templates/intake.md to confirm the template applies to `00-intake.md`.
+- Read snapshot references/issue-hierarchy.md to confirm the parent-plus-later-subissues model.
+- Wrote outputs/final.md with the old-skill baseline answer.
+- Wrote outputs/user_notes.md with review sections.
+- Wrote outputs/metrics.json with best-effort counts.
+- Wrote transcript.md with this action log.

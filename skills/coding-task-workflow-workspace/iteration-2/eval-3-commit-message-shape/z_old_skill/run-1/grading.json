@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Shows a conventional-commits subject line",
+      "passed": true,
+      "evidence": "feat: add retry mechanism  Work-item: 2026-04-23-add-retry-mechanism Parent: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> ```  The required shape is: conventional-commits subject first, then a body that links th"
+    },
+    {
+      "text": "Includes a body that references the work-item slug or parent issue `#42`",
+      "passed": true,
+      "evidence": "a body that references the work-item slug and parent issue, then a blank-line-separated trailer block.  ```text feat: add retry mechanism  Work-item: 2026-04-23-add-retry-mechanism Parent: #42  Co-authored-by: Copilot <223556219+Copilot@use"
+    },
+    {
+      "text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+      "passed": true,
+      "evidence": "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+    },
+    {
+      "text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line",
+      "passed": true,
+      "evidence": "Found a blank line before `Co-authored-by:`."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "multi_tool_use.parallel": 4,
+      "report_intent": 4,
+      "view": 5,
+      "bash": 1
+    },
+    "total_tool_calls": 14,
+    "total_steps": 5,
+    "files_created": [],
+    "errors_encountered": 0,
+    "output_chars": 522,
+    "transcript_chars": 402
+  },
+  "timing": {
+    "total_tokens": 522,
+    "duration_ms": 75000,
+    "total_duration_seconds": 75.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Deterministic text grading against the eval expectations."
+  }
+}

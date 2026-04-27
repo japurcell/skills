@@ -1,13 +1,3 @@
----
-work_id: WORK_ID
-phase: plan
-status: draft | approved
-updated_at: ISO8601_TIMESTAMP
-depends_on: [clarification]
----
-
-# Implementation Plan: TITLE
-
 ## Goal / Non-Goals
 
 **Goal**: One sentence describing what this plan delivers.
@@ -18,7 +8,7 @@ depends_on: [clarification]
 
 ## Recommended Approach
 
-One to three paragraphs describing the implementation approach and why it is the best fit for this codebase given the findings from exploration and research.
+One to three paragraphs describing the implementation approach and why it is the best fit for this codebase.
 
 ## Alternatives Considered
 
@@ -44,7 +34,7 @@ One to three paragraphs describing the implementation approach and why it is the
 ## Verification Guidance
 
 **Test commands**:
-```
+```text
 npm test -- --testPathPattern=retry
 npm test -- --testPathPattern=client
 npm test -- --watchAll=false
@@ -61,11 +51,17 @@ npm test -- --watchAll=false
 | Criterion 1 | TestName in retry.test.ts |
 | Criterion 2 | TestName in client.test.ts |
 
-## Revision History
+## Approval
 
-*(Added when plan is revised after initial draft.)*
+Do not mark this phase complete in the body. Wait for an explicit approval comment, then close the issue.
 
-| Revision | Date | Change |
-|----------|------|--------|
-| 1.0 | YYYY-MM-DD | Initial draft |
-| 1.1 | YYYY-MM-DD | Added max-elapsed-time constraint per human feedback |
+## Machine Data
+
+```yaml
+work_id: WORK_ID
+kind: phase
+phase: plan
+status: open
+depends_on:
+  - clarification
+```
