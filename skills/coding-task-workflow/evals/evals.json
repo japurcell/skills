@@ -28,12 +28,13 @@
     {
       "id": 2,
       "prompt": "Using coding-task-workflow, explain exactly how the workflow should create the Phase 6 plan issue and Phase 7 implementation-task issues under the parent issue from Phase 1. Include the concrete GitHub commands or command shapes the workflow expects.",
-      "expected_output": "Explains that child issues are created normally, their node IDs are resolved, and `gh api graphql` with `addSubIssue` is used to attach them as true GitHub sub-issues of the Phase 1 parent issue.",
+      "expected_output": "Explains that child issues are created normally, their node IDs are resolved, and a shell-safe literal-ID `gh api graphql` `addSubIssue` mutation is used to attach them as true GitHub sub-issues of the Phase 1 parent issue.",
       "files": [],
       "expectations": [
         "Describes creating the child issue first and then linking it to the parent issue",
         "Mentions resolving parent and child issue node IDs before linking",
-        "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation",
+        "Includes or clearly describes the shell-safe literal-ID `gh api graphql` `addSubIssue` mutation",
+        "Avoids GraphQL `$parentId`/`$subIssueId` variables inside the shell query text",
         "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable"
       ]
     },

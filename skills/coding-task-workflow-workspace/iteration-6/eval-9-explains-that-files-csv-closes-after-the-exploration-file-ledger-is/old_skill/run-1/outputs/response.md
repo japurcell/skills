@@ -1,0 +1,1 @@
+In the older workflow, `files.csv`, `sources.md`, and `open-questions.md` are local files under `.coding-workflow/work/<slug>/`, so there is no GitHub artifact issue to close for them. You update those files during exploration, research, and clarification as needed. The Phase 7 task graph lives in `06-task-graph.yaml`.

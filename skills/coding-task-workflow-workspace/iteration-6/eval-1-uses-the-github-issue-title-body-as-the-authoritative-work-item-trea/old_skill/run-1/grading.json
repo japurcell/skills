@@ -1,0 +1,46 @@
+{
+  "expectations": [
+    {
+      "text": "Says Intake should fetch/read the GitHub issue title or body before classification",
+      "passed": true,
+      "evidence": "Intake still begins by fetching `gh issue view 42 --json number,title,body,url,id` before classification. Use the CSV import bug from the i"
+    },
+    {
+      "text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+      "passed": true,
+      "evidence": "e CSV import bug from the issue title/body as the authoritative `WORK_ITEM`; treat `maybe clean up auth later` as supplemental only. Keep `#42` as the pa"
+    },
+    {
+      "text": "Does not treat `maybe clean up auth later` as the primary work item",
+      "passed": true,
+      "evidence": "tle/body as the authoritative `WORK_ITEM`; treat `maybe clean up auth later` as supplemental only. Keep `#42` as the parent issue for the workflow and do not create"
+    },
+    {
+      "text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue",
+      "passed": true,
+      "evidence": "clean up auth later` as supplemental only. Keep `#42` as the parent issue for the workflow and do not create another parent issue.; th later` as supplemental only. Keep `#42` as the parent issue for the workflow and do not create another parent issue."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_skill_files": 2,
+      "read_reference_files": 2,
+      "generate_response": 1,
+      "grade_expectations": 4
+    },
+    "total_tool_calls": 9,
+    "total_steps": 1,
+    "errors_encountered": 0
+  },
+  "timing": {
+    "total_tokens": 66,
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001
+  }
+}

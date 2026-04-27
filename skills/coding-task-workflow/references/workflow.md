@@ -10,7 +10,7 @@ These rules override user requests to skip or compress the workflow:
 
 1. If `ISSUE` is supplied, fetch it before classification with `gh issue view <ISSUE> --json number,title,body,url,id`, infer `WORK_ITEM` from that issue title/body, and keep that issue as the parent issue for the full workflow.
 2. After Bootstrap, do **not** create local per-work-item artifacts under `.coding-workflow/work/<slug>/`. Persist durable state in GitHub parent issues, phase issues, artifact subissues, and issue comments.
-3. Every child issue must be created first, then linked to its parent with the `addSubIssue` GraphQL mutation. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
+3. Every child issue must be created first, then linked to its parent with the `addSubIssue` GraphQL mutation. When showing shell commands, use the shell-safe literal-ID form from [issue-hierarchy.md](issue-hierarchy.md) rather than GraphQL `$variables` inside the query text. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
 4. After Gate E passes, stop and hand off `coding-task-workflow RESUME=<slug>`. Do not begin Phase 8 in the same session even if the user explicitly asks for it.
 5. Phase 8 implementation is always executed by implementation subagents. The primary agent orchestrates dependency order, safe parallelism, issue updates, and final consolidation; it does not directly implement slices itself.
 6. Phase 10 verification step 1 is always executed by verification subagents. Use parallel subagents for independent checks when the repo supports concurrent execution, otherwise run verification subagents sequentially.

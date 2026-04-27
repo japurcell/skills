@@ -47,17 +47,15 @@ When GitHub sub-issues are available, link child issues with GitHub's actual sub
    CHILD_NODE_ID=$(gh issue view <child-issue-number> --json id --jq .id)
    ```
 
-4. Attach the child issue to the parent with GitHub's GraphQL mutation:
+4. Attach the child issue to the parent with GitHub's GraphQL mutation. Keep the shell snippet Copilot-safe by inlining the resolved IDs in the query text; do **not** use GraphQL `$variables` such as `mutation($parentId: ID!, ...)` inside the shell command because those `$...` tokens may be blocked as suspicious shell expansion:
 
    ```bash
-   gh api graphql -f query='
-     mutation($parentId: ID!, $subIssueId: ID!) {
-       addSubIssue(input: {issueId: $parentId, subIssueId: $subIssueId}) {
+   gh api graphql -f query="
+     mutation {
+       addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"$CHILD_NODE_ID\"}) {
          issue { number }
        }
-     }' \
-     -f parentId="$PARENT_NODE_ID" \
-     -f subIssueId="$CHILD_NODE_ID"
+     }"
    ```
 
 5. Treat the GraphQL mutation as the success criterion. Only if the repository cannot use GitHub sub-issues should the workflow fall back to a body reference such as `Parent: #N`.

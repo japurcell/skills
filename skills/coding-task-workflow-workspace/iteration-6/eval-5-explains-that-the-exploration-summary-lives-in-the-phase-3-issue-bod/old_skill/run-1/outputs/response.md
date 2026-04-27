@@ -1,0 +1,1 @@
+Store the exploration outputs in the local artifact directory: `02-exploration/summary.md`, `02-exploration/files.csv`, and `02-exploration/open-questions.md`. The exploration GitHub issue, if used, just links back to those files. Resume state comes from the local `.coding-workflow/work/<slug>/02-exploration/` artifacts.

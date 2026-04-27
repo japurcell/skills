@@ -1,0 +1,1 @@
+Intake still begins by fetching `gh issue view 42 --json number,title,body,url,id` before classification. Use the CSV import bug from the issue title/body as the authoritative `WORK_ITEM`; treat `maybe clean up auth later` as supplemental only. Keep `#42` as the parent issue for the workflow and do not create another parent issue.

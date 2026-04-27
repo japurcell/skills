@@ -1,0 +1,216 @@
+{
+  "iteration": "iteration-6",
+  "generated_at": "2026-04-27T20:08:28.014039+00:00",
+  "current_skill_path": "/home/adam/dev/personal/skills/skills/coding-task-workflow",
+  "baseline_skill_path": "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/skill-snapshot",
+  "eval_count": 12,
+  "run_count": 24,
+  "totals": {
+    "with_skill": {
+      "passed": 49,
+      "failed": 0,
+      "total": 49,
+      "pass_rate": 1.0
+    },
+    "old_skill": {
+      "passed": 16,
+      "failed": 33,
+      "total": 49,
+      "pass_rate": 0.327
+    }
+  },
+  "results": [
+    {
+      "eval_id": 0,
+      "eval_name": "eval-0-refuses-to-continue-into-phase-8-in-the-same-session-names-the-hard",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "eval-1-uses-the-github-issue-title-body-as-the-authoritative-work-item-trea",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "eval-2-explains-that-child-issues-are-created-normally-their-node-ids-are-r",
+      "with_skill": {
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "pass_rate": 0.8
+      }
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "eval-3-shows-a-conventional-commits-message-with-a-body-that-links-the-work",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "eval-4-explains-that-phase-1-creates-a-lightweight-parent-issue-plus-a-sepa",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "pass_rate": 0.0
+      }
+    },
+    {
+      "eval_id": 5,
+      "eval_name": "eval-5-explains-that-the-exploration-summary-lives-in-the-phase-3-issue-bod",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "pass_rate": 0.0
+      }
+    },
+    {
+      "eval_id": 6,
+      "eval_name": "eval-6-explains-that-phase-6-approval-is-an-explicit-comment-on-the-plan-is",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "pass_rate": 0.0
+      }
+    },
+    {
+      "eval_id": 7,
+      "eval_name": "eval-7-explains-that-resume-slug-rebuilds-state-from-github-issues-and-comm",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "pass_rate": 0.0
+      }
+    },
+    {
+      "eval_id": 8,
+      "eval_name": "eval-8-explains-that-phase-7-creates-exactly-two-implementation-task-issues",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "pass_rate": 0.0
+      }
+    },
+    {
+      "eval_id": 9,
+      "eval_name": "eval-9-explains-that-files-csv-closes-after-the-exploration-file-ledger-is",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "pass_rate": 0.0
+      }
+    },
+    {
+      "eval_id": 10,
+      "eval_name": "eval-10-explains-that-phase-8-implementation-is-always-performed-by-subagent",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "pass_rate": 0.0
+      }
+    },
+    {
+      "eval_id": 11,
+      "eval_name": "eval-11-explains-that-phase-10-step-1-always-launches-verification-subagents",
+      "with_skill": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "old_skill": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "pass_rate": 0.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "expectations": [
+    {
+      "text": "Says there are exactly two implementation task issues under the Phase 7 task-graph issue, one per behavior or vertical slice",
+      "passed": false,
+      "evidence": "missing: exactly two, phase:implement, phase:task-graph"
+    },
+    {
+      "text": "Explains that each task issue owns a full vertical slice rather than a single RED, GREEN, or REFACTOR stage",
+      "passed": false,
+      "evidence": "missing: full, vertical slice"
+    },
+    {
+      "text": "Records RED, GREEN, and REFACTOR progress as comments on the same task issue",
+      "passed": false,
+      "evidence": "missing: same task issue"
+    },
+    {
+      "text": "Explains that the task issue `stage` field starts at `red` and is updated in place as the slice advances",
+      "passed": false,
+      "evidence": "missing: starting at `red`, updating in place"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_skill_files": 2,
+      "read_reference_files": 2,
+      "generate_response": 1,
+      "grade_expectations": 4
+    },
+    "total_tool_calls": 9,
+    "total_steps": 1,
+    "errors_encountered": 0
+  },
+  "timing": {
+    "total_tokens": 80,
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001
+  }
+}

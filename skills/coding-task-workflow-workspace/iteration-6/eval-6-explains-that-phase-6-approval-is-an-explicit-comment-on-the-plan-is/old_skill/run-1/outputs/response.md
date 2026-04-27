@@ -1,0 +1,1 @@
+In the older flow, Gate D is satisfied in the local artifacts: `05-plan.md` is approved and `00-intake.md` carries the approval state, Phase 7 writes `06-task-graph.yaml`, and Phase 8 appends RED/GREEN/REFACTOR progress to `07-implementation-log.md`. The workflow does not rely on a plan-issue approval comment or YAML stored in a GitHub issue body.

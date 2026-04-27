@@ -1,0 +1,11 @@
+{
+  "tool_calls": {
+    "read_skill_files": 2,
+    "read_reference_files": 2,
+    "generate_response": 1,
+    "grade_expectations": 4
+  },
+  "total_tool_calls": 9,
+  "total_steps": 1,
+  "errors_encountered": 0
+}

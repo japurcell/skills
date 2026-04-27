@@ -1,0 +1,46 @@
+{
+  "expectations": [
+    {
+      "text": "Closes `files.csv` after the exploration file ledger is complete",
+      "passed": false,
+      "evidence": "missing: closes, file ledger is complete"
+    },
+    {
+      "text": "Closes `sources.md` after the research source ledger is complete",
+      "passed": false,
+      "evidence": "missing: closes, source ledger is complete"
+    },
+    {
+      "text": "Keeps `open-questions` open only while unresolved questions remain and closes it once every entry is finalized",
+      "passed": false,
+      "evidence": "missing: stays open, closes once every question is finalized"
+    },
+    {
+      "text": "Places the Phase 7 task graph YAML in the `phase:task-graph` issue body rather than a separate artifact subissue",
+      "passed": false,
+      "evidence": "missing: phase:task-graph, issue body; contains disallowed: 06-task-graph.yaml"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_skill_files": 2,
+      "read_reference_files": 2,
+      "generate_response": 1,
+      "grade_expectations": 4
+    },
+    "total_tool_calls": 9,
+    "total_steps": 1,
+    "errors_encountered": 0
+  },
+  "timing": {
+    "total_tokens": 55,
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001
+  }
+}

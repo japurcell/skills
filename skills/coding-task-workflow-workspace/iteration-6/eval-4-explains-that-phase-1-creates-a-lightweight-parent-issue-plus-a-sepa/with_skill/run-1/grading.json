@@ -1,0 +1,46 @@
+{
+  "expectations": [
+    {
+      "text": "Creates both a lightweight parent issue and a separate `phase:intake` child issue",
+      "passed": true,
+      "evidence": "Phase 1 now creates two GitHub issues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue who; ns the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or"
+    },
+    {
+      "text": "Says the intake child issue body is based on the intake template",
+      "passed": true,
+      "evidence": "`phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.codi"
+    },
+    {
+      "text": "States that local per-work-item markdown artifacts like `00-intake.md` are not created",
+      "passed": true,
+      "evidence": "follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.coding-workflow/work/<slug>/`; Intake"
+    },
+    {
+      "text": "Keeps the parent issue as the durable top-level tracker rather than collapsing intake into the parent body",
+      "passed": true,
+      "evidence": "sues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It doe"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_skill_files": 2,
+      "read_reference_files": 2,
+      "generate_response": 1,
+      "grade_expectations": 4
+    },
+    "total_tool_calls": 9,
+    "total_steps": 1,
+    "errors_encountered": 0
+  },
+  "timing": {
+    "total_tokens": 61,
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001
+  }
+}

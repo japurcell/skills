@@ -28,7 +28,7 @@ These rules override user requests to skip or compress the workflow:
 
 1. If `ISSUE` is provided, fetch it before classification with `gh issue view <ISSUE> --json number,title,body,url,id`. The GitHub issue title/body is the authoritative `WORK_ITEM`, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue.
 2. Phase 0 is the only phase that writes durable repo-local workflow artifacts. For Phases 1–11, GitHub parent issues, phase issues, artifact subissues, and issue comments are the canonical workflow record; do not create `.coding-workflow/work/<slug>/...` artifacts.
-3. Every child issue is created first, then linked to the appropriate parent issue by resolving parent/child node IDs and calling `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
+3. Every child issue is created first, then linked to the appropriate parent issue by resolving parent/child node IDs and calling a shell-safe `gh api graphql ... addSubIssue` mutation that inlines the resolved IDs in the query text. Do not use GraphQL `$variables` inside shell snippets. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
 4. After Gate E passes, hard-stop the session and hand off `coding-task-workflow RESUME=<slug>`. Do not begin Phase 8 in the same session. Resume from a fresh session; Phase 8 is the next phase after the resume. Do not restart earlier phases unless the GitHub artifact state says they are incomplete.
 5. Phase 8 implementation is always performed by implementation subagents. The primary agent orchestrates dependency order, parallel groups, file-overlap checks, and GitHub comments; it does not directly write the implementation slice itself.
 6. Phase 10 verification step 1 is always performed by verification subagents. Split independent checks across parallel subagents when the repo supports concurrent execution; otherwise run one verification subagent at a time.
@@ -42,7 +42,7 @@ Lead with the governing rule; add only command shape and fallback details.
 | --- | --- |
 | Phase 7 resume handoff | `Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with coding-task-workflow RESUME=<slug>. Phase 8 is the next phase after the resume.` |
 | Intake authority | `The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue.` |
-| Sub-issue linking | `Create the child issue first, resolve both node IDs, then attach it with gh api graphql ... addSubIssue. Parent: #N is fallback-only when GitHub sub-issues are unavailable.` |
+| Sub-issue linking | `Create the child issue first, resolve both node IDs, then attach it with a shell-safe gh api graphql addSubIssue mutation that inlines the resolved IDs. Do not use GraphQL $variables inside the shell snippet. Parent: #N is fallback-only when GitHub sub-issues are unavailable.` |
 | Workflow record | `Phase 0 keeps repo-local overrides, but Phases 1–11 persist durable state in GitHub issues and comments instead of local per-work-item markdown files.` |
 
 Do not invent issue-template prose, sample issue bodies, or extra artifact structure unless explicitly asked.

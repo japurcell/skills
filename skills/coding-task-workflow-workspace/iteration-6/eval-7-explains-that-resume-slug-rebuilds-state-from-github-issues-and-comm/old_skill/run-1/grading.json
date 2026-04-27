@@ -1,0 +1,46 @@
+{
+  "expectations": [
+    {
+      "text": "States that resume state is rebuilt from GitHub issues/comments using the work item slug or machine data",
+      "passed": false,
+      "evidence": "missing: rebuilds state from github, work-item slug/work_id"
+    },
+    {
+      "text": "Does not instruct the agent to read `.coding-workflow/work/<slug>/`",
+      "passed": false,
+      "evidence": "missing one of: does not require `.coding-workflow/work/2026-04-27-add-rate-limit-logs/` / does not require `.coding-workflow/work/<slug>/` / does not require; contains disallowed: resume state comes from `.coding-workflow/work/2026-04-27-add-rate-limit-logs/`, authoritative resume record"
+    },
+    {
+      "text": "Uses issue closure state and durable comments such as approvals or implementation log comments to determine what is complete",
+      "passed": false,
+      "evidence": "missing: comments; missing one of: issue closure state / closed phase issues"
+    },
+    {
+      "text": "Makes clear that GitHub is the canonical durable record for Phases 1\u201311",
+      "passed": false,
+      "evidence": "missing: github is the canonical durable record"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_skill_files": 2,
+      "read_reference_files": 2,
+      "generate_response": 1,
+      "grade_expectations": 4
+    },
+    "total_tool_calls": 9,
+    "total_steps": 1,
+    "errors_encountered": 0
+  },
+  "timing": {
+    "total_tokens": 58,
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001
+  }
+}

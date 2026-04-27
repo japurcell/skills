@@ -1,0 +1,1 @@
+In the older workflow, resume state comes from `.coding-workflow/work/2026-04-27-add-rate-limit-logs/`. Re-read `00-intake.md`, `05-plan.md`, `06-task-graph.yaml`, and the other local artifacts, then use their frontmatter/status fields to determine the next incomplete phase. GitHub issues can help with context, but the local artifact directory is the authoritative resume record.
