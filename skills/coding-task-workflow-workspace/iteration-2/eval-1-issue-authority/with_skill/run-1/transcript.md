@@ -1,7 +1,0 @@
-- Read eval metadata: eval_metadata.json
-- Read skill rules: SKILL.md
-- Derived Intake rule answer from skill metadata authority rule
-- Wrote outputs/final.md
-- Wrote outputs/user_notes.md
-- Wrote outputs/metrics.json
-- Wrote transcript.md

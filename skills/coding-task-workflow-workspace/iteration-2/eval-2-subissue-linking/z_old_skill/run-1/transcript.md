@@ -1,8 +1,0 @@
-- Read eval metadata: eval_metadata.json
-- Read old-skill rules: skill-snapshot/SKILL.md
-- Read old-skill reference: skill-snapshot/references/issue-hierarchy.md
-- Derived required child-issue linking flow for Phase 6 and Phase 7
-- Wrote outputs/final.md
-- Wrote outputs/user_notes.md
-- Wrote outputs/metrics.json
-- Wrote transcript.md

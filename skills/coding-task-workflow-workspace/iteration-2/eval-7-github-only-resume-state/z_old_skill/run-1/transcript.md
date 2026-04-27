@@ -1,5 +1,0 @@
-- Read eval metadata: iteration-2/eval-7-github-only-resume-state/eval_metadata.json
-- Read skill entrypoint: skill-snapshot/SKILL.md
-- Searched skill references for resume-state rules
-- Read supporting resume/gate references: references/stop-gates.md, references/artifact-schema.md
-- Wrote final answer, user notes, and metrics to iteration-2/eval-7-github-only-resume-state/z_old_skill/run-1

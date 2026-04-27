@@ -1,3 +1,0 @@
-Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`. Phase 8 is the next phase after the resume.
-
-Next, Phase 8 executes `06-task-graph.yaml` in dependency order: for each slice, write a failing test, confirm the failure, write the minimal code to pass it, confirm green, then refactor. Run only tasks whose dependencies are satisfied, parallelize only tasks marked `parallelizable: true`, append each slice to `07-implementation-log.md`, and never add code for a test that has not yet been written.

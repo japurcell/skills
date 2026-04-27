@@ -1,7 +1,0 @@
-{
-  "variant": "with_skill",
-  "total_steps": 4,
-  "total_tool_calls": 19,
-  "files_created": 4,
-  "errors_encountered": 0
-}

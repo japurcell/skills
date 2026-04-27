@@ -1,5 +1,0 @@
-Phase 0 keeps repo-local overrides, but Phases 1–11 persist durable state in GitHub issues and comments instead of local per-work-item markdown files.
-
-`RESUME=2026-04-27-add-rate-limit-logs` rebuilds state from the GitHub issue hierarchy for that work_id: load the parent issue plus descendant phase, artifact, and task issues, then read their bodies/comments as the machine-readable record. Do not rely on `.coding-workflow/work/<slug>/`.
-
-The next phase is whichever phase is still incomplete according to GitHub state: closed phase issues and artifact issues mean earlier gates passed; durable comments carry required evidence such as the Phase 6 approval comment and implementation RED/GREEN/REFACTOR log comments on task issues. In particular, implementation task issue comments replace `07-implementation-log.md`, so an agent with no local artifact directory can resume by inspecting closed phase issues, open task/artifact issues, task `stage`/dependency metadata, and gate conditions from GitHub alone.

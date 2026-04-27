@@ -1,0 +1,6 @@
+{
+  "total_tokens": null,
+  "duration_ms": 62000,
+  "total_duration_seconds": 62,
+  "note": "Agent notification/readout exposed elapsed time but not token totals."
+}

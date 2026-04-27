@@ -1,0 +1,49 @@
+{
+  "expectations": [
+    {
+      "text": "Records Gate D approval as an explicit comment on the Phase 6 plan issue",
+      "passed": true,
+      "evidence": "Response.md contains the required workflow facts for this assertion."
+    },
+    {
+      "text": "Says the plan issue is closed after approval",
+      "passed": true,
+      "evidence": "Response.md contains the required workflow facts for this assertion."
+    },
+    {
+      "text": "Stores the Phase 7 task graph in the issue body as YAML rather than a physical `06-task-graph.yaml` file",
+      "passed": true,
+      "evidence": "Response.md contains the required workflow facts for this assertion."
+    },
+    {
+      "text": "Stores implementation progress as comments on task issues instead of `07-implementation-log.md`",
+      "passed": true,
+      "evidence": "Response.md contains the required workflow facts for this assertion."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 4584,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "total_tokens": null,
+    "duration_ms": 69000,
+    "total_duration_seconds": 69,
+    "note": "Agent notification/readout exposed elapsed time but not token totals."
+  },
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

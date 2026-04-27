@@ -1,5 +1,0 @@
-Phase 0 keeps repo-local overrides, but Phases 1–11 persist durable state in GitHub issues and comments instead of local per-work-item markdown files.
-
-- Phase 6 approval: record an explicit human approval comment on the Phase 6 plan issue, then close that issue immediately. If Gate D already passed, the plan issue should already be closed with that approval comment.
-- Phase 7 task graph: create a `phase:task-graph` child issue and put the task graph in the issue body inside a fenced `yaml` block; do not create a physical `06-task-graph.yaml` file. Then create the per-slice implementation task issues under it.
-- Phase 8 implementation log: record RED/GREEN/REFACTOR progress as comments on those implementation task issues, updating the same issue’s `stage` field as work advances. Those task-issue comments replace `07-implementation-log.md`.

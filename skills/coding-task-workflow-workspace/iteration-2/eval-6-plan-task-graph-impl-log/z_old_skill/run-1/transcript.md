@@ -1,9 +1,0 @@
-- Read eval metadata: eval_metadata.json
-- Read old-skill rules: skill-snapshot/SKILL.md
-- Read old-skill workflow reference for Phases 6-8
-- Read old-skill stop-gates reference for Gate D/E approval rules
-- Derived baseline answer from old local-artifact workflow
-- Wrote outputs/final.md
-- Wrote outputs/user_notes.md
-- Wrote outputs/metrics.json
-- Wrote transcript.md
