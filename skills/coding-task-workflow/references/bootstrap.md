@@ -1,6 +1,6 @@
 # Bootstrap / Override Synthesis
 
-This document specifies the Phase 0 (Bootstrap) capability of the `coding-task-workflow` skill. Bootstrap inspects a target repository and generates or updates repo-local override files that all subsequent phases read.
+This document specifies the Phase 0 (Bootstrap) capability of the `coding-task-workflow` skill. Bootstrap inspects a target repository and generates or updates repo-local override files that all subsequent phases read. Those files must be committed before Phase 2 creates a worktree, or refreshed into an existing Phase 2 worktree, so later phases see the same overrides from the checkout they implement in.
 
 ---
 
@@ -10,6 +10,7 @@ Run bootstrap automatically when:
 - `.coding-workflow/overrides/` does not exist.
 - One or more required override files are missing.
 - Override files contain entries with `source: inferred` that are more than 30 days old and material signals have changed (e.g., new CI workflows, updated `package.json`).
+- The Phase 2 worktree exists but is missing `.coding-workflow/overrides/` or has an out-of-date override tree.
 
 Run bootstrap on demand when:
 - The user passes `BOOTSTRAP=only`.
@@ -70,6 +71,7 @@ For each override file, apply signals in tier order (Tier 1 → Tier 4). For eac
 - Record `confidence`: `high | medium | low`.
 - Record `evidence`: the file name and section that the value was derived from.
 - If a value is already present in the override file with `source: manual`, do **not** overwrite it.
+- Commit the resulting override files before Phase 2 worktree creation so the worktree inherits them as tracked files.
 
 ### Special rules
 

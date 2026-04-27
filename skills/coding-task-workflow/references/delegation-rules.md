@@ -120,19 +120,23 @@ Always. Every implementation task issue is executed by a subagent. Use multiple 
 You are implementing task issue #[ISSUE_NUMBER] for work item [WORK_ID].
 Task ID: [TASK_ID]
 Stage: [red | green | refactor]
+Worktree: [WORKTREE_PATH]
 
 Read first:
+- Operate from the worktree root above so your reads, writes, and `.coding-workflow/overrides/` come from the same checkout.
 - The Phase 6 plan issue: [SUMMARY OR LINK]
 - The Phase 7 task-graph issue: [SUMMARY OR LINK]
+- Bootstrap overrides in that worktree: [LIST OF RELEVANT OVERRIDE FILES OR "none"]
 - Relevant source files: [LIST]
 
 Instructions:
-1. Write the failing test first (RED).
-2. Confirm the test fails for the right reason.
-3. Write the minimal code to make it pass (GREEN).
-4. Confirm the test passes.
-5. Refactor if needed (REFACTOR).
-6. Do not add untested code paths.
+1. Work only inside the recorded worktree; do not implement from another checkout.
+2. Write the failing test first (RED).
+3. Confirm the test fails for the right reason.
+4. Write the minimal code to make it pass (GREEN).
+5. Confirm the test passes.
+6. Refactor if needed (REFACTOR).
+7. Do not add untested code paths.
 
 Files you may write to:
 [EXPLICIT LIST — do not write outside this list]

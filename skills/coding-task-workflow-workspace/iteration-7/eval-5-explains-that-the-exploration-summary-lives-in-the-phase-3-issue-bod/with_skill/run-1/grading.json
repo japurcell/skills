@@ -1,0 +1,46 @@
+{
+  "expectations": [
+    {
+      "text": "Places the exploration summary in the `phase:exploration` issue body",
+      "passed": true,
+      "evidence": "he consolidated exploration summary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration is"
+    },
+    {
+      "text": "Places `files.csv` in an artifact subissue under the Phase 3 issue",
+      "passed": true,
+      "evidence": "ary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration issue, and the open-questi"
+    },
+    {
+      "text": "Places open questions in a durable GitHub artifact issue rather than `02-exploration/open-questions.md`",
+      "passed": true,
+      "evidence": "ct subissue under that exploration issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifact; issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifacts are durable in GitHub so a"
+    },
+    {
+      "text": "Makes clear that these artifacts exist in GitHub so another agent can resume without local files",
+      "passed": true,
+      "evidence": "ifacts are durable in GitHub so another agent can resume without any local `02-exploration/...` files.; Store Phase 3 in GitHub: the consolidated exploration summary lives in the `phase:exploration` issue body, `files"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_skill_files": 2,
+      "read_reference_files": 2,
+      "generate_response": 1,
+      "grade_expectations": 4
+    },
+    "total_tool_calls": 9,
+    "total_steps": 1,
+    "errors_encountered": 0
+  },
+  "timing": {
+    "total_tokens": 74,
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001
+  }
+}

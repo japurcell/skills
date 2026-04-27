@@ -1,0 +1,46 @@
+{
+  "expectations": [
+    {
+      "text": "States that the workflow hard-stops after Phase 7 once Gate E passes",
+      "passed": true,
+      "evidence": "ue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-wo; n the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2"
+    },
+    {
+      "text": "Does not agree to continue into Phase 8 in the same session",
+      "passed": true,
+      "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is sa"
+    },
+    {
+      "text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent",
+      "passed": true,
+      "evidence": "r Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next ph; e from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next phase after that resume unless the durable record shows an earlier"
+    },
+    {
+      "text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases",
+      "passed": true,
+      "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resu"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_skill_files": 2,
+      "read_reference_files": 2,
+      "generate_response": 1,
+      "grade_expectations": 4
+    },
+    "total_tool_calls": 9,
+    "total_steps": 1,
+    "errors_encountered": 0
+  },
+  "timing": {
+    "total_tokens": 68,
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001
+  }
+}

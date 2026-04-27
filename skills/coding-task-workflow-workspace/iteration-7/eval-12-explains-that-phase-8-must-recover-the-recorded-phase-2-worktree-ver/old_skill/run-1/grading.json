@@ -1,0 +1,51 @@
+{
+  "expectations": [
+    {
+      "text": "Loads the recorded Phase 2 worktree path during resume",
+      "passed": true,
+      "evidence": "Resume by loading the parent issue, the Phase 2 worktree issue, and the open implementation task issues so you can continue from `../worktrees/2026-04-2; lementation task issues so you can continue from `../worktrees/2026-04-27-add-rate-limit-logs`. Once the task graph is loaded, proceed with the ready implementation tasks in dependenc"
+    },
+    {
+      "text": "Checks `.coding-workflow/overrides/` inside that worktree rather than only in the source checkout",
+      "passed": false,
+      "evidence": "missing: `.coding-workflow/overrides/`, recorded worktree; missing one of: inside that worktree / enter that recorded worktree and check / check `.coding-workflow/overrides/` there"
+    },
+    {
+      "text": "Returns to Phase 0 / Phase 2 maintenance when overrides are missing, incomplete, or stale",
+      "passed": false,
+      "evidence": "missing: phase 0 / phase 2 maintenance; missing one of: missing / incomplete / stale"
+    },
+    {
+      "text": "Does not start implementation subagents until the override tree is synced into the worktree",
+      "passed": false,
+      "evidence": "missing one of: stop before launching / do not start / before implementation subagents start"
+    },
+    {
+      "text": "Keeps implementation work inside the recorded worktree once overrides are restored",
+      "passed": false,
+      "evidence": "missing: operate from that recorded worktree; missing one of: restored override set / override tree"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 4,
+    "total": 5,
+    "pass_rate": 0.2
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_skill_files": 2,
+      "read_reference_files": 2,
+      "generate_response": 1,
+      "grade_expectations": 5
+    },
+    "total_tool_calls": 10,
+    "total_steps": 1,
+    "errors_encountered": 0
+  },
+  "timing": {
+    "total_tokens": 78,
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001
+  }
+}

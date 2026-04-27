@@ -1,6 +1,6 @@
 # Workflow Specification
 
-This document specifies each phase of the `coding-task-workflow` skill. Follow it exactly. Phase 0 writes repo-local override files; Phases 1–11 use GitHub issues and comments as the canonical durable workflow record.
+This document specifies each phase of the `coding-task-workflow` skill. Follow it exactly. Phase 0 writes repo-local override files and makes sure they are available inside the Phase 2 worktree; Phases 1–11 use GitHub issues and comments as the canonical durable workflow record.
 
 ---
 
@@ -9,7 +9,7 @@ This document specifies each phase of the `coding-task-workflow` skill. Follow i
 These rules override user requests to skip or compress the workflow:
 
 1. If `ISSUE` is supplied, fetch it before classification with `gh issue view <ISSUE> --json number,title,body,url,id`, infer `WORK_ITEM` from that issue title/body, and keep that issue as the parent issue for the full workflow.
-2. After Bootstrap, do **not** create local per-work-item artifacts under `.coding-workflow/work/<slug>/`. Persist durable state in GitHub parent issues, phase issues, artifact subissues, and issue comments.
+2. After Bootstrap, do **not** create local per-work-item artifacts under `.coding-workflow/work/<slug>/`. If `.coding-workflow/overrides/` is missing, incomplete, or stale, run or refresh Phase 0 before Phase 2 creates the worktree and verify the committed override tree exists inside that worktree before later phases continue. Persist durable state in GitHub parent issues, phase issues, artifact subissues, and issue comments.
 3. Every child issue must be created first, then linked to its parent with the `addSubIssue` GraphQL mutation. When showing shell commands, use the shell-safe literal-ID form from [issue-hierarchy.md](issue-hierarchy.md) rather than GraphQL `$variables` inside the query text. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
 4. After Gate E passes, stop and hand off `coding-task-workflow RESUME=<slug>`. Do not begin Phase 8 in the same session even if the user explicitly asks for it.
 5. Phase 8 implementation is always executed by implementation subagents. The primary agent orchestrates dependency order, safe parallelism, issue updates, and final consolidation; it does not directly implement slices itself.
@@ -20,9 +20,9 @@ These rules override user requests to skip or compress the workflow:
 
 ## Phase 0 — Bootstrap _(optional)_
 
-**Trigger**: run this phase when `.coding-workflow/overrides/` does not exist or is missing required files, when the user passes `BOOTSTRAP=only`, or when override files are more than 30 days stale.
+**Trigger**: run this phase when `.coding-workflow/overrides/` does not exist or is missing required files, when the user passes `BOOTSTRAP=only`, when override files are more than 30 days stale, or when the recorded Phase 2 worktree does not contain the committed override tree.
 
-**Objective**: inspect the target repository and produce or update repo-local override files that future phases will read.
+**Objective**: inspect the target repository and produce or update committed repo-local override files that future phases will read from the Phase 2 worktree.
 
 **Inputs**: target repository root.
 
@@ -31,9 +31,10 @@ These rules override user requests to skip or compress the workflow:
 1. List files at repo root and in `docs/`, `.github/`, `.github/workflows/`.
 2. Read each signal file that exists (see [bootstrap.md](bootstrap.md) for the full signal list and inference rules).
 3. For each override file: if it does not exist, create it from the template; if it exists, merge new findings with existing content, preserving any manually written content.
-4. Commit override files with message `chore: bootstrap coding-workflow overrides`.
+4. Commit override files with message `chore: bootstrap coding-workflow overrides` so the next Phase 2 worktree creation inherits them as tracked files.
+5. If the work item already has a Phase 2 worktree, refresh that worktree so `.coding-workflow/overrides/` in the worktree matches the committed override set before later phases continue.
 
-**Outputs**: `.coding-workflow/overrides/*.yaml`, `.coding-workflow/overrides/*.md`.
+**Outputs**: committed `.coding-workflow/overrides/*.yaml`, committed `.coding-workflow/overrides/*.md`.
 
 **Gate**: none — bootstrap is a standalone phase.
 
@@ -70,17 +71,19 @@ These rules override user requests to skip or compress the workflow:
 
 **Objective**: isolate the work in a dedicated git worktree so the main branch is never touched until the PR is ready.
 
-**Inputs**: `WORKTREE` path (default: `../worktrees/<slug>`), `BRANCH` name (default: `feat/<slug>` or `fix/<slug>`).
+**Inputs**: `WORKTREE` path (default: `../worktrees/<slug>`), `BRANCH` name (default: `feat/<slug>` or `fix/<slug>`), committed override files from Phase 0.
 
 **Steps**:
 
-1. Run `git worktree add <WORKTREE> -b <BRANCH>`.
-2. Confirm the worktree was created successfully.
-3. Create a GitHub child issue labelled `agent:phase` and `phase:worktree`. Record the worktree path, branch name, base commit SHA, and timestamp in the issue body.
-4. Attach the worktree issue to the parent issue with `addSubIssue`.
-5. Close the worktree issue once the worktree details are complete.
+1. If `.coding-workflow/overrides/` is missing, incomplete, or stale in the source checkout, run or refresh Phase 0 first and commit the override update before creating the worktree.
+2. Run `git worktree add <WORKTREE> -b <BRANCH>`.
+3. Confirm the worktree was created successfully and that `<WORKTREE>/.coding-workflow/overrides/` exists with the expected files.
+4. If the override tree is missing in the new worktree, stop and repair bootstrap/worktree sync before later phases continue; do not defer this to Phase 8.
+5. Create a GitHub child issue labelled `agent:phase` and `phase:worktree`. Record the worktree path, branch name, base commit SHA, timestamp, and override-tree verification result in the issue body.
+6. Attach the worktree issue to the parent issue with `addSubIssue`.
+7. Close the worktree issue once the worktree details are complete.
 
-**Outputs**: closed worktree child issue, git worktree.
+**Outputs**: closed worktree child issue, git worktree with `.coding-workflow/overrides/` present.
 
 **Gate**: none — worktree setup always runs immediately after intake.
 
@@ -229,19 +232,20 @@ These rules override user requests to skip or compress the workflow:
 
 **Objective**: execute the task graph using a strict TDD red→green→refactor loop.
 
-**Inputs**: task-graph issue, open implementation task issues, relevant source files, fresh session resumed after the Phase 7 hard stop.
+**Inputs**: task-graph issue, Phase 2 worktree issue, open implementation task issues, relevant source files, `.coding-workflow/overrides/` inside the worktree, fresh session resumed after the Phase 7 hard stop.
 
 **Steps**:
 
-1. Resolve `RESUME=<slug>` by loading the parent issue and descendant phase/task issues for that `work_id`. Do not rely on local phase files.
-2. Process implementation task issues in dependency order, but delegate every implementation task issue to a subagent. Run tasks labelled `parallel` concurrently when their dependencies are satisfied and they do not overlap on files. Run sequential tasks one at a time, still through a subagent.
-3. For each task issue, launch an implementation subagent with the task issue, plan context, relevant files, allowed write paths, current stage, and exact tests to run. The subagent performs the full RED → GREEN → REFACTOR slice:
+1. Resolve `RESUME=<slug>` by loading the parent issue and descendant phase/task issues for that `work_id`, including the Phase 2 worktree issue so you recover the recorded worktree path and branch. Do not rely on local phase files.
+2. Enter the recorded worktree and confirm `.coding-workflow/overrides/` exists there. If it is missing, incomplete, or stale, return to Phase 0 / Phase 2 maintenance to refresh bootstrap overrides and sync them into the worktree before delegating implementation.
+3. Process implementation task issues in dependency order, but delegate every implementation task issue to a subagent. Run tasks labelled `parallel` concurrently when their dependencies are satisfied and they do not overlap on files. Run sequential tasks one at a time, still through a subagent.
+4. For each task issue, launch an implementation subagent with the task issue, recorded worktree path, plan context, relevant files, override files, allowed write paths, current stage, and exact tests to run. The subagent performs the full RED → GREEN → REFACTOR slice:
     a. **RED**: write a failing test that captures the behaviour. Run it and confirm it fails for the expected reason. Record the result as a comment on the task issue while the issue remains at `stage: red`.
     b. **GREEN**: update the same task issue to `stage: green`, write the minimal code to make the test pass, run it, and record the result as a comment on that issue.
     c. **REFACTOR**: update the same task issue to `stage: refactor`, clean up if needed, rerun the relevant tests, and record the outcome as another comment on that issue.
-4. After each subagent finishes, inspect its changed files and test output before updating or closing the task issue. Do not rely on the subagent summary alone.
-5. Never add untested code paths. If a useful branch is not yet covered by a test, do not add it.
-6. Close each task issue when its slice is complete. The task issue comments replace `07-implementation-log.md`, and the issue body remains the durable record of the slice's current/final stage.
+5. After each subagent finishes, inspect its changed files and test output before updating or closing the task issue. Do not rely on the subagent summary alone.
+6. Never add untested code paths. If a useful branch is not yet covered by a test, do not add it.
+7. Close each task issue when its slice is complete. The task issue comments replace `07-implementation-log.md`, and the issue body remains the durable record of the slice's current/final stage.
 
 **Outputs**: modified source files and tests, implementation task issue comments, updated task issue stage fields, closed implementation task issues.
 

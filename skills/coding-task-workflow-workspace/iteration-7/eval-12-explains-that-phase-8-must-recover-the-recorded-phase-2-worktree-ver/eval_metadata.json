@@ -1,0 +1,12 @@
+{
+  "eval_id": 12,
+  "eval_name": "eval-12-explains-that-phase-8-must-recover-the-recorded-phase-2-worktree-ver",
+  "prompt": "We resumed `coding-task-workflow RESUME=2026-04-27-add-rate-limit-logs` after Gate E. The Phase 2 worktree issue points at `../worktrees/2026-04-27-add-rate-limit-logs`, but inside that worktree `.coding-workflow/overrides/` is missing `test-commands.yaml` and `repo-policy.md`. Explain exactly what the workflow requires next before any implementation subagent starts.",
+  "assertions": [
+    "Loads the recorded Phase 2 worktree path during resume",
+    "Checks `.coding-workflow/overrides/` inside that worktree rather than only in the source checkout",
+    "Returns to Phase 0 / Phase 2 maintenance when overrides are missing, incomplete, or stale",
+    "Does not start implementation subagents until the override tree is synced into the worktree",
+    "Keeps implementation work inside the recorded worktree once overrides are restored"
+  ]
+}

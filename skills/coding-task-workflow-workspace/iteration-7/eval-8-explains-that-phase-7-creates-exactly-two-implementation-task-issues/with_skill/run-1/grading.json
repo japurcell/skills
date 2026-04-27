@@ -1,0 +1,46 @@
+{
+  "expectations": [
+    {
+      "text": "Says there are exactly two implementation task issues under the Phase 7 task-graph issue, one per behavior or vertical slice",
+      "passed": true,
+      "evidence": "Create exactly two `phase:implement` task issues under the `phase:task-graph` issue: one vertical slice for"
+    },
+    {
+      "text": "Explains that each task issue owns a full vertical slice rather than a single RED, GREEN, or REFACTOR stage",
+      "passed": true,
+      "evidence": "sk issues under the `phase:task-graph` issue: one vertical slice for the retry-cap behavior and one vertical slice for the jitter behavior. Each issue own"
+    },
+    {
+      "text": "Records RED, GREEN, and REFACTOR progress as comments on the same task issue",
+      "passed": true,
+      "evidence": "es. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice; GREEN, and REFACTOR into separate issues. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red`"
+    },
+    {
+      "text": "Explains that the task issue `stage` field starts at `red` and is updated in place as the slice advances",
+      "passed": true,
+      "evidence": "me task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`.; p the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "read_skill_files": 2,
+      "read_reference_files": 2,
+      "generate_response": 1,
+      "grade_expectations": 4
+    },
+    "total_tool_calls": 9,
+    "total_steps": 1,
+    "errors_encountered": 0
+  },
+  "timing": {
+    "total_tokens": 105,
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001
+  }
+}

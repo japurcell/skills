@@ -1,0 +1,11 @@
+{
+  "eval_id": 3,
+  "eval_name": "eval-3-shows-a-conventional-commits-message-with-a-body-that-links-the-work",
+  "prompt": "Phase 11 is ready for work item `2026-04-23-add-retry-mechanism` on parent issue `#42`. Show the required commit message shape that coding-task-workflow expects, including any trailer formatting rules.",
+  "assertions": [
+    "Shows a conventional-commits subject line",
+    "Includes a body that references the work-item slug or parent issue `#42`",
+    "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+    "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line"
+  ]
+}

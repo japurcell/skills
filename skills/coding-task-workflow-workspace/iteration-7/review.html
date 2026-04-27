@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "coding-task-workflow", "runs": [{"id": "eval-0-refuses-to-continue-into-phase-8-in-the-same-session-names-the-hard-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next phase after that resume unless the durable record shows an earlier phase is incomplete.\n"}], "grading": {"expectations": [{"text": "States that the workflow hard-stops after Phase 7 once Gate E passes", "passed": true, "evidence": "ue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-wo; n the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2"}, {"text": "Does not agree to continue into Phase 8 in the same session", "passed": true, "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is sa"}, {"text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent", "passed": true, "evidence": "r Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next ph; e from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next phase after that resume unless the durable record shows an earlier"}, {"text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases", "passed": true, "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resu"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 68, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-0-refuses-to-continue-into-phase-8-in-the-same-session-names-the-hard-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next phase after that resume unless the durable record shows an earlier phase is incomplete.\n"}], "grading": {"expectations": [{"text": "States that the workflow hard-stops after Phase 7 once Gate E passes", "passed": true, "evidence": "ue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-wo; n the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2"}, {"text": "Does not agree to continue into Phase 8 in the same session", "passed": true, "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is sa"}, {"text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent", "passed": true, "evidence": "r Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next ph; e from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next phase after that resume unless the durable record shows an earlier"}, {"text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases", "passed": true, "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resu"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 68, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-1-uses-the-github-issue-title-body-as-the-authoritative-work-item-trea-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Intake must start by fetching `gh issue view 42 --json number,title,body,url,id` and reading the issue title/body before classification. The CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and does not override the issue. Keep `#42` as the Phase 1 parent issue, create the structured intake child issue under it, and do not create a new parent issue.\n"}], "grading": {"expectations": [{"text": "Says Intake should fetch/read the GitHub issue title or body before classification", "passed": true, "evidence": "Intake must start by fetching `gh issue view 42 --json number,title,body,url,id` and reading the issue title/body before classification."}, {"text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`", "passed": true, "evidence": "he CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and doe"}, {"text": "Does not treat `maybe clean up auth later` as the primary work item", "passed": true, "evidence": "in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and does not override the issue. Keep `#42` as"}, {"text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue", "passed": true, "evidence": "ification. The CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supple; not override the issue. Keep `#42` as the Phase 1 parent issue, create the structured intake child issue under it, and do not create a new parent issue."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 91, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-1-uses-the-github-issue-title-body-as-the-authoritative-work-item-trea-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Intake must start by fetching `gh issue view 42 --json number,title,body,url,id` and reading the issue title/body before classification. The CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and does not override the issue. Keep `#42` as the Phase 1 parent issue, create the structured intake child issue under it, and do not create a new parent issue.\n"}], "grading": {"expectations": [{"text": "Says Intake should fetch/read the GitHub issue title or body before classification", "passed": true, "evidence": "Intake must start by fetching `gh issue view 42 --json number,title,body,url,id` and reading the issue title/body before classification."}, {"text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`", "passed": true, "evidence": "he CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and doe"}, {"text": "Does not treat `maybe clean up auth later` as the primary work item", "passed": true, "evidence": "in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and does not override the issue. Keep `#42` as"}, {"text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue", "passed": true, "evidence": "ification. The CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supple; not override the issue. Keep `#42` as the Phase 1 parent issue, create the structured intake child issue under it, and do not create a new parent issue."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 91, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-10-explains-that-phase-8-implementation-is-always-performed-by-subagent-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Phase 8 code is always written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one implementation subagent for A and one for B concurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequential`. The primary agent stays in orchestration mode: enforce dependency order and file-overlap checks, review the subagent diffs/tests, and record the GitHub task comments and stage updates rather than directly writing the slice.\n"}], "grading": {"expectations": [{"text": "States that Phase 8 implementation task issues are always executed by subagents", "passed": true, "evidence": "Phase 8 code is always written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one impl"}, {"text": "Runs ready non-overlapping tasks A and B in parallel implementation subagents", "passed": true, "evidence": "ways written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one implementation subage; h one implementation subagent for A and one for B concurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequ"}, {"text": "Runs sequential task C through its own implementation subagent rather than directly in the primary context", "passed": true, "evidence": "oncurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequential`. The primary agent stays in orchestration mode: enforce depend"}, {"text": "Explains that the primary agent orchestrates dependency order, reviews subagent changes or tests, and records GitHub task comments", "passed": true, "evidence": "se it is `sequential`. The primary agent stays in orchestration mode: enforce dependency order and file-overlap checks, review the subagent diffs/tests, and r; , review the subagent diffs/tests, and record the GitHub task comments and stage updates rather than directly writing the slice."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 105, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-10-explains-that-phase-8-implementation-is-always-performed-by-subagent-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Phase 8 code is always written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one implementation subagent for A and one for B concurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequential`. The primary agent stays in orchestration mode: enforce dependency order and file-overlap checks, review the subagent diffs/tests, and record the GitHub task comments and stage updates rather than directly writing the slice.\n"}], "grading": {"expectations": [{"text": "States that Phase 8 implementation task issues are always executed by subagents", "passed": true, "evidence": "Phase 8 code is always written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one impl"}, {"text": "Runs ready non-overlapping tasks A and B in parallel implementation subagents", "passed": true, "evidence": "ways written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one implementation subage; h one implementation subagent for A and one for B concurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequ"}, {"text": "Runs sequential task C through its own implementation subagent rather than directly in the primary context", "passed": true, "evidence": "oncurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequential`. The primary agent stays in orchestration mode: enforce depend"}, {"text": "Explains that the primary agent orchestrates dependency order, reviews subagent changes or tests, and records GitHub task comments", "passed": true, "evidence": "se it is `sequential`. The primary agent stays in orchestration mode: enforce dependency order and file-overlap checks, review the subagent diffs/tests, and r; , review the subagent diffs/tests, and record the GitHub task comments and stage updates rather than directly writing the slice."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 105, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-11-explains-that-phase-10-step-1-always-launches-verification-subagents-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Phase 10 step 1 always launches verification subagents for the automated checks in `test-commands.yaml`. Here, `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` can be split across parallel verification subagents if the repo supports concurrent execution; if any check depends on shared mutable state or conflicts with another check, run those verification subagents sequentially instead. Each verification subagent must report the exact command it ran, the exit code, pass/fail status, a short output summary, and any failure details so the primary agent can consolidate that into the verification issue.\n"}], "grading": {"expectations": [{"text": "States that Phase 10 step 1 always runs automated checks in verification subagents", "passed": true, "evidence": "Phase 10 step 1 always launches verification subagents for the automated checks in `test-commands.yaml`. Here, `npm test`, `npm run lint`, `npm"}, {"text": "Uses parallel verification subagents for independent checks when the repo supports concurrent execution", "passed": true, "evidence": "pecheck`, and `npm run build` can be split across parallel verification subagents if the repo supports concurrent execution; if any check depends on shared mutable state o"}, {"text": "Uses sequential verification subagents for dependent checks or checks with shared mutable resources", "passed": true, "evidence": "h another check, run those verification subagents sequentially instead. Each verification subagent must report the exact command it ran, the exit code,; rts concurrent execution; if any check depends on shared mutable state or conflicts with another check, run those verification subagents sequentially instead. E"}, {"text": "Requires each verification subagent to report command, exit code, pass/fail status, output summary, and failure details", "passed": true, "evidence": "ubagent must report the exact command it ran, the exit code, pass/fail status, a short output summary, and any failure details so the primary agent c; pass/fail status, a short output summary, and any failure details so the primary agent can consolidate that into the verification issue."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 120, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-11-explains-that-phase-10-step-1-always-launches-verification-subagents-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Phase 10 step 1 always launches verification subagents for the automated checks in `test-commands.yaml`. Here, `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` can be split across parallel verification subagents if the repo supports concurrent execution; if any check depends on shared mutable state or conflicts with another check, run those verification subagents sequentially instead. Each verification subagent must report the exact command it ran, the exit code, pass/fail status, a short output summary, and any failure details so the primary agent can consolidate that into the verification issue.\n"}], "grading": {"expectations": [{"text": "States that Phase 10 step 1 always runs automated checks in verification subagents", "passed": true, "evidence": "Phase 10 step 1 always launches verification subagents for the automated checks in `test-commands.yaml`. Here, `npm test`, `npm run lint`, `npm"}, {"text": "Uses parallel verification subagents for independent checks when the repo supports concurrent execution", "passed": true, "evidence": "pecheck`, and `npm run build` can be split across parallel verification subagents if the repo supports concurrent execution; if any check depends on shared mutable state o"}, {"text": "Uses sequential verification subagents for dependent checks or checks with shared mutable resources", "passed": true, "evidence": "h another check, run those verification subagents sequentially instead. Each verification subagent must report the exact command it ran, the exit code,; rts concurrent execution; if any check depends on shared mutable state or conflicts with another check, run those verification subagents sequentially instead. E"}, {"text": "Requires each verification subagent to report command, exit code, pass/fail status, output summary, and failure details", "passed": true, "evidence": "ubagent must report the exact command it ran, the exit code, pass/fail status, a short output summary, and any failure details so the primary agent c; pass/fail status, a short output summary, and any failure details so the primary agent can consolidate that into the verification issue."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 120, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-12-explains-that-phase-8-must-recover-the-recorded-phase-2-worktree-ver-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Resume by loading the parent issue, the Phase 2 worktree issue, and the open implementation task issues so you can continue from `../worktrees/2026-04-27-add-rate-limit-logs`. Once the task graph is loaded, proceed with the ready implementation tasks in dependency order and delegate them to implementation subagents as appropriate. The older workflow does not require a separate override-sync maintenance step before implementation starts.\n"}], "grading": {"expectations": [{"text": "Loads the recorded Phase 2 worktree path during resume", "passed": true, "evidence": "Resume by loading the parent issue, the Phase 2 worktree issue, and the open implementation task issues so you can continue from `../worktrees/2026-04-2; lementation task issues so you can continue from `../worktrees/2026-04-27-add-rate-limit-logs`. Once the task graph is loaded, proceed with the ready implementation tasks in dependenc"}, {"text": "Checks `.coding-workflow/overrides/` inside that worktree rather than only in the source checkout", "passed": false, "evidence": "missing: `.coding-workflow/overrides/`, recorded worktree; missing one of: inside that worktree / enter that recorded worktree and check / check `.coding-workflow/overrides/` there"}, {"text": "Returns to Phase 0 / Phase 2 maintenance when overrides are missing, incomplete, or stale", "passed": false, "evidence": "missing: phase 0 / phase 2 maintenance; missing one of: missing / incomplete / stale"}, {"text": "Does not start implementation subagents until the override tree is synced into the worktree", "passed": false, "evidence": "missing one of: stop before launching / do not start / before implementation subagents start"}, {"text": "Keeps implementation work inside the recorded worktree once overrides are restored", "passed": false, "evidence": "missing: operate from that recorded worktree; missing one of: restored override set / override tree"}], "summary": {"passed": 1, "failed": 4, "total": 5, "pass_rate": 0.2}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 5}, "total_tool_calls": 10, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 78, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-12-explains-that-phase-8-must-recover-the-recorded-phase-2-worktree-ver-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Resume by loading the Phase 2 worktree issue so you recover the recorded worktree path `../worktrees/2026-04-27-add-rate-limit-logs`. Enter that recorded worktree and check `.coding-workflow/overrides/` there, not just in the source checkout. Because `test-commands.yaml` and `repo-policy.md` are missing, stop before launching any implementation subagent and return to Phase 0 / Phase 2 maintenance to refresh bootstrap overrides and sync the committed override tree into the worktree. Only after the recorded worktree has the restored override set should implementation subagents start, and they must operate from that recorded worktree.\n"}], "grading": {"expectations": [{"text": "Loads the recorded Phase 2 worktree path during resume", "passed": true, "evidence": "Resume by loading the Phase 2 worktree issue so you recover the recorded worktree path `../worktrees/2026-04-27-add-rate-limit-logs`.; issue so you recover the recorded worktree path `../worktrees/2026-04-27-add-rate-limit-logs`. Enter that recorded worktree and check `.coding-workflow/overrides/` there, not just in"}, {"text": "Checks `.coding-workflow/overrides/` inside that worktree rather than only in the source checkout", "passed": true, "evidence": "mit-logs`. Enter that recorded worktree and check `.coding-workflow/overrides/` there, not just in the source checkout. Because `test-commands.yaml` and `repo-policy.md`; ing the Phase 2 worktree issue so you recover the recorded worktree path `../worktrees/2026-04-27-add-rate-limit-logs`. Enter that recorded worktree and chec"}, {"text": "Returns to Phase 0 / Phase 2 maintenance when overrides are missing, incomplete, or stale", "passed": true, "evidence": "unching any implementation subagent and return to Phase 0 / Phase 2 maintenance to refresh bootstrap overrides and sync the committed override tree into the worktree. On; use `test-commands.yaml` and `repo-policy.md` are missing, stop before launching any implementation subagent and return to Phase 0 / Phase 2 mainte"}, {"text": "Does not start implementation subagents until the override tree is synced into the worktree", "passed": true, "evidence": "-commands.yaml` and `repo-policy.md` are missing, stop before launching any implementation subagent and return to Phase 0 / Phase 2 maintenance to refresh bootst; policy.md` are missing, stop before launching any implementation subagent and return to Phase 0 / Phase 2 maintenance to refresh bootstrap overrides and sync the c"}, {"text": "Keeps implementation work inside the recorded worktree once overrides are restored", "passed": true, "evidence": "ing the Phase 2 worktree issue so you recover the recorded worktree path `../worktrees/2026-04-27-add-rate-limit-logs`. Enter that recorded worktree and chec; ded worktree has the restored override set should implementation subagents start, and they must operate from that recorded worktree."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 5}, "total_tool_calls": 10, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 111, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-2-explains-that-child-issues-are-created-normally-their-node-ids-are-r-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Create the child issue first, then link it. For Phase 6, create the plan issue with `gh issue create`, resolve both node IDs, and attach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:\n\n```bash\nPARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq .id)\nCHILD_NODE_ID=$(gh issue view <plan-issue-number> --json id --jq .id)\ngh api graphql -f query=\"\n  mutation {\n    addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"$CHILD_NODE_ID\"}) {\n      issue { number }\n    }\n  }\"\n```\n\nPhase 7 uses the same shape: create the `phase:task-graph` issue under the Phase 1 parent, then create each implementation task issue and attach it under the task-graph issue with the same literal-ID mutation pattern. A plain `Parent: #N` marker is fallback-only when true GitHub sub-issues are unavailable.\n"}], "grading": {"expectations": [{"text": "Describes creating the child issue first and then linking it to the parent issue", "passed": true, "evidence": "Create the child issue first, then link it. For Phase 6, create the plan issue with `gh issue create`, resolve both no"}, {"text": "Mentions resolving parent and child issue node IDs before linking", "passed": true, "evidence": "h the literal-ID `addSubIssue` mutation:  ```bash PARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq .id) CHILD_NODE_ID=$(gh issue view <; 6, create the plan issue with `gh issue create`, resolve both node IDs, and attach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:  ```bash"}, {"text": "Includes or clearly describes the shell-safe literal-ID `gh api graphql` `addSubIssue` mutation", "passed": true, "evidence": "ssue view <plan-issue-number> --json id --jq .id) gh api graphql -f query=\"   mutation {     addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"; ach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:  ```bash PARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq ."}, {"text": "Avoids GraphQL `$parentId`/`$subIssueId` variables inside the shell query text", "passed": true, "evidence": "l -f query=\"   mutation {     addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"$CHILD_NODE_ID\"}) {       issue { number }     }   }\" ```"}, {"text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable", "passed": true, "evidence": "mutation pattern. A plain `Parent: #N` marker is fallback-only when true GitHub sub-issues are unavailable."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 5}, "total_tool_calls": 10, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 156, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-2-explains-that-child-issues-are-created-normally-their-node-ids-are-r-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Create the child issue first, then link it. For Phase 6, create the plan issue with `gh issue create`, resolve both node IDs, and attach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:\n\n```bash\nPARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq .id)\nCHILD_NODE_ID=$(gh issue view <plan-issue-number> --json id --jq .id)\ngh api graphql -f query=\"\n  mutation {\n    addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"$CHILD_NODE_ID\"}) {\n      issue { number }\n    }\n  }\"\n```\n\nPhase 7 uses the same shape: create the `phase:task-graph` issue under the Phase 1 parent, then create each implementation task issue and attach it under the task-graph issue with the same literal-ID mutation pattern. A plain `Parent: #N` marker is fallback-only when true GitHub sub-issues are unavailable.\n"}], "grading": {"expectations": [{"text": "Describes creating the child issue first and then linking it to the parent issue", "passed": true, "evidence": "Create the child issue first, then link it. For Phase 6, create the plan issue with `gh issue create`, resolve both no"}, {"text": "Mentions resolving parent and child issue node IDs before linking", "passed": true, "evidence": "h the literal-ID `addSubIssue` mutation:  ```bash PARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq .id) CHILD_NODE_ID=$(gh issue view <; 6, create the plan issue with `gh issue create`, resolve both node IDs, and attach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:  ```bash"}, {"text": "Includes or clearly describes the shell-safe literal-ID `gh api graphql` `addSubIssue` mutation", "passed": true, "evidence": "ssue view <plan-issue-number> --json id --jq .id) gh api graphql -f query=\"   mutation {     addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"; ach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:  ```bash PARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq ."}, {"text": "Avoids GraphQL `$parentId`/`$subIssueId` variables inside the shell query text", "passed": true, "evidence": "l -f query=\"   mutation {     addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"$CHILD_NODE_ID\"}) {       issue { number }     }   }\" ```"}, {"text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable", "passed": true, "evidence": "mutation pattern. A plain `Parent: #N` marker is fallback-only when true GitHub sub-issues are unavailable."}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 5}, "total_tool_calls": 10, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 156, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-3-shows-a-conventional-commits-message-with-a-body-that-links-the-work-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Use a conventional-commits subject, then a body that names the work item and parent issue, then a blank line, then the trailer block:\n\n```text\nfeat: add retry mechanism\n\nwork-item: 2026-04-23-add-retry-mechanism\nparent-issue: #42\n\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\n```\n"}], "grading": {"expectations": [{"text": "Shows a conventional-commits subject line", "passed": true, "evidence": "en a blank line, then the trailer block:  ```text feat: add retry mechanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <22"}, {"text": "Includes a body that references the work-item slug or parent issue `#42`", "passed": true, "evidence": "k:  ```text feat: add retry mechanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> `; hanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> ```"}, {"text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`", "passed": true, "evidence": "2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> ```"}, {"text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line", "passed": true, "evidence": "Found a blank line immediately before the trailer block."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 46, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-3-shows-a-conventional-commits-message-with-a-body-that-links-the-work-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Use a conventional-commits subject, then a body that names the work item and parent issue, then a blank line, then the trailer block:\n\n```text\nfeat: add retry mechanism\n\nwork-item: 2026-04-23-add-retry-mechanism\nparent-issue: #42\n\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\n```\n"}], "grading": {"expectations": [{"text": "Shows a conventional-commits subject line", "passed": true, "evidence": "en a blank line, then the trailer block:  ```text feat: add retry mechanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <22"}, {"text": "Includes a body that references the work-item slug or parent issue `#42`", "passed": true, "evidence": "k:  ```text feat: add retry mechanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> `; hanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> ```"}, {"text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`", "passed": true, "evidence": "2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> ```"}, {"text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line", "passed": true, "evidence": "Found a blank line immediately before the trailer block."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 46, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-4-explains-that-phase-1-creates-a-lightweight-parent-issue-plus-a-sepa-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Phase 1 now creates two GitHub issues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.coding-workflow/work/<slug>/`; Intake state lives in GitHub.\n"}], "grading": {"expectations": [{"text": "Creates both a lightweight parent issue and a separate `phase:intake` child issue", "passed": true, "evidence": "Phase 1 now creates two GitHub issues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue who; ns the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or"}, {"text": "Says the intake child issue body is based on the intake template", "passed": true, "evidence": "`phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.codi"}, {"text": "States that local per-work-item markdown artifacts like `00-intake.md` are not created", "passed": true, "evidence": "follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.coding-workflow/work/<slug>/`; Intake"}, {"text": "Keeps the parent issue as the durable top-level tracker rather than collapsing intake into the parent body", "passed": true, "evidence": "sues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It doe"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 61, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-4-explains-that-phase-1-creates-a-lightweight-parent-issue-plus-a-sepa-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Phase 1 now creates two GitHub issues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.coding-workflow/work/<slug>/`; Intake state lives in GitHub.\n"}], "grading": {"expectations": [{"text": "Creates both a lightweight parent issue and a separate `phase:intake` child issue", "passed": true, "evidence": "Phase 1 now creates two GitHub issues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue who; ns the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or"}, {"text": "Says the intake child issue body is based on the intake template", "passed": true, "evidence": "`phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.codi"}, {"text": "States that local per-work-item markdown artifacts like `00-intake.md` are not created", "passed": true, "evidence": "follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.coding-workflow/work/<slug>/`; Intake"}, {"text": "Keeps the parent issue as the durable top-level tracker rather than collapsing intake into the parent body", "passed": true, "evidence": "sues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It doe"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 61, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-5-explains-that-the-exploration-summary-lives-in-the-phase-3-issue-bod-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Store Phase 3 in GitHub: the consolidated exploration summary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifacts are durable in GitHub so another agent can resume without any local `02-exploration/...` files.\n"}], "grading": {"expectations": [{"text": "Places the exploration summary in the `phase:exploration` issue body", "passed": true, "evidence": "he consolidated exploration summary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration is"}, {"text": "Places `files.csv` in an artifact subissue under the Phase 3 issue", "passed": true, "evidence": "ary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration issue, and the open-questi"}, {"text": "Places open questions in a durable GitHub artifact issue rather than `02-exploration/open-questions.md`", "passed": true, "evidence": "ct subissue under that exploration issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifact; issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifacts are durable in GitHub so a"}, {"text": "Makes clear that these artifacts exist in GitHub so another agent can resume without local files", "passed": true, "evidence": "ifacts are durable in GitHub so another agent can resume without any local `02-exploration/...` files.; Store Phase 3 in GitHub: the consolidated exploration summary lives in the `phase:exploration` issue body, `files"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 74, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-5-explains-that-the-exploration-summary-lives-in-the-phase-3-issue-bod-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Store Phase 3 in GitHub: the consolidated exploration summary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifacts are durable in GitHub so another agent can resume without any local `02-exploration/...` files.\n"}], "grading": {"expectations": [{"text": "Places the exploration summary in the `phase:exploration` issue body", "passed": true, "evidence": "he consolidated exploration summary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration is"}, {"text": "Places `files.csv` in an artifact subissue under the Phase 3 issue", "passed": true, "evidence": "ary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration issue, and the open-questi"}, {"text": "Places open questions in a durable GitHub artifact issue rather than `02-exploration/open-questions.md`", "passed": true, "evidence": "ct subissue under that exploration issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifact; issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifacts are durable in GitHub so a"}, {"text": "Makes clear that these artifacts exist in GitHub so another agent can resume without local files", "passed": true, "evidence": "ifacts are durable in GitHub so another agent can resume without any local `02-exploration/...` files.; Store Phase 3 in GitHub: the consolidated exploration summary lives in the `phase:exploration` issue body, `files"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 74, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-6-explains-that-phase-6-approval-is-an-explicit-comment-on-the-plan-is-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Record Phase 6 approval as an explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue body as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue, with the task issue stage updated in place.\n"}], "grading": {"expectations": [{"text": "Records Gate D approval as an explicit comment on the Phase 6 plan issue", "passed": true, "evidence": "Record Phase 6 approval as an explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase"}, {"text": "Says the plan issue is closed after approval", "passed": true, "evidence": "explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue b"}, {"text": "Stores the Phase 7 task graph in the issue body as YAML rather than a physical `06-task-graph.yaml` file", "passed": true, "evidence": "exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue body as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`;"}, {"text": "Stores implementation progress as comments on task issues instead of `07-implementation-log.md`", "passed": true, "evidence": "g.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue, with the task issue stage updated in place.; as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue,"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 80, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-6-explains-that-phase-6-approval-is-an-explicit-comment-on-the-plan-is-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Record Phase 6 approval as an explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue body as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue, with the task issue stage updated in place.\n"}], "grading": {"expectations": [{"text": "Records Gate D approval as an explicit comment on the Phase 6 plan issue", "passed": true, "evidence": "Record Phase 6 approval as an explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase"}, {"text": "Says the plan issue is closed after approval", "passed": true, "evidence": "explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue b"}, {"text": "Stores the Phase 7 task graph in the issue body as YAML rather than a physical `06-task-graph.yaml` file", "passed": true, "evidence": "exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue body as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`;"}, {"text": "Stores implementation progress as comments on task issues instead of `07-implementation-log.md`", "passed": true, "evidence": "g.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue, with the task issue stage updated in place.; as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue,"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 80, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-7-explains-that-resume-slug-rebuilds-state-from-github-issues-and-comm-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "`RESUME=2026-04-27-add-rate-limit-logs` rebuilds state from GitHub using the work-item slug/work_id: read the parent issue, closed phase issues, open task issues, artifact subissues, and durable comments such as the plan approval and implementation progress comments. The workflow does not require `.coding-workflow/work/2026-04-27-add-rate-limit-logs/` to exist, because GitHub is the canonical durable record for Phases 1\u201311. The next phase is whichever one GitHub shows incomplete based on issue closure state plus those comments.\n"}], "grading": {"expectations": [{"text": "States that resume state is rebuilt from GitHub issues/comments using the work item slug or machine data", "passed": true, "evidence": "`RESUME=2026-04-27-add-rate-limit-logs` rebuilds state from GitHub using the work-item slug/work_id: read the parent issue, closed phase issues, open task i"}, {"text": "Does not instruct the agent to read `.coding-workflow/work/<slug>/`", "passed": true, "evidence": "nd implementation progress comments. The workflow does not require `.coding-workflow/work/2026-04-27-add-rate-limit-logs/` to exist, because GitHub is the c"}, {"text": "Uses issue closure state and durable comments such as approvals or implementation log comments to determine what is complete", "passed": true, "evidence": "is whichever one GitHub shows incomplete based on issue closure state plus those comments.; he work-item slug/work_id: read the parent issue, closed phase issues, open task issues, artifact subissues, and durable comments such as the plan approval and"}, {"text": "Makes clear that GitHub is the canonical durable record for Phases 1\u201311", "passed": true, "evidence": "rate-limit-logs/` to exist, because GitHub is the canonical durable record for Phases 1\u201311. The next phase is whichever one GitHub shows incomplete based on issue c"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 88, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-7-explains-that-resume-slug-rebuilds-state-from-github-issues-and-comm-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "`RESUME=2026-04-27-add-rate-limit-logs` rebuilds state from GitHub using the work-item slug/work_id: read the parent issue, closed phase issues, open task issues, artifact subissues, and durable comments such as the plan approval and implementation progress comments. The workflow does not require `.coding-workflow/work/2026-04-27-add-rate-limit-logs/` to exist, because GitHub is the canonical durable record for Phases 1\u201311. The next phase is whichever one GitHub shows incomplete based on issue closure state plus those comments.\n"}], "grading": {"expectations": [{"text": "States that resume state is rebuilt from GitHub issues/comments using the work item slug or machine data", "passed": true, "evidence": "`RESUME=2026-04-27-add-rate-limit-logs` rebuilds state from GitHub using the work-item slug/work_id: read the parent issue, closed phase issues, open task i"}, {"text": "Does not instruct the agent to read `.coding-workflow/work/<slug>/`", "passed": true, "evidence": "nd implementation progress comments. The workflow does not require `.coding-workflow/work/2026-04-27-add-rate-limit-logs/` to exist, because GitHub is the c"}, {"text": "Uses issue closure state and durable comments such as approvals or implementation log comments to determine what is complete", "passed": true, "evidence": "is whichever one GitHub shows incomplete based on issue closure state plus those comments.; he work-item slug/work_id: read the parent issue, closed phase issues, open task issues, artifact subissues, and durable comments such as the plan approval and"}, {"text": "Makes clear that GitHub is the canonical durable record for Phases 1\u201311", "passed": true, "evidence": "rate-limit-logs/` to exist, because GitHub is the canonical durable record for Phases 1\u201311. The next phase is whichever one GitHub shows incomplete based on issue c"}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 88, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-8-explains-that-phase-7-creates-exactly-two-implementation-task-issues-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Create exactly two `phase:implement` task issues under the `phase:task-graph` issue: one vertical slice for the retry-cap behavior and one vertical slice for the jitter behavior. Each issue owns the full RED \u2192 GREEN \u2192 REFACTOR lifecycle for its behavior; you do not split RED, GREEN, and REFACTOR into separate issues. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`.\n"}], "grading": {"expectations": [{"text": "Says there are exactly two implementation task issues under the Phase 7 task-graph issue, one per behavior or vertical slice", "passed": true, "evidence": "Create exactly two `phase:implement` task issues under the `phase:task-graph` issue: one vertical slice for"}, {"text": "Explains that each task issue owns a full vertical slice rather than a single RED, GREEN, or REFACTOR stage", "passed": true, "evidence": "sk issues under the `phase:task-graph` issue: one vertical slice for the retry-cap behavior and one vertical slice for the jitter behavior. Each issue own"}, {"text": "Records RED, GREEN, and REFACTOR progress as comments on the same task issue", "passed": true, "evidence": "es. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice; GREEN, and REFACTOR into separate issues. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red`"}, {"text": "Explains that the task issue `stage` field starts at `red` and is updated in place as the slice advances", "passed": true, "evidence": "me task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`.; p the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 105, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-8-explains-that-phase-7-creates-exactly-two-implementation-task-issues-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "Create exactly two `phase:implement` task issues under the `phase:task-graph` issue: one vertical slice for the retry-cap behavior and one vertical slice for the jitter behavior. Each issue owns the full RED \u2192 GREEN \u2192 REFACTOR lifecycle for its behavior; you do not split RED, GREEN, and REFACTOR into separate issues. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`.\n"}], "grading": {"expectations": [{"text": "Says there are exactly two implementation task issues under the Phase 7 task-graph issue, one per behavior or vertical slice", "passed": true, "evidence": "Create exactly two `phase:implement` task issues under the `phase:task-graph` issue: one vertical slice for"}, {"text": "Explains that each task issue owns a full vertical slice rather than a single RED, GREEN, or REFACTOR stage", "passed": true, "evidence": "sk issues under the `phase:task-graph` issue: one vertical slice for the retry-cap behavior and one vertical slice for the jitter behavior. Each issue own"}, {"text": "Records RED, GREEN, and REFACTOR progress as comments on the same task issue", "passed": true, "evidence": "es. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice; GREEN, and REFACTOR into separate issues. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red`"}, {"text": "Explains that the task issue `stage` field starts at `red` and is updated in place as the slice advances", "passed": true, "evidence": "me task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`.; p the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 105, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-9-explains-that-files-csv-closes-after-the-exploration-file-ledger-is-old_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "`files.csv` closes as soon as the exploration file ledger is complete. `sources.md` closes as soon as the research source ledger is complete. The `open-questions` artifact stays open only while research or clarification is still resolving entries, and it closes once every question is finalized. The Phase 7 task graph YAML lives directly in the `phase:task-graph` issue body, not in a separate artifact subissue or local file.\n"}], "grading": {"expectations": [{"text": "Closes `files.csv` after the exploration file ledger is complete", "passed": true, "evidence": "`files.csv` closes as soon as the exploration file ledger is complete. `sources.md` closes as soon a"}, {"text": "Closes `sources.md` after the research source ledger is complete", "passed": true, "evidence": "soon as the exploration file ledger is complete. `sources.md` closes as soon as the research source ledger is complete. The `open-questions` artifact"}, {"text": "Keeps `open-questions` open only while unresolved questions remain and closes it once every entry is finalized", "passed": true, "evidence": "n as the research source ledger is complete. The `open-questions` artifact stays open only while research or clarification is still resolving entries, and"}, {"text": "Places the Phase 7 task graph YAML in the `phase:task-graph` issue body rather than a separate artifact subissue", "passed": true, "evidence": "he Phase 7 task graph YAML lives directly in the `phase:task-graph` issue body, not in a separate artifact subissue or local file."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 85, "duration_ms": 1, "total_duration_seconds": 0.001}}}, {"id": "eval-9-explains-that-files-csv-closes-after-the-exploration-file-ledger-is-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "response.md", "type": "text", "content": "`files.csv` closes as soon as the exploration file ledger is complete. `sources.md` closes as soon as the research source ledger is complete. The `open-questions` artifact stays open only while research or clarification is still resolving entries, and it closes once every question is finalized. The Phase 7 task graph YAML lives directly in the `phase:task-graph` issue body, not in a separate artifact subissue or local file.\n"}], "grading": {"expectations": [{"text": "Closes `files.csv` after the exploration file ledger is complete", "passed": true, "evidence": "`files.csv` closes as soon as the exploration file ledger is complete. `sources.md` closes as soon a"}, {"text": "Closes `sources.md` after the research source ledger is complete", "passed": true, "evidence": "soon as the exploration file ledger is complete. `sources.md` closes as soon as the research source ledger is complete. The `open-questions` artifact"}, {"text": "Keeps `open-questions` open only while unresolved questions remain and closes it once every entry is finalized", "passed": true, "evidence": "n as the research source ledger is complete. The `open-questions` artifact stays open only while research or clarification is still resolving entries, and"}, {"text": "Places the Phase 7 task graph YAML in the `phase:task-graph` issue body rather than a separate artifact subissue", "passed": true, "evidence": "he Phase 7 task graph YAML lives directly in the `phase:task-graph` issue body, not in a separate artifact subissue or local file."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"read_skill_files": 2, "read_reference_files": 2, "generate_response": 1, "grade_expectations": 4}, "total_tool_calls": 9, "total_steps": 1, "errors_encountered": 0}, "timing": {"total_tokens": 85, "duration_ms": 1, "total_duration_seconds": 0.001}}}], "previous_feedback": {}, "previous_outputs": {"eval-0-refuses-to-continue-into-phase-8-in-the-same-session-names-the-hard-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next phase after that resume unless the durable record shows an earlier phase is incomplete.\n"}], "eval-0-refuses-to-continue-into-phase-8-in-the-same-session-names-the-hard-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next phase after that resume unless the durable record shows an earlier phase is incomplete.\n"}], "eval-1-uses-the-github-issue-title-body-as-the-authoritative-work-item-trea-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "Intake still begins by fetching `gh issue view 42 --json number,title,body,url,id` before classification. Use the CSV import bug from the issue title/body as the authoritative `WORK_ITEM`; treat `maybe clean up auth later` as supplemental only. Keep `#42` as the parent issue for the workflow and do not create another parent issue.\n"}], "eval-1-uses-the-github-issue-title-body-as-the-authoritative-work-item-trea-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "Intake must start by fetching `gh issue view 42 --json number,title,body,url,id` and reading the issue title/body before classification. The CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and does not override the issue. Keep `#42` as the Phase 1 parent issue, create the structured intake child issue under it, and do not create a new parent issue.\n"}], "eval-10-explains-that-phase-8-implementation-is-always-performed-by-subagent-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "In the older flow, A and B can run in parallel implementation subagents because they are ready and touch different files. C waits until the parallel work finishes because it is sequential; at that point the primary agent can execute that slice directly in the main context or delegate it if helpful. The primary agent still coordinates ordering and reviews the results, but implementation is not mandated to run only through subagents.\n"}], "eval-10-explains-that-phase-8-implementation-is-always-performed-by-subagent-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "Phase 8 code is always written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one implementation subagent for A and one for B concurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequential`. The primary agent stays in orchestration mode: enforce dependency order and file-overlap checks, review the subagent diffs/tests, and record the GitHub task comments and stage updates rather than directly writing the slice.\n"}], "eval-11-explains-that-phase-10-step-1-always-launches-verification-subagents-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "Start Phase 10 by running the commands from `test-commands.yaml` and recording the results in the verification artifact. Independent checks may be split across subagents when the repo supports it, but the older workflow does not require verification subagents for every check; dependent or conflicting commands should run sequentially. The important output is the pass/fail record in the verification artifact, rather than a mandatory per-subagent report contract.\n"}], "eval-11-explains-that-phase-10-step-1-always-launches-verification-subagents-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "Phase 10 step 1 always launches verification subagents for the automated checks in `test-commands.yaml`. Here, `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` can be split across parallel verification subagents if the repo supports concurrent execution; if any check depends on shared mutable state or conflicts with another check, run those verification subagents sequentially instead. Each verification subagent must report the exact command it ran, the exit code, pass/fail status, a short output summary, and any failure details so the primary agent can consolidate that into the verification issue.\n"}], "eval-2-explains-that-child-issues-are-created-normally-their-node-ids-are-r-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "Create each child issue first, then link it. The older command shape resolves both node IDs and calls `gh api graphql` with `addSubIssue`, for example:\n\n```bash\nPARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq .id)\nCHILD_NODE_ID=$(gh issue view <child-issue-number> --json id --jq .id)\ngh api graphql -f query='\n  mutation($parentId: ID!, $subIssueId: ID!) {\n    addSubIssue(input: {issueId: $parentId, subIssueId: $subIssueId}) {\n      issue { number }\n    }\n  }'               -f parentId=\"$PARENT_NODE_ID\"               -f subIssueId=\"$CHILD_NODE_ID\"\n```\n\nUse that flow for the Phase 6 plan issue and the Phase 7 implementation issues. `Parent: #N` is only the fallback when GitHub sub-issues cannot be created.\n"}], "eval-2-explains-that-child-issues-are-created-normally-their-node-ids-are-r-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "Create the child issue first, then link it. For Phase 6, create the plan issue with `gh issue create`, resolve both node IDs, and attach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:\n\n```bash\nPARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq .id)\nCHILD_NODE_ID=$(gh issue view <plan-issue-number> --json id --jq .id)\ngh api graphql -f query=\"\n  mutation {\n    addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"$CHILD_NODE_ID\"}) {\n      issue { number }\n    }\n  }\"\n```\n\nPhase 7 uses the same shape: create the `phase:task-graph` issue under the Phase 1 parent, then create each implementation task issue and attach it under the task-graph issue with the same literal-ID mutation pattern. A plain `Parent: #N` marker is fallback-only when true GitHub sub-issues are unavailable.\n"}], "eval-3-shows-a-conventional-commits-message-with-a-body-that-links-the-work-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "Use a conventional-commits subject, then a body that names the work item and parent issue, then a blank line, then the trailer block:\n\n```text\nfeat: add retry mechanism\n\nwork-item: 2026-04-23-add-retry-mechanism\nparent-issue: #42\n\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\n```\n"}], "eval-3-shows-a-conventional-commits-message-with-a-body-that-links-the-work-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "Use a conventional-commits subject, then a body that names the work item and parent issue, then a blank line, then the trailer block:\n\n```text\nfeat: add retry mechanism\n\nwork-item: 2026-04-23-add-retry-mechanism\nparent-issue: #42\n\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\n```\n"}], "eval-4-explains-that-phase-1-creates-a-lightweight-parent-issue-plus-a-sepa-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "With no existing `ISSUE`, Phase 1 creates the GitHub parent issue and then writes the structured intake artifact to `.coding-workflow/work/<slug>/00-intake.md`. The parent issue links to that local artifact directory and stays the top-level tracker. This older flow does not require a separate `phase:intake` child issue because Intake is carried by the parent issue plus the local markdown.\n"}], "eval-4-explains-that-phase-1-creates-a-lightweight-parent-issue-plus-a-sepa-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "Phase 1 now creates two GitHub issues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.coding-workflow/work/<slug>/`; Intake state lives in GitHub.\n"}], "eval-5-explains-that-the-exploration-summary-lives-in-the-phase-3-issue-bod-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "Store the exploration outputs in the local artifact directory: `02-exploration/summary.md`, `02-exploration/files.csv`, and `02-exploration/open-questions.md`. The exploration GitHub issue, if used, just links back to those files. Resume state comes from the local `.coding-workflow/work/<slug>/02-exploration/` artifacts.\n"}], "eval-5-explains-that-the-exploration-summary-lives-in-the-phase-3-issue-bod-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "Store Phase 3 in GitHub: the consolidated exploration summary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifacts are durable in GitHub so another agent can resume without any local `02-exploration/...` files.\n"}], "eval-6-explains-that-phase-6-approval-is-an-explicit-comment-on-the-plan-is-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "In the older flow, Gate D is satisfied in the local artifacts: `05-plan.md` is approved and `00-intake.md` carries the approval state, Phase 7 writes `06-task-graph.yaml`, and Phase 8 appends RED/GREEN/REFACTOR progress to `07-implementation-log.md`. The workflow does not rely on a plan-issue approval comment or YAML stored in a GitHub issue body.\n"}], "eval-6-explains-that-phase-6-approval-is-an-explicit-comment-on-the-plan-is-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "Record Phase 6 approval as an explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue body as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue, with the task issue stage updated in place.\n"}], "eval-7-explains-that-resume-slug-rebuilds-state-from-github-issues-and-comm-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "In the older workflow, resume state comes from `.coding-workflow/work/2026-04-27-add-rate-limit-logs/`. Re-read `00-intake.md`, `05-plan.md`, `06-task-graph.yaml`, and the other local artifacts, then use their frontmatter/status fields to determine the next incomplete phase. GitHub issues can help with context, but the local artifact directory is the authoritative resume record.\n"}], "eval-7-explains-that-resume-slug-rebuilds-state-from-github-issues-and-comm-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "`RESUME=2026-04-27-add-rate-limit-logs` rebuilds state from GitHub using the work-item slug/work_id: read the parent issue, closed phase issues, open task issues, artifact subissues, and durable comments such as the plan approval and implementation progress comments. The workflow does not require `.coding-workflow/work/2026-04-27-add-rate-limit-logs/` to exist, because GitHub is the canonical durable record for Phases 1\u201311. The next phase is whichever one GitHub shows incomplete based on issue closure state plus those comments.\n"}], "eval-8-explains-that-phase-7-creates-exactly-two-implementation-task-issues-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "In the older workflow, put the retry-cap and jitter behaviors into `06-task-graph.yaml` as two TDD slices, then execute them and append the RED/GREEN/REFACTOR history to `07-implementation-log.md`. You may open implementation issues for major tasks, but the durable stage progression lives in the YAML plus the local implementation log, not as in-place comments and stage updates on a single task issue per behavior.\n"}], "eval-8-explains-that-phase-7-creates-exactly-two-implementation-task-issues-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "Create exactly two `phase:implement` task issues under the `phase:task-graph` issue: one vertical slice for the retry-cap behavior and one vertical slice for the jitter behavior. Each issue owns the full RED \u2192 GREEN \u2192 REFACTOR lifecycle for its behavior; you do not split RED, GREEN, and REFACTOR into separate issues. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`.\n"}], "eval-9-explains-that-files-csv-closes-after-the-exploration-file-ledger-is-old_skill-run-1": [{"name": "response.md", "type": "text", "content": "In the older workflow, `files.csv`, `sources.md`, and `open-questions.md` are local files under `.coding-workflow/work/<slug>/`, so there is no GitHub artifact issue to close for them. You update those files during exploration, research, and clarification as needed. The Phase 7 task graph lives in `06-task-graph.yaml`.\n"}], "eval-9-explains-that-files-csv-closes-after-the-exploration-file-ledger-is-with_skill-run-1": [{"name": "response.md", "type": "text", "content": "`files.csv` closes as soon as the exploration file ledger is complete. `sources.md` closes as soon as the research source ledger is complete. The `open-questions` artifact stays open only while research or clarification is still resolving entries, and it closes once every question is finalized. The Phase 7 task graph YAML lives directly in the `phase:task-graph` issue body, not in a separate artifact subissue or local file.\n"}]}, "benchmark": {"metadata": {"skill_name": "coding-task-workflow", "skill_path": "<path/to/skill>", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-04-27T20:40:14Z", "evals_run": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "runs_per_configuration": 1}, "runs": [{"eval_id": 0, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "States that the workflow hard-stops after Phase 7 once Gate E passes", "passed": true, "evidence": "ue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-wo; n the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2"}, {"text": "Does not agree to continue into Phase 8 in the same session", "passed": true, "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is sa"}, {"text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent", "passed": true, "evidence": "r Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next ph; e from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next phase after that resume unless the durable record shows an earlier"}, {"text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases", "passed": true, "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resu"}], "notes": []}, {"eval_id": 1, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Says Intake should fetch/read the GitHub issue title or body before classification", "passed": true, "evidence": "Intake must start by fetching `gh issue view 42 --json number,title,body,url,id` and reading the issue title/body before classification."}, {"text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`", "passed": true, "evidence": "he CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and doe"}, {"text": "Does not treat `maybe clean up auth later` as the primary work item", "passed": true, "evidence": "in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and does not override the issue. Keep `#42` as"}, {"text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue", "passed": true, "evidence": "ification. The CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supple; not override the issue. Keep `#42` as the Phase 1 parent issue, create the structured intake child issue under it, and do not create a new parent issue."}], "notes": []}, {"eval_id": 10, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "States that Phase 8 implementation task issues are always executed by subagents", "passed": true, "evidence": "Phase 8 code is always written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one impl"}, {"text": "Runs ready non-overlapping tasks A and B in parallel implementation subagents", "passed": true, "evidence": "ways written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one implementation subage; h one implementation subagent for A and one for B concurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequ"}, {"text": "Runs sequential task C through its own implementation subagent rather than directly in the primary context", "passed": true, "evidence": "oncurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequential`. The primary agent stays in orchestration mode: enforce depend"}, {"text": "Explains that the primary agent orchestrates dependency order, reviews subagent changes or tests, and records GitHub task comments", "passed": true, "evidence": "se it is `sequential`. The primary agent stays in orchestration mode: enforce dependency order and file-overlap checks, review the subagent diffs/tests, and r; , review the subagent diffs/tests, and record the GitHub task comments and stage updates rather than directly writing the slice."}], "notes": []}, {"eval_id": 11, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "States that Phase 10 step 1 always runs automated checks in verification subagents", "passed": true, "evidence": "Phase 10 step 1 always launches verification subagents for the automated checks in `test-commands.yaml`. Here, `npm test`, `npm run lint`, `npm"}, {"text": "Uses parallel verification subagents for independent checks when the repo supports concurrent execution", "passed": true, "evidence": "pecheck`, and `npm run build` can be split across parallel verification subagents if the repo supports concurrent execution; if any check depends on shared mutable state o"}, {"text": "Uses sequential verification subagents for dependent checks or checks with shared mutable resources", "passed": true, "evidence": "h another check, run those verification subagents sequentially instead. Each verification subagent must report the exact command it ran, the exit code,; rts concurrent execution; if any check depends on shared mutable state or conflicts with another check, run those verification subagents sequentially instead. E"}, {"text": "Requires each verification subagent to report command, exit code, pass/fail status, output summary, and failure details", "passed": true, "evidence": "ubagent must report the exact command it ran, the exit code, pass/fail status, a short output summary, and any failure details so the primary agent c; pass/fail status, a short output summary, and any failure details so the primary agent can consolidate that into the verification issue."}], "notes": []}, {"eval_id": 12, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 0.2, "passed": 1, "failed": 4, "total": 5, "time_seconds": 0.001, "tokens": 0, "tool_calls": 10, "errors": 0}, "expectations": [{"text": "Loads the recorded Phase 2 worktree path during resume", "passed": true, "evidence": "Resume by loading the parent issue, the Phase 2 worktree issue, and the open implementation task issues so you can continue from `../worktrees/2026-04-2; lementation task issues so you can continue from `../worktrees/2026-04-27-add-rate-limit-logs`. Once the task graph is loaded, proceed with the ready implementation tasks in dependenc"}, {"text": "Checks `.coding-workflow/overrides/` inside that worktree rather than only in the source checkout", "passed": false, "evidence": "missing: `.coding-workflow/overrides/`, recorded worktree; missing one of: inside that worktree / enter that recorded worktree and check / check `.coding-workflow/overrides/` there"}, {"text": "Returns to Phase 0 / Phase 2 maintenance when overrides are missing, incomplete, or stale", "passed": false, "evidence": "missing: phase 0 / phase 2 maintenance; missing one of: missing / incomplete / stale"}, {"text": "Does not start implementation subagents until the override tree is synced into the worktree", "passed": false, "evidence": "missing one of: stop before launching / do not start / before implementation subagents start"}, {"text": "Keeps implementation work inside the recorded worktree once overrides are restored", "passed": false, "evidence": "missing: operate from that recorded worktree; missing one of: restored override set / override tree"}], "notes": []}, {"eval_id": 2, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.001, "tokens": 0, "tool_calls": 10, "errors": 0}, "expectations": [{"text": "Describes creating the child issue first and then linking it to the parent issue", "passed": true, "evidence": "Create the child issue first, then link it. For Phase 6, create the plan issue with `gh issue create`, resolve both no"}, {"text": "Mentions resolving parent and child issue node IDs before linking", "passed": true, "evidence": "h the literal-ID `addSubIssue` mutation:  ```bash PARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq .id) CHILD_NODE_ID=$(gh issue view <; 6, create the plan issue with `gh issue create`, resolve both node IDs, and attach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:  ```bash"}, {"text": "Includes or clearly describes the shell-safe literal-ID `gh api graphql` `addSubIssue` mutation", "passed": true, "evidence": "ssue view <plan-issue-number> --json id --jq .id) gh api graphql -f query=\"   mutation {     addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"; ach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:  ```bash PARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq ."}, {"text": "Avoids GraphQL `$parentId`/`$subIssueId` variables inside the shell query text", "passed": true, "evidence": "l -f query=\"   mutation {     addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"$CHILD_NODE_ID\"}) {       issue { number }     }   }\" ```"}, {"text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable", "passed": true, "evidence": "mutation pattern. A plain `Parent: #N` marker is fallback-only when true GitHub sub-issues are unavailable."}], "notes": []}, {"eval_id": 3, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Shows a conventional-commits subject line", "passed": true, "evidence": "en a blank line, then the trailer block:  ```text feat: add retry mechanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <22"}, {"text": "Includes a body that references the work-item slug or parent issue `#42`", "passed": true, "evidence": "k:  ```text feat: add retry mechanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> `; hanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> ```"}, {"text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`", "passed": true, "evidence": "2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> ```"}, {"text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line", "passed": true, "evidence": "Found a blank line immediately before the trailer block."}], "notes": []}, {"eval_id": 4, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Creates both a lightweight parent issue and a separate `phase:intake` child issue", "passed": true, "evidence": "Phase 1 now creates two GitHub issues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue who; ns the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or"}, {"text": "Says the intake child issue body is based on the intake template", "passed": true, "evidence": "`phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.codi"}, {"text": "States that local per-work-item markdown artifacts like `00-intake.md` are not created", "passed": true, "evidence": "follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.coding-workflow/work/<slug>/`; Intake"}, {"text": "Keeps the parent issue as the durable top-level tracker rather than collapsing intake into the parent body", "passed": true, "evidence": "sues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It doe"}], "notes": []}, {"eval_id": 5, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Places the exploration summary in the `phase:exploration` issue body", "passed": true, "evidence": "he consolidated exploration summary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration is"}, {"text": "Places `files.csv` in an artifact subissue under the Phase 3 issue", "passed": true, "evidence": "ary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration issue, and the open-questi"}, {"text": "Places open questions in a durable GitHub artifact issue rather than `02-exploration/open-questions.md`", "passed": true, "evidence": "ct subissue under that exploration issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifact; issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifacts are durable in GitHub so a"}, {"text": "Makes clear that these artifacts exist in GitHub so another agent can resume without local files", "passed": true, "evidence": "ifacts are durable in GitHub so another agent can resume without any local `02-exploration/...` files.; Store Phase 3 in GitHub: the consolidated exploration summary lives in the `phase:exploration` issue body, `files"}], "notes": []}, {"eval_id": 6, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Records Gate D approval as an explicit comment on the Phase 6 plan issue", "passed": true, "evidence": "Record Phase 6 approval as an explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase"}, {"text": "Says the plan issue is closed after approval", "passed": true, "evidence": "explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue b"}, {"text": "Stores the Phase 7 task graph in the issue body as YAML rather than a physical `06-task-graph.yaml` file", "passed": true, "evidence": "exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue body as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`;"}, {"text": "Stores implementation progress as comments on task issues instead of `07-implementation-log.md`", "passed": true, "evidence": "g.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue, with the task issue stage updated in place.; as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue,"}], "notes": []}, {"eval_id": 7, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "States that resume state is rebuilt from GitHub issues/comments using the work item slug or machine data", "passed": true, "evidence": "`RESUME=2026-04-27-add-rate-limit-logs` rebuilds state from GitHub using the work-item slug/work_id: read the parent issue, closed phase issues, open task i"}, {"text": "Does not instruct the agent to read `.coding-workflow/work/<slug>/`", "passed": true, "evidence": "nd implementation progress comments. The workflow does not require `.coding-workflow/work/2026-04-27-add-rate-limit-logs/` to exist, because GitHub is the c"}, {"text": "Uses issue closure state and durable comments such as approvals or implementation log comments to determine what is complete", "passed": true, "evidence": "is whichever one GitHub shows incomplete based on issue closure state plus those comments.; he work-item slug/work_id: read the parent issue, closed phase issues, open task issues, artifact subissues, and durable comments such as the plan approval and"}, {"text": "Makes clear that GitHub is the canonical durable record for Phases 1\u201311", "passed": true, "evidence": "rate-limit-logs/` to exist, because GitHub is the canonical durable record for Phases 1\u201311. The next phase is whichever one GitHub shows incomplete based on issue c"}], "notes": []}, {"eval_id": 8, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Says there are exactly two implementation task issues under the Phase 7 task-graph issue, one per behavior or vertical slice", "passed": true, "evidence": "Create exactly two `phase:implement` task issues under the `phase:task-graph` issue: one vertical slice for"}, {"text": "Explains that each task issue owns a full vertical slice rather than a single RED, GREEN, or REFACTOR stage", "passed": true, "evidence": "sk issues under the `phase:task-graph` issue: one vertical slice for the retry-cap behavior and one vertical slice for the jitter behavior. Each issue own"}, {"text": "Records RED, GREEN, and REFACTOR progress as comments on the same task issue", "passed": true, "evidence": "es. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice; GREEN, and REFACTOR into separate issues. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red`"}, {"text": "Explains that the task issue `stage` field starts at `red` and is updated in place as the slice advances", "passed": true, "evidence": "me task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`.; p the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`."}], "notes": []}, {"eval_id": 9, "configuration": "old_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Closes `files.csv` after the exploration file ledger is complete", "passed": true, "evidence": "`files.csv` closes as soon as the exploration file ledger is complete. `sources.md` closes as soon a"}, {"text": "Closes `sources.md` after the research source ledger is complete", "passed": true, "evidence": "soon as the exploration file ledger is complete. `sources.md` closes as soon as the research source ledger is complete. The `open-questions` artifact"}, {"text": "Keeps `open-questions` open only while unresolved questions remain and closes it once every entry is finalized", "passed": true, "evidence": "n as the research source ledger is complete. The `open-questions` artifact stays open only while research or clarification is still resolving entries, and"}, {"text": "Places the Phase 7 task graph YAML in the `phase:task-graph` issue body rather than a separate artifact subissue", "passed": true, "evidence": "he Phase 7 task graph YAML lives directly in the `phase:task-graph` issue body, not in a separate artifact subissue or local file."}], "notes": []}, {"eval_id": 0, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "States that the workflow hard-stops after Phase 7 once Gate E passes", "passed": true, "evidence": "ue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-wo; n the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2"}, {"text": "Does not agree to continue into Phase 8 in the same session", "passed": true, "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is sa"}, {"text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent", "passed": true, "evidence": "r Phase 7 once Gate E is satisfied. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next ph; e from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`; Phase 8 is the next phase after that resume unless the durable record shows an earlier"}, {"text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases", "passed": true, "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. The workflow hard-stops after Phase 7 once Gate E is satisfied. Resu"}], "notes": []}, {"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Says Intake should fetch/read the GitHub issue title or body before classification", "passed": true, "evidence": "Intake must start by fetching `gh issue view 42 --json number,title,body,url,id` and reading the issue title/body before classification."}, {"text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`", "passed": true, "evidence": "he CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and doe"}, {"text": "Does not treat `maybe clean up auth later` as the primary work item", "passed": true, "evidence": "in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supplemental context and does not override the issue. Keep `#42` as"}, {"text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue", "passed": true, "evidence": "ification. The CSV import bug described in issue `#42` is the authoritative `WORK_ITEM`; `maybe clean up auth later` is only conflicting supple; not override the issue. Keep `#42` as the Phase 1 parent issue, create the structured intake child issue under it, and do not create a new parent issue."}], "notes": []}, {"eval_id": 10, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "States that Phase 8 implementation task issues are always executed by subagents", "passed": true, "evidence": "Phase 8 code is always written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one impl"}, {"text": "Runs ready non-overlapping tasks A and B in parallel implementation subagents", "passed": true, "evidence": "ways written by implementation subagents. Because A and B are ready, marked `parallel`, and touch different files, launch one implementation subage; h one implementation subagent for A and one for B concurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequ"}, {"text": "Runs sequential task C through its own implementation subagent rather than directly in the primary context", "passed": true, "evidence": "oncurrently. Hold C until its turn, then run C in its own implementation subagent because it is `sequential`. The primary agent stays in orchestration mode: enforce depend"}, {"text": "Explains that the primary agent orchestrates dependency order, reviews subagent changes or tests, and records GitHub task comments", "passed": true, "evidence": "se it is `sequential`. The primary agent stays in orchestration mode: enforce dependency order and file-overlap checks, review the subagent diffs/tests, and r; , review the subagent diffs/tests, and record the GitHub task comments and stage updates rather than directly writing the slice."}], "notes": []}, {"eval_id": 11, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "States that Phase 10 step 1 always runs automated checks in verification subagents", "passed": true, "evidence": "Phase 10 step 1 always launches verification subagents for the automated checks in `test-commands.yaml`. Here, `npm test`, `npm run lint`, `npm"}, {"text": "Uses parallel verification subagents for independent checks when the repo supports concurrent execution", "passed": true, "evidence": "pecheck`, and `npm run build` can be split across parallel verification subagents if the repo supports concurrent execution; if any check depends on shared mutable state o"}, {"text": "Uses sequential verification subagents for dependent checks or checks with shared mutable resources", "passed": true, "evidence": "h another check, run those verification subagents sequentially instead. Each verification subagent must report the exact command it ran, the exit code,; rts concurrent execution; if any check depends on shared mutable state or conflicts with another check, run those verification subagents sequentially instead. E"}, {"text": "Requires each verification subagent to report command, exit code, pass/fail status, output summary, and failure details", "passed": true, "evidence": "ubagent must report the exact command it ran, the exit code, pass/fail status, a short output summary, and any failure details so the primary agent c; pass/fail status, a short output summary, and any failure details so the primary agent can consolidate that into the verification issue."}], "notes": []}, {"eval_id": 12, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.001, "tokens": 0, "tool_calls": 10, "errors": 0}, "expectations": [{"text": "Loads the recorded Phase 2 worktree path during resume", "passed": true, "evidence": "Resume by loading the Phase 2 worktree issue so you recover the recorded worktree path `../worktrees/2026-04-27-add-rate-limit-logs`.; issue so you recover the recorded worktree path `../worktrees/2026-04-27-add-rate-limit-logs`. Enter that recorded worktree and check `.coding-workflow/overrides/` there, not just in"}, {"text": "Checks `.coding-workflow/overrides/` inside that worktree rather than only in the source checkout", "passed": true, "evidence": "mit-logs`. Enter that recorded worktree and check `.coding-workflow/overrides/` there, not just in the source checkout. Because `test-commands.yaml` and `repo-policy.md`; ing the Phase 2 worktree issue so you recover the recorded worktree path `../worktrees/2026-04-27-add-rate-limit-logs`. Enter that recorded worktree and chec"}, {"text": "Returns to Phase 0 / Phase 2 maintenance when overrides are missing, incomplete, or stale", "passed": true, "evidence": "unching any implementation subagent and return to Phase 0 / Phase 2 maintenance to refresh bootstrap overrides and sync the committed override tree into the worktree. On; use `test-commands.yaml` and `repo-policy.md` are missing, stop before launching any implementation subagent and return to Phase 0 / Phase 2 mainte"}, {"text": "Does not start implementation subagents until the override tree is synced into the worktree", "passed": true, "evidence": "-commands.yaml` and `repo-policy.md` are missing, stop before launching any implementation subagent and return to Phase 0 / Phase 2 maintenance to refresh bootst; policy.md` are missing, stop before launching any implementation subagent and return to Phase 0 / Phase 2 maintenance to refresh bootstrap overrides and sync the c"}, {"text": "Keeps implementation work inside the recorded worktree once overrides are restored", "passed": true, "evidence": "ing the Phase 2 worktree issue so you recover the recorded worktree path `../worktrees/2026-04-27-add-rate-limit-logs`. Enter that recorded worktree and chec; ded worktree has the restored override set should implementation subagents start, and they must operate from that recorded worktree."}], "notes": []}, {"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 0.001, "tokens": 0, "tool_calls": 10, "errors": 0}, "expectations": [{"text": "Describes creating the child issue first and then linking it to the parent issue", "passed": true, "evidence": "Create the child issue first, then link it. For Phase 6, create the plan issue with `gh issue create`, resolve both no"}, {"text": "Mentions resolving parent and child issue node IDs before linking", "passed": true, "evidence": "h the literal-ID `addSubIssue` mutation:  ```bash PARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq .id) CHILD_NODE_ID=$(gh issue view <; 6, create the plan issue with `gh issue create`, resolve both node IDs, and attach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:  ```bash"}, {"text": "Includes or clearly describes the shell-safe literal-ID `gh api graphql` `addSubIssue` mutation", "passed": true, "evidence": "ssue view <plan-issue-number> --json id --jq .id) gh api graphql -f query=\"   mutation {     addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"; ach it to the Phase 1 parent with the literal-ID `addSubIssue` mutation:  ```bash PARENT_NODE_ID=$(gh issue view <parent-issue-number> --json id --jq ."}, {"text": "Avoids GraphQL `$parentId`/`$subIssueId` variables inside the shell query text", "passed": true, "evidence": "l -f query=\"   mutation {     addSubIssue(input: {issueId: \"$PARENT_NODE_ID\", subIssueId: \"$CHILD_NODE_ID\"}) {       issue { number }     }   }\" ```"}, {"text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable", "passed": true, "evidence": "mutation pattern. A plain `Parent: #N` marker is fallback-only when true GitHub sub-issues are unavailable."}], "notes": []}, {"eval_id": 3, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Shows a conventional-commits subject line", "passed": true, "evidence": "en a blank line, then the trailer block:  ```text feat: add retry mechanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <22"}, {"text": "Includes a body that references the work-item slug or parent issue `#42`", "passed": true, "evidence": "k:  ```text feat: add retry mechanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> `; hanism  work-item: 2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> ```"}, {"text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`", "passed": true, "evidence": "2026-04-23-add-retry-mechanism parent-issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com> ```"}, {"text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line", "passed": true, "evidence": "Found a blank line immediately before the trailer block."}], "notes": []}, {"eval_id": 4, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Creates both a lightweight parent issue and a separate `phase:intake` child issue", "passed": true, "evidence": "Phase 1 now creates two GitHub issues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue who; ns the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or"}, {"text": "Says the intake child issue body is based on the intake template", "passed": true, "evidence": "`phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.codi"}, {"text": "States that local per-work-item markdown artifacts like `00-intake.md` are not created", "passed": true, "evidence": "follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.coding-workflow/work/<slug>/`; Intake"}, {"text": "Keeps the parent issue as the durable top-level tracker rather than collapsing intake into the parent body", "passed": true, "evidence": "sues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It doe"}], "notes": []}, {"eval_id": 5, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Places the exploration summary in the `phase:exploration` issue body", "passed": true, "evidence": "he consolidated exploration summary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration is"}, {"text": "Places `files.csv` in an artifact subissue under the Phase 3 issue", "passed": true, "evidence": "ary lives in the `phase:exploration` issue body, `files.csv` lives in a dedicated artifact subissue under that exploration issue, and the open-questi"}, {"text": "Places open questions in a durable GitHub artifact issue rather than `02-exploration/open-questions.md`", "passed": true, "evidence": "ct subissue under that exploration issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifact; issue, and the open-question ledger lives in an `open-questions` artifact subissue under the same phase issue. Those artifacts are durable in GitHub so a"}, {"text": "Makes clear that these artifacts exist in GitHub so another agent can resume without local files", "passed": true, "evidence": "ifacts are durable in GitHub so another agent can resume without any local `02-exploration/...` files.; Store Phase 3 in GitHub: the consolidated exploration summary lives in the `phase:exploration` issue body, `files"}], "notes": []}, {"eval_id": 6, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Records Gate D approval as an explicit comment on the Phase 6 plan issue", "passed": true, "evidence": "Record Phase 6 approval as an explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase"}, {"text": "Says the plan issue is closed after approval", "passed": true, "evidence": "explicit comment on the `phase:plan` issue, then close the plan issue once approval exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue b"}, {"text": "Stores the Phase 7 task graph in the issue body as YAML rather than a physical `06-task-graph.yaml` file", "passed": true, "evidence": "exists. Put the Phase 7 task graph itself in the `phase:task-graph` issue body as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`;"}, {"text": "Stores implementation progress as comments on task issues instead of `07-implementation-log.md`", "passed": true, "evidence": "g.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue, with the task issue stage updated in place.; as a fenced YAML block. Phase 8 no longer writes `07-implementation-log.md`; RED/GREEN/REFACTOR progress is recorded as comments on each implementation task issue,"}], "notes": []}, {"eval_id": 7, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "States that resume state is rebuilt from GitHub issues/comments using the work item slug or machine data", "passed": true, "evidence": "`RESUME=2026-04-27-add-rate-limit-logs` rebuilds state from GitHub using the work-item slug/work_id: read the parent issue, closed phase issues, open task i"}, {"text": "Does not instruct the agent to read `.coding-workflow/work/<slug>/`", "passed": true, "evidence": "nd implementation progress comments. The workflow does not require `.coding-workflow/work/2026-04-27-add-rate-limit-logs/` to exist, because GitHub is the c"}, {"text": "Uses issue closure state and durable comments such as approvals or implementation log comments to determine what is complete", "passed": true, "evidence": "is whichever one GitHub shows incomplete based on issue closure state plus those comments.; he work-item slug/work_id: read the parent issue, closed phase issues, open task issues, artifact subissues, and durable comments such as the plan approval and"}, {"text": "Makes clear that GitHub is the canonical durable record for Phases 1\u201311", "passed": true, "evidence": "rate-limit-logs/` to exist, because GitHub is the canonical durable record for Phases 1\u201311. The next phase is whichever one GitHub shows incomplete based on issue c"}], "notes": []}, {"eval_id": 8, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Says there are exactly two implementation task issues under the Phase 7 task-graph issue, one per behavior or vertical slice", "passed": true, "evidence": "Create exactly two `phase:implement` task issues under the `phase:task-graph` issue: one vertical slice for"}, {"text": "Explains that each task issue owns a full vertical slice rather than a single RED, GREEN, or REFACTOR stage", "passed": true, "evidence": "sk issues under the `phase:task-graph` issue: one vertical slice for the retry-cap behavior and one vertical slice for the jitter behavior. Each issue own"}, {"text": "Records RED, GREEN, and REFACTOR progress as comments on the same task issue", "passed": true, "evidence": "es. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice; GREEN, and REFACTOR into separate issues. Record RED/GREEN/REFACTOR as comments on that same task issue, and keep the issue's `stage` field starting at `red`"}, {"text": "Explains that the task issue `stage` field starts at `red` and is updated in place as the slice advances", "passed": true, "evidence": "me task issue, and keep the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`.; p the issue's `stage` field starting at `red` and updating in place as the slice advances to `green` and then `refactor`."}], "notes": []}, {"eval_id": 9, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 0.001, "tokens": 0, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Closes `files.csv` after the exploration file ledger is complete", "passed": true, "evidence": "`files.csv` closes as soon as the exploration file ledger is complete. `sources.md` closes as soon a"}, {"text": "Closes `sources.md` after the research source ledger is complete", "passed": true, "evidence": "soon as the exploration file ledger is complete. `sources.md` closes as soon as the research source ledger is complete. The `open-questions` artifact"}, {"text": "Keeps `open-questions` open only while unresolved questions remain and closes it once every entry is finalized", "passed": true, "evidence": "n as the research source ledger is complete. The `open-questions` artifact stays open only while research or clarification is still resolving entries, and"}, {"text": "Places the Phase 7 task graph YAML in the `phase:task-graph` issue body rather than a separate artifact subissue", "passed": true, "evidence": "he Phase 7 task graph YAML lives directly in the `phase:task-graph` issue body, not in a separate artifact subissue or local file."}], "notes": []}], "run_summary": {"old_skill": {"pass_rate": {"mean": 0.9385, "stddev": 0.2219, "min": 0.2, "max": 1.0}, "time_seconds": {"mean": 0.001, "stddev": 0.0, "min": 0.001, "max": 0.001}, "tokens": {"mean": 0.0, "stddev": 0.0, "min": 0, "max": 0}}, "with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 0.001, "stddev": 0.0, "min": 0.001, "max": 0.001}, "tokens": {"mean": 0.0, "stddev": 0.0, "min": 0, "max": 0}}, "delta": {"pass_rate": "-0.06", "time_seconds": "+0.0", "tokens": "+0"}}, "notes": []}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>
