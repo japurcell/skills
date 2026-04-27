@@ -1,0 +1,125 @@
+{
+  "skill_name": "coding-task-workflow",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use the coding-task-workflow skill for this handoff: Gate E already passed for work item `2026-04-23-add-rate-limit-logs`, and I want you to continue directly into Phase 8 right now in this same session. Do not tell me to resume later. Explain exactly what the workflow requires next.",
+      "expected_output": "Refuses to continue into Phase 8 in the same session, names the hard stop after Phase 7, and instructs the user to resume with RESUME=2026-04-23-add-rate-limit-logs in a fresh session.",
+      "files": [],
+      "expectations": [
+        "States that the workflow hard-stops after Phase 7 once Gate E passes",
+        "Does not agree to continue into Phase 8 in the same session",
+        "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent",
+        "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Run only Phase 1 Intake for coding-task-workflow with `ISSUE: 42`. I also typed `WORK_ITEM: maybe clean up auth later`, but the GitHub issue body actually describes a CSV import bug that silently drops rows. Tell me what Intake should do and what it should use as the work item.",
+      "expected_output": "Uses the GitHub issue title/body as the authoritative work item, treats the separately typed WORK_ITEM as supplemental or conflicting context, and records the supplied issue as the parent issue for later sub-issue creation.",
+      "files": [],
+      "expectations": [
+        "Says Intake should fetch/read the GitHub issue title or body before classification",
+        "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+        "Does not treat `maybe clean up auth later` as the primary work item",
+        "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Using coding-task-workflow, explain exactly how the workflow should create the Phase 6 plan issue and Phase 7 implementation-task issues under the parent issue from Phase 1. Include the concrete GitHub commands or command shapes the workflow expects.",
+      "expected_output": "Explains that child issues are created normally, their node IDs are resolved, and `gh api graphql` with `addSubIssue` is used to attach them as true GitHub sub-issues of the Phase 1 parent issue.",
+      "files": [],
+      "expectations": [
+        "Describes creating the child issue first and then linking it to the parent issue",
+        "Mentions resolving parent and child issue node IDs before linking",
+        "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation",
+        "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Phase 11 is ready for work item `2026-04-23-add-retry-mechanism` on parent issue `#42`. Show the required commit message shape that coding-task-workflow expects, including any trailer formatting rules.",
+      "expected_output": "Shows a conventional-commits message with a body that links the work-item slug and parent issue, followed by a blank-line-separated Co-authored-by trailer using Copilot's known identity.",
+      "files": [],
+      "expectations": [
+        "Shows a conventional-commits subject line",
+        "Includes a body that references the work-item slug or parent issue `#42`",
+        "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+        "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Use coding-task-workflow for a new feature request with no existing ISSUE. Tell me exactly what GitHub issues Phase 1 should create now that local per-work-item markdown files are gone.",
+      "expected_output": "Explains that Phase 1 creates a lightweight parent issue plus a separate `phase:intake` child issue whose body follows the intake template, and does not create `00-intake.md` or other local per-work-item markdown.",
+      "files": [],
+      "expectations": [
+        "Creates both a lightweight parent issue and a separate `phase:intake` child issue",
+        "Says the intake child issue body is based on the intake template",
+        "States that local per-work-item markdown artifacts like `00-intake.md` are not created",
+        "Keeps the parent issue as the durable top-level tracker rather than collapsing intake into the parent body"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "For Phase 3 of coding-task-workflow, explain how the exploration outputs should be stored now. I specifically want to know where the exploration summary, `files.csv`, and open questions live in GitHub.",
+      "expected_output": "Explains that the exploration summary lives in the Phase 3 issue body, while `files.csv` and the open-questions ledger are artifact subissues under the Phase 3 issue, not local files on disk.",
+      "files": [],
+      "expectations": [
+        "Places the exploration summary in the `phase:exploration` issue body",
+        "Places `files.csv` in an artifact subissue under the Phase 3 issue",
+        "Places open questions in a durable GitHub artifact issue rather than `02-exploration/open-questions.md`",
+        "Makes clear that these artifacts exist in GitHub so another agent can resume without local files"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Gate D passed and I want to understand the new GitHub-native flow. How should coding-task-workflow record the Phase 6 approval, the Phase 7 task graph, and the Phase 8 implementation log now that `05-plan.md`, `06-task-graph.yaml`, and `07-implementation-log.md` are gone?",
+      "expected_output": "Explains that Phase 6 approval is an explicit comment on the plan issue, the Phase 7 task graph lives in a fenced YAML block in the task-graph issue body, and implementation progress is recorded as comments on the related task issues.",
+      "files": [],
+      "expectations": [
+        "Records Gate D approval as an explicit comment on the Phase 6 plan issue",
+        "Says the plan issue is closed after approval",
+        "Stores the Phase 7 task graph in the issue body as YAML rather than a physical `06-task-graph.yaml` file",
+        "Stores implementation progress as comments on task issues instead of `07-implementation-log.md`"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I need to resume `coding-task-workflow RESUME=2026-04-27-add-rate-limit-logs` from another agent that has no local artifact directory. Explain exactly where resume state comes from and how the workflow decides the next phase.",
+      "expected_output": "Explains that `RESUME=<slug>` rebuilds state from GitHub issues and comments using the work_id, reads closed phase issues and open task/artifact issues, and does not require `.coding-workflow/work/<slug>/` to exist.",
+      "files": [],
+      "expectations": [
+        "States that resume state is rebuilt from GitHub issues/comments using the work item slug or machine data",
+        "Does not instruct the agent to read `.coding-workflow/work/<slug>/`",
+        "Uses issue closure state and durable comments such as approvals or implementation log comments to determine what is complete",
+        "Makes clear that GitHub is the canonical durable record for Phases 1–11"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The approved plan has two behaviors: add a retry cap and add jitter. In Phase 7 and Phase 8 of coding-task-workflow, describe exactly what implementation task issues to create for those two behaviors. Say how many task issues there are, what each one represents, where RED/GREEN/REFACTOR progress is recorded, and how the `stage` field changes over time.",
+      "expected_output": "Explains that Phase 7 creates exactly two implementation task issues for the two behaviors, each issue owns one full vertical slice, RED/GREEN/REFACTOR are recorded as comments on that same issue, and the issue's `stage` field starts at `red` and is updated in place as the slice advances.",
+      "files": [],
+      "expectations": [
+        "Says there are exactly two implementation task issues under the Phase 7 task-graph issue, one per behavior or vertical slice",
+        "Explains that each task issue owns a full vertical slice rather than a single RED, GREEN, or REFACTOR stage",
+        "Records RED, GREEN, and REFACTOR progress as comments on the same task issue",
+        "Explains that the task issue `stage` field starts at `red` and is updated in place as the slice advances"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "I want the GitHub issue tree to end cleanly. In coding-task-workflow, when should `files.csv`, `sources.md`, and `open-questions` be closed, and where does the Phase 7 task graph YAML live?",
+      "expected_output": "Explains that `files.csv` closes after the exploration file ledger is recorded, `sources.md` closes after the research source ledger is recorded, `open-questions` stays open only while questions are still being resolved and then closes in research or clarification once finalized, and the task graph YAML lives in the `phase:task-graph` issue body.",
+      "files": [],
+      "expectations": [
+        "Closes `files.csv` after the exploration file ledger is complete",
+        "Closes `sources.md` after the research source ledger is complete",
+        "Keeps `open-questions` open only while unresolved questions remain and closes it once every entry is finalized",
+        "Places the Phase 7 task graph YAML in the `phase:task-graph` issue body rather than a separate artifact subissue"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "evaluation_type": "baseline_workflow_analysis",
+  "skill_name": "coding-task-workflow",
+  "skill_path": "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/skill-snapshot-phase8-phase10",
+  "test_scenario": "Phase 6 plan issue and Phase 7 implementation task issue creation",
+  "findings": {
+    "creation_pattern": "Create child issue normally, then attach via GraphQL mutation",
+    "non_negotiable_rule_3": "Enforced - child issues created first, linked second",
+    "github_commands_documented": true,
+    "phase_6_issue_created": true,
+    "phase_7_task_graph_issue_created": true,
+    "phase_7_implementation_tasks_created": true,
+    "graphql_mutation_required": true,
+    "fallback_supported": "Parent: #N body reference only if sub-issue mutation unavailable",
+    "no_local_markdown_files": true,
+    "label_application_rules": "agent:phase, phase:plan, agent:task, phase:implement, parallel/sequential"
+  },
+  "command_categories": {
+    "create_issue": "gh issue create --title --body-file --label",
+    "resolve_node_id": "gh issue view <number> --json id --jq .id",
+    "attach_via_graphql": "gh api graphql with addSubIssue mutation",
+    "mutation_signature": "mutation($parentId: ID!, $subIssueId: ID!) { addSubIssue(input: {issueId: $parentId, subIssueId: $subIssueId}) { issue { number } } }"
+  },
+  "phase_6_specifics": {
+    "creates_one_issue": true,
+    "issue_title_pattern": "Plan — <slug>",
+    "uses_template": "templates/plan.md",
+    "requires_approval_comment": true,
+    "requires_attachment_to_parent": true,
+    "labels": ["agent:phase", "phase:plan"]
+  },
+  "phase_7_specifics": {
+    "creates_task_graph_phase_issue": true,
+    "creates_one_task_issue_per_slice": true,
+    "task_issue_title_pattern": "Task <id> — <name>",
+    "task_issue_initial_stage": "red",
+    "task_issue_labels": ["agent:task", "phase:implement", "parallel or sequential"],
+    "requires_machine_data_yaml": true,
+    "progress_logged_as_comments": "Not as separate stage issues",
+    "task_issues_attached_to_taskgraph": true,
+    "taskgraph_attached_to_parent": true
+  },
+  "issue_body_structure": {
+    "sections": ["Summary", "Inputs", "Deliverable", "Exit Criteria", "Machine Data"],
+    "machine_data_required": true,
+    "machine_data_format": "yaml fenced block"
+  },
+  "github_issue_hierarchy": {
+    "parent_issue": "#N [agent:parent]",
+    "phase_6_issue": "#N+6 [agent:phase, phase:plan]",
+    "phase_7_issue": "#N+7 [agent:phase, phase:task-graph]",
+    "task_issues": "#N+8..N+X [agent:task, phase:implement, parallel/sequential]",
+    "attachment_method": "GraphQL addSubIssue mutation with resolved node IDs"
+  },
+  "fallback_handling": {
+    "when_applied": "If repository cannot use GitHub sub-issues",
+    "fallback_method": "Add Parent: #N in child issue body",
+    "must_not_fallback_to": "local per-work-item markdown files"
+  },
+  "references_cited": [
+    "SKILL.md line 31 (Non-negotiable rule #3)",
+    "issue-hierarchy.md lines 34-64 (Required sub-issue linking flow)",
+    "issue-hierarchy.md lines 162-191 (Phase issue template)",
+    "issue-hierarchy.md lines 222-256 (Implementation task issue template)",
+    "workflow.md lines 179-198 (Phase 6 specification)",
+    "workflow.md lines 202-222 (Phase 7 specification)",
+    "templates/plan.md (Plan artifact template)",
+    "templates/task-graph.yaml (Task graph template)"
+  ],
+  "response_metrics": {
+    "total_lines": 384,
+    "sections": 9,
+    "code_examples": 8,
+    "command_shapes_detailed": true,
+    "graphql_mutation_examples": 5
+  }
+}

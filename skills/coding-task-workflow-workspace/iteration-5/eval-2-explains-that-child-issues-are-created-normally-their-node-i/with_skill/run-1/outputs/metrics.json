@@ -1,0 +1,70 @@
+{
+  "evaluation": "coding-task-workflow-github-issue-creation-and-linking",
+  "task": "Explain how Phase 6 plan and Phase 7 implementation tasks are created and linked under the parent issue, with concrete GitHub commands",
+  "key_findings": {
+    "creation_pattern": "three-step pattern: create issue, resolve node IDs, attach via GraphQL",
+    "primary_linking_mechanism": "gh api graphql addSubIssue mutation",
+    "fallback_mechanism": "Parent: #N body reference (only if mutation fails)",
+    "is_mandatory": true,
+    "is_rule_based": true
+  },
+  "github_commands_identified": [
+    "gh issue create",
+    "gh issue view --json id --jq .id",
+    "gh api graphql (addSubIssue mutation)",
+    "gh issue close",
+    "gh issue comment"
+  ],
+  "templates_used": [
+    "references/templates/plan.md",
+    "references/templates/task-graph.yaml",
+    "references/issue-hierarchy.md (phase and task templates)"
+  ],
+  "phases_covered": {
+    "phase_6_plan": {
+      "steps": 6,
+      "commands": 4,
+      "includes_approval_gate": true
+    },
+    "phase_7_taskgraph": {
+      "steps": 5,
+      "commands": 5,
+      "includes_per_task_linking": true
+    }
+  },
+  "issue_hierarchy": {
+    "parent_issue": 1,
+    "phase_6_plan_issue": 1,
+    "phase_7_taskgraph_issue": 1,
+    "phase_7_task_issues": "1 per task (t1, t2, t3, ...)",
+    "total_structure_depth": 3
+  },
+  "labels_applied": [
+    "agent:phase (plan and task-graph issues)",
+    "phase:plan (plan issue)",
+    "phase:task-graph (task-graph issue)",
+    "agent:task (implementation task issues)",
+    "phase:implement (implementation task issues)",
+    "parallel/sequential (implementation task issues, per YAML)"
+  ],
+  "machine_data_blocks_required": 6,
+  "rules_documented": {
+    "child_issue_creation_first": true,
+    "graphql_mutation_mandatory": true,
+    "node_id_resolution_required": true,
+    "fallback_only_when_mutation_fails": true,
+    "task_graph_yaml_in_phase_body": true,
+    "no_local_files_after_bootstrap": true
+  },
+  "example_provided": true,
+  "fallback_handling_explained": true,
+  "completeness_score": "high",
+  "documentation_sources": [
+    "SKILL.md",
+    "references/issue-hierarchy.md",
+    "references/artifact-schema.md",
+    "references/workflow.md (Phase 6 and 7)",
+    "references/templates/plan.md",
+    "references/templates/task-graph.yaml"
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "evaluation_task": "coding-task-workflow Phase 3 exploration artifact storage",
+  "skill_evaluated": "coding-task-workflow",
+  "skill_path": "/home/adam/dev/personal/skills/skills/coding-task-workflow",
+  "test_scenario": "Explain where Phase 3 exploration outputs (summary, files.csv, open-questions) are stored in GitHub",
+  "phase": 3,
+  "phase_name": "Codebase Exploration",
+  "storage_architecture": {
+    "principle": "GitHub-native; no local per-work-item files",
+    "hierarchy": "Parent Issue → phase:exploration child issue → artifact subissues",
+    "canonical_storage": "GitHub issues and artifact subissues (not local markdown)"
+  },
+  "exploration_outputs": {
+    "exploration_summary": {
+      "storage_location": "phase:exploration child issue (main phase issue)",
+      "github_labels": ["agent:phase", "phase:exploration"],
+      "content": "Consolidated exploration summary using exploration-summary template",
+      "content_includes": [
+        "Codebase findings and anti-patterns",
+        "Key modules and interactions",
+        "Observed patterns and conventions",
+        "Initial recommendations"
+      ],
+      "lifecycle": "Created Phase 3 Step 5, closed Phase 3 Step 9 when complete",
+      "template": "references/templates/exploration-summary.md"
+    },
+    "files_csv": {
+      "storage_location": "Artifact subissue under phase:exploration issue",
+      "github_labels": ["artifact"],
+      "body_format": "CSV in fenced code block",
+      "csv_columns": [
+        "file_path",
+        "reason",
+        "agent_found_by",
+        "pattern",
+        "notes"
+      ],
+      "lifecycle": "Created Phase 3 Step 6, CLOSED Phase 3 Step 7 immediately after complete",
+      "why_github": "So other agents can resume from GitHub alone",
+      "status_at_phase_3_end": "CLOSED"
+    },
+    "open_questions": {
+      "storage_location": "Artifact subissue under phase:exploration issue",
+      "github_labels": ["artifact"],
+      "body_format": "Structured markdown with machine-readable fields",
+      "required_fields": [
+        "id",
+        "question",
+        "status",
+        "resolved_by",
+        "answer"
+      ],
+      "status_values": ["open", "resolved", "needs-human"],
+      "lifecycle": "Created Phase 3 Step 8, LEFT OPEN at Phase 3 end, updated Phase 4 (research), finalized Phase 5, CLOSED Phase 5 Step 8",
+      "status_at_phase_3_end": "OPEN",
+      "updated_by_phases": ["Phase 4 (research)", "Phase 5 (clarification)"]
+    }
+  },
+  "github_issue_hierarchy": {
+    "structure": "Parent Issue → phase:exploration (Phase 3) → files.csv (artifact), open-questions (artifact)",
+    "parent_issue_type": "agent:parent",
+    "phase_issue_type": "agent:phase + phase:exploration",
+    "artifact_issue_type": "artifact subissues",
+    "linking_mechanism": "GitHub sub-issue relationship (gh api graphql addSubIssue mutation), fallback to Parent: #N body reference"
+  },
+  "no_local_files": {
+    "principle": "SKILL.md Non-negotiable rule #2",
+    "statement": "Phase 0 is the only phase that writes durable repo-local workflow artifacts. For Phases 1–11, GitHub issues are canonical; do not create .coding-workflow/work/<slug>/... artifacts.",
+    "implication_for_phase_3": "NO local files; all artifacts live in GitHub issues"
+  },
+  "skill_specification_references": [
+    "README.md:150-170 (Phase artifacts table)",
+    "issue-hierarchy.md (GitHub hierarchy tree and linking flow)",
+    "workflow.md:91-125 (Phase 3 steps and artifact creation)",
+    "SKILL.md:30 (Non-negotiable rule #2: GitHub is canonical)"
+  ],
+  "phase_3_gate_a": {
+    "requirement": "Before Phase 4 begins:",
+    "conditions": [
+      "exploration phase issue is CLOSED",
+      "files.csv artifact subissue is CLOSED",
+      "open-questions artifact subissue EXISTS (left open)"
+    ]
+  },
+  "evaluation_result": "PASS",
+  "result_summary": "The skill clearly specifies that Phase 3 exploration outputs live entirely in GitHub as a hierarchy: exploration summary in the phase:exploration issue, files.csv as a closed artifact subissue, and open-questions as an open artifact subissue. No local markdown files are created per work item.",
+  "key_insights": [
+    "Exploration summary: phase:exploration child issue (closed at end of Phase 3)",
+    "files.csv: artifact subissue under exploration (closed Phase 3 Step 7)",
+    "open-questions: artifact subissue under exploration (left open, updated through Phase 5)",
+    "All stored in GitHub; no local .coding-workflow/work/<slug>/ files",
+    "GitHub sub-issue linking via GraphQL mutation, fallback to Parent: #N reference",
+    "Resume-safe: fresh session can find all artifacts via parent issue → child issues → artifact subissues"
+  ]
+}

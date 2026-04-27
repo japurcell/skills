@@ -1,0 +1,131 @@
+{
+  "evaluation_type": "baseline_workflow_analysis",
+  "skill_name": "coding-task-workflow",
+  "skill_path": "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/skill-snapshot-phase8-phase10",
+  "test_scenario": "GitHub-native recording of Phase 6 approval, Phase 7 task graph, Phase 8 implementation log",
+  "findings": {
+    "approval_location": "Explicit comment on plan issue body",
+    "task_graph_location": "YAML in task-graph issue body (NOT separate artifact subissue)",
+    "implementation_log_location": "Comments on individual task issues (one per RED/GREEN/REFACTOR)",
+    "no_local_files": "All local files (05-plan.md, 06-task-graph.yaml, 07-implementation-log.md) completely forbidden",
+    "rule_2_enforced": true,
+    "github_native_canonical": true,
+    "machine_data_required": "Yes, in all artifacts"
+  },
+  "phase_6_approval": {
+    "triggered_by": "Gate D (human approval)",
+    "stored_as": "Comment on phase:plan issue",
+    "comment_template": {
+      "header": "Approved. Proceed with the implementation plan captured in this issue.",
+      "machine_data": "kind: approval, phase: plan, status: approved, approved_by: human, approved_at: ISO8601"
+    },
+    "gate_d_condition_1": "Phase 6 plan issue is closed",
+    "gate_d_condition_2": "Plan issue contains explicit approval comment from human",
+    "command_shape": "gh issue comment <plan-number> --body <(cat <<'EOF' ... EOF)"
+  },
+  "phase_7_task_graph": {
+    "stored_as": "YAML in task-graph issue body (fenced block)",
+    "not_stored_as": "Separate artifact subissue or local file",
+    "issue_hierarchy_rule": "For Phase 7 specifically, keep YAML in phase issue body. Do NOT create separate task-graph.yaml artifact subissue.",
+    "yaml_structure": {
+      "root_fields": ["work_id", "phase: task-graph", "status", "updated_at"],
+      "task_fields": ["id", "name", "stage", "depends_on", "parallelizable", "files"]
+    },
+    "gate_e_conditions": [
+      "Task-graph issue is closed",
+      "At least one implementation task issue has stage: red",
+      "Every implementation task issue has explicit dependency list",
+      "No circular dependencies in YAML"
+    ],
+    "template_source": "templates/task-graph.yaml"
+  },
+  "phase_8_implementation_log": {
+    "stored_as": "Comments on individual task issues",
+    "not_stored_as": "Local 07-implementation-log.md file",
+    "workflow_statement": "The task issue comments replace 07-implementation-log.md, and the issue body remains the durable record of the slice's current/final stage.",
+    "comment_per_stage": {
+      "red": "Comment with failing test result, machine_data stage: red",
+      "green": "Comment with passing implementation, machine_data stage: green",
+      "refactor": "Comment with cleanup completion, machine_data stage: refactor"
+    },
+    "comment_template": {
+      "header": "Slice Update — <task_id> / <stage>",
+      "fields": ["status", "files_changed", "test_result", "notes"],
+      "machine_data": "kind: implementation-log, task_id, stage, status, updated_at"
+    },
+    "comment_format": "gh issue comment <task-number> --body <(cat <<'EOF' ... EOF)"
+  },
+  "old_vs_new_files": {
+    "forbidden_file_1": "05-plan.md (plan + approval history)",
+    "forbidden_file_2": "06-task-graph.yaml (task decomposition)",
+    "forbidden_file_3": "07-implementation-log.md (RED/GREEN/REFACTOR log)",
+    "new_equivalent_1": "Plan approval → comment on phase:plan issue",
+    "new_equivalent_2": "Task graph → YAML in phase:task-graph issue body",
+    "new_equivalent_3": "Implementation log → comments on phase:implement task issues"
+  },
+  "session_resumption": {
+    "when": "Phase 8 starts in fresh session with RESUME=<slug>",
+    "loads_from": "GitHub issues only (never local files)",
+    "gate_d_check": "Load plan issue, verify approval comment exists",
+    "task_graph_load": "Parse YAML from task-graph issue body",
+    "implementation_history": "Load all comments on each task issue (RED/GREEN/REFACTOR timeline)",
+    "canonical_source": "GitHub issues and comments (single source of truth)"
+  },
+  "machine_data_blocks": {
+    "approval_comment": {
+      "kind": "approval",
+      "phase": "plan",
+      "status": "approved",
+      "approved_by": "human",
+      "approved_at": "ISO8601"
+    },
+    "task_graph_issue": {
+      "work_id": "<slug>",
+      "phase": "task-graph",
+      "status": "complete",
+      "updated_at": "ISO8601"
+    },
+    "implementation_log_comment": {
+      "kind": "implementation-log",
+      "task_id": "<id>",
+      "stage": "red | green | refactor",
+      "status": "complete | blocked",
+      "updated_at": "ISO8601"
+    }
+  },
+  "rule_2_enforcement": {
+    "description": "Phase 0 is only phase that writes durable repo-local workflow artifacts. Phases 1-11 use GitHub issues and comments.",
+    "forbidden_patterns": [
+      ".coding-workflow/work/<slug>/05-plan.md",
+      ".coding-workflow/work/<slug>/06-task-graph.yaml",
+      ".coding-workflow/work/<slug>/07-implementation-log.md"
+    ],
+    "allowed_patterns": [
+      "gh issue comment (approval)",
+      "GitHub issue body (task-graph YAML)",
+      "gh issue comment (implementation-log)"
+    ]
+  },
+  "references_cited": [
+    "SKILL.md line 30 (Rule #2 - no local per-work-item artifacts)",
+    "workflow.md lines 179-198 (Phase 6 specification)",
+    "workflow.md lines 202-222 (Phase 7 specification)",
+    "workflow.md lines 226-250 (Phase 8 specification)",
+    "stop-gates.md lines 65-86 (Gate D - plan approval)",
+    "stop-gates.md lines 89-111 (Gate E - task graph)",
+    "issue-hierarchy.md lines 193 (Phase 7 constraint - YAML in body)",
+    "issue-hierarchy.md lines 222-256 (Implementation task issue template)",
+    "issue-hierarchy.md lines 258-273 (Plan approval comment template)",
+    "issue-hierarchy.md lines 275-295 (Implementation log comment template)",
+    "templates/task-graph.yaml (Task graph YAML structure)"
+  ],
+  "response_metrics": {
+    "total_lines": 353,
+    "sections": 13,
+    "code_examples": 7,
+    "command_shapes": 6,
+    "tables": 3,
+    "old_vs_new_comparison": true,
+    "machine_data_structures_documented": true
+  }
+}

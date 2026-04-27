@@ -1,0 +1,73 @@
+{
+  "evaluation": "coding-task-workflow-phase-1-issue-creation-no-existing-issue",
+  "task": "Explain exactly what GitHub issues Phase 1 should create for a new feature request with no existing ISSUE",
+  "key_finding": "Phase 1 creates exactly 2 GitHub issues: parent issue and intake issue. No local files.",
+  "github_issues_created": [
+    {
+      "type": "parent",
+      "label": "agent:parent",
+      "status": "open",
+      "role": "lightweight index",
+      "description": "Work-item tracker with phase checklist"
+    },
+    {
+      "type": "intake",
+      "labels": ["agent:phase", "phase:intake"],
+      "status": "closed",
+      "role": "structured artifact",
+      "description": "Work-item classification, acceptance criteria, constraints"
+    }
+  ],
+  "local_files_created": 0,
+  "critical_rule": "Phase 0 only creates local files. Phases 1-11 use GitHub as canonical record. No .coding-workflow/work/<slug>/ files.",
+  "what_changed": {
+    "legacy": "Created parent issue + intake issue + local 01-intake.md + local work.yaml",
+    "current": "Creates parent issue + intake issue only. No local files."
+  },
+  "parent_issue_sections": [
+    "Summary",
+    "Current Phase",
+    "Acceptance Snapshot",
+    "Sub-issues (checklist of 10 phases)",
+    "Machine Data (YAML metadata)"
+  ],
+  "intake_issue_sections": [
+    "Summary",
+    "Classification",
+    "Acceptance Criteria",
+    "Known Constraints",
+    "References",
+    "Machine Data (YAML metadata)"
+  ],
+  "github_linking_mechanism": "gh api graphql addSubIssue mutation",
+  "resumability": "Achieved by reading GitHub issue hierarchy. No local files needed.",
+  "scenario_coverage": {
+    "no_existing_issue": true,
+    "with_existing_issue_mentioned": true
+  },
+  "commands_provided": [
+    "gh issue create (parent)",
+    "gh issue create (intake)",
+    "gh issue view --json id (node resolution)",
+    "gh api graphql (addSubIssue mutation)",
+    "gh issue close"
+  ],
+  "example_work_item": "Add rate limiting to the API",
+  "example_work_id": "2026-04-27-add-rate-limiting",
+  "complete_bash_script_provided": true,
+  "rules_documented": {
+    "github_is_canonical": true,
+    "no_local_per_work_item_files": true,
+    "phase_0_only_writes_local": true,
+    "two_issues_one_workflow": true,
+    "structured_machine_data": true,
+    "graphql_sub_issue_linking": true
+  },
+  "sources": [
+    "workflow.md Phase 1",
+    "references/templates/intake.md",
+    "references/issue-hierarchy.md",
+    "SKILL.md Non-negotiable rules",
+    "artifact-schema.md"
+  ]
+}

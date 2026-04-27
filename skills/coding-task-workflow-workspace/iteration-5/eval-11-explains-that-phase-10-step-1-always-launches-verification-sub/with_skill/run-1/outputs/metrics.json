@@ -1,0 +1,149 @@
+{
+  "evaluation_task": "coding-task-workflow Phase 10 verification step 1 subagent delegation",
+  "skill_evaluated": "coding-task-workflow",
+  "skill_path": "/home/adam/dev/personal/skills/skills/coding-task-workflow",
+  "test_scenario": "Phase 10 starts with test-commands.yaml listing npm test, npm run lint, npm run typecheck, npm run build",
+  "phase": 10,
+  "phase_name": "Verification",
+  "step": 1,
+  "test_commands": [
+    "npm test",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "step_1_mandate": "ALWAYS launches verification subagents; primary agent does NOT directly run commands",
+  "verification_subagent_purpose": "Execute verification commands and report structured results; primary agent consolidates",
+  "parallelism_rules": {
+    "when_repo_supports_concurrent_execution": "Run independent checks in parallel subagents",
+    "when_repo_does_not_support_concurrent": "Run one verification subagent at a time sequentially",
+    "independent_checks": ["npm run lint", "npm run typecheck"],
+    "potentially_dependent_checks": ["npm run build", "npm test"],
+    "dependency": "npm test may depend on npm run build artifacts"
+  },
+  "partitioning_strategy": {
+    "option_a_concurrent": {
+      "parallel_group_1": "npm run lint",
+      "parallel_group_2": "npm run typecheck",
+      "sequential_group": ["npm run build", "npm test"]
+    },
+    "option_b_sequential": {
+      "order": ["npm run lint", "npm run typecheck", "npm run build", "npm test"]
+    }
+  },
+  "subagent_required_reports": {
+    "field_1_command": "Exact command executed (e.g., npm run lint)",
+    "field_2_exit_code": "Numeric exit code (0 = success, non-zero = failure)",
+    "field_3_pass_fail": "Binary pass/fail status derived from exit code",
+    "field_4_output_summary": "Concise summary (e.g., '44 tests passed, 0 failed' or '247 files checked, 0 warnings')",
+    "field_5_failure_details": "If exit non-zero: file paths, test names, error messages, stack traces",
+    "field_6_environment_assumptions": "Node version, npm version, runtime requirements, cached vs clean, skipped checks"
+  },
+  "subagent_prompt_template": {
+    "structure": [
+      "You are running Phase 10 verification for work item [WORK_ID]",
+      "Command group: [NAME]",
+      "Context: acceptance criteria, plan guidance, review issue, changed files",
+      "Run exactly these commands: [COMMANDS]",
+      "Return: command, exit code, pass/fail, output summary, failure details, environment assumptions"
+    ]
+  },
+  "example_subagent_reports": {
+    "npm_run_lint": {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "pass_fail": "pass",
+      "output_summary": "All 247 files passed linting; 0 new warnings",
+      "failure_details": "N/A",
+      "environment_assumptions": "Node 18.4.0, npm 8.12.1, ESLint 8.0.0"
+    },
+    "npm_run_typecheck": {
+      "command": "npm run typecheck",
+      "exit_code": 0,
+      "pass_fail": "pass",
+      "output_summary": "TypeScript check passed; 0 errors",
+      "failure_details": "N/A",
+      "environment_assumptions": "TypeScript 5.0.0"
+    },
+    "npm_run_build": {
+      "command": "npm run build",
+      "exit_code": 0,
+      "pass_fail": "pass",
+      "output_summary": "Build successful; 3 bundles generated, 2.4 MB total",
+      "failure_details": "N/A",
+      "environment_assumptions": "Clean build; webpack cache cleared"
+    },
+    "npm_test": {
+      "command": "npm test",
+      "exit_code": 0,
+      "pass_fail": "pass",
+      "output_summary": "44 tests passed, 0 failed",
+      "failure_details": "N/A",
+      "environment_assumptions": "Build artifacts from npm run build required; ran after build completed"
+    }
+  },
+  "primary_agent_consolidation": {
+    "reads_all_subagent_reports": true,
+    "creates_automated_checks_table": "| Command | Exit code | Notes |",
+    "creates_acceptance_criteria_table": "| # | Criterion | Result | Evidence |",
+    "creates_review_clearance_table": "| Review type | High findings | Status |",
+    "records_in_github_issue": "phase:verify issue using verification.md template",
+    "checks_acceptance_criteria": "Maps each criterion from intake issue to subagent evidence",
+    "verifies_review_clearance": "Confirms no High severity issues remain open from Phase 9",
+    "must_review_results": "Do not rely on subagent summaries alone; inspect test output details"
+  },
+  "verification_template_format": {
+    "section_1": "Automated Checks table with command, exit code, notes",
+    "section_2": "Acceptance Criteria table with # criterion, result, evidence",
+    "section_3": "Review Clearance table with review type, High findings, status",
+    "section_4": "Limitations section if any checks could not be performed",
+    "section_5": "Machine Data YAML block"
+  },
+  "gate_f_requirements": {
+    "all_automated_commands_exit_0": true,
+    "all_acceptance_criteria_pass": true,
+    "no_high_severity_review_findings_open": true,
+    "verification_issue_closed": true
+  },
+  "primary_agent_responsibilities": [
+    "Do NOT directly run verification commands",
+    "Read test-commands.yaml (or infer from bootstrap)",
+    "Partition commands into independent (parallel) and dependent (sequential) groups",
+    "Launch verification subagents for each command/group",
+    "Collect all subagent reports",
+    "Review every result before consolidating",
+    "Record results in phase:verify GitHub issue",
+    "Verify acceptance criteria against subagent evidence",
+    "Check review clearance",
+    "Decide: fail → Phase 8 fixes → re-verify, or pass → close verification → Phase 11"
+  ],
+  "scenario_1_concurrent_execution": {
+    "parallel_batch_1": ["npm run lint", "npm run typecheck"],
+    "sequential_batch_2": ["npm run build", "npm test"],
+    "subagents_launched": 4,
+    "parallelism_level": "2 concurrent (lint + typecheck), then 2 sequential (build, test)"
+  },
+  "scenario_2_no_concurrent_execution": {
+    "all_sequential": ["npm run lint", "npm run typecheck", "npm run build", "npm test"],
+    "subagents_launched": 4,
+    "parallelism_level": "1 at a time"
+  },
+  "skill_specification_references": [
+    "workflow.md:292 (Phase 10 Step 1: launch verification subagents)",
+    "SKILL.md:34 (Non-negotiable rule #6: Phase 10 step 1 always runs in verification subagents)",
+    "workflow.md:303 (Parallelism: independent checks parallel when safe, dependent sequential)",
+    "delegation-rules.md (Phase 10 section: partitioning strategy and agent prompt template)",
+    "references/templates/verification.md (consolidation template)"
+  ],
+  "evaluation_result": "PASS",
+  "result_summary": "The skill clearly specifies that Phase 10 Step 1 ALWAYS launches verification subagents (never direct execution). Partition commands into independent (parallel: lint, typecheck) and dependent (sequential: build, test) groups based on repo capabilities. Each subagent must report: command, exit code, pass/fail, output summary, failure details, environment assumptions. Primary agent consolidates results into phase:verify issue, verifies acceptance criteria, checks review clearance, and decides pass/fail before Gate F.",
+  "key_insights": [
+    "Phase 10 Step 1 is MANDATORY subagent work; primary agent orchestrates only",
+    "Partitioning decision: concurrent if repo supports, sequential if not",
+    "Each subagent must report 6 required fields for primary agent review",
+    "Primary agent consolidates into structured GitHub issue using template",
+    "Acceptance criteria validation is primary agent responsibility",
+    "Review clearance verification (no High findings) is primary agent responsibility",
+    "Decision logic: all pass → close verification → Phase 11, any fail → Phase 8 → re-verify"
+  ]
+}

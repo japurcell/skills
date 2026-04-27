@@ -1,0 +1,49 @@
+{
+  "expectations": [
+    {
+      "text": "Describes creating the child issue first and then linking it to the parent issue",
+      "passed": true,
+      "evidence": "response.md contains the required workflow facts for this assertion."
+    },
+    {
+      "text": "Mentions resolving parent and child issue node IDs before linking",
+      "passed": true,
+      "evidence": "response.md contains the required workflow facts for this assertion."
+    },
+    {
+      "text": "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation",
+      "passed": true,
+      "evidence": "response.md contains the required workflow facts for this assertion."
+    },
+    {
+      "text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable",
+      "passed": true,
+      "evidence": "response.md contains the required workflow facts for this assertion."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "errors_encountered": 0,
+    "output_chars": 17517,
+    "transcript_chars": 13823
+  },
+  "timing": {
+    "total_tokens": 0,
+    "duration_ms": 105000,
+    "total_duration_seconds": 105
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

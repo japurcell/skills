@@ -1,0 +1,67 @@
+{
+  "evaluation_task": "coding-task-workflow Phase 11 commit message format",
+  "skill_evaluated": "coding-task-workflow",
+  "skill_path": "/home/adam/dev/personal/skills/skills/coding-task-workflow",
+  "test_scenario": "Phase 11 is ready with work_id=2026-04-23-add-retry-mechanism and parent_issue=#42",
+  "test_inputs": {
+    "work_item_slug": "2026-04-23-add-retry-mechanism",
+    "parent_issue": "#42",
+    "phase": 11,
+    "agent_identity": "Copilot"
+  },
+  "commit_message_structure": {
+    "line_1": {
+      "format": "<type>(<scope>): <subject>",
+      "example": "feat(http-client): add retry mechanism with exponential backoff and jitter",
+      "description": "Conventional commits subject line"
+    },
+    "line_2": {
+      "format": "[blank line]",
+      "description": "Separator between subject and body"
+    },
+    "lines_3_to_n": {
+      "format": "[body content]",
+      "required_references": [
+        "work-item slug: 2026-04-23-add-retry-mechanism",
+        "parent issue: #42"
+      ],
+      "description": "Free-form body linking to slug and issue"
+    },
+    "line_n_plus_1": {
+      "format": "[blank line]",
+      "description": "Separator between body and trailer block"
+    },
+    "line_n_plus_2": {
+      "format": "Co-authored-by: NAME <EMAIL>",
+      "github_copilot_cli_example": "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+      "description": "Trailer block with agent identity"
+    }
+  },
+  "skill_specification_references": [
+    "references/workflow.md:316 (Phase 11 Step 2: commit message format and trailer specification)",
+    "SKILL.md:35 (Non-negotiable rule #7: commit message structure for Phase 11)"
+  ],
+  "trailer_formatting_rules": {
+    "blank_line_separation": "REQUIRED: exactly one blank line before trailer",
+    "format": "Co-authored-by: NAME <EMAIL>",
+    "no_variant_spellings": "Must use 'Co-authored-by' not 'Co-Author' or other variants",
+    "github_copilot_cli_identity": "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+    "single_trailer_only": "Only one Co-authored-by trailer required",
+    "position": "Final element of commit message"
+  },
+  "body_content_requirements": {
+    "must_reference_work_item_slug": true,
+    "must_reference_parent_issue": true,
+    "may_include_technical_rationale": true,
+    "may_include_migration_notes": true,
+    "example_body": "Implements retry logic for HTTP client as specified in work item 2026-04-23-add-retry-mechanism (fixes #42). Includes exponential backoff with jitter, capped at 5 retries, for status codes 429, 500, 502, 503, 504."
+  },
+  "pr_integration": {
+    "pr_title_source": "Conventional commits subject line",
+    "pr_body_must_include": "Fixes #<parent_issue_number> (e.g., Fixes #42)",
+    "pr_body_additional": "Summary of changes and any follow-up items"
+  },
+  "evaluation_result": "PASS",
+  "result_summary": "The skill correctly specifies a conventional-commits message with a blank-line-separated trailer block. The body must reference both the work-item slug (2026-04-23-add-retry-mechanism) and parent issue (#42). For GitHub Copilot CLI, the trailer must be 'Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>'.",
+  "notes": "The specification is precise about the structure: subject → blank line → body (with required references) → blank line → trailer. This format preserves both the conventional-commits standard for compatibility and the workflow's internal tracking via the work-item slug and parent issue."
+}

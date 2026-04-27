@@ -27,9 +27,9 @@ A portable, reusable skill that gives any AI agent a **deterministic end-to-end 
 - **Minimal human interaction**: asks the human only for clarifications that cannot be resolved through exploration or research.
 - **Explicit design gate**: a written plan is approved before implementation begins.
 - **Session boundary before implementation**: the workflow hard-stops after Phase 7 and resumes in a fresh session for Phases 8–11.
-- **TDD-first implementation**: work is broken into vertical red→green→refactor slices; no speculative code.
+- **TDD-first implementation**: work is broken into vertical red→green→refactor slices; implementation always runs through subagents, with safe parallel batches when task dependencies and write paths allow.
 - **Parallel specialised review**: code review, security review, and tech-debt review run concurrently.
-- **Verified landing**: tests must pass and acceptance criteria must be verified before the PR is opened.
+- **Verified landing**: verification commands always run through subagents, in parallel when checks are independent and the repo supports concurrent execution; tests must pass and acceptance criteria must be verified before the PR is opened.
 - **Commit hygiene**: the final commit message ends with a blank-line-separated `Co-authored-by: NAME <EMAIL>` trailer block using the agent's own co-author identity.
 - **Persistent artifacts**: Phase 0 writes repo-local override files; Phases 1–11 persist durable workflow state in GitHub issues and comments, making work resumable and auditable across agents.
 
@@ -85,9 +85,9 @@ Phase 4  Online research       ──┘  — parallel subagents
 Phase 5  Clarification              — human gate (Gate C) if needed
 Phase 6  Plan                       — Gate D (human approval)
 Phase 7  TDD task graph            — Gate E (tests defined) + hard stop
-Phase 8  Implementation             — TDD red→green→refactor after resume
+Phase 8  Implementation             — TDD subagents after resume
 Phase 9  Review                ──┐  — parallel specialised subagents
-Phase 10 Verification          ──┘  — Gate F (all checks pass)
+Phase 10 Verification          ──┘  — verification subagents + Gate F
 Phase 11 Commit / Push / PR        — conventional commits + PR creation
 ```
 
@@ -226,7 +226,7 @@ WORK_ITEM: Bug: pagination returns duplicate records when total_count is a multi
               Reproducible with page_size=10, total_count=20.
 ```
 
-What happens: classified as `bug`, Light track exploration (one agent focused on the pagination logic), research phase checks for known off-by-one patterns, no clarification needed, plan proposes adding a regression test first, task graph creates one vertical slice for the bugfix, Phase 8 records the RED regression test result, GREEN fix, and REFACTOR cleanup as comments on that same task issue, review agents check for similar bugs elsewhere, and verification confirms the reproduction script no longer fails.
+What happens: classified as `bug`, Light track exploration (one agent focused on the pagination logic), research phase checks for known off-by-one patterns, no clarification needed, plan proposes adding a regression test first, task graph creates one vertical slice for the bugfix, Phase 8 launches an implementation subagent for that slice and records the RED regression test result, GREEN fix, and REFACTOR cleanup as comments on that same task issue, review agents check for similar bugs elsewhere, and Phase 10 launches a verification subagent to confirm the reproduction script no longer fails.
 
 ---
 
@@ -340,7 +340,7 @@ Use the coding-task-workflow skill.
 WORK_ITEM: Migrate all API responses from a flat JSON structure to JSON:API 1.1 spec.
 ```
 
-What happens: Deep track exploration (3 agents covering controllers, serialisers, and tests). Research phase queries the JSON:API spec and any existing migration guides. Plan decomposes into 6 implementation slices. Task graph has 12 tasks. Implementation uses 3 parallel subagent groups for the three modules. Code-review agents are partitioned by module (non-overlapping). Verification runs the full test suite plus a smoke test against a running instance.
+What happens: Deep track exploration (3 agents covering controllers, serialisers, and tests). Research phase queries the JSON:API spec and any existing migration guides. Plan decomposes into 6 implementation slices. Task graph has 12 tasks. Implementation uses parallel subagent groups for non-overlapping module tasks and sequential subagents for any overlapping tasks. Code-review agents are partitioned by module (non-overlapping). Verification delegates the full test suite and smoke test to verification subagents, using parallel subagents only for independent checks.
 
 ---
 

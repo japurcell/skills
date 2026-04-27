@@ -120,6 +120,30 @@
         "Keeps `open-questions` open only while unresolved questions remain and closes it once every entry is finalized",
         "Places the Phase 7 task graph YAML in the `phase:task-graph` issue body rather than a separate artifact subissue"
       ]
+    },
+    {
+      "id": 10,
+      "prompt": "We resumed `coding-task-workflow RESUME=2026-04-27-add-rate-limit-logs` after Gate E. The task graph has three ready implementation tasks: A and B are labelled `parallel` and touch different files, while C is labelled `sequential`. Explain exactly how Phase 8 should execute them and who writes the code.",
+      "expected_output": "Explains that Phase 8 implementation is always performed by subagents: A and B run concurrently in separate implementation subagents because dependencies are satisfied and files do not overlap, while C runs afterward or alone in its own subagent because it is sequential. The primary agent orchestrates, reviews outputs, and records GitHub task comments rather than directly writing the implementation.",
+      "files": [],
+      "expectations": [
+        "States that Phase 8 implementation task issues are always executed by subagents",
+        "Runs ready non-overlapping tasks A and B in parallel implementation subagents",
+        "Runs sequential task C through its own implementation subagent rather than directly in the primary context",
+        "Explains that the primary agent orchestrates dependency order, reviews subagent changes or tests, and records GitHub task comments"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Phase 10 of coding-task-workflow is starting. `test-commands.yaml` lists `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build`. Tell me what step 1 must do, including when to use parallel subagents and what each subagent needs to report.",
+      "expected_output": "Explains that Phase 10 step 1 always launches verification subagents for automated checks. Independent checks can run in parallel subagents when the repo supports concurrent execution; dependent or resource-conflicting checks run sequentially through subagents. Each subagent reports command, exit code, pass/fail, output summary, and failure details for the primary agent to record in the verification issue.",
+      "files": [],
+      "expectations": [
+        "States that Phase 10 step 1 always runs automated checks in verification subagents",
+        "Uses parallel verification subagents for independent checks when the repo supports concurrent execution",
+        "Uses sequential verification subagents for dependent checks or checks with shared mutable resources",
+        "Requires each verification subagent to report command, exit code, pass/fail status, output summary, and failure details"
+      ]
     }
   ]
 }

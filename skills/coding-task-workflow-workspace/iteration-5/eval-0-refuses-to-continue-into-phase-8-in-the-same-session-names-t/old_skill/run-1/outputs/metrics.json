@@ -1,0 +1,27 @@
+{
+  "evaluation_type": "baseline_skill_behavior",
+  "skill_name": "coding-task-workflow",
+  "skill_path": "/home/adam/dev/personal/skills/skills/coding-task-workflow-workspace/skill-snapshot-phase8-phase10",
+  "test_scenario": "Gate E already passed; request to continue into Phase 8 in same session",
+  "work_item_id": "2026-04-23-add-rate-limit-logs",
+  "findings": {
+    "skill_refusal_enforced": true,
+    "rule_citations": 3,
+    "non_negotiable_rule_4": "Explicitly forbids Phase 8 continuation in same session after Gate E",
+    "workflow_rule_answer_provided": "Yes, with exact handoff command pattern",
+    "phase_7_specification_reinforces": true,
+    "session_boundary_enforced": "mandatory hard stop"
+  },
+  "rule_locations": [
+    "SKILL.md line 32 (Non-negotiable rules #4)",
+    "SKILL.md lines 40-41 (Workflow-rule answers table)",
+    "references/workflow.md line 216-217 (Phase 7 specification)"
+  ],
+  "handoff_command": "coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs",
+  "phase_8_requirements_documented": true,
+  "phase_8_execution_model": "strict TDD red->green->refactor with dependency ordering",
+  "parallelism_rules": "concurrent execution only for parallelizable tasks with satisfied dependencies and no file overlap",
+  "no_gate_after_phase_8": true,
+  "gate_structure": "task graph itself is the gate structure",
+  "context_window_rationale": "Documented - session boundary manages context window between planning (1-7) and implementation (8-11)"
+}

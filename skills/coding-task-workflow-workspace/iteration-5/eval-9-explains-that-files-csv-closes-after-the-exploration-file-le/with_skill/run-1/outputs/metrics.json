@@ -1,0 +1,134 @@
+{
+  "evaluation_task": "coding-task-workflow artifact closure lifecycle and task graph storage",
+  "skill_evaluated": "coding-task-workflow",
+  "skill_path": "/home/adam/dev/personal/skills/skills/coding-task-workflow",
+  "test_scenario": "When should files.csv, sources.md, open-questions close? Where does Phase 7 task graph YAML live?",
+  "artifact_closure_lifecycle": {
+    "files_csv": {
+      "phase": 3,
+      "closes_when": "Immediately after file ledger is complete",
+      "closes_in_step": "Phase 3 Step 7",
+      "status_at_end_of_phase_3": "CLOSED",
+      "storage": "Artifact subissue under phase:exploration",
+      "format": "Fenced CSV block",
+      "gate_requirement": "Gate A: files.csv CLOSED (workflow.md:122)",
+      "specification_reference": "workflow.md:116"
+    },
+    "sources_md": {
+      "phase": 4,
+      "closes_when": "Immediately after source ledger is complete",
+      "closes_in_step": "Phase 4 Step 6",
+      "status_at_end_of_phase_4": "CLOSED",
+      "storage": "Artifact subissue under phase:research",
+      "format": "Markdown table",
+      "gate_requirement": "Gate B: sources.md CLOSED (workflow.md:148)",
+      "specification_reference": "workflow.md:141"
+    },
+    "open_questions": {
+      "phase": "3–5",
+      "created_in": "Phase 3 Step 8",
+      "remains_open_through": ["Phase 3", "Phase 4", "Phase 5"],
+      "updated_in": ["Phase 4 Step 7", "Phase 5 Step 7"],
+      "closes_when": "At end of Phase 5 when every entry is resolved or finalized as needs-human",
+      "closes_in_step": "Phase 5 Step 8",
+      "status_at_end_of_phase_3": "OPEN",
+      "status_at_end_of_phase_4": "OPEN",
+      "status_at_end_of_phase_5": "CLOSED",
+      "storage": "Artifact subissue under phase:exploration",
+      "format": "Structured table with id, question, status, resolved_by, answer",
+      "gate_requirement_phase_5": "Gate C: open-questions CLOSED (workflow.md:175)",
+      "specification_references": ["workflow.md:117–118", "workflow.md:142–143", "workflow.md:169"]
+    }
+  },
+  "phase_7_task_graph_yaml": {
+    "lives_in": "phase:task-graph issue body (NOT a separate artifact subissue)",
+    "format": "Fenced YAML block",
+    "phase": 7,
+    "created_in_step": "Phase 7 Step 4",
+    "artifact_subissues": "NO - task graph YAML is phase-owned",
+    "separate_artifacts": "Separate task issues created per vertical slice (linked as sub-issues)",
+    "why_not_separate": "Task graph is the primary Phase 7 deliverable; phase-owned content stays in issue body",
+    "closure": "Phase 7 issue CLOSED after YAML authored and task issues created",
+    "gate_requirement": "Gate E: task-graph CLOSED (workflow.md:222)",
+    "specification_reference": "artifact-schema.md (Phase Issue Requirements section)",
+    "yaml_content": {
+      "includes": [
+        "work_id",
+        "phase",
+        "tasks: [array of task definitions]"
+      ],
+      "task_fields": [
+        "id",
+        "name",
+        "depends_on",
+        "parallelizable",
+        "files",
+        "stage: red"
+      ]
+    }
+  },
+  "github_issue_tree_cleanliness": {
+    "end_of_phase_3": {
+      "phase_exploration": "CLOSED",
+      "files_csv": "CLOSED",
+      "open_questions": "OPEN"
+    },
+    "end_of_phase_4": {
+      "phase_research": "CLOSED",
+      "sources_md": "CLOSED",
+      "open_questions": "OPEN (updated with research answers)"
+    },
+    "end_of_phase_5": {
+      "phase_clarification": "CLOSED",
+      "open_questions": "CLOSED (all questions resolved/finalized)"
+    },
+    "end_of_phase_7": {
+      "phase_task_graph": "CLOSED",
+      "task_graph_yaml": "In phase:task-graph issue body",
+      "task_issues": "OPEN (waiting for Phase 8 implementation)"
+    }
+  },
+  "artifact_hierarchy": {
+    "files_csv": "Subissue of phase:exploration",
+    "sources_md": "Subissue of phase:research",
+    "open_questions": "Subissue of phase:exploration (updated across phases 4, 5)",
+    "task_graph_yaml": "In body of phase:task-graph issue (NOT a subissue)",
+    "task_issues": "Subissues of phase:task-graph, labeled phase:implement"
+  },
+  "closure_rationale": {
+    "files_csv": "File discovery complete; no further exploration agents add files; reference for later phases",
+    "sources_md": "Research sources documented; no further updates; reference for decisions",
+    "open_questions": "All questions resolved or explicitly deferred; no blocking questions remain",
+    "task_graph": "Task decomposition complete; ready for Phase 8 implementation"
+  },
+  "gate_conditions": {
+    "gate_a": "Phase 3 exploration CLOSED + files.csv CLOSED + open-questions EXISTS (workflow.md:122)",
+    "gate_b": "Phase 4 research CLOSED + sources.md CLOSED + open-questions no status:open (workflow.md:148)",
+    "gate_c": "Phase 5 clarification CLOSED + open-questions CLOSED (workflow.md:175)",
+    "gate_e": "Phase 7 task-graph CLOSED + task issues created + dependencies recorded (workflow.md:222)"
+  },
+  "skill_specification_references": [
+    "workflow.md:116 (files.csv closure - Phase 3 Step 7)",
+    "workflow.md:141 (sources.md closure - Phase 4 Step 6)",
+    "workflow.md:117–118 (open-questions creation - Phase 3 Step 8)",
+    "workflow.md:142–143 (open-questions updates - Phase 4 Step 7)",
+    "workflow.md:169 (open-questions closure - Phase 5 Step 8)",
+    "workflow.md:215 (task graph YAML authoring - Phase 7 Step 4)",
+    "artifact-schema.md (Phase Issue Requirements: task graph is phase-owned in issue body)",
+    "workflow.md:122 (Gate A requirement)",
+    "workflow.md:148 (Gate B requirement)",
+    "workflow.md:175 (Gate C requirement)",
+    "workflow.md:222 (Gate E requirement)",
+    "README.md:150–170 (Artifact storage table)"
+  ],
+  "evaluation_result": "PASS",
+  "result_summary": "The skill clearly specifies precise closure points for each artifact: files.csv closes at end of Phase 3 after file ledger complete; sources.md closes at end of Phase 4 after source ledger complete; open-questions remains open through Phases 3–4 and closes at end of Phase 5 when all questions are resolved/finalized; Phase 7 task graph YAML lives in the phase:task-graph issue body (not a separate artifact subissue) as the primary phase-owned deliverable.",
+  "key_insights": [
+    "files.csv: CLOSED Phase 3 (file discovery done)",
+    "sources.md: CLOSED Phase 4 (research done)",
+    "open-questions: OPEN Phase 3–4, CLOSED Phase 5 (questions resolved)",
+    "Task graph YAML: In phase:task-graph issue body, NOT separate artifact",
+    "Closure signals indicate work complete; open signals indicate ongoing",
+    "Task issues separate from task graph YAML: issues for implementation tracking, YAML for decomposition"
+  ]
+}

@@ -98,19 +98,21 @@ Do not return generic summaries. Return only findings directly applicable to: [R
 
 ---
 
-## Phase 8 — Implementation Agents _(parallel groups only)_
+## Phase 8 — Implementation Agents _(always)_
 
 ### When to use
 
-Only for implementation task issues marked `parallel` whose dependencies are already satisfied. Sequential tasks are always executed by the primary agent.
+Always. Every implementation task issue is executed by a subagent. Use multiple subagents in parallel for dependency-ready tasks marked `parallel` whose write paths do not overlap. Use one subagent at a time for sequential tasks or when write paths overlap.
 
 ### How to partition
 
 1. Read the task-graph issue body and the open implementation task issues.
 2. Identify task issues whose `depends_on` lists are fully satisfied.
-3. From those ready tasks, select all tasks labelled `parallel`.
-4. Each agent handles exactly one task issue.
-5. Agents must not write to the same files. If file overlap is detected, convert the tasks to sequential execution.
+3. From those ready tasks, select all non-overlapping tasks labelled `parallel` for the next parallel batch.
+4. If no safe parallel batch exists, select the next sequential or overlapping ready task and run exactly one implementation subagent for it.
+5. Each agent handles exactly one task issue and one full RED → GREEN → REFACTOR slice.
+6. Agents must not write to the same files. If file overlap is detected, convert the tasks to sequential subagent execution.
+7. The primary agent records durable GitHub issue comments and stage updates after reviewing each subagent's changed files and test output.
 
 ### Agent prompt template
 
@@ -139,10 +141,9 @@ Return:
 - status
 - files changed
 - tests run and result
+- RED failure evidence, GREEN pass evidence, and REFACTOR pass evidence
 - anything the primary agent should record as a comment on the task issue
 ```
-
----
 
 ## Phase 9 — Review Agents
 
@@ -224,6 +225,47 @@ Return findings as:
 - severity (High|Medium|Low|Info)
 - description
 - suggested improvement
+```
+
+---
+
+## Phase 10 — Verification Agents _(always for step 1)_
+
+### When to use
+
+Always for Phase 10 step 1. The primary agent does not directly run the full verification command set. It launches verification subagents, then records the consolidated results in the Phase 10 issue.
+
+### How to partition
+
+1. Read `.coding-workflow/overrides/test-commands.yaml`; if it does not exist, use commands inferred during bootstrap or from repo scripts.
+2. Group commands by resource needs and dependency order:
+   - independent checks such as lint, type-check, unit tests, and build may run in parallel subagents when the repo supports concurrent execution;
+   - checks that share mutable state, require a server/database, or depend on build artifacts run sequentially, one verification subagent at a time.
+3. Each verification subagent owns one command or one tightly coupled command group.
+4. The primary agent reviews every command result before marking acceptance criteria or closing the verification issue.
+
+### Agent prompt template
+
+```text
+You are running Phase 10 verification for work item [WORK_ID].
+Command group: [NAME]
+
+Context:
+- Acceptance criteria issue: [SUMMARY OR LINK]
+- Plan verification guidance: [SUMMARY OR LINK]
+- Review issue: [SUMMARY OR LINK]
+- Changed files: [LIST]
+
+Run exactly these commands:
+[COMMANDS]
+
+Return:
+- command
+- exit code
+- pass/fail
+- concise output summary
+- failure details with file paths or test names when applicable
+- any environment assumptions or skipped checks
 ```
 
 ---

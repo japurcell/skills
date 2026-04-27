@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "eval-4-explains-that-phase-1-creates-a-lightweight-parent-issue-plu",
+  "prompt": "Use coding-task-workflow for a new feature request with no existing ISSUE. Tell me exactly what GitHub issues Phase 1 should create now that local per-work-item markdown files are gone.",
+  "assertions": [
+    "Creates both a lightweight parent issue and a separate `phase:intake` child issue",
+    "Says the intake child issue body is based on the intake template",
+    "States that local per-work-item markdown artifacts like `00-intake.md` are not created",
+    "Keeps the parent issue as the durable top-level tracker rather than collapsing intake into the parent body"
+  ]
+}

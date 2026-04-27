@@ -30,7 +30,9 @@ These rules override user requests to skip or compress the workflow:
 2. Phase 0 is the only phase that writes durable repo-local workflow artifacts. For Phases 1–11, GitHub parent issues, phase issues, artifact subissues, and issue comments are the canonical workflow record; do not create `.coding-workflow/work/<slug>/...` artifacts.
 3. Every child issue is created first, then linked to the appropriate parent issue by resolving parent/child node IDs and calling `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
 4. After Gate E passes, hard-stop the session and hand off `coding-task-workflow RESUME=<slug>`. Do not begin Phase 8 in the same session. Resume from a fresh session; Phase 8 is the next phase after the resume. Do not restart earlier phases unless the GitHub artifact state says they are incomplete.
-5. Phase 11 commit messages use a conventional-commits subject, a body that references the work-item slug and parent issue, then a blank-line-separated trailer block. For GitHub Copilot CLI, include `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`.
+5. Phase 8 implementation is always performed by implementation subagents. The primary agent orchestrates dependency order, parallel groups, file-overlap checks, and GitHub comments; it does not directly write the implementation slice itself.
+6. Phase 10 verification step 1 is always performed by verification subagents. Split independent checks across parallel subagents when the repo supports concurrent execution; otherwise run one verification subagent at a time.
+7. Phase 11 commit messages use a conventional-commits subject, a body that references the work-item slug and parent issue, then a blank-line-separated trailer block. For GitHub Copilot CLI, include `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`.
 
 ## Workflow-rule answers
 
@@ -79,7 +81,7 @@ Routing precedence:
 | 5   | **Clarification**          | –                     | C    |
 | 6   | **Plan**                   | –                     | D    |
 | 7   | **TDD task graph**         | –                     | E    |
-| 8   | **Implementation**         | sequential + parallel | –    |
+| 8   | **Implementation**         | subagents; parallel groups when safe | –    |
 | 9   | **Review**                 | parallel              | –    |
-| 10  | **Verification**           | –                     | F    |
+| 10  | **Verification**           | subagents; parallel checks when safe | F    |
 | 11  | **Commit / Push / PR**     | –                     | –    |

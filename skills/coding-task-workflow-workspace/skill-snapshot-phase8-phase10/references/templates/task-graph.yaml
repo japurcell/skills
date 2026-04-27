@@ -1,0 +1,38 @@
+# Paste this YAML into a fenced `yaml` block inside the Phase 7 task-graph issue body.
+work_id: WORK_ID
+phase: task-graph
+status: complete
+updated_at: "ISO8601_TIMESTAMP"
+
+# Each task below becomes one implementation task issue and owns one full vertical TDD slice.
+# RED -> GREEN -> REFACTOR progress is recorded as comments on that same task issue.
+# The `stage` value is the issue's initial/current stage and starts at `red`.
+# Tasks with no shared file dependencies and parallelizable: true may run concurrently.
+
+tasks:
+  - id: t1
+    name: "BEHAVIOUR_1 vertical slice"
+    stage: red
+    depends_on: []
+    parallelizable: false
+    files:
+      - src/example/feature.test.ts
+      - src/example/feature.ts
+
+  - id: t2
+    name: "BEHAVIOUR_2 vertical slice"
+    stage: red
+    depends_on: [t1]
+    parallelizable: false
+    files:
+      - src/example/feature.test.ts
+      - src/example/feature.ts
+
+  - id: t3
+    name: "BEHAVIOUR_3 vertical slice"
+    stage: red
+    depends_on: [t1]
+    parallelizable: true
+    files:
+      - src/example/feature-ext.test.ts
+      - src/example/feature-ext.ts

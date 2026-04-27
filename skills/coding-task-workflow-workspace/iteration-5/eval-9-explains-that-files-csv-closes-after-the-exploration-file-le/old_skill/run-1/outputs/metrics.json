@@ -1,0 +1,256 @@
+{
+  "evaluation": {
+    "test_case": "Artifact closure timeline and Phase 7 task graph storage",
+    "baseline_skill": "skill-snapshot-phase8-phase10",
+    "focus": "clean_github_issue_tree_lifecycle"
+  },
+  "artifact_closure_timeline": {
+    "files_csv": {
+      "phase_created": 3,
+      "phase_name": "Codebase Exploration",
+      "closure_trigger": "Phase 3 Step 7",
+      "closure_condition": "file_ledger_is_complete",
+      "status_after_closure": "closed",
+      "reopened_in_later_phases": false,
+      "available_for_reading": true,
+      "github_location": {
+        "type": "artifact_subissue",
+        "parent": "Exploration phase issue (#N+3)",
+        "labels": ["agent:artifact"],
+        "body_format": "fenced_csv_block_with_file_list"
+      },
+      "specification_sources": [
+        "references/workflow.md Phase 3 line 114",
+        "references/issue-hierarchy.md line 305"
+      ]
+    },
+    "sources_md": {
+      "phase_created": 4,
+      "phase_name": "Online Research",
+      "closure_trigger": "Phase 4 Step 6",
+      "closure_condition": "source_ledger_is_complete",
+      "status_after_closure": "closed",
+      "reopened_in_later_phases": false,
+      "available_for_reading": true,
+      "github_location": {
+        "type": "artifact_subissue",
+        "parent": "Research phase issue (#N+4)",
+        "labels": ["agent:artifact"],
+        "body_format": "markdown_table_with_sources"
+      },
+      "specification_sources": [
+        "references/workflow.md Phase 4 line 139",
+        "references/issue-hierarchy.md line 306"
+      ]
+    },
+    "open_questions": {
+      "phase_created": 3,
+      "phase_name": "Codebase Exploration",
+      "initial_status": "open",
+      "phase_3_behavior": "leave_open_for_phase_4_research",
+      "phase_4_behavior": "update_with_answers_or_needs_human",
+      "phase_4_closure": {
+        "condition": "all_questions_at_status_resolved_rare",
+        "otherwise": "leave_open_for_phase_5",
+        "reference": "references/workflow.md Phase 4 line 141-142"
+      },
+      "phase_5_closure_trigger": "Phase 5 Step 8",
+      "phase_5_closure_condition": "every_entry_resolved_or_finalized_needs_human",
+      "status_after_closure": "closed",
+      "reopened_in_later_phases": false,
+      "available_for_reading": true,
+      "github_location": {
+        "type": "artifact_subissue",
+        "parent": "Exploration phase issue (#N+3)",
+        "labels": ["agent:artifact"],
+        "body_format": "markdown_table_with_question_ledger",
+        "table_columns": ["id", "question", "status", "resolved_by", "answer"]
+      },
+      "lifecycle_span": "phases_3_to_5_then_closed",
+      "specification_sources": [
+        "references/workflow.md Phase 3 line 116",
+        "references/workflow.md Phase 4 lines 141-142",
+        "references/workflow.md Phase 5 line 167",
+        "references/workflow.md Phase 5 line 173 (Gate C)",
+        "references/issue-hierarchy.md lines 307-308"
+      ]
+    }
+  },
+  "phase_7_task_graph_storage": {
+    "location": "phase_issue_body_not_artifact_subissue",
+    "github_issue": {
+      "number": "N+7",
+      "labels": ["agent:phase", "phase:task-graph"],
+      "parent": "top_level_parent_issue (not artifact sub-issue)"
+    },
+    "body_format": {
+      "sections": [
+        "Summary",
+        "Inputs",
+        "Deliverable (fenced yaml block)",
+        "Exit Criteria",
+        "Machine Data"
+      ],
+      "fenced_yaml_block": "task_graph_yaml_stored_here",
+      "template_reference": "references/templates/task-graph.yaml"
+    },
+    "yaml_content": {
+      "structure": {
+        "version": "1",
+        "tasks": [
+          {
+            "id": "task_id",
+            "name": "task_name",
+            "depends_on": ["task_ids"],
+            "parallelizable": true,
+            "files": ["file_paths"]
+          }
+        ]
+      },
+      "example": "see response.md for detailed example"
+    },
+    "why_not_artifact_subissue": {
+      "reason_1": "single_primary_output",
+      "reason_2": "phase_owned_concept",
+      "reason_3": "distinction_from_task_issues",
+      "reason_4": "simpler_closure_model"
+    },
+    "related_task_issues": {
+      "creation": "One issue per vertical slice (Phase 7 Step 5)",
+      "attachment": "Each task issue attached as sub-issue to Phase 7 task-graph issue",
+      "labels": ["agent:task", "phase:implement", "parallel or sequential"],
+      "closure": "Each task closes when RED-GREEN-REFACTOR complete",
+      "progress_log": "Comments on task issue, not separate issues"
+    },
+    "specification_sources": [
+      "references/issue-hierarchy.md line 193-194",
+      "references/workflow.md Phase 7 line 213-214",
+      "README.md line 166"
+    ]
+  },
+  "clean_issue_tree_final_state": {
+    "before_pr_merge": {
+      "parent_issue": "[OPEN] — closes on PR merge via Fixes #N",
+      "all_child_issues": "CLOSED or OPEN_BASED_ON_PHASE"
+    },
+    "phase_1_intake": {
+      "status": "closed",
+      "after_phase": 1
+    },
+    "phase_2_worktree": {
+      "status": "closed",
+      "after_phase": 2
+    },
+    "phase_3_exploration": {
+      "status": "closed",
+      "after_phase": 3,
+      "artifacts": {
+        "files_csv": "CLOSED",
+        "open_questions": "OPEN (until Phase 5)"
+      }
+    },
+    "phase_4_research": {
+      "status": "closed",
+      "after_phase": 4,
+      "artifacts": {
+        "sources_md": "CLOSED"
+      }
+    },
+    "phase_5_clarification": {
+      "status": "closed",
+      "after_phase": 5,
+      "artifacts": {
+        "open_questions": "CLOSED"
+      }
+    },
+    "phase_6_plan": {
+      "status": "closed",
+      "after_phase": 6
+    },
+    "phase_7_task_graph": {
+      "status": "closed",
+      "after_phase": 7,
+      "yaml_location": "in_issue_body",
+      "task_issues": "all_closed_after_phase_8_11"
+    },
+    "phase_8_implementation": {
+      "status": "closed_after_phase_8",
+      "task_issues": "all_closed_after_RED_GREEN_REFACTOR"
+    },
+    "phase_9_review": {
+      "status": "closed",
+      "after_phase": 9
+    },
+    "phase_10_verify": {
+      "status": "closed",
+      "after_phase": 10
+    },
+    "phase_11_pr": {
+      "status": "closed",
+      "after_phase": 11,
+      "note": "closed_immediately_after_PR_opened"
+    }
+  },
+  "issue_hierarchy_visual": {
+    "tree": "see response.md for complete ASCII tree",
+    "parent": "#N [agent:parent] [OPEN]",
+    "phases": "#N+1 through #N+10 [all CLOSED]",
+    "artifacts": "files.csv, open-questions, sources.md [all CLOSED by Phase 5]",
+    "tasks": "Task issues [all CLOSED by Phase 11]"
+  },
+  "gate_enforcement": {
+    "gate_A": {
+      "phase": 3,
+      "conditions": [
+        "exploration_phase_closed",
+        "files_csv_closed",
+        "open_questions_exists"
+      ]
+    },
+    "gate_B": {
+      "phase": 4,
+      "conditions": [
+        "research_closed",
+        "sources_md_closed",
+        "open_questions_no_status_open"
+      ]
+    },
+    "gate_C": {
+      "phase": 5,
+      "conditions": [
+        "clarification_closed",
+        "open_questions_closed",
+        "no_blocking_unanswered_questions"
+      ],
+      "reference": "references/workflow.md Phase 5 line 173"
+    }
+  },
+  "specification_sources": {
+    "files_csv": [
+      "references/workflow.md Phase 3 line 114 (Step 7)",
+      "references/issue-hierarchy.md line 305"
+    ],
+    "sources_md": [
+      "references/workflow.md Phase 4 line 139 (Step 6)",
+      "references/issue-hierarchy.md line 306"
+    ],
+    "open_questions": [
+      "references/workflow.md Phase 3 line 116",
+      "references/workflow.md Phase 4 line 141-142",
+      "references/workflow.md Phase 5 line 167 (Step 8)",
+      "references/workflow.md Phase 5 line 173 (Gate C)",
+      "references/issue-hierarchy.md line 307-308"
+    ],
+    "phase_7_task_graph": [
+      "references/issue-hierarchy.md line 193-194 (phase-owned concept)",
+      "references/workflow.md Phase 7 line 213-214",
+      "README.md line 166"
+    ]
+  },
+  "evaluation_result": {
+    "status": "complete",
+    "finding": "files.csv closes after Phase 3 when complete. sources.md closes after Phase 4 when complete. open-questions stays open through Phase 5 for research and clarification updates, then closes in Phase 5 step 8. Phase 7 task graph YAML lives in the phase issue body (not as a separate artifact), with task issues as separate GitHub issues attached to the phase. All artifacts close by Phase 5, creating a clean, linear GitHub issue tree.",
+    "confidence": "high",
+    "rationale": "The closure timeline and storage locations are explicitly specified in workflow.md, issue-hierarchy.md, and README.md with specific step numbers and gate conditions. The phase-owned concept for Phase 7 is documented in issue-hierarchy.md as a special case."
+  }
+}

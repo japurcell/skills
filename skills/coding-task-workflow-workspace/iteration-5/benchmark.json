@@ -1,0 +1,990 @@
+{
+  "metadata": {
+    "skill_name": "coding-task-workflow",
+    "skill_path": "skills/coding-task-workflow",
+    "executor_model": "claude-haiku-4.5",
+    "analyzer_model": "deterministic-keyword-grader",
+    "timestamp": "2026-04-27T19:33:44Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 61,
+        "tokens": 7474,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the workflow hard-stops after Phase 7 once Gate E passes",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Does not agree to continue into Phase 8 in the same session",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 72,
+        "tokens": 7536,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the workflow hard-stops after Phase 7 once Gate E passes",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Does not agree to continue into Phase 8 in the same session",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 71,
+        "tokens": 5122,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says Intake should fetch/read the GitHub issue title or body before classification",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Does not treat `maybe clean up auth later` as the primary work item",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 71,
+        "tokens": 5819,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says Intake should fetch/read the GitHub issue title or body before classification",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Does not treat `maybe clean up auth later` as the primary work item",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 116,
+        "tokens": 17430,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Describes creating the child issue first and then linking it to the parent issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Mentions resolving parent and child issue node IDs before linking",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 105,
+        "tokens": 17517,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Describes creating the child issue first and then linking it to the parent issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Mentions resolving parent and child issue node IDs before linking",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 104,
+        "tokens": 8760,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Shows a conventional-commits subject line",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Includes a body that references the work-item slug or parent issue `#42`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 90,
+        "tokens": 10732,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Shows a conventional-commits subject line",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Includes a body that references the work-item slug or parent issue `#42`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 109,
+        "tokens": 16899,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Creates both a lightweight parent issue and a separate `phase:intake` child issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Says the intake child issue body is based on the intake template",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "States that local per-work-item markdown artifacts like `00-intake.md` are not created",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Keeps the parent issue as the durable top-level tracker rather than collapsing intake into the parent body",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 109,
+        "tokens": 13956,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Creates both a lightweight parent issue and a separate `phase:intake` child issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Says the intake child issue body is based on the intake template",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "States that local per-work-item markdown artifacts like `00-intake.md` are not created",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Keeps the parent issue as the durable top-level tracker rather than collapsing intake into the parent body",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 98,
+        "tokens": 12203,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Places the exploration summary in the `phase:exploration` issue body",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Places `files.csv` in an artifact subissue under the Phase 3 issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Places open questions in a durable GitHub artifact issue rather than `02-exploration/open-questions.md`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Makes clear that these artifacts exist in GitHub so another agent can resume without local files",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 119,
+        "tokens": 16804,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Places the exploration summary in the `phase:exploration` issue body",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Places `files.csv` in an artifact subissue under the Phase 3 issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Places open questions in a durable GitHub artifact issue rather than `02-exploration/open-questions.md`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Makes clear that these artifacts exist in GitHub so another agent can resume without local files",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 109,
+        "tokens": 19767,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Records Gate D approval as an explicit comment on the Phase 6 plan issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Says the plan issue is closed after approval",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Stores the Phase 7 task graph in the issue body as YAML rather than a physical `06-task-graph.yaml` file",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Stores implementation progress as comments on task issues instead of `07-implementation-log.md`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 113,
+        "tokens": 20939,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Records Gate D approval as an explicit comment on the Phase 6 plan issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Says the plan issue is closed after approval",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Stores the Phase 7 task graph in the issue body as YAML rather than a physical `06-task-graph.yaml` file",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Stores implementation progress as comments on task issues instead of `07-implementation-log.md`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 145,
+        "tokens": 17244,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that resume state is rebuilt from GitHub issues/comments using the work item slug or machine data",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Does not instruct the agent to read `.coding-workflow/work/<slug>/`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Uses issue closure state and durable comments such as approvals or implementation log comments to determine what is complete",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Makes clear that GitHub is the canonical durable record for Phases 1\u201311",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 126,
+        "tokens": 19470,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that resume state is rebuilt from GitHub issues/comments using the work item slug or machine data",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Does not instruct the agent to read `.coding-workflow/work/<slug>/`",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Uses issue closure state and durable comments such as approvals or implementation log comments to determine what is complete",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Makes clear that GitHub is the canonical durable record for Phases 1\u201311",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 148,
+        "tokens": 21778,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says there are exactly two implementation task issues under the Phase 7 task-graph issue, one per behavior or vertical slice",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Explains that each task issue owns a full vertical slice rather than a single RED, GREEN, or REFACTOR stage",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Records RED, GREEN, and REFACTOR progress as comments on the same task issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Explains that the task issue `stage` field starts at `red` and is updated in place as the slice advances",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 137,
+        "tokens": 22635,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says there are exactly two implementation task issues under the Phase 7 task-graph issue, one per behavior or vertical slice",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Explains that each task issue owns a full vertical slice rather than a single RED, GREEN, or REFACTOR stage",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Records RED, GREEN, and REFACTOR progress as comments on the same task issue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Explains that the task issue `stage` field starts at `red` and is updated in place as the slice advances",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 9,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 144,
+        "tokens": 17932,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Closes `files.csv` after the exploration file ledger is complete",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Closes `sources.md` after the research source ledger is complete",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Keeps `open-questions` open only while unresolved questions remain and closes it once every entry is finalized",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Places the Phase 7 task graph YAML in the `phase:task-graph` issue body rather than a separate artifact subissue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 9,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 136,
+        "tokens": 18428,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Closes `files.csv` after the exploration file ledger is complete",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Closes `sources.md` after the research source ledger is complete",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Keeps `open-questions` open only while unresolved questions remain and closes it once every entry is finalized",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Places the Phase 7 task graph YAML in the `phase:task-graph` issue body rather than a separate artifact subissue",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 10,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 127,
+        "tokens": 21626,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that Phase 8 implementation task issues are always executed by subagents",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Runs ready non-overlapping tasks A and B in parallel implementation subagents",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Runs sequential task C through its own implementation subagent rather than directly in the primary context",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Explains that the primary agent orchestrates dependency order, reviews subagent changes or tests, and records GitHub task comments",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 10,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 133,
+        "tokens": 18380,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that Phase 8 implementation task issues are always executed by subagents",
+          "passed": false,
+          "evidence": "response.md preserves the old behavior and does not meet the updated delegation requirement."
+        },
+        {
+          "text": "Runs ready non-overlapping tasks A and B in parallel implementation subagents",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Runs sequential task C through its own implementation subagent rather than directly in the primary context",
+          "passed": false,
+          "evidence": "response.md preserves the old behavior and does not meet the updated delegation requirement."
+        },
+        {
+          "text": "Explains that the primary agent orchestrates dependency order, reviews subagent changes or tests, and records GitHub task comments",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 11,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 116,
+        "tokens": 18258,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that Phase 10 step 1 always runs automated checks in verification subagents",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Uses parallel verification subagents for independent checks when the repo supports concurrent execution",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Uses sequential verification subagents for dependent checks or checks with shared mutable resources",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Requires each verification subagent to report command, exit code, pass/fail status, output summary, and failure details",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 11,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 137,
+        "tokens": 18614,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that Phase 10 step 1 always runs automated checks in verification subagents",
+          "passed": false,
+          "evidence": "response.md preserves the old behavior and does not meet the updated delegation requirement."
+        },
+        {
+          "text": "Uses parallel verification subagents for independent checks when the repo supports concurrent execution",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        },
+        {
+          "text": "Uses sequential verification subagents for dependent checks or checks with shared mutable resources",
+          "passed": false,
+          "evidence": "response.md preserves the old behavior and does not meet the updated delegation requirement."
+        },
+        {
+          "text": "Requires each verification subagent to report command, exit code, pass/fail status, output summary, and failure details",
+          "passed": true,
+          "evidence": "response.md contains the required workflow facts for this assertion."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 112.3333,
+        "stddev": 27.344,
+        "min": 61,
+        "max": 148
+      },
+      "tokens": {
+        "mean": 15374.4167,
+        "stddev": 5605.3658,
+        "min": 5122,
+        "max": 21778
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.9167,
+        "stddev": 0.1946,
+        "min": 0.5,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 112.3333,
+        "stddev": 23.9975,
+        "min": 71,
+        "max": 137
+      },
+      "tokens": {
+        "mean": 15902.5,
+        "stddev": 5299.2785,
+        "min": 5819,
+        "max": 22635
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.08",
+      "time_seconds": "+0.0",
+      "tokens": "-528"
+    }
+  },
+  "notes": [
+    "New evals 10 and 11 discriminate the requested behavior: the updated skill passes mandatory Phase 8/10 subagent delegation, while the old snapshot preserves direct primary-agent execution for sequential implementation and verification work.",
+    "Timing uses wall-clock elapsed seconds captured from background-agent runs; token values use output character counts as a proxy because total token counts were not exposed by read_agent output.",
+    "Existing evals 0-9 remained passing for both configurations, so the change did not regress the GitHub-native workflow rules already covered by the suite."
+  ]
+}

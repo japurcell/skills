@@ -12,7 +12,9 @@ These rules override user requests to skip or compress the workflow:
 2. After Bootstrap, do **not** create local per-work-item artifacts under `.coding-workflow/work/<slug>/`. Persist durable state in GitHub parent issues, phase issues, artifact subissues, and issue comments.
 3. Every child issue must be created first, then linked to its parent with the `addSubIssue` GraphQL mutation. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable.
 4. After Gate E passes, stop and hand off `coding-task-workflow RESUME=<slug>`. Do not begin Phase 8 in the same session even if the user explicitly asks for it.
-5. Phase 11 commit messages end with a blank-line-separated `Co-authored-by: NAME <EMAIL>` trailer block using the agent's own known identity.
+5. Phase 8 implementation is always executed by implementation subagents. The primary agent orchestrates dependency order, safe parallelism, issue updates, and final consolidation; it does not directly implement slices itself.
+6. Phase 10 verification step 1 is always executed by verification subagents. Use parallel subagents for independent checks when the repo supports concurrent execution, otherwise run verification subagents sequentially.
+7. Phase 11 commit messages end with a blank-line-separated `Co-authored-by: NAME <EMAIL>` trailer block using the agent's own known identity.
 
 ---
 
@@ -232,19 +234,20 @@ These rules override user requests to skip or compress the workflow:
 **Steps**:
 
 1. Resolve `RESUME=<slug>` by loading the parent issue and descendant phase/task issues for that `work_id`. Do not rely on local phase files.
-2. Process implementation task issues in dependency order. Run tasks labelled `parallel` concurrently when their dependencies are satisfied and they do not overlap on files.
-3. For each task issue:
-   a. **RED**: write a failing test that captures the behaviour. Run it and confirm it fails for the expected reason. Record the result as a comment on the task issue while the issue remains at `stage: red`.
-   b. **GREEN**: update the same task issue to `stage: green`, write the minimal code to make the test pass, run it, and record the result as a comment on that issue.
-   c. **REFACTOR**: update the same task issue to `stage: refactor`, clean up if needed, rerun the relevant tests, and record the outcome as another comment on that issue.
-4. Never add untested code paths. If a useful branch is not yet covered by a test, do not add it.
-5. Close each task issue when its slice is complete. The task issue comments replace `07-implementation-log.md`, and the issue body remains the durable record of the slice's current/final stage.
+2. Process implementation task issues in dependency order, but delegate every implementation task issue to a subagent. Run tasks labelled `parallel` concurrently when their dependencies are satisfied and they do not overlap on files. Run sequential tasks one at a time, still through a subagent.
+3. For each task issue, launch an implementation subagent with the task issue, plan context, relevant files, allowed write paths, current stage, and exact tests to run. The subagent performs the full RED → GREEN → REFACTOR slice:
+    a. **RED**: write a failing test that captures the behaviour. Run it and confirm it fails for the expected reason. Record the result as a comment on the task issue while the issue remains at `stage: red`.
+    b. **GREEN**: update the same task issue to `stage: green`, write the minimal code to make the test pass, run it, and record the result as a comment on that issue.
+    c. **REFACTOR**: update the same task issue to `stage: refactor`, clean up if needed, rerun the relevant tests, and record the outcome as another comment on that issue.
+4. After each subagent finishes, inspect its changed files and test output before updating or closing the task issue. Do not rely on the subagent summary alone.
+5. Never add untested code paths. If a useful branch is not yet covered by a test, do not add it.
+6. Close each task issue when its slice is complete. The task issue comments replace `07-implementation-log.md`, and the issue body remains the durable record of the slice's current/final stage.
 
 **Outputs**: modified source files and tests, implementation task issue comments, updated task issue stage fields, closed implementation task issues.
 
 **Gate**: none — the task graph itself is the gate structure.
 
-**Parallelism**: parallelizable task groups run concurrently; sequential tasks run in order.
+**Parallelism**: implementation always runs in subagents. Parallelizable task groups run concurrently when dependencies are satisfied and write paths do not overlap; sequential tasks run in order, one subagent at a time.
 
 Strict TDD rules: see [../tdd/SKILL.md](../tdd/SKILL.md).
 
@@ -286,7 +289,7 @@ Strict TDD rules: see [../tdd/SKILL.md](../tdd/SKILL.md).
 
 **Steps**:
 
-1. Run the test suite, linter, type-checker, and build commands from `.coding-workflow/overrides/test-commands.yaml`. If the file does not exist, run the commands inferred during bootstrap or from repo scripts.
+1. Launch verification subagents to run the test suite, linter, type-checker, and build commands from `.coding-workflow/overrides/test-commands.yaml`. If the file does not exist, use the commands inferred during bootstrap or from repo scripts. Run independent checks in parallel subagents when the repo supports concurrent execution; otherwise run one verification subagent at a time. Each subagent reports command, exit code, output summary, and any failure details.
 2. For each acceptance criterion captured in the intake issue, record `pass` or `fail` with evidence.
 3. Verify that no `High` severity issue remains open from Phase 9 review.
 4. Create a GitHub child issue labelled `agent:phase` and `phase:verify`. Its body uses [templates/verification.md](templates/verification.md).
@@ -297,7 +300,7 @@ Strict TDD rules: see [../tdd/SKILL.md](../tdd/SKILL.md).
 
 **Gate F**: the verification issue is closed, every acceptance criterion is marked `pass`, all automated checks exit 0, and no `High` review finding remains open before Phase 11 begins.
 
-**Parallelism**: test-suite steps may run in parallel subagents if the test framework supports it.
+**Parallelism**: Phase 10 step 1 always runs in verification subagents. Independent checks may run in parallel subagents when safe; dependent or resource-conflicting checks run sequentially through subagents.
 
 ---
 

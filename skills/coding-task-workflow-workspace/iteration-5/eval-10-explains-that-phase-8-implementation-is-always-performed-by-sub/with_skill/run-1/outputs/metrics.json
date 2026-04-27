@@ -1,0 +1,95 @@
+{
+  "evaluation": "coding-task-workflow-phase-8-parallel-sequential-execution",
+  "task": "Explain Phase 8 execution strategy for three tasks: A and B parallel (different files), C sequential",
+  "key_findings": {
+    "num_tasks": 3,
+    "batch_1": {
+      "tasks": ["A", "B"],
+      "execution_mode": "concurrent",
+      "reason": "both parallel, no dependencies, no file overlap"
+    },
+    "batch_2": {
+      "tasks": ["C"],
+      "execution_mode": "sequential_after_batch_1",
+      "reason": "marked sequential"
+    }
+  },
+  "file_overlap_analysis": {
+    "task_a_files": ["x", "y"],
+    "task_b_files": ["z", "w"],
+    "overlap": "none",
+    "decision": "safe_to_run_parallel"
+  },
+  "who_writes_code": {
+    "implementation_code": "subagents",
+    "tests": "subagents",
+    "refactored_code": "subagents",
+    "github_comments": "primary_agent_records",
+    "stage_updates": "primary_agent_updates",
+    "issue_closes": "primary_agent_closes"
+  },
+  "subagent_responsibilities": [
+    "Write failing test (RED)",
+    "Write minimal implementation (GREEN)",
+    "Refactor and polish (REFACTOR)",
+    "Return results to primary agent"
+  ],
+  "primary_agent_responsibilities": [
+    "Load state from GitHub",
+    "Partition tasks into batches",
+    "Detect file overlaps",
+    "Launch subagents with context",
+    "Validate file changes (read git diff)",
+    "Validate test results (run tests)",
+    "Record comments on issues",
+    "Update stage field in body",
+    "Close task issues"
+  ],
+  "execution_phases": {
+    "phase_1_load": "Primary loads state",
+    "phase_2_partition": "Primary identifies {A,B} parallel, {C} sequential",
+    "phase_3_launch_batch_1": "Primary launches Subagent 1 (A) and Subagent 2 (B) in parallel",
+    "phase_4_execute_batch_1": "Subagents 1 and 2 execute concurrently",
+    "phase_5_validate_batch_1": "Primary validates both A and B, records comments, closes issues",
+    "phase_6_launch_batch_2": "Primary launches Subagent 3 (C)",
+    "phase_7_execute_batch_2": "Subagent 3 executes C",
+    "phase_8_validate_batch_2": "Primary validates C, records comments, closes issue"
+  },
+  "critical_rules": [
+    "Every implementation task is executed by a subagent",
+    "Primary agent never writes implementation code",
+    "Parallel tasks must have no file overlap",
+    "If file overlap detected, convert to sequential",
+    "Primary agent must inspect actual file diffs (not just summaries)",
+    "Primary agent must run tests to validate (not just trust subagent)",
+    "Subagents enforce TDD: RED first, GREEN minimal, REFACTOR polish"
+  ],
+  "partition_logic": {
+    "rule_1_ready_tasks": "tasks with depends_on satisfied",
+    "rule_2_parallel_candidates": "ready tasks marked parallelizable=true",
+    "rule_3_no_overlap": "parallel tasks must not share files",
+    "rule_4_sequential": "sequential or overlapping tasks run one at a time",
+    "rule_5_one_agent_per_task": "each agent owns exactly one task issue"
+  },
+  "validation_process": {
+    "after_subagent_returns": [
+      "Read actual git diff of files",
+      "Run tests to confirm pass/fail",
+      "Review file changes against expected scope",
+      "Do not rely on subagent summary alone"
+    ]
+  },
+  "comments_per_task": 3,
+  "comment_types": ["RED", "GREEN", "REFACTOR"],
+  "time_efficiency": {
+    "sequential_time": "3 tasks sequentially = 3x time",
+    "parallel_time": "2 tasks parallel + 1 sequential = ~2x time",
+    "savings": "~33% time saved with parallel"
+  },
+  "sources": [
+    "workflow.md Phase 8",
+    "delegation-rules.md Phase 8",
+    "SKILL.md Non-negotiable rule 5",
+    "README.md TDD-first implementation"
+  ]
+}
