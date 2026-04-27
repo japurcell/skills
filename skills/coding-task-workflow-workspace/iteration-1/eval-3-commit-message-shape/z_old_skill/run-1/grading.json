@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Shows a conventional-commits subject line",
+      "passed": true,
+      "evidence": "fix(retry): add retry mechanism"
+    },
+    {
+      "text": "Includes a body that references the work-item slug or parent issue `#42`",
+      "passed": true,
+      "evidence": "Work-item: 2026-04-23-add-retry-mechanism Parent: #42"
+    },
+    {
+      "text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+      "passed": true,
+      "evidence": "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+    },
+    {
+      "text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line",
+      "passed": true,
+      "evidence": "Parent: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "parallel": 2,
+      "report_intent": 2,
+      "view": 2,
+      "bash": 1
+    },
+    "total_tool_calls": 7,
+    "total_steps": 4,
+    "files_created": 4,
+    "errors_encountered": 0,
+    "output_chars": 421,
+    "transcript_chars": 1248
+  },
+  "timing": {
+    "total_tokens": 0,
+    "duration_ms": 171000,
+    "total_duration_seconds": 171.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No suggestions, evals look solid."
+  }
+}

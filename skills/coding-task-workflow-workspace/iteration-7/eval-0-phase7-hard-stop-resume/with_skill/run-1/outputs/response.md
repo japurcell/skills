@@ -1,1 +1,0 @@
-Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`. Phase 8 is the next phase after the resume.

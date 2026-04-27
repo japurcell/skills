@@ -1,0 +1,374 @@
+{
+  "metadata": {
+    "skill_name": "coding-task-workflow",
+    "skill_path": "/home/adam/dev/personal/skills/skills/coding-task-workflow",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-27T15:25:04Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 122.0,
+        "tokens": 618,
+        "tool_calls": 6,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the workflow hard-stops after Phase 7 once Gate E passes",
+          "passed": true,
+          "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`. Phase 8 is the next phase after the resume."
+        },
+        {
+          "text": "Does not agree to continue into Phase 8 in the same session",
+          "passed": true,
+          "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`. Phase 8 is the next phase after the resume."
+        },
+        {
+          "text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent",
+          "passed": true,
+          "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`. Phase 8 is the next phase after the resume."
+        },
+        {
+          "text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases",
+          "passed": true,
+          "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with `coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs`. Phase 8 is the next phase after the resume."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 122.0,
+        "tokens": 604,
+        "tool_calls": 8,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says Intake should fetch/read the GitHub issue title or body before classification",
+          "passed": true,
+          "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, it should fetch `ISSUE: 42`, infer the work item from that issue, treat `WORK_ITEM: maybe clean up auth later` as supplemental only, classify it, generate the slug, create `.coding-workflow/work/<slug>/00-intake.md`, record the issue number/node ID, and add a comment linking the intake artifact. The work item to use is the CSV import bug that silently drops rows, so Intake should classify this as a bug, not an auth cleanup task."
+        },
+        {
+          "text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+          "passed": true,
+          "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, it should fetch `ISSUE: 42`, infer the work item from that issue, treat `WORK_ITEM: maybe clean up auth later` as supplemental only, classify it, generate the slug, create `.coding-workflow/work/<slug>/00-intake.md`, record the issue number/node ID, and add a comment linking the intake artifact. The work item to use is the CSV import bug that silently drops rows, so Intake should classify this as a bug, not an auth cleanup task."
+        },
+        {
+          "text": "Does not treat `maybe clean up auth later` as the primary work item",
+          "passed": true,
+          "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, it should fetch `ISSUE: 42`, infer the work item from that issue, treat `WORK_ITEM: maybe clean up auth later` as supplemental only, classify it, generate the slug, create `.coding-workflow/work/<slug>/00-intake.md`, record the issue number/node ID, and add a comment linking the intake artifact. The work item to use is the CSV import bug that silently drops rows, so Intake should classify this as a bug, not an auth cleanup task."
+        },
+        {
+          "text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue",
+          "passed": true,
+          "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, it should fetch `ISSUE: 42`, infer the work item from that issue, treat `WORK_ITEM: maybe clean up auth later` as supplemental only, classify it, generate the slug, create `.coding-workflow/work/<slug>/00-intake.md`, record the issue number/node ID, and add a comment linking the intake artifact. The work item to use is the CSV import bug that silently drops rows, so Intake should classify this as a bug, not an auth cleanup task."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 171.0,
+        "tokens": 2573,
+        "tool_calls": 6,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Describes creating the child issue first and then linking it to the parent issue",
+          "passed": true,
+          "evidence": "Create the child issue first, resolve both node IDs, then attach it with `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable."
+        },
+        {
+          "text": "Mentions resolving parent and child issue node IDs before linking",
+          "passed": true,
+          "evidence": "Create the child issue first, resolve both node IDs, then attach it with `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable."
+        },
+        {
+          "text": "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation",
+          "passed": true,
+          "evidence": "Create the child issue first, resolve both node IDs, then attach it with `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable."
+        },
+        {
+          "text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable",
+          "passed": true,
+          "evidence": "Create the child issue first, resolve both node IDs, then attach it with `gh api graphql ... addSubIssue`. `Parent: #N` is fallback-only when GitHub sub-issues are unavailable."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 171.0,
+        "tokens": 423,
+        "tool_calls": 4,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Shows a conventional-commits subject line",
+          "passed": true,
+          "evidence": "<type>(<scope>): <subject>"
+        },
+        {
+          "text": "Includes a body that references the work-item slug or parent issue `#42`",
+          "passed": true,
+          "evidence": "Work item: 2026-04-23-add-retry-mechanism Parent issue: #42"
+        },
+        {
+          "text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+          "passed": true,
+          "evidence": "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+        },
+        {
+          "text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line",
+          "passed": true,
+          "evidence": "Parent issue: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "z_old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 122.0,
+        "tokens": 463,
+        "tool_calls": 7,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the workflow hard-stops after Phase 7 once Gate E passes",
+          "passed": true,
+          "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs. Phase 8 is the next phase after the resume. In that resumed session, start from `06-task-graph.yaml` and `05-plan.md`, execute slices in dependency order with strict red\u2192green\u2192refactor, update `07-implementation-log.md` after each slice, and never implement code before the failing test exists."
+        },
+        {
+          "text": "Does not agree to continue into Phase 8 in the same session",
+          "passed": true,
+          "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs. Phase 8 is the next phase after the resume. In that resumed session, start from `06-task-graph.yaml` and `05-plan.md`, execute slices in dependency order with strict red\u2192green\u2192refactor, update `07-implementation-log.md` after each slice, and never implement code before the failing test exists."
+        },
+        {
+          "text": "Tells the user to resume from a fresh session with `RESUME=2026-04-23-add-rate-limit-logs` or equivalent",
+          "passed": true,
+          "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs. Phase 8 is the next phase after the resume. In that resumed session, start from `06-task-graph.yaml` and `05-plan.md`, execute slices in dependency order with strict red\u2192green\u2192refactor, update `07-implementation-log.md` after each slice, and never implement code before the failing test exists."
+        },
+        {
+          "text": "Identifies Phase 8 as the next phase after the resume rather than restarting earlier phases",
+          "passed": true,
+          "evidence": "Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with coding-task-workflow RESUME=2026-04-23-add-rate-limit-logs. Phase 8 is the next phase after the resume. In that resumed session, start from `06-task-graph.yaml` and `05-plan.md`, execute slices in dependency order with strict red\u2192green\u2192refactor, update `07-implementation-log.md` after each slice, and never implement code before the failing test exists."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "z_old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 122.0,
+        "tokens": 623,
+        "tool_calls": 14,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says Intake should fetch/read the GitHub issue title or body before classification",
+          "passed": true,
+          "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, fetch ISSUE 42 first, infer the work item from its title/body, classify it, assign a `YYYY-MM-DD-<kebab-title>` slug, create `.coding-workflow/work/<slug>/`, write `00-intake.md` from the intake template, and record the issue number/node ID with a comment linking the intake artifact. Here, the work item should be the CSV import bug that silently drops rows; `WORK_ITEM: maybe clean up auth later` is supplemental only and must not override the issue."
+        },
+        {
+          "text": "Treats the GitHub issue body as the authoritative source for `WORK_ITEM`",
+          "passed": true,
+          "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, fetch ISSUE 42 first, infer the work item from its title/body, classify it, assign a `YYYY-MM-DD-<kebab-title>` slug, create `.coding-workflow/work/<slug>/`, write `00-intake.md` from the intake template, and record the issue number/node ID with a comment linking the intake artifact. Here, the work item should be the CSV import bug that silently drops rows; `WORK_ITEM: maybe clean up auth later` is supplemental only and must not override the issue."
+        },
+        {
+          "text": "Does not treat `maybe clean up auth later` as the primary work item",
+          "passed": true,
+          "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, fetch ISSUE 42 first, infer the work item from its title/body, classify it, assign a `YYYY-MM-DD-<kebab-title>` slug, create `.coding-workflow/work/<slug>/`, write `00-intake.md` from the intake template, and record the issue number/node ID with a comment linking the intake artifact. Here, the work item should be the CSV import bug that silently drops rows; `WORK_ITEM: maybe clean up auth later` is supplemental only and must not override the issue."
+        },
+        {
+          "text": "Uses the supplied issue as the Phase 1 parent issue rather than creating a new parent issue",
+          "passed": true,
+          "evidence": "The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue. For Phase 1 Intake, fetch ISSUE 42 first, infer the work item from its title/body, classify it, assign a `YYYY-MM-DD-<kebab-title>` slug, create `.coding-workflow/work/<slug>/`, write `00-intake.md` from the intake template, and record the issue number/node ID with a comment linking the intake artifact. Here, the work item should be the CSV import bug that silently drops rows; `WORK_ITEM: maybe clean up auth later` is supplemental only and must not override the issue."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "z_old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 171.0,
+        "tokens": 1587,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Describes creating the child issue first and then linking it to the parent issue",
+          "passed": true,
+          "evidence": "Create the child issue first, resolve both node IDs, then attach it with gh api graphql ... addSubIssue. Parent: #N is fallback-only when GitHub sub-issues are unavailable."
+        },
+        {
+          "text": "Mentions resolving parent and child issue node IDs before linking",
+          "passed": true,
+          "evidence": "Create the child issue first, resolve both node IDs, then attach it with gh api graphql ... addSubIssue. Parent: #N is fallback-only when GitHub sub-issues are unavailable."
+        },
+        {
+          "text": "Includes or clearly describes the `gh api graphql` `addSubIssue` mutation",
+          "passed": true,
+          "evidence": "Create the child issue first, resolve both node IDs, then attach it with gh api graphql ... addSubIssue. Parent: #N is fallback-only when GitHub sub-issues are unavailable."
+        },
+        {
+          "text": "States that a plain `Parent: #N` body reference is only a fallback when GitHub sub-issues are unavailable",
+          "passed": true,
+          "evidence": "Create the child issue first, resolve both node IDs, then attach it with gh api graphql ... addSubIssue. Parent: #N is fallback-only when GitHub sub-issues are unavailable."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "z_old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 171.0,
+        "tokens": 421,
+        "tool_calls": 7,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Shows a conventional-commits subject line",
+          "passed": true,
+          "evidence": "fix(retry): add retry mechanism"
+        },
+        {
+          "text": "Includes a body that references the work-item slug or parent issue `#42`",
+          "passed": true,
+          "evidence": "Work-item: 2026-04-23-add-retry-mechanism Parent: #42"
+        },
+        {
+          "text": "Includes `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`",
+          "passed": true,
+          "evidence": "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+        },
+        {
+          "text": "Makes clear that the Co-authored-by trailer block is separated from the preceding body by a blank line",
+          "passed": true,
+          "evidence": "Parent: #42  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 146.5,
+        "stddev": 28.2902,
+        "min": 122.0,
+        "max": 171.0
+      },
+      "tokens": {
+        "mean": 1054.5,
+        "stddev": 1016.2213,
+        "min": 423,
+        "max": 2573
+      }
+    },
+    "z_old_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 146.5,
+        "stddev": 28.2902,
+        "min": 122.0,
+        "max": 171.0
+      },
+      "tokens": {
+        "mean": 773.5,
+        "stddev": 549.2719,
+        "min": 421,
+        "max": 1587
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+0.0",
+      "tokens": "+281"
+    }
+  },
+  "notes": [
+    "All four evals passed 100% in both configurations, so the current eval set does not distinguish the leaner SKILL.md from the baseline version.",
+    "The existing evals are rule-adherence checks for Gate E resume, ISSUE authority, sub-issue linking, and commit trailer formatting; they verify that the rewrite preserved behavior but do not measure context-efficiency gains directly.",
+    "Timing was captured at batch granularity because per-run duration_ms was not exposed in the task notifications, so time metrics are approximate and most useful for rough comparison only."
+  ]
+}
