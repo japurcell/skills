@@ -1,6 +1,7 @@
 ---
 name: coding-task-workflow
 description: Deterministic workflow for non-trivial coding work from ticket/spec to PR. Use whenever implementing a feature, bug fix, refactor, or requirements doc that needs bootstrap, exploration, research, TDD task graph, review, verification, and GitHub issue/PR tracking.
+disable-model-invocation: true
 ---
 
 # Coding Task Workflow
@@ -11,14 +12,14 @@ Use this skill to take non-trivial coding work from intake to PR with durable ar
 
 Read only the needed reference:
 
-| When | Read |
-| --- | --- |
-| Start or phase mechanics | [references/workflow.md](references/workflow.md) |
-| Crossing a gate, resuming, or unclear gate state | [references/stop-gates.md](references/stop-gates.md) |
-| Creating/attaching sub-issues or writing the PR | [references/issue-hierarchy.md](references/issue-hierarchy.md) |
-| Phase 0, Phase 2, or stale/missing overrides | [references/bootstrap.md](references/bootstrap.md) |
-| Before launching subagents | [references/delegation-rules.md](references/delegation-rules.md) |
-| Writing/updating artifacts | [references/artifact-schema.md](references/artifact-schema.md) and [references/templates/](references/templates/) |
+| When                                             | Read                                                                                                              |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Start or phase mechanics                         | [references/workflow.md](references/workflow.md)                                                                  |
+| Crossing a gate, resuming, or unclear gate state | [references/stop-gates.md](references/stop-gates.md)                                                              |
+| Creating/attaching sub-issues or writing the PR  | [references/issue-hierarchy.md](references/issue-hierarchy.md)                                                    |
+| Phase 0, Phase 2, or stale/missing overrides     | [references/bootstrap.md](references/bootstrap.md)                                                                |
+| Before launching subagents                       | [references/delegation-rules.md](references/delegation-rules.md)                                                  |
+| Writing/updating artifacts                       | [references/artifact-schema.md](references/artifact-schema.md) and [references/templates/](references/templates/) |
 
 Follow references exactly. Do not duplicate them in responses.
 
@@ -38,13 +39,13 @@ These rules override user requests to skip or compress the workflow:
 
 Lead with the governing rule; add only command shape and fallback details.
 
-| User asks about | Answer |
-| --- | --- |
-| Phase 7 resume handoff | `Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with coding-task-workflow RESUME=<slug>. Phase 8 is the next phase after the resume.` |
-| Intake authority | `The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue.` |
-| Sub-issue linking | `Create the child issue first, resolve both node IDs, then attach it with a shell-safe gh api graphql addSubIssue mutation that inlines the resolved IDs. Do not use GraphQL $variables inside the shell snippet. Parent: #N is fallback-only when GitHub sub-issues are unavailable.` |
-| Workflow record | `Phase 0 keeps repo-local overrides, but Phases 1–11 persist durable state in GitHub issues and comments instead of local per-work-item markdown files.` |
-| Override availability | `If .coding-workflow/overrides/ is missing, incomplete, or stale, run or refresh Phase 0 before Phase 2 and confirm the committed override tree exists inside the Phase 2 worktree before Phase 8 begins.` |
+| User asks about        | Answer                                                                                                                                                                                                                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 7 resume handoff | `Gate E already passed, so do not continue into Phase 8 in the same session. Resume from a fresh session with coding-task-workflow RESUME=<slug>. Phase 8 is the next phase after the resume.`                                                                                         |
+| Intake authority       | `The GitHub issue title/body is the authoritative WORK_ITEM, and the supplied issue remains the Phase 1 parent issue; do not create a new parent issue.`                                                                                                                               |
+| Sub-issue linking      | `Create the child issue first, resolve both node IDs, then attach it with a shell-safe gh api graphql addSubIssue mutation that inlines the resolved IDs. Do not use GraphQL $variables inside the shell snippet. Parent: #N is fallback-only when GitHub sub-issues are unavailable.` |
+| Workflow record        | `Phase 0 keeps repo-local overrides, but Phases 1–11 persist durable state in GitHub issues and comments instead of local per-work-item markdown files.`                                                                                                                               |
+| Override availability  | `If .coding-workflow/overrides/ is missing, incomplete, or stale, run or refresh Phase 0 before Phase 2 and confirm the committed override tree exists inside the Phase 2 worktree before Phase 8 begins.`                                                                             |
 
 Do not invent issue-template prose, sample issue bodies, or extra artifact structure unless explicitly asked.
 
@@ -73,17 +74,17 @@ Routing precedence:
 
 ## Phase map
 
-| #   | Phase                      | Parallelism           | Gate |
-| --- | -------------------------- | --------------------- | ---- |
-| 0   | **Bootstrap** _(auto when needed; standalone with `BOOTSTRAP=only`)_ | parallel              | –    |
-| 1   | **Intake**                 | –                     | –    |
-| 2   | **Worktree setup**         | –                     | –    |
-| 3   | **Codebase exploration**   | parallel              | A    |
-| 4   | **Online research**        | parallel              | B    |
-| 5   | **Clarification**          | –                     | C    |
-| 6   | **Plan**                   | –                     | D    |
-| 7   | **TDD task graph**         | –                     | E    |
-| 8   | **Implementation**         | subagents; parallel groups when safe | –    |
-| 9   | **Review**                 | parallel              | –    |
-| 10  | **Verification**           | subagents; parallel checks when safe | F    |
-| 11  | **Commit / Push / PR**     | –                     | –    |
+| #   | Phase                                                                | Parallelism                          | Gate |
+| --- | -------------------------------------------------------------------- | ------------------------------------ | ---- |
+| 0   | **Bootstrap** _(auto when needed; standalone with `BOOTSTRAP=only`)_ | parallel                             | –    |
+| 1   | **Intake**                                                           | –                                    | –    |
+| 2   | **Worktree setup**                                                   | –                                    | –    |
+| 3   | **Codebase exploration**                                             | parallel                             | A    |
+| 4   | **Online research**                                                  | parallel                             | B    |
+| 5   | **Clarification**                                                    | –                                    | C    |
+| 6   | **Plan**                                                             | –                                    | D    |
+| 7   | **TDD task graph**                                                   | –                                    | E    |
+| 8   | **Implementation**                                                   | subagents; parallel groups when safe | –    |
+| 9   | **Review**                                                           | parallel                             | –    |
+| 10  | **Verification**                                                     | subagents; parallel checks when safe | F    |
+| 11  | **Commit / Push / PR**                                               | –                                    | –    |

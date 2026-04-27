@@ -2,6 +2,7 @@
 name: create-plan
 description: Build complete implementation plans from a feature spec using the plan template, producing phase artifacts and a readiness report. Use this whenever the user asks for implementation planning, architecture planning, research-before-build, or preparation for task breakdown (even if they do not explicitly say "create-plan").
 argument-hint: "spec_file: .agents/scratchpad/<feature>/spec.md"
+disable-model-invocation: true
 ---
 
 # Create implementation plan

@@ -1,6 +1,7 @@
 ---
 name: architecture-design-contest
 description: Generate multiple competing architecture designs for a feature, compare their trade-offs, and recommend or synthesize the best direction before implementation. Use this whenever the user wants architecture options, says "design it twice", asks for alternatives before coding, wants an RFC-level design review, or is unsure which approach to choose. Prefer this skill over jumping straight into implementation when the real need is exploring and comparing viable designs.
+disable-model-invocation: true
 ---
 
 # Architecture Design Contest
