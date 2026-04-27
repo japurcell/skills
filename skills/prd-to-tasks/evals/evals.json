@@ -1,0 +1,44 @@
+{
+  "skill_name": "prd-to-tasks",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Turn issue #142 in acme/platform into independently-grabbable GitHub issues. The parent issue is a PRD for saved searches with email alerts; fetch the comments, propose vertical slices first, then create child issues after approval.",
+      "expected_output": "A proposed breakdown of AFK/HITL vertical slices, followed by dependency-ordered GitHub child issues attached to the existing parent issue after user approval.",
+      "files": [],
+      "expectations": [
+        "Fetches the GitHub issue with comments before slicing.",
+        "Presents a numbered proposed breakdown before creating child issues because the source is an existing GitHub issue.",
+        "Each proposed slice includes Title, Type, Blocked by, and User stories covered.",
+        "Creates dependency blockers before blocked issues and references real issue numbers in Blocked by.",
+        "Attaches child issues to the parent using addSubIssue without GraphQL variables in the mutation signature."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "I have a PRD for admin audit log exports: admins can filter by actor, date range, and event type, export CSV for compliance, and see export failures. Please break this into grabbable GitHub issues.",
+      "expected_output": "A new parent tracker issue and child issues using thin vertical slices, with AFK/HITL classification, acceptance criteria, verification, dependencies, likely files, and scope estimates.",
+      "files": [],
+      "expectations": [
+        "Creates or plans a new parent tracker issue because the source was not a GitHub issue.",
+        "Child issues are vertical feature slices rather than horizontal database/API/UI tasks.",
+        "Prefers AFK slices and reserves HITL only for real decisions or reviews.",
+        "Each child issue includes three or fewer acceptance criteria.",
+        "Final summary lists parent and child issue numbers with dependency information."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Break this implementation plan into child issues: add workspace onboarding that guides a new admin through inviting teammates, connecting Slack, and completing the first project setup. We need design review before changing the onboarding UI.",
+      "expected_output": "A task graph with a HITL design-review slice and multiple AFK implementation slices that each deliver independently verifiable onboarding behavior.",
+      "files": [],
+      "expectations": [
+        "Marks the design review as HITL and implementation slices as AFK where possible.",
+        "Avoids a single large issue covering inviting teammates and Slack and first project setup together.",
+        "Uses dependencies only where a slice truly cannot start before another.",
+        "Includes manual verification steps appropriate to onboarding behavior.",
+        "Splits any Large or XL slice into smaller S/M vertical issues."
+      ]
+    }
+  ]
+}
