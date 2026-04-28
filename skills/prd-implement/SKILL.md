@@ -7,7 +7,7 @@ description: Execute a PRD GitHub issue that already has a task graph from `prd-
 
 Use this skill to turn a PRD issue graph into implemented code without letting the controller context balloon.
 
-The controller owns intake, graph parsing, wave scheduling, and issue updates. It does **not** implement tasks inline. Every implementation task runs in a subagent that loads `tdd` first. Every review step also runs in subagents.
+The controller owns intake, graph parsing, wave scheduling, and issue updates. It does **not** implement tasks inline. Every implementation task runs in a subagent that loads the `tdd` skill first. Every review step also runs in subagents.
 
 ## Inputs
 
@@ -24,7 +24,7 @@ If `prd_issue` is missing, ask for it. If the issue does not contain a `prd-to-t
 4. Only execute **AFK** issues. **HITL** issues pause the workflow until the named decision, review, approval, or access step happens.
 5. Never skip a lower-numbered wave to start a later wave early.
 6. The controller schedules waves; implementation happens only in subagents.
-7. Every implementation subagent must load `tdd` first and follow a strict RED → GREEN → REFACTOR loop.
+7. Every implementation subagent must load the `tdd` skill first and follow a strict RED → GREEN → REFACTOR loop.
 8. Review always happens in subagents after each completed wave. Keep review scope to the files changed in that wave.
 9. Close a child issue only after its implementation, review, and verification steps pass. Leave the parent PRD issue open.
 10. Do not commit, push, or open a PR unless the user explicitly asks for that after implementation is done.
@@ -99,7 +99,7 @@ Wave W1
 
 ## Implementation subagents
 
-Every implementation task must run in its own subagent. Before the subagent does anything else, it must load `tdd`.
+Every implementation task must run in its own subagent. Before the subagent does anything else, it must load the `tdd` skill.
 
 Pass the subagent only the context it needs:
 
@@ -120,11 +120,11 @@ Tell the subagent to:
 3. Keep slices thin and avoid broad cleanup.
 4. Run the child issue's targeted verification commands exactly as required for that issue, and treat missing tooling as a blocking result rather than a cue to invent substitutes.
 5. Return:
-    - RED/GREEN/REFACTOR summary
-    - files changed
-    - commands run and outcomes
-    - remaining risks or deferments
-    - whether the task is ready to close
+   - RED/GREEN/REFACTOR summary
+   - files changed
+   - commands run and outcomes
+   - remaining risks or deferments
+   - whether the task is ready to close
 
 Do not let the implementation subagent expand scope, edit files owned by another in-flight task, or decide wave ordering on its own.
 If it must touch a file that was not listed in `Files likely touched`, it should stop and escalate that need back to the controller instead of silently broadening scope.
