@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+      "passed": true,
+      "evidence": "- none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command `pnpm exec expo-router verify` could not run because `expo-router` is not installed (`/bin/sh: expo-router: command not found`). I did not"
+    },
+    {
+      "text": "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+      "passed": false,
+      "evidence": "po-router` is not installed (`/bin/sh: expo-router: command not found`). I did not replace it with `pnpm exec tsc --noEmit`.  Next ready work:  - none  Notes:  - `pnpm test -- route-guard.test.ts` passed.   # Prompt You are"
+    },
+    {
+      "text": "Keeps the child issue open or not ready to close.",
+      "passed": false,
+      "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command `pnpm exec expo-router verify` could not run be"
+    },
+    {
+      "text": "Leaves the parent PRD task-graph line for #5101 unchecked instead of marking it complete.",
+      "passed": false,
+      "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command `pnpm exec expo-router verify` could not run be"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": true,
+      "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command `pnpm exec expo-router ver"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.4
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 12,
+    "errors_encountered": 0,
+    "output_chars": 413,
+    "transcript_chars": 1249
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

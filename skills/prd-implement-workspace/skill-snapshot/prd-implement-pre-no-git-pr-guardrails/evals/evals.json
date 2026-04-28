@@ -45,53 +45,25 @@
       "prompt": "You are executing /prd-implement for PRD #7000. AFK child issue #7101 is ready for verification. The parent PRD issue still shows `- [ ] W2 - #7101 Add user retry headers - AFK - blocked by #7098`. Its Verification section says: (1) `pnpm exec redwood test api/src/functions/users/users.test.ts`; (2) if the Redwood CLI is unavailable in the current environment, run `yarn rw test api/src/functions/users/users.test.ts` instead. The verification subagent reports `pnpm: command not found`, then runs `yarn rw test api/src/functions/users/users.test.ts` successfully. Show the controller response.",
       "expected_output": "The controller accepts the fallback only because the issue explicitly lists it, records the verification evidence, closes the child issue, checks the parent task-graph line from `[ ]` to `[x]`, and leaves the parent PRD issue open.",
       "files": [],
-        "expectations": [
-          "Acknowledges that the original `pnpm` command could not run.",
-          "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
-          "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
-          "Allows the child issue to close or be ready to close after the fallback passes.",
-          "Checks or updates the parent PRD task-graph line for #7101 from `[ ]` to `[x]`.",
-          "Leaves the parent PRD issue open after syncing #7101."
-        ]
-      },
-      {
-        "id": 4,
-        "prompt": "You are resuming /prd-implement for PRD #8200. Child issue #8201, \"Add webhook retry headers,\" is already closed from a prior run. The parent PRD issue still shows `- [ ] W1 - #8201 Add webhook retry headers - AFK - blocked by none`. W2 contains AFK child issue #8202, \"Emit webhook retry metrics,\" and its only blocker is #8201. Show the controller's response before starting W2.",
-        "expected_output": "The controller identifies the closed-child / unchecked-parent mismatch, updates only the parent checkbox for #8201 from `[ ]` to `[x]`, verifies the sync, leaves the parent PRD issue open, and only then treats W2/#8202 as ready.",
-        "files": [],
-        "expectations": [
-          "Identifies that #8201 is closed but its parent PRD task-graph line is still unchecked.",
-          "Checks or updates the parent PRD task-graph line for #8201 from `[ ]` to `[x]` before starting W2.",
-          "Makes clear that only the checkbox should change and the rest of the managed task-graph line stays the same.",
-          "Only after the parent checkbox is synchronized does it treat W2 or #8202 as ready to proceed.",
-          "Leaves the parent PRD issue open after synchronizing #8201."
-        ]
-      },
-      {
-        "id": 5,
-        "prompt": "You are executing /prd-implement for PRD #9000. All AFK child issues are complete and already synchronized in the parent task graph. The only remaining child issue is HITL #9005, \"Approve rollout checklist,\" so the parent PRD issue must stay open. In the same user request, the user said: `implement PRD #9000 and open a PR when you're done.` Show the controller's exact final response.",
-        "expected_output": "The controller reports that AFK execution is done, keeps the parent PRD issue open for the remaining HITL work, states that commit/push/PR work is out of scope for prd-implement, leaves local changes uncommitted, and tells the user to use commit or commit-to-pr in a separate follow-up instead of opening a PR now.",
-        "files": [],
-        "expectations": [
-          "States that commit, push, or PR work is out of scope for this prd-implement run.",
-          "Explicitly says no PR will be opened and no commit or push will be performed in this run.",
-          "Says the changes remain local-only or uncommitted.",
-          "Directs the user to use `commit` or `commit-to-pr` only in a separate follow-up request after this skill finishes.",
-          "Keeps the parent PRD issue open or says only HITL work remains."
-        ]
-      },
-      {
-        "id": 6,
-        "prompt": "You are executing /prd-implement for PRD #9100. AFK child issue #9101, \"Add webhook retry cap,\" just returned from its implementation subagent with a clean RED -> GREEN summary and passing targeted tests. The subagent also says: `I already ran git commit -m \"feat: add webhook retry cap\" so the branch is ready for review and PR creation.` The child issue is still open and the parent PRD issue still shows `- [ ] W3 - #9101 Add webhook retry cap - AFK - blocked by #9099`. Produce the controller's response.",
-        "expected_output": "The controller treats the unauthorized git commit as a workflow violation, refuses to proceed into review, verification, issue closure, or PR creation, leaves the child issue open and the parent task-graph line unchecked, and says the run must stop before any landing work.",
-        "files": [],
-        "expectations": [
-          "Identifies the `git commit` as an unauthorized or out-of-scope landing action.",
-          "Stops before review, verification, issue closure, or PR creation proceeds.",
-          "Keeps child issue #9101 open or not ready to close.",
-          "Leaves the parent PRD task-graph line for #9101 unchecked.",
-          "Explicitly says it will not push, open a PR, or treat the commit as permission to continue."
-        ]
-      }
-    ]
-  }
+      "expectations": [
+        "Acknowledges that the original `pnpm` command could not run.",
+        "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
+        "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
+        "Allows the child issue to close or be ready to close after the fallback passes.",
+        "Checks or updates the parent PRD task-graph line for #7101 from `[ ]` to `[x]`."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "You are resuming /prd-implement for PRD #8200. Child issue #8201, \"Add webhook retry headers,\" is already closed from a prior run. The parent PRD issue still shows `- [ ] W1 - #8201 Add webhook retry headers - AFK - blocked by none`. W2 contains AFK child issue #8202, \"Emit webhook retry metrics,\" and its only blocker is #8201. Show the controller's response before starting W2.",
+      "expected_output": "The controller identifies the closed-child / unchecked-parent mismatch, updates only the parent checkbox for #8201 from `[ ]` to `[x]`, verifies the sync, leaves the parent PRD issue open, and only then treats W2/#8202 as ready.",
+      "files": [],
+      "expectations": [
+        "Identifies that #8201 is closed but its parent PRD task-graph line is still unchecked.",
+        "Checks or updates the parent PRD task-graph line for #8201 from `[ ]` to `[x]` before starting W2.",
+        "Makes clear that only the checkbox should change and the rest of the managed task-graph line stays the same.",
+        "Only after the parent checkbox is synchronized does it treat W2 or #8202 as ready to proceed."
+      ]
+    }
+  ]
+}

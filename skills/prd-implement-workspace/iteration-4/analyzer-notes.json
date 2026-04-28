@@ -1,0 +1,7 @@
+[
+  "The skill changes outcomes only on evals 0, 3, 4, and 5; evals 1, 2, and 6 are identical between configs.",
+  "The biggest gap is eval 5: with-skill passes 5/5 while old-skill passes 1/5, and the four missed checks are all out-of-scope landing constraints (commit/push/PR/local-only/follow-up).",
+  "Skill-driven wins cluster around PRD bookkeeping: eval 3 keeps the parent PRD issue open after syncing #7101, and eval 4 detects that #8201 is closed while its parent task-graph line is still unchecked.",
+  "Eval 0 is the only run where the old skill misses the no-substitution verification rule; with-skill passes the expectation that rejects `tsc --noEmit` and static analysis as stand-ins for the required command.",
+  "The checkbox-sync wording stays brittle in both configs: eval 3 and eval 4 both fail the explicit parent task-graph checkbox update expectation even when nearby closure-status checks pass."
+]

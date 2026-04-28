@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "Acknowledges that the original `pnpm` command could not run.",
+      "passed": true,
+      "evidence": "ronment, run `yarn rw test api/src/functions/users/users.test.ts` instead. The verification subagent reports `pnpm: command not found`, then runs `yarn rw test api/src/functions/users/users.test.ts` successfully. Show the controller response."
+    },
+    {
+      "text": "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
+      "passed": true,
+      "evidence": "exec redwood test api/src/functions/users/users.test.ts` was unavailable, so the explicitly allowed fallback `yarn rw test api/src/functions/users/users.test.ts` was used and passed. - The parent task-graph line for #7101 can be che"
+    },
+    {
+      "text": "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
+      "passed": true,
+      "evidence": "n this run.  Notes:  - `pnpm exec redwood test api/src/functions/users/users.test.ts` was unavailable, so the explicitly allowed fallback `yarn rw test api/src/functions/users/users.test.ts` was used and passed. - The parent task-graph li"
+    },
+    {
+      "text": "Allows the child issue to close or be ready to close after the fallback passes.",
+      "passed": false,
+      "evidence": "PRD execution status for #7000  Completed this run:  1. #7101 Add user retry headers  Blocked / waiting:  - none  Next ready work:  - none  Landing status:  - Local change"
+    },
+    {
+      "text": "Checks or updates the parent PRD task-graph line for #7101 from `[ ]` to `[x]`.",
+      "passed": false,
+      "evidence": "PRD execution status for #7000  Completed this run:  1. #7101 Add user retry headers  Blocked / waiting:  - none  Next ready work:  - none  Landing status:  - Local change"
+    },
+    {
+      "text": "Leaves the parent PRD issue open after syncing #7101.",
+      "passed": true,
+      "evidence": "ns/users/users.test.ts` was used and passed. - The parent task-graph line for #7101 can be checked [x]. - The parent PRD issue remains open.  # Prompt  You are executing /prd-implement for PRD #7000. AFK child issue #7101 is ready for verification."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 2,
+    "total": 6,
+    "pass_rate": 0.667
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 16,
+    "errors_encountered": 0,
+    "output_chars": 528,
+    "transcript_chars": 1149
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

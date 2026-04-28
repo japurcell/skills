@@ -53,8 +53,6 @@ def issue_open_check(text: str, *issue_numbers: str) -> tuple[bool, str]:
         "remain open",
         "stays open",
         "stay open",
-        "still open",
-        "is still open",
         "not ready to close",
         "do not close",
         "cannot close",
@@ -161,25 +159,6 @@ def parent_checked_check(text: str, *issue_numbers: str) -> tuple[bool, str]:
     return passed, evidence_for(text, *issue_phrases, *parent_line_terms, *checked_terms)
 
 
-def parent_issue_open_check(text: str) -> tuple[bool, str]:
-    parent_terms = (
-        "parent prd issue",
-        "parent issue",
-    )
-    open_terms = (
-        "leave the parent prd issue open",
-        "leave the parent issue open",
-        "parent prd issue remains open",
-        "parent issue remains open",
-        "do not close the parent prd issue",
-        "do not close the parent issue",
-        "keeps the parent prd issue open",
-        "keeps the parent issue open",
-    )
-    passed = has_any(text, *parent_terms) and has_any(text, *open_terms)
-    return passed, evidence_for(text, *open_terms, *parent_terms)
-
-
 def checkbox_only_update_check(text: str) -> tuple[bool, str]:
     only_checkbox = has_any(
         text,
@@ -235,103 +214,6 @@ def stop_progress_check(text: str) -> tuple[bool, str]:
         "do not proceed to the next wave",
         "halt",
         "blocked",
-    )
-
-
-def landing_out_of_scope_check(text: str) -> tuple[bool, str]:
-    landing_terms = (
-        "landing work",
-        "commit",
-        "push",
-        "open a pr",
-        "pr creation",
-        "pull request",
-    )
-    boundary_terms = (
-        "out of scope",
-        "separate workflow",
-        "separate request",
-        "separate follow-up",
-        "not part of prd-implement",
-        "stops here",
-    )
-    passed = has_any(text, *landing_terms) and has_any(text, *boundary_terms)
-    return passed, evidence_for(text, *boundary_terms, *landing_terms)
-
-
-def no_landing_now_check(text: str) -> tuple[bool, str]:
-    passed = has_any(
-        text,
-        "no commit, push, or pr actions",
-        "no commit, push, or pull request actions",
-        "no commit, push, or pr action will be performed in this run",
-        "no pr will be opened and no commit or push will be performed",
-        "will not commit, push, or open a pr",
-        "will not commit, push, or open a pull request",
-        "do not commit, push, or open a pr",
-        "do not commit, push, or open a pull request",
-        "no pr creation",
-    )
-    return passed, evidence_for(
-        text,
-        "no commit, push, or pr actions",
-        "no pr will be opened and no commit or push will be performed",
-        "will not commit, push, or open a pr",
-        "do not commit, push, or open a pr",
-    )
-
-
-def local_only_check(text: str) -> tuple[bool, str]:
-    passed = has_any(
-        text,
-        "local changes only",
-        "local-only",
-        "remain uncommitted",
-        "stays uncommitted",
-        "leave the worktree uncommitted",
-        "changes remain local",
-        "uncommitted",
-    )
-    return passed, evidence_for(
-        text,
-        "local changes only",
-        "local-only",
-        "remain uncommitted",
-        "changes remain local",
-        "uncommitted",
-    )
-
-
-def separate_followup_commit_check(text: str) -> tuple[bool, str]:
-    passed = (
-        has_any(text, "commit-to-pr", "`commit-to-pr`", "`commit`", "commit skill", "separate commit or commit-to-pr request")
-        and (
-            has_any(text, "separate request", "separate follow-up", "after this skill finishes", "after this run", "later request")
-            or (has_any(text, "separate") and has_any(text, "request"))
-        )
-    )
-    return passed, evidence_for(
-        text,
-        "commit-to-pr",
-        "`commit`",
-        "separate request",
-        "separate follow-up",
-        "after this skill finishes",
-    )
-
-
-def unauthorized_landing_violation_check(text: str) -> tuple[bool, str]:
-    passed = (
-        has_any(text, "git commit", "already ran git commit", "committed")
-        and has_any(text, "workflow violation", "unauthorized", "out-of-scope landing action", "out of scope", "must stop")
-    )
-    return passed, evidence_for(
-        text,
-        "git commit",
-        "already ran git commit",
-        "workflow violation",
-        "unauthorized",
-        "must stop",
     )
 
 
@@ -430,7 +312,6 @@ def eval_3(text: str) -> list[tuple[bool, str]]:
         (explicit_reason, evidence_for(text, "explicitly allowed", "explicitly listed", "because the child issue says", "documented fallback", "as specified in child issue")),
         (close_allowed, evidence_for(text, "#7101", "ready to close", "can close", "ready for closure", "Blocked / waiting:")),
         parent_checked_check(text, "7101"),
-        parent_issue_open_check(text),
     ]
 
 
@@ -455,39 +336,6 @@ def eval_4(text: str) -> list[tuple[bool, str]]:
         parent_checked_check(text, "8201"),
         checkbox_only_update_check(text),
         (ready_after_sync, evidence_for(text, "W2", "#8202", "next ready work", "before starting W2")),
-        parent_issue_open_check(text),
-    ]
-
-
-def eval_5(text: str) -> list[tuple[bool, str]]:
-    hitl_remaining = (
-        has_any(text, "#9005", "hitl", "only hitl work remains")
-        or parent_issue_open_check(text)[0]
-    )
-    return [
-        landing_out_of_scope_check(text),
-        no_landing_now_check(text),
-        local_only_check(text),
-        separate_followup_commit_check(text),
-        (hitl_remaining, evidence_for(text, "#9005", "HITL", "only HITL work remains", "parent PRD issue remains open")),
-    ]
-
-
-def eval_6(text: str) -> list[tuple[bool, str]]:
-    stop_before_review = (
-        has_any(text, "review", "verification", "issue closure", "pr creation", "pull request")
-        and has_any(text, "stop", "must stop", "do not proceed", "halt", "blocked")
-    )
-    no_permission_to_continue = (
-        has_any(text, "will not push", "do not push", "will not open a pr", "do not open a pr", "do not treat the commit as permission", "not permission to continue")
-        or no_landing_now_check(text)[0]
-    )
-    return [
-        unauthorized_landing_violation_check(text),
-        (stop_before_review, evidence_for(text, "review", "verification", "issue closure", "PR creation", "must stop")),
-        issue_open_check(text, "9101"),
-        parent_unchecked_check(text, "9101"),
-        (no_permission_to_continue, evidence_for(text, "will not push", "will not open a PR", "do not treat the commit as permission", "not permission to continue")),
     ]
 
 
@@ -497,8 +345,6 @@ CHECKS = {
     2: eval_2,
     3: eval_3,
     4: eval_4,
-    5: eval_5,
-    6: eval_6,
 }
 
 

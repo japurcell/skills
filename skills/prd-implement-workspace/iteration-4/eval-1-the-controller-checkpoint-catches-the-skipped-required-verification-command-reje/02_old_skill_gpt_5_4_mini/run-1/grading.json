@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+      "passed": true,
+      "evidence": "e generated types file plus ran `pnpm exec eslint app/settings/form.tsx`. Show how the controller handles the checkpoint before review.  # Response PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add ad"
+    },
+    {
+      "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+      "passed": true,
+      "evidence": "eted this run:  - none  Blocked / waiting:  1. #5104 Add admin settings form - required verification command `pnpm exec next typegen` could not run because `next` is unavailable in this checkout. The fallback of reading the generated types fi"
+    },
+    {
+      "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+      "passed": false,
+      "evidence": "ext` is unavailable in this checkout. The fallback of reading the generated types file and running `pnpm exec eslint app/settings/form.tsx` is not an acceptable replacement.  Next ready work:  - none  Notes:  - The controller"
+    },
+    {
+      "text": "Keeps the child issue open or not ready to close.",
+      "passed": false,
+      "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add admin settings form - required verification command `pnpm exec next typegen` could not run because `next`"
+    },
+    {
+      "text": "Leaves the parent PRD task-graph line for #5104 unchecked instead of marking it complete.",
+      "passed": false,
+      "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add admin settings form - required verification command `pnpm exec next typegen` could not run because `next`"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.4
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 12,
+    "errors_encountered": 0,
+    "output_chars": 493,
+    "transcript_chars": 1176
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

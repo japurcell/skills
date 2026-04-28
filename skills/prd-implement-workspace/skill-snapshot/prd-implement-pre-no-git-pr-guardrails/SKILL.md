@@ -1,6 +1,6 @@
 ---
 name: prd-implement
-description: Execute a PRD GitHub issue that already has a task graph from `prd-to-tasks`. Use this whenever the user wants to implement, resume, or finish work from a PRD/tracker issue with child implementation issues and execution waves — for example "implement PRD #123", "work through the task graph under issue 123", "resume the AFK slices for #123", or "build the next ready task from the PRD issue". This skill reads the parent issue's managed `Task graph` block, uses the `gh-cli` skill to retrieve and update the issue, executes AFK child issues in dependency order, keeps the parent task-graph checkboxes synchronized with closed child issues, requires `tdd` subagents for implementation, and runs review in separate subagents. It stops before git landing work: never commit, push, or open a PR from inside this skill; use `commit` or `commit-to-pr` separately afterward. Do not use it to create or redesign the task graph; use `prd-to-tasks` first.
+description: Execute a PRD GitHub issue that already has a task graph from `prd-to-tasks`. Use this whenever the user wants to implement, resume, or finish work from a PRD/tracker issue with child implementation issues and execution waves — for example "implement PRD #123", "work through the task graph under issue 123", "resume the AFK slices for #123", or "build the next ready task from the PRD issue". This skill reads the parent issue's managed `Task graph` block, uses the `gh-cli` skill to retrieve and update the issue, executes AFK child issues in dependency order, keeps the parent task-graph checkboxes synchronized with closed child issues, requires `tdd` subagents for implementation, and runs review in separate subagents. Do not use it to create or redesign the task graph; use `prd-to-tasks` first.
 ---
 
 # PRD Implement
@@ -27,17 +27,7 @@ If `prd_issue` is missing, ask for it. If the issue does not contain a `prd-to-t
 7. Every implementation subagent must load the `tdd` skill first and follow a strict RED → GREEN → REFACTOR loop.
 8. Review always happens in subagents after each completed wave. Keep review scope to the files changed in that wave.
 9. Treat completion as a paired GitHub update: close the child issue **and** check off the matching parent `Task graph` line. A task is not done until both are true. Leave the parent PRD issue open.
-10. This skill never commits, pushes, rebases, merges, or opens PRs. Landing work always happens in a separate request after PRD execution stops.
-
-## Git and PR boundary
-
-Treat landing work as a separate workflow. `prd-implement` ends at verified local changes plus GitHub issue/task-graph synchronization, not at branch landing.
-
-1. Never run `git commit`, `git push`, `git merge`, `git rebase`, `gh pr create`, or invoke `commit` / `commit-to-pr` from this skill.
-2. Never ask implementation, review, or verification subagents to prepare commits, push branches, draft PRs, or land code. They may inspect diffs and local state, but they must leave changes uncommitted and unpushed.
-3. If the user asks for "implement PRD #123 and open a PR" in one request, execute only the PRD implementation workflow. In the final response, say that landing work remains out of scope for this run and requires a separate `commit` or `commit-to-pr` request after this skill finishes.
-4. If any subagent reports that it already committed, pushed, rebased, merged, or opened a PR, stop immediately and surface that as a workflow violation before review, verification, or issue closure continues. In that response, also say the child issue remains open and the parent task-graph line stays `[ ]`.
-5. Some weaker models equate "verified" with "ready to land." Counter that drift by restating the boundary in the controller plan whenever the user mentions commits, pushes, branches, or PRs: `Landing work remains out of scope for this run.`
+10. Do not commit, push, or open a PR unless the user explicitly asks for that after implementation is done.
 
 ## Fetch and parse the graph
 
@@ -140,16 +130,14 @@ Tell the subagent to:
 3. Keep slices thin and avoid broad cleanup.
 4. Run the child issue's targeted verification commands exactly as required for that issue, and treat missing tooling as a blocking result rather than a cue to invent substitutes.
 5. Return:
-    - RED/GREEN/REFACTOR summary
-    - files changed
-    - commands run and outcomes
-    - remaining risks or deferments
-    - whether the task is ready to close
-6. Never commit, push, rebase, merge, open a PR, or invoke landing skills. Leave the worktree uncommitted for the controller.
+   - RED/GREEN/REFACTOR summary
+   - files changed
+   - commands run and outcomes
+   - remaining risks or deferments
+   - whether the task is ready to close
 
 Do not let the implementation subagent expand scope, edit files owned by another in-flight task, or decide wave ordering on its own.
 If it must touch a file that was not listed in `Files likely touched`, it should stop and escalate that need back to the controller instead of silently broadening scope.
-If it reports any git landing action already happened, treat that as a blocking workflow violation rather than progress.
 
 ### Resume by current stage
 
@@ -191,7 +179,6 @@ After each wave's implementation finishes, review the changed files in subagents
 5. Record deferred non-blocking findings in the relevant issue comments or as follow-up notes to the user.
 
 The controller must define the review file list. Review subagents must not recompute or narrow their own scope.
-Review subagents inspect code only; they must not commit, push, or prepare PR text.
 
 Normalize blocking review findings like this:
 
@@ -211,7 +198,7 @@ Do not close issues or advance waves based on subagent summaries alone.
 
 ## Verification subagents and issue updates
 
-Verification also runs in subagents. Keep the controller focused on orchestration and issue state, not git landing.
+Verification also runs in subagents. Keep the controller focused on orchestration and issue state.
 
 For each completed child issue in the wave:
 
@@ -248,7 +235,6 @@ Verification subagents must preserve verification strength:
 - If the required verification command is unavailable, fail closed and report the blocker.
 - Do not replace framework-native verification with static analysis, source inspection, or generic "looks correct" reasoning.
 - Do not downgrade `npm run verify:web`, `bin/rails test`, `cargo test`, `nx test`, framework codegen validators, or similar required commands to unrelated checks unless the issue explicitly says those checks are acceptable alternatives.
-- Never commit, push, or open a PR after verification passes. Verification proves readiness for issue-state updates only.
 
 If verification is missing, ambiguous, or failing:
 
@@ -282,7 +268,6 @@ Before declaring any child issue complete or advancing to the next wave, the con
 3. the latest issue comments make the TDD stage history and verification outcome visible from GitHub alone
 4. no required verification command was skipped, replaced with a weaker proxy, or left blocked without being reported
 5. the matching parent task-graph line is checked `[x]` and still matches the same wave, title, type, and blocker text except for the checkbox change
-6. no git commit, push, merge, rebase, `commit`/`commit-to-pr` invocation, or PR creation happened during this run
 
 ## Resume behavior
 
@@ -314,17 +299,6 @@ Stop and report clearly when any of these happens:
 - a completed child issue cannot be synchronized back to the parent task graph safely
 - unrelated local changes create a conflict with the assigned task scope
 
-## Final response visibility rules
-
-Some weaker models do the right orchestration but omit state the user still needs. Make the final response spell out the safety-critical state instead of implying it.
-
-1. Keep every section from the final template, including `Landing status`, even when its content is `- none`.
-2. If a child issue stays open, say that explicitly with `#<issue> remains open` or `not ready to close`.
-3. If a parent task-graph line stays unchecked, say that explicitly with `parent task-graph line for #<issue> remains [ ]`.
-4. If a closed child issue needed sync, name it explicitly as a `closed-child / unchecked-parent mismatch`.
-5. If the parent PRD issue stays open, say that explicitly.
-6. If landing work is out of scope or blocked, say explicitly that no commit, push, or PR action will be performed in this run.
-
 ## Final response
 
 Always end with a concise execution summary in this shape:
@@ -344,15 +318,9 @@ Next ready work:
 
 - W<n>: #<issue> <title>
 
-Landing status:
-
-- Local changes only; no commit, push, or PR actions performed in this run.
-
 Notes:
 
 - <review deferments, assumptions, or follow-up items>
 ```
 
-Keep the section order exactly as written. If a section has no items, write `- none`.
-
-If all AFK child issues are closed and only HITL or no work remains, say that explicitly. If the user wants the finished work landed after that, tell them `prd-implement` stops here and they must start a separate `commit` or `commit-to-pr` request. Never invoke those skills from inside `prd-implement`.
+If all AFK child issues are closed and only HITL or no work remains, say that explicitly. If the user wants the finished work landed after that, hand off to `commit` or `commit-to-pr`.
