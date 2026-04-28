@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
+      "passed": true,
+      "evidence": "PRD execution status for #6000  Completed this run:  1. None  Blocked / waiting:  1. #6101 CSV export filters - shared verification command `bundle exec rspec spec/requests/admin/export_spec.rb` faile"
+    },
+    {
+      "text": "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
+      "passed": true,
+      "evidence": "Completed this run:  1. None  Blocked / waiting:  1. #6101 CSV export filters - shared verification command `bundle exec rspec spec/requests/admin/export_spec.rb` failed with `/bin/sh: bundle: command not found`; that missing `bundle` t"
+    },
+    {
+      "text": "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
+      "passed": true,
+      "evidence": "s closure for both covered issues. 2. #6102 CSV export download audit log - same shared verification blocker; diff inspection or \u201clooks correct\u201d reasoning is not a substitute for the required shared verification command.  Next ready wo"
+    },
+    {
+      "text": "Leaves the parent PRD task-graph lines for #6101 and #6102 unchecked instead of marking either complete.",
+      "passed": true,
+      "evidence": "PRD execution status for #6000  Completed this run:  1. None  Blocked / waiting:  1. #6101 CSV export filters - shared verification command `bundle exec rspec spec/requests/admin/export_spec.rb` faile"
+    },
+    {
+      "text": "Stops before the next wave or any additional issue closure proceeds.",
+      "passed": true,
+      "evidence": "PRD execution status for #6000  Completed this run:  1. None  Blocked / waiting:  1. #6101 CSV export filters - shared verification command `bundle exec rspec spec/requests/admin/"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 649,
+    "transcript_chars": 206
+  },
+  "timing": {
+    "duration_ms": 6,
+    "total_duration_seconds": 0.006,
+    "total_tokens": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "1. The shared verification command failed because `bundle` was unavailable.\n2. The controller should not close either issue or advance the wave until that command succeeds."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

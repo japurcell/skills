@@ -1,0 +1,54 @@
+{
+  "expectations": [
+    {
+      "text": "Acknowledges that the original `pnpm` command could not run.",
+      "passed": true,
+      "evidence": "/src/functions/users/users.test.ts` if `pnpm` / Redwood CLI is unavailable. - Verification subagent reported `pnpm: command not found`, then ran the fallback `yarn rw test api/src/functions/users/users.test.ts` successfully.  Controller checkp"
+    },
+    {
+      "text": "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
+      "passed": true,
+      "evidence": "nctions/users/users.test.ts` could not run because `pnpm` was unavailable, so the verification subagent used `yarn rw test api/src/functions/users/users.test.ts` as explicitly allowed by the child issue and it passed. #7101 is close"
+    },
+    {
+      "text": "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
+      "passed": true,
+      "evidence": "ecution status for #7000  Completed this run:  1. #7101 Add user retry headers \u2014 verification passed with the explicitly allowed fallback. The original `pnpm exec redwood test api/src/functions/users/users.test.ts` could not run because `"
+    },
+    {
+      "text": "Allows the child issue to close or be ready to close after the fallback passes.",
+      "passed": true,
+      "evidence": "PRD execution status for #7000  Completed this run:  1. #7101 Add user retry headers \u2014 verification passed with the explicitly allowed fallback. The original `pnpm exec re"
+    },
+    {
+      "text": "Checks or updates the parent PRD task-graph line for #7101 from `[ ]` to `[x]`.",
+      "passed": true,
+      "evidence": "PRD execution status for #7000  Completed this run:  1. #7101 Add user retry headers \u2014 verification passed with the explicitly allowed fallback. The original `pnpm exec re"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 8,
+    "errors_encountered": 0,
+    "output_chars": 591,
+    "transcript_chars": 572
+  },
+  "timing": {
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001,
+    "total_tokens": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

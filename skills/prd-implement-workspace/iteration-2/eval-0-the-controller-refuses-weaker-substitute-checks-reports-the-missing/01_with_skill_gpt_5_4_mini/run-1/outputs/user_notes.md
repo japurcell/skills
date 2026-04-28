@@ -1,0 +1,1 @@
+Verification blocked by missing `expo-router` CLI. The required command `pnpm exec expo-router verify` failed with `/bin/sh: expo-router: command not found`, so the child issue stays open and the parent PRD line remains unchecked.

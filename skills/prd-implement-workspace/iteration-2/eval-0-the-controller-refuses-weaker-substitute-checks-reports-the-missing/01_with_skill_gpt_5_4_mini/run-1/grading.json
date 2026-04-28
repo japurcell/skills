@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+      "passed": true,
+      "evidence": ". None  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command `pnpm exec expo-router verify` cannot run because the `expo-router` CLI is missing (`/bin/sh: expo-router: command not found`). Do not subs"
+    },
+    {
+      "text": "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+      "passed": true,
+      "evidence": "uter verify` cannot run because the `expo-router` CLI is missing (`/bin/sh: expo-router: command not found`). Do not substitute static analysis, manual code inspection, or `pnpm exec tsc --noEmit` for this required command.  Next ready w"
+    },
+    {
+      "text": "Keeps the child issue open or not ready to close.",
+      "passed": true,
+      "evidence": "PRD execution status for #5000  Completed this run:  1. None  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command `pnpm exec expo-router verify` cannot run becau"
+    },
+    {
+      "text": "Leaves the parent PRD task-graph line for #5101 unchecked instead of marking it complete.",
+      "passed": true,
+      "evidence": "PRD execution status for #5000  Completed this run:  1. None  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command `pnpm exec expo-router verify` cannot run becau"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": true,
+      "evidence": "PRD execution status for #5000  Completed this run:  1. None  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command `pnpm exec expo-router ver"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 2,
+    "errors_encountered": 0,
+    "output_chars": 678,
+    "transcript_chars": 289
+  },
+  "timing": {
+    "duration_ms": 1,
+    "total_duration_seconds": 0.001,
+    "total_tokens": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Verification blocked by missing `expo-router` CLI. The required command `pnpm exec expo-router verify` failed with `/bin/sh: expo-router: command not found`, so the child issue stays open and the parent PRD line remains unchecked."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

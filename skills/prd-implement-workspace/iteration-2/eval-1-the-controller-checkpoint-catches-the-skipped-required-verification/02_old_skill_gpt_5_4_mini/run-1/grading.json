@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+      "passed": true,
+      "evidence": "Completed this run:  1. #5104 Add admin settings form  Blocked / waiting:  1. #5104 Add admin settings form - controller checkpoint failed before review because the required verification command `pnpm exec next typegen` could not run in this"
+    },
+    {
+      "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+      "passed": true,
+      "evidence": "d admin settings form - controller checkpoint failed before review because the required verification command `pnpm exec next typegen` could not run in this checkout (`next` unavailable); the subagent substituted `read generated types file` +"
+    },
+    {
+      "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+      "passed": true,
+      "evidence": "run in this checkout (`next` unavailable); the subagent substituted `read generated types file` + `pnpm exec eslint app/settings/form.tsx`, which is not an approved replacement.  Next ready work:  - none  Notes:  - Halted aft"
+    },
+    {
+      "text": "Keeps the child issue open or not ready to close.",
+      "passed": true,
+      "evidence": "PRD execution status for #5000  Completed this run:  1. #5104 Add admin settings form  Blocked / waiting:  1. #5104 Add admin settings form - controller checkpoint failed"
+    },
+    {
+      "text": "Leaves the parent PRD task-graph line for #5104 unchecked instead of marking it complete.",
+      "passed": false,
+      "evidence": "PRD execution status for #5000  Completed this run:  1. #5104 Add admin settings form  Blocked / waiting:  1. #5104 Add admin settings form - controller checkpoint failed"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 663,
+    "transcript_chars": 173
+  },
+  "timing": {
+    "duration_ms": 6,
+    "total_duration_seconds": 0.006,
+    "total_tokens": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Controller checkpoint stopped before review because `pnpm exec next typegen` was skipped and the fallback checks were not an approved substitute."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

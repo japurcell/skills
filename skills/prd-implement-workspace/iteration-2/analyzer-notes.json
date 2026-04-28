@@ -1,0 +1,7 @@
+[
+  "Final summary: `01_with_skill_gpt_5_4_mini` reached 1.00 pass rate versus 0.73 for `02_old_skill_gpt_5_4_mini` (`+0.27`), while also using fewer tokens on average (about 570 vs 666, `-96`) and slightly less time.",
+  "The updated skill is clean across all five evals on `gpt-5.4-mini`, including the new parent-checkbox sync scenarios and the shared-verification-group blocker case.",
+  "The strongest improvement over the baseline is GitHub state synchronization: the revised instructions consistently keep blocked parent task-graph lines unchecked and explicitly sync `[ ] -> [x]` on successful closure or resume reconciliation.",
+  "The old skill still misses several parent task-graph expectations, especially around leaving blocked tasks unchecked and reconciling a closed child issue back into the parent PRD graph before starting the next wave.",
+  "Variance improved with the new skill as well as mean score, so the checkbox-sync guidance is not just stronger on average but more reliable for a weaker model."
+]

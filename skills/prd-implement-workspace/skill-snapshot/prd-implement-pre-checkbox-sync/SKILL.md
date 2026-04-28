@@ -1,13 +1,13 @@
 ---
 name: prd-implement
-description: Execute a PRD GitHub issue that already has a task graph from `prd-to-tasks`. Use this whenever the user wants to implement, resume, or finish work from a PRD/tracker issue with child implementation issues and execution waves — for example "implement PRD #123", "work through the task graph under issue 123", "resume the AFK slices for #123", or "build the next ready task from the PRD issue". This skill reads the parent issue's managed `Task graph` block, uses the `gh-cli` skill to retrieve and update the issue, executes AFK child issues in dependency order, keeps the parent task-graph checkboxes synchronized with closed child issues, requires `tdd` subagents for implementation, and runs review in separate subagents. Do not use it to create or redesign the task graph; use `prd-to-tasks` first.
+description: Execute a PRD GitHub issue that already has a task graph from `prd-to-tasks`. Use this whenever the user wants to implement, resume, or finish work from a PRD/tracker issue with child implementation issues and execution waves — for example "implement PRD #123", "work through the task graph under issue 123", "resume the AFK slices for #123", or "build the next ready task from the PRD issue". This skill reads the parent issue's managed `Task graph` block, uses the `gh-cli` skill to retrieve the issue and comments, executes AFK child issues in dependency order, requires `tdd` subagents for implementation, and runs review in separate subagents. Do not use it to create or rewrite the task graph; use `prd-to-tasks` first.
 ---
 
 # PRD Implement
 
 Use this skill to turn a PRD issue graph into implemented code without letting the controller context balloon.
 
-The controller owns intake, graph parsing, wave scheduling, and issue updates. It does **not** implement tasks inline. Every implementation task runs in a subagent that loads the `tdd` skill first. Every review step also runs in subagents. Completed work is not fully recorded until the child issue is closed **and** the matching parent `Task graph` line is checked off.
+The controller owns intake, graph parsing, wave scheduling, and issue updates. It does **not** implement tasks inline. Every implementation task runs in a subagent that loads the `tdd` skill first. Every review step also runs in subagents.
 
 ## Inputs
 
@@ -26,7 +26,7 @@ If `prd_issue` is missing, ask for it. If the issue does not contain a `prd-to-t
 6. The controller schedules waves; implementation happens only in subagents.
 7. Every implementation subagent must load the `tdd` skill first and follow a strict RED → GREEN → REFACTOR loop.
 8. Review always happens in subagents after each completed wave. Keep review scope to the files changed in that wave.
-9. Treat completion as a paired GitHub update: close the child issue **and** check off the matching parent `Task graph` line. A task is not done until both are true. Leave the parent PRD issue open.
+9. Close a child issue only after its implementation, review, and verification steps pass. Leave the parent PRD issue open.
 10. Do not commit, push, or open a PR unless the user explicitly asks for that after implementation is done.
 
 ## Fetch and parse the graph
@@ -46,17 +46,15 @@ If `prd_issue` is missing, ask for it. If the issue does not contain a `prd-to-t
 
 3. If the managed markers are missing, fall back to a plain `## Task graph` section only when it clearly uses the same line format.
 4. Parse each task-graph line with anchored fields, not naive string splitting:
-   - checkbox: the leading `[ ]` or `[x]`
    - wave: leading `W<n>`
    - child issue: the first `#<number>` after the wave
    - type: the final `- AFK -` or `- HITL -` segment
    - blockers: the text after the final `blocked by `
    - title: everything between `#<number> ` and the final ` - AFK/HITL - blocked by ...`
 5. For every referenced child issue:
-    - fetch its title, body, state, and recent comments
-    - extract `Type`, `Acceptance criteria`, `Verification`, and `Files likely touched`
-    - record the exact parent task-graph line text for that child issue so the controller can later change only its checkbox
-    - prefer the child issue state over the parent checkbox if they disagree, but treat disagreement as a state-sync problem that must be reconciled before advancing waves
+   - fetch its title, body, state, and recent comments
+   - extract `Type`, `Acceptance criteria`, `Verification`, and `Files likely touched`
+   - prefer the child issue state over the parent checkbox if they disagree
 6. Treat the parent managed graph as authoritative for **wave order and blockers**. Use the child issue body only as a consistency check for blocker text, not as the source of scheduling truth.
 7. If any referenced child issue is missing, unreadable, malformed enough that execution order is unclear, or disagrees with the parent graph about wave or blockers, stop with a blocking error.
 
@@ -72,14 +70,6 @@ Build the execution queue from the current GitHub state, not assumptions from ea
    - **HITL** issues are never implemented by the agent
 4. If the lowest open wave contains only HITL or blocked tasks, stop and report the exact issue numbers and what human action is required.
 5. Never advance to the next wave until the current wave's ready AFK tasks are fully handled.
-
-### Reconcile task-graph state before new work
-
-Before launching new implementation or verification work:
-
-1. If a child issue is already closed but its parent task-graph line is still `[ ]`, synchronize the parent checkbox first. Do not treat the graph as up to date until that line becomes `[x]`.
-2. If a parent task-graph line is `[x]` but the child issue is still open, stop and report the mismatch. Do not trust the checkbox alone as proof of completion.
-3. Some weaker models forget this reconciliation step. Make it explicit in the controller plan whenever such a mismatch exists: `sync parent checkbox for #<issue> before starting the next wave`.
 
 ## Wave scheduling
 
@@ -218,15 +208,7 @@ For each completed child issue in the wave:
    - changed files
    - verification evidence
    - notable review findings and fixes
-10. Perform the completion sync only when every verification command that covers the child issue passed:
-    - close the child issue
-    - re-fetch the latest parent issue body immediately before editing it
-    - locate the exact managed task-graph line for that child issue
-    - replace only the leading checkbox on that one line from `[ ]` to `[x]`
-    - preserve the rest of the line, all other task-graph lines, and all non-managed issue content verbatim
-    - write the updated parent issue body back to GitHub
-    - re-fetch the parent issue and verify that the line now shows `[x]`
-11. If the child issue closed but the parent checkbox update failed, or the parent checkbox changed but the child issue is still open, stop and report the mismatch before another wave starts.
+10. Close the child issue only when every verification command that covers it passed.
 
 If a child issue has multiple verification commands and they are independent, the controller may launch them in parallel verification subagents. If they share state or resources, run them sequentially through verification subagents.
 
@@ -242,32 +224,16 @@ If verification is missing, ambiguous, or failing:
 - report the exact gap
 - stop before the next wave unless another already-launched task is still finishing
 
-### Parent task-graph checkbox updates
-
-Parent task-graph edits must be surgical. The controller may update checkbox state inside the managed block, but it must not rewrite the task graph freehand.
-
-1. Use the `gh-cli` skill explicitly for the parent issue edit as well as issue reads. Weaker models often remember the read but forget the write.
-2. Match the child issue by its exact managed line from the latest parent body, not by a loose substring.
-3. Only change this:
-
-```markdown
-- [ ] W2 - #124 Another slice - AFK - blocked by #123
-+ [x] W2 - #124 Another slice - AFK - blocked by #123
-```
-
-4. Do **not** reorder lines, rename titles, rewrite blockers, regenerate the whole block, or touch text outside the managed section.
-5. If the exact line cannot be found uniquely in the latest parent issue body, stop and report that the task graph drifted. Do not guess.
-6. After the edit, re-read the parent issue and confirm the checkbox is now `[x]` before declaring the task complete.
+Do not rewrite the parent issue's managed task-graph block during execution. Issue state and comments are enough.
 
 ## Acceptance confirmation
 
-Before declaring any child issue complete or advancing to the next wave, the controller must also confirm that:
+Before closing any child issue, the controller must also confirm that:
 
 1. the acceptance criteria are satisfied
 2. no blocking review finding remains unresolved for that issue's scope
 3. the latest issue comments make the TDD stage history and verification outcome visible from GitHub alone
 4. no required verification command was skipped, replaced with a weaker proxy, or left blocked without being reported
-5. the matching parent task-graph line is checked `[x]` and still matches the same wave, title, type, and blocker text except for the checkbox change
 
 ## Resume behavior
 
@@ -277,7 +243,7 @@ On resume:
 
 1. Re-fetch the parent issue and all open child issues from the task graph.
 2. Parse each open child issue's latest `Stage:` comment into `current_stage`.
-3. Recompute ready work from current issue states and reconcile any closed-child / unchecked-parent mismatches before launching new work.
+3. Recompute ready work from current issue states.
 4. Ignore tasks that are already closed.
 5. Continue from the lowest-numbered wave that still has open work.
 6. Pass `current_stage` into the next implementation subagent instead of restarting the slice blindly.
@@ -296,7 +262,6 @@ Stop and report clearly when any of these happens:
 - repository or GitHub authentication is ambiguous or broken
 - a required verification command or framework CLI is unavailable and no human-approved replacement path exists
 - an implementation or verification failure remains unresolved
-- a completed child issue cannot be synchronized back to the parent task graph safely
 - unrelated local changes create a conflict with the assigned task scope
 
 ## Final response

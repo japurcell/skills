@@ -2,15 +2,16 @@
 
 This repository publishes custom coding skills from `skills/` and custom agent definitions from `agents/`.
 
-## Essentials
+## Getting Started
 
-- Install or refresh the locally loaded copies with `./scripts/copilot-install.sh`.
-- Run helper scripts with `python3`; there is no repo-wide package manifest or single test runner.
-- Edit repository source first, then rerun `./scripts/copilot-install.sh` before live model spot checks so `~/.agents/skills` and `~/.copilot/agents` reflect the repo changes.
-- Ignore `skills/*-workspace/**/outputs/` during normal audits and edits; those files are benchmark fixtures, not maintained source.
+- **Install or refresh** locally loaded copies with `./scripts/copilot-install.sh`.
+- **Run scripts** with `python3`; there is no repo-wide package manifest or single test runner.
+- **Refresh after edits** by rerunning `./scripts/copilot-install.sh` so `~/.agents/skills` and `~/.copilot/agents` reflect your changes.
+- **Ignore fixture outputs** — treat `skills/*-workspace/**/outputs/` as generated benchmark artifacts, not maintained source.
 
-## Guides
+## Documentation
 
-- [Repo layout](docs/agent-guides/repo-layout.md)
-- [Authoring rules](docs/agent-guides/authoring.md)
-- [Validation commands](docs/agent-guides/validation.md)
+- [Repo layout](docs/agent-guides/repo-layout.md) — directory structure and key files
+- [Authoring rules](docs/agent-guides/authoring.md) — skill, agent, and script conventions
+- [Validation & workflow](docs/agent-guides/validation.md) — targeted validation commands and narrowest checks per area
+- [Benchmarking](docs/agent-guides/benchmarking.md) — snapshot, iteration, and grading workflows
