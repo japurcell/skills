@@ -49,6 +49,26 @@ def matches(text: str, pattern: str) -> bool:
     return re.search(pattern, text, flags=re.I | re.S) is not None
 
 
+def has_js_package_commands(text: str) -> bool:
+    return has_any(text, "npm ", "pnpm ", "yarn ", "bun ")
+
+
+def has_browser_ui_checks(text: str) -> bool:
+    return has_any(
+        text,
+        "playwright",
+        "cypress",
+        "storybook",
+        "open the page",
+        "visit the page",
+        "click through",
+        "browser",
+        "rendered page",
+        "rendered ui",
+        "visual regression",
+    )
+
+
 def referenced_parent_numbers(text: str) -> set[str]:
     numbers = set(re.findall(r"Parent:\s*`?#(\d+)", text, flags=re.I))
     numbers.update(re.findall(r"## Parent\s+`?#(\d+)", text, flags=re.I | re.S))
@@ -221,19 +241,7 @@ def eval_3(response: str, transcript: str) -> list[tuple[bool, str]]:
 
 def eval_4(response: str, transcript: str) -> list[tuple[bool, str]]:
     combined = f"{response}\n\n{transcript}"
-    frontend_leak = has_any(
-        response,
-        "playwright",
-        "cypress",
-        "storybook",
-        "open the page",
-        "visit the page",
-        "click through",
-        "browser",
-        "rendered page",
-        "rendered ui",
-        "visual regression",
-    )
+    frontend_leak = has_browser_ui_checks(response)
     backend_manual_check = matches(
         response,
         r"manual check:.*(api|endpoint|worker|job|queue|log|database|delivery|retry|replay|persist)",
@@ -271,12 +279,103 @@ def eval_4(response: str, transcript: str) -> list[tuple[bool, str]]:
     ]
 
 
+def eval_5(response: str, transcript: str) -> list[tuple[bool, str]]:
+    combined = f"{response}\n\n{transcript}"
+    python_backend_files = matches(
+        response,
+        r"(files likely touched|likely files).*?(app/api/|app/jobs/|app/models/|tests/|migrations|\.py`)",
+    )
+    python_backend_verification = matches(
+        response,
+        r"tests pass:.*(pytest|python -m pytest|targeted python|targeted backend|fastapi|celery|api|worker|job)",
+    )
+    backend_manual_check = matches(
+        response,
+        r"manual check:.*(api|endpoint|worker|job|queue|database|persist|reconcil|mismatch|batch)",
+    )
+    forbidden_frontend_or_js_defaults = has_js_package_commands(response) or has_browser_ui_checks(response)
+    return [
+        (
+            has_any(combined, "parent tracker", "tracker") and has_any(combined, "#5000", "placeholder"),
+            evidence_for(combined, "Parent: #5000", "parent tracker", "tracker"),
+        ),
+        (
+            has_any(response, "python", "fastapi", "celery", "reconciliation", "invoice")
+            and has_any(response, "api", "job", "worker", "persistence", "model")
+            and not has_any(response, "frontend page", "ui component", "build the admin ui"),
+            evidence_for(response, "FastAPI", "Celery", "reconciliation", "invoice", "worker", "persistence"),
+        ),
+        (
+            python_backend_files,
+            evidence_for(response, "Files likely touched", "app/api/", "app/jobs/", "app/models/", "tests/", ".py"),
+        ),
+        (
+            python_backend_verification and backend_manual_check and not forbidden_frontend_or_js_defaults,
+            evidence_for(response, "Tests pass:", "Build succeeds:", "Manual check:", "pytest", "FastAPI", "Celery", "database"),
+        ),
+        (
+            has_any(combined, "Final summary", "Created task graph")
+            and has_any(combined, "#5001", "#5002", "#<child-1>", "#<child-2>")
+            and has_any(combined, "blocked by", "W1", "W2"),
+            evidence_for(combined, "Final summary", "#5001", "#<child-1>", "blocked by", "W1"),
+        ),
+    ]
+
+
+def eval_6(response: str, transcript: str) -> list[tuple[bool, str]]:
+    combined = f"{response}\n\n{transcript}"
+    frontend_files = matches(
+        response,
+        r"(files likely touched|likely files).*?(app/admin/|components/|\.tsx`|\.jsx`|frontend test|ui test)",
+    )
+    frontend_verification = matches(
+        response,
+        r"tests pass:.*(frontend|ui|component|page|react|next|vitest|jest|playwright|cypress)",
+    )
+    frontend_manual_check = matches(
+        response,
+        r"manual check:.*(page|screen|preview|filter|form|validation|render)",
+    )
+    backend_leak = matches(
+        response,
+        r"(manual check:.*(database|worker|job|queue|log|migration))|(tests pass:.*(alembic|sidekiq|celery))",
+    )
+    return [
+        (
+            has_any(combined, "parent tracker", "tracker") and has_any(combined, "#5000", "placeholder"),
+            evidence_for(combined, "Parent: #5000", "parent tracker", "tracker"),
+        ),
+        (
+            has_any(response, "next.js", "react", "saved-view", "audit log", "inline validation")
+            and has_any(response, "frontend", "ui", "page", "component")
+            and not has_any(response, "worker", "queue", "migration", "persist mismatch", "internal admin api"),
+            evidence_for(response, "Next.js", "React", "saved-view", "audit log", "inline validation"),
+        ),
+        (
+            frontend_files,
+            evidence_for(response, "Files likely touched", "app/", "components/", ".tsx", ".jsx", "frontend test"),
+        ),
+        (
+            frontend_verification and frontend_manual_check and not backend_leak,
+            evidence_for(response, "Tests pass:", "Build succeeds:", "Manual check:", "React", "Next", "page", "validation"),
+        ),
+        (
+            has_any(combined, "Final summary", "Created task graph")
+            and has_any(combined, "#5001", "#5002", "#<child-1>", "#<child-2>")
+            and has_any(combined, "blocked by", "W1", "W2"),
+            evidence_for(combined, "Final summary", "#5001", "#<child-1>", "blocked by", "W1"),
+        ),
+    ]
+
+
 CHECKS = {
     0: eval_0,
     1: eval_1,
     2: eval_2,
     3: eval_3,
     4: eval_4,
+    5: eval_5,
+    6: eval_6,
 }
 
 

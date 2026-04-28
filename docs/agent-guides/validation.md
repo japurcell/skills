@@ -16,6 +16,7 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 ## Other targeted checks
 
 - `bash skills/agent-sop-author/validate-sop.sh path/to/file.sop.md`: validate an Agent SOP file
+- `python3 -m py_compile skills/<skill-name>/evals/grade_benchmark.py`: syntax-check a skill-local Python benchmark grader after editing it
 - `python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>`: grade benchmark-style eval artifacts when a skill ships a local `grade_benchmark.py` helper
 - `python3 skills/security-review/evals/grade_reports.py <run-dir>`: grade a `security-review` eval run
 

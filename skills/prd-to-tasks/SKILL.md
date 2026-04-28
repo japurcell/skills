@@ -241,11 +241,18 @@ Create the parent with `gh issue create` unless the user explicitly asked for a 
 
 Create child issues in dependency order with `gh issue create`: blockers first, then the issues they unblock.
 
-Before drafting `## Verification`, look at `## What to build`, the acceptance criteria, and `## Files likely touched`, then choose checks that prove the behavior from that same surface.
+Before drafting `## Verification`, work in this order:
 
+1. Read `## What to build`, the acceptance criteria, and `## Files likely touched`.
+2. Infer the affected surface and stack from those clues before you write any command: backend/API/worker/persistence, frontend/UI, full-stack, CLI, data/migration, and the likely framework or language.
+3. Choose tests, build/typecheck steps, and manual checks from that same surface only.
+
+- Never guess package-manager or framework commands. If the prompt or repository context does not show `npm`, `pnpm`, `yarn`, `pytest`, `go test`, `bundle exec rspec`, `cargo test`, or similar, do not invent one.
+- Match commands to the likely files and stack clues. `.py`, FastAPI, Django, Celery, and migrations point to Python/backend verification; `.go` points to Go service verification; `.rb`, Rails, and Sidekiq point to Ruby/backend verification; `.tsx`, `.jsx`, Next.js, React, and Vue point to frontend/UI verification.
 - For backend/API/worker/persistence slices, prefer targeted backend or contract tests plus API, queue, log, job, or database/manual verification. Do not invent browser/page/Storybook/Playwright/Cypress steps unless the slice actually touches a user-facing surface.
-- For frontend/UI slices, prefer UI-appropriate tests and manual checks, and only mention backend verification when the slice genuinely spans that layer.
-- If the repo's real command is unknown, keep the placeholder specific to the surface (for example, "targeted API/worker test command") instead of guessing a framework-specific frontend command.
+- For frontend/UI slices, prefer component/page/browser/manual UI checks. Do not invent database, queue, worker, or log inspection steps unless the slice genuinely spans those layers.
+- For mixed slices, include verification for each touched surface and make each line's purpose explicit.
+- If the repo's real command is unknown, keep the placeholder specific to the surface and stack (for example, `targeted Python API/worker test command`, `targeted Go service test command`, or `targeted React page/component test command`) instead of guessing a generic frontend command.
 - Manual checks should name the actor and surface being verified: API response, admin endpoint, background job, log line, persisted row, rendered page, CLI output, and so on.
 
 Use this issue body template:
@@ -271,9 +278,9 @@ AFK | HITL
 
 ## Verification
 
-- [ ] Tests pass: `<targeted command aligned to this slice's surface>`
-- [ ] Build succeeds: `<relevant build command, if known and applicable>`
-- [ ] Manual check: <verify through the actual affected surface; do not default to a UI check for backend-only work>
+- [ ] Tests pass: `<targeted command aligned to this slice's surface and stack>`
+- [ ] Build succeeds: `<matching build/typecheck/package command for this same surface, or "Not applicable - no separate build step for this slice">`
+- [ ] Manual check: <verify through the actual affected surface; name the actor and surface instead of defaulting to a UI walkthrough for backend-only work>
 
 ## Blocked by
 
@@ -444,7 +451,7 @@ Before finishing, verify:
 - execution waves make the next ready AFK issue obvious from GitHub alone
 - blockers are created before blocked issues
 - each issue has acceptance criteria, verification, likely files, scope estimate, and queue position
-- verification commands and manual checks match the slice's likely files and affected surface
+- verification commands and manual checks match the slice's likely files, affected surface, and stack; do not default to `npm` or browser checks for non-frontend slices
 - the parent tracker exists or was drafted first
 - if the parent already existed, its managed task-graph block makes the sibling subissue queue explicit without overwriting unrelated content
 - if the source already lived in a GitHub issue, no extra parent tracker or wrapper issue was created

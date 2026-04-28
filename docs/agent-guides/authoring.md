@@ -7,6 +7,7 @@
 - Keep `name` lowercase kebab-case.
 - Keep `description` concrete and trigger-oriented.
 - Use imperative instructions in the body.
+- For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build/manual checks instead of defaulting to generic frontend commands.
 - Keep bundled resources next to the skill instead of scattering supporting files elsewhere.
 - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 
