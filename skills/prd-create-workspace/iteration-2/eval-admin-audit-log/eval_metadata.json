@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "admin-audit-log",
+  "prompt": "I need a product requirements doc filed as an issue for a team admin audit log. Admins need to see who changed user roles, billing settings, and SSO configuration, with enough detail for compliance review.",
+  "assertions": [
+    "The workflow gathers codebase context through parallel code-explorer agents and asks each for 5-10 key files with reasons.",
+    "The workflow identifies security, retention, permissions, and compliance gaps, surfaces assumptions early, and interviews the user one question at a time.",
+    "The workflow researches official security, privacy, platform, or framework guidance before recommending decisions.",
+    "The PRD contains an extensive numbered user-story list covering primary, edge, admin, compliance, and error-state scenarios plus concrete success criteria.",
+    "Testing decisions focus on external behavior, implementation decisions remain durably cited, and the issue body avoids specific file paths and code snippets."
+  ]
+}

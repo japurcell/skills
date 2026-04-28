@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "The workflow gathers codebase context through parallel code-explorer agents and asks each for 5-10 key files with reasons.",
+      "passed": false,
+      "evidence": "code-explorer markers=0; parallel-run-noted=False; key-file bullets=0."
+    },
+    {
+      "text": "The workflow identifies security, retention, permissions, and compliance gaps, surfaces assumptions early, and interviews the user one question at a time.",
+      "passed": false,
+      "evidence": "assumptions-before-questions=False; questions=0; recommendations=7."
+    },
+    {
+      "text": "The workflow researches official security, privacy, platform, or framework guidance before recommending decisions.",
+      "passed": true,
+      "evidence": "official-link count=23."
+    },
+    {
+      "text": "The PRD contains an extensive numbered user-story list covering primary, edge, admin, compliance, and error-state scenarios plus concrete success criteria.",
+      "passed": true,
+      "evidence": "user-stories=20; success-criteria-bullets=9."
+    },
+    {
+      "text": "Testing decisions focus on external behavior, implementation decisions remain durably cited, and the issue body avoids specific file paths and code snippets.",
+      "passed": true,
+      "evidence": "durable-citations=True; brittle-dump-detected=False."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 41145,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 872.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 872.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": [
+      "Offline benchmark: real GitHub issue creation was intentionally replaced by saved issue title/body and intended gh issue create command."
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+# Skill Benchmark: prd-create
+
+**Model**: <model-name>
+**Date**: 2026-04-28T16:54:07Z
+**Evals**: 1, 2, 3 (1 runs each per configuration)
+
+## Summary
+
+| Metric | New Skill | Old Skill | Delta |
+|--------|------------|---------------|-------|
+| Pass Rate | 93% ± 12% | 67% ± 12% | +0.27 |
+| Time | 1046.0s ± 498.3s | 903.0s ± 448.3s | +143.0s |
+| Tokens | 40147 ± 7382 | 39826 ± 3871 | +321 |
+
+## Notes
+
+- The updated skill only misses 1 expectation across all 15 checks: eval 2's requirement to return 5-10 key files with reasons. Its evidence still shows exploration happened ('code-explorer markers=2; parallel-run-noted=True'), so the remaining gap is the file-list artifact, not the broader exploration workflow.
+- The old skill's failures cluster around discovery/interview discipline rather than PRD formatting: it fails the exploration + one-question-at-a-time assumptions check in eval 1, the same interview/assumptions check in eval 2, and the dependency-order + early-assumptions check in eval 3.
+- Eval 2 is the clearest apples-to-apples differentiator. Both skills pass official-research, user-story coverage, and durable-citation expectations, but only the updated skill passes the security/retention/permissions/compliance interview expectation; the old skill records 'questions=0' despite 'recommendations=7'.
+- Eval 3 shows the updated skill's gain is about sequencing, not just asking more questions. Both configurations ask 10 questions, but the old skill has 'dependency-notes=9; assumptions-before-questions=False' while the updated skill passes with dependency notes present and assumptions surfaced first.
+- Several assertions do not differentiate skill value in this benchmark: official-source research passes everywhere it is tested, durable citations / no brittle dumps pass in all 6 runs, and issue-title/body + intended gh command expectations also pass wherever they appear.
+- The pass-rate improvement comes with almost no token increase: mean pass rate rises from 0.6667 to 0.9333 while mean tokens move only from 39,826 to 40,146.7 (+321, under 1%). The stronger results are not explained by simply producing much longer outputs.
+- The mean time penalty (+143s) hides an uneven pattern by eval. The updated skill is faster on eval 1 (829s vs 1366s) and eval 2 (693s vs 872s), but slower on eval 3 (1616s vs 471s), so most of the average slowdown comes from a single long run.
+- Resource usage is more variable with the updated skill: tokens range from 32,277 to 46,918 and time from 693s to 1616s, versus the old skill's tighter 35,468-42,865 tokens and 471s-1366s. The benchmark suggests the new workflow's cost depends heavily on scenario shape.
+- All 6 runs report errors=0 and tool_calls=0, so benchmark differentiation comes entirely from expectation evidence, not from execution-failure signals or tool-count metrics.
+- Because runs_per_configuration is 1, there is no way to separate true instability from per-eval difficulty. Any apparent variance here is cross-eval workload variation, not measured run-to-run flakiness.
+- Every run carries the same offline note: GitHub issue creation was replaced by saved issue title/body plus the intended gh command. In this dataset, issue-filing expectations validate artifact completeness rather than real GitHub side effects.

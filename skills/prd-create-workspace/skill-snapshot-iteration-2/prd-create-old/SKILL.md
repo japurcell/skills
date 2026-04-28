@@ -100,7 +100,7 @@ Do not interview the user about questions that codebase exploration or official 
 
 ### 4. Perform targeted web research before decisions
 
-Before recommending answers, selecting designs, or writing implementation decisions, launch several parallel research subagents when available. Use `general-purpose` or `explore` subagents for this work; otherwise perform the research inline with the available web tools.
+Before recommending answers, selecting designs, or writing implementation decisions, launch several parallel research subagents.
 
 Give each research subagent a narrow target, such as:
 
@@ -180,19 +180,50 @@ ASSUMPTIONS I'M MAKING:
 
 Don't silently fill in ambiguous requirements. The PRD's entire purpose is to surface misunderstandings _before_ code gets written — assumptions are the most dangerous form of misunderstanding.
 
-### 6. Write the PRD
+### 6. Write the PRD covering these ten core areas:
 
-The issue body should stay durable and decision-oriented. Do not include specific file paths, code snippets, copied commands, or brittle directory maps. If stack details, commands, project-structure notes, or guardrails materially affect scope or delivery, summarize them as stable requirements inside Implementation Decisions, Success Criteria, or Further Notes rather than adding extra template sections.
+1. **Objective** — What are we building and why? Who is the user? What does success look like?
+2. **User Stories**: Produce a long, numbered list. Cover primary flows, secondary flows, edge cases, permissions, error states, onboarding, migration, notifications, accessibility, privacy/security, admin/support needs, observability, and rollout where relevant.
+3. **Implementation Decisions**: Include modules, interfaces, architecture, schema, API contracts, integrations, data lifecycle, error handling, permissions, rollout, and operational decisions. Do not include specific file paths or code snippets. Every item must cite an existing codebase pattern or a targeted research source link, with the reason it was chosen.
+4. **Commands** — Full executable commands with flags, not just tool names.
 
-Cover these core areas:
+   ```
+   Frontend
 
-1. **Objective** — What are we building, who is it for, why does it matter, and what does success look like?
-2. **User Stories** — Produce a long, numbered list. Cover primary flows, secondary flows, edge cases, permissions, error states, onboarding, migration, notifications, accessibility, privacy/security, admin/support needs, observability, and rollout where relevant.
-3. **Implementation Decisions** — Include modules, interfaces, architecture, schema, API contracts, integrations, data lifecycle, error handling, permissions, rollout, and operational decisions. Every item must cite an existing codebase pattern or a targeted research source link, with the reason it was chosen.
-4. **Testing Decisions** — Start by stating that good tests verify external behavior and user-visible outcomes rather than implementation details. Include which modules or product surfaces should be tested and cite similar test patterns from the codebase when available.
-5. **Success Criteria** — Capture concrete, user-visible outcomes and launch/quality conditions that make the feature meaningfully done.
-6. **Out of Scope** — Be explicit about excluded features, deferred integrations, unsupported user types, non-goals, and implementation work not covered by this PRD.
-7. **Further Notes** — Capture open risks, dependencies, rollout notes, assumptions accepted by the user, and research caveats.
+   Build: npm run build
+   Test: npm test -- --coverage
+   Lint: npm run lint --fix
+   Dev: npm run dev
+
+   Backend
+
+   Build: dotnet build
+   Test: dotnet test --collect:"XPlat Code Coverage"
+   Lint: dotnet format
+   Dev: dotnet run
+   ```
+
+5. **Project Structure** — Where source code lives, where tests go, where docs belong.
+
+   ```
+   src/           → Application source code
+   src/components → React components
+   src/lib        → Shared utilities
+   tests/         → Unit and integration tests
+   e2e/           → End-to-end tests
+   docs/          → Documentation
+   ```
+
+6. **Code Style** — One real code snippet showing your style beats three paragraphs describing it. Include naming conventions, formatting rules, and examples of good output.
+
+7. **Testing Decisions**: Start by stating that good tests verify external behavior and user-visible outcomes rather than implementation details. Include which modules or product surfaces should be tested and cite similar test patterns from the codebase when available. Do not include specific file paths.
+
+8. **Boundaries** — Three-tier system:
+   - **Always do:** Run tests before commits, follow naming conventions, validate inputs
+   - **Ask first:** Database schema changes, adding dependencies, changing CI config
+   - **Never do:** Commit secrets, edit vendor directories, remove failing tests without approval
+9. **Out of Scope**: Be explicit about excluded features, deferred integrations, unsupported user types, non-goals, and implementation work not covered by this PRD.
+10. **Further Notes**: Capture open risks, dependencies, rollout notes, assumptions accepted by the user, and research caveats.
 
 Use this exact section order and headings:
 
@@ -211,9 +242,31 @@ Use this exact section order and headings:
 
 - <Decision>. Citation: <existing codebase pattern or research link>. Reason: <why this source supports the decision>.
 
+## Tech Stack
+
+[Framework, language, key dependencies with versions]
+
+## Commands
+
+[Build, test, lint, dev — full commands]
+
+## Project Structure
+
+[Directory layout with descriptions]
+
+## Code Style
+
+[Example snippet + key conventions]
+
 ## Testing Decisions
 
 - <Decision>. Prior art: <existing test pattern or research link>. Reason: <why this is the right testing approach>.
+
+## Boundaries
+
+- Always: [...]
+- Ask first: [...]
+- Never: [...]
 
 ## Success Criteria
 
@@ -244,10 +297,8 @@ Review the PRD before creating the issue:
 - The objective contains the why, the who, and what success looks like.
 - User stories are extensive and numbered.
 - No specific file paths or code snippets appear in the issue body.
-- Commands, stack details, and structural notes are summarized only when they materially affect the requirements, and they are written in durable language rather than as brittle snippets or directory dumps.
 - Every implementation decision has a codebase-pattern citation or research citation with a reason.
 - Testing decisions describe external behavior and cite prior art where available.
-- Success criteria are specific, user-visible, and testable.
 - Out-of-scope items are explicit.
 - Blocking and decision-shaping questions are resolved or documented as user-approved assumptions.
 
@@ -270,7 +321,6 @@ After creating the issue, return:
 
 ## Failure handling
 
-- If subagents are unavailable, perform the exploration and research inline, but preserve the same evidence requirements and explain that the workflow ran without parallel subagents.
 - If web access is unavailable, continue only with codebase evidence and user-approved assumptions; mark research-backed decisions as blocked rather than inventing citations.
 - If the codebase is unavailable or the current directory is not a repository, skip codebase citations and rely on targeted research plus user interview, clearly noting that no repository patterns were available.
 - If the user stops the interview early, create only a draft PRD if they explicitly ask for it; otherwise report the unresolved blocking questions.

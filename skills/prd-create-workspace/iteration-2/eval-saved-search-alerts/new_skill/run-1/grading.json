@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "The workflow launches multiple code-explorer subagents with distinct lenses before writing the PRD.",
+      "passed": true,
+      "evidence": "code-explorer markers=1; distinct-lenses=True; parallel-run-noted=True."
+    },
+    {
+      "text": "The workflow performs targeted research from official sources before recording implementation decisions.",
+      "passed": true,
+      "evidence": "official-link count=12."
+    },
+    {
+      "text": "The workflow surfaces assumptions early, then asks one user question at a time and includes a recommended answer for each question.",
+      "passed": true,
+      "evidence": "assumptions-before-questions=True; questions=10; recommendations=10."
+    },
+    {
+      "text": "The final PRD follows the required section order (Objective, User Stories, Implementation Decisions, Testing Decisions, Success Criteria, Out of Scope, Further Notes) and includes a GitHub issue title/body plus the intended gh issue create command for offline filing.",
+      "passed": true,
+      "evidence": "heading-order=True; issue-title-present=True; gh-command-present=True."
+    },
+    {
+      "text": "Implementation decisions use durable codebase-pattern or official research citations and the PRD avoids specific file paths, code snippets, and brittle command or directory dumps.",
+      "passed": true,
+      "evidence": "durable-citations=True; brittle-dump-detected=False."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 41245,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 829.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 829.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": [
+      "Offline benchmark: real GitHub issue creation was intentionally replaced by saved issue title/body and intended gh issue create command."
+    ]
+  }
+}
