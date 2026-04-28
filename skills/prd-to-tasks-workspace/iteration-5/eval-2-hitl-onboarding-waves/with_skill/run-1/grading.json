@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Marks the design review as HITL and implementation slices as AFK where possible.",
+      "passed": true,
+      "evidence": "ugh inviting teammates, connecting Slack, and completing the first project setup. We need design review before changing the onboarding UI.  ## Task graph  - [ ] W1 - #<issue-design-review> Onbo"
+    },
+    {
+      "text": "Avoids a single large issue covering inviting teammates and Slack and first project setup together.",
+      "passed": true,
+      "evidence": "mates to the workspace.  ## Type  AFK  ## Acceptance criteria  - [ ] Admin is prompted to invite teammates during onboarding - [ ] Invitations can be sent via email - [ ] UI reflects invitation st"
+    },
+    {
+      "text": "Uses dependencies only where a slice truly cannot start before another, and reflects that in the execution waves or ready-order guidance.",
+      "passed": true,
+      "evidence": "mediately  ## Queue position  - Parent queue: direct subissue of #<parent-issue-number> - Execution wave: W1 - Ready to start when: this issue has no blockers  ## User stories covered  Not expli"
+    },
+    {
+      "text": "Includes manual verification steps appropriate to onboarding behavior.",
+      "passed": true,
+      "evidence": "ed and actionable - [ ] Approval is granted before implementation  ## Verification  - [ ] Manual check: Review meeting held and feedback documented  ## Blocked by  None - can start immediately"
+    },
+    {
+      "text": "Splits any Large or XL slice into smaller S/M vertical issues.",
+      "passed": true,
+      "evidence": "n source  ## Files likely touched  - `design/onboarding-mockups.fig`  ## Estimated scope  Small: 1-2 files ```  --- ### Implement teammate invitation onboarding  ``` ## Parent  #<parent-"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 8,
+    "errors_encountered": 0,
+    "output_chars": 6097,
+    "transcript_chars": 798
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 120.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Assumptions:\n- No existing parent GitHub issue is specified; a new parent tracker is needed.\n- The implementation plan is fully described in the prompt.\n- Design review is required before UI changes (HITL slice).\nUncertainties:\n- Exact file paths, test commands, and user stories are not provided; placeholders are used.\n- The order of onboarding steps is inferred from the prompt."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

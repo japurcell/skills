@@ -45,17 +45,10 @@ def evidence_for(text: str, *terms: str) -> str:
     return "No supporting excerpt found."
 
 
-def referenced_parent_numbers(text: str) -> set[str]:
-    numbers = set(re.findall(r"Parent:\s*`?#(\d+)", text, flags=re.I))
-    numbers.update(re.findall(r"## Parent\s+`?#(\d+)", text, flags=re.I | re.S))
-    return numbers
-
-
 def eval_0(response: str, transcript: str) -> list[tuple[bool, str]]:
     combined = f"{response}\n\n{transcript}"
     add_sub_issue = has_all(combined, "gh api graphql", "addsubissue")
     no_graphql_vars = not has_any(combined, "mutation($parentid", "mutation ($parentid", "$subissueid", "$parentid")
-    parent_numbers = referenced_parent_numbers(response)
     return [
         (
             has_any(combined, "1. **title**", "proposed breakdown", "1. **title**:"),
@@ -64,12 +57,6 @@ def eval_0(response: str, transcript: str) -> list[tuple[bool, str]]:
         (
             has_any(combined, "execution wave", "w1", "lowest-numbered wave", "ready-order"),
             evidence_for(combined, "Execution wave", "W1", "lowest-numbered wave", "ready-order"),
-        ),
-        (
-            "4100" in parent_numbers
-            and parent_numbers == {"4100"}
-            and not has_any(response, "# create parent tracker", "### create parent tracker", "create parent tracker first"),
-            evidence_for(response, "Parent: `#4100", "Parent: #4100", "## Parent\n\n#4100"),
         ),
         (
             has_any(combined, "gh issue edit", "<!-- prd-to-tasks:start -->", "managed block")
@@ -176,18 +163,11 @@ def eval_2(response: str, transcript: str) -> list[tuple[bool, str]]:
 
 def eval_3(response: str, transcript: str) -> list[tuple[bool, str]]:
     combined = f"{response}\n\n{transcript}"
-    parent_numbers = referenced_parent_numbers(response)
     return [
         (
             has_any(combined, "keep the parent issue", "title", "labels", "state", "untouched")
             or (has_any(combined, "do not edit", "metadata") and has_any(combined, "title", "labels", "state")),
             evidence_for(combined, "title", "labels", "state", "metadata"),
-        ),
-        (
-            "4200" in parent_numbers
-            and parent_numbers == {"4200"}
-            and not has_any(response, "# create parent tracker", "### create parent tracker", "create parent tracker first"),
-            evidence_for(response, "Parent: `#4200", "Parent: #4200", "## Parent\n\n#4200"),
         ),
         (
             has_any(combined, "direct subissues", "direct sub-issues", "direct subissues of the parent")

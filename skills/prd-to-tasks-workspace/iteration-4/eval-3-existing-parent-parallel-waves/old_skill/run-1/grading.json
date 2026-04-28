@@ -1,0 +1,64 @@
+{
+  "expectations": [
+    {
+      "text": "Keeps the parent PRD issue title, labels, and state untouched while allowing a body update for tracking guidance.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Keeps existing parent issue #4200 as the only parent tracker and does not draft or create any additional parent tracker or wrapper issue.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Keeps the executable implementation issues as direct sub-issues of the parent PRD issue rather than hiding them under a synthetic nested tracker.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Updates the parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue.",
+      "passed": false,
+      "evidence": "## Task Graph Guidance for Billing Alert Policies (Issue #4200)  ### Task Breakdown  1. Add threshold s"
+    },
+    {
+      "text": "Places the schema slice in an earlier wave than the email and Slack slices, allows email and Slack to share a wave, and places the history UI after both.",
+      "passed": true,
+      "evidence": "Task Graph Guidance for Billing Alert Policies (Issue #4200)  ### Task Breakdown  1. Add threshold schema support 2. Implement email alert delivery (can start after 1) 3. Implement Slack a"
+    },
+    {
+      "text": "Queue guidance tells agents to inspect the parent issue's task graph plus direct sub-issues, and pick the lowest ready AFK wave whose blockers are closed.",
+      "passed": false,
+      "evidence": "## Task Graph Guidance for Billing Alert Policies (Issue #4200)  ### Task Breakdown  1. Add threshold s"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 5,
+    "total": 6,
+    "pass_rate": 0.167
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 6,
+    "errors_encountered": 0,
+    "output_chars": 881,
+    "transcript_chars": 445
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 81.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Assumptions:\n- Issue numbers for child issues are placeholders.\n- All work is tracked in the parent issue (#4200) as required.\n\nUncertainties:\n- None."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

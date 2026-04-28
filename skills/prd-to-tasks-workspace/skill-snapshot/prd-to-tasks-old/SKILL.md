@@ -1,6 +1,7 @@
 ---
 name: prd-to-tasks
 description: Break a PRD, plan, feature description, problem statement, or body of work into independently-grabbable GitHub issues using thin vertical slices, explicit execution waves, and ready-task guidance. Use this whenever the user wants to turn requirements into child issues, a tracker issue, AFK/HITL slices, or an issue graph future agents can execute from.
+argument-hint: "Provide a GitHub issue number or URL, raw PRD/plan/spec/feature text, or a short problem description that needs a task graph."
 ---
 
 # PRD to Tasks
@@ -11,34 +12,6 @@ Do not implement code while using this skill. The deliverable is either:
 
 - a new parent tracker issue plus child implementation issues, or
 - child implementation issues attached to an existing parent issue.
-
-## Parent-tracker decision
-
-Make this decision before drafting any issues:
-
-- If the source PRD already lives in a GitHub issue, that exact issue is already the parent tracker. Reuse that issue as the parent everywhere in the breakdown, child issue bodies, parent-body update, attachment flow, and final summary.
-- If the prompt gives the existing parent issue number explicitly, repeat that exact number in every parent reference. Do not swap it for a fresh tracker number or a generic placeholder.
-- In that existing-parent case, **never** create another parent tracker, wrapper tracker, queue-guide issue, or nested meta issue. The only new issues should be the executable child implementation slices.
-- Create a new parent tracker only when the source is raw PRD/plan/spec/problem text that does not already live in a GitHub issue.
-
-## Response fidelity
-
-Weak models often try to summarize the task graph instead of drafting executable issues. Do not do that here: future agents need issue-ready output, not a sketch.
-
-- Even in dry-run or draft mode, produce the same structural sections you would use for a real run; placeholders are allowed, but missing sections are not.
-- Do not stop after a high-level slice list, checklist, or tracker blurb. Draft the child issues with the full issue-body structure, then draft the parent-body update, then draft the subissue attachment commands.
-- For existing-parent requests, keep this order:
-  1. `## Proposed vertical-slice breakdown (present first)`
-  2. Full child issue drafts using the issue body template
-  3. Managed parent-body block using `<!-- prd-to-tasks:start --> ... <!-- prd-to-tasks:end -->`
-  4. `addSubIssue` attachment commands
-- For raw-PRD/new-parent requests, keep this order:
-  1. Parent tracker draft or create command
-  2. Full child issue drafts using the issue body template
-  3. Subissue attachment commands
-  4. Final summary
-- Do not replace the managed parent-body block with a looser heading such as `## Parent Issue Tracking Guidance` or `## Execution Guidance`.
-- Do not collapse child issues into one-line bullets. Each child needs type, acceptance criteria, verification, blockers, queue position, likely files, and scope.
 
 ## Inputs
 
@@ -62,7 +35,6 @@ If the user wants a draft only, or real issue numbers are unavailable, use place
 - Create blockers before blocked issues so later issue bodies can reference real blocker issue numbers.
 - Keep existing parent metadata unchanged. You may update its body only by appending or refreshing a dedicated managed task-graph section.
 - Make the next ready AFK task obvious from GitHub alone.
-- If the source already is a GitHub issue, do not add any extra tracker layer; the executable work must stay as that issue's direct child subissues.
 
 ## Workflow
 
@@ -131,7 +103,7 @@ Future agents need a deterministic rule for what comes next, so do not leave ord
 
 Prefer S/M slices. Split a slice if it would take more than one focused implementation session, touch more than roughly 5 files, need more than three acceptance bullets, or span multiple subsystems that can be verified separately.
 
-### 4. Existing-parent requests: present the breakdown first and keep the same parent
+### 4. Existing-parent requests: present the breakdown first
 
 If the source came from an existing GitHub issue, start by presenting the proposed breakdown before creating child issues. Use this shape:
 
@@ -147,19 +119,15 @@ If the source came from an existing GitHub issue, start by presenting the propos
 
 If the user needs approval before any GitHub mutation, stop after the breakdown and ask for it.
 
-After the breakdown, keep drafting against that same parent issue. Do not create a fresh tracker issue just to hold queue guidance; put the managed task-graph guidance on the existing parent body instead.
-
-If the request is a draft or dry run, still draft the full child issue bodies, managed parent-body block, and `addSubIssue` commands. The only difference is that placeholders are acceptable where live issue numbers are unavailable.
-
 If the user asked for a dry run, inline draft, or all-in-one answer, present the breakdown first and then continue with the draft issues in the same response, using placeholders where needed.
 
 If the source is raw PRD or plan text rather than an existing GitHub issue, use judgment: create issues directly when the breakdown is straightforward, or pause for review when scope, dependencies, or HITL classification are uncertain.
 
 ### 5. Prepare the parent tracker issue
 
-If the source was a GitHub issue, treat that exact issue as the parent tracker. Keep its title, labels, state, assignees, and unrelated body content untouched.
+If the source was a GitHub issue, treat that issue as the parent tracker. Keep its title, labels, state, assignees, and unrelated body content untouched.
 
-When the parent already exists, use its body as the durable queue record by appending or refreshing a managed task-graph section after the child issue numbers are known. Replace only the managed block; do not rewrite the whole body. Do not create a second tracker issue for queue guidance, documentation, or nesting.
+When the parent already exists, use its body as the durable queue record by appending or refreshing a managed task-graph section after the child issue numbers are known. Replace only the managed block; do not rewrite the whole body.
 
 If the source was not a GitHub issue, create a new parent tracker issue first with a concise title and a body like this:
 
@@ -368,4 +336,3 @@ Before finishing, verify:
 - each issue has acceptance criteria, verification, likely files, scope estimate, and queue position
 - the parent tracker exists or was drafted first
 - if the parent already existed, its managed task-graph block makes the sibling subissue queue explicit without overwriting unrelated content
-- if the source already lived in a GitHub issue, no extra parent tracker or wrapper issue was created

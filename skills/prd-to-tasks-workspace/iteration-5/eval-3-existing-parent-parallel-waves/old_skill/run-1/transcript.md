@@ -1,0 +1,6 @@
+- Read SKILL.md to extract the authoritative workflow and templates for existing-parent PRD-to-tasks breakdowns.
+- Noted that the parent issue (#4200) already exists and must not be mutated except for the managed task-graph block.
+- Used the PRD summary and constraints from the prompt to define four vertical slices, with parallel execution for email and Slack delivery, and clear dependencies and execution waves.
+- Drafted each child issue using the prescribed template, including acceptance criteria, verification, likely files, and scope.
+- Drafted the managed parent-body tracking block per SKILL.md, using placeholders for child issue numbers.
+- Summarized the result and key notes, ensuring all instructions were followed and no code or GitHub mutations were performed.

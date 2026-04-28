@@ -1,0 +1,8 @@
+- Read SKILL.md to extract the required structure and rules for existing-parent breakdowns.
+- Noted that parent issue #4200 must be reused and not mutated except for the managed block.
+- Drafted a vertical-slice breakdown with four AFK child issues, assigning execution waves and dependencies per the PRD.
+- For each child, wrote a full issue body with acceptance criteria, verification, queue position, and likely files.
+- Drafted the managed parent-body block for #4200 with the task graph and guidance.
+- Added draft subissue attachment commands.
+- Wrote a summary section per SKILL.md.
+- Used placeholders for child issue numbers as required for a dry run.

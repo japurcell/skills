@@ -1,0 +1,448 @@
+{
+  "metadata": {
+    "skill_name": "prd-to-tasks",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-28T20:16:24Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.857,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 243.0,
+        "tokens": 6890,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Presents a numbered proposed breakdown before creating child issues because the source is an existing GitHub issue.",
+          "passed": true,
+          "evidence": "## Proposed vertical-slice breakdown (present first)  1. **Title**: Implement saved search CRUD (create, read, update, delete)    **Type**: AFK    **Executi"
+        },
+        {
+          "text": "The proposed breakdown includes execution-wave or equivalent ready-order guidance so future agents can tell what comes next.",
+          "passed": true,
+          "evidence": "Title**: Implement saved search CRUD (create, read, update, delete)    **Type**: AFK    **Execution wave**: W1    **Blocked by**: None    **User stories covered**: Saved search creation, editing"
+        },
+        {
+          "text": "Keeps existing parent issue #4100 as the only parent tracker and does not draft or create any additional parent tracker or wrapper issue.",
+          "passed": true,
+          "evidence": "- prd-to-tasks:end -->  ---  Created task graph for saved searches and alerting feature.  Parent: #4100 Saved searches and alerting  Child issues: 1. #<Child Issue 1> Implement saved search CRU"
+        },
+        {
+          "text": "Updates the existing parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue, and makes clear that the executable tasks remain sibling direct sub-issues of the PRD issue.",
+          "passed": true,
+          "evidence": "ed scope**: Small: 1-2 files  ---  ### Managed parent-body tracking guidance (for #4100)  <!-- prd-to-tasks:start -->  ## Task graph  - [ ] W1 - #<Child Issue 1> Implement saved search CRUD - AFK - blocked b"
+        },
+        {
+          "text": "Queue guidance on the parent tells future agents to pick the lowest ready AFK wave/task whose blockers are closed, and to hold HITL work until the named decision or review is complete.",
+          "passed": true,
+          "evidence": "k is in the sibling implementation issues listed above. 3. Pick any open AFK issue in the lowest-numbered wave whose blockers are all closed. 4. If several AFK issues are ready in the same wave, they"
+        },
+        {
+          "text": "Uses the issue comments to keep saved-search creation earlier than alert delivery and to avoid blocking initial creation on notification preference editing.",
+          "passed": true,
+          "evidence": "er stories covered**: Saved search CRUD  **Files likely touched**: - `src/search/` - `src/saved-searches/` - `tests/saved-searches/`  **Estimated scope**: Medium: 3-5 files  ---  #### Child Is"
+        },
+        {
+          "text": "Attaches child issues to the parent using addSubIssue without GraphQL variables in the mutation signature.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        }
+      ],
+      "notes": [
+        "Assumptions:\n- Child issue numbers are placeholders due to dry run.\n- Acceptance criteria and file paths are inferred based on typical repo structure and feature scope.\n- All slices are AFK; no HITL tasks identified from prompt or constraints.\n- No code or GitHub mutations performed.\n\nUncertainties:\n- Exact file paths and test commands may differ in the real repo.\n- Some implementation details may require further clarification in a real run."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 187.0,
+        "tokens": 5125,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Creates or plans a new parent tracker issue because the source was not a GitHub issue.",
+          "passed": true,
+          "evidence": "arent-issue-number>, #<child-issue-number>). No GitHub mutations have been performed.  ## Parent Tracker Issue (Draft)  ### Title Admin Audit Log Export: Filtering, CSV Export, and Failure Handl"
+        },
+        {
+          "text": "The parent tracker issue body includes a task graph plus explicit how-to-grab-work guidance.",
+          "passed": true,
+          "evidence": "actor, date range, and event type, export CSV for compliance, and see export failures.  #### Task graph - [ ] W1 - Implement audit log filtering by actor, date range, and event type - AFK - blo"
+        },
+        {
+          "text": "Child issues are vertical feature slices rather than horizontal database/API/UI tasks.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Each child issue includes queue position information such as execution wave and readiness guidance.",
+          "passed": true,
+          "evidence": "src/api/audit-log/` - `tests/admin/audit-log/`  #### Estimated scope Medium: 3-5 files  #### Queue position - Parent queue: direct subissue of #<parent-issue-number> - Execution wave: W1 - Ready to"
+        },
+        {
+          "text": "Final summary lists parent and child issue numbers with dependency or wave information.",
+          "passed": false,
+          "evidence": "aph - [ ] W1 - Implement audit log filtering by actor, date range, and event type - AFK - blocked by none - [ ] W1 - Implement CSV export of filtered audit logs - AFK - blocked by none - [ ]"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 130.0,
+        "tokens": 6328,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Marks the design review as HITL and implementation slices as AFK where possible.",
+          "passed": true,
+          "evidence": "tle Workspace Onboarding: Invite Teammates, Connect Slack, Complete First Project, and UI Design Review  ### Body  #### Source Add workspace onboarding that guides a new admin through inviting"
+        },
+        {
+          "text": "Avoids a single large issue covering inviting teammates and Slack and first project setup together.",
+          "passed": true,
+          "evidence": "ns have been performed.  ## Parent Tracker Issue (Draft)  ### Title Workspace Onboarding: Invite Teammates, Connect Slack, Complete First Project, and UI Design Review  ### Body  #### Source Add w"
+        },
+        {
+          "text": "Uses dependencies only where a slice truly cannot start before another, and reflects that in the execution waves or ready-order guidance.",
+          "passed": true,
+          "evidence": "sign review for onboarding UI changes **Parent:** #<parent-issue-number> **Type:** HITL **Execution wave:** W1 **Blocked by:** None **User stories covered:** UI design review before onboarding c"
+        },
+        {
+          "text": "Includes manual verification steps appropriate to onboarding behavior.",
+          "passed": true,
+          "evidence": "able - [ ] Approval or required changes are clearly communicated  #### Verification - [ ] Manual check: Reviewer confirms review is complete and feedback is addressed  #### Files likely touched"
+        },
+        {
+          "text": "Splits any Large or XL slice into smaller S/M vertical issues.",
+          "passed": true,
+          "evidence": "## Files likely touched - `design/onboarding/` - `docs/onboarding/`  #### Estimated scope Small: 1-2 files  #### Queue position - Parent queue: direct subissue of #<parent-issue-number>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.167,
+        "passed": 1,
+        "failed": 5,
+        "total": 6,
+        "time_seconds": 81.0,
+        "tokens": 881,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Keeps the parent PRD issue title, labels, and state untouched while allowing a body update for tracking guidance.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Keeps existing parent issue #4200 as the only parent tracker and does not draft or create any additional parent tracker or wrapper issue.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Keeps the executable implementation issues as direct sub-issues of the parent PRD issue rather than hiding them under a synthetic nested tracker.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Updates the parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue.",
+          "passed": false,
+          "evidence": "## Task Graph Guidance for Billing Alert Policies (Issue #4200)  ### Task Breakdown  1. Add threshold s"
+        },
+        {
+          "text": "Places the schema slice in an earlier wave than the email and Slack slices, allows email and Slack to share a wave, and places the history UI after both.",
+          "passed": true,
+          "evidence": "Task Graph Guidance for Billing Alert Policies (Issue #4200)  ### Task Breakdown  1. Add threshold schema support 2. Implement email alert delivery (can start after 1) 3. Implement Slack a"
+        },
+        {
+          "text": "Queue guidance tells agents to inspect the parent issue's task graph plus direct sub-issues, and pick the lowest ready AFK wave whose blockers are closed.",
+          "passed": false,
+          "evidence": "## Task Graph Guidance for Billing Alert Policies (Issue #4200)  ### Task Breakdown  1. Add threshold s"
+        }
+      ],
+      "notes": [
+        "Assumptions:\n- Issue numbers for child issues are placeholders.\n- All work is tracked in the parent issue (#4200) as required.\n\nUncertainties:\n- None."
+      ]
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 7,
+        "total": 7,
+        "time_seconds": 89.0,
+        "tokens": 1778,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Presents a numbered proposed breakdown before creating child issues because the source is an existing GitHub issue.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "The proposed breakdown includes execution-wave or equivalent ready-order guidance so future agents can tell what comes next.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Keeps existing parent issue #4100 as the only parent tracker and does not draft or create any additional parent tracker or wrapper issue.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Updates the existing parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue, and makes clear that the executable tasks remain sibling direct sub-issues of the PRD issue.",
+          "passed": false,
+          "evidence": "cker for the saved search and alerting feature set. All executable work is managed in the direct sub-issues listed below. Please do not implement code or make repository changes in this parent issu"
+        },
+        {
+          "text": "Queue guidance on the parent tells future agents to pick the lowest ready AFK wave/task whose blockers are closed, and to hold HITL work until the named decision or review is complete.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Uses the issue comments to keep saved-search creation earlier than alert delivery and to avoid blocking initial creation on notification preference editing.",
+          "passed": false,
+          "evidence": "ts without deleting saved search 4. Notification preference editing (not blocking initial saved-search creation)  ---  ## Child Issues  ### 1. Saved Search CRUD - Implement creation of saved s"
+        },
+        {
+          "text": "Attaches child issues to the parent using addSubIssue without GraphQL variables in the mutation signature.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        }
+      ],
+      "notes": [
+        "Assumptions:\n- Child issue numbers are placeholders, as no real issues are created in this dry run.\n- The parent issue body is updated only with tracking guidance, not implementation details.\n- All PRD and comment context is accurately reflected in the breakdown.\n\nUncertainties:\n- None."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 160.0,
+        "tokens": 3692,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Creates or plans a new parent tracker issue because the source was not a GitHub issue.",
+          "passed": true,
+          "evidence": "raph for Admin Audit Log Exports  **Source:** Raw PRD (no existing GitHub issue)  ---  ## Parent Tracker Issue (DRAFT)  **Title:** Admin Audit Log Export: Filtering, CSV Export, and Failure Visi"
+        },
+        {
+          "text": "The parent tracker issue body includes a task graph plus explicit how-to-grab-work guidance.",
+          "passed": true,
+          "evidence": "e range, and event type, export results as CSV for compliance, and see export failures.  ### Task graph - [ ] W1 - Implement audit log filtering by actor, date range, and event type - AFK - blo"
+        },
+        {
+          "text": "Child issues are vertical feature slices rather than horizontal database/API/UI tasks.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Each child issue includes queue position information such as execution wave and readiness guidance.",
+          "passed": true,
+          "evidence": "g by actor, date range, and event type **Parent:** #<parent-issue-number> **Type:** AFK **Execution wave:** W1 **Blocked by:** None **User stories covered:** Not explicit in source  #### What to"
+        },
+        {
+          "text": "Final summary lists parent and child issue numbers with dependency or wave information.",
+          "passed": false,
+          "evidence": "aph - [ ] W1 - Implement audit log filtering by actor, date range, and event type - AFK - blocked by none - [ ] W2 - Implement CSV export of filtered audit logs - AFK - blocked by W1 - [ ] W"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.4,
+        "passed": 2,
+        "failed": 3,
+        "total": 5,
+        "time_seconds": 120.0,
+        "tokens": 1725,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Marks the design review as HITL and implementation slices as AFK where possible.",
+          "passed": false,
+          "evidence": "ance) 2. Invite teammates 3. Connect Slack integration 4. Complete first project setup 5. Design review of onboarding UI (must precede UI changes)  ---  ## Child Issues  ### 1. Design Review fo"
+        },
+        {
+          "text": "Avoids a single large issue covering inviting teammates and Slack and first project setup together.",
+          "passed": true,
+          "evidence": "## Vertical Slice Breakdown  1. Workspace onboarding flow (admin guidance) 2. Invite teammates 3. Connect Slack integration 4. Complete first project setup 5. Design review of onboardi"
+        },
+        {
+          "text": "Uses dependencies only where a slice truly cannot start before another, and reflects that in the execution waves or ready-order guidance.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Includes manual verification steps appropriate to onboarding behavior.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Splits any Large or XL slice into smaller S/M vertical issues.",
+          "passed": true,
+          "evidence": "No supporting excerpt found."
+        }
+      ],
+      "notes": [
+        "Assumptions:\n- Design review must be completed before onboarding UI changes are implemented.\n- Issue numbers for child issues are placeholders.\n- Each onboarding step is independently actionable after dependencies are resolved.\n\nUncertainties:\n- None."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.833,
+        "passed": 5,
+        "failed": 1,
+        "total": 6,
+        "time_seconds": 119.0,
+        "tokens": 5109,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Keeps the parent PRD issue title, labels, and state untouched while allowing a body update for tracking guidance.",
+          "passed": true,
+          "evidence": "## Proposed vertical-slice breakdown (present first)  1. **Title**: Add threshold schema support    **Type**: AFK    **Execution wave**: W1    **Blocked b"
+        },
+        {
+          "text": "Keeps existing parent issue #4200 as the only parent tracker and does not draft or create any additional parent tracker or wrapper issue.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Keeps the executable implementation issues as direct sub-issues of the parent PRD issue rather than hiding them under a synthetic nested tracker.",
+          "passed": true,
+          "evidence": "d-issue-number-3>  ## How to grab work  1. Open this parent issue (#4200) and inspect its direct subissues. 2. The executable work is in the sibling implementation issues listed above. 3. Pick any"
+        },
+        {
+          "text": "Updates the parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue.",
+          "passed": true,
+          "evidence": "Implement Slack alert delivery    **User stories covered**: Not explicit in source  ---  <!-- prd-to-tasks:start --> ## Task graph  - [ ] W1 - #<child-issue-number-1> Add threshold schema support - AFK - bl"
+        },
+        {
+          "text": "Places the schema slice in an earlier wave than the email and Slack slices, allows email and Slack to share a wave, and places the history UI after both.",
+          "passed": true,
+          "evidence": "## Proposed vertical-slice breakdown (present first)  1. **Title**: Add threshold schema support    **Type**: AFK    **Execution wave**: W1    **Blocked by**: None    **Us"
+        },
+        {
+          "text": "Queue guidance tells agents to inspect the parent issue's task graph plus direct sub-issues, and pick the lowest ready AFK wave whose blockers are closed.",
+          "passed": true,
+          "evidence": "FK - blocked by #<child-issue-number-2>, #<child-issue-number-3>  ## How to grab work  1. Open this parent issue (#4200) and inspect its direct subissues. 2. The executable work is in the sibling implem"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.656,
+        "stddev": 0.3656,
+        "min": 0.167,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 160.25,
+        "stddev": 70.1397,
+        "min": 81.0,
+        "max": 243.0
+      },
+      "tokens": {
+        "mean": 4806.0,
+        "stddev": 2718.267,
+        "min": 881,
+        "max": 6890
+      }
+    },
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.4582,
+        "stddev": 0.353,
+        "min": 0.0,
+        "max": 0.833
+      },
+      "time_seconds": {
+        "mean": 122.0,
+        "stddev": 29.1319,
+        "min": 89.0,
+        "max": 160.0
+      },
+      "tokens": {
+        "mean": 3076.0,
+        "stddev": 1635.293,
+        "min": 1725,
+        "max": 5109
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.20",
+      "time_seconds": "+38.2",
+      "tokens": "+1730"
+    }
+  },
+  "notes": []
+}

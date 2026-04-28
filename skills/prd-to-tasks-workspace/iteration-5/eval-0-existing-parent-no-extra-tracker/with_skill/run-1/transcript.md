@@ -1,0 +1,9 @@
+- Read SKILL.md for authoritative instructions and workflow.
+- Noted that the source PRD is in existing GitHub issue #4100, so no new parent tracker is created.
+- Identified constraints from issue comments: saved-search CRUD can ship before alert delivery, and notification preference edits should not block initial saved-search creation.
+- Drafted a vertical-slice breakdown as the first section, per SKILL.md.
+- Drafted full child issue bodies with all required sections (parent, what to build, type, acceptance, verification, blockers, queue, user stories, files, scope).
+- Drafted the managed parent-body block using the <!-- prd-to-tasks:start --> ... <!-- prd-to-tasks:end --> format.
+- Drafted addSubIssue attachment commands as placeholders.
+- Used placeholders for issue numbers and file paths where concrete data is unavailable.
+- Did not mutate GitHub or implement code, as this is a dry run.

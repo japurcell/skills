@@ -1,0 +1,67 @@
+{
+  "expectations": [
+    {
+      "text": "Presents a numbered proposed breakdown before creating child issues because the source is an existing GitHub issue.",
+      "passed": true,
+      "evidence": "## Proposed vertical-slice breakdown (present first)  1. **Title**: Implement saved search CRUD (create, read, update, delete)    **Type**: AFK    **Executi"
+    },
+    {
+      "text": "The proposed breakdown includes execution-wave or equivalent ready-order guidance so future agents can tell what comes next.",
+      "passed": true,
+      "evidence": "Title**: Implement saved search CRUD (create, read, update, delete)    **Type**: AFK    **Execution wave**: W1    **Blocked by**: None    **User stories covered**: Saved search creation and mana"
+    },
+    {
+      "text": "Keeps existing parent issue #4100 as the only parent tracker and does not draft or create any additional parent tracker or wrapper issue.",
+      "passed": true,
+      "evidence": "-> ```  ---  ### Summary  Created task graph for saved search CRUD and alerting feature.  Parent: #4100 (existing)  Child issues:  1. #<child-issue-1> Implement saved search CRUD - W1 - AFK - b"
+    },
+    {
+      "text": "Updates the existing parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue, and makes clear that the executable tasks remain sibling direct sub-issues of the PRD issue.",
+      "passed": true,
+      "evidence": "pe  Small: 1-2 files ```  ---  ### Managed parent-body tracking guidance (for #4100)  ``` <!-- prd-to-tasks:start --> ## Task graph  - [ ] W1 - #<child-issue-1> Implement saved search CRUD - AFK - blocked by"
+    },
+    {
+      "text": "Queue guidance on the parent tells future agents to pick the lowest ready AFK wave/task whose blockers are closed, and to hold HITL work until the named decision or review is complete.",
+      "passed": true,
+      "evidence": "k is in the sibling implementation issues listed above. 3. Pick any open AFK issue in the lowest-numbered wave whose blockers are all closed. 4. If several AFK issues are ready in the same wave, they"
+    },
+    {
+      "text": "Uses the issue comments to keep saved-search creation earlier than alert delivery and to avoid blocking initial creation on notification preference editing.",
+      "passed": true,
+      "evidence": "ed  Saved search creation and management  ## Files likely touched  - `src/search/` - `src/saved-searches/` - `tests/search/`  ## Estimated scope  Medium: 3-5 files ```  #### Child Issue 2: Ena"
+    },
+    {
+      "text": "Attaches child issues to the parent using addSubIssue without GraphQL variables in the mutation signature.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.857
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 6,
+    "errors_encountered": 0,
+    "output_chars": 6731,
+    "transcript_chars": 746
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 185.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,8 @@
+- Read SKILL.md for authoritative workflow and templates.
+- Recognized the PRD lives in existing parent issue #4200; no new tracker created.
+- Presented a vertical-slice breakdown per SKILL.md, with explicit execution waves and dependencies.
+- Drafted a managed task-graph block for #4200's body, using placeholders for child issue numbers.
+- Broke the work into four AFK, vertical, grabbable child issues: schema, email, Slack, and UI.
+- For each child, drafted a full issue body with acceptance criteria, verification, likely files, and scope.
+- Ensured parallel execution for email and Slack delivery (W2), with UI blocked on both (W3).
+- Did not mutate GitHub or implement code, per dry-run instructions.

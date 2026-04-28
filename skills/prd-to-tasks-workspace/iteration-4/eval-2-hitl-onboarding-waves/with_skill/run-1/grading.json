@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Marks the design review as HITL and implementation slices as AFK where possible.",
+      "passed": false,
+      "evidence": "ance) 2. Invite teammates 3. Connect Slack integration 4. Complete first project setup 5. Design review of onboarding UI (must precede UI changes)  ---  ## Child Issues  ### 1. Design Review fo"
+    },
+    {
+      "text": "Avoids a single large issue covering inviting teammates and Slack and first project setup together.",
+      "passed": true,
+      "evidence": "## Vertical Slice Breakdown  1. Workspace onboarding flow (admin guidance) 2. Invite teammates 3. Connect Slack integration 4. Complete first project setup 5. Design review of onboardi"
+    },
+    {
+      "text": "Uses dependencies only where a slice truly cannot start before another, and reflects that in the execution waves or ready-order guidance.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Includes manual verification steps appropriate to onboarding behavior.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Splits any Large or XL slice into smaller S/M vertical issues.",
+      "passed": true,
+      "evidence": "No supporting excerpt found."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.4
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 8,
+    "errors_encountered": 0,
+    "output_chars": 1725,
+    "transcript_chars": 615
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 120.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Assumptions:\n- Design review must be completed before onboarding UI changes are implemented.\n- Issue numbers for child issues are placeholders.\n- Each onboarding step is independently actionable after dependencies are resolved.\n\nUncertainties:\n- None."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,9 @@
+- Read SKILL.md for slicing, HITL/AFK, and execution wave rules.
+- Interpreted the plan: onboarding guides for inviting teammates, Slack connection, project setup, and required design review.
+- Created a new parent tracker issue (draft, dry-run, placeholders for numbers).
+- Identified design review as a HITL slice (W1, must precede implementation).
+- Split implementation into three AFK vertical slices: teammate invitation, Slack connection, project setup (all W2, blocked by design review).
+- Used placeholders for all issue numbers and repo details.
+- Drafted each child issue with acceptance criteria, verification, likely files, and queue position per SKILL.md.
+- Summarized the task graph and how to grab work in the parent issue body.
+- Noted all assumptions and dry-run constraints in the summary.

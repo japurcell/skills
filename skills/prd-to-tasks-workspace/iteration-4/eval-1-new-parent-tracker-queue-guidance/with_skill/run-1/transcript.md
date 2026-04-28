@@ -1,0 +1,8 @@
+- Read SKILL.md to extract authoritative workflow and templates for PRD-to-tasks.
+- Identified the input as raw PRD text (no existing GitHub issue), so a new parent tracker is required.
+- Drafted a parent tracker issue with a summary, task graph, and queue guidance per SKILL.md.
+- Broke the PRD into three vertical, AFK, execution-wave child issues: filtering, CSV export, and failure display.
+- For each child, drafted a full issue body with acceptance criteria, verification, likely files, and scope.
+- Used placeholders for issue numbers and commands as required for a dry run.
+- Ensured all slices are vertical, AFK, and ready to grab.
+- Did not mutate GitHub or implement code, per dry-run instructions.

@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Marks the design review as HITL and implementation slices as AFK where possible.",
+      "passed": true,
+      "evidence": "min through inviting teammates, connecting Slack, and completing the first project setup. Design review is required before onboarding UI changes.  ## Task graph  - [ ] W1 - Design review for on"
+    },
+    {
+      "text": "Avoids a single large issue covering inviting teammates and Slack and first project setup together.",
+      "passed": true,
+      "evidence": "Onboarding Task Graph  ## Parent Tracker Issue (Draft)  **Title:** Workspace Onboarding: Invite Teammates, Connect Slack, Complete First Project Setup  **Body:**  ## Source  Add workspace onboard"
+    },
+    {
+      "text": "Uses dependencies only where a slice truly cannot start before another, and reflects that in the execution waves or ready-order guidance.",
+      "passed": true,
+      "evidence": "ediately  **Queue position:** - Parent queue: direct subissue of #<parent-issue-number> - Execution wave: W1 - Ready to start when: this issue has no blockers  **User stories covered:** Not expl"
+    },
+    {
+      "text": "Includes manual verification steps appropriate to onboarding behavior.",
+      "passed": true,
+      "evidence": "Approval is granted to proceed with onboarding UI implementation  **Verification:** - [ ] Manual check: Design review feedback is available and approval is recorded  **Blocked by:** None - can"
+    },
+    {
+      "text": "Splits any Large or XL slice into smaller S/M vertical issues.",
+      "passed": true,
+      "evidence": "source  **Files likely touched:** - `design/onboarding/` - `docs/`  **Estimated scope:** Small: 1-2 files  ---  ### 2. Implement teammate invitation step in onboarding  **Parent:** #<pa"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 9,
+    "errors_encountered": 0,
+    "output_chars": 6056,
+    "transcript_chars": 797
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 151.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Assumptions:\n- The plan is for workspace onboarding for new admins: inviting teammates, connecting Slack, completing first project setup.\n- Design review is required before onboarding UI changes (HITL slice).\n- No concrete repo data (labels, assignees, issue numbers) is available; placeholders are used.\nUncertainties:\n- None."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

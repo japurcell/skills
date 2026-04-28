@@ -1,0 +1,9 @@
+- Reviewed the implementation plan for workspace onboarding: invite teammates, connect Slack, complete first project setup.
+- Read SKILL.md for prd-to-tasks baseline to ensure output matches skill's expected format and guidance.
+- Identified the need for a parent tracker issue and vertical slices for each onboarding step.
+- Inserted a HITL slice for design review before onboarding UI changes, as required by the prompt.
+- Ordered issues into execution waves: design review (W1, HITL), then implementation (W2, AFK).
+- Used placeholders for repo-specific data (labels, assignees, issue numbers).
+- Ensured no implementation or GitHub mutation occurs (dry-run only).
+- Saved only the required output, transcript, and user notes files.
+- Documented assumptions and uncertainties in user_notes.md.

@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "text": "Creates or plans a new parent tracker issue because the source was not a GitHub issue.",
+      "passed": true,
+      "evidence": "# Parent Tracker Issue (Draft)  ## Source  Admins can filter audit logs by actor, date range, and event ty"
+    },
+    {
+      "text": "The parent tracker issue body includes a task graph plus explicit how-to-grab-work guidance.",
+      "passed": true,
+      "evidence": "y actor, date range, and event type, export CSV for compliance, and see export failures.  ## Task graph  - [ ] W1 - [Draft: Implement audit log filtering] - AFK - blocked by none - [ ] W1 - [Dr"
+    },
+    {
+      "text": "Child issues are vertical feature slices rather than horizontal database/API/UI tasks.",
+      "passed": true,
+      "evidence": "t functionality  #### Parent  #<parent-issue-number>  #### What to build  Allow admins to export filtered audit logs as CSV for compliance purposes. Ensure the export respects all applied filters.  #### Type  AFK"
+    },
+    {
+      "text": "Each child issue includes queue position information such as execution wave and readiness guidance.",
+      "passed": true,
+      "evidence": ": Filtering works as expected in the UI  #### Blocked by  None - can start immediately  #### Queue position  - Parent queue: direct subissue of #<parent-issue-number> - Execution wave: W1 - Ready t"
+    },
+    {
+      "text": "Final summary lists parent and child issue numbers with dependency or wave information.",
+      "passed": false,
+      "evidence": "xport failures.  ## Task graph  - [ ] W1 - [Draft: Implement audit log filtering] - AFK - blocked by none - [ ] W1 - [Draft: Implement CSV export functionality] - AFK - blocked by none - [ ]"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 9,
+    "errors_encountered": 0,
+    "output_chars": 4615,
+    "transcript_chars": 699
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 152.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

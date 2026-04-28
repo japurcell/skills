@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "text": "Marks the design review as HITL and implementation slices as AFK where possible.",
+      "passed": true,
+      "evidence": "tle Workspace Onboarding: Invite Teammates, Connect Slack, Complete First Project, and UI Design Review  ### Body  #### Source Add workspace onboarding that guides a new admin through inviting"
+    },
+    {
+      "text": "Avoids a single large issue covering inviting teammates and Slack and first project setup together.",
+      "passed": true,
+      "evidence": "ns have been performed.  ## Parent Tracker Issue (Draft)  ### Title Workspace Onboarding: Invite Teammates, Connect Slack, Complete First Project, and UI Design Review  ### Body  #### Source Add w"
+    },
+    {
+      "text": "Uses dependencies only where a slice truly cannot start before another, and reflects that in the execution waves or ready-order guidance.",
+      "passed": true,
+      "evidence": "sign review for onboarding UI changes **Parent:** #<parent-issue-number> **Type:** HITL **Execution wave:** W1 **Blocked by:** None **User stories covered:** UI design review before onboarding c"
+    },
+    {
+      "text": "Includes manual verification steps appropriate to onboarding behavior.",
+      "passed": true,
+      "evidence": "able - [ ] Approval or required changes are clearly communicated  #### Verification - [ ] Manual check: Reviewer confirms review is complete and feedback is addressed  #### Files likely touched"
+    },
+    {
+      "text": "Splits any Large or XL slice into smaller S/M vertical issues.",
+      "passed": true,
+      "evidence": "## Files likely touched - `design/onboarding/` - `docs/onboarding/`  #### Estimated scope Small: 1-2 files  #### Queue position - Parent queue: direct subissue of #<parent-issue-number>"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 9,
+    "errors_encountered": 0,
+    "output_chars": 6328,
+    "transcript_chars": 808
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 130.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

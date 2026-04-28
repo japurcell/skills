@@ -1,0 +1,8 @@
+- Read SKILL.md for authoritative instructions and workflow.
+- Noted that the source is an existing GitHub parent issue (#4100) with comments providing constraints.
+- Gathered requirements and constraints from the prompt and comments.
+- Drafted a vertical-slice breakdown first, as required for existing-parent flows.
+- Created four AFK child issues, each a vertical slice, with dependencies and execution waves.
+- Drafted managed parent-body tracking guidance for #4100, using placeholders for child issue numbers.
+- Ensured all instructions (no code, no real mutations, dry run) were followed.
+- Wrote only the required output files, nothing else.
