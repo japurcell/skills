@@ -1,0 +1,62 @@
+{
+  "expectations": [
+    {
+      "text": "Keeps the parent PRD issue title, labels, and state untouched while allowing a body update for tracking guidance.",
+      "passed": true,
+      "evidence": "## Proposed vertical-slice breakdown (present first)  1. **Title**: Add threshold schema support    **Type**: AFK    **Execution wave**: W1    **Blocked b"
+    },
+    {
+      "text": "Keeps existing parent issue #4200 as the only parent tracker and does not draft or create any additional parent tracker or wrapper issue.",
+      "passed": true,
+      "evidence": "umber }   } }\" ```  ---  ## Final summary  Created task graph for billing alert policies (parent: #4200).  Child issues: 1. #<threshold-schema-issue-number> Add threshold schema support - W1 -"
+    },
+    {
+      "text": "Keeps the executable implementation issues as direct sub-issues of the parent PRD issue rather than hiding them under a synthetic nested tracker.",
+      "passed": true,
+      "evidence": "slack-alert-issue-number>  ## How to grab work  1. Open this parent issue and inspect its direct subissues. 2. The executable work is in the sibling implementation issues listed above. 3. Pick any"
+    },
+    {
+      "text": "Updates the parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue.",
+      "passed": true,
+      "evidence": "- billing/alerts/ui/ - billing/alerts/api.py  ## Estimated scope  Medium: 3-5 files  ---  <!-- prd-to-tasks:start --> ## Task graph  - [ ] W1 - #<threshold-schema-issue-number> Add threshold schema support -"
+    },
+    {
+      "text": "Places the schema slice in an earlier wave than the email and Slack slices, allows email and Slack to share a wave, and places the history UI after both.",
+      "passed": true,
+      "evidence": "## Proposed vertical-slice breakdown (present first)  1. **Title**: Add threshold schema support    **Type**: AFK    **Execution wave**: W1    **Blocked by**: None    **Us"
+    },
+    {
+      "text": "Queue guidance tells agents to inspect the parent issue's task graph plus direct sub-issues, and pick the lowest ready AFK wave whose blockers are closed.",
+      "passed": true,
+      "evidence": "cked by #<email-alert-issue-number>, #<slack-alert-issue-number>  ## How to grab work  1. Open this parent issue and inspect its direct subissues. 2. The executable work is in the sibling implementation"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 14,
+    "errors_encountered": 0,
+    "output_chars": 7235,
+    "transcript_chars": 1336
+  },
+  "timing": {
+    "total_tokens": 825,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

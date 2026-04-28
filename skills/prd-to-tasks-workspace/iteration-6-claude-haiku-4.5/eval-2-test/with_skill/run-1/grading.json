@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "text": "Marks the design review as HITL and implementation slices as AFK where possible.",
+      "passed": true,
+      "evidence": "## Proposed vertical-slice breakdown  1. **Title**: Design review and approval for onboarding flow    **Type**: HITL    **Execution wave**: W1    **Blocked"
+    },
+    {
+      "text": "Avoids a single large issue covering inviting teammates and Slack and first project setup together.",
+      "passed": true,
+      "evidence": "ne    **User stories covered**: Get design team approval before UI changes  2. **Title**: Invite teammates step with email    **Type**: AFK    **Execution wave**: W2    **Blocked by**: Slice 1: De"
+    },
+    {
+      "text": "Uses dependencies only where a slice truly cannot start before another, and reflects that in the execution waves or ready-order guidance.",
+      "passed": true,
+      "evidence": "down  1. **Title**: Design review and approval for onboarding flow    **Type**: HITL    **Execution wave**: W1    **Blocked by**: None    **User stories covered**: Get design team approval befor"
+    },
+    {
+      "text": "Includes manual verification steps appropriate to onboarding behavior.",
+      "passed": true,
+      "evidence": "## Verification  - [ ] Tests pass: `npm run test -- onboarding.inviteTeam.test.ts` - [ ] Manual check: Complete invite step, verify emails received - [ ] Build succeeds: `npm run build`  ## Bl"
+    },
+    {
+      "text": "Splits any Large or XL slice into smaller S/M vertical issues.",
+      "passed": true,
+      "evidence": "- Design artifacts (Figma/design tool) - Design specs/documentation  ## Estimated scope  Small: 1-2 files  ### Child 2: Invite teammates step with email  ## Parent  #6001  ## What to bu"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 7908,
+    "transcript_chars": 87
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

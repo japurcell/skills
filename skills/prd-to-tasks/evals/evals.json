@@ -55,6 +55,19 @@
         "Places the schema slice in an earlier wave than the email and Slack slices, allows email and Slack to share a wave, and places the history UI after both.",
         "Queue guidance tells agents to inspect the parent issue's task graph plus direct sub-issues, and pick the lowest ready AFK wave whose blockers are closed."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "I have a backend-only PRD for webhook retry operations: when a delivery fails, the service should persist retry attempts, expose an internal admin API to replay a failed delivery, and emit retry outcome metrics to logs. There is no end-user or admin UI in this phase; the likely work is in API handlers, background workers, and persistence. Please break this into grabbable GitHub issues.",
+      "expected_output": "A new parent tracker issue and backend-oriented child issues using thin vertical slices, with likely files and verification guidance that stay aligned to API/worker/persistence work instead of drifting into frontend or browser checks.",
+      "files": [],
+      "expectations": [
+        "Creates or plans a new parent tracker issue because the source was not a GitHub issue.",
+        "Keeps the child issues focused on backend/API/worker/persistence behavior rather than inventing frontend or UI implementation work for this phase.",
+        "Uses backend-oriented likely files or directories, such as handlers, workers, jobs, services, repositories, or persistence modules.",
+        "Verification guidance stays aligned to backend work: targeted backend tests plus API/log/job/database/manual checks, and does not introduce browser/UI verification commands such as Playwright, Cypress, Storybook, or page-click checks.",
+        "Final summary lists parent and child issue numbers with wave or dependency guidance."
+      ]
     }
   ]
 }

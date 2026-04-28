@@ -1,5 +1,0 @@
-- The existing parent issue number was not provided, so placeholder issue numbers were used throughout.
-- No repository or codebase context was provided, so likely file paths, test commands, and build commands remain generic placeholders.
-- Assumed the parent issue's saved-search CRUD scope was best represented as separate create, read/list, edit, and delete slices.
-- Assumed "notification preference edits" is distinct from the explicit pause/unpause requirement, so it was drafted as a separate downstream child issue.
-- Because the benchmark asks for a full dry-run deliverable in one pass, I presented the review-stage breakdown first and then proceeded as though that breakdown had been approved.

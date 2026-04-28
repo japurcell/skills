@@ -1,0 +1,62 @@
+{
+  "expectations": [
+    {
+      "text": "Keeps the parent PRD issue title, labels, and state untouched while allowing a body update for tracking guidance.",
+      "passed": true,
+      "evidence": "raph to coordinate parallel and sequential work.  ---  *Do not modify this parent issue's metadata. Only update this body section as needed to reflect the current task graph and progress.*"
+    },
+    {
+      "text": "Keeps existing parent issue #4200 as the only parent tracker and does not draft or create any additional parent tracker or wrapper issue.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Keeps the executable implementation issues as direct sub-issues of the parent PRD issue rather than hiding them under a synthetic nested tracker.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Updates the parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue.",
+      "passed": false,
+      "evidence": "**Updated Issue Body for #4200: Billing Alert Policies Implementation Task Graph**  This issue tracks the implementation of billing alert policies. The following task gra"
+    },
+    {
+      "text": "Places the schema slice in an earlier wave than the email and Slack slices, allows email and Slack to share a wave, and places the history UI after both.",
+      "passed": true,
+      "evidence": "b-issues and their dependencies to guide implementation agents:  ### Task Graph  1. **Add Threshold Schema Support**    - Implement schema changes to support alert thresholds for billing ev"
+    },
+    {
+      "text": "Queue guidance tells agents to inspect the parent issue's task graph plus direct sub-issues, and pick the lowest ready AFK wave whose blockers are closed.",
+      "passed": false,
+      "evidence": "**Updated Issue Body for #4200: Billing Alert Policies Implementation Task Graph**  This issue tracks the implementation of billing alert policies. The following task gra"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 4,
+    "total": 6,
+    "pass_rate": 0.333
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 12,
+    "errors_encountered": 0,
+    "output_chars": 1432,
+    "transcript_chars": 1066
+  },
+  "timing": {
+    "total_tokens": 283,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "text": "Creates or plans a new parent tracker issue because the source was not a GitHub issue.",
+      "passed": true,
+      "evidence": "## New parent tracker issue planned  When creating this for real, use a placeholder such as #7001.  ## Proposed"
+    },
+    {
+      "text": "Keeps the child issues focused on backend/API/worker/persistence behavior rather than inventing frontend or UI implementation work for this phase.",
+      "passed": true,
+      "evidence": "a placeholder such as #7001.  ## Proposed vertical-slice breakdown  1. **Title**: Persist webhook retry attempts to database    **Type**: AFK    **Execution wave**: W1    **Blocked by**:"
+    },
+    {
+      "text": "Uses backend-oriented likely files or directories, such as handlers, workers, jobs, services, repositories, or persistence modules.",
+      "passed": true,
+      "evidence": "e has no blockers  ## User stories covered  Store retry history for failed deliveries  ## Files likely touched  - `src/db/migrations/webhook_retries_table.sql` - `src/db/models/WebhookRetry.ts` - `src"
+    },
+    {
+      "text": "Verification guidance stays aligned to backend work: targeted backend tests plus API/log/job/database/manual checks, and does not introduce browser/UI verification commands such as Playwright, Cypress, Storybook, or page-click checks.",
+      "passed": true,
+      "evidence": "run test -- webhookRetry.persistence.test.ts` - [ ] Build succeeds: `npm run build` - [ ] Manual check: Database contains retry records for failed webhook deliveries - [ ] Manual check: Trigger"
+    },
+    {
+      "text": "Final summary lists parent and child issue numbers with wave or dependency guidance.",
+      "passed": true,
+      "evidence": "perations feature.  Parent: #<parent-issue-number> (placeholder - new)  Child issues:  1. #<child-1> Persist webhook retry attempts to database - W1 - AFK - blocked by none 2. #<child-1> Exp"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 5666,
+    "transcript_chars": 86
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

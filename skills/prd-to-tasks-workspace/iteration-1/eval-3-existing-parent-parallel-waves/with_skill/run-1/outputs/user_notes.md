@@ -1,1 +1,0 @@
-Assumption: the repository slug `acme/platform` is unavailable or inaccessible in this environment. Per the skill's context-gathering stop rule, I did not infer the parent issue body from the prompt alone after the fetch failed.

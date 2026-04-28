@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Creates or plans a new parent tracker issue because the source was not a GitHub issue.",
+      "passed": true,
+      "evidence": "vering the retry mechanism, API usage, and logging/metrics format.  ---  *This issue is a tracker. Child issues should be created for each task above. Use placeholders for issue numbers i"
+    },
+    {
+      "text": "Keeps the child issues focused on backend/API/worker/persistence behavior rather than inventing frontend or UI implementation work for this phase.",
+      "passed": true,
+      "evidence": "# Epic: Webhook Retry Operations (Backend)  ## Overview Implement backend support for webhook retry opera"
+    },
+    {
+      "text": "Uses backend-oriented likely files or directories, such as handlers, workers, jobs, services, repositories, or persistence modules.",
+      "passed": false,
+      "evidence": "etrics to logs  No end-user or admin UI is included in this phase. Work is limited to API handlers, background workers, and persistence.  ## Child Issues  - [ ] **Persist webhook retry at"
+    },
+    {
+      "text": "Verification guidance stays aligned to backend work: targeted backend tests plus API/log/job/database/manual checks, and does not introduce browser/UI verification commands such as Playwright, Cypress, Storybook, or page-click checks.",
+      "passed": false,
+      "evidence": "a delivery fails, the system should: - Persist retry attempts - Expose an internal admin API to replay failed deliveries - Emit retry outcome metrics to logs  No end-user or admin UI"
+    },
+    {
+      "text": "Final summary lists parent and child issue numbers with wave or dependency guidance.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.4
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 16,
+    "errors_encountered": 0,
+    "output_chars": 1727,
+    "transcript_chars": 1122
+  },
+  "timing": {
+    "total_tokens": 340,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "- This is a dry-run draft using the prd-to-tasks skill; no GitHub issues were created.\n- The tracker and child issues are backend-focused, with no UI or admin frontend work.\n- Each child issue is thin and independently grabbable, following the skill's template.\n- Placeholders are used for issue numbers and links as per instructions.\n- See response.md for the tracker issue draft and transcript.md for the dry-run process."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

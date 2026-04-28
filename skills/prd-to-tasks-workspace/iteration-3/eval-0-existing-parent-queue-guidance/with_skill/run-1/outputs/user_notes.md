@@ -1,3 +1,0 @@
-- Assumed the parent issue number, title, and repository are intentionally omitted; placeholders such as `#<parent-issue-number>` and `#<child-1-number>` were used throughout.
-- `Files likely touched` entries are illustrative because no target codebase or architecture details were available in context.
-- All slices were marked AFK because the prompt already resolved the major sequencing/product constraints and did not surface a remaining human-only decision.

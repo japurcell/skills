@@ -1,3 +1,0 @@
-- No repository or codebase context was provided, so likely files and verification commands are generic placeholders.
-- I created issues directly instead of inserting a user review checkpoint because the raw plan was straightforward and the only explicit HITL dependency was the required design review.
-- I treated the teammate invite slice as the first implementation wave because it can establish the onboarding shell that later Slack and project-setup steps reuse.

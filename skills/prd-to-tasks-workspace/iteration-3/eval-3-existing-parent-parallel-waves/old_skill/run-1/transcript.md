@@ -1,6 +1,0 @@
-1. Read the assigned `SKILL.md` from the skill snapshot and treated it as the only task-specific instruction source.
-2. Relied on **Operating principles** and **Workflow** sections, especially: keep slices vertical, present a numbered review breakdown first when the source is an existing GitHub issue, create blockers before blocked issues, and keep the existing parent issue unchanged.
-3. Used the prompt's dependency chain directly: threshold schema support first; email and Slack delivery in parallel after that; alert history UI after both delivery paths.
-4. Because this is a dry run with no concrete parent issue number, repository, or codebase context, drafted placeholder issue numbers, generic likely files, and placeholder verification commands.
-5. Included the exact first user-facing review output the skill would send, then drafted the post-approval issue graph, child issue bodies, creation commands, subissue attachment commands, and final summary without executing anything.
-6. Noted the conflict between the eval prompt and the assigned skill: the prompt asked for a parent-body update, but the assigned `SKILL.md` explicitly forbids editing an existing parent issue's body or metadata, so the output leaves the parent untouched and records that miss.

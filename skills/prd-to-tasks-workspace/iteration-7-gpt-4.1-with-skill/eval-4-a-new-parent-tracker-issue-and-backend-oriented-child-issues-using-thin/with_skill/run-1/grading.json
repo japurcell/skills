@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "text": "Creates or plans a new parent tracker issue because the source was not a GitHub issue.",
+      "passed": false,
+      "evidence": "# Parent tracker draft  **Title:** Webhook Retry Operations: Delivery Persistence, Replay API, and Metrics"
+    },
+    {
+      "text": "Keeps the child issues focused on backend/API/worker/persistence behavior rather than inventing frontend or UI implementation work for this phase.",
+      "passed": true,
+      "evidence": "# Parent tracker draft  **Title:** Webhook Retry Operations: Delivery Persistence, Replay API, and Metrics  ## Source  This tracker"
+    },
+    {
+      "text": "Uses backend-oriented likely files or directories, such as handlers, workers, jobs, services, repositories, or persistence modules.",
+      "passed": false,
+      "evidence": "etrics to logs. No end-user or admin UI is included in this phase; work is limited to API handlers, background workers, and persistence.  ## Task graph  - [ ] W1 - Persist webhook retry a"
+    },
+    {
+      "text": "Verification guidance stays aligned to backend work: targeted backend tests plus API/log/job/database/manual checks, and does not introduce browser/UI verification commands such as Playwright, Cypress, Storybook, or page-click checks.",
+      "passed": false,
+      "evidence": "# Parent tracker draft  **Title:** Webhook Retry Operations: Delivery Persistence, Replay API, and Metrics  ## Source  This tracker covers the implementation of webhook retry operatio"
+    },
+    {
+      "text": "Final summary lists parent and child issue numbers with wave or dependency guidance.",
+      "passed": false,
+      "evidence": "locked by none - [ ] W2 - Internal admin API to replay failed delivery - AFK - blocked by #<child-1> - [ ] W3 - Emit retry outcome metrics to logs - AFK - blocked by #<child-2>  ## How to gr"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 4,
+    "total": 5,
+    "pass_rate": 0.2
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 12,
+    "errors_encountered": 0,
+    "output_chars": 1083,
+    "transcript_chars": 983
+  },
+  "timing": {
+    "total_tokens": 244,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

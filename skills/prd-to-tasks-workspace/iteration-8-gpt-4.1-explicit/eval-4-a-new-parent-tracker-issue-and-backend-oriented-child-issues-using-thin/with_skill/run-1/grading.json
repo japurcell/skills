@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Creates or plans a new parent tracker issue because the source was not a GitHub issue.",
+      "passed": true,
+      "evidence": "## Parent tracker draft  ### Title Webhook retry operations: persistence, replay API, and metrics (backend-"
+    },
+    {
+      "text": "Keeps the child issues focused on backend/API/worker/persistence behavior rather than inventing frontend or UI implementation work for this phase.",
+      "passed": true,
+      "evidence": "## Parent tracker draft  ### Title Webhook retry operations: persistence, replay API, and metrics (backend-only)  ### Body  ## Sourc"
+    },
+    {
+      "text": "Uses backend-oriented likely files or directories, such as handlers, workers, jobs, services, repositories, or persistence modules.",
+      "passed": true,
+      "evidence": "sue listed in `Blocked by` is closed  ## User stories covered  Not explicit in source  ## Files likely touched  - `src/webhooks/persistence.py` - `tests/webhooks/test_persistence.py`  ## Estimated sco"
+    },
+    {
+      "text": "Verification guidance stays aligned to backend work: targeted backend tests plus API/log/job/database/manual checks, and does not introduce browser/UI verification commands such as Playwright, Cypress, Storybook, or page-click checks.",
+      "passed": true,
+      "evidence": "st command` - [ ] Build succeeds: `relevant build command, if known and applicable` - [ ] Manual check: verify persisted retry attempts in storage after simulated failures  ## Blocked by  None"
+    },
+    {
+      "text": "Final summary lists parent and child issue numbers with wave or dependency guidance.",
+      "passed": true,
+      "evidence": "RENT_ISSUE_ID\\\", subIssueId: \\\"$CHILD_ISSUE_ID_3\\\"}) { issue { number } } }\" ```  ---  ## Final summary  Created task graph for backend-only webhook retry operations (persistence, replay API, m"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 15,
+    "errors_encountered": 0,
+    "output_chars": 5981,
+    "transcript_chars": 860
+  },
+  "timing": {
+    "total_tokens": 1138,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "# PRD-to-tasks dry-run notes (eval 4)\n\n- This is a dry-run draft using the prd-to-tasks skill, following SKILL.md exactly.\n- The PRD is backend-only: no UI, only API, worker, persistence, and metrics.\n- A new parent tracker is required (source is raw PRD, not an existing issue).\n- All issue numbers and IDs are placeholders.\n- Each child issue is a thin, vertical slice: persistence, replay API, metrics.\n- Acceptance criteria, verification, and queue position are explicit per template.\n- No GitHub mutations are performed; this is a draft for review."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

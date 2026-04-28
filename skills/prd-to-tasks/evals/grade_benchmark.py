@@ -45,6 +45,10 @@ def evidence_for(text: str, *terms: str) -> str:
     return "No supporting excerpt found."
 
 
+def matches(text: str, pattern: str) -> bool:
+    return re.search(pattern, text, flags=re.I | re.S) is not None
+
+
 def referenced_parent_numbers(text: str) -> set[str]:
     numbers = set(re.findall(r"Parent:\s*`?#(\d+)", text, flags=re.I))
     numbers.update(re.findall(r"## Parent\s+`?#(\d+)", text, flags=re.I | re.S))
@@ -215,11 +219,64 @@ def eval_3(response: str, transcript: str) -> list[tuple[bool, str]]:
     ]
 
 
+def eval_4(response: str, transcript: str) -> list[tuple[bool, str]]:
+    combined = f"{response}\n\n{transcript}"
+    frontend_leak = has_any(
+        response,
+        "playwright",
+        "cypress",
+        "storybook",
+        "open the page",
+        "visit the page",
+        "click through",
+        "browser",
+        "rendered page",
+        "rendered ui",
+        "visual regression",
+    )
+    backend_manual_check = matches(
+        response,
+        r"manual check:.*(api|endpoint|worker|job|queue|log|database|delivery|retry|replay|persist)",
+    )
+    backend_files = matches(
+        response,
+        r"(files likely touched|likely files).*?(handler|api|worker|job|service|webhook|retry|queue|repository|persistence|migration|db)",
+    )
+    frontend_files = has_any(response, ".tsx", ".jsx", "/components/", "/pages/", "/app/")
+    return [
+        (
+            has_any(combined, "parent tracker", "tracker") and has_any(combined, "#5000", "placeholder"),
+            evidence_for(combined, "Parent: #5000", "parent tracker", "tracker"),
+        ),
+        (
+            has_any(combined, "webhook", "delivery", "retry", "replay")
+            and has_any(combined, "api", "worker", "job", "service", "persistence", "repository")
+            and not has_any(combined, "ui component", "frontend page", "build the admin ui"),
+            evidence_for(combined, "webhook", "retry", "replay", "worker", "persistence"),
+        ),
+        (
+            backend_files and not frontend_files,
+            evidence_for(response, "Files likely touched", "handler", "worker", "service", "repository", "persistence"),
+        ),
+        (
+            backend_manual_check and not frontend_leak,
+            evidence_for(response, "Manual check:", "Tests pass:", "Build succeeds:", "API", "log", "worker", "database"),
+        ),
+        (
+            has_any(combined, "Final summary", "Created task graph")
+            and has_any(combined, "#5001", "#5002", "#<child-1>", "#<child-2>")
+            and has_any(combined, "blocked by", "W1", "W2"),
+            evidence_for(combined, "Final summary", "#5001", "#<child-1>", "blocked by", "W1"),
+        ),
+    ]
+
+
 CHECKS = {
     0: eval_0,
     1: eval_1,
     2: eval_2,
     3: eval_3,
+    4: eval_4,
 }
 
 

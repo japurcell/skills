@@ -27,6 +27,7 @@ Weak models often try to summarize the task graph instead of drafting executable
 
 - Even in dry-run or draft mode, produce the same structural sections you would use for a real run; placeholders are allowed, but missing sections are not.
 - Do not stop after a high-level slice list, checklist, or tracker blurb. Draft the child issues with the full issue-body structure, then draft the parent-body update, then draft the subissue attachment commands.
+- Copy required headings and placeholder shapes literally. Do not paraphrase section names, change heading levels, or swap in custom placeholder names when a template already shows the canonical form.
 - For existing-parent requests, keep this order:
   1. `## Proposed vertical-slice breakdown (present first)`
   2. Full child issue drafts using the issue body template
@@ -37,8 +38,13 @@ Weak models often try to summarize the task graph instead of drafting executable
   2. Full child issue drafts using the issue body template
   3. Subissue attachment commands
   4. Final summary
+- A tracker-only answer is wrong for raw-PRD/new-parent requests. After drafting the parent tracker, continue immediately into the full child issue bodies, then the attachment commands, then the final summary in the same response.
+- A prose description of the managed parent block is wrong for existing-parent requests. Emit the literal managed block with `<!-- prd-to-tasks:start -->`, `## Task graph`, `## How to grab work`, and `<!-- prd-to-tasks:end -->`.
 - Do not replace the managed parent-body block with a looser heading such as `## Parent Issue Tracking Guidance` or `## Execution Guidance`.
 - Do not collapse child issues into one-line bullets. Each child needs type, acceptance criteria, verification, blockers, queue position, likely files, and scope.
+- When the template shows `## Parent`, `## Verification`, `## Queue position`, `Parent: #<number>`, or `#<child-1>`, use those exact headings and placeholder forms rather than variants like `### Parent`, `Verification plan`, or `#<saved-search-crud-issue-number>`.
+- Never substitute slash-command shorthand such as `/addSubIssue` for the required `gh api graphql` attachment commands.
+- Do not flatten child issue drafts into bold label lists like `**Parent**: #4200` or `**Verification**:`. Emit the actual issue body template with the exact `## Parent`, `## What to build`, `## Verification`, and `## Queue position` sections.
 
 ## Inputs
 
@@ -52,6 +58,8 @@ Use whatever context is already in the conversation. The user may provide:
 If the source is too vague to identify the intended outcome, ask for the missing PRD, plan, or feature description before drafting issues.
 
 If the user wants a draft only, or real issue numbers are unavailable, use placeholders such as `#<parent-issue-number>` and clearly label the output as a draft.
+
+When using placeholders, say so explicitly at least once near the parent tracker or final summary (for example, `Parent: #<parent-issue-number> <title> (placeholder)`) so draft status is unmistakable.
 
 ## Core rules
 
@@ -86,6 +94,8 @@ If the fetch fails because of authentication, permissions, or repository ambigui
 
 Use issue comments and follow-up constraints when deciding slice boundaries, dependencies, and ordering.
 
+If the prompt explicitly says the parent issue body and comments are already in context, trust that context and skip the `gh issue view` fetch. Do not fail or stall on repository lookup in that case.
+
 ### 2. Explore the codebase only when it matters
 
 If the source depends on existing architecture and you do not already have enough repository context, launch several parallel `code-explorer` subagents with complementary lenses:
@@ -112,9 +122,19 @@ Break the work into child issues. Each slice should deliver one independently de
 Rules for slices:
 
 - Avoid horizontal issues like "database schema", "all API endpoints", or "UI components" unless the work is truly infrastructure-only.
+- Avoid splitting one user-visible behavior into separate backend-only and UI-only issues when a single thin vertical slice can cover the behavior end to end.
+- Do not add generic "tests", "documentation", or "cleanup" child issues unless the source work is truly infrastructure-only or the user explicitly asked for that standalone slice.
 - Keep acceptance criteria to three bullets or fewer. If you need more, split the issue.
 - Avoid "and" in titles; it often signals two slices.
 - Use dependencies only when one slice truly cannot start until another lands.
+- Keep the slice's likely files, acceptance criteria, and verification surface aligned. If the slice is backend-only, do not drift into frontend files or browser checks just because the product eventually has a UI.
+
+Concrete example for weak-model fidelity:
+
+- **Bad horizontal split**: `Implement audit log filtering backend`, `Build admin UI for filtering and export`, `Add tests and documentation`
+- **Good vertical split**: `Filter audit logs by actor/date/event type`, `Export filtered audit logs as CSV`, `Show admin-visible export failures`
+
+When the source already names narrow user-visible behaviors like filtering, exporting, or showing failures, use those behaviors as the child issue titles and let each slice span whatever backend/UI/test files it needs.
 
 Classify every slice:
 
@@ -177,11 +197,56 @@ If the source was not a GitHub issue, create a new parent tracker issue first wi
 Work is executed from this issue's direct subissues. Start with any open AFK issue in the lowest-numbered wave whose blockers are all closed. If multiple AFK issues share that wave and do not block one another, they may be worked in parallel. HITL issues require the named human decision or review before implementation.
 ```
 
+For raw PRD/new-parent draft responses, start with the parent tracker body above, then keep going. A minimal acceptable response has all four parts below in one answer:
+
+```markdown
+## Parent tracker draft
+
+<title/body or create command>
+
+## Child issue draft 1
+
+<full issue body template>
+
+## Child issue draft 2
+
+<full issue body template>
+
+## Subissue attachment commands
+
+```bash
+gh api graphql -f query="
+mutation {
+  addSubIssue(input: {issueId: \"$PARENT_ISSUE_ID\", subIssueId: \"$CHILD_ISSUE_ID\"}) {
+    issue { number }
+  }
+}"
+```
+
+## Final summary
+
+Created task graph for <feature/source>.
+
+Parent: #<parent-issue-number> <title>
+
+Child issues:
+
+1. #<child-1> <title> - W1 - AFK - blocked by none
+2. #<child-2> <title> - W2 - AFK - blocked by #<child-1>
+```
+
 Create the parent with `gh issue create` unless the user explicitly asked for a draft only.
 
 ### 6. Create child GitHub issues
 
 Create child issues in dependency order with `gh issue create`: blockers first, then the issues they unblock.
+
+Before drafting `## Verification`, look at `## What to build`, the acceptance criteria, and `## Files likely touched`, then choose checks that prove the behavior from that same surface.
+
+- For backend/API/worker/persistence slices, prefer targeted backend or contract tests plus API, queue, log, job, or database/manual verification. Do not invent browser/page/Storybook/Playwright/Cypress steps unless the slice actually touches a user-facing surface.
+- For frontend/UI slices, prefer UI-appropriate tests and manual checks, and only mention backend verification when the slice genuinely spans that layer.
+- If the repo's real command is unknown, keep the placeholder specific to the surface (for example, "targeted API/worker test command") instead of guessing a framework-specific frontend command.
+- Manual checks should name the actor and surface being verified: API response, admin endpoint, background job, log line, persisted row, rendered page, CLI output, and so on.
 
 Use this issue body template:
 
@@ -206,9 +271,9 @@ AFK | HITL
 
 ## Verification
 
-- [ ] Tests pass: `<targeted test command>`
-- [ ] Build succeeds: `<build command, if known>`
-- [ ] Manual check: <what to verify manually>
+- [ ] Tests pass: `<targeted command aligned to this slice's surface>`
+- [ ] Build succeeds: `<relevant build command, if known and applicable>`
+- [ ] Manual check: <verify through the actual affected surface; do not default to a UI check for backend-only work>
 
 ## Blocked by
 
@@ -233,6 +298,8 @@ None - can start immediately
 
 Small: 1-2 files | Medium: 3-5 files | Large: 5+ files
 ```
+
+Use this template verbatim in draft output. Keep the exact `##` headings, colon placement, and placeholder forms so future agents and grading tooling can parse the result reliably.
 
 When blocked, replace the `Blocked by` section with:
 
@@ -277,6 +344,9 @@ Use this managed block:
 5. Do not start HITL issues until the named human decision or review has happened.
 <!-- prd-to-tasks:end -->
 ```
+
+Copy that managed block literally in draft responses. Do not replace it with prose such as "this parent now serves as the managed tracker" or with alternate headings.
+Copy the numbered `1.` through `5.` lines inside `## How to grab work` literally as well; do not compress them into a paragraph.
 
 Suggested update flow:
 
@@ -355,6 +425,14 @@ Notes:
 
 If the run stopped early, clearly say whether it stopped during context gathering, review, parent creation, child issue creation, parent-body update, or subissue attachment.
 
+Use the final summary template literally:
+
+- keep the `Created task graph for ...` opening line
+- keep the `Parent: #<number> <title>` line
+- keep numbered child issue lines in the form `1. #<number> <title> - W<n> - AFK/HITL - blocked by <none/#n>`
+- for draft placeholders, prefer `#<child-1>`, `#<child-2>`, and so on instead of custom placeholder names
+- when the parent issue number is still unresolved in a draft, append `(placeholder)` to the parent line so the unresolved state is explicit
+
 ## Final checklist
 
 Before finishing, verify:
@@ -366,6 +444,7 @@ Before finishing, verify:
 - execution waves make the next ready AFK issue obvious from GitHub alone
 - blockers are created before blocked issues
 - each issue has acceptance criteria, verification, likely files, scope estimate, and queue position
+- verification commands and manual checks match the slice's likely files and affected surface
 - the parent tracker exists or was drafted first
 - if the parent already existed, its managed task-graph block makes the sibling subissue queue explicit without overwriting unrelated content
 - if the source already lived in a GitHub issue, no extra parent tracker or wrapper issue was created
