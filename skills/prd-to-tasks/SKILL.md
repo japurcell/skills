@@ -1,41 +1,45 @@
 ---
 name: prd-to-tasks
-description: Break a PRD, plan, feature description, problem statement, or body of work into independently-grabbable GitHub issues using vertical tracer-bullet slices with explicit dependency and ready-task guidance. Use this whenever the user wants to decompose requirements into GitHub issues, child issues, a task tracker issue, AFK/HITL implementation slices, or an issue graph that future agents can grab from, even if they do not explicitly say "prd-to-tasks".
+description: Break a PRD, plan, feature description, problem statement, or body of work into independently-grabbable GitHub issues using thin vertical slices, explicit execution waves, and ready-task guidance. Use this whenever the user wants to turn requirements into child issues, a tracker issue, AFK/HITL slices, or an issue graph future agents can execute from.
 ---
 
 # PRD to Tasks
 
-Break a PRD, plan, feature/problem description, or body of work into independently-grabbable GitHub issues. Each issue should be a thin vertical tracer bullet that can be implemented, reviewed, and verified on its own.
+Turn a PRD, plan, or feature description into a GitHub issue graph.
 
-Do not implement code while using this skill. The deliverable is a GitHub issue graph: one parent tracker issue plus child implementation issues, or child issues attached to an existing parent issue.
+Do not implement code while using this skill. The deliverable is either:
+
+- a new parent tracker issue plus child implementation issues, or
+- child implementation issues attached to an existing parent issue.
 
 ## Inputs
 
-Work from whatever context is already available in the conversation. The user may provide:
+Use whatever context is already in the conversation. The user may provide:
 
-- A GitHub issue number or URL containing the source PRD/plan.
-- Raw PRD, plan, spec, or feature text.
-- A short problem description that needs to become a task graph.
-- A target repository, labels, milestone, or project metadata.
+- a GitHub issue number or URL
+- raw PRD, plan, spec, or feature text
+- a short problem description that needs a task graph
+- repository, label, milestone, or project metadata
 
-If the source material is empty or too vague to identify the intended outcome, ask for the missing PRD, plan, or feature/problem description before creating issues.
+If the source is too vague to identify the intended outcome, ask for the missing PRD, plan, or feature description before drafting issues.
 
-## Operating principles
+If the user wants a draft only, or real issue numbers are unavailable, use placeholders such as `#<parent-issue-number>` and clearly label the output as a draft.
 
-- Slice vertically, not horizontally. A good child issue cuts through the layers needed for one narrow behavior, such as schema, API, UI, tests, and docs where applicable.
-- Prefer many thin slices over a few broad issues. Agents can grab small, self-contained work reliably.
-- Prefer **AFK** slices over **HITL** slices when reasonable. Mark a slice HITL only when human interaction is genuinely required, such as an architectural decision, design review, security/privacy signoff, or product trade-off.
-- Keep issue bodies implementation-guiding without over-prescribing internals. Include likely files, verification, and dependencies, but do not turn the issue into a step-by-step coding transcript.
+## Core rules
+
+- Slice vertically, not horizontally. Each child issue should deliver one narrow but complete behavior through the layers it needs.
+- Prefer many thin slices over a few broad ones.
+- Prefer **AFK** unless a human decision, review, approval, or access gate is genuinely required.
+- Keep issue bodies implementation-guiding without turning them into coding transcripts.
 - Create blockers before blocked issues so later issue bodies can reference real blocker issue numbers.
-- Do not close, rename, relabel, or otherwise change the metadata of an existing parent issue. You may update its body to append or refresh a dedicated task-graph section so the parent issue becomes the durable queue record.
-- Leave durable task-grabbing guidance in GitHub. A future implementation agent should be able to start from the parent issue and determine which AFK subissue is ready next without needing this chat transcript.
-- Make each child issue self-routing. A future agent who opens only that issue should be able to tell its parent, readiness rule, and place in the execution queue.
+- Keep existing parent metadata unchanged. You may update its body only by appending or refreshing a dedicated managed task-graph section.
+- Make the next ready AFK task obvious from GitHub alone.
 
 ## Workflow
 
-### 1. Gather context
+### 1. Gather source context
 
-Use context already present in the conversation first.
+Reuse conversation context first.
 
 If the user passes a GitHub issue number or URL, fetch the issue with comments before slicing:
 
@@ -43,77 +47,68 @@ If the user passes a GitHub issue number or URL, fetch the issue with comments b
 gh issue view <issue-number-or-url> --comments
 ```
 
-When a repository is provided or the current repository is ambiguous, pass the repo explicitly:
+When the repository is ambiguous, pass it explicitly:
 
 ```bash
 gh issue view <issue-number-or-url> --repo <owner/repo> --comments
 ```
 
-If the issue cannot be fetched because of authentication, permissions, or repository ambiguity, stop and report the exact `gh` failure plus the next action needed.
+If the fetch fails because of authentication, permissions, or repository ambiguity, stop and report the exact `gh` failure plus the next action needed.
 
-### 2. Explore the codebase when useful
+Use issue comments and follow-up constraints when deciding slice boundaries, dependencies, and ordering.
 
-If you have not already explored the codebase and the source material depends on existing architecture, launch several parallel `code-explorer` subagents. Use distinct lenses so their findings are complementary:
+### 2. Explore the codebase only when it matters
 
-1. Similar user flows and product surfaces.
+If the source depends on existing architecture and you do not already have enough repository context, launch several parallel `code-explorer` subagents with complementary lenses:
+
+1. Similar product flows and user surfaces.
 2. Architecture boundaries, data flow, and extension points.
 3. Persistence, API contracts, integrations, and migrations.
-4. Tests, accessibility, security, performance, or operational constraints.
+4. Tests, accessibility, security, performance, and operational constraints.
 
-Use this prompt shape for each explorer:
+Ask each explorer for:
 
-```text
-We are breaking a PRD/plan into independently-grabbable GitHub issues, not implementing code.
-
-Source material:
-<paste the PRD, plan, issue summary, or feature/problem description>
-
-Explore the repository for patterns relevant to <lens>.
-
-Return:
 1. Key findings that affect issue boundaries, dependencies, or verification.
 2. Existing conventions to preserve.
-3. 5-10 likely files or directories with a one-sentence reason for each.
+3. Likely files or directories to mention in issue bodies.
 4. Relevant tests or test patterns.
 5. Risks, unknowns, or decisions that may require HITL slices.
 
-Do not modify files.
-```
-
-If the request is simple or the codebase has already been explored in the current conversation, reuse existing context instead of launching redundant subagents.
+If the request is simple or the codebase has already been explored in the current conversation, skip this step.
 
 ### 3. Draft vertical tracer-bullet slices
 
-Break the work into child issues. Each slice should deliver a narrow but complete behavior through every required integration layer.
+Break the work into child issues. Each slice should deliver one independently demoable, testable, or otherwise verifiable behavior.
 
-Vertical-slice rules:
+Rules for slices:
 
-- Each slice delivers one complete path through relevant layers such as schema, API, UI, tests, docs, or operations.
-- A completed slice is independently demoable, testable, or otherwise verifiable.
-- Avoid horizontal issues like "add database schema", "build all API endpoints", or "create UI components" unless the source work is truly infrastructure-only.
+- Avoid horizontal issues like "database schema", "all API endpoints", or "UI components" unless the work is truly infrastructure-only.
 - Keep acceptance criteria to three bullets or fewer. If you need more, split the issue.
-- Avoid "and" in issue titles; it usually signals two slices.
+- Avoid "and" in titles; it often signals two slices.
+- Use dependencies only when one slice truly cannot start until another lands.
 
-Classify each slice:
+Classify every slice:
 
-- **AFK**: Can be implemented and merged without human interaction once assigned.
-- **HITL**: Requires human input before or during implementation, such as a product decision, architecture review, design review, compliance/security signoff, or external credential/access setup.
+- **AFK**: can be implemented and merged without human interaction once assigned
+- **HITL**: requires a human decision, review, approval, or access step before or during implementation
 
-Use dependencies only when one slice truly cannot start until another lands. Do not over-serialize independent work.
+Assign every slice an explicit **execution wave**:
 
-Assign each slice an explicit **execution wave**:
+- **W1**: can start immediately once the task graph exists
+- **W2+**: must wait for earlier blockers or earlier waves
+- reuse the same wave only for AFK slices that can genuinely proceed in parallel once blockers are closed
 
-- **W1**: Can start immediately once the task graph exists.
-- **W2+**: Must wait for earlier blockers or earlier waves.
-- Reuse the same wave number only for AFK slices that can genuinely proceed in parallel once their blockers are closed.
+Future agents need a deterministic rule for what comes next, so do not leave ordering implicit.
 
-Future agents need a deterministic rule for "what comes next," so do not leave ordering implicit.
+Prefer S/M slices. Split a slice if it would take more than one focused implementation session, touch more than roughly 5 files, need more than three acceptance bullets, or span multiple subsystems that can be verified separately.
 
-### 4. Review the proposed breakdown with the user when required
+### 4. Existing-parent requests: present the breakdown first
 
-If the source context came from an existing GitHub issue, present the proposed breakdown before creating child issues. Use a numbered list with this shape:
+If the source came from an existing GitHub issue, start by presenting the proposed breakdown before creating child issues. Use this shape:
 
 ```markdown
+## Proposed vertical-slice breakdown (present first)
+
 1. **Title**: <short descriptive title>
    **Type**: AFK | HITL
    **Execution wave**: W<n>
@@ -121,24 +116,19 @@ If the source context came from an existing GitHub issue, present the proposed b
    **User stories covered**: <story IDs or "Not explicit in source">
 ```
 
-Ask the user to confirm:
+If the user needs approval before any GitHub mutation, stop after the breakdown and ask for it.
 
-- Does the granularity feel right: too coarse, too fine, or about right?
-- Are the execution waves and dependency relationships correct?
-- Should any slices be merged or split further?
-- Are the correct slices marked HITL and AFK?
+If the user asked for a dry run, inline draft, or all-in-one answer, present the breakdown first and then continue with the draft issues in the same response, using placeholders where needed.
 
-Iterate until the user approves the breakdown. If the user provided raw PRD/plan text rather than an existing GitHub issue, use judgment: create issues directly when the breakdown is straightforward, or ask for review when dependencies, scope, or HITL classification are uncertain.
+If the source is raw PRD or plan text rather than an existing GitHub issue, use judgment: create issues directly when the breakdown is straightforward, or pause for review when scope, dependencies, or HITL classification are uncertain.
 
 ### 5. Prepare the parent tracker issue
 
 If the source was a GitHub issue, treat that issue as the parent tracker. Keep its title, labels, state, assignees, and unrelated body content untouched.
 
-Use the parent issue body as the durable queue record by appending or refreshing a dedicated managed section after the child issue numbers are known. Do not rewrite the whole issue body; only replace the content inside the managed block so user-authored prose outside that block remains intact.
+When the parent already exists, use its body as the durable queue record by appending or refreshing a managed task-graph section after the child issue numbers are known. Replace only the managed block; do not rewrite the whole body.
 
-If the source was not a GitHub issue, create a new parent tracker issue first with a concise title and a body that summarizes the source material and lists the intended child slices. This parent issue exists so agents can determine which task to grab next.
-
-Suggested parent body for a new tracker issue:
+If the source was not a GitHub issue, create a new parent tracker issue first with a concise title and a body like this:
 
 ```markdown
 ## Source
@@ -158,7 +148,7 @@ Create the parent with `gh issue create` unless the user explicitly asked for a 
 
 ### 6. Create child GitHub issues
 
-Create child issues in dependency order with `gh issue create`: blockers first, then issues they unblock. This lets later issue bodies reference real issue numbers.
+Create child issues in dependency order with `gh issue create`: blockers first, then the issues they unblock.
 
 Use this issue body template:
 
@@ -169,7 +159,7 @@ Use this issue body template:
 
 ## What to build
 
-<A concise description of this vertical slice. Describe the end-to-end behavior, not layer-by-layer implementation chores.>
+<Describe the end-to-end behavior of this slice, not layer-by-layer chores.>
 
 ## Type
 
@@ -185,7 +175,7 @@ AFK | HITL
 
 - [ ] Tests pass: `<targeted test command>`
 - [ ] Build succeeds: `<build command, if known>`
-- [ ] Manual check: <description of what to verify>
+- [ ] Manual check: <what to verify manually>
 
 ## Blocked by
 
@@ -196,21 +186,7 @@ None - can start immediately
 - Parent queue: direct subissue of #<parent-issue-number>
 - Execution wave: W<n>
 - Ready to start when: this issue has no blockers, or every issue listed in `Blocked by` is closed
-- Parallel rule: if multiple AFK issues are ready in W<n>, they may be worked in parallel
-- HITL rule: if this issue is HITL, wait for the named human decision or review before implementation begins
-```
 
-Or, when blocked:
-
-```markdown
-## Blocked by
-
-- Blocked by #<issue-number>
-```
-
-Then continue the body:
-
-```markdown
 ## User stories covered
 
 <Story IDs/titles from source material, or "Not explicit in source">
@@ -225,25 +201,31 @@ Then continue the body:
 Small: 1-2 files | Medium: 3-5 files | Large: 5+ files
 ```
 
-Omit the Parent section only if there is genuinely no parent tracker, which should be rare.
+When blocked, replace the `Blocked by` section with:
 
-If the issue is blocked, keep the same `Queue position` section but make the `Ready to start when` line explicit about the blocker closure condition.
+```markdown
+## Blocked by
 
-Create each child issue non-interactively. Prefer writing the body to a temporary file first so shell quoting does not damage Markdown checkboxes or code spans:
+- Blocked by #<issue-number>
+```
+
+Keep the same `Queue position` section for blocked issues, but make the `Ready to start when` line explicitly reference blocker closure.
+
+Create each child issue non-interactively. Prefer a body file so Markdown survives shell quoting:
 
 ```bash
 gh issue create --title "<child issue title>" --body-file <body-file>
 ```
 
-### 7. Update the existing parent issue body with durable tracking guidance
+### 7. Update an existing parent issue with durable tracking guidance
 
-When the parent tracker already exists as a GitHub issue, update its body after the child issue numbers are known. The parent body should tell future agents:
+When the parent tracker already exists as a GitHub issue, update its body after the child issue numbers are known. The parent body should make clear that:
 
 - the executable tasks are the parent issue's direct subissues
-- which wave each task belongs to
-- which AFK task is ready next
+- each task belongs to an execution wave
+- future agents should pick the lowest ready AFK task next
 
-Use a managed block so repeated runs replace only the generated task-graph guidance:
+Use this managed block:
 
 ```markdown
 <!-- prd-to-tasks:start -->
@@ -267,21 +249,16 @@ Suggested update flow:
 ```bash
 CURRENT_BODY_FILE=$(mktemp)
 UPDATED_BODY_FILE=$(mktemp)
-
 gh issue view <parent-issue-number> --json body --jq .body > "$CURRENT_BODY_FILE"
-
 python3 - "$CURRENT_BODY_FILE" "$UPDATED_BODY_FILE" <<'PY'
 from pathlib import Path
-import re
-import sys
-
-current_path = Path(sys.argv[1])
-updated_path = Path(sys.argv[2])
-current_body = current_path.read_text(encoding="utf-8")
+import re, sys
+current = Path(sys.argv[1]).read_text(encoding="utf-8")
 managed_block = """<!-- prd-to-tasks:start -->
 ## Task graph
 
 - [ ] W1 - #<child-issue-number> <title> - AFK/HITL - blocked by <none/#n>
+- [ ] W2 - #<child-issue-number> <title> - AFK/HITL - blocked by <none/#n>
 
 ## How to grab work
 
@@ -291,25 +268,18 @@ managed_block = """<!-- prd-to-tasks:start -->
 4. If several AFK issues are ready in the same wave, they may be worked in parallel.
 5. Do not start HITL issues until the named human decision or review has happened.
 <!-- prd-to-tasks:end -->"""
-
 pattern = re.compile(r"<!-- prd-to-tasks:start -->.*?<!-- prd-to-tasks:end -->", re.S)
-if pattern.search(current_body):
-    updated_body = pattern.sub(managed_block, current_body)
-else:
-    separator = "\n\n" if current_body.strip() else ""
-    updated_body = f"{current_body.rstrip()}{separator}{managed_block}\n"
-
-updated_path.write_text(updated_body, encoding="utf-8")
+updated = pattern.sub(managed_block, current) if pattern.search(current) else f"{current.rstrip()}\n\n{managed_block}\n"
+Path(sys.argv[2]).write_text(updated, encoding="utf-8")
 PY
-
 gh issue edit <parent-issue-number> --body-file "$UPDATED_BODY_FILE"
 ```
 
 ### 8. Attach child issues to the parent
 
-After creating each child issue, attach it to the parent issue using GitHub's subissue GraphQL mutation.
+After creating each child issue, attach it to the parent issue with `addSubIssue`.
 
-Keep the shell snippet Copilot-safe by inlining the resolved IDs in the GraphQL query text. Do not use GraphQL variables such as `mutation($parentId: ID!, ...)` inside the shell command because `$...` tokens may be blocked as suspicious shell expansion.
+Inline the resolved IDs in the GraphQL query text. Do not use GraphQL variables such as `mutation($parentId: ID!, ...)` inside the shell command.
 
 ```bash
 PARENT_ISSUE_ID=$(gh issue view <parent-issue-number> --json id --jq .id)
@@ -322,30 +292,11 @@ mutation {
 }"
 ```
 
-If attaching subissues fails because the repository or account lacks subissue support, do not delete created issues. Report the child issue numbers and the exact failure, then explain that the parent tracker can still link them manually.
-
-## Task sizing guidelines
-
-| Size | Files | Scope | Example |
-|------|-------|-------|---------|
-| **XS** | 1 | Single function or config change | Add a validation rule |
-| **S** | 1-2 | One component or endpoint | Add a new API endpoint |
-| **M** | 3-5 | One feature slice | User registration flow |
-| **L** | 5-8 | Multi-component feature | Search with filtering and pagination |
-| **XL** | 8+ | Too large - break it down further | N/A |
-
-If a slice is L or larger, split it into smaller vertical slices. Agents perform best on S and M issues.
-
-Break a slice down further when:
-
-- It would take more than one focused implementation session.
-- You cannot describe acceptance criteria in three or fewer bullets.
-- It touches two or more independent subsystems that can be verified separately.
-- The title contains "and".
+If subissue attachment fails because the repository or account lacks support, do not delete created issues. Report the exact failure and explain that the parent tracker can still link the children manually.
 
 ## Final response
 
-After creating issues, return a concise summary:
+After creating or drafting the issues, return a concise summary:
 
 ```markdown
 Created task graph for <feature/source>.
@@ -362,21 +313,21 @@ How to grab work:
 - If the parent issue already existed, read the managed `Task graph` / `How to grab work` section in its body.
 
 Notes:
-- <Any HITL decisions, attach failures, or assumptions>
+- <Any HITL decisions, attachment failures, or assumptions>
 ```
 
-If the run stopped before creating issues, clearly say whether it stopped during context gathering, review, parent creation, child issue creation, or subissue attachment.
+If the run stopped early, clearly say whether it stopped during context gathering, review, parent creation, child issue creation, parent-body update, or subissue attachment.
 
-## Quality gate
+## Final checklist
 
-Before creating child issues, verify:
+Before finishing, verify:
 
-- Every child issue is a vertical slice, not a horizontal layer.
-- Every AFK issue has enough context for an agent to implement without human interaction.
-- Every HITL issue names the human decision or review required.
-- Dependencies are minimal and accurate.
-- Execution waves make the next ready AFK issue obvious from GitHub alone.
-- Blockers are created before blocked issues.
-- Each issue has acceptance criteria, verification, likely files, scope estimate, and queue position.
-- The parent tracker exists or will be created first.
-- If the parent tracker was an existing GitHub issue, its body has been updated with a managed task-graph block that makes the sibling subissue queue explicit without overwriting unrelated content.
+- every child issue is a vertical slice, not a horizontal layer
+- every AFK issue has enough context for an implementation agent to start without human interaction
+- every HITL issue names the human decision or review required
+- dependencies are minimal and accurate
+- execution waves make the next ready AFK issue obvious from GitHub alone
+- blockers are created before blocked issues
+- each issue has acceptance criteria, verification, likely files, scope estimate, and queue position
+- the parent tracker exists or was drafted first
+- if the parent already existed, its managed task-graph block makes the sibling subissue queue explicit without overwriting unrelated content
