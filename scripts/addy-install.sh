@@ -216,12 +216,8 @@ updated_content, replacements = re.subn(
     count=1,
 )
 
-if replacements != 1:
-    raise SystemExit(
-        f"Missing expected name field in {path}: name: {original_name}"
-    )
-
-path.write_text(updated_content, encoding="utf-8")
+if replacements == 1:
+    path.write_text(updated_content, encoding="utf-8")
 PY
 }
 
