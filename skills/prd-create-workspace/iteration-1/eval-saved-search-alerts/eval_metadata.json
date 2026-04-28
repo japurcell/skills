@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "saved-search-alerts",
+  "prompt": "Create a PRD for adding saved searches with email alerts to this application. Users should be able to save a search, choose how often they want updates, and manage existing alerts from their account area.",
+  "assertions": [
+    "The workflow launches multiple code-explorer subagents with distinct lenses before writing the PRD.",
+    "The workflow performs targeted research from official sources before recording implementation decisions.",
+    "The workflow asks one user question at a time and includes a recommended answer for each question.",
+    "The final PRD follows the required template and includes a GitHub issue title/body plus the intended gh issue create command for offline filing.",
+    "Implementation decisions cite durable codebase patterns or official research links without including specific file paths."
+  ]
+}

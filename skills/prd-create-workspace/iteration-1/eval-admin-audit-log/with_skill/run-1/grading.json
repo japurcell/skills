@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "The workflow gathers codebase context through parallel code-explorer agents and asks each for 5-10 key files with reasons.",
+      "passed": true,
+      "evidence": "Exploration summary has 7 code-explorer/agent/lens markers. Found 37 source/file mentions in exploration summary."
+    },
+    {
+      "text": "The workflow identifies security, retention, permissions, and compliance gaps and interviews the user one question at a time.",
+      "passed": true,
+      "evidence": "Interview log has 24 question markers, 38 recommendation/assumption markers, sequential order=True."
+    },
+    {
+      "text": "The workflow researches official security, privacy, platform, or framework guidance before recommending decisions.",
+      "passed": true,
+      "evidence": "Research summary has 16 links, 104 lines, official-source marker=True."
+    },
+    {
+      "text": "The PRD contains an extensive numbered user-story list covering primary, edge, admin, compliance, and error-state scenarios.",
+      "passed": true,
+      "evidence": "Found 24 numbered user stories; coverage={'admin': True, 'compliance': True, 'error|fail|denied|unauthorized': True, 'role|permission|access': True}."
+    },
+    {
+      "text": "Testing decisions focus on external behavior and cite similar codebase test patterns where available.",
+      "passed": true,
+      "evidence": "Testing section external-behavior marker=True, modules/surfaces=True, prior-art marker=True."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 50532,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 772.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 772.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": [
+      "Offline benchmark: real GitHub issue creation was intentionally replaced by saved issue title/body and intended gh issue create command."
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "The workflow distinguishes product-scope questions from questions answerable by exploration or official documentation.",
+      "passed": true,
+      "evidence": "Research summary has 13 links, 201 lines, official-source marker=True."
+    },
+    {
+      "text": "The workflow walks dependent decisions in order, resolving parent decisions before child decisions.",
+      "passed": true,
+      "evidence": "Dependency marker=True; questions=10; sequential order=True."
+    },
+    {
+      "text": "The PRD avoids specific file paths and code snippets while still citing existing product or architectural patterns.",
+      "passed": true,
+      "evidence": "Local/repo file paths in issue body=False; citation/source markers=34."
+    },
+    {
+      "text": "The Out of Scope section clearly excludes deferred onboarding paths, integrations, or implementation work.",
+      "passed": true,
+      "evidence": "Out of Scope section length=1013; exclusion markers=9."
+    },
+    {
+      "text": "The final output includes the GitHub issue title/body, intended gh issue create command, and any important assumptions or follow-up notes.",
+      "passed": true,
+      "evidence": "Issue title present=True; body heading order=True; gh command=True; assumptions/notes marker=True."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 55022,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 596.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 596.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": [
+      "Offline benchmark: real GitHub issue creation was intentionally replaced by saved issue title/body and intended gh issue create command."
+    ]
+  }
+}
