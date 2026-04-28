@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+      "passed": true,
+      "evidence": "prove an alternative verification path in the child issue.   Skipped required command with weaker substitute. Controller checkpoint (line 185 of SKILL.md) catches this: \"If the subagent... skipped or substituted a required verification comma"
+    },
+    {
+      "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+      "passed": true,
+      "evidence": "he subagent **skipped a required verification command** and substituted a weaker alternative:  **Required:** `pnpm exec next typegen`   **Actual:** Subagent skipped because `next` is unavailable, then ran `pnpm exec eslint app/settings/form.t"
+    },
+    {
+      "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+      "passed": true,
+      "evidence": "** `pnpm exec next typegen`   **Actual:** Subagent skipped because `next` is unavailable, then ran `pnpm exec eslint app/settings/form.tsx` instead.  This violates the acceptance contract. Per the skill:  > Treat each listed v"
+    },
+    {
+      "text": "Keeps the child issue open or not ready to close.",
+      "passed": true,
+      "evidence": "## \u26d4 Checkpoint stop before review  W3 / #5104 \"Add admin settings form\"  The implementation subagent reported a clean RED \u2192 GREEN \u2192 REFACTOR chain with pas"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "errors_encountered": 0,
+    "output_chars": 2002,
+    "transcript_chars": 292
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

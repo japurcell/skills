@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+      "passed": true,
+      "evidence": "ification status  | Command | Result | |---------|--------| | `pnpm exec expo-doctor` | \u2713 Pass | | `pnpm exec expo-router verify` | \u2717 **BLOCKED** \u2014 `/bin/sh: expo-router: command not found` | | `pnpm test -- route-guard.test.ts` | \u2713 Pass"
+    },
+    {
+      "text": "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+      "passed": true,
+      "evidence": "er verify` \u2014 a framework-native validation step specified in the child issue. Per the prd-implement rules, we do not substitute weaker verification proxies (static analysis, type-only checks, manual code inspection) when a required frame"
+    },
+    {
+      "text": "Keeps the child issue open or not ready to close.",
+      "passed": true,
+      "evidence": "## PRD execution blocked: W2 #5101 verification cannot proceed  **Blocking issue:** W2 #5101 \"Add tenant-scoped route guard\" cannot close becaus"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": true,
+      "evidence": "## PRD execution blocked: W2 #5101 verification cannot proceed  **Blocking issue:** W2 #5101 \"Add tenant-scoped route guard\" cannot cl"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 6,
+    "errors_encountered": 0,
+    "output_chars": 2034,
+    "transcript_chars": 620
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Controller rejects weaker verification substitutes per SKILL.md rules 199-200 and 215-219. The required `pnpm exec expo-router verify` command is unavailable (missing binary), triggering stop condition (line 263-264). Issue #5101 remains open and cannot be closed until the framework CLI is restored or the verification plan is explicitly re-approved in GitHub by a human."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

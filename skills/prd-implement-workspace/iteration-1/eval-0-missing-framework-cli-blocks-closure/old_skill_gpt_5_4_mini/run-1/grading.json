@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+      "passed": true,
+      "evidence": "r #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - `pnpm exec expo-router verify` failed immediately with `/bin/sh: expo-router: command not found`.  Next ready work:  - none until the missi"
+    },
+    {
+      "text": "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+      "passed": true,
+      "evidence": "is available and verification can be rerun.  Notes:  - `pnpm test -- route-guard.test.ts` passed. - I did not substitute manual code inspection or `pnpm exec tsc --noEmit` for the required verification command. - #5101 remains ope"
+    },
+    {
+      "text": "Keeps the child issue open or not ready to close.",
+      "passed": false,
+      "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - `pnpm exec expo-router verify` failed immediately with `/bin/sh: expo-router:"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": false,
+      "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - `pnpm exec expo-router verify` failed immediately with `"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 515,
+    "transcript_chars": 216
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Verification is blocked because `pnpm exec expo-router verify` cannot find the `expo-router` command."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,6 +1,7 @@
 ---
 name: prd-implement
 description: Execute a PRD GitHub issue that already has a task graph from `prd-to-tasks`. Use this whenever the user wants to implement, resume, or finish work from a PRD/tracker issue with child implementation issues and execution waves — for example "implement PRD #123", "work through the task graph under issue 123", "resume the AFK slices for #123", or "build the next ready task from the PRD issue". This skill reads the parent issue's managed `Task graph` block, executes AFK child issues in dependency order, requires `tdd` subagents for implementation, and runs review in separate subagents. Do not use it to create or rewrite the task graph; use `prd-to-tasks` first.
+argument-hint: "prd_issue: #123"
 ---
 
 # PRD Implement
@@ -118,13 +119,13 @@ Tell the subagent to:
 1. Implement **only** the assigned child issue.
 2. Follow **RED → GREEN → REFACTOR** strictly.
 3. Keep slices thin and avoid broad cleanup.
-4. Run the child issue's targeted verification commands exactly as required for that issue, and treat missing tooling as a blocking result rather than a cue to invent substitutes.
+4. Run the child issue's targeted verification commands.
 5. Return:
-    - RED/GREEN/REFACTOR summary
-    - files changed
-    - commands run and outcomes
-    - remaining risks or deferments
-    - whether the task is ready to close
+   - RED/GREEN/REFACTOR summary
+   - files changed
+   - commands run and outcomes
+   - remaining risks or deferments
+   - whether the task is ready to close
 
 Do not let the implementation subagent expand scope, edit files owned by another in-flight task, or decide wave ordering on its own.
 If it must touch a file that was not listed in `Files likely touched`, it should stop and escalate that need back to the controller instead of silently broadening scope.
@@ -182,7 +183,7 @@ After each implementation subagent finishes, the controller must inspect the act
 
 1. Read the changed files or diff for that child issue.
 2. Read the reported test/command output, or rerun the targeted command if the evidence is incomplete.
-3. If the subagent changed unexpected files, failed to produce a clean RED/GREEN/REFACTOR chain, skipped or substituted a required verification command, or left verification unclear, stop and resolve that before review.
+3. If the subagent changed unexpected files, failed to produce a clean RED/GREEN/REFACTOR chain, or left verification unclear, stop and resolve that before review.
 
 Do not close issues or advance waves based on subagent summaries alone.
 
@@ -196,27 +197,19 @@ For each completed child issue in the wave:
    - default: one verification subagent per child issue using that issue's `Verification` steps
    - exception: if a command clearly validates multiple child issues together, create one shared command group and list the exact covered child issue numbers
 2. Assert that every child issue being considered for closure is covered by at least one verification command or command group. If any issue has no verification coverage, do not close it.
-3. Treat each listed verification step as the required command contract for that issue. If the issue says to use a framework or project CLI, run that CLI; do not silently swap in static analysis, code reading, lint-only checks, type-check-only checks, or some other weaker proxy just because the intended verification tool is missing or inconvenient.
-4. If a required verification command cannot run as written because a binary, framework CLI, generated artifact, environment dependency, credential, or service is unavailable, stop and surface that exact blocker. Report the command, the missing dependency/tool, and the stderr or setup gap. Do not mark the issue ready to close, and do not invent an alternative verification path unless the child issue itself already lists it or the human updates the verification plan explicitly.
-5. Launch verification subagents from that plan.
-6. Have each verification subagent run its assigned commands and return command, exit code, covered issue numbers, and evidence.
-7. Do not close any child issue covered by a shared command group unless that shared group passes.
-8. Confirm the acceptance criteria are satisfied.
-9. Add a concise progress comment that captures:
+3. Launch verification subagents from that plan.
+4. Have each verification subagent run its assigned commands and return command, exit code, covered issue numbers, and evidence.
+5. Do not close any child issue covered by a shared command group unless that shared group passes.
+6. Confirm the acceptance criteria are satisfied.
+7. Add a concise progress comment that captures:
    - wave name
    - RED/GREEN/REFACTOR completion
    - changed files
    - verification evidence
    - notable review findings and fixes
-10. Close the child issue only when every verification command that covers it passed.
+8. Close the child issue only when every verification command that covers it passed.
 
 If a child issue has multiple verification commands and they are independent, the controller may launch them in parallel verification subagents. If they share state or resources, run them sequentially through verification subagents.
-
-Verification subagents must preserve verification strength:
-
-- If the required verification command is unavailable, fail closed and report the blocker.
-- Do not replace framework-native verification with static analysis, source inspection, or generic "looks correct" reasoning.
-- Do not downgrade `npm run verify:web`, `bin/rails test`, `cargo test`, `nx test`, framework codegen validators, or similar required commands to unrelated checks unless the issue explicitly says those checks are acceptable alternatives.
 
 If verification is missing, ambiguous, or failing:
 
@@ -233,7 +226,6 @@ Before closing any child issue, the controller must also confirm that:
 1. the acceptance criteria are satisfied
 2. no blocking review finding remains unresolved for that issue's scope
 3. the latest issue comments make the TDD stage history and verification outcome visible from GitHub alone
-4. no required verification command was skipped, replaced with a weaker proxy, or left blocked without being reported
 
 ## Resume behavior
 
@@ -260,7 +252,6 @@ Stop and report clearly when any of these happens:
 - a child issue referenced by the graph is missing or malformed
 - the current lowest wave is gated by a HITL issue
 - repository or GitHub authentication is ambiguous or broken
-- a required verification command or framework CLI is unavailable and no human-approved replacement path exists
 - an implementation or verification failure remains unresolved
 - unrelated local changes create a conflict with the assigned task scope
 

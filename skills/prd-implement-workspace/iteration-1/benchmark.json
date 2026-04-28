@@ -1,0 +1,550 @@
+{
+  "metadata": {
+    "skill_name": "prd-implement",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-28T20:41:46Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "old_skill_gpt_5_4_mini",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 515,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+          "passed": true,
+          "evidence": "r #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - `pnpm exec expo-router verify` failed immediately with `/bin/sh: expo-router: command not found`.  Next ready work:  - none until the missi"
+        },
+        {
+          "text": "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+          "passed": true,
+          "evidence": "is available and verification can be rerun.  Notes:  - `pnpm test -- route-guard.test.ts` passed. - I did not substitute manual code inspection or `pnpm exec tsc --noEmit` for the required verification command. - #5101 remains ope"
+        },
+        {
+          "text": "Keeps the child issue open or not ready to close.",
+          "passed": false,
+          "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - `pnpm exec expo-router verify` failed immediately with `/bin/sh: expo-router:"
+        },
+        {
+          "text": "Stops before the next wave or other new work proceeds.",
+          "passed": false,
+          "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - `pnpm exec expo-router verify` failed immediately with `"
+        }
+      ],
+      "notes": [
+        "Verification is blocked because `pnpm exec expo-router verify` cannot find the `expo-router` command."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill_gpt_5_4_mini",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 645,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+          "passed": true,
+          "evidence": "min settings form  Blocked / waiting:  1. None  Next ready work:  - Review wave W3 scope for #5104  Notes:  - Controller checkpoint passed: reviewed the actual diff and the reported test output before review. - RED/GREEN/REFACTOR summary was"
+        },
+        {
+          "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+          "passed": true,
+          "evidence": "tput before review. - RED/GREEN/REFACTOR summary was clean. - `npm test -- settings-form.test.tsx` passed. - `pnpm exec next typegen` could not run because `next` is unavailable in this checkout, so the subagent skipped it after validating th"
+        },
+        {
+          "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+          "passed": false,
+          "evidence": "in this checkout, so the subagent skipped it after validating the generated types file and running `pnpm exec eslint app/settings/form.tsx`. - No unexpected files or unresolved verification gaps were reported.   Read the old p"
+        },
+        {
+          "text": "Keeps the child issue open or not ready to close.",
+          "passed": false,
+          "evidence": "PRD execution status for #5000  Completed this run:  1. #5104 Add admin settings form  Blocked / waiting:  1. None  Next ready work:  - Review wave W3 scope for #5104  Not"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill_gpt_5_4_mini",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 621,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
+          "passed": true,
+          "evidence": "PRD execution status for #6000  Completed this run:  None.  Blocked / waiting:  1. #6101 CSV export filters - shared verification failed (`/bin/sh: bundle: command not found`), so it cannot be close"
+        },
+        {
+          "text": "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
+          "passed": true,
+          "evidence": "es:  - Do not close #6101 based on diff review alone; the shared verification group must pass first. - Rerun `bundle exec rspec spec/requests/admin/export_spec.rb` after Bundler is available.   Read the authoritative prd-implement skill"
+        },
+        {
+          "text": "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Stops before the next wave or any additional issue closure proceeds.",
+          "passed": true,
+          "evidence": "PRD execution status for #6000  Completed this run:  None.  Blocked / waiting:  1. #6101 CSV export filters - shared verification failed (`/bin/sh: bundle: command not found`),"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill_gpt_5_4_mini",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 359,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Acknowledges that the original `pnpm` command could not run.",
+          "passed": true,
+          "evidence": "ady work:  - None  Notes:  - `pnpm exec redwood test api/src/functions/users/users.test.ts` was unavailable (`pnpm: command not found`), so verification completed with `yarn rw test api/src/functions/users/users.test.ts`.   Read the prd-implem"
+        },
+        {
+          "text": "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
+          "passed": true,
+          "evidence": "c/functions/users/users.test.ts` was unavailable (`pnpm: command not found`), so verification completed with `yarn rw test api/src/functions/users/users.test.ts`.   Read the prd-implement skill file first. Produced the controller-st"
+        },
+        {
+          "text": "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Allows the child issue to close or be ready to close after the fallback passes.",
+          "passed": true,
+          "evidence": "PRD execution status for #7000  Completed this run:  1. #7101 AFK child issue verified successfully  Blocked / waiting:  1. None  Next ready work:  - None  Notes:  - `pnpm"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill_claude_haiku_4_5",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 2034,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+          "passed": true,
+          "evidence": "ification status  | Command | Result | |---------|--------| | `pnpm exec expo-doctor` | \u2713 Pass | | `pnpm exec expo-router verify` | \u2717 **BLOCKED** \u2014 `/bin/sh: expo-router: command not found` | | `pnpm test -- route-guard.test.ts` | \u2713 Pass"
+        },
+        {
+          "text": "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+          "passed": true,
+          "evidence": "er verify` \u2014 a framework-native validation step specified in the child issue. Per the prd-implement rules, we do not substitute weaker verification proxies (static analysis, type-only checks, manual code inspection) when a required frame"
+        },
+        {
+          "text": "Keeps the child issue open or not ready to close.",
+          "passed": true,
+          "evidence": "## PRD execution blocked: W2 #5101 verification cannot proceed  **Blocking issue:** W2 #5101 \"Add tenant-scoped route guard\" cannot close becaus"
+        },
+        {
+          "text": "Stops before the next wave or other new work proceeds.",
+          "passed": true,
+          "evidence": "## PRD execution blocked: W2 #5101 verification cannot proceed  **Blocking issue:** W2 #5101 \"Add tenant-scoped route guard\" cannot cl"
+        }
+      ],
+      "notes": [
+        "Controller rejects weaker verification substitutes per SKILL.md rules 199-200 and 215-219. The required `pnpm exec expo-router verify` command is unavailable (missing binary), triggering stop condition (line 263-264). Issue #5101 remains open and cannot be closed until the framework CLI is restored or the verification plan is explicitly re-approved in GitHub by a human."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill_claude_haiku_4_5",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 2002,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+          "passed": true,
+          "evidence": "prove an alternative verification path in the child issue.   Skipped required command with weaker substitute. Controller checkpoint (line 185 of SKILL.md) catches this: \"If the subagent... skipped or substituted a required verification comma"
+        },
+        {
+          "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+          "passed": true,
+          "evidence": "he subagent **skipped a required verification command** and substituted a weaker alternative:  **Required:** `pnpm exec next typegen`   **Actual:** Subagent skipped because `next` is unavailable, then ran `pnpm exec eslint app/settings/form.t"
+        },
+        {
+          "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+          "passed": true,
+          "evidence": "** `pnpm exec next typegen`   **Actual:** Subagent skipped because `next` is unavailable, then ran `pnpm exec eslint app/settings/form.tsx` instead.  This violates the acceptance contract. Per the skill:  > Treat each listed v"
+        },
+        {
+          "text": "Keeps the child issue open or not ready to close.",
+          "passed": true,
+          "evidence": "## \u26d4 Checkpoint stop before review  W3 / #5104 \"Add admin settings form\"  The implementation subagent reported a clean RED \u2192 GREEN \u2192 REFACTOR chain with pas"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill_claude_haiku_4_5",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1523,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
+          "passed": true,
+          "evidence": "tion plan uses a shared command group `bundle exec rspec spec/requests/admin/export_spec.rb` to validate both #6101 and #6102. This shared coverage means both issues are blocked by the same verification result.  The required"
+        },
+        {
+          "text": "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
+          "passed": true,
+          "evidence": "**Verification blocked \u2014 cannot close either issue**  The verification plan uses a shared command group `bundle exec rspec spec/requests/admin/export_spec.rb` to validate both #6101 and #6102. This shared coverage means both issues"
+        },
+        {
+          "text": "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
+          "passed": true,
+          "evidence": "be closed until either the environment is fixed or verification is re-specified  Do not close #6101 based on diff inspection. Verification strength requires running the specified framework test suite, not code review."
+        },
+        {
+          "text": "Stops before the next wave or any additional issue closure proceeds.",
+          "passed": true,
+          "evidence": "**Verification blocked \u2014 cannot close either issue**  The verification plan uses a shared command group `bundle exec rspec spec/requ"
+        }
+      ],
+      "notes": [
+        "Shared command group blocks both issues per SKILL rule: do not close covered issues unless shared group passes. Missing `bundle` binary is a stop condition\u2014no framework substitution allowed per verification strength rules. Code inspection alone does not satisfy the contracted rspec verification."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill_claude_haiku_4_5",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 346,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Acknowledges that the original `pnpm` command could not run.",
+          "passed": true,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
+          "passed": true,
+          "evidence": "ked / waiting:  None  Next ready work:  - See controller output below  Notes:  - Verification succeeded using fallback command when pnpm was unavailable. Redwood test framework properly validated via yarn CLI as specified in child issue"
+        },
+        {
+          "text": "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
+          "passed": true,
+          "evidence": "eded using fallback command when pnpm was unavailable. Redwood test framework properly validated via yarn CLI as specified in child issue acceptance criteria.   1. Read SKILL.md to understand prd-implement controller responsibilities and verificat"
+        },
+        {
+          "text": "Allows the child issue to close or be ready to close after the fallback passes.",
+          "passed": true,
+          "evidence": "PRD execution status for #7000  Completed this run:  1. #7101 Users API test suite  Blocked / waiting:  None  Next ready work:  - See controller output below  Notes:  - Ve"
+        }
+      ],
+      "notes": [
+        "The skill correctly handles environment-aware fallback commands. The verification subagent attempted the primary pnpm command, encountered \"pnpm: command not found\", and successfully executed the explicit fallback command (yarn rw test). Since the fallback was pre-approved in the child issue's Verification section, this is a valid verification pass per SKILL.md rule 199 which permits issue-listed alternatives. Child issue #7101 is ready to close."
+      ]
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill_gpt_5_4_mini",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 758,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+          "passed": true,
+          "evidence": "enant-scoped route guard \u2014 implementation and review completed; verification partially passed, but `pnpm exec expo-router verify` failed immediately with `/bin/sh: expo-router: command not found`.  Blocked / waiting:  1. #5101 Add tenant-"
+        },
+        {
+          "text": "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+          "passed": true,
+          "evidence": "1. #5101 Add tenant-scoped route guard \u2014 required verification CLI is unavailable. Do not close the issue or substitute manual inspection / `pnpm exec tsc --noEmit`.  Next ready work:  - None; W2 remains blocked until the require"
+        },
+        {
+          "text": "Keeps the child issue open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #5000  Completed this run:  1. #5101 Add tenant-scoped route guard \u2014 implementation and review completed; verification partially passed, but `pnpm"
+        },
+        {
+          "text": "Stops before the next wave or other new work proceeds.",
+          "passed": true,
+          "evidence": "assed, but `pnpm exec expo-router verify` failed immediately with `/bin/sh: expo-router: command not found`.  Blocked / waiting:  1. #5101 Add tenant-scoped route guard \u2014 required verification CLI is unavailable. Do not close t"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill_gpt_5_4_mini",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 663,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+          "passed": true,
+          "evidence": "the verification plan is updated in GitHub.   Read the prd-implement skill file first. Modeled the controller checkpoint before review from the provided subagent results. Wrote the benchmark outputs under the requested run directory."
+        },
+        {
+          "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+          "passed": true,
+          "evidence": "d admin settings form - controller checkpoint failed before review because the required verification command `pnpm exec next typegen` could not run in this checkout (`next` unavailable); the subagent substituted `read generated types file` +"
+        },
+        {
+          "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+          "passed": true,
+          "evidence": "run in this checkout (`next` unavailable); the subagent substituted `read generated types file` + `pnpm exec eslint app/settings/form.tsx`, which is not an approved replacement.  Next ready work:  - none  Notes:  - Halted aft"
+        },
+        {
+          "text": "Keeps the child issue open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #5000  Completed this run:  1. #5104 Add admin settings form  Blocked / waiting:  1. #5104 Add admin settings form - controller checkpoint failed"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill_gpt_5_4_mini",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 498,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
+          "passed": true,
+          "evidence": "PRD execution status for #6000  Completed this run:  1. None  Blocked / waiting:  1. #6101 CSV export filters - blocked by shared verification; `bundle exec rspec spec/requests/admin/export_spec.rb` f"
+        },
+        {
+          "text": "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
+          "passed": true,
+          "evidence": "pleted this run:  1. None  Blocked / waiting:  1. #6101 CSV export filters - blocked by shared verification; `bundle exec rspec spec/requests/admin/export_spec.rb` failed with `/bin/sh: bundle: command not found` 2. #6102 CSV export down"
+        },
+        {
+          "text": "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
+          "passed": true,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Stops before the next wave or any additional issue closure proceeds.",
+          "passed": true,
+          "evidence": "PRD execution status for #6000  Completed this run:  1. None  Blocked / waiting:  1. #6101 CSV export filters - blocked by shared verification; `bundle exec rspec spec/requests/ad"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill_gpt_5_4_mini",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 395,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Acknowledges that the original `pnpm` command could not run.",
+          "passed": true,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
+          "passed": true,
+          "evidence": "ers.test.ts` could not run because `pnpm` is unavailable in this environment. - Used the documented fallback `yarn rw test api/src/functions/users/users.test.ts`, which completed successfully.   Read the prd-implement skill file fir"
+        },
+        {
+          "text": "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
+          "passed": true,
+          "evidence": "rc/functions/users/users.test.ts` could not run because `pnpm` is unavailable in this environment. - Used the documented fallback `yarn rw test api/src/functions/users/users.test.ts`, which completed successfully.   Read the prd-implement"
+        },
+        {
+          "text": "Allows the child issue to close or be ready to close after the fallback passes.",
+          "passed": true,
+          "evidence": "PRD execution status for #7000  Completed this run:  1. #7101 Users test verification  Blocked / waiting:  1. None  Next ready work:  - None  Notes:  - `pnpm exec redwood"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "old_skill_gpt_5_4_mini": {
+      "pass_rate": {
+        "mean": 0.625,
+        "stddev": 0.1443,
+        "min": 0.5,
+        "max": 0.75
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 535.0,
+        "stddev": 130.2203,
+        "min": 359,
+        "max": 645
+      }
+    },
+    "with_skill_claude_haiku_4_5": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 1476.25,
+        "stddev": 788.9125,
+        "min": 346,
+        "max": 2034
+      }
+    },
+    "with_skill_gpt_5_4_mini": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 578.5,
+        "stddev": 162.8015,
+        "min": 395,
+        "max": 758
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.38",
+      "time_seconds": "+0.0",
+      "tokens": "-941"
+    }
+  },
+  "notes": []
+}
