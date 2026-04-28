@@ -1,6 +1,6 @@
 ---
 name: prd-implement
-description: Execute a PRD GitHub issue that already has a task graph from `prd-to-tasks`. Use this whenever the user wants to implement, resume, or finish work from a PRD/tracker issue with child implementation issues and execution waves — for example "implement PRD #123", "work through the task graph under issue 123", "resume the AFK slices for #123", or "build the next ready task from the PRD issue". This skill reads the parent issue's managed `Task graph` block, executes AFK child issues in dependency order, requires `tdd` subagents for implementation, and runs review in separate subagents. Do not use it to create or rewrite the task graph; use `prd-to-tasks` first.
+description: Execute a PRD GitHub issue that already has a task graph from `prd-to-tasks`. Use this whenever the user wants to implement, resume, or finish work from a PRD/tracker issue with child implementation issues and execution waves — for example "implement PRD #123", "work through the task graph under issue 123", "resume the AFK slices for #123", or "build the next ready task from the PRD issue". This skill reads the parent issue's managed `Task graph` block, uses the `gh-cli` skill to retrieve the issue and comments, executes AFK child issues in dependency order, requires `tdd` subagents for implementation, and runs review in separate subagents. Do not use it to create or rewrite the task graph; use `prd-to-tasks` first.
 ---
 
 # PRD Implement
@@ -31,7 +31,7 @@ If `prd_issue` is missing, ask for it. If the issue does not contain a `prd-to-t
 
 ## Fetch and parse the graph
 
-1. Fetch the parent issue with comments.
+1. Use the `gh-cli` skill to fetch the parent issue with comments. Some weaker models do not auto-load that skill, so call it explicitly before issue retrieval.
 2. Parse the managed block written by `prd-to-tasks`:
 
 ```markdown
