@@ -1,6 +1,7 @@
 ---
 name: prd-to-tasks
 description: Break a PRD, plan, feature description, problem statement, or body of work into independently-grabbable GitHub issues using thin vertical slices, explicit execution waves, and ready-task guidance. Use this whenever the user wants to turn requirements into child issues, a tracker issue, AFK/HITL slices, or an issue graph future agents can execute from.
+argument-hint: "Provide a GitHub issue number or URL, raw PRD/plan/spec/feature text, or a short problem description that needs a task graph."
 ---
 
 # PRD to Tasks
@@ -229,6 +230,7 @@ Use this managed block:
 
 ```markdown
 <!-- prd-to-tasks:start -->
+
 ## Task graph
 
 - [ ] W1 - #<child-issue-number> <title> - AFK/HITL - blocked by <none/#n>
@@ -304,15 +306,18 @@ Created task graph for <feature/source>.
 Parent: #<number> <title>
 
 Child issues:
+
 1. #<number> <title> - W<n> - AFK/HITL - blocked by <none/#n>
 2. #<number> <title> - W<n> - AFK/HITL - blocked by <none/#n>
 
 How to grab work:
+
 - Open parent #<number> and inspect its direct subissues.
 - Pick the lowest-numbered open AFK wave whose blockers are all closed.
 - If the parent issue already existed, read the managed `Task graph` / `How to grab work` section in its body.
 
 Notes:
+
 - <Any HITL decisions, attachment failures, or assumptions>
 ```
 
