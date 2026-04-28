@@ -1,0 +1,64 @@
+{
+  "expectations": [
+    {
+      "text": "Presents a numbered proposed breakdown before creating child issues because the source is an existing GitHub issue.",
+      "passed": true,
+      "evidence": "## Proposed vertical-slice breakdown (present first)  1. **Title**: Create a saved search from the search page      **Type**: AFK      **Execution wave**: W"
+    },
+    {
+      "text": "The proposed breakdown includes execution-wave or equivalent ready-order guidance so future agents can tell what comes next.",
+      "passed": true,
+      "evidence": "irst)  1. **Title**: Create a saved search from the search page      **Type**: AFK      **Execution wave**: W1      **Blocked by**: None      **User stories covered**: Saved searches can be crea"
+    },
+    {
+      "text": "Updates the existing parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue, and makes clear that the executable tasks remain sibling direct sub-issues of the PRD issue.",
+      "passed": true,
+      "evidence": "separator}{managed_block}\\n\"  updated_path.write_text(updated_body, encoding=\"utf-8\") PY  gh issue edit <parent-issue-number> --body-file \"$UPDATED_BODY_FILE\" ```  ### 3. Attach each child issu"
+    },
+    {
+      "text": "Queue guidance on the parent tells future agents to pick the lowest ready AFK wave/task whose blockers are closed, and to hold HITL work until the named decision or review is complete.",
+      "passed": true,
+      "evidence": "k is in the sibling implementation issues listed above. 3. Pick any open AFK issue in the lowest-numbered wave whose blockers are all closed. 4. If several AFK issues are ready in the same wave, they"
+    },
+    {
+      "text": "Uses the issue comments to keep saved-search creation earlier than alert delivery and to avoid blocking initial creation on notification preference editing.",
+      "passed": true,
+      "evidence": "n be created from the search page; notification preference edits should not block initial saved-search creation.  2. **Title**: Manage saved searches after creation      **Type**: AFK      **E"
+    },
+    {
+      "text": "Attaches child issues to the parent using addSubIssue without GraphQL variables in the mutation signature.",
+      "passed": true,
+      "evidence": "gh issue view <child-1-number> --json id --jq .id) gh api graphql -f query=\" mutation {   addSubIssue(input: {issueId: \\\"$PARENT_ISSUE_ID\\\", subIssueId: \\\"$CHILD_1_ISSUE_ID\\\"}) {     issue {"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 6,
+    "errors_encountered": 0,
+    "output_chars": 19718,
+    "transcript_chars": 914
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 392.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "- Assumed the parent issue number, title, and repository are intentionally omitted; placeholders such as `#<parent-issue-number>` and `#<child-1-number>` were used throughout.\n- `Files likely touched` entries are illustrative because no target codebase or architecture details were available in context.\n- All slices were marked AFK because the prompt already resolved the major sequencing/product constraints and did not surface a remaining human-only decision."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

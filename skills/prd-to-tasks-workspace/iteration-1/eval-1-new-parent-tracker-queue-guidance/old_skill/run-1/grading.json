@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Creates or plans a new parent tracker issue because the source was not a GitHub issue.",
+      "passed": true,
+      "evidence": "run does not create real GitHub issues.  Created task graph for admin audit log exports.  Parent: #5000 Admin audit log exports tracker  ## Parent tracker draft  **Title**: `Admin audit log exp"
+    },
+    {
+      "text": "The parent tracker issue body includes a task graph plus explicit how-to-grab-work guidance.",
+      "passed": true,
+      "evidence": "ate range, and event type, allow CSV export for compliance, and surface export failures.  ## Task graph  - [ ] Filter admin audit logs by actor, date range, and event type - AFK - blocked by no"
+    },
+    {
+      "text": "Child issues are vertical feature slices rather than horizontal database/API/UI tasks.",
+      "passed": true,
+      "evidence": "type, allow CSV export for compliance, and surface export failures.  ## Task graph  - [ ] Filter admin audit logs by actor, date range, and event type - AFK - blocked by none - [ ] Export filtered admin"
+    },
+    {
+      "text": "Each child issue includes queue position information such as execution wave and readiness guidance.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Final summary lists parent and child issue numbers with dependency or wave information.",
+      "passed": true,
+      "evidence": "\"$PARENT_ISSUE_ID\", subIssueId: \"$CHILD_ISSUE_ID\"}) {     issue { number }   } }\" ```  ## Final summary  Created task graph for admin audit log exports.  Parent: #5000 Admin audit log exports t"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 5,
+    "errors_encountered": 0,
+    "output_chars": 6298,
+    "transcript_chars": 792
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 148.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "- Placeholder issue numbers (`#5000`-`#5003`) were used because this is a dry run and no remote issues were created.\n- Verification commands remain placeholders because the prompt did not provide repository-specific test or build commands.\n- File paths are illustrative because no target application repository or codebase context was provided in the prompt."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

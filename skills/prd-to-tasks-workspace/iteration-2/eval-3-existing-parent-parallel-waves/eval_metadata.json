@@ -1,0 +1,12 @@
+{
+  "eval_id": 3,
+  "eval_name": "eval-3-existing-parent-parallel-waves",
+  "prompt": "The source PRD already lives in an existing GitHub parent issue whose body and comments are already in context. Treat that parent issue as immutable. The issue describes billing alert policies: first add threshold schema support, then email alerts and Slack alerts can be implemented in parallel, then the alert history UI depends on both delivery paths. A comment from product says the parent PRD issue must stay untouched and future implementation agents need to figure out the next task from GitHub alone. Turn this into grabbable GitHub issues.",
+  "assertions": [
+    "Does not propose editing the parent PRD issue body, title, labels, or state.",
+    "Keeps the executable implementation issues as direct sub-issues of the parent PRD issue rather than hiding them under a synthetic nested tracker.",
+    "Creates a queue-guide/task-graph child issue under the parent because the parent cannot be edited.",
+    "Places the schema slice in an earlier wave than the email and Slack slices, allows email and Slack to share a wave, and places the history UI after both.",
+    "Queue guidance tells agents to inspect the parent issue's sub-issues, ignore the queue-guide issue for implementation, and pick the lowest ready AFK wave whose blockers are closed."
+  ]
+}

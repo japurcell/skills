@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Keeps the parent PRD issue title, labels, and state untouched while allowing a body update for tracking guidance.",
+      "passed": true,
+      "evidence": "*not** draft a body update.  ## Exact user-facing output the skill would send first  1. **Title**: Add billing alert threshold schema support      **Type**: AFK      **Blocked by**: Non"
+    },
+    {
+      "text": "Keeps the executable implementation issues as direct sub-issues of the parent PRD issue rather than hiding them under a synthetic nested tracker.",
+      "passed": true,
+      "evidence": "ited. - Future implementation agents would discover the next task from the parent issue's direct subissues plus each child issue's `Blocked by` section. - Dry run only; commands and issue bodies b"
+    },
+    {
+      "text": "Updates the parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue.",
+      "passed": false,
+      "evidence": "_ID\\\"}) {     issue { number }   } }\" ```  ## Draft final summary after creation  Created task graph for billing alert policies.  Parent: `#<parent-issue-number>` existing immutable PRD issu"
+    },
+    {
+      "text": "Places the schema slice in an earlier wave than the email and Slack slices, allows email and Slack to share a wave, and places the history UI after both.",
+      "passed": true,
+      "evidence": "## Exact user-facing output the skill would send first  1. **Title**: Add billing alert threshold schema support      **Type**: AFK      **Blocked by**: None      **User stories covered**"
+    },
+    {
+      "text": "Queue guidance tells agents to inspect the parent issue's task graph plus direct sub-issues, and pick the lowest ready AFK wave whose blockers are closed.",
+      "passed": false,
+      "evidence": "_ID\\\"}) {     issue { number }   } }\" ```  ## Draft final summary after creation  Created task graph for billing alert policies.  Parent: `#<parent-issue-number>` existing immutable PRD issu"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 6,
+    "errors_encountered": 0,
+    "output_chars": 9387,
+    "transcript_chars": 1270
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 109.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Assumptions:\n- No parent issue number, repository, parent issue body text, or existing comment text were provided in the benchmark prompt, so placeholders were used.\n- The assigned `SKILL.md` conflicts with the eval prompt on parent-body updates; I followed the skill and therefore drafted no body-update command."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

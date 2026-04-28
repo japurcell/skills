@@ -1,0 +1,64 @@
+{
+  "expectations": [
+    {
+      "text": "Fetches the GitHub issue with comments before slicing.",
+      "passed": true,
+      "evidence": "l instruction to fetch the existing GitHub issue with comments before proposing slices:  `gh issue view 142 --repo acme/platform --comments`  It failed with:  `GraphQL: Could not resolve to a Repos"
+    },
+    {
+      "text": "Presents a numbered proposed breakdown before creating child issues because the source is an existing GitHub issue.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Includes execution-wave or equivalent ready-order guidance so future agents can tell what comes next.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Creates a queue-guide/task-graph child issue because the parent GitHub issue cannot be edited, and makes clear that the executable tasks remain sibling direct sub-issues of the PRD issue.",
+      "passed": false,
+      "evidence": "e and comments, propose vertical slices for approval, and then draft the child issues and queue-guide issue.  Because the source issue could not be fetched, I did not draft slices or child is"
+    },
+    {
+      "text": "Queue guidance tells future agents to pick the lowest ready AFK wave/task whose blockers are closed, and to hold HITL work until the named decision or review is complete.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Attaches child issues to the parent using addSubIssue without GraphQL variables in the mutation signature.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 5,
+    "total": 6,
+    "pass_rate": 0.167
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 6,
+    "errors_encountered": 1,
+    "output_chars": 691,
+    "transcript_chars": 829
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 81.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Assumption: the intended repository slug was exactly `acme/platform`, so I passed it explicitly per the skill.\nUncertainty: the fetch failure could mean the repository slug is wrong, the repository is private/inaccessible to the current `gh` auth context, or the repository does not exist."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

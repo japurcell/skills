@@ -1,0 +1,6 @@
+- The eval prompt asks for a parent-body tracking update, but the assigned SKILL.md explicitly says that when the source was a GitHub issue, the parent issue body and metadata should not be edited. I followed the skill literally and surfaced that mismatch in `response.md`.
+- The existing parent issue number was not provided, so placeholder issue numbers were used throughout.
+- No repository or codebase context was provided, so likely file paths, test commands, and build commands remain generic placeholders.
+- Assumed the parent issue's saved-search CRUD scope was best represented as separate create, read/list, edit, and delete slices.
+- Assumed `pause alert delivery` is distinct from broader `notification preference edits`, so those were drafted as separate downstream child issues.
+- Because the benchmark asks for a complete dry-run deliverable in one pass, I presented the review-stage breakdown first and then proceeded as though that breakdown had been approved.

@@ -1,0 +1,3 @@
+- Assumed there is no existing parent GitHub issue because the prompt supplied raw plan text rather than an issue URL or number.
+- Assumed all implementation slices are blocked on the design review because the prompt says onboarding UI changes require review first.
+- Used placeholder issue numbers, GraphQL node IDs, and test/build commands because this benchmark run must not mutate remote state and did not provide repo-specific verification commands.

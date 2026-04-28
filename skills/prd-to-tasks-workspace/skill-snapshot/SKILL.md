@@ -1,6 +1,6 @@
 ---
 name: prd-to-tasks
-description: Break a PRD, plan, feature description, problem statement, or body of work into independently-grabbable GitHub issues using vertical tracer-bullet slices with explicit dependency and ready-task guidance. Use this whenever the user wants to decompose requirements into GitHub issues, child issues, a task tracker issue, AFK/HITL implementation slices, or an issue graph that future agents can grab from, even if they do not explicitly say "prd-to-tasks".
+description: Break a PRD, plan, feature description, problem statement, or body of work into independently-grabbable GitHub issues using vertical tracer-bullet slices. Use this whenever the user wants to decompose requirements into GitHub issues, child issues, a task tracker issue, AFK/HITL implementation slices, or an issue graph from a PRD or plan, even if they do not explicitly say "prd-to-tasks".
 ---
 
 # PRD to Tasks
@@ -27,9 +27,7 @@ If the source material is empty or too vague to identify the intended outcome, a
 - Prefer **AFK** slices over **HITL** slices when reasonable. Mark a slice HITL only when human interaction is genuinely required, such as an architectural decision, design review, security/privacy signoff, or product trade-off.
 - Keep issue bodies implementation-guiding without over-prescribing internals. Include likely files, verification, and dependencies, but do not turn the issue into a step-by-step coding transcript.
 - Create blockers before blocked issues so later issue bodies can reference real blocker issue numbers.
-- Do not close, rename, relabel, or otherwise change the metadata of an existing parent issue. You may update its body to append or refresh a dedicated task-graph section so the parent issue becomes the durable queue record.
-- Leave durable task-grabbing guidance in GitHub. A future implementation agent should be able to start from the parent issue and determine which AFK subissue is ready next without needing this chat transcript.
-- Make each child issue self-routing. A future agent who opens only that issue should be able to tell its parent, readiness rule, and place in the execution queue.
+- Do not close, rename, reword, relabel, or otherwise edit an existing parent issue. Attaching subissues is the intended tracker operation; avoid other parent modifications.
 
 ## Workflow
 
@@ -101,14 +99,6 @@ Classify each slice:
 
 Use dependencies only when one slice truly cannot start until another lands. Do not over-serialize independent work.
 
-Assign each slice an explicit **execution wave**:
-
-- **W1**: Can start immediately once the task graph exists.
-- **W2+**: Must wait for earlier blockers or earlier waves.
-- Reuse the same wave number only for AFK slices that can genuinely proceed in parallel once their blockers are closed.
-
-Future agents need a deterministic rule for "what comes next," so do not leave ordering implicit.
-
 ### 4. Review the proposed breakdown with the user when required
 
 If the source context came from an existing GitHub issue, present the proposed breakdown before creating child issues. Use a numbered list with this shape:
@@ -116,7 +106,6 @@ If the source context came from an existing GitHub issue, present the proposed b
 ```markdown
 1. **Title**: <short descriptive title>
    **Type**: AFK | HITL
-   **Execution wave**: W<n>
    **Blocked by**: None | Slice <n>: <title>
    **User stories covered**: <story IDs or "Not explicit in source">
 ```
@@ -124,7 +113,7 @@ If the source context came from an existing GitHub issue, present the proposed b
 Ask the user to confirm:
 
 - Does the granularity feel right: too coarse, too fine, or about right?
-- Are the execution waves and dependency relationships correct?
+- Are dependency relationships correct?
 - Should any slices be merged or split further?
 - Are the correct slices marked HITL and AFK?
 
@@ -132,13 +121,11 @@ Iterate until the user approves the breakdown. If the user provided raw PRD/plan
 
 ### 5. Prepare the parent tracker issue
 
-If the source was a GitHub issue, treat that issue as the parent tracker. Keep its title, labels, state, assignees, and unrelated body content untouched.
-
-Use the parent issue body as the durable queue record by appending or refreshing a dedicated managed section after the child issue numbers are known. Do not rewrite the whole issue body; only replace the content inside the managed block so user-authored prose outside that block remains intact.
+If the source was a GitHub issue, treat that issue as the parent tracker. Do not edit its body, title, labels, state, or other metadata.
 
 If the source was not a GitHub issue, create a new parent tracker issue first with a concise title and a body that summarizes the source material and lists the intended child slices. This parent issue exists so agents can determine which task to grab next.
 
-Suggested parent body for a new tracker issue:
+Suggested parent body:
 
 ```markdown
 ## Source
@@ -147,11 +134,11 @@ Suggested parent body for a new tracker issue:
 
 ## Task graph
 
-- [ ] W<n> - <child title or placeholder until created> - AFK/HITL - blocked by <none/title>
+- [ ] <child title or placeholder until created> - AFK/HITL - blocked by <none/title>
 
 ## How to grab work
 
-Work is executed from this issue's direct subissues. Start with any open AFK issue in the lowest-numbered wave whose blockers are all closed. If multiple AFK issues share that wave and do not block one another, they may be worked in parallel. HITL issues require the named human decision or review before implementation.
+Start with any unchecked AFK issue marked "None - can start immediately" in its Blocked by section. HITL issues require the named human decision or review before implementation.
 ```
 
 Create the parent with `gh issue create` unless the user explicitly asked for a draft only.
@@ -190,14 +177,6 @@ AFK | HITL
 ## Blocked by
 
 None - can start immediately
-
-## Queue position
-
-- Parent queue: direct subissue of #<parent-issue-number>
-- Execution wave: W<n>
-- Ready to start when: this issue has no blockers, or every issue listed in `Blocked by` is closed
-- Parallel rule: if multiple AFK issues are ready in W<n>, they may be worked in parallel
-- HITL rule: if this issue is HITL, wait for the named human decision or review before implementation begins
 ```
 
 Or, when blocked:
@@ -227,85 +206,13 @@ Small: 1-2 files | Medium: 3-5 files | Large: 5+ files
 
 Omit the Parent section only if there is genuinely no parent tracker, which should be rare.
 
-If the issue is blocked, keep the same `Queue position` section but make the `Ready to start when` line explicit about the blocker closure condition.
-
 Create each child issue non-interactively. Prefer writing the body to a temporary file first so shell quoting does not damage Markdown checkboxes or code spans:
 
 ```bash
 gh issue create --title "<child issue title>" --body-file <body-file>
 ```
 
-### 7. Update the existing parent issue body with durable tracking guidance
-
-When the parent tracker already exists as a GitHub issue, update its body after the child issue numbers are known. The parent body should tell future agents:
-
-- the executable tasks are the parent issue's direct subissues
-- which wave each task belongs to
-- which AFK task is ready next
-
-Use a managed block so repeated runs replace only the generated task-graph guidance:
-
-```markdown
-<!-- prd-to-tasks:start -->
-## Task graph
-
-- [ ] W1 - #<child-issue-number> <title> - AFK/HITL - blocked by <none/#n>
-- [ ] W2 - #<child-issue-number> <title> - AFK/HITL - blocked by <none/#n>
-
-## How to grab work
-
-1. Open this parent issue and inspect its direct subissues.
-2. The executable work is in the sibling implementation issues listed above.
-3. Pick any open AFK issue in the lowest-numbered wave whose blockers are all closed.
-4. If several AFK issues are ready in the same wave, they may be worked in parallel.
-5. Do not start HITL issues until the named human decision or review has happened.
-<!-- prd-to-tasks:end -->
-```
-
-Suggested update flow:
-
-```bash
-CURRENT_BODY_FILE=$(mktemp)
-UPDATED_BODY_FILE=$(mktemp)
-
-gh issue view <parent-issue-number> --json body --jq .body > "$CURRENT_BODY_FILE"
-
-python3 - "$CURRENT_BODY_FILE" "$UPDATED_BODY_FILE" <<'PY'
-from pathlib import Path
-import re
-import sys
-
-current_path = Path(sys.argv[1])
-updated_path = Path(sys.argv[2])
-current_body = current_path.read_text(encoding="utf-8")
-managed_block = """<!-- prd-to-tasks:start -->
-## Task graph
-
-- [ ] W1 - #<child-issue-number> <title> - AFK/HITL - blocked by <none/#n>
-
-## How to grab work
-
-1. Open this parent issue and inspect its direct subissues.
-2. The executable work is in the sibling implementation issues listed above.
-3. Pick any open AFK issue in the lowest-numbered wave whose blockers are all closed.
-4. If several AFK issues are ready in the same wave, they may be worked in parallel.
-5. Do not start HITL issues until the named human decision or review has happened.
-<!-- prd-to-tasks:end -->"""
-
-pattern = re.compile(r"<!-- prd-to-tasks:start -->.*?<!-- prd-to-tasks:end -->", re.S)
-if pattern.search(current_body):
-    updated_body = pattern.sub(managed_block, current_body)
-else:
-    separator = "\n\n" if current_body.strip() else ""
-    updated_body = f"{current_body.rstrip()}{separator}{managed_block}\n"
-
-updated_path.write_text(updated_body, encoding="utf-8")
-PY
-
-gh issue edit <parent-issue-number> --body-file "$UPDATED_BODY_FILE"
-```
-
-### 8. Attach child issues to the parent
+### 7. Attach child issues to the parent
 
 After creating each child issue, attach it to the parent issue using GitHub's subissue GraphQL mutation.
 
@@ -353,13 +260,8 @@ Created task graph for <feature/source>.
 Parent: #<number> <title>
 
 Child issues:
-1. #<number> <title> - W<n> - AFK/HITL - blocked by <none/#n>
-2. #<number> <title> - W<n> - AFK/HITL - blocked by <none/#n>
-
-How to grab work:
-- Open parent #<number> and inspect its direct subissues.
-- Pick the lowest-numbered open AFK wave whose blockers are all closed.
-- If the parent issue already existed, read the managed `Task graph` / `How to grab work` section in its body.
+1. #<number> <title> - AFK/HITL - blocked by <none/#n>
+2. #<number> <title> - AFK/HITL - blocked by <none/#n>
 
 Notes:
 - <Any HITL decisions, attach failures, or assumptions>
@@ -375,8 +277,6 @@ Before creating child issues, verify:
 - Every AFK issue has enough context for an agent to implement without human interaction.
 - Every HITL issue names the human decision or review required.
 - Dependencies are minimal and accurate.
-- Execution waves make the next ready AFK issue obvious from GitHub alone.
 - Blockers are created before blocked issues.
-- Each issue has acceptance criteria, verification, likely files, scope estimate, and queue position.
+- Each issue has acceptance criteria, verification, likely files, and scope estimate.
 - The parent tracker exists or will be created first.
-- If the parent tracker was an existing GitHub issue, its body has been updated with a managed task-graph block that makes the sibling subissue queue explicit without overwriting unrelated content.

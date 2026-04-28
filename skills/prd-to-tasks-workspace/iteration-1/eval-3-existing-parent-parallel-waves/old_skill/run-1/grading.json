@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Does not propose editing the parent PRD issue body, title, labels, or state.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Keeps the executable implementation issues as direct sub-issues of the parent PRD issue rather than hiding them under a synthetic nested tracker.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Creates a queue-guide/task-graph child issue under the parent because the parent cannot be edited.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Places the schema slice in an earlier wave than the email and Slack slices, allows email and Slack to share a wave, and places the history UI after both.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Queue guidance tells agents to inspect the parent issue's sub-issues, ignore the queue-guide issue for implementation, and pick the lowest ready AFK wave whose blockers are closed.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 5,
+    "total": 5,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 5,
+    "errors_encountered": 1,
+    "output_chars": 494,
+    "transcript_chars": 725
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 64.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Assumption: the `gh` failure means either the `acme/platform` repository slug is incorrect for this environment or the current GitHub authentication cannot access it."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,3 @@
+- Assumed the existing parent issue number is unavailable in this benchmark prompt, so `#<parent-issue-number>` placeholders are used.
+- Assumed no repository context is available, so likely files and verification commands are generic placeholders.
+- Because the source is an existing GitHub issue, the skill would normally stop after the review/confirmation prompt before creating issues; the later issue bodies and commands are included here only because the benchmark explicitly asked for drafted artifacts.

@@ -1,0 +1,64 @@
+{
+  "expectations": [
+    {
+      "text": "Presents a numbered proposed breakdown before creating child issues because the source is an existing GitHub issue.",
+      "passed": true,
+      "evidence": "able, so placeholder issue numbers are used below.  ## Proposed vertical-slice breakdown  1. **Title**: Create saved searches from the search page      **Type**: AFK      **Blocked by**: None"
+    },
+    {
+      "text": "The proposed breakdown includes execution-wave or equivalent ready-order guidance so future agents can tell what comes next.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Updates the existing parent issue body with a managed task-graph/how-to-grab-work section instead of creating a queue-guide child issue, and makes clear that the executable tasks remain sibling direct sub-issues of the PRD issue.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Queue guidance on the parent tells future agents to pick the lowest ready AFK wave/task whose blockers are closed, and to hold HITL work until the named decision or review is complete.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Uses the issue comments to keep saved-search creation earlier than alert delivery and to avoid blocking initial creation on notification preference editing.",
+      "passed": true,
+      "evidence": "by**: Slice 1: Create saved searches from the search page      **User stories covered**: Saved-search CRUD - read/list existing saved searches. 3. **Title**: Edit a saved search      **Type**"
+    },
+    {
+      "text": "Attaches child issues to the parent using addSubIssue without GraphQL variables in the mutation signature.",
+      "passed": true,
+      "evidence": "E_ID=$(gh issue view <child-1> --json id --jq .id) gh api graphql -f query=\" mutation {   addSubIssue(input: {issueId: \\\"$PARENT_ISSUE_ID\\\", subIssueId: \\\"$CHILD_ISSUE_ID\\\"}) {     issue { nu"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 3,
+    "total": 6,
+    "pass_rate": 0.5
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 8,
+    "errors_encountered": 0,
+    "output_chars": 15402,
+    "transcript_chars": 1587
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 142.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "- The eval prompt asks for a parent-body tracking update, but the assigned SKILL.md explicitly says that when the source was a GitHub issue, the parent issue body and metadata should not be edited. I followed the skill literally and surfaced that mismatch in `response.md`.\n- The existing parent issue number was not provided, so placeholder issue numbers were used throughout.\n- No repository or codebase context was provided, so likely file paths, test commands, and build commands remain generic placeholders.\n- Assumed the parent issue's saved-search CRUD scope was best represented as separate create, read/list, edit, and delete slices.\n- Assumed `pause alert delivery` is distinct from broader `notification preference edits`, so those were drafted as separate downstream child issues.\n- Because the benchmark asks for a complete dry-run deliverable in one pass, I presented the review-stage breakdown first and then proceeded as though that breakdown had been approved."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

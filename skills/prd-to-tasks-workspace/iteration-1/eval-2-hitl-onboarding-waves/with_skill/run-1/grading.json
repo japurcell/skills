@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Marks the design review as HITL and implementation slices as AFK where possible.",
+      "passed": true,
+      "evidence": "arent: #<new-parent> Workspace onboarding for new admins  Child issues: 1. #<new-child-1> Design review for workspace onboarding flow - W1 - HITL - blocked by none 2. #<new-child-2> Add teammat"
+    },
+    {
+      "text": "Avoids a single large issue covering inviting teammates and Slack and first project setup together.",
+      "passed": true,
+      "evidence": "Acceptance criteria  - [ ] Design review is completed for the onboarding flow, including invite teammates, connect Slack, and first project setup states. - [ ] Approved design artifacts or review"
+    },
+    {
+      "text": "Uses dependencies only where a slice truly cannot start before another, and reflects that in the execution waves or ready-order guidance.",
+      "passed": true,
+      "evidence": "aph  1. **Title**: Design review for workspace onboarding flow      **Type**: HITL      **Execution wave**: W1      **Blocked by**: None      **User stories covered**: Not explicit in source 2."
+    },
+    {
+      "text": "Includes manual verification steps appropriate to onboarding behavior.",
+      "passed": true,
+      "evidence": "e - design review only` - [ ] Build succeeds: `Not applicable - design review only` - [ ] Manual check: Approved design artifacts or review notes are linked from the issue.  ## Blocked by  None"
+    },
+    {
+      "text": "Splits any Large or XL slice into smaller S/M vertical issues.",
+      "passed": true,
+      "evidence": "ace-onboarding-flow.fig` - `docs/onboarding/workspace-admin-flow.md`  ## Estimated scope  Small: 1-2 files ```  ### #<new-child-2> Add teammate invite step to workspace onboarding  ```ma"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 6,
+    "errors_encountered": 0,
+    "output_chars": 20781,
+    "transcript_chars": 836
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 287.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "- No repository or codebase context was provided, so likely files and verification commands are generic placeholders.\n- I created issues directly instead of inserting a user review checkpoint because the raw plan was straightforward and the only explicit HITL dependency was the required design review.\n- I treated the teammate invite slice as the first implementation wave because it can establish the onboarding shell that later Slack and project-setup steps reuse."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}
