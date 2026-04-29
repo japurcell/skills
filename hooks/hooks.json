@@ -1,13 +1,12 @@
 {
+  "version": 1,
   "hooks": {
-    "SessionStart": [
+    "sessionEnd": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
-          }
-        ]
+        "type": "command",
+        "bash": "echo -e '\\a'",
+        "cwd": ".",
+        "timeoutSec": 10
       }
     ]
   }

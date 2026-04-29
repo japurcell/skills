@@ -24,9 +24,9 @@ The installer copies:
 
 Workspace directories whose names end with `-workspace` are skipped during installation.
 
-### [Notify Hook](./hooks/notify.json)
+### [Session End Hook](./hooks/hooks.json)
 
-For the notify hook to work, add these lines to your vscode settings.json file:
+For the session-end hook to work, add these lines to your vscode settings.json file:
 
 ```json
 {
@@ -48,7 +48,7 @@ For the notify hook to work, add these lines to your vscode settings.json file:
 - `docs/agent-guides/`: repo-specific guidance for layout, authoring, and validation
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts
 - `scripts/copilot-install.sh`: installs `skills/` → `~/.agents/skills`, optional top-level `references/` → `~/.agents/references`, `agents/` → `~/.copilot/agents`, optional top-level `hooks/` → `~/.copilot/hooks`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
-- `scripts/addy-install.sh`: syncs `../addy-agent-skills` from `https://github.com/addyosmani/agent-skills` by cloning or fast-forward pulling, then imports addy agents, skills, references, and hooks into this repository, prefixing imported addy agent and skill names with `addy-`; pass `--skills foo,bar` or `--skills-file path` to copy specific source skill names and their referenced skills, and each successful run refreshes `.addy-skills` with the installed source skill names
+- `scripts/addy-install.sh`: syncs `../addy-agent-skills` from `https://github.com/addyosmani/agent-skills` by cloning or fast-forward pulling, then imports addy agents, skills, top-level references, and top-level hooks into this repository, prefixing imported addy agent and skill names with `addy-`; pass `--skills foo,bar` or `--skills-file path` to copy specific source skill names and their referenced skills, and each successful run refreshes `.addy-skills` with the installed source skill names
 
 ## Working in this repo
 

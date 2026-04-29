@@ -545,12 +545,12 @@ copy_agents
 prune_unselected_skills
 copy_skills
 copy_references
-copy_hooks
+# copy_hooks
 rewrite_references "$NAME_MAP_FILE"
 write_skills_state_file
 
 echo "Installed addy agents to $AGENTS_DEST"
 echo "Installed addy skills to $SKILLS_DEST"
 echo "Installed addy references to $REFERENCES_DEST"
-echo "Installed addy hooks to $HOOKS_DEST"
+# echo "Installed addy hooks to $HOOKS_DEST"
 echo "Updated addy skills state file at $SKILLS_STATE_FILE"

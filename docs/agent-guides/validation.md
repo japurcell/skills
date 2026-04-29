@@ -4,9 +4,9 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 
 ## Installer scripts
 
-- `./scripts/copilot-install.sh`: refresh installed skills, agents, references, and hooks after editing repo source and before checking live model behavior
+- `./scripts/copilot-install.sh`: refresh installed skills, references, hooks, agents, and Copilot instructions after editing repo source and before checking live model behavior
 - `bash -n scripts/copilot-install.sh`: syntax-check the local Copilot installer
-- `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`: syntax-check and exercise the addy importer, including upstream sync and dependency-copying behavior
+- `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`: syntax-check and exercise the addy importer, including upstream sync, dependency-copying, and hook-copying behavior
 
 ## Skill validation and packaging
 
