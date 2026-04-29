@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "text": "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
+      "passed": true,
+      "evidence": "# Controller Stop: Shared Verification Command Group Blocked for Both Issues  **Issues #6101 and #6102 cannot be closed.** Both are covered by a shared verification command group that has failed due to"
+    },
+    {
+      "text": "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
+      "passed": true,
+      "evidence": "he verification plan for wave W4 identified that both child issues require the same verification command: ``` bundle exec rspec spec/requests/admin/export_spec.rb ```  This command validates the behavior of both: - #6101: CSV export filt"
+    },
+    {
+      "text": "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
+      "passed": true,
+      "evidence": "th** #6101 and #6102, regardless of how correct their diffs appear.  A suggestion to close #6101 because \"its diff looks correct\" does not override this rule. Diff inspection is not a substitute for the required verification command. The"
+    },
+    {
+      "text": "Keeps child issues #6101 and #6102 open or not ready to close.",
+      "passed": true,
+      "evidence": "# Controller Stop: Shared Verification Command Group Blocked for Both Issues  **Issues #6101 and #6102 cannot be closed.** Both are covered by a shared verification command group that has failed due to"
+    },
+    {
+      "text": "Stops before the next wave or any additional issue closure proceeds.",
+      "passed": true,
+      "evidence": "ue #6102: open, awaiting shared verification command to pass - Task-graph lines: both remain `[ ]` - Wave W4: halted until blocker is resolved   # Transcript: Baseline Run  - Both #6101 and #6102 finished implementation and"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 6,
+    "errors_encountered": 0,
+    "output_chars": 2206,
+    "transcript_chars": 485
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Controller correctly applies shared command group blocking rule to both issues despite diff inspection suggestion."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

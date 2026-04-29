@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "eval-0-the-controller-refuses-weaker-substitute-checks-reports-the-missing-framework-cli-precisely-keep",
+  "prompt": "You are executing /prd-implement for PRD #5000. The lowest open wave is W2 with AFK child issue #5101, \"Add tenant-scoped route guard.\" The parent PRD issue still shows `- [ ] W2 - #5101 Add tenant-scoped route guard - AFK - blocked by #5099`. The child issue's Verification section says to run: (1) `pnpm exec expo-doctor`, (2) `pnpm exec expo-router verify`, and (3) `pnpm test -- route-guard.test.ts`. Implementation and review are already complete. In verification, `pnpm test -- route-guard.test.ts` passes, but `pnpm exec expo-router verify` fails immediately with `/bin/sh: expo-router: command not found`. A subagent proposes using manual code inspection plus `pnpm exec tsc --noEmit` instead because it should be good enough. Produce the controller's exact user-facing response and issue-handling outcome.",
+  "assertions": [
+    "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+    "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+    "Keeps the child issue open or not ready to close.",
+    "Stops before the next wave or other new work proceeds."
+  ]
+}

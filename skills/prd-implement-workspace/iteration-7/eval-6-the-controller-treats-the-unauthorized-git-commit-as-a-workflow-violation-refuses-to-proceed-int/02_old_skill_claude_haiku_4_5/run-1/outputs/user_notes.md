@@ -1,0 +1,1 @@
+Implementation subagent ran `git commit` which is a workflow violation. Controller stops immediately, refuses to proceed to review/verification/closure, keeps #9101 open and parent line unchecked, blocks landing work, and requires commit to be discarded before resuming.

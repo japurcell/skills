@@ -4,65 +4,67 @@
     {
       "id": 0,
       "prompt": "You are executing /prd-implement for PRD #5000. The lowest open wave is W2 with AFK child issue #5101, \"Add tenant-scoped route guard.\" The parent PRD issue still shows `- [ ] W2 - #5101 Add tenant-scoped route guard - AFK - blocked by #5099`. The child issue's Verification section says to run: (1) `pnpm exec expo-doctor`, (2) `pnpm exec expo-router verify`, and (3) `pnpm test -- route-guard.test.ts`. Implementation and review are already complete. In verification, `pnpm test -- route-guard.test.ts` passes, but `pnpm exec expo-router verify` fails immediately with `/bin/sh: expo-router: command not found`. A subagent proposes using manual code inspection plus `pnpm exec tsc --noEmit` instead because it should be good enough. Produce the controller's exact user-facing response and issue-handling outcome.",
-      "expected_output": "The controller refuses weaker substitute checks, reports the missing framework CLI precisely, keeps the child issue open, and stops before advancing to another wave.",
+      "expected_output": "The controller refuses weaker substitute checks, reports the missing framework CLI precisely, keeps the child issue open, leaves the parent task-graph line unchecked, and stops before advancing to another wave.",
       "files": [],
       "expectations": [
         "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
         "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
         "Keeps the child issue open or not ready to close.",
+        "Leaves the parent PRD task-graph line for #5101 unchecked instead of marking it complete.",
         "Stops before the next wave or other new work proceeds."
       ]
     },
     {
       "id": 1,
       "prompt": "You are executing /prd-implement for PRD #5000. Ready wave W3 contains only AFK child issue #5104, \"Add admin settings form.\" The parent PRD issue still shows `- [ ] W3 - #5104 Add admin settings form - AFK - blocked by #5103`. The implementation subagent returns a clean RED -> GREEN -> REFACTOR summary, changed files, and these command results: `npm test -- settings-form.test.tsx` passed, `pnpm exec next typegen` could not run because `next` is unavailable in this checkout, so the subagent skipped it and instead read the generated types file plus ran `pnpm exec eslint app/settings/form.tsx`. Show how the controller handles the checkpoint before review.",
-      "expected_output": "The controller checkpoint catches the skipped required verification command, rejects the weaker substitutes, keeps the issue open, and stops before review starts.",
+      "expected_output": "The controller checkpoint catches the skipped required verification command, rejects the weaker substitutes, keeps the issue open, keeps the parent task-graph line unchecked, and stops before review starts.",
       "files": [],
       "expectations": [
         "Stops at the controller checkpoint before review rather than proceeding into review.",
         "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
         "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
-        "Keeps child issue #5104 open or not ready to close."
+        "Keeps the child issue open or not ready to close.",
+        "Leaves the parent PRD task-graph line for #5104 unchecked instead of marking it complete."
       ]
     },
     {
       "id": 2,
       "prompt": "You are executing /prd-implement for PRD #6000. The lowest open wave is W4. The parent PRD issue still shows `- [ ] W4 - #6101 CSV export filters - AFK - blocked by #6099` and `- [ ] W4 - #6102 CSV export download audit log - AFK - blocked by #6101`. AFK child issues #6101, \"CSV export filters,\" and #6102, \"CSV export download audit log,\" finished implementation and review. The controller's verification plan uses one shared command group for both issues because each child issue says verification is `bundle exec rspec spec/requests/admin/export_spec.rb`. The verification subagent reports `/bin/sh: bundle: command not found`. Another agent suggests closing #6101 anyway because its diff looks correct and leaving only #6102 open. Produce the controller's response.",
-      "expected_output": "The controller treats the shared verification command group as blocking both issues, rejects diff inspection as a substitute, keeps both child issues open, and stops before the next wave.",
+      "expected_output": "The controller treats the shared verification command group as blocking both issues, rejects diff inspection as a substitute, leaves both parent task-graph lines unchecked, and stops before the next wave.",
       "files": [],
       "expectations": [
         "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
         "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
         "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
-        "Keeps child issues #6101 and #6102 open or not ready to close.",
+        "Leaves the parent PRD task-graph lines for #6101 and #6102 unchecked instead of marking either complete.",
         "Stops before the next wave or any additional issue closure proceeds."
       ]
     },
     {
       "id": 3,
       "prompt": "You are executing /prd-implement for PRD #7000. AFK child issue #7101 is ready for verification. The parent PRD issue still shows `- [ ] W2 - #7101 Add user retry headers - AFK - blocked by #7098`. Its Verification section says: (1) `pnpm exec redwood test api/src/functions/users/users.test.ts`; (2) if the Redwood CLI is unavailable in the current environment, run `yarn rw test api/src/functions/users/users.test.ts` instead. The verification subagent reports `pnpm: command not found`, then runs `yarn rw test api/src/functions/users/users.test.ts` successfully. Show the controller response.",
-      "expected_output": "The controller accepts the fallback only because the issue explicitly lists it, records the verification evidence, closes the child issue, and leaves the parent PRD issue open.",
+      "expected_output": "The controller accepts the fallback only because the issue explicitly lists it, records the verification evidence, closes the child issue, checks the parent task-graph line from `[ ]` to `[x]`, and leaves the parent PRD issue open.",
       "files": [],
         "expectations": [
           "Acknowledges that the original `pnpm` command could not run.",
           "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
           "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
-          "Closes child issue #7101 after the fallback passes.",
-          "Makes clear that parent task-graph checkbox updates are not required for task completion.",
-          "Leaves the parent PRD issue open after closing #7101."
+          "Allows the child issue to close or be ready to close after the fallback passes.",
+          "Checks or updates the parent PRD task-graph line for #7101 from `[ ]` to `[x]`.",
+          "Leaves the parent PRD issue open after syncing #7101."
         ]
       },
       {
         "id": 4,
         "prompt": "You are resuming /prd-implement for PRD #8200. Child issue #8201, \"Add webhook retry headers,\" is already closed from a prior run. The parent PRD issue still shows `- [ ] W1 - #8201 Add webhook retry headers - AFK - blocked by none`. W2 contains AFK child issue #8202, \"Emit webhook retry metrics,\" and its only blocker is #8201. Show the controller's response before starting W2.",
-        "expected_output": "The controller treats closed child issue #8201 as complete even though the parent task-graph line is still unchecked, leaves the parent PRD issue open, and treats W2/#8202 as ready.",
+        "expected_output": "The controller identifies the closed-child / unchecked-parent mismatch, updates only the parent checkbox for #8201 from `[ ]` to `[x]`, verifies the sync, leaves the parent PRD issue open, and only then treats W2/#8202 as ready.",
         "files": [],
         "expectations": [
-          "Identifies that #8201 is already closed.",
-          "Treats child issue state as authoritative even though the parent PRD task-graph line is still unchecked.",
-          "Explicitly says parent checkbox sync is not required before starting W2.",
-          "Treats W2 or #8202 as ready to proceed.",
-          "Leaves the parent PRD issue open."
+          "Identifies that #8201 is closed but its parent PRD task-graph line is still unchecked.",
+          "Checks or updates the parent PRD task-graph line for #8201 from `[ ]` to `[x]` before starting W2.",
+          "Makes clear that only the checkbox should change and the rest of the managed task-graph line stays the same.",
+          "Only after the parent checkbox is synchronized does it treat W2 or #8202 as ready to proceed.",
+          "Leaves the parent PRD issue open after synchronizing #8201."
         ]
       },
       {
@@ -81,24 +83,26 @@
       {
         "id": 6,
         "prompt": "You are executing /prd-implement for PRD #9100. AFK child issue #9101, \"Add webhook retry cap,\" just returned from its implementation subagent with a clean RED -> GREEN summary and passing targeted tests. The subagent also says: `I already ran git commit -m \"feat: add webhook retry cap\" so the branch is ready for review and PR creation.` The child issue is still open and the parent PRD issue still shows `- [ ] W3 - #9101 Add webhook retry cap - AFK - blocked by #9099`. Produce the controller's response.",
-        "expected_output": "The controller treats the unauthorized git commit as a workflow violation, refuses to proceed into review, verification, issue closure, or PR creation, leaves the child issue open, and says the run must stop before any landing work.",
+        "expected_output": "The controller treats the unauthorized git commit as a workflow violation, refuses to proceed into review, verification, issue closure, or PR creation, leaves the child issue open and the parent task-graph line unchecked, and says the run must stop before any landing work.",
         "files": [],
         "expectations": [
           "Identifies the `git commit` as an unauthorized or out-of-scope landing action.",
           "Stops before review, verification, issue closure, or PR creation proceeds.",
           "Keeps child issue #9101 open or not ready to close.",
+          "Leaves the parent PRD task-graph line for #9101 unchecked.",
           "Explicitly says it will not push, open a PR, or treat the commit as permission to continue."
         ]
       },
       {
         "id": 7,
         "prompt": "You are executing /prd-implement for PRD #9300. AFK child issue #9301, \"Ship usage quota banner,\" just finished its TDD work. The implementation subagent reports that the required verification commands passed and says: `I commented on child issue #9301 that the task is done, and I left a note on the parent PRD issue that W2 is complete. That should be enough to move on.` GitHub still shows child issue #9301 open, and the parent PRD issue still shows `- [ ] W2 - #9301 Ship usage quota banner - AFK - blocked by #9298`. Show the controller's response.",
-        "expected_output": "The controller rejects comment-only completion, requires explicit gh-cli-driven closeout by closing child issue #9301, keeps the child issue open until that happens, leaves the parent PRD issue open, and stops before the next wave.",
+        "expected_output": "The controller rejects comment-only completion, requires explicit gh-cli-driven closeout by closing the child issue and checking the exact parent task-graph line, keeps the child issue open and parent line unchecked until that happens, leaves the parent PRD issue open, and stops before the next wave.",
         "files": [],
         "expectations": [
           "Explicitly says that comments or status notes do not count as task completion.",
-          "Requires explicit `gh-cli`-driven closeout or equivalent real GitHub state change: close child issue #9301.",
+          "Requires explicit `gh-cli`-driven closeout or equivalent real GitHub state changes: close child issue #9301 and update the matching parent task-graph line.",
           "Keeps child issue #9301 open or not ready to close until those real GitHub updates succeed.",
+          "Leaves the parent PRD task-graph line for #9301 unchecked or `[ ]` until it is synchronized.",
           "Leaves the parent PRD issue open.",
           "Stops before the next wave or other new work proceeds."
         ]

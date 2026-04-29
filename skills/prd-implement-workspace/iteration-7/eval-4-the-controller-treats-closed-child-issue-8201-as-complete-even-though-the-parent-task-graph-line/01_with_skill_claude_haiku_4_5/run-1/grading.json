@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies that #8201 is already closed.",
+      "passed": true,
+      "evidence": "## Wave 2: Ready to Proceed  W2 contains one ready AFK task:  - #8202 \"Emit webhook retry metrics\" \u2014 blocker #8201 is closed \u2713  Since #8201 is closed, its blocker status is resolved. #8202's only constraint is satisfied and W2 is unbl"
+    },
+    {
+      "text": "Treats child issue state as authoritative even though the parent PRD task-graph line is still unchecked.",
+      "passed": true,
+      "evidence": "ot affect scheduling.  **Decision Rule Applied:** Per skill guidelines, child issue state controls readiness; stale parent checkbox does not block progress.  ---  ## Wave 1: Already Complete  #8201 (closed, prior run)  ---  ## Wave 2: Ready"
+    },
+    {
+      "text": "Explicitly says parent checkbox sync is not required before starting W2.",
+      "passed": true,
+      "evidence": "ot affect scheduling.  **Decision Rule Applied:** Per skill guidelines, child issue state controls readiness; stale parent checkbox does not block progress.  ---  ## Wave 1: Already Complete  #8201 (closed, prior run)  ---  ## Wave 2: Ready to Proceed  W2"
+    },
+    {
+      "text": "Treats W2 or #8202 as ready to proceed.",
+      "passed": true,
+      "evidence": "ock progress.  ---  ## Wave 1: Already Complete  #8201 (closed, prior run)  ---  ## Wave 2: Ready to Proceed  W2 contains one ready AFK task:  - #8202 \"Emit webhook retry metrics\" \u2014 blocker #8201 is closed \u2713  Since #8201 i"
+    },
+    {
+      "text": "Leaves the parent PRD issue open.",
+      "passed": true,
+      "evidence": "agent to implement \"Emit webhook retry metrics\"  ---  ## Parent Task Graph Status  The parent PRD issue #8200 remains open. The unchecked checkbox on the #8201 line is informational only; it does not block W2 scheduling or create an"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 4,
+    "errors_encountered": 0,
+    "output_chars": 1489,
+    "transcript_chars": 364
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Checkbox drift detected: #8201 closed but parent line still unchecked; child issue state authoritative, W2 ready to proceed."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -73,6 +73,108 @@ def issue_open_check(text: str, *issue_numbers: str) -> tuple[bool, str]:
     return passed, evidence_for(text, *open_terms)
 
 
+def parent_unchecked_check(text: str, *issue_numbers: str) -> tuple[bool, str]:
+    normalized = normalize(text)
+    issue_phrases = [f"#{number}" for number in issue_numbers]
+    parent_line_terms = (
+        "parent task-graph line",
+        "parent prd task-graph line",
+        "parent task graph line",
+        "parent prd task graph line",
+        "parent task-graph lines",
+        "parent prd task-graph lines",
+        "parent task graph lines",
+        "parent prd task graph lines",
+        "parent checkbox",
+    )
+    unchecked_terms = (
+        "leave the parent task-graph line unchecked",
+        "leave the parent prd task-graph line unchecked",
+        "leave the parent task graph line unchecked",
+        "leave the parent prd task graph line unchecked",
+        "keep the parent task-graph line unchecked",
+        "keep the parent prd task-graph line unchecked",
+        "keep the parent task graph line unchecked",
+        "keep the parent prd task graph line unchecked",
+        "leave the parent checkbox unchecked",
+        "keep the parent checkbox unchecked",
+        "parent task-graph line remains [ ]",
+        "parent prd task-graph line remains [ ]",
+        "parent task graph line remains [ ]",
+        "parent prd task graph line remains [ ]",
+        "parent task-graph line still shows [ ]",
+        "parent prd task-graph line still shows [ ]",
+        "parent task graph line still shows [ ]",
+        "parent prd task graph line still shows [ ]",
+        "parent task-graph lines remain [ ]",
+        "parent prd task-graph lines remain [ ]",
+        "parent task graph lines remain [ ]",
+        "parent prd task graph lines remain [ ]",
+        "remain unchecked",
+        "remains unchecked",
+        "stay unchecked",
+        "still unchecked",
+        "do not check off",
+        "do not mark either complete",
+        "do not mark it complete",
+        "unchecked until",
+    )
+    mentions_issues = all(issue in normalized for issue in issue_phrases) if issue_phrases else True
+    passed = (
+        mentions_issues
+        and any(term in normalized for term in parent_line_terms)
+        and any(term in normalized for term in unchecked_terms)
+    )
+    return passed, evidence_for(text, *issue_phrases, *parent_line_terms, *unchecked_terms)
+
+
+def parent_checked_check(text: str, *issue_numbers: str) -> tuple[bool, str]:
+    normalized = normalize(text)
+    issue_phrases = [f"#{number}" for number in issue_numbers]
+    parent_line_terms = (
+        "parent task-graph line",
+        "parent prd task-graph line",
+        "parent task graph line",
+        "parent prd task graph line",
+        "parent checkbox",
+    )
+    checked_terms = (
+        "check off the matching parent task-graph line",
+        "check off the parent task-graph line",
+        "check off the parent task graph line",
+        "mark the parent task-graph line [x]",
+        "mark the parent task graph line [x]",
+        "update the parent task-graph line from [ ] to [x]",
+        "update the parent task graph line from [ ] to [x]",
+        "parent task-graph line was updated from [ ] to [x]",
+        "parent task graph line was updated from [ ] to [x]",
+        "synced the parent task-graph line",
+        "synced the parent task graph line",
+        "sync the parent task-graph line",
+        "sync the parent task graph line",
+        "checked the parent task-graph line",
+        "checked the parent task graph line",
+        "parent checkbox is now [x]",
+        "parent line is now [x]",
+        "parent line now shows [x]",
+        "parent task-graph line is now [x]",
+        "parent task-graph line now shows [x]",
+        "parent task graph line is now [x]",
+        "parent task graph line now shows [x]",
+        "synchronize the parent checkbox",
+        "sync the parent checkbox",
+        "mark it [x]",
+        "from [ ] to [x]",
+    )
+    mentions_issues = all(issue in normalized for issue in issue_phrases) if issue_phrases else True
+    passed = (
+        mentions_issues
+        and any(term in normalized for term in parent_line_terms)
+        and any(term in normalized for term in checked_terms)
+    )
+    return passed, evidence_for(text, *issue_phrases, *parent_line_terms, *checked_terms)
+
+
 def parent_issue_open_check(text: str) -> tuple[bool, str]:
     parent_terms = (
         "parent prd issue",
@@ -89,6 +191,38 @@ def parent_issue_open_check(text: str) -> tuple[bool, str]:
     )
     passed = has_any(text, *parent_terms) and has_any(text, *open_terms)
     return passed, evidence_for(text, *open_terms, *parent_terms)
+
+
+def checkbox_only_update_check(text: str) -> tuple[bool, str]:
+    only_checkbox = has_any(
+        text,
+        "only the checkbox should change",
+        "replace only the leading checkbox",
+        "only change the checkbox",
+        "change only the checkbox",
+        "only the checkbox changed",
+    )
+    preserve_rest = has_any(
+        text,
+        "preserve the rest of the line",
+        "rest of the managed task-graph line stays the same",
+        "rest of the managed task graph line stays the same",
+        "rest of the managed line stayed the same",
+        "rest of the managed line stays the same",
+        "preserve the rest of the managed line",
+        "leave the rest of the line unchanged",
+        "do not rewrite the task graph",
+        "do not rewrite the managed block",
+    )
+    passed = only_checkbox and preserve_rest
+    return passed, evidence_for(
+        text,
+        "only the checkbox should change",
+        "replace only the leading checkbox",
+        "preserve the rest of the line",
+        "leave the rest of the line unchanged",
+        "do not rewrite the task graph",
+    )
 
 
 def comment_only_rejected_check(text: str) -> tuple[bool, str]:
@@ -132,6 +266,15 @@ def real_closeout_required_check(text: str, issue_number: str) -> tuple[bool, st
         f"{issue_term} remains open until",
         f"{issue_term} remains open",
     )
+    sync_required = has_any(
+        text,
+        "check the exact parent task-graph line",
+        "check the matching parent task-graph line",
+        "update the matching parent task-graph line",
+        "sync the parent task-graph line",
+        "sync the parent checkbox",
+        "from [ ] to [x]",
+    )
     github_state_required = has_any(
         text,
         "gh-cli",
@@ -140,7 +283,7 @@ def real_closeout_required_check(text: str, issue_number: str) -> tuple[bool, st
         "real github updates",
         "actual github updates",
     )
-    passed = close_required and github_state_required
+    passed = close_required and sync_required and github_state_required
     return passed, evidence_for(
         text,
         "gh-cli",
@@ -148,57 +291,9 @@ def real_closeout_required_check(text: str, issue_number: str) -> tuple[bool, st
         "actual github state changes",
         "close the child issue",
         f"close {issue_term}",
-    )
-
-
-def issue_closed_check(text: str, issue_number: str) -> tuple[bool, str]:
-    issue_term = f"#{issue_number}"
-    passed = has_any(
-        text,
-        f"{issue_term} is closed",
-        f"child issue {issue_term} is closed",
-        f"closed child issue {issue_term}",
-        f"closed {issue_term}",
-        f"close {issue_term}",
-    )
-    return passed, evidence_for(
-        text,
-        f"{issue_term} is closed",
-        f"child issue {issue_term} is closed",
-        f"closed child issue {issue_term}",
-        f"closed {issue_term}",
-        f"close {issue_term}",
-    )
-
-
-def stale_parent_not_blocking_check(text: str, issue_number: str) -> tuple[bool, str]:
-    issue_term = f"#{issue_number}"
-    mentions_stale_parent = has_any(
-        text,
-        "parent task-graph line is still unchecked",
-        "parent task graph line is still unchecked",
-        "parent checkbox is still unchecked",
-        "still shows [ ]",
-        "stale parent checkbox",
-    )
-    child_state_authoritative = has_any(
-        text,
-        "child issue state is authoritative",
-        "treat the child issue state as authoritative",
-        "treat closed child issue",
-        "checkbox sync is not required",
-        "do not need to sync the parent checkbox",
-        "stale parent checkbox does not block",
-        "parent checkbox does not block readiness",
-    )
-    passed = has_any(text, issue_term) and mentions_stale_parent and child_state_authoritative
-    return passed, evidence_for(
-        text,
-        "child issue state is authoritative",
-        "treat the child issue state as authoritative",
-        "checkbox sync is not required",
-        "do not need to sync the parent checkbox",
-        "stale parent checkbox",
+        "sync the parent task-graph line",
+        "sync the parent checkbox",
+        "from [ ] to [x]",
     )
 
 
@@ -338,6 +433,7 @@ def eval_0(text: str) -> list[tuple[bool, str]]:
             evidence_for(text, "do not substitute", "cannot substitute", "substitute", "manual inspection", "tsc"),
         ),
         issue_open_check(text, "5101"),
+        parent_unchecked_check(text, "5101"),
         stop_progress_check(text),
     ]
 
@@ -361,6 +457,7 @@ def eval_1(text: str) -> list[tuple[bool, str]]:
         (skipped_typegen, evidence_for(text, "pnpm exec next typegen", "next typegen", "next is unavailable")),
         (substitute_rejected, evidence_for(text, "eslint", "generated types file", "cannot substitute", "insufficient")),
         issue_open_check(text, "5104"),
+        parent_unchecked_check(text, "5104"),
     ]
 
 
@@ -390,7 +487,7 @@ def eval_2(text: str) -> list[tuple[bool, str]]:
         (both_blocked, evidence_for(text, "#6101", "#6102", "both issues", "shared command group covers both")),
         (missing_bundle, evidence_for(text, "bundle exec rspec", "bundle: command not found", "missing bundle")),
         (diff_rejected, evidence_for(text, "diff looks correct", "looks satisfied", "diff inspection", "insufficient")),
-        issue_open_check(text, "6101", "6102"),
+        parent_unchecked_check(text, "6101", "6102"),
         stop_progress_check(text),
     ]
 
@@ -412,24 +509,13 @@ def eval_3(text: str) -> list[tuple[bool, str]]:
         has_any(text, "explicitly allowed", "explicitly listed", "because the issue says", "because the child issue says", "documented fallback", "as specified in child issue", "issue explicitly allowed", "child issue explicitly allowed")
         and has_any(text, "fallback", "alternative", "instead", "documented")
     )
-    no_parent_sync_required = has_any(
-        text,
-        "parent task-graph checkbox updates are not required",
-        "parent checkbox updates are not required",
-        "do not need to update the parent checkbox",
-        "parent checkbox is not required for task completion",
-        "stale parent checkbox does not block completion",
-        "parent task-graph checkbox state is informational only",
-        "parent checkbox state is informational only",
-        "does not gate task completion",
-        "child issue state on github is authoritative",
-    )
+    close_allowed = has_any(text, "#7101 is ready to close", "#7101 can close", "close #7101", "issue can close", "ready for closure", "blocked / waiting: none", "blocked / waiting:\n\n1. none", "blocked / waiting: 1. none")
     return [
         (original_missing, evidence_for(text, "pnpm: command not found", "pnpm unavailable")),
         (fallback_used, evidence_for(text, "yarn rw test", "fallback command")),
         (explicit_reason, evidence_for(text, "explicitly allowed", "explicitly listed", "because the child issue says", "documented fallback", "as specified in child issue")),
-        issue_closed_check(text, "7101"),
-        (no_parent_sync_required, evidence_for(text, "parent task-graph checkbox updates are not required", "parent checkbox updates are not required", "do not need to update the parent checkbox", "stale parent checkbox does not block completion", "parent task-graph checkbox state is informational only", "does not gate task completion", "child issue state on github is authoritative")),
+        (close_allowed, evidence_for(text, "#7101", "ready to close", "can close", "ready for closure", "Blocked / waiting:")),
+        parent_checked_check(text, "7101"),
         parent_issue_open_check(text),
     ]
 
@@ -438,22 +524,22 @@ def eval_4(text: str) -> list[tuple[bool, str]]:
     mismatch_identified = (
         has_any(
             text,
-            "#8201 is already closed",
-            "#8201 is closed",
+            "closed-child / unchecked-parent mismatch",
+            "closed child / unchecked parent mismatch",
+            "closed but its parent task-graph line is still unchecked",
+            "closed but its parent task graph line is still unchecked",
             "closed child issue #8201",
         )
+        and has_any(text, "parent task-graph line", "parent task graph line", "parent checkbox")
     )
     ready_after_sync = (
         has_any(text, "w2", "#8202", "next ready work")
-        and has_any(text, "ready", "can proceed", "start w2", "before starting w2")
+        and has_any(text, "ready", "can proceed", "start w2", "before starting w2", "after the parent checkbox is synchronized")
     )
     return [
-        (mismatch_identified, evidence_for(text, "#8201 is already closed", "#8201 is closed", "closed child issue #8201")),
-        stale_parent_not_blocking_check(text, "8201"),
-        (
-            has_any(text, "checkbox sync is not required", "do not need to sync the parent checkbox", "stale parent checkbox does not block", "parent checkbox does not block readiness"),
-            evidence_for(text, "checkbox sync is not required", "do not need to sync the parent checkbox", "stale parent checkbox does not block", "parent checkbox does not block readiness"),
-        ),
+        (mismatch_identified, evidence_for(text, "closed-child / unchecked-parent mismatch", "closed but its parent task-graph line is still unchecked", "closed child issue #8201")),
+        parent_checked_check(text, "8201"),
+        checkbox_only_update_check(text),
         (ready_after_sync, evidence_for(text, "W2", "#8202", "next ready work", "before starting W2")),
         parent_issue_open_check(text),
     ]
@@ -486,6 +572,7 @@ def eval_6(text: str) -> list[tuple[bool, str]]:
         unauthorized_landing_violation_check(text),
         (stop_before_review, evidence_for(text, "review", "verification", "issue closure", "PR creation", "must stop")),
         issue_open_check(text, "9101"),
+        parent_unchecked_check(text, "9101"),
         (no_permission_to_continue, evidence_for(text, "will not push", "will not open a PR", "do not treat the commit as permission", "not permission to continue")),
     ]
 
@@ -495,6 +582,7 @@ def eval_7(text: str) -> list[tuple[bool, str]]:
         comment_only_rejected_check(text),
         real_closeout_required_check(text, "9301"),
         issue_open_check(text, "9301"),
+        parent_unchecked_check(text, "9301"),
         parent_issue_open_check(text),
         stop_progress_check(text),
     ]

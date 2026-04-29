@@ -1,0 +1,60 @@
+{
+  "expectations": [
+    {
+      "text": "Acknowledges that the original `pnpm` command could not run.",
+      "passed": true,
+      "evidence": "n Outcome  **Primary Command:** `pnpm exec redwood test api/src/functions/users/users.test.ts`   **Result:** `pnpm: command not found` \u2014 Redwood CLI unavailable.  **Fallback Command:** `yarn rw test api/src/functions/users/users.test.ts`   **R"
+    },
+    {
+      "text": "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
+      "passed": true,
+      "evidence": "ers/users.test.ts`   **Result:** `pnpm: command not found` \u2014 Redwood CLI unavailable.  **Fallback Command:** `yarn rw test api/src/functions/users/users.test.ts`   **Result:** \u2713 Passed   **Justification:** The child issue #7101 expl"
+    },
+    {
+      "text": "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
+      "passed": true,
+      "evidence": "nd passed verification. The verification subagent encountered the expected environment constraint and ran the explicitly listed fallback command successfully.  ## Verification Outcome  **Primary Command:** `pnpm exec redwood test api/src"
+    },
+    {
+      "text": "Closes child issue #7101 after the fallback passes.",
+      "passed": true,
+      "evidence": "# Verification Passed: Fallback Command Accepted  **Issue:** #7101 is closed.  Child issue #7101 \"Add user retry headers\" has completed implementation and passed verification. The verifi"
+    },
+    {
+      "text": "Makes clear that parent task-graph checkbox updates are not required for task completion.",
+      "passed": true,
+      "evidence": "closeout turn to close #7101 on GitHub.  ---  ## Parent Task Graph  The parent PRD issue #7000 remains open. Parent task-graph checkbox state is informational only and does not gate task completion. The child issue state on GitHub is authoritative.  ---  ## Status  **Compl"
+    },
+    {
+      "text": "Leaves the parent PRD issue open after closing #7101.",
+      "passed": true,
+      "evidence": "as been sent a closeout turn to close #7101 on GitHub.  ---  ## Parent Task Graph  The parent PRD issue #7000 remains open. Parent task-graph checkbox state is informational only and does not gate task completion. The child issue st"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 4,
+    "errors_encountered": 0,
+    "output_chars": 1711,
+    "transcript_chars": 454
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Fallback command explicitly listed in issue #7101 verification spec; pnpm unavailable but yarn rw test passed."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

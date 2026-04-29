@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+      "passed": true,
+      "evidence": "# Controller Checkpoint: Verification Command Substitution Blocked  **Issue:** #5104 remains open.  The implementation subagent compl"
+    },
+    {
+      "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+      "passed": true,
+      "evidence": "weaker alternatives rather than surfacing the blocker.  ## Checkpoint Finding  **Skipped Required Command:** `pnpm exec next typegen` \u2014 the subagent reported this command could not run because the `next` binary is unavailable in this checkout"
+    },
+    {
+      "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+      "passed": true,
+      "evidence": "this checkout.  **Substitution Made:** The subagent read the generated types file manually and ran `pnpm exec eslint app/settings/form.tsx` instead.  **Problem:** The child issue #5104 specifies `pnpm exec next typegen` as a r"
+    },
+    {
+      "text": "Keeps child issue #5104 open or not ready to close.",
+      "passed": true,
+      "evidence": "# Controller Checkpoint: Verification Command Substitution Blocked  **Issue:** #5104 remains open.  The implementation subagent completed a clean RED \u2192 GREEN \u2192 REFACTOR cycle for \"Add admin sett"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 4,
+    "errors_encountered": 0,
+    "output_chars": 1957,
+    "transcript_chars": 442
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Verification substitution caught: `pnpm exec next typegen` unavailable, alternatives (eslint + manual file read) do not satisfy verification contract."
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,3 @@
+Baseline skill file: /home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot/SKILL.md
+
+Key reasoning: The baseline skill treats unauthorized git commits as blocking workflow violations (line 40). When a subagent commits, the controller must stop before review/verification/closure, keep the child issue open, leave the parent line unchecked, and explicitly refuse to proceed. The controller correctly identifies the commit as a violation, halts all progress, keeps #9101 open and the parent line `[ ]`, and blocks further execution. This satisfies all four assertions about violation treatment and state integrity.
