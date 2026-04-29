@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Says review cannot start until all implementation subagents for W3 finish or #9402 returns.",
+      "passed": true,
+      "evidence": "et for that wave before any child issue in the wave can move to closeout.\"** (line 204)  **\"After every wave, wait for all implementation results, inspect each result, run one wave-level review phase across the combined changed-file set, rerun review afte"
+    },
+    {
+      "text": "Treats review as a wave-level pass over the full W3 scope rather than an early per-issue review.",
+      "passed": true,
+      "evidence": "oseout.\"** (line 204)  **\"After every wave, wait for all implementation results, inspect each result, run one wave-level review phase across the combined changed-file set, rerun review after any review-driven fixes, then verify covered c"
+    },
+    {
+      "text": "Keeps child issue #9401 open or not ready to close.",
+      "passed": true,
+      "evidence": "issues.  Here is the controller's user-facing response for the scenario:  ---  **W3 implementation status:** #9401 completed RED \u2192 GREEN \u2192 REFACTOR with passing targeted tests. #9402 still running.  **Controller decision:**"
+    },
+    {
+      "text": "Rejects early verification or closeout for #9401 before wave review succeeds.",
+      "passed": false,
+      "evidence": "on unclear, stop and resolve that before review. /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md:Do not close issues or advance waves based on subagent summaries alone. /home/adam/dev/personal/skills/skills/prd-implemen"
+    },
+    {
+      "text": "Keeps W4 blocked or refuses to advance to the next wave.",
+      "passed": true,
+      "evidence": "es comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave. /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md:6. Until the controller has re-read GitHub and"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 449,
+    "errors_encountered": 0,
+    "output_chars": 2114,
+    "transcript_chars": 43586
+  },
+  "timing": {
+    "total_tokens": 493,
+    "duration_ms": 26239,
+    "total_duration_seconds": 26.239
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: claude-haiku-4.5\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md\nExit code: 0\nAPI duration ms: 22758\nSession duration ms: 26239"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

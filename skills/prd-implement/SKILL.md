@@ -105,7 +105,16 @@ Within the ready wave:
    - each parallel implementation subagent has an isolated worktree or equivalent isolated checkout
 3. Treat `Files likely touched` as a scheduling hint, not a guarantee. If overlap is uncertain, or isolated worktrees are unavailable, serialize the tasks within the wave.
 4. If one task in a parallel wave fails, let the already-running independent tasks finish, then stop before launching another wave.
-5. After every wave, wait for all implementation results, then run review, then verify, then update issue state.
+5. After every wave, wait for all implementation results, inspect each result, run one wave-level review phase across the combined changed-file set, rerun review after any review-driven fixes, then verify covered child issues, then update issue state.
+
+### Wave execution lifecycle
+
+Keep the controller's phase order explicit:
+
+1. Finish all implementation work launched for the current wave.
+2. Run the controller checkpoint, then one review phase for the whole wave.
+3. After that review phase succeeds, run verification for the covered child issues.
+4. Only after review and verification are clear may the implementation subagents perform GitHub closeout for those child issues.
 
 When reporting the plan for a wave, use explicit language such as:
 
@@ -176,22 +185,23 @@ Each child issue must record TDD progress while it happens, not only at the end.
 3. After REFACTOR, add a comment with `Stage: refactor`, the rerun command/results, and whether the task is ready for review.
 4. On resume, the latest stage comment is the authoritative in-progress state for an open child issue.
 
-### GitHub closeout is part of implementation
+### GitHub closeout after wave review and verification
 
-Review and verification still gate completion, but the implementation subagent owns the final GitHub closeout for its child issue.
+Implementation subagents still own GitHub closeout, but closeout starts only after the full wave review phase succeeds and the child issue's required verification commands pass.
 
-1. After review fixes are complete and every required verification command that covers the child issue passed, send the assigned implementation subagent an explicit closeout turn instead of accepting a status-only finish.
-2. In that closeout turn, the subagent must explicitly load `gh-cli`, then:
-   - close the child issue
-   - re-read the child issue and confirm GitHub now shows it closed
-3. A `Stage: refactor` comment, "done" comment, or "task complete" comment is progress evidence only. It never counts as completion.
-4. If a subagent leaves comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave.
-5. Until the controller has re-read GitHub and confirmed closure, report only the **current** state. Do not write speculative sections like `Outcome after closeout` or claim the issue is closed just because you plan to send a closeout turn next.
-6. If any closeout step fails, the subagent must return a blocking result with the exact failed GitHub command or edit step. Do not declare success.
+1. Do not send any closeout turn while the wave review phase is still running, still blocked on findings, or has not yet covered the full wave scope.
+2. After review fixes are complete for the whole wave and every required verification command that covers the child issue passed, send the assigned implementation subagent an explicit closeout turn instead of accepting a status-only finish.
+3. In that closeout turn, the subagent must explicitly load `gh-cli`, then:
+    - close the child issue
+    - re-read the child issue and confirm GitHub now shows it closed
+4. A `Stage: refactor` comment, "done" comment, or "task complete" comment is progress evidence only. It never counts as completion.
+5. If a subagent leaves comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave.
+6. Until the controller has re-read GitHub and confirmed closure, report only the **current** state. Do not write speculative sections like `Outcome after closeout` or claim the issue is closed just because you plan to send a closeout turn next.
+7. If any closeout step fails, the subagent must return a blocking result with the exact failed GitHub command or edit step. Do not declare success.
 
 ## Review subagents
 
-After each wave's implementation finishes, review the changed files in subagents before closing any child issue.
+After all implementation work in the wave finishes, run one review phase over the full changed-file set for that wave before any child issue in the wave can move to closeout.
 
 ### Required review passes
 
@@ -202,9 +212,10 @@ After each wave's implementation finishes, review the changed files in subagents
    - `code-reviewer` for correctness and conventions
    - `security-review` for security and unsafe defaults
    - `code-reviewer` for simplicity, duplication, and maintainability
-3. Fix all blocking review findings before closing the affected child issues.
-4. If review-driven fixes change code, rerun the relevant review subagents on the affected scope before closure. Do not rely on the pre-fix review result.
-5. Record deferred non-blocking findings in the relevant issue comments or as follow-up notes to the user.
+3. Do not start verification or close any child issue while the wave review phase still has unresolved blocking findings anywhere in that wave scope.
+4. Fix all blocking review findings before closing the affected child issues.
+5. If review-driven fixes change code, rerun the relevant review subagents on the affected scope before closure. Do not rely on the pre-fix review result.
+6. Record deferred non-blocking findings in the relevant issue comments or as follow-up notes to the user.
 
 The controller must define the review file list. Review subagents must not recompute or narrow their own scope.
 Review subagents inspect code only; they must not commit, push, or prepare PR text.
@@ -227,9 +238,9 @@ Do not close issues or advance waves based on subagent summaries alone.
 
 ## Verification subagents and implementation-owned issue closure
 
-Verification also runs in subagents. Keep the controller focused on orchestration and acceptance, then hand final GitHub closeout back to the implementation subagent rather than treating a comment or summary as enough.
+After the wave review phase passes, verification also runs in subagents. Keep the controller focused on orchestration and acceptance, then hand final GitHub closeout back to the implementation subagent rather than treating a comment or summary as enough.
 
-For each completed child issue in the wave:
+For each child issue approved by the completed wave review phase:
 
 1. Build a controller-authored verification plan before launching verification subagents:
    - default: one verification subagent per child issue using that issue's `Verification` steps
@@ -242,15 +253,16 @@ For each completed child issue in the wave:
 7. Do not treat passing verification as completion. Verification subagents provide evidence only; they do not close child issues or edit the parent task graph.
 8. Do not close any child issue covered by a shared command group unless that shared group passes.
 9. Confirm the acceptance criteria are satisfied.
-10. Add a concise progress comment that captures:
-   - wave name
-   - RED/GREEN/REFACTOR completion
-   - changed files
-   - verification evidence
-   - notable review findings and fixes
-11. Once review is clear and every verification command that covers the child issue passed, send the assigned implementation subagent a closeout turn with explicit instructions to load `gh-cli`, close the child issue, and re-read GitHub to confirm closure.
-12. If that closeout turn returns only a comment, "ready to close", or another status-only note without the child issue actually closing on GitHub, treat it as a failed closeout. Keep the child issue open and stop before another wave starts.
-13. If the closeout turn claims success but a fresh GitHub read still shows the child issue open, stop and report the mismatch before another wave starts.
+10. If a child issue explicitly lists a fallback verification command and that fallback passes, say that the fallback was allowed by the issue itself. Do not describe it as an improvised substitute.
+11. Add a concise progress comment that captures:
+    - wave name
+    - RED/GREEN/REFACTOR completion
+    - changed files
+    - verification evidence
+    - notable review findings and fixes
+12. Once review is clear and every verification command that covers the child issue passed, send the assigned implementation subagent a closeout turn with explicit instructions to load `gh-cli`, close the child issue, and re-read GitHub to confirm closure.
+13. If that closeout turn returns only a comment, "ready to close", or another status-only note without the child issue actually closing on GitHub, treat it as a failed closeout. Keep the child issue open and stop before another wave starts.
+14. If the closeout turn claims success but a fresh GitHub read still shows the child issue open, stop and report the mismatch before another wave starts.
 
 If a child issue has multiple verification commands and they are independent, the controller may launch them in parallel verification subagents. If they share state or resources, run them sequentially through verification subagents.
 
@@ -275,6 +287,7 @@ Use the parent task graph for wave order and blocker parsing, but do not make ch
 2. Never reopen, hold, or downgrade a closed child issue just because the parent line still shows `[ ]`.
 3. If the parent line shows `[x]` while the child issue is still open, trust the child issue state and treat the task as still open.
 4. Mention stale parent checkbox state only when it helps explain why the task graph display looks outdated. Do not present that drift as a blocker.
+5. If the child issue is ready to close or already closed while the parent line still shows `[ ]`, say explicitly that the parent checkbox is informational only and does not delay closure.
 
 ## Acceptance confirmation
 

@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
+      "passed": true,
+      "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - Required shared verification command `bundle exec rspec spec/requests/admin/export_spec."
+    },
+    {
+      "text": "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
+      "passed": true,
+      "evidence": "ed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - Required shared verification command `bundle exec rspec spec/requests/admin/export_spec.rb` failed with `/bin/sh: bundle: command not found`; shared verification gro"
+    },
+    {
+      "text": "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
+      "passed": true,
+      "evidence": "ubagent reports `/bin/sh: bundle: command not found`. Another agent suggests closing #6101 anyway because its diff looks correct and leaving only #6102 open. Produce the controller's response.   ---  <sub>\u23f1\ufe0f 7s</sub>  ### \u2705 `view`  **view"
+    },
+    {
+      "text": "Keeps child issues #6101 and #6102 open or not ready to close.",
+      "passed": true,
+      "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - Required shared verification command `bundle exec rspec spec/requests/admin/export_spec."
+    },
+    {
+      "text": "Stops before the next wave or any additional issue closure proceeds.",
+      "passed": true,
+      "evidence": "es comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave. 199. 6. Until the controller has re-read GitHub and confirmed closure, report only the **current** state. Do"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 458,
+    "errors_encountered": 0,
+    "output_chars": 855,
+    "transcript_chars": 32208
+  },
+  "timing": {
+    "total_tokens": 1486,
+    "duration_ms": 38332,
+    "total_duration_seconds": 38.332
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: gpt-5.3-codex\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md\nExit code: 0\nAPI duration ms: 34767\nSession duration ms: 38332"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

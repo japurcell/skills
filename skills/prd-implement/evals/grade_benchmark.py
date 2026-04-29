@@ -105,6 +105,8 @@ def comment_only_rejected_check(text: str) -> tuple[bool, str]:
             "status note does not count as completion",
             "ready to close note does not count",
             "progress evidence only",
+            "not a substitute for that real github state change",
+            "must be actually closed on github before we can mark it complete",
         )
         or (
             has_any(text, "comment", "status note", "ready to close")
@@ -118,6 +120,8 @@ def comment_only_rejected_check(text: str) -> tuple[bool, str]:
         "a comment is not enough",
         "status-only comment is not completion",
         "ready to close note does not count",
+        "not a substitute for that real github state change",
+        "must be actually closed on github before we can mark it complete",
     )
 
 
@@ -148,6 +152,31 @@ def real_closeout_required_check(text: str, issue_number: str) -> tuple[bool, st
         "actual github state changes",
         "close the child issue",
         f"close {issue_term}",
+    )
+
+
+def closeout_next_or_closed_check(text: str, issue_number: str) -> tuple[bool, str]:
+    issue_term = f"#{issue_number}"
+    passed = has_any(
+        text,
+        f"{issue_term} is closed",
+        f"closed {issue_term}",
+        f"awaiting github closeout for {issue_term}",
+        f"awaiting github closeout",
+        f"ready to close",
+        f"verified and ready to close",
+        "closeout turn",
+        f"close {issue_term} on github",
+        f"explicit closeout turn",
+    )
+    return passed, evidence_for(
+        text,
+        f"{issue_term} is closed",
+        f"closed {issue_term}",
+        "awaiting github closeout",
+        "ready to close",
+        "closeout turn",
+        f"close {issue_term} on github",
     )
 
 
@@ -262,6 +291,9 @@ def no_landing_now_check(text: str) -> tuple[bool, str]:
         "do not commit, push, or open a pr",
         "do not commit, push, or open a pull request",
         "no pr creation",
+        "landing work happens in a separate step outside this skill",
+        "landing work remains out of scope",
+        "outside this skill",
     )
     return passed, evidence_for(
         text,
@@ -269,6 +301,8 @@ def no_landing_now_check(text: str) -> tuple[bool, str]:
         "no pr will be opened and no commit or push will be performed",
         "will not commit, push, or open a pr",
         "do not commit, push, or open a pr",
+        "landing work happens in a separate step outside this skill",
+        "landing work remains out of scope",
     )
 
 
@@ -323,6 +357,116 @@ def unauthorized_landing_violation_check(text: str) -> tuple[bool, str]:
         "workflow violation",
         "unauthorized",
         "must stop",
+    )
+
+
+def wait_for_all_wave_results_check(text: str, wave: str, pending_issue: str) -> tuple[bool, str]:
+    passed = (
+        has_any(text, wave, f"#{pending_issue}")
+        and has_any(
+            text,
+            "wait for all implementation results",
+            "wait for all implementation subagents",
+            "wait for the rest of the wave",
+            "review cannot start until all implementation work in the wave finishes",
+            "review cannot start until all implementation subagents for the wave finish",
+            "cannot start review yet",
+            "review has to wait",
+        )
+    )
+    return passed, evidence_for(
+        text,
+        "wait for all implementation results",
+        "wait for all implementation subagents",
+        "cannot start review yet",
+        "review has to wait",
+        f"#{pending_issue}",
+        wave,
+    )
+
+
+def wave_review_scope_check(text: str, wave: str) -> tuple[bool, str]:
+    passed = (
+        has_any(text, wave, "wave-level review", "whole wave", "full wave scope", "combined changed-file set")
+        and has_any(
+            text,
+            "wave-level review",
+            "review the whole wave",
+            "full wave scope",
+            "combined changed-file set",
+            "all changed files in the wave",
+            "not a per-issue review",
+        )
+    )
+    return passed, evidence_for(
+        text,
+        "wave-level review",
+        "review the whole wave",
+        "full wave scope",
+        "combined changed-file set",
+        "all changed files in the wave",
+    )
+
+
+def early_closeout_rejected_check(text: str, issue_number: str) -> tuple[bool, str]:
+    issue_term = f"#{issue_number}"
+    passed = (
+        has_any(text, issue_term)
+        and has_any(
+            text,
+            "before wave review succeeds",
+            "before the wave review phase succeeds",
+            "before review succeeds",
+            "before the review phase passes",
+            "before wave-level review is complete",
+            "while the wave review phase is incomplete",
+            "closeout must wait for review",
+            "closeout must wait",
+            "only then may closeout proceed",
+        )
+        and has_any(
+            text,
+            "do not close",
+            "cannot close",
+            "not ready to close",
+            "remains open",
+            "stay open",
+            "keep open",
+            "closeout proceed",
+            "closing",
+        )
+    )
+    return passed, evidence_for(
+        text,
+        "before wave review succeeds",
+        "before the wave review phase succeeds",
+        "before wave-level review is complete",
+        "while the wave review phase is incomplete",
+        "closeout must wait for review",
+        "only then may closeout proceed",
+        "do not close",
+        "not ready to close",
+        issue_term,
+    )
+
+
+def review_fix_rerun_check(text: str) -> tuple[bool, str]:
+    passed = (
+        has_any(text, "fix", "blocking review finding", "review finding")
+        and has_any(
+            text,
+            "rerun review",
+            "re-review",
+            "rerun the relevant review subagents",
+            "rerun the affected review scope",
+        )
+    )
+    return passed, evidence_for(
+        text,
+        "blocking review finding",
+        "rerun review",
+        "re-review",
+        "rerun the relevant review subagents",
     )
 
 
@@ -409,7 +553,7 @@ def eval_3(text: str) -> list[tuple[bool, str]]:
     )
     fallback_used = has_any(text, "yarn rw test", "`yarn rw test", "fallback command")
     explicit_reason = (
-        has_any(text, "explicitly allowed", "explicitly listed", "because the issue says", "because the child issue says", "documented fallback", "as specified in child issue", "issue explicitly allowed", "child issue explicitly allowed")
+        has_any(text, "explicitly allowed", "explicitly listed", "because the issue says", "because the child issue says", "documented fallback", "as specified in child issue", "issue explicitly allowed", "child issue explicitly allowed", "per issue specification", "secondary command per issue specification", "allowed by the issue")
         and has_any(text, "fallback", "alternative", "instead", "documented")
     )
     no_parent_sync_required = has_any(
@@ -427,8 +571,8 @@ def eval_3(text: str) -> list[tuple[bool, str]]:
     return [
         (original_missing, evidence_for(text, "pnpm: command not found", "pnpm unavailable")),
         (fallback_used, evidence_for(text, "yarn rw test", "fallback command")),
-        (explicit_reason, evidence_for(text, "explicitly allowed", "explicitly listed", "because the child issue says", "documented fallback", "as specified in child issue")),
-        issue_closed_check(text, "7101"),
+        (explicit_reason, evidence_for(text, "explicitly allowed", "explicitly listed", "because the child issue says", "documented fallback", "as specified in child issue", "per issue specification", "secondary command per issue specification", "allowed by the issue")),
+        closeout_next_or_closed_check(text, "7101"),
         (no_parent_sync_required, evidence_for(text, "parent task-graph checkbox updates are not required", "parent checkbox updates are not required", "do not need to update the parent checkbox", "stale parent checkbox does not block completion", "parent task-graph checkbox state is informational only", "does not gate task completion", "child issue state on github is authoritative")),
         parent_issue_open_check(text),
     ]
@@ -500,6 +644,42 @@ def eval_7(text: str) -> list[tuple[bool, str]]:
     ]
 
 
+def eval_8(text: str) -> list[tuple[bool, str]]:
+    return [
+        wait_for_all_wave_results_check(text, "W3", "9402"),
+        wave_review_scope_check(text, "W3"),
+        issue_open_check(text, "9401"),
+        early_closeout_rejected_check(text, "9401"),
+        stop_progress_check(text),
+    ]
+
+
+def eval_9(text: str) -> list[tuple[bool, str]]:
+    review_incomplete = (
+        has_any(text, "W5", "wave review", "review phase")
+        and has_any(
+            text,
+            "not complete",
+            "not yet successful",
+            "still blocked",
+            "still has unresolved blocking findings",
+            "cannot pass yet",
+            "review phase is incomplete",
+        )
+    )
+    reject_9501_early_close = (
+        has_any(text, "#9501")
+        and has_any(text, "do not close", "cannot close", "not ready to close", "remains open")
+    )
+    return [
+        (review_incomplete, evidence_for(text, "review phase is incomplete", "not yet successful", "still blocked", "W5")),
+        (reject_9501_early_close, evidence_for(text, "#9501", "verification passed", "do not close", "not ready to close")),
+        review_fix_rerun_check(text),
+        issue_open_check(text, "9501", "9502"),
+        stop_progress_check(text),
+    ]
+
+
 CHECKS = {
     0: eval_0,
     1: eval_1,
@@ -509,6 +689,8 @@ CHECKS = {
     5: eval_5,
     6: eval_6,
     7: eval_7,
+    8: eval_8,
+    9: eval_9,
 }
 
 

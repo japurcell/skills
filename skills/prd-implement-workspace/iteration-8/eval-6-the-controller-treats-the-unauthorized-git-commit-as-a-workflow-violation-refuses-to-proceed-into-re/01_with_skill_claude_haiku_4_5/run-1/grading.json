@@ -1,0 +1,51 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies the `git commit` as an unauthorized or out-of-scope landing action.",
+      "passed": true,
+      "evidence": "continues. In that response, also say the child issue remains open.\"**  The subagent reported: `I already ran git commit -m \"feat: add webhook retry cap\" so the branch is ready for review and PR creation.`  This is a workflow viol"
+    },
+    {
+      "text": "Stops before review, verification, issue closure, or PR creation proceeds.",
+      "passed": true,
+      "evidence": "ed, pushed, rebased, merged, or opened a PR, stop immediately and surface that as a workflow violation before review, verification, or issue closure continues. In that response, also say the child issue remains open.\"**  The s"
+    },
+    {
+      "text": "Keeps child issue #9101 open or not ready to close.",
+      "passed": true,
+      "evidence": "er's User-Facing Response:**  \ud83d\uded1 **Workflow Violation: Premature Git Commit**  The implementation subagent for #9101 already ran `git commit`. Per the prd-implement workflow, subagents must leave changes uncommitted and unpush"
+    },
+    {
+      "text": "Explicitly says it will not push, open a PR, or treat the commit as permission to continue.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 142,
+    "errors_encountered": 0,
+    "output_chars": 1558,
+    "transcript_chars": 22031
+  },
+  "timing": {
+    "total_tokens": 365,
+    "duration_ms": 16547,
+    "total_duration_seconds": 16.547
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: claude-haiku-4.5\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md\nExit code: 0\nAPI duration ms: 12919\nSession duration ms: 16547"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

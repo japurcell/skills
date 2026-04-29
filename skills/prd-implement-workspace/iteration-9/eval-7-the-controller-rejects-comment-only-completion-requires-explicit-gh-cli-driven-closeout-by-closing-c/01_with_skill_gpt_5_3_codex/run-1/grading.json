@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Explicitly says that comments or status notes do not count as task completion.",
+      "passed": true,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Requires explicit `gh-cli`-driven closeout or equivalent real GitHub state change: close child issue #9301.",
+      "passed": false,
+      "evidence": "t count as completion.  Next ready work:  - W2: #9301 Ship usage quota banner - run explicit GitHub closeout (close #9301, then re-read and confirm it is closed) before any wave advancement.  Landing status:  - Local changes only;"
+    },
+    {
+      "text": "Keeps child issue #9301 open or not ready to close until those real GitHub updates succeed.",
+      "passed": true,
+      "evidence": "PRD execution status for #9300  Completed this run:  - none  Blocked / waiting:  1. #9301 Ship usage quota banner - implementation/test work is reported complete, but closeout is incomplete because G"
+    },
+    {
+      "text": "Leaves the parent PRD issue open.",
+      "passed": true,
+      "evidence": "Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - #9301 remains open. - parent PRD issue remains open. - The stale parent checkbox (`- [ ] W2 - #9301 ...`) is informational only;"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": true,
+      "evidence": "PRD execution status for #9300  Completed this run:  - none  Blocked / waiting:  1. #9301 Ship usage quota banner - implementation/test work is reported complete, but closeout is"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 55,
+    "errors_encountered": 0,
+    "output_chars": 729,
+    "transcript_chars": 2625
+  },
+  "timing": {
+    "total_tokens": 944,
+    "duration_ms": 46960,
+    "total_duration_seconds": 46.96
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: gpt-5.3-codex\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md\nExit code: 0\nAPI duration ms: 42763\nSession duration ms: 46960"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

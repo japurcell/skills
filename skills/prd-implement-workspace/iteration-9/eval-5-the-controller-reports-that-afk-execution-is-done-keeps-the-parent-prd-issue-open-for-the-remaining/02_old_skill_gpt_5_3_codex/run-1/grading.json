@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "States that commit, push, or PR work is out of scope for this prd-implement run.",
+      "passed": true,
+      "evidence": "e request, execute only the PRD implementation workflow. In the final response, say that landing work remains out of scope for this run and requires a separate `commit` or `commit-to-pr` request after this skill finishes. 40. 4. If"
+    },
+    {
+      "text": "Explicitly says no PR will be opened and no commit or push will be performed in this run.",
+      "passed": true,
+      "evidence": "oval is still required. #9005 remains open.  Next ready work:  - none  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - All AFK child issues are complete; only HITL work remains. - parent PRD iss"
+    },
+    {
+      "text": "Says the changes remain local-only or uncommitted.",
+      "passed": true,
+      "evidence": "hecklist - HITL approval is still required. #9005 remains open.  Next ready work:  - none  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - All AFK child issues are complete; only HIT"
+    },
+    {
+      "text": "Directs the user to use `commit` or `commit-to-pr` only in a separate follow-up request after this skill finishes.",
+      "passed": true,
+      "evidence": "- parent PRD issue remains open. - `prd-implement` stops here; opening a PR requires a separate `commit` or `commit-to-pr` request after HITL #9005 is resolved.   # \ud83e\udd16 Copilot CLI Session  > [!NOTE] > - **Session ID:** `874782c7-c9d"
+    },
+    {
+      "text": "Keeps the parent PRD issue open or says only HITL work remains.",
+      "passed": true,
+      "evidence": "PRD execution status for #9000  Completed this run:  - none  Blocked / waiting:  1. #9005 Approve rollout checklist - HITL approval is still required. #9005 remains open.  Next ready work:  - none  L"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 461,
+    "errors_encountered": 0,
+    "output_chars": 522,
+    "transcript_chars": 31414
+  },
+  "timing": {
+    "total_tokens": 1017,
+    "duration_ms": 28001,
+    "total_duration_seconds": 28.001
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: gpt-5.3-codex\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-iteration-8/SKILL.md\nExit code: 0\nAPI duration ms: 24075\nSession duration ms: 28001"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

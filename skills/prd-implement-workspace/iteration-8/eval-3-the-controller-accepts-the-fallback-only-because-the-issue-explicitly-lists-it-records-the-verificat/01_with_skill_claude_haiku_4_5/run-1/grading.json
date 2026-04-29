@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "text": "Acknowledges that the original `pnpm` command could not run.",
+      "passed": true,
+      "evidence": "rification subagent: - Ran `pnpm exec redwood test api/src/functions/users/users.test.ts` and it failed with `pnpm: command not found` - Then ran the fallback command `yarn rw test api/src/functions/users/users.test.ts` successfully - The issu"
+    },
+    {
+      "text": "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
+      "passed": true,
+      "evidence": "/functions/users/users.test.ts` and it failed with `pnpm: command not found` - Then ran the fallback command `yarn rw test api/src/functions/users/users.test.ts` successfully - The issue #7101 explicitly lists this fallback as an al"
+    },
+    {
+      "text": "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
+      "passed": true,
+      "evidence": "arn rw test api/src/functions/users/users.test.ts` was run instead and passed successfully. This fallback was explicitly listed in #7101's Verification section and is therefore allowed; it is not an improvised substitute. - Awaiting clos"
+    },
+    {
+      "text": "Moves child issue #7101 into explicit GitHub closeout after the fallback passes instead of treating verification alone as completion.",
+      "passed": true,
+      "evidence": "blocker. Report the command, the missing dependency/tool, and the stderr or setup gap. Do not mark the issue ready to close, and do not invent an alternative verification path unless the child issue itself already lists it or the hum"
+    },
+    {
+      "text": "Makes clear that parent task-graph checkbox updates are not required for task completion.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Leaves the parent PRD issue open after closing #7101.",
+      "passed": true,
+      "evidence": "violation before review, verification, or issue closure continues. In that response, also say the child issue remains open. /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md:- [ ] W1 - #123 Slice title - AFK - blocked by"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.833
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 421,
+    "errors_encountered": 0,
+    "output_chars": 2112,
+    "transcript_chars": 35274
+  },
+  "timing": {
+    "total_tokens": 554,
+    "duration_ms": 22482,
+    "total_duration_seconds": 22.482
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: claude-haiku-4.5\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md\nExit code: 0\nAPI duration ms: 18658\nSession duration ms: 22482"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

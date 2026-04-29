@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "States that the W5 review phase is not yet successful or complete while the blocking review finding remains.",
+      "passed": true,
+      "evidence": "tion commands pass. 191.  192. 1. Do not send any closeout turn while the wave review phase is still running, still blocked on findings, or has not yet covered the full wave scope. 193. 2. After review fixes are complete for the whol"
+    },
+    {
+      "text": "Rejects closing child issue #9501 early even though its verification passed.",
+      "passed": true,
+      "evidence": "PRD execution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9501 Cache account lookup - verification passed, but closeout is blocked because W5 still has an unresolved blocki"
+    },
+    {
+      "text": "Requires fixing the blocking review finding and rerunning review on the affected scope before any child issue in W5 closes.",
+      "passed": true,
+      "evidence": "#9501 Cache account lookup - verification passed, but closeout is blocked because W5 still has an unresolved blocking review finding. 2. #9502 Invalidate account cache on role change - blocked by a `security-review` Medium finding in W5 scope"
+    },
+    {
+      "text": "Keeps child issues #9501 and #9502 open or not ready to close.",
+      "passed": true,
+      "evidence": "PRD execution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9501 Cache account lookup - verification passed, but closeout is blocked because W5 still has an unresolved blocki"
+    },
+    {
+      "text": "Stops before additional closeout or another wave proceeds.",
+      "passed": true,
+      "evidence": "es comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave. 199. 6. Until the controller has re-read GitHub and confirmed closure, report only the **current** state. Do"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 492,
+    "errors_encountered": 0,
+    "output_chars": 789,
+    "transcript_chars": 34695
+  },
+  "timing": {
+    "total_tokens": 1010,
+    "duration_ms": 39064,
+    "total_duration_seconds": 39.064
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: gpt-5.3-codex\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md\nExit code: 0\nAPI duration ms: 35349\nSession duration ms: 39064"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

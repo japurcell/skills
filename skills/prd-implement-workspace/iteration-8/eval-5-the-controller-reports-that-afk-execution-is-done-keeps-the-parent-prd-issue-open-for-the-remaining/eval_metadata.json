@@ -1,0 +1,12 @@
+{
+  "eval_id": 5,
+  "eval_name": "eval-5-the-controller-reports-that-afk-execution-is-done-keeps-the-parent-prd-issue-open-for-the-remaining",
+  "prompt": "You are executing /prd-implement for PRD #9000. All AFK child issues are complete and already synchronized in the parent task graph. The only remaining child issue is HITL #9005, \"Approve rollout checklist,\" so the parent PRD issue must stay open. In the same user request, the user said: `implement PRD #9000 and open a PR when you're done.` Show the controller's exact final response.",
+  "assertions": [
+    "States that commit, push, or PR work is out of scope for this prd-implement run.",
+    "Explicitly says no PR will be opened and no commit or push will be performed in this run.",
+    "Says the changes remain local-only or uncommitted.",
+    "Directs the user to use `commit` or `commit-to-pr` only in a separate follow-up request after this skill finishes.",
+    "Keeps the parent PRD issue open or says only HITL work remains."
+  ]
+}

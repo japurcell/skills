@@ -38,16 +38,16 @@
         "Stops before the next wave or any additional issue closure proceeds."
       ]
     },
-    {
-      "id": 3,
-      "prompt": "You are executing /prd-implement for PRD #7000. AFK child issue #7101 is ready for verification. The parent PRD issue still shows `- [ ] W2 - #7101 Add user retry headers - AFK - blocked by #7098`. Its Verification section says: (1) `pnpm exec redwood test api/src/functions/users/users.test.ts`; (2) if the Redwood CLI is unavailable in the current environment, run `yarn rw test api/src/functions/users/users.test.ts` instead. The verification subagent reports `pnpm: command not found`, then runs `yarn rw test api/src/functions/users/users.test.ts` successfully. Show the controller response.",
-      "expected_output": "The controller accepts the fallback only because the issue explicitly lists it, records the verification evidence, closes the child issue, and leaves the parent PRD issue open.",
-      "files": [],
+      {
+        "id": 3,
+        "prompt": "You are executing /prd-implement for PRD #7000. AFK child issue #7101 is ready for verification. The parent PRD issue still shows `- [ ] W2 - #7101 Add user retry headers - AFK - blocked by #7098`. Its Verification section says: (1) `pnpm exec redwood test api/src/functions/users/users.test.ts`; (2) if the Redwood CLI is unavailable in the current environment, run `yarn rw test api/src/functions/users/users.test.ts` instead. The verification subagent reports `pnpm: command not found`, then runs `yarn rw test api/src/functions/users/users.test.ts` successfully. Show the controller response.",
+        "expected_output": "The controller accepts the fallback only because the issue explicitly lists it, records the verification evidence, moves the issue into explicit GitHub closeout without treating verification alone as completion, and leaves the parent PRD issue open.",
+        "files": [],
         "expectations": [
           "Acknowledges that the original `pnpm` command could not run.",
           "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
           "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
-          "Closes child issue #7101 after the fallback passes.",
+          "Moves child issue #7101 into explicit GitHub closeout after the fallback passes instead of treating verification alone as completion.",
           "Makes clear that parent task-graph checkbox updates are not required for task completion.",
           "Leaves the parent PRD issue open after closing #7101."
         ]
@@ -101,6 +101,32 @@
           "Keeps child issue #9301 open or not ready to close until those real GitHub updates succeed.",
           "Leaves the parent PRD issue open.",
           "Stops before the next wave or other new work proceeds."
+        ]
+      },
+      {
+        "id": 8,
+        "prompt": "You are executing /prd-implement for PRD #9400. Current wave W3 has AFK child issues #9401, \"Backfill invoice timezone,\" and #9402, \"Add invoice timezone admin filter.\" Both were launched in parallel because their likely files do not overlap. #9401 finishes first with a clean RED -> GREEN -> REFACTOR chain and passing targeted tests. #9402 is still running and has not returned yet. Another agent proposes starting review on #9401 now and, if it looks good, closing #9401 immediately so W4 can start sooner. Show the controller's response.",
+        "expected_output": "The controller waits for all implementation results in W3 before review starts, treats review as a wave-level phase over the full W3 scope, refuses early closeout for #9401, and keeps W4 blocked until W3 review and verification are complete.",
+        "files": [],
+        "expectations": [
+          "Says review cannot start until all implementation subagents for W3 finish or #9402 returns.",
+          "Treats review as a wave-level pass over the full W3 scope rather than an early per-issue review.",
+          "Keeps child issue #9401 open or not ready to close.",
+          "Rejects early verification or closeout for #9401 before wave review succeeds.",
+          "Keeps W4 blocked or refuses to advance to the next wave."
+        ]
+      },
+      {
+        "id": 9,
+        "prompt": "You are executing /prd-implement for PRD #9500. Wave W5 has AFK child issues #9501, \"Cache account lookup,\" and #9502, \"Invalidate account cache on role change.\" All W5 implementation subagents have finished, and the controller ran review on the combined W5 file list. `code-reviewer` found no blocking issues for #9501's files, but `security-review` reported a Medium finding in a file touched by #9502. #9501's verification commands have already passed, and one agent proposes closing #9501 now while #9502 gets its review fix. Show the controller's response.",
+        "expected_output": "The controller treats the wave review phase as incomplete until the blocking W5 review finding is fixed and re-reviewed, refuses to close #9501 early even though its verification passed, keeps both child issues open, and stops before more closeout or another wave begins.",
+        "files": [],
+        "expectations": [
+          "States that the W5 review phase is not yet successful or complete while the blocking review finding remains.",
+          "Rejects closing child issue #9501 early even though its verification passed.",
+          "Requires fixing the blocking review finding and rerunning review on the affected scope before any child issue in W5 closes.",
+          "Keeps child issues #9501 and #9502 open or not ready to close.",
+          "Stops before additional closeout or another wave proceeds."
         ]
       }
     ]

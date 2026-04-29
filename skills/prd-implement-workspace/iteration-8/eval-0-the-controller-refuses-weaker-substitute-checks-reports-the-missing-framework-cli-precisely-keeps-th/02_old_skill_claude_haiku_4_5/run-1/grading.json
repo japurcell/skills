@@ -1,0 +1,51 @@
+{
+  "expectations": [
+    {
+      "text": "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+      "passed": true,
+      "evidence": "g:**  1. #5101 Add tenant-scoped route guard - Verification blocked: required verification command `pnpm exec expo-router verify` unavailable  **Next ready work:**  - none (W2 stalled on verification failure)  **Landing status:**  - Local"
+    },
+    {
+      "text": "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+      "passed": true,
+      "evidence": "sue is closed on GitHub. A completion comment, `Stage: refactor` note, or \"ready to close\" summary is never a substitute for that real GitHub state change. Parent `Task graph` checkbox drift does not block completion. 11.  12. ##"
+    },
+    {
+      "text": "Keeps the child issue open or not ready to close.",
+      "passed": true,
+      "evidence": "esponse:  ---  ## PRD execution status for #5000  **Completed this run:**  - none  **Blocked / waiting:**  1. #5101 Add tenant-scoped route guard - Verification blocked: required verification command `pnpm exec expo-router ve"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": true,
+      "evidence": "es comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave. 189. 5. Until the controller has re-read GitHub and confirmed closure, report only the **current** state. Do"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 460,
+    "errors_encountered": 0,
+    "output_chars": 1363,
+    "transcript_chars": 32167
+  },
+  "timing": {
+    "total_tokens": 327,
+    "duration_ms": 16028,
+    "total_duration_seconds": 16.028
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: claude-haiku-4.5\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-iteration-8/SKILL.md\nExit code: 0\nAPI duration ms: 12351\nSession duration ms: 16028"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

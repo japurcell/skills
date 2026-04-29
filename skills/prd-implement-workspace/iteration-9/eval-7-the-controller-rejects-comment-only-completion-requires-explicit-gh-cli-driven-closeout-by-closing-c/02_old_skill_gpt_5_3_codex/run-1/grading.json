@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Explicitly says that comments or status notes do not count as task completion.",
+      "passed": true,
+      "evidence": "t task-graph line staying `- [ ] W2 - #9301 ...` is checkbox drift and does not override child-issue state. - Comment-only completion does not count; work cannot advance until GitHub shows #9301 closed.   # \ud83e\udd16 Copilot CLI Session  > [!NOTE] > -"
+    },
+    {
+      "text": "Requires explicit `gh-cli`-driven closeout or equivalent real GitHub state change: close child issue #9301.",
+      "passed": true,
+      "evidence": "itHub. #9301 remains open.  Next ready work:  - W2: #9301 Ship usage quota banner (run explicit closeout via `gh-cli`, then re-read the issue to confirm closure)  Landing status:  - Local changes only; no commit, push, or PR a"
+    },
+    {
+      "text": "Keeps child issue #9301 open or not ready to close until those real GitHub updates succeed.",
+      "passed": true,
+      "evidence": "PRD execution status for #9300  Completed this run:  - none  Blocked / waiting:  1. #9301 Ship usage quota banner - verification passed, but closeout failed because only comments were posted; the iss"
+    },
+    {
+      "text": "Leaves the parent PRD issue open.",
+      "passed": true,
+      "evidence": "ed, but closeout failed because only comments were posted; the issue was not actually closed on GitHub. #9301 remains open.  Next ready work:  - W2: #9301 Ship usage quota banner (run explicit closeout via `gh-cli`, then re-read the"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": true,
+      "evidence": "es comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave. 189. 5. Until the controller has re-read GitHub and confirmed closure, report only the **current** state. Do"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 446,
+    "errors_encountered": 0,
+    "output_chars": 742,
+    "transcript_chars": 30991
+  },
+  "timing": {
+    "total_tokens": 805,
+    "duration_ms": 32573,
+    "total_duration_seconds": 32.573
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: gpt-5.3-codex\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-iteration-8/SKILL.md\nExit code: 0\nAPI duration ms: 28648\nSession duration ms: 32573"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Says review cannot start until all implementation subagents for W3 finish or #9402 returns.",
+      "passed": true,
+      "evidence": "already-running independent tasks finish, then stop before launching another wave. 108. 5. After every wave, wait for all implementation results, then run review, then verify, then update issue state. 109.  110. When reporting the plan for a wave, use ex"
+    },
+    {
+      "text": "Treats review as a wave-level pass over the full W3 scope rather than an early per-issue review.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Keeps child issue #9401 open or not ready to close.",
+      "passed": true,
+      "evidence": "No\u2014we should **not** start review or close **#9401** yet.  PRD execution status for #9400  Completed this run:  - none  Blocked / waiting:  1. #9401 Backfill in"
+    },
+    {
+      "text": "Rejects early verification or closeout for #9401 before wave review succeeds.",
+      "passed": false,
+      "evidence": "required verification command, or left verification unclear, stop and resolve that before review. 225.  226. Do not close issues or advance waves based on subagent summaries alone. 227.  228. ## Verification subagents and implement"
+    },
+    {
+      "text": "Keeps W4 blocked or refuses to advance to the next wave.",
+      "passed": true,
+      "evidence": "es comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave. 189. 5. Until the controller has re-read GitHub and confirmed closure, report only the **current** state. Do"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 449,
+    "errors_encountered": 0,
+    "output_chars": 763,
+    "transcript_chars": 30990
+  },
+  "timing": {
+    "total_tokens": 1427,
+    "duration_ms": 34105,
+    "total_duration_seconds": 34.105
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: gpt-5.3-codex\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-iteration-8/SKILL.md\nExit code: 0\nAPI duration ms: 30254\nSession duration ms: 34105"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

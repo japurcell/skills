@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "States that the W5 review phase is not yet successful or complete while the blocking review finding remains.",
+      "passed": false,
+      "evidence": "m block closure\") 2. **Not allow partial closures across a wave**: Both #9501 and #9502 are in the same wave (W5). The skill says to fix all blocking review findings before closing affected child issues (line 205) 3. **Rej"
+    },
+    {
+      "text": "Rejects closing child issue #9501 early even though its verification passed.",
+      "passed": true,
+      "evidence": "215: \"security-review: High and Medium block closure\") 2. **Not allow partial closures across a wave**: Both #9501 and #9502 are in the same wave (W5). The skill says to fix all blocking review findings before closing affect"
+    },
+    {
+      "text": "Requires fixing the blocking review finding and rerunning review on the affected scope before any child issue in W5 closes.",
+      "passed": true,
+      "evidence": "e complete context. Based on the scenario and the SKILL.md instructions, the controller must:  1. **Recognize blocking review findings**: `security-review` reported a **Medium** finding on #9502's files, which **blocks closure** (per line 215:"
+    },
+    {
+      "text": "Keeps child issues #9501 and #9502 open or not ready to close.",
+      "passed": true,
+      "evidence": "215: \"security-review: High and Medium block closure\") 2. **Not allow partial closures across a wave**: Both #9501 and #9502 are in the same wave (W5). The skill says to fix all blocking review findings before closing affect"
+    },
+    {
+      "text": "Stops before additional closeout or another wave proceeds.",
+      "passed": true,
+      "evidence": "es comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave. /home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-iteration-8/SKILL.md:5. Until t"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 464,
+    "errors_encountered": 0,
+    "output_chars": 1768,
+    "transcript_chars": 45625
+  },
+  "timing": {
+    "total_tokens": 430,
+    "duration_ms": 26442,
+    "total_duration_seconds": 26.442
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Model: claude-haiku-4.5\nSkill path: /home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-iteration-8/SKILL.md\nExit code: 0\nAPI duration ms: 22445\nSession duration ms: 26442"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}
