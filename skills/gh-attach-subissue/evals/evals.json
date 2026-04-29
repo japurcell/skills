@@ -1,0 +1,41 @@
+{
+  "skill_name": "gh-attach-subissue",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use gh-attach-subissue to attach octo-org/platform#128 under octo-org/platform#42 as a real GitHub sub-issue. Show me the exact gh commands you would run.",
+      "expected_output": "Resolves parent and child node IDs, then uses a shell-safe `gh api graphql` `addSubIssue` mutation that inlines the resolved IDs into the query text.",
+      "files": [],
+      "expectations": [
+        "Uses GitHub issue node IDs rather than raw issue numbers in the `addSubIssue` input.",
+        "Shows `gh api repos/.../issues/... --jq .node_id` or an equivalent node-ID lookup for both issues.",
+        "Shows a `gh api graphql` mutation for `addSubIssue`.",
+        "Avoids GraphQL variable declarations such as `mutation($parentId: ID!, ...)` inside the shell command."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "I already created acme/api#901. Make it a true child issue of acme/api#900 with gh. Do not use a plain `Parent: #900` body line unless GitHub sub-issues are unavailable.",
+      "expected_output": "Prioritizes the true GitHub sub-issue attach flow, clearly distinguishes it from a plain body reference, and only mentions the body-reference fallback as non-equivalent.",
+      "files": [],
+      "expectations": [
+        "Prefers a real GitHub sub-issue attach instead of a body-reference shortcut.",
+        "States that `Parent: #900` is only a fallback or weaker alternative.",
+        "Includes the `addSubIssue` mutation shape.",
+        "Does not claim the body-reference fallback is equivalent to a real sub-issue link."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Show the safest shell command shape for linking child issue #17 under parent issue #3 in widgets/infra when shell expansion filters are touchy. I specifically do not want GraphQL `$variables` in the command.",
+      "expected_output": "Provides the safe command pattern that resolves node IDs first and inlines those resolved IDs into the `gh api graphql` mutation text without GraphQL variable declarations.",
+      "files": [],
+      "expectations": [
+        "Explains or demonstrates resolving node IDs before the mutation.",
+        "Uses an inlined-ID `gh api graphql` `addSubIssue` command shape.",
+        "Avoids `mutation($parentId: ID!, $childId: ID!)` or similar GraphQL variable syntax.",
+        "Keeps the answer focused on shell-safe command construction."
+      ]
+    }
+  ]
+}

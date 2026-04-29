@@ -6,7 +6,7 @@
 - `agents/`: standalone custom agent prompt files such as `code-architect.md` and `code-reviewer.md`
 - `references/`: optional top-level shared reference material copied into `~/.agents/references`
 - `scripts/`: repository-level helper scripts such as installers and importers
-- `skills/*-workspace/`: generated evaluation runs, snapshots, and review artifacts
+- `skills/*-workspace/`: generated evaluation runs, snapshots, and review artifacts; their `outputs/` subdirectories are generated fixtures, not maintained source
 
 ## Key files
 
