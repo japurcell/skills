@@ -1,6 +1,7 @@
 ---
 name: commit
 description: 'Commit current local changes into one clean git commit and push the working branch to origin: stage intended files, create or reuse the appropriate branch, write a conventional commit with issue linkage and Co-authored-by trailers, and return branch and commit details. Use this whenever the user asks to commit changes, save the current worktree, make a git commit, push a branch, or get work ready to share without opening a PR, even if they only say "commit this", "push my changes", or "save this work". Do not use for pull request creation, rebasing, cherry-picking, amending existing commits, resolving merge conflicts, or reviewing an existing PR.'
+disable-model-invocation: true
 ---
 
 # Commit

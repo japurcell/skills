@@ -1,6 +1,7 @@
 ---
 name: prd-create
 description: Create a Product Requirements Document (PRD) from a feature or problem description and submit it as a GitHub issue. Use this whenever the user asks to create, draft, write, refine, or file a PRD/product requirements document; wants requirements gathered before implementation; or describes a feature/problem and asks for a product brief, requirements issue, or PRD-style GitHub issue, even if they do not explicitly say "PRD".
+disable-model-invocation: true
 ---
 
 # PRD Create
@@ -81,11 +82,17 @@ Then:
 
 ```markdown
 # Exploration summary
+
 ## Key findings
+
 ## Patterns to preserve
+
 ## Key files
+
 - <file> - <one-line reason>
+
 ## Relevant tests
+
 ## Open questions
 ```
 

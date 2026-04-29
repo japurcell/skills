@@ -1,8 +1,7 @@
 ---
 name: agent-sop-author
 description: Create (or update) and validate Agent SOPs (Standard Operating Procedures) - markdown-based workflows that guide AI agents through complex, multi-step tasks with RFC 2119 constraints.
-version: 1.0.0
-tags: [skill, agent-sop, workflow, automation, sop, rfc2119]
+disable-model-invocation: true
 ---
 
 # Agent SOP Author
@@ -14,6 +13,7 @@ Agent SOPs (Standard Operating Procedures) are markdown-based instruction sets t
 ## Usage
 
 When working with Agent SOPs and need to:
+
 - Create new workflow automation SOPs
 - Update existing workflow automation SOPs
 - Structure multi-step agent workflows
@@ -27,6 +27,7 @@ When working with Agent SOPs and need to:
 ### What is an Agent SOP?
 
 An Agent SOP is a standardized markdown file (`.sop.md`) that defines:
+
 - **Clear objectives** with detailed overviews
 - **Parameterized inputs** for flexible reuse
 - **Step-by-step instructions** with RFC 2119 constraints
@@ -46,12 +47,14 @@ An Agent SOP is a standardized markdown file (`.sop.md`) that defines:
 ### File Location
 
 You **MUST** check for an `agent-sops/` directory in the current working directory:
+
 - If `agent-sops/` exists, You **MUST** write the SOP file there
 - If `agent-sops/` does not exist, You **MAY** write the SOP in the current directory or ask the user where to save it
 
 ### File Naming
 
 You **MUST** follow these naming conventions:
+
 - Use `.sop.md` file extension
 - Use kebab-case for filenames (e.g., `code-assist.sop.md`, `idea-honing.sop.md`)
 - Choose descriptive names that indicate the SOP's purpose
@@ -76,6 +79,7 @@ Every Agent SOP **MUST** include these sections in order:
 # [SOP Name]
 
 ## Overview
+
 [Concise description of what the SOP does and when to use it]
 
 ## Parameters
@@ -84,24 +88,30 @@ Every Agent SOP **MUST** include these sections in order:
 - **optional_param** (optional, default: "value"): Description
 
 **Constraints for parameter acquisition:**
+
 - If all required parameters are already provided, You MUST proceed to the Steps
 - If any required parameters are missing, You MUST ask for them before proceeding
 - When asking for parameters, You MUST request all parameters in a single prompt
 - When asking for parameters, You MUST use the exact parameter names as defined
 
 ## Steps
+
 ### 1. [Step Name]
+
 Description of what happens in this step.
 
 **Constraints:**
+
 - You MUST [specific requirement]
 - You SHOULD [recommended behavior]
 - You MAY [optional behavior]
 
 ## Examples
+
 [Concrete usage examples]
 
 ## Troubleshooting
+
 [Common issues and solutions]
 ```
 
@@ -118,6 +128,7 @@ You **MUST** define parameters using this format:
 - **with_default** (optional, default: "default_value"): Description
 
 **Constraints for parameter acquisition:**
+
 - If all required parameters are already provided, You MUST proceed to the Steps
 - If any required parameters are missing, You MUST ask for them before proceeding
 - When asking for parameters, You MUST request all parameters in a single prompt
@@ -125,12 +136,14 @@ You **MUST** define parameters using this format:
 ```
 
 **Parameter naming rules:**
+
 - You **MUST** use lowercase letters
 - You **MUST** use underscores for spaces (snake_case)
 - You **MUST** be descriptive of purpose
 - You **MUST** list required parameters before optional ones
 
 **The Constraints for parameter acquisition section:**
+
 - You **MUST** include this section in every Parameters section
 - You **MUST** include these directives:
   - "If all required parameters are already provided, You MUST proceed to the Steps"
@@ -141,6 +154,7 @@ You **MUST** define parameters using this format:
 
 ```markdown
 **Constraints for parameter acquisition:**
+
 - If all required parameters are already provided, You MUST proceed to the Steps
 - If any required parameters are missing, You MUST ask for them before proceeding
 - When asking for parameters, You MUST request all parameters in a single prompt
@@ -157,6 +171,7 @@ You **MUST** define parameters using this format:
 ### Steps Section
 
 You **MUST** structure steps with:
+
 1. Numbered heading (### 1., ### 2., etc.)
 2. Step name
 3. Natural language description
@@ -166,9 +181,11 @@ You **MUST** structure steps with:
 
 ```markdown
 ### 1. Setup
+
 Initialize the project environment and create necessary structures.
 
 **Constraints:**
+
 - You MUST validate directory structure exists
 - You MUST create missing directories
 - You MUST NOT proceed if directory creation fails
@@ -180,9 +197,11 @@ Initialize the project environment and create necessary structures.
 
 ```markdown
 ### 3. Conditional Processing
+
 If validation passes, proceed with processing. Otherwise, report errors.
 
 **Constraints:**
+
 - You MUST check validation status before proceeding
 - If validation passes, You MUST process the data
 - If validation fails, You MUST report specific errors
@@ -204,6 +223,7 @@ You **MUST** use these keywords as defined in RFC 2119:
 You **MUST** provide context when using negative constraints:
 
 **Good (with context):**
+
 ```markdown
 - You MUST NOT use ellipses (...) because your output will be read aloud by text-to-speech
 - You SHOULD NEVER delete Git history files since this could corrupt the repository
@@ -211,6 +231,7 @@ You **MUST** provide context when using negative constraints:
 ```
 
 **Bad (without context):**
+
 ```markdown
 - You MUST NOT use ellipses
 - You SHOULD NEVER delete Git files
@@ -218,6 +239,7 @@ You **MUST** provide context when using negative constraints:
 ```
 
 **Common contexts for negative constraints:**
+
 - Technical limitations: "because the system cannot handle..."
 - Security risks: "since this could expose sensitive data..."
 - Data integrity: "as this could corrupt important information..."
@@ -228,6 +250,7 @@ You **MUST** provide context when using negative constraints:
 ### Examples Section
 
 You **SHOULD** include concrete examples showing:
+
 - Example input parameters
 - Expected output or behavior
 - Common usage patterns
@@ -236,7 +259,9 @@ You **SHOULD** include concrete examples showing:
 ## Examples
 
 ### Example 1: Basic Usage
+
 **Input:**
+
 - task_description: "Create user authentication system"
 - mode: "interactive"
 
@@ -244,7 +269,9 @@ You **SHOULD** include concrete examples showing:
 Agent will guide through TDD workflow, creating tests first, then implementation.
 
 ### Example 2: Automated Mode
+
 **Input:**
+
 - task_description: "Fix bug in payment processing"
 - mode: "auto"
 
@@ -260,13 +287,17 @@ You **SHOULD** include common issues and solutions:
 ## Troubleshooting
 
 ### Parameter Validation Fails
+
 If parameter validation fails, check that:
+
 - All required parameters are provided
 - Parameter names use snake_case
 - Values match expected types
 
 ### Step Execution Hangs
+
 If a step appears to hang:
+
 - Check for missing tool permissions
 - Verify file paths are accessible
 - Review constraint requirements
@@ -284,9 +315,11 @@ For SOPs requiring user interaction:
 
 ```markdown
 ### 2. Requirements Clarification
+
 Guide the user through questions to refine their initial idea.
 
 **Constraints:**
+
 - You MUST ask one question at a time
 - You MUST append each Q&A to "idea-honing.md"
 - You SHOULD adapt follow-up questions based on previous answers
@@ -308,49 +341,58 @@ You **SHOULD** follow these practices when authoring SOPs:
 
 ## Quick Reference
 
-| Element | Format | Required |
-|---------|--------|----------|
-| File extension | `.sop.md` | Yes |
-| Title | `# SOP Name` | Yes |
-| Overview | `## Overview` | Yes |
-| Parameters | `## Parameters` | Yes |
-| Steps | `## Steps` with `### N.` | Yes |
-| Constraints | `**Constraints:**` with RFC 2119 | Yes |
-| Examples | `## Examples` | Recommended |
-| Troubleshooting | `## Troubleshooting` | Recommended |
+| Element         | Format                           | Required    |
+| --------------- | -------------------------------- | ----------- |
+| File extension  | `.sop.md`                        | Yes         |
+| Title           | `# SOP Name`                     | Yes         |
+| Overview        | `## Overview`                    | Yes         |
+| Parameters      | `## Parameters`                  | Yes         |
+| Steps           | `## Steps` with `### N.`         | Yes         |
+| Constraints     | `**Constraints:**` with RFC 2119 | Yes         |
+| Examples        | `## Examples`                    | Recommended |
+| Troubleshooting | `## Troubleshooting`             | Recommended |
 
 ## Common Patterns
 
 ### Before: Unstructured Prompt
+
 ```markdown
 Please implement a user authentication system using TDD.
 Make sure to write tests first and follow best practices.
 ```
 
 ### After: Structured SOP
+
 ```markdown
 # Code Assist
 
 ## Overview
+
 This SOP guides implementation using test-driven development.
 
 ## Parameters
+
 - **task_description** (required): Description of task
 - **mode** (optional, default: "interactive"): "interactive" or "auto"
 
 ## Steps
+
 ### 1. Setup
+
 Initialize project environment.
 
 **Constraints:**
+
 - You MUST validate directory structure
 - You MUST create test directory if missing
 - You MUST NOT proceed if setup fails
 
 ### 2. Test Creation
+
 Create tests based on requirements.
 
 **Constraints:**
+
 - You MUST write tests before implementation
 - You SHOULD follow existing test patterns
 - You MAY add additional edge case tests
@@ -359,22 +401,27 @@ Create tests based on requirements.
 ## Common Mistakes
 
 ### Missing Context in Negative Constraints
+
 **Problem:** Using MUST NOT without explaining why.
 **Fix:** Always provide context: "You MUST NOT X because Y"
 
 ### Vague Parameter Descriptions
+
 **Problem:** "input_data (required): The data"
 **Fix:** "input_data (required): JSON object containing user profile fields (name, email, role)"
 
 ### Mixing Requirement Levels
+
 **Problem:** Using MUST for optional behaviors or MAY for critical requirements.
 **Fix:** Use RFC 2119 keywords precisely - MUST for absolute requirements, SHOULD for recommendations, MAY for optional.
 
 ### Missing Examples
+
 **Problem:** Complex workflow without concrete usage examples.
 **Fix:** Include at least one complete example showing input parameters and expected behavior.
 
 ### Overly Complex Steps
+
 **Problem:** Single step trying to accomplish multiple objectives with nested conditionals.
 **Fix:** Break into multiple focused steps, each with clear constraints.
 

@@ -1,6 +1,7 @@
 ---
 name: prd-to-tasks
 description: Break a PRD, plan, feature description, problem statement, or body of work into independently-grabbable GitHub issues using thin vertical slices, explicit execution waves, and ready-task guidance. Use this whenever the user wants to turn requirements into child issues, a tracker issue, AFK/HITL slices, or an issue graph future agents can execute from.
+disable-model-invocation: true
 ---
 
 # PRD to Tasks
@@ -199,7 +200,7 @@ Work is executed from this issue's direct subissues. Start with any open AFK iss
 
 For raw PRD/new-parent draft responses, start with the parent tracker body above, then keep going. A minimal acceptable response has all four parts below in one answer:
 
-```markdown
+````markdown
 ## Parent tracker draft
 
 <title/body or create command>
@@ -222,6 +223,7 @@ mutation {
   }
 }"
 ```
+````
 
 ## Final summary
 
@@ -233,7 +235,8 @@ Child issues:
 
 1. #<child-1> <title> - W1 - AFK - blocked by none
 2. #<child-2> <title> - W2 - AFK - blocked by #<child-1>
-```
+
+````
 
 Create the parent with `gh issue create` unless the user explicitly asked for a draft only.
 
@@ -304,7 +307,7 @@ None - can start immediately
 ## Estimated scope
 
 Small: 1-2 files | Medium: 3-5 files | Large: 5+ files
-```
+````
 
 Use this template verbatim in draft output. Keep the exact `##` headings, colon placement, and placeholder forms so future agents and grading tooling can parse the result reliably.
 

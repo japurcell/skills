@@ -2,6 +2,7 @@
 name: commit-to-pr
 description: 'Commit local changes and open a GitHub pull request in one workflow: stage files, create or reuse the appropriate branch, write a conventional commit message with issue linkage, push to origin, and open a PR with `gh pr create`. Use this whenever the user asks to commit and open a PR, turn current work into a PR, push and make a pull request, open/raise/cut a PR, get this up for review, put this up for review, wrap this up as a PR, submit as a pull request, or any equivalent phrasing implying "take my local changes and turn them into a PR" — even if they omit git or gh details. Do not use for rebasing, cherry-picking, amending existing commits, resolving merge conflicts, or reviewing an existing PR.'
 argument-hint: "spec_file: path/to/spec.yaml, issue_numbers: [123, 456], base_branch: main, feature_branch: feat/123-new-feature"
+disable-model-invocation: true
 ---
 
 # Commit to PR
