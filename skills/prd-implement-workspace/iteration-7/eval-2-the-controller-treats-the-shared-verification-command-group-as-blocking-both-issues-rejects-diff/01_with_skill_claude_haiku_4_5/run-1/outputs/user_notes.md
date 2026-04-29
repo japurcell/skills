@@ -1,1 +1,0 @@
-Shared verification command group `bundle exec rspec spec/requests/admin/export_spec.rb` failed due to missing `bundle` CLI. Because the group covers both #6101 and #6102, neither can close until the group passes. Diff inspection is rejected as a substitute. Both issues remain open.

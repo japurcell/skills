@@ -1,1 +1,0 @@
-EVAL 0: Verification blocker for missing expo-router CLI. The skill requires that framework CLIs must be run as specified, and type checking or code inspection cannot substitute for expo-router verify. Controller stops before review, keeping #5101 open and parent line unchecked.

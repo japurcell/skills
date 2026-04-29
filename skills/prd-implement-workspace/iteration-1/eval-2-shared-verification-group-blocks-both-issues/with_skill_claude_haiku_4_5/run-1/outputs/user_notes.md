@@ -1,1 +1,0 @@
-Shared command group blocks both issues per SKILL rule: do not close covered issues unless shared group passes. Missing `bundle` binary is a stop condition—no framework substitution allowed per verification strength rules. Code inspection alone does not satisfy the contracted rspec verification.

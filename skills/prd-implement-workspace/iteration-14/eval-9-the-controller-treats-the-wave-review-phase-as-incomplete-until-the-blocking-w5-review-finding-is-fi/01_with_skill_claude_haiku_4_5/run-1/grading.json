@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "text": "States that the W5 review phase is not yet successful or complete while the blocking review finding remains.",
+      "passed": true,
+      "evidence": "ution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9501 Cache account lookup - Wave review phase is incomplete. security-review reported a Medium finding in file(s) touched by #9502. Although #9501's verification command"
+    },
+    {
+      "text": "Rejects closing child issue #9501 early even though its verification passed.",
+      "passed": true,
+      "evidence": "PRD execution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9501 Cache account lookup - Wave review phase is incomplete. security-review reported a Medium finding in file(s)"
+    },
+    {
+      "text": "Requires fixing the blocking review finding and rerunning review on the affected scope before any child issue in W5 closes.",
+      "passed": true,
+      "evidence": "oseout must wait for wave-level review completion. Fix the blocking security-review finding in #9502's scope, rerun review on the affected scope, and confirm the finding is resolved before closing any child in W5. #9501 remains open"
+    },
+    {
+      "text": "Keeps child issues #9501 and #9502 open or not ready to close.",
+      "passed": true,
+      "evidence": "PRD execution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9501 Cache account lookup - Wave review phase is incomplete. security-review reported a Medium finding in file(s)"
+    },
+    {
+      "text": "Stops before additional closeout or another wave proceeds.",
+      "passed": true,
+      "evidence": "PRD execution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9501 Cache account lookup - Wave review phase is incomplete. security-review reported a Mediu"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 16,
+    "errors_encountered": 0,
+    "output_chars": 1372,
+    "transcript_chars": 1985
+  },
+  "timing": {
+    "total_tokens": 164,
+    "duration_ms": 0,
+    "total_duration_seconds": 0,
+    "eval_id": 9
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "# Evaluation Run Notes\n\n- **Model**: claude-haiku-4.5\n- **Configuration**: 01_with_skill_claude_haiku_4_5\n- **Skill path**: /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md\n- **Eval ID**: 9\n- **Timestamp**: 2026-04-28T20:11:38.395839\n\n## Evaluation Case\n\neval-9: Wave review incomplete; block closeout until finding fixed\n\n## Controller Logic Applied\n\nThis is a dry-run evaluation. The response applies prd-implement skill controller logic to the hypothetical GitHub state without making actual GitHub calls or modifying source code.\n\n- No GitHub reads or writes occurred\n- No git operations were performed\n- No files were modified in the local repository\n- The response demonstrates the controller's exact decision flow for the given scenario"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

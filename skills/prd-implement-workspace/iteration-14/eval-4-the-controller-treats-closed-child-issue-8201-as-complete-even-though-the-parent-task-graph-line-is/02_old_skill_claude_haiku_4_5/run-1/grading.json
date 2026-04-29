@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies that #8201 is already closed.",
+      "passed": true,
+      "evidence": "er resolution:** \"Within that wave: ready tasks are open **AFK** issues whose blockers are all closed\"  Since #8201 is already closed, the blocker for #8202 is satisfied.  ## Outcome  - #8201 is closed (already done from prior run). - W2 is no"
+    },
+    {
+      "text": "Treats child issue state as authoritative even though the parent PRD task-graph line is still unchecked.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Explicitly says parent checkbox sync is not required before starting W2.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Treats W2 or #8202 as ready to proceed.",
+      "passed": true,
+      "evidence": "or PRD #8200  Current GitHub state: - #8201 \"Add webhook retry headers\" is already closed from a prior run. - W2 contains open AFK child issue #8202 \"Emit webhook retry metrics\" - #8202 is blocked by #8201, which is now cl"
+    },
+    {
+      "text": "Leaves the parent PRD issue open.",
+      "passed": false,
+      "evidence": "lement for PRD #8200. Child issue #8201, \"Add webhook retry headers,\" is already closed from a prior run. The parent PRD issue still shows `- [ ] W1 - #8201 Add webhook retry headers - AFK - blocked by none`. W2 contains AFK child issue"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.4
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 19,
+    "errors_encountered": 0,
+    "output_chars": 816,
+    "transcript_chars": 1223
+  },
+  "timing": {
+    "total_tokens": 175,
+    "duration_ms": 0,
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "model=claude-haiku-4.5\nconfig=02_old_skill_claude_haiku_4_5\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

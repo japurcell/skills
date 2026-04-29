@@ -1,0 +1,952 @@
+{
+  "metadata": {
+    "skill_name": "prd-implement",
+    "skill_path": "skills/prd-implement/SKILL.md",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-29T03:12:17Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "01_with_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 656,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+          "passed": true,
+          "evidence": "- none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - Required verification command `pnpm exec expo-router verify` failed with `/bin/sh: expo-router: command not found`; manual code inspection plus `pnpm exec tsc --noEmit`"
+        },
+        {
+          "text": "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+          "passed": true,
+          "evidence": "/sh: expo-router: command not found`; manual code inspection plus `pnpm exec tsc --noEmit` is an insufficient substitute. #5101 remains open.  Next ready work:  - none  Landing status:  - Local changes only; no commit, push, or PR"
+        },
+        {
+          "text": "Keeps the child issue open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - Required verification command `pnpm exec expo-router verify` failed with `/bi"
+        },
+        {
+          "text": "Stops before the next wave or other new work proceeds.",
+          "passed": true,
+          "evidence": "sh, or PR actions performed in this run.  Notes:  - parent task-graph checkbox state is informational only. - Stop before the next wave until `expo-router` is available and the required command passes. - parent PRD issue remains open.   # Prompt"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "01_with_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 648,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+          "passed": true,
+          "evidence": "e generated types file plus ran `pnpm exec eslint app/settings/form.tsx`. Show how the controller handles the checkpoint before review.  # Response  PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add a"
+        },
+        {
+          "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+          "passed": true,
+          "evidence": "/ waiting:  1. #5104 Add admin settings form - Controller checkpoint failed before review: required command `pnpm exec next typegen` was skipped because `next` is unavailable, and reading generated types plus running `pnpm exec eslint app/se"
+        },
+        {
+          "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+          "passed": true,
+          "evidence": "next typegen` was skipped because `next` is unavailable, and reading generated types plus running `pnpm exec eslint app/settings/form.tsx` is an insufficient substitute. #5104 remains open.  Next ready work:  - none  Landing"
+        },
+        {
+          "text": "Keeps child issue #5104 open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add admin settings form - Controller checkpoint failed before review: required command `pnpm exec next typege"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "01_with_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 754,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
+          "passed": true,
+          "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - Shared verification command group failed: `bundle exec rspec spec/requests/admin/export_"
+        },
+        {
+          "text": "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
+          "passed": true,
+          "evidence": "is run:  - none  Blocked / waiting:  1. #6101 CSV export filters - Shared verification command group failed: `bundle exec rspec spec/requests/admin/export_spec.rb` could not run (`/bin/sh: bundle: command not found`). #6101 remains open."
+        },
+        {
+          "text": "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
+          "passed": true,
+          "evidence": "ubagent reports `/bin/sh: bundle: command not found`. Another agent suggests closing #6101 anyway because its diff looks correct and leaving only #6102 open. Produce the controller's response.  # Response  PRD execution status for #6000"
+        },
+        {
+          "text": "Keeps child issues #6101 and #6102 open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - Shared verification command group failed: `bundle exec rspec spec/requests/admin/export_"
+        },
+        {
+          "text": "Stops before the next wave or any additional issue closure proceeds.",
+          "passed": true,
+          "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - Shared verification command group failed: `bundle exec rspec spec/r"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 3,
+      "configuration": "01_with_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.833,
+        "passed": 5,
+        "failed": 1,
+        "total": 6,
+        "time_seconds": 0,
+        "tokens": 684,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Acknowledges that the original `pnpm` command could not run.",
+          "passed": true,
+          "evidence": "ted this run:  - none  Blocked / waiting:  1. #7101 Add user retry headers - Original command could not run (`pnpm: command not found`); fallback command `yarn rw test api/src/functions/users/users.test.ts` passed, and this fallback was allowe"
+        },
+        {
+          "text": "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
+          "passed": true,
+          "evidence": "#7101 Add user retry headers - Original command could not run (`pnpm: command not found`); fallback command `yarn rw test api/src/functions/users/users.test.ts` passed, and this fallback was allowed by the issue itself. #7101 remai"
+        },
+        {
+          "text": "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
+          "passed": true,
+          "evidence": "found`); fallback command `yarn rw test api/src/functions/users/users.test.ts` passed, and this fallback was allowed by the issue itself. #7101 remains open.  Next ready work:  - none  Landing status:  - Local changes only; no commit, push"
+        },
+        {
+          "text": "Moves child issue #7101 into explicit GitHub closeout after the fallback passes instead of treating verification alone as completion.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Makes clear that parent task-graph checkbox updates are not required for task completion.",
+          "passed": true,
+          "evidence": "none  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - parent task-graph checkbox updates are not required. - Verification evidence is acceptable, but child completion still requires explicit `gh-cli`-driven closeout"
+        },
+        {
+          "text": "Leaves the parent PRD issue open after closing #7101.",
+          "passed": true,
+          "evidence": "test api/src/functions/users/users.test.ts` passed, and this fallback was allowed by the issue itself. #7101 remains open.  Next ready work:  - none  Landing status:  - Local changes only; no commit, push, or PR actions performed i"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 4,
+      "configuration": "01_with_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 464,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies that #8201 is already closed.",
+          "passed": true,
+          "evidence": "rics  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - #8201 is closed. - Child issue state is authoritative; parent task-graph checkbox updates are not required. - W2 is ready bec"
+        },
+        {
+          "text": "Treats child issue state as authoritative even though the parent PRD task-graph line is still unchecked.",
+          "passed": false,
+          "evidence": "s:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - #8201 is closed. - Child issue state is authoritative; parent task-graph checkbox updates are not required. - W2 is ready because #8201 is closed and #8202\u2019s block"
+        },
+        {
+          "text": "Explicitly says parent checkbox sync is not required before starting W2.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Treats W2 or #8202 as ready to proceed.",
+          "passed": true,
+          "evidence": "PRD execution status for #8200  Completed this run:  - none  Blocked / waiting:  - none  Next ready work:  - W2: #8202 Emit webhook retry metrics  Landing status:  - Local changes only; no commit, push, or PR actions perf"
+        },
+        {
+          "text": "Leaves the parent PRD issue open.",
+          "passed": true,
+          "evidence": "are not required. - W2 is ready because #8201 is closed and #8202\u2019s blocker is satisfied. - parent PRD issue remains open.   # Prompt  You are resuming /prd-implement for PRD #8200. Child issue #8201, \"Add webhook retry headers,\" i"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 5,
+      "configuration": "01_with_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 602,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that commit, push, or PR work is out of scope for this prd-implement run.",
+          "passed": true,
+          "evidence": "- Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - Landing work remains out of scope for this run. - No commit, push, or PR action will be performed in this run. - parent PRD issue remains open."
+        },
+        {
+          "text": "Explicitly says no PR will be opened and no commit or push will be performed in this run.",
+          "passed": true,
+          "evidence": "all AFK child issues are already complete.  Next ready work:  - none  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - Landing work remains out of scope for this run. - No commit, push, or PR ac"
+        },
+        {
+          "text": "Says the changes remain local-only or uncommitted.",
+          "passed": true,
+          "evidence": "for human approval; all AFK child issues are already complete.  Next ready work:  - none  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - Landing work remains out of scope for this"
+        },
+        {
+          "text": "Directs the user to use `commit` or `commit-to-pr` only in a separate follow-up request after this skill finishes.",
+          "passed": true,
+          "evidence": "ormed in this run. - parent PRD issue remains open. - `prd-implement` stops here; use a separate `commit` or `commit-to-pr` request after HITL completion if you want landing work.   # Prompt  You are executing /prd-implement for PRD"
+        },
+        {
+          "text": "Keeps the parent PRD issue open or says only HITL work remains.",
+          "passed": true,
+          "evidence": "PRD execution status for #9000  Completed this run:  - none  Blocked / waiting:  1. #9005 Approve rollout checklist - HITL item waiting for human approval; all AFK child issues are already complete."
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 6,
+      "configuration": "01_with_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 634,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies the `git commit` as an unauthorized or out-of-scope landing action.",
+          "passed": true,
+          "evidence": "1. #9101 Add webhook retry cap - Workflow violation: an unauthorized, out-of-scope landing action occurred (`git commit -m \"feat: add webhook retry cap\"`). Stop immediately before review, verification, closeout, or PR creation. #"
+        },
+        {
+          "text": "Stops before review, verification, issue closure, or PR creation proceeds.",
+          "passed": true,
+          "evidence": "out-of-scope landing action occurred (`git commit -m \"feat: add webhook retry cap\"`). Stop immediately before review, verification, closeout, or PR creation. #9101 remains open.  Next ready work:  - none  Landing status:  - Lo"
+        },
+        {
+          "text": "Keeps child issue #9101 open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #9100  Completed this run:  - none  Blocked / waiting:  1. #9101 Add webhook retry cap - Workflow violation: an unauthorized, out-of-scope landing action occurred (`git commi"
+        },
+        {
+          "text": "Explicitly says it will not push, open a PR, or treat the commit as permission to continue.",
+          "passed": true,
+          "evidence": "ormed in this run.  Notes:  - The existing commit is not permission to continue this `prd-implement` run. - I will not push, open a PR, or treat the commit as completion. - parent PRD issue remains open.   # Prompt  You are executing"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 7,
+      "configuration": "01_with_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 608,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Explicitly says that comments or status notes do not count as task completion.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Requires explicit `gh-cli`-driven closeout or equivalent real GitHub state change: close child issue #9301.",
+          "passed": true,
+          "evidence": "1 Ship usage quota banner - Comments/status notes were posted, but comments do not count as task completion. `gh-cli`-driven closeout with real GitHub state change is still required. #9301 remains open.  Next ready work:  - no"
+        },
+        {
+          "text": "Keeps child issue #9301 open or not ready to close until those real GitHub updates succeed.",
+          "passed": true,
+          "evidence": "PRD execution status for #9300  Completed this run:  - none  Blocked / waiting:  1. #9301 Ship usage quota banner - Comments/status notes were posted, but comments do not count as task completion. `g"
+        },
+        {
+          "text": "Leaves the parent PRD issue open.",
+          "passed": true,
+          "evidence": "not count as task completion. `gh-cli`-driven closeout with real GitHub state change is still required. #9301 remains open.  Next ready work:  - none  Landing status:  - Local changes only; no commit, push, or PR actions performed i"
+        },
+        {
+          "text": "Stops before the next wave or other new work proceeds.",
+          "passed": true,
+          "evidence": "none  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - Do not advance to the next wave until child issue closure is confirmed by a fresh GitHub read. - parent task-graph checkbox state is informat"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 8,
+      "configuration": "01_with_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 748,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says review cannot start until all implementation subagents for W3 finish or #9402 returns.",
+          "passed": false,
+          "evidence": "closeout must wait for wave-level review after all W3 implementation subagents return. #9401 remains open. 2. #9402 Add invoice timezone admin filter - Implementation still in flight; review cannot start until #9402 returns."
+        },
+        {
+          "text": "Treats review as a wave-level pass over the full W3 scope rather than an early per-issue review.",
+          "passed": true,
+          "evidence": "Blocked / waiting:  1. #9401 Backfill invoice timezone - Implementation finished, but closeout must wait for wave-level review after all W3 implementation subagents return. #9401 remains open. 2. #9402 Add invoice timezone admin filter"
+        },
+        {
+          "text": "Keeps child issue #9401 open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #9400  Completed this run:  - none  Blocked / waiting:  1. #9401 Backfill invoice timezone - Implementation finished, but closeout must wait for wave-level review after all W"
+        },
+        {
+          "text": "Rejects early verification or closeout for #9401 before wave review succeeds.",
+          "passed": true,
+          "evidence": "l changes only; no commit, push, or PR actions performed in this run.  Notes:  - Review is a wave-level gate; do not close any W3 child issue while another W3 task is still implementing. - The next wave remains blocked until W3 impl"
+        },
+        {
+          "text": "Keeps W4 blocked or refuses to advance to the next wave.",
+          "passed": true,
+          "evidence": "PRD execution status for #9400  Completed this run:  - none  Blocked / waiting:  1. #9401 Backfill invoice timezone - Implementation finished, but closeout must wait for wave-lev"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 9,
+      "configuration": "01_with_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 804,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the W5 review phase is not yet successful or complete while the blocking review finding remains.",
+          "passed": true,
+          "evidence": "ution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9501 Cache account lookup - Wave review phase is incomplete due to a blocking W5 security finding on #9502 scope; do not close any child in W5 yet. #9501 remains open. 2"
+        },
+        {
+          "text": "Rejects closing child issue #9501 early even though its verification passed.",
+          "passed": true,
+          "evidence": "PRD execution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9501 Cache account lookup - Wave review phase is incomplete due to a blocking W5 security finding on #9502 scope;"
+        },
+        {
+          "text": "Requires fixing the blocking review finding and rerunning review on the affected scope before any child issue in W5 closes.",
+          "passed": true,
+          "evidence": "open. 2. #9502 Invalidate account cache on role change - `security-review` reported a Medium finding; fix and rerun review on the affected scope before verification/closeout. #9502 remains open.  Next ready work:  - none  Landing st"
+        },
+        {
+          "text": "Keeps child issues #9501 and #9502 open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9501 Cache account lookup - Wave review phase is incomplete due to a blocking W5 security finding on #9502 scope;"
+        },
+        {
+          "text": "Stops before additional closeout or another wave proceeds.",
+          "passed": true,
+          "evidence": "PRD execution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9501 Cache account lookup - Wave review phase is incomplete due to a blocking W5 security fin"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 0,
+      "configuration": "02_old_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 113,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Names the missing required verification command or missing `expo-router` CLI as the blocker.",
+          "passed": true,
+          "evidence": "Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command failed: `pnpm exec expo-router verify` -> `/bin/sh: expo-router: command not found`. Manual inspection + `pnpm exec tsc --noEmit` is not an allowed"
+        },
+        {
+          "text": "Explicitly rejects substituting static analysis, code inspection, or `tsc --noEmit` for the required verification command.",
+          "passed": true,
+          "evidence": "-> `/bin/sh: expo-router: command not found`. Manual inspection + `pnpm exec tsc --noEmit` is not an allowed substitute.  Next ready work:  - none (W2 cannot advance until the required verification path is available or explicitly"
+        },
+        {
+          "text": "Keeps the child issue open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command failed: `pnpm exec expo-router verify` -> `/bin"
+        },
+        {
+          "text": "Stops before the next wave or other new work proceeds.",
+          "passed": true,
+          "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5101 Add tenant-scoped route guard - required verification command failed: `pnpm exec expo-ro"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "02_old_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 111,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+          "passed": true,
+          "evidence": "e generated types file plus ran `pnpm exec eslint app/settings/form.tsx`. Show how the controller handles the checkpoint before review.  # Response  PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add a"
+        },
+        {
+          "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+          "passed": true,
+          "evidence": "1. #5104 Add admin settings form - controller checkpoint failed before review: required verification command `pnpm exec next typegen` was skipped because `next` is unavailable, and substituted checks (reading generated types + eslint) are not"
+        },
+        {
+          "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+          "passed": false,
+          "evidence": "ec next typegen` was skipped because `next` is unavailable, and substituted checks (reading generated types + eslint) are not equivalent.  Next ready work:  - none (remain in W3 until required verification command runs or the"
+        },
+        {
+          "text": "Keeps child issue #5104 open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add admin settings form - controller checkpoint failed before review: required verification command `pnpm exe"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "02_old_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 117,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
+          "passed": false,
+          "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - shared required verification command group failed: `bundle exec rspec spec/requests/admi"
+        },
+        {
+          "text": "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
+          "passed": true,
+          "evidence": "- none  Blocked / waiting:  1. #6101 CSV export filters - shared required verification command group failed: `bundle exec rspec spec/requests/admin/export_spec.rb` -> `/bin/sh: bundle: command not found`. 2. #6102 CSV export download aud"
+        },
+        {
+          "text": "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
+          "passed": false,
+          "evidence": "ubagent reports `/bin/sh: bundle: command not found`. Another agent suggests closing #6101 anyway because its diff looks correct and leaving only #6102 open. Produce the controller's response.  # Response  PRD execution status for #6000"
+        },
+        {
+          "text": "Keeps child issues #6101 and #6102 open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - shared required verification command group failed: `bundle exec rspec spec/requests/admi"
+        },
+        {
+          "text": "Stops before the next wave or any additional issue closure proceeds.",
+          "passed": true,
+          "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - shared required verification command group failed: `bundle exec rsp"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 3,
+      "configuration": "02_old_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 3,
+        "failed": 3,
+        "total": 6,
+        "time_seconds": 0,
+        "tokens": 100,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Acknowledges that the original `pnpm` command could not run.",
+          "passed": true,
+          "evidence": "tus for #7000  Completed this run:  - Verification evidence recorded for #7101 using issue-defined fallback: `pnpm: command not found`, then `yarn rw test api/src/functions/users/users.test.ts` passed.  Blocked / waiting:  1. #7101 Add user re"
+        },
+        {
+          "text": "Uses or accepts the explicitly listed `yarn rw test` fallback command.",
+          "passed": true,
+          "evidence": "n:  - Verification evidence recorded for #7101 using issue-defined fallback: `pnpm: command not found`, then `yarn rw test api/src/functions/users/users.test.ts` passed.  Blocked / waiting:  1. #7101 Add user retry headers - closeou"
+        },
+        {
+          "text": "Makes clear that the fallback is acceptable because the child issue explicitly allowed it.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Moves child issue #7101 into explicit GitHub closeout after the fallback passes instead of treating verification alone as completion.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Makes clear that parent task-graph checkbox updates are not required for task completion.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Leaves the parent PRD issue open after closing #7101.",
+          "passed": true,
+          "evidence": "performed in this run.  Notes:  - The fallback was allowed by the child issue itself, not improvised. - #7101 remains open. - parent PRD issue remains open.   # Prompt  You are executing /prd-implement for PRD #7000. AFK child issue"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 4,
+      "configuration": "02_old_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 68,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies that #8201 is already closed.",
+          "passed": true,
+          "evidence": "rics  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - #8201 is closed. - Parent checkbox drift is informational only; child issue state controls readiness. - parent PRD issue rema"
+        },
+        {
+          "text": "Treats child issue state as authoritative even though the parent PRD task-graph line is still unchecked.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Explicitly says parent checkbox sync is not required before starting W2.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Treats W2 or #8202 as ready to proceed.",
+          "passed": true,
+          "evidence": "200  Completed this run:  1. #8201 Add webhook retry headers  Blocked / waiting:  - none  Next ready work:  - W2: #8202 Emit webhook retry metrics  Landing status:  - Local changes only; no commit, push, or PR actions perf"
+        },
+        {
+          "text": "Leaves the parent PRD issue open.",
+          "passed": true,
+          "evidence": "osed. - Parent checkbox drift is informational only; child issue state controls readiness. - parent PRD issue remains open.   # Prompt  You are resuming /prd-implement for PRD #8200. Child issue #8201, \"Add webhook retry headers,\" i"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 5,
+      "configuration": "02_old_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 94,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that commit, push, or PR work is out of scope for this prd-implement run.",
+          "passed": true,
+          "evidence": "Notes:  - #9005 remains open. - parent PRD issue remains open. - `prd-implement` stops here; opening a PR is out of scope for this run. Start a separate `commit` or `commit-to-pr` request after HITL completion.   # Prompt  You are"
+        },
+        {
+          "text": "Explicitly says no PR will be opened and no commit or push will be performed in this run.",
+          "passed": true,
+          "evidence": "d.  Next ready work:  - none (AFK execution is done; waiting on HITL)  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - #9005 remains open. - parent PRD issue remains open. - `prd-implement` stop"
+        },
+        {
+          "text": "Says the changes remain local-only or uncommitted.",
+          "passed": true,
+          "evidence": "human action required.  Next ready work:  - none (AFK execution is done; waiting on HITL)  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - #9005 remains open. - parent PRD issue rema"
+        },
+        {
+          "text": "Directs the user to use `commit` or `commit-to-pr` only in a separate follow-up request after this skill finishes.",
+          "passed": true,
+          "evidence": "open. - `prd-implement` stops here; opening a PR is out of scope for this run. Start a separate `commit` or `commit-to-pr` request after HITL completion.   # Prompt  You are executing /prd-implement for PRD #9000. All AFK child iss"
+        },
+        {
+          "text": "Keeps the parent PRD issue open or says only HITL work remains.",
+          "passed": true,
+          "evidence": "0  Completed this run:  - All AFK child issues are already complete and synchronized.  Blocked / waiting:  1. #9005 Approve rollout checklist - HITL human action required.  Next ready work:  - none (AFK execution is done; wai"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 6,
+      "configuration": "02_old_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0,
+        "tokens": 97,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies the `git commit` as an unauthorized or out-of-scope landing action.",
+          "passed": true,
+          "evidence": "ed / waiting:  1. #9101 Add webhook retry cap - workflow violation: implementation subagent reported running `git commit -m \"feat: add webhook retry cap\"`. Per skill boundary, this run must stop before review, verification, or clo"
+        },
+        {
+          "text": "Stops before review, verification, issue closure, or PR creation proceeds.",
+          "passed": true,
+          "evidence": "reported running `git commit -m \"feat: add webhook retry cap\"`. Per skill boundary, this run must stop before review, verification, or closeout.  Next ready work:  - none (resolve unauthorized landing action and re-establish c"
+        },
+        {
+          "text": "Keeps child issue #9101 open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #9100  Completed this run:  - none  Blocked / waiting:  1. #9101 Add webhook retry cap - workflow violation: implementation subagent reported running `git commit -m \"feat: ad"
+        },
+        {
+          "text": "Explicitly says it will not push, open a PR, or treat the commit as permission to continue.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 7,
+      "configuration": "02_old_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 99,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Explicitly says that comments or status notes do not count as task completion.",
+          "passed": true,
+          "evidence": "300  Completed this run:  - none  Blocked / waiting:  1. #9301 Ship usage quota banner - closeout incomplete: comment-only completion on child/parent does not count as done because GitHub still shows the child issue open.  Next ready work:  -"
+        },
+        {
+          "text": "Requires explicit `gh-cli`-driven closeout or equivalent real GitHub state change: close child issue #9301.",
+          "passed": true,
+          "evidence": "ld issue open.  Next ready work:  - W2: #9301 Ship usage quota banner (explicit closeout turn required: load `gh-cli`, close child issue, re-read to confirm)  Landing status:  - Local changes only; no commit, push, or PR actio"
+        },
+        {
+          "text": "Keeps child issue #9301 open or not ready to close until those real GitHub updates succeed.",
+          "passed": true,
+          "evidence": "PRD execution status for #9300  Completed this run:  - none  Blocked / waiting:  1. #9301 Ship usage quota banner - closeout incomplete: comment-only completion on child/parent does not count as done"
+        },
+        {
+          "text": "Leaves the parent PRD issue open.",
+          "passed": true,
+          "evidence": "Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - #9301 remains open. - parent PRD issue remains open. - Workflow stops before later waves until real GitHub closeout succeeds."
+        },
+        {
+          "text": "Stops before the next wave or other new work proceeds.",
+          "passed": true,
+          "evidence": "PRD execution status for #9300  Completed this run:  - none  Blocked / waiting:  1. #9301 Ship usage quota banner - closeout incomplete: comment-only completion on child/parent d"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 8,
+      "configuration": "02_old_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 110,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says review cannot start until all implementation subagents for W3 finish or #9402 returns.",
+          "passed": false,
+          "evidence": "implementation finished and reported passing targeted tests.  Blocked / waiting:  1. W3 wave lifecycle gate - #9402 is still running, so review has not started and no W3 child issue can be closed yet.  Next ready work:  - W3:"
+        },
+        {
+          "text": "Treats review as a wave-level pass over the full W3 scope rather than an early per-issue review.",
+          "passed": true,
+          "evidence": "ted and no W3 child issue can be closed yet.  Next ready work:  - W3: wait for #9402 completion, then run one wave-level review across combined W3 scope, then verification, then closeout.  Landing status:  - Local changes only; no commit"
+        },
+        {
+          "text": "Keeps child issue #9401 open or not ready to close.",
+          "passed": true,
+          "evidence": "PRD execution status for #9400  Completed this run:  - #9401 implementation finished and reported passing targeted tests.  Blocked / waiting:  1. W3 wave lifecycle gate -"
+        },
+        {
+          "text": "Rejects early verification or closeout for #9401 before wave review succeeds.",
+          "passed": false,
+          "evidence": "PRD execution status for #9400  Completed this run:  - #9401 implementation finished and reported passing targeted tests.  Blocked / waiting:  1. W3 wave lifecycle gate -"
+        },
+        {
+          "text": "Keeps W4 blocked or refuses to advance to the next wave.",
+          "passed": true,
+          "evidence": "status for #9400  Completed this run:  - #9401 implementation finished and reported passing targeted tests.  Blocked / waiting:  1. W3 wave lifecycle gate - #9402 is still running, so review has not started and no W3 child iss"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+      ]
+    },
+    {
+      "eval_id": 9,
+      "configuration": "02_old_skill_gpt_5_3_codex",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 0,
+        "tokens": 103,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the W5 review phase is not yet successful or complete while the blocking review finding remains.",
+          "passed": false,
+          "evidence": "wave review finding from `security-review` (Medium). 2. #9501 Cache account lookup - cannot close yet because W5 review phase is not clear for the full wave scope.  Next ready work:  - W5: fix #9502 security finding, rerun"
+        },
+        {
+          "text": "Rejects closing child issue #9501 early even though its verification passed.",
+          "passed": true,
+          "evidence": "02 Invalidate account cache on role change - blocking wave review finding from `security-review` (Medium). 2. #9501 Cache account lookup - cannot close yet because W5 review phase is not clear for the full wave scope.  Next r"
+        },
+        {
+          "text": "Requires fixing the blocking review finding and rerunning review on the affected scope before any child issue in W5 closes.",
+          "passed": false,
+          "evidence": "No supporting excerpt found."
+        },
+        {
+          "text": "Keeps child issues #9501 and #9502 open or not ready to close.",
+          "passed": true,
+          "evidence": "02 Invalidate account cache on role change - blocking wave review finding from `security-review` (Medium). 2. #9501 Cache account lookup - cannot close yet because W5 review phase is not clear for the full wave scope.  Next r"
+        },
+        {
+          "text": "Stops before additional closeout or another wave proceeds.",
+          "passed": true,
+          "evidence": "PRD execution status for #9500  Completed this run:  - none  Blocked / waiting:  1. #9502 Invalidate account cache on role change - blocking wave review finding from `security-re"
+        }
+      ],
+      "notes": [
+        "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+      ]
+    }
+  ],
+  "run_summary": {
+    "01_with_skill_gpt_5_3_codex": {
+      "pass_rate": {
+        "mean": 0.9033,
+        "stddev": 0.1392,
+        "min": 0.6,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "tokens": {
+        "mean": 660.2,
+        "stddev": 96.1547,
+        "min": 464,
+        "max": 804
+      }
+    },
+    "02_old_skill_gpt_5_3_codex": {
+      "pass_rate": {
+        "mean": 0.74,
+        "stddev": 0.1941,
+        "min": 0.5,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "tokens": {
+        "mean": 101.2,
+        "stddev": 13.9188,
+        "min": 68,
+        "max": 117
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.16",
+      "time_seconds": "+0.0",
+      "tokens": "+559"
+    }
+  },
+  "notes": []
+}

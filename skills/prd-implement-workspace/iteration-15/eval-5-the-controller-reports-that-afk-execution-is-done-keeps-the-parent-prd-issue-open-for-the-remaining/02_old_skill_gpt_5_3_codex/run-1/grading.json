@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "States that commit, push, or PR work is out of scope for this prd-implement run.",
+      "passed": true,
+      "evidence": "Notes:  - #9005 remains open. - parent PRD issue remains open. - `prd-implement` stops here; opening a PR is out of scope for this run. Start a separate `commit` or `commit-to-pr` request after HITL completion.   # Prompt  You are"
+    },
+    {
+      "text": "Explicitly says no PR will be opened and no commit or push will be performed in this run.",
+      "passed": true,
+      "evidence": "d.  Next ready work:  - none (AFK execution is done; waiting on HITL)  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - #9005 remains open. - parent PRD issue remains open. - `prd-implement` stop"
+    },
+    {
+      "text": "Says the changes remain local-only or uncommitted.",
+      "passed": true,
+      "evidence": "human action required.  Next ready work:  - none (AFK execution is done; waiting on HITL)  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - #9005 remains open. - parent PRD issue rema"
+    },
+    {
+      "text": "Directs the user to use `commit` or `commit-to-pr` only in a separate follow-up request after this skill finishes.",
+      "passed": true,
+      "evidence": "open. - `prd-implement` stops here; opening a PR is out of scope for this run. Start a separate `commit` or `commit-to-pr` request after HITL completion.   # Prompt  You are executing /prd-implement for PRD #9000. All AFK child iss"
+    },
+    {
+      "text": "Keeps the parent PRD issue open or says only HITL work remains.",
+      "passed": true,
+      "evidence": "0  Completed this run:  - All AFK child issues are already complete and synchronized.  Blocked / waiting:  1. #9005 Approve rollout checklist - HITL human action required.  Next ready work:  - none (AFK execution is done; wai"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 16,
+    "errors_encountered": 0,
+    "output_chars": 574,
+    "transcript_chars": 984
+  },
+  "timing": {
+    "total_tokens": 94,
+    "duration_ms": 0,
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "model=gpt-5.3-codex\nconfig=02_old_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

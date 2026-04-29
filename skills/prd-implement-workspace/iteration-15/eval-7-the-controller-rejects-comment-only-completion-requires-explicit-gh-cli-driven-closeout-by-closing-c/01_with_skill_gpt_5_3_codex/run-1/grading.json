@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Explicitly says that comments or status notes do not count as task completion.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Requires explicit `gh-cli`-driven closeout or equivalent real GitHub state change: close child issue #9301.",
+      "passed": true,
+      "evidence": "1 Ship usage quota banner - Comments/status notes were posted, but comments do not count as task completion. `gh-cli`-driven closeout with real GitHub state change is still required. #9301 remains open.  Next ready work:  - no"
+    },
+    {
+      "text": "Keeps child issue #9301 open or not ready to close until those real GitHub updates succeed.",
+      "passed": true,
+      "evidence": "PRD execution status for #9300  Completed this run:  - none  Blocked / waiting:  1. #9301 Ship usage quota banner - Comments/status notes were posted, but comments do not count as task completion. `g"
+    },
+    {
+      "text": "Leaves the parent PRD issue open.",
+      "passed": true,
+      "evidence": "not count as task completion. `gh-cli`-driven closeout with real GitHub state change is still required. #9301 remains open.  Next ready work:  - none  Landing status:  - Local changes only; no commit, push, or PR actions performed i"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": true,
+      "evidence": "none  Landing status:  - Local changes only; no commit, push, or PR actions performed in this run.  Notes:  - Do not advance to the next wave until child issue closure is confirmed by a fresh GitHub read. - parent task-graph checkbox state is informat"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 16,
+    "errors_encountered": 0,
+    "output_chars": 608,
+    "transcript_chars": 1186
+  },
+  "timing": {
+    "total_tokens": 0,
+    "duration_ms": 0,
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

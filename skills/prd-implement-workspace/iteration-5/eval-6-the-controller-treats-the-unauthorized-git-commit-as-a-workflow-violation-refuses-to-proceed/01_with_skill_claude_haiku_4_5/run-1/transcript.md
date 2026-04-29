@@ -1,1 +1,0 @@
-Workflow violation: subagent committed to git (rule 2). Stops before review/verification/closure. Issue #9101 stays open, parent checkbox unchecked. Directs user to resolve and use separate `commit` skill after prd-implement finishes.

@@ -1,0 +1,5 @@
+[
+  "Final Haiku comparison: revised skill reached 0.833 mean pass rate versus 0.785 for the baseline (+0.05). The revised skill also used fewer estimated response tokens (129 vs 286), suggesting the progressive-disclosure rewrite improved concision for the weaker model.",
+  "The first Haiku attempt regressed because the model answered with analysis sections and omitted exact state phrases. Adding the dry-run response contract corrected that without reducing GPT-5.3-Codex performance.",
+  "Remaining misses are concentrated in wording-sensitive assertions around exact final-state phrases, not broad policy selection. Future eval improvements could separate semantic outcome checks from exact phrase checks."
+]

@@ -1,1 +1,0 @@
-Eval 2: Shared verification command failed. `bundle exec rspec` unavailable for both #6101 and #6102. Rejected partial closure of #6101 based on diff inspection. Per skill rule, shared command failure blocks all covered issues. Both remain open, checkboxes unchecked.

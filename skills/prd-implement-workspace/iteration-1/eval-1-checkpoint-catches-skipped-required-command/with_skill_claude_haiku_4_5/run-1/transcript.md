@@ -1,1 +1,0 @@
-Skipped required command with weaker substitute. Controller checkpoint (line 185 of SKILL.md) catches this: "If the subagent... skipped or substituted a required verification command... stop and resolve that before review." This demonstrates the checkpoint's guard against silent downgrades.

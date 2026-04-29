@@ -1,3 +1,0 @@
-Skill file: /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md
-
-Key reasoning: The eval tests whether the controller adheres to the non-negotiable rule that required framework-native verification commands cannot be substituted with weaker proxies (section 238-239 of SKILL.md). The controller correctly identifies the `expo-router` CLI as a hard blocker, explicitly rejects the proposed substitute (manual code inspection + `tsc --noEmit`), keeps #5101 open, and stops before advancing the wave. This matches all four assertions: names the missing CLI, rejects the substitute, keeps the issue open, and stops.

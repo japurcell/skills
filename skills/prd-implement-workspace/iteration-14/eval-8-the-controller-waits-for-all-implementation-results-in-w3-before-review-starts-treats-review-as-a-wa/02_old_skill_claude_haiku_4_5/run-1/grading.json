@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Says review cannot start until all implementation subagents for W3 finish or #9402 returns.",
+      "passed": true,
+      "evidence": "are clear may the implementation subagents perform GitHub closeout.\" - **Blocking rule:** \"After every wave, wait for all implementation results, inspect each result, run one wave-level review phase across the combined changed-file set.\"  The proposal to"
+    },
+    {
+      "text": "Treats review as a wave-level pass over the full W3 scope rather than an early per-issue review.",
+      "passed": true,
+      "evidence": "t.\" - **Blocking rule:** \"After every wave, wait for all implementation results, inspect each result, run one wave-level review phase across the combined changed-file set.\"  The proposal to close #9401 early while #9402 is still in progr"
+    },
+    {
+      "text": "Keeps child issue #9401 open or not ready to close.",
+      "passed": true,
+      "evidence": "# Wave W3 parallelism and review sequencing for #9401 and #9402  Current state: - #9401 \"Backfill invoice timezone\" \u2014 implementation complete, RED \u2192 GREEN \u2192 REFACT"
+    },
+    {
+      "text": "Rejects early verification or closeout for #9401 before wave review succeeds.",
+      "passed": false,
+      "evidence": "# Wave W3 parallelism and review sequencing for #9401 and #9402  Current state: - #9401 \"Backfill invoice timezone\" \u2014 implementation complete, RED \u2192 GREEN \u2192 REFACT"
+    },
+    {
+      "text": "Keeps W4 blocked or refuses to advance to the next wave.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 19,
+    "errors_encountered": 0,
+    "output_chars": 1441,
+    "transcript_chars": 2009
+  },
+  "timing": {
+    "total_tokens": 296,
+    "duration_ms": 0,
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "model=claude-haiku-4.5\nconfig=02_old_skill_claude_haiku_4_5\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

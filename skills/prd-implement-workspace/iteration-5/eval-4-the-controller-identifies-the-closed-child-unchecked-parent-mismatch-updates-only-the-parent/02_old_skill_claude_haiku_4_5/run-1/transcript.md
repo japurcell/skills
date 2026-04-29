@@ -1,1 +1,0 @@
-Eval 4: Closed-child / unchecked-parent reconciliation on resume. #8201 is closed but parent checkbox remains `[ ]`. Sync parent checkbox to `[x]` before starting W2. Issue #8202 only then becomes ready.

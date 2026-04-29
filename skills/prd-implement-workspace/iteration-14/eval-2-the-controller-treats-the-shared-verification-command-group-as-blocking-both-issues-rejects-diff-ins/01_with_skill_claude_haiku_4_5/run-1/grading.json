@@ -1,0 +1,57 @@
+{
+  "expectations": [
+    {
+      "text": "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
+      "passed": true,
+      "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - Shared verification command group cannot run. The controller's verification plan listed"
+    },
+    {
+      "text": "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
+      "passed": true,
+      "evidence": "CSV export filters - Shared verification command group cannot run. The controller's verification plan listed `bundle exec rspec spec/requests/admin/export_spec.rb` for both #6101 and #6102 because each child issue declares the same verif"
+    },
+    {
+      "text": "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
+      "passed": true,
+      "evidence": "ubagent reports `/bin/sh: bundle: command not found`. Another agent suggests closing #6101 anyway because its diff looks correct and leaving only #6102 open. Produce the controller's response.  ## Response  PRD execution status for #6000"
+    },
+    {
+      "text": "Keeps child issues #6101 and #6102 open or not ready to close.",
+      "passed": true,
+      "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - Shared verification command group cannot run. The controller's verification plan listed"
+    },
+    {
+      "text": "Stops before the next wave or any additional issue closure proceeds.",
+      "passed": true,
+      "evidence": "PRD execution status for #6000  Completed this run:  - none  Blocked / waiting:  1. #6101 CSV export filters - Shared verification command group cannot run. The controller's veri"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 16,
+    "errors_encountered": 0,
+    "output_chars": 1666,
+    "transcript_chars": 2488
+  },
+  "timing": {
+    "total_tokens": 188,
+    "duration_ms": 0,
+    "total_duration_seconds": 0,
+    "eval_id": 2
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "# Evaluation Run Notes\n\n- **Model**: claude-haiku-4.5\n- **Configuration**: 01_with_skill_claude_haiku_4_5\n- **Skill path**: /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md\n- **Eval ID**: 2\n- **Timestamp**: 2026-04-28T20:11:38.391256\n\n## Evaluation Case\n\neval-2: Shared verification group blocks both issues on missing tool\n\n## Controller Logic Applied\n\nThis is a dry-run evaluation. The response applies prd-implement skill controller logic to the hypothetical GitHub state without making actual GitHub calls or modifying source code.\n\n- No GitHub reads or writes occurred\n- No git operations were performed\n- No files were modified in the local repository\n- The response demonstrates the controller's exact decision flow for the given scenario"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

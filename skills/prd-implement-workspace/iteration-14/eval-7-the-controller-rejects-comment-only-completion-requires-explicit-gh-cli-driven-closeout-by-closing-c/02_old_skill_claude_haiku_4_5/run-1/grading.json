@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "Explicitly says that comments or status notes do not count as task completion.",
+      "passed": true,
+      "evidence": "ws `- [ ] W2 - #9301 Ship usage quota banner - AFK - blocked by #9298`  ## Controller assessment  This is a **comment-only completion**. The skill rules are unambiguous:  - \"Treat comments as evidence only, never as completion.\" - \"A task is n"
+    },
+    {
+      "text": "Requires explicit `gh-cli`-driven closeout or equivalent real GitHub state change: close child issue #9301.",
+      "passed": true,
+      "evidence": "his run.  Next step: Send an explicit closeout turn to the implementation subagent with instructions to load `gh-cli`, close the child issue on GitHub directly, and re-read to confirm closure.  ## Prompt  You are executing /pr"
+    },
+    {
+      "text": "Keeps child issue #9301 open or not ready to close until those real GitHub updates succeed.",
+      "passed": true,
+      "evidence": "# Verification and closeout blocker for #9301  The implementation subagent reports: - \"I commented on child issue #9301 that the task is done\" - \"I left a"
+    },
+    {
+      "text": "Leaves the parent PRD issue open.",
+      "passed": true,
+      "evidence": "is closed just because you plan to send a closeout turn next.\"  Comments alone do not count. The child issue remains open on GitHub.  ## Outcome  - #9301 remains open. - Verification and review evidence is now in the issue comments"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": true,
+      "evidence": "es comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave.\" - \"Until the controller has re-read GitHub and confirmed closure, report only the **current** state. Do not"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 21,
+    "errors_encountered": 0,
+    "output_chars": 1418,
+    "transcript_chars": 1999
+  },
+  "timing": {
+    "total_tokens": 315,
+    "duration_ms": 0,
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "model=claude-haiku-4.5\nconfig=02_old_skill_claude_haiku_4_5\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

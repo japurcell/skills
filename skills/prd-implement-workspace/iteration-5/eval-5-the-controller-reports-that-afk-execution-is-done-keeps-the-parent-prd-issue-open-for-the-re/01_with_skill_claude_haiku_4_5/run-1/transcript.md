@@ -1,1 +1,0 @@
-AFK work complete. HITL #9005 remains. Enforces Git/PR boundary rule: no commit, push, or PR from prd-implement. Landing work deferred to separate `commit` or `commit-to-pr` request. Parent PRD stays open.

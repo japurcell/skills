@@ -1,0 +1,52 @@
+{
+  "expectations": [
+    {
+      "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+      "passed": true,
+      "evidence": "tus for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add admin settings form - Controller checkpoint before review: the implementation subagent skipped a required verification command. The child issue's Verification section"
+    },
+    {
+      "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+      "passed": true,
+      "evidence": "ementation subagent skipped a required verification command. The child issue's Verification section required `pnpm exec next typegen`, but the subagent could not run it because `next` is unavailable in this checkout. Instead of attempting fal"
+    },
+    {
+      "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+      "passed": true,
+      "evidence": "the blocker, the subagent substituted weaker proxies: reading the generated types file and running `pnpm exec eslint app/settings/form.tsx`. Framework-native verification commands are the contract. Skipped required commands, e"
+    },
+    {
+      "text": "Keeps child issue #5104 open or not ready to close.",
+      "passed": true,
+      "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add admin settings form - Controller checkpoint before review: the implementation subagent skipped a required"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 15,
+    "errors_encountered": 0,
+    "output_chars": 1455,
+    "transcript_chars": 2168
+  },
+  "timing": {
+    "total_tokens": 167,
+    "duration_ms": 0,
+    "total_duration_seconds": 0,
+    "eval_id": 1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "# Evaluation Run Notes\n\n- **Model**: claude-haiku-4.5\n- **Configuration**: 01_with_skill_claude_haiku_4_5\n- **Skill path**: /home/adam/dev/personal/skills/skills/prd-implement/SKILL.md\n- **Eval ID**: 1\n- **Timestamp**: 2026-04-28T20:11:38.390564\n\n## Evaluation Case\n\neval-1: Controller checkpoint catches skipped required command\n\n## Controller Logic Applied\n\nThis is a dry-run evaluation. The response applies prd-implement skill controller logic to the hypothetical GitHub state without making actual GitHub calls or modifying source code.\n\n- No GitHub reads or writes occurred\n- No git operations were performed\n- No files were modified in the local repository\n- The response demonstrates the controller's exact decision flow for the given scenario"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

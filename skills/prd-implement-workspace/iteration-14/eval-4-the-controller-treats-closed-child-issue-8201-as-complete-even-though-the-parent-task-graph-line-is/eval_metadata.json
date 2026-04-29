@@ -1,0 +1,12 @@
+{
+  "eval_id": 4,
+  "eval_name": "eval-4-the-controller-treats-closed-child-issue-8201-as-complete-even-though-the-parent-task-graph-line-is",
+  "prompt": "You are resuming /prd-implement for PRD #8200. Child issue #8201, \"Add webhook retry headers,\" is already closed from a prior run. The parent PRD issue still shows `- [ ] W1 - #8201 Add webhook retry headers - AFK - blocked by none`. W2 contains AFK child issue #8202, \"Emit webhook retry metrics,\" and its only blocker is #8201. Show the controller's response before starting W2.",
+  "assertions": [
+    "Identifies that #8201 is already closed.",
+    "Treats child issue state as authoritative even though the parent PRD task-graph line is still unchecked.",
+    "Explicitly says parent checkbox sync is not required before starting W2.",
+    "Treats W2 or #8202 as ready to proceed.",
+    "Leaves the parent PRD issue open."
+  ]
+}

@@ -1,1 +1,0 @@
-Eval 1: Controller checkpoint blocks before review. Subagent skipped required `pnpm exec next typegen` and substituted eslint + file reading. Checkpoint halts per skill rule: required verification commands cannot be silently swapped for static analysis. Issue remains open, checkbox unchecked.

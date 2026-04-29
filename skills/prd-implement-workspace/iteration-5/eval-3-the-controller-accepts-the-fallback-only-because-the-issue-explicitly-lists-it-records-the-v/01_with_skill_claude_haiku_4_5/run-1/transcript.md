@@ -1,1 +1,0 @@
-Fallback accepted because issue explicitly lists it. Verification passed via `yarn rw test`. Closeout turn sent to subagent: close #7101, update parent checkbox to [x] via gh-cli. Parent PRD issue stays open.

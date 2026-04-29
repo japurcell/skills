@@ -1,0 +1,51 @@
+{
+  "expectations": [
+    {
+      "text": "Stops at the controller checkpoint before review rather than proceeding into review.",
+      "passed": true,
+      "evidence": "e generated types file plus ran `pnpm exec eslint app/settings/form.tsx`. Show how the controller handles the checkpoint before review.  # Response  PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add a"
+    },
+    {
+      "text": "Identifies the skipped or unavailable `pnpm exec next typegen` command as the problem.",
+      "passed": true,
+      "evidence": "/ waiting:  1. #5104 Add admin settings form - Controller checkpoint failed before review: required command `pnpm exec next typegen` was skipped because `next` is unavailable, and reading generated types plus running `pnpm exec eslint app/se"
+    },
+    {
+      "text": "Treats reading generated files or running eslint as insufficient substitutes for the required verification command.",
+      "passed": true,
+      "evidence": "next typegen` was skipped because `next` is unavailable, and reading generated types plus running `pnpm exec eslint app/settings/form.tsx` is an insufficient substitute. #5104 remains open.  Next ready work:  - none  Landing"
+    },
+    {
+      "text": "Keeps child issue #5104 open or not ready to close.",
+      "passed": true,
+      "evidence": "PRD execution status for #5000  Completed this run:  - none  Blocked / waiting:  1. #5104 Add admin settings form - Controller checkpoint failed before review: required command `pnpm exec next typege"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 15,
+    "errors_encountered": 0,
+    "output_chars": 648,
+    "transcript_chars": 1333
+  },
+  "timing": {
+    "total_tokens": 0,
+    "duration_ms": 0,
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "model=gpt-5.3-codex\nconfig=01_with_skill_gpt_5_3_codex\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement/SKILL.md"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

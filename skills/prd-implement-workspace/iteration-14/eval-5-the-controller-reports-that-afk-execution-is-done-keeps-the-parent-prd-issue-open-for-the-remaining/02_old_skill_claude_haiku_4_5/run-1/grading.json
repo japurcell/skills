@@ -1,0 +1,56 @@
+{
+  "expectations": [
+    {
+      "text": "States that commit, push, or PR work is out of scope for this prd-implement run.",
+      "passed": true,
+      "evidence": "tation for #9000 is complete. However, the skill has a hard boundary on landing work:  **Landing work remains out of scope for this run.**   Per the skill rules: - \"This skill never commits, pushes, rebases, merges, or opens PRs. La"
+    },
+    {
+      "text": "Explicitly says no PR will be opened and no commit or push will be performed in this run.",
+      "passed": true,
+      "evidence": "decision). - Parent PRD issue #9000 remains open for HITL completion and eventual landing. - Landing status: no commit, push, or PR actions performed in this run. **To land this work, start a separate `commit` or `commit-to-pr` request after all AFK"
+    },
+    {
+      "text": "Says the changes remain local-only or uncommitted.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Directs the user to use `commit` or `commit-to-pr` only in a separate follow-up request after this skill finishes.",
+      "passed": true,
+      "evidence": "a PR' in one request, execute only the PRD implementation workflow... they must start a separate `commit` or `commit-to-pr` request.\"  ## Outcome  - All AFK child issues are closed. - #9005 HITL remains open (awaiting human decision"
+    },
+    {
+      "text": "Keeps the parent PRD issue open or says only HITL work remains.",
+      "passed": true,
+      "evidence": "execution complete for PRD #9000  Current state: - All AFK child issues are complete and closed. - Only HITL #9005 \"Approve rollout checklist\" remains open. - Parent PRD issue must stay open for the HITL decision.  The user'"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 21,
+    "errors_encountered": 0,
+    "output_chars": 1321,
+    "transcript_chars": 1734
+  },
+  "timing": {
+    "total_tokens": 283,
+    "duration_ms": 0,
+    "total_duration_seconds": 0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [
+      "model=claude-haiku-4.5\nconfig=02_old_skill_claude_haiku_4_5\nskill_path=/home/adam/dev/personal/skills/skills/prd-implement-workspace/skill-snapshot-current/SKILL.md"
+    ],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

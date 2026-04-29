@@ -1,1 +1,0 @@
-EVAL 1: Checkpoint inspection catches skipped required verification. The implementation subagent skipped `pnpm exec next typegen` and substituted `eslint`, which the skill prohibits. Controller stops before review, keeping #5104 open.

@@ -1,1 +1,0 @@
-Controller rejects weaker verification substitutes per SKILL.md rules 199-200 and 215-219. The required `pnpm exec expo-router verify` command is unavailable (missing binary), triggering stop condition (line 263-264). Issue #5101 remains open and cannot be closed until the framework CLI is restored or the verification plan is explicitly re-approved in GitHub by a human.

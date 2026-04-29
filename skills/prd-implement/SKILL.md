@@ -5,45 +5,64 @@ description: Execute a PRD GitHub issue that already has a task graph from `prd-
 
 # PRD Implement
 
-Use this skill to turn a PRD issue graph into implemented code without letting the controller context balloon.
+Use this skill as the controller for a PRD issue graph. The controller reads GitHub state, schedules waves, delegates implementation/review/verification, and updates child issues. It does not implement slices inline and it never lands code.
 
-The controller owns intake, graph parsing, wave scheduling, and issue updates. It does **not** implement tasks inline. Every implementation task runs in a subagent that loads the `tdd` skill first and `gh-cli` before any GitHub reads or writes. Every review step also runs in subagents. Completed work is not fully recorded until the child issue is closed on GitHub. A completion comment, `Stage: refactor` note, or "ready to close" summary is never a substitute for that real GitHub state change. Parent `Task graph` checkbox drift does not block completion.
+If the user gives a complete hypothetical state and asks for the controller's response or issue-handling outcome, apply these rules directly to the supplied facts and produce the final response. Do not invent GitHub reads for a dry-run prompt.
 
-## Inputs
+For dry-run/controller-response prompts, answer in the final response template from this skill, not with analysis sections like "Scenario", "Policy violation", or quoted rule text. The user is testing the controller outcome, so the useful output is the issue state, blocker, next ready work, landing status, and notes in the required section order.
 
-- `prd_issue` is required. Accept an issue number or issue URL.
-- If the repository is ambiguous, resolve it before doing anything else.
+Before sending any dry-run or final response, run this quick phrase checklist and include the applicable exact phrases:
 
-If `prd_issue` is missing, ask for it. If the issue does not contain a `prd-to-tasks` task graph, stop and tell the user to run `prd-to-tasks` first.
+- Required verification unavailable with no issue-defined fallback: name the command/tool, say the proposed substitute is insufficient, say `#<issue> remains open.`, and stop before the next wave.
+- Explicit fallback passed: say the original command could not run, the fallback command passed, the fallback was allowed by the issue itself, parent task-graph checkbox updates are not required, and the child needs explicit GitHub closeout before it is complete.
+- Closed child with stale parent checkbox: say `#<issue> is closed.`, child issue state is authoritative, checkbox sync is not required, the next wave/issue is ready, and `parent PRD issue remains open.`
+- User asks for commit/push/PR: say landing work remains out of scope, no commit, push, or PR action will be performed in this run, changes remain local-only/uncommitted, and `commit` or `commit-to-pr` requires a separate follow-up request.
+- Unauthorized landing action already happened: call it an unauthorized/out-of-scope landing action or workflow violation, stop before review/verification/closeout/PR creation, say `#<issue> remains open.`, and say you will not push, open a PR, or treat the commit as permission to continue.
+- Comment-only completion: say comments or status notes do not count as task completion, require `gh-cli`-driven closeout or equivalent real GitHub state change, say `#<issue> remains open.`, and stop before the next wave.
+- In-flight same-wave task: say review cannot start until all implementation subagents in that wave finish or the named pending issue returns, closeout must wait for wave-level review, the current child remains open, and the next wave remains blocked.
+- Blocking wave review finding: say the wave review phase is incomplete, fix the blocking finding and rerun review on the affected scope before closing any child in the wave, keep all affected child issues open, and stop before additional closeout or another wave.
 
-## Non-negotiable rules
+## Controller loop
 
-1. Treat the PRD issue's managed `Task graph` block as the source of truth for wave order and intended child issues.
-2. Treat each child issue body as the source of truth for that task's scope, acceptance criteria, verification steps, likely files, and HITL/AFK type.
-3. Do not invent new tasks, waves, or dependencies during implementation. If the graph is wrong, stop and tell the user what must be fixed in GitHub first.
-4. Only execute **AFK** issues. **HITL** issues pause the workflow until the named decision, review, approval, or access step happens.
-5. Never skip a lower-numbered wave to start a later wave early.
-6. The controller schedules waves; implementation happens only in subagents.
-7. Every implementation subagent must load the `tdd` skill first, then explicitly load `gh-cli` before any GitHub issue reads or writes, and follow a strict RED → GREEN → REFACTOR loop.
-8. Review always happens in subagents after each completed wave. Keep review scope to the files changed in that wave.
-9. Treat completion as a GitHub closeout: close the child issue. A task is not done until GitHub shows that issue closed. Leave the parent PRD issue open.
-10. Treat comments as evidence only, never as completion. A child issue with only a status comment is still open work until GitHub shows the issue closed.
-11. This skill never commits, pushes, rebases, merges, or opens PRs. Landing work always happens in a separate request after PRD execution stops.
+1. **Resolve input.** Get the parent PRD issue number or URL and repository. If either is ambiguous, ask before doing anything else.
+2. **Load GitHub context.** Explicitly invoke `gh-cli`, then read the parent issue and relevant comments.
+3. **Parse the task graph.** Use the parent issue's managed `Task graph` block for wave order and blockers. If no valid `prd-to-tasks` graph exists, stop and tell the user to run `prd-to-tasks` first.
+4. **Read child issues.** For each referenced child issue, fetch title, body, state, recent comments, type, acceptance criteria, verification steps, and likely files.
+5. **Compute readiness from GitHub state.** Child issue state controls completion. Stale parent checkbox state is informational only.
+6. **Select the lowest open wave.** Execute only ready AFK issues whose blockers are closed. HITL issues pause the workflow for human action.
+7. **Launch implementation subagents.** One child issue per implementation subagent. Each implementation subagent loads `tdd` first and `gh-cli` before any issue read/write.
+8. **Wait for the wave.** Wait for all implementation subagents launched for the current wave before review starts.
+9. **Run the controller checkpoint.** Inspect each diff and verification evidence. Stop before review if any required command was skipped, substituted, or unclear.
+10. **Review the whole wave.** Run one wave-level review phase over the combined changed-file set. Resolve blocking findings and rerun affected review before verification or closeout.
+11. **Verify exactly.** Run the child issue's required verification commands, or shared command groups that explicitly cover listed issues. Missing tools block closure unless the child issue itself listed a fallback.
+12. **Close child issues for real.** Verification is evidence, not completion. Send the implementation subagent a closeout turn that loads `gh-cli`, closes the child issue, and re-reads GitHub to confirm it is closed.
+13. **Report and stop or continue.** Never advance past a blocked lowest wave. Leave the parent PRD issue open. Never commit, push, or open a PR from this skill.
+
+## Non-negotiable invariants
+
+- The parent managed graph is authoritative for wave order and blockers.
+- The child issue body is authoritative for scope, acceptance criteria, verification, likely files, and AFK/HITL intent.
+- Do not invent tasks, waves, or dependencies. If the graph is wrong, stop and say what must change in GitHub.
+- Only AFK child issues are implemented by agents. HITL issues remain waiting for the named human decision, approval, access, or review.
+- Never skip a lower-numbered open wave to start a later wave.
+- Implementation happens only in subagents; the controller orchestrates and checks.
+- Comments or status notes do not count as task completion. A child issue is complete only when GitHub shows it closed.
+- Parent task-graph checkbox updates are not required for task completion. A closed child issue is complete even if the parent line still shows `[ ]`.
+- Landing work remains out of scope. Do not commit, push, merge, rebase, open PRs, or invoke `commit` / `commit-to-pr`.
 
 ## Git and PR boundary
 
-Treat landing work as a separate workflow. `prd-implement` ends at verified local changes plus GitHub child-issue closeout, not at branch landing.
+`prd-implement` ends at verified local changes plus GitHub child-issue closeout. Landing work is a separate workflow.
 
-1. Never run `git commit`, `git push`, `git merge`, `git rebase`, `gh pr create`, or invoke `commit` / `commit-to-pr` from this skill.
-2. Never ask implementation, review, or verification subagents to prepare commits, push branches, draft PRs, or land code. They may inspect diffs and local state, but they must leave changes uncommitted and unpushed.
-3. If the user asks for "implement PRD #123 and open a PR" in one request, execute only the PRD implementation workflow. In the final response, say that landing work remains out of scope for this run and requires a separate `commit` or `commit-to-pr` request after this skill finishes.
-4. If any subagent reports that it already committed, pushed, rebased, merged, or opened a PR, stop immediately and surface that as a workflow violation before review, verification, or issue closure continues. In that response, also say the child issue remains open.
-5. Some weaker models equate "verified" with "ready to land." Counter that drift by restating the boundary in the controller plan whenever the user mentions commits, pushes, branches, or PRs: `Landing work remains out of scope for this run.`
+1. Never run `git commit`, `git push`, `git merge`, `git rebase`, `gh pr create`, or invoke landing skills.
+2. Never ask implementation, review, or verification subagents to prepare commits, push branches, draft PRs, or land code.
+3. If the user's request combines implementation with PR creation, do only PRD implementation. In the final response, say no commit, push, or PR will be performed in this run and that the user must make a separate `commit` or `commit-to-pr` request after this skill finishes.
+4. If any subagent already committed, pushed, rebased, merged, opened a PR, or invoked a landing skill, stop immediately. Treat it as an unauthorized, out-of-scope landing action; do not proceed to review, verification, issue closure, or PR creation. Say the child issue remains open.
+5. When the user mentions commits, branches, pushes, or PRs, restate: `Landing work remains out of scope for this run.`
 
-## Fetch and parse the graph
+## Graph parsing and readiness
 
-1. Use the `gh-cli` skill to fetch the parent issue with comments. Some weaker models do not auto-load that skill, so call it explicitly before issue retrieval.
-2. Parse the managed block written by `prd-to-tasks`:
+Read the managed block written by `prd-to-tasks`:
 
 ```markdown
 <!-- prd-to-tasks:start -->
@@ -55,300 +74,181 @@ Treat landing work as a separate workflow. `prd-implement` ends at verified loca
 <!-- prd-to-tasks:end -->
 ```
 
-3. If the managed markers are missing, fall back to a plain `## Task graph` section only when it clearly uses the same line format.
-4. Parse each task-graph line with anchored fields, not naive string splitting:
-   - checkbox: the leading `[ ]` or `[x]`
-   - wave: leading `W<n>`
-   - child issue: the first `#<number>` after the wave
-   - type: the final `- AFK -` or `- HITL -` segment
-   - blockers: the text after the final `blocked by `
-   - title: everything between `#<number> ` and the final ` - AFK/HITL - blocked by ...`
-5. For every referenced child issue:
-    - fetch its title, body, state, and recent comments
-    - extract `Type`, `Acceptance criteria`, `Verification`, and `Files likely touched`
-    - prefer the child issue state over the parent checkbox if they disagree
-    - treat parent checkbox drift as informational only unless it creates ambiguity about which child issue the line refers to
-6. Treat the parent managed graph as authoritative for **wave order and blockers**. Use the child issue body only as a consistency check for blocker text, not as the source of scheduling truth.
-7. If any referenced child issue is missing, unreadable, malformed enough that execution order is unclear, or disagrees with the parent graph about wave or blockers, stop with a blocking error.
+If the markers are missing, fall back to a plain `## Task graph` section only when it clearly uses the same line format. Parse each line by anchored fields:
 
-## Determine what is ready
+- checkbox: leading `[ ]` or `[x]`
+- wave: `W<n>`
+- child issue: first `#<number>` after the wave
+- title: text between the child issue number and final type segment
+- type: final `- AFK -` or `- HITL -`
+- blockers: text after final `blocked by `
 
-Build the execution queue from the current GitHub state, not assumptions from earlier in the session.
+For every child issue:
 
-1. Ignore already-closed child issues.
-2. Find the **lowest-numbered wave** that still has open work.
-3. Within that wave:
-   - ready tasks are open **AFK** issues whose blockers are all closed
-   - blocked tasks stay queued for later in the same wave or a later wave
-   - **HITL** issues are never implemented by the agent
-4. If the lowest open wave contains only HITL or blocked tasks, stop and report the exact issue numbers and what human action is required.
-5. Never advance to the next wave until the current wave's ready AFK tasks are fully handled.
+1. Fetch title, body, state, and recent comments.
+2. Extract `Type`, `Acceptance criteria`, `Verification`, and `Files likely touched`.
+3. Prefer child issue state over parent checkbox drift:
+   - child closed + parent `[ ]`: treat the child as complete; stale parent checkbox does not block readiness.
+   - parent `[x]` + child open: treat the child as open; checkbox sync is not required and the checkbox alone is not proof.
+4. Use child issue bodies as consistency checks, but use the parent graph for wave order and blockers.
+5. Stop if a referenced child issue is missing, unreadable, malformed enough to make ordering unclear, or conflicts with the graph about wave or blockers.
 
-### Prefer child issue state over checkbox drift
-
-Before launching new implementation or verification work:
-
-1. If a child issue is already closed but its parent task-graph line is still `[ ]`, treat the child issue state as authoritative and continue scheduling from the child issue state.
-2. If a parent task-graph line is `[x]` but the child issue is still open, treat the task as still open. Do not trust the checkbox alone as proof of completion.
-3. Some weaker models over-index on checkbox state. Make it explicit in the controller plan whenever drift exists: `child issue state controls readiness; stale parent checkbox does not block progress`.
+To choose work, ignore already-closed children, find the lowest-numbered wave with open work, then run only open AFK issues whose blockers are closed. If the lowest open wave contains only HITL or blocked tasks, report the issue numbers and required human action.
 
 ## Wave scheduling
 
-Treat `[same wave]` as permission for parallelism, not a command.
+Treat same-wave placement as permission for parallelism, not a command.
 
-Within the ready wave:
+- Default to one child issue per implementation subagent.
+- Launch same-wave tasks in parallel only when blockers are closed, likely files do not overlap, controller code reading does not reveal a shared module boundary, and isolated worktrees or equivalent checkouts are available.
+- If overlap or isolation is uncertain, serialize within the wave.
+- If one parallel task fails, let already-running independent tasks finish, then stop before another wave.
+- Review, verification, and closeout are wave-level gates: do not close one child or start the next wave while another child in the current wave is still implementing or blocked by review.
 
-1. Default to **one child issue per implementation subagent**.
-2. Launch tasks in parallel only when all are true:
-   - their blockers are closed
-   - their `Files likely touched` hints do not overlap **and** the controller's code reading does not reveal a shared file or module boundary
-   - each parallel implementation subagent has an isolated worktree or equivalent isolated checkout
-3. Treat `Files likely touched` as a scheduling hint, not a guarantee. If overlap is uncertain, or isolated worktrees are unavailable, serialize the tasks within the wave.
-4. If one task in a parallel wave fails, let the already-running independent tasks finish, then stop before launching another wave.
-5. After every wave, wait for all implementation results, inspect each result, run one wave-level review phase across the combined changed-file set, rerun review after any review-driven fixes, then verify covered child issues, then update issue state.
-
-### Wave execution lifecycle
-
-Keep the controller's phase order explicit:
+Lifecycle for each wave:
 
 1. Finish all implementation work launched for the current wave.
-2. Run the controller checkpoint, then one review phase for the whole wave.
-3. After that review phase succeeds, run verification for the covered child issues.
-4. Only after review and verification are clear may the implementation subagents perform GitHub closeout for those child issues.
+2. Run the controller checkpoint.
+3. Run one wave-level review phase across the combined changed-file set.
+4. Fix and rerun review for blocking findings.
+5. Verify covered child issues.
+6. Send explicit closeout turns for child issues whose review and verification are clear.
 
-When reporting the plan for a wave, use explicit language such as:
+## Implementation subagent contract
 
-```markdown
-Wave W1
+Each implementation task runs in its own subagent. The subagent must load `tdd` before anything else and load `gh-cli` before issue reads, comments, or closure.
 
-- Launch W1-A: #123 in a TDD subagent.
-- Launch W1-B: #124 in a TDD subagent.
-- Keep #125 sequential because it overlaps on `src/foo.ts`.
-- Wait for W1 results before W2.
-```
+Pass only the needed context:
 
-## Implementation subagents
-
-Every implementation task must run in its own subagent. Before the subagent does anything else, it must load the `tdd` skill. Before it reads from or writes to GitHub issues, it must explicitly load `gh-cli`.
-
-Pass the subagent only the context it needs:
-
-- parent issue number and title
-- assigned child issue number, title, body, and recent comments
-- current wave name
-- current TDD stage for that child issue: `none | red | green | refactor`
+- parent issue number/title
+- assigned child issue number/title/body/recent comments
+- current wave
+- current TDD stage: `none | red | green | refactor`
 - resolved blocker state
-- relevant repo/worktree/branch context
-- likely file paths from `Files likely touched`, marked explicitly as hints rather than hard limits
+- repo/worktree/branch context
+- likely file paths, explicitly as hints
 - acceptance criteria and verification commands
-- any directly relevant source files the controller already read
+- relevant source files already read by the controller
 
 Tell the subagent to:
 
-1. Implement **only** the assigned child issue.
-2. Follow **RED → GREEN → REFACTOR** strictly.
-3. Keep slices thin and avoid broad cleanup.
-4. Use `gh-cli` explicitly for issue comments, issue closure, and parent-issue reads. Do not assume the model will remember to load it implicitly.
-5. Run the child issue's targeted verification commands exactly as required for that issue, and treat missing tooling as a blocking result rather than a cue to invent substitutes.
-6. Do not finish with "ready to close", "done", or a status-only comment. Stay responsible for GitHub closeout until it is either confirmed or blocked.
-7. Return:
-    - RED/GREEN/REFACTOR summary
-    - files changed
-    - commands run and outcomes
-    - GitHub closeout evidence: child issue closed, or the exact blocker that prevented closure
-    - remaining risks or deferments
-8. Never commit, push, rebase, merge, open a PR, or invoke landing skills. Leave the worktree uncommitted for the controller.
+1. Implement only the assigned child issue.
+2. Follow RED -> GREEN -> REFACTOR. A clean RED means the new or changed test fails for the intended missing behavior, not for syntax/import/fixture mistakes.
+3. Keep the slice thin; avoid broad cleanup.
+4. Treat required verification commands as contracts. Missing tooling is a blocking result, not a reason to invent substitutes.
+5. Record durable TDD progress while it happens:
+   - `Stage: red` comment after clean RED
+   - `Stage: green` comment after implementation passes targeted proof
+   - `Stage: refactor` comment after cleanup and rerun proof
+6. Return the RED/GREEN/REFACTOR summary, files changed, commands and outcomes, GitHub closeout evidence or blocker, and remaining risks.
+7. Never commit, push, rebase, merge, open a PR, invoke landing skills, or broaden scope without controller approval.
 
-Do not let the implementation subagent expand scope, edit files owned by another in-flight task, or decide wave ordering on its own.
-If it must touch a file that was not listed in `Files likely touched`, it should stop and escalate that need back to the controller instead of silently broadening scope.
-If it reports any git landing action already happened, treat that as a blocking workflow violation rather than progress.
-
-### Resume by current stage
-
-Implementation subagents must resume from the passed `current_stage` like this:
+On resume, pass the current stage from the latest `Stage:` comment:
 
 - `none`: start with RED.
-- `red`: re-run the failing test to confirm clean RED, then continue to GREEN.
-- `green`: re-run the passing proof for the targeted test or command, then continue to REFACTOR.
-- `refactor`: re-run the post-refactor targeted tests/commands, do only the remaining cleanup or closeout work, then hand off to review.
+- `red`: re-run the failing test to confirm clean RED, then continue.
+- `green`: re-run the passing proof, then refactor.
+- `refactor`: re-run post-refactor targeted tests/commands, then hand off for review/closeout.
 
-### Clean RED rule
-
-A RED step counts only when the new or updated test fails for the intended missing behavior. Syntax errors in the test, broken imports caused by the test setup itself, or invalid fixtures do **not** count as a clean RED.
-
-### Durable TDD progress
-
-Each child issue must record TDD progress while it happens, not only at the end.
-
-1. After clean RED, add a child-issue comment with `Stage: red`, the test command, and brief evidence of the expected failure.
-2. After GREEN, add a comment with `Stage: green`, the implementation command/test result, and the files changed.
-3. After REFACTOR, add a comment with `Stage: refactor`, the rerun command/results, and whether the task is ready for review.
-4. On resume, the latest stage comment is the authoritative in-progress state for an open child issue.
-
-### GitHub closeout after wave review and verification
-
-Implementation subagents still own GitHub closeout, but closeout starts only after the full wave review phase succeeds and the child issue's required verification commands pass.
-
-1. Do not send any closeout turn while the wave review phase is still running, still blocked on findings, or has not yet covered the full wave scope.
-2. After review fixes are complete for the whole wave and every required verification command that covers the child issue passed, send the assigned implementation subagent an explicit closeout turn instead of accepting a status-only finish.
-3. In that closeout turn, the subagent must explicitly load `gh-cli`, then:
-    - close the child issue
-    - re-read the child issue and confirm GitHub now shows it closed
-4. A `Stage: refactor` comment, "done" comment, or "task complete" comment is progress evidence only. It never counts as completion.
-5. If a subagent leaves comments but does not close the child issue, treat that child issue as incomplete: keep the issue open and stop before the next wave.
-6. Until the controller has re-read GitHub and confirmed closure, report only the **current** state. Do not write speculative sections like `Outcome after closeout` or claim the issue is closed just because you plan to send a closeout turn next.
-7. If any closeout step fails, the subagent must return a blocking result with the exact failed GitHub command or edit step. Do not declare success.
-
-## Review subagents
-
-After all implementation work in the wave finishes, run one review phase over the full changed-file set for that wave before any child issue in the wave can move to closeout.
-
-### Required review passes
-
-1. Launch `code-simplifier` subagents first:
-   - if the wave changed 5 files or fewer, use 1 subagent for the whole wave
-   - otherwise partition files into non-overlapping groups and use one subagent per group
-2. Launch three review subagents in parallel on the reviewed wave scope:
-   - `code-reviewer` for correctness and conventions
-   - `security-review` for security and unsafe defaults
-   - `code-reviewer` for simplicity, duplication, and maintainability
-3. Do not start verification or close any child issue while the wave review phase still has unresolved blocking findings anywhere in that wave scope.
-4. Fix all blocking review findings before closing the affected child issues.
-5. If review-driven fixes change code, rerun the relevant review subagents on the affected scope before closure. Do not rely on the pre-fix review result.
-6. Record deferred non-blocking findings in the relevant issue comments or as follow-up notes to the user.
-
-The controller must define the review file list. Review subagents must not recompute or narrow their own scope.
-Review subagents inspect code only; they must not commit, push, or prepare PR text.
-
-Normalize blocking review findings like this:
-
-- `code-reviewer`: `Critical` and `Important` block closure.
-- `security-review`: `High` and `Medium` block closure.
-- `code-simplifier`: advisory by default; only treat a finding as blocking when it exposes a correctness risk, unsafe duplication, or a cross-task scope conflict.
+Resume from `green` or `refactor` only when matching local code and test state still exist. If local state is missing or disagrees with GitHub stage history, restart from RED deliberately or stop and ask how to recover.
 
 ## Controller checkpoint before review
 
-After each implementation subagent finishes, the controller must inspect the actual diff and the task's test output before moving on.
+Before review, inspect the real output of every implementation subagent:
 
-1. Read the changed files or diff for that child issue.
-2. Read the reported test/command output, or rerun the targeted command if the evidence is incomplete.
-3. If the subagent changed unexpected files, failed to produce a clean RED/GREEN/REFACTOR chain, skipped or substituted a required verification command, or left verification unclear, stop and resolve that before review.
+1. Read the changed files or diff.
+2. Read the reported test/command output, or rerun targeted commands when evidence is incomplete.
+3. Stop before review if the subagent changed unexpected files, lacked a clean RED/GREEN/REFACTOR chain, skipped or substituted a required verification command, left verification unclear, or performed any landing action.
 
-Do not close issues or advance waves based on subagent summaries alone.
+Do not close issues or advance waves based on summaries alone.
 
-## Verification subagents and implementation-owned issue closure
+## Review phase
 
-After the wave review phase passes, verification also runs in subagents. Keep the controller focused on orchestration and acceptance, then hand final GitHub closeout back to the implementation subagent rather than treating a comment or summary as enough.
+After all implementation work in the wave finishes, review the full wave scope before any child issue moves to verification or closeout.
 
-For each child issue approved by the completed wave review phase:
+1. Run `code-simplifier` first:
+   - 5 files or fewer: one subagent for the whole wave
+   - more than 5 files: partition into non-overlapping groups
+2. Run review subagents in parallel on the controller-defined file list:
+   - `code-reviewer` for correctness and conventions
+   - `security-review` for security and unsafe defaults
+   - `code-reviewer` for simplicity, duplication, and maintainability
+3. Blocking findings:
+   - `code-reviewer`: Critical and Important
+   - `security-review`: High and Medium
+   - `code-simplifier`: advisory unless it exposes correctness risk, unsafe duplication, or cross-task scope conflict
+4. If any blocking finding remains, the wave review phase is incomplete. Fix it, then rerun review on the affected scope before verifying or closing any child in that wave.
+5. Review subagents inspect code only; they do not commit, push, or prepare PR text.
 
-1. Build a controller-authored verification plan before launching verification subagents:
+## Verification and closeout
+
+Verification protects the user's acceptance criteria. Preserve its strength.
+
+1. Build a controller-authored verification plan after wave review passes:
    - default: one verification subagent per child issue using that issue's `Verification` steps
-   - exception: if a command clearly validates multiple child issues together, create one shared command group and list the exact covered child issue numbers
-2. Assert that every child issue being considered for closure is covered by at least one verification command or command group. If any issue has no verification coverage, do not close it.
-3. Treat each listed verification step as the required command contract for that issue. If the issue says to use a framework or project CLI, run that CLI; do not silently swap in static analysis, code reading, lint-only checks, type-check-only checks, or some other weaker proxy just because the intended verification tool is missing or inconvenient.
-4. If a required verification command cannot run as written because a binary, framework CLI, generated artifact, environment dependency, credential, or service is unavailable, stop and surface that exact blocker. Report the command, the missing dependency/tool, and the stderr or setup gap. Do not mark the issue ready to close, and do not invent an alternative verification path unless the child issue itself already lists it or the human updates the verification plan explicitly.
-5. Launch verification subagents from that plan.
-6. Have each verification subagent run its assigned commands and return command, exit code, covered issue numbers, and evidence.
-7. Do not treat passing verification as completion. Verification subagents provide evidence only; they do not close child issues or edit the parent task graph.
-8. Do not close any child issue covered by a shared command group unless that shared group passes.
-9. Confirm the acceptance criteria are satisfied.
-10. If a child issue explicitly lists a fallback verification command and that fallback passes, say that the fallback was allowed by the issue itself. Do not describe it as an improvised substitute.
-11. Add a concise progress comment that captures:
-    - wave name
-    - RED/GREEN/REFACTOR completion
-    - changed files
-    - verification evidence
-    - notable review findings and fixes
-12. Once review is clear and every verification command that covers the child issue passed, send the assigned implementation subagent a closeout turn with explicit instructions to load `gh-cli`, close the child issue, and re-read GitHub to confirm closure.
-13. If that closeout turn returns only a comment, "ready to close", or another status-only note without the child issue actually closing on GitHub, treat it as a failed closeout. Keep the child issue open and stop before another wave starts.
-14. If the closeout turn claims success but a fresh GitHub read still shows the child issue open, stop and report the mismatch before another wave starts.
+   - shared command group: allowed only when a command clearly validates multiple child issues; list the exact covered issue numbers
+2. Every child considered for closure must be covered by at least one required command or command group.
+3. Run the listed command contract. If the issue says to use a framework/project CLI, run that CLI.
+4. Do not replace framework-native verification with static analysis, source inspection, lint-only checks, type-check-only checks, diff inspection, or "looks correct" reasoning.
+5. If a required command cannot run because a binary, framework CLI, artifact, dependency, credential, or service is unavailable, fail closed. Report the exact command, missing tool/dependency, and stderr/setup gap. Do not close the child issue.
+6. If the child issue explicitly lists a fallback command and that fallback passes, say the fallback was allowed by the issue itself. Do not describe it as an improvised substitute.
+7. Do not close any child issue covered by a shared command group unless that shared group passes. If it fails, every covered child remains open.
+8. Verification subagents return command, exit code, covered issues, and evidence. They do not close issues or edit the parent task graph.
+9. Once review and verification are clear, add a concise progress comment with wave, TDD stages, changed files, verification evidence, and review findings/fixes.
+10. Send the assigned implementation subagent an explicit `gh-cli`-driven closeout turn: close the child issue and re-read it to confirm GitHub shows it closed.
+11. If closeout returns only a comment, "done", "ready to close", or another status note, reject comment-only completion. The child issue remains open until real GitHub state changes succeed.
+12. Until a fresh GitHub read confirms closure, report only the current state. Do not claim the issue is closed or the next wave is ready.
 
-If a child issue has multiple verification commands and they are independent, the controller may launch them in parallel verification subagents. If they share state or resources, run them sequentially through verification subagents.
+## Acceptance gate
 
-Verification subagents must preserve verification strength:
+Before declaring any child issue complete or advancing waves, confirm:
 
-- If the required verification command is unavailable, fail closed and report the blocker.
-- Do not replace framework-native verification with static analysis, source inspection, or generic "looks correct" reasoning.
-- Do not downgrade `npm run verify:web`, `bin/rails test`, `cargo test`, `nx test`, framework codegen validators, or similar required commands to unrelated checks unless the issue explicitly says those checks are acceptable alternatives.
-- Never commit, push, or open a PR after verification passes. Verification proves readiness for issue-state updates only.
-
-If verification is missing, ambiguous, or failing:
-
-- do not close the child issue
-- report the exact gap
-- stop before the next wave unless another already-launched task is still finishing
-
-### Parent task-graph checkboxes are informational only
-
-Use the parent task graph for wave order and blocker parsing, but do not make checkbox edits part of task completion.
-
-1. Never block child-issue completion on editing the parent task-graph checkbox.
-2. Never reopen, hold, or downgrade a closed child issue just because the parent line still shows `[ ]`.
-3. If the parent line shows `[x]` while the child issue is still open, trust the child issue state and treat the task as still open.
-4. Mention stale parent checkbox state only when it helps explain why the task graph display looks outdated. Do not present that drift as a blocker.
-5. If the child issue is ready to close or already closed while the parent line still shows `[ ]`, say explicitly that the parent checkbox is informational only and does not delay closure.
-
-## Acceptance confirmation
-
-Before declaring any child issue complete or advancing to the next wave, the controller must also confirm that:
-
-1. the acceptance criteria are satisfied
-2. no blocking review finding remains unresolved for that issue's scope
-3. the latest issue comments make the TDD stage history and verification outcome visible from GitHub alone
-4. no required verification command was skipped, replaced with a weaker proxy, or left blocked without being reported
-5. the child issue is actually closed on GitHub, not merely described as complete in a comment
-6. no git commit, push, merge, rebase, `commit`/`commit-to-pr` invocation, or PR creation happened during this run
+- acceptance criteria are satisfied
+- no blocking review finding remains
+- TDD stage history and verification outcome are visible from GitHub comments
+- no required verification command was skipped, replaced by a weaker proxy, or left blocked without being reported
+- the child issue is actually closed on GitHub
+- no commit, push, merge, rebase, landing skill, or PR creation happened during this run
 
 ## Resume behavior
 
-This skill is resumable from GitHub for queue state and TDD history, but not for missing local code.
+Queue state and progress come from GitHub, not local scratch files.
 
-On resume:
-
-1. Re-fetch the parent issue and all open child issues from the task graph.
-2. Parse each open child issue's latest `Stage:` comment into `current_stage`.
-3. Recompute ready work from current child-issue states and ignore stale parent checkbox drift.
-4. Ignore tasks that are already closed.
-5. Continue from the lowest-numbered wave that still has open work.
-6. Pass `current_stage` into the next implementation subagent instead of restarting the slice blindly.
-7. Resume from `green` or `refactor` only when the corresponding local code and test state are still present in the working tree.
-8. If the local state for an open issue is missing or disagrees with the latest GitHub `Stage:` history, do not trust the recorded stage. Either restart that issue from RED deliberately or stop and ask the user how to recover the lost work.
-
-Do not rely on local scratch files for queue state.
+1. Re-fetch the parent issue and all task-graph child issues.
+2. Ignore closed child issues even when parent checkboxes are stale.
+3. Parse open child issue comments for latest `Stage:` history.
+4. Recompute readiness from current child issue states.
+5. Continue from the lowest-numbered wave with open work.
+6. Pass `current_stage` into implementation subagents instead of restarting blindly.
+7. If local code is missing for a staged open issue, restart deliberately from RED or stop and ask how to recover.
 
 ## Stop conditions
 
-Stop and report clearly when any of these happens:
+Stop and report clearly when:
 
-- the parent issue has no valid `prd-to-tasks` task graph
-- a child issue referenced by the graph is missing or malformed
-- the current lowest wave is gated by a HITL issue
+- the parent issue lacks a valid `prd-to-tasks` graph
+- a graph child issue is missing or malformed
+- the lowest open wave is gated by HITL or unresolved blockers
 - repository or GitHub authentication is ambiguous or broken
-- a required verification command or framework CLI is unavailable and no human-approved replacement path exists
-- an implementation or verification failure remains unresolved
+- a required verification command or framework CLI is unavailable and no issue-defined or human-approved fallback exists
+- implementation, review, verification, or closeout remains blocked
 - a completed child issue cannot be closed or confirmed on GitHub
-- unrelated local changes create a conflict with the assigned task scope
+- unrelated local changes conflict with the assigned scope
+- any landing action happened during this run
 
-## Final response visibility rules
+## Final response rules
 
-Some weaker models do the right orchestration but omit state the user still needs. Make the final response spell out the safety-critical state instead of implying it.
+Some weaker models do the right work but omit state the user still needs. Make safety-critical state explicit:
 
-1. Keep every section from the final template, including `Landing status`, even when its content is `- none`.
-2. If a child issue stays open, say that explicitly with `#<issue> remains open` or `not ready to close`.
-3. If the parent PRD issue stays open, say that explicitly.
-4. If landing work is out of scope or blocked, say explicitly that no commit, push, or PR action will be performed in this run.
-5. If a subagent only posted a completion comment or "ready to close" note, say explicitly that comment-only status does not count and that the child issue remains open until real GitHub updates succeed.
-6. When closeout is still pending or blocked, use these exact phrases somewhere in the response:
-   - `#<issue> remains open.`
-   - `parent PRD issue remains open.`
-7. When closeout is confirmed, use these exact phrases somewhere in the response:
-   - `#<issue> is closed.`
-8. Never mix pending and confirmed states. If GitHub has not yet been re-read to confirm closeout, do not say the issue is closed and do not say the next wave is ready.
+- If a child issue stays open, say `#<issue> remains open.` or `not ready to close`.
+- If a child issue is confirmed closed, say `#<issue> is closed.`
+- If the parent PRD issue stays open, say `parent PRD issue remains open.`
+- If parent checkbox drift is relevant, say `parent task-graph checkbox state is informational only` or `parent task-graph checkbox updates are not required`.
+- If comments/status notes were the only completion action, say comments do not count as task completion and real GitHub updates are still required.
+- If closeout is pending, blocked, or unconfirmed, do not say the issue is closed and do not say the next wave is ready.
+- If landing work is requested or mentioned, say no commit, push, or PR action will be performed in this run.
 
-## Final response
-
-Always end with a concise execution summary in this shape:
+End with this section order:
 
 ```markdown
 PRD execution status for #<parent>
@@ -374,6 +274,4 @@ Notes:
 - <review deferments, assumptions, or follow-up items>
 ```
 
-Keep the section order exactly as written. If a section has no items, write `- none`.
-
-If all AFK child issues are closed and only HITL or no work remains, say that explicitly. If the user wants the finished work landed after that, tell them `prd-implement` stops here and they must start a separate `commit` or `commit-to-pr` request. Never invoke those skills from inside `prd-implement`.
+If a section has no items, write `- none`. If all AFK child issues are closed and only HITL or no work remains, say so explicitly. If the user wants the finished work landed after that, tell them `prd-implement` stops here and they must start a separate `commit` or `commit-to-pr` request.
