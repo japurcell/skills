@@ -15,18 +15,17 @@ def read_text(path: Path) -> str:
 
 def normalize(text: str) -> str:
     text = re.sub(r"[`*_]+", "", text.lower())
-    text = re.sub(r"[^\w\s#\[\]-]+", " ", text)
     return re.sub(r"\s+", " ", text).strip()
 
 
 def has_any(text: str, *terms: str) -> bool:
     normalized = normalize(text)
-    return any(normalize(term) in normalized for term in terms)
+    return any(term.lower() in normalized for term in terms)
 
 
 def has_all(text: str, *terms: str) -> bool:
     normalized = normalize(text)
-    return all(normalize(term) in normalized for term in terms)
+    return all(term.lower() in normalized for term in terms)
 
 
 def excerpt(text: str, term: str, radius: int = 110) -> str:
@@ -52,7 +51,6 @@ def issue_open_check(text: str, *issue_numbers: str) -> tuple[bool, str]:
     issue_phrases = [f"#{number}" for number in issue_numbers]
     open_terms = (
         "remain open",
-        "remains open",
         "stays open",
         "stay open",
         "still open",
@@ -102,18 +100,12 @@ def parent_unchecked_check(text: str, *issue_numbers: str) -> tuple[bool, str]:
         "parent prd task-graph line remains [ ]",
         "parent task graph line remains [ ]",
         "parent prd task graph line remains [ ]",
-        "parent task-graph line still shows [ ]",
-        "parent prd task-graph line still shows [ ]",
-        "parent task graph line still shows [ ]",
-        "parent prd task graph line still shows [ ]",
         "parent task-graph lines remain [ ]",
         "parent prd task-graph lines remain [ ]",
         "parent task graph lines remain [ ]",
         "parent prd task graph lines remain [ ]",
         "remain unchecked",
-        "remains unchecked",
         "stay unchecked",
-        "still unchecked",
         "do not check off",
         "do not mark either complete",
         "do not mark it complete",
@@ -155,12 +147,6 @@ def parent_checked_check(text: str, *issue_numbers: str) -> tuple[bool, str]:
         "checked the parent task-graph line",
         "checked the parent task graph line",
         "parent checkbox is now [x]",
-        "parent line is now [x]",
-        "parent line now shows [x]",
-        "parent task-graph line is now [x]",
-        "parent task-graph line now shows [x]",
-        "parent task graph line is now [x]",
-        "parent task graph line now shows [x]",
         "synchronize the parent checkbox",
         "sync the parent checkbox",
         "mark it [x]",
@@ -181,13 +167,14 @@ def parent_issue_open_check(text: str) -> tuple[bool, str]:
         "parent issue",
     )
     open_terms = (
-        "leave open",
-        "remains open",
-        "remain open",
-        "stays open",
-        "stay open",
-        "do not close",
-        "keeps open",
+        "leave the parent prd issue open",
+        "leave the parent issue open",
+        "parent prd issue remains open",
+        "parent issue remains open",
+        "do not close the parent prd issue",
+        "do not close the parent issue",
+        "keeps the parent prd issue open",
+        "keeps the parent issue open",
     )
     passed = has_any(text, *parent_terms) and has_any(text, *open_terms)
     return passed, evidence_for(text, *open_terms, *parent_terms)
@@ -209,7 +196,6 @@ def checkbox_only_update_check(text: str) -> tuple[bool, str]:
         "rest of the managed task graph line stays the same",
         "rest of the managed line stayed the same",
         "rest of the managed line stays the same",
-        "preserve the rest of the managed line",
         "leave the rest of the line unchanged",
         "do not rewrite the task graph",
         "do not rewrite the managed block",
@@ -222,78 +208,6 @@ def checkbox_only_update_check(text: str) -> tuple[bool, str]:
         "preserve the rest of the line",
         "leave the rest of the line unchanged",
         "do not rewrite the task graph",
-    )
-
-
-def comment_only_rejected_check(text: str) -> tuple[bool, str]:
-    passed = (
-        has_any(
-            text,
-            "comment-only completion",
-            "comment only completion",
-            "comment-only status",
-            "comment only status",
-            "comments do not count as completion",
-            "a comment is not enough",
-            "status-only comment is not completion",
-            "status note does not count as completion",
-            "ready to close note does not count",
-            "progress evidence only",
-        )
-        or (
-            has_any(text, "comment", "status note", "ready to close")
-            and has_any(text, "not enough", "does not count", "not completion", "still incomplete", "cannot move on")
-        )
-    )
-    return passed, evidence_for(
-        text,
-        "comment-only completion",
-        "comments do not count as completion",
-        "a comment is not enough",
-        "status-only comment is not completion",
-        "ready to close note does not count",
-    )
-
-
-def real_closeout_required_check(text: str, issue_number: str) -> tuple[bool, str]:
-    issue_term = f"#{issue_number}"
-    close_required = has_any(
-        text,
-        "close the child issue",
-        "close child issue",
-        f"close {issue_term}",
-        f"child issue {issue_term} open",
-        f"{issue_term} remains open until",
-        f"{issue_term} remains open",
-    )
-    sync_required = has_any(
-        text,
-        "check the exact parent task-graph line",
-        "check the matching parent task-graph line",
-        "update the matching parent task-graph line",
-        "sync the parent task-graph line",
-        "sync the parent checkbox",
-        "from [ ] to [x]",
-    )
-    github_state_required = has_any(
-        text,
-        "gh-cli",
-        "real github state changes",
-        "actual github state changes",
-        "real github updates",
-        "actual github updates",
-    )
-    passed = close_required and sync_required and github_state_required
-    return passed, evidence_for(
-        text,
-        "gh-cli",
-        "real github state changes",
-        "actual github state changes",
-        "close the child issue",
-        f"close {issue_term}",
-        "sync the parent task-graph line",
-        "sync the parent checkbox",
-        "from [ ] to [x]",
     )
 
 
@@ -428,7 +342,7 @@ def eval_0(text: str) -> list[tuple[bool, str]]:
             evidence_for(text, "expo-router verify", "expo-router: command not found", "missing expo-router"),
         ),
         (
-            has_any(text, "do not substitute", "cannot substitute", "not an acceptable substitute", "weaker proxy", "not good enough", "substitute", "cannot validate", "cannot prove")
+            has_any(text, "do not substitute", "cannot substitute", "not an acceptable substitute", "weaker proxy", "not good enough", "substitute")
             and has_any(text, "static analysis", "code inspection", "manual inspection", "tsc --noemit", "tsc"),
             evidence_for(text, "do not substitute", "cannot substitute", "substitute", "manual inspection", "tsc"),
         ),
@@ -577,17 +491,6 @@ def eval_6(text: str) -> list[tuple[bool, str]]:
     ]
 
 
-def eval_7(text: str) -> list[tuple[bool, str]]:
-    return [
-        comment_only_rejected_check(text),
-        real_closeout_required_check(text, "9301"),
-        issue_open_check(text, "9301"),
-        parent_unchecked_check(text, "9301"),
-        parent_issue_open_check(text),
-        stop_progress_check(text),
-    ]
-
-
 CHECKS = {
     0: eval_0,
     1: eval_1,
@@ -596,7 +499,6 @@ CHECKS = {
     4: eval_4,
     5: eval_5,
     6: eval_6,
-    7: eval_7,
 }
 
 

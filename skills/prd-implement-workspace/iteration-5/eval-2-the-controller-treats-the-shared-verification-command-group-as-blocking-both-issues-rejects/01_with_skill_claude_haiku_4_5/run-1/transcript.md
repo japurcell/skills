@@ -1,0 +1,1 @@
+Shared verification command group blocks closure for both #6101 and #6102 (rule 8). Missing `bundle` CLI cannot be replaced by diff inspection. Keep both issues open, both parent checkboxes unchecked, do not split closure.

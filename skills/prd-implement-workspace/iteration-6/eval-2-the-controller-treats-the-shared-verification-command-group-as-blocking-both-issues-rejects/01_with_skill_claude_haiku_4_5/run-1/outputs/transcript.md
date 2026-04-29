@@ -1,0 +1,1 @@
+EVAL 2: Shared verification command group failure blocks both issues. `bundle exec rspec` is missing; because both issues share this verification command, both remain open and unchecked. Diff inspection is rejected as a substitute.

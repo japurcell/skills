@@ -1,0 +1,1 @@
+Eval 0: Verification blocker. Child #5101 requires `pnpm exec expo-router verify` which is unavailable. Rejected substitution with `tsc --noEmit` and code inspection per skill rule: framework CLIs must not be silently swapped for static analysis. Issue remains open, checkbox unchecked, wave blocked.

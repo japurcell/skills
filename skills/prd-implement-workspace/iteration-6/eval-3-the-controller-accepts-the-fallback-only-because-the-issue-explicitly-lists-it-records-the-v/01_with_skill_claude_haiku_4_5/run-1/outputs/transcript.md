@@ -1,0 +1,1 @@
+EVAL 3: Fallback verification command accepted because explicitly listed in child issue. `pnpm exec redwood test` failed, fallback `yarn rw test` passed. Child issue #7101 ready for closure and parent line sync.

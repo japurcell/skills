@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "Explicitly says that comments or status notes do not count as task completion.",
+      "passed": true,
+      "evidence": "## Comment-Only Completion Rejected: Real GitHub State Changes Required  **Child issue #9301 is not complete.** Comments and status note"
+    },
+    {
+      "text": "Requires explicit `gh-cli`-driven closeout or equivalent real GitHub state changes: close child issue #9301 and update the matching parent task-graph line.",
+      "passed": false,
+      "evidence": "quired Closeout  I am sending the implementation subagent a closeout turn with explicit instructions to load `gh-cli` and: 1. **Close child issue #9301** on GitHub (not just comment). 2. Re-fetch the latest parent PRD #9300 bo"
+    },
+    {
+      "text": "Keeps child issue #9301 open or not ready to close until those real GitHub updates succeed.",
+      "passed": true,
+      "evidence": "## Comment-Only Completion Rejected: Real GitHub State Changes Required  **Child issue #9301 is not complete.** Comments and status notes do not count as task completion.  ### What the subagent did (ins"
+    },
+    {
+      "text": "Leaves the parent PRD task-graph line for #9301 unchecked or `[ ]` until it is synchronized.",
+      "passed": false,
+      "evidence": "## Comment-Only Completion Rejected: Real GitHub State Changes Required  **Child issue #9301 is not complete.** Comments and status notes do not count as task completion.  ### What the subagent did (ins"
+    },
+    {
+      "text": "Leaves the parent PRD issue open.",
+      "passed": false,
+      "evidence": "agent did (insufficient)  - Left a comment on child issue #9301 saying the task is done. - Left a note on the parent PRD issue saying W2 is complete. - Verification commands passed.  ### What GitHub shows (the source of truth)  - Child"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": true,
+      "evidence": ": Still **open**. - Parent PRD task-graph line: Still shows `- [ ] W2 - #9301 Ship usage quota banner - AFK - blocked by #9298` (unchecked).  ### Why comments do not count as completion  Per the prd-implement skill (Non-negotia"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 3,
+    "total": 6,
+    "pass_rate": 0.5
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "errors_encountered": 0,
+    "output_chars": 1937,
+    "transcript_chars": 188
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

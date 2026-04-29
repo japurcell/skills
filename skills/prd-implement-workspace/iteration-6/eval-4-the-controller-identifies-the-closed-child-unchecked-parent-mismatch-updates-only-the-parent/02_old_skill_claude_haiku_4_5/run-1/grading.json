@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies that #8201 is closed but its parent PRD task-graph line is still unchecked.",
+      "passed": true,
+      "evidence": "# PRD #8200 Resume: Closed-child / Unchecked-parent Mismatch Detected  **Status:** Synchronizing parent task-graph before W2 can proceed.  ## State mismatch detected  On"
+    },
+    {
+      "text": "Checks or updates the parent PRD task-graph line for #8201 from `[ ]` to `[x]` before starting W2.",
+      "passed": true,
+      "evidence": "Synchronizing parent task-graph before W2 can proceed.  ## State mismatch detected  On resume: - Child issue #8201 **is closed** (from prior execution) - Parent task-graph line **still shows `[ ]` unchecked**  Per the prd-im"
+    },
+    {
+      "text": "Makes clear that only the checkbox should change and the rest of the managed task-graph line stays the same.",
+      "passed": false,
+      "evidence": "No supporting excerpt found."
+    },
+    {
+      "text": "Only after the parent checkbox is synchronized does it treat W2 or #8202 as ready to proceed.",
+      "passed": true,
+      "evidence": "Resume: Closed-child / Unchecked-parent Mismatch Detected  **Status:** Synchronizing parent task-graph before W2 can proceed.  ## State mismatch detected  On resume: - Child issue #8201 **is closed** (from prior execution)"
+    },
+    {
+      "text": "Leaves the parent PRD issue open after synchronizing #8201.",
+      "passed": true,
+      "evidence": "closed** (from prior run) - Parent task-graph line for #8201 **now `[x]` checked** - Parent PRD issue #8200 **remains open** - Wave W2 **unblocked** and ready to launch  ## Next step  Proceed to launch W2 with child issue #8202 \"Emi"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 2,
+    "errors_encountered": 0,
+    "output_chars": 1932,
+    "transcript_chars": 199
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

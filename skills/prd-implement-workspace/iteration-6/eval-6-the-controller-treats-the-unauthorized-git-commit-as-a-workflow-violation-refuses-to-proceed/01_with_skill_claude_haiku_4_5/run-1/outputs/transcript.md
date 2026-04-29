@@ -1,0 +1,1 @@
+EVAL 6: Implementation subagent committed work, which violates prd-implement boundary. Controller stops before review, requires commit to be undone, keeps #9101 open and parent line [ ].

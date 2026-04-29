@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "States that commit, push, or PR work is out of scope for this prd-implement run.",
+      "passed": true,
+      "evidence": "Landing Blocked  **Execution status:** All AFK child issues are complete. HITL work remains. Landing work is out of scope for this run.  ## AFK execution summary  All AFK child issues are closed and their parent task-graph lines ar"
+    },
+    {
+      "text": "Explicitly says no PR will be opened and no commit or push will be performed in this run.",
+      "passed": true,
+      "evidence": "L)  **Next ready work:**  - HITL: #9005 Approve rollout checklist  **Landing status:**  - Local changes only; no commit, push, or PR actions performed in this run. - To land this work, open a separate request with `commit` or `commit-to-pr` after thi"
+    },
+    {
+      "text": "Says the changes remain local-only or uncommitted.",
+      "passed": true,
+      "evidence": "cision/approval (HITL)  **Next ready work:**  - HITL: #9005 Approve rollout checklist  **Landing status:**  - Local changes only; no commit, push, or PR actions performed in this run. - To land this work, open a separate request with `com"
+    },
+    {
+      "text": "Directs the user to use `commit` or `commit-to-pr` only in a separate follow-up request after this skill finishes.",
+      "passed": true,
+      "evidence": "main uncommitted.  To land the work after this skill finishes, start a separate request with the `commit` or `commit-to-pr` skill.  ## Current state  - All AFK child issues **closed and synchronized** - Only HITL #9005 **remains ope"
+    },
+    {
+      "text": "Keeps the parent PRD issue open or says only HITL work remains.",
+      "passed": true,
+      "evidence": "task-graph lines are checked `[x]`. No AFK work remains.  ## HITL work remaining  One child issue is HITL: - #9005 \"Approve rollout checklist\"  HITL issues are not executed by this skill. This issue requires human decision o"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 2,
+    "errors_encountered": 0,
+    "output_chars": 2138,
+    "transcript_chars": 199
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

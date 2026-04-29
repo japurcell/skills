@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "States that the shared verification command group's failure or missing tool blocks closure for both covered issues, not just one of them.",
+      "passed": true,
+      "evidence": "blocker: shared command group failed for both issues  The shared verification command group for child issues #6101 and #6102 has failed. Both issues remain open.  ### Shared verification command  The controller's verificatio"
+    },
+    {
+      "text": "Names the missing `bundle` or `bundle exec rspec` command as the blocker.",
+      "passed": true,
+      "evidence": "red verification command  The controller's verification plan covers both issues with one command: - Command: `bundle exec rspec spec/requests/admin/export_spec.rb` - Status: `/bin/sh: bundle: command not found` - Covered issues: #6101 \"C"
+    },
+    {
+      "text": "Rejects diff inspection or 'looks satisfied' reasoning as a substitute for the required shared verification command.",
+      "passed": true,
+      "evidence": "source inspection, or generic 'looks correct' reasoning.\"  The suggested workaround \u2014 closing #6101 based on diff inspection while #6102 remains open \u2014 violates the shared command group contract. When multiple issues share one verific"
+    },
+    {
+      "text": "Leaves the parent PRD task-graph lines for #6101 and #6102 unchecked instead of marking either complete.",
+      "passed": false,
+      "evidence": "blocker: shared command group failed for both issues  The shared verification command group for child issues #6101 and #6102 has failed. Both issues remain open.  ### Shared verification command  The controller's verificatio"
+    },
+    {
+      "text": "Stops before the next wave or any additional issue closure proceeds.",
+      "passed": true,
+      "evidence": "- Covered issues: #6101 \"CSV export filters\", #6102 \"CSV export download audit log\"  ### Why both issues are blocked  The skill rules state:  > \"Do not close any child issue covered by a shared command group unless that shared"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "errors_encountered": 0,
+    "output_chars": 2612,
+    "transcript_chars": 267
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,1 @@
+Verification blocker on rule 3: The subagent proposed swapping `pnpm exec expo-router verify` (framework-native) for TSC + manual inspection. The skill forbids this substitution unless the child issue explicitly allows it. Keep #5101 open, parent checkbox stays unchecked, stop before next wave.

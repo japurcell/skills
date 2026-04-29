@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "Explicitly says that comments or status notes do not count as task completion.",
+      "passed": true,
+      "evidence": "- Parent PRD issue still shows `- [ ] W2 - #9301 Ship usage quota banner - AFK - blocked by #9298`  ### Why comments do not count as completion  The skill specification is explicit:  > Treat comments as evidence only, never as completion. A child issue"
+    },
+    {
+      "text": "Requires explicit `gh-cli`-driven closeout or equivalent real GitHub state changes: close child issue #9301 and update the matching parent task-graph line.",
+      "passed": true,
+      "evidence": "procedure required  The implementation subagent must now perform the explicit GitHub closeout:  1. Load the `gh-cli` skill   2. Close child issue #9301   3. Re-fetch the latest parent issue body   4. Locate the exact managed"
+    },
+    {
+      "text": "Keeps child issue #9301 open or not ready to close until those real GitHub updates succeed.",
+      "passed": true,
+      "evidence": "b closeout required.**  ### Status review  The implementation subagent reports: > \"I commented on child issue #9301 that the task is done, and I left a note on the parent PRD issue that W2 is complete. That should be enough t"
+    },
+    {
+      "text": "Leaves the parent PRD task-graph line for #9301 unchecked or `[ ]` until it is synchronized.",
+      "passed": false,
+      "evidence": "b closeout required.**  ### Status review  The implementation subagent reports: > \"I commented on child issue #9301 that the task is done, and I left a note on the parent PRD issue that W2 is complete. That should be enough t"
+    },
+    {
+      "text": "Leaves the parent PRD issue open.",
+      "passed": true,
+      "evidence": "firm:    - #9301 is closed      - The parent line now shows `[x]`  ### Issue state (before closeout)  #9301 **remains open.**  Parent task-graph line for #9301 **remains [ ]**.  ### Next steps  Send the implementation subagent an ex"
+    },
+    {
+      "text": "Stops before the next wave or other new work proceeds.",
+      "passed": true,
+      "evidence": "e parent checkbox, treat that child issue as incomplete: keep the issue open, keep the parent line `[ ]`, and stop before the next wave.  Comments are progress evidence only. Real completion requires two simultaneous GitHub state changes: 1. Chi"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.833
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2673,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

@@ -1,0 +1,1 @@
+EVAL 4: Resume flow detects closed-child mismatch for #8201. Sync required: update parent task-graph line from [ ] to [x] before W2 starts. After sync confirmation, W2 #8202 is unblocked.

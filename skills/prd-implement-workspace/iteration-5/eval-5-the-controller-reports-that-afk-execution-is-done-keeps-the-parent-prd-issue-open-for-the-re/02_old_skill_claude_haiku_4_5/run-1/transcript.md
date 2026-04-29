@@ -1,0 +1,1 @@
+Eval 5: AFK complete, HITL remaining. User requested PR in same message. Response: landing work (commit/push/PR) out of scope for prd-implement. User must follow up with `commit` or `commit-to-pr` separately. Parent PRD stays open.

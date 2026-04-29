@@ -1,0 +1,1 @@
+Checkpoint detects that required `pnpm exec next typegen` was skipped and replaced with eslint + file inspection. Per rule from Verification section: no framework-native substitution. Stop before review, keep #5104 open, parent checkbox unchecked.

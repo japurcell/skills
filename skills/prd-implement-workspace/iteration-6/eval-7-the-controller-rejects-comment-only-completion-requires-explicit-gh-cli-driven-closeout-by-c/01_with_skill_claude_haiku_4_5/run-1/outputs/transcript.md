@@ -1,0 +1,1 @@
+EVAL 7: Implementation subagent left comment-only completion. Skill requires explicit GitHub closeout: close #9301 and update parent line to [x]. Comments alone don't count. Controller keeps issue open and requires closeout turn.

@@ -1,0 +1,1 @@
+Eval 7: Comment-only completion rejected. Subagent left issue open and checkbox unchecked, only added comments. Per skill rule: completion requires explicit GitHub state changes (close issue + update checkbox via gh-cli). Issue remains open, checkbox unchecked, wave blocked.

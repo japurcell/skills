@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies that #8201 is closed but its parent PRD task-graph line is still unchecked.",
+      "passed": true,
+      "evidence": "PRD issue still shows: ``` - [ ] W1 - #8201 Add webhook retry headers - AFK - blocked by none ```  This is a closed-child / unchecked-parent mismatch. Before starting W2, the controller must synchronize the parent task-graph line.  ### Sync procedure  The par"
+    },
+    {
+      "text": "Checks or updates the parent PRD task-graph line for #8201 from `[ ]` to `[x]` before starting W2.",
+      "passed": true,
+      "evidence": "wave sync: Reconciling closed child / unchecked parent mismatch for W1.**  ### Mismatch detected  Child issue #8201 \"Add webhook retry headers\" is already closed from a prior run. However, the parent PRD issue still shows: ``"
+    },
+    {
+      "text": "Makes clear that only the checkbox should change and the rest of the managed task-graph line stays the same.",
+      "passed": false,
+      "evidence": "to: 1. Re-fetch the latest parent PRD issue body   2. Locate the exact managed task-graph line for #8201   3. Replace only the leading checkbox   4. Write the updated parent issue body back to GitHub   5. Re-read both the parent issue and child issue #8"
+    },
+    {
+      "text": "Only after the parent checkbox is synchronized does it treat W2 or #8202 as ready to proceed.",
+      "passed": true,
+      "evidence": "etry headers - AFK - blocked by none ```  This is a closed-child / unchecked-parent mismatch. Before starting W2, the controller must synchronize the parent task-graph line.  ### Sync procedure  The parent task-graph line"
+    },
+    {
+      "text": "Leaves the parent PRD issue open after synchronizing #8201.",
+      "passed": false,
+      "evidence": "atch detected  Child issue #8201 \"Add webhook retry headers\" is already closed from a prior run. However, the parent PRD issue still shows: ``` - [ ] W1 - #8201 Add webhook retry headers - AFK - blocked by none ```  This is a closed-chi"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2199,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "total_tokens": 0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  }
+}

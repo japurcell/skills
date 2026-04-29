@@ -1,0 +1,1 @@
+Eval 3: Fallback command accepted. Primary `pnpm` unavailable, but child issue explicitly lists `yarn rw test` as fallback. Fallback passed verification. Issue #7101 closed, parent checkbox updated to `[x]`. Parent PRD remains open.
