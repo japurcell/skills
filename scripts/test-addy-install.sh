@@ -310,6 +310,111 @@ test_pulls_latest_addy_repo_before_copying() {
     "Expected the installer to pull the latest addy repository changes before copying skills."
 }
 
+test_copies_hooks_directory() {
+  local workdir="$1"
+  local copied_hook
+
+  mkdir -p \
+    "$workdir/src/agents" \
+    "$workdir/src/skills/alpha" \
+    "$workdir/src/references" \
+    "$workdir/src/hooks" \
+    "$workdir/dest/agents" \
+    "$workdir/dest/skills" \
+    "$workdir/dest/references" \
+    "$workdir/dest/hooks"
+
+  printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$workdir/src/skills/alpha/SKILL.md"
+  printf '%s\n' '#!/bin/bash' 'echo "New hook"' > "$workdir/src/hooks/new-hook.sh"
+  chmod +x "$workdir/src/hooks/new-hook.sh"
+
+  ADDY_AGENTS_SRC="$workdir/src/agents" \
+    ADDY_SKILLS_SRC="$workdir/src/skills" \
+    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+    ADDY_SKILLS_DEST="$workdir/dest/skills" \
+    ADDY_REFERENCES_SRC="$workdir/src/references" \
+    ADDY_REFERENCES_DEST="$workdir/dest/references" \
+    ADDY_HOOKS_SRC="$workdir/src/hooks" \
+    ADDY_HOOKS_DEST="$workdir/dest/hooks" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
+    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+
+  copied_hook="$(<"$workdir/dest/hooks/new-hook.sh")"
+
+  assert_equals \
+    $'#!/bin/bash\necho "New hook"' \
+    "$copied_hook" \
+    "Expected hooks to be copied from source to destination."
+}
+
+test_preserves_existing_hooks_files() {
+  local workdir="$1"
+  local existing_content
+
+  mkdir -p \
+    "$workdir/src/agents" \
+    "$workdir/src/skills/alpha" \
+    "$workdir/src/references" \
+    "$workdir/src/hooks" \
+    "$workdir/dest/agents" \
+    "$workdir/dest/skills" \
+    "$workdir/dest/references" \
+    "$workdir/dest/hooks"
+
+  printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$workdir/src/skills/alpha/SKILL.md"
+  printf '%s\n' '#!/bin/bash' 'echo "Source hook"' > "$workdir/src/hooks/source-hook.sh"
+  printf '%s\n' '#!/bin/bash' 'echo "Existing hook"' > "$workdir/dest/hooks/existing-hook.sh"
+
+  ADDY_AGENTS_SRC="$workdir/src/agents" \
+    ADDY_SKILLS_SRC="$workdir/src/skills" \
+    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+    ADDY_SKILLS_DEST="$workdir/dest/skills" \
+    ADDY_REFERENCES_SRC="$workdir/src/references" \
+    ADDY_REFERENCES_DEST="$workdir/dest/references" \
+    ADDY_HOOKS_SRC="$workdir/src/hooks" \
+    ADDY_HOOKS_DEST="$workdir/dest/hooks" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
+    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+
+  existing_content="$(<"$workdir/dest/hooks/existing-hook.sh")"
+
+  assert_equals \
+    $'#!/bin/bash\necho "Existing hook"' \
+    "$existing_content" \
+    "Expected existing hook files in destination to be preserved during copy."
+}
+
+test_handles_missing_hooks_dir_gracefully() {
+  local workdir="$1"
+
+  mkdir -p \
+    "$workdir/src/agents" \
+    "$workdir/src/skills/alpha" \
+    "$workdir/src/references" \
+    "$workdir/dest/agents" \
+    "$workdir/dest/skills" \
+    "$workdir/dest/references" \
+    "$workdir/dest/hooks"
+
+  printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$workdir/src/skills/alpha/SKILL.md"
+
+  ADDY_AGENTS_SRC="$workdir/src/agents" \
+    ADDY_SKILLS_SRC="$workdir/src/skills" \
+    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+    ADDY_SKILLS_DEST="$workdir/dest/skills" \
+    ADDY_REFERENCES_SRC="$workdir/src/references" \
+    ADDY_REFERENCES_DEST="$workdir/dest/references" \
+    ADDY_HOOKS_SRC="$workdir/src/hooks" \
+    ADDY_HOOKS_DEST="$workdir/dest/hooks" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
+    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+
+  assert_equals \
+    "yes" \
+    "$([[ -d "$workdir/dest/hooks" ]] && echo yes || echo no)" \
+    "Expected destination hooks directory to be created."
+}
+
 main() {
   local workdir
 
@@ -324,6 +429,9 @@ main() {
   test_rewrites_root_reference_links_for_copied_skills "$workdir/skill-reference-links"
   test_clones_addy_repo_before_copying "$workdir/clone"
   test_pulls_latest_addy_repo_before_copying "$workdir/pull"
+  test_copies_hooks_directory "$workdir/hooks"
+  test_preserves_existing_hooks_files "$workdir/hooks-preserve"
+  test_handles_missing_hooks_dir_gracefully "$workdir/hooks-missing"
 }
 
 main "$@"

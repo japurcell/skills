@@ -14,12 +14,15 @@ readonly REFERENCES_SRC="${ADDY_REFERENCES_SRC:-${SOURCE_ROOT}/references}"
 readonly AGENTS_DEST="${ADDY_AGENTS_DEST:-${DEFAULT_DEST_ROOT}/agents}"
 readonly SKILLS_DEST="${ADDY_SKILLS_DEST:-${DEFAULT_DEST_ROOT}/skills}"
 readonly REFERENCES_DEST="${ADDY_REFERENCES_DEST:-${DEFAULT_DEST_ROOT}/references}"
+readonly HOOKS_SRC="${ADDY_HOOKS_SRC:-${SOURCE_ROOT}/hooks}"
+readonly HOOKS_DEST="${ADDY_HOOKS_DEST:-${DEFAULT_DEST_ROOT}/hooks}"
 readonly DEFAULT_SKILLS_STATE_FILE="${REPO_ROOT}/.addy-skills"
 readonly SKILLS_STATE_FILE="${ADDY_SKILLS_STATE_FILE:-${DEFAULT_SKILLS_STATE_FILE}}"
 
 declare -a COPIED_AGENT_FILES=()
 declare -a COPIED_SKILL_DIRS=()
 declare -a COPIED_REFERENCE_DIRS=()
+declare -a COPIED_HOOK_FILES=()
 declare -a SELECTED_SKILLS=()
 
 usage() {
@@ -473,6 +476,21 @@ copy_references() {
   COPIED_REFERENCE_DIRS+=("$REFERENCES_DEST")
 }
 
+copy_hooks() {
+  local source_file
+  local target_file
+
+  [[ -d "$HOOKS_SRC" ]] || return 0
+
+  mkdir -p "$HOOKS_DEST"
+
+  while IFS= read -r -d '' source_file; do
+    target_file="$HOOKS_DEST/$(basename "$source_file")"
+    cp -p "$source_file" "$target_file"
+    COPIED_HOOK_FILES+=("$target_file")
+  done < <(find "$HOOKS_SRC" -mindepth 1 -maxdepth 1 -print0 | sort -z)
+}
+
 write_skills_state_file() {
   local source_dir
   local base_name
@@ -520,17 +538,19 @@ resolve_selected_skills
 readonly NAME_MAP_FILE="$(mktemp)"
 trap 'rm -f "$NAME_MAP_FILE"' EXIT
 
-mkdir -p "$AGENTS_DEST" "$SKILLS_DEST" "$(dirname "$REFERENCES_DEST")"
+mkdir -p "$AGENTS_DEST" "$SKILLS_DEST" "$(dirname "$REFERENCES_DEST")" "$HOOKS_DEST"
 
 build_name_map "$NAME_MAP_FILE"
 copy_agents
 prune_unselected_skills
 copy_skills
 copy_references
+copy_hooks
 rewrite_references "$NAME_MAP_FILE"
 write_skills_state_file
 
 echo "Installed addy agents to $AGENTS_DEST"
 echo "Installed addy skills to $SKILLS_DEST"
 echo "Installed addy references to $REFERENCES_DEST"
+echo "Installed addy hooks to $HOOKS_DEST"
 echo "Updated addy skills state file at $SKILLS_STATE_FILE"
