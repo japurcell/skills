@@ -1,5 +1,0 @@
-- This is a dry-run draft using the prd-to-tasks skill; no GitHub issues were created.
-- The tracker and child issues are backend-focused, with no UI or admin frontend work.
-- Each child issue is thin and independently grabbable, following the skill's template.
-- Placeholders are used for issue numbers and links as per instructions.
-- See response.md for the tracker issue draft and transcript.md for the dry-run process.

@@ -1,9 +1,0 @@
-- Review PRD for admin audit log exports: filter by actor, date range, event type; export CSV; see export failures.
-- Read SKILL.md for prd-to-tasks baseline to ensure output matches skill's expected format and guidance.
-- Identify main deliverable: a parent tracker issue with child issues for each vertical slice.
-- Draft parent tracker issue with summary and explicit child issue list.
-- For each feature (filtering, export, failures), break into grabbable, testable child issues.
-- Use placeholders for repo-specific data (labels, assignees, etc.).
-- Ensure no implementation or mutation of GitHub occurs (dry-run only).
-- Save only the required output, transcript, and user notes files.
-- Document any assumptions or uncertainties in user_notes.md.

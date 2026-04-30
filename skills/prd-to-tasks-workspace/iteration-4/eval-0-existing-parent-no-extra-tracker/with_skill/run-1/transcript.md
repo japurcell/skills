@@ -1,8 +1,0 @@
-- Read SKILL.md for authoritative instructions and constraints
-- Parsed the eval prompt and extracted key requirements (existing parent issue, no new tracker, vertical slice first)
-- Identified and listed vertical slices based on PRD and comments
-- Drafted child issue breakdowns for each vertical slice, ensuring independent executability
-- Incorporated constraints from comments (CRUD before alerts, notification prefs not blocking CRUD)
-- Wrote parent issue tracking guidance per SKILL.md, referencing sub-issues and AFK task
-- Used placeholders for child issue numbers as required
-- Ensured no code or repo mutation, as this is a dry-run benchmark

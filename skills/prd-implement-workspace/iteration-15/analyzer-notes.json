@@ -1,5 +1,0 @@
-[
-  "Final GPT-5.3-Codex comparison: revised skill reached 0.903 mean pass rate versus 0.740 for the baseline (+0.16).",
-  "The dry-run response contract improved final-response completeness for controller-outcome prompts, especially explicit state phrases for closeout, parent issue openness, and landing boundaries.",
-  "The revised skill is shorter than the baseline SKILL.md while preserving behavior-critical sections for verification strength, wave-level review, comment-only rejection, checkbox drift, and git/PR boundaries."
-]

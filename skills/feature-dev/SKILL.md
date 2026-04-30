@@ -135,7 +135,7 @@ If the user says "whatever you think is best", provide your recommendation and g
 
 **Goal**: Ensure code is simple, DRY, elegant, easy to read, and functionally correct.
 
-1. Launch independent [code-simplifier](../code-simplifier/SKILL.md) subagents to identify refactoring opportunities. Scale based on the number of changed files:
+1. Launch independent code-simplifier subagents to identify refactoring opportunities. Scale based on the number of changed files:
    - **≤5 files**: launch 1 agent covering all changed files
    - **>5 files**: partition files into non-overlapping groups (by module, directory, or logical area) and launch one agent per group in parallel. Each file must appear in exactly one agent's scope — overlapping scopes cause conflicting writes.
 

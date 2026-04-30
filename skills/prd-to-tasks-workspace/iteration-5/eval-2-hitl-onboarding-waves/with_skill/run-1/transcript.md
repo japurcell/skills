@@ -1,8 +1,0 @@
-- Read SKILL.md for authoritative workflow and templates.
-- Noted that the source is an implementation plan, not an existing GitHub issue, so a new parent tracker is required.
-- Identified vertical slices: onboarding UI design review (HITL), teammate invitation, Slack connection, and first project setup.
-- Placed design review as W1 (blocker for UI changes), then parallel AFK slices for implementation.
-- Drafted the parent tracker issue with summary, task graph, and guidance.
-- Drafted child issues with all required sections (parent, what to build, type, acceptance, verification, blockers, queue, user stories, files, scope).
-- Used placeholders for issue numbers, file paths, and commands where concrete data is unavailable.
-- Did not mutate GitHub or implement code, as this is a dry run.

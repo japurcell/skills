@@ -147,7 +147,7 @@ After implementation, review all changed code.
 
 Build the review scope from all uncommitted changed files (staged, unstaged, and untracked via `git status --porcelain`). Exclude deleted files and `.gitignore` files from review but list them under excluded files.
 
-- Launch [code-simplifier](../code-simplifier/SKILL.md) subagents to identify refactoring opportunities. This is not optional for runs that produce changed files:
+- Launch code-simplifier subagents to identify refactoring opportunities. This is not optional for runs that produce changed files:
   - **≤5 files**: 1 code-simplifier agent covering all changed files
   - **>5 files**: partition files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one agent's scope
 - Launch 3 code-reviewer agents in parallel using code-reviewer, each focusing on a different lens:

@@ -1,9 +1,0 @@
-- Read SKILL.md to extract the required structure and rules for PRD-to-tasks breakdowns.
-- Identified that the PRD is raw text, so a new parent tracker issue is needed.
-- Drafted a parent tracker issue with a summary, task graph, and guidance section.
-- Broke the PRD into three vertical, AFK child issues: filtering, CSV export, and export failure handling.
-- For each child, drafted a full issue body with acceptance criteria, verification, queue position, and likely files.
-- Assigned execution waves and dependencies per SKILL.md rules.
-- Added draft subissue attachment commands.
-- Wrote a summary section per SKILL.md.
-- Used placeholders for issue numbers and paths as required for a dry run.
