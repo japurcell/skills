@@ -13,11 +13,24 @@ description: Implement the next task incrementally — build, test, verify, comm
    b. Load relevant context (existing code, patterns, types)
    c. Write a failing test for the expected behavior (RED)
    d. Implement the minimum code to pass the test (GREEN)
-   e. Run the full test suite to check for regressions
+   e. Run the relevant test suite to check for regressions
    f. Run the build to verify compilation
-   g. Mark the task complete and move to the next one
+   g. Update the human-readable docs immediately:
+      - check off completed items in the plan
+      - check off completed items in the todo doc
+      - note any verification actually performed
+   h. Mark the task `done` in the tracker
+   i. Move to the next pending task
 
 **If any step fails**, follow the `addy-debugging-and-error-recovery` skill.
+
+## Tracking Discipline
+ 
+- Treat stale docs as incomplete work.
+- Every task status change must be reflected in:
+  1. the tracker
+  2. the plan
+  3. the todo doc
 
 ## Commit Override Behavior
 
@@ -37,4 +50,5 @@ After completing all tasks:
 - [ ] The full test suite passes
 - [ ] The build is clean
 - [ ] The feature works end-to-end as specified
+- [ ] All relevant docs are updated to reflect the completed work
 - [ ] All changes are uncommitted
