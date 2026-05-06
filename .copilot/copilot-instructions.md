@@ -1,11 +1,15 @@
 # Project Coding Standards
 
+## Skills
+
+- Always load the `addy-using-agent-skills` skill. It encodes the core workflows and best practices for engineering work.
+
 ## Testing
 
 - Write tests before code (TDD)
 - For bugs: write a failing test first, then fix (Prove-It pattern)
 - Test hierarchy: unit > integration > e2e (use the lowest level that captures the behavior)
-- Run `npm test` after every change
+- Run applicable test commands after every change
 
 ## Code Quality
 
