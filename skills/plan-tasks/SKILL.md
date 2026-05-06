@@ -7,7 +7,7 @@ description: Break work into small verifiable tasks with acceptance criteria and
 
 ## Workflow
 
-1. Invoke the `addy-context-engineering`, `addy-planning-and-task-breakdown`, and `subagent-model-selection` skills.
+1. Invoke the `addy-context-engineering`, `addy-source-driven-development`, `addy-planning-and-task-breakdown`, and `subagent-model-selection` skills.
 2. Read the existing spec (SPEC.md or equivalent) and the relevant codebase sections.
 3. Enter plan mode — read only, no code changes
 4. Identify the dependency graph between components

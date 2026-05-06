@@ -1,0 +1,77 @@
+{
+  "skill_name": "build",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I already have the next pending task from the plan: add pagination to `GET /api/issues`. The acceptance criteria are written, the repo's validation commands are known, and the plan already names the files likely involved. Using the build workflow, tell me what the manager should do before the implementer runs, what belongs in the handoff, and what work must stay with the implementer.",
+      "expected_output": "A dispatch-first manager response that uses a lean handoff, does not pre-solve the task in the main agent, and makes the implementer own discovery and first-pass design.",
+      "files": [],
+      "expectations": [
+        "Says the manager should dispatch once the task is clear enough, rather than pre-reading lots of files first.",
+        "Defines a lean handoff that includes task text, success criteria, known constraints or commands, and only already-known file hints.",
+        "States that discovery, pattern lookup, and first-pass design belong to the implementer.",
+        "Explicitly says the manager should not draft the solution or likely patches before dispatch."
+      ],
+      "assertions": [
+        "Says the manager should dispatch once the task is clear enough, rather than pre-reading lots of files first.",
+        "Defines a lean handoff that includes task text, success criteria, known constraints or commands, and only already-known file hints.",
+        "States that discovery, pattern lookup, and first-pass design belong to the implementer.",
+        "Explicitly says the manager should not draft the solution or likely patches before dispatch."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "An implementer comes back with `NEEDS_CONTEXT` and says: 'I have not explored the repo yet. Please read the relevant files and tell me the solution before I start.' Using the build workflow, how should the manager respond?",
+      "expected_output": "A response that rejects this as ordinary discovery work, keeps the manager from pre-reading the codebase, and pushes exploration back to the implementer unless requirements are genuinely missing.",
+      "files": [],
+      "expectations": [
+        "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
+        "Keeps file discovery and pattern lookup assigned to the implementer.",
+        "Does not tell the manager to pre-read the codebase or hand over a solution.",
+        "Reserves NEEDS_CONTEXT for genuinely missing requirements, constraints, or conflicting signals."
+      ],
+      "assertions": [
+        "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
+        "Keeps file discovery and pattern lookup assigned to the implementer.",
+        "Does not tell the manager to pre-read the codebase or hand over a solution.",
+        "Reserves NEEDS_CONTEXT for genuinely missing requirements, constraints, or conflicting signals."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The plan says to defer audit logging until phase 2, but the next task text says to implement audit logging now. Using the build workflow, what should happen before any implementer is dispatched?",
+      "expected_output": "A manager response that recognizes the conflict, stops before dispatch, and resolves the ambiguity with the human rather than silently choosing an interpretation.",
+      "files": [],
+      "expectations": [
+        "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
+        "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
+        "Keeps the manager focused on ambiguity resolution rather than speculative implementation.",
+        "Does not silently choose one interpretation and proceed."
+      ],
+      "assertions": [
+        "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
+        "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
+        "Keeps the manager focused on ambiguity resolution rather than speculative implementation.",
+        "Does not silently choose one interpretation and proceed."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "An implementer reports `DONE_WITH_CONCERNS`: the tests passed and the build is clean, but they suspect the changes may not match the requested scope. Using the build workflow, what does the manager do before updating tracking?",
+      "expected_output": "A manager response that treats scope concerns as unresolved work, reads the concerns before marking done, and addresses them before updating tracking.",
+      "files": [],
+      "expectations": [
+        "Says the manager must read the concerns before updating tracking.",
+        "Treats correctness or scope concerns as something to address before marking the task done.",
+        "Allows re-dispatching another implementer if needed to resolve the concern.",
+        "Does not immediately mark the task done just because tests passed."
+      ],
+      "assertions": [
+        "Says the manager must read the concerns before updating tracking.",
+        "Treats correctness or scope concerns as something to address before marking the task done.",
+        "Allows re-dispatching another implementer if needed to resolve the concern.",
+        "Does not immediately mark the task done just because tests passed."
+      ]
+    }
+  ]
+}

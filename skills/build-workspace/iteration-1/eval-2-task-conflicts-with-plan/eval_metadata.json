@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "task-conflicts-with-plan",
+  "prompt": "The plan says to defer audit logging until phase 2, but the next task text says to implement audit logging now. Using the build workflow, what should happen before any implementer is dispatched?",
+  "assertions": [
+    "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
+    "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
+    "Keeps the manager focused on ambiguity resolution rather than speculative implementation.",
+    "Does not silently choose one interpretation and proceed."
+  ]
+}
