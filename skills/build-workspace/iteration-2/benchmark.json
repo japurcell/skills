@@ -1,0 +1,524 @@
+{
+  "metadata": {
+    "skill_name": "build",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-06T22:38:58Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 32.3,
+        "tokens": 1372,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager should dispatch once the task is clear enough, rather than pre-reading lots of files first.",
+          "passed": true,
+          "evidence": "Response tells the manager to dispatch promptly once the task is clear."
+        },
+        {
+          "text": "Defines a lean handoff that includes task text, success criteria, known constraints or commands, and only already-known file hints.",
+          "passed": true,
+          "evidence": "Response describes a lean handoff with task, criteria, constraints/commands, and already-known file hints."
+        },
+        {
+          "text": "States that discovery, pattern lookup, and first-pass design belong to the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly keep discovery, patterns, and first-pass design with the implementer."
+        },
+        {
+          "text": "Explicitly says the manager should not draft the solution or likely patches before dispatch.",
+          "passed": false,
+          "evidence": "Response never explicitly forbids manager-side solution drafting before dispatch."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 34.6,
+        "tokens": 824,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
+          "passed": false,
+          "evidence": "Response does not explicitly say that ordinary exploration is not a valid NEEDS_CONTEXT reason."
+        },
+        {
+          "text": "Keeps file discovery and pattern lookup assigned to the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly keep discovery and pattern lookup with the implementer."
+        },
+        {
+          "text": "Does not tell the manager to pre-read the codebase or hand over a solution.",
+          "passed": true,
+          "evidence": "Response avoids telling the manager to pre-read files or provide the solution."
+        },
+        {
+          "text": "Reserves NEEDS_CONTEXT for genuinely missing requirements, constraints, or conflicting signals.",
+          "passed": true,
+          "evidence": "Response reserves NEEDS_CONTEXT for missing requirements/constraints or conflicting signals."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 34.9,
+        "tokens": 737,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
+          "passed": true,
+          "evidence": "Response identifies the plan/task conflict and stops dispatch."
+        },
+        {
+          "text": "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
+          "passed": true,
+          "evidence": "Response routes the conflict to ambiguity resolution or human escalation."
+        },
+        {
+          "text": "Keeps the manager focused on ambiguity resolution rather than speculative implementation.",
+          "passed": true,
+          "evidence": "Response keeps the manager on ambiguity resolution instead of speculative implementation."
+        },
+        {
+          "text": "Does not silently choose one interpretation and proceed.",
+          "passed": true,
+          "evidence": "Response avoids silently picking one interpretation."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 18.9,
+        "tokens": 316,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must read the concerns before updating tracking.",
+          "passed": false,
+          "evidence": "Response does not clearly require reading the concerns before updating tracking."
+        },
+        {
+          "text": "Treats correctness or scope concerns as something to address before marking the task done.",
+          "passed": true,
+          "evidence": "Response treats scope/correctness concerns as unresolved work."
+        },
+        {
+          "text": "Allows re-dispatching another implementer if needed to resolve the concern.",
+          "passed": true,
+          "evidence": "Response allows another implementer pass to resolve the concern."
+        },
+        {
+          "text": "Does not immediately mark the task done just because tests passed.",
+          "passed": true,
+          "evidence": "Response avoids immediately marking the task done just because tests passed."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 35.9,
+        "tokens": 775,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager should dispatch the code-simplifier before updating tracking.",
+          "passed": false,
+          "evidence": "Response does not clearly route completed implementer work through the code-simplifier before tracking."
+        },
+        {
+          "text": "Passes the files touched by the implementer to the code-simplifier.",
+          "passed": true,
+          "evidence": "Response forwards the touched files to the code-simplifier."
+        },
+        {
+          "text": "Carries forward relevant validation context or results from the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly mention carrying forward validation context."
+        },
+        {
+          "text": "Does not send the main agent back into manual simplification or discovery first.",
+          "passed": true,
+          "evidence": "Response keeps the main agent out of manual simplification or rediscovery work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "time_seconds": 51.0,
+        "tokens": 1388,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+          "passed": false,
+          "evidence": "Response does not clearly keep the manager handoff lean."
+        },
+        {
+          "text": "Says the implementer should infer the slice's surface or stack before choosing validation.",
+          "passed": false,
+          "evidence": "Response does not clearly say to infer the slice's surface or stack first."
+        },
+        {
+          "text": "Chooses matching shell or Python checks rather than generic frontend commands.",
+          "passed": false,
+          "evidence": "Response does not clearly choose stack-matching shell/Python checks."
+        },
+        {
+          "text": "Keeps validation ownership with the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly keep validation ownership with the implementer."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 35.6,
+        "tokens": 1580,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager should dispatch once the task is clear enough, rather than pre-reading lots of files first.",
+          "passed": true,
+          "evidence": "Response tells the manager to dispatch promptly once the task is clear."
+        },
+        {
+          "text": "Defines a lean handoff that includes task text, success criteria, known constraints or commands, and only already-known file hints.",
+          "passed": true,
+          "evidence": "Response describes a lean handoff with task, criteria, constraints/commands, and already-known file hints."
+        },
+        {
+          "text": "States that discovery, pattern lookup, and first-pass design belong to the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly keep discovery, patterns, and first-pass design with the implementer."
+        },
+        {
+          "text": "Explicitly says the manager should not draft the solution or likely patches before dispatch.",
+          "passed": false,
+          "evidence": "Response never explicitly forbids manager-side solution drafting before dispatch."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 31.2,
+        "tokens": 1309,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
+          "passed": false,
+          "evidence": "Response does not explicitly say that ordinary exploration is not a valid NEEDS_CONTEXT reason."
+        },
+        {
+          "text": "Keeps file discovery and pattern lookup assigned to the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly keep discovery and pattern lookup with the implementer."
+        },
+        {
+          "text": "Does not tell the manager to pre-read the codebase or hand over a solution.",
+          "passed": true,
+          "evidence": "Response avoids telling the manager to pre-read files or provide the solution."
+        },
+        {
+          "text": "Reserves NEEDS_CONTEXT for genuinely missing requirements, constraints, or conflicting signals.",
+          "passed": true,
+          "evidence": "Response reserves NEEDS_CONTEXT for missing requirements/constraints or conflicting signals."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 24.0,
+        "tokens": 682,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
+          "passed": true,
+          "evidence": "Response identifies the plan/task conflict and stops dispatch."
+        },
+        {
+          "text": "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
+          "passed": false,
+          "evidence": "Response does not clearly route the conflict to ambiguity resolution or human escalation."
+        },
+        {
+          "text": "Keeps the manager focused on ambiguity resolution rather than speculative implementation.",
+          "passed": true,
+          "evidence": "Response keeps the manager on ambiguity resolution instead of speculative implementation."
+        },
+        {
+          "text": "Does not silently choose one interpretation and proceed.",
+          "passed": true,
+          "evidence": "Response avoids silently picking one interpretation."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 22.6,
+        "tokens": 352,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must read the concerns before updating tracking.",
+          "passed": false,
+          "evidence": "Response does not clearly require reading the concerns before updating tracking."
+        },
+        {
+          "text": "Treats correctness or scope concerns as something to address before marking the task done.",
+          "passed": true,
+          "evidence": "Response treats scope/correctness concerns as unresolved work."
+        },
+        {
+          "text": "Allows re-dispatching another implementer if needed to resolve the concern.",
+          "passed": true,
+          "evidence": "Response allows another implementer pass to resolve the concern."
+        },
+        {
+          "text": "Does not immediately mark the task done just because tests passed.",
+          "passed": true,
+          "evidence": "Response avoids immediately marking the task done just because tests passed."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 33.3,
+        "tokens": 614,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager should dispatch the code-simplifier before updating tracking.",
+          "passed": false,
+          "evidence": "Response does not clearly route completed implementer work through the code-simplifier before tracking."
+        },
+        {
+          "text": "Passes the files touched by the implementer to the code-simplifier.",
+          "passed": true,
+          "evidence": "Response forwards the touched files to the code-simplifier."
+        },
+        {
+          "text": "Carries forward relevant validation context or results from the implementer.",
+          "passed": true,
+          "evidence": "Response carries forward validation context from the implementer."
+        },
+        {
+          "text": "Does not send the main agent back into manual simplification or discovery first.",
+          "passed": true,
+          "evidence": "Response keeps the main agent out of manual simplification or rediscovery work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.25,
+        "passed": 1,
+        "failed": 3,
+        "total": 4,
+        "time_seconds": 35.2,
+        "tokens": 1236,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+          "passed": false,
+          "evidence": "Response does not clearly keep the manager handoff lean."
+        },
+        {
+          "text": "Says the implementer should infer the slice's surface or stack before choosing validation.",
+          "passed": true,
+          "evidence": "Response tells the implementer to infer the slice's surface/stack before choosing validation."
+        },
+        {
+          "text": "Chooses matching shell or Python checks rather than generic frontend commands.",
+          "passed": false,
+          "evidence": "Response does not clearly choose stack-matching shell/Python checks."
+        },
+        {
+          "text": "Keeps validation ownership with the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly keep validation ownership with the implementer."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.5417,
+        "stddev": 0.3323,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 34.6,
+        "stddev": 10.2227,
+        "min": 18.9,
+        "max": 51.0
+      },
+      "tokens": {
+        "mean": 902.0,
+        "stddev": 412.2936,
+        "min": 316,
+        "max": 1388
+      }
+    },
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.5833,
+        "stddev": 0.2041,
+        "min": 0.25,
+        "max": 0.75
+      },
+      "time_seconds": {
+        "mean": 30.3167,
+        "stddev": 5.6725,
+        "min": 22.6,
+        "max": 35.6
+      },
+      "tokens": {
+        "mean": 962.1667,
+        "stddev": 479.3773,
+        "min": 352,
+        "max": 1580
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.04",
+      "time_seconds": "+4.3",
+      "tokens": "-60"
+    }
+  },
+  "notes": []
+}

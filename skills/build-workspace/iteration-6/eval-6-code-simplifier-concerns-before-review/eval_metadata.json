@@ -1,0 +1,11 @@
+{
+  "eval_id": 6,
+  "eval_name": "code-simplifier-concerns-before-review",
+  "prompt": "The implementer returned `DONE`, then the code-simplifier returned `DONE_WITH_CONCERNS`: the change is smaller now, but one extracted helper may have widened scope and could hide a behavior change. Using the build workflow, what should the manager do next?",
+  "assertions": [
+    "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+    "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+    "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+    "Does not update tracking yet."
+  ]
+}

@@ -72,6 +72,78 @@
         "Allows re-dispatching another implementer if needed to resolve the concern.",
         "Does not immediately mark the task done just because tests passed."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "An implementer reports `DONE` on the next task, with passing verification and a list of the four files they touched. Using the build workflow, what should the manager do next before updating tracking, and what context should go to the next subagent?",
+      "expected_output": "A manager response that dispatches the code-simplifier before updating tracking, passes the touched files and relevant validation context forward, and keeps the main agent out of manual simplification work.",
+      "files": [],
+      "expectations": [
+        "Says the manager should dispatch the code-simplifier before updating tracking.",
+        "Passes the files touched by the implementer to the code-simplifier.",
+        "Carries forward relevant validation context or results from the implementer.",
+        "Does not send the main agent back into manual simplification or discovery first."
+      ],
+      "assertions": [
+        "Says the manager should dispatch the code-simplifier before updating tracking.",
+        "Passes the files touched by the implementer to the code-simplifier.",
+        "Carries forward relevant validation context or results from the implementer.",
+        "Does not send the main agent back into manual simplification or discovery first."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The next task touches `scripts/addy-install.sh` and `skills/build/evals/grade_benchmark.py`. The plan says only 'run relevant validation.' Using the build workflow, what should the manager hand to the implementer, and how should the implementer choose verification so a weaker model does not fall back to generic frontend commands?",
+      "expected_output": "A manager-plus-implementer workflow answer that keeps the handoff lean, makes the implementer infer the slice's surface and stack before choosing verification, and uses matching shell/Python checks instead of generic frontend commands.",
+      "files": [],
+      "expectations": [
+        "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+        "Says the implementer should infer the slice's surface or stack before choosing validation.",
+        "Chooses matching shell or Python checks rather than generic frontend commands.",
+        "Keeps validation ownership with the implementer."
+      ],
+      "assertions": [
+        "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+        "Says the implementer should infer the slice's surface or stack before choosing validation.",
+        "Chooses matching shell or Python checks rather than generic frontend commands.",
+        "Keeps validation ownership with the implementer."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "The implementer returned `DONE`, then the code-simplifier returned `DONE_WITH_CONCERNS`: the change is smaller now, but one extracted helper may have widened scope and could hide a behavior change. Using the build workflow, what should the manager do next?",
+      "expected_output": "A manager response that reads the simplifier's concerns before code-reviewer, treats correctness or scope concerns as unresolved work, routes the fix back to the right subagent, and avoids updating tracking yet.",
+      "files": [],
+      "expectations": [
+        "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+        "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+        "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+        "Does not update tracking yet."
+      ],
+      "assertions": [
+        "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+        "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+        "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+        "Does not update tracking yet."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "The implementer and code-simplifier both returned `DONE`, but the code-reviewer returned `DONE_WITH_FINDINGS`: two correctness issues remain in files already touched. Using the build workflow, what should the manager do next, and when can tracking be updated?",
+      "expected_output": "A manager response that addresses the review findings before tracking, routes the fixes to the right subagent, and only updates tracking after the final reviewer comes back `DONE`.",
+      "files": [],
+      "expectations": [
+        "Says the manager must address code-review findings before updating tracking.",
+        "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+        "Requires the final subagent to return `DONE` before marking the task done.",
+        "Does not ignore findings just because earlier stages already returned `DONE`."
+      ],
+      "assertions": [
+        "Says the manager must address code-review findings before updating tracking.",
+        "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+        "Requires the final subagent to return `DONE` before marking the task done.",
+        "Does not ignore findings just because earlier stages already returned `DONE`."
+      ]
     }
   ]
 }

@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+      "passed": true,
+      "evidence": "Response keeps the manager side lean."
+    },
+    {
+      "text": "Says the implementer should infer the slice's surface or stack before choosing validation.",
+      "passed": true,
+      "evidence": "Response tells the implementer to infer the slice's surface/stack before choosing validation."
+    },
+    {
+      "text": "Chooses matching shell or Python checks rather than generic frontend commands.",
+      "passed": true,
+      "evidence": "Response picks shell/Python-style checks instead of generic frontend commands."
+    },
+    {
+      "text": "Keeps validation ownership with the implementer.",
+      "passed": false,
+      "evidence": "Response does not clearly keep validation ownership with the implementer."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 860,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 67.3,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 67.3
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

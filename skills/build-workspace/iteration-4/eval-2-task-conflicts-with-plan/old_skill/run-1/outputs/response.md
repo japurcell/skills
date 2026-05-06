@@ -1,0 +1,3 @@
+**Before dispatch, the conflict must be resolved.** The build workflow explicitly says **do not dispatch** an implementer when **the task text is ambiguous or conflicts with the plan**. In this case, “defer audit logging until phase 2” vs. “implement audit logging now” is exactly that condition, so the coordinator should **surface the contradiction and get it clarified/escalated to the human** before sending any implementer.
+
+Separately, the workflow’s first step is to invoke **`addy-context-engineering`** and **`subagent-model-selection`**, but with this conflict present, the key gating action is still: **stop and resolve the plan/task mismatch first, then dispatch once the task is clear.**

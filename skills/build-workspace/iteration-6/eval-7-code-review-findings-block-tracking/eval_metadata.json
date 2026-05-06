@@ -1,0 +1,11 @@
+{
+  "eval_id": 7,
+  "eval_name": "code-review-findings-block-tracking",
+  "prompt": "The implementer and code-simplifier both returned `DONE`, but the code-reviewer returned `DONE_WITH_FINDINGS`: two correctness issues remain in files already touched. Using the build workflow, what should the manager do next, and when can tracking be updated?",
+  "assertions": [
+    "Says the manager must address code-review findings before updating tracking.",
+    "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+    "Requires the final subagent to return `DONE` before marking the task done.",
+    "Does not ignore findings just because earlier stages already returned `DONE`."
+  ]
+}

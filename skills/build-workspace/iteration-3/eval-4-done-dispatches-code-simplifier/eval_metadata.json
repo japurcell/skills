@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "done-dispatches-code-simplifier",
+  "prompt": "An implementer reports `DONE` on the next task, with passing verification and a list of the four files they touched. Using the build workflow, what should the manager do next before updating tracking, and what context should go to the next subagent?",
+  "assertions": [
+    "Says the manager should dispatch the code-simplifier before updating tracking.",
+    "Passes the files touched by the implementer to the code-simplifier.",
+    "Carries forward relevant validation context or results from the implementer.",
+    "Does not send the main agent back into manual simplification or discovery first."
+  ]
+}

@@ -84,8 +84,8 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             {
                 "text": "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
-                "passed": has_any(text, ["conflicts with the plan", "plan conflict", "task conflicts", "not clear enough to dispatch", "do not dispatch yet"]),
-                "evidence": "Response identifies the plan/task conflict and stops dispatch." if has_any(text, ["conflicts with the plan", "plan conflict", "task conflicts", "not clear enough to dispatch", "do not dispatch yet"]) else "Response does not clearly identify the plan/task conflict before dispatch."
+                "passed": has_any(text, ["conflicts with the plan", "plan conflict", "task conflicts", "not clear enough to dispatch", "do not dispatch yet", "plan/task contradiction", "task/plan contradiction", "plan and task contradict", "mismatch between the plan and task"]),
+                "evidence": "Response identifies the plan/task conflict and stops dispatch." if has_any(text, ["conflicts with the plan", "plan conflict", "task conflicts", "not clear enough to dispatch", "do not dispatch yet", "plan/task contradiction", "task/plan contradiction", "plan and task contradict", "mismatch between the plan and task"]) else "Response does not clearly identify the plan/task conflict before dispatch."
             },
             {
                 "text": "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
@@ -125,6 +125,102 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
                 "text": "Does not immediately mark the task done just because tests passed.",
                 "passed": not has_any(text, ["mark it done now", "update tracking now because tests passed", "tests passed so mark done"]),
                 "evidence": "Response avoids immediately marking the task done just because tests passed." if not has_any(text, ["mark it done now", "update tracking now because tests passed", "tests passed so mark done"]) else "Response incorrectly marks the task done just because tests passed."
+            },
+        ]
+
+    if eval_name == "done-dispatches-code-simplifier":
+        return [
+            {
+                "text": "Says the manager should dispatch the code-simplifier before updating tracking.",
+                "passed": has_any(text, ["dispatch the code-simplifier", "send the code-simplifier", "run the code-simplifier", "launch the code-simplifier"]) and has_any(text, ["before updating tracking", "before update tracking", "before marking it done", "before marking the task done", "do not update tracking yet", "only update tracking after"]),
+                "evidence": "Response dispatches the code-simplifier before tracking updates." if has_any(text, ["dispatch the code-simplifier", "send the code-simplifier", "run the code-simplifier", "launch the code-simplifier"]) and has_any(text, ["before updating tracking", "before update tracking", "before marking it done", "before marking the task done", "do not update tracking yet", "only update tracking after"]) else "Response does not clearly route completed implementer work through the code-simplifier before tracking."
+            },
+            {
+                "text": "Passes the files touched by the implementer to the code-simplifier.",
+                "passed": has_any(text, ["files the implementer touched", "touched files", "files changed", "four files they touched"]),
+                "evidence": "Response forwards the touched files to the code-simplifier." if has_any(text, ["files the implementer touched", "touched files", "files changed", "four files they touched"]) else "Response does not clearly pass the implementer's touched files to the code-simplifier."
+            },
+            {
+                "text": "Carries forward relevant validation context or results from the implementer.",
+                "passed": has_any(text, ["validation context", "validation results", "verification results", "tests they ran", "commands they ran"]),
+                "evidence": "Response carries forward validation context from the implementer." if has_any(text, ["validation context", "validation results", "verification results", "tests they ran", "commands they ran"]) else "Response does not clearly mention carrying forward validation context."
+            },
+            {
+                "text": "Does not send the main agent back into manual simplification or discovery first.",
+                "passed": not has_any(text, ["manager should simplify", "simplify the code yourself", "manager should review every file first", "manager should rediscover the codebase"]),
+                "evidence": "Response keeps the main agent out of manual simplification or rediscovery work." if not has_any(text, ["manager should simplify", "simplify the code yourself", "manager should review every file first", "manager should rediscover the codebase"]) else "Response sends the main agent back into manual simplification or rediscovery."
+            },
+        ]
+
+    if eval_name == "weak-model-validation-selection":
+        return [
+            {
+                "text": "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+                "passed": has_any(text, ["lean handoff", "manager handoff", "handoff (lean)", "dispatch immediately", "do not pre-read", "do not draft the solution"]) and not has_any(text, ["manager should read the files first", "manager should pre-solve", "manager should draft the solution"]),
+                "evidence": "Response keeps the manager side lean." if has_any(text, ["lean handoff", "manager handoff", "handoff (lean)", "dispatch immediately", "do not pre-read", "do not draft the solution"]) and not has_any(text, ["manager should read the files first", "manager should pre-solve", "manager should draft the solution"]) else "Response does not clearly keep the manager handoff lean."
+            },
+            {
+                "text": "Says the implementer should infer the slice's surface or stack before choosing validation.",
+                "passed": has_any(text, ["infer the slice", "infer the stack", "infer the surface", "figure out what stack", "determine the stack first", "infer stack from file types", "infer the slice/stack", "infer stack from filenames", "stack from file types"]),
+                "evidence": "Response tells the implementer to infer the slice's surface/stack before choosing validation." if has_any(text, ["infer the slice", "infer the stack", "infer the surface", "figure out what stack", "determine the stack first", "infer stack from file types", "infer the slice/stack", "infer stack from filenames", "stack from file types"]) else "Response does not clearly say to infer the slice's surface or stack first."
+            },
+            {
+                "text": "Chooses matching shell or Python checks rather than generic frontend commands.",
+                "passed": has_any(text, ["bash -n", "shell check", "shell validation", "py_compile", "python checks", "python validation", "shellcheck", "pytest", "stack-specific validators", "run grade_benchmark"]) and not has_any(text, ["npm run test", "npm run build", "frontend commands by default"]),
+                "evidence": "Response picks shell/Python-style checks instead of generic frontend commands." if has_any(text, ["bash -n", "shell check", "shell validation", "py_compile", "python checks", "python validation", "shellcheck", "pytest", "stack-specific validators", "run grade_benchmark"]) and not has_any(text, ["npm run test", "npm run build", "frontend commands by default"]) else "Response does not clearly choose stack-matching shell/Python checks."
+            },
+            {
+                "text": "Keeps validation ownership with the implementer.",
+                "passed": has_any(text, ["implementer should choose", "implementer owns verification", "implementer owns validation", "implementer should run the matching checks", "implementer verification selection", "keep verification ownership with the implementer"]),
+                "evidence": "Response keeps verification ownership with the implementer." if has_any(text, ["implementer should choose", "implementer owns verification", "implementer owns validation", "implementer should run the matching checks", "implementer verification selection", "keep verification ownership with the implementer"]) else "Response does not clearly keep validation ownership with the implementer."
+            },
+        ]
+
+    if eval_name == "code-simplifier-concerns-before-review":
+        return [
+            {
+                "text": "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+                "passed": has_any(text, ["read the concerns before code-reviewer", "review the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer"]),
+                "evidence": "Response requires reading simplifier concerns before code-reviewer." if has_any(text, ["read the concerns before code-reviewer", "review the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer"]) else "Response does not clearly require reading simplifier concerns before code-reviewer."
+            },
+            {
+                "text": "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+                "passed": has_any(text, ["scope concern", "correctness concern", "unresolved work", "address them first", "before continuing"]),
+                "evidence": "Response treats simplifier concerns as unresolved work." if has_any(text, ["scope concern", "correctness concern", "unresolved work", "address them first", "before continuing"]) else "Response does not clearly treat correctness/scope concerns as unresolved work."
+            },
+            {
+                "text": "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+                "passed": has_any(text, ["re-dispatch", "dispatch the subagent that should own the fix", "send it back to the implementer", "send it back to the code-simplifier"]) and not has_any(text, ["manager should patch it directly", "fix it yourself as manager"]),
+                "evidence": "Response routes the fix to the owning subagent." if has_any(text, ["re-dispatch", "dispatch the subagent that should own the fix", "send it back to the implementer", "send it back to the code-simplifier"]) and not has_any(text, ["manager should patch it directly", "fix it yourself as manager"]) else "Response does not clearly route the fix back to an owning subagent."
+            },
+            {
+                "text": "Does not update tracking yet.",
+                "passed": not has_any(text, ["update tracking now", "mark it done now", "record it done now"]),
+                "evidence": "Response avoids updating tracking before the concern is resolved." if not has_any(text, ["update tracking now", "mark it done now", "record it done now"]) else "Response incorrectly updates tracking before resolving the concern."
+            },
+        ]
+
+    if eval_name == "code-review-findings-block-tracking":
+        return [
+            {
+                "text": "Says the manager must address code-review findings before updating tracking.",
+                "passed": has_any(text, ["address findings before update tracking", "address findings before updating tracking", "before updating tracking", "before marking the task done"]),
+                "evidence": "Response blocks tracking on reviewer findings." if has_any(text, ["address findings before update tracking", "address findings before updating tracking", "before updating tracking", "before marking the task done"]) else "Response does not clearly block tracking on reviewer findings."
+            },
+            {
+                "text": "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+                "passed": has_any(text, ["re-dispatch", "dispatch the subagent that should own the fix", "send it back to the implementer", "send it back to the code-simplifier"]) and not has_any(text, ["manager should fix it directly", "repair it inline yourself"]),
+                "evidence": "Response routes review findings to an owning subagent." if has_any(text, ["re-dispatch", "dispatch the subagent that should own the fix", "send it back to the implementer", "send it back to the code-simplifier"]) and not has_any(text, ["manager should fix it directly", "repair it inline yourself"]) else "Response does not clearly route review findings to an owning subagent."
+            },
+            {
+                "text": "Requires the final subagent to return `DONE` before marking the task done.",
+                "passed": has_any(text, ["final subagent returns done", "reviewer returns done", "after the final reviewer comes back done", "only after the final subagent returns done"]),
+                "evidence": "Response requires a final DONE before marking the task done." if has_any(text, ["final subagent returns done", "reviewer returns done", "after the final reviewer comes back done", "only after the final subagent returns done"]) else "Response does not clearly require a final DONE before marking the task done."
+            },
+            {
+                "text": "Does not ignore findings just because earlier stages already returned `DONE`.",
+                "passed": not has_any(text, ["ignore the findings", "earlier done means you can update tracking", "skip the findings because implementer and simplifier returned done"]),
+                "evidence": "Response does not ignore reviewer findings despite earlier DONE statuses." if not has_any(text, ["ignore the findings", "earlier done means you can update tracking", "skip the findings because implementer and simplifier returned done"]) else "Response incorrectly ignores reviewer findings because earlier stages returned DONE."
             },
         ]
 
