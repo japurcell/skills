@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "root-bug-checkpoint",
+  "prompt": "No scratchpad spec or plan exists yet. This session narrowed a bug in `scripts/sync.sh` to a missing environment variable, but we are stopping before the fix. Use /handoff to save a continuation note for a future agent session.",
+  "assertions": [
+    "Chooses the default path `.agents/scratchpad/handoff.md` when no feature-scoped scratchpad spec or plan is in context.",
+    "Invokes or explicitly follows addy-context-engineering before choosing what to preserve.",
+    "Captures the blocker or open question clearly enough for the next agent to resume.",
+    "Includes a concrete recommended next step instead of ending with a generic summary."
+  ]
+}

@@ -7,7 +7,7 @@ description: Start spec-driven development — write a structured specification 
 
 ## The Workflow
 
-- Invoke the `addy-spec-driven-development` skill.
+- Invoke the `addy-context-engineering` and `addy-spec-driven-development` skills.
 - Begin by understanding what the user wants to build. Ask clarifying questions about:
   1. The objective and target users
   2. Core features and acceptance criteria

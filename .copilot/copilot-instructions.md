@@ -3,6 +3,7 @@
 ## Skills
 
 - Always load the `addy-using-agent-skills` skill. It encodes the core workflows and best practices for engineering work.
+- Always load the `addy-context-engineering` skill. It encodes best practices for providing context to agents, which is critical for their performance.
 
 ## Testing
 

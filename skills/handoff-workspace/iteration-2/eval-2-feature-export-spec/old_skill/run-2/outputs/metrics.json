@@ -1,0 +1,12 @@
+{
+  "tool_calls": {},
+  "total_tool_calls": 0,
+  "total_steps": 0,
+  "files_created": [
+    "outputs/response.md",
+    "outputs/handoff.md"
+  ],
+  "errors_encountered": 0,
+  "output_chars": 1850,
+  "transcript_chars": 19251
+}
