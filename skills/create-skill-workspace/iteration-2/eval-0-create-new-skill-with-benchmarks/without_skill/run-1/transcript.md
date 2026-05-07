@@ -108,7 +108,7 @@ Skill "skill-creator" loaded successfully. Follow the instructions in the skill 
 7. - Keep `name` lowercase kebab-case.
 8. - Keep `description` concrete and trigger-oriented.
 9. - Use imperative instructions in the body.
-10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build/manual checks instead of defaulting to generic frontend commands.
+10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build-review/manual checks instead of defaulting to generic frontend commands.
 11. - Keep bundled resources next to the skill instead of scattering supporting files elsewhere.
 12. - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 13. 

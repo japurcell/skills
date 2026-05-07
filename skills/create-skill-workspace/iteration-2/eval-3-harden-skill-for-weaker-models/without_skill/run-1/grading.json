@@ -37,8 +37,8 @@
     "total_tool_calls": 0,
     "total_steps": 0,
     "errors_encountered": 0,
-    "output_chars": 32046,
-    "transcript_chars": 93301
+    "output_chars": 32137,
+    "transcript_chars": 93511
   },
   "timing": {
     "executor_duration_seconds": 149.7,

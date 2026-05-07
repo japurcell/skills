@@ -12,5 +12,5 @@
 
 ## Verification Steps
 - Targeted check: execute the updated helper path in a focused script/test run.
-- Broad check: run full repository validation command set (lint/test/build as applicable).
+- Broad check: run full repository validation command set (lint/test/build-review as applicable).
 - Compare pre/post outputs for unchanged behavior on representative cases.

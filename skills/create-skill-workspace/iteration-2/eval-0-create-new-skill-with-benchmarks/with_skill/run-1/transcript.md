@@ -484,7 +484,7 @@ Skill "skill-creator" loaded successfully. Follow the instructions in the skill 
 7. - Keep `name` lowercase kebab-case.
 8. - Keep `description` concrete and trigger-oriented.
 9. - Use imperative instructions in the body.
-10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build/manual checks instead of defaulting to generic frontend commands.
+10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build-review/manual checks instead of defaulting to generic frontend commands.
 11. - Keep bundled resources next to the skill instead of scattering supporting files elsewhere.
 12. - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 13. 
@@ -571,7 +571,7 @@ Skill "skill-creator" loaded successfully. Follow the instructions in the skill 
 /Users/adam/Development/skills/skills/agent-sop-codetask/SKILL.md
 /Users/adam/Development/skills/skills/tdd/SKILL.md
 /Users/adam/Development/skills/skills/addy-test-driven-development/SKILL.md
-/Users/adam/Development/skills/skills/build/SKILL.md
+/Users/adam/Development/skills/skills/build-review/SKILL.md
 /Users/adam/Development/skills/skills/agent-sop-codebase-summary/SKILL.md
 /Users/adam/Development/skills/skills/frontend-design/SKILL.md
 /Users/adam/Development/skills/skills/implement-plan/SKILL.md
@@ -892,12 +892,12 @@ The local skill context is enough to proceed; I’m pulling examples for skill/e
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/without_skill/run-1/outputs/review-handoff/evals/grade_benchmark.py
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/evals/grade_benchmark.py
 /Users/adam/Development/skills/skills/create-skill/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-6/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-8/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-10/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-7/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-6/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-8/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-10/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-7/evals/grade_benchmark.py
 ```
 
 </details>
@@ -917,18 +917,18 @@ The local skill context is enough to proceed; I’m pulling examples for skill/e
 <summary>12 matches</summary>
 
 ```
-/Users/adam/Development/skills/skills/build/evals/grade_benchmark.py:640:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
+/Users/adam/Development/skills/skills/build-review/evals/grade_benchmark.py:640:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
 /Users/adam/Development/skills/skills/create-skill/evals/grade_benchmark.py:373:                (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
 /Users/adam/Development/skills/skills/create-skill/evals/grade_benchmark.py:375:    print(f"Wrote grading.json files in {iteration_dir}")
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-6/evals/grade_benchmark.py:232:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-8/evals/grade_benchmark.py:323:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-6/evals/grade_benchmark.py:232:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-8/evals/grade_benchmark.py:323:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-0-create-new-skill-with-benchmarks/with_skill/run-1/outputs/release-notes-skill/evals/grade_benchmark.py:287:        (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-0-create-new-skill-with-benchmarks/with_skill/run-1/outputs/release-notes-skill/evals/grade_benchmark.py:289:    print(f"Wrote grading.json files in {iteration_dir}")
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-0-create-new-skill-with-benchmarks/without_skill/run-1/outputs/release-notes-skill/evals/grade_benchmark.py:300:        (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-0-create-new-skill-with-benchmarks/without_skill/run-1/outputs/release-notes-skill/evals/grade_benchmark.py:302:    print(f"Wrote grading.json files in {iteration_dir}")
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot/evals/grade_benchmark.py:184:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-10/evals/grade_benchmark.py:415:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-7/evals/grade_benchmark.py:280:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot/evals/grade_benchmark.py:184:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-10/evals/grade_benchmark.py:415:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-7/evals/grade_benchmark.py:280:    (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
 ```
 
 </details>

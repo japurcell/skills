@@ -15,13 +15,13 @@
     },
     {
       "id": 1,
-      "prompt": "Rewrite this vague plan into a `task-wave` plan for this repository: 1) figure out the skill changes, 2) update the benchmark files, 3) run the usual tests, 4) finish up. The real work is to edit `skills/build/SKILL.md`, update `skills/build/evals/evals.json`, and syntax-check any edited grader file if one changes.",
+      "prompt": "Rewrite this vague plan into a `task-wave` plan for this repository: 1) figure out the skill changes, 2) update the benchmark files, 3) run the usual tests, 4) finish up. The real work is to edit `skills/build-review/SKILL.md`, update `skills/build-review/evals/evals.json`, and syntax-check any edited grader file if one changes.",
       "expected_output": "A clearer wave-by-wave plan that replaces vague steps with exact files, explicit exit conditions, and repo-specific validation commands.",
       "files": [],
       "assertions": [
         "The rewritten plan replaces vague verbs like `figure out` and `finish up` with concrete actions.",
         "The output names the exact touched paths from the prompt.",
-        "The output replaces generic validation with `python3 skills/skill-creator/scripts/quick_validate.py` and, if relevant, `python3 -m py_compile skills/build/evals/grade_benchmark.py`.",
+        "The output replaces generic validation with `python3 skills/skill-creator/scripts/quick_validate.py` and, if relevant, `python3 -m py_compile skills/build-review/evals/grade_benchmark.py`.",
         "The output stays concise."
       ]
     },

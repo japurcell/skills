@@ -277,7 +277,7 @@ Skill "addy-test-driven-development" loaded successfully. Follow the instruction
 7. - Keep `name` lowercase kebab-case.
 8. - Keep `description` concrete and trigger-oriented.
 9. - Use imperative instructions in the body.
-10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build/manual checks instead of defaulting to generic frontend commands.
+10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build-review/manual checks instead of defaulting to generic frontend commands.
 11. - Keep bundled resources next to the skill instead of scattering supporting files elsewhere.
 12. - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 13. 
@@ -598,12 +598,12 @@ Skill not found: create-skill
 ```
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-0-create-new-skill-with-benchmarks/with_skill/run-1/outputs/release-notes-skill/evals/grade_benchmark.py
 /Users/adam/Development/skills/skills/create-skill/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-6/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-8/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-10/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-7/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-6/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-8/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-10/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-7/evals/grade_benchmark.py
 ```
 
 </details>

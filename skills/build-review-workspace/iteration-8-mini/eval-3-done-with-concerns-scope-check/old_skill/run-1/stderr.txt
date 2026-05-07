@@ -1,0 +1,2 @@
+Cannot open directory /home/adam/.aspnet/dev-certs/trust:/etc/ssl/certs to load OpenSSL certificates.
+Session exported to: /home/adam/dev/personal/skills/skills/build-review-workspace/iteration-8-mini/eval-3-done-with-concerns-scope-check/old_skill/run-1/transcript.md

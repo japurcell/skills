@@ -16,21 +16,21 @@
     },
     {
       "id": 1,
-      "prompt": "Rewrite this vague plan into a `task-wave` plan for this repository: 1) figure out the skill changes, 2) update the benchmark files, 3) run the usual tests, 4) finish up. The real work is to edit `skills/build/SKILL.md`, update `skills/build/evals/evals.json`, and syntax-check `skills/build/evals/grade_benchmark.py` if it changes.",
+      "prompt": "Rewrite this vague plan into a `task-wave` plan for this repository: 1) figure out the skill changes, 2) update the benchmark files, 3) run the usual tests, 4) finish up. The real work is to edit `skills/build-review/SKILL.md`, update `skills/build-review/evals/evals.json`, and syntax-check `skills/build-review/evals/grade_benchmark.py` if it changes.",
       "expected_output": "A compact rewrite that replaces vague steps with literal waves, exact paths, explicit exit conditions, and repository-specific validation.",
       "files": [],
       "expectations": [
         "The rewritten plan removes vague verbs like `figure out` and `finish up`.",
-        "The response names `skills/build/SKILL.md` and `skills/build/evals/evals.json`.",
-        "The response includes `python3 skills/skill-creator/scripts/quick_validate.py skills/build`.",
-        "If the grader is touched, the response includes `python3 -m py_compile skills/build/evals/grade_benchmark.py`.",
+        "The response names `skills/build-review/SKILL.md` and `skills/build-review/evals/evals.json`.",
+        "The response includes `python3 skills/skill-creator/scripts/quick_validate.py skills/build-review`.",
+        "If the grader is touched, the response includes `python3 -m py_compile skills/build-review/evals/grade_benchmark.py`.",
         "The response uses wave exit conditions."
       ]
     },
     {
       "id": 2,
       "prompt": "Use `task-wave` for a weaker-model handoff. The task is to update `scripts/copilot-install.sh`, mirror the change in `scripts/addy-install.sh`, and verify both installers without assuming generic project commands. Keep the plan literal and include the exact repo commands.",
-      "expected_output": "A literal plan that groups the installer edits sensibly and uses this repo's shell validation commands instead of generic test/build steps.",
+      "expected_output": "A literal plan that groups the installer edits sensibly and uses this repo's shell validation commands instead of generic test/build-review steps.",
       "files": [],
       "expectations": [
         "The response names `scripts/copilot-install.sh` and `scripts/addy-install.sh`.",

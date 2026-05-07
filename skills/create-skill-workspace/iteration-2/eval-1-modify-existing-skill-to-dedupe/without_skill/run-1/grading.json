@@ -43,7 +43,7 @@
     "total_steps": 0,
     "errors_encountered": 0,
     "output_chars": 32480,
-    "transcript_chars": 128953
+    "transcript_chars": 129002
   },
   "timing": {
     "executor_duration_seconds": 161.0,

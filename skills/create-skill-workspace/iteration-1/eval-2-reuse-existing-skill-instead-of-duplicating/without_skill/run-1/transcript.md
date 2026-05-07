@@ -143,7 +143,7 @@ Executed 3 statement(s):
 /Users/adam/Development/skills/skills/create-agentsmd/SKILL.md
 /Users/adam/Development/skills/skills/security-review/SKILL.md
 /Users/adam/Development/skills/skills/addy-deprecation-and-migration/SKILL.md
-/Users/adam/Development/skills/skills/build/SKILL.md
+/Users/adam/Development/skills/skills/build-review/SKILL.md
 /Users/adam/Development/skills/skills/gh-attach-subissue/SKILL.md
 /Users/adam/Development/skills/skills/revise-agents-md/SKILL.md
 /Users/adam/Development/skills/skills/create-skill/SKILL.md

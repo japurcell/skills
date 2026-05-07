@@ -490,7 +490,7 @@ I have the brief and local rules; next I’m checking for overlapping skills and
 7. - Keep `name` lowercase kebab-case.
 8. - Keep `description` concrete and trigger-oriented.
 9. - Use imperative instructions in the body.
-10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build/manual checks instead of defaulting to generic frontend commands.
+10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build-review/manual checks instead of defaulting to generic frontend commands.
 11. - Keep bundled resources next to the skill instead of scattering supporting files elsewhere.
 12. - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 13. 
@@ -980,7 +980,7 @@ I have the brief and local rules; next I’m checking for overlapping skills and
 /Users/adam/Development/skills/skills/skillify/evals/evals.json
 /Users/adam/Development/skills/skills/create-spec/evals/evals.json
 /Users/adam/Development/skills/skills/security-review/evals/evals.json
-/Users/adam/Development/skills/skills/build/evals/evals.json
+/Users/adam/Development/skills/skills/build-review/evals/evals.json
 /Users/adam/Development/skills/skills/gh-attach-subissue/evals/evals.json
 /Users/adam/Development/skills/skills/techdebt/evals/evals.json
 /Users/adam/Development/skills/skills/commit/evals/evals.json
@@ -1009,13 +1009,13 @@ I have the brief and local rules; next I’m checking for overlapping skills and
 /Users/adam/Development/skills/skills/implement-plan-workspace/skill-snapshot-v7/evals/evals.json
 /Users/adam/Development/skills/skills/implement-plan-workspace/skill-snapshot-v2/evals/evals.json
 /Users/adam/Development/skills/skills/implement-plan-workspace/skill-snapshot-v5/evals/evals.json
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-7/evals/evals.json
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot/evals/evals.json
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-7/evals/evals.json
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot/evals/evals.json
 /Users/adam/Development/skills/skills/implement-plan-workspace/skill-snapshot-v6/evals/evals.json
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-8/evals/evals.json
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-8/evals/evals.json
 /Users/adam/Development/skills/skills/implement-plan/evals/evals.json
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-6/evals/evals.json
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-10/evals/evals.json
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-6/evals/evals.json
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-10/evals/evals.json
 ```
 
 </details>
@@ -1036,12 +1036,12 @@ I have the brief and local rules; next I’m checking for overlapping skills and
 
 ```
 /Users/adam/Development/skills/skills/create-skill/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-10/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-6/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-8/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-7/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-10/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-6/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-8/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-7/evals/grade_benchmark.py
 ```
 
 </details>
@@ -1146,9 +1146,9 @@ I’ve confirmed there isn’t an overlapping release-notes skill; next I’m sa
 
 ### ✅ `view`
 
-**view the file at /Users/adam/Development/skills/skills/build/evals/evals.json.**
+**view the file at /Users/adam/Development/skills/skills/build-review/evals/evals.json.**
 
-/Users/adam/Development/skills/skills/build/evals/evals.json
+/Users/adam/Development/skills/skills/build-review/evals/evals.json
 
 ```
 File too large to read at once (21.7 KB). Consider using the grep tool to search within the file, or view with view_range to read specific sections.
@@ -1524,9 +1524,9 @@ File too large to read at once (21.7 KB). Consider using the grep tool to search
 
 ### ✅ `view`
 
-**view the file at /Users/adam/Development/skills/skills/build/evals/grade_benchmark.py.**
+**view the file at /Users/adam/Development/skills/skills/build-review/evals/grade_benchmark.py.**
 
-/Users/adam/Development/skills/skills/build/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review/evals/grade_benchmark.py
 
 ```
 File too large to read at once (42.1 KB). Consider using the grep tool to search within the file, or view with view_range to read specific sections.
@@ -1606,9 +1606,9 @@ I’m checking the current JSON shape used by repo skills before I write the eva
 
 ### ✅ `view`
 
-**view the file at /Users/adam/Development/skills/skills/build/evals/evals.json.**
+**view the file at /Users/adam/Development/skills/skills/build-review/evals/evals.json.**
 
-/Users/adam/Development/skills/skills/build/evals/evals.json (lines 1-120)
+/Users/adam/Development/skills/skills/build-review/evals/evals.json (lines 1-120)
 
 <details>
 <summary>120 lines</summary>
@@ -1709,7 +1709,7 @@ I’m checking the current JSON shape used by repo skills before I write the eva
 93.     },
 94.     {
 95.       "id": 5,
-96.       "prompt": "The next task touches `scripts/addy-install.sh` and `skills/build/evals/grade_benchmark.py`. The plan says only 'run relevant validation.' Using the build workflow, what should the manager hand to the implementer, and how should the implementer choose verification so a weaker model does not fall back to generic frontend commands?",
+96.       "prompt": "The next task touches `scripts/addy-install.sh` and `skills/build-review/evals/grade_benchmark.py`. The plan says only 'run relevant validation.' Using the build workflow, what should the manager hand to the implementer, and how should the implementer choose verification so a weaker model does not fall back to generic frontend commands?",
 97.       "expected_output": "A manager-plus-implementer workflow answer that keeps the handoff lean, makes the implementer infer the slice's surface and stack before choosing verification, and uses matching shell/Python checks instead of generic frontend commands.",
 98.       "files": [],
 99.       "expectations": [

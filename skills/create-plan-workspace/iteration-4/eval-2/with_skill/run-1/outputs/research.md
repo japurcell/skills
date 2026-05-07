@@ -39,7 +39,7 @@ Rationale: The spec sets a strict perceived-latency target for interactive calen
 
 Official docs reviewed:
 - Next.js Caching and Revalidating — https://nextjs.org/docs/app/getting-started/caching-and-revalidating
-- Next.js Route Handlers — https://nextjs.org/docs/app/building-your-application/routing/route-handlers
+- Next.js Route Handlers — https://nextjs.org/docs/app/build-reviewing-your-application/routing/route-handlers
 
 Version/context checked: Next.js docs last updated 2026-04-15 and reviewed on 2026-04-21; plan assumes the existing monorepo can use its current Next.js data fetching and route-handling patterns.
 

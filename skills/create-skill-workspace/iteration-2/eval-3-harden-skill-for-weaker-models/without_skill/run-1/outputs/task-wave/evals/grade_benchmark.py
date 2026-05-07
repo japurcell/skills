@@ -135,8 +135,8 @@ def grade(eval_id: int | None, eval_name: str, response_text: str) -> list[dict]
                 has_all(
                     normalized,
                     [
-                        "skills/build/skill.md",
-                        "skills/build/evals/evals.json",
+                        "skills/build-review/skill.md",
+                        "skills/build-review/evals/evals.json",
                     ],
                 ),
                 "Named both build paths.",
@@ -144,13 +144,13 @@ def grade(eval_id: int | None, eval_name: str, response_text: str) -> list[dict]
             ),
             expectation(
                 "Uses the exact build-skill validation command.",
-                "python3 skills/skill-creator/scripts/quick_validate.py skills/build" in normalized,
-                "Included quick_validate for skills/build.",
+                "python3 skills/skill-creator/scripts/quick_validate.py skills/build-review" in normalized,
+                "Included quick_validate for skills/build-review.",
                 response_text,
             ),
             expectation(
                 "Includes the py_compile command when the grader is mentioned.",
-                "python3 -m py_compile skills/build/evals/grade_benchmark.py" in normalized,
+                "python3 -m py_compile skills/build-review/evals/grade_benchmark.py" in normalized,
                 "Included py_compile for the build grader.",
                 response_text,
             ),

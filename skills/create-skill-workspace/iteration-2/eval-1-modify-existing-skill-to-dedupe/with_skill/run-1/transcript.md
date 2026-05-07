@@ -186,7 +186,7 @@ SKILL.md
 7. - Keep `name` lowercase kebab-case.
 8. - Keep `description` concrete and trigger-oriented.
 9. - Use imperative instructions in the body.
-10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build/manual checks instead of defaulting to generic frontend commands.
+10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build-review/manual checks instead of defaulting to generic frontend commands.
 11. - Keep bundled resources next to the skill instead of scattering supporting files elsewhere.
 12. - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 13. 
@@ -516,7 +516,7 @@ I have the repo authoring rules and the draft inputs; next I’m inspecting the 
 /Users/adam/Development/skills/skills/addy-deprecation-and-migration/SKILL.md
 /Users/adam/Development/skills/skills/ship/SKILL.md
 /Users/adam/Development/skills/skills/addy-test-driven-development/SKILL.md
-/Users/adam/Development/skills/skills/build/SKILL.md
+/Users/adam/Development/skills/skills/build-review/SKILL.md
 /Users/adam/Development/skills/skills/agent-sop-codebase-summary/SKILL.md
 /Users/adam/Development/skills/skills/implement-plan/SKILL.md
 /Users/adam/Development/skills/skills/agent-sop-pdd/SKILL.md

@@ -29,7 +29,7 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 
 2. **Load the required references**
    - Invoke `skill-creator` immediately and use it for the authoring, eval, and benchmark loop instead of recreating that workflow from memory.
-   - Read `references/skill-anatomy.md` before drafting or editing the body. Use its section pattern as the default template.
+   - Read [./templates/skill-anatomy.md](./templates/skill-anatomy.md) before drafting or editing the body. Use its section pattern as the default template.
    - Read `docs/agent-guides/authoring.md` and `docs/agent-guides/validation.md` so the result follows repository-specific rules.
 
 3. **Draft or revise the skill**
@@ -58,7 +58,7 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 - Compare the requested skill against existing names, descriptions, and nearby workflows before creating a new directory.
 - If the only meaningful change is tighter triggering, better evals, or clearer wording, update the existing skill instead of creating a sibling duplicate.
 - When you decide to reuse or refine an existing skill, name the closest existing skill explicitly and explain why it is a better fit than creating a new one.
-- Reuse `references/skill-anatomy.md` as structure, not as copy source. Keep the reference deduped by avoiding verbatim prose unless a short quote is truly necessary.
+- Reuse [./templates/skill-anatomy.md](./templates/skill-anatomy.md) as structure, not as copy source. Keep the reference deduped by avoiding verbatim prose unless a short quote is truly necessary.
 
 ### Weaker-model guardrails
 
@@ -77,17 +77,17 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 
 ## Common Rationalizations
 
-| Rationalization | Reality |
-| --- | --- |
-| "This is only a small skill edit, so I can skip eval work." | Small description or structure changes often break triggering and benchmark behavior first. Keep evals current. |
-| "I can just paste the anatomy reference into the skill." | That bloats context and duplicates repo references. Reuse the section structure and only inline what changes behavior. |
-| "The repo probably has a generic test command." | It does not. Choose the narrow validation command that matches the changed files. |
-| "A baseline is optional because the new draft looks better." | Without a baseline, you cannot show the skill actually improves outcomes instead of just adding instructions. |
+| Rationalization                                              | Reality                                                                                                                |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| "This is only a small skill edit, so I can skip eval work."  | Small description or structure changes often break triggering and benchmark behavior first. Keep evals current.        |
+| "I can just paste the anatomy reference into the skill."     | That bloats context and duplicates repo references. Reuse the section structure and only inline what changes behavior. |
+| "The repo probably has a generic test command."              | It does not. Choose the narrow validation command that matches the changed files.                                      |
+| "A baseline is optional because the new draft looks better." | Without a baseline, you cannot show the skill actually improves outcomes instead of just adding instructions.          |
 
 ## Red Flags
 
 - The description reads like a workflow summary instead of a trigger description.
-- `SKILL.md` duplicates long passages from `references/skill-anatomy.md` or nearby skills.
+- `SKILL.md` duplicates long passages from [./templates/skill-anatomy.md](./templates/skill-anatomy.md) or nearby skills.
 - The skill says "run the usual tests" or invents generic frontend commands.
 - Evals cover only happy paths and never test duplicate avoidance or weaker-model behavior.
 - Benchmark artifacts are written inside `skills/<skill>/` instead of the sibling workspace.
@@ -97,7 +97,7 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 After completing the workflow, confirm:
 
 - [ ] The skill request was classified as create vs modify, and duplicate checking happened before new files were added.
-- [ ] `skill-creator` was invoked and `references/skill-anatomy.md` was used as the drafting template.
+- [ ] `skill-creator` was invoked and [./templates/skill-anatomy.md](./templates/skill-anatomy.md) was used as the drafting template.
 - [ ] The final `SKILL.md` is concise, trigger-oriented, and follows the anatomy section pattern.
 - [ ] `evals/evals.json` covers create, modify, and at least one dedupe or negative case.
 - [ ] `evals/grade_benchmark.py` exists when deterministic grading is practical, and its syntax is valid.

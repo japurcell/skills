@@ -22,5 +22,5 @@
 
 ## Validation Plan
 - Targeted check: validate all `eval_metadata.json` files parse and include required keys.
-- Broad check: run repository-relevant lint/test/type/build command set for the touched area.
+- Broad check: run repository-relevant lint/test/type/build-review command set for the touched area.
 - Confirm no framework-specific assumptions were introduced.

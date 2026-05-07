@@ -444,7 +444,7 @@ No matches found.
 7. - Keep `name` lowercase kebab-case.
 8. - Keep `description` concrete and trigger-oriented.
 9. - Use imperative instructions in the body.
-10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build/manual checks instead of defaulting to generic frontend commands.
+10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build-review/manual checks instead of defaulting to generic frontend commands.
 11. - Keep bundled resources next to the skill instead of scattering supporting files elsewhere.
 12. - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 13. 
@@ -683,7 +683,7 @@ test
 /Users/adam/Development/skills/skills/gh-attach-subissue/SKILL.md
 /Users/adam/Development/skills/skills/addy-using-agent-skills/SKILL.md
 /Users/adam/Development/skills/skills/agents-md-improver/SKILL.md
-/Users/adam/Development/skills/skills/build/SKILL.md
+/Users/adam/Development/skills/skills/build-review/SKILL.md
 /Users/adam/Development/skills/skills/addy-code-review-and-quality/SKILL.md
 /Users/adam/Development/skills/skills/create-plan/SKILL.md
 /Users/adam/Development/skills/skills/frontend-design/SKILL.md
@@ -779,20 +779,20 @@ test
 /Users/adam/Development/skills/skills/create-plan-workspace/skill-snapshot/iteration-2-old-skill/SKILL.md
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/without_skill/run-1/outputs/review-handoff/SKILL.md
 /Users/adam/Development/skills/skills/create-plan-workspace/skill-snapshot/iteration-4-new-skill/SKILL.md
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-6/SKILL.md
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-6/SKILL.md
 /Users/adam/Development/skills/skills/techdebt/SKILL.md
 /Users/adam/Development/skills/skills/create-spec-workspace/skill-snapshot/SKILL.md
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-10/SKILL.md
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-10/SKILL.md
 /Users/adam/Development/skills/skills/create-plan-workspace/skill-snapshot/iteration-4-old-skill/SKILL.md
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-8/SKILL.md
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-8/SKILL.md
 /Users/adam/Development/skills/skills/agent-sop-eval/SKILL.md
 /Users/adam/Development/skills/skills/addy-deprecation-and-migration/SKILL.md
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-7/SKILL.md
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-7/SKILL.md
 /Users/adam/Development/skills/skills/addy-ci-cd-and-automation/SKILL.md
 /Users/adam/Development/skills/skills/addy-incremental-implementation/SKILL.md
 /Users/adam/Development/skills/skills/feature-dev/SKILL.md
 /Users/adam/Development/skills/skills/agent-sop-pdd/SKILL.md
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot/SKILL.md
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot/SKILL.md
 ```
 
 </details>

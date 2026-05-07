@@ -179,7 +179,7 @@ I’m reviewing the benchmark request and the closest existing skills before wri
 /Users/adam/Development/skills/skills/skillify-workspace/iteration-1/eval-2/without_skill/run-2/outputs/SKILL.md
 /Users/adam/Development/skills/skills/skillify-workspace/iteration-1/eval-1/without_skill/run-3/outputs/SKILL.md
 /Users/adam/Development/skills/skills/skillify-workspace/iteration-1/eval-2/without_skill/run-3/outputs/SKILL.md
-/Users/adam/Development/skills/skills/build/SKILL.md
+/Users/adam/Development/skills/skills/build-review/SKILL.md
 /Users/adam/Development/skills/skills/plan-tasks/SKILL.md
 /Users/adam/Development/skills/skills/frontend-design/SKILL.md
 /Users/adam/Development/skills/skills/ship/SKILL.md
@@ -190,11 +190,11 @@ I’m reviewing the benchmark request and the closest existing skills before wri
 /Users/adam/Development/skills/skills/implement-plan-workspace/skill-snapshot/SKILL.md
 /Users/adam/Development/skills/skills/coding-task-workflow-workspace/skill-snapshot/SKILL.md
 /Users/adam/Development/skills/skills/issue-to-spec/SKILL.md
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-10/SKILL.md
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-7/SKILL.md
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-6/SKILL.md
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot-iteration-8/SKILL.md
-/Users/adam/Development/skills/skills/build-workspace/skill-snapshot/SKILL.md
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-10/SKILL.md
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-7/SKILL.md
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-6/SKILL.md
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-iteration-8/SKILL.md
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot/SKILL.md
 /Users/adam/Development/skills/skills/agent-sop-codebase-summary/SKILL.md
 ```
 
@@ -831,7 +831,7 @@ Preview (first 500 chars):
 7. - Keep `name` lowercase kebab-case.
 8. - Keep `description` concrete and trigger-oriented.
 9. - Use imperative instructions in the body.
-10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build/manual checks instead of defaulting to generic frontend commands.
+10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build-review/manual checks instead of defaulting to generic frontend commands.
 11. - Keep bundled resources next to the skill instead of scattering supporting files elsewhere.
 12. - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 13. 

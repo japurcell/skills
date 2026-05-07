@@ -356,7 +356,7 @@ SKILL.md
 7. - Keep `name` lowercase kebab-case.
 8. - Keep `description` concrete and trigger-oriented.
 9. - Use imperative instructions in the body.
-10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build/manual checks instead of defaulting to generic frontend commands.
+10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build-review/manual checks instead of defaulting to generic frontend commands.
 11. - Keep bundled resources next to the skill instead of scattering supporting files elsewhere.
 12. - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 13. 
@@ -616,8 +616,8 @@ Preview (first 500 chars):
 /Users/adam/Development/skills/skills/skillify/evals/validate_skillify_run.py
 /Users/adam/Development/skills/skills/skillify/evals/evals.json
 /Users/adam/Development/skills/skills/create-spec/evals/evals.json
-/Users/adam/Development/skills/skills/build/evals/grade_benchmark.py
-/Users/adam/Development/skills/skills/build/evals/evals.json
+/Users/adam/Development/skills/skills/build-review/evals/grade_benchmark.py
+/Users/adam/Development/skills/skills/build-review/evals/evals.json
 /Users/adam/Development/skills/skills/issue-to-spec/evals/evals.json
 /Users/adam/Development/skills/skills/revise-agents-md/evals/evals.json
 /Users/adam/Development/skills/skills/create-tasks/evals/evals.json
@@ -1433,9 +1433,9 @@ I’ve confirmed the target output directory is empty. I’m checking one concre
 
 ### ✅ `view`
 
-**view the file at /Users/adam/Development/skills/skills/build/evals/evals.json.**
+**view the file at /Users/adam/Development/skills/skills/build-review/evals/evals.json.**
 
-/Users/adam/Development/skills/skills/build/evals/evals.json
+/Users/adam/Development/skills/skills/build-review/evals/evals.json
 
 ```
 File too large to read at once (21.7 KB). Consider using the grep tool to search within the file, or view with view_range to read specific sections.
@@ -1448,9 +1448,9 @@ File too large to read at once (21.7 KB). Consider using the grep tool to search
 
 ### ✅ `view`
 
-**view the file at /Users/adam/Development/skills/skills/build/evals/grade_benchmark.py.**
+**view the file at /Users/adam/Development/skills/skills/build-review/evals/grade_benchmark.py.**
 
-/Users/adam/Development/skills/skills/build/evals/grade_benchmark.py (lines 1-260)
+/Users/adam/Development/skills/skills/build-review/evals/grade_benchmark.py (lines 1-260)
 
 <details>
 <summary>260 lines</summary>

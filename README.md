@@ -2,7 +2,7 @@
 
 This repository publishes custom GitHub Copilot assets:
 
-- **Skills** in `skills/` for reusable task workflows such as `tdd`, `security-review`, `frontend-design`, `create-plan`, `plan-tasks`, `build`, and `test`
+- **Skills** in `skills/` for reusable task workflows such as `tdd`, `security-review`, `frontend-design`, `create-plan`, `plan-tasks`, `build`, `build-review`, and `test`
 - **Custom agents** in `agents/` such as `code-architect`, `code-explorer`, `code-reviewer`, and `grader`
 - **Local Copilot instructions** in `.copilot/copilot-instructions.md`
 

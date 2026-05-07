@@ -62,6 +62,7 @@ __pycache__/
 .Python
 build/
 !skills/build/
+!skills/build-review/
 develop-eggs/
 dist/
 downloads/
