@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Uses the BLOCKED escalation ladder instead of retrying the same stuck attempt unchanged.",
+      "passed": true,
+      "evidence": "Response follows the BLOCKED path instead of repeating the same stuck attempt."
+    },
+    {
+      "text": "Recognizes that an oversized partition should be split into smaller pieces.",
+      "passed": true,
+      "evidence": "Response shrinks the oversized partition."
+    },
+    {
+      "text": "Keeps partition ownership with the manager and re-dispatches the review rather than reviewing inline.",
+      "passed": true,
+      "evidence": "Response keeps partition ownership with the manager and re-dispatches."
+    },
+    {
+      "text": "Avoids escalating to the human unless the plan itself is wrong.",
+      "passed": true,
+      "evidence": "Response keeps human escalation conditional on the plan being wrong."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 306,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 22.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 22.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

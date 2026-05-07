@@ -1,0 +1,1 @@
+Split the blocked review partition into smaller, non-overlapping scopes—e.g. separate auth and billing—then rerun the simplifier/reviewer waves on each smaller partition. Do not rerun the same oversized partition unchanged; only escalate to the human if the plan itself is wrong or cannot be split safely.

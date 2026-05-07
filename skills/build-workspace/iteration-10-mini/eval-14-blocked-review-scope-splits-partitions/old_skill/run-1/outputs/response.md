@@ -1,0 +1,1 @@
+Split the review scope into smaller, non-overlapping partitions by module/area (for example, auth and billing separately), then re-dispatch code-review on each slice. Keep the scope exact; do not ask the reviewer to continue on the mixed partition. If the plan itself is wrong, escalate separately.

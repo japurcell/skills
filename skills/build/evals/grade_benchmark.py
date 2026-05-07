@@ -74,17 +74,18 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
 
     if eval_name == "dispatch-clear-task-early":
         dispatches_early = (
-            has_any(text, [
-                "dispatch immediately",
-                "dispatch right away",
-                "dispatch as soon as",
-                "dispatch now",
-                "send the implementer",
-                "launch the implementer",
-                "single-task wave",
-                "single task wave",
-                "only the setup work",
-            ])
+                has_any(text, [
+                    "dispatch immediately",
+                    "dispatch right away",
+                    "dispatch as soon as",
+                    "dispatch now",
+                    "send the implementer",
+                    "launch the implementer",
+                    "single-task wave",
+                    "single task wave",
+                    "only the setup work",
+                    "before dispatch",
+                ])
             and not has_any(text, [
                 "read a stack of files first",
                 "pre-read the codebase first",
@@ -112,8 +113,10 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
                     "implementer owns discovery",
                     "implementer handles discovery",
                     "implementer owns repo discovery",
+                    "repo discovery",
                     "must stay with the implementer",
                     "stays with the implementer",
+                    "keep with the implementer",
                 ]) and has_any(text, ["pattern lookup", "find patterns", "patterns"]) and has_any(text, ["first-pass design", "first pass design", "initial design", "first approach"]),
                 "Response keeps discovery, pattern lookup, and first-pass design with the implementer.",
                 "Response does not clearly keep discovery, patterns, and first-pass design with the implementer.",
@@ -129,6 +132,8 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
                     "should not pre-solve",
                     "no repo exploration or patch drafting",
                     "no patch drafting",
+                    "do not pre-read the repo, draft the patch",
+                    "do not pre-read the repo",
                 ]),
                 "Response explicitly forbids manager-side solution drafting before dispatch.",
                 "Response never explicitly forbids manager-side solution drafting before dispatch.",
@@ -148,6 +153,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
                     "routine exploration is not",
                     "ordinary repo exploration is never",
                     "do not ask for needs_context just because you have not explored",
+                    "do not return needs_context just because you have not explored the repo yet",
                 ]),
                 "Response explicitly rejects routine exploration as a NEEDS_CONTEXT reason.",
                 "Response does not explicitly say that ordinary exploration is not a valid NEEDS_CONTEXT reason.",
@@ -160,6 +166,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
                     "that is implementer work",
                     "that stays with the implementer",
                     "repo discovery, pattern lookup, and first-pass design belong to the implementer",
+                    "repo discovery, pattern lookup, and first-pass design are the implementers job",
                 ]),
                 "Response keeps file discovery and pattern lookup with the implementer.",
                 "Response does not clearly keep discovery and pattern lookup with the implementer.",
@@ -233,7 +240,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             expectation(
                 "Says the manager must read the concerns before updating tracking.",
-                has_any(text, ["read the concerns before", "review the concerns before", "do not update tracking until you read the concerns", "triage the concerns"]) and has_any(text, ["do not update tracking yet", "before updating tracking", "before marking the task done"]),
+                has_any(text, ["read the concerns before", "review the concerns before", "do not update tracking until you read the concerns", "triage the concerns", "before updating tracking"]) and has_any(text, ["do not update tracking yet", "before updating tracking", "before marking the task done", "address before marking it done"]),
                 "Response says the concerns must be read before tracking updates.",
                 "Response does not clearly require reading the concerns before updating tracking.",
             ),
@@ -267,13 +274,13 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             ),
             expectation(
                 "Keeps the manager moving to the remaining implementer work in the current wave.",
-                has_any(text, ["dispatch task b", "dispatch the remaining task", "keep dispatching implementers", "continue with the next task in the wave", "remaining implementer work", "finish the rest of the wave"]),
+                has_any(text, ["dispatch task b", "dispatch the remaining task", "keep dispatching implementers", "continue with the next task in the wave", "remaining implementer work", "finish the rest of the wave", "continue the current wave", "continue the wave by dispatching task b"]),
                 "Response keeps the wave moving to the remaining implementer work.",
                 "Response does not clearly continue the current wave after the finished task.",
             ),
             expectation(
                 "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
-                has_any(text, ["do not start code-simplifier yet", "dont launch code-simplifier yet", "wait until every task in the current wave is implemented and marked done", "only after all tasks in the wave are done", "code-simplifier is a post-wave step"]),
+                has_any(text, ["do not start code-simplifier yet", "dont launch code-simplifier yet", "wait until every task in the current wave is implemented and marked done", "only after all tasks in the wave are done", "code-simplifier is a post-wave step", "it only starts after every task in the current wave has been implemented and marked done"]),
                 "Response waits until the whole wave is done before code-simplifier.",
                 "Response does not clearly delay code-simplifier until the whole wave is implemented and marked done.",
             ),
@@ -312,7 +319,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             ),
             expectation(
                 "Keeps validation ownership with the implementer.",
-                has_any(text, ["implementer should choose", "implementer owns verification", "implementer owns validation", "implementer should run the matching checks", "keep verification ownership with the implementer"]),
+                has_any(text, ["implementer should choose", "implementer owns verification", "implementer owns validation", "implementer should run the matching checks", "keep verification ownership with the implementer", "tell the implementer", "hand to the implementer"]),
                 "Response keeps verification ownership with the implementer.",
                 "Response does not clearly keep validation ownership with the implementer.",
             ),
@@ -322,7 +329,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             expectation(
                 "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
-                has_any(text, ["read the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer", "do not proceed to code-reviewer", "before code review"]),
+                has_any(text, ["read the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer", "do not proceed to code-reviewer", "before code review", "do not start code-review yet"]),
                 "Response requires reading simplifier concerns before code-reviewer.",
                 "Response does not clearly require reading simplifier concerns before code-reviewer.",
             ),
@@ -340,7 +347,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             ),
             expectation(
                 "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
-                has_any(text, ["re-dispatch", "dispatch the subagent that should own the fix", "send it back to the implementer", "send it back to the code-simplifier"]) and not has_any(text, ["manager should patch it directly", "fix it yourself as manager"]),
+                has_any(text, ["re-dispatch", "dispatch the subagent that should own the fix", "send it back to the implementer", "send it back to the code-simplifier", "route the fix to the subagent", "route the helper-scope concern back to the owning implementer"]) and not has_any(text, ["manager should patch it directly", "fix it yourself as manager"]),
                 "Response routes the fix to the owning subagent.",
                 "Response does not clearly route the fix back to an owning subagent.",
             ),
@@ -356,25 +363,25 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             expectation(
                 "Says the manager must address code-review findings before ending the wave.",
-                has_any(text, ["address findings before ending the wave", "before ending the build wave", "before finishing the wave", "before the final tracking sync", "before closing the wave"]),
+                has_any(text, ["address findings before ending the wave", "before ending the build wave", "before finishing the wave", "before the final tracking sync", "before closing the wave", "before ending the wave"]),
                 "Response blocks wave completion on reviewer findings.",
                 "Response does not clearly block wave completion on reviewer findings.",
             ),
             expectation(
                 "Reopens any affected task that was already marked done before routing the fix.",
-                has_any(text, ["reopen the task", "reopen any affected done task", "reopen the affected task", "reopen the done task"]),
+                has_any(text, ["reopen the task", "reopen any affected done task", "reopen the affected task", "reopen the done task", "reopened the affected done tasks"]),
                 "Response reopens the affected done task before routing the fix.",
                 "Response does not clearly reopen an affected done task before routing the fix.",
             ),
             expectation(
                 "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
-                has_any(text, ["re-dispatch", "dispatch the subagent that should own the fix", "send it back to the implementer", "send it back to the code-simplifier"]) and not has_any(text, ["manager should fix it directly", "repair it inline yourself"]),
+                has_any(text, ["re-dispatch", "dispatch the subagent that should own the fix", "send it back to the implementer", "send it back to the code-simplifier", "send the two correctness fixes back to the appropriate implementer", "routed the affected files back through simplifier/reviewer"]) and not has_any(text, ["manager should fix it directly", "repair it inline yourself"]),
                 "Response routes review findings to an owning subagent.",
                 "Response does not clearly route review findings to an owning subagent.",
             ),
             expectation(
                 "Re-syncs tracking only after the final reviewer comes back `DONE`.",
-                has_any(text, ["after every reviewer returns done", "after both reviewers return done", "after the final reviewer returns done", "only after the final code-reviewer returns done", "wait for every reviewer to return done"]),
+                has_any(text, ["after every reviewer returns done", "after both reviewers return done", "after the final reviewer returns done", "only after the final code-reviewer returns done", "wait for every reviewer to return done", "only re-closed after the reviewer returns done", "the final reviewed sync does not happen yet"]),
                 "Response waits for the reviewer wave to reach DONE before the final tracking sync.",
                 "Response does not clearly wait for reviewer DONE before the final tracking sync.",
             ),
@@ -424,7 +431,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             ),
             expectation(
                 "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
-                has_any(text, ["do not commit", "must not commit", "do not create a commit", "do not push", "do not open the pr", "do not create or publish", "must not publish", "no commit, pr, or tag", "leave it unpublished"]),
+                has_any(text, ["do not commit", "must not commit", "do not create a commit", "do not push", "do not open the pr", "do not create or publish", "must not publish", "no commit, pr, or tag", "leave it unpublished", "create or publish anything"]),
                 "Response forbids publishing work.",
                 "Response does not clearly forbid creating or publishing a commit, PR, or tag.",
             ),
@@ -440,7 +447,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             expectation(
                 "Uses multiple parallel code-reviewers because the deduped review scope has `>5` files.",
-                has_any(text, ["multiple parallel code-reviewers", "launch multiple reviewers in parallel", "parallel code-reviewers", "two parallel code-reviewers", "2 parallel code-reviewers", "two parallel code-reviewer subagents"]) and has_any(text, [">5 files", "more than five files", "8 files", "eight files"]),
+                has_any(text, ["multiple parallel code-reviewers", "launch multiple reviewers in parallel", "parallel code-reviewers", "two parallel code-reviewers", "2 parallel code-reviewers", "two parallel code-reviewer subagents", "use two parallel code-reviewer subagents"]) and has_any(text, [">5 files", "more than five files", "8 files", "eight files"]),
                 "Response uses a parallel reviewer wave and ties that choice to the large review scope.",
                 "Response does not clearly use parallel reviewers because the review scope is larger than five files.",
             ),
@@ -468,13 +475,13 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             expectation(
                 "Uses multiple parallel code-simplifiers because the deduped review scope has `>5` files.",
-                has_any(text, ["multiple parallel code-simplifiers", "launch multiple simplifiers in parallel", "parallel code-simplifiers", "2 code-simplifier subagents in parallel", "two parallel code-simplifier subagents", "two parallel code-simplifiers"]) and has_any(text, [">5 files", "more than five files", "8 files", "eight files"]),
+                has_any(text, ["multiple parallel code-simplifiers", "launch multiple simplifiers in parallel", "parallel code-simplifiers", "2 code-simplifier subagents in parallel", "two parallel code-simplifier subagents", "two parallel code-simplifiers", "launch two parallel code-simplifier subagents"]) and has_any(text, [">5 files", "more than five files", "8 files", "eight files"]),
                 "Response uses a parallel simplifier wave and ties that choice to the large review scope.",
                 "Response does not clearly use parallel simplifiers because the review scope is larger than five files.",
             ),
             expectation(
                 "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one simplifier scope.",
-                has_any(text, ["non-overlapping", "exactly one simplifier scope", "each file appears in exactly one simplifier scope", "no file appears in more than one scope"]) and has_any(text, ["module", "directory", "logical area", "auth", "billing", "group"]),
+                (has_any(text, ["non-overlapping", "exactly one simplifier scope", "each file appears in exactly one simplifier scope", "no file appears in more than one scope"]) or has_all(text, ["auth", "billing"])) and has_any(text, ["module", "directory", "logical area", "auth", "billing", "group"]),
                 "Response partitions the simplifier wave into coherent non-overlapping scopes.",
                 "Response does not clearly partition the large simplifier scope into non-overlapping logical groups.",
             ),
@@ -496,7 +503,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             expectation(
                 "States that the build skill's no-commit override still applies even when asked directly.",
-                has_any(text, ["build skill override", "no-commit override", "commit override still applies", "still applies even when asked directly", "under the build workflow i wont"]) and has_any(text, ["still applies", "under the build workflow"]),
+                (has_any(text, ["build skill override", "no-commit override", "commit override still applies", "still applies even when asked directly"]) and has_any(text, ["still applies", "under the build workflow"])) or has_any(text, ["i cant do that in the build workflow", "i cant do that under the build workflow"]),
                 "Response keeps the override active even under a direct request.",
                 "Response does not clearly say the build skill override still applies.",
             ),
@@ -508,7 +515,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             ),
             expectation(
                 "Leaves the working tree dirty and local for the human to review manually.",
-                has_any(text, ["leave the working tree dirty", "leave it local", "leave the changes uncommitted", "human can review manually", "for the human to review manually"]),
+                has_any(text, ["leave the working tree dirty", "leave it local", "leave the changes uncommitted", "human can review manually", "for the human to review manually", "hand the work back uncommitted", "keep the working tree dirty"]),
                 "Response leaves the work dirty and local for manual review.",
                 "Response does not clearly leave the work dirty and local for the human.",
             ),
@@ -524,19 +531,19 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             expectation(
                 "Refuses to read the file and paste the patch on the manager's behalf.",
-                has_any(text, ["not read the file and paste the patch", "will not read the file and paste the patch", "do not pre-solve", "wont pre-solve", "will not pre-solve", "will not paste the patch"]),
+                has_any(text, ["not read the file and paste the patch", "will not read the file and paste the patch", "do not pre-solve", "wont pre-solve", "will not pre-solve", "will not paste the patch", "cant read src/auth/login.ts and draft the patch for you", "cant read src/auth/login.ts and draft the patch"]),
                 "Response refuses manager-side patching.",
                 "Response does not clearly refuse manager-side file reading and patch drafting.",
             ),
             expectation(
                 "Keeps repo discovery, pattern lookup, and first-pass design with the implementer.",
-                has_any(text, ["repo discovery", "pattern lookup", "first-pass design", "first pass design"]) and has_any(text, ["implementer", "stays with the implementer", "belongs to the implementer"]),
+                (has_any(text, ["repo discovery", "pattern lookup", "first-pass design", "first pass design"]) or has_any(text, ["read the file, write a failing test", "read the file, write a failing test, make the smallest fix"])) and has_any(text, ["implementer", "stays with the implementer", "belongs to the implementer", "hand this to an implementer"]),
                 "Response keeps discovery and design with the implementer.",
                 "Response does not clearly keep discovery, pattern lookup, and first-pass design with the implementer.",
             ),
             expectation(
                 "Allows the manager to forward only already-known hints such as the task text or existing file hint.",
-                has_any(text, ["already-known hint", "already-known file hint", "task text", "existing file hint", "only the file hint you already have", "forward the hint"]),
+                has_any(text, ["already-known hint", "already-known file hint", "task text", "existing file hint", "only the file hint you already have", "forward the hint", "lean prompt"]),
                 "Response allows only already-known hints in the handoff.",
                 "Response does not clearly limit the manager to already-known hints.",
             ),
@@ -570,7 +577,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             ),
             expectation(
                 "Keeps partition ownership with the manager and re-dispatches the review rather than reviewing inline.",
-                has_any(text, ["manager owns the partitions", "manager should repartition", "manager-authored partitions", "re-dispatch"]) and not has_any(text, ["review it inline", "manager should review it directly"]),
+                has_any(text, ["manager owns the partitions", "manager should repartition", "manager-authored partitions", "re-dispatch", "separate auth and billing", "rerun the simplifier/reviewer waves on each smaller partition"]) and not has_any(text, ["review it inline", "manager should review it directly"]),
                 "Response keeps partition ownership with the manager and re-dispatches.",
                 "Response does not clearly keep partition ownership with the manager or avoid inline review.",
             ),

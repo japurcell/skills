@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
+      "passed": false,
+      "evidence": "Response does not clearly build one deduped review scope from touched and filtered uncommitted files."
+    },
+    {
+      "text": "Excludes deleted files and `.gitignore` files from that deduped review scope.",
+      "passed": true,
+      "evidence": "Response excludes deleted files and `.gitignore` from the review scope."
+    },
+    {
+      "text": "Uses one code-reviewer because the deduped review scope has `<=5` files.",
+      "passed": false,
+      "evidence": "Response does not clearly use one reviewer because the deduped scope is small."
+    },
+    {
+      "text": "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync.",
+      "passed": false,
+      "evidence": "Response does not clearly pass the deduped review scope and verification context forward before the final tracking sync."
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 3,
+    "total": 4,
+    "pass_rate": 0.25
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 407,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 23.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 23.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,1237 @@
+{
+  "metadata": {
+    "skill_name": "build",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-07T04:28:39Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 32.0,
+        "tokens": 845,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager should dispatch once the task is clear enough, rather than pre-reading lots of files first.",
+          "passed": true,
+          "evidence": "Response keeps the manager on setup and prompt dispatch."
+        },
+        {
+          "text": "Defines a lean handoff that includes task text, success criteria, known constraints or commands, and only already-known file hints.",
+          "passed": true,
+          "evidence": "Response describes the expected lean handoff contents."
+        },
+        {
+          "text": "States that discovery, pattern lookup, and first-pass design belong to the implementer.",
+          "passed": true,
+          "evidence": "Response keeps discovery, pattern lookup, and first-pass design with the implementer."
+        },
+        {
+          "text": "Explicitly says the manager should not draft the solution or likely patches before dispatch.",
+          "passed": false,
+          "evidence": "Response never explicitly forbids manager-side solution drafting before dispatch."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 32.0,
+        "tokens": 336,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
+          "passed": true,
+          "evidence": "Response explicitly rejects routine exploration as a NEEDS_CONTEXT reason."
+        },
+        {
+          "text": "Keeps file discovery and pattern lookup assigned to the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly keep discovery and pattern lookup with the implementer."
+        },
+        {
+          "text": "Does not tell the manager to pre-read the codebase or hand over a solution.",
+          "passed": true,
+          "evidence": "Response avoids telling the manager to explore or provide the solution."
+        },
+        {
+          "text": "Reserves NEEDS_CONTEXT for genuinely missing requirements, constraints, or conflicting signals.",
+          "passed": true,
+          "evidence": "Response reserves NEEDS_CONTEXT for missing requirements/constraints or conflicting signals."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 10,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.25,
+        "passed": 1,
+        "failed": 3,
+        "total": 4,
+        "time_seconds": 17.0,
+        "tokens": 554,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Uses multiple parallel code-reviewers because the deduped review scope has `>5` files.",
+          "passed": false,
+          "evidence": "Response does not clearly use parallel reviewers because the review scope is larger than five files."
+        },
+        {
+          "text": "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one reviewer scope.",
+          "passed": true,
+          "evidence": "Response partitions the review into coherent non-overlapping scopes."
+        },
+        {
+          "text": "Keeps the reviewer file lists manager-authored instead of telling reviewers to recompute or narrow scope.",
+          "passed": false,
+          "evidence": "Response does not clearly keep reviewer file lists manager-authored."
+        },
+        {
+          "text": "Waits for every reviewer to return `DONE` before the final tracking sync.",
+          "passed": false,
+          "evidence": "Response does not clearly wait for every reviewer to return DONE before the final tracking sync."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 11,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 17.0,
+        "tokens": 581,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Uses multiple parallel code-simplifiers because the deduped review scope has `>5` files.",
+          "passed": false,
+          "evidence": "Response does not clearly use parallel simplifiers because the review scope is larger than five files."
+        },
+        {
+          "text": "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one simplifier scope.",
+          "passed": true,
+          "evidence": "Response partitions the simplifier wave into coherent non-overlapping scopes."
+        },
+        {
+          "text": "Keeps the simplifier file lists manager-authored instead of telling simplifiers to recompute or narrow scope.",
+          "passed": true,
+          "evidence": "Response keeps scope ownership with the manager instead of the simplifiers."
+        },
+        {
+          "text": "Waits for every code-simplifier to return `DONE` before launching code-reviewers or updating tracking.",
+          "passed": false,
+          "evidence": "Response does not clearly wait for every simplifier to return DONE before moving downstream."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 12,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 24.0,
+        "tokens": 191,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the build skill's no-commit override still applies even when asked directly.",
+          "passed": true,
+          "evidence": "Response keeps the override active even under a direct request."
+        },
+        {
+          "text": "Refuses to create, amend, push, or otherwise publish a commit, PR, or tag.",
+          "passed": false,
+          "evidence": "Response does not clearly refuse to create or publish the work."
+        },
+        {
+          "text": "Leaves the working tree dirty and local for the human to review manually.",
+          "passed": false,
+          "evidence": "Response does not clearly leave the work dirty and local for the human."
+        },
+        {
+          "text": "Does not offer a workaround that still publishes the changes.",
+          "passed": true,
+          "evidence": "Response does not propose an alternate way to publish the work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 13,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 27.0,
+        "tokens": 518,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Refuses to read the file and paste the patch on the manager's behalf.",
+          "passed": true,
+          "evidence": "Response refuses manager-side patching."
+        },
+        {
+          "text": "Keeps repo discovery, pattern lookup, and first-pass design with the implementer.",
+          "passed": true,
+          "evidence": "Response keeps discovery and design with the implementer."
+        },
+        {
+          "text": "Allows the manager to forward only already-known hints such as the task text or existing file hint.",
+          "passed": true,
+          "evidence": "Response allows only already-known hints in the handoff."
+        },
+        {
+          "text": "Does not include code fences, diff hunks, or an inline patch.",
+          "passed": true,
+          "evidence": "Response contains no code fence or patch artifact."
+        },
+        {
+          "text": "Keeps the response concise instead of turning the handoff into a long design writeup.",
+          "passed": true,
+          "evidence": "Response stays concise at 84 words."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 14,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 22.0,
+        "tokens": 299,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Uses the BLOCKED escalation ladder instead of retrying the same stuck attempt unchanged.",
+          "passed": false,
+          "evidence": "Response does not clearly follow the BLOCKED ladder."
+        },
+        {
+          "text": "Recognizes that an oversized partition should be split into smaller pieces.",
+          "passed": false,
+          "evidence": "Response does not clearly split the oversized partition."
+        },
+        {
+          "text": "Keeps partition ownership with the manager and re-dispatches the review rather than reviewing inline.",
+          "passed": true,
+          "evidence": "Response keeps partition ownership with the manager and re-dispatches."
+        },
+        {
+          "text": "Avoids escalating to the human unless the plan itself is wrong.",
+          "passed": true,
+          "evidence": "Response keeps human escalation conditional on the plan being wrong."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 17.0,
+        "tokens": 243,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
+          "passed": false,
+          "evidence": "Response does not clearly identify the plan/task conflict before dispatch."
+        },
+        {
+          "text": "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
+          "passed": true,
+          "evidence": "Response routes the conflict to ambiguity resolution or human escalation."
+        },
+        {
+          "text": "Keeps the manager focused on ambiguity resolution rather than speculative implementation.",
+          "passed": true,
+          "evidence": "Response keeps the manager on ambiguity resolution instead of speculative implementation."
+        },
+        {
+          "text": "Does not silently choose one interpretation and proceed.",
+          "passed": true,
+          "evidence": "Response avoids silently picking one interpretation."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 17.0,
+        "tokens": 207,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must read the concerns before updating tracking.",
+          "passed": true,
+          "evidence": "Response says the concerns must be read before tracking updates."
+        },
+        {
+          "text": "Treats correctness or scope concerns as something to address before marking the task done.",
+          "passed": false,
+          "evidence": "Response does not clearly treat scope/correctness concerns as unresolved work."
+        },
+        {
+          "text": "Allows re-dispatching another implementer if needed to resolve the concern.",
+          "passed": true,
+          "evidence": "Response allows another implementer pass to resolve the concern."
+        },
+        {
+          "text": "Does not immediately mark the task done just because tests passed.",
+          "passed": true,
+          "evidence": "Response avoids immediately marking the task done just because tests passed."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 18.0,
+        "tokens": 251,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Runs the per-task tracking update for the finished task immediately.",
+          "passed": true,
+          "evidence": "Response updates tracking immediately for the finished task."
+        },
+        {
+          "text": "Keeps the manager moving to the remaining implementer work in the current wave.",
+          "passed": true,
+          "evidence": "Response keeps the wave moving to the remaining implementer work."
+        },
+        {
+          "text": "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
+          "passed": false,
+          "evidence": "Response does not clearly delay code-simplifier until the whole wave is implemented and marked done."
+        },
+        {
+          "text": "Does not send the main agent back into manual simplification or discovery first.",
+          "passed": true,
+          "evidence": "Response keeps the main agent out of manual simplification or rediscovery work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 24.0,
+        "tokens": 608,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+          "passed": true,
+          "evidence": "Response keeps the manager handoff lean."
+        },
+        {
+          "text": "Says the implementer should infer the slice's surface or stack before choosing validation.",
+          "passed": true,
+          "evidence": "Response tells the implementer to infer the slice's surface/stack before choosing validation."
+        },
+        {
+          "text": "Chooses matching shell or Python checks rather than generic frontend commands.",
+          "passed": true,
+          "evidence": "Response picks shell/Python-style checks instead of generic frontend commands."
+        },
+        {
+          "text": "Keeps validation ownership with the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly keep validation ownership with the implementer."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 38.0,
+        "tokens": 346,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+          "passed": false,
+          "evidence": "Response does not clearly require reading simplifier concerns before code-reviewer."
+        },
+        {
+          "text": "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+          "passed": true,
+          "evidence": "Response treats simplifier concerns as unresolved work."
+        },
+        {
+          "text": "Reopens any affected task that was already marked done before re-dispatching the fix.",
+          "passed": true,
+          "evidence": "Response reopens the affected done task before routing the fix."
+        },
+        {
+          "text": "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+          "passed": true,
+          "evidence": "Response routes the fix to the owning subagent."
+        },
+        {
+          "text": "Does not continue with stale tracking or proceed straight to code-reviewer.",
+          "passed": true,
+          "evidence": "Response stops the flow until tracking and the fix are handled."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "time_seconds": 28.0,
+        "tokens": 477,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must address code-review findings before ending the wave.",
+          "passed": false,
+          "evidence": "Response does not clearly block wave completion on reviewer findings."
+        },
+        {
+          "text": "Reopens any affected task that was already marked done before routing the fix.",
+          "passed": false,
+          "evidence": "Response does not clearly reopen an affected done task before routing the fix."
+        },
+        {
+          "text": "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+          "passed": false,
+          "evidence": "Response does not clearly route review findings to an owning subagent."
+        },
+        {
+          "text": "Re-syncs tracking only after the final reviewer comes back `DONE`.",
+          "passed": false,
+          "evidence": "Response does not clearly wait for reviewer DONE before the final tracking sync."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "time_seconds": 23.0,
+        "tokens": 312,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
+          "passed": false,
+          "evidence": "Response does not clearly build one deduped review scope from touched and filtered uncommitted files."
+        },
+        {
+          "text": "Excludes deleted files and `.gitignore` files from that deduped review scope.",
+          "passed": false,
+          "evidence": "Response does not clearly exclude deleted files and `.gitignore` from the review scope."
+        },
+        {
+          "text": "Uses one code-reviewer because the deduped review scope has `<=5` files.",
+          "passed": false,
+          "evidence": "Response does not clearly use one reviewer because the deduped scope is small."
+        },
+        {
+          "text": "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync.",
+          "passed": false,
+          "evidence": "Response does not clearly pass the deduped review scope and verification context forward before the final tracking sync."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 9,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.25,
+        "passed": 1,
+        "failed": 3,
+        "total": 4,
+        "time_seconds": 23.0,
+        "tokens": 167,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Syncs the plan and todo tracker to the final reviewed state.",
+          "passed": true,
+          "evidence": "Response syncs tracking to the final reviewed state."
+        },
+        {
+          "text": "Records any additional verification actually performed during review.",
+          "passed": false,
+          "evidence": "Response does not clearly record any additional verification performed during review."
+        },
+        {
+          "text": "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+          "passed": false,
+          "evidence": "Response does not clearly forbid creating or publishing a commit, PR, or tag."
+        },
+        {
+          "text": "Leaves the changes uncommitted and local.",
+          "passed": false,
+          "evidence": "Response does not clearly say to leave the work uncommitted and local."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 26.0,
+        "tokens": 490,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager should dispatch once the task is clear enough, rather than pre-reading lots of files first.",
+          "passed": true,
+          "evidence": "Response keeps the manager on setup and prompt dispatch."
+        },
+        {
+          "text": "Defines a lean handoff that includes task text, success criteria, known constraints or commands, and only already-known file hints.",
+          "passed": true,
+          "evidence": "Response describes the expected lean handoff contents."
+        },
+        {
+          "text": "States that discovery, pattern lookup, and first-pass design belong to the implementer.",
+          "passed": true,
+          "evidence": "Response keeps discovery, pattern lookup, and first-pass design with the implementer."
+        },
+        {
+          "text": "Explicitly says the manager should not draft the solution or likely patches before dispatch.",
+          "passed": true,
+          "evidence": "Response explicitly forbids manager-side solution drafting before dispatch."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 32.0,
+        "tokens": 385,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
+          "passed": true,
+          "evidence": "Response explicitly rejects routine exploration as a NEEDS_CONTEXT reason."
+        },
+        {
+          "text": "Keeps file discovery and pattern lookup assigned to the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly keep discovery and pattern lookup with the implementer."
+        },
+        {
+          "text": "Does not tell the manager to pre-read the codebase or hand over a solution.",
+          "passed": true,
+          "evidence": "Response avoids telling the manager to explore or provide the solution."
+        },
+        {
+          "text": "Reserves NEEDS_CONTEXT for genuinely missing requirements, constraints, or conflicting signals.",
+          "passed": true,
+          "evidence": "Response reserves NEEDS_CONTEXT for missing requirements/constraints or conflicting signals."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 10,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 17.0,
+        "tokens": 539,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Uses multiple parallel code-reviewers because the deduped review scope has `>5` files.",
+          "passed": false,
+          "evidence": "Response does not clearly use parallel reviewers because the review scope is larger than five files."
+        },
+        {
+          "text": "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one reviewer scope.",
+          "passed": true,
+          "evidence": "Response partitions the review into coherent non-overlapping scopes."
+        },
+        {
+          "text": "Keeps the reviewer file lists manager-authored instead of telling reviewers to recompute or narrow scope.",
+          "passed": true,
+          "evidence": "Response keeps scope ownership with the manager instead of the reviewers."
+        },
+        {
+          "text": "Waits for every reviewer to return `DONE` before the final tracking sync.",
+          "passed": true,
+          "evidence": "Response waits for the whole reviewer wave to finish before the final tracking sync."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 11,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 17.0,
+        "tokens": 588,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Uses multiple parallel code-simplifiers because the deduped review scope has `>5` files.",
+          "passed": false,
+          "evidence": "Response does not clearly use parallel simplifiers because the review scope is larger than five files."
+        },
+        {
+          "text": "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one simplifier scope.",
+          "passed": true,
+          "evidence": "Response partitions the simplifier wave into coherent non-overlapping scopes."
+        },
+        {
+          "text": "Keeps the simplifier file lists manager-authored instead of telling simplifiers to recompute or narrow scope.",
+          "passed": true,
+          "evidence": "Response keeps scope ownership with the manager instead of the simplifiers."
+        },
+        {
+          "text": "Waits for every code-simplifier to return `DONE` before launching code-reviewers or updating tracking.",
+          "passed": true,
+          "evidence": "Response waits for the whole simplifier wave to finish before moving downstream."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 12,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 24.0,
+        "tokens": 198,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "States that the build skill's no-commit override still applies even when asked directly.",
+          "passed": false,
+          "evidence": "Response does not clearly say the build skill override still applies."
+        },
+        {
+          "text": "Refuses to create, amend, push, or otherwise publish a commit, PR, or tag.",
+          "passed": true,
+          "evidence": "Response refuses to publish the work."
+        },
+        {
+          "text": "Leaves the working tree dirty and local for the human to review manually.",
+          "passed": true,
+          "evidence": "Response leaves the work dirty and local for manual review."
+        },
+        {
+          "text": "Does not offer a workaround that still publishes the changes.",
+          "passed": true,
+          "evidence": "Response does not propose an alternate way to publish the work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 13,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 27.0,
+        "tokens": 292,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Refuses to read the file and paste the patch on the manager's behalf.",
+          "passed": false,
+          "evidence": "Response does not clearly refuse manager-side file reading and patch drafting."
+        },
+        {
+          "text": "Keeps repo discovery, pattern lookup, and first-pass design with the implementer.",
+          "passed": true,
+          "evidence": "Response keeps discovery and design with the implementer."
+        },
+        {
+          "text": "Allows the manager to forward only already-known hints such as the task text or existing file hint.",
+          "passed": true,
+          "evidence": "Response allows only already-known hints in the handoff."
+        },
+        {
+          "text": "Does not include code fences, diff hunks, or an inline patch.",
+          "passed": true,
+          "evidence": "Response contains no code fence or patch artifact."
+        },
+        {
+          "text": "Keeps the response concise instead of turning the handoff into a long design writeup.",
+          "passed": true,
+          "evidence": "Response stays concise at 55 words."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 14,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 22.0,
+        "tokens": 306,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Uses the BLOCKED escalation ladder instead of retrying the same stuck attempt unchanged.",
+          "passed": true,
+          "evidence": "Response follows the BLOCKED path instead of repeating the same stuck attempt."
+        },
+        {
+          "text": "Recognizes that an oversized partition should be split into smaller pieces.",
+          "passed": true,
+          "evidence": "Response shrinks the oversized partition."
+        },
+        {
+          "text": "Keeps partition ownership with the manager and re-dispatches the review rather than reviewing inline.",
+          "passed": true,
+          "evidence": "Response keeps partition ownership with the manager and re-dispatches."
+        },
+        {
+          "text": "Avoids escalating to the human unless the plan itself is wrong.",
+          "passed": true,
+          "evidence": "Response keeps human escalation conditional on the plan being wrong."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 17.0,
+        "tokens": 229,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
+          "passed": false,
+          "evidence": "Response does not clearly identify the plan/task conflict before dispatch."
+        },
+        {
+          "text": "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
+          "passed": false,
+          "evidence": "Response does not clearly route the conflict to ambiguity resolution or human escalation."
+        },
+        {
+          "text": "Keeps the manager focused on ambiguity resolution rather than speculative implementation.",
+          "passed": true,
+          "evidence": "Response keeps the manager on ambiguity resolution instead of speculative implementation."
+        },
+        {
+          "text": "Does not silently choose one interpretation and proceed.",
+          "passed": true,
+          "evidence": "Response avoids silently picking one interpretation."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 17.0,
+        "tokens": 230,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must read the concerns before updating tracking.",
+          "passed": false,
+          "evidence": "Response does not clearly require reading the concerns before updating tracking."
+        },
+        {
+          "text": "Treats correctness or scope concerns as something to address before marking the task done.",
+          "passed": false,
+          "evidence": "Response does not clearly treat scope/correctness concerns as unresolved work."
+        },
+        {
+          "text": "Allows re-dispatching another implementer if needed to resolve the concern.",
+          "passed": true,
+          "evidence": "Response allows another implementer pass to resolve the concern."
+        },
+        {
+          "text": "Does not immediately mark the task done just because tests passed.",
+          "passed": true,
+          "evidence": "Response avoids immediately marking the task done just because tests passed."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 18.0,
+        "tokens": 351,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Runs the per-task tracking update for the finished task immediately.",
+          "passed": true,
+          "evidence": "Response updates tracking immediately for the finished task."
+        },
+        {
+          "text": "Keeps the manager moving to the remaining implementer work in the current wave.",
+          "passed": true,
+          "evidence": "Response keeps the wave moving to the remaining implementer work."
+        },
+        {
+          "text": "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
+          "passed": true,
+          "evidence": "Response waits until the whole wave is done before code-simplifier."
+        },
+        {
+          "text": "Does not send the main agent back into manual simplification or discovery first.",
+          "passed": true,
+          "evidence": "Response keeps the main agent out of manual simplification or rediscovery work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 24.0,
+        "tokens": 746,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+          "passed": true,
+          "evidence": "Response keeps the manager handoff lean."
+        },
+        {
+          "text": "Says the implementer should infer the slice's surface or stack before choosing validation.",
+          "passed": true,
+          "evidence": "Response tells the implementer to infer the slice's surface/stack before choosing validation."
+        },
+        {
+          "text": "Chooses matching shell or Python checks rather than generic frontend commands.",
+          "passed": true,
+          "evidence": "Response picks shell/Python-style checks instead of generic frontend commands."
+        },
+        {
+          "text": "Keeps validation ownership with the implementer.",
+          "passed": false,
+          "evidence": "Response does not clearly keep validation ownership with the implementer."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 38.0,
+        "tokens": 261,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+          "passed": true,
+          "evidence": "Response requires reading simplifier concerns before code-reviewer."
+        },
+        {
+          "text": "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+          "passed": true,
+          "evidence": "Response treats simplifier concerns as unresolved work."
+        },
+        {
+          "text": "Reopens any affected task that was already marked done before re-dispatching the fix.",
+          "passed": false,
+          "evidence": "Response does not clearly reopen an affected done task before re-dispatch."
+        },
+        {
+          "text": "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+          "passed": true,
+          "evidence": "Response routes the fix to the owning subagent."
+        },
+        {
+          "text": "Does not continue with stale tracking or proceed straight to code-reviewer.",
+          "passed": true,
+          "evidence": "Response stops the flow until tracking and the fix are handled."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 28.0,
+        "tokens": 424,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must address code-review findings before ending the wave.",
+          "passed": true,
+          "evidence": "Response blocks wave completion on reviewer findings."
+        },
+        {
+          "text": "Reopens any affected task that was already marked done before routing the fix.",
+          "passed": false,
+          "evidence": "Response does not clearly reopen an affected done task before routing the fix."
+        },
+        {
+          "text": "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+          "passed": true,
+          "evidence": "Response routes review findings to an owning subagent."
+        },
+        {
+          "text": "Re-syncs tracking only after the final reviewer comes back `DONE`.",
+          "passed": true,
+          "evidence": "Response waits for the reviewer wave to reach DONE before the final tracking sync."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.25,
+        "passed": 1,
+        "failed": 3,
+        "total": 4,
+        "time_seconds": 23.0,
+        "tokens": 407,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
+          "passed": false,
+          "evidence": "Response does not clearly build one deduped review scope from touched and filtered uncommitted files."
+        },
+        {
+          "text": "Excludes deleted files and `.gitignore` files from that deduped review scope.",
+          "passed": true,
+          "evidence": "Response excludes deleted files and `.gitignore` from the review scope."
+        },
+        {
+          "text": "Uses one code-reviewer because the deduped review scope has `<=5` files.",
+          "passed": false,
+          "evidence": "Response does not clearly use one reviewer because the deduped scope is small."
+        },
+        {
+          "text": "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync.",
+          "passed": false,
+          "evidence": "Response does not clearly pass the deduped review scope and verification context forward before the final tracking sync."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 9,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 23.0,
+        "tokens": 191,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Syncs the plan and todo tracker to the final reviewed state.",
+          "passed": true,
+          "evidence": "Response syncs tracking to the final reviewed state."
+        },
+        {
+          "text": "Records any additional verification actually performed during review.",
+          "passed": false,
+          "evidence": "Response does not clearly record any additional verification performed during review."
+        },
+        {
+          "text": "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+          "passed": false,
+          "evidence": "Response does not clearly forbid creating or publishing a commit, PR, or tag."
+        },
+        {
+          "text": "Leaves the changes uncommitted and local.",
+          "passed": true,
+          "evidence": "Response leaves the work dirty and local."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.5533,
+        "stddev": 0.3044,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 23.9333,
+        "stddev": 6.4749,
+        "min": 17.0,
+        "max": 38.0
+      },
+      "tokens": {
+        "mean": 395.6667,
+        "stddev": 193.5317,
+        "min": 167,
+        "max": 845
+      }
+    },
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.7233,
+        "stddev": 0.2103,
+        "min": 0.25,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 23.5333,
+        "stddev": 6.1163,
+        "min": 17.0,
+        "max": 38.0
+      },
+      "tokens": {
+        "mean": 375.8,
+        "stddev": 160.2218,
+        "min": 191,
+        "max": 746
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.17",
+      "time_seconds": "+0.4",
+      "tokens": "+20"
+    }
+  },
+  "notes": []
+}

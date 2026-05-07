@@ -1,0 +1,1 @@
+Reopen the affected done task immediately, route the helper-scope concern back to the owning implementer to fix, and do not start code-review yet. After the fix lands, rerun code-simplifier on the same reviewed surface, then continue only once it returns DONE.

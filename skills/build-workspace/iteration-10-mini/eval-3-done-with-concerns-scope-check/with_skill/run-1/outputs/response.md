@@ -1,0 +1,1 @@
+The manager reads the concerns first and does not update tracking yet. If the concern suggests a correctness or scope mismatch, the manager addresses it first—usually by re-dispatching an implementer—before marking anything done.
