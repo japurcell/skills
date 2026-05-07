@@ -19,4 +19,4 @@ description: Break work into small verifiable tasks with acceptance criteria and
 ## Output
 
 1. Determine `$OUTPUT_PATH`: if a spec file was provided, use the same directory; otherwise, use `.agents/scratchpad/<feature-name>`.
-2. Save the plan to `$OUTPUT_PATH/plan.md` and task list to `$OUTPUT_PATH/todo.md`.
+2. Save the plan to `$OUTPUT_PATH/plan.md`.
