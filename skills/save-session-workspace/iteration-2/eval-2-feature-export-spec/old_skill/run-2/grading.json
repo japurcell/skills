@@ -1,0 +1,68 @@
+{
+  "expectations": [
+    {
+      "text": "The save-session artifact starts with the Save Session title.",
+      "passed": true,
+      "evidence": "# Save Session"
+    },
+    {
+      "text": "The save-session artifact includes the required section headings in the correct order.",
+      "passed": true,
+      "evidence": "all headings present"
+    },
+    {
+      "text": "The Relevant Files section includes at least one bullet and each bullet has a short reason.",
+      "passed": true,
+      "evidence": "bullets=3, with_reason=3"
+    },
+    {
+      "text": "The save-session stays concise.",
+      "passed": true,
+      "evidence": "word_count=193"
+    },
+    {
+      "text": "The response names the absolute path, the scope, and the next-session note.",
+      "passed": true,
+      "evidence": "Save Session saved.\n\n- Path: /home/adam/dev/personal/skills/skills/save-session-workspace/iteration-2/eval-2-feature-export-spec/old_skill/run-2/sandbox/.agents/scratchpad/feature-export/save-session.md\n- Scope: feature-scoped (saved beside spec.md)\n- Most important note: Create `.agents/scratchpad/feature-export/plan.md` next and implement the first serializer unit tests (CSV/JSON).\n"
+    },
+    {
+      "text": "The response scope matches the expected feature-vs-root pattern for this run.",
+      "passed": true,
+      "evidence": "Save Session saved.\n\n- Path: /home/adam/dev/personal/skills/skills/save-session-workspace/iteration-2/eval-2-feature-export-spec/old_skill/run-2/sandbox/.agents/scratchpad/feature-export/save-session.md\n- Scope: feature-scoped (saved beside spec.md)\n- Most important note: Create `.agents/scratchpad/feature-export/plan.md` next and implement the first serializer unit tests (CSV/JSON).\n"
+    },
+    {
+      "text": "The saved output avoids stale handoff wording.",
+      "passed": true,
+      "evidence": "no stale handoff text"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2125,
+    "transcript_chars": 166390
+  },
+  "timing": {
+    "executor_duration_seconds": 57.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 57.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

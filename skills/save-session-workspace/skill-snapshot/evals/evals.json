@@ -1,0 +1,41 @@
+{
+  "skill_name": "save-session",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "We have been working from `.agents/scratchpad/feature-auth/plan.md` and already finished the tests phase. The next agent should continue with `src/auth/service.ts` and keep the existing AGENTS.md rules in mind. Use /save-session to save a concise continuation note for the next session.",
+      "expected_output": "Creates a concise, feature-scoped /save-session at `.agents/scratchpad/feature-auth/save-session.md` that captures current status, constraints, relevant files, and the next step.",
+      "files": [],
+      "expectations": [
+        "Chooses `.agents/scratchpad/feature-auth/save-session.md` instead of the root scratchpad path.",
+        "Invokes or explicitly follows addy-context-engineering before deciding what context to save.",
+        "Writes the /save-session using the required sections: Goal, Current Status, Decisions and Constraints, Relevant Files, Open Questions or Blockers, Recommended Next Step.",
+        "Relevant Files entries include a short reason each path matters.",
+        "The summary stays concise and does not turn into a transcript or raw log dump."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "No scratchpad spec or plan exists yet. This session narrowed a bug in `scripts/sync.sh` to a missing environment variable, but we are stopping before the fix. Use /save-session to save a continuation note for a future agent session.",
+      "expected_output": "Creates `.agents/scratchpad/save-session.md` with a concise bug-focused /save-session that preserves the blocker and next step without inventing a feature folder.",
+      "files": [],
+      "expectations": [
+        "Chooses the default path `.agents/scratchpad/save-session.md` when no feature-scoped scratchpad spec or plan is in context.",
+        "Invokes or explicitly follows addy-context-engineering before choosing what to preserve.",
+        "Captures the blocker or open question clearly enough for the next agent to resume.",
+        "Includes a concrete recommended next step instead of ending with a generic summary."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We only have `.agents/scratchpad/feature-export/spec.md` so far and want another agent session to continue from there. Save a /save-session now that summarizes the goal, current status, relevant files, and the next move.",
+      "expected_output": "Creates `.agents/scratchpad/feature-export/save-session.md`, using the spec's feature subfolder even though no plan exists yet.",
+      "files": [],
+      "expectations": [
+        "Recognizes that a scratchpad spec file is enough to select the feature-scoped output path.",
+        "Writes the /save-session beside the spec as `.agents/scratchpad/feature-export/save-session.md`.",
+        "Keeps the /save-session continuation-oriented, with the next step anchored to the active feature context."
+      ]
+    }
+  ]
+}

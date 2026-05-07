@@ -1,0 +1,68 @@
+{
+  "expectations": [
+    {
+      "text": "The save-session artifact starts with the Save Session title.",
+      "passed": true,
+      "evidence": "# Save Session"
+    },
+    {
+      "text": "The save-session artifact includes the required section headings in the correct order.",
+      "passed": true,
+      "evidence": "all headings present"
+    },
+    {
+      "text": "The Relevant Files section includes at least one bullet and each bullet has a short reason.",
+      "passed": true,
+      "evidence": "bullets=3, with_reason=3"
+    },
+    {
+      "text": "The save-session stays concise.",
+      "passed": true,
+      "evidence": "word_count=284"
+    },
+    {
+      "text": "The response names the absolute path, the scope, and the next-session note.",
+      "passed": true,
+      "evidence": "Save Session saved at: /home/adam/dev/personal/skills/skills/save-session-workspace/iteration-2/eval-1-root-bug-checkpoint/old_skill/run-2/sandbox/.agents/scratchpad/save-session.md\nScope: root-scoped (no feature spec/plan found)\nMost important note for next agent: scripts/sync.sh fails due to a missing environment variable \u2014 identify the exact variable name and add a defensive check or default before applying the fix.\n"
+    },
+    {
+      "text": "The response scope matches the expected feature-vs-root pattern for this run.",
+      "passed": true,
+      "evidence": "Save Session saved at: /home/adam/dev/personal/skills/skills/save-session-workspace/iteration-2/eval-1-root-bug-checkpoint/old_skill/run-2/sandbox/.agents/scratchpad/save-session.md\nScope: root-scoped (no feature spec/plan found)\nMost important note for next agent: scripts/sync.sh fails due to a missing environment variable \u2014 identify the exact variable name and add a defensive check or default before applying the fix.\n"
+    },
+    {
+      "text": "The saved output avoids stale handoff wording.",
+      "passed": true,
+      "evidence": "no stale handoff text"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2456,
+    "transcript_chars": 153256
+  },
+  "timing": {
+    "executor_duration_seconds": 74.1,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 74.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}
