@@ -1,0 +1,3 @@
+**Next:** send the findings back to the **implementer** to fix. In the build workflow, `code-reviewer: DONE_WITH_FINDINGS` means the work is still unresolved; the manager should **re-dispatch the subagent that should own the fix** (here, the implementer for correctness issues in touched files), then route the updated result back through **code-simplifier** and **code-reviewer** again as needed.
+
+**Tracking stays unchanged for now.** Update the plan/todo tracker **only after** the final code-reviewer run returns **`DONE`**. At that point, record the verification actually performed and mark the task done.

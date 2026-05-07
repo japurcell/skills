@@ -1,0 +1,11 @@
+{
+  "eval_id": 5,
+  "eval_name": "weak-model-validation-selection",
+  "prompt": "The next task touches `scripts/addy-install.sh` and `skills/build/evals/grade_benchmark.py`. The plan says only 'run relevant validation.' Using the build workflow, what should the manager hand to the implementer, and how should the implementer choose verification so a weaker model does not fall back to generic frontend commands?",
+  "assertions": [
+    "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+    "Says the implementer should infer the slice's surface or stack before choosing validation.",
+    "Chooses matching shell or Python checks rather than generic frontend commands.",
+    "Keeps validation ownership with the implementer."
+  ]
+}

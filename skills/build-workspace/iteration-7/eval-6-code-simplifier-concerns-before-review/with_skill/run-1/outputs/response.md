@@ -1,0 +1,3 @@
+**Stop the pipeline and send it back for remediation.** In the build workflow, a code-simplifier result of `DONE_WITH_CONCERNS` must be read before any next step, and a concern about a helper widening scope or hiding a behavior change is explicitly a **correctness/scope concern**.
+
+So the manager should **not** send this to the code-reviewer yet and **not** update tracking. Instead, re-dispatch the subagent that should own the fix—**usually the code-simplifier for this specific extracted-helper concern**, or the implementer if resolving it requires a functional correction—then route the result back through the normal flow once that concern is cleared.

@@ -1,0 +1,11 @@
+{
+  "eval_id": 8,
+  "eval_name": "code-reviewer-handoff-includes-uncommitted-files",
+  "prompt": "The implementer returned `DONE`, the code-simplifier also returned `DONE`, and `git status --porcelain` now shows `M skills/build/SKILL.md`, ` M skills/build/implementer-prompt.md`, `?? notes.txt`, `D scratch.tmp`, and `?? .gitignore`. Using the build workflow, what should the manager send to the code-reviewer before tracking is updated?",
+  "assertions": [
+    "Says the manager should dispatch the code-reviewer now rather than update tracking.",
+    "Includes the touched files and current verification context in the code-reviewer handoff.",
+    "Includes all remaining uncommitted files from `git status --porcelain` in the handoff.",
+    "Excludes deleted files and `.gitignore` files from that uncommitted-file set."
+  ]
+}

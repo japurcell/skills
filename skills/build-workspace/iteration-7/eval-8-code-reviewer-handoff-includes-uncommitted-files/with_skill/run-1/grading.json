@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Says the manager should dispatch the code-reviewer now rather than update tracking.",
+      "passed": true,
+      "evidence": "Response routes the next step to code-reviewer before tracking."
+    },
+    {
+      "text": "Includes the touched files and current verification context in the code-reviewer handoff.",
+      "passed": true,
+      "evidence": "Response includes touched files and verification context in the review handoff."
+    },
+    {
+      "text": "Includes all remaining uncommitted files from `git status --porcelain` in the handoff.",
+      "passed": true,
+      "evidence": "Response includes uncommitted-file context from git status."
+    },
+    {
+      "text": "Excludes deleted files and `.gitignore` files from that uncommitted-file set.",
+      "passed": false,
+      "evidence": "Response does not clearly exclude deleted and .gitignore files."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 776,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 51.3,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 51.3
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

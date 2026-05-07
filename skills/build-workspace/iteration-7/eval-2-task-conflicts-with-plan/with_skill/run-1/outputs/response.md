@@ -1,0 +1,3 @@
+**Do not dispatch an implementer yet.** The exact build workflow says to first invoke `addy-context-engineering` and `subagent-model-selection`, then check the next pending task; if the task is **ambiguous or conflicts with the plan**, dispatch must stop until that conflict is resolved.
+
+Here, “defer audit logging until phase 2” vs. “implement audit logging now” is a direct plan/task conflict, so the manager should **surface and resolve that conflicting signal first**—and if the plan itself is wrong, **escalate to the human**. Only after the plan and task text are aligned should any implementer be dispatched.

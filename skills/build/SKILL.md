@@ -5,110 +5,100 @@ description: Coordinate the next implementation increment — pick the next read
 
 # Build
 
-## Workflow
+## Core Loop
 
 1. Invoke the `addy-context-engineering` and `subagent-model-selection` skills.
 2. Pick the next pending task from the plan.
-3. If the task is ambiguous, conflicts with the plan, or the human wants tradeoff analysis first, it is not clear enough to dispatch yet. Resolve that before dispatch.
+3. If the task is ambiguous, conflicts with the plan, or the human wants tradeoff analysis first, do not dispatch yet. Resolve that first.
 4. Otherwise dispatch immediately with the [implementer-prompt.md](./implementer-prompt.md) template and a lean handoff:
    - task text and success criteria
    - known constraints and validation commands
    - only already-known file hints
-5. Do **not** pre-read a large file set, draft the solution, or sketch likely patches before the first dispatch.
+5. Do **not** pre-read large file sets, draft the solution, or sketch likely patches before dispatch.
 6. The implementer owns repo discovery, pattern lookup, first-pass design, code changes, and verification.
-7. After the implementer returns `DONE`, dispatch the [simplifier-prompt.md](./simplifier-prompt.md) template over the files the implementer touched and the verification context they produced.
-8. After the code-simplifier returns `DONE`, dispatch the [code-reviewer-prompt.md](./code-reviewer-prompt.md) template over the touched files plus the current verification context.
-9. Update tracking only after the final subagent returns `DONE`, using <update-tracking-instructions>.
+7. After the implementer returns `DONE`, dispatch the [simplifier-prompt.md](./simplifier-prompt.md) with:
+   - the files the implementer touched
+   - the implementer's verification context
+   - all uncommitted files from `git status --porcelain`, excluding deleted files and `.gitignore` files
+8. After the code-simplifier returns `DONE`, dispatch the [code-reviewer-prompt.md](./code-reviewer-prompt.md) with:
+   - the touched files
+   - the current verification context
+   - all uncommitted files from `git status --porcelain`, excluding deleted files and `.gitignore` files
+9. Update tracking only after the final reviewer returns `DONE`, using <update-tracking-instructions>.
 
-## Implementer Dispatch Rule
-
-The main agent coordinates. It does not pre-implement.
+## Manager Guardrails
 
 - Dispatch as soon as the task is clear enough to execute.
-- Do **not** pre-read a large file set, draft the solution, or sketch likely patches before the first dispatch.
 - Pass through only information already known from the plan, task, or repo rules.
-- Ordinary repo exploration is implementer work, not manager work.
-- `NEEDS_CONTEXT` is for missing requirements, missing constraints, or conflicting signals — routine discovery is not a valid `NEEDS_CONTEXT`.
+- Ordinary repo exploration, pattern lookup, and first-pass design stay with the implementer.
+- Ordinary repo exploration is not a valid `NEEDS_CONTEXT`.
 - If the implementer asks the manager to explore the repo or hand over a solution, push that work back to the implementer.
 
 ## Verification Selection
 
 - Verification ownership stays with the implementer.
 - Infer the task's surface and stack before choosing validation.
-- Prefer the narrowest matching checks for that stack. For shell or Python work, use shell or Python validation rather than generic frontend commands unless the task is actually frontend work.
+- Prefer the narrowest matching checks for that stack. For shell or Python work, use shell or Python validation instead of generic frontend commands unless the task is actually frontend work.
 
 <update-tracking-instructions>
-1. Update the plan and todo doc immediately.
+1. Update the plan and todo tracker immediately.
 2. Record the verification actually performed.
 3. Mark the task `done` in the tracker.
 </update-tracking-instructions>
+
+## Shared Escalation Rules
+
+- **NEEDS_CONTEXT:** Provide the missing requirements, missing constraints, or conflicting-signal context and re-dispatch. Routine discovery is not a valid `NEEDS_CONTEXT`.
+- **BLOCKED:** Assess the blocker:
+  1. If it's a context problem, provide more context and re-dispatch with the same model.
+  2. If the task requires more reasoning, re-dispatch with a more capable model.
+  3. If the task is too large, break it into smaller pieces.
+  4. If the plan itself is wrong, escalate to the human.
 
 ## Subagent Status Handling
 
 ### Implementer
 
-Implementer subagents report one of four statuses. Handle each appropriately:
-
 - **DONE:** Proceed to code-simplifier.
-- **DONE_WITH_CONCERNS:** Read the concerns before code-simplifier. If they touch correctness or scope, address them first, usually by re-dispatching another implementer. Do not update tracking yet.
-- **NEEDS_CONTEXT:** Use this only for missing requirements, constraints, or conflicting signals, not ordinary repo exploration. Provide the missing context and re-dispatch.
-- **BLOCKED:** The implementer cannot complete the task. Assess the blocker:
-  1.  If it's a context problem, provide more context and re-dispatch with the same model
-  2.  If the task requires more reasoning, re-dispatch with a more capable model
-  3.  If the task is too large, break it into smaller pieces
-  4.  If the plan itself is wrong, escalate to the human
+- **DONE_WITH_CONCERNS:** Read the concerns before any downstream step or tracking update. If they raise a correctness concern or scope concern, address them first, usually by re-dispatching an implementer. Do not update tracking yet.
+- **NEEDS_CONTEXT:** Ordinary repo exploration and pattern lookup stay with the implementer; only missing requirements, missing constraints, or conflicting signals qualify.
+- **BLOCKED:** Follow the shared escalation rules.
 
 ### Code-Simplifier
 
-Code-simplifier subagents report one of four statuses. Handle each appropriately:
-
 - **DONE:** Proceed to code-reviewer.
-- **DONE_WITH_CONCERNS:** Read the concerns before code-reviewer. If they touch correctness or scope, address them before continuing with code-reviewer, usually by re-dispatching the subagent that should own the fix.
+- **DONE_WITH_CONCERNS:** Read the concerns before continuing to code-reviewer. If they raise a correctness concern or scope concern, treat them as unresolved work, address them first, usually by re-dispatching the subagent that should own the fix, and do not update tracking yet.
 - **NEEDS_CONTEXT:** Provide the missing context and re-dispatch.
-- **BLOCKED:** The code-simplifier cannot complete the task. Assess the blocker:
-  1.  If it's a context problem, provide more context and re-dispatch with the same model
-  2.  If the task requires more reasoning, re-dispatch with a more capable model
-  3.  If the task is too large, break it into smaller pieces
-  4.  If the plan itself is wrong, escalate to the human
+- **BLOCKED:** Follow the shared escalation rules.
 
 ### Code-Reviewer
 
-Code-reviewer subagents report one of four statuses. Handle each appropriately:
-
 - **DONE:** Proceed to update tracking.
-- **DONE_WITH_FINDINGS:** Address findings before update tracking, usually by re-dispatching the subagent that should own the fix.
+- **DONE_WITH_FINDINGS:** Address findings before updating tracking. Re-dispatch the subagent that should own the fix, then route the result back through code-simplifier and code-reviewer as needed. Only mark the task done after the final reviewer returns `DONE`.
 - **NEEDS_CONTEXT:** Provide the missing context and re-dispatch.
-- **BLOCKED:** The code-reviewer cannot complete the task. Assess the blocker:
-  1.  If it's a context problem, provide more context and re-dispatch with the same model
-  2.  If the task requires more reasoning, re-dispatch with a more capable model
-  3.  If the task is too large, break it into smaller pieces
-  4.  If the plan itself is wrong, escalate to the human
+- **BLOCKED:** Follow the shared escalation rules.
 
 Never ignore an escalation or rerun the same stuck attempt without changing context, scope, or model.
 
 ## Tracking Discipline
 
 - Treat stale docs as incomplete work.
-- Reflect every task status change in the tracker, plan, and todo doc.
+- Reflect every task status change in the tracker, plan, and todo tracker.
 
 ## Commit Override Behavior
 
-Do NOT commit. The user will review the changes and commit manually later.
+Never commit. The human will review the changes and commit manually later.
 
 ## Red Flags
 
 - Not using a subagent for implementation tasks, fixes, simplifications, or code-review findings
-- Main agent performs discovery, pattern lookup, first-pass design, code changes, or verification when task is clearly defined
-- Marking a tracking item completed when the implementer, code-simplifier, and code-reviewer did not return DONE
-- Marking a task done without updating the plan and todo docs
+- The manager performs repo discovery, pattern lookup, first-pass design, code changes, or verification when the task is clear enough to dispatch
+- Marking a tracking item completed when the implementer, code-simplifier, and code-reviewer did not return `DONE`
+- Marking a task done without updating the plan and todo tracker
 
 ## Verification
 
-After completing all tasks:
-
-- [ ] Each increment was individually tested
-- [ ] The full test suite passes
-- [ ] The build is clean
-- [ ] The feature works end-to-end as specified
-- [ ] All relevant docs are updated to reflect the completed work
+- [ ] Each increment was tested with the right checks for its stack
+- [ ] Relevant build, test, or manual verification is clean
+- [ ] Tracking and docs reflect the final state
 - [ ] All changes are uncommitted

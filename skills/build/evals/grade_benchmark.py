@@ -36,8 +36,8 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             {
                 "text": "Says the manager should dispatch once the task is clear enough, rather than pre-reading lots of files first.",
-                "passed": has_any(text, ["dispatch immediately", "dispatch right away", "dispatch as soon as", "send the implementer", "launch the implementer"]) and not has_any(text, ["read a stack of files first", "pre-read the codebase first", "study the codebase before dispatch"]),
-                "evidence": "Response tells the manager to dispatch promptly once the task is clear." if has_any(text, ["dispatch immediately", "dispatch right away", "dispatch as soon as", "send the implementer", "launch the implementer"]) and not has_any(text, ["read a stack of files first", "pre-read the codebase first", "study the codebase before dispatch"]) else "Response does not clearly prioritize immediate dispatch over manager-side exploration."
+                "passed": has_any(text, ["dispatch immediately", "dispatch right away", "dispatch as soon as", "dispatch quickly", "dispatch now", "ready to dispatch now", "send the implementer", "launch the implementer"]) and not has_any(text, ["read a stack of files first", "pre-read the codebase first", "study the codebase before dispatch"]),
+                "evidence": "Response tells the manager to dispatch promptly once the task is clear." if has_any(text, ["dispatch immediately", "dispatch right away", "dispatch as soon as", "dispatch quickly", "dispatch now", "ready to dispatch now", "send the implementer", "launch the implementer"]) and not has_any(text, ["read a stack of files first", "pre-read the codebase first", "study the codebase before dispatch"]) else "Response does not clearly prioritize immediate dispatch over manager-side exploration."
             },
             {
                 "text": "Defines a lean handoff that includes task text, success criteria, known constraints or commands, and only already-known file hints.",
@@ -46,13 +46,13 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             },
             {
                 "text": "States that discovery, pattern lookup, and first-pass design belong to the implementer.",
-                "passed": has_any(text, ["implementer owns discovery", "implementer handles discovery", "implementer owns repo discovery"]) and has_any(text, ["pattern lookup", "find patterns"]) and has_any(text, ["first-pass design", "first pass design", "initial design", "first approach"]),
-                "evidence": "Response keeps discovery, pattern lookup, and first-pass design with the implementer." if has_any(text, ["implementer owns discovery", "implementer handles discovery", "implementer owns repo discovery"]) and has_any(text, ["pattern lookup", "find patterns"]) and has_any(text, ["first-pass design", "first pass design", "initial design", "first approach"]) else "Response does not clearly keep discovery, patterns, and first-pass design with the implementer."
+                "passed": (has_any(text, ["implementer owns discovery", "implementer handles discovery", "implementer owns repo discovery", "repo discovery"]) or has_any(text, ["must stay with the implementer", "stays with the implementer", "what stays with the implementer"])) and has_any(text, ["pattern lookup", "find patterns", "patterns"]) and has_any(text, ["first-pass design", "first pass design", "initial design", "first approach"]),
+                "evidence": "Response keeps discovery, pattern lookup, and first-pass design with the implementer." if (has_any(text, ["implementer owns discovery", "implementer handles discovery", "implementer owns repo discovery", "repo discovery"]) or has_any(text, ["must stay with the implementer", "stays with the implementer", "what stays with the implementer"])) and has_any(text, ["pattern lookup", "find patterns", "patterns"]) and has_any(text, ["first-pass design", "first pass design", "initial design", "first approach"]) else "Response does not clearly keep discovery, patterns, and first-pass design with the implementer."
             },
             {
                 "text": "Explicitly says the manager should not draft the solution or likely patches before dispatch.",
-                "passed": has_any(text, ["do not draft the solution", "should not draft the solution", "do not sketch likely patches", "should not sketch likely patches", "do not pre-solve", "should not pre-solve"]),
-                "evidence": "Response explicitly forbids manager-side solution drafting before dispatch." if has_any(text, ["do not draft the solution", "should not draft the solution", "do not sketch likely patches", "should not sketch likely patches", "do not pre-solve", "should not pre-solve"]) else "Response never explicitly forbids manager-side solution drafting before dispatch."
+                "passed": has_any(text, ["do not draft the solution", "should not draft the solution", "do not sketch likely patches", "should not sketch likely patches", "do not pre-solve", "should not pre-solve", "draft designs", "sketch patches", "pre-solved design"]) or (has_any(text, ["sketch likely patches", "sketch patches", "design the pagination approach", "draft the pagination design"]) and has_any(text, ["do not", "do **not**", "should not"])),
+                "evidence": "Response explicitly forbids manager-side solution drafting before dispatch." if has_any(text, ["do not draft the solution", "should not draft the solution", "do not sketch likely patches", "should not sketch likely patches", "do not pre-solve", "should not pre-solve", "draft designs", "sketch patches", "pre-solved design"]) or (has_any(text, ["sketch likely patches", "sketch patches", "design the pagination approach", "draft the pagination design"]) and has_any(text, ["do not", "do **not**", "should not"])) else "Response never explicitly forbids manager-side solution drafting before dispatch."
             },
         ]
 
@@ -60,13 +60,13 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             {
                 "text": "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
-                "passed": has_any(text, ["not a valid needs_context", "not valid needs_context", "needs_context is not for ordinary", "needs_context is not for routine", "ordinary repo exploration is not", "routine exploration is not"]),
-                "evidence": "Response explicitly limits NEEDS_CONTEXT away from routine exploration." if has_any(text, ["not a valid needs_context", "not valid needs_context", "needs_context is not for ordinary", "needs_context is not for routine", "ordinary repo exploration is not", "routine exploration is not"]) else "Response does not explicitly say that ordinary exploration is not a valid NEEDS_CONTEXT reason."
+                "passed": has_any(text, ["not a valid needs_context", "not valid needs_context", "needs_context is not for ordinary", "needs_context is not for routine", "ordinary repo exploration is not", "routine exploration is not", "routine repo exploration is the implementer's job", "ordinary repo exploration is implementer work"]),
+                "evidence": "Response explicitly limits NEEDS_CONTEXT away from routine exploration." if has_any(text, ["not a valid needs_context", "not valid needs_context", "needs_context is not for ordinary", "needs_context is not for routine", "ordinary repo exploration is not", "routine exploration is not", "routine repo exploration is the implementer's job", "ordinary repo exploration is implementer work"]) else "Response does not explicitly say that ordinary exploration is not a valid NEEDS_CONTEXT reason."
             },
             {
                 "text": "Keeps file discovery and pattern lookup assigned to the implementer.",
-                "passed": has_any(text, ["implementer should explore", "implementer should read the relevant files", "implementer should discover", "push exploration back to the implementer"]) and has_any(text, ["pattern", "patterns"]),
-                "evidence": "Response pushes file discovery and pattern lookup back to the implementer." if has_any(text, ["implementer should explore", "implementer should read the relevant files", "implementer should discover", "push exploration back to the implementer"]) and has_any(text, ["pattern", "patterns"]) else "Response does not clearly keep discovery and pattern lookup with the implementer."
+                "passed": (has_any(text, ["implementer should explore", "implementer should read the relevant files", "implementer should discover", "push exploration back to the implementer", "please explore the repo", "explore the repo and re-report"]) and has_any(text, ["pattern", "patterns"])) or has_any(text, ["pattern lookup stay with the implementer", "pattern lookup is implementer work"]),
+                "evidence": "Response pushes file discovery and pattern lookup back to the implementer." if (has_any(text, ["implementer should explore", "implementer should read the relevant files", "implementer should discover", "push exploration back to the implementer", "please explore the repo", "explore the repo and re-report"]) and has_any(text, ["pattern", "patterns"])) or has_any(text, ["pattern lookup stay with the implementer", "pattern lookup is implementer work"]) else "Response does not clearly keep discovery and pattern lookup with the implementer."
             },
             {
                 "text": "Does not tell the manager to pre-read the codebase or hand over a solution.",
@@ -84,8 +84,8 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             {
                 "text": "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
-                "passed": has_any(text, ["conflicts with the plan", "plan conflict", "task conflicts", "not clear enough to dispatch", "do not dispatch yet", "plan/task contradiction", "task/plan contradiction", "plan and task contradict", "mismatch between the plan and task"]),
-                "evidence": "Response identifies the plan/task conflict and stops dispatch." if has_any(text, ["conflicts with the plan", "plan conflict", "task conflicts", "not clear enough to dispatch", "do not dispatch yet", "plan/task contradiction", "task/plan contradiction", "plan and task contradict", "mismatch between the plan and task"]) else "Response does not clearly identify the plan/task conflict before dispatch."
+                "passed": has_any(text, ["conflicts with the plan", "plan conflict", "task conflicts", "not clear enough to dispatch", "do not dispatch yet", "plan/task contradiction", "task/plan contradiction", "plan and task contradict", "mismatch between the plan and task", "plan/task conflict"]),
+                "evidence": "Response identifies the plan/task conflict and stops dispatch." if has_any(text, ["conflicts with the plan", "plan conflict", "task conflicts", "not clear enough to dispatch", "do not dispatch yet", "plan/task contradiction", "task/plan contradiction", "plan and task contradict", "mismatch between the plan and task", "plan/task conflict"]) else "Response does not clearly identify the plan/task conflict before dispatch."
             },
             {
                 "text": "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
@@ -108,13 +108,13 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             {
                 "text": "Says the manager must read the concerns before updating tracking.",
-                "passed": has_any(text, ["read the concerns before", "review the concerns before", "do not update tracking until you read the concerns"]),
-                "evidence": "Response says the concerns must be read before tracking updates." if has_any(text, ["read the concerns before", "review the concerns before", "do not update tracking until you read the concerns"]) else "Response does not clearly require reading the concerns before updating tracking."
+                "passed": has_any(text, ["read the concerns before", "review the concerns before", "do not update tracking until you read the concerns", "read the implementer", "triage the concerns"]) and has_any(text, ["do not update tracking yet", "before updating tracking", "before marking the task done"]),
+                "evidence": "Response says the concerns must be read before tracking updates." if has_any(text, ["read the concerns before", "review the concerns before", "do not update tracking until you read the concerns", "read the implementer", "triage the concerns"]) and has_any(text, ["do not update tracking yet", "before updating tracking", "before marking the task done"]) else "Response does not clearly require reading the concerns before updating tracking."
             },
             {
                 "text": "Treats correctness or scope concerns as something to address before marking the task done.",
-                "passed": has_any(text, ["scope concern", "correctness concern", "before marking it done", "before marking the task done", "before updating tracking"]),
-                "evidence": "Response treats scope/correctness concerns as unresolved work." if has_any(text, ["scope concern", "correctness concern", "before marking it done", "before marking the task done", "before updating tracking"]) else "Response does not clearly treat scope/correctness concerns as unresolved work."
+                "passed": has_any(text, ["scope concern", "correctness concern", "before marking it done", "before marking the task done", "before updating tracking", "touch correctness or scope", "address them first"]),
+                "evidence": "Response treats scope/correctness concerns as unresolved work." if has_any(text, ["scope concern", "correctness concern", "before marking it done", "before marking the task done", "before updating tracking", "touch correctness or scope", "address them first"]) else "Response does not clearly treat scope/correctness concerns as unresolved work."
             },
             {
                 "text": "Allows re-dispatching another implementer if needed to resolve the concern.",
@@ -142,8 +142,8 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             },
             {
                 "text": "Carries forward relevant validation context or results from the implementer.",
-                "passed": has_any(text, ["validation context", "validation results", "verification results", "tests they ran", "commands they ran"]),
-                "evidence": "Response carries forward validation context from the implementer." if has_any(text, ["validation context", "validation results", "verification results", "tests they ran", "commands they ran"]) else "Response does not clearly mention carrying forward validation context."
+                "passed": has_any(text, ["validation context", "validation results", "verification results", "verification context", "tests they ran", "commands they ran", "commands run"]),
+                "evidence": "Response carries forward validation context from the implementer." if has_any(text, ["validation context", "validation results", "verification results", "verification context", "tests they ran", "commands they ran", "commands run"]) else "Response does not clearly mention carrying forward validation context."
             },
             {
                 "text": "Does not send the main agent back into manual simplification or discovery first.",
@@ -180,8 +180,8 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             {
                 "text": "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
-                "passed": has_any(text, ["read the concerns before code-reviewer", "review the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer"]),
-                "evidence": "Response requires reading simplifier concerns before code-reviewer." if has_any(text, ["read the concerns before code-reviewer", "review the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer"]) else "Response does not clearly require reading simplifier concerns before code-reviewer."
+                "passed": has_any(text, ["read the concerns before code-reviewer", "review the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer", "read the simplifier", "do not proceed to code-reviewer"]),
+                "evidence": "Response requires reading simplifier concerns before code-reviewer." if has_any(text, ["read the concerns before code-reviewer", "review the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer", "read the simplifier", "do not proceed to code-reviewer"]) else "Response does not clearly require reading simplifier concerns before code-reviewer."
             },
             {
                 "text": "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
@@ -204,8 +204,8 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             {
                 "text": "Says the manager must address code-review findings before updating tracking.",
-                "passed": has_any(text, ["address findings before update tracking", "address findings before updating tracking", "before updating tracking", "before marking the task done"]),
-                "evidence": "Response blocks tracking on reviewer findings." if has_any(text, ["address findings before update tracking", "address findings before updating tracking", "before updating tracking", "before marking the task done"]) else "Response does not clearly block tracking on reviewer findings."
+                "passed": has_any(text, ["address findings before update tracking", "address findings before updating tracking", "before updating tracking", "before marking the task done", "update tracking only after", "tracking stays unchanged for now"]),
+                "evidence": "Response blocks tracking on reviewer findings." if has_any(text, ["address findings before update tracking", "address findings before updating tracking", "before updating tracking", "before marking the task done", "update tracking only after", "tracking stays unchanged for now"]) else "Response does not clearly block tracking on reviewer findings."
             },
             {
                 "text": "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
@@ -214,8 +214,8 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             },
             {
                 "text": "Requires the final subagent to return `DONE` before marking the task done.",
-                "passed": has_any(text, ["final subagent returns done", "reviewer returns done", "after the final reviewer comes back done", "only after the final subagent returns done"]),
-                "evidence": "Response requires a final DONE before marking the task done." if has_any(text, ["final subagent returns done", "reviewer returns done", "after the final reviewer comes back done", "only after the final subagent returns done"]) else "Response does not clearly require a final DONE before marking the task done."
+                "passed": has_any(text, ["final subagent returns done", "reviewer returns done", "after the final reviewer comes back done", "only after the final subagent returns done", "final code-reviewer returns plain done", "final reviewer returns done", "only after the final code-reviewer run returns"]),
+                "evidence": "Response requires a final DONE before marking the task done." if has_any(text, ["final subagent returns done", "reviewer returns done", "after the final reviewer comes back done", "only after the final subagent returns done", "final code-reviewer returns plain done", "final reviewer returns done", "only after the final code-reviewer run returns"]) else "Response does not clearly require a final DONE before marking the task done."
             },
             {
                 "text": "Does not ignore findings just because earlier stages already returned `DONE`.",
@@ -224,15 +224,58 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             },
         ]
 
+    if eval_name == "code-reviewer-handoff-includes-uncommitted-files":
+        return [
+            {
+                "text": "Says the manager should dispatch the code-reviewer now rather than update tracking.",
+                "passed": has_any(text, ["dispatch the code-reviewer", "send the code-reviewer", "run the code-reviewer", "launch the code-reviewer", "code-reviewer-prompt.md"]) and has_any(text, ["do not update tracking yet", "before updating tracking", "rather than update tracking", "wait for the reviewer to return done before updating tracking"]),
+                "evidence": "Response routes the next step to code-reviewer before tracking." if has_any(text, ["dispatch the code-reviewer", "send the code-reviewer", "run the code-reviewer", "launch the code-reviewer", "code-reviewer-prompt.md"]) and has_any(text, ["do not update tracking yet", "before updating tracking", "rather than update tracking", "wait for the reviewer to return done before updating tracking"]) else "Response does not clearly send the work to code-reviewer before tracking."
+            },
+            {
+                "text": "Includes the touched files and current verification context in the code-reviewer handoff.",
+                "passed": has_any(text, ["touched files", "files they touched", "files changed"]) and has_any(text, ["current verification context", "verification context", "validation context", "verification results"]),
+                "evidence": "Response includes touched files and verification context in the review handoff." if has_any(text, ["touched files", "files they touched", "files changed"]) and has_any(text, ["current verification context", "verification context", "validation context", "verification results"]) else "Response does not clearly include touched files plus verification context."
+            },
+            {
+                "text": "Includes all remaining uncommitted files from `git status --porcelain` in the handoff.",
+                "passed": has_any(text, ["uncommitted files", "git status --porcelain", "remaining uncommitted files"]),
+                "evidence": "Response includes uncommitted-file context from git status." if has_any(text, ["uncommitted files", "git status --porcelain", "remaining uncommitted files"]) else "Response does not clearly include the uncommitted-file set."
+            },
+            {
+                "text": "Excludes deleted files and `.gitignore` files from that uncommitted-file set.",
+                "passed": (has_any(text, ["excluding deleted files", "exclude deleted files", "without deleted files"]) or has_any(text, ["— deleted", "- deleted", "scratch.tmp"])) and (has_any(text, ["excluding .gitignore files", "exclude .gitignore files", "without .gitignore files"]) or has_any(text, [".gitignore file", ".gitignore —"])),
+                "evidence": "Response excludes deleted and .gitignore files from the extra uncommitted-file set." if (has_any(text, ["excluding deleted files", "exclude deleted files", "without deleted files"]) or has_any(text, ["— deleted", "- deleted", "scratch.tmp"])) and (has_any(text, ["excluding .gitignore files", "exclude .gitignore files", "without .gitignore files"]) or has_any(text, [".gitignore file", ".gitignore —"])) else "Response does not clearly exclude deleted and .gitignore files."
+            },
+        ]
+
+    if eval_name == "final-done-updates-tracking-without-commit":
+        return [
+            {
+                "text": "Updates the plan and todo tracker immediately.",
+                "passed": has_any(text, ["update the plan and todo tracker", "update plan and todo tracker", "plan and todo tracker immediately", "tracker/plan/todo tracking", "plan/todo tracker"]),
+                "evidence": "Response updates the plan and todo tracker." if has_any(text, ["update the plan and todo tracker", "update plan and todo tracker", "plan and todo tracker immediately", "tracker/plan/todo tracking", "plan/todo tracker"]) else "Response does not clearly update both the plan and todo tracker."
+            },
+            {
+                "text": "Records the verification actually performed.",
+                "passed": has_any(text, ["record the verification actually performed", "record the verification performed", "record what verification was performed"]),
+                "evidence": "Response records the performed verification." if has_any(text, ["record the verification actually performed", "record the verification performed", "record what verification was performed"]) else "Response does not clearly record the performed verification."
+            },
+            {
+                "text": "Marks the task done only now that the final reviewer returned `DONE`.",
+                "passed": has_any(text, ["final reviewer returned done", "now that the final reviewer returned done", "only now", "mark the task done", "after the final code-reviewer returns plain", "after the final `code-reviewer` returns plain"]),
+                "evidence": "Response marks the task done at the final DONE point." if has_any(text, ["final reviewer returned done", "now that the final reviewer returned done", "only now", "mark the task done", "after the final code-reviewer returns plain", "after the final `code-reviewer` returns plain"]) else "Response does not clearly tie task completion to the final reviewer DONE."
+            },
+            {
+                "text": "Says the manager must not commit and should leave the changes uncommitted.",
+                "passed": has_any(text, ["never commit", "must not commit", "do not commit", "leave the changes uncommitted", "all changes are uncommitted"]),
+                "evidence": "Response keeps commit ownership with the human." if has_any(text, ["never commit", "must not commit", "do not commit", "leave the changes uncommitted", "all changes are uncommitted"]) else "Response does not clearly forbid the manager from committing."
+            },
+        ]
+
     raise ValueError(f"Unknown eval name: {eval_name}")
 
 
-def main() -> int:
-    if len(sys.argv) != 2:
-        print("Usage: grade_benchmark.py <run-dir>", file=sys.stderr)
-        return 2
-
-    run_dir = Path(sys.argv[1]).resolve()
+def write_grading(run_dir: Path) -> None:
     metadata_path = run_dir.parent.parent / "eval_metadata.json"
     response_path = run_dir / "outputs" / "response.md"
 
@@ -278,6 +321,39 @@ def main() -> int:
     }
 
     (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
+
+
+def iter_run_dirs(path: Path) -> list[Path]:
+    if (path / "outputs" / "response.md").exists():
+        return [path]
+
+    eval_dirs = sorted(path.glob("eval-*"))
+    if not eval_dirs:
+        return []
+
+    run_dirs: list[Path] = []
+    for eval_dir in eval_dirs:
+        for run_dir in sorted(eval_dir.glob("*/run-*")):
+            if (run_dir / "outputs" / "response.md").exists():
+                run_dirs.append(run_dir)
+    return run_dirs
+
+
+def main() -> int:
+    if len(sys.argv) != 2:
+        print("Usage: grade_benchmark.py <run-dir-or-iteration-dir>", file=sys.stderr)
+        return 2
+
+    target = Path(sys.argv[1]).resolve()
+    run_dirs = iter_run_dirs(target)
+    if not run_dirs:
+        print(f"No benchmark run directories found under {target}", file=sys.stderr)
+        return 2
+
+    for run_dir in run_dirs:
+        write_grading(run_dir)
+        print(f"Graded {run_dir}")
+
     return 0
 
 

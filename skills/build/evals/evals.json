@@ -144,6 +144,42 @@
         "Requires the final subagent to return `DONE` before marking the task done.",
         "Does not ignore findings just because earlier stages already returned `DONE`."
       ]
+    },
+    {
+      "id": 8,
+      "prompt": "The implementer returned `DONE`, the code-simplifier also returned `DONE`, and `git status --porcelain` now shows `M skills/build/SKILL.md`, ` M skills/build/implementer-prompt.md`, `?? notes.txt`, `D scratch.tmp`, and `?? .gitignore`. Using the build workflow, what should the manager send to the code-reviewer before tracking is updated?",
+      "expected_output": "A manager response that dispatches the code-reviewer with touched files, current verification context, and the remaining uncommitted files from `git status --porcelain`, while excluding deleted files and `.gitignore` files.",
+      "files": [],
+      "expectations": [
+        "Says the manager should dispatch the code-reviewer now rather than update tracking.",
+        "Includes the touched files and current verification context in the code-reviewer handoff.",
+        "Includes all remaining uncommitted files from `git status --porcelain` in the handoff.",
+        "Excludes deleted files and `.gitignore` files from that uncommitted-file set."
+      ],
+      "assertions": [
+        "Says the manager should dispatch the code-reviewer now rather than update tracking.",
+        "Includes the touched files and current verification context in the code-reviewer handoff.",
+        "Includes all remaining uncommitted files from `git status --porcelain` in the handoff.",
+        "Excludes deleted files and `.gitignore` files from that uncommitted-file set."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "The code-reviewer has now returned plain `DONE`. Using the build workflow, what should the manager update now, and should the manager create a commit?",
+      "expected_output": "A manager response that updates the plan and todo tracker, records the verification performed, marks the task done, and leaves the changes uncommitted.",
+      "files": [],
+      "expectations": [
+        "Updates the plan and todo tracker immediately.",
+        "Records the verification actually performed.",
+        "Marks the task done only now that the final reviewer returned `DONE`.",
+        "Says the manager must not commit and should leave the changes uncommitted."
+      ],
+      "assertions": [
+        "Updates the plan and todo tracker immediately.",
+        "Records the verification actually performed.",
+        "Marks the task done only now that the final reviewer returned `DONE`.",
+        "Says the manager must not commit and should leave the changes uncommitted."
+      ]
     }
   ]
 }
