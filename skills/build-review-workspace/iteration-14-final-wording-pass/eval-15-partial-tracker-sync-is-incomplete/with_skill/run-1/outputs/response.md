@@ -1,0 +1,3 @@
+**No.** That is not acceptable in the build-review workflow. A partial tracker sync is incomplete work: if `todo.md` and **SQL todo state** say Task 9 is `done`, `.agents/scratchpad/auth/plan.md` cannot stay `in progress` to be fixed after review.
+
+**Before dispatching the next subagent,** the manager must run the task-complete tracking sync immediately: update `plan.md`, keep Task 9’s status aligned across `plan.md`, `todo.md`, and SQL todo state, record the verification actually performed, and confirm all active trackers agree. Only then can the manager dispatch the next implementer or, if the wave is fully done, move on to code-simplifier.

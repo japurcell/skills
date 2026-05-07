@@ -44,6 +44,25 @@ def has_all(text: str, phrases: list[str]) -> bool:
     return all(phrase in text for phrase in phrases)
 
 
+def mentions_plan_md(text: str) -> bool:
+    return has_any(text, ["plan.md", "plan file"])
+
+
+def mentions_todo_md(text: str) -> bool:
+    return has_any(text, ["todo.md", "todo file"])
+
+
+def mentions_sql_todos(text: str) -> bool:
+    return has_any(text, ["sql todo", "sql todos", "todos table", "sql tracker", "sql row", "sql status"])
+
+
+def mentions_all_active_trackers(text: str) -> bool:
+    return (
+        has_any(text, ["all active trackers", "every active tracker", "all three trackers", "same task across all trackers"])
+        or (mentions_plan_md(text) and mentions_todo_md(text) and mentions_sql_todos(text))
+    )
+
+
 def word_count(text: str) -> int:
     return len(re.findall(r"\b\w+\b", text))
 
@@ -267,10 +286,12 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
     if eval_name == "done-dispatches-code-simplifier":
         return [
             expectation(
-                "Runs the per-task tracking update for the finished task immediately.",
-                has_any(text, ["update the plan and todo tracker", "update tracking for task a", "record the verification", "mark task a done", "task-complete tracking update"]),
-                "Response updates tracking immediately for the finished task.",
-                "Response does not clearly perform the per-task tracking update when the implementer returns DONE.",
+                "Updates the finished task across `plan.md`, `todo.md`, and SQL todo state immediately before moving on.",
+                mentions_all_active_trackers(text)
+                and has_any(text, ["immediately", "right away", "before moving on", "before the next dispatch", "before dispatching task b"])
+                and has_any(text, ["sync", "update", "mark task a done", "task-complete tracking sync", "same status"]),
+                "Response syncs the finished task across the active trackers before moving on.",
+                "Response does not clearly sync Task A across `plan.md`, `todo.md`, and SQL todo state before moving on.",
             ),
             expectation(
                 "Keeps the manager moving to the remaining implementer work in the current wave.",
@@ -340,10 +361,11 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
                 "Response does not clearly treat correctness/scope concerns as unresolved work.",
             ),
             expectation(
-                "Reopens any affected task that was already marked done before re-dispatching the fix.",
-                has_any(text, ["reopen the task", "reopen any affected done task", "reopen the affected task", "reopen the done task"]),
-                "Response reopens the affected done task before routing the fix.",
-                "Response does not clearly reopen an affected done task before re-dispatch.",
+                "Reopens any affected task across `plan.md`, `todo.md`, and SQL todo state before re-dispatching the fix.",
+                has_any(text, ["reopen the task", "reopen any affected done task", "reopen the affected task", "reopen the done task"])
+                and mentions_all_active_trackers(text),
+                "Response reopens the affected task across the active trackers before routing the fix.",
+                "Response does not clearly reopen the affected task across `plan.md`, `todo.md`, and SQL todo state before re-dispatch.",
             ),
             expectation(
                 "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
@@ -418,10 +440,11 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
     if eval_name == "final-done-updates-tracking-without-commit":
         return [
             expectation(
-                "Syncs the plan and todo tracker to the final reviewed state.",
-                has_any(text, ["final reviewed state", "sync the plan and todo tracker", "sync tracking to the final reviewed state", "final tracking sync", "sync the tracker to the final state"]),
-                "Response syncs tracking to the final reviewed state.",
-                "Response does not clearly sync the plan and todo tracker to the final reviewed state.",
+                "Syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
+                mentions_all_active_trackers(text)
+                and has_any(text, ["final reviewed state", "same final reviewed state", "sync the final state", "final tracking sync", "trackers agree again"]),
+                "Response syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
+                "Response does not clearly sync `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
             ),
             expectation(
                 "Records any additional verification actually performed during review.",
@@ -440,6 +463,39 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
                 has_any(text, ["leave the working tree dirty", "leave the changes uncommitted", "leave the changes local", "keep it local", "leave it dirty and local", "uncommitted and local"]),
                 "Response leaves the work dirty and local.",
                 "Response does not clearly say to leave the work uncommitted and local.",
+            ),
+        ]
+
+    if eval_name == "partial-tracker-sync-is-incomplete":
+        return [
+            expectation(
+                "Rejects leaving `plan.md` stale while `todo.md` and SQL already show the task done.",
+                mentions_plan_md(text)
+                and mentions_todo_md(text)
+                and mentions_sql_todos(text)
+                and has_any(text, ["not acceptable", "not okay", "cannot leave", "must not leave", "plan.md cannot stay stale", "update plan.md now", "fix plan.md now"]),
+                "Response rejects leaving `plan.md` behind the other trackers.",
+                "Response does not clearly reject leaving `plan.md` stale while `todo.md` and SQL already show `done`.",
+            ),
+            expectation(
+                "Requires the same task status across `plan.md`, `todo.md`, and SQL todo state before the next dispatch.",
+                mentions_all_active_trackers(text)
+                and has_any(text, ["same status", "keep them in sync", "sync them together", "all say done", "trackers agree", "all active trackers agree"])
+                and has_any(text, ["before the next dispatch", "before dispatching the next subagent", "before moving on", "before continuing"]),
+                "Response requires the trackers to agree before the next dispatch.",
+                "Response does not clearly require the same task status across the active trackers before the next dispatch.",
+            ),
+            expectation(
+                "Treats tracker disagreement as incomplete work instead of cleanup for later.",
+                has_any(text, ["incomplete work", "not cleanup for later", "cannot catch up later", "fix the mismatch first", "tracker disagreement is incomplete", "stale tracking is incomplete work"]),
+                "Response treats tracker disagreement as incomplete work.",
+                "Response does not clearly treat tracker disagreement as incomplete work instead of later cleanup.",
+            ),
+            expectation(
+                "Does not bless `todo.md` or SQL as the only tracker that matters.",
+                not has_any(text, ["todo.md is enough", "todo.md is the real tracker", "sql is enough", "sql is the source of truth so plan.md can wait", "plan.md can wait", "only sql matters"]),
+                "Response does not bless a single tracker as canonical while the others drift.",
+                "Response blesses `todo.md` or SQL as the only tracker that matters.",
             ),
         ]
 

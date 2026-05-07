@@ -1,0 +1,45 @@
+● I’ll read the requested build-review skill file and use that workflow to
+  answer the scenario.
+
+● Read SKILL.md
+  │ skills/build-review/SKILL.md
+  └ 1 line read
+
+● skill(addy-using-agent-skills)
+
+● skill(addy-context-engineering)
+
+● The first read was truncated, so I’m pulling the build-review skill in
+  chunks now, then I’ll answer from that workflow only.
+
+● Read SKILL.md
+  │ skills/build-review/SKILL.md
+  └ L1:200 (118 lines read)
+
+● Read SKILL.md
+  └ skills/build-review/SKILL.md
+
+● Read SKILL.md
+  └ skills/build-review/SKILL.md
+
+● I need the remainder of the same skill file to answer precisely, then I’ll
+  stop using tools.
+
+● Read SKILL.md
+  │ skills/build-review/SKILL.md
+  └ L119:220 (21 lines read)
+
+● Next: treat the simplifier concern as unresolved work, not as a finished
+  review pass.
+
+  Because the extracted helper may have widened scope and hidden a behavior
+  change, the manager should reopen the affected task immediately in all
+  active trackers together (.agents/scratchpad/auth/plan.md,
+  .agents/scratchpad/auth/todo.md, and SQL todos), then re-dispatch the
+  subagent that should own the fix for that concern. Do not proceed to
+  code-review yet.
+
+  After that fix returns DONE, rerun the affected simplifier partition,
+  re-close the task across all trackers only when that downstream pass is
+  clean, and only then continue to code-review.
+

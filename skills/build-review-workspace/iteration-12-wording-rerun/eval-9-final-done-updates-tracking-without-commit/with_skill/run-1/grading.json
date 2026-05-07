@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
+      "passed": true,
+      "evidence": "Response syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state."
+    },
+    {
+      "text": "Records any additional verification actually performed during review.",
+      "passed": true,
+      "evidence": "Response records review-time verification."
+    },
+    {
+      "text": "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+      "passed": false,
+      "evidence": "Response does not clearly forbid creating or publishing a commit, PR, or tag."
+    },
+    {
+      "text": "Leaves the changes uncommitted and local.",
+      "passed": false,
+      "evidence": "Response does not clearly say to leave the work uncommitted and local."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 521,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 45.758,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 45.758
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

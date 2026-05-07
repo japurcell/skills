@@ -1,0 +1,26 @@
+● I’m reading the specified build-review skill file and will answer from that
+  workflow only.
+
+● Read SKILL.md
+  │ skills/build-review-workspace/skill-snapshot-iteration-10/SKILL.md
+  └ 129 lines read
+
+● skill(addy-context-engineering)
+
+● skill(addy-using-agent-skills)
+
+● Reopen the affected task immediately. A code-simplifier DONE_WITH_CONCERNS
+  about a helper widening scope and possibly hiding a behavior change is
+  unresolved scope/correctness work, so the manager should:
+
+   1. Mark the affected task back out of done in
+  .agents/scratchpad/auth/plan.md, .agents/scratchpad/auth/todo.md, and the
+  SQL todos table.
+   2. Re-dispatch the subagent that should own the fix, passing the
+  simplifier’s concern and the current verification context.
+   3. Do not proceed to code-review yet.
+
+  Only after that concern is resolved, the task is marked done again, and the
+  affected simplifier pass returns clean DONE should the manager continue to
+  code-review.
+

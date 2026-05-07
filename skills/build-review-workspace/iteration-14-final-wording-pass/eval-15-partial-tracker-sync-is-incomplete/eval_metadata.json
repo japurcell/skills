@@ -1,0 +1,11 @@
+{
+  "eval_id": 15,
+  "eval_name": "partial-tracker-sync-is-incomplete",
+  "prompt": "`todo.md` and the SQL `todos` table already mark Task 9 `done`, but `.agents/scratchpad/auth/plan.md` still shows the task in progress because the manager plans to catch it up after the review wave. Using the build workflow, is that acceptable, and what must happen before the manager dispatches the next subagent?",
+  "assertions": [
+    "Rejects leaving `plan.md` stale while `todo.md` and SQL already show the task done.",
+    "Requires the same task status across `plan.md`, `todo.md`, and SQL todo state before the next dispatch.",
+    "Treats tracker disagreement as incomplete work instead of cleanup for later.",
+    "Does not bless `todo.md` or SQL as the only tracker that matters."
+  ]
+}

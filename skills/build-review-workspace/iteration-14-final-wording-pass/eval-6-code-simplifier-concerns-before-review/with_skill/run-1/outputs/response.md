@@ -1,0 +1,3 @@
+**Next step:** read the code-simplifier’s concerns **before continuing to code-reviewer**.
+
+Because the concern is about possible widened scope and hidden behavior change, treat it as unresolved correctness/scope risk: **reopen the affected task immediately** in all three active trackers — `.agents/scratchpad/auth/plan.md`, `.agents/scratchpad/auth/todo.md`, and **SQL todo state** — then re-dispatch the owning implementer to investigate/fix that helper. **Do not proceed to code-reviewer yet.** Re-close the task everywhere only after the fix is in and the affected simplifier pass returns `DONE` again.

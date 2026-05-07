@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Rejects leaving `plan.md` stale while `todo.md` and SQL already show the task done.",
+      "passed": true,
+      "evidence": "Response rejects leaving `plan.md` behind the other trackers."
+    },
+    {
+      "text": "Requires the same task status across `plan.md`, `todo.md`, and SQL todo state before the next dispatch.",
+      "passed": true,
+      "evidence": "Response requires the trackers to agree before the next dispatch."
+    },
+    {
+      "text": "Treats tracker disagreement as incomplete work instead of cleanup for later.",
+      "passed": true,
+      "evidence": "Response treats tracker disagreement as incomplete work."
+    },
+    {
+      "text": "Does not bless `todo.md` or SQL as the only tracker that matters.",
+      "passed": true,
+      "evidence": "Response does not bless a single tracker as canonical while the others drift."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 651,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 37.04,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 37.04
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

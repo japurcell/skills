@@ -1,5 +1,5 @@
 {
-  "skill_name": "build",
+  "skill_name": "build-review",
   "evals": [
     {
       "id": 0,
@@ -75,17 +75,17 @@
     },
     {
       "id": 4,
-      "prompt": "The manager is running a build wave of two ready tasks. Task A's implementer returned `DONE` with passing verification and touched four files. Task B is still part of the current wave and has not been dispatched yet. Using the build workflow, what should the manager do now, and should the code-simplifier wave start yet?",
-      "expected_output": "A manager response that updates tracking for Task A right away, keeps the wave moving to the remaining implementer work, and explicitly waits until every task in the current wave is implemented and marked done before launching code-simplifier.",
+      "prompt": "The manager is running a build wave of two ready tasks. Task A's implementer returned `DONE` with passing verification and touched four files. Task B is still part of the current wave and has not been dispatched yet. This build is tracked in `.agents/scratchpad/issues/plan.md`, `.agents/scratchpad/issues/todo.md`, and the SQL `todos` table row `api-issues-pagination`. Using the build workflow, what should the manager sync now, and should the code-simplifier wave start yet?",
+      "expected_output": "A manager response that syncs Task A across `plan.md`, `todo.md`, and SQL todo state immediately, keeps the wave moving to the remaining implementer work, and explicitly waits until every task in the current wave is implemented and marked done before launching code-simplifier.",
       "files": [],
       "expectations": [
-        "Runs the per-task tracking update for Task A immediately.",
+        "Updates Task A across `plan.md`, `todo.md`, and SQL todo state immediately before moving on.",
         "Keeps the manager moving to the remaining implementer work in the current wave.",
         "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
         "Does not send the manager back into manual simplification or discovery first."
       ],
       "assertions": [
-        "Runs the per-task tracking update for Task A immediately.",
+        "Updates Task A across `plan.md`, `todo.md`, and SQL todo state immediately before moving on.",
         "Keeps the manager moving to the remaining implementer work in the current wave.",
         "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
         "Does not send the manager back into manual simplification or discovery first."
@@ -111,20 +111,20 @@
     },
     {
       "id": 6,
-      "prompt": "Every task in the current build wave is already marked done. Then the code-simplifier returned `DONE_WITH_CONCERNS`: the change is smaller now, but one extracted helper may have widened scope and could hide a behavior change. Using the build workflow, what should the manager do next?",
-      "expected_output": "A manager response that reads the simplifier's concerns before code-reviewer, treats correctness or scope concerns as unresolved work, reopens any affected done task, routes the fix back to the right subagent, and avoids leaving tracking stale.",
+      "prompt": "Every task in the current build wave is already marked done in `.agents/scratchpad/auth/plan.md`, `.agents/scratchpad/auth/todo.md`, and the SQL `todos` table. Then the code-simplifier returned `DONE_WITH_CONCERNS`: the change is smaller now, but one extracted helper may have widened scope and could hide a behavior change. Using the build workflow, what should the manager do next?",
+      "expected_output": "A manager response that reads the simplifier's concerns before code-reviewer, treats correctness or scope concerns as unresolved work, reopens any affected done task across the active trackers, routes the fix back to the right subagent, and avoids leaving tracking stale.",
       "files": [],
       "expectations": [
         "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
         "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
-        "Reopens any affected task that was already marked done before re-dispatching the fix.",
+        "Reopens any affected task across `plan.md`, `todo.md`, and SQL todo state before re-dispatching the fix.",
         "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
         "Does not continue with stale tracking or proceed straight to code-reviewer."
       ],
       "assertions": [
         "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
         "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
-        "Reopens any affected task that was already marked done before re-dispatching the fix.",
+        "Reopens any affected task across `plan.md`, `todo.md`, and SQL todo state before re-dispatching the fix.",
         "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
         "Does not continue with stale tracking or proceed straight to code-reviewer."
       ]
@@ -167,17 +167,17 @@
     },
     {
       "id": 9,
-      "prompt": "The final code-reviewer has now returned plain `DONE`, and any task reopened during review has already been fixed and re-closed. Using the build workflow, what should the manager sync now, and should the manager create or publish anything?",
-      "expected_output": "A manager response that syncs the plan and todo tracker to the final reviewed state, records any additional verification performed during review, and leaves the work dirty and unpublished.",
+      "prompt": "The final code-reviewer has now returned plain `DONE`, and any task reopened during review has already been fixed and re-closed. The build is tracked in `.agents/scratchpad/auth/plan.md`, `.agents/scratchpad/auth/todo.md`, and the SQL `todos` table. Using the build workflow, what should the manager sync now, and should the manager create or publish anything?",
+      "expected_output": "A manager response that syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state, records any additional verification performed during review, and leaves the work dirty and unpublished.",
       "files": [],
       "expectations": [
-        "Syncs the plan and todo tracker to the final reviewed state.",
+        "Syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
         "Records any additional verification actually performed during review.",
         "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
         "Leaves the changes uncommitted and local."
       ],
       "assertions": [
-        "Syncs the plan and todo tracker to the final reviewed state.",
+        "Syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
         "Records any additional verification actually performed during review.",
         "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
         "Leaves the changes uncommitted and local."
@@ -273,6 +273,24 @@
         "Recognizes that an oversized partition should be split into smaller pieces.",
         "Keeps partition ownership with the manager and re-dispatches the review rather than reviewing inline.",
         "Avoids escalating to the human unless the plan itself is wrong."
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "`todo.md` and the SQL `todos` table already mark Task 9 `done`, but `.agents/scratchpad/auth/plan.md` still shows the task in progress because the manager plans to catch it up after the review wave. Using the build workflow, is that acceptable, and what must happen before the manager dispatches the next subagent?",
+      "expected_output": "A manager response that rejects partial tracker sync, requires the same task status across `plan.md`, `todo.md`, and SQL todo state before any further dispatch, and treats tracker disagreement as incomplete work rather than cleanup for later.",
+      "files": [],
+      "expectations": [
+        "Rejects leaving `plan.md` stale while `todo.md` and SQL already show the task done.",
+        "Requires the same task status across `plan.md`, `todo.md`, and SQL todo state before the next dispatch.",
+        "Treats tracker disagreement as incomplete work instead of cleanup for later.",
+        "Does not bless `todo.md` or SQL as the only tracker that matters."
+      ],
+      "assertions": [
+        "Rejects leaving `plan.md` stale while `todo.md` and SQL already show the task done.",
+        "Requires the same task status across `plan.md`, `todo.md`, and SQL todo state before the next dispatch.",
+        "Treats tracker disagreement as incomplete work instead of cleanup for later.",
+        "Does not bless `todo.md` or SQL as the only tracker that matters."
       ]
     }
   ]

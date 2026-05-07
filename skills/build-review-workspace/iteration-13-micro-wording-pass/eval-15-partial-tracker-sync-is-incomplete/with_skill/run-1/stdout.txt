@@ -1,0 +1,29 @@
+● Reading the referenced skill file, then I’ll answer from that workflow only.
+
+● Read SKILL.md
+  │ skills/build-review/SKILL.md
+  └ 1 line read
+
+● Read SKILL.md
+  │ skills/build-review/SKILL.md
+  └ L1:200 (117 lines read)
+
+● Read SKILL.md
+  └ skills/build-review/SKILL.md
+
+● Read SKILL.md
+  └ skills/build-review/SKILL.md
+
+● Read SKILL.md
+  │ skills/build-review/SKILL.md
+  └ L118:200 (22 lines read)
+
+● No. That is a partial tracker sync, and the build-review workflow treats it
+  as incomplete work.
+
+  Before the next dispatch, the manager must run the task-complete sync
+  immediately: update .agents/scratchpad/auth/plan.md so Task 9 matches
+  todo.md and SQL todo state, record the verification actually performed, and
+  confirm all active trackers agree. Until that happens, the manager should
+  not dispatch the next subagent.
+

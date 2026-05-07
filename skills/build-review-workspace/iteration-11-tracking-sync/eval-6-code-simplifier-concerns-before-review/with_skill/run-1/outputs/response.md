@@ -1,0 +1,3 @@
+Reopen the affected task **immediately in all active trackers** (`plan.md`, `todo.md`, and SQL `todos`) and treat the simplifier concern as unresolved work.
+
+Because this is a potential correctness/scope issue, the manager should route the helper-scope check/fix to the owning implementation subagent, update trackers in sync as status changes, and **pause code-review fanout** until that fix lands. Then rerun the affected simplifier partition; once simplifier is back to `DONE`, run reviewer on the same partition/scope, and only re-close the task across all trackers after downstream passes return clean `DONE`.

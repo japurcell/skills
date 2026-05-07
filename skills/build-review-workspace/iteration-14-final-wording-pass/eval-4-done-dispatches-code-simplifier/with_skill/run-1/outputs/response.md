@@ -1,0 +1,3 @@
+Sync **Task A** to `done` **now** across all active trackers: `.agents/scratchpad/issues/plan.md`, `.agents/scratchpad/issues/todo.md`, and the **SQL todo state** for `api-issues-pagination`. Record the verification that actually passed, then confirm those three trackers agree before moving on. After that, **dispatch the remaining Task B next**.
+
+**Do not start code-simplifier yet.** This wave still has an unfinished task, so the simplifier wave waits until **every task in the current wave** is implemented and marked done. The four touched files are only input for the later full-wave `review_scope_files` step.

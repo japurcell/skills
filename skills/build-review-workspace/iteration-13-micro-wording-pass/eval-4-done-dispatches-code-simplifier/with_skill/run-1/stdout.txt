@@ -1,0 +1,38 @@
+● I’m reading the specified build-review skill file, then I’ll answer the
+  scenario from that workflow only.
+
+● Read SKILL.md
+  │ skills/build-review/SKILL.md
+  └ 1 line read
+
+● skill(addy-context-engineering)
+
+● skill(addy-using-agent-skills)
+
+● The first read was truncated, so I’m reading the specified skill file in
+  chunks and then I’ll answer without any more tool use.
+
+● Read SKILL.md
+  │ skills/build-review/SKILL.md
+  └ L1:150 (117 lines read)
+
+● Read SKILL.md
+  └ skills/build-review/SKILL.md
+
+● Read SKILL.md
+  └ skills/build-review/SKILL.md
+
+● Read SKILL.md
+  │ skills/build-review/SKILL.md
+  └ L118:220 (22 lines read)
+
+● Sync Task A’s completion now, not the review wave: update
+  .agents/scratchpad/issues/plan.md, .agents/scratchpad/issues/todo.md, and
+  the SQL todo state row api-issues-pagination to the same done status, record
+  the verification that actually passed, and confirm all three trackers agree
+  before dispatching Task B.
+
+  Do not start code-simplifier yet. Task B is still in the current wave, so
+  downstream review waits until every task in the wave is implemented and
+  marked done. The four touched files do not trigger review_scope_files yet.
+
