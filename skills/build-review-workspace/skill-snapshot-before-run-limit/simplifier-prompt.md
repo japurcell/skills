@@ -17,7 +17,6 @@ Do **not** create, amend, rewrite, push, or otherwise publish any commit, PR, or
 ## Guardrails
 
 - Simplify exactly the provided files. Do **not** recompute, expand, or narrow the file list.
-- Treat the provided files as already gitignore-filtered. Do **not** add ignored, deleted, generated, or `.gitignore` paths to scope.
 - Preserve the implementer's accepted behavior and task scope.
 - If there is no safe simplification, say so and return `DONE`.
 - Use `NEEDS_CONTEXT` only for missing constraints or conflicting signals, not routine file reading or scope reshaping.

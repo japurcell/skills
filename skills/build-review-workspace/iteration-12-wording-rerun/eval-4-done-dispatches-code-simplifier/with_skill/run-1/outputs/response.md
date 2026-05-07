@@ -1,3 +1,0 @@
-**Sync now:** run the **task-complete sync for Task A immediately** across every active tracker: `.agents/scratchpad/issues/plan.md`, `.agents/scratchpad/issues/todo.md`, and the SQL todo entry for that same task (`api-issues-pagination` if that is Task A). Record the **passing verification actually performed** and make sure all three trackers show the **same done state** before dispatching anything else. Task B stays ready/pending until it is dispatched.
-
-**Code-simplifier:** **no, not yet.** Task B is still in the current wave, so the manager should dispatch Task B next. The four files from Task A only become part of the later full-wave `review_scope_files`; simplifier starts only after **every task in the wave** is implemented and marked done.

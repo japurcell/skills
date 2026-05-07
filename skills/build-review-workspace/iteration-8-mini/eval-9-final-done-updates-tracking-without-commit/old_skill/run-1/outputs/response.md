@@ -1,1 +1,0 @@
-Per the build SKILL.md: update the plan and todo tracker immediately — record the verification actually performed and mark the task done. Ensure tracking/docs reflect the final state and that verification checks passed. Do NOT create a commit: Commit Override Behavior forbids the manager committing changes; leave changes uncommitted for human review and manual commit.

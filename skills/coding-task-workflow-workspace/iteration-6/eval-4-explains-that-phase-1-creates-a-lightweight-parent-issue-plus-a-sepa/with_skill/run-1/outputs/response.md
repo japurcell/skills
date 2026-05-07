@@ -1,1 +1,0 @@
-Phase 1 now creates two GitHub issues: a lightweight parent issue that remains the durable top-level tracker, and a separate `phase:intake` child issue whose body follows the intake template. It does not create `00-intake.md` or any other local per-work-item markdown under `.coding-workflow/work/<slug>/`; Intake state lives in GitHub.

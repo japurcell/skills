@@ -362,7 +362,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             ),
             expectation(
                 "Reopens any affected task across `plan.md`, `todo.md`, and SQL todo state before re-dispatching the fix.",
-                has_any(text, ["reopen the task", "reopen any affected done task", "reopen the affected task", "reopen the affected done task", "reopen the done task"])
+                has_any(text, ["reopen the task", "reopen any affected done task", "reopen the affected task", "reopen the done task"])
                 and mentions_all_active_trackers(text),
                 "Response reopens the affected task across the active trackers before routing the fix.",
                 "Response does not clearly reopen the affected task across `plan.md`, `todo.md`, and SQL todo state before re-dispatch.",
@@ -385,55 +385,27 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             expectation(
                 "Says the manager must address code-review findings before ending the wave.",
-                has_any(text, ["address findings before ending the wave", "before ending the build wave", "before finishing the wave", "before the final tracking sync", "before closing the wave", "before ending the wave"])
-                or (has_any(text, ["done_with_findings", "findings"]) and has_any(text, ["fix", "fixes", "correctness issues"])),
+                has_any(text, ["address findings before ending the wave", "before ending the build wave", "before finishing the wave", "before the final tracking sync", "before closing the wave", "before ending the wave"]),
                 "Response blocks wave completion on reviewer findings.",
                 "Response does not clearly block wave completion on reviewer findings.",
             ),
             expectation(
                 "Reopens any affected task that was already marked done before routing the fix.",
-                has_any(text, ["reopen the task", "reopen any affected done task", "reopen the affected task", "reopen the affected done task", "reopen each affected done task", "reopen the done task", "reopened the affected done tasks"]),
+                has_any(text, ["reopen the task", "reopen any affected done task", "reopen the affected task", "reopen the done task", "reopened the affected done tasks"]),
                 "Response reopens the affected done task before routing the fix.",
                 "Response does not clearly reopen an affected done task before routing the fix.",
             ),
             expectation(
                 "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
-                has_any(text, ["re-dispatch", "dispatch the subagent that should own the fix", "send it back to the implementer", "send the two correctness fixes back to the appropriate implementer", "route the fix to the owning subagent", "route the fixes to the owning subagent", "appropriate owning subagent"]) and not has_any(text, ["manager should fix it directly", "repair it inline yourself"]),
+                has_any(text, ["re-dispatch", "dispatch the subagent that should own the fix", "send it back to the implementer", "send it back to the code-simplifier", "send the two correctness fixes back to the appropriate implementer", "routed the affected files back through simplifier/reviewer"]) and not has_any(text, ["manager should fix it directly", "repair it inline yourself"]),
                 "Response routes review findings to an owning subagent.",
                 "Response does not clearly route review findings to an owning subagent.",
             ),
             expectation(
-                "Does not run another code-simplifier or code-reviewer wave after the fixes.",
-                has_any(text, [
-                    "do not rerun code-simplifier",
-                    "do not rerun code-reviewer",
-                    "should not rerun code-simplifier",
-                    "should not rerun code-reviewer",
-                    "do not run another code-simplifier",
-                    "do not run another code-reviewer",
-                    "no second code-simplifier",
-                    "no second code-reviewer",
-                    "no second simplifier",
-                    "no second reviewer",
-                    "single review wave has already been spent",
-                ]) and not has_any(text, [
-                    "rerun the affected code-simplifier",
-                    "rerun affected code-simplifier",
-                    "rerun the affected reviewer",
-                    "rerun affected reviewer",
-                    "rerun the affected code-reviewer",
-                    "rerun affected code-reviewer",
-                    "run another code-reviewer wave",
-                    "run a second reviewer wave",
-                ]),
-                "Response avoids second simplifier/reviewer waves after reviewer findings.",
-                "Response reruns or fails to forbid rerunning downstream waves after reviewer findings.",
-            ),
-            expectation(
-                "Says the final reviewed sync does not happen yet because post-review fixes are not reviewed in this invocation.",
-                has_any(text, ["the final reviewed sync does not happen yet", "final reviewed sync does not happen yet"]) and has_any(text, ["not reviewed", "unreviewed", "post-review fixes", "fresh quality gate", "another build-review wave"]),
-                "Response handoffs post-review fixes as not final-reviewed.",
-                "Response does not clearly say the final reviewed sync is withheld for unreviewed post-review fixes.",
+                "Re-syncs tracking only after the final reviewer comes back `DONE`.",
+                has_any(text, ["after every reviewer returns done", "after both reviewers return done", "after the final reviewer returns done", "only after the final code-reviewer returns done", "wait for every reviewer to return done", "only re-closed after the reviewer returns done", "the final reviewed sync does not happen yet"]),
+                "Response waits for the reviewer wave to reach DONE before the final tracking sync.",
+                "Response does not clearly wait for reviewer DONE before the final tracking sync.",
             ),
         ]
 
@@ -441,20 +413,15 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             expectation(
                 "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
-                has_any(text, ["deduped review scope", "dedupe the review scope", "review_scope_files", "single review scope", "one review scope", "review scope"])
-                and (has_any(text, ["touched files", "files the implementer touched", "files changed"]) or has_all(text, ["skills/build-review/skill.md", "skills/build-review/implementer-prompt.md"]))
-                and has_any(text, ["uncommitted files", "git status --porcelain", "notes.txt"]),
+                has_any(text, ["deduped review scope", "dedupe the review scope", "review_scope_files", "single review scope", "one review scope", "review scope"]) and has_any(text, ["touched files", "files the implementer touched", "files changed"]) and has_any(text, ["uncommitted files", "git status --porcelain", "notes.txt"]),
                 "Response builds one manager-owned review scope from touched plus filtered uncommitted files.",
                 "Response does not clearly build one deduped review scope from touched and filtered uncommitted files.",
             ),
             expectation(
-                "Excludes deleted files, `.gitignore`, and gitignored files from that deduped review scope.",
-                has_any(text, ["exclude deleted files", "excluding deleted files", "scratch.tmp", "deleted"])
-                and has_any(text, ["exclude .gitignore", "excluding .gitignore", ".gitignore"])
-                and has_any(text, ["git check-ignore", "gitignored", "ignored by git", "dist/generated-report.json", "dist/"])
-                and has_any(text, ["exclude", "excluding", "filter out", "remove", "not include"]),
-                "Response excludes deleted files, `.gitignore`, and gitignored paths from the review scope.",
-                "Response does not clearly exclude deleted files, `.gitignore`, and gitignored paths from the review scope.",
+                "Excludes deleted files and `.gitignore` files from that deduped review scope.",
+                has_any(text, ["exclude deleted files", "excluding deleted files", "scratch.tmp", "deleted"]) and has_any(text, ["exclude .gitignore", "excluding .gitignore", ".gitignore"]),
+                "Response excludes deleted files and `.gitignore` from the review scope.",
+                "Response does not clearly exclude deleted files and `.gitignore` from the review scope.",
             ),
             expectation(
                 "Uses one code-reviewer because the deduped review scope has `<=5` files.",
@@ -464,9 +431,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             ),
             expectation(
                 "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync.",
-                has_any(text, ["review scope", "review_scope_files", "single file list", "manager-authored scope"])
-                and has_any(text, ["current verification context", "verification context", "validation context", "verification results", "wave tasks are already done", "code-simplifier wave is complete"])
-                and has_any(text, ["before the final tracking sync", "before syncing tracking", "wait for the reviewer to return done before the final tracking sync", "final tracking sync only happens after"]),
+                has_any(text, ["review scope", "review_scope_files", "single file list"]) and has_any(text, ["current verification context", "verification context", "validation context", "verification results"]) and has_any(text, ["before the final tracking sync", "before syncing tracking", "wait for the reviewer to return done before the final tracking sync"]),
                 "Response passes review scope plus verification context forward before the final tracking sync.",
                 "Response does not clearly pass the deduped review scope and verification context forward before the final tracking sync.",
             ),
@@ -477,7 +442,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             expectation(
                 "Syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
                 mentions_all_active_trackers(text)
-                and has_any(text, ["final reviewed state", "same final reviewed state", "final reviewed status", "same final reviewed status", "sync the final state", "final tracking sync", "trackers agree again"]),
+                and has_any(text, ["final reviewed state", "same final reviewed state", "sync the final state", "final tracking sync", "trackers agree again"]),
                 "Response syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
                 "Response does not clearly sync `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
             ),
@@ -522,7 +487,7 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             ),
             expectation(
                 "Treats tracker disagreement as incomplete work instead of cleanup for later.",
-                has_any(text, ["incomplete work", "not cleanup for later", "cannot catch up later", "fix the mismatch first", "tracker disagreement is incomplete", "stale tracking is incomplete work", "not acceptable"]),
+                has_any(text, ["incomplete work", "not cleanup for later", "cannot catch up later", "fix the mismatch first", "tracker disagreement is incomplete", "stale tracking is incomplete work"]),
                 "Response treats tracker disagreement as incomplete work.",
                 "Response does not clearly treat tracker disagreement as incomplete work instead of later cleanup.",
             ),

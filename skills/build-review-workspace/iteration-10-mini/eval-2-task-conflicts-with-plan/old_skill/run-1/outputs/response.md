@@ -1,1 +1,0 @@
-Do not dispatch an implementer yet. First resolve the conflict between the plan and the task text; the task is ambiguous/conflicting, so the manager should provide the missing/conflicting context and escalate or clarify before assigning work.

@@ -1,3 +1,0 @@
-**Stop the wave before code review.** A `DONE_WITH_CONCERNS` from code-simplifier that says an extracted helper may have widened scope and hidden a behavior change is an unresolved **correctness/scope concern**, so the manager should **reopen the affected done task immediately** in `.agents/scratchpad/auth/plan.md`, `.agents/scratchpad/auth/todo.md`, and the SQL `todos` table, because the current tracking is now stale.
-
-Then **re-dispatch the appropriate implementer** to inspect and fix or justify that helper change. After that fix returns `DONE`, re-close the task in tracking, run code-simplifier again for the affected partition, and **only proceed to code-reviewer once every simplifier returns `DONE` with no unresolved concerns**.

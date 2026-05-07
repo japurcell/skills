@@ -1,1 +1,0 @@
-Read the concerns before any downstream step or tracking update. If they indicate a correctness or scope problem, address that first—usually by re-dispatching the implementer—and do not update tracking yet.

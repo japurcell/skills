@@ -15,7 +15,6 @@ Do **not** create, amend, rewrite, push, or otherwise publish any commit, PR, or
 ## Guardrails
 
 - Review exactly the files in Context. Do **not** recompute, expand, or narrow the file list.
-- Treat the provided files as already gitignore-filtered. Do **not** add ignored, deleted, generated, or `.gitignore` paths to scope.
 - If the provided scope is missing required context, return `NEEDS_CONTEXT` instead of silently choosing a different scope.
 - Do not fix the code in this pass; review it.
 

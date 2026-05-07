@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "Says the manager must address code-review findings before ending the wave.",
+      "passed": true,
+      "evidence": "Response blocks wave completion on reviewer findings."
+    },
+    {
+      "text": "Reopens any affected task that was already marked done before routing the fix.",
+      "passed": true,
+      "evidence": "Response reopens the affected done task before routing the fix."
+    },
+    {
+      "text": "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+      "passed": false,
+      "evidence": "Response does not clearly route review findings to an owning subagent."
+    },
+    {
+      "text": "Does not run another code-simplifier or code-reviewer wave after the fixes.",
+      "passed": false,
+      "evidence": "Response reruns or fails to forbid rerunning downstream waves after reviewer findings."
+    },
+    {
+      "text": "Says the final reviewed sync does not happen yet because post-review fixes are not reviewed in this invocation.",
+      "passed": false,
+      "evidence": "Response does not clearly say the final reviewed sync is withheld for unreviewed post-review fixes."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.4
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 693,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 14.205,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 14.205
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

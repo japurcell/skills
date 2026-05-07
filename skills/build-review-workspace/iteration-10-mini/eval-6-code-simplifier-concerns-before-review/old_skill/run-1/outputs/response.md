@@ -1,1 +1,0 @@
-Read the code-simplifier concerns first. Because the concern suggests a possible behavior change in the extracted helper, treat it as unresolved work: reopen any affected done task, re-dispatch the implementer to address the scope/behavior risk, and do not update tracking or move to code-review until the fix is re-implemented and re-validated.

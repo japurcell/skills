@@ -1,9 +1,0 @@
-Cannot open directory /home/adam/.aspnet/dev-certs/trust:/etc/ssl/certs to load OpenSSL certificates.
-! Third-party MCP servers are disabled by your organization's Copilot policy.
-  Only built-in servers are available.
-
-
-Changes   +0 -0
-Requests  1 Premium (1m 12s)
-Tokens    ↑ 42.8k • ↓ 4.1k • 39.6k (cached) • 3.9k (reasoning)
-Session exported to: /home/adam/dev/personal/skills/skills/build-review-workspace/iteration-14-final-wording-pass/eval-15-partial-tracker-sync-is-incomplete/old_skill/run-1/transcript.md

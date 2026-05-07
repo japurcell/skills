@@ -1,0 +1,12 @@
+{
+  "eval_id": 7,
+  "eval_name": "code-review-findings-block-tracking",
+  "prompt": "Every task in the current build wave was already marked done after implementation. Then the code-reviewer returned `DONE_WITH_FINDINGS`: two correctness issues remain in files already touched. Using the build workflow, what should the manager do next, and what happens to tracking?",
+  "assertions": [
+    "Says the manager must address code-review findings before ending the wave.",
+    "Reopens any affected task that was already marked done before routing the fix.",
+    "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+    "Does not run another code-simplifier or code-reviewer wave after the fixes.",
+    "Says the final reviewed sync does not happen yet because post-review fixes are not reviewed in this invocation."
+  ]
+}

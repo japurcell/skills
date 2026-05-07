@@ -1,3 +1,0 @@
-**Next step:** **do not proceed to code-reviewer yet.** Per the workflow: **“read the code-simplifier’s concerns before continuing to code-reviewer.”**
-
-Because this concern is about **scope/correctness** (the extracted helper may hide a behavior change), the manager should **immediately reopen the affected task across all active trackers together** — `.agents/scratchpad/auth/plan.md`, `.agents/scratchpad/auth/todo.md`, and **SQL todo state** — then **re-dispatch the appropriate subagent, usually the implementer, to investigate/fix that helper change**. Re-close the task everywhere only after the fix is in and the affected simplifier pass returns `DONE`; only then resume code-review.

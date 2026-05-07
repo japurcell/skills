@@ -1,3 +1,0 @@
-Sync **Task A** to a complete task-level state in all active trackers **right now**: update `.agents/scratchpad/issues/plan.md`, `.agents/scratchpad/issues/todo.md`, and the SQL `todos` entry (`api-issues-pagination`, if that is Task A’s ID) to `done`, and record the verification that was actually run. Ensure those three trackers agree before moving on.
-
-**Do not start the code-simplifier wave yet.** Task B is still unfinished (not even dispatched), so the next step is dispatch Task B’s implementer; simplifier/reviewer only begin after *every* task in the current wave is implemented and marked done.

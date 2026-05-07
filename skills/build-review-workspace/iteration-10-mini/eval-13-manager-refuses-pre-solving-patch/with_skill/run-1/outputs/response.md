@@ -1,1 +1,0 @@
-I can’t read `src/auth/login.ts` and draft the patch for you. In the build workflow, the manager should hand this to an implementer with a lean prompt: read the file, write a failing test, make the smallest fix, validate, and report back. I’ll coordinate once there’s a concrete task result.

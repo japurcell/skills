@@ -1,7 +1,0 @@
-**The manager should dispatch immediately, not “prepare” the solution first.** In this build snapshot, your task is already clear enough to run: the acceptance criteria exist, validation commands are known, and the plan already names likely files.
-
-1. **Before the implementer runs:** invoke `addy-context-engineering` and `subagent-model-selection`, confirm there is no ambiguity, plan conflict, or needed tradeoff decision, then dispatch. The manager should **not** pre-read large file sets, explore the repo, sketch patches, or do first-pass design.
-2. **What belongs in the handoff:** keep it lean and only pass already-known context: the task text (`add pagination to GET /api/issues`), the success criteria, known constraints, known validation commands, and only the file hints already named in the plan. Relevant repo-rule constraints are fine too. Do **not** add speculative implementation guidance or manager-generated code analysis.
-3. **What stays with the implementer:** repo discovery, pattern lookup, reading the real files/tests, deciding how pagination fits existing conventions, first-pass design, code changes, and verification. The workflow is explicit that ordinary repo exploration is implementer-owned and is **not** a valid `NEEDS_CONTEXT`.
-
-If the implementer asks the manager to explore the repo or hand over a likely solution, the manager should push that work back to the implementer.

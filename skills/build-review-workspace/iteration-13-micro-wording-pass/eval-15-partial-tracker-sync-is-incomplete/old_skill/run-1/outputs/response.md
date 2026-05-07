@@ -1,3 +1,0 @@
-**No.** In this workflow, that is stale tracking, and stale docs count as incomplete work.
-
-Before the manager dispatches the next subagent, they must **immediately sync `.agents/scratchpad/auth/plan.md` to match Task 9’s actual status**, record the verification that was performed, and ensure the **plan, `todo.md`, and SQL `todos` table all agree**. Only after that task-complete tracking update is written can the next implementer or post-wave reviewer be dispatched.

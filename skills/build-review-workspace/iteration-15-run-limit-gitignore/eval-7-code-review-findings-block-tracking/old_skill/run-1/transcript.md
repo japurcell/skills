@@ -1,0 +1,200 @@
+# 🤖 Copilot CLI Session
+
+> [!NOTE]
+> - **Session ID:** `1e590844-15ec-4941-850d-9626be8b933b`  
+> - **Started:** 5/7/2026, 11:49:28 AM  
+> - **Duration:** 13s  
+> - **Exported:** 5/7/2026, 11:49:42 AM  
+
+---
+
+<sub>⏱️ 2s</sub>
+
+### 👤 User
+
+You are running a build-review skill benchmark. Use only this exact skill file as the build-review skill: /Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-before-run-limit/SKILL.md. Ignore any installed skill with the same name unless it is this exact file. Read the file if needed, but do not modify files, do not run repository validation, and do not create commits or artifacts. Answer the task directly and concisely.
+
+Task:
+Every task in the current build wave was already marked done after implementation. Then the code-reviewer returned `DONE_WITH_FINDINGS`: two correctness issues remain in files already touched. Using the build workflow, what should the manager do next, and what happens to tracking?
+
+---
+
+<sub>⏱️ 10s</sub>
+
+### 💬 Copilot
+
+I’ll read the specified snapshot skill file and answer from that source only.
+
+---
+
+<sub>⏱️ 10s</sub>
+
+### ✅ `view`
+
+**view the file at /Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-before-run-limit/SKILL.md.**
+
+/Users/adam/Development/skills/skills/build-review-workspace/skill-snapshot-before-run-limit/SKILL.md
+
+<details>
+<summary>141 lines</summary>
+
+```
+1. ---
+2. name: build-review
+3. description: Coordinate the current implementation wave. Use when the plan already has the next ready task or small ready set and you need a manager-led workflow that dispatches implementers with lean handoffs, keeps active trackers in sync, then runs code-simplifier and code-reviewer waves over the full uncommitted surface before handing the work back uncommitted.
+4. ---
+5. 
+6. # Build Review
+7. 
+8. ## Overview
+9. 
+10. Use this skill to run a manager-led implementation wave: pick the next ready task, dispatch subagents with lean handoffs, then route the resulting surface through simplifier and reviewer waves before handing the work back uncommitted. It matters because the manager must coordinate progress and tracking without stealing repo discovery, design, implementation, or verification work from the subagents.
+11. 
+12. ## When to Use
+13. 
+14. - Use when the plan already has a next ready task or small ready set and you need to execute that wave through implementation, simplification, review, and tracking.
+15. - Use when you need a manager/subagent boundary: the manager coordinates, while implementers own repo discovery, first-pass design, code changes, and validation.
+16. - Use when downstream review must cover the full uncommitted surface, not just the file from one finished task.
+17. - Do **not** use this skill for planning, specs, or unresolved tradeoff analysis. Resolve ambiguity first.
+18. 
+19. ## Workflow
+20. 
+21. 1. Invoke the `addy-context-engineering` and `subagent-model-selection` skills.
+22. 2. Define the current build wave: the next ready task, or a small explicit set of already-ready independent tasks. A wave of one is the default.
+23. 3. Identify the active trackers already in play for that wave. In this repo that usually means `plan.md`, `todo.md`, and SQL todo state. Reuse the same task names or IDs across them, and do **not** invent a new tracker mid-wave.
+24. 4. If any task is ambiguous, conflicts with the plan, or the human wants tradeoff analysis first, resolve that before dispatch.
+25. 5. For each task in the wave, dispatch immediately with [implementer-prompt.md](./implementer-prompt.md) and only:
+26.    - task text and success criteria
+27.    - known constraints and validation commands
+28.    - already-known file hints
+29. 6. When an implementer returns `DONE`, run one task-complete tracking sync immediately before anything else and before dispatching the next subagent: update that same task across every active tracker (`plan.md`, `todo.md`, and SQL todo state when present), record the verification actually performed, and confirm the trackers agree before you move on. If another task remains in the wave, say so plainly and dispatch that remaining task next.
+30. 7. If any task in the current wave is still unfinished, keep dispatching implementers. Do **not** start code-simplifier yet. Wait until every task in the current wave is implemented and marked done before any code-simplifier or code-review work starts. Say that exact delay plainly when work remains.
+31. 8. After every task in the wave has been implemented and marked done, build one deduped `review_scope_files` list from:
+32.    - every file any implementer touched in the wave
+33.    - all uncommitted files from `git status --porcelain`, excluding deleted files and `.gitignore` files
+34. 9. Dispatch code-simplifier subagents over manager-authored `review_scope_files` partitions using [simplifier-prompt.md](./simplifier-prompt.md).
+35. 10. After every code-simplifier returns `DONE`, dispatch code-reviewer subagents over the same partitions using [code-reviewer-prompt.md](./code-reviewer-prompt.md), unless a later fix changes the surface enough to require fresh partitions.
+36. 11. After every reviewer returns `DONE`, run one final reviewed tracking sync across the same active trackers, record any additional verification actually performed during review, and confirm the same final reviewed state matches everywhere. Then say the final handoff plainly: do **not** create or publish a commit, PR, or tag, and leave the changes uncommitted and local.
+37. 
+38. ## Specific Techniques
+39. 
+40. ### Role Boundaries
+41. 
+42. - The manager owns wave selection, dispatch, tracking, `review_scope_files`, review partitions, and the final reviewed sync.
+43. - The implementer owns repo discovery, pattern lookup, first-pass design, code changes, and verification.
+44. - Dispatch as soon as the task is clear enough. Do **not** pre-read large file sets, draft the solution, sketch likely patches, or run verification on the implementer's behalf.
+45. - Ordinary repo exploration is never a valid `NEEDS_CONTEXT`. Only missing requirements, missing constraints, or conflicting signals qualify.
+46. - Leave the working tree dirty. Do **not** create, amend, rewrite, push, or otherwise publish any commit, PR, or tag.
+47. 
+48. ### Review Fanout
+49. 
+50. 1. Materialize `review_scope_files` once after the full wave is implemented, dedupe it, and keep stable order.
+51. 2. **<=5 files:** launch one code-simplifier or code-reviewer over the full list.
+52. 3. **>5 files:** partition files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one downstream scope.
+53. 4. The manager owns the partitions. Simplifiers and reviewers use only the exact file list they are given; they do not recompute or narrow scope.
+54. 5. Reuse the same partitions for code-simplifier and code-review unless a later fix changes the touched surface.
+55. 
+56. ### Verification Selection
+57. 
+58. - Verification ownership stays with the implementer.
+59. - Infer the task's surface and stack before choosing validation.
+60. - Prefer the narrowest matching checks for that stack. Shell or Python work should use shell or Python validation instead of generic frontend commands unless the task is actually frontend work.
+61. 
+62. ### Tracking Sync
+63. 
+64. 1. Reuse the trackers that already exist for the current plan. In this repo that usually means `plan.md`, `todo.md`, and SQL todo rows.
+65. 2. Apply each status change to all active trackers together. Do **not** update `todo.md` now and promise to catch up `plan.md` or SQL later.
+66. 3. Keep the same task identity and status across trackers. If downstream work reopens a task, reopen it everywhere.
+67. 4. If one tracker is absent for the current build, sync the trackers that do exist. Do **not** create a new tracker mid-wave just to satisfy this skill.
+68. 5. Before dispatching the next subagent, confirm the active trackers agree. Say it plainly when needed: `plan.md`, `todo.md`, and SQL todo state all say the same status before moving on. Prefer the exact phrase `SQL todo state` over a vague `SQL`. Any tracker mismatch is incomplete work.
+69. 
+70. ### Status Handling
+71. 
+72. #### Implementer
+73. 
+74. - **DONE:** run the task-complete tracking sync immediately across every active tracker before moving on or dispatching Task B / the next subagent. If more tasks remain in the wave, say `dispatch the remaining task next` or `continue the current wave by dispatching Task B`, then keep dispatching implementers; otherwise start code-simplifier.
+75. - **DONE_WITH_CONCERNS:** read the concerns before any tracking update. If they raise correctness or scope risk, address them first, usually by re-dispatching an implementer. Do **not** mark the task done yet.
+76. - **NEEDS_CONTEXT:** only valid for missing requirements, missing constraints, or conflicting signals. Routine discovery stays with the implementer.
+77. - **BLOCKED:** follow the escalation ladder.
+78. 
+79. #### Code-Simplifier
+80. 
+81. - **DONE:** when every simplifier is `DONE`, proceed to code-review.
+82. - **DONE_WITH_CONCERNS:** begin by saying `read the code-simplifier's concerns before continuing to code-reviewer.` Treat correctness or scope concerns as unresolved work. Reopen any affected done task immediately across every active tracker, re-dispatch the subagent that should own the fix, and do **not** proceed to code-reviewer yet.
+83. - **NEEDS_CONTEXT:** provide the missing context and re-dispatch.
+84. - **BLOCKED:** follow the escalation ladder.
+85. 
+86. #### Code-Reviewer
+87. 
+88. - **DONE:** when every reviewer is `DONE`, run the final reviewed tracking sync across every active tracker, record any additional verification actually performed during review, and say `do not create or publish a commit, PR, or tag` plus `leave the changes uncommitted and local`.
+89. - **DONE_WITH_FINDINGS:** address findings before ending the wave. Reopen any affected done task immediately across every active tracker, route the fix to the subagent that should own it, then rerun the affected code-simplifier and reviewer partitions as needed. Re-sync tracking only after every reviewer returns `DONE`.
+90. - **NEEDS_CONTEXT:** provide the missing context and re-dispatch.
+91. - **BLOCKED:** follow the escalation ladder.
+92. 
+93. ### Escalation Ladder
+94. 
+95. When a subagent returns `BLOCKED`:
+96. 
+97. 1. If it is a context problem, provide more context and re-dispatch with the same model.
+98. 2. If it needs more reasoning, re-dispatch with a more capable model.
+99. 3. If the task or partition is too large, split it into smaller pieces.
+100. 4. If the plan itself is wrong, escalate to the human.
+101. 
+102. Never ignore an escalation or rerun the same stuck attempt without changing context, scope, or model.
+103. 
+104. ### Tracking Discipline
+105. 
+106. - A partial sync is not a sync. When `plan.md`, `todo.md`, and SQL todo state are active, they move together immediately, before the next dispatch.
+107. - If `todo.md` and SQL already say `done`, `plan.md` cannot stay stale. Say that plainly instead of only saying `partial sync`.
+108. - Reopen any done task immediately in every active tracker if downstream simplifier or reviewer work changes it or questions its correctness or scope.
+109. - Re-close that task only after the affected downstream passes return `DONE`, and re-close it in every active tracker.
+110. - Treat stale docs, stale SQL status, or tracker disagreement as incomplete work.
+111. - Final handoff language should be explicit: sync the same final reviewed state, record any additional verification from review, say `do not create or publish a commit, PR, or tag`, and say `leave the changes uncommitted and local`.
+112. 
+113. ## Common Rationalizations
+114. 
+115. | Rationalization | Reality |
+116. | --- | --- |
+117. | "I should read the repo and sketch the patch before I dispatch." | That steals implementer work and pushes the manager out of coordination mode. Dispatch once the task is clear enough. |
+118. | "The implementer has not explored the repo yet, so `NEEDS_CONTEXT` is fine." | Ordinary repo discovery, pattern lookup, and first-pass design belong to the implementer. `NEEDS_CONTEXT` is only for missing requirements, constraints, or conflicting signals. |
+119. | "One task in the wave is done, so I can start code-simplifier now." | Downstream review starts only after every task in the current wave is implemented and marked done. Say `do not start code-simplifier yet` when work remains in the wave. |
+120. | "`todo.md` is already updated, so I can fix `plan.md` or SQL later." | Partial tracker sync is a workflow failure. Update every active tracker together before the next dispatch. |
+121. | "Once review is done I can commit or open the PR for the human." | This skill explicitly leaves the work dirty and unpublished. The human handles any commit or PR later. |
+122. 
+123. ## Red Flags
+124. 
+125. - The manager reads large file sets, proposes a patch, or runs validation before dispatching a clear task.
+126. - An implementer asks for `NEEDS_CONTEXT` just to avoid ordinary repo exploration.
+127. - A simplifier or reviewer recomputes scope instead of using the exact manager-authored file list.
+128. - A downstream concern or finding surfaces, but the affected task stays marked `done`.
+129. - `plan.md`, `todo.md`, and SQL todo state disagree about the same task.
+130. - Any step creates or publishes a commit, PR, or tag.
+131. 
+132. ## Verification
+133. 
+134. After completing the build wave, confirm:
+135. 
+136. - [ ] Each implementer `DONE` updated every active tracker for that task — typically `plan.md`, `todo.md`, and SQL todo state — before the next dispatch, and recorded the verification actually performed.
+137. - [ ] `review_scope_files` was deduped, filtered, manager-authored, and reused across simplifier/reviewer waves unless the touched surface changed.
+138. - [ ] Code-simplifier and code-review started only after the full wave was implemented and marked done.
+139. - [ ] Any reopened task was reopened and re-closed across every active tracker only after the affected downstream passes returned `DONE`.
+140. - [ ] The final reviewed sync leaves `plan.md`, `todo.md`, and SQL todo state aligned, and the working tree remains dirty and unpublished.
+141.
+```
+
+</details>
+
+
+---
+
+<sub>⏱️ 13s</sub>
+
+### 💬 Copilot
+
+The manager should **not end the wave**. For `DONE_WITH_FINDINGS`, they must address the two correctness issues first: immediately reopen the affected done task(s) across every active tracker, route the fixes to the appropriate subagent, then rerun the affected code-simplifier and code-reviewer partitions as needed.
+
+Tracking stays synchronized: any reopened task is reopened everywhere (`plan.md`, `todo.md`, and SQL todo state if active), and it is only re-closed everywhere after the affected downstream passes return `DONE`. The final reviewed tracking sync happens only after every reviewer returns `DONE`.
+
+---
+
+<sub>Generated by [GitHub Copilot CLI](https://github.com/features/copilot/cli)</sub>

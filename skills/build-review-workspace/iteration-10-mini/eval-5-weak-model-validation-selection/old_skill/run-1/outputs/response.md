@@ -1,3 +1,0 @@
-Manager handoff: a lean task packet only — the task text, success criteria, known constraints, exact validation commands, and only already-known file hints. No solution sketch or extra exploration.
-
-Verification choice: first infer the slice’s surface/stack from the touched files, then pick the narrowest matching checks for that stack. For these files, that means shell/Python validation such as `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh` and `python3 -m py_compile skills/build-review/evals/grade_benchmark.py` (or the closest targeted grader command), not generic frontend commands.

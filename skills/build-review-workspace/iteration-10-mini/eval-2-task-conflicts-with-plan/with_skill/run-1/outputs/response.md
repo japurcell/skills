@@ -1,1 +1,0 @@
-Do not dispatch an implementer yet. First reconcile the conflict and pick the next pending task from the plan—the plan is the source of truth. Then read that task’s acceptance criteria and context before starting implementation.

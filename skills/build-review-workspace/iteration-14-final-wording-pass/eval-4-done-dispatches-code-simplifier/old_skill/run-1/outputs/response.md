@@ -1,3 +1,0 @@
-Sync **Task A** immediately in all three trackers: update `.agents/scratchpad/issues/plan.md`, `.agents/scratchpad/issues/todo.md`, and the SQL `todos` entry for `api-issues-pagination` to record the verification actually performed and mark that task **done**. **Task B** should stay not-done until its implementer finishes.
-
-**No**, the code-simplifier wave should **not** start yet. The current wave still has an unfinished task, so the manager should dispatch **Task B** next and wait until **every** task in the wave is implemented and marked done before building `review_scope_files` and starting code-simplifier.

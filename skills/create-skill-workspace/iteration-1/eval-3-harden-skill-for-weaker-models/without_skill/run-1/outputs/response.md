@@ -1,5 +1,0 @@
-Done: I saved the hardened `task-wave` output under the requested workspace and kept the name as `task-wave`.
-
-- `skills/create-skill-workspace/iteration-1/eval-3-harden-skill-for-weaker-models/without_skill/run-1/outputs/task-wave/SKILL.md` — rewritten with a short, literal wave-by-wave workflow for weaker models and repo-specific validation commands instead of generic `npm test` / `npm run build`
-- `skills/create-skill-workspace/iteration-1/eval-3-harden-skill-for-weaker-models/without_skill/run-1/outputs/task-wave/evals/evals.json` — added focused eval cases that check dependency-ordered waves, exact repo commands, and the “no waves for one-step work” rule
-- `skills/create-skill-workspace/iteration-1/eval-3-harden-skill-for-weaker-models/without_skill/run-1/outputs/output.md` — added a benchmark workspace layout note using the repo’s canonical `skill-snapshot/` + `iteration-N/eval-*` structure with paired `with_skill/` and `without_skill/` runs

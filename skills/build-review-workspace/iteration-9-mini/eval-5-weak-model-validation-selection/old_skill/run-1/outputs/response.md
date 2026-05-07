@@ -1,3 +1,0 @@
-**Manager handoff:** give the implementer only the task text, success criteria, known constraints, and the two file hints: `scripts/addy-install.sh` and `skills/build-review/evals/grade_benchmark.py`. Don’t pre-digest the fix or add extra repo discovery; just say this is a shell + Python/eval slice and that the implementer owns reading the files and finding the right patterns.
-
-**Verification choice:** instruct them to classify the slice first, then pick the narrowest matching checks for that stack. For these files, that means shell/script validation plus targeted Python/eval validation, not generic frontend commands. Make it explicit: **do not default to `npm test`, `npm run lint`, or `npm run build` unless the change is actually frontend.**

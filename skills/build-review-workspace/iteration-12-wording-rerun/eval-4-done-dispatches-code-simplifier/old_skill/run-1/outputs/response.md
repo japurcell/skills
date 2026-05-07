@@ -1,3 +1,0 @@
-Sync **Task A only** right now: update `.agents/scratchpad/issues/plan.md` and `.agents/scratchpad/issues/todo.md` to show Task A is **done**, record the verification that actually passed, and mirror that status in the SQL tracker **for the completed task**. If `api-issues-pagination` is Task A’s row, mark it `done` now; if it belongs to Task B, leave it alone. Also carry forward Task A’s four touched files as part of the eventual wave review scope.
-
-**Do not start the code-simplifier wave yet.** Task B is still in the current wave and hasn’t even been dispatched, so the manager should dispatch/finish Task B first. Only after **every** task in the wave is implemented and marked done should the manager build `review_scope_files` and launch code-simplifier.

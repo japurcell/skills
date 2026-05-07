@@ -173,6 +173,24 @@ def load_run_results(benchmark_dir: Path) -> dict:
     return results
 
 
+def ordered_config_names(configs: list[str]) -> list[str]:
+    """Return configs with the edited skill before its baseline when known."""
+    preferred_pairs = [
+        ("with_skill", "old_skill"),
+        ("with_skill", "without_skill"),
+        ("new_skill", "old_skill"),
+        ("new_skill", "without_skill"),
+    ]
+
+    for primary, baseline in preferred_pairs:
+        if primary in configs and baseline in configs:
+            ordered = [primary, baseline]
+            ordered.extend(config for config in configs if config not in ordered)
+            return ordered
+
+    return configs
+
+
 def aggregate_results(results: dict) -> dict:
     """
     Aggregate run results into summary statistics.
@@ -180,7 +198,7 @@ def aggregate_results(results: dict) -> dict:
     Returns run_summary with stats for each configuration and delta.
     """
     run_summary = {}
-    configs = list(results.keys())
+    configs = ordered_config_names(list(results.keys()))
 
     for config in configs:
         runs = results.get(config, [])
@@ -203,7 +221,7 @@ def aggregate_results(results: dict) -> dict:
             "tokens": calculate_stats(tokens)
         }
 
-    # Calculate delta between the first two configs (if two exist)
+    # Calculate delta between the edited skill and baseline configs when known.
     if len(configs) >= 2:
         primary = run_summary.get(configs[0], {})
         baseline = run_summary.get(configs[1], {})
@@ -233,7 +251,7 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
 
     # Build runs array for benchmark.json
     runs = []
-    for config in results:
+    for config in [k for k in run_summary if k != "delta" and k in results]:
         for result in results[config]:
             runs.append({
                 "eval_id": result["eval_id"],

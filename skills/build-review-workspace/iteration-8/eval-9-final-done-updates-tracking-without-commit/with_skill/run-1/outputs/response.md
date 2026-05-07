@@ -1,3 +1,0 @@
-**Now the manager should update tracking, not commit.** Since the final code-reviewer returned plain `DONE`, the build workflow says to proceed to **update tracking**: update the **plan** and **todo tracker** immediately, **record the verification actually performed**, and **mark the task `done`** in the tracker. The tracking discipline section also says the final state should be reflected across the **tracker, plan, and todo tracker**.
-
-**No commit should be created.** The build skill’s commit override is explicit: **“Never commit. The human will review the changes and commit manually later.”** The verification checklist also expects **all changes to remain uncommitted**.

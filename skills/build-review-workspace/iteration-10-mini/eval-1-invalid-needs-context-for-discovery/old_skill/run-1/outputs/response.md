@@ -1,1 +1,0 @@
-That is not a valid `NEEDS_CONTEXT`. Ordinary repo exploration stays with the implementer. Re-dispatch with a lean handoff and tell them to read the relevant files, infer the minimum context themselves, and report back. Only provide more context if there are genuinely missing requirements, missing constraints, or conflicting signals.

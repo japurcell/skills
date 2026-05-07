@@ -132,37 +132,35 @@
     {
       "id": 7,
       "prompt": "Every task in the current build wave was already marked done after implementation. Then the code-reviewer returned `DONE_WITH_FINDINGS`: two correctness issues remain in files already touched. Using the build workflow, what should the manager do next, and what happens to tracking?",
-      "expected_output": "A manager response that addresses the review findings before ending the wave, reopens any affected done task, routes the fixes to the right subagent, does not run another simplifier or reviewer wave after the fixes, and says the final reviewed sync does not happen yet.",
+      "expected_output": "A manager response that addresses the review findings before ending the wave, reopens any affected done task, routes the fixes to the right subagent, and only re-syncs tracking after the final reviewer comes back `DONE`.",
       "files": [],
       "expectations": [
         "Says the manager must address code-review findings before ending the wave.",
         "Reopens any affected task that was already marked done before routing the fix.",
         "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
-        "Does not run another code-simplifier or code-reviewer wave after the fixes.",
-        "Says the final reviewed sync does not happen yet because post-review fixes are not reviewed in this invocation."
+        "Re-syncs tracking only after the final reviewer comes back `DONE`."
       ],
       "assertions": [
         "Says the manager must address code-review findings before ending the wave.",
         "Reopens any affected task that was already marked done before routing the fix.",
         "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
-        "Does not run another code-simplifier or code-reviewer wave after the fixes.",
-        "Says the final reviewed sync does not happen yet because post-review fixes are not reviewed in this invocation."
+        "Re-syncs tracking only after the final reviewer comes back `DONE`."
       ]
     },
     {
       "id": 8,
-      "prompt": "Every task in the current build wave is already marked done, and the code-simplifier wave has finished. The implementers across the wave touched `skills/build-review/SKILL.md`, `skills/build-review/implementer-prompt.md`, and `dist/generated-report.json`; `git status --porcelain` now shows `M  skills/build-review/SKILL.md`, ` M skills/build-review/implementer-prompt.md`, `?? notes.txt`, `D  scratch.tmp`, and `?? .gitignore`; and `git check-ignore --stdin` reports `dist/generated-report.json` because `dist/` is ignored. Using the build workflow, what deduped review scope should the manager build, how many code-reviewers should run, and what context should go to them before the final tracking sync?",
-      "expected_output": "A manager response that materializes one deduped review scope from touched and uncommitted files, excludes deleted files, `.gitignore`, and gitignored paths, runs one code-reviewer because the filtered scope is small, and passes current verification context forward before the final tracking sync.",
+      "prompt": "Every task in the current build wave is already marked done, and the code-simplifier wave has finished. The implementers across the wave touched `skills/build-review/SKILL.md` and `skills/build-review/implementer-prompt.md`, and `git status --porcelain` now shows `M skills/build-review/SKILL.md`, ` M skills/build-review/implementer-prompt.md`, `?? notes.txt`, `D scratch.tmp`, and `?? .gitignore`. Using the build workflow, what deduped review scope should the manager build, how many code-reviewers should run, and what context should go to them before the final tracking sync?",
+      "expected_output": "A manager response that materializes one deduped review scope from touched and uncommitted files, excludes deleted files and `.gitignore`, runs one code-reviewer because the scope is small, and passes current verification context forward before the final tracking sync.",
       "files": [],
       "expectations": [
         "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
-        "Excludes deleted files, `.gitignore`, and gitignored files from that deduped review scope.",
+        "Excludes deleted files and `.gitignore` files from that deduped review scope.",
         "Uses one code-reviewer because the deduped review scope has `<=5` files.",
         "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync."
       ],
       "assertions": [
         "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
-        "Excludes deleted files, `.gitignore`, and gitignored files from that deduped review scope.",
+        "Excludes deleted files and `.gitignore` files from that deduped review scope.",
         "Uses one code-reviewer because the deduped review scope has `<=5` files.",
         "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync."
       ]

@@ -1,0 +1,544 @@
+{
+  "metadata": {
+    "skill_name": "build-review",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-07T19:01:09Z",
+    "evals_run": [
+      4,
+      6,
+      7,
+      8,
+      9,
+      15
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 15,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 14.246,
+        "tokens": 620,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Rejects leaving `plan.md` stale while `todo.md` and SQL already show the task done.",
+          "passed": true,
+          "evidence": "Response rejects leaving `plan.md` behind the other trackers."
+        },
+        {
+          "text": "Requires the same task status across `plan.md`, `todo.md`, and SQL todo state before the next dispatch.",
+          "passed": true,
+          "evidence": "Response requires the trackers to agree before the next dispatch."
+        },
+        {
+          "text": "Treats tracker disagreement as incomplete work instead of cleanup for later.",
+          "passed": true,
+          "evidence": "Response treats tracker disagreement as incomplete work."
+        },
+        {
+          "text": "Does not bless `todo.md` or SQL as the only tracker that matters.",
+          "passed": true,
+          "evidence": "Response does not bless a single tracker as canonical while the others drift."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 16.047,
+        "tokens": 683,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Updates the finished task across `plan.md`, `todo.md`, and SQL todo state immediately before moving on.",
+          "passed": true,
+          "evidence": "Response syncs the finished task across the active trackers before moving on."
+        },
+        {
+          "text": "Keeps the manager moving to the remaining implementer work in the current wave.",
+          "passed": true,
+          "evidence": "Response keeps the wave moving to the remaining implementer work."
+        },
+        {
+          "text": "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
+          "passed": true,
+          "evidence": "Response waits until the whole wave is done before code-simplifier."
+        },
+        {
+          "text": "Does not send the main agent back into manual simplification or discovery first.",
+          "passed": true,
+          "evidence": "Response keeps the main agent out of manual simplification or rediscovery work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 19.908,
+        "tokens": 722,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+          "passed": true,
+          "evidence": "Response requires reading simplifier concerns before code-reviewer."
+        },
+        {
+          "text": "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+          "passed": true,
+          "evidence": "Response treats simplifier concerns as unresolved work."
+        },
+        {
+          "text": "Reopens any affected task across `plan.md`, `todo.md`, and SQL todo state before re-dispatching the fix.",
+          "passed": true,
+          "evidence": "Response reopens the affected task across the active trackers before routing the fix."
+        },
+        {
+          "text": "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+          "passed": true,
+          "evidence": "Response routes the fix to the owning subagent."
+        },
+        {
+          "text": "Does not continue with stale tracking or proceed straight to code-reviewer.",
+          "passed": true,
+          "evidence": "Response stops the flow until tracking and the fix are handled."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 21.469,
+        "tokens": 830,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must address code-review findings before ending the wave.",
+          "passed": true,
+          "evidence": "Response blocks wave completion on reviewer findings."
+        },
+        {
+          "text": "Reopens any affected task that was already marked done before routing the fix.",
+          "passed": true,
+          "evidence": "Response reopens the affected done task before routing the fix."
+        },
+        {
+          "text": "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+          "passed": true,
+          "evidence": "Response routes review findings to an owning subagent."
+        },
+        {
+          "text": "Does not run another code-simplifier or code-reviewer wave after the fixes.",
+          "passed": true,
+          "evidence": "Response avoids second simplifier/reviewer waves after reviewer findings."
+        },
+        {
+          "text": "Says the final reviewed sync does not happen yet because post-review fixes are not reviewed in this invocation.",
+          "passed": true,
+          "evidence": "Response handoffs post-review fixes as not final-reviewed."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 26.01,
+        "tokens": 1084,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
+          "passed": true,
+          "evidence": "Response builds one manager-owned review scope from touched plus filtered uncommitted files."
+        },
+        {
+          "text": "Excludes deleted files, `.gitignore`, and gitignored files from that deduped review scope.",
+          "passed": true,
+          "evidence": "Response excludes deleted files, `.gitignore`, and gitignored paths from the review scope."
+        },
+        {
+          "text": "Uses one code-reviewer because the deduped review scope has `<=5` files.",
+          "passed": true,
+          "evidence": "Response uses one reviewer and ties it to the small-scope rule."
+        },
+        {
+          "text": "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync.",
+          "passed": true,
+          "evidence": "Response passes review scope plus verification context forward before the final tracking sync."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 9,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 36.599,
+        "tokens": 628,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
+          "passed": true,
+          "evidence": "Response syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state."
+        },
+        {
+          "text": "Records any additional verification actually performed during review.",
+          "passed": true,
+          "evidence": "Response records review-time verification."
+        },
+        {
+          "text": "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+          "passed": true,
+          "evidence": "Response forbids publishing work."
+        },
+        {
+          "text": "Leaves the changes uncommitted and local.",
+          "passed": true,
+          "evidence": "Response leaves the work dirty and local."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 15,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 18.921,
+        "tokens": 621,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Rejects leaving `plan.md` stale while `todo.md` and SQL already show the task done.",
+          "passed": true,
+          "evidence": "Response rejects leaving `plan.md` behind the other trackers."
+        },
+        {
+          "text": "Requires the same task status across `plan.md`, `todo.md`, and SQL todo state before the next dispatch.",
+          "passed": true,
+          "evidence": "Response requires the trackers to agree before the next dispatch."
+        },
+        {
+          "text": "Treats tracker disagreement as incomplete work instead of cleanup for later.",
+          "passed": true,
+          "evidence": "Response treats tracker disagreement as incomplete work."
+        },
+        {
+          "text": "Does not bless `todo.md` or SQL as the only tracker that matters.",
+          "passed": true,
+          "evidence": "Response does not bless a single tracker as canonical while the others drift."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 18.778,
+        "tokens": 624,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Updates the finished task across `plan.md`, `todo.md`, and SQL todo state immediately before moving on.",
+          "passed": true,
+          "evidence": "Response syncs the finished task across the active trackers before moving on."
+        },
+        {
+          "text": "Keeps the manager moving to the remaining implementer work in the current wave.",
+          "passed": true,
+          "evidence": "Response keeps the wave moving to the remaining implementer work."
+        },
+        {
+          "text": "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
+          "passed": false,
+          "evidence": "Response does not clearly delay code-simplifier until the whole wave is implemented and marked done."
+        },
+        {
+          "text": "Does not send the main agent back into manual simplification or discovery first.",
+          "passed": true,
+          "evidence": "Response keeps the main agent out of manual simplification or rediscovery work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 21.384,
+        "tokens": 672,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+          "passed": true,
+          "evidence": "Response requires reading simplifier concerns before code-reviewer."
+        },
+        {
+          "text": "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+          "passed": true,
+          "evidence": "Response treats simplifier concerns as unresolved work."
+        },
+        {
+          "text": "Reopens any affected task across `plan.md`, `todo.md`, and SQL todo state before re-dispatching the fix.",
+          "passed": true,
+          "evidence": "Response reopens the affected task across the active trackers before routing the fix."
+        },
+        {
+          "text": "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+          "passed": true,
+          "evidence": "Response routes the fix to the owning subagent."
+        },
+        {
+          "text": "Does not continue with stale tracking or proceed straight to code-reviewer.",
+          "passed": true,
+          "evidence": "Response stops the flow until tracking and the fix are handled."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 7,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.4,
+        "passed": 2,
+        "failed": 3,
+        "total": 5,
+        "time_seconds": 14.205,
+        "tokens": 693,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Says the manager must address code-review findings before ending the wave.",
+          "passed": true,
+          "evidence": "Response blocks wave completion on reviewer findings."
+        },
+        {
+          "text": "Reopens any affected task that was already marked done before routing the fix.",
+          "passed": true,
+          "evidence": "Response reopens the affected done task before routing the fix."
+        },
+        {
+          "text": "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+          "passed": false,
+          "evidence": "Response does not clearly route review findings to an owning subagent."
+        },
+        {
+          "text": "Does not run another code-simplifier or code-reviewer wave after the fixes.",
+          "passed": false,
+          "evidence": "Response reruns or fails to forbid rerunning downstream waves after reviewer findings."
+        },
+        {
+          "text": "Says the final reviewed sync does not happen yet because post-review fixes are not reviewed in this invocation.",
+          "passed": false,
+          "evidence": "Response does not clearly say the final reviewed sync is withheld for unreviewed post-review fixes."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 8,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 28.008,
+        "tokens": 1001,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
+          "passed": true,
+          "evidence": "Response builds one manager-owned review scope from touched plus filtered uncommitted files."
+        },
+        {
+          "text": "Excludes deleted files, `.gitignore`, and gitignored files from that deduped review scope.",
+          "passed": true,
+          "evidence": "Response excludes deleted files, `.gitignore`, and gitignored paths from the review scope."
+        },
+        {
+          "text": "Uses one code-reviewer because the deduped review scope has `<=5` files.",
+          "passed": false,
+          "evidence": "Response does not clearly use one reviewer because the deduped scope is small."
+        },
+        {
+          "text": "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync.",
+          "passed": false,
+          "evidence": "Response does not clearly pass the deduped review scope and verification context forward before the final tracking sync."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 9,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 23.012,
+        "tokens": 656,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Syncs `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state.",
+          "passed": false,
+          "evidence": "Response does not clearly sync `plan.md`, `todo.md`, and SQL todo state to the same final reviewed state."
+        },
+        {
+          "text": "Records any additional verification actually performed during review.",
+          "passed": true,
+          "evidence": "Response records review-time verification."
+        },
+        {
+          "text": "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+          "passed": true,
+          "evidence": "Response forbids publishing work."
+        },
+        {
+          "text": "Leaves the changes uncommitted and local.",
+          "passed": true,
+          "evidence": "Response leaves the work dirty and local."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 22.3798,
+        "stddev": 8.1064,
+        "min": 14.246,
+        "max": 36.599
+      },
+      "tokens": {
+        "mean": 761.1667,
+        "stddev": 175.6501,
+        "min": 620,
+        "max": 1084
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.7333,
+        "stddev": 0.2483,
+        "min": 0.4,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 20.718,
+        "stddev": 4.6532,
+        "min": 14.205,
+        "max": 28.008
+      },
+      "tokens": {
+        "mean": 711.1667,
+        "stddev": 144.6643,
+        "min": 621,
+        "max": 1001
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.27",
+      "time_seconds": "+1.7",
+      "tokens": "+50"
+    }
+  },
+  "notes": []
+}
