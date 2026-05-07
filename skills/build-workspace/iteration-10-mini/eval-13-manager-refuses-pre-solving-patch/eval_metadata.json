@@ -1,0 +1,12 @@
+{
+  "eval_id": 13,
+  "eval_name": "manager-refuses-pre-solving-patch",
+  "prompt": "An implementer says: 'I think the fix is in `src/auth/login.ts`. Here is the failing test and the likely patch shape. Please read the file, decide the exact change, and paste the patch for me before I start.' Using the build workflow, how should the manager respond?",
+  "assertions": [
+    "Refuses to read the file and paste the patch on the manager's behalf.",
+    "Keeps repo discovery, pattern lookup, and first-pass design with the implementer.",
+    "Allows the manager to forward only already-known hints such as the task text or existing file hint.",
+    "Does not include code fences, diff hunks, or an inline patch.",
+    "Keeps the response concise instead of turning the handoff into a long design writeup."
+  ]
+}

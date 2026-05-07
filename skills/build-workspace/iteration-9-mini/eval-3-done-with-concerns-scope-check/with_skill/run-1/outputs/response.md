@@ -1,0 +1,1 @@
+The manager **reads the concerns first** and **does not update tracking yet**. Because this is a likely **scope concern**, the manager should **address it before proceeding**—usually by **re-dispatching an implementer** to correct or confirm the scope match.

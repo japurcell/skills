@@ -1,0 +1,11 @@
+{
+  "eval_id": 9,
+  "eval_name": "final-done-updates-tracking-without-commit",
+  "prompt": "The final code-reviewer has now returned plain `DONE`, and any task reopened during review has already been fixed and re-closed. Using the build workflow, what should the manager sync now, and should the manager create or publish anything?",
+  "assertions": [
+    "Syncs the plan and todo tracker to the final reviewed state.",
+    "Records any additional verification actually performed during review.",
+    "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+    "Leaves the changes uncommitted and local."
+  ]
+}

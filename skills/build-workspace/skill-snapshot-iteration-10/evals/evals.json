@@ -1,0 +1,241 @@
+{
+  "skill_name": "build",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I already have the next pending task from the plan: add pagination to `GET /api/issues`. The acceptance criteria are written, the repo's validation commands are known, and the plan already names the files likely involved. Using the build workflow, tell me what the manager should do before the implementer runs, what belongs in the handoff, and what work must stay with the implementer.",
+      "expected_output": "A dispatch-first manager response that uses a lean handoff, does not pre-solve the task in the main agent, and makes the implementer own discovery and first-pass design.",
+      "files": [],
+      "expectations": [
+        "Says the manager should dispatch once the task is clear enough, rather than pre-reading lots of files first.",
+        "Defines a lean handoff that includes task text, success criteria, known constraints or commands, and only already-known file hints.",
+        "States that discovery, pattern lookup, and first-pass design belong to the implementer.",
+        "Explicitly says the manager should not draft the solution or likely patches before dispatch."
+      ],
+      "assertions": [
+        "Says the manager should dispatch once the task is clear enough, rather than pre-reading lots of files first.",
+        "Defines a lean handoff that includes task text, success criteria, known constraints or commands, and only already-known file hints.",
+        "States that discovery, pattern lookup, and first-pass design belong to the implementer.",
+        "Explicitly says the manager should not draft the solution or likely patches before dispatch."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "An implementer comes back with `NEEDS_CONTEXT` and says: 'I have not explored the repo yet. Please read the relevant files and tell me the solution before I start.' Using the build workflow, how should the manager respond?",
+      "expected_output": "A response that rejects this as ordinary discovery work, keeps the manager from pre-reading the codebase, and pushes exploration back to the implementer unless requirements are genuinely missing.",
+      "files": [],
+      "expectations": [
+        "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
+        "Keeps file discovery and pattern lookup assigned to the implementer.",
+        "Does not tell the manager to pre-read the codebase or hand over a solution.",
+        "Reserves NEEDS_CONTEXT for genuinely missing requirements, constraints, or conflicting signals."
+      ],
+      "assertions": [
+        "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
+        "Keeps file discovery and pattern lookup assigned to the implementer.",
+        "Does not tell the manager to pre-read the codebase or hand over a solution.",
+        "Reserves NEEDS_CONTEXT for genuinely missing requirements, constraints, or conflicting signals."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The plan says to defer audit logging until phase 2, but the next task text says to implement audit logging now. Using the build workflow, what should happen before any implementer is dispatched?",
+      "expected_output": "A manager response that recognizes the conflict, stops before dispatch, and resolves the ambiguity with the human rather than silently choosing an interpretation.",
+      "files": [],
+      "expectations": [
+        "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
+        "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
+        "Keeps the manager focused on ambiguity resolution rather than speculative implementation.",
+        "Does not silently choose one interpretation and proceed."
+      ],
+      "assertions": [
+        "Recognizes that the task conflicts with the plan and is not clear enough to dispatch yet.",
+        "Says the manager should resolve the ambiguity or escalate to the human before implementation starts.",
+        "Keeps the manager focused on ambiguity resolution rather than speculative implementation.",
+        "Does not silently choose one interpretation and proceed."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "An implementer reports `DONE_WITH_CONCERNS`: the tests passed and the build is clean, but they suspect the changes may not match the requested scope. Using the build workflow, what does the manager do before updating tracking?",
+      "expected_output": "A manager response that treats scope concerns as unresolved work, reads the concerns before marking done, and addresses them before updating tracking.",
+      "files": [],
+      "expectations": [
+        "Says the manager must read the concerns before updating tracking.",
+        "Treats correctness or scope concerns as something to address before marking the task done.",
+        "Allows re-dispatching another implementer if needed to resolve the concern.",
+        "Does not immediately mark the task done just because tests passed."
+      ],
+      "assertions": [
+        "Says the manager must read the concerns before updating tracking.",
+        "Treats correctness or scope concerns as something to address before marking the task done.",
+        "Allows re-dispatching another implementer if needed to resolve the concern.",
+        "Does not immediately mark the task done just because tests passed."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The manager is running a build wave of two ready tasks. Task A's implementer returned `DONE` with passing verification and touched four files. Task B is still part of the current wave and has not been dispatched yet. Using the build workflow, what should the manager do now, and should the code-simplifier wave start yet?",
+      "expected_output": "A manager response that updates tracking for Task A right away, keeps the wave moving to the remaining implementer work, and explicitly waits until every task in the current wave is implemented and marked done before launching code-simplifier.",
+      "files": [],
+      "expectations": [
+        "Runs the per-task tracking update for Task A immediately.",
+        "Keeps the manager moving to the remaining implementer work in the current wave.",
+        "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
+        "Does not send the manager back into manual simplification or discovery first."
+      ],
+      "assertions": [
+        "Runs the per-task tracking update for Task A immediately.",
+        "Keeps the manager moving to the remaining implementer work in the current wave.",
+        "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
+        "Does not send the manager back into manual simplification or discovery first."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The next task touches `scripts/addy-install.sh` and `skills/build/evals/grade_benchmark.py`. The plan says only 'run relevant validation.' Using the build workflow, what should the manager hand to the implementer, and how should the implementer choose verification so a weaker model does not fall back to generic frontend commands?",
+      "expected_output": "A manager-plus-implementer workflow answer that keeps the handoff lean, makes the implementer infer the slice's surface and stack before choosing verification, and uses matching shell/Python checks instead of generic frontend commands.",
+      "files": [],
+      "expectations": [
+        "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+        "Says the implementer should infer the slice's surface or stack before choosing validation.",
+        "Chooses matching shell or Python checks rather than generic frontend commands.",
+        "Keeps validation ownership with the implementer."
+      ],
+      "assertions": [
+        "Keeps the manager handoff lean instead of pre-solving or pre-reading the task.",
+        "Says the implementer should infer the slice's surface or stack before choosing validation.",
+        "Chooses matching shell or Python checks rather than generic frontend commands.",
+        "Keeps validation ownership with the implementer."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Every task in the current build wave is already marked done. Then the code-simplifier returned `DONE_WITH_CONCERNS`: the change is smaller now, but one extracted helper may have widened scope and could hide a behavior change. Using the build workflow, what should the manager do next?",
+      "expected_output": "A manager response that reads the simplifier's concerns before code-reviewer, treats correctness or scope concerns as unresolved work, reopens any affected done task, routes the fix back to the right subagent, and avoids leaving tracking stale.",
+      "files": [],
+      "expectations": [
+        "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+        "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+        "Reopens any affected task that was already marked done before re-dispatching the fix.",
+        "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+        "Does not continue with stale tracking or proceed straight to code-reviewer."
+      ],
+      "assertions": [
+        "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+        "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+        "Reopens any affected task that was already marked done before re-dispatching the fix.",
+        "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+        "Does not continue with stale tracking or proceed straight to code-reviewer."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Every task in the current build wave was already marked done after implementation. Then the code-reviewer returned `DONE_WITH_FINDINGS`: two correctness issues remain in files already touched. Using the build workflow, what should the manager do next, and what happens to tracking?",
+      "expected_output": "A manager response that addresses the review findings before ending the wave, reopens any affected done task, routes the fixes to the right subagent, and only re-syncs tracking after the final reviewer comes back `DONE`.",
+      "files": [],
+      "expectations": [
+        "Says the manager must address code-review findings before ending the wave.",
+        "Reopens any affected task that was already marked done before routing the fix.",
+        "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+        "Re-syncs tracking only after the final reviewer comes back `DONE`."
+      ],
+      "assertions": [
+        "Says the manager must address code-review findings before ending the wave.",
+        "Reopens any affected task that was already marked done before routing the fix.",
+        "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
+        "Re-syncs tracking only after the final reviewer comes back `DONE`."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Every task in the current build wave is already marked done, and the code-simplifier wave has finished. The implementers across the wave touched `skills/build/SKILL.md` and `skills/build/implementer-prompt.md`, and `git status --porcelain` now shows `M skills/build/SKILL.md`, ` M skills/build/implementer-prompt.md`, `?? notes.txt`, `D scratch.tmp`, and `?? .gitignore`. Using the build workflow, what deduped review scope should the manager build, how many code-reviewers should run, and what context should go to them before the final tracking sync?",
+      "expected_output": "A manager response that materializes one deduped review scope from touched and uncommitted files, excludes deleted files and `.gitignore`, runs one code-reviewer because the scope is small, and passes current verification context forward before the final tracking sync.",
+      "files": [],
+      "expectations": [
+        "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
+        "Excludes deleted files and `.gitignore` files from that deduped review scope.",
+        "Uses one code-reviewer because the deduped review scope has `<=5` files.",
+        "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync."
+      ],
+      "assertions": [
+        "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
+        "Excludes deleted files and `.gitignore` files from that deduped review scope.",
+        "Uses one code-reviewer because the deduped review scope has `<=5` files.",
+        "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "The final code-reviewer has now returned plain `DONE`, and any task reopened during review has already been fixed and re-closed. Using the build workflow, what should the manager sync now, and should the manager create or publish anything?",
+      "expected_output": "A manager response that syncs the plan and todo tracker to the final reviewed state, records any additional verification performed during review, and leaves the work dirty and unpublished.",
+      "files": [],
+      "expectations": [
+        "Syncs the plan and todo tracker to the final reviewed state.",
+        "Records any additional verification actually performed during review.",
+        "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+        "Leaves the changes uncommitted and local."
+      ],
+      "assertions": [
+        "Syncs the plan and todo tracker to the final reviewed state.",
+        "Records any additional verification actually performed during review.",
+        "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+        "Leaves the changes uncommitted and local."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Every task in the current build wave is already marked done, and the deduped review scope now contains 8 files across two logical areas: `src/auth/login.ts`, `src/auth/session.ts`, `src/auth/token.ts`, `tests/auth/login.test.ts`, `src/billing/invoice.ts`, `src/billing/payment.ts`, `src/billing/refund.ts`, and `tests/billing/invoice.test.ts`. Using the build workflow, how should the manager launch code-reviewers before the final tracking sync?",
+      "expected_output": "A manager response that recognizes the `>5 files` rule, launches multiple parallel code-reviewers over non-overlapping auth and billing scopes (or similar logical groups), keeps partition ownership with the manager, and waits for every reviewer to return `DONE` before the final tracking sync.",
+      "files": [],
+      "expectations": [
+        "Uses multiple parallel code-reviewers because the deduped review scope has `>5` files.",
+        "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one reviewer scope.",
+        "Keeps the reviewer file lists manager-authored instead of telling reviewers to recompute or narrow scope.",
+        "Waits for every reviewer to return `DONE` before the final tracking sync."
+      ],
+      "assertions": [
+        "Uses multiple parallel code-reviewers because the deduped review scope has `>5` files.",
+        "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one reviewer scope.",
+        "Keeps the reviewer file lists manager-authored instead of telling reviewers to recompute or narrow scope.",
+        "Waits for every reviewer to return `DONE` before the final tracking sync."
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Every task in the current build wave is already marked done, and the manager materialized a deduped `review_scope_files` list of 8 files across two logical areas: `src/auth/login.ts`, `src/auth/session.ts`, `src/auth/token.ts`, `tests/auth/login.test.ts`, `src/billing/invoice.ts`, `src/billing/payment.ts`, `src/billing/refund.ts`, and `tests/billing/invoice.test.ts`. Using the build workflow, how should the manager launch code-simplifiers before code-review begins?",
+      "expected_output": "A manager response that recognizes the `>5 files` rule, launches multiple parallel code-simplifiers over non-overlapping auth and billing scopes (or similar logical groups), keeps partition ownership with the manager, and waits for every code-simplifier to return `DONE` before code-review begins.",
+      "files": [],
+      "expectations": [
+        "Uses multiple parallel code-simplifiers because the deduped review scope has `>5` files.",
+        "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one simplifier scope.",
+        "Keeps the simplifier file lists manager-authored instead of telling simplifiers to recompute or narrow scope.",
+        "Waits for every code-simplifier to return `DONE` before launching code-reviewers or updating tracking."
+      ],
+      "assertions": [
+        "Uses multiple parallel code-simplifiers because the deduped review scope has `>5` files.",
+        "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one simplifier scope.",
+        "Keeps the simplifier file lists manager-authored instead of telling simplifiers to recompute or narrow scope.",
+        "Waits for every code-simplifier to return `DONE` before launching code-reviewers or updating tracking."
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "The human says: 'Once the build wave is fully reviewed, go ahead and commit, push, and open the PR for me.' Using the build workflow, how should the manager respond?",
+      "expected_output": "A manager response that says the build skill's no-commit override still applies, refuses to create or publish any commit/PR/tag, and leaves the working tree dirty for the human to review manually.",
+      "files": [],
+      "expectations": [
+        "States that the build skill's no-commit override still applies even when asked directly.",
+        "Refuses to create, amend, push, or otherwise publish a commit, PR, or tag.",
+        "Leaves the working tree dirty and local for the human to review manually.",
+        "Does not offer a workaround that still publishes the changes."
+      ],
+      "assertions": [
+        "States that the build skill's no-commit override still applies even when asked directly.",
+        "Refuses to create, amend, push, or otherwise publish a commit, PR, or tag.",
+        "Leaves the working tree dirty and local for the human to review manually.",
+        "Does not offer a workaround that still publishes the changes."
+      ]
+    }
+  ]
+}

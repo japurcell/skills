@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
+      "passed": true,
+      "evidence": "Response requires reading simplifier concerns before code-reviewer."
+    },
+    {
+      "text": "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+      "passed": false,
+      "evidence": "Response does not clearly treat correctness/scope concerns as unresolved work."
+    },
+    {
+      "text": "Reopens any affected task that was already marked done before re-dispatching the fix.",
+      "passed": false,
+      "evidence": "Response does not clearly reopen an affected done task before re-dispatch."
+    },
+    {
+      "text": "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
+      "passed": false,
+      "evidence": "Response does not clearly route the fix back to an owning subagent."
+    },
+    {
+      "text": "Does not continue with stale tracking or proceed straight to code-reviewer.",
+      "passed": false,
+      "evidence": "Response does not clearly stop the flow before code-reviewer or keep tracking current."
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 4,
+    "total": 5,
+    "pass_rate": 0.2
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 388,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 11.9,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 11.9
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

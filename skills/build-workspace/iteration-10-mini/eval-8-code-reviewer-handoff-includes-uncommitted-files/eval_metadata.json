@@ -1,0 +1,11 @@
+{
+  "eval_id": 8,
+  "eval_name": "code-reviewer-handoff-includes-uncommitted-files",
+  "prompt": "Every task in the current build wave is already marked done, and the code-simplifier wave has finished. The implementers across the wave touched `skills/build/SKILL.md` and `skills/build/implementer-prompt.md`, and `git status --porcelain` now shows `M skills/build/SKILL.md`, ` M skills/build/implementer-prompt.md`, `?? notes.txt`, `D scratch.tmp`, and `?? .gitignore`. Using the build workflow, what deduped review scope should the manager build, how many code-reviewers should run, and what context should go to them before the final tracking sync?",
+  "assertions": [
+    "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
+    "Excludes deleted files and `.gitignore` files from that deduped review scope.",
+    "Uses one code-reviewer because the deduped review scope has `<=5` files.",
+    "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync."
+  ]
+}

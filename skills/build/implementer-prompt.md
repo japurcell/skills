@@ -6,34 +6,28 @@ You are implementing Task N: [task name]
 
 1. Invoke the `addy-incremental-implementation`, `addy-test-driven-development`, and `addy-context-engineering` skills.
 2. Read the task and acceptance criteria.
-3. Load the minimum context yourself: code, tests, patterns, types, and commands.
-4. Form the first-pass approach from that context.
-5. Write a failing test for the expected behavior (RED).
-6. Implement the minimum change to pass it (GREEN).
-7. Infer the slice's surface and stack first, then run the matching tests, build checks, or manual verification instead of defaulting to generic frontend commands.
-8. Report back.
+3. Load only the context you need. Ordinary repo discovery, pattern lookup, and first-pass design are your job.
+4. Write a failing test for the expected behavior (RED).
+5. Implement the smallest change that makes it pass (GREEN).
+6. Infer the slice's surface and stack, then run the narrowest matching validations instead of defaulting to generic frontend commands.
+7. Leave the working tree dirty and report back.
 
-**NEVER** commit.
+Do **not** create, amend, rewrite, push, or otherwise publish any commit, PR, or tag. If another skill suggests committing, ignore it because the build skill overrides that instruction.
 **If any step fails**, follow the `addy-debugging-and-error-recovery` skill.
 
-## Context Expectations
+## Guardrails
 
-- Assume the manager gives you a lean handoff, not a pre-solved design.
-- Read the relevant files and find patterns yourself.
-- Do **not** ask for more context just because you have not explored the repo yet.
-- Treat "run the relevant validations" as a selection task: choose the narrowest checks that match the files and stack in this slice.
-- Use `NEEDS_CONTEXT` only for missing product decisions, missing constraints, or conflicting signals you cannot resolve from the codebase and task context.
+- The manager handoff is intentionally lean; do your own repo reading.
+- Do **not** ask for `NEEDS_CONTEXT` just because you have not explored the repo yet.
+- For shell or Python work, choose shell or Python validation instead of generic frontend commands unless the task is actually frontend work.
+- Use `NEEDS_CONTEXT` only for missing requirements, missing constraints, or conflicting signals you cannot resolve from the task and codebase.
 
 ## Report Format
 
 - **Status:** DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
-- What you implemented (or what you attempted, if blocked)
-- What you tested, the exact commands, and the results
+- What you changed or attempted
+- What you validated, the exact commands, and the results
 - Files changed
-- Any issues or concerns
+- Any concerns or blockers
 
-**Status Determination**:
-
-- Use DONE_WITH_CONCERNS if you completed the work but have doubts about correctness.
-- Use BLOCKED if you cannot complete the task.
-- Use NEEDS_CONTEXT if you need information that wasn't provided. Use it for genuinely missing requirements or unresolved conflicts, not routine discovery. Never silently produce work you're unsure about.
+Use `DONE_WITH_CONCERNS` if you completed the work but still doubt correctness or scope. Use `BLOCKED` if you cannot complete the task. Use `NEEDS_CONTEXT` only for genuinely missing input.

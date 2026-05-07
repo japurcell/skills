@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Syncs the plan and todo tracker to the final reviewed state.",
+      "passed": true,
+      "evidence": "Response syncs tracking to the final reviewed state."
+    },
+    {
+      "text": "Records any additional verification actually performed during review.",
+      "passed": true,
+      "evidence": "Response records review-time verification."
+    },
+    {
+      "text": "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+      "passed": true,
+      "evidence": "Response forbids publishing work."
+    },
+    {
+      "text": "Leaves the changes uncommitted and local.",
+      "passed": true,
+      "evidence": "Response leaves the work dirty and local."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 243,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 10.5,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 10.5
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

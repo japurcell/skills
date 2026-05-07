@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
+      "passed": false,
+      "evidence": "Response does not explicitly say that ordinary exploration is not a valid NEEDS_CONTEXT reason."
+    },
+    {
+      "text": "Keeps file discovery and pattern lookup assigned to the implementer.",
+      "passed": false,
+      "evidence": "Response does not clearly keep discovery and pattern lookup with the implementer."
+    },
+    {
+      "text": "Does not tell the manager to pre-read the codebase or hand over a solution.",
+      "passed": true,
+      "evidence": "Response avoids telling the manager to pre-read files or provide the solution."
+    },
+    {
+      "text": "Reserves NEEDS_CONTEXT for genuinely missing requirements, constraints, or conflicting signals.",
+      "passed": false,
+      "evidence": "Response does not restate the valid reasons for NEEDS_CONTEXT."
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 3,
+    "total": 4,
+    "pass_rate": 0.25
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 557,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 14.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 14.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

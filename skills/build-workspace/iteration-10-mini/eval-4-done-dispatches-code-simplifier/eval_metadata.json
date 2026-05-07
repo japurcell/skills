@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "done-dispatches-code-simplifier",
+  "prompt": "The manager is running a build wave of two ready tasks. Task A's implementer returned `DONE` with passing verification and touched four files. Task B is still part of the current wave and has not been dispatched yet. Using the build workflow, what should the manager do now, and should the code-simplifier wave start yet?",
+  "assertions": [
+    "Runs the per-task tracking update for Task A immediately.",
+    "Keeps the manager moving to the remaining implementer work in the current wave.",
+    "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
+    "Does not send the manager back into manual simplification or discovery first."
+  ]
+}

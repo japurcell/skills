@@ -1,0 +1,11 @@
+{
+  "eval_id": 11,
+  "eval_name": "large-review-scope-partitions-code-simplifiers",
+  "prompt": "Every task in the current build wave is already marked done, and the manager materialized a deduped `review_scope_files` list of 8 files across two logical areas: `src/auth/login.ts`, `src/auth/session.ts`, `src/auth/token.ts`, `tests/auth/login.test.ts`, `src/billing/invoice.ts`, `src/billing/payment.ts`, `src/billing/refund.ts`, and `tests/billing/invoice.test.ts`. Using the build workflow, how should the manager launch code-simplifiers before code-review begins?",
+  "assertions": [
+    "Uses multiple parallel code-simplifiers because the deduped review scope has `>5` files.",
+    "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one simplifier scope.",
+    "Keeps the simplifier file lists manager-authored instead of telling simplifiers to recompute or narrow scope.",
+    "Waits for every code-simplifier to return `DONE` before launching code-reviewers or updating tracking."
+  ]
+}

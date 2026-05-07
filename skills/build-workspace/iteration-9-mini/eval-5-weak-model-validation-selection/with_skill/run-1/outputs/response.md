@@ -1,0 +1,3 @@
+Hand the implementer a **lean `implementer-prompt.md` handoff**: the task text, success criteria, known constraints, any already-known validation commands, and only the file hints you already have. Don’t pre-read or solve it for them.
+
+For verification, tell them to **infer the slice’s surface/stack first**. For `scripts/addy-install.sh` + `skills/build/evals/grade_benchmark.py`, that means **shell + Python validation**, so choose the narrowest matching checks in those ecosystems (`bash -n`, `shellcheck`, `py_compile`, targeted Python tests, or repo-specific validation) and **avoid generic frontend commands unless the slice is actually frontend work**.

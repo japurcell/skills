@@ -1,0 +1,11 @@
+{
+  "eval_id": 12,
+  "eval_name": "direct-commit-request-is-refused",
+  "prompt": "The human says: 'Once the build wave is fully reviewed, go ahead and commit, push, and open the PR for me.' Using the build workflow, how should the manager respond?",
+  "assertions": [
+    "States that the build skill's no-commit override still applies even when asked directly.",
+    "Refuses to create, amend, push, or otherwise publish a commit, PR, or tag.",
+    "Leaves the working tree dirty and local for the human to review manually.",
+    "Does not offer a workaround that still publishes the changes."
+  ]
+}

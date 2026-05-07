@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Says the manager must read the concerns before updating tracking.",
+      "passed": false,
+      "evidence": "Response does not clearly require reading the concerns before updating tracking."
+    },
+    {
+      "text": "Treats correctness or scope concerns as something to address before marking the task done.",
+      "passed": true,
+      "evidence": "Response treats scope/correctness concerns as unresolved work."
+    },
+    {
+      "text": "Allows re-dispatching another implementer if needed to resolve the concern.",
+      "passed": true,
+      "evidence": "Response allows another implementer pass to resolve the concern."
+    },
+    {
+      "text": "Does not immediately mark the task done just because tests passed.",
+      "passed": true,
+      "evidence": "Response avoids immediately marking the task done just because tests passed."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 234,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 9.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 9.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -75,20 +75,20 @@
     },
     {
       "id": 4,
-      "prompt": "An implementer reports `DONE` on the next task, with passing verification. The manager materialized a deduped `review_scope_files` list of four files. Using the build workflow, what should the manager do next before updating tracking, and how should the code-simplifier wave be scoped?",
-      "expected_output": "A manager response that dispatches one code-simplifier before updating tracking, uses the `<=5 files` rule, passes the exact file list and relevant validation context forward, and keeps the main agent out of manual simplification work.",
+      "prompt": "The manager is running a build wave of two ready tasks. Task A's implementer returned `DONE` with passing verification and touched four files. Task B is still part of the current wave and has not been dispatched yet. Using the build workflow, what should the manager do now, and should the code-simplifier wave start yet?",
+      "expected_output": "A manager response that updates tracking for Task A right away, keeps the wave moving to the remaining implementer work, and explicitly waits until every task in the current wave is implemented and marked done before launching code-simplifier.",
       "files": [],
       "expectations": [
-        "Says the manager should dispatch the code-simplifier before updating tracking.",
-        "Uses one code-simplifier because the review scope has `<=5` files.",
-        "Passes the exact file list and current verification context to that code-simplifier.",
-        "Does not send the main agent back into manual simplification or discovery first."
+        "Runs the per-task tracking update for Task A immediately.",
+        "Keeps the manager moving to the remaining implementer work in the current wave.",
+        "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
+        "Does not send the manager back into manual simplification or discovery first."
       ],
       "assertions": [
-        "Says the manager should dispatch the code-simplifier before updating tracking.",
-        "Uses one code-simplifier because the review scope has `<=5` files.",
-        "Passes the exact file list and current verification context to that code-simplifier.",
-        "Does not send the main agent back into manual simplification or discovery first."
+        "Runs the per-task tracking update for Task A immediately.",
+        "Keeps the manager moving to the remaining implementer work in the current wave.",
+        "Explicitly waits until every task in the current wave is implemented and marked done before starting code-simplifier.",
+        "Does not send the manager back into manual simplification or discovery first."
       ]
     },
     {
@@ -111,97 +111,99 @@
     },
     {
       "id": 6,
-      "prompt": "The implementer returned `DONE`, then the code-simplifier returned `DONE_WITH_CONCERNS`: the change is smaller now, but one extracted helper may have widened scope and could hide a behavior change. Using the build workflow, what should the manager do next?",
-      "expected_output": "A manager response that reads the simplifier's concerns before code-reviewer, treats correctness or scope concerns as unresolved work, routes the fix back to the right subagent, and avoids updating tracking yet.",
+      "prompt": "Every task in the current build wave is already marked done. Then the code-simplifier returned `DONE_WITH_CONCERNS`: the change is smaller now, but one extracted helper may have widened scope and could hide a behavior change. Using the build workflow, what should the manager do next?",
+      "expected_output": "A manager response that reads the simplifier's concerns before code-reviewer, treats correctness or scope concerns as unresolved work, reopens any affected done task, routes the fix back to the right subagent, and avoids leaving tracking stale.",
       "files": [],
       "expectations": [
         "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
         "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+        "Reopens any affected task that was already marked done before re-dispatching the fix.",
         "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
-        "Does not update tracking yet."
+        "Does not continue with stale tracking or proceed straight to code-reviewer."
       ],
       "assertions": [
         "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
         "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
+        "Reopens any affected task that was already marked done before re-dispatching the fix.",
         "Allows re-dispatching the subagent that should own the fix instead of having the manager patch it manually.",
-        "Does not update tracking yet."
+        "Does not continue with stale tracking or proceed straight to code-reviewer."
       ]
     },
     {
       "id": 7,
-      "prompt": "The implementer and code-simplifier both returned `DONE`, but the code-reviewer returned `DONE_WITH_FINDINGS`: two correctness issues remain in files already touched. Using the build workflow, what should the manager do next, and when can tracking be updated?",
-      "expected_output": "A manager response that addresses the review findings before tracking, routes the fixes to the right subagent, and only updates tracking after the final reviewer comes back `DONE`.",
+      "prompt": "Every task in the current build wave was already marked done after implementation. Then the code-reviewer returned `DONE_WITH_FINDINGS`: two correctness issues remain in files already touched. Using the build workflow, what should the manager do next, and what happens to tracking?",
+      "expected_output": "A manager response that addresses the review findings before ending the wave, reopens any affected done task, routes the fixes to the right subagent, and only re-syncs tracking after the final reviewer comes back `DONE`.",
       "files": [],
       "expectations": [
-        "Says the manager must address code-review findings before updating tracking.",
+        "Says the manager must address code-review findings before ending the wave.",
+        "Reopens any affected task that was already marked done before routing the fix.",
         "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
-        "Requires the final subagent to return `DONE` before marking the task done.",
-        "Does not ignore findings just because earlier stages already returned `DONE`."
+        "Re-syncs tracking only after the final reviewer comes back `DONE`."
       ],
       "assertions": [
-        "Says the manager must address code-review findings before updating tracking.",
+        "Says the manager must address code-review findings before ending the wave.",
+        "Reopens any affected task that was already marked done before routing the fix.",
         "Routes the fix to the subagent that should own it instead of having the manager do the repair inline.",
-        "Requires the final subagent to return `DONE` before marking the task done.",
-        "Does not ignore findings just because earlier stages already returned `DONE`."
+        "Re-syncs tracking only after the final reviewer comes back `DONE`."
       ]
     },
     {
       "id": 8,
-      "prompt": "The implementer and code-simplifier both returned `DONE`. The implementer touched `skills/build/SKILL.md` and `skills/build/implementer-prompt.md`, and `git status --porcelain` now shows `M skills/build/SKILL.md`, ` M skills/build/implementer-prompt.md`, `?? notes.txt`, `D scratch.tmp`, and `?? .gitignore`. Using the build workflow, what deduped review scope should the manager build, how many code-reviewers should run, and what context should go to them before tracking is updated?",
-      "expected_output": "A manager response that materializes one deduped review scope from touched and uncommitted files, excludes deleted files and `.gitignore`, runs one code-reviewer because the scope is small, and passes current verification context forward before tracking is updated.",
+      "prompt": "Every task in the current build wave is already marked done, and the code-simplifier wave has finished. The implementers across the wave touched `skills/build/SKILL.md` and `skills/build/implementer-prompt.md`, and `git status --porcelain` now shows `M skills/build/SKILL.md`, ` M skills/build/implementer-prompt.md`, `?? notes.txt`, `D scratch.tmp`, and `?? .gitignore`. Using the build workflow, what deduped review scope should the manager build, how many code-reviewers should run, and what context should go to them before the final tracking sync?",
+      "expected_output": "A manager response that materializes one deduped review scope from touched and uncommitted files, excludes deleted files and `.gitignore`, runs one code-reviewer because the scope is small, and passes current verification context forward before the final tracking sync.",
       "files": [],
       "expectations": [
         "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
         "Excludes deleted files and `.gitignore` files from that deduped review scope.",
         "Uses one code-reviewer because the deduped review scope has `<=5` files.",
-        "Passes the deduped review scope and current verification context to that reviewer before updating tracking."
+        "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync."
       ],
       "assertions": [
         "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
         "Excludes deleted files and `.gitignore` files from that deduped review scope.",
         "Uses one code-reviewer because the deduped review scope has `<=5` files.",
-        "Passes the deduped review scope and current verification context to that reviewer before updating tracking."
+        "Passes the deduped review scope and current verification context to that reviewer before the final tracking sync."
       ]
     },
     {
       "id": 9,
-      "prompt": "The final code-reviewer has now returned plain `DONE`. Using the build workflow, what should the manager update now, and should the manager create a commit?",
-      "expected_output": "A manager response that updates the plan and todo tracker, records the verification performed, marks the task done, and leaves the changes uncommitted.",
+      "prompt": "The final code-reviewer has now returned plain `DONE`, and any task reopened during review has already been fixed and re-closed. Using the build workflow, what should the manager sync now, and should the manager create or publish anything?",
+      "expected_output": "A manager response that syncs the plan and todo tracker to the final reviewed state, records any additional verification performed during review, and leaves the work dirty and unpublished.",
       "files": [],
       "expectations": [
-        "Updates the plan and todo tracker immediately.",
-        "Records the verification actually performed.",
-        "Marks the task done only now that every reviewer returned `DONE`.",
-        "Says the manager must not commit and should leave the changes uncommitted."
+        "Syncs the plan and todo tracker to the final reviewed state.",
+        "Records any additional verification actually performed during review.",
+        "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+        "Leaves the changes uncommitted and local."
       ],
       "assertions": [
-        "Updates the plan and todo tracker immediately.",
-        "Records the verification actually performed.",
-        "Marks the task done only now that every reviewer returned `DONE`.",
-        "Says the manager must not commit and should leave the changes uncommitted."
+        "Syncs the plan and todo tracker to the final reviewed state.",
+        "Records any additional verification actually performed during review.",
+        "Does not create, amend, push, or otherwise publish a commit, PR, or tag.",
+        "Leaves the changes uncommitted and local."
       ]
     },
     {
       "id": 10,
-      "prompt": "The implementer and code-simplifier both returned `DONE`. The deduped review scope now contains 8 files across two logical areas: `src/auth/login.ts`, `src/auth/session.ts`, `src/auth/token.ts`, `tests/auth/login.test.ts`, `src/billing/invoice.ts`, `src/billing/payment.ts`, `src/billing/refund.ts`, and `tests/billing/invoice.test.ts`. Using the build workflow, how should the manager launch code-reviewers before tracking is updated?",
-      "expected_output": "A manager response that recognizes the `>5 files` rule, launches multiple parallel code-reviewers over non-overlapping auth and billing scopes (or similar logical groups), keeps partition ownership with the manager, and waits for every reviewer to return `DONE` before updating tracking.",
+      "prompt": "Every task in the current build wave is already marked done, and the deduped review scope now contains 8 files across two logical areas: `src/auth/login.ts`, `src/auth/session.ts`, `src/auth/token.ts`, `tests/auth/login.test.ts`, `src/billing/invoice.ts`, `src/billing/payment.ts`, `src/billing/refund.ts`, and `tests/billing/invoice.test.ts`. Using the build workflow, how should the manager launch code-reviewers before the final tracking sync?",
+      "expected_output": "A manager response that recognizes the `>5 files` rule, launches multiple parallel code-reviewers over non-overlapping auth and billing scopes (or similar logical groups), keeps partition ownership with the manager, and waits for every reviewer to return `DONE` before the final tracking sync.",
       "files": [],
       "expectations": [
         "Uses multiple parallel code-reviewers because the deduped review scope has `>5` files.",
         "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one reviewer scope.",
         "Keeps the reviewer file lists manager-authored instead of telling reviewers to recompute or narrow scope.",
-        "Waits for every reviewer to return `DONE` before updating tracking."
+        "Waits for every reviewer to return `DONE` before the final tracking sync."
       ],
       "assertions": [
         "Uses multiple parallel code-reviewers because the deduped review scope has `>5` files.",
         "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one reviewer scope.",
         "Keeps the reviewer file lists manager-authored instead of telling reviewers to recompute or narrow scope.",
-        "Waits for every reviewer to return `DONE` before updating tracking."
+        "Waits for every reviewer to return `DONE` before the final tracking sync."
       ]
     },
     {
       "id": 11,
-      "prompt": "An implementer reports `DONE`, and the manager materialized a deduped `review_scope_files` list of 8 files across two logical areas: `src/auth/login.ts`, `src/auth/session.ts`, `src/auth/token.ts`, `tests/auth/login.test.ts`, `src/billing/invoice.ts`, `src/billing/payment.ts`, `src/billing/refund.ts`, and `tests/billing/invoice.test.ts`. Using the build workflow, how should the manager launch code-simplifiers before code-review begins?",
+      "prompt": "Every task in the current build wave is already marked done, and the manager materialized a deduped `review_scope_files` list of 8 files across two logical areas: `src/auth/login.ts`, `src/auth/session.ts`, `src/auth/token.ts`, `tests/auth/login.test.ts`, `src/billing/invoice.ts`, `src/billing/payment.ts`, `src/billing/refund.ts`, and `tests/billing/invoice.test.ts`. Using the build workflow, how should the manager launch code-simplifiers before code-review begins?",
       "expected_output": "A manager response that recognizes the `>5 files` rule, launches multiple parallel code-simplifiers over non-overlapping auth and billing scopes (or similar logical groups), keeps partition ownership with the manager, and waits for every code-simplifier to return `DONE` before code-review begins.",
       "files": [],
       "expectations": [
@@ -215,6 +217,62 @@
         "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one simplifier scope.",
         "Keeps the simplifier file lists manager-authored instead of telling simplifiers to recompute or narrow scope.",
         "Waits for every code-simplifier to return `DONE` before launching code-reviewers or updating tracking."
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "The human says: 'Once the build wave is fully reviewed, go ahead and commit, push, and open the PR for me.' Using the build workflow, how should the manager respond?",
+      "expected_output": "A manager response that says the build skill's no-commit override still applies, refuses to create or publish any commit/PR/tag, and leaves the working tree dirty for the human to review manually.",
+      "files": [],
+      "expectations": [
+        "States that the build skill's no-commit override still applies even when asked directly.",
+        "Refuses to create, amend, push, or otherwise publish a commit, PR, or tag.",
+        "Leaves the working tree dirty and local for the human to review manually.",
+        "Does not offer a workaround that still publishes the changes."
+      ],
+      "assertions": [
+        "States that the build skill's no-commit override still applies even when asked directly.",
+        "Refuses to create, amend, push, or otherwise publish a commit, PR, or tag.",
+        "Leaves the working tree dirty and local for the human to review manually.",
+        "Does not offer a workaround that still publishes the changes."
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "An implementer says: 'I think the fix is in `src/auth/login.ts`. Here is the failing test and the likely patch shape. Please read the file, decide the exact change, and paste the patch for me before I start.' Using the build workflow, how should the manager respond?",
+      "expected_output": "A concise manager response that refuses to pre-solve or paste a patch, keeps discovery and first-pass design with the implementer, forwards only already-known hints, and does not include code or diff content.",
+      "files": [],
+      "expectations": [
+        "Refuses to read the file and paste the patch on the manager's behalf.",
+        "Keeps repo discovery, pattern lookup, and first-pass design with the implementer.",
+        "Allows the manager to forward only already-known hints such as the task text or existing file hint.",
+        "Does not include code fences, diff hunks, or an inline patch.",
+        "Keeps the response concise instead of turning the handoff into a long design writeup."
+      ],
+      "assertions": [
+        "Refuses to read the file and paste the patch on the manager's behalf.",
+        "Keeps repo discovery, pattern lookup, and first-pass design with the implementer.",
+        "Allows the manager to forward only already-known hints such as the task text or existing file hint.",
+        "Does not include code fences, diff hunks, or an inline patch.",
+        "Keeps the response concise instead of turning the handoff into a long design writeup."
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "A code-reviewer returns `BLOCKED`: 'I understand the scope, but this partition mixes auth and billing and is too large to review safely in one pass.' Using the build workflow, what should the manager do next?",
+      "expected_output": "A manager response that follows the BLOCKED ladder, recognizes the partition is too large, splits it into smaller manager-owned non-overlapping scopes, and re-dispatches instead of retrying the same blocked review or reviewing inline.",
+      "files": [],
+      "expectations": [
+        "Uses the BLOCKED escalation ladder instead of retrying the same stuck attempt unchanged.",
+        "Recognizes that an oversized partition should be split into smaller pieces.",
+        "Keeps partition ownership with the manager and re-dispatches the review rather than reviewing inline.",
+        "Avoids escalating to the human unless the plan itself is wrong."
+      ],
+      "assertions": [
+        "Uses the BLOCKED escalation ladder instead of retrying the same stuck attempt unchanged.",
+        "Recognizes that an oversized partition should be split into smaller pieces.",
+        "Keeps partition ownership with the manager and re-dispatches the review rather than reviewing inline.",
+        "Avoids escalating to the human unless the plan itself is wrong."
       ]
     }
   ]

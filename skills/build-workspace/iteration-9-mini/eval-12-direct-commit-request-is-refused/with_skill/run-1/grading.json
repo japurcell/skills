@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "States that the build skill's no-commit override still applies even when asked directly.",
+      "passed": false,
+      "evidence": "Response does not clearly say the build skill override still applies."
+    },
+    {
+      "text": "Refuses to create, amend, push, or otherwise publish a commit, PR, or tag.",
+      "passed": false,
+      "evidence": "Response does not clearly refuse to create or publish the work."
+    },
+    {
+      "text": "Leaves the working tree dirty and local for the human to review manually.",
+      "passed": true,
+      "evidence": "Response leaves the work dirty and local for manual review."
+    },
+    {
+      "text": "Does not offer a workaround that still publishes the changes.",
+      "passed": true,
+      "evidence": "Response does not propose an alternate way to publish the work."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 236,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 12.3,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 12.3
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}
