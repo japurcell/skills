@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "reuse-existing-skill-instead-of-duplicating",
+  "prompt": "Evaluate the request in `evals/files/plan-maker-request.md`. Decide whether this repository needs a new skill or whether an existing skill should be reused or refined instead. This is a benchmark run with no live user. Save the decision to `outputs/decision.md`. If you choose to refine an existing skill, save the revised files under `outputs/`. Do not create a brand-new duplicate skill unless the brief clearly requires it.",
+  "assertions": [
+    "decision.md recommends reusing or refining an existing skill instead of creating plan-maker.",
+    "decision.md names create-plan or create-tasks as the closer existing skill.",
+    "No new plan-maker/SKILL.md is created.",
+    "If a revised skill is proposed, it preserves the existing skill name."
+  ]
+}

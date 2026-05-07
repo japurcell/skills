@@ -1,0 +1,21 @@
+{
+  "type": "result",
+  "timestamp": "2026-05-07T05:10:00.805Z",
+  "sessionId": "d0ffe0e2-b9f0-47b0-b260-7f9b3f405740",
+  "exitCode": 0,
+  "usage": {
+    "premiumRequests": 1,
+    "totalApiDurationMs": 139281,
+    "sessionDurationMs": 145337,
+    "codeChanges": {
+      "linesAdded": 223,
+      "linesRemoved": 0,
+      "filesModified": [
+        "/Users/adam/.copilot/session-state/d0ffe0e2-b9f0-47b0-b260-7f9b3f405740/plan.md",
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-3-harden-skill-for-weaker-models/without_skill/run-1/outputs/task-wave/SKILL.md",
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-3-harden-skill-for-weaker-models/without_skill/run-1/outputs/task-wave/evals/evals.json",
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-3-harden-skill-for-weaker-models/without_skill/run-1/outputs/output.md"
+      ]
+    }
+  }
+}

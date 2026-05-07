@@ -1,0 +1,13 @@
+{
+  "eval_id": 0,
+  "eval_name": "create-new-skill-with-benchmarks",
+  "prompt": "Create a new skill called `release-notes-skill` from the confirmed brief in `evals/files/release-notes-brief.md`. This is a benchmark run with no live user, so treat the brief as complete and do not ask follow-up questions. Use the repository's create-skill workflow. Save the result to `outputs/release-notes-skill/` with `SKILL.md`, `evals/evals.json`, and `evals/grade_benchmark.py`. Also write `outputs/output.md` that lists the exact validation, grading, and install commands you would run.",
+  "assertions": [
+    "Generated skill passes quick_validate.",
+    "Generated SKILL.md uses the anatomy sections Overview, When to Use, Workflow, Specific Techniques, Common Rationalizations, Red Flags, and Verification.",
+    "Generated description says what the skill does and includes 'Use when' trigger language.",
+    "Generated evals.json includes at least 3 evals.",
+    "Generated grade_benchmark.py compiles.",
+    "output.md lists quick_validate and ./scripts/copilot-install.sh."
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "decision.md recommends reusing or refining an existing skill instead of creating plan-maker.",
+      "passed": true,
+      "evidence": "# Decision\n\nReuse and refine `create-plan`; do **not** create a new `plan-maker` skill.\n\n## Why\n\n- The brief matches `create-plan` almost exactly: it already starts from a spec file, reads local planning conventions, writes `plan.md` plus supporting planning artifacts, and hands off cleanly to `/create-tasks`.\n- The request explicitly says there is no new file layout or novel workflow. That means the gap is not capability, it is trigger clarity and output specificity.\n- `create-tasks` is related, but it is the downstream task-breakdown step after planning, not the replacement for the requested workflow.\n\n## Refinement choice\n\nTighten `create-plan` so it triggers more reliably on requests like \"make this spec ready for task breakdown\", \"write plan.md and research notes\", or \"read the repo's planning conventions before implementation\", and make the output contract more explicit so the skill avoids vague summaries.\n\n## Saved files\n\n- `outputs/create-plan/SKILL.md`\n- `outputs/create-plan/evals/evals.json`\n- `outputs/create-plan/references/plan-template.md`\n\n## Guardrails satisfied\n\n- Existing skill name preserved: `create-plan`\n- Nearby downstream skill acknowledged: `create-tasks`\n- No duplicate `plan-maker/SKILL.md` created\n"
+    },
+    {
+      "text": "decision.md names create-plan or create-tasks as the closer existing skill.",
+      "passed": true,
+      "evidence": "# Decision\n\nReuse and refine `create-plan`; do **not** create a new `plan-maker` skill.\n\n## Why\n\n- The brief matches `create-plan` almost exactly: it already starts from a spec file, reads local planning conventions, writes `plan.md` plus supporting planning artifacts, and hands off cleanly to `/create-tasks`.\n- The request explicitly says there is no new file layout or novel workflow. That means the gap is not capability, it is trigger clarity and output specificity.\n- `create-tasks` is related, but it is the downstream task-breakdown step after planning, not the replacement for the requested workflow.\n\n## Refinement choice\n\nTighten `create-plan` so it triggers more reliably on requests like \"make this spec ready for task breakdown\", \"write plan.md and research notes\", or \"read the repo's planning conventions before implementation\", and make the output contract more explicit so the skill avoids vague summaries.\n\n## Saved files\n\n- `outputs/create-plan/SKILL.md`\n- `outputs/create-plan/evals/evals.json`\n- `outputs/create-plan/references/plan-template.md`\n\n## Guardrails satisfied\n\n- Existing skill name preserved: `create-plan`\n- Nearby downstream skill acknowledged: `create-tasks`\n- No duplicate `plan-maker/SKILL.md` created\n"
+    },
+    {
+      "text": "No new plan-maker/SKILL.md is created.",
+      "passed": true,
+      "evidence": "no duplicate skill created"
+    },
+    {
+      "text": "If a revised skill is proposed, it preserves the existing skill name.",
+      "passed": true,
+      "evidence": "revised_names=['create-plan']"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 18327,
+    "transcript_chars": 126717
+  },
+  "timing": {
+    "executor_duration_seconds": 231.8,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 231.8
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

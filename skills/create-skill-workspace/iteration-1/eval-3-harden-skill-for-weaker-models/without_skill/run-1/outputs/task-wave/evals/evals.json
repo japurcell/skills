@@ -1,0 +1,51 @@
+{
+  "skill_name": "task-wave",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use the `task-wave` skill to plan a repo task that will update `skills/create-skill/SKILL.md`, add a new case to `skills/create-skill/evals/evals.json`, and refresh installed copies afterward. Keep the plan short, dependency-ordered, and explicit enough for a weaker model. Name the exact validation and refresh commands for this repository.",
+      "expected_output": "A short multi-wave plan that separates the skill edit, eval update, and refresh/verification work while naming exact repo commands instead of generic test language.",
+      "files": [],
+      "assertions": [
+        "The output uses multiple dependency-ordered waves instead of one undifferentiated list.",
+        "The output names `python3 skills/skill-creator/scripts/quick_validate.py` for skill validation.",
+        "The output names `./scripts/copilot-install.sh` for the refresh step.",
+        "The output does not use `npm test` or `npm run build`."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Rewrite this vague plan into a `task-wave` plan for this repository: 1) figure out the skill changes, 2) update the benchmark files, 3) run the usual tests, 4) finish up. The real work is to edit `skills/build/SKILL.md`, update `skills/build/evals/evals.json`, and syntax-check any edited grader file if one changes.",
+      "expected_output": "A clearer wave-by-wave plan that replaces vague steps with exact files, explicit exit conditions, and repo-specific validation commands.",
+      "files": [],
+      "assertions": [
+        "The rewritten plan replaces vague verbs like `figure out` and `finish up` with concrete actions.",
+        "The output names the exact touched paths from the prompt.",
+        "The output replaces generic validation with `python3 skills/skill-creator/scripts/quick_validate.py` and, if relevant, `python3 -m py_compile skills/build/evals/grade_benchmark.py`.",
+        "The output stays concise."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use `task-wave` for a weaker-model handoff. The task is to update `scripts/copilot-install.sh`, mirror the change in `scripts/addy-install.sh`, and verify both installers without assuming generic project commands. Keep the wave plan literal and include the exact repo commands.",
+      "expected_output": "A literal plan that groups the installer edits sensibly and uses the repo's shell validation commands rather than generic build/test steps.",
+      "files": [],
+      "assertions": [
+        "The output uses exact installer validation commands from this repo.",
+        "The output includes `bash -n scripts/copilot-install.sh`.",
+        "The output includes `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`.",
+        "The plan uses explicit wave exit conditions for weaker models."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Should `task-wave` create waves for this work: change one typo in `README.md` and stop? Answer using the skill's rules.",
+      "expected_output": "A response that says waves are unnecessary for a one-step change and avoids inventing extra structure.",
+      "files": [],
+      "assertions": [
+        "The output says waves are not needed for this one-step task.",
+        "The output does not invent multiple waves for the typo fix."
+      ]
+    }
+  ]
+}

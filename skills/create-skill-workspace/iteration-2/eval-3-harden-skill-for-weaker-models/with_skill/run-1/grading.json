@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "Generated skill preserves the name task-wave.",
+      "passed": true,
+      "evidence": "name=task-wave"
+    },
+    {
+      "text": "Generated skill passes quick_validate.",
+      "passed": true,
+      "evidence": "Skill is valid!"
+    },
+    {
+      "text": "Generated skill uses exact repo validation commands instead of positive generic npm test or npm run build instructions.",
+      "passed": true,
+      "evidence": "repo-specific commands present and generic npm commands absent"
+    },
+    {
+      "text": "Generated output describes sibling workspace layout skills/<skill>-workspace/iteration-N.",
+      "passed": true,
+      "evidence": "# Benchmark workspace layout\n\nUse the canonical sibling pattern `skills/<skill>-workspace/iteration-N/`. For this revision, the concrete path would be `skills/task-wave-workspace/iteration-2/`, with the pre-revision draft saved once as the modified-skill baseline.\n\n```text\nskills/<skill>-workspace/\n  skill-snapshot/\n    SKILL.md\n    evals/\n      evals.json\n      grade_benchmark.py\n  iteration-N/\n    eval-0-multi-surface-skill-update/\n      eval_metadata.json\n      with_skill/\n        run-1/\n          outputs/\n            response.md\n            metrics.json\n          transcript.md\n          timing.json\n          grading.json\n      old_skill/\n        run-1/\n          outputs/\n            response.md\n            metrics.json\n          transcript.md\n          timing.json\n          grading.json\n    eval-1-rewrite-vague-plan/\n      ...\n    eval-2-installer-validation-wave/\n      ...\n    eval-3-no-wave-needed/\n      ...\n    benchmark.json\n    benchmark.md\n    review.html\n```\n\nConcrete example for this revision:\n\n```text\nskills/task-wave-workspace/\n  skill-snapshot/\n    SKILL.md\n    evals/\n      evals.json\n      grade_benchmark.py\n  iteration-2/\n    eval-0-multi-surface-skill-update/\n    eval-1-rewrite-vague-plan/\n    eval-2-installer-validation-wave/\n    eval-3-no-wave-needed/\n```\n\nLayout notes:\n\n- Keep generated runs out of `skills/task-wave/`; this repo treats `skills/*-workspace/**/outputs/` as benchmark artifacts.\n- Use `old_skill/` with `skill-snapshot/` as the baseline because this task improves an existing draft rather than creating a brand-new skill.\n- Keep one canonical `eval_metadata.json` beside each `eval-*` directory so local graders and aggregation scripts can walk the iteration cleanly.\n- Point live prompts at the exact local `skills/task-wave/SKILL.md` or snapshot path and tell the model to ignore other installed copies of the same skill name.\n- After runs finish, grade with `python3 skills/task-wave/evals/grade_benchmark.py skills/task-wave-workspace/iteration-N`, aggregate with `python -m scripts.aggregate_benchmark skills/task-wave-workspace/iteration-N --skill-name task-wave`, then generate `review.html`.\n"
+    },
+    {
+      "text": "Generated evals.json includes at least 3 evals.",
+      "passed": true,
+      "evidence": "eval_count=4"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 31428,
+    "transcript_chars": 160758
+  },
+  "timing": {
+    "executor_duration_seconds": 261.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 261.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

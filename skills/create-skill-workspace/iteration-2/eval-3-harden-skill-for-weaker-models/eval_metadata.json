@@ -1,0 +1,12 @@
+{
+  "eval_id": 3,
+  "eval_name": "harden-skill-for-weaker-models",
+  "prompt": "Improve the weak-model-unfriendly `task-wave` skill draft in `evals/files/task-wave-draft/` so it is repo-ready and benchmarkable. Keep the existing name and save the revised skill to `outputs/task-wave/`. Also write `outputs/output.md` describing the benchmark workspace layout you would use for this revised skill.",
+  "assertions": [
+    "Generated skill preserves the name task-wave.",
+    "Generated skill passes quick_validate.",
+    "Generated skill uses exact repo validation commands instead of positive generic npm test or npm run build instructions.",
+    "Generated output describes sibling workspace layout skills/<skill>-workspace/iteration-N.",
+    "Generated evals.json includes at least 3 evals."
+  ]
+}

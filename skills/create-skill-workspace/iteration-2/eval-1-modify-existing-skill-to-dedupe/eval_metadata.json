@@ -1,0 +1,13 @@
+{
+  "eval_id": 1,
+  "eval_name": "modify-existing-skill-to-dedupe",
+  "prompt": "Tighten the existing `review-handoff` skill draft in `evals/files/review-handoff-draft/` into a repo-ready version under `outputs/review-handoff/`. Preserve the skill identity, remove duplicated guidance, and make it benchmarkable. This is a benchmark run with no live user, so treat the draft as already confirmed and do not ask follow-up questions. Write `outputs/output.md` summarizing what you tightened and how you would benchmark the revision.",
+  "assertions": [
+    "Generated skill preserves the name review-handoff.",
+    "Generated skill passes quick_validate.",
+    "Generated SKILL.md is shorter than the source draft.",
+    "Generated SKILL.md avoids verbatim copy from references/skill-anatomy.md.",
+    "Generated eval assets include evals.json and grade_benchmark.py.",
+    "output.md names old_skill or a snapshot as the baseline for modifying an existing skill."
+  ]
+}

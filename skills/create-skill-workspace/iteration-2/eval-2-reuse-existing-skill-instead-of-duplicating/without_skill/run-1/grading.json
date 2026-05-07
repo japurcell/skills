@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "decision.md recommends reusing or refining an existing skill instead of creating plan-maker.",
+      "passed": true,
+      "evidence": "# Decision\n\nReuse the existing `create-plan` skill as-is. Do **not** add a new `plan-maker` skill.\n\n## Why\n\nThe request is a direct match for `create-plan`, not a new capability:\n\n- The request wants a skill that takes a spec file, reads repo planning conventions, and produces `plan.md`, research notes, and design artifacts ready for task breakdown.\n- `create-plan` already does exactly that: it reads the spec, uses the plan template and repo instructions, writes `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, and optional `contracts/`, then returns a readiness report that points to `/create-tasks`.\n- The requester explicitly says they do **not** need a new file layout or a novel workflow. Creating `plan-maker` would duplicate the repository's existing planning workflow instead of improving it.\n\n## Evidence\n\n- Request scope: `/Users/adam/Development/skills/skills/create-skill/evals/files/plan-maker-request.md:7-15`\n- Existing skill coverage: `/Users/adam/Development/skills/skills/create-plan/SKILL.md:10-25`\n- Existing artifact and handoff contract: `/Users/adam/Development/skills/skills/create-plan/SKILL.md:37-87`\n- Existing anti-vagueness rules: `/Users/adam/Development/skills/skills/create-plan/SKILL.md:26-31` and `/Users/adam/Development/skills/skills/create-plan/SKILL.md:77-95`\n\n## Refinement decision\n\nNo refinement is needed for this benchmark run. The current `create-plan` skill already addresses the stated concerns about reliable triggering and non-vague output, so there are no revised skill files to save.\n"
+    },
+    {
+      "text": "decision.md names create-plan or create-tasks as the closer existing skill.",
+      "passed": true,
+      "evidence": "# Decision\n\nReuse the existing `create-plan` skill as-is. Do **not** add a new `plan-maker` skill.\n\n## Why\n\nThe request is a direct match for `create-plan`, not a new capability:\n\n- The request wants a skill that takes a spec file, reads repo planning conventions, and produces `plan.md`, research notes, and design artifacts ready for task breakdown.\n- `create-plan` already does exactly that: it reads the spec, uses the plan template and repo instructions, writes `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, and optional `contracts/`, then returns a readiness report that points to `/create-tasks`.\n- The requester explicitly says they do **not** need a new file layout or a novel workflow. Creating `plan-maker` would duplicate the repository's existing planning workflow instead of improving it.\n\n## Evidence\n\n- Request scope: `/Users/adam/Development/skills/skills/create-skill/evals/files/plan-maker-request.md:7-15`\n- Existing skill coverage: `/Users/adam/Development/skills/skills/create-plan/SKILL.md:10-25`\n- Existing artifact and handoff contract: `/Users/adam/Development/skills/skills/create-plan/SKILL.md:37-87`\n- Existing anti-vagueness rules: `/Users/adam/Development/skills/skills/create-plan/SKILL.md:26-31` and `/Users/adam/Development/skills/skills/create-plan/SKILL.md:77-95`\n\n## Refinement decision\n\nNo refinement is needed for this benchmark run. The current `create-plan` skill already addresses the stated concerns about reliable triggering and non-vague output, so there are no revised skill files to save.\n"
+    },
+    {
+      "text": "No new plan-maker/SKILL.md is created.",
+      "passed": true,
+      "evidence": "no duplicate skill created"
+    },
+    {
+      "text": "If a revised skill is proposed, it preserves the existing skill name.",
+      "passed": true,
+      "evidence": "revised_names=[]"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1950,
+    "transcript_chars": 54417
+  },
+  "timing": {
+    "executor_duration_seconds": 76.8,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 76.8
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

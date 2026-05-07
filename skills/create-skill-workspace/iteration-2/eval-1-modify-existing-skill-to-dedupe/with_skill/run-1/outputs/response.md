@@ -1,0 +1,3 @@
+Done. I tightened `review-handoff` into a repo-ready, benchmarkable skill at `skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/`.
+
+`SKILL.md` keeps the `review-handoff` identity but removes the draft’s repetition in favor of an exact output contract: fixed review-handoff headings, concrete file/risk/validation guidance, explicit `- None.` follow-ups, and no vague “normal tests” wording. I also added `evals/evals.json`, a deterministic `evals/grade_benchmark.py`, and `skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/output.md` with the tightening summary and a benchmark plan that uses `old_skill` or a snapshot baseline.

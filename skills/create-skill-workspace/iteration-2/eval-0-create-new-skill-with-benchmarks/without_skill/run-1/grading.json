@@ -1,0 +1,68 @@
+{
+  "expectations": [
+    {
+      "text": "Generated skill passes quick_validate.",
+      "passed": true,
+      "evidence": "Skill is valid!"
+    },
+    {
+      "text": "Generated SKILL.md uses the anatomy sections Overview, When to Use, Workflow, Specific Techniques, Common Rationalizations, Red Flags, and Verification.",
+      "passed": true,
+      "evidence": "all anatomy headings present"
+    },
+    {
+      "text": "Generated description says what the skill does and includes 'Use when' trigger language.",
+      "passed": true,
+      "evidence": "Helps agents turn merged pull requests, changelog fragments, and issue summaries into polished release notes with clear highlights, grouped changes, upgrade notes, and follow-ups. Use when the user asks to draft release notes, summarize merged work, group changes for a release, or turn PRs/issues into a changelog, even if the inputs are messy, overlapping, or only partially structured."
+    },
+    {
+      "text": "Generated evals.json includes at least 3 evals.",
+      "passed": true,
+      "evidence": "eval_count=4"
+    },
+    {
+      "text": "Generated grade_benchmark.py compiles.",
+      "passed": true,
+      "evidence": "py_compile exit=0"
+    },
+    {
+      "text": "output.md lists quick_validate and ./scripts/copilot-install.sh.",
+      "passed": true,
+      "evidence": "# Validation, benchmarking, and refresh\n\nThese commands assume the generated artifact has been promoted into `skills/release-notes-skill/` and benchmark runs will live under `skills/release-notes-skill-workspace/iteration-N/`.\n\n## 1. Validate the skill files\n\n```bash\npython3 skills/skill-creator/scripts/quick_validate.py skills/release-notes-skill\npython3 -m py_compile skills/release-notes-skill/evals/grade_benchmark.py\n```\n\n## 2. Package the skill artifact\n\n```bash\nPYTHONPATH=skills/skill-creator python3 skills/skill-creator/scripts/package_skill.py \\\n  skills/release-notes-skill \\\n  /tmp/skill-dist\n```\n\n## 3. Benchmark the skill against a baseline\n\nFor a brand-new skill, use `without_skill` as the baseline and save run artifacts under `skills/release-notes-skill-workspace/iteration-N/eval-*/{with_skill,without_skill}/run-1/`.\n\n```bash\npython3 skills/release-notes-skill/evals/grade_benchmark.py skills/release-notes-skill-workspace/iteration-N\nPYTHONPATH=skills/skill-creator python3 -m scripts.aggregate_benchmark \\\n  skills/release-notes-skill-workspace/iteration-N \\\n  --skill-name release-notes-skill\nPYTHONPATH=skills/skill-creator python3 skills/skill-creator/eval-viewer/generate_review.py \\\n  skills/release-notes-skill-workspace/iteration-N \\\n  --skill-name \"release-notes-skill\" \\\n  --benchmark skills/release-notes-skill-workspace/iteration-N/benchmark.json \\\n  --static skills/release-notes-skill-workspace/iteration-N/review.html\n```\n\n## 4. Refresh installed copies after the repo skill is updated\n\n```bash\n./scripts/copilot-install.sh\n```\n"
+    },
+    {
+      "text": "output.md names without_skill as the baseline for a new skill benchmark.",
+      "passed": true,
+      "evidence": "# Validation, benchmarking, and refresh\n\nThese commands assume the generated artifact has been promoted into `skills/release-notes-skill/` and benchmark runs will live under `skills/release-notes-skill-workspace/iteration-N/`.\n\n## 1. Validate the skill files\n\n```bash\npython3 skills/skill-creator/scripts/quick_validate.py skills/release-notes-skill\npython3 -m py_compile skills/release-notes-skill/evals/grade_benchmark.py\n```\n\n## 2. Package the skill artifact\n\n```bash\nPYTHONPATH=skills/skill-creator python3 skills/skill-creator/scripts/package_skill.py \\\n  skills/release-notes-skill \\\n  /tmp/skill-dist\n```\n\n## 3. Benchmark the skill against a baseline\n\nFor a brand-new skill, use `without_skill` as the baseline and save run artifacts under `skills/release-notes-skill-workspace/iteration-N/eval-*/{with_skill,without_skill}/run-1/`.\n\n```bash\npython3 skills/release-notes-skill/evals/grade_benchmark.py skills/release-notes-skill-workspace/iteration-N\nPYTHONPATH=skills/skill-creator python3 -m scripts.aggregate_benchmark \\\n  skills/release-notes-skill-workspace/iteration-N \\\n  --skill-name release-notes-skill\nPYTHONPATH=skills/skill-creator python3 skills/skill-creator/eval-viewer/generate_review.py \\\n  skills/release-notes-skill-workspace/iteration-N \\\n  --skill-name \"release-notes-skill\" \\\n  --benchmark skills/release-notes-skill-workspace/iteration-N/benchmark.json \\\n  --static skills/release-notes-skill-workspace/iteration-N/review.html\n```\n\n## 4. Refresh installed copies after the repo skill is updated\n\n```bash\n./scripts/copilot-install.sh\n```\n"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 42034,
+    "transcript_chars": 167179
+  },
+  "timing": {
+    "executor_duration_seconds": 311.5,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 311.5
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

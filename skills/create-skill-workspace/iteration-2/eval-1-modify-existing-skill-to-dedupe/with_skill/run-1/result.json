@@ -1,0 +1,22 @@
+{
+  "type": "result",
+  "timestamp": "2026-05-07T05:29:26.340Z",
+  "sessionId": "f4bc2c41-b8b5-453c-873d-d49f19417b33",
+  "exitCode": 0,
+  "usage": {
+    "premiumRequests": 1,
+    "totalApiDurationMs": 349843,
+    "sessionDurationMs": 361884,
+    "codeChanges": {
+      "linesAdded": 513,
+      "linesRemoved": 46,
+      "filesModified": [
+        "/Users/adam/.copilot/session-state/f4bc2c41-b8b5-453c-873d-d49f19417b33/plan.md",
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/SKILL.md",
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/evals/evals.json",
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/evals/grade_benchmark.py",
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/output.md"
+      ]
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "skill_name": "create-skill",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Create a repo-ready skill called `release-notes-skill` from the confirmed brief in `evals/files/release-notes-brief.md`. This is a benchmark run with no live user, so treat the brief as complete and do not ask follow-up questions. Save the full result under `outputs/release-notes-skill/`. Also write `outputs/output.md` describing how you would validate, benchmark, and refresh the skill after creating it.",
+      "expected_output": "A repo-ready new skill package that follows the anatomy template, ships evals plus a grader, and documents repo-specific validation, baseline, and install commands.",
+      "files": [
+        "evals/files/release-notes-brief.md"
+      ],
+      "assertions": [
+        "Generated skill passes quick_validate.",
+        "Generated SKILL.md uses the anatomy sections Overview, When to Use, Workflow, Specific Techniques, Common Rationalizations, Red Flags, and Verification.",
+        "Generated description says what the skill does and includes 'Use when' trigger language.",
+        "Generated evals.json includes at least 3 evals.",
+        "Generated grade_benchmark.py compiles.",
+        "output.md lists quick_validate and ./scripts/copilot-install.sh.",
+        "output.md names without_skill as the baseline for a new skill benchmark."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Tighten the existing `review-handoff` skill draft in `evals/files/review-handoff-draft/` into a repo-ready version under `outputs/review-handoff/`. Preserve the skill identity, remove duplicated guidance, and make it benchmarkable. This is a benchmark run with no live user, so treat the draft as already confirmed and do not ask follow-up questions. Write `outputs/output.md` summarizing what you tightened and how you would benchmark the revision.",
+      "expected_output": "A smaller, cleaner revision of the draft that preserves the name, uses the anatomy structure, adds missing benchmark support, and chooses the right modified-skill baseline.",
+      "files": [
+        "evals/files/review-handoff-draft/SKILL.md"
+      ],
+      "assertions": [
+        "Generated skill preserves the name review-handoff.",
+        "Generated skill passes quick_validate.",
+        "Generated SKILL.md is shorter than the source draft.",
+        "Generated SKILL.md avoids verbatim copy from references/skill-anatomy.md.",
+        "Generated eval assets include evals.json and grade_benchmark.py.",
+        "output.md names old_skill or a snapshot as the baseline for modifying an existing skill."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Evaluate the request in `evals/files/plan-maker-request.md`. Decide whether this repository needs a new skill or whether an existing skill should be reused or refined instead. This is a benchmark run with no live user. Save the decision to `outputs/decision.md`. If the best answer is to refine an existing skill, save the revised files under `outputs/`.",
+      "expected_output": "A duplicate-avoidance decision that reuses or refines an existing planning skill instead of creating a shadow `plan-maker` skill.",
+      "files": [
+        "evals/files/plan-maker-request.md"
+      ],
+      "assertions": [
+        "decision.md recommends reusing or refining an existing skill instead of creating plan-maker.",
+        "decision.md names create-plan or create-tasks as the closer existing skill.",
+        "No new plan-maker/SKILL.md is created.",
+        "If a revised skill is proposed, it preserves the existing skill name."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Improve the weak-model-unfriendly `task-wave` skill draft in `evals/files/task-wave-draft/` so it is repo-ready and benchmarkable. Keep the existing name and save the revised skill to `outputs/task-wave/`. Also write `outputs/output.md` describing the benchmark workspace layout you would use for this revised skill.",
+      "expected_output": "A revised skill that preserves the name, adds concrete repo validation commands, uses an explicit workflow, and includes eval coverage.",
+      "files": [
+        "evals/files/task-wave-draft/SKILL.md"
+      ],
+      "assertions": [
+        "Generated skill preserves the name task-wave.",
+        "Generated skill passes quick_validate.",
+        "Generated skill uses exact repo validation commands instead of positive generic npm test or npm run build instructions.",
+        "Generated output describes sibling workspace layout skills/<skill>-workspace/iteration-N.",
+        "Generated evals.json includes at least 3 evals."
+      ]
+    }
+  ]
+}

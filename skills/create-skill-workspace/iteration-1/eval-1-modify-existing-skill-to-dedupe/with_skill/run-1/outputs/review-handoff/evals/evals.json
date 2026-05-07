@@ -1,0 +1,59 @@
+{
+  "skill_name": "review-handoff",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Write a markdown review handoff for a backend auth change. Modified files: `src/auth/token_cache.py` caches token introspection for 30 seconds, `src/auth/middleware.py` bypasses the cache on logout, and `tests/auth/test_token_cache.py` adds invalidation coverage. Reviewer concern: stale auth after logout. Validation run: `python3 -m pytest tests/auth/test_token_cache.py` and `python3 -m pytest tests/auth/test_middleware.py`. There are no follow-ups.",
+      "expected_output": "A concise review handoff with Summary, Files to Review, Reviewer Focus, Validation, and Follow-Ups. It should highlight logout invalidation risk, name the touched files, include the two pytest commands, and explicitly say there are no follow-ups.",
+      "files": [],
+      "expectations": [
+        "The handoff uses the required review-handoff headings.",
+        "Reviewer Focus calls out the stale-auth or logout invalidation risk.",
+        "Validation names both pytest commands.",
+        "Follow-Ups explicitly says there are no follow-ups."
+      ],
+      "assertions": [
+        "The handoff uses the required review-handoff headings.",
+        "Reviewer Focus calls out the stale-auth or logout invalidation risk.",
+        "Validation names both pytest commands.",
+        "Follow-Ups explicitly says there are no follow-ups."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Write a markdown review handoff for a mixed API and UI billing change. Modified files: `api/billing/retry.py` now uses exponential backoff with jitter, `web/src/billing/BillingPanel.tsx` shows retry failures in the UI, and `web/src/billing/__tests__/BillingPanel.test.tsx` was updated. Validation run: `python3 -m pytest tests/billing/test_retry.py` and `npm test -- BillingPanel.test.tsx`. Missing validation: no browser smoke check was run. Follow-up: update the billing troubleshooting screenshot in docs if the UI copy stays as-is.",
+      "expected_output": "A concise handoff that names the API and UI files, calls out the missing browser smoke check, includes the executed validation commands, and records the docs screenshot follow-up.",
+      "files": [],
+      "expectations": [
+        "The handoff uses the required review-handoff headings.",
+        "Reviewer Focus or Validation mentions the missing browser smoke check.",
+        "Validation includes both executed commands.",
+        "Follow-Ups mentions the billing troubleshooting screenshot update."
+      ],
+      "assertions": [
+        "The handoff uses the required review-handoff headings.",
+        "Reviewer Focus or Validation mentions the missing browser smoke check.",
+        "Validation includes both executed commands.",
+        "Follow-Ups mentions the billing troubleshooting screenshot update."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write a markdown review handoff for a review-state migration change. Modified files: `db/migrate/20260501_add_review_state.sql` adds a nullable column, `server/reviews/service.py` starts writing the new state, and `tests/reviews/test_service.py` covers the service path. Reviewer concern: backward compatibility during rollout and rollback safety. Validation run: `python3 -m pytest tests/reviews/test_service.py`. Missing validation: the migration has not been applied in staging. Keep the handoff concise and do not repeat the migration risk in multiple sections.",
+      "expected_output": "A concise handoff that names the migration and service files, calls out backward compatibility and rollback review focus once, includes the pytest command, and clearly notes that staging migration validation is still missing.",
+      "files": [],
+      "expectations": [
+        "The handoff uses the required review-handoff headings.",
+        "Reviewer Focus mentions backward compatibility or rollback safety.",
+        "Validation names the pytest command and says staging migration validation is still missing.",
+        "The output avoids repeating the same migration risk in multiple bullet lines."
+      ],
+      "assertions": [
+        "The handoff uses the required review-handoff headings.",
+        "Reviewer Focus mentions backward compatibility or rollback safety.",
+        "Validation names the pytest command and says staging migration validation is still missing.",
+        "The output avoids repeating the same migration risk in multiple bullet lines."
+      ]
+    }
+  ]
+}

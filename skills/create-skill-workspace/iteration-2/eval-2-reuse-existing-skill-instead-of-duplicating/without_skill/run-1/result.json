@@ -1,0 +1,18 @@
+{
+  "type": "result",
+  "timestamp": "2026-05-07T05:36:42.808Z",
+  "sessionId": "8ae62c7f-4379-4c62-b828-4162d1524132",
+  "exitCode": 0,
+  "usage": {
+    "premiumRequests": 1,
+    "totalApiDurationMs": 71135,
+    "sessionDurationMs": 76763,
+    "codeChanges": {
+      "linesAdded": 23,
+      "linesRemoved": 0,
+      "filesModified": [
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-2-reuse-existing-skill-instead-of-duplicating/without_skill/run-1/outputs/decision.md"
+      ]
+    }
+  }
+}

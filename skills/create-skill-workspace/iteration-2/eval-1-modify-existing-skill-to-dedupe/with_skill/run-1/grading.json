@@ -1,0 +1,63 @@
+{
+  "expectations": [
+    {
+      "text": "Generated skill preserves the name review-handoff.",
+      "passed": true,
+      "evidence": "name=review-handoff"
+    },
+    {
+      "text": "Generated skill passes quick_validate.",
+      "passed": true,
+      "evidence": "Skill is valid!"
+    },
+    {
+      "text": "Generated SKILL.md is shorter than the source draft.",
+      "passed": true,
+      "evidence": "source_lines=50, generated_lines=45"
+    },
+    {
+      "text": "Generated SKILL.md avoids verbatim copy from references/skill-anatomy.md.",
+      "passed": true,
+      "evidence": "no distinctive anatomy prose copied"
+    },
+    {
+      "text": "Generated eval assets include evals.json and grade_benchmark.py.",
+      "passed": true,
+      "evidence": "eval assets present"
+    },
+    {
+      "text": "output.md names old_skill or a snapshot as the baseline for modifying an existing skill.",
+      "passed": true,
+      "evidence": "# Tightening summary\n\n- Preserved the skill identity as `review-handoff` and rewrote the description to be trigger-oriented instead of repetitive.\n- Replaced duplicated draft guidance with one explicit workflow: read the real diff and validation, write the handoff with the exact heading order, name concrete commands, say `- None.` when no follow-up remains, and keep each risk or gap in one section.\n- Tightened the body around reviewer decisions: `Files to Review` now requires `path` - why it matters, `Reviewer Focus` owns risks and edge cases, and `Validation` bans vague phrases like \"normal tests.\"\n- Added benchmark assets under `review-handoff/evals/`: `evals.json` covers backend, mixed API/UI, migration, and no-validation edge cases, and `grade_benchmark.py` deterministically checks heading order, concrete validation, deduped bullets, and scenario-specific requirements.\n\n# Benchmark plan\n\nUse this revised skill as `with_skill` and compare it against an explicit `old_skill` or draft snapshot baseline, for example `old_skill/review-handoff/` populated from `skills/create-skill/evals/files/review-handoff-draft/`.\n\nFrom the repo root:\n\n1. Validate the generated skill:\n   - `python3 skills/skill-creator/scripts/quick_validate.py skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff`\n   - `python3 -m py_compile skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/evals/grade_benchmark.py`\n2. Run live `copilot -p` benchmarks with prompts that point at the exact local `skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/SKILL.md` path and explicitly say to ignore other installed copies of `review-handoff`.\n3. Save response, transcript, and timing artifacts under a dedicated `skills/review-handoff-workspace/iteration-N/` directory, then grade them with:\n   - `python3 skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/evals/grade_benchmark.py skills/review-handoff-workspace/iteration-N`\n"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 32023,
+    "transcript_chars": 141487
+  },
+  "timing": {
+    "executor_duration_seconds": 361.9,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 361.9
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

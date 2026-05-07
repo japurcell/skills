@@ -1,0 +1,20 @@
+{
+  "type": "result",
+  "timestamp": "2026-05-07T05:35:22.397Z",
+  "sessionId": "dc941c21-dda4-404b-b86c-86723c042b7f",
+  "exitCode": 0,
+  "usage": {
+    "premiumRequests": 1,
+    "totalApiDurationMs": 181284,
+    "sessionDurationMs": 188132,
+    "codeChanges": {
+      "linesAdded": 220,
+      "linesRemoved": 0,
+      "filesModified": [
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-2-reuse-existing-skill-instead-of-duplicating/with_skill/run-1/outputs/decision.md",
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-2-reuse-existing-skill-instead-of-duplicating/with_skill/run-1/outputs/create-plan/SKILL.md",
+        "/Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-2-reuse-existing-skill-instead-of-duplicating/with_skill/run-1/outputs/create-plan/evals/evals.json"
+      ]
+    }
+  }
+}
