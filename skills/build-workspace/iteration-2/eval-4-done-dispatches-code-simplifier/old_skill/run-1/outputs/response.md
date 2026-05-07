@@ -1,3 +1,0 @@
-**Next step:** go straight to tracking updates. In this workflow, a plain **DONE** means the manager should **not** stop to inspect the four touched files, pre-read more code, or build a solution for the next task; it should update the plan/todo/tracker immediately, including the verification that was actually performed.
-
-**Next subagent context:** after tracking is updated and the manager selects the next pending task, send a **lean handoff only**: the next task text, acceptance criteria, known constraints, relevant commands, and file hints **only if they are already obvious from the task or plan**. Do **not** pass exploratory file reads, speculative design, or the prior task’s four touched files unless those paths are already explicitly relevant to the new task.

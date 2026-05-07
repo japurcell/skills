@@ -1,1 +1,0 @@
-**Before updating tracking, the manager reads the concerns and treats this as a scope/correctness issue.** Under the build workflow, they **do not mark the task done yet**; they **re-dispatch another implementer subagent to address the concern** first. Only once that concern is resolved should tracking be updated.

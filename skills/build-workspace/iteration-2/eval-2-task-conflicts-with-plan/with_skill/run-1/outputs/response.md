@@ -1,3 +1,0 @@
-**Before dispatching any implementer, the conflict must be resolved.** In the local `build` workflow, step 3 says: if the task is ambiguous or **conflicts with the plan, resolve that before dispatch**. So with “defer audit logging until phase 2” vs “implement audit logging now,” the manager should stop, surface the inconsistency, and get/establish the authoritative direction first.
-
-Also, the workflow says to invoke **`addy-context-engineering`** and **`subagent-model-selection`** first. But **no implementer should be dispatched until the audit-logging conflict is reconciled**; routine repo discovery is implementer work, conflicting requirements resolution is manager work.
