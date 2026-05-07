@@ -1,1 +1,0 @@
-Following the build workflow: update the plan and todo tracker immediately, record the exact verification steps that were run, and mark the task as done in the tracker. Do NOT create a commit — commit override rule: never commit; the human will review and commit manually.

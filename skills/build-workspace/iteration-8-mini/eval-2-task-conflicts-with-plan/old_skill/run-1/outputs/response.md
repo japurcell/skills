@@ -1,0 +1,3 @@
+Reading the build skill to follow its manager guardrails and core loop.
+
+Because the task text conflicts with the plan, do NOT dispatch. Per Core Loop #3 and Shared Escalation Rules, resolve the conflict first: clarify with the human which directive wins (defer to phase 2 or implement now), record the decision by updating the plan and todo tracker, then only — if the task is unambiguous — dispatch an implementer with the implementer-prompt (lean handoff: task + success criteria, constraints, validation commands, known file hints). Do not pre-read large file sets or draft patches before dispatch.

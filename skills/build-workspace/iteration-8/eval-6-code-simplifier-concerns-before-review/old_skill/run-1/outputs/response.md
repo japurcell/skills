@@ -1,0 +1,3 @@
+**Do not proceed to code-reviewer yet.** In the build workflow, `code-simplifier -> DONE_WITH_CONCERNS` means the manager must read the concern and treat it as unresolved work if it suggests a correctness or scope risk.
+
+Here, “the extracted helper may have widened scope and could hide a behavior change” is exactly that, so the manager should **re-dispatch the owning fixer, usually the implementer**, with the concern and current verification context, asking them to either narrow/remove the helper or prove behavior is unchanged. **Do not update tracking yet.** After that comes back `DONE`, route it **back through code-simplifier**, and only after simplifier returns `DONE` send it to **code-reviewer**.

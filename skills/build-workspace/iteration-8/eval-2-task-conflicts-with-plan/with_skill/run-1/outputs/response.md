@@ -1,0 +1,3 @@
+**Do not dispatch an implementer yet.** From `/home/adam/dev/personal/skills/skills/build/SKILL.md`, this is a direct **plan/task conflict**, so the build manager must **resolve that conflict first**.
+
+Concretely: invoke `addy-context-engineering` and `subagent-model-selection`, identify the next task, then stop because the task text conflicts with the plan. The manager should surface the mismatch—**“audit logging is deferred to phase 2 in the plan, but the task says do it now”**—and get that resolved (and escalate to the human if the plan itself may be wrong) **before any implementer is dispatched**. Per the same workflow, the manager also should **not** pre-read large file sets, draft a solution, or sketch patches while the conflict is unresolved.

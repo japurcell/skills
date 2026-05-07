@@ -1,0 +1,3 @@
+**Stop the pipeline before code review.** In the repo-local build workflow, `DONE_WITH_CONCERNS` from the code-simplifier means the concern must be read and treated as unresolved work if it suggests a correctness or scope risk—which this does.
+
+The manager should **re-dispatch the subagent that owns the fix** with the specific concern called out: likely send it back to the **code-simplifier** to narrow/revert/prove the extracted helper is behavior-preserving, or to the **implementer** if it now looks like an actual behavior fix. Then route the result **back through the simplifier step**, and only once the simplifier returns **`DONE`** should the manager proceed to the code-reviewer. **Do not update tracking yet.**

@@ -1,0 +1,3 @@
+**Next:** dispatch the **code-simplifier**; **do not update tracking yet**. The manager should hand it the stable deduped `review_scope_files`, the implementer’s verification context, and the current uncommitted non-deleted, non-`.gitignore` files required by the workflow.
+
+Because `review_scope_files` has **4 files** (`<=5`), the code-simplifier wave should be **one simplifier subagent covering the full four-file list**—no partitioning, and the simplifier should use only that manager-owned scope rather than recomputing or narrowing it. After that returns `DONE`, send the **same full scope** to code-reviewer, and only then update tracking once the reviewer also returns `DONE`.

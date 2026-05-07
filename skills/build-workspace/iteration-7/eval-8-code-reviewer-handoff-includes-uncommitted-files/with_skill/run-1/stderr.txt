@@ -1,2 +1,0 @@
-Cannot open directory /home/adam/.aspnet/dev-certs/trust:/etc/ssl/certs to load OpenSSL certificates.
-Session exported to: /home/adam/dev/personal/skills/skills/build-workspace/iteration-7/eval-8-code-reviewer-handoff-includes-uncommitted-files/with_skill/run-1/transcript.md

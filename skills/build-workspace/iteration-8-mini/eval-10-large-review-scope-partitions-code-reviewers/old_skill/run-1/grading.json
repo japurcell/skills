@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Uses multiple parallel code-reviewers because the deduped review scope has `>5` files.",
+      "passed": false,
+      "evidence": "Response does not clearly use parallel reviewers because the review scope is larger than five files."
+    },
+    {
+      "text": "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one reviewer scope.",
+      "passed": false,
+      "evidence": "Response does not clearly partition the large review scope into non-overlapping logical groups."
+    },
+    {
+      "text": "Keeps the reviewer file lists manager-authored instead of telling reviewers to recompute or narrow scope.",
+      "passed": false,
+      "evidence": "Response does not clearly keep reviewer file lists manager-authored."
+    },
+    {
+      "text": "Waits for every reviewer to return `DONE` before updating tracking.",
+      "passed": false,
+      "evidence": "Response does not clearly wait for every reviewer to return DONE before updating tracking."
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 923,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 49.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 49.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

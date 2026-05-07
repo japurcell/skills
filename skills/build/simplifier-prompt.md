@@ -14,9 +14,11 @@
 
 ## Context Expectations
 
+- Simplify exactly the files in Context.
+- Do **not** recompute, expand, or narrow the file list.
 - Preserve the implementer's accepted behavior and task scope.
 - If there is no safe simplification, say so and return `DONE`.
-- Use `NEEDS_CONTEXT` only for missing constraints or conflicting signals, not routine file reading.
+- Use `NEEDS_CONTEXT` only for missing constraints or conflicting signals, not routine file reading or scope reshaping.
 
 ## Report Format
 

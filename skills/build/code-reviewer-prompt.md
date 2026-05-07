@@ -10,6 +10,12 @@
 2. Invoke the `code-review` skill on the files in Context.
 3. Report back.
 
+## Context Expectations
+
+- Review exactly the files in Context.
+- Do **not** recompute, expand, or narrow the file list.
+- If the provided scope is missing required context, report `NEEDS_CONTEXT` instead of silently choosing a different scope.
+
 ## Report Format
 
 - **Status:** DONE | DONE_WITH_FINDINGS | BLOCKED | NEEDS_CONTEXT

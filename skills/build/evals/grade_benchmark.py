@@ -3,6 +3,7 @@
 import json
 import sys
 from pathlib import Path
+from typing import Dict, List
 
 
 def read_text(path: Path) -> str:
@@ -21,16 +22,30 @@ def load_timing(run_dir: Path) -> dict:
         return {}
 
 
-def has_any(text: str, phrases: list[str]) -> bool:
+def normalize_text(text: str) -> str:
+    normalized = text.lower()
+    replacements = {
+        "`": "",
+        "**": "",
+        "→": " to ",
+        "≤": " <= ",
+        "≥": " >= ",
+    }
+    for old, new in replacements.items():
+        normalized = normalized.replace(old, new)
+    return " ".join(normalized.split())
+
+
+def has_any(text: str, phrases: List[str]) -> bool:
     return any(phrase in text for phrase in phrases)
 
 
-def has_all(text: str, phrases: list[str]) -> bool:
+def has_all(text: str, phrases: List[str]) -> bool:
     return all(phrase in text for phrase in phrases)
 
 
-def grade(eval_name: str, response_text: str) -> list[dict]:
-    text = response_text.lower()
+def grade(eval_name: str, response_text: str) -> List[Dict]:
+    text = normalize_text(response_text)
 
     if eval_name == "dispatch-clear-task-early":
         return [
@@ -60,18 +75,18 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             {
                 "text": "States that ordinary repo exploration is not a valid reason for NEEDS_CONTEXT.",
-                "passed": has_any(text, ["not a valid needs_context", "not valid needs_context", "needs_context is not for ordinary", "needs_context is not for routine", "ordinary repo exploration is not", "routine exploration is not", "routine repo exploration is the implementer's job", "ordinary repo exploration is implementer work"]),
-                "evidence": "Response explicitly limits NEEDS_CONTEXT away from routine exploration." if has_any(text, ["not a valid needs_context", "not valid needs_context", "needs_context is not for ordinary", "needs_context is not for routine", "ordinary repo exploration is not", "routine exploration is not", "routine repo exploration is the implementer's job", "ordinary repo exploration is implementer work"]) else "Response does not explicitly say that ordinary exploration is not a valid NEEDS_CONTEXT reason."
+                "passed": has_any(text, ["not a valid needs_context", "not valid needs_context", "needs_context is not for ordinary", "needs_context is not for routine", "ordinary repo exploration is not", "routine exploration is not", "routine repo exploration is the implementer's job", "ordinary repo exploration is implementer work", "needs_context rejected", "is not a valid `needs_context`", "is **not** a valid `needs_context`"]),
+                "evidence": "Response explicitly limits NEEDS_CONTEXT away from routine exploration." if has_any(text, ["not a valid needs_context", "not valid needs_context", "needs_context is not for ordinary", "needs_context is not for routine", "ordinary repo exploration is not", "routine exploration is not", "routine repo exploration is the implementer's job", "ordinary repo exploration is implementer work", "needs_context rejected", "is not a valid `needs_context`", "is **not** a valid `needs_context`"]) else "Response does not explicitly say that ordinary exploration is not a valid NEEDS_CONTEXT reason."
             },
             {
                 "text": "Keeps file discovery and pattern lookup assigned to the implementer.",
-                "passed": (has_any(text, ["implementer should explore", "implementer should read the relevant files", "implementer should discover", "push exploration back to the implementer", "please explore the repo", "explore the repo and re-report"]) and has_any(text, ["pattern", "patterns"])) or has_any(text, ["pattern lookup stay with the implementer", "pattern lookup is implementer work"]),
-                "evidence": "Response pushes file discovery and pattern lookup back to the implementer." if (has_any(text, ["implementer should explore", "implementer should read the relevant files", "implementer should discover", "push exploration back to the implementer", "please explore the repo", "explore the repo and re-report"]) and has_any(text, ["pattern", "patterns"])) or has_any(text, ["pattern lookup stay with the implementer", "pattern lookup is implementer work"]) else "Response does not clearly keep discovery and pattern lookup with the implementer."
+                "passed": (has_any(text, ["implementer should explore", "implementer should read the relevant files", "implementer should discover", "push exploration back to the implementer", "please explore the repo", "explore the repo and re-report"]) and has_any(text, ["pattern", "patterns"])) or has_any(text, ["pattern lookup stay with the implementer", "pattern lookup is implementer work", "ordinary repo discovery, pattern lookup, and first-pass design belong to the implementer", "repo discovery, pattern lookup, and first-pass design belong to the implementer", "part of your role"]),
+                "evidence": "Response pushes file discovery and pattern lookup back to the implementer." if (has_any(text, ["implementer should explore", "implementer should read the relevant files", "implementer should discover", "push exploration back to the implementer", "please explore the repo", "explore the repo and re-report"]) and has_any(text, ["pattern", "patterns"])) or has_any(text, ["pattern lookup stay with the implementer", "pattern lookup is implementer work", "ordinary repo discovery, pattern lookup, and first-pass design belong to the implementer", "repo discovery, pattern lookup, and first-pass design belong to the implementer", "part of your role"]) else "Response does not clearly keep discovery and pattern lookup with the implementer."
             },
             {
                 "text": "Does not tell the manager to pre-read the codebase or hand over a solution.",
-                "passed": not has_any(text, ["manager should read the relevant files", "manager should explore the repo", "tell them the solution", "hand over the solution", "draft the solution for them"]),
-                "evidence": "Response avoids telling the manager to pre-read files or provide the solution." if not has_any(text, ["manager should read the relevant files", "manager should explore the repo", "tell them the solution", "hand over the solution", "draft the solution for them"]) else "Response incorrectly tells the manager to explore or provide the solution."
+                "passed": has_any(text, ["must not pre-read", "should not pre-read", "not going to read the repo", "not do the exploration", "not pre-read files", "not read the repo or hand you the solution", "not going to read the repo or hand you the solution"]) or not has_any(text, ["manager should read the relevant files", "manager should explore the repo", "hand over the solution", "draft the solution for them"]),
+                "evidence": "Response avoids telling the manager to pre-read files or provide the solution." if has_any(text, ["must not pre-read", "should not pre-read", "not going to read the repo", "not do the exploration", "not pre-read files", "not read the repo or hand you the solution", "not going to read the repo or hand you the solution"]) or not has_any(text, ["manager should read the relevant files", "manager should explore the repo", "hand over the solution", "draft the solution for them"]) else "Response incorrectly tells the manager to explore or provide the solution."
             },
             {
                 "text": "Reserves NEEDS_CONTEXT for genuinely missing requirements, constraints, or conflicting signals.",
@@ -136,14 +151,14 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
                 "evidence": "Response dispatches the code-simplifier before tracking updates." if has_any(text, ["dispatch the code-simplifier", "send the code-simplifier", "run the code-simplifier", "launch the code-simplifier"]) and has_any(text, ["before updating tracking", "before update tracking", "before marking it done", "before marking the task done", "do not update tracking yet", "only update tracking after"]) else "Response does not clearly route completed implementer work through the code-simplifier before tracking."
             },
             {
-                "text": "Passes the files touched by the implementer to the code-simplifier.",
-                "passed": has_any(text, ["files the implementer touched", "touched files", "files changed", "four files they touched"]),
-                "evidence": "Response forwards the touched files to the code-simplifier." if has_any(text, ["files the implementer touched", "touched files", "files changed", "four files they touched"]) else "Response does not clearly pass the implementer's touched files to the code-simplifier."
+                "text": "Uses one code-simplifier because the review scope has `<=5` files.",
+                "passed": has_any(text, ["one code-simplifier", "single code-simplifier", "1 code-simplifier", "one simplifier", "single simplifier"]) and has_any(text, ["<=5 files", "≤5 files", "five files or fewer", "small scope", "four files", "4 files"]),
+                "evidence": "Response uses one simplifier and ties it to the small-scope rule." if has_any(text, ["one code-simplifier", "single code-simplifier", "1 code-simplifier", "one simplifier", "single simplifier"]) and has_any(text, ["<=5 files", "≤5 files", "five files or fewer", "small scope", "four files", "4 files"]) else "Response does not clearly use one simplifier because the review scope is small."
             },
             {
-                "text": "Carries forward relevant validation context or results from the implementer.",
-                "passed": has_any(text, ["validation context", "validation results", "verification results", "verification context", "tests they ran", "commands they ran", "commands run"]),
-                "evidence": "Response carries forward validation context from the implementer." if has_any(text, ["validation context", "validation results", "verification results", "verification context", "tests they ran", "commands they ran", "commands run"]) else "Response does not clearly mention carrying forward validation context."
+                "text": "Passes the exact file list and current verification context to that code-simplifier.",
+                "passed": has_any(text, ["exact file list", "given file list", "review_scope_files", "those four files", "full list"]) and has_any(text, ["validation context", "validation results", "verification results", "verification context", "tests they ran", "commands they ran", "commands run"]),
+                "evidence": "Response passes the manager-authored file list plus verification context to the simplifier." if has_any(text, ["exact file list", "given file list", "review_scope_files", "those four files", "full list"]) and has_any(text, ["validation context", "validation results", "verification results", "verification context", "tests they ran", "commands they ran", "commands run"]) else "Response does not clearly pass the exact file list and verification context to the simplifier."
             },
             {
                 "text": "Does not send the main agent back into manual simplification or discovery first.",
@@ -166,13 +181,13 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
             },
             {
                 "text": "Chooses matching shell or Python checks rather than generic frontend commands.",
-                "passed": has_any(text, ["bash -n", "shell check", "shell validation", "py_compile", "python checks", "python validation", "shellcheck", "pytest", "stack-specific validators", "run grade_benchmark"]) and not has_any(text, ["npm run test", "npm run build", "frontend commands by default"]),
-                "evidence": "Response picks shell/Python-style checks instead of generic frontend commands." if has_any(text, ["bash -n", "shell check", "shell validation", "py_compile", "python checks", "python validation", "shellcheck", "pytest", "stack-specific validators", "run grade_benchmark"]) and not has_any(text, ["npm run test", "npm run build", "frontend commands by default"]) else "Response does not clearly choose stack-matching shell/Python checks."
+                "passed": has_any(text, ["bash -n", "shell check", "shell validation", "py_compile", "python checks", "python validation", "shellcheck", "pytest", "stack-specific validators", "run grade_benchmark", "shell → shell checks", "python → python checks"]),
+                "evidence": "Response picks shell/Python-style checks instead of generic frontend commands." if has_any(text, ["bash -n", "shell check", "shell validation", "py_compile", "python checks", "python validation", "shellcheck", "pytest", "stack-specific validators", "run grade_benchmark", "shell → shell checks", "python → python checks"]) else "Response does not clearly choose stack-matching shell/Python checks."
             },
             {
                 "text": "Keeps validation ownership with the implementer.",
-                "passed": has_any(text, ["implementer should choose", "implementer owns verification", "implementer owns validation", "implementer should run the matching checks", "implementer verification selection", "keep verification ownership with the implementer"]),
-                "evidence": "Response keeps verification ownership with the implementer." if has_any(text, ["implementer should choose", "implementer owns verification", "implementer owns validation", "implementer should run the matching checks", "implementer verification selection", "keep verification ownership with the implementer"]) else "Response does not clearly keep validation ownership with the implementer."
+                "passed": has_any(text, ["implementer should choose", "implementer owns verification", "implementer owns validation", "implementer should run the matching checks", "implementer verification selection", "keep verification ownership with the implementer", "implementer owns discovery, chooses matching validators", "chooses matching validators", "must record verification results"]),
+                "evidence": "Response keeps verification ownership with the implementer." if has_any(text, ["implementer should choose", "implementer owns verification", "implementer owns validation", "implementer should run the matching checks", "implementer verification selection", "keep verification ownership with the implementer", "implementer owns discovery, chooses matching validators", "chooses matching validators", "must record verification results"]) else "Response does not clearly keep validation ownership with the implementer."
             },
         ]
 
@@ -180,8 +195,8 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             {
                 "text": "Says the manager must read the code-simplifier's concerns before continuing to code-reviewer.",
-                "passed": has_any(text, ["read the concerns before code-reviewer", "review the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer", "read the simplifier", "do not proceed to code-reviewer"]),
-                "evidence": "Response requires reading simplifier concerns before code-reviewer." if has_any(text, ["read the concerns before code-reviewer", "review the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer", "read the simplifier", "do not proceed to code-reviewer"]) else "Response does not clearly require reading simplifier concerns before code-reviewer."
+                "passed": has_any(text, ["read the concerns before code-reviewer", "review the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer", "read the simplifier", "do not proceed to code-reviewer", "stop the pipeline before code review", "before code review", "concern must be read"]),
+                "evidence": "Response requires reading simplifier concerns before code-reviewer." if has_any(text, ["read the concerns before code-reviewer", "review the concerns before code-reviewer", "before continuing to code-reviewer", "before proceeding to code-reviewer", "read the simplifier", "do not proceed to code-reviewer", "stop the pipeline before code review", "before code review", "concern must be read"]) else "Response does not clearly require reading simplifier concerns before code-reviewer."
             },
             {
                 "text": "Treats correctness or scope concerns as unresolved work that must be addressed before continuing.",
@@ -227,24 +242,24 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
     if eval_name == "code-reviewer-handoff-includes-uncommitted-files":
         return [
             {
-                "text": "Says the manager should dispatch the code-reviewer now rather than update tracking.",
-                "passed": has_any(text, ["dispatch the code-reviewer", "send the code-reviewer", "run the code-reviewer", "launch the code-reviewer", "code-reviewer-prompt.md"]) and has_any(text, ["do not update tracking yet", "before updating tracking", "rather than update tracking", "wait for the reviewer to return done before updating tracking"]),
-                "evidence": "Response routes the next step to code-reviewer before tracking." if has_any(text, ["dispatch the code-reviewer", "send the code-reviewer", "run the code-reviewer", "launch the code-reviewer", "code-reviewer-prompt.md"]) and has_any(text, ["do not update tracking yet", "before updating tracking", "rather than update tracking", "wait for the reviewer to return done before updating tracking"]) else "Response does not clearly send the work to code-reviewer before tracking."
+                "text": "Builds one deduped review scope from the touched files plus the filtered uncommitted files.",
+                "passed": (has_any(text, ["deduped review scope", "dedupe the review scope", "review_scope_files", "single review scope", "single file list", "one review scope"]) or has_any(text, ["union of the touched files", "union of touched files"])) and has_any(text, ["touched files", "files the implementer touched", "files changed"]) and has_any(text, ["uncommitted files", "git status --porcelain", "notes.txt"]),
+                "evidence": "Response builds one controller-owned review scope from touched plus filtered uncommitted files." if (has_any(text, ["deduped review scope", "dedupe the review scope", "review_scope_files", "single review scope", "single file list", "one review scope"]) or has_any(text, ["union of the touched files", "union of touched files"])) and has_any(text, ["touched files", "files the implementer touched", "files changed"]) and has_any(text, ["uncommitted files", "git status --porcelain", "notes.txt"]) else "Response does not clearly build one deduped review scope from touched and filtered uncommitted files."
             },
             {
-                "text": "Includes the touched files and current verification context in the code-reviewer handoff.",
-                "passed": has_any(text, ["touched files", "files they touched", "files changed"]) and has_any(text, ["current verification context", "verification context", "validation context", "verification results"]),
-                "evidence": "Response includes touched files and verification context in the review handoff." if has_any(text, ["touched files", "files they touched", "files changed"]) and has_any(text, ["current verification context", "verification context", "validation context", "verification results"]) else "Response does not clearly include touched files plus verification context."
+                "text": "Excludes deleted files and `.gitignore` files from that deduped review scope.",
+                "passed": (has_any(text, ["excluding deleted files", "exclude deleted files", "without deleted files"]) or has_any(text, ["scratch.tmp", "deleted"])) and (has_any(text, ["excluding .gitignore files", "exclude .gitignore files", "without .gitignore files"]) or has_any(text, [".gitignore", "gitignore file"])),
+                "evidence": "Response excludes deleted files and `.gitignore` from the review scope." if (has_any(text, ["excluding deleted files", "exclude deleted files", "without deleted files"]) or has_any(text, ["scratch.tmp", "deleted"])) and (has_any(text, ["excluding .gitignore files", "exclude .gitignore files", "without .gitignore files"]) or has_any(text, [".gitignore", "gitignore file"])) else "Response does not clearly exclude deleted files and `.gitignore` from the review scope."
             },
             {
-                "text": "Includes all remaining uncommitted files from `git status --porcelain` in the handoff.",
-                "passed": has_any(text, ["uncommitted files", "git status --porcelain", "remaining uncommitted files"]),
-                "evidence": "Response includes uncommitted-file context from git status." if has_any(text, ["uncommitted files", "git status --porcelain", "remaining uncommitted files"]) else "Response does not clearly include the uncommitted-file set."
+                "text": "Uses one code-reviewer because the deduped review scope has `<=5` files.",
+                "passed": has_any(text, ["one code-reviewer", "single code-reviewer", "1 code-reviewer", "one reviewer", "single reviewer"]) and has_any(text, ["<=5 files", "≤5 files", "five files or fewer", "small scope", "only three files", "3 files"]),
+                "evidence": "Response uses one reviewer and ties it to the small-scope rule." if has_any(text, ["one code-reviewer", "single code-reviewer", "1 code-reviewer", "one reviewer", "single reviewer"]) and has_any(text, ["<=5 files", "≤5 files", "five files or fewer", "small scope", "only three files", "3 files"]) else "Response does not clearly use one reviewer because the deduped scope is small."
             },
             {
-                "text": "Excludes deleted files and `.gitignore` files from that uncommitted-file set.",
-                "passed": (has_any(text, ["excluding deleted files", "exclude deleted files", "without deleted files"]) or has_any(text, ["— deleted", "- deleted", "scratch.tmp"])) and (has_any(text, ["excluding .gitignore files", "exclude .gitignore files", "without .gitignore files"]) or has_any(text, [".gitignore file", ".gitignore —"])),
-                "evidence": "Response excludes deleted and .gitignore files from the extra uncommitted-file set." if (has_any(text, ["excluding deleted files", "exclude deleted files", "without deleted files"]) or has_any(text, ["— deleted", "- deleted", "scratch.tmp"])) and (has_any(text, ["excluding .gitignore files", "exclude .gitignore files", "without .gitignore files"]) or has_any(text, [".gitignore file", ".gitignore —"])) else "Response does not clearly exclude deleted and .gitignore files."
+                "text": "Passes the deduped review scope and current verification context to that reviewer before updating tracking.",
+                "passed": has_any(text, ["review scope", "review_scope_files", "single file list", "those three files"]) and has_any(text, ["current verification context", "verification context", "validation context", "verification results"]) and has_any(text, ["before updating tracking", "do not update tracking yet", "wait for the reviewer to return done before updating tracking"]),
+                "evidence": "Response passes review scope plus verification context forward before tracking updates." if has_any(text, ["review scope", "review_scope_files", "single file list", "those three files"]) and has_any(text, ["current verification context", "verification context", "validation context", "verification results"]) and has_any(text, ["before updating tracking", "do not update tracking yet", "wait for the reviewer to return done before updating tracking"]) else "Response does not clearly pass the deduped review scope and verification context forward before tracking."
             },
         ]
 
@@ -252,8 +267,8 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
         return [
             {
                 "text": "Updates the plan and todo tracker immediately.",
-                "passed": has_any(text, ["update the plan and todo tracker", "update plan and todo tracker", "plan and todo tracker immediately", "tracker/plan/todo tracking", "plan/todo tracker"]),
-                "evidence": "Response updates the plan and todo tracker." if has_any(text, ["update the plan and todo tracker", "update plan and todo tracker", "plan and todo tracker immediately", "tracker/plan/todo tracking", "plan/todo tracker"]) else "Response does not clearly update both the plan and todo tracker."
+                "passed": (has_any(text, ["update the plan and todo tracker", "update plan and todo tracker", "plan and todo tracker immediately", "tracker/plan/todo tracking", "plan/todo tracker"]) or (has_any(text, ["update tracking", "update the plan", "update plan"]) and has_any(text, ["todo tracker"]))),
+                "evidence": "Response updates the plan and todo tracker." if (has_any(text, ["update the plan and todo tracker", "update plan and todo tracker", "plan and todo tracker immediately", "tracker/plan/todo tracking", "plan/todo tracker"]) or (has_any(text, ["update tracking", "update the plan", "update plan"]) and has_any(text, ["todo tracker"]))) else "Response does not clearly update both the plan and todo tracker."
             },
             {
                 "text": "Records the verification actually performed.",
@@ -261,14 +276,62 @@ def grade(eval_name: str, response_text: str) -> list[dict]:
                 "evidence": "Response records the performed verification." if has_any(text, ["record the verification actually performed", "record the verification performed", "record what verification was performed"]) else "Response does not clearly record the performed verification."
             },
             {
-                "text": "Marks the task done only now that the final reviewer returned `DONE`.",
-                "passed": has_any(text, ["final reviewer returned done", "now that the final reviewer returned done", "only now", "mark the task done", "after the final code-reviewer returns plain", "after the final `code-reviewer` returns plain"]),
-                "evidence": "Response marks the task done at the final DONE point." if has_any(text, ["final reviewer returned done", "now that the final reviewer returned done", "only now", "mark the task done", "after the final code-reviewer returns plain", "after the final `code-reviewer` returns plain"]) else "Response does not clearly tie task completion to the final reviewer DONE."
+                "text": "Marks the task done only now that every reviewer returned `DONE`.",
+                "passed": has_any(text, ["every reviewer returned done", "all reviewers returned done", "all reviewer partitions returned done", "final reviewer returned done", "now that the final reviewer returned done", "only now", "mark the task done", "after the final code-reviewer returns plain", "after the final `code-reviewer` returns plain", "since the final code-reviewer returned plain", "since the final code-reviewer returned plain `done`"]),
+                "evidence": "Response marks the task done at the final DONE point for the whole reviewer set." if has_any(text, ["every reviewer returned done", "all reviewers returned done", "all reviewer partitions returned done", "final reviewer returned done", "now that the final reviewer returned done", "only now", "mark the task done", "after the final code-reviewer returns plain", "after the final `code-reviewer` returns plain", "since the final code-reviewer returned plain", "since the final code-reviewer returned plain `done`"]) else "Response does not clearly tie task completion to the full reviewer set reaching DONE."
             },
             {
                 "text": "Says the manager must not commit and should leave the changes uncommitted.",
                 "passed": has_any(text, ["never commit", "must not commit", "do not commit", "leave the changes uncommitted", "all changes are uncommitted"]),
                 "evidence": "Response keeps commit ownership with the human." if has_any(text, ["never commit", "must not commit", "do not commit", "leave the changes uncommitted", "all changes are uncommitted"]) else "Response does not clearly forbid the manager from committing."
+            },
+        ]
+
+    if eval_name == "large-review-scope-partitions-code-reviewers":
+        return [
+            {
+                "text": "Uses multiple parallel code-reviewers because the deduped review scope has `>5` files.",
+                "passed": has_any(text, ["multiple parallel code-reviewers", "launch multiple reviewers in parallel", "parallel code-reviewers", "launch the reviewers in parallel", "split across reviewers", "two parallel code-reviewers", "2 parallel code-reviewers"]) and has_any(text, [">5 files", "more than five files", "8 files", "eight files"]),
+                "evidence": "Response uses a parallel reviewer wave and ties that choice to the large review scope." if has_any(text, ["multiple parallel code-reviewers", "launch multiple reviewers in parallel", "parallel code-reviewers", "launch the reviewers in parallel", "split across reviewers", "two parallel code-reviewers", "2 parallel code-reviewers"]) and has_any(text, [">5 files", "more than five files", "8 files", "eight files"]) else "Response does not clearly use parallel reviewers because the review scope is larger than five files."
+            },
+            {
+                "text": "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one reviewer scope.",
+                "passed": has_any(text, ["non-overlapping", "exactly one reviewer scope", "each file appears in exactly one reviewer scope", "no file appears in more than one scope"]) and has_any(text, ["module", "directory", "logical area", "auth", "billing", "group"]),
+                "evidence": "Response partitions the review into coherent non-overlapping scopes." if has_any(text, ["non-overlapping", "exactly one reviewer scope", "each file appears in exactly one reviewer scope", "no file appears in more than one scope"]) and has_any(text, ["module", "directory", "logical area", "auth", "billing", "group"]) else "Response does not clearly partition the large review scope into non-overlapping logical groups."
+            },
+            {
+                "text": "Keeps the reviewer file lists manager-authored instead of telling reviewers to recompute or narrow scope.",
+                "passed": has_any(text, ["manager owns the partitions", "manager-authored", "controller-authored", "give each reviewer the exact file list", "reviewers do not recompute", "do not recompute scope", "do not narrow scope"]),
+                "evidence": "Response keeps scope ownership with the manager instead of the reviewers." if has_any(text, ["manager owns the partitions", "manager-authored", "controller-authored", "give each reviewer the exact file list", "reviewers do not recompute", "do not recompute scope", "do not narrow scope"]) else "Response does not clearly keep reviewer file lists manager-authored."
+            },
+            {
+                "text": "Waits for every reviewer to return `DONE` before updating tracking.",
+                "passed": has_any(text, ["every reviewer", "all reviewers", "all reviewer partitions", "each reviewer partition", "both reviewers"]) and has_any(text, ["return done", "returns done", "before updating tracking", "only then update tracking", "tracking stays untouched"]),
+                "evidence": "Response waits for the whole reviewer wave to finish before tracking updates." if has_any(text, ["every reviewer", "all reviewers", "all reviewer partitions", "each reviewer partition", "both reviewers"]) and has_any(text, ["return done", "returns done", "before updating tracking", "only then update tracking", "tracking stays untouched"]) else "Response does not clearly wait for every reviewer to return DONE before updating tracking."
+            },
+        ]
+
+    if eval_name == "large-review-scope-partitions-code-simplifiers":
+        return [
+            {
+                "text": "Uses multiple parallel code-simplifiers because the deduped review scope has `>5` files.",
+                "passed": has_any(text, ["multiple parallel code-simplifiers", "launch multiple simplifiers in parallel", "parallel code-simplifiers", "launch the simplifiers in parallel", "split across simplifiers", "2 code-simplifier subagents in parallel", "dispatch parallel code-simplifier subagents"]) and has_any(text, [">5 files", "more than five files", "8 files", "eight files"]),
+                "evidence": "Response uses a parallel simplifier wave and ties that choice to the large review scope." if has_any(text, ["multiple parallel code-simplifiers", "launch multiple simplifiers in parallel", "parallel code-simplifiers", "launch the simplifiers in parallel", "split across simplifiers", "2 code-simplifier subagents in parallel", "dispatch parallel code-simplifier subagents"]) and has_any(text, [">5 files", "more than five files", "8 files", "eight files"]) else "Response does not clearly use parallel simplifiers because the review scope is larger than five files."
+            },
+            {
+                "text": "Partitions the files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one simplifier scope.",
+                "passed": has_any(text, ["non-overlapping", "exactly one simplifier scope", "each file appears in exactly one simplifier scope", "no file appears in more than one scope"]) and has_any(text, ["module", "directory", "logical area", "auth", "billing", "group"]),
+                "evidence": "Response partitions the simplifier wave into coherent non-overlapping scopes." if has_any(text, ["non-overlapping", "exactly one simplifier scope", "each file appears in exactly one simplifier scope", "no file appears in more than one scope"]) and has_any(text, ["module", "directory", "logical area", "auth", "billing", "group"]) else "Response does not clearly partition the large simplifier scope into non-overlapping logical groups."
+            },
+            {
+                "text": "Keeps the simplifier file lists manager-authored instead of telling simplifiers to recompute or narrow scope.",
+                "passed": has_any(text, ["manager owns the partitions", "manager-authored", "controller-authored", "give each simplifier the exact file list", "simplifiers do not recompute", "do not recompute scope", "do not narrow scope", "manager materialized", "pass only that exact stable file list", "manager-owned"]),
+                "evidence": "Response keeps scope ownership with the manager instead of the simplifiers." if has_any(text, ["manager owns the partitions", "manager-authored", "controller-authored", "give each simplifier the exact file list", "simplifiers do not recompute", "do not recompute scope", "do not narrow scope", "manager materialized", "pass only that exact stable file list", "manager-owned"]) else "Response does not clearly keep simplifier file lists manager-authored."
+            },
+            {
+                "text": "Waits for every code-simplifier to return `DONE` before launching code-reviewers or updating tracking.",
+                "passed": has_any(text, ["every code-simplifier", "all code-simplifiers", "all simplifier partitions", "each simplifier partition", "both simplifiers"]) and has_any(text, ["return done", "returns done", "before launching code-reviewers", "before code-review begins", "before updating tracking", "begin code-review only after", "after every simplifier returns done"]),
+                "evidence": "Response waits for the whole simplifier wave to finish before moving downstream." if has_any(text, ["every code-simplifier", "all code-simplifiers", "all simplifier partitions", "each simplifier partition", "both simplifiers"]) and has_any(text, ["return done", "returns done", "before launching code-reviewers", "before code-review begins", "before updating tracking", "begin code-review only after", "after every simplifier returns done"]) else "Response does not clearly wait for every simplifier to return DONE before moving downstream."
             },
         ]
 

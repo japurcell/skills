@@ -1,6 +1,6 @@
 ---
 name: build
-description: Coordinate the next implementation increment — pick the next ready task, dispatch an implementer with a lean handoff, route finished work through code-simplifier and code-reviewer, then update tracking.
+description: Coordinate the next implementation increment — pick the next ready task, dispatch an implementer with a lean handoff, route finished work through one or more code-simplifiers and code-reviewers, then update tracking.
 ---
 
 # Build
@@ -16,15 +16,16 @@ description: Coordinate the next implementation increment — pick the next read
    - only already-known file hints
 5. Do **not** pre-read large file sets, draft the solution, or sketch likely patches before dispatch.
 6. The implementer owns repo discovery, pattern lookup, first-pass design, code changes, and verification.
-7. After the implementer returns `DONE`, dispatch the [simplifier-prompt.md](./simplifier-prompt.md) with:
+7. After the implementer returns `DONE`, build one deduped `review_scope_files` list from:
    - the files the implementer touched
+   - all uncommitted files from `git status --porcelain`, excluding deleted files and `.gitignore` files
+8. Dispatch parallel [simplifier-prompt.md](./simplifier-prompt.md) subagents over `review_scope_files` using <review-fanout-instructions> with:
+   - the exact file list for that simplifier
    - the implementer's verification context
-   - all uncommitted files from `git status --porcelain`, excluding deleted files and `.gitignore` files
-8. After the code-simplifier returns `DONE`, dispatch the [code-reviewer-prompt.md](./code-reviewer-prompt.md) with:
-   - the touched files
+9. After every code-simplifier returns `DONE`, dispatch parallel [code-reviewer-prompt.md](./code-reviewer-prompt.md) subagents over the same `review_scope_files` partitions using <review-fanout-instructions> with:
+   - the exact file list for that reviewer
    - the current verification context
-   - all uncommitted files from `git status --porcelain`, excluding deleted files and `.gitignore` files
-9. Update tracking only after the final reviewer returns `DONE`, using <update-tracking-instructions>.
+10. Update tracking only after every reviewer returns `DONE`, using <update-tracking-instructions>.
 
 ## Manager Guardrails
 
@@ -33,12 +34,21 @@ description: Coordinate the next implementation increment — pick the next read
 - Ordinary repo exploration, pattern lookup, and first-pass design stay with the implementer.
 - Ordinary repo exploration is not a valid `NEEDS_CONTEXT`.
 - If the implementer asks the manager to explore the repo or hand over a solution, push that work back to the implementer.
+- The manager owns `review_scope_files` and all downstream partitions. Keep them deduped, exhaustive, and non-overlapping.
 
 ## Verification Selection
 
 - Verification ownership stays with the implementer.
 - Infer the task's surface and stack before choosing validation.
 - Prefer the narrowest matching checks for that stack. For shell or Python work, use shell or Python validation instead of generic frontend commands unless the task is actually frontend work.
+
+<review-fanout-instructions>
+1. Materialize `review_scope_files` once, dedupe it, and keep stable order.
+2. **≤5 files:** launch 1 code-simplifier or code-reviewer covering the full list.
+3. **>5 files:** partition files into non-overlapping groups by module, directory, or logical area so each file appears in exactly one downstream scope, then launch those code-simplifier or code-reviewer subagents in parallel.
+4. The manager owns the partitions. Simplifiers and reviewers use only the file list they are given; they do not recompute or narrow scope.
+5. Reuse the same `review_scope_files` partitions for code-simplifier and code-reviewer unless a later fix changes the surface enough to require a fresh partition.
+</review-fanout-instructions>
 
 <update-tracking-instructions>
 1. Update the plan and todo tracker immediately.
@@ -66,15 +76,15 @@ description: Coordinate the next implementation increment — pick the next read
 
 ### Code-Simplifier
 
-- **DONE:** Proceed to code-reviewer.
+- **DONE:** If every code-simplifier returned `DONE`, proceed to code-reviewer.
 - **DONE_WITH_CONCERNS:** Read the concerns before continuing to code-reviewer. If they raise a correctness concern or scope concern, treat them as unresolved work, address them first, usually by re-dispatching the subagent that should own the fix, and do not update tracking yet.
 - **NEEDS_CONTEXT:** Provide the missing context and re-dispatch.
 - **BLOCKED:** Follow the shared escalation rules.
 
 ### Code-Reviewer
 
-- **DONE:** Proceed to update tracking.
-- **DONE_WITH_FINDINGS:** Address findings before updating tracking. Re-dispatch the subagent that should own the fix, then route the result back through code-simplifier and code-reviewer as needed. Only mark the task done after the final reviewer returns `DONE`.
+- **DONE:** If every reviewer returned `DONE`, proceed to update tracking.
+- **DONE_WITH_FINDINGS:** Address findings before updating tracking. Re-dispatch the subagent that should own the fix, then route the result back through code-simplifier and the affected code-reviewer partitions as needed. Only mark the task done after every reviewer returns `DONE`.
 - **NEEDS_CONTEXT:** Provide the missing context and re-dispatch.
 - **BLOCKED:** Follow the shared escalation rules.
 
@@ -93,7 +103,7 @@ Never commit. The human will review the changes and commit manually later.
 
 - Not using a subagent for implementation tasks, fixes, simplifications, or code-review findings
 - The manager performs repo discovery, pattern lookup, first-pass design, code changes, or verification when the task is clear enough to dispatch
-- Marking a tracking item completed when the implementer, code-simplifier, and code-reviewer did not return `DONE`
+- Marking a tracking item completed when the implementer, every code-simplifier, and every code-reviewer did not return `DONE`
 - Marking a task done without updating the plan and todo tracker
 
 ## Verification

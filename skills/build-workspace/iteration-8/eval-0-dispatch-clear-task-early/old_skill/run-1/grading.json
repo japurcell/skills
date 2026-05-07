@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Says the manager should dispatch once the task is clear enough, rather than pre-reading lots of files first.",
+      "passed": true,
+      "evidence": "Response tells the manager to dispatch promptly once the task is clear."
+    },
+    {
+      "text": "Defines a lean handoff that includes task text, success criteria, known constraints or commands, and only already-known file hints.",
+      "passed": true,
+      "evidence": "Response describes a lean handoff with task, criteria, constraints/commands, and already-known file hints."
+    },
+    {
+      "text": "States that discovery, pattern lookup, and first-pass design belong to the implementer.",
+      "passed": true,
+      "evidence": "Response keeps discovery, pattern lookup, and first-pass design with the implementer."
+    },
+    {
+      "text": "Explicitly says the manager should not draft the solution or likely patches before dispatch.",
+      "passed": true,
+      "evidence": "Response explicitly forbids manager-side solution drafting before dispatch."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1412,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 47.7,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 47.7
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}
