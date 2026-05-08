@@ -10,7 +10,7 @@ Create `save-session.md`: a short continuation artifact for the next agent. Pres
 ## Use this skill when
 
 - The user asks to save progress, write a /save-session, capture current state, or leave resumable context for another agent session.
-- Work is stopping midstream and the next agent will need the goal, current status, blockers, and next step.
+- Work is stopping midstream and the next agent will need the goal, current status, suggested skills, durable learnings, blockers, and next step.
 - A `.agents/scratchpad/<feature>/spec.md` or `plan.md` is already in scope and the /save-session should stay with that feature folder.
 
 Do not use this to create a full spec, a full implementation plan, repo documentation, or a transcript archive. Do not use it when the user wants execution to continue now.
@@ -38,7 +38,7 @@ Use the checklist below even if you do not need the full text of `addy-context-e
 
 4. **Write the /save-session**
    - Aim for roughly 150-300 words plus short file bullets. Be shorter if little progress exists.
-   - Capture the goal, current status, decisions/constraints, relevant files, blockers, and the single best next step.
+   - Capture the goal, current status, suggested skills, decisions/constraints, relevant files, durable learnings, blockers, and the single best next step.
    - If work has not started, say so plainly in `Current Status`.
 
 5. **Reply with status**
@@ -52,7 +52,9 @@ Keep:
 
 - goal and active work item
 - what is done, in progress, and next
+- suggested skills to be invoked in the next session
 - decisions, constraints, and real blockers
+- durable learnings
 - 1-8 relevant files, each with a short reason; keep the set as small as the durable context allows
 - the single best next step
 
@@ -63,6 +65,32 @@ Skip:
 - routine investigation narration
 - speculative future work that is not grounded in this session
 
+## Durable Learnings
+
+Ask yourself: What context was missing that would have helped me work more effectively?
+
+- Bash commands that were used or discovered
+- Code style patterns followed
+- Testing approaches that worked
+- Environment/configuration quirks
+- Warnings or gotchas encountered
+
+**Keep it concise** - one line per concept because brevity matters.
+
+Format: `<command or pattern>` - `<brief description>`
+
+Prioritize:
+
+- Recurring: likely to matter again in future tasks
+- Actionable: directly changes what an agent should do
+- Specific: concrete command, file pattern, or decision rule
+
+Avoid:
+
+- Verbose explanations
+- Obvious information
+- One-off fixes unlikely to recur
+
 ## Save Session Template
 
 Write `save-session.md` using this exact structure:
@@ -71,25 +99,41 @@ Write `save-session.md` using this exact structure:
 # Save Session
 
 ## Goal
+
 - ...
 
 ## Current Status
+
 - Done: ...
 - In progress: ...
 - Next up: ...
 
+## Suggested Skills
+
+- <skill-name> - reason
+- ...
+
 ## Decisions and Constraints
+
 - ...
 
 ## Relevant Files
+
 - `path` — why it matters
 
+## Durable Learnings
+
+<concise-learning>
+- ...
+
 ## Open Questions or Blockers
+
 - None.
-or
+  or
 - ...
 
 ## Recommended Next Step
+
 - ...
 ```
 
