@@ -3,50 +3,49 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "You already have an existing plan.md and tasks.md. The next pending task is T014: add pagination to `GET /api/issues`. Show the workflow you will follow for that task, including how you update tracking after it passes.",
-      "expected_output": "Explains the TDD-first loop, reads acceptance criteria first, writes a failing test before code, runs the relevant tests and build, updates the plan and task tracker immediately, and leaves the work uncommitted.",
+      "prompt": "You already have an existing `plan.md`. The next pending task is T014: add pagination to `GET /api/issues`. Show the build workflow you will follow for that task, including how you pick the implementer, what you wait for, and how you update `plan.md` afterward.",
+      "expected_output": "Explains the orchestrator flow: reads `plan.md`, selects the next pending task, uses `subagent-model-selection`, dispatches a fresh implementer with `implementer-prompt.md`, waits for `DONE`, updates and re-reads `plan.md`, and leaves the work uncommitted.",
       "files": [],
       "expectations": [
-        "Mentions the next pending task is selected from the plan or task list",
-        "Includes reading acceptance criteria before implementation",
-        "Includes writing a failing test before implementation",
-        "Includes running the relevant tests and the build",
-        "Mentions updating the plan and task tracker immediately after verification",
+        "Mentions selecting the next pending task from `plan.md`",
+        "Mentions invoking `subagent-model-selection`",
+        "Mentions dispatching a fresh implementer subagent with `implementer-prompt.md`",
+        "Mentions updating and re-reading `plan.md` only after `DONE`",
         "States that the work is left uncommitted"
       ]
     },
     {
       "id": 1,
-      "prompt": "Continue the build workflow from a partially completed task list: T014 is already done, T015 is pending, and T016 depends on T015. Explain how you handle the next task and what happens if verification fails.",
-      "expected_output": "Shows resuming from the next pending task, respects dependency order, and switches to debugging-and-error-recovery if a step fails.",
+      "prompt": "Continue the build workflow from a partially completed `plan.md`: T014 is already done, T015 is pending, and T016 depends on T015. Explain how you handle T015 and what you do if the implementer reports `NEEDS_CONTEXT` before it can finish.",
+      "expected_output": "Shows resuming from the next pending task in `plan.md`, respects dependency order, provides missing context and re-dispatches on `NEEDS_CONTEXT`, keeps T015 incomplete until `plan.md` is updated, and does not move to T016 early.",
       "files": [],
       "expectations": [
         "Resumes from the next pending task instead of redoing completed work",
         "Respects dependency order between tasks",
-        "Uses the same incremental test-build-verify loop for the next task",
-        "Mentions addy-debugging-and-error-recovery when a step fails"
+        "Handles `NEEDS_CONTEXT` by providing context and re-dispatching",
+        "Does not mark the task done or move to T016 before `plan.md` is updated"
       ]
     },
     {
       "id": 2,
-      "prompt": "A user asks you to create the plan first, not build anything yet, and there is no active tasks.md. Should you use the build skill? Explain the correct response.",
-      "expected_output": "Declines the build workflow because there is no existing plan or task list to execute, and routes the user to planning instead.",
+      "prompt": "A user asks you to create the plan first, not build anything yet, and there is no active `plan.md`. Should you use the build skill? Explain the correct response.",
+      "expected_output": "Declines the build workflow because there is no existing `plan.md` to execute, says the skill is for execution rather than planning, and routes the user to planning instead.",
       "files": [],
       "expectations": [
-        "Does not start the build workflow without an existing plan or task list",
+        "Does not start the build workflow without an existing `plan.md`",
         "Says the skill is not for plan creation or task breakdown",
         "Routes the user to planning or another appropriate workflow"
       ]
     },
     {
       "id": 3,
-      "prompt": "You implemented a task, but `npm run build` fails with a type error. Explain what the build skill expects you to do next before marking anything done.",
-      "expected_output": "Switches to debugging-and-error-recovery, keeps the task unmarked, and fixes the failure before updating tracking.",
+      "prompt": "Your implementer reports `DONE_WITH_CONCERNS`: the code landed, but the concern is about correctness for the current task, not just a cosmetic note. Explain what the build skill expects you to do before marking anything complete or moving on.",
+      "expected_output": "Reads the concerns first, resolves correctness or scope problems before marking the task complete, then updates and re-reads `plan.md` before continuing.",
       "files": [],
       "expectations": [
-        "Mentions addy-debugging-and-error-recovery for the failure",
-        "Does not mark the task done after a failed build",
-        "Keeps verification and tracking tied to a passing fix"
+        "Mentions `DONE_WITH_CONCERNS` explicitly",
+        "Does not mark the task complete immediately",
+        "Resolves correctness or scope concerns before updating `plan.md`"
       ]
     }
   ]

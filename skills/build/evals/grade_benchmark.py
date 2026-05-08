@@ -42,34 +42,59 @@ def contains_any(text: str, phrases: list[str]) -> bool:
     return any(phrase in text for phrase in phrases)
 
 
+def mentions_plan(text: str) -> bool:
+    return contains_any(text, ["plan.md", "the plan", "plan file"])
+
+
+def mentions_dispatch(text: str) -> bool:
+    return contains_any(
+        text,
+        [
+            "implementer subagent",
+            "fresh implementer",
+            "fresh subagent",
+            "dispatch",
+            "implementer-prompt.md",
+        ],
+    )
+
+
 def grade(eval_id: int, response_text: str) -> list[dict]:
     text = normalize(response_text)
 
     if eval_id == 0:
         return [
             expectation(
-                "Selects the next pending task from the plan or task list.",
-                contains_any(text, ["next pending task", "pick the next pending task", "select the next pending task"]),
+                "Selects the next pending task from `plan.md`.",
+                mentions_plan(text)
+                and contains_any(text, ["next pending task", "pick the next pending task", "select the next pending task"]),
                 response_text or "missing response",
             ),
             expectation(
-                "Reads acceptance criteria before implementation.",
-                contains_any(text, ["acceptance criteria", "read its acceptance criteria"]),
+                "Invokes `subagent-model-selection`.",
+                contains_any(text, ["subagent-model-selection", "model selection"]),
                 response_text or "missing response",
             ),
             expectation(
-                "Writes a failing test before implementation.",
-                contains_any(text, ["failing test", "write a failing test", "red"]),
+                "Dispatches a fresh implementer subagent with `implementer-prompt.md`.",
+                mentions_dispatch(text),
                 response_text or "missing response",
             ),
             expectation(
-                "Runs the relevant tests and the build.",
-                contains_all(text, ["tests"]) and contains_any(text, ["build", "compile"]),
-                response_text or "missing response",
-            ),
-            expectation(
-                "Updates plan and task tracking immediately after verification.",
-                contains_any(text, ["update the plan", "update the task tracker", "tracking immediately"]),
+                "Updates and re-reads `plan.md` only after `DONE`.",
+                contains_any(text, ["done", "status: done", "if the implementer reports done"])
+                and contains_any(
+                    text,
+                    [
+                        "update plan.md",
+                        "mark the task complete in plan.md",
+                        "update the plan",
+                        "persist completion in plan.md",
+                        "record completion in plan.md",
+                        "write the finished state to plan.md",
+                    ],
+                )
+                and contains_any(text, ["re-read", "reread", "reopen", "verify in plan.md", "read plan.md again"]),
                 response_text or "missing response",
             ),
             expectation(
@@ -83,22 +108,24 @@ def grade(eval_id: int, response_text: str) -> list[dict]:
         return [
             expectation(
                 "Resumes from the next pending task instead of redoing completed work.",
-                contains_any(text, ["next pending task", "resume", "skip completed work"]),
+                contains_any(text, ["next pending task", "resume", "skip completed work", "t015"]),
                 response_text or "missing response",
             ),
             expectation(
                 "Respects dependency order between tasks.",
-                contains_any(text, ["depends on", "dependency order", "after t015"]),
+                contains_any(text, ["depends on", "dependency order", "after t015", "t016 depends on t015"]),
                 response_text or "missing response",
             ),
             expectation(
-                "Uses the same incremental test-build-verify loop.",
-                contains_all(text, ["test"]) and contains_any(text, ["build", "verify"]),
+                "Handles `NEEDS_CONTEXT` by providing context and re-dispatching.",
+                contains_any(text, ["needs_context", "needs context"])
+                and contains_any(text, ["provide missing context", "give more context", "re-dispatch", "redispatch", "send more context"]),
                 response_text or "missing response",
             ),
             expectation(
-                "Mentions addy-debugging-and-error-recovery when a step fails.",
-                "addy-debugging-and-error-recovery" in text,
+                "Does not mark the task done or move to T016 before `plan.md` is updated.",
+                contains_any(text, ["do not mark", "not mark", "keep t015 open", "keep the task open"])
+                and contains_any(text, ["before moving to t016", "do not move to t016", "until plan.md is updated", "until t015 is complete in plan.md"]),
                 response_text or "missing response",
             ),
         ]
@@ -106,13 +133,22 @@ def grade(eval_id: int, response_text: str) -> list[dict]:
     if eval_id == 2:
         return [
             expectation(
-                "Does not start the build workflow without an existing plan or task list.",
-                contains_any(text, ["no existing plan", "no active tasks", "does not use the build skill"]),
+                "Does not start the build workflow without an existing `plan.md`.",
+                contains_any(text, ["no existing plan.md", "no active plan.md", "no plan.md", "does not use the build skill"]),
                 response_text or "missing response",
             ),
             expectation(
                 "Says the skill is not for plan creation or task breakdown.",
-                contains_any(text, ["not for plan creation", "not for task breakdown"]),
+                contains_any(
+                    text,
+                    [
+                        "not for plan creation",
+                        "not for task breakdown",
+                        "not for planning",
+                        "for execution, not planning",
+                        "create the plan first",
+                    ],
+                ),
                 response_text or "missing response",
             ),
             expectation(
@@ -125,18 +161,29 @@ def grade(eval_id: int, response_text: str) -> list[dict]:
     if eval_id == 3:
         return [
             expectation(
-                "Mentions addy-debugging-and-error-recovery for the failure.",
-                "addy-debugging-and-error-recovery" in text,
+                "Mentions `DONE_WITH_CONCERNS` explicitly.",
+                contains_any(text, ["done_with_concerns", "done with concerns"]),
                 response_text or "missing response",
             ),
             expectation(
-                "Does not mark the task done after a failed build.",
-                contains_any(text, ["not mark", "stay unmarked", "keep the task open", "do not mark"]),
+                "Does not mark the task complete immediately.",
+                contains_any(text, ["do not mark", "not mark", "do not mark it complete", "before marking the task complete"]),
                 response_text or "missing response",
             ),
             expectation(
-                "Keeps verification and tracking tied to a passing fix.",
-                contains_any(text, ["passing fix", "after the failure is fixed", "before updating tracking"]),
+                "Resolves correctness or scope concerns before updating `plan.md`.",
+                contains_any(text, ["correctness", "scope", "risk", "issue", "problem"])
+                and contains_any(text, ["resolve", "address"])
+                and contains_any(
+                    text,
+                    [
+                        "before updating plan.md",
+                        "before marking the task complete",
+                        "before updating the plan",
+                        "before moving on",
+                        "before continuing",
+                    ],
+                ),
                 response_text or "missing response",
             ),
         ]

@@ -1,25 +1,22 @@
 ---
 name: build
-description: Implement the next task incrementally — build, test, verify
+description: Orchestrates execution of an existing `plan.md` by dispatching one fresh implementer subagent per task and persisting completion in `plan.md`. Use when the user wants you to continue an existing implementation plan, work through pending tasks without repeated check-ins, or finish a planned feature continuously.
 ---
 
 # Build
 
-You are the orchestrator, and you implement the plan by dispatching a fresh subagent per task.
+## Overview
 
-**Why subagents**: You delegate tasks to specialized agents with isolated context to preserve your own context for coordination work.
+Execute an existing `plan.md` continuously. You are the orchestrator: pick the next pending task, dispatch one fresh implementer subagent with [implementer-prompt.md](./implementer-prompt.md), then update `plan.md` only after the implementer has truly finished.
 
-**Core principle:** Fresh subagent per task = high quality, fast iteration, without context pollution.
+Use a fresh implementer per task so coordination stays clean and each task gets focused context.
 
-**Continuous execution:** Do not pause to check in with the human between tasks. Execute all tasks from the plan without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete. "Should I continue?" prompts and progress summaries waste their time.
+## When to Use
 
-## Source of Truth
-
-`plan.md` is the authoritative record of task status.
-
-Internal todo trackers, memory, scratchpads, runtime task lists, and chat status messages are non-authoritative and must never be treated as substitutes for updating `plan.md`.
-
-A task is considered completed only when its completion is persisted in `plan.md`.
+- `plan.md` already exists and has pending implementation tasks.
+- The user wants execution, not planning.
+- The work should continue through ready tasks without repeated "should I continue?" check-ins.
+- Not for creating a plan, writing a spec, or breaking work down from scratch.
 
 ## Workflow
 
@@ -27,133 +24,46 @@ A task is considered completed only when its completion is persisted in `plan.md
 2. Based on the task's size or scope, invoke the `subagent-model-selection` skill to determine the least powerful model and most appropriate agent type for the implementer subagent.
 3. Dispatch an implementer subagent with the [implementer-prompt.md](./implementer-prompt.md) template.
 4. Wait for the implementer to report back.
-5. If the implementer reports `DONE`, update `plan.md` immediately to mark the task as completed.
-6. Save the change to `plan.md`.
-7. Verify directly in `plan.md` that the task now appears completed.
-8. Only after that verification, move to the next pending task.
+5. Handle the status exactly:
+   - **DONE:** Update the matching task in `plan.md`, save it, then re-read `plan.md` and verify the completion is visible before starting the next task.
+   - **DONE_WITH_CONCERNS:** Treat this as unresolved correctness or scope risk. Read the concerns first and resolve them before marking the task complete. If the implementer only has a non-blocking observation, it should report `DONE` and include the note there instead.
+   - **NEEDS_CONTEXT:** Provide the missing context and re-dispatch. Do not mark the task complete.
+   - **BLOCKED:** Try to unblock with better context, a smaller slice, or a more capable model. If the blocker remains, stop and escalate to the human. Do not mark the task complete.
+6. Continue through ready tasks without pausing for permission. Stop only when all tasks are complete, a real blocker remains, or the plan itself is wrong.
+7. Leave all changes uncommitted.
 
-## Task Completion
+## Specific Techniques
 
-Mark the task as completed in `plan.md` only when the implementer reports `DONE`.
+- Treat `plan.md` as the only execution record. Internal todo trackers, memory, scratchpads, chat summaries, and subagent status messages can help coordination but never replace updating `plan.md`.
+- A task is complete only after the finished state is written to `plan.md` and then verified by re-reading `plan.md`.
+- Send the implementer the exact task text plus the relevant `plan.md` excerpt. Weaker models behave better when task boundaries are explicit.
+- Keep the orchestration boundary intact: the implementer does the task work; you coordinate selection, status handling, and `plan.md` updates.
+- Reuse [implementer-prompt.md](./implementer-prompt.md) instead of re-explaining implementation details from memory. That prompt already covers incremental implementation, TDD, targeted verification, and debugging when a step fails.
 
-A task is not complete until the completion state is written to `plan.md`.
+## Common Rationalizations
 
-**Examples of completed tasks**:
-
-1. A simple task: `- [x] Task 1: Add user registration endpoint`
-2. A task with subtasks:
-
-   ```markdown
-   ## Task [N]: [Short descriptive title]
-
-   **Description:** One paragraph explaining what this task accomplishes.
-
-   **Acceptance criteria:**
-
-   - [x] [Specific, testable condition]
-   - [x] [Specific, testable condition]
-
-   **Verification:**
-
-   - [x] Tests pass: `npm test -- --grep "feature-name"`
-   - [x] Build succeeds: `npm run build`
-   - [x] Manual check: [description of what to verify]
-   ```
-
-**Examples of pending or incomplete tasks**:
-
-1. A simple task: `- [ ] Task 1: Add user registration endpoint`
-2. A task with subtasks:
-
-   ```markdown
-   ## Task [N]: [Short descriptive title]
-
-   **Description:** One paragraph explaining what this task accomplishes.
-
-   **Acceptance criteria:**
-
-   - [ ] [Specific, testable condition]
-   - [x] [Specific, testable condition]
-
-   **Verification:**
-
-   - [x] Tests pass: `npm test -- --grep "feature-name"`
-   - [x] Build succeeds: `npm run build`
-   - [x] Manual check: [description of what to verify]
-   ```
-
-## Completion Gate
-
-After any implementer reports `DONE`, do not begin the next task until all of the following are true:
-
-1. `plan.md` has been updated
-2. The updated completion status is visible in `plan.md`
-3. `plan.md` matches the current execution state
-
-If `plan.md` is not updated, the task remains incomplete regardless of internal tracker state.
-
-## Post-Task Reconciliation
-
-After each completed task:
-
-- confirm the correct task is marked completed in `plan.md`
-- confirm no unrelated tasks were changed incorrectly
-- confirm any required subtasks or verification checkboxes were updated appropriately
-
-## Handling Implementer Status
-
-Implementer subagents report one of four statuses. Handle each appropriately:
-
-- **DONE:** Update `plan.md`, verify the update, then proceed.
-- **DONE_WITH_CONCERNS:** Read the concerns before proceeding. If the concerns are about correctness or scope, address them before task completion. If they're observations (e.g., "this file is getting large"), note them, update `plan.md`, verify the update, and proceed.
-- **NEEDS_CONTEXT:** The implementer needs information that wasn't provided. Provide the missing context and re-dispatch.
-- **BLOCKED:** The implementer cannot complete the task. Assess the blocker:
-  1. If it's a context problem, provide more context and re-dispatch with the same model
-  2. If the task requires more reasoning, re-dispatch with a more capable model
-  3. If the task is too large, break it into smaller pieces
-  4. If the plan itself is wrong, escalate to the human
-
-**Never** ignore an escalation or force the same model to retry without changes. If the implementer said it's stuck, something needs to change.
-
-## Prohibited Behavior
-
-Do not treat any of the following as equivalent to updating `plan.md`:
-
-- runtime todo trackers
-- internal state
-- memory
-- subagent status reports
-- chat summaries
-
-These can assist coordination but are not execution records.
-
-Failure to persist completion to `plan.md` is a workflow error.
-
-## Commit Override Behavior
-
-Do NOT commit. The user will review the changes and commit manually later.
+| Rationalization | Reality |
+| --- | --- |
+| "The implementer said it's done, so I can move on." | `DONE` is not enough by itself. The task is complete only after `plan.md` is updated, saved, and re-read. |
+| "I can track completion in my todo list or chat summary." | Those are helpers, not execution records. `plan.md` is the only source of truth. |
+| "I'll just do this task myself instead of dispatching a subagent." | This skill is for orchestration. A fresh implementer subagent per task keeps context clean and the workflow consistent. |
+| "I'll stop after this task and ask whether to continue." | Keep going through ready tasks. Stop only for a real blocker, genuine ambiguity, or full completion. |
+| "DONE_WITH_CONCERNS is close enough to done." | If the concern affects correctness or scope, resolve it before marking the task complete. |
 
 ## Red Flags
 
 - Code implemented by the orchestrator instead of an implementer subagent
-- Proceeding with unfixed issues
-- Committing changes without human review
-- Starting the next task before `plan.md` is updated and verified
+- Starting the next task before `plan.md` is updated and re-read
+- Treating runtime trackers or subagent reports as equivalent to `plan.md`
+- Marking `BLOCKED` or `NEEDS_CONTEXT` work complete
+- Stopping between ready tasks to ask for permission
+- Committing changes or telling the implementer to commit
 
 ## Verification
 
-- All tasks were completed continuously and marked as completed in `plan.md`
-- Each increment was individually tested
-- The relevant test suite passes
-- The build is clean
-- The feature works end-to-end as specified
-- All changes are uncommitted
-
-## Final Audit
-
-Before declaring the plan complete:
-
-- audit `plan.md` against actual completed work
-- ensure every finished task is marked complete in `plan.md`
-- ensure no unfinished task is marked complete
-- fix any discrepancy before reporting completion
+- [ ] `plan.md` existed and provided the task order.
+- [ ] Each task was assigned to a fresh implementer subagent.
+- [ ] Each completed task was written to `plan.md` only after `DONE` or an acceptable `DONE_WITH_CONCERNS` resolution.
+- [ ] After each `plan.md` update, the file was re-read and matched the current execution state before the next task began.
+- [ ] Ready tasks ran continuously until completion or a real blocker required escalation.
+- [ ] All work remains uncommitted.
