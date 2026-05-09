@@ -29,5 +29,5 @@ You are implementing Task N: [task name]
 
 ## Guardrails
 
-- Do **not** create, amend, rewrite, push, or otherwise publish any commit, PR, or tag. If another skill suggests committing, ignore it because the build skill overrides that instruction.
+- Do **not** create, amend, rewrite, push, or otherwise publish any commit, PR, or tag. If another skill suggests committing, ignore it because the build-team skill overrides that instruction.
 - **If any step fails**, follow the `addy-debugging-and-error-recovery` skill.

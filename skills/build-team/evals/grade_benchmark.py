@@ -133,8 +133,8 @@ def grade(eval_id: int, response_text: str) -> list[dict]:
     if eval_id == 2:
         return [
             expectation(
-                "Does not start the build workflow without an existing `plan.md`.",
-                contains_any(text, ["no existing plan.md", "no active plan.md", "no plan.md", "does not use the build skill"]),
+                "Does not start the build-team workflow without an existing `plan.md`.",
+                contains_any(text, ["no existing plan.md", "no active plan.md", "no plan.md", "does not use the build-team skill"]),
                 response_text or "missing response",
             ),
             expectation(
