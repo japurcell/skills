@@ -1,97 +1,93 @@
 ---
 name: save-session
-description: Save a concise session continuation note that another agent can continue from. Use this whenever the user asks to save progress, write a continuation note, capture current session state, or preserve enough context for a future agent session to resume work. Before writing, invoke addy-context-engineering to decide what context is worth carrying forward, then write save-session.md under .agents/scratchpad/ or the active feature subfolder when a scratchpad spec.md or plan.md is already in scope.
+description: Save a short continuation note for a future agent session. Keep only durable context, then write `save-session.md` under `.agents/scratchpad/` or the active in-scope feature subfolder.
 ---
 
 # Save Session
 
-Create `save-session.md`: a short continuation artifact for the next agent. Preserve only the durable context needed to resume cleanly. Do not turn the note into a transcript.
+Create `save-session.md` for the next agent. Keep it short and durable. Do not write a transcript.
 
 ## Use this skill when
 
-- The user asks to save progress, write a /save-session, capture current state, or leave resumable context for another agent session.
-- Work is stopping midstream and the next agent will need the goal, current status, suggested skills, durable learnings, blockers, and next step.
-- A `.agents/scratchpad/<feature>/spec.md` or `plan.md` is already in scope and the /save-session should stay with that feature folder.
+- The user asks to save progress, write a continuation note, capture session state, or leave resumable context.
+- Work is stopping mid-task and another agent may continue later.
 
-Do not use this to create a full spec, a full implementation plan, repo documentation, or a transcript archive. Do not use it when the user wants execution to continue now.
+Do not use this for a full spec, full plan, repo docs, or when the user wants work to continue now.
 
-## Fast path
+## Rules
 
-Use the checklist below even if you do not need the full text of `addy-context-engineering`.
+1. **Keep only durable context**
+   - Include only what a future agent needs: goal, status, constraints, blockers, touched files, durable learnings, and next step.
+   - If available, invoke `addy-context-engineering` first.
+   - If unavailable, apply the same principle directly.
 
-1. **Invoke `addy-context-engineering` first**
-   - Keep only the minimum durable context: rules/conventions, active scratchpad artifacts, touched files, blockers, and the next task boundary.
-
-2. **Resolve the output path**
-   - Use this precedence: explicit `.agents/scratchpad/<feature>/plan.md` or `spec.md` > most recent in-scope feature artifact > `.agents/scratchpad/save-session.md` > ask if ambiguous.
-   - If the request explicitly names `.agents/scratchpad/<feature>/plan.md` or `spec.md`, use `.agents/scratchpad/<feature>/save-session.md`.
-   - Otherwise reuse the most recent `.agents/scratchpad/<feature>/plan.md` or `spec.md` already in scope this session.
-   - If no feature-scoped scratchpad artifact is in scope, use `.agents/scratchpad/save-session.md`.
-   - If two feature folders are equally plausible, ask instead of guessing.
+2. **Choose the output path**
    - Never write outside `.agents/scratchpad/`.
+   - If the user explicitly names `.agents/scratchpad/<feature>/spec.md` or `plan.md`, write `.agents/scratchpad/<feature>/save-session.md`.
+   - Otherwise, if a feature `spec.md` or `plan.md` is already in scope this session, write to that feature folder.
+   - Otherwise write `.agents/scratchpad/save-session.md`.
+   - If two feature folders are equally plausible, ask instead of guessing.
 
-3. **Load only what matters**
-   - Read `AGENTS.md` and narrower instruction files already in scope.
+3. **What counts as in scope**
+   - A scratchpad artifact is in scope if it was explicitly referenced by the user, read in this session, or modified in this session.
+   - If multiple are in scope, prefer the one most recently modified; if none were modified, prefer the one most recently read.
+
+4. **Read only what matters**
+   - Read applicable instruction files already in scope, including relevant `AGENTS.md`.
    - Read the active scratchpad `spec.md` or `plan.md` if one exists.
-   - Read only the specific files, diffs, or errors needed to explain current status and the next step.
-   - Do not reread the whole repo just to produce a /save-session.
+   - Read only the files, diffs, or errors needed to explain status and next step.
+   - Do not reread the whole repo just to save session state.
 
-4. **Write the /save-session**
-   - Aim for roughly 150-300 words plus short file bullets. Be shorter if little progress exists.
-   - Capture the goal, current status, suggested skills, decisions/constraints, relevant files, durable learnings, blockers, and the single best next step.
-   - If work has not started, say so plainly in `Current Status`.
+5. **Write concisely**
+   - Target about 150-300 words plus short file bullets.
+   - Be shorter if little progress exists.
+   - If no work has started, say so in `Current Status`.
 
-5. **Reply with status**
-   - Report the absolute path to `save-session.md`.
-   - Say whether it is feature-scoped or root-scoped.
-   - Add one line about the most important thing the next agent should know.
+6. **If something goes wrong**
+   - If the path is ambiguous, ask the user.
+   - If writing fails, provide the draft inline and explain why.
+   - If `.agents/scratchpad/` is missing, create it if allowed; otherwise ask.
 
 ## Keep / Skip
 
 Keep:
 
-- goal and active work item
-- what is done, in progress, and next
-- suggested skills to be invoked in the next session
-- decisions, constraints, and real blockers
+- goal
+- done / in progress / next
+- useful suggested skills
+- decisions, constraints, blockers
 - durable learnings
-- 1-8 relevant files, each with a short reason; keep the set as small as the durable context allows
-- the single best next step
+- smallest useful set of relevant files, each with a reason
+- one best next step
 
 Skip:
 
-- full chat transcripts
-- raw command logs unless a specific error message is the blocker
-- routine investigation narration
-- speculative future work that is not grounded in this session
+- full transcript
+- routine investigation details
+- raw command logs unless an error is the blocker
+- speculative future work not grounded in this session
 
 ## Durable Learnings
 
-Ask yourself: What context was missing that would have helped me work more effectively?
+Use one short line per item.
 
-- Bash commands that were used or discovered
-- Code style patterns followed
-- Testing approaches that worked
-- Environment/configuration quirks
-- Warnings or gotchas encountered
+Good examples:
 
-**Keep it concise** - one line per concept because brevity matters.
+- commands that were useful
+- code patterns or conventions followed
+- tests that worked
+- environment quirks
+- warnings or gotchas
 
-Format: `<command or pattern>` - `<brief description>`
+Format:
 
-Prioritize:
+- `<command-or-pattern>` - `<brief-description>`
 
-- Recurring: likely to matter again in future tasks
-- Actionable: directly changes what an agent should do
-- Specific: concrete command, file pattern, or decision rule
+If none, write:
 
-Avoid:
+- `- None.`
 
-- Verbose explanations
-- Obvious information
-- One-off fixes unlikely to recur
-
-## Save Session Template
+## Template
 
 Write `save-session.md` using this exact structure:
 
@@ -123,7 +119,7 @@ Write `save-session.md` using this exact structure:
 
 ## Durable Learnings
 
-<concise-learning>
+- <command-or-pattern> - <brief-description>
 - ...
 
 ## Open Questions or Blockers
@@ -137,10 +133,19 @@ Write `save-session.md` using this exact structure:
 - ...
 ```
 
+Allow explicit empties:
+
+- `## Suggested Skills` → `- None.`
+- `## Relevant Files` → `- None.`
+- `## Durable Learnings` → `- None.`
+
 ## Before finishing
 
-- Confirm the output path is under `.agents/scratchpad/`, and use the feature subfolder when a scratchpad spec or plan is in scope.
-- Confirm `save-session.md` uses the exact headings and order from the template.
-- Confirm every `Relevant Files` entry includes a short reason it matters.
-- Confirm the summary is concise and continuation-oriented rather than a transcript.
-- Confirm the final response includes the absolute path, the scope, and the most important next-session note.
+- Confirm the file path is under `.agents/scratchpad/`.
+- Confirm the headings and order exactly match the template.
+- Confirm each `Relevant Files` entry has a reason.
+- Confirm the note is concise and continuation-oriented.
+- In your final reply, include:
+  - the absolute path
+  - whether it is feature-scoped or root-scoped
+  - the single most important note for the next agent
