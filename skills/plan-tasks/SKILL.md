@@ -6,12 +6,16 @@ argument-hint: <skip_design_phase:true|false>
 
 # Plan Tasks
 
+## Inputs
+
+- `$skip_design_phase` (optional, default: `false`): Whether to skip the design phase.
+
 ## Workflow
 
 1. Invoke the `addy-planning-and-task-breakdown` skill.
 2. Read the existing spec (SPEC.md or equivalent) and the relevant codebase sections.
 3. Enter plan mode — read only, no code changes
-4. Unless `skip_design_phase=true`, [Design the architecture and implementation approach](#architecture-design)
+4. Unless `$skip_design_phase=true`, [Design the architecture and implementation approach](#architecture-design)
 5. Identify the dependency graph between components
 6. Slice work vertically (one complete path per task, not horizontal layers)
 7. Write tasks with acceptance criteria and verification steps
