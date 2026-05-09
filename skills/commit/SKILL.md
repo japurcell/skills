@@ -1,100 +1,122 @@
 ---
 name: commit
-description: 'Commit current local changes into one clean git commit and push the working branch to origin: stage intended files, create or reuse the appropriate branch, write a conventional commit with issue linkage and Co-authored-by trailers, and return branch and commit details. Use this whenever the user asks to commit changes, save the current worktree, make a git commit, push a branch, or get work ready to share without opening a PR, even if they only say "commit this", "push my changes", or "save this work". Do not use for pull request creation, rebasing, cherry-picking, amending existing commits, resolving merge conflicts, or reviewing an existing PR.'
-disable-model-invocation: true
+description: "Create one clean git commit from current local changes and push the branch to origin. Use when the user asks to commit, save, or push current work without opening a PR. Do not use for PR creation, rebasing, cherry-picking, amending commits, resolving merge conflicts, or reviewing a PR."
 ---
 
 # Commit
 
 ## Inputs
 
-You receive these parameters in your prompt:
-
-- **spec_file** (optional): The path to the spec file that contains the linked GitHub issue.
-- **issue_numbers** (optional): A list of issue numbers to link in the commit message. If not provided, attempt to extract from `spec_file`.
-- **base_branch** (optional, default: "main"): The branch name that should be treated as the protected base branch when deciding whether to create a new feature branch.
-- **feature_branch** (optional): The feature branch to create and use for the commit.
-- **co_author** (optional): One or more `Co-authored-by` trailer lines to attribute collaborators. Each line must follow the format `Co-authored-by: NAME <EMAIL>`. When multiple co-authors are needed, separate each trailer with a newline. If omitted, you (the executing agent) should add your own known co-author identity. If you don't have a known identity, ask the user to provide one.
+- **spec_file** (optional): Path to a spec file that may contain issue references and target file paths.
+- **issue_numbers** (optional): Issue numbers to include. If omitted, try to extract them from `spec_file`.
+- **base_branch** (optional, default: `main`): Protected base branch name.
+- **feature_branch** (optional): Branch to create or use.
+- **co_author** (optional, default: `Copilot <223556219+Copilot@users.noreply.github.com>`): One or more `NAME <EMAIL>` entries separated by newlines. Render each as `Co-authored-by: NAME <EMAIL>`.
 
 ## Context
 
-- Current git status: !`git status`
-- Current git diff (staged and unstaged changes): !`git diff HEAD`
+- Git status: !`git status --short --branch`
+- Staged diff: !`git diff --cached`
+- Unstaged diff: !`git diff`
+- Staged files: !`git diff --cached --name-only`
+- Unstaged files: !`git diff --name-only`
 - Current branch: !`git branch --show-current`
+- Recent commits: !`git log --oneline -10`
 
-## Objective
+## Goal
 
-Convert the current local changes into one clean pushed commit with minimal user back-and-forth.
+Create exactly one atomic commit, push its branch to `origin`, and return branch and commit details.
+
+## Stop if
+
+- not inside a Git repository
+- Git author identity is not configured
+- there are no staged or unstaged changes
+- merge, rebase, or cherry-pick is in progress
+- there are unmerged paths or index conflicts
+- `HEAD` is detached and no new branch will be created
+- the selected staged diff is empty
+- a required git command fails
 
 ## Workflow
 
-Based on the above changes:
+### 1) Extract issues
 
-1. Load `issue_numbers` and extract, when available:
-   - Linked issue numbers (for example `#123`)
-   - Feature title or short slug candidate
-   - Any acceptance criteria that should influence the commit summary
-2. Validate repository readiness:
-   - Confirm there are local changes to commit.
-   - Confirm you are inside a git repository.
-   - Confirm a push target is available, or be prepared to stop with a precise blocker if `origin` push fails.
-   - If there are no changes, stop and clearly report that there is nothing to commit.
-3. Determine branch strategy:
-   - If `feature_branch` input is specified, create a new branch with that name.
-   - If the current branch is `base_branch`, `main`, or `master`, create a new feature branch.
-   - If already on a non-base branch, reuse it unless `feature_branch` input is specified.
-   - Branch names should be concise, kebab-case, and derived from the spec or issue context (for example `feat/123-add-invoice-export`).
-4. Stage and commit once:
-   - Stage all intended changes for this task.
-   - Create exactly one atomic commit.
-   - Use a conventional commit subject when possible (for example `feat: add invoice export flow`).
-   - If issue numbers exist, include `Fixes #<issue>` for each issue number in the commit message body separated by newlines.
-   - Always append a `Co-authored-by` trailer block at the end of the commit message. Use the `co_author` input if provided; otherwise use your own known co-author identity. Each trailer line must match the format `Co-authored-by: NAME <EMAIL>`. Separate the trailer block from the preceding body with a blank line.
+- Accept `#123` or bare integers from `issue_numbers`.
+- If `issue_numbers` is missing and `spec_file` is readable, extract:
+  - `#123`
+  - `GH-123`
+  - full GitHub issue URLs
+- Deduplicate while preserving first appearance.
+- Use `Fixes #N` only if the user explicitly says to fix or close the issue; otherwise use `Refs #N`.
 
-   **Commit message format:**
+### 2) Choose branch
 
-   ```
-   feat: add invoice export flow
+- If `feature_branch` is provided:
+  - if a local branch with that name exists, switch to it only if checkout succeeds without overwriting or conflicting with local changes; otherwise stop
+  - else if a remote branch with that name exists, create a local tracking branch
+  - else create it
+- Otherwise:
+  - if current branch is `base_branch`, `main`, `master`, or empty, create a new branch
+  - else reuse current branch
 
-   Fixes #123
+### 3) Select files
 
-   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
-   ```
+- If staged changes exist, commit staged changes only.
+- Otherwise select files in this order:
+  1. files explicitly named in `spec_file` that are present in current changes
+  2. the only changed file, if exactly one file changed
+  3. all changed files, if they are all under one top-level directory
+- Otherwise stop and ask which files to commit.
+- If `spec_file` cannot be read or parsed, ignore it; if that makes selection ambiguous, stop and ask.
 
-   When there are multiple co-authors, place each on its own line with no blank lines between them:
+### 4) Choose commit type
 
-   ```
-   fix: resolve rate-limit retry logic
+Use these heuristics:
 
-   Fixes #456
+- `docs` if selected changes are docs-only
+- `test` if selected changes are tests-only
+- `fix` if the user explicitly says `fix`, `bug`, or `bugfix`, or the selected diff clearly resolves an error or failing condition
+- `feat` if the selected diff clearly adds a user-facing capability
+- `refactor` if the selected diff restructures code without clear behavior change
+- `perf` if the selected diff clearly improves performance
+- otherwise `chore`
 
-   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
-   Co-authored-by: Jane <jane@example.com>
-   ```
+### 5) Name branch
 
-   When there are no linked issues, the trailer still applies:
+When creating a branch:
 
-   ```
-   chore: update audit-log schema
+- use the selected commit type as the prefix when reasonable; otherwise use `chore`
+- use the first extracted issue number, if any
+- derive slug from, in order:
+  1. `spec_file` basename without extension
+  2. a concise summary of selected changes
+  3. single selected file basename without extension
+  4. `worktree-update-YYYYMMDD`
+- normalize to lowercase kebab-case
+- format:
+  - with issue: `<type>/<issue>-<slug>`
+  - without issue: `<type>/<slug>`
 
-   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
-   ```
+### 6) Build commit subject
 
-5. Push to origin:
-   - Push the branch with upstream tracking when needed (`-u origin <branch>`).
-6. Return a concise execution summary including:
-   - Branch name
-   - Commit SHA and subject
-   - Push result or remote tracking branch
+Create a concise conventional commit subject:
 
-## Guardrails
+- prefer a short action-oriented summary of selected changes
+- if unclear and exactly one file is selected: `update <file-basename>`
+- if unclear and all selected files are under one top-level directory: `update <directory>`
+- otherwise: `update changed files`
 
-- Prefer non-interactive commands to avoid hanging.
-- Do not create multiple commits for this flow.
-- Do not rewrite history (no force-push) unless the user explicitly requests it.
-- Do not open a pull request or invoke `gh pr create` as part of this skill.
-- If a required step fails (repo readiness, commit creation, or push), stop and report the exact blocker plus next corrective action.
+### 7) Create commit message
 
-## Execution Mode
+Format exactly:
 
-You have the capability to call multiple tools in a single response. Complete the full workflow in one response when possible. Avoid unrelated actions.
+```text
+<type>: <subject>
+
+Refs #123
+Refs #456
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+Co-authored-by: Jane <jane@example.com>
+```
