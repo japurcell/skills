@@ -1,9 +1,8 @@
-# Project Coding Standards
+# Global Coding Standards
 
 ## Skills
 
 - Always load the `addy-using-agent-skills` skill. It encodes the core workflows and best practices for engineering work.
-- Always load the `addy-context-engineering` skill. It encodes best practices for providing context to agents, which is critical for their performance.
 
 ## Testing
 
@@ -21,7 +20,7 @@
 ## Implementation
 
 - Build in small, verifiable increments
-- Each increment: implement → test → verify → commit
+- Each increment: implement → test → verify
 - Never mix formatting changes with behavior changes
 
 ## Boundaries
