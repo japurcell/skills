@@ -5,7 +5,7 @@ description: Capture durable session learnings into AGENTS.md and reorganize AGE
 
 # Remember Lessons Learned
 
-Capture durable session learnings into AGENTS.md, then reorganize all AGENTS.md files into a clean, minimal structure — all in one pass.
+Capture durable session learnings into the appropriate AGENTS.md files. If structural issues are present or the user asks for cleanup, also perform a refactor pass.
 
 ## The Workflow
 
@@ -24,7 +24,7 @@ Look for:
 
 Filter out one-off incidents, temporary noise, and obvious facts.
 
-If session context is partial or missing, do not stop at questions. Use best-effort assumptions based on available context and produce candidate updates anyway, clearly labeling assumptions.
+When context is incomplete, prefer proposed candidate updates over direct modifications, and clearly label confidence/assumptions.
 
 ### Phase 1: Find AGENTS.md Files
 
@@ -39,7 +39,7 @@ If session context is partial or missing, do not stop at questions. Use best-eff
 If no AGENTS.md files exist:
 
 - Say so clearly
-- Propose creating `./AGENTS.md` with only the strongest 3-7 learnings
+- Create `./AGENTS.md` with only the strongest 3-7 learnings
 
 Decide where each addition belongs:
 
@@ -73,7 +73,7 @@ Avoid:
 
 Produce a minimal root AGENTS.md that contains only globally essential guidance, then move all specialized guidance into linked, topic-specific files.
 
-1. **Detect contradictions** — places where two rules conflict and can't both be followed. Use your best judgment to pick one to keep, then flag the other for deletion.
+1. **Detect contradictions** — places where two rules conflict and can't both be followed. When rules truly conflict, pick one version to keep and explain why. Apply destructive changes because the user can review later.
 
 2. **Assess whether a structural refactor is warranted**. Signals that it is:
    - Root AGENTS.md exceeds ~120 lines
@@ -105,7 +105,7 @@ Produce a minimal root AGENTS.md that contains only globally essential guidance,
    - Obvious boilerplate
    - Contradictory flagged for deletion
 
-6. **Produce final structure**:
+6. **Create final structure**:
    - Minimal root AGENTS.md with links
    - Updated scoped AGENTS.md files where needed
    - New/updated topic docs
@@ -127,20 +127,16 @@ In the final response, include:
 6. **Folder structure**: If new folders were created, show the new structure in a tree-style layout
 7. **Assumptions** (only when needed): explicit assumptions used to produce best-effort proposals despite partial context
 
-### Operating Principles
-
-1. Keep root AGENTS.md short and always-load safe.
-2. Prefer actionable rules over vague advice.
-3. Preserve scope boundaries (root vs subdirectory AGENTS files).
-4. Avoid duplicate guidance across files; link instead.
-
 ## Quality Bar
 
-- Root AGENTS.md should stay under ~120 lines
+- Root AGENTS.md should stay under ~120 lines and always-load safe
 - Every linked file should have a clear purpose and no mixed scopes
-- No orphan links
+- Orphan links should be removed or resolved
 - No duplicated rule text unless duplication is explicitly justified
+- Avoid duplicate guidance across files; link instead
 - New learnings are concise, actionable, and likely to recur
+- Prefer actionable rules over vague advice
+- Preserve scope boundaries (root vs subdirectory AGENTS files)
 - If no changes meet the quality bar, say so explicitly — don't force updates
 
 ## Common Rationalizations
@@ -189,4 +185,3 @@ Before concluding, confirm:
 - [ ] Conflicts were surfaced explicitly and resolved
 - [ ] No orphan links remain
 - [ ] Structural changes were explained clearly
-- [ ] Final response includes all required sections (learnings, updates, contradictions, deletions, grouped files, folder structure, assumptions)
