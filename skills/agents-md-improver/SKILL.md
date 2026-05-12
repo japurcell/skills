@@ -130,14 +130,10 @@ After outputting the quality report, ask user for confirmation before updating.
 +
 + ```bash
 + npm install
-+ npm run dev  # Start development server on port 3000
++ npm run dev # Start development server on port 3000
 + ```
 ````
 `````
-
-````
-
-```
 
 ### Phase 5: Apply Updates
 
@@ -166,12 +162,14 @@ When presenting recommendations, remind users:
 ## What Makes a Great AGENTS.md
 
 **Key principles:**
+
 - Concise and human-readable
 - Actionable commands that can be copy-pasted
 - Project-specific patterns, not generic advice
 - Non-obvious gotchas and warnings
 
 **Recommended sections** (use only what's relevant):
+
 - Commands (build, test, dev, lint)
 - Architecture (directory structure)
 - Key Files (entry points, config)
@@ -180,5 +178,3 @@ When presenting recommendations, remind users:
 - Testing (commands, patterns)
 - Gotchas (quirks, common mistakes)
 - Workflow (when to do what)
-```
-````
