@@ -36,14 +36,14 @@ Pick the narrowest capable agent and the cheapest capable model before launching
 
    ```
    Simple, bounded, repeatable work
-       -> fast tier: haiku / mini / 4.1
+       -> fast tier: mini / haiku  / 4.1
    Multi-file reasoning or moderate ambiguity
-       -> standard tier: sonnet / GPT-5.x standard
+       -> standard tier: GPT-5.x standard / sonnet
    Exceptional complexity, repeated failure, or explicit premium-quality ask
-       -> premium tier: opus / GPT-5.5
+       -> premium tier: GPT-5.5 / opus
    ```
 
-   In current environments, the fast tier commonly includes models such as `claude-haiku-4.5`, `gpt-5.4-mini`, `gpt-5-mini`, or `gpt-4.1`.
+   In current environments, the fast tier commonly includes models such as`gpt-5.4-mini`, `gpt-5-mini`, `gpt-4.1`, or `claude-haiku-4.5`.
 
 4. **Escalate only for a concrete reason.**
    Move up one tier only when at least one of these is true:
@@ -104,14 +104,14 @@ Output: Use a `task` agent on a fast-tier model.
 
 ## Common Rationalizations
 
-| Rationalization | Reality |
-|---|---|
-| "A stronger model is safer." | It is often slower and more expensive without improving bounded execution tasks. |
-| "The task is important, so use the best model." | Importance does not equal complexity. Pick for reasoning demand, not emotional weight. |
-| "I don't know how hard it is yet." | Start cheap when the task is bounded; escalate only after evidence. |
-| "I'm already using a general-purpose agent, so I might as well use a strong model too." | First ask whether a specialized agent would lower both risk and cost. |
-| "The user didn't mention cost." | Cost and speed are still engineering constraints unless the user explicitly deprioritizes them. |
-| "Parallel agents should all use the same model for consistency." | Match the model to each agent's job; uniform overprovisioning is wasteful. |
+| Rationalization                                                                         | Reality                                                                                         |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| "A stronger model is safer."                                                            | It is often slower and more expensive without improving bounded execution tasks.                |
+| "The task is important, so use the best model."                                         | Importance does not equal complexity. Pick for reasoning demand, not emotional weight.          |
+| "I don't know how hard it is yet."                                                      | Start cheap when the task is bounded; escalate only after evidence.                             |
+| "I'm already using a general-purpose agent, so I might as well use a strong model too." | First ask whether a specialized agent would lower both risk and cost.                           |
+| "The user didn't mention cost."                                                         | Cost and speed are still engineering constraints unless the user explicitly deprioritizes them. |
+| "Parallel agents should all use the same model for consistency."                        | Match the model to each agent's job; uniform overprovisioning is wasteful.                      |
 
 ## Red Flags
 
