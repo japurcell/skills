@@ -8,6 +8,13 @@
         "cwd": ".",
         "timeoutSec": 10
       }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "cd \"$HOME/.copilot/hooks\" && ./scripts/format.sh",
+        "timeoutSec": 20
+      }
     ]
   }
 }
