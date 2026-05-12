@@ -21,7 +21,7 @@ copy_skills() {
   while IFS= read -r -d '' entry; do
     name="$(basename "$entry")"
 
-    if [[ "$name" == *-workspace ]]; then
+    if [[ "$name" == *-workspace || "$name" == "archive" ]]; then
       continue
     fi
 
