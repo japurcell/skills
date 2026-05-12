@@ -34,10 +34,18 @@ run_hook() {
   local audit_log="$1"
   local max_bytes="$2"
   local payload="$3"
+  local copilot_home="${4:-}"
 
-  AUDIT_LOG="$audit_log" \
-    AUDIT_LOG_MAX_BYTES="$max_bytes" \
-    bash "$REPO_ROOT/hooks/scripts/format.sh" <<<"$payload" >/dev/null
+  if [[ -n "$copilot_home" ]]; then
+    COPILOT_HOME="$copilot_home" \
+      AUDIT_LOG="$audit_log" \
+      AUDIT_LOG_MAX_BYTES="$max_bytes" \
+      bash "$REPO_ROOT/hooks/scripts/format.sh" <<<"$payload" >/dev/null
+  else
+    AUDIT_LOG="$audit_log" \
+      AUDIT_LOG_MAX_BYTES="$max_bytes" \
+      bash "$REPO_ROOT/hooks/scripts/format.sh" <<<"$payload" >/dev/null
+  fi
 }
 
 test_logs_csharp_apply_patch_command_before_formatter_failure() {
@@ -117,6 +125,70 @@ EOF
     "Expected the hook to write the npx oxfmt failure to the audit log."
 }
 
+test_logs_subagent_csharp_file_from_task_session_events() {
+  local workdir
+  local audit_log
+  local copilot_home
+  local session_id
+  local task_result
+  local fake_bin
+  local old_path
+
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  copilot_home="$workdir/copilot-home"
+  session_id="task-parent"
+  task_result="The file was created using the create tool. A minimal valid C# class was written to /tmp/Widget.cs. No repository files were modified."
+  fake_bin="$workdir/bin"
+
+  mkdir -p "$fake_bin"
+  cat >"$fake_bin/dotnet" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$fake_bin/dotnet"
+
+  mkdir -p "$copilot_home/session-state/$session_id"
+  cat >"$copilot_home/session-state/$session_id/events.jsonl" <<EOF
+{"type":"tool.execution_start","data":{"toolCallId":"parent-task","toolName":"task","arguments":{"description":"Reproducing subagent hook","agent_type":"general-purpose"}}}
+{"type":"tool.execution_start","data":{"parentToolCallId":"parent-task","toolCallId":"child-create","toolName":"create","arguments":{"path":"/tmp/Widget.cs","file_text":"public class Widget {}"}}}
+{"type":"tool.execution_complete","data":{"toolCallId":"parent-task","success":true,"result":{"content":"$task_result"},"toolTelemetry":{"restrictedProperties":{"agent_id":"subagent-hook-repro"}}}}
+EOF
+
+  old_path="$PATH"
+  PATH="$fake_bin:$PATH"
+  run_hook \
+    "$audit_log" \
+    1024 \
+    "{\"sessionId\":\"$session_id\",\"timestamp\":\"2026-05-12T19:00:05Z\",\"toolName\":\"task\",\"toolArgs\":{\"description\":\"Reproducing subagent hook\",\"agent_type\":\"general-purpose\"},\"toolResult\":{\"resultType\":\"success\",\"textResultForLlm\":\"$task_result\",\"toolTelemetry\":{\"restrictedProperties\":{\"agent_id\":\"subagent-hook-repro\"}}}}" \
+    "$copilot_home"
+  PATH="$old_path"
+
+  assert_file_contains "$audit_log" "Session: $session_id, Tool: task" \
+    "Expected the hook to log the parent task tool use."
+
+  assert_file_contains "$audit_log" "Session: $session_id, File: /tmp/Widget.cs" \
+    "Expected the hook to recover subagent C# edits from the session events transcript."
+}
+
+test_ignores_tools_without_files() {
+  local workdir
+  local audit_log
+
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  run_hook \
+    "$audit_log" \
+    1024 \
+    '{"sessionId":"nofiles","timestamp":"2026-05-12T19:00:06Z","toolName":"report_intent","toolArgs":{"intent":"Testing"}}'
+
+  assert_file_contains "$audit_log" "Session: nofiles, Tool: report_intent" \
+    "Expected the hook to log tools that do not carry file paths without crashing."
+}
+
 test_rolls_over_audit_log() {
   local workdir
   local audit_log
@@ -191,6 +263,8 @@ test_waits_for_log_lock() {
 main() {
   test_logs_csharp_apply_patch_command_before_formatter_failure
   test_logs_js_formatter_failure
+  test_logs_subagent_csharp_file_from_task_session_events
+  test_ignores_tools_without_files
   test_rolls_over_audit_log
   test_waits_for_log_lock
 }
