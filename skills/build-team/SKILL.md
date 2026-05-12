@@ -1,6 +1,6 @@
 ---
 name: build-team
-description: Orchestrates execution of an existing `$plan` by dispatching one fresh implementer subagent per task and persisting completion in `$plan`. Use when the user wants you to continue an existing implementation plan, work through pending tasks without repeated check-ins, or finish a planned feature continuously.
+description: Orchestrates execution of an existing `$plan` by dispatching one fresh implementer subagent per task, persisting completion in `$plan`, and capturing durable session learnings at the end. Use when the user wants you to continue an existing implementation plan, work through pending tasks without repeated check-ins, or finish a planned feature continuously.
 argument-hint: <plan:.agents/scratchpad/<feature>/plan.md>
 ---
 
@@ -12,18 +12,20 @@ argument-hint: <plan:.agents/scratchpad/<feature>/plan.md>
 
 ## Overview
 
-Execute an existing `$plan` continuously. You are the orchestrator: pick the next pending task, dispatch one fresh implementer subagent with [implementer-prompt.md](./implementer-prompt.md), then update `$plan` only after the implementer has truly finished.
+Execute an existing `$plan` continuously. You are the orchestrator: pick the next pending task, dispatch one fresh implementer subagent with [implementer-prompt.md](./implementer-prompt.md), then update `$plan` only after the implementer has truly finished. Before stopping, capture any durable, reusable session learnings with `remember-lessons`.
 
 Use a fresh implementer per task so coordination stays clean and each task gets focused context.
 
 ## When to Use
 
 - `$plan` already exists and has pending implementation tasks.
-- The user wants execution, not planning.
+- The user wants execution of an existing plan, not planning from scratch.
 - The work should continue through ready tasks without repeated "should I continue?" check-ins.
 - Not for creating a plan, writing a spec, or breaking work down from scratch.
 
 ## Workflow
+
+### Phase 1: Implementation Orchestration
 
 1. Read `$plan` and pick the next pending task from the file.
 2. Based on the task's size or scope, invoke the `subagent-model-selection` skill to determine the least powerful model and most appropriate agent type for the implementer subagent.
@@ -34,8 +36,12 @@ Use a fresh implementer per task so coordination stays clean and each task gets 
    - **DONE_WITH_CONCERNS:** Treat this as unresolved correctness or scope risk. Read the concerns first and resolve them before marking the task complete. If the implementer only has a non-blocking observation, it should report `DONE` and include the note there instead.
    - **NEEDS_CONTEXT:** Provide the missing context and re-dispatch. Do not mark the task complete.
    - **BLOCKED:** Try to unblock with better context, a smaller slice, or a more capable model. If the blocker remains, stop and escalate to the human. Do not mark the task complete.
-6. Continue through ready tasks without pausing for permission. Stop only when all tasks are complete, a real blocker remains, or the plan itself is wrong.
+6. Continue through ready tasks without pausing for permission. When all ready tasks are complete, proceed to Phase 2. Stop early only when a real blocker remains or the plan itself is wrong.
 7. Leave all changes uncommitted.
+
+### Phase 2: Self-Improve
+
+Before stopping, invoke the `remember-lessons` skill to capture durable session learnings to work more effectively in future tasks.
 
 ## Specific Techniques
 
@@ -44,6 +50,7 @@ Use a fresh implementer per task so coordination stays clean and each task gets 
 - Send the implementer the exact task text plus the relevant `$plan` excerpt. Weaker models behave better when task boundaries are explicit.
 - Keep the orchestration boundary intact: the implementer does the task work; you coordinate selection, status handling, and `$plan` updates.
 - Reuse [implementer-prompt.md](./implementer-prompt.md) instead of re-explaining implementation details from memory. That prompt already covers incremental implementation, TDD, targeted verification, and debugging when a step fails.
+- After implementation tasks are complete, run `remember-lessons` once to preserve durable lessons from the session.
 
 ## Common Rationalizations
 
@@ -54,6 +61,7 @@ Use a fresh implementer per task so coordination stays clean and each task gets 
 | "I'll just do this task myself instead of dispatching a subagent." | This skill is for orchestration. A fresh implementer subagent per task keeps context clean and the workflow consistent. |
 | "I'll stop after this task and ask whether to continue."           | Keep going through ready tasks. Stop only for a real blocker, genuine ambiguity, or full completion.                    |
 | "DONE_WITH_CONCERNS is close enough to done."                      | If the concern affects correctness or scope, resolve it before marking the task complete.                               |
+| "The plan is done, so the skill is done."                          | Not yet. Before stopping, run `remember-lessons`.           |
 
 ## Red Flags
 
@@ -63,6 +71,8 @@ Use a fresh implementer per task so coordination stays clean and each task gets 
 - Marking `BLOCKED` or `NEEDS_CONTEXT` work complete
 - Stopping between ready tasks to ask for permission
 - Committing changes or telling the implementer to commit
+- Finishing all plan tasks but skipping `remember-lessons`
+- Recording one-off task trivia as durable lessons
 
 ## Verification
 
@@ -72,3 +82,5 @@ Use a fresh implementer per task so coordination stays clean and each task gets 
 - [ ] After each `$plan` update, the file was re-read and matched the current execution state before the next task began.
 - [ ] Ready tasks ran continuously until completion or a real blocker required escalation.
 - [ ] All work remains uncommitted.
+- [ ] Before stopping, `remember-lessons` was invoked if the session produced durable, reusable learnings worth preserving.
+- [ ] Any captured lessons were durable and reusable, not one-off task trivia.
