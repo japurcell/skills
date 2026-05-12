@@ -40,6 +40,83 @@ run_hook() {
     bash "$REPO_ROOT/hooks/scripts/format.sh" <<<"$payload" >/dev/null
 }
 
+test_logs_csharp_apply_patch_command_before_formatter_failure() {
+  local workdir
+  local audit_log
+  local fake_bin
+  local old_path
+
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  fake_bin="$workdir/bin"
+  mkdir -p "$fake_bin"
+
+  cat >"$fake_bin/dotnet" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$fake_bin/dotnet"
+
+  old_path="$PATH"
+  PATH="$fake_bin:$PATH"
+  if run_hook \
+    "$audit_log" \
+    1024 \
+    '{"sessionId":"cs","timestamp":"2026-05-12T19:00:03Z","toolName":"apply_patch","toolArgs":"*** Begin Patch\n*** Update File: /tmp/Widget.cs\n@@\n- old\n+ new\n*** End Patch"}'
+  then
+    echo "Expected the hook to fail when dotnet format fails." >&2
+    exit 1
+  fi
+  PATH="$old_path"
+
+  assert_file_contains "$audit_log" "Session: cs, File: /tmp/Widget.cs" \
+    "Expected the hook to detect C# edits reported via apply_patch."
+
+  assert_file_contains "$audit_log" "Session: cs, Command: dotnet format --include /tmp/Widget.cs" \
+    "Expected the hook to log the formatter command before the formatter fails."
+
+  assert_file_contains "$audit_log" "Session: cs, Failure: dotnet format --include /tmp/Widget.cs (exit 1)" \
+    "Expected the hook to write the dotnet format failure to the audit log."
+}
+
+test_logs_js_formatter_failure() {
+  local workdir
+  local audit_log
+  local fake_bin
+  local old_path
+
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  fake_bin="$workdir/bin"
+  mkdir -p "$fake_bin"
+
+  cat >"$fake_bin/npx" <<'EOF'
+#!/usr/bin/env bash
+exit 1
+EOF
+  chmod +x "$fake_bin/npx"
+
+  old_path="$PATH"
+  PATH="$fake_bin:$PATH"
+  if run_hook \
+    "$audit_log" \
+    1024 \
+    '{"sessionId":"js","timestamp":"2026-05-12T19:00:04Z","toolName":"edit","toolArgs":{"path":"/tmp/app.ts","file_text":"const value = 1;"}}'
+  then
+    echo "Expected the hook to fail when npx oxfmt fails." >&2
+    exit 1
+  fi
+  PATH="$old_path"
+
+  assert_file_contains "$audit_log" "Session: js, Command: npx oxfmt /tmp/app.ts" \
+    "Expected the hook to log the formatter command before the formatter fails."
+
+  assert_file_contains "$audit_log" "Session: js, Failure: npx oxfmt /tmp/app.ts (exit 1)" \
+    "Expected the hook to write the npx oxfmt failure to the audit log."
+}
+
 test_rolls_over_audit_log() {
   local workdir
   local audit_log
@@ -112,6 +189,8 @@ test_waits_for_log_lock() {
 }
 
 main() {
+  test_logs_csharp_apply_patch_command_before_formatter_failure
+  test_logs_js_formatter_failure
   test_rolls_over_audit_log
   test_waits_for_log_lock
 }

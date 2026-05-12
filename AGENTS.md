@@ -10,6 +10,7 @@ This repository publishes custom coding skills from `skills/` and custom agent d
 - **Hook scripts** should resolve repo-relative paths from `BASH_SOURCE[0]`; don't rely on the installed hook `cwd`.
 - **postToolUse hooks** should read camelCase `toolName`/`toolArgs` first and keep snake_case fallbacks only for compatibility.
 - **Shared hook logs** should use `flock` plus explicit rollover thresholds to stay safe under concurrent sessions.
+- **Hook formatter failures** should append a failure line to `audit.log` before the hook exits.
 - **Ignore fixture outputs** — treat `skills/*-workspace/**/outputs/` as generated benchmark artifacts, not maintained source.
 - **TDD applies to app code AND shell scripts**
 

@@ -40,10 +40,17 @@ append_audit_line() {
   printf '%s\n' "$line" >> "$AUDIT_LOG"
 }
 
+log_command_failure() {
+  local command="$1"
+  local status="$2"
+
+  append_audit_line "[$TIMESTAMP] Session: $SESSION_ID, Failure: $command (exit $status)"
+}
+
 if [ "$TOOL_NAME" = "apply_patch" ]; then
   FILES=$(printf '%s\n' "$TOOL_ARGS" | sed -n -e 's/^\*\*\* Update File: //p' -e 's/^\*\*\* Add File: //p' -e 's/^\*\*\* Delete File: //p' -e 's/^\*\*\* Move to: //p')
 elif [ "$TOOL_NAME" = "create" ] || [ "$TOOL_NAME" = "edit" ]; then
-  FILES=$(echo "$INPUT" | jq -r '.toolArgs.path // .toolArgs.files[]? // .toolArgs.paths[]? // .tool_input.path // .tool_input.files[]? // .tool_input.paths[]? // empty')
+  FILES=$(echo "$INPUT" | jq -r '.toolArgs.path // .toolArgs.filePath // .toolArgs.file_path // .toolArgs.files[]? // .toolArgs.paths[]? // .tool_input.path // .tool_input.filePath // .tool_input.file_path // .tool_input.files[]? // .tool_input.paths[]? // empty')
 fi
 
 mkdir -p "$(dirname "$AUDIT_LOG")"
@@ -60,13 +67,25 @@ if [ -n "$FILES" ]; then
     append_audit_line "[$TIMESTAMP] Session: $SESSION_ID, File: $FILE"
 
     if [[ "$FILE" =~ \.(js|ts|jsx|tsx|mjs|cjs)$ ]]; then
-      npx oxfmt "$FILE" 2>/dev/null
       append_audit_line "[$TIMESTAMP] Session: $SESSION_ID, Command: npx oxfmt $FILE"
+      if npx oxfmt "$FILE" 2>&1; then
+        :
+      else
+        status=$?
+        log_command_failure "npx oxfmt $FILE" "$status"
+        exit "$status"
+      fi
     fi
 
     if [[ "$FILE" =~ \.(cs)$ ]]; then
-      dotnet format --include "$FILE" 2>/dev/null
       append_audit_line "[$TIMESTAMP] Session: $SESSION_ID, Command: dotnet format --include $FILE"
+      if dotnet format --include "$FILE" --severity error 2>&1; then
+        :
+      else
+        status=$?
+        log_command_failure "dotnet format --include $FILE" "$status"
+        exit "$status"
+      fi
     fi
   done <<< "$FILES"
 fi
