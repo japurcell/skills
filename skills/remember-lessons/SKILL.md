@@ -1,6 +1,6 @@
 ---
 name: remember-lessons
-description: Capture durable session learnings into AGENTS.md and reorganize AGENTS.md files. Use this skill whenever the user asks to update AGENTS.md with lessons learned, capture session discoveries, clean up or reorganize AGENTS.md files, do a retrospective update, or refresh agent instructions. Also use it when the user mentions "revise agents", "refactor agents.md", "codify learnings", or "remember lessons learned".
+description: Capture durable session learnings into AGENTS.md files. When requested or clearly warranted, also reorganize AGENTS.md structure to reduce duplication and improve scope. Use this skill when the user asks to update AGENTS.md, record lessons learned, codify discoveries, or clean up/refactor agent instructions.
 ---
 
 # Remember Lessons Learned
@@ -32,8 +32,8 @@ When context is incomplete, prefer proposed candidate updates over direct modifi
    ```bash
    find . -name "AGENTS.md" 2>/dev/null | head -20
    ```
-2. Read each file and any linked topic docs.
-3. Read currently linked instruction docs if they exist.
+2. Read each file.
+3. Read directly linked instruction/topic docs if they exist.
 4. Build a quick map of where each rule currently lives.
 
 If no AGENTS.md files exist:
@@ -43,11 +43,11 @@ If no AGENTS.md files exist:
 
 Decide where each addition belongs:
 
-| Type             | Location            | Purpose                                                      |
-| ---------------- | ------------------- | ------------------------------------------------------------ |
-| Project root     | `./AGENTS.md`       | Primary project context (checked into git, shared with team) |
-| Package-specific | `./**/AGENTS.md`    | Module-level context in monorepos                            |
-| Subdirectory     | Any nested location | Feature/domain-specific context                              |
+| Type             | Location            | Purpose                           |
+| ---------------- | ------------------- | --------------------------------- |
+| Project root     | `./AGENTS.md`       | Primary project-wide context      |
+| Package-specific | `./**/AGENTS.md`    | Module-level context in monorepos |
+| Subdirectory     | Any nested location | Feature/domain-specific context   |
 
 ### Phase 2: Apply Additions
 
@@ -71,17 +71,17 @@ Avoid:
 
 ### Phase 3: Refactor
 
-Produce a minimal root AGENTS.md that contains only globally essential guidance, then move all specialized guidance into linked, topic-specific files.
-
-1. **Detect contradictions** — places where two rules conflict and can't both be followed. When rules truly conflict, pick one version to keep and explain why. Apply destructive changes because the user can review later.
-
-2. **Assess whether a structural refactor is warranted**. Signals that it is:
+1. **Assess whether a structural refactor is warranted**. Signals that it is:
    - Root AGENTS.md exceeds ~120 lines
    - Duplicated rules across files
    - Contradictory rules across files
    - Mixed scopes (domain-specific guidance sitting in root)
    - Orphan links or missing linked docs
    - User explicitly asked for cleanup or reorganization
+
+If refactor is not clearly warranted, skip to Phase 4.
+
+2. **Detect contradictions** — places where two rules conflict and can't both be followed. When rules truly conflict, pick one version to keep and explain why. Apply destructive changes because the user can review later.
 
 3. **Extract root essentials** — keep only guidance relevant to nearly every task:
    - One-sentence project description
@@ -115,17 +115,22 @@ Produce a minimal root AGENTS.md that contains only globally essential guidance,
 
 In the final response, include:
 
+**Always**:
+
 1. **Learnings**: list concise learnings or a statement that none qualified
 2. **Applied updates**: grouped by AGENTS.md or topic docs path with diff blocks
-3. **Contradictions**: For each contradiction:
+3. **Assumptions** (only when needed): explicit assumptions used to produce best-effort proposals despite partial context
+
+**If refactor was performed**:
+
+4. **Contradictions**: For each contradiction:
    - Conflict summary
    - Source A (file + short quote)
    - Source B (file + short quote)
    - Version chosen and reason
-4. **Deletions**: List deleted text, reason, and original location
-5. **Grouped files**: List each topic file and what rules it now owns
-6. **Folder structure**: If new folders were created, show the new structure in a tree-style layout
-7. **Assumptions** (only when needed): explicit assumptions used to produce best-effort proposals despite partial context
+5. **Deletions**: List deleted text, reason, and original location
+6. **Grouped files**: List each topic file and what rules it now owns
+7. **Folder structure**: If new folders were created, show the new structure in a tree-style layout
 
 ## Quality Bar
 
@@ -141,19 +146,15 @@ In the final response, include:
 
 ## Common Rationalizations
 
-| Rationalization                                        | Reality                                                                    |
-| ------------------------------------------------------ | -------------------------------------------------------------------------- |
-| "The user only asked for a small edit."                | Small edits can still reinforce duplication, contradictions, or bad scope. |
-| "I'll just add it to the root AGENTS.md."              | Root should stay minimal; scoped guidance belongs in focused files.        |
-| "This is too minor to record."                         | Small corrections often reveal durable, reusable rules.                    |
-| "I'll clean up the structure later."                   | Deferring cleanup compounds clutter and duplication.                       |
-| "I can't decided which conflicting rule to keep."      | Use your best judgment to pick one. The human can review later.            |
-| "The root file is enough for this change."             | Linked docs may contain scope-defining guidance.                           |
-| "That command is obvious."                             | Non-default commands are often exactly what future agents need.            |
-| "The user didn't explicitly ask me to remember this."  | Capture durable guidance even when the request is implicit.                |
-| "Broader wording is safer."                            | Vague rules are less useful than specific, actionable ones.                |
-| "Leaving redundant rules is harmless."                 | Redundancy creates drift and inconsistency.                                |
-| "I should make some update even if nothing qualifies." | Do not force low-value changes.                                            |
+| Rationalization                                        | Reality                                                         |
+| ------------------------------------------------------ | --------------------------------------------------------------- |
+| "I can't decide which conflicting rule to keep."       | Use your best judgment to pick one. The human can review later. |
+| "The root file is enough for this change."             | Linked docs may contain scope-defining guidance.                |
+| "That command is obvious."                             | Non-default commands are often exactly what future agents need. |
+| "The user didn't explicitly ask me to remember this."  | Capture durable guidance even when the request is implicit.     |
+| "Broader wording is safer."                            | Vague rules are less useful than specific, actionable ones.     |
+| "Leaving redundant rules is harmless."                 | Redundancy creates drift and inconsistency.                     |
+| "I should make some update even if nothing qualifies." | Do not force low-value changes.                                 |
 
 ## Red Flags
 
@@ -167,20 +168,26 @@ In the final response, include:
 - User corrections were not preserved
 - One-off incidents were added as standing instructions
 - Conflicting rules exist and were not resolved
-- An AGENTS.md file was edited without checking related files
+- An `AGENTS.md` file was edited without checking directly linked instruction/topic docs
 - Redundant or obsolete guidance was added but not pruned
 
 ## Verification
 
 Before concluding, confirm:
 
+**Always**:
+
 - [ ] All relevant `AGENTS.md` files were found
 - [ ] Linked instruction files were reviewed
 - [ ] Durable learnings were applied to the right files
-- [ ] Deletion candidates were applied where appropriate
 - [ ] One-off and low-value items were excluded
+- [ ] Assumptions were clearly stated when needed
+
+**If refactor was performed**:
+
 - [ ] Root `AGENTS.md` stays minimal
 - [ ] Scoped guidance was placed in the right file
+- [ ] Deletion candidates were applied where appropriate
 - [ ] Duplicate rules were removed or justified
 - [ ] Conflicts were surfaced explicitly and resolved
 - [ ] No orphan links remain
