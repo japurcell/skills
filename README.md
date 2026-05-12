@@ -42,6 +42,7 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 ## Repository layout
 
 - `skills/`: one directory per skill, centered on `SKILL.md`
+- `skills/archive/`: skills that are no longer maintained but kept for historical reference
 - `agents/`: standalone custom agent prompt files
 - `references/`: optional shared reference material installed to `~/.agents/references`
 - `scripts/`: repo helper and installation scripts

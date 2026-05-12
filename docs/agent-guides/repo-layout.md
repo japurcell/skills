@@ -3,6 +3,7 @@
 ## Structure
 
 - `skills/`: one directory per skill; each skill is centered on `SKILL.md` and may include `scripts/`, `references/`, `assets/`, and `evals/`
+- `skills/archive/`: skills that are no longer maintained but kept for historical reference
 - `agents/`: standalone custom agent prompt files such as `code-architect.md` and `code-reviewer.md`
 - `references/`: optional top-level shared reference material copied into `~/.agents/references`
 - `scripts/`: repository-level helper scripts such as installers and importers
