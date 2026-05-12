@@ -5,9 +5,27 @@ description: Capture session learnings into AGENTS.md and reorganize all AGENTS.
 
 # Remember Lessons Learned
 
+## Overview
+
 Capture durable session learnings into AGENTS.md, then reorganize all AGENTS.md files into a clean, minimal structure — all in one pass.
 
-## Core Workflow
+## When to Use
+
+Use this skill when the goal is to improve future-agent context by recording durable learnings and/or cleaning up agent instruction files.
+
+Use it when:
+
+- The user asks to update `AGENTS.md`
+- The user asks to capture lessons learned or codify discoveries
+- The user asks to clean up, refactor, or reorganize `AGENTS.md`
+- The session reveals reusable guidance, such as:
+  - non-obvious commands
+  - project conventions
+  - recurring pitfalls
+  - validation steps
+  - important user corrections
+
+## The Workflow
 
 ### Phase 0: Discover
 
@@ -112,22 +130,47 @@ In the final response, include:
 
 ## Common Rationalizations
 
-| Rationalization                 | Reality                 |
-| ------------------------------- | ----------------------- |
-| Excuse agents use to skip steps | Why the excuse is wrong |
+| Rationalization                                        | Reality                                                                    |
+| ------------------------------------------------------ | -------------------------------------------------------------------------- |
+| "The user only asked for a small edit."                | Small edits can still reinforce duplication, contradictions, or bad scope. |
+| "I'll just add it to the root AGENTS.md."              | Root should stay minimal; scoped guidance belongs in focused files.        |
+| "This is too minor to record."                         | Small corrections often reveal durable, reusable rules.                    |
+| "I'll clean up the structure later."                   | Deferring cleanup compounds clutter and duplication.                       |
+| "I can merge conflicting rules into one."              | Do not silently resolve conflicts; surface them explicitly.                |
+| "The root file is enough for this change."             | Linked docs may contain scope-defining guidance.                           |
+| "That command is obvious."                             | Non-default commands are often exactly what future agents need.            |
+| "The user didn't explicitly ask me to remember this."  | Capture durable guidance even when the request is implicit.                |
+| "Broader wording is safer."                            | Vague rules are less useful than specific, actionable ones.                |
+| "Leaving redundant rules is harmless."                 | Redundancy creates drift and inconsistency.                                |
+| "I should make some update even if nothing qualifies." | Do not force low-value changes.                                            |
 
 ## Red Flags
 
-- Root AGENTS.md does not exist or is empty
-- Any AGENTS.md file exceeds ~120 lines
-- Duplicated rules across files
-- Orphan links or missing linked docs
-- Undocumented or new command was not captured as a learning
-- Human interventions, corrections or re-directions were not captured as learnings
+- Root `AGENTS.md` is missing, empty, or overly long
+- Files mix global and scoped guidance
+- Rules are duplicated across files
+- Linked docs are missing, stale, or orphaned
+- Rules are vague or non-actionable
+- Durable learnings from the session were not captured
+- Non-standard commands or validation steps are undocumented
+- User corrections were not preserved
+- One-off incidents were added as standing instructions
+- Conflicting rules exist and were not called out
+- An AGENTS.md file was edited without checking related files
+- Redundant or obsolete guidance was added but not pruned
 
 ## Verification
 
-After completing the skill's process, confirm:
+Before concluding, confirm:
 
-- [ ] Checklist of exit criteria
-- [ ] Evidence requirements
+- [ ] All relevant `AGENTS.md` files were found
+- [ ] Linked instruction files were reviewed
+- [ ] Durable learnings were identified
+- [ ] One-off and low-value items were excluded
+- [ ] Root `AGENTS.md` stays minimal
+- [ ] Scoped guidance was placed in the right file
+- [ ] Duplicate rules were removed or justified
+- [ ] Conflicts were surfaced explicitly
+- [ ] No orphan links remain
+- [ ] Structural changes were explained clearly
+- [ ] Final response includes findings, applied updates, and assumptions when needed
