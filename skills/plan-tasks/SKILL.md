@@ -26,14 +26,13 @@ argument-hint: <skip_design_phase:true|false>
 **Goal**: Design implementation approaches with different trade-offs.
 
 1. Invoke the `addy-source-driven-development` skill to ensure that every implementation decision is grounded in up-to-date, official documentation.
-2. Invoke the `subagent-model-selection` skill to determine the least powerful models to use for the `code-architect` subagents.
-3. Launch N parallel `code-architect` subagents where N is determined by the complexity and scope of the feature.
-4. Each agent should design a different implementation approach with a clear rationale, citations, trade-offs, and potential risks. For example:
+2. Launch N parallel `code-architect` subagents where N is determined by the complexity and scope of the feature.
+3. Each agent should design a different implementation approach with a clear rationale, citations, trade-offs, and potential risks. For example:
    - Minimal changes: the smallest possible change to implement the feature
    - Clean architecture: the most maintainable and extensible design, even if it requires more upfront work
    - Pragmatic balance: a middle ground that balances maintainability with development speed
-5. Present a recommendation; include multiple options only when the choice is meaningful.
-6. Ask the user to choose only when there is a real product or architectural fork; otherwise recommend the best path and proceed.
+4. Present a recommendation; include multiple options only when the choice is meaningful.
+5. Ask the user to choose only when there is a real product or architectural fork; otherwise recommend the best path and proceed.
 
 ## Output
 

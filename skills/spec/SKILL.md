@@ -27,11 +27,10 @@ description: Start spec-driven development — write a structured specification 
 
 **Goal**: Understand relevant existing code and patterns at both high and low levels
 
-1. Invoke the `subagent-model-selection` skill to determine the least powerful models to use for the `code-explorer` subagents.
-2. Launch N parallel `code-explorer` subagents where N is determined by the complexity and scope of the feature.
-3. Each agent should trace through the code comprehensively, focus on abstractions and flow of control, target a different aspect of the codebase (e.g., similar features, architecture, UX, testing, extension points), and return a list of 5–10 key files to read and why.
-4. After agents complete, read the files they identify.
-5. Present only findings that will influence implementation or questioning.
+1. Launch N parallel `code-explorer` subagents where N is determined by the complexity and scope of the feature.
+2. Each agent should trace through the code comprehensively, focus on abstractions and flow of control, target a different aspect of the codebase (e.g., similar features, architecture, UX, testing, extension points), and return a list of 5–10 key files to read and why.
+3. After agents complete, read the files they identify.
+4. Present only findings that will influence implementation or questioning.
 
 ## Mandatory Output Location
 

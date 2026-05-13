@@ -31,7 +31,6 @@ Simplify the target scope while preserving exact behavior.
    - balance by simplification effort, coupling, and complexity, not file count
    - output a partition plan with each subagent’s name, owned files, focus, rationale, expected themes, and cross-bundle dependencies
    - confirm every in-scope file is assigned exactly once
-   - optionally invoke `subagent-model-selection` to choose the smallest sufficient model for each bundle
    - dispatch `code-simplifier` subagents that may read any in-scope file for context but modify only owned files; cross-bundle opportunities should be reported, not edited directly
 
 6. Simplify by preferring local, behavior-preserving changes:

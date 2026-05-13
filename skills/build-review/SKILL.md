@@ -18,7 +18,7 @@ Use this skill to run a manager-led implementation wave: pick the next ready tas
 
 ## Workflow
 
-1. Invoke the `addy-context-engineering` and `subagent-model-selection` skills.
+1. Invoke the `addy-context-engineering` skill.
 2. Define the current build wave: the next ready task, or a small explicit set of already-ready independent tasks. A wave of one is the default.
 3. Identify the active trackers already in play for that wave. In this repo that usually means `plan.md`, `todo.md`, and SQL todo state. Reuse the same task names or IDs across them, and do **not** invent a new tracker mid-wave.
 4. If any task is ambiguous, conflicts with the plan, or the human wants tradeoff analysis first, resolve that before dispatch.

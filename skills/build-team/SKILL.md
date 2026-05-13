@@ -34,58 +34,55 @@ Use a fresh subagent for each dispatched unit of work:
 ### Phase 1: Implementation Orchestration
 
 1. Read `$plan` and select the next ready task. In Phase 1, a task is ready if it is an unchecked implementation or fix task with no incomplete dependency or prerequisite listed in `$plan`.
-2. Use `subagent-model-selection` to choose the least powerful suitable model and the implementer agent type.
-3. Dispatch one fresh implementer subagent using [implementer-prompt.md](./implementer-prompt.md). Include:
+2. Dispatch one fresh implementer subagent using [implementer-prompt.md](./implementer-prompt.md). Include:
    - the exact task text
    - the minimum relevant `$plan` excerpt: dependencies, acceptance criteria, verification notes, and nearby task boundaries if needed
-4. Wait for the implementer result.
-5. Handle statuses exactly:
+3. Wait for the implementer result.
+4. Handle statuses exactly:
    - **DONE:** mark the matching task complete in `$plan`, save, re-read, and verify before starting the next task
    - **DONE_WITH_CONCERNS:** resolve correctness or scope concerns before marking complete; non-blocking notes should be reported under `DONE`
    - **NEEDS_CONTEXT:** provide missing context and re-dispatch; do not mark complete
    - **BLOCKED:** try to unblock with better context, a smaller slice, or a stronger model; if still blocked, stop and escalate to the human; do not mark complete
-6. Continue through ready implementation and fix tasks without pausing for permission.
-7. When no ready implementation or fix tasks remain, build `$review_scope_files`:
+5. Continue through ready implementation and fix tasks without pausing for permission.
+6. When no ready implementation or fix tasks remain, build `$review_scope_files`:
    - include every file any implementer reported changing
    - add uncommitted files from `git status --porcelain`
    - exclude deleted files, `.gitignore`, and git-ignored paths
    - deduplicate
    - keep paths relative to the repository root
-8. Proceed to simplification. Stop only for a real blocker. If `$plan` is materially wrong, inconsistent, or missing required information, escalate to the human instead of silently rewriting it.
+7. Proceed to simplification. Stop only for a real blocker. If `$plan` is materially wrong, inconsistent, or missing required information, escalate to the human instead of silently rewriting it.
 
 ### Phase 2: Code Simplification
 
 1. Add a "Code Simplification" task to `$plan` with the full `$review_scope_files` list in the description.
-2. Use `subagent-model-selection` to choose the least powerful suitable model and the code-simplifier agent type.
-3. Dispatch fresh code-simplifier subagents using [code-simplifier-prompt.md](./code-simplifier-prompt.md). Include the exact file list for each subagent.
+2. Dispatch fresh code-simplifier subagents using [code-simplifier-prompt.md](./code-simplifier-prompt.md). Include the exact file list for each subagent.
    - **≤5 files:** 1 agent for all files
    - **>5 files:** partition into non-overlapping groups by module, directory, or logical area, and launch one agent per group in parallel
    - each file must appear in exactly one simplifier scope
-4. Wait for all simplifier results.
-5. Handle statuses exactly:
+3. Wait for all simplifier results.
+4. Handle statuses exactly:
    - **DONE:** when all subagents report `DONE`, mark the simplification task complete in `$plan`, save, re-read, and verify, then proceed
    - **DONE_WITH_CONCERNS:** resolve correctness or scope concerns before marking complete; non-blocking notes should be reported under `DONE`
    - **NEEDS_CONTEXT:** provide context and re-dispatch; do not mark complete
    - **BLOCKED:** try to unblock with better context, a smaller slice, or a stronger model; if still blocked, stop and escalate; do not mark complete
-6. Keep the existing "Code Simplification" task open across simplification/review iterations for the same review cycle unless the plan format explicitly requires otherwise.
+5. Keep the existing "Code Simplification" task open across simplification/review iterations for the same review cycle unless the plan format explicitly requires otherwise.
 
 ### Phase 3: Code Review
 
 **Review loop:** finding → new fix task → implementer fix → update `$review_scope_files` → simplification on affected scope → review again → complete only when review returns `DONE`.
 
 1. Add a "Code Review" task to `$plan` with the full `$review_scope_files` list in the description.
-2. Use `subagent-model-selection` to choose the least powerful suitable model and the code-reviewer agent type.
-3. Dispatch fresh code-reviewer subagents using [code-reviewer-prompt.md](./code-reviewer-prompt.md). Include the exact file list for each subagent.
+2. Dispatch fresh code-reviewer subagents using [code-reviewer-prompt.md](./code-reviewer-prompt.md). Include the exact file list for each subagent.
    - **≤5 files:** 1 agent for all files
    - **>5 files:** multiple agents in parallel with different focuses such as correctness, security, or performance
    - reviewers are read-only; overlapping review scopes are allowed
-4. Wait for all reviewer results.
-5. Handle statuses exactly:
+3. Wait for all reviewer results.
+4. Handle statuses exactly:
    - **DONE:** when all subagents report `DONE`, mark the review task complete in `$plan`, save, re-read, and verify, then proceed
    - **DONE_WITH_FINDINGS:** add a new fix task to `$plan` with the finding, affected files, and original task context; route it to a fresh implementer subagent; after the fix lands, update `$review_scope_files` for the affected scope, return to Phase 2, and review again; do not mark review complete
    - **NEEDS_CONTEXT:** provide context and re-dispatch; do not mark complete
    - **BLOCKED:** try to unblock with better context, a smaller slice, or a stronger model; if still blocked, stop and escalate; do not mark complete
-6. Keep the existing "Code Review" task open across review iterations for the same review cycle unless the plan format explicitly requires otherwise.
+5. Keep the existing "Code Review" task open across review iterations for the same review cycle unless the plan format explicitly requires otherwise.
 
 ### Phase 4: Self-Improve
 
