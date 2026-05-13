@@ -1,0 +1,14 @@
+{
+  "eval_id": 3,
+  "eval_name": "eval-3-your-implementer-reports-done-with-concerns-the-cod",
+  "prompt": "Your implementer reports `DONE_WITH_CONCERNS`: the code landed, but the concern is about correctness for the current task, not just a cosmetic note. Explain what the build skill expects you to do before marking anything complete or moving on.",
+  "expected_output": "Reads the concerns first, resolves correctness or scope problems before marking the task complete, then updates and re-reads `plan.md` before continuing.",
+  "assertions": [
+    "Mentions `DONE_WITH_CONCERNS` explicitly",
+    "Does not mark the task complete immediately",
+    "Resolves correctness or scope concerns before updating `plan.md`"
+  ],
+  "configuration": "with_skill",
+  "skill_path": "/home/adam/dev/personal/skills/skills/build-team-workspace/skill-snapshot-current/SKILL.md",
+  "model": "gpt-5.5"
+}

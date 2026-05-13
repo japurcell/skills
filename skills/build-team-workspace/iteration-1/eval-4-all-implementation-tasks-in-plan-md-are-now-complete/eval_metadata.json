@@ -1,0 +1,15 @@
+{
+  "eval_id": 4,
+  "eval_name": "eval-4-all-implementation-tasks-in-plan-md-are-now-complete",
+  "prompt": "All implementation tasks in `plan.md` are now complete. The changed files are `src/api/issues.ts` and `src/api/issues.test.ts`, and `git status --porcelain` also shows `M src/api/router.ts` plus `D src/old.ts`. Explain the post-implementation build-team steps, including what goes in the review scope and what happens if code review reports `DONE_WITH_FINDINGS` for `src/api/router.ts`.",
+  "expected_output": "Builds a deduped review scope from touched files plus filtered uncommitted files, excludes the deleted path, adds and completes Code Simplification and Code Review tasks in `plan.md`, and on `DONE_WITH_FINDINGS` reopens the affected task in `plan.md` and routes the fix to a fresh implementer instead of patching inline.",
+  "assertions": [
+    "Builds a deduped review scope from touched files plus filtered uncommitted files",
+    "Excludes the deleted path from the review scope",
+    "Adds Code Simplification and Code Review tasks to `plan.md`",
+    "Handles `DONE_WITH_FINDINGS` by reopening the affected task and routing the fix to a fresh implementer"
+  ],
+  "configuration": "with_skill",
+  "skill_path": "/home/adam/dev/personal/skills/skills/build-team-workspace/skill-snapshot-current/SKILL.md",
+  "model": "gpt-5.5"
+}

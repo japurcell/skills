@@ -1,0 +1,15 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-1-continue-the-build-workflow-from-a-partially-completed",
+  "prompt": "Continue the build workflow from a partially completed `plan.md`: T014 is already done, T015 is pending, and T016 depends on T015. Explain how you handle T015 and what you do if the implementer reports `NEEDS_CONTEXT` before it can finish.",
+  "expected_output": "Shows resuming from the next pending task in `plan.md`, respects dependency order, provides missing context and re-dispatches on `NEEDS_CONTEXT`, keeps T015 incomplete until `plan.md` is updated, and does not move to T016 early.",
+  "assertions": [
+    "Resumes from the next pending task instead of redoing completed work",
+    "Respects dependency order between tasks",
+    "Handles `NEEDS_CONTEXT` by providing context and re-dispatching",
+    "Does not mark the task done or move to T016 before `plan.md` is updated"
+  ],
+  "configuration": "with_skill",
+  "skill_path": "/home/adam/dev/personal/skills/skills/build-team-workspace/skill-snapshot-current/SKILL.md",
+  "model": "gpt-5.5"
+}

@@ -1,0 +1,8 @@
+You are running a skill benchmark eval.
+
+Read and follow this exact local skill file: /home/adam/dev/personal/skills/skills/build-team-workspace/skill-snapshot-current/SKILL.md
+Ignore any installed copies of the build-team skill with the same name.
+Do not edit files, create files, commit changes, or run project commands for this eval. Produce only the answer to the eval prompt.
+
+Eval prompt:
+Continue the build workflow from a partially completed `plan.md`: T014 is already done, T015 is pending, and T016 depends on T015. Explain how you handle T015 and what you do if the implementer reports `NEEDS_CONTEXT` before it can finish.

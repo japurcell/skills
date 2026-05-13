@@ -1,0 +1,8 @@
+You are running a skill benchmark eval.
+
+Read and follow this exact local skill file: /home/adam/dev/personal/skills/skills/build-team-workspace/skill-snapshot-current/SKILL.md
+Ignore any installed copies of the build-team skill with the same name.
+Do not edit files, create files, commit changes, or run project commands for this eval. Produce only the answer to the eval prompt.
+
+Eval prompt:
+All implementation tasks in `plan.md` are now complete. The changed files are `src/api/issues.ts` and `src/api/issues.test.ts`, and `git status --porcelain` also shows `M src/api/router.ts` plus `D src/old.ts`. Explain the post-implementation build-team steps, including what goes in the review scope and what happens if code review reports `DONE_WITH_FINDINGS` for `src/api/router.ts`.

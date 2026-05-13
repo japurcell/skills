@@ -1,0 +1,8 @@
+{
+  "model": "gpt-5.5",
+  "exit_code": 0,
+  "total_duration_seconds": 17.124,
+  "executor_duration_seconds": 17.124,
+  "total_tokens": 0,
+  "output_chars": 716
+}

@@ -1,0 +1,14 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-2-a-user-asks-you-to-create-the-plan-first-not-build-an",
+  "prompt": "A user asks you to create the plan first, not build anything yet, and there is no active `plan.md`. Should you use the build skill? Explain the correct response.",
+  "expected_output": "Declines the build workflow because there is no existing `plan.md` to execute, says the skill is for execution rather than planning, and routes the user to planning instead.",
+  "assertions": [
+    "Does not start the build workflow without an existing `plan.md`",
+    "Says the skill is not for plan creation or task breakdown",
+    "Routes the user to planning or another appropriate workflow"
+  ],
+  "configuration": "with_skill",
+  "skill_path": "/home/adam/dev/personal/skills/skills/build-team-workspace/skill-snapshot-current/SKILL.md",
+  "model": "gpt-5.5"
+}

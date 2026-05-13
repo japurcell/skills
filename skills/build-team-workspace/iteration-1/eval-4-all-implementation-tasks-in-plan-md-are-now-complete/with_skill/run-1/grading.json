@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Builds a deduped review scope from touched files plus filtered uncommitted files.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nPost-implementation build-team does **not** stop when implementation tasks are complete. It builds `$review_scope_files`, then runs exactly one simplification phase and one review phase before handoff.\n\n**Review scope:** include `src/api/issues.ts`, `src/api/issues.test.ts`, and `src/api/router.ts`. Exclude `src/old.ts` because deleted paths are filtered out. Deduplicate and keep paths repo-relative.\n\nThen:\n\n1. Add a **Code Simplification** task to `plan.md` with that full scope, dispatch a code-simplifier over the files, mark complete only after `DONE`, save, and re-read `plan.md`.\n2. Add a **Code Review** task to `plan.md` with the same scope, dispatch a code-reviewer, and handle status.\n3. If review reports `DONE_WITH_FINDINGS` for `src/api/router.ts`, do **not** patch inline and do **not** mark Code Review complete. Re-open the affected `plan.md` task, send the finding plus `src/api/router.ts` and original task context to a fresh implementer, add any newly changed files to `$review_scope_files`, return to simplification for the affected files, then repeat code review.\n4. Leave all repository changes uncommitted, and invoke `self-improve` only if there are durable reusable lessons.\n\n"
+    },
+    {
+      "text": "Excludes the deleted path from the review scope.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nPost-implementation build-team does **not** stop when implementation tasks are complete. It builds `$review_scope_files`, then runs exactly one simplification phase and one review phase before handoff.\n\n**Review scope:** include `src/api/issues.ts`, `src/api/issues.test.ts`, and `src/api/router.ts`. Exclude `src/old.ts` because deleted paths are filtered out. Deduplicate and keep paths repo-relative.\n\nThen:\n\n1. Add a **Code Simplification** task to `plan.md` with that full scope, dispatch a code-simplifier over the files, mark complete only after `DONE`, save, and re-read `plan.md`.\n2. Add a **Code Review** task to `plan.md` with the same scope, dispatch a code-reviewer, and handle status.\n3. If review reports `DONE_WITH_FINDINGS` for `src/api/router.ts`, do **not** patch inline and do **not** mark Code Review complete. Re-open the affected `plan.md` task, send the finding plus `src/api/router.ts` and original task context to a fresh implementer, add any newly changed files to `$review_scope_files`, return to simplification for the affected files, then repeat code review.\n4. Leave all repository changes uncommitted, and invoke `self-improve` only if there are durable reusable lessons.\n\n"
+    },
+    {
+      "text": "Adds Code Simplification and Code Review tasks to `plan.md`.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nPost-implementation build-team does **not** stop when implementation tasks are complete. It builds `$review_scope_files`, then runs exactly one simplification phase and one review phase before handoff.\n\n**Review scope:** include `src/api/issues.ts`, `src/api/issues.test.ts`, and `src/api/router.ts`. Exclude `src/old.ts` because deleted paths are filtered out. Deduplicate and keep paths repo-relative.\n\nThen:\n\n1. Add a **Code Simplification** task to `plan.md` with that full scope, dispatch a code-simplifier over the files, mark complete only after `DONE`, save, and re-read `plan.md`.\n2. Add a **Code Review** task to `plan.md` with the same scope, dispatch a code-reviewer, and handle status.\n3. If review reports `DONE_WITH_FINDINGS` for `src/api/router.ts`, do **not** patch inline and do **not** mark Code Review complete. Re-open the affected `plan.md` task, send the finding plus `src/api/router.ts` and original task context to a fresh implementer, add any newly changed files to `$review_scope_files`, return to simplification for the affected files, then repeat code review.\n4. Leave all repository changes uncommitted, and invoke `self-improve` only if there are durable reusable lessons.\n\n"
+    },
+    {
+      "text": "Routes `DONE_WITH_FINDINGS` fixes through a reopened plan task and fresh implementer.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nPost-implementation build-team does **not** stop when implementation tasks are complete. It builds `$review_scope_files`, then runs exactly one simplification phase and one review phase before handoff.\n\n**Review scope:** include `src/api/issues.ts`, `src/api/issues.test.ts`, and `src/api/router.ts`. Exclude `src/old.ts` because deleted paths are filtered out. Deduplicate and keep paths repo-relative.\n\nThen:\n\n1. Add a **Code Simplification** task to `plan.md` with that full scope, dispatch a code-simplifier over the files, mark complete only after `DONE`, save, and re-read `plan.md`.\n2. Add a **Code Review** task to `plan.md` with the same scope, dispatch a code-reviewer, and handle status.\n3. If review reports `DONE_WITH_FINDINGS` for `src/api/router.ts`, do **not** patch inline and do **not** mark Code Review complete. Re-open the affected `plan.md` task, send the finding plus `src/api/router.ts` and original task context to a fresh implementer, add any newly changed files to `$review_scope_files`, return to simplification for the affected files, then repeat code review.\n4. Leave all repository changes uncommitted, and invoke `self-improve` only if there are durable reusable lessons.\n\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "files_created": [
+      "response.md"
+    ],
+    "errors_encountered": 0,
+    "output_chars": 1419,
+    "transcript_chars": 15128,
+    "stderr_chars": 392
+  },
+  "timing": {
+    "model": "gpt-5.5",
+    "exit_code": 0,
+    "total_duration_seconds": 30.977,
+    "executor_duration_seconds": 30.977,
+    "total_tokens": 0,
+    "output_chars": 1419
+  }
+}

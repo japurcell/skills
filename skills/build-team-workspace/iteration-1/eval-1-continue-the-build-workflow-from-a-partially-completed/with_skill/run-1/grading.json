@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Resumes from the next pending task instead of redoing completed work.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nT015 is the next ready task because T014 is done and T016 depends on T015. I would dispatch **T015** to a fresh implementer with the exact task text, relevant `plan.md` excerpt, and implementer prompt. I would not start T016 yet.\n\nIf the implementer reports **`NEEDS_CONTEXT`**, I provide the missing context and re-dispatch T015. I do **not** mark T015 complete and do **not** advance to T016 until T015 reports `DONE`, after which I update `plan.md`, save it, re-read it to verify T015 is visibly complete, and then proceed to T016.\n\n"
+    },
+    {
+      "text": "Respects dependency order between tasks.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nT015 is the next ready task because T014 is done and T016 depends on T015. I would dispatch **T015** to a fresh implementer with the exact task text, relevant `plan.md` excerpt, and implementer prompt. I would not start T016 yet.\n\nIf the implementer reports **`NEEDS_CONTEXT`**, I provide the missing context and re-dispatch T015. I do **not** mark T015 complete and do **not** advance to T016 until T015 reports `DONE`, after which I update `plan.md`, save it, re-read it to verify T015 is visibly complete, and then proceed to T016.\n\n"
+    },
+    {
+      "text": "Handles `NEEDS_CONTEXT` by providing context and re-dispatching.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nT015 is the next ready task because T014 is done and T016 depends on T015. I would dispatch **T015** to a fresh implementer with the exact task text, relevant `plan.md` excerpt, and implementer prompt. I would not start T016 yet.\n\nIf the implementer reports **`NEEDS_CONTEXT`**, I provide the missing context and re-dispatch T015. I do **not** mark T015 complete and do **not** advance to T016 until T015 reports `DONE`, after which I update `plan.md`, save it, re-read it to verify T015 is visibly complete, and then proceed to T016.\n\n"
+    },
+    {
+      "text": "Does not mark the task done or move to T016 before `plan.md` is updated.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nT015 is the next ready task because T014 is done and T016 depends on T015. I would dispatch **T015** to a fresh implementer with the exact task text, relevant `plan.md` excerpt, and implementer prompt. I would not start T016 yet.\n\nIf the implementer reports **`NEEDS_CONTEXT`**, I provide the missing context and re-dispatch T015. I do **not** mark T015 complete and do **not** advance to T016 until T015 reports `DONE`, after which I update `plan.md`, save it, re-read it to verify T015 is visibly complete, and then proceed to T016.\n\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "files_created": [
+      "response.md"
+    ],
+    "errors_encountered": 0,
+    "output_chars": 716,
+    "transcript_chars": 14027,
+    "stderr_chars": 393
+  },
+  "timing": {
+    "model": "gpt-5.5",
+    "exit_code": 0,
+    "total_duration_seconds": 17.124,
+    "executor_duration_seconds": 17.124,
+    "total_tokens": 0,
+    "output_chars": 716
+  }
+}

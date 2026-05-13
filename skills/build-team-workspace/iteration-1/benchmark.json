@@ -1,0 +1,246 @@
+{
+  "metadata": {
+    "skill_name": "build-team",
+    "skill_path": "skills/build-team-workspace/skill-snapshot-current/SKILL.md",
+    "executor_model": "gpt-5.5",
+    "analyzer_model": "n/a",
+    "timestamp": "2026-05-13T16:41:55Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 25.819,
+        "tokens": 2023,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Selects the next pending task from `plan.md`.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill file, then answer the eval prompt without modifying or running anything.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nI would run the **build-team orchestration workflow** from the existing `plan.md` without implementing inline.\n\n1. Read `plan.md` and identify **T014: add pagination to `GET /api/issues`** as the next ready pending task.\n2. Invoke `subagent-model-selection` to choose the least powerful capable implementer model/agent for T014.\n3. Dispatch a **fresh implementer subagent** with:\n   - the exact T014 task text\n   - the relevant `plan.md` excerpt\n   - the local `implementer-prompt.md` template\n4. Wait for the implementer result:\n   - `DONE`: update T014 as complete in `plan.md`, save it, then re-read `plan.md` and verify T014 is visibly complete.\n   - `DONE_WITH_CONCERNS`: resolve the concerns before marking complete.\n   - `NEEDS_CONTEXT`: provide context and re-dispatch.\n   - `BLOCKED`: try better context, smaller scope, or stronger model; escalate only if still blocked.\n5. Because T014 is the final pending implementation task, build `$review_scope_files` from files changed by implementers plus filtered uncommitted files, excluding deleted, ignored, and `.gitignore` paths.\n6. Add and run a **Code Simplification** task in `plan.md`, dispatching code-simplifier subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n7. Add and run a **Code Review** task in `plan.md`, dispatching code-reviewer subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n8. If review returns `DONE_WITH_FINDINGS`, re-open the affected `plan.md` task and route the fix to a fresh implementer, then repeat simplification and review for affected files.\n9. Before stopping, invoke `self-improve` only if the session produced durable reusable lessons.\n10. Leave all repository changes uncommitted.\n\n"
+        },
+        {
+          "text": "Invokes `subagent-model-selection`.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill file, then answer the eval prompt without modifying or running anything.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nI would run the **build-team orchestration workflow** from the existing `plan.md` without implementing inline.\n\n1. Read `plan.md` and identify **T014: add pagination to `GET /api/issues`** as the next ready pending task.\n2. Invoke `subagent-model-selection` to choose the least powerful capable implementer model/agent for T014.\n3. Dispatch a **fresh implementer subagent** with:\n   - the exact T014 task text\n   - the relevant `plan.md` excerpt\n   - the local `implementer-prompt.md` template\n4. Wait for the implementer result:\n   - `DONE`: update T014 as complete in `plan.md`, save it, then re-read `plan.md` and verify T014 is visibly complete.\n   - `DONE_WITH_CONCERNS`: resolve the concerns before marking complete.\n   - `NEEDS_CONTEXT`: provide context and re-dispatch.\n   - `BLOCKED`: try better context, smaller scope, or stronger model; escalate only if still blocked.\n5. Because T014 is the final pending implementation task, build `$review_scope_files` from files changed by implementers plus filtered uncommitted files, excluding deleted, ignored, and `.gitignore` paths.\n6. Add and run a **Code Simplification** task in `plan.md`, dispatching code-simplifier subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n7. Add and run a **Code Review** task in `plan.md`, dispatching code-reviewer subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n8. If review returns `DONE_WITH_FINDINGS`, re-open the affected `plan.md` task and route the fix to a fresh implementer, then repeat simplification and review for affected files.\n9. Before stopping, invoke `self-improve` only if the session produced durable reusable lessons.\n10. Leave all repository changes uncommitted.\n\n"
+        },
+        {
+          "text": "Dispatches a fresh implementer subagent with `implementer-prompt.md`.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill file, then answer the eval prompt without modifying or running anything.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nI would run the **build-team orchestration workflow** from the existing `plan.md` without implementing inline.\n\n1. Read `plan.md` and identify **T014: add pagination to `GET /api/issues`** as the next ready pending task.\n2. Invoke `subagent-model-selection` to choose the least powerful capable implementer model/agent for T014.\n3. Dispatch a **fresh implementer subagent** with:\n   - the exact T014 task text\n   - the relevant `plan.md` excerpt\n   - the local `implementer-prompt.md` template\n4. Wait for the implementer result:\n   - `DONE`: update T014 as complete in `plan.md`, save it, then re-read `plan.md` and verify T014 is visibly complete.\n   - `DONE_WITH_CONCERNS`: resolve the concerns before marking complete.\n   - `NEEDS_CONTEXT`: provide context and re-dispatch.\n   - `BLOCKED`: try better context, smaller scope, or stronger model; escalate only if still blocked.\n5. Because T014 is the final pending implementation task, build `$review_scope_files` from files changed by implementers plus filtered uncommitted files, excluding deleted, ignored, and `.gitignore` paths.\n6. Add and run a **Code Simplification** task in `plan.md`, dispatching code-simplifier subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n7. Add and run a **Code Review** task in `plan.md`, dispatching code-reviewer subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n8. If review returns `DONE_WITH_FINDINGS`, re-open the affected `plan.md` task and route the fix to a fresh implementer, then repeat simplification and review for affected files.\n9. Before stopping, invoke `self-improve` only if the session produced durable reusable lessons.\n10. Leave all repository changes uncommitted.\n\n"
+        },
+        {
+          "text": "Updates and re-reads `plan.md` only after `DONE`.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill file, then answer the eval prompt without modifying or running anything.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nI would run the **build-team orchestration workflow** from the existing `plan.md` without implementing inline.\n\n1. Read `plan.md` and identify **T014: add pagination to `GET /api/issues`** as the next ready pending task.\n2. Invoke `subagent-model-selection` to choose the least powerful capable implementer model/agent for T014.\n3. Dispatch a **fresh implementer subagent** with:\n   - the exact T014 task text\n   - the relevant `plan.md` excerpt\n   - the local `implementer-prompt.md` template\n4. Wait for the implementer result:\n   - `DONE`: update T014 as complete in `plan.md`, save it, then re-read `plan.md` and verify T014 is visibly complete.\n   - `DONE_WITH_CONCERNS`: resolve the concerns before marking complete.\n   - `NEEDS_CONTEXT`: provide context and re-dispatch.\n   - `BLOCKED`: try better context, smaller scope, or stronger model; escalate only if still blocked.\n5. Because T014 is the final pending implementation task, build `$review_scope_files` from files changed by implementers plus filtered uncommitted files, excluding deleted, ignored, and `.gitignore` paths.\n6. Add and run a **Code Simplification** task in `plan.md`, dispatching code-simplifier subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n7. Add and run a **Code Review** task in `plan.md`, dispatching code-reviewer subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n8. If review returns `DONE_WITH_FINDINGS`, re-open the affected `plan.md` task and route the fix to a fresh implementer, then repeat simplification and review for affected files.\n9. Before stopping, invoke `self-improve` only if the session produced durable reusable lessons.\n10. Leave all repository changes uncommitted.\n\n"
+        },
+        {
+          "text": "Builds the post-implementation review scope from touched and uncommitted files.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill file, then answer the eval prompt without modifying or running anything.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nI would run the **build-team orchestration workflow** from the existing `plan.md` without implementing inline.\n\n1. Read `plan.md` and identify **T014: add pagination to `GET /api/issues`** as the next ready pending task.\n2. Invoke `subagent-model-selection` to choose the least powerful capable implementer model/agent for T014.\n3. Dispatch a **fresh implementer subagent** with:\n   - the exact T014 task text\n   - the relevant `plan.md` excerpt\n   - the local `implementer-prompt.md` template\n4. Wait for the implementer result:\n   - `DONE`: update T014 as complete in `plan.md`, save it, then re-read `plan.md` and verify T014 is visibly complete.\n   - `DONE_WITH_CONCERNS`: resolve the concerns before marking complete.\n   - `NEEDS_CONTEXT`: provide context and re-dispatch.\n   - `BLOCKED`: try better context, smaller scope, or stronger model; escalate only if still blocked.\n5. Because T014 is the final pending implementation task, build `$review_scope_files` from files changed by implementers plus filtered uncommitted files, excluding deleted, ignored, and `.gitignore` paths.\n6. Add and run a **Code Simplification** task in `plan.md`, dispatching code-simplifier subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n7. Add and run a **Code Review** task in `plan.md`, dispatching code-reviewer subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n8. If review returns `DONE_WITH_FINDINGS`, re-open the affected `plan.md` task and route the fix to a fresh implementer, then repeat simplification and review for affected files.\n9. Before stopping, invoke `self-improve` only if the session produced durable reusable lessons.\n10. Leave all repository changes uncommitted.\n\n"
+        },
+        {
+          "text": "Adds code simplification and code review tasks before stopping.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill file, then answer the eval prompt without modifying or running anything.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nI would run the **build-team orchestration workflow** from the existing `plan.md` without implementing inline.\n\n1. Read `plan.md` and identify **T014: add pagination to `GET /api/issues`** as the next ready pending task.\n2. Invoke `subagent-model-selection` to choose the least powerful capable implementer model/agent for T014.\n3. Dispatch a **fresh implementer subagent** with:\n   - the exact T014 task text\n   - the relevant `plan.md` excerpt\n   - the local `implementer-prompt.md` template\n4. Wait for the implementer result:\n   - `DONE`: update T014 as complete in `plan.md`, save it, then re-read `plan.md` and verify T014 is visibly complete.\n   - `DONE_WITH_CONCERNS`: resolve the concerns before marking complete.\n   - `NEEDS_CONTEXT`: provide context and re-dispatch.\n   - `BLOCKED`: try better context, smaller scope, or stronger model; escalate only if still blocked.\n5. Because T014 is the final pending implementation task, build `$review_scope_files` from files changed by implementers plus filtered uncommitted files, excluding deleted, ignored, and `.gitignore` paths.\n6. Add and run a **Code Simplification** task in `plan.md`, dispatching code-simplifier subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n7. Add and run a **Code Review** task in `plan.md`, dispatching code-reviewer subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n8. If review returns `DONE_WITH_FINDINGS`, re-open the affected `plan.md` task and route the fix to a fresh implementer, then repeat simplification and review for affected files.\n9. Before stopping, invoke `self-improve` only if the session produced durable reusable lessons.\n10. Leave all repository changes uncommitted.\n\n"
+        },
+        {
+          "text": "Leaves the work uncommitted.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill file, then answer the eval prompt without modifying or running anything.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nI would run the **build-team orchestration workflow** from the existing `plan.md` without implementing inline.\n\n1. Read `plan.md` and identify **T014: add pagination to `GET /api/issues`** as the next ready pending task.\n2. Invoke `subagent-model-selection` to choose the least powerful capable implementer model/agent for T014.\n3. Dispatch a **fresh implementer subagent** with:\n   - the exact T014 task text\n   - the relevant `plan.md` excerpt\n   - the local `implementer-prompt.md` template\n4. Wait for the implementer result:\n   - `DONE`: update T014 as complete in `plan.md`, save it, then re-read `plan.md` and verify T014 is visibly complete.\n   - `DONE_WITH_CONCERNS`: resolve the concerns before marking complete.\n   - `NEEDS_CONTEXT`: provide context and re-dispatch.\n   - `BLOCKED`: try better context, smaller scope, or stronger model; escalate only if still blocked.\n5. Because T014 is the final pending implementation task, build `$review_scope_files` from files changed by implementers plus filtered uncommitted files, excluding deleted, ignored, and `.gitignore` paths.\n6. Add and run a **Code Simplification** task in `plan.md`, dispatching code-simplifier subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n7. Add and run a **Code Review** task in `plan.md`, dispatching code-reviewer subagents over `$review_scope_files`; wait for `DONE`, update `plan.md`, save, and re-read to verify.\n8. If review returns `DONE_WITH_FINDINGS`, re-open the affected `plan.md` task and route the fix to a fresh implementer, then repeat simplification and review for affected files.\n9. Before stopping, invoke `self-improve` only if the session produced durable reusable lessons.\n10. Leave all repository changes uncommitted.\n\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 17.124,
+        "tokens": 716,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Resumes from the next pending task instead of redoing completed work.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nT015 is the next ready task because T014 is done and T016 depends on T015. I would dispatch **T015** to a fresh implementer with the exact task text, relevant `plan.md` excerpt, and implementer prompt. I would not start T016 yet.\n\nIf the implementer reports **`NEEDS_CONTEXT`**, I provide the missing context and re-dispatch T015. I do **not** mark T015 complete and do **not** advance to T016 until T015 reports `DONE`, after which I update `plan.md`, save it, re-read it to verify T015 is visibly complete, and then proceed to T016.\n\n"
+        },
+        {
+          "text": "Respects dependency order between tasks.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nT015 is the next ready task because T014 is done and T016 depends on T015. I would dispatch **T015** to a fresh implementer with the exact task text, relevant `plan.md` excerpt, and implementer prompt. I would not start T016 yet.\n\nIf the implementer reports **`NEEDS_CONTEXT`**, I provide the missing context and re-dispatch T015. I do **not** mark T015 complete and do **not** advance to T016 until T015 reports `DONE`, after which I update `plan.md`, save it, re-read it to verify T015 is visibly complete, and then proceed to T016.\n\n"
+        },
+        {
+          "text": "Handles `NEEDS_CONTEXT` by providing context and re-dispatching.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nT015 is the next ready task because T014 is done and T016 depends on T015. I would dispatch **T015** to a fresh implementer with the exact task text, relevant `plan.md` excerpt, and implementer prompt. I would not start T016 yet.\n\nIf the implementer reports **`NEEDS_CONTEXT`**, I provide the missing context and re-dispatch T015. I do **not** mark T015 complete and do **not** advance to T016 until T015 reports `DONE`, after which I update `plan.md`, save it, re-read it to verify T015 is visibly complete, and then proceed to T016.\n\n"
+        },
+        {
+          "text": "Does not mark the task done or move to T016 before `plan.md` is updated.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nT015 is the next ready task because T014 is done and T016 depends on T015. I would dispatch **T015** to a fresh implementer with the exact task text, relevant `plan.md` excerpt, and implementer prompt. I would not start T016 yet.\n\nIf the implementer reports **`NEEDS_CONTEXT`**, I provide the missing context and re-dispatch T015. I do **not** mark T015 complete and do **not** advance to T016 until T015 reports `DONE`, after which I update `plan.md`, save it, re-read it to verify T015 is visibly complete, and then proceed to T016.\n\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 23.297,
+        "tokens": 564,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Does not start the build-team workflow without an existing `plan.md`.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer only from that source.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nNo. The build-team skill requires an existing `$plan` with pending implementation tasks and is explicitly **not for creating a plan from scratch**.\n\nCorrect response: respect \u201cplan first, don\u2019t build yet,\u201d use a planning/spec/task-breakdown workflow instead, create or draft the plan as requested, and do **no implementation**, subagent dispatch, simplification, review, or commits.\n\n"
+        },
+        {
+          "text": "Says the skill is not for plan creation or task breakdown.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer only from that source.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nNo. The build-team skill requires an existing `$plan` with pending implementation tasks and is explicitly **not for creating a plan from scratch**.\n\nCorrect response: respect \u201cplan first, don\u2019t build yet,\u201d use a planning/spec/task-breakdown workflow instead, create or draft the plan as requested, and do **no implementation**, subagent dispatch, simplification, review, or commits.\n\n"
+        },
+        {
+          "text": "Routes the user to planning or another appropriate workflow.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer only from that source.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nNo. The build-team skill requires an existing `$plan` with pending implementation tasks and is explicitly **not for creating a plan from scratch**.\n\nCorrect response: respect \u201cplan first, don\u2019t build yet,\u201d use a planning/spec/task-breakdown workflow instead, create or draft the plan as requested, and do **no implementation**, subagent dispatch, simplification, review, or commits.\n\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 17.202,
+        "tokens": 592,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Mentions `DONE_WITH_CONCERNS` explicitly.",
+          "passed": true,
+          "evidence": "I\u2019ll read the requested local skill snapshot and answer from that only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nTreat `DONE_WITH_CONCERNS` as unresolved correctness or scope risk. Read the concern first, resolve it, and only then mark the task complete in `$plan`.\n\nDo **not** move on while the concern remains. Completion requires updating `$plan`, saving it, then re-reading `$plan` to verify the completed state is visible. If the concern is truly non-blocking, the implementer should have reported `DONE` with a note instead.\n\n"
+        },
+        {
+          "text": "Does not mark the task complete immediately.",
+          "passed": true,
+          "evidence": "I\u2019ll read the requested local skill snapshot and answer from that only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nTreat `DONE_WITH_CONCERNS` as unresolved correctness or scope risk. Read the concern first, resolve it, and only then mark the task complete in `$plan`.\n\nDo **not** move on while the concern remains. Completion requires updating `$plan`, saving it, then re-reading `$plan` to verify the completed state is visible. If the concern is truly non-blocking, the implementer should have reported `DONE` with a note instead.\n\n"
+        },
+        {
+          "text": "Resolves correctness or scope concerns before updating `plan.md`.",
+          "passed": true,
+          "evidence": "I\u2019ll read the requested local skill snapshot and answer from that only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nTreat `DONE_WITH_CONCERNS` as unresolved correctness or scope risk. Read the concern first, resolve it, and only then mark the task complete in `$plan`.\n\nDo **not** move on while the concern remains. Completion requires updating `$plan`, saving it, then re-reading `$plan` to verify the completed state is visible. If the concern is truly non-blocking, the implementer should have reported `DONE` with a note instead.\n\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 30.977,
+        "tokens": 1419,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Builds a deduped review scope from touched files plus filtered uncommitted files.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nPost-implementation build-team does **not** stop when implementation tasks are complete. It builds `$review_scope_files`, then runs exactly one simplification phase and one review phase before handoff.\n\n**Review scope:** include `src/api/issues.ts`, `src/api/issues.test.ts`, and `src/api/router.ts`. Exclude `src/old.ts` because deleted paths are filtered out. Deduplicate and keep paths repo-relative.\n\nThen:\n\n1. Add a **Code Simplification** task to `plan.md` with that full scope, dispatch a code-simplifier over the files, mark complete only after `DONE`, save, and re-read `plan.md`.\n2. Add a **Code Review** task to `plan.md` with the same scope, dispatch a code-reviewer, and handle status.\n3. If review reports `DONE_WITH_FINDINGS` for `src/api/router.ts`, do **not** patch inline and do **not** mark Code Review complete. Re-open the affected `plan.md` task, send the finding plus `src/api/router.ts` and original task context to a fresh implementer, add any newly changed files to `$review_scope_files`, return to simplification for the affected files, then repeat code review.\n4. Leave all repository changes uncommitted, and invoke `self-improve` only if there are durable reusable lessons.\n\n"
+        },
+        {
+          "text": "Excludes the deleted path from the review scope.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nPost-implementation build-team does **not** stop when implementation tasks are complete. It builds `$review_scope_files`, then runs exactly one simplification phase and one review phase before handoff.\n\n**Review scope:** include `src/api/issues.ts`, `src/api/issues.test.ts`, and `src/api/router.ts`. Exclude `src/old.ts` because deleted paths are filtered out. Deduplicate and keep paths repo-relative.\n\nThen:\n\n1. Add a **Code Simplification** task to `plan.md` with that full scope, dispatch a code-simplifier over the files, mark complete only after `DONE`, save, and re-read `plan.md`.\n2. Add a **Code Review** task to `plan.md` with the same scope, dispatch a code-reviewer, and handle status.\n3. If review reports `DONE_WITH_FINDINGS` for `src/api/router.ts`, do **not** patch inline and do **not** mark Code Review complete. Re-open the affected `plan.md` task, send the finding plus `src/api/router.ts` and original task context to a fresh implementer, add any newly changed files to `$review_scope_files`, return to simplification for the affected files, then repeat code review.\n4. Leave all repository changes uncommitted, and invoke `self-improve` only if there are durable reusable lessons.\n\n"
+        },
+        {
+          "text": "Adds Code Simplification and Code Review tasks to `plan.md`.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nPost-implementation build-team does **not** stop when implementation tasks are complete. It builds `$review_scope_files`, then runs exactly one simplification phase and one review phase before handoff.\n\n**Review scope:** include `src/api/issues.ts`, `src/api/issues.test.ts`, and `src/api/router.ts`. Exclude `src/old.ts` because deleted paths are filtered out. Deduplicate and keep paths repo-relative.\n\nThen:\n\n1. Add a **Code Simplification** task to `plan.md` with that full scope, dispatch a code-simplifier over the files, mark complete only after `DONE`, save, and re-read `plan.md`.\n2. Add a **Code Review** task to `plan.md` with the same scope, dispatch a code-reviewer, and handle status.\n3. If review reports `DONE_WITH_FINDINGS` for `src/api/router.ts`, do **not** patch inline and do **not** mark Code Review complete. Re-open the affected `plan.md` task, send the finding plus `src/api/router.ts` and original task context to a fresh implementer, add any newly changed files to `$review_scope_files`, return to simplification for the affected files, then repeat code review.\n4. Leave all repository changes uncommitted, and invoke `self-improve` only if there are durable reusable lessons.\n\n"
+        },
+        {
+          "text": "Routes `DONE_WITH_FINDINGS` fixes through a reopened plan task and fresh implementer.",
+          "passed": true,
+          "evidence": "I\u2019ll read the specified local skill snapshot and answer from that source only.\n\n\u25cf skill(addy-using-agent-skills)\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nPost-implementation build-team does **not** stop when implementation tasks are complete. It builds `$review_scope_files`, then runs exactly one simplification phase and one review phase before handoff.\n\n**Review scope:** include `src/api/issues.ts`, `src/api/issues.test.ts`, and `src/api/router.ts`. Exclude `src/old.ts` because deleted paths are filtered out. Deduplicate and keep paths repo-relative.\n\nThen:\n\n1. Add a **Code Simplification** task to `plan.md` with that full scope, dispatch a code-simplifier over the files, mark complete only after `DONE`, save, and re-read `plan.md`.\n2. Add a **Code Review** task to `plan.md` with the same scope, dispatch a code-reviewer, and handle status.\n3. If review reports `DONE_WITH_FINDINGS` for `src/api/router.ts`, do **not** patch inline and do **not** mark Code Review complete. Re-open the affected `plan.md` task, send the finding plus `src/api/router.ts` and original task context to a fresh implementer, add any newly changed files to `$review_scope_files`, return to simplification for the affected files, then repeat code review.\n4. Leave all repository changes uncommitted, and invoke `self-improve` only if there are durable reusable lessons.\n\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 22.8838,
+        "stddev": 5.9107,
+        "min": 17.124,
+        "max": 30.977
+      },
+      "tokens": {
+        "mean": 1062.8,
+        "stddev": 640.2318,
+        "min": 564,
+        "max": 2023
+      }
+    },
+    "delta": {
+      "pass_rate": "+1.00",
+      "time_seconds": "+22.9",
+      "tokens": "+1063"
+    }
+  },
+  "notes": [
+    "Single-configuration performance baseline for the edited build-team skill; no old_skill comparison was run.",
+    "time_seconds is wall-clock duration for each copilot -p eval run.",
+    "tokens is output character count proxy because copilot -p did not expose token usage in these artifacts."
+  ]
+}

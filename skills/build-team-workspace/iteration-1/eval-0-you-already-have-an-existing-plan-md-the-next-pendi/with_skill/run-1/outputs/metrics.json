@@ -1,0 +1,12 @@
+{
+  "tool_calls": {},
+  "total_tool_calls": 0,
+  "total_steps": 1,
+  "files_created": [
+    "response.md"
+  ],
+  "errors_encountered": 0,
+  "output_chars": 2023,
+  "transcript_chars": 15686,
+  "stderr_chars": 391
+}

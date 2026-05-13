@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Mentions `DONE_WITH_CONCERNS` explicitly.",
+      "passed": true,
+      "evidence": "I\u2019ll read the requested local skill snapshot and answer from that only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nTreat `DONE_WITH_CONCERNS` as unresolved correctness or scope risk. Read the concern first, resolve it, and only then mark the task complete in `$plan`.\n\nDo **not** move on while the concern remains. Completion requires updating `$plan`, saving it, then re-reading `$plan` to verify the completed state is visible. If the concern is truly non-blocking, the implementer should have reported `DONE` with a note instead.\n\n"
+    },
+    {
+      "text": "Does not mark the task complete immediately.",
+      "passed": true,
+      "evidence": "I\u2019ll read the requested local skill snapshot and answer from that only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nTreat `DONE_WITH_CONCERNS` as unresolved correctness or scope risk. Read the concern first, resolve it, and only then mark the task complete in `$plan`.\n\nDo **not** move on while the concern remains. Completion requires updating `$plan`, saving it, then re-reading `$plan` to verify the completed state is visible. If the concern is truly non-blocking, the implementer should have reported `DONE` with a note instead.\n\n"
+    },
+    {
+      "text": "Resolves correctness or scope concerns before updating `plan.md`.",
+      "passed": true,
+      "evidence": "I\u2019ll read the requested local skill snapshot and answer from that only.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nTreat `DONE_WITH_CONCERNS` as unresolved correctness or scope risk. Read the concern first, resolve it, and only then mark the task complete in `$plan`.\n\nDo **not** move on while the concern remains. Completion requires updating `$plan`, saving it, then re-reading `$plan` to verify the completed state is visible. If the concern is truly non-blocking, the implementer should have reported `DONE` with a note instead.\n\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "files_created": [
+      "response.md"
+    ],
+    "errors_encountered": 0,
+    "output_chars": 592,
+    "transcript_chars": 13906,
+    "stderr_chars": 390
+  },
+  "timing": {
+    "model": "gpt-5.5",
+    "exit_code": 0,
+    "total_duration_seconds": 17.202,
+    "executor_duration_seconds": 17.202,
+    "total_tokens": 0,
+    "output_chars": 592
+  }
+}

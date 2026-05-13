@@ -1,0 +1,6 @@
+Cannot open directory /home/adam/.aspnet/dev-certs/trust:/etc/ssl/certs to load OpenSSL certificates.
+
+Changes   +0 -0
+Requests  7.5 Premium (14s)
+Tokens    ↑ 49.2k • ↓ 594 • 44.5k (cached) • 356 (reasoning)
+Session exported to: /home/adam/dev/personal/skills/skills/build-team-workspace/iteration-1/eval-1-continue-the-build-workflow-from-a-partially-completed/with_skill/run-1/transcript.md

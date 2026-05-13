@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Does not start the build-team workflow without an existing `plan.md`.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer only from that source.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nNo. The build-team skill requires an existing `$plan` with pending implementation tasks and is explicitly **not for creating a plan from scratch**.\n\nCorrect response: respect \u201cplan first, don\u2019t build yet,\u201d use a planning/spec/task-breakdown workflow instead, create or draft the plan as requested, and do **no implementation**, subagent dispatch, simplification, review, or commits.\n\n"
+    },
+    {
+      "text": "Says the skill is not for plan creation or task breakdown.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer only from that source.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nNo. The build-team skill requires an existing `$plan` with pending implementation tasks and is explicitly **not for creating a plan from scratch**.\n\nCorrect response: respect \u201cplan first, don\u2019t build yet,\u201d use a planning/spec/task-breakdown workflow instead, create or draft the plan as requested, and do **no implementation**, subagent dispatch, simplification, review, or commits.\n\n"
+    },
+    {
+      "text": "Routes the user to planning or another appropriate workflow.",
+      "passed": true,
+      "evidence": "I\u2019ll read the specified local skill snapshot and answer only from that source.\n\n\u25cf Read SKILL.md\n  \u2502 skills/build-team-workspace/skill-snapshot-current/SKILL.md\n  \u2514 128 lines read\n\nNo. The build-team skill requires an existing `$plan` with pending implementation tasks and is explicitly **not for creating a plan from scratch**.\n\nCorrect response: respect \u201cplan first, don\u2019t build yet,\u201d use a planning/spec/task-breakdown workflow instead, create or draft the plan as requested, and do **no implementation**, subagent dispatch, simplification, review, or commits.\n\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 1,
+    "files_created": [
+      "response.md"
+    ],
+    "errors_encountered": 0,
+    "output_chars": 564,
+    "transcript_chars": 13799,
+    "stderr_chars": 392
+  },
+  "timing": {
+    "model": "gpt-5.5",
+    "exit_code": 0,
+    "total_duration_seconds": 23.297,
+    "executor_duration_seconds": 23.297,
+    "total_tokens": 0,
+    "output_chars": 564
+  }
+}

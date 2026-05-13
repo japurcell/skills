@@ -1,0 +1,8 @@
+You are running a skill benchmark eval.
+
+Read and follow this exact local skill file: /home/adam/dev/personal/skills/skills/build-team-workspace/skill-snapshot-current/SKILL.md
+Ignore any installed copies of the build-team skill with the same name.
+Do not edit files, create files, commit changes, or run project commands for this eval. Produce only the answer to the eval prompt.
+
+Eval prompt:
+A user asks you to create the plan first, not build anything yet, and there is no active `plan.md`. Should you use the build skill? Explain the correct response.
