@@ -172,6 +172,94 @@ EOF
     "Expected the hook to recover subagent C# edits from the session events transcript."
 }
 
+test_logs_background_subagent_apply_patch_file_from_read_agent_events() {
+  local workdir
+  local audit_log
+  local copilot_home
+  local session_id
+  local fake_bin
+  local old_path
+
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  copilot_home="$workdir/copilot-home"
+  session_id="background-agent"
+  fake_bin="$workdir/bin"
+
+  mkdir -p "$fake_bin"
+  cat >"$fake_bin/dotnet" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$fake_bin/dotnet"
+
+  mkdir -p "$copilot_home/session-state/$session_id"
+  cat >"$copilot_home/session-state/$session_id/events.jsonl" <<'EOF'
+{"type":"tool.execution_start","data":{"toolCallId":"parent-task","toolName":"task","arguments":{"agent_type":"general-purpose","name":"share-cart-implementer","mode":"background","description":"Implement ShareCart task"}}}
+{"type":"tool.execution_start","data":{"parentToolCallId":"parent-task","toolCallId":"child-apply-patch","toolName":"apply_patch","arguments":"*** Begin Patch\n*** Update File: /tmp/ShareCartOperationalAssetSeedingTests.cs\n@@\n- old\n+ new\n*** End Patch"}}
+EOF
+
+  old_path="$PATH"
+  PATH="$fake_bin:$PATH"
+  run_hook \
+    "$audit_log" \
+    1024 \
+    '{"sessionId":"background-agent","timestamp":"2026-05-13T14:10:17Z","toolName":"read_agent","toolArgs":{"agent_id":"share-cart-implementer","wait":true,"timeout":30},"toolResult":{"resultType":"success","textResultForLlm":"Agent is idle (waiting for messages). agent_id: share-cart-implementer"}}' \
+    "$copilot_home"
+  PATH="$old_path"
+
+  assert_file_contains "$audit_log" "Session: background-agent, Tool: read_agent" \
+    "Expected the hook to log read_agent tool use for background subagents."
+
+  assert_file_contains "$audit_log" "Session: background-agent, File: /tmp/ShareCartOperationalAssetSeedingTests.cs" \
+    "Expected the hook to recover subagent apply_patch edits when read_agent returns a background task result."
+}
+
+test_logs_background_subagent_apply_patch_file_from_read_agent_events_with_camel_case_agent_id() {
+  local workdir
+  local audit_log
+  local copilot_home
+  local session_id
+  local fake_bin
+  local old_path
+
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  copilot_home="$workdir/copilot-home"
+  session_id="background-agent-camel"
+  fake_bin="$workdir/bin"
+
+  mkdir -p "$fake_bin"
+  cat >"$fake_bin/dotnet" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$fake_bin/dotnet"
+
+  mkdir -p "$copilot_home/session-state/$session_id"
+  cat >"$copilot_home/session-state/$session_id/events.jsonl" <<'EOF'
+{"type":"tool.execution_start","data":{"toolCallId":"parent-task","toolName":"task","arguments":{"agent_type":"general-purpose","name":"share-cart-implementer","mode":"background","description":"Implement ShareCart task"}}}
+{"type":"tool.execution_start","data":{"parentToolCallId":"parent-task","toolCallId":"child-apply-patch","toolName":"apply_patch","arguments":"*** Begin Patch\n*** Update File: /tmp/ShareCartCamelCase.cs\n@@\n- old\n+ new\n*** End Patch"}}
+EOF
+
+  old_path="$PATH"
+  PATH="$fake_bin:$PATH"
+  run_hook \
+    "$audit_log" \
+    1024 \
+    '{"sessionId":"background-agent-camel","timestamp":"2026-05-13T14:10:18Z","toolName":"read_agent","toolArgs":{"agentId":"share-cart-implementer","wait":true,"timeout":30},"toolResult":{"resultType":"success","textResultForLlm":"Agent is idle (waiting for messages). agent_id: share-cart-implementer"}}' \
+    "$copilot_home"
+  PATH="$old_path"
+
+  assert_file_contains "$audit_log" "Session: background-agent-camel, Tool: read_agent" \
+    "Expected the hook to log read_agent tool use for background subagents."
+
+  assert_file_contains "$audit_log" "Session: background-agent-camel, File: /tmp/ShareCartCamelCase.cs" \
+    "Expected the hook to recover subagent apply_patch edits when read_agent uses camelCase agentId."
+}
+
 test_ignores_tools_without_files() {
   local workdir
   local audit_log
@@ -264,6 +352,8 @@ main() {
   test_logs_csharp_apply_patch_command_before_formatter_failure
   test_logs_js_formatter_failure
   test_logs_subagent_csharp_file_from_task_session_events
+  test_logs_background_subagent_apply_patch_file_from_read_agent_events
+  test_logs_background_subagent_apply_patch_file_from_read_agent_events_with_camel_case_agent_id
   test_ignores_tools_without_files
   test_rolls_over_audit_log
   test_waits_for_log_lock

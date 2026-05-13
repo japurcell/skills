@@ -63,46 +63,59 @@ extract_direct_files() {
   echo "$INPUT" | jq -r '.toolArgs.path // .toolArgs.filePath // .toolArgs.file_path // .toolArgs.files[]? // .toolArgs.paths[]? // .tool_input.path // .tool_input.filePath // .tool_input.file_path // .tool_input.files[]? // .tool_input.paths[]? // empty'
 }
 
-extract_task_files() {
-  local events_path="$COPILOT_HOME_DIR/session-state/$SESSION_ID/events.jsonl"
-  local task_result
-  local agent_id
-  local parent_tool_call_id
-  local task_files=""
-  local event
-  local child_tool_name
-  local child_files=""
-  local child_args=""
+find_task_call_id_by_args() {
+  local events_path="$1"
+  local current_args="$2"
 
-  [[ -f "$events_path" ]] || return 0
-
-  task_result=$(echo "$INPUT" | jq -r '.toolResult.textResultForLlm // .tool_result.text_result_for_llm // empty')
-  parent_tool_call_id=$(jq -r --arg current_args "$TOOL_ARGS" '
+  jq -r --arg current_args "$current_args" '
     select(.type == "tool.execution_start")
     | .data
     | select((.toolName // "") == "task")
     | select(.arguments == ($current_args | fromjson))
     | .toolCallId
-  ' "$events_path" | tail -n 1)
+  ' "$events_path" | tail -n 1
+}
 
-  if [[ -z "$parent_tool_call_id" ]]; then
-    [[ -n "$task_result" ]] || return 0
+find_task_call_id_by_result() {
+  local events_path="$1"
+  local task_result="$2"
+  local agent_id="$3"
 
-    agent_id=$(echo "$INPUT" | jq -r '.toolResult.toolTelemetry.restrictedProperties.agent_id // .toolResult.toolTelemetry.restrictedProperties.agentId // .tool_result.tool_telemetry.restricted_properties.agent_id // .tool_result.tool_telemetry.restricted_properties.agentId // empty')
+  jq -r --arg result "$task_result" --arg agent_id "$agent_id" '
+    select(.type == "tool.execution_complete")
+    | .data
+    | select(.success == true)
+    | select((.result.content // "") == $result)
+    | if $agent_id == "" then
+        .toolCallId
+      else
+        select((.toolTelemetry.restrictedProperties.agent_id // .toolTelemetry.restrictedProperties.agentId // "") == $agent_id)
+        | .toolCallId
+      end
+  ' "$events_path" | tail -n 1
+}
 
-    parent_tool_call_id=$(jq -r --arg result "$task_result" --arg agent_id "$agent_id" '
-      select(.type == "tool.execution_complete")
-      | .data
-      | select(.success == true)
-      | select((.result.content // "") == $result)
-      | if $agent_id == "" then
-          .toolCallId
-        else
-          select((.toolTelemetry.restrictedProperties.agent_id // .toolTelemetry.restrictedProperties.agentId // "") == $agent_id)
-          | .toolCallId
-        end
-    ' "$events_path" | tail -n 1)
-  fi
+find_task_call_id_by_agent_id() {
+  local events_path="$1"
+  local requested_agent_id="$2"
+
+  jq -r --arg requested_agent_id "$requested_agent_id" '
+    select(.type == "tool.execution_start")
+    | .data
+    | select((.toolName // "") == "task")
+    | select((.arguments.name // "") == $requested_agent_id or (.toolCallId // "") == $requested_agent_id)
+    | .toolCallId
+  ' "$events_path" | tail -n 1
+}
+
+extract_child_task_files() {
+  local events_path="$1"
+  local parent_tool_call_id="$2"
+  local task_files=""
+  local event
+  local child_tool_name
+  local child_files=""
+  local child_args=""
 
   [[ -n "$parent_tool_call_id" ]] || return 0
 
@@ -135,12 +148,50 @@ extract_task_files() {
   printf '%s' "${task_files%$'\n'}"
 }
 
+extract_task_files() {
+  local events_path="$COPILOT_HOME_DIR/session-state/$SESSION_ID/events.jsonl"
+  local task_result
+  local agent_id
+  local parent_tool_call_id
+
+  [[ -f "$events_path" ]] || return 0
+
+  task_result=$(echo "$INPUT" | jq -r '.toolResult.textResultForLlm // .tool_result.text_result_for_llm // empty')
+  parent_tool_call_id=$(find_task_call_id_by_args "$events_path" "$TOOL_ARGS")
+
+  if [[ -z "$parent_tool_call_id" ]]; then
+    [[ -n "$task_result" ]] || return 0
+
+    agent_id=$(echo "$INPUT" | jq -r '.toolResult.toolTelemetry.restrictedProperties.agent_id // .toolResult.toolTelemetry.restrictedProperties.agentId // .tool_result.tool_telemetry.restricted_properties.agent_id // .tool_result.tool_telemetry.restricted_properties.agentId // empty')
+    parent_tool_call_id=$(find_task_call_id_by_result "$events_path" "$task_result" "$agent_id")
+  fi
+
+  extract_child_task_files "$events_path" "$parent_tool_call_id"
+}
+
+extract_read_agent_files() {
+  local events_path="$COPILOT_HOME_DIR/session-state/$SESSION_ID/events.jsonl"
+  local requested_agent_id
+  local parent_tool_call_id
+
+  [[ -f "$events_path" ]] || return 0
+
+  requested_agent_id=$(echo "$INPUT" | jq -r '.toolArgs.agentId // .toolArgs.agent_id // .tool_input.agentId // .tool_input.agent_id // empty')
+  [[ -n "$requested_agent_id" ]] || return 0
+
+  parent_tool_call_id=$(find_task_call_id_by_agent_id "$events_path" "$requested_agent_id")
+
+  extract_child_task_files "$events_path" "$parent_tool_call_id"
+}
+
 if [ "$TOOL_NAME" = "apply_patch" ]; then
   FILES=$(extract_patch_files "$TOOL_ARGS")
 elif [ "$TOOL_NAME" = "create" ] || [ "$TOOL_NAME" = "edit" ]; then
   FILES=$(extract_direct_files)
 elif [ "$TOOL_NAME" = "task" ]; then
   FILES=$(extract_task_files)
+elif [ "$TOOL_NAME" = "read_agent" ]; then
+  FILES=$(extract_read_agent_files)
 fi
 
 mkdir -p "$(dirname "$AUDIT_LOG")"
