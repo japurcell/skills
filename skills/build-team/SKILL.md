@@ -59,7 +59,7 @@ Use a fresh subagent for each dispatched unit of work:
    - **≤5 files:** 1 agent for all files
    - **>5 files:** partition into non-overlapping groups by module, directory, or logical area, and launch one agent per group in parallel
    - each file must appear in exactly one simplifier scope
-3. Wait for all simplifier results.
+3. Wait for all simplifier results, then announce a summary.
 4. Handle statuses exactly:
    - **DONE:** when all subagents report `DONE`, mark the simplification task complete in `$plan`, save, re-read, and verify, then proceed
    - **DONE_WITH_CONCERNS:** resolve correctness or scope concerns before marking complete; non-blocking notes should be reported under `DONE`
@@ -76,7 +76,7 @@ Use a fresh subagent for each dispatched unit of work:
    - **≤5 files:** 1 agent for all files
    - **>5 files:** multiple agents in parallel with different focuses such as correctness, security, or performance
    - reviewers are read-only; overlapping review scopes are allowed
-3. Wait for all reviewer results.
+3. Wait for all reviewer results, then announce a summary.
 4. Handle statuses exactly:
    - **DONE:** when all subagents report `DONE`, mark the review task complete in `$plan`, save, re-read, and verify, then proceed
    - **DONE_WITH_FINDINGS:** add a new fix task to `$plan` with the finding, affected files, and original task context; route it to a fresh implementer subagent; after the fix lands, update `$review_scope_files` for the affected scope, return to Phase 2, and review again; do not mark review complete
