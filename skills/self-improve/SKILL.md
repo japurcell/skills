@@ -1,9 +1,9 @@
 ---
-name: remember-lessons
+name: self-improve
 description: Capture durable session learnings into AGENTS.md files. When requested or clearly warranted, also reorganize AGENTS.md structure to reduce duplication and improve scope. Use this skill when the user asks to update AGENTS.md, record lessons learned, codify discoveries, or clean up/refactor agent instructions.
 ---
 
-# Remember Lessons Learned
+# Self Improve
 
 Capture durable session learnings into the appropriate AGENTS.md files. If structural issues are present or the user asks for cleanup, also perform a refactor pass.
 

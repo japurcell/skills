@@ -12,7 +12,7 @@ argument-hint: <plan:.agents/scratchpad/<feature>/plan.md>
 
 ## Overview
 
-Execute an existing `$plan` continuously. You are the orchestrator: pick the next pending task, dispatch one fresh implementer subagent with [implementer-prompt.md](./implementer-prompt.md), then update `$plan` only after the implementer has truly finished. Before stopping, capture any durable, reusable session learnings with `remember-lessons`.
+Execute an existing `$plan` continuously. You are the orchestrator: pick the next pending task, dispatch one fresh implementer subagent with [implementer-prompt.md](./implementer-prompt.md), then update `$plan` only after the implementer has truly finished. Before stopping, capture any durable, reusable session learnings with `self-improve`.
 
 Use a fresh implementer per task so coordination stays clean and each task gets focused context.
 
@@ -41,7 +41,7 @@ Use a fresh implementer per task so coordination stays clean and each task gets 
 
 ### Phase 2: Self-Improve
 
-Before stopping, invoke the `remember-lessons` skill to capture durable session learnings to work more effectively in future tasks.
+Before stopping, invoke the `self-improve` skill to capture durable session learnings to work more effectively in future tasks.
 
 ## Specific Techniques
 
@@ -50,7 +50,7 @@ Before stopping, invoke the `remember-lessons` skill to capture durable session 
 - Send the implementer the exact task text plus the relevant `$plan` excerpt. Weaker models behave better when task boundaries are explicit.
 - Keep the orchestration boundary intact: the implementer does the task work; you coordinate selection, status handling, and `$plan` updates.
 - Reuse [implementer-prompt.md](./implementer-prompt.md) instead of re-explaining implementation details from memory. That prompt already covers incremental implementation, TDD, targeted verification, and debugging when a step fails.
-- After implementation tasks are complete, run `remember-lessons` once to preserve durable lessons from the session.
+- After implementation tasks are complete, run `self-improve` once to preserve durable lessons from the session.
 
 ## Common Rationalizations
 
@@ -61,7 +61,7 @@ Before stopping, invoke the `remember-lessons` skill to capture durable session 
 | "I'll just do this task myself instead of dispatching a subagent." | This skill is for orchestration. A fresh implementer subagent per task keeps context clean and the workflow consistent. |
 | "I'll stop after this task and ask whether to continue."           | Keep going through ready tasks. Stop only for a real blocker, genuine ambiguity, or full completion.                    |
 | "DONE_WITH_CONCERNS is close enough to done."                      | If the concern affects correctness or scope, resolve it before marking the task complete.                               |
-| "The plan is done, so the skill is done."                          | Not yet. Before stopping, run `remember-lessons`.           |
+| "The plan is done, so the skill is done."                          | Not yet. Before stopping, run `self-improve`.               |
 
 ## Red Flags
 
@@ -71,7 +71,7 @@ Before stopping, invoke the `remember-lessons` skill to capture durable session 
 - Marking `BLOCKED` or `NEEDS_CONTEXT` work complete
 - Stopping between ready tasks to ask for permission
 - Committing changes or telling the implementer to commit
-- Finishing all plan tasks but skipping `remember-lessons`
+- Finishing all plan tasks but skipping `self-improve`
 - Recording one-off task trivia as durable lessons
 
 ## Verification
@@ -82,5 +82,5 @@ Before stopping, invoke the `remember-lessons` skill to capture durable session 
 - [ ] After each `$plan` update, the file was re-read and matched the current execution state before the next task began.
 - [ ] Ready tasks ran continuously until completion or a real blocker required escalation.
 - [ ] All work remains uncommitted.
-- [ ] Before stopping, `remember-lessons` was invoked if the session produced durable, reusable learnings worth preserving.
+- [ ] Before stopping, `self-improve` was invoked if the session produced durable, reusable learnings worth preserving.
 - [ ] Any captured lessons were durable and reusable, not one-off task trivia.
