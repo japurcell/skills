@@ -5,6 +5,8 @@ description: Start spec-driven development — write a structured specification 
 
 # Spec
 
+**Do NOT write code.** The output is a spec document, not implementation.
+
 ## The Workflow
 
 1. Invoke `addy-spec-driven-development` skill.
@@ -48,6 +50,8 @@ Rules:
 If you are unable to write to that exact path, explicitly say so and stop rather than writing somewhere else.
 
 ## Verification
+
+- [ ] No code was written during the spec phase
 
 After asking clarifying questions, verify that:
 
