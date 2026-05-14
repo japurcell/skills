@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+# example hooks.json configuration for this script:
+# {
+#   "version": 1,
+#   "hooks": {
+#     "postToolUse": [
+#       {
+#         "type": "command",
+#         "bash": "cd \"$HOME/.copilot/hooks\" && ./scripts/format.sh",
+#         "timeoutSec": 20
+#       }
+#     ]
+#   }
+# }
 
 set -euo pipefail
 
