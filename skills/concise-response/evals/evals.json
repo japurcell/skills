@@ -1,0 +1,113 @@
+{
+  "skill_name": "concise-response",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Write the exact user-facing final response only and save it to `outputs/response.md`: You fixed duplicate webhook deliveries by de-duping event IDs before enqueueing. The user did not ask for implementation details.",
+      "expected_output": "A short completion message that leads with the fix, names the meaningful change, and stops without filler or an offer to continue.",
+      "files": [],
+      "expectations": [
+        "Opens with completion or fix status instead of process narration.",
+        "Mentions duplicate webhook deliveries or event ID de-duping.",
+        "Stays brief, roughly 40 words or fewer.",
+        "Does not add an offer to continue or a recap."
+      ],
+      "assertions": [
+        "Opens with completion or fix status instead of process narration.",
+        "Mentions duplicate webhook deliveries or event ID de-duping.",
+        "Stays brief, roughly 40 words or fewer.",
+        "Does not add an offer to continue or a recap."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Write the exact user-facing progress update only and save it to `outputs/response.md`: You are still working. You found the flaky login test's root cause: a race between cache invalidation and session creation. The user does not need to do anything yet.",
+      "expected_output": "A brief progress note that says work is still in flight, reports the root cause, and avoids asking the user for unnecessary action.",
+      "files": [],
+      "expectations": [
+        "Clearly says the work is still in progress.",
+        "Mentions the race between cache invalidation and session creation.",
+        "Does not ask the user to do anything.",
+        "Stays brief, roughly 45 words or fewer."
+      ],
+      "assertions": [
+        "Clearly says the work is still in progress.",
+        "Mentions the race between cache invalidation and session creation.",
+        "Does not ask the user to do anything.",
+        "Stays brief, roughly 45 words or fewer."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write the exact user-facing blocker update only and save it to `outputs/response.md`: You cannot continue the deploy because the production API key is missing from the environment. The only thing you need from the user is the correct secret name or value.",
+      "expected_output": "A short blocker message that leads with the block, states the missing production API key, and asks only for the missing secret information.",
+      "files": [],
+      "expectations": [
+        "Opens with blocked or cannot continue status.",
+        "Mentions the missing production API key.",
+        "Asks only for the secret name or value needed to proceed.",
+        "Stays brief, roughly 50 words or fewer."
+      ],
+      "assertions": [
+        "Opens with blocked or cannot continue status.",
+        "Mentions the missing production API key.",
+        "Asks only for the secret name or value needed to proceed.",
+        "Stays brief, roughly 50 words or fewer."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write the exact user-facing clarification question only and save it to `outputs/response.md`: You can finish the hotfix as soon as the user tells you which branch should receive it.",
+      "expected_output": "A single direct question that asks only which branch should receive the hotfix.",
+      "files": [],
+      "expectations": [
+        "Asks exactly one direct question.",
+        "Mentions the branch or hotfix target.",
+        "Avoids extra explanation or preamble.",
+        "Stays very short, roughly 20 words or fewer."
+      ],
+      "assertions": [
+        "Asks exactly one direct question.",
+        "Mentions the branch or hotfix target.",
+        "Avoids extra explanation or preamble.",
+        "Stays very short, roughly 20 words or fewer."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Write the exact user-facing response only and save it to `outputs/response.md`: The user explicitly asked for a concise failure explanation plus exactly three remediation steps after a failed deployment caused by an expired TLS certificate.",
+      "expected_output": "A concise failure explanation followed by exactly three brief remediation steps, with no extra filler.",
+      "files": [],
+      "expectations": [
+        "Briefly states that the deployment failed because the TLS certificate expired.",
+        "Includes exactly three remediation steps.",
+        "Keeps the steps concise rather than turning them into a long essay.",
+        "Does not add filler beyond the requested explanation and steps."
+      ],
+      "assertions": [
+        "Briefly states that the deployment failed because the TLS certificate expired.",
+        "Includes exactly three remediation steps.",
+        "Keeps the steps concise rather than turning them into a long essay.",
+        "Does not add filler beyond the requested explanation and steps."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Write the exact user-facing response only and save it to `outputs/response.md`: A teammate asks how you will inspect a 15,000-line CI log and a large source file while keeping token usage low during debugging.",
+      "expected_output": "A concise response that says tool output will be limited to targeted slices such as a failing log tail, filtered search hits, or specific line ranges instead of dumping full output.",
+      "files": [],
+      "expectations": [
+        "Mentions using targeted slices such as tail, filtered search hits, or line ranges.",
+        "Explicitly avoids dumping the full log or full file.",
+        "Keeps the answer concise, roughly 60 words or fewer.",
+        "Does not add filler or an unnecessary offer to continue."
+      ],
+      "assertions": [
+        "Mentions using targeted slices such as tail, filtered search hits, or line ranges.",
+        "Explicitly avoids dumping the full log or full file.",
+        "Keeps the answer concise, roughly 60 words or fewer.",
+        "Does not add filler or an unnecessary offer to continue."
+      ]
+    }
+  ]
+}
