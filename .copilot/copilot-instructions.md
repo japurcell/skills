@@ -8,6 +8,8 @@ Always load:
 - `karpathy-guidelines` - Guides reading, writing, and refactoring code.
 - `concise-response` - Generates clear and brief answers.
 
+**Subagent Dispatch**: When dispatching subagents, always instruct them to load the `context-engineering` skill.
+
 ## RTK — Token-Optimized CLI
 
 **rtk** is a CLI proxy that filters and compresses command outputs, saving 60-90% tokens.
