@@ -46,8 +46,8 @@ Create a clear, implementation-ready PRD. Do not implement the feature.
 
 **Goal:** Identify implementation options and recommend one.
 
-1. Invoke the `official-sources` skill so implementation decisions are grounded in current official documentation.
-2. Launch 2-3 parallel `code-architect` subagents, where the number matches feature complexity.
+1. Launch 2-3 parallel `code-architect` subagents, where the number matches feature complexity.
+2. Instruct each subagent to invoke the `official-sources` skill so implementation decisions are grounded in current official documentation.
 3. Each agent should propose a different approach, such as:
    - Minimal changes
    - Clean architecture
@@ -83,6 +83,7 @@ Each story should be small enough for one focused implementation session.
 ### US-001: [Title]
 
 **Description:** As a [user], I want [feature] so that [benefit].
+
 **Acceptance Criteria:**
 
 - [ ] Specific verifiable criterion
