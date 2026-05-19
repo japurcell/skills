@@ -10,9 +10,9 @@ You are an autonomous coding agent working on a software project.
 ## Inputs
 
 - `prd_file` (required)
-- `progress_file` (default: `<same location as $prd_file>/progress.txt`)
+- `progress_file` (optional): if not provided, resolve to `dirname(prd_file) + "/progress.txt"`
 
-## Task
+## Workflow
 
 Complete exactly ONE user story per iteration:
 
