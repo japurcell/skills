@@ -15,13 +15,13 @@ Create a clear, implementation-ready PRD. Do not implement the feature.
      - What should it do?
      - Any constraints or preferences?
    - Summarize your understanding only if there is meaningful uncertainty.
-2. Explore the codebase.
+2. [Explore the codebase](#codebase-exploration) and wait for the code-explorer subagents to return findings.
 3. Ask clarifying questions until requirements are clear enough to write the PRD. Focus on:
    - Objective and target users
    - Core features and acceptance criteria
    - Tech stack preferences and constraints
    - Boundaries: what to do, ask first about, and never do
-4. Design the architecture and implementation approach.
+4. [Design the architecture and implementation approach](#architecture-design) and wait for the code-architect subagents to return findings.
 5. Write the PRD.
 6. Save it to `.agents/scratchpad/[feature-name]/prd.md`.
 
