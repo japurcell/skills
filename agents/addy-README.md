@@ -49,7 +49,7 @@ Is the work a single perspective on a single artifact?
 ├── Yes → Direct persona invocation
 └── No  → Are the sub-tasks independent (no shared mutable state, no ordering)?
          ├── Yes → Slash command with parallel fan-out (e.g. /ship)
-         └── No  → Sequential slash commands run by the user (/spec → /plan → /review → /test → /ship)
+         └── No  → Sequential slash commands run by the user (/spec → /plan → /build → /test → /review)
 ```
 
 ## Worked example: valid orchestration
