@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository publishes custom coding skills from `skills/` and custom agent definitions from `agents/`.
+This repository publishes custom coding skills from `skills/`, custom agent definitions from `agents/`, and local Copilot instructions in `.copilot/copilot-instructions.md`.
 
 ## Getting Started
 

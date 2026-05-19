@@ -1,250 +1,110 @@
 #!/usr/bin/env bash
-# example hooks.json configuration for this script:
-# {
-#   "version": 1,
-#   "hooks": {
-#     "postToolUse": [
-#       {
-#         "type": "command",
-#         "bash": "cd \"$HOME/.copilot/hooks\" && ./scripts/format.sh",
-#         "timeoutSec": 20
-#       }
-#     ]
-#   }
-# }
-
 set -euo pipefail
 
-INPUT="$(cat)"
-SESSION_ID=$(echo "$INPUT" | jq -r '.sessionId // .session_id // empty')
-TIMESTAMP=$(echo "$INPUT" | jq -r '.timestamp')
-TOOL_NAME=$(echo "$INPUT" | jq -r '.toolName // .tool_name // empty')
-TOOL_ARGS=$(echo "$INPUT" | jq -r '.toolArgs // .tool_input // empty')
-HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-COPILOT_HOME_DIR="${COPILOT_HOME:-$HOME/.copilot}"
-AUDIT_LOG="${AUDIT_LOG:-$HOOK_DIR/audit.log}"
-AUDIT_LOG_MAX_BYTES="${AUDIT_LOG_MAX_BYTES:-1048576}"
-AUDIT_LOG_BACKUPS="${AUDIT_LOG_BACKUPS:-3}"
-AUDIT_LOCK="${AUDIT_LOCK:-$AUDIT_LOG.lock}"
-FILES=""
-
-rotate_audit_log() {
-  local current_size
-  local backup
-
-  [[ -f "$AUDIT_LOG" ]] || return 0
-
-  current_size=$(wc -c < "$AUDIT_LOG")
-  (( current_size < AUDIT_LOG_MAX_BYTES )) && return 0
-
-  for ((backup=AUDIT_LOG_BACKUPS; backup >= 1; backup--)); do
-    if [[ -f "$AUDIT_LOG.$backup" ]]; then
-      if [[ "$backup" -eq "$AUDIT_LOG_BACKUPS" ]]; then
-        rm -f "$AUDIT_LOG.$backup"
-      else
-        mv -f "$AUDIT_LOG.$backup" "$AUDIT_LOG.$((backup + 1))"
-      fi
-    fi
-  done
-
-  mv -f "$AUDIT_LOG" "$AUDIT_LOG.1"
+require_cmd() {
+  local cmd="${1:?require_cmd: command name required}"
+  command -v "$cmd" >/dev/null 2>&1 || {
+    echo "Required command not found: $cmd" >&2
+    exit 1
+  }
 }
 
-append_audit_line() {
-  local line="$1"
-  printf '%s\n' "$line" >> "$AUDIT_LOG"
-}
-
-log_command_failure() {
-  local command="$1"
-  local status="$2"
-
-  append_audit_line "[$TIMESTAMP] Session: $SESSION_ID, Failure: $command (exit $status)"
-}
-
-extract_patch_files() {
-  local patch_text="$1"
-
-  printf '%s\n' "$patch_text" | sed -n \
-    -e 's/^\*\*\* Update File: //p' \
-    -e 's/^\*\*\* Add File: //p' \
-    -e 's/^\*\*\* Delete File: //p' \
-    -e 's/^\*\*\* Move to: //p'
-}
-
-extract_direct_files() {
-  echo "$INPUT" | jq -r '.toolArgs.path // .toolArgs.filePath // .toolArgs.file_path // .toolArgs.files[]? // .toolArgs.paths[]? // .tool_input.path // .tool_input.filePath // .tool_input.file_path // .tool_input.files[]? // .tool_input.paths[]? // empty'
-}
-
-find_task_call_id_by_args() {
-  local events_path="$1"
-  local current_args="$2"
-
-  jq -r --arg current_args "$current_args" '
-    select(.type == "tool.execution_start")
-    | .data
-    | select((.toolName // "") == "task")
-    | select(.arguments == ($current_args | fromjson))
-    | .toolCallId
-  ' "$events_path" | tail -n 1
-}
-
-find_task_call_id_by_result() {
-  local events_path="$1"
-  local task_result="$2"
-  local agent_id="$3"
-
-  jq -r --arg result "$task_result" --arg agent_id "$agent_id" '
-    select(.type == "tool.execution_complete")
-    | .data
-    | select(.success == true)
-    | select((.result.content // "") == $result)
-    | if $agent_id == "" then
-        .toolCallId
-      else
-        select((.toolTelemetry.restrictedProperties.agent_id // .toolTelemetry.restrictedProperties.agentId // "") == $agent_id)
-        | .toolCallId
-      end
-  ' "$events_path" | tail -n 1
-}
-
-find_task_call_id_by_agent_id() {
-  local events_path="$1"
-  local requested_agent_id="$2"
-
-  jq -r --arg requested_agent_id "$requested_agent_id" '
-    select(.type == "tool.execution_start")
-    | .data
-    | select((.toolName // "") == "task")
-    | select((.arguments.name // "") == $requested_agent_id or (.toolCallId // "") == $requested_agent_id)
-    | .toolCallId
-  ' "$events_path" | tail -n 1
-}
-
-extract_child_task_files() {
-  local events_path="$1"
-  local parent_tool_call_id="$2"
-  local task_files=""
-  local event
-  local child_tool_name
-  local child_files=""
-  local child_args=""
-
-  [[ -n "$parent_tool_call_id" ]] || return 0
-
-  while IFS= read -r event; do
-    child_tool_name=$(jq -r '.toolName // empty' <<<"$event")
-    child_files=""
-
-    case "$child_tool_name" in
-      apply_patch)
-        child_args=$(jq -r '.arguments // empty' <<<"$event")
-        child_files=$(extract_patch_files "$child_args")
-        ;;
-      create|edit)
-        child_files=$(jq -r '.arguments.path // .arguments.filePath // .arguments.file_path // .arguments.files[]? // .arguments.paths[]? // empty' <<<"$event")
-        ;;
-    esac
-
-    if [[ -n "$child_files" ]]; then
-      task_files+="${child_files}"$'\n'
-    fi
-  done < <(
-    jq -c --arg parent "$parent_tool_call_id" '
-      select(.type == "tool.execution_start")
-      | .data
-      | select((.parentToolCallId // "") == $parent)
-      | select((.toolName // "") == "apply_patch" or (.toolName // "") == "create" or (.toolName // "") == "edit")
-    ' "$events_path"
-  )
-
-  printf '%s' "${task_files%$'\n'}"
-}
-
-extract_task_files() {
-  local events_path="$COPILOT_HOME_DIR/session-state/$SESSION_ID/events.jsonl"
-  local task_result
-  local agent_id
-  local parent_tool_call_id
-
-  [[ -f "$events_path" ]] || return 0
-
-  task_result=$(echo "$INPUT" | jq -r '.toolResult.textResultForLlm // .tool_result.text_result_for_llm // empty')
-  parent_tool_call_id=$(find_task_call_id_by_args "$events_path" "$TOOL_ARGS")
-
-  if [[ -z "$parent_tool_call_id" ]]; then
-    [[ -n "$task_result" ]] || return 0
-
-    agent_id=$(echo "$INPUT" | jq -r '.toolResult.toolTelemetry.restrictedProperties.agent_id // .toolResult.toolTelemetry.restrictedProperties.agentId // .tool_result.tool_telemetry.restricted_properties.agent_id // .tool_result.tool_telemetry.restricted_properties.agentId // empty')
-    parent_tool_call_id=$(find_task_call_id_by_result "$events_path" "$task_result" "$agent_id")
+cleanup() {
+  local exit_code=$?
+  if [[ -n "${LOCK_FD_OPENED:-}" ]]; then
+    flock -u 9 || true
+    exec 9>&- || true
   fi
-
-  extract_child_task_files "$events_path" "$parent_tool_call_id"
+  exit "$exit_code"
 }
 
-extract_read_agent_files() {
-  local events_path="$COPILOT_HOME_DIR/session-state/$SESSION_ID/events.jsonl"
-  local requested_agent_id
-  local parent_tool_call_id
+require_cmd jq
+require_cmd flock
 
-  [[ -f "$events_path" ]] || return 0
+INPUT="$(cat)"
+SESSION_ID=$(jq -r '.sessionId // .session_id // empty' <<< "$INPUT")
+TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$INPUT")
+TOOL_NAME=$(jq -r '.toolName // .tool_name // empty' <<< "$INPUT")
+TOOL_ARGS=$(jq -r '.toolArgs // .tool_input // empty' <<< "$INPUT")
 
-  requested_agent_id=$(echo "$INPUT" | jq -r '.toolArgs.agentId // .toolArgs.agent_id // .tool_input.agentId // .tool_input.agent_id // empty')
-  [[ -n "$requested_agent_id" ]] || return 0
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+HOOK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-  parent_tool_call_id=$(find_task_call_id_by_agent_id "$events_path" "$requested_agent_id")
+AUDIT_LIB="$SCRIPT_DIR/audit.sh"
+if [[ ! -f "$AUDIT_LIB" ]]; then
+  echo "Missing audit library: $AUDIT_LIB" >&2
+  exit 1
+fi
 
-  extract_child_task_files "$events_path" "$parent_tool_call_id"
-}
+# shellcheck source=/dev/null
+source "$AUDIT_LIB"
 
-if [ "$TOOL_NAME" = "apply_patch" ]; then
-  FILES=$(extract_patch_files "$TOOL_ARGS")
-elif [ "$TOOL_NAME" = "create" ] || [ "$TOOL_NAME" = "edit" ]; then
-  FILES=$(extract_direct_files)
-elif [ "$TOOL_NAME" = "task" ]; then
-  FILES=$(extract_task_files)
-elif [ "$TOOL_NAME" = "read_agent" ]; then
-  FILES=$(extract_read_agent_files)
+AUDIT_LOG="${AUDIT_LOG:-$HOOK_DIR/audit.log}"
+AUDIT_LOCK="${AUDIT_LOCK:-$AUDIT_LOG.lock}"
+
+FILES=""
+if [[ "$TOOL_NAME" == "apply_patch" ]]; then
+  FILES=$(
+    printf '%s\n' "$TOOL_ARGS" | sed -n \
+      -e 's/^\*\*\* Update File: //p' \
+      -e 's/^\*\*\* Add File: //p' \
+      -e 's/^\*\*\* Delete File: //p' \
+      -e 's/^\*\*\* Move to: //p'
+  )
+elif [[ "$TOOL_NAME" == "create" || "$TOOL_NAME" == "edit" ]]; then
+  FILES=$(jq -r '
+    .toolArgs.path //
+    .toolArgs.files[]? //
+    .toolArgs.paths[]? //
+    .tool_input.path //
+    .tool_input.files[]? //
+    .tool_input.paths[]? //
+    empty
+  ' <<< "$INPUT")
 fi
 
 mkdir -p "$(dirname "$AUDIT_LOG")"
 
-exec 9>"$AUDIT_LOCK"
-flock -x 9
-rotate_audit_log
-append_audit_line "[$TIMESTAMP] Session: $SESSION_ID, Tool: $TOOL_NAME"
+trap cleanup EXIT
 
-if [ -n "$FILES" ]; then
+exec 9>"$AUDIT_LOCK"
+LOCK_FD_OPENED=1
+flock -x 9
+
+rotate_audit_log "$AUDIT_LOG"
+append_audit_line "$AUDIT_LOG" "[$TIMESTAMP] Session: $SESSION_ID, Tool: $TOOL_NAME"
+
+if [[ -n "$FILES" ]]; then
   while IFS= read -r FILE; do
     [[ -n "$FILE" ]] || continue
 
-    append_audit_line "[$TIMESTAMP] Session: $SESSION_ID, File: $FILE"
+    append_audit_line "$AUDIT_LOG" "[$TIMESTAMP] Session: $SESSION_ID, File: $FILE"
 
     if [[ "$FILE" =~ \.(js|ts|jsx|tsx|mjs|cjs)$ ]]; then
-      append_audit_line "[$TIMESTAMP] Session: $SESSION_ID, Command: npx oxfmt $FILE"
-      if npx oxfmt "$FILE" 2>&1; then
-        :
-      else
-        status=$?
-        log_command_failure "npx oxfmt $FILE" "$status"
-        exit "$status"
+      require_cmd npx
+      if ! oxfmt_output=$(npx oxfmt "$FILE" 2>&1); then
+        append_audit_line "$AUDIT_LOG" "[$TIMESTAMP] Session: $SESSION_ID, Error: npx oxfmt failed for $FILE, Output: $oxfmt_output"
+        exit 1
       fi
+      append_audit_line "$AUDIT_LOG" "[$TIMESTAMP] Session: $SESSION_ID, Command: npx oxfmt $FILE"
     fi
 
-    if [[ "$FILE" =~ \.(cs)$ ]]; then
-      append_audit_line "[$TIMESTAMP] Session: $SESSION_ID, Command: dotnet format --include $FILE"
-      if dotnet format --include "$FILE" --severity error 2>&1; then
-        :
-      else
-        status=$?
-        log_command_failure "dotnet format --include $FILE" "$status"
-        exit "$status"
+    if [[ "$FILE" =~ \.cs$ ]]; then
+      require_cmd dotnet
+      if ! cd "$REPO_ROOT/src"; then
+        append_audit_line "$AUDIT_LOG" "[$TIMESTAMP] Session: $SESSION_ID, Error: failed to cd to $REPO_ROOT/src"
+        exit 1
       fi
+
+      if ! dotnet_format_output=$(dotnet format --no-restore --include "$FILE" 2>&1); then
+        append_audit_line "$AUDIT_LOG" "[$TIMESTAMP] Session: $SESSION_ID, Error: dotnet format failed for $FILE, Output: $dotnet_format_output"
+        exit 1
+      fi
+
+      append_audit_line "$AUDIT_LOG" "[$TIMESTAMP] Session: $SESSION_ID, Command: dotnet format --no-restore --include $FILE"
     fi
   done <<< "$FILES"
 fi
-
-flock -u 9
-exec 9>&-
 
 echo '{"continue":true}'

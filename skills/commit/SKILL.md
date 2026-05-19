@@ -1,131 +1,148 @@
 ---
 name: commit
-description: "Create one clean git commit from current local changes, push the branch to origin, and optionally open a PR. Use for commit, save, or push requests. Also use for commit+PR requests when create_pr=true or the user explicitly asks for a PR."
+description: "Create 1 git commit from current changes, optionally open a PR."
 ---
 
 # Commit
 
 ## Inputs
 
-- **spec_file** (optional): Path to a spec file that may contain issue references and target file paths.
-- **issue_numbers** (optional): Issue numbers to include; if omitted, try to extract them from `spec_file`.
-- **base_branch** (optional, default: `main`): Protected base branch name.
-- **feature_branch** (optional): Branch to create or use.
-- **co_author** (optional, default: `Copilot <223556219+Copilot@users.noreply.github.com>`): One or more `NAME <EMAIL>` entries separated by newlines; render each as `Co-authored-by: NAME <EMAIL>`.
-- **create_pr** (optional, default: `false`): If `true`, open a PR after successful commit and push.
+- `spec_file` (optional)
+- `issue_numbers` (optional)
+- `base_branch` (default: `main`)
+- `feature_branch` (optional)
+- `co_author` (optional, default: `Copilot <223556219+Copilot@users.noreply.github.com>`)
+- `create_pr` (default: `false`)
 
 ## Context
 
-- Git status: !`git status --short --branch`
-- Staged diff: !`git diff --cached`
-- Unstaged diff: !`git diff`
-- Staged files: !`git diff --cached --name-only`
-- Unstaged files: !`git diff --name-only`
-- Current branch: !`git branch --show-current`
-- Recent commits: !`git log --oneline -10`
+- !`git status --short --branch`
+- !`git diff --cached`
+- !`git diff`
+- !`git diff --cached --name-only`
+- !`git diff --name-only`
+- !`git branch --show-current`
+- !`git log --oneline -10`
 
 ## Goal
 
-Create exactly one atomic commit, push its branch to `origin`, optionally open a PR, and return branch, commit, push, and PR details.
+- Create exactly 1 commit
+- Open PR only if requested
 
-## Stop the workflow if
+## Stop if
 
-- not inside a Git repository
-- Git author identity is not configured
-- there are no staged or unstaged changes
-- merge, rebase, or cherry-pick is in progress
-- there are unmerged paths or index conflicts
-- `HEAD` is detached and no new branch will be created
-- the selected staged diff is empty
-- a required Git command for branching, staging, committing, or pushing fails
+- not in git repo
+- git author not configured
+- no changes
+- merge/rebase/cherry-pick in progress
+- conflicts/unmerged paths exist
+- `HEAD` detached and no branch will be created
+- selected diff is empty
+- required git command fails
 
-## PR creation is requested when
+## PR requested if
 
-- `create_pr=true`, or
-- the user explicitly asks for a PR
+- `create_pr=true`
+- user explicitly asks for PR
 
-## Skip PR creation and report the blocker if PR creation was requested and
+## PR blocked if
 
-- `gh` is not installed
-- GitHub CLI is not authenticated
-- the repository does not support GitHub PR creation
+- `gh` missing
+- `gh` not authenticated
+- repo cannot create GitHub PRs
 
-## Workflow
+## Algorithm
 
-### 1) Extract issues
+### 1) Issues
 
-- Accept `#123` or bare integers from `issue_numbers`.
-- If `issue_numbers` is missing and `spec_file` is readable, extract from:
+- Parse issues from `issue_numbers` (`#123` or `123`)
+- If missing, and `spec_file` is readable, also parse:
   - `#123`
   - `GH-123`
-  - full GitHub issue URLs
-- Deduplicate while preserving first appearance.
-- Use `Fixes #N` only if the user explicitly says to fix or close the issue; otherwise use `Refs #N`.
+  - GitHub issue URLs
+- Deduplicate, preserve order
+- Trailer verb:
+  - `Fixes` only if user explicitly says fix/close
+  - else `Refs`
 
-### 2) Choose branch
+### 2) Branch
 
-- If `feature_branch` is provided:
-  - switch to it if it exists locally and checkout succeeds cleanly
-  - else create a local tracking branch if it exists remotely
-  - else create it
-- Otherwise:
-  - if current branch is `base_branch`, `main`, `master`, or empty, create a new branch
-  - else reuse current branch
+If `feature_branch` provided:
 
-### 3) Select files
+- use local branch if it exists
+- else use remote tracking branch if it exists
+- else create it
 
-- If staged changes exist, commit staged changes only.
-- Otherwise select files in this order:
-  1. files explicitly named in `spec_file` and present in current changes
-  2. the only changed file, if exactly one file changed
-  3. all changed files, if all are under one top-level directory
-- Otherwise stop and ask which files to commit.
-- If `spec_file` cannot be read or parsed, ignore it; if that makes selection ambiguous, stop and ask.
+Else:
 
-### 4) Choose commit type
+- if current branch is `base_branch`, `main`, `master`, or empty: create branch
+- else use current branch
 
-Use:
+### 3) Files
 
-- `docs` for docs-only changes
-- `test` for tests-only changes
-- `fix` if the user explicitly says `fix`, `bug`, or `bugfix`, or the diff clearly resolves an error or failing condition
-- `feat` if the diff clearly adds a user-facing capability
-- `refactor` if the diff restructures code without clear behavior change
-- `perf` if the diff clearly improves performance
-- otherwise `chore`
+If staged changes exist:
 
-### 5) Name branch
+- commit staged changes only
 
-When creating a branch:
+Else select, in order:
 
-- prefix: selected commit type when reasonable, else `chore`
-- issue: first extracted issue number, if any
-- slug, in order:
+1. changed files named in `spec_file`
+2. only changed file
+3. all changed files if all under one top-level directory
+
+Else:
+
+- stop and ask which files to commit
+
+If `spec_file` unreadable/unparseable:
+
+- ignore it
+
+Before selecting files to commit:
+
+- exclude ignored files and paths matched by `.gitignore`
+
+### 4) Type
+
+Choose one:
+
+- `docs`: docs-only
+- `test`: tests-only
+- `fix`: user says fix/bug/bugfix, or diff clearly fixes error
+- `feat`: clearly adds user-facing capability
+- `refactor`: restructure without clear behavior change
+- `perf`: performance improvement
+- else `chore`
+
+### 5) New branch name
+
+Only if creating branch.
+
+- prefix = commit type, else `chore`
+- issue = first issue number if any
+- slug = first available:
   1. `spec_file` basename without extension
-  2. concise summary of selected changes
+  2. short summary of selected changes
   3. single selected file basename without extension
   4. `worktree-update-YYYYMMDD`
-- normalize slug to lowercase kebab-case
-- format:
-  - `<type>/<issue>-<slug>` if an issue exists
-  - `<type>/<slug>` otherwise
+- slug must be lowercase kebab-case
 
-### 6) Build commit subject
+Format:
 
-Use a concise conventional subject:
+- `<type>/<issue>-<slug>` if issue exists
+- `<type>/<slug>` otherwise
 
-- prefer a short action-oriented summary of selected changes
-- if unclear and exactly one file is selected: `update <file-basename>`
-- if unclear and all selected files are under one top-level directory: `update <directory>`
-- otherwise: `update changed files`
+### 6) Subject
 
-### 7) Create commit message
+Use short action summary.
 
-Rules:
+Fallbacks:
 
-- blank line after subject
-- blank line before trailers
-- no blank lines between trailer lines
+1. `update <file-basename>`
+2. `update <directory>`
+3. `update changed files`
+
+### 7) Commit message
 
 Format exactly:
 
@@ -134,32 +151,36 @@ Format exactly:
 
 Refs #123
 Refs #456
-
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 Co-authored-by: Jane <jane@example.com>
 ```
 
-### 8) Commit and push
+Rules:
 
-- Create exactly one commit.
-- Prefer non-interactive commands.
-- If `origin` does not exist, create the local commit, skip push and PR creation, and report that no `origin` remote is configured.
-- Otherwise push to `origin`.
-- Do not force-push unless explicitly requested.
+- first line = `<type>: <subject>`
+- blank line after subject
+- blank line before trailers
+- no blank lines between trailer lines
 
-### 9) Open PR
+### 8) Commit
 
-If PR creation was requested and push succeeded:
+- create exactly 1 commit
+- prefer non-interactive commands
+- do not push unless user explicitly asks
 
-- if a PR already exists for the branch, return the existing PR URL and do not create a duplicate
-- otherwise run `gh pr create --base <base_branch> --head <branch> --title ... --body ...`
+### 9) PR
+
+Only if PR requested.
+
+- if PR already exists for branch: return its URL
+- else run `gh pr create --base <base_branch> --head <branch> --title ... --body ...`
 - always pass both `--title` and `--body`
-- use the commit subject as the PR title
-- include issue linkage in the PR body using `Fixes #N` or `Refs #N`
-- if there are no issues, omit the `Issues:` section
-- if PR creation fails after commit and push succeed, report PR failure and next action
+- title = commit subject
+- include issue lines in body if any
+- omit `Issues:` if no issues
+- if PR creation fails: report failure and next action
 
-PR body format:
+PR body with issues:
 
 ```text
 Summary:
@@ -170,7 +191,7 @@ Refs #123
 Fixes #456
 ```
 
-If there are no issues:
+PR body without issues:
 
 ```text
 Summary:
@@ -184,11 +205,14 @@ Return:
 - branch name
 - commit SHA
 - commit subject
-- push result or exact push error
 - PR URL if created
 - next action if stopped
 
 ## Guardrails
 
-- do not create multiple commits
-- stop and report the exact blocker and next action
+- never create more than 1 commit
+- stop on blocker
+- report exact blocker and next action
+- never stage or commit ignored files, tool-generated artifacts, local state files, traces, videos, screenshots, storage-state files, or scratch outputs unless the user explicitly asks for them to be versioned
+- before staging, verify candidate files are not ignored via git
+- if staged changes include ignored-looking or generated artifacts, stop and ask before committing

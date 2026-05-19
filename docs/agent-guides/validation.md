@@ -6,7 +6,7 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 
 - `./scripts/copilot-install.sh`: refresh installed skills, references, hooks, agents, and Copilot instructions after editing repo source and before checking live model behavior
 - `bash -n scripts/copilot-install.sh`: syntax-check the local Copilot installer
-- `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`: syntax-check and exercise the addy importer, including upstream sync, dependency-copying, and hook-copying behavior
+- `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`: syntax-check and exercise the addy importer, including upstream sync, dependency-copying, and reference-copying behavior
 
 ## Skill validation and packaging
 
@@ -18,7 +18,6 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 - `bash skills/agent-sop-author/validate-sop.sh path/to/file.sop.md`: validate an Agent SOP file
 - `python3 -m py_compile skills/<skill-name>/evals/grade_benchmark.py`: syntax-check a skill-local Python benchmark grader after editing it
 - `python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>`: grade benchmark-style eval artifacts when a skill ships a local `grade_benchmark.py` helper
-- `python3 skills/security-review/evals/grade_reports.py <run-dir>`: grade a `security-review` eval run
 - `bash scripts/test-hooks-format.sh`: validate hook audit logging, rollover, and locking behavior
 
 ## Workflow
