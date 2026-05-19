@@ -1,58 +1,57 @@
 ---
 name: ship
-description: Run a parallel pre-launch review with three specialist personas, then merge the results into a go/no-go decision with a rollback plan.
+description: Run the pre-launch checklist via parallel fan-out to specialist personas, then synthesize a go/no-go decision
 ---
 
-`/ship` is a fan-out orchestrator. It reviews the current change by running three specialist personas independently, then synthesizes their reports into one go/no-go decision with a rollback plan.
+Invoke the `addy-shipping-and-launch` skill.
 
-## Phase A — Fan-out
+`/ship` is a **fan-out orchestrator**. It runs three specialist personas in parallel against the current change, then merges their reports into a single go/no-go decision with a rollback plan. The personas operate independently — no shared state, no ordering — which is what makes parallel execution safe and useful here.
 
-Use the Agent tool to start these three subagents concurrently in one assistant turn. Do not call them sequentially.
+## Phase A — Parallel fan-out
 
-In Claude Code, set `subagent_type` to the persona name:
+Spawn three subagents concurrently using the Agent tool. **Issue all three Agent tool calls in a single assistant turn so they execute in parallel** — sequential calls defeat the purpose of this command.
 
-1. `addy-code-reviewer` — Review staged changes or recent commits across correctness, readability, architecture, security, and performance. Return the standard review template.
-2. `addy-security-auditor` — Review for vulnerabilities and threats, including OWASP Top 10, secrets handling, auth/authz, and dependency CVEs. Return the standard audit report.
-3. `addy-test-engineer` — Review test coverage and identify gaps in happy path, edge cases, error paths, and concurrency. Return the standard coverage analysis.
+In Claude Code, each call passes `subagent_type` matching the persona's `name` field:
 
-If no Agent tool is available, run the three persona prompts separately and treat the results as parallel inputs for Phase B.
+1. **`addy-code-reviewer`** — Run a five-axis review (correctness, readability, architecture, security, performance) on the staged changes or recent commits. Output the standard review template.
+2. **`addy-security-auditor`** — Run a vulnerability and threat-model pass. Check OWASP Top 10, secrets handling, auth/authz, dependency CVEs. Output the standard audit report.
+3. **`addy-test-engineer`** — Analyze test coverage for the change. Identify gaps in happy path, edge cases, error paths, and concurrency scenarios. Output the standard coverage analysis.
 
-Subagent constraints:
+In other harnesses without an Agent tool, invoke each persona's system prompt sequentially and treat their outputs as if returned in parallel — the merge phase still works.
 
-- Subagents must not spawn other subagents.
-- Each subagent works in its own context and returns only its report.
-- If collaboration between specialists is required, use Agent Teams instead of this command.
+Constraints (from Claude Code's subagent model):
 
-Persona resolution:
+- Subagents cannot spawn other subagents — do not let one persona delegate to another.
+- Each subagent gets its own context window and returns only its report to this main session.
+- If you need teammates that talk to each other instead of just reporting back, use Claude Code Agent Teams and reference these personas as teammate types (see `references/orchestration-patterns.md`).
 
-- If custom personas with the same names exist in `.claude/agents/` or `~/.claude/agents/`, use those instead of plugin defaults.
-- User-defined personas take precedence by design.
+**Persona resolution.** If you've defined your own `addy-code-reviewer`, `addy-security-auditor`, or `addy-test-engineer` in `.claude/agents/` or `~/.claude/agents/`, those take precedence over this plugin's versions — `/ship` picks up your customizations automatically. This is intentional: plugin subagents sit at the bottom of Claude Code's scope priority table, so user-level definitions win by design.
 
-## Phase B — Merge
+## Phase B — Merge in main context
 
-After all three reports return, the main agent merges them in the main context:
+Once all three reports are back, the main agent (not a sub-persona) synthesizes them:
 
-1. **Code Quality** — Combine Critical and Important findings from `addy-code-reviewer` with any failing tests, lint, or build output. Remove duplicates.
-2. **Security** — Treat any Critical or High finding from `addy-security-auditor` as a launch blocker. Cross-check with `addy-code-reviewer` security findings.
-3. **Performance** — Use `addy-code-reviewer` performance findings and check Core Web Vitals if relevant.
-4. **Accessibility** — Verify keyboard navigation, screen reader support, and contrast directly, or run an accessibility checklist.
-5. **Infrastructure** — Verify env vars, migrations, monitoring, and feature flags directly.
-6. **Documentation** — Verify README, ADRs, and changelog directly.
+1. **Code Quality** — Aggregate Critical/Important findings from `addy-code-reviewer` and any failing tests, lint, or build output. Resolve duplicates between reviewers.
+2. **Security** — Promote any Critical/High `addy-security-auditor` findings to launch blockers. Cross-reference with `addy-code-reviewer`'s security axis.
+3. **Performance** — Pull from `addy-code-reviewer`'s performance axis; cross-check Core Web Vitals if applicable.
+4. **Accessibility** — Verify keyboard nav, screen reader support, contrast (not covered by the three personas — handle directly here, or invoke the accessibility checklist).
+5. **Infrastructure** — Env vars, migrations, monitoring, feature flags. Verify directly.
+6. **Documentation** — README, ADRs, changelog. Verify directly.
 
-## Phase C — Decision
+## Phase C — Decision and rollback
 
-Return exactly one final report:
+Produce a single output:
 
 ```markdown
-## Code Review Decision: GO | NO-GO
+## Ship Decision: GO | NO-GO
 
 ### Blockers (must fix before ship)
 
-- [Source persona: finding + file:line]
+- [Source persona: Critical finding + file:line]
 
 ### Recommended fixes (should fix before ship)
 
-- [Source persona: finding + file:line]
+- [Source persona: Important finding + file:line]
 
 ### Acknowledged risks (shipping anyway)
 
@@ -60,7 +59,7 @@ Return exactly one final report:
 
 ### Rollback plan
 
-- Trigger conditions: [signals that would prompt rollback]
+- Trigger conditions: [what signals would prompt rollback]
 - Rollback procedure: [exact steps]
 - Recovery time objective: [target]
 
@@ -73,13 +72,8 @@ Return exactly one final report:
 
 ## Rules
 
-1. In Phase A, run all three personas in parallel, not sequentially.
-2. Personas do not call each other; the main agent merges all results.
-3. A rollback plan is required before any GO decision.
-4. If any persona reports a Critical finding, default to NO-GO unless the user explicitly accepts the risk.
-5. Skip fan-out only if all are true:
-   - the change touches 2 files or fewer
-   - the diff is under 50 lines
-   - it does not affect auth, payments, data access, or config/env
-
-Otherwise, use fan-out by default. `/ship` is intended for production-bound changes, especially when blast radius is non-trivial.
+1. The three Phase A personas run in parallel — never sequentially.
+2. Personas do not call each other. The main agent merges in Phase B.
+3. The rollback plan is mandatory before any GO decision.
+4. If any persona returns a Critical finding, the default verdict is NO-GO unless the user explicitly accepts the risk.
+5. **Skip the fan-out only if all of the following are true:** the change touches 2 files or fewer, the diff is under 50 lines, and it does not touch auth, payments, data access, or config/env. Otherwise, default to fan-out. `/ship` is designed for production-bound changes — when the blast radius is non-trivial, run the parallel review even if the diff looks small.
