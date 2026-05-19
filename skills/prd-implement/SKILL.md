@@ -40,6 +40,10 @@ Complete exactly ONE user story per iteration:
     - Append a progress entry to `progress_file`
     - Create exactly 1 commit containing all changes for this story with message: `feat: [Story ID] - [Story Title]`
 
+## Subagent Dispatch
+
+Instruct all subagents to invoke the `context-engineering` skill.
+
 ## Progress Report
 
 Append to `progress_file` only. Never replace its contents.
