@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "session-start",
+  "prompt": "Use the skill under test to prepare startup context for the fixture repo in `evals/files/session-start-fixture/`. The user asks: `Fix the login timeout in src/auth_service.py so it matches the spec.` Do not change code. Read only the context you need and write only the `PROJECT CONTEXT` block to `outputs/context.md`.",
+  "assertions": [
+    "The output uses the `PROJECT CONTEXT` block.",
+    "The output lists every present rules file, including `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+    "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections.",
+    "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`."
+  ]
+}

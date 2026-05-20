@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "conflict",
+  "prompt": "Use the skill under test for the fixture repo in `evals/files/conflict-fixture/`. The user asks to change invoice rounding to bankers rounding. `docs/spec.md` says to round half up, `src/invoice_math.py` rounds away from zero, and `AGENTS.md` says to ask before changing financial behavior without explicit approval. Do not change code. Write only the `CONFUSION` block to `outputs/conflict.md`.",
+  "assertions": [
+    "The output uses the `CONFUSION` block.",
+    "The output has `Rules say`, `Spec says`, `Code says`, and `Missing` lines.",
+    "The output includes options A, B, and C and ends by asking which path to follow."
+  ]
+}

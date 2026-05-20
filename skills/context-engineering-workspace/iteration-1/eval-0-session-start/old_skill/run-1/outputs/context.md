@@ -1,0 +1,13 @@
+PROJECT CONTEXT:
+- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (15 minutes), but do not change code — prepare startup context for the fix.
+- Stack: Python 3, pytest
+- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-old/SKILL.md
+- Spec: "Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity." (docs/spec.md)
+- Constraints: Do not modify source files; produce context only. Follow repo rules; surface conflicts before acting.
+- Files: 
+  - evals/files/session-start-fixture/src/auth_service.py  (SESSION_TIMEOUT_MINUTES = 60)
+  - evals/files/session-start-fixture/src/session_service.py (DEFAULT_TIMEOUT_MINUTES = 15)
+  - evals/files/session-start-fixture/tests/test_auth_service.py (asserts session_timeout_minutes() == 15)
+  - evals/files/session-start-fixture/docs/spec.md (Login timeout = 15 minutes)
+- Pattern: session_service defines DEFAULT_TIMEOUT_MINUTES = 15 and tests assert 15; auth_service currently returns 60 — this is the mismatch to resolve.
+- Gotchas: Tests and spec require 15 minutes, but auth_service is set to 60. User requested no code change; clarify whether to update auth_service or spec/tests before implementing.

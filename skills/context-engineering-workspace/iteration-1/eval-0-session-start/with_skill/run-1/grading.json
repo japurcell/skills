@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `PROJECT CONTEXT` block.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (sessions should expire after 15 minutes of inactivity).\n- Stack: Python\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change code; prepare startup context only; follow repo rules (use Python for edits, read targets before editing).\n- Files: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/auth_service.py, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md\n- Pattern: src/auth_service.py defines SESSION_TIMEOUT_MINUTES = 60\n- Gotchas: Code sets timeout to 60 minutes (SESSION_TIMEOUT_MINUTES=60) while spec requires 15 minutes; user explicitly forbids changing code, so resolution options include updating configuration, tests, or asking for permission to change code.\n"
+    },
+    {
+      "text": "The output lists every present rules file, including `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+      "passed": false,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (sessions should expire after 15 minutes of inactivity).\n- Stack: Python\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change code; prepare startup context only; follow repo rules (use Python for edits, read targets before editing).\n- Files: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/auth_service.py, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md\n- Pattern: src/auth_service.py defines SESSION_TIMEOUT_MINUTES = 60\n- Gotchas: Code sets timeout to 60 minutes (SESSION_TIMEOUT_MINUTES=60) while spec requires 15 minutes; user explicitly forbids changing code, so resolution options include updating configuration, tests, or asking for permission to change code.\n"
+    },
+    {
+      "text": "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (sessions should expire after 15 minutes of inactivity).\n- Stack: Python\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change code; prepare startup context only; follow repo rules (use Python for edits, read targets before editing).\n- Files: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/auth_service.py, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md\n- Pattern: src/auth_service.py defines SESSION_TIMEOUT_MINUTES = 60\n- Gotchas: Code sets timeout to 60 minutes (SESSION_TIMEOUT_MINUTES=60) while spec requires 15 minutes; user explicitly forbids changing code, so resolution options include updating configuration, tests, or asking for permission to change code.\n"
+    },
+    {
+      "text": "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`.",
+      "passed": false,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (sessions should expire after 15 minutes of inactivity).\n- Stack: Python\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change code; prepare startup context only; follow repo rules (use Python for edits, read targets before editing).\n- Files: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/auth_service.py, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md\n- Pattern: src/auth_service.py defines SESSION_TIMEOUT_MINUTES = 60\n- Gotchas: Code sets timeout to 60 minutes (SESSION_TIMEOUT_MINUTES=60) while spec requires 15 minutes; user explicitly forbids changing code, so resolution options include updating configuration, tests, or asking for permission to change code.\n"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1957,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 80.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 80.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

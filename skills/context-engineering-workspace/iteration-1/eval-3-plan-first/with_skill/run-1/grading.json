@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `PLAN` block.",
+      "passed": false,
+      "evidence": "PLAN\n- Inspect the fixture repo at evals/files/plan-fixture to identify the symbol(s) and all usages in:\n  src/report_builder.py, src/report_serializer.py, tests/test_report_builder.py\n- Perform an atomic cross-file rename: update the definition and all imports/usages across the three files.\n- Run the test suite and iterate until tests pass; fix remaining references and imports as needed.\n"
+    },
+    {
+      "text": "The output contains exactly three numbered steps.",
+      "passed": false,
+      "evidence": "PLAN\n- Inspect the fixture repo at evals/files/plan-fixture to identify the symbol(s) and all usages in:\n  src/report_builder.py, src/report_serializer.py, tests/test_report_builder.py\n- Perform an atomic cross-file rename: update the definition and all imports/usages across the three files.\n- Run the test suite and iterate until tests pass; fix remaining references and imports as needed.\n"
+    },
+    {
+      "text": "The output ends with `Executing unless you redirect.`",
+      "passed": false,
+      "evidence": "PLAN\n- Inspect the fixture repo at evals/files/plan-fixture to identify the symbol(s) and all usages in:\n  src/report_builder.py, src/report_serializer.py, tests/test_report_builder.py\n- Perform an atomic cross-file rename: update the definition and all imports/usages across the three files.\n- Run the test suite and iterate until tests pass; fix remaining references and imports as needed.\n"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 3,
+    "total": 3,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 459,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 36.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 36.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

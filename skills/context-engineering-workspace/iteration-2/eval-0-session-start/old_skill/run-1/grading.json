@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `PROJECT CONTEXT` block.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (15 minutes) without changing code.\n- Stack: Python\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-old/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md, tests in /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/tests/\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change source files; follow repo tests and spec; surface ambiguities before making code changes.\n- Files: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/auth_service.py (target), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/session_service.py (example), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/tests/test_auth_service.py (test), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md (spec)\n- Pattern: src/session_service.py shows DEFAULT_TIMEOUT_MINUTES = 15 and build_session() -> {\"timeout_minutes\": DEFAULT_TIMEOUT_MINUTES}; follow this precedent.\n- Gotchas: src/auth_service.py currently sets SESSION_TIMEOUT_MINUTES = 60; tests expect 15. The user forbids changing code, so fix will likely be a configuration, initialization, or CI/test adjustment; surface options and ask before applying code changes.\n"
+    },
+    {
+      "text": "The output lists every present rules file, including `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+      "passed": false,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (15 minutes) without changing code.\n- Stack: Python\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-old/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md, tests in /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/tests/\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change source files; follow repo tests and spec; surface ambiguities before making code changes.\n- Files: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/auth_service.py (target), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/session_service.py (example), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/tests/test_auth_service.py (test), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md (spec)\n- Pattern: src/session_service.py shows DEFAULT_TIMEOUT_MINUTES = 15 and build_session() -> {\"timeout_minutes\": DEFAULT_TIMEOUT_MINUTES}; follow this precedent.\n- Gotchas: src/auth_service.py currently sets SESSION_TIMEOUT_MINUTES = 60; tests expect 15. The user forbids changing code, so fix will likely be a configuration, initialization, or CI/test adjustment; surface options and ask before applying code changes.\n"
+    },
+    {
+      "text": "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (15 minutes) without changing code.\n- Stack: Python\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-old/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md, tests in /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/tests/\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change source files; follow repo tests and spec; surface ambiguities before making code changes.\n- Files: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/auth_service.py (target), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/session_service.py (example), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/tests/test_auth_service.py (test), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md (spec)\n- Pattern: src/session_service.py shows DEFAULT_TIMEOUT_MINUTES = 15 and build_session() -> {\"timeout_minutes\": DEFAULT_TIMEOUT_MINUTES}; follow this precedent.\n- Gotchas: src/auth_service.py currently sets SESSION_TIMEOUT_MINUTES = 60; tests expect 15. The user forbids changing code, so fix will likely be a configuration, initialization, or CI/test adjustment; surface options and ask before applying code changes.\n"
+    },
+    {
+      "text": "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (15 minutes) without changing code.\n- Stack: Python\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-old/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md, tests in /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/tests/\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change source files; follow repo tests and spec; surface ambiguities before making code changes.\n- Files: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/auth_service.py (target), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/session_service.py (example), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/tests/test_auth_service.py (test), /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/docs/spec.md (spec)\n- Pattern: src/session_service.py shows DEFAULT_TIMEOUT_MINUTES = 15 and build_session() -> {\"timeout_minutes\": DEFAULT_TIMEOUT_MINUTES}; follow this precedent.\n- Gotchas: src/auth_service.py currently sets SESSION_TIMEOUT_MINUTES = 60; tests expect 15. The user forbids changing code, so fix will likely be a configuration, initialization, or CI/test adjustment; surface options and ask before applying code changes.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2169,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 104.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 104.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

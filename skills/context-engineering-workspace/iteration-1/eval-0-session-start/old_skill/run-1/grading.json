@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `PROJECT CONTEXT` block.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (15 minutes), but do not change code \u2014 prepare startup context for the fix.\n- Stack: Python 3, pytest\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-old/SKILL.md\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not modify source files; produce context only. Follow repo rules; surface conflicts before acting.\n- Files: \n  - evals/files/session-start-fixture/src/auth_service.py  (SESSION_TIMEOUT_MINUTES = 60)\n  - evals/files/session-start-fixture/src/session_service.py (DEFAULT_TIMEOUT_MINUTES = 15)\n  - evals/files/session-start-fixture/tests/test_auth_service.py (asserts session_timeout_minutes() == 15)\n  - evals/files/session-start-fixture/docs/spec.md (Login timeout = 15 minutes)\n- Pattern: session_service defines DEFAULT_TIMEOUT_MINUTES = 15 and tests assert 15; auth_service currently returns 60 \u2014 this is the mismatch to resolve.\n- Gotchas: Tests and spec require 15 minutes, but auth_service is set to 60. User requested no code change; clarify whether to update auth_service or spec/tests before implementing.\n"
+    },
+    {
+      "text": "The output lists every present rules file, including `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+      "passed": false,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (15 minutes), but do not change code \u2014 prepare startup context for the fix.\n- Stack: Python 3, pytest\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-old/SKILL.md\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not modify source files; produce context only. Follow repo rules; surface conflicts before acting.\n- Files: \n  - evals/files/session-start-fixture/src/auth_service.py  (SESSION_TIMEOUT_MINUTES = 60)\n  - evals/files/session-start-fixture/src/session_service.py (DEFAULT_TIMEOUT_MINUTES = 15)\n  - evals/files/session-start-fixture/tests/test_auth_service.py (asserts session_timeout_minutes() == 15)\n  - evals/files/session-start-fixture/docs/spec.md (Login timeout = 15 minutes)\n- Pattern: session_service defines DEFAULT_TIMEOUT_MINUTES = 15 and tests assert 15; auth_service currently returns 60 \u2014 this is the mismatch to resolve.\n- Gotchas: Tests and spec require 15 minutes, but auth_service is set to 60. User requested no code change; clarify whether to update auth_service or spec/tests before implementing.\n"
+    },
+    {
+      "text": "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (15 minutes), but do not change code \u2014 prepare startup context for the fix.\n- Stack: Python 3, pytest\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-old/SKILL.md\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not modify source files; produce context only. Follow repo rules; surface conflicts before acting.\n- Files: \n  - evals/files/session-start-fixture/src/auth_service.py  (SESSION_TIMEOUT_MINUTES = 60)\n  - evals/files/session-start-fixture/src/session_service.py (DEFAULT_TIMEOUT_MINUTES = 15)\n  - evals/files/session-start-fixture/tests/test_auth_service.py (asserts session_timeout_minutes() == 15)\n  - evals/files/session-start-fixture/docs/spec.md (Login timeout = 15 minutes)\n- Pattern: session_service defines DEFAULT_TIMEOUT_MINUTES = 15 and tests assert 15; auth_service currently returns 60 \u2014 this is the mismatch to resolve.\n- Gotchas: Tests and spec require 15 minutes, but auth_service is set to 60. User requested no code change; clarify whether to update auth_service or spec/tests before implementing.\n"
+    },
+    {
+      "text": "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec (15 minutes), but do not change code \u2014 prepare startup context for the fix.\n- Stack: Python 3, pytest\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-old/SKILL.md\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not modify source files; produce context only. Follow repo rules; surface conflicts before acting.\n- Files: \n  - evals/files/session-start-fixture/src/auth_service.py  (SESSION_TIMEOUT_MINUTES = 60)\n  - evals/files/session-start-fixture/src/session_service.py (DEFAULT_TIMEOUT_MINUTES = 15)\n  - evals/files/session-start-fixture/tests/test_auth_service.py (asserts session_timeout_minutes() == 15)\n  - evals/files/session-start-fixture/docs/spec.md (Login timeout = 15 minutes)\n- Pattern: session_service defines DEFAULT_TIMEOUT_MINUTES = 15 and tests assert 15; auth_service currently returns 60 \u2014 this is the mismatch to resolve.\n- Gotchas: Tests and spec require 15 minutes, but auth_service is set to 60. User requested no code change; clarify whether to update auth_service or spec/tests before implementing.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1825,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 57.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 57.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

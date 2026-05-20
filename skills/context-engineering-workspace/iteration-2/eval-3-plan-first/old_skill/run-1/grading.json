@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `PLAN` block.",
+      "passed": true,
+      "evidence": "PLAN:\n1. Load repo rules (AGENTS.md, .github/copilot-instructions.md, ~/.copilot/copilot-instructions.md if present).\n2. Read target files under the fixture repo: evals/files/plan-fixture/src/report_builder.py, evals/files/plan-fixture/src/report_serializer.py, evals/files/plan-fixture/tests/test_report_builder.py.\n3. Run the test suite to record a failing/passing baseline.\n4. Identify the exact identifier to rename (OldName -> NewName).\n5. Edit the three files to rename the identifier and update imports/usages.\n6. Run tests and linters; iterate until green.\n7. Commit changes on a feature branch with a clear message.\n"
+    },
+    {
+      "text": "The output contains exactly three numbered steps.",
+      "passed": false,
+      "evidence": "PLAN:\n1. Load repo rules (AGENTS.md, .github/copilot-instructions.md, ~/.copilot/copilot-instructions.md if present).\n2. Read target files under the fixture repo: evals/files/plan-fixture/src/report_builder.py, evals/files/plan-fixture/src/report_serializer.py, evals/files/plan-fixture/tests/test_report_builder.py.\n3. Run the test suite to record a failing/passing baseline.\n4. Identify the exact identifier to rename (OldName -> NewName).\n5. Edit the three files to rename the identifier and update imports/usages.\n6. Run tests and linters; iterate until green.\n7. Commit changes on a feature branch with a clear message.\n"
+    },
+    {
+      "text": "The output ends with `Executing unless you redirect.`",
+      "passed": false,
+      "evidence": "PLAN:\n1. Load repo rules (AGENTS.md, .github/copilot-instructions.md, ~/.copilot/copilot-instructions.md if present).\n2. Read target files under the fixture repo: evals/files/plan-fixture/src/report_builder.py, evals/files/plan-fixture/src/report_serializer.py, evals/files/plan-fixture/tests/test_report_builder.py.\n3. Run the test suite to record a failing/passing baseline.\n4. Identify the exact identifier to rename (OldName -> NewName).\n5. Edit the three files to rename the identifier and update imports/usages.\n6. Run tests and linters; iterate until green.\n7. Commit changes on a feature branch with a clear message.\n"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 2,
+    "total": 3,
+    "pass_rate": 0.33
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 735,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 63.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 63.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

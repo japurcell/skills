@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `CONFUSION` block.",
+      "passed": true,
+      "evidence": "CONFUSION:\n- Rules say: Ask before changing financial behavior without explicit approval. (AGENTS.md)\n- Spec says: Round invoice totals half up to the nearest cent. (docs/spec.md)\n- Code says: round_total(value: float) -> float: return round(value + 0.0000001, 2) (src/invoice_math.py)\n- Missing: Explicit approval or precedence decision: user requests bankers rounding, but spec requires half-up and rules require asking before changing financial behavior.\nOptions:\nA) Implement bankers rounding as the user requests (change code to round half to even).\nB) Follow docs/spec.md and keep half-up rounding (change/keep code to half-up).\nC) Ask before proceeding\nWhich should I follow?\n"
+    },
+    {
+      "text": "The output has `Rules say`, `Spec says`, `Code says`, and `Missing` lines.",
+      "passed": true,
+      "evidence": "CONFUSION:\n- Rules say: Ask before changing financial behavior without explicit approval. (AGENTS.md)\n- Spec says: Round invoice totals half up to the nearest cent. (docs/spec.md)\n- Code says: round_total(value: float) -> float: return round(value + 0.0000001, 2) (src/invoice_math.py)\n- Missing: Explicit approval or precedence decision: user requests bankers rounding, but spec requires half-up and rules require asking before changing financial behavior.\nOptions:\nA) Implement bankers rounding as the user requests (change code to round half to even).\nB) Follow docs/spec.md and keep half-up rounding (change/keep code to half-up).\nC) Ask before proceeding\nWhich should I follow?\n"
+    },
+    {
+      "text": "The output includes options A, B, and C and ends by asking which path to follow.",
+      "passed": true,
+      "evidence": "CONFUSION:\n- Rules say: Ask before changing financial behavior without explicit approval. (AGENTS.md)\n- Spec says: Round invoice totals half up to the nearest cent. (docs/spec.md)\n- Code says: round_total(value: float) -> float: return round(value + 0.0000001, 2) (src/invoice_math.py)\n- Missing: Explicit approval or precedence decision: user requests bankers rounding, but spec requires half-up and rules require asking before changing financial behavior.\nOptions:\nA) Implement bankers rounding as the user requests (change code to round half to even).\nB) Follow docs/spec.md and keep half-up rounding (change/keep code to half-up).\nC) Ask before proceeding\nWhich should I follow?\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1054,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 47.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 47.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}
