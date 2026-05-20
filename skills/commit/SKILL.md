@@ -7,7 +7,6 @@ description: "Create 1 git commit from current changes, optionally open a PR."
 
 ## Inputs
 
-- `spec_file` (optional)
 - `issue_numbers` (optional)
 - `base_branch` (default: `main`)
 - `feature_branch` (optional)
@@ -56,10 +55,6 @@ description: "Create 1 git commit from current changes, optionally open a PR."
 ### 1) Issues
 
 - Parse issues from `issue_numbers` (`#123` or `123`)
-- If missing, and `spec_file` is readable, also parse:
-  - `#123`
-  - `GH-123`
-  - GitHub issue URLs
 - Deduplicate, preserve order
 - Trailer verb:
   - `Fixes` only if user explicitly says fix/close
@@ -86,17 +81,12 @@ If staged changes exist:
 
 Else select, in order:
 
-1. changed files named in `spec_file`
-2. only changed file
-3. all changed files if all under one top-level directory
+1. only changed file
+2. all changed files if all under one top-level directory
 
 Else:
 
 - stop and ask which files to commit
-
-If `spec_file` unreadable/unparseable:
-
-- ignore it
 
 Before selecting files to commit:
 
@@ -121,10 +111,9 @@ Only if creating branch.
 - prefix = commit type, else `chore`
 - issue = first issue number if any
 - slug = first available:
-  1. `spec_file` basename without extension
-  2. short summary of selected changes
-  3. single selected file basename without extension
-  4. `worktree-update-YYYYMMDD`
+  1. short summary of selected changes
+  2. single selected file basename without extension
+  3. `worktree-update-YYYYMMDD`
 - slug must be lowercase kebab-case
 
 Format:
