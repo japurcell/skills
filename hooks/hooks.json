@@ -1,16 +1,40 @@
 {
   "version": 1,
   "hooks": {
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/log-agent-stop.sh"
+      }
+    ],
     "errorOccurred": [
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/log-error-occurred.sh"
       }
     ],
+    "notification": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/log-notification.sh"
+      }
+    ],
+    "permissionRequest": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/log-permission-request.sh"
+      }
+    ],
     "preToolUse": [
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/log-pre-tooluse.sh"
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/log-post-tooluse.sh"
       }
     ],
     "postToolUseFailure": [
@@ -35,6 +59,10 @@
       {
         "type": "command",
         "bash": "echo -e '\\a'"
+      },
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/log-session-end.sh"
       }
     ],
     "sessionStart": [
