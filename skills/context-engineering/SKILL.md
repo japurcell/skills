@@ -30,9 +30,6 @@ At session start and when changing repositories, check all of these and load eve
 - `~/.copilot/copilot-instructions.md`
 - `.github/copilot-instructions.md`
 - `AGENTS.md`
-- `.cursorrules`
-- `.cursor/rules/*.md`
-- `.windsurfrules`
 
 Do not stop after finding one. If both `~/.copilot/copilot-instructions.md` and `.github/copilot-instructions.md` exist, load both.
 
