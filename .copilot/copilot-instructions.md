@@ -20,6 +20,9 @@ Always prefix shell commands with `rtk`:
 
 ```bash
 # Instead of:              Use:
+cat file.txt               rtk cat file.txt
+grep "pattern" .           rtk grep "pattern" .
+ls -la                     rtk ls -la
 git status                 rtk git status
 git log -10                rtk git log -10
 cargo test                 rtk cargo test

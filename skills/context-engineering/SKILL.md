@@ -41,11 +41,12 @@ Load context in this order:
 
 ## Common rules files
 
+- `~/.copilot/copilot-instructions.md`
+- `.github/copilot-instructions.md`
 - `AGENTS.md`
 - `.cursorrules`
 - `.cursor/rules/*.md`
 - `.windsurfrules`
-- `.github/copilot-instructions.md`
 
 ## Context templates
 
@@ -105,7 +106,12 @@ PLAN:
 Executing unless you redirect.
 ```
 
-## Compact checklist
+## Red Flags
+
+- `~/.copilot/copilot-instructions.md` not loaded when present
+- `AGENTS.md` not loaded when present
+
+## Validation
 
 - [ ] Rules loaded
 - [ ] Relevant spec/prd section only
