@@ -1,0 +1,33 @@
+{
+  "user_request": "Turn the staged rate-limit bugfix into one clean commit and open a PR for issue 456.",
+  "inputs": {
+    "issue_numbers": [
+      "456"
+    ],
+    "base_branch": "main",
+    "feature_branch": null,
+    "co_author": "Copilot <223556219+Copilot@users.noreply.github.com>",
+    "create_pr": true
+  },
+  "git_state": {
+    "in_repo": true,
+    "author_configured": true,
+    "operation_in_progress": null,
+    "conflicts": false,
+    "detached_head": false,
+    "current_branch": "fix/rate-limit-backoff",
+    "staged_paths": [
+      "src/rate_limit.py",
+      "tests/test_rate_limit.py"
+    ],
+    "unstaged_paths": [
+      "README.md"
+    ],
+    "ignored_paths": []
+  },
+  "change_summary": "Fixes the retry backoff for the rate-limit bug and adds coverage.",
+  "recent_log": [
+    "b28d403 feat: add retry budget metrics",
+    "2d9bc18 test: cover backoff jitter"
+  ]
+}

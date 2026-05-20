@@ -1,0 +1,32 @@
+{
+  "user_request": "Please make one clean commit for the invoice CSV export work and push the branch when you're done.",
+  "inputs": {
+    "issue_numbers": [
+      "#123"
+    ],
+    "base_branch": "main",
+    "feature_branch": null,
+    "co_author": "Copilot <223556219+Copilot@users.noreply.github.com>",
+    "create_pr": false
+  },
+  "git_state": {
+    "in_repo": true,
+    "author_configured": true,
+    "operation_in_progress": null,
+    "conflicts": false,
+    "detached_head": false,
+    "current_branch": "main",
+    "staged_paths": [],
+    "unstaged_paths": [
+      "src/invoice/export_csv.py"
+    ],
+    "ignored_paths": [
+      ".pytest_cache/v/cache/nodeids"
+    ]
+  },
+  "change_summary": "Adds invoice CSV export support for accountants.",
+  "recent_log": [
+    "8ac51ba chore: update changelog",
+    "fd22aa9 test: cover invoice totals"
+  ]
+}

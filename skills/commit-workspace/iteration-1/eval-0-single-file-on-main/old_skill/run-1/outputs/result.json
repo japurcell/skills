@@ -1,0 +1,20 @@
+{
+  "status": "commit",
+  "stop_reason": null,
+  "next_action": null,
+  "branch": "feat/123-invoice-csv-export",
+  "branch_action": "create",
+  "selected_paths": [
+    "src/invoice/export_csv.py"
+  ],
+  "commit_type": "feat",
+  "subject": "Add invoice CSV export support",
+  "commit_message": "feat: Add invoice CSV export support\n\nRefs #123\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+  "push_requested": true,
+  "should_push": false,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": null,
+  "pr_title": null,
+  "pr_body": null
+}

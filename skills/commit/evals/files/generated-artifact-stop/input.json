@@ -1,0 +1,30 @@
+{
+  "user_request": "Commit what I already staged.",
+  "inputs": {
+    "issue_numbers": [],
+    "base_branch": "main",
+    "feature_branch": null,
+    "co_author": "Copilot <223556219+Copilot@users.noreply.github.com>",
+    "create_pr": false
+  },
+  "git_state": {
+    "in_repo": true,
+    "author_configured": true,
+    "operation_in_progress": null,
+    "conflicts": false,
+    "detached_head": false,
+    "current_branch": "feat/session-audit",
+    "staged_paths": [
+      "src/audit/session_log.py",
+      "playwright-report/index.html",
+      "test-results/session-flow/video.mp4"
+    ],
+    "unstaged_paths": [],
+    "ignored_paths": []
+  },
+  "change_summary": "Adds session audit logging, but the staged set also includes generated browser artifacts.",
+  "recent_log": [
+    "7c91a2f chore: refresh fixtures",
+    "924cb1d feat: add session heartbeat"
+  ]
+}

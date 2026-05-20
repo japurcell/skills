@@ -1,0 +1,18 @@
+{
+  "status": "commit",
+  "stop_reason": null,
+  "next_action": "push then create PR",
+  "branch": "fix/rate-limit-backoff",
+  "branch_action": "keep",
+  "selected_paths": ["src/rate_limit.py", "tests/test_rate_limit.py"],
+  "commit_type": "fix",
+  "subject": "fix retry backoff for rate-limit bug",
+  "commit_message": "fix: fix retry backoff for rate-limit bug\n\nFixes #456\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+  "push_requested": false,
+  "should_push": true,
+  "pr_requested": true,
+  "should_create_pr": true,
+  "pr_blocker": null,
+  "pr_title": "fix retry backoff for rate-limit bug",
+  "pr_body": "Summary:\n- fix retry backoff for rate-limit bug\n\nIssues:\nFixes #456"
+}

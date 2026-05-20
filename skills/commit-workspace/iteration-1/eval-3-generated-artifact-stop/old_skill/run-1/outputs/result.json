@@ -1,0 +1,18 @@
+{
+  "status": "stop",
+  "stop_reason": "generated_artifacts_staged",
+  "next_action": "Clarify which files to commit. The staged changes include generated browser artifacts (playwright-report/index.html, test-results/session-flow/video.mp4) that should typically not be versioned. Confirm: commit only src/audit/session_log.py, or include all staged files?",
+  "branch": "feat/session-audit",
+  "branch_action": "keep",
+  "selected_paths": [],
+  "commit_type": null,
+  "subject": null,
+  "commit_message": null,
+  "push_requested": false,
+  "should_push": false,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": null,
+  "pr_title": null,
+  "pr_body": null
+}

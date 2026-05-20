@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Returns a stop decision.",
+      "passed": true,
+      "evidence": "stop"
+    },
+    {
+      "text": "Flags generated artifacts instead of committing them automatically.",
+      "passed": true,
+      "evidence": "generated_artifacts_staged"
+    },
+    {
+      "text": "Asks for confirmation before versioning those artifacts.",
+      "passed": true,
+      "evidence": "Clarify which files to commit. The staged changes include generated browser artifacts (playwright-report/index.html, test-results/session-flow/video.mp4) that should typically not be versioned. Confirm: commit only src/audit/session_log.py, or include all staged files?"
+    },
+    {
+      "text": "Does not plan a push or PR.",
+      "passed": true,
+      "evidence": "{\"should_push\": false, \"should_create_pr\": false}"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2556,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 33,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 33
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

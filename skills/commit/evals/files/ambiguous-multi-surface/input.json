@@ -1,0 +1,29 @@
+{
+  "user_request": "Please make one clean commit from the current worktree.",
+  "inputs": {
+    "issue_numbers": [],
+    "base_branch": "main",
+    "feature_branch": null,
+    "co_author": "Copilot <223556219+Copilot@users.noreply.github.com>",
+    "create_pr": false
+  },
+  "git_state": {
+    "in_repo": true,
+    "author_configured": true,
+    "operation_in_progress": null,
+    "conflicts": false,
+    "detached_head": false,
+    "current_branch": "feat/report-api",
+    "staged_paths": [],
+    "unstaged_paths": [
+      "src/report/api.py",
+      "docs/report-api.md"
+    ],
+    "ignored_paths": []
+  },
+  "change_summary": "Touches both the report API implementation and its docs.",
+  "recent_log": [
+    "5130a14 feat: add report filters",
+    "d20b66c docs: describe report auth"
+  ]
+}

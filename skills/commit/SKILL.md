@@ -1,175 +1,124 @@
 ---
 name: commit
-description: "Create 1 git commit from current changes, optionally open a PR."
+description: "Creates exactly one git commit from the current working tree, and can also push the branch or open a PR when asked. Use when the user asks to commit, save, stage, push, or open a PR for current changes and wants safe file selection, branch handling, conventional commit typing, issue trailers, or PR text."
 ---
 
 # Commit
 
-## Inputs
+## Overview
 
-- `issue_numbers` (optional)
-- `base_branch` (default: `main`)
-- `feature_branch` (optional)
-- `co_author` (optional, default: `Copilot <223556219+Copilot@users.noreply.github.com>`)
-- `create_pr` (default: `false`)
+Create exactly one commit from the current worktree. Push only when the user explicitly asks, and open a PR only when requested.
 
-## Context
+Honor these inputs when present: `issue_numbers`, `base_branch` (default `main`), `feature_branch`, `co_author` (default `Copilot <223556219+Copilot@users.noreply.github.com>`), and `create_pr` (default `false`).
 
-- !`git status --short --branch`
-- !`git diff --cached`
-- !`git diff`
-- !`git diff --cached --name-only`
-- !`git diff --name-only`
-- !`git branch --show-current`
-- !`git log --oneline -10`
+## When to Use
 
-## Goal
+- User asks to commit current changes, save staged work, or turn the worktree into one clean commit
+- User also wants the branch pushed or a PR opened after the commit
+- Not for splitting work into multiple commits, rewriting history, or handling merge/rebase cleanup
 
-- Create exactly 1 commit
-- Open PR only if requested
+## Workflow
 
-## Stop if
+1. **Inspect first and stop on blockers.**
+   Run:
+   - `git status --short --branch`
+   - `git diff --cached`
+   - `git diff`
+   - `git diff --cached --name-only`
+   - `git diff --name-only`
+   - `git branch --show-current`
+   - `git log --oneline -10`
 
-- not in git repo
-- git author not configured
-- no changes
-- merge/rebase/cherry-pick in progress
-- conflicts/unmerged paths exist
-- `HEAD` detached and no branch will be created
-- selected diff is empty
-- required git command fails
+   Stop if any of these are true: not in a git repo; git author is unset; there are no changes; merge, rebase, or cherry-pick is in progress; conflicts or unmerged paths exist; `HEAD` is detached and no branch will be created; the selected diff ends up empty; or a required git command fails.
 
-## PR requested if
+2. **Parse issues.**
+   Parse `issue_numbers` as `#123` or `123`, dedupe them, and preserve order.
 
-- `create_pr=true`
-- user explicitly asks for PR
+   Use `Fixes` only when the user explicitly says fix, close, bug, or bugfix. Otherwise use `Refs`.
 
-## PR blocked if
+3. **Choose the branch.**
+   If `feature_branch` is provided, use the local branch if it exists, else the remote tracking branch if it exists, else create it.
 
-- `gh` missing
-- `gh` not authenticated
-- repo cannot create GitHub PRs
+   Otherwise keep the current branch unless it is `base_branch`, `main`, `master`, or empty. In those cases create a branch.
 
-## Algorithm
+4. **Choose the commit scope.**
+   If staged changes exist, commit staged changes only.
 
-### 1) Issues
+   Otherwise select, in order:
+   1. the only changed file;
+   2. all changed files when they all live under one top-level directory;
+   3. otherwise stop and ask which files to commit.
 
-- Parse issues from `issue_numbers` (`#123` or `123`)
-- Deduplicate, preserve order
-- Trailer verb:
-  - `Fixes` only if user explicitly says fix/close
-  - else `Refs`
+   Before staging or selecting files, verify candidates are not ignored. Never include ignored files, tool-generated artifacts, local state files, traces, videos, screenshots, storage-state files, or scratch outputs unless the user explicitly asks to version them. If staged changes include ignored-looking or generated artifacts, stop and ask before committing.
 
-### 2) Branch
+5. **Choose the type and subject.**
+   Type order:
+   - `docs` for docs-only
+   - `test` for tests-only
+   - `fix` when the user says fix, bug, or bugfix, or the diff clearly fixes an error
+   - `feat` for a clear user-facing capability
+   - `refactor` for structural change without a clear behavior change
+   - `perf` for performance work
+   - otherwise `chore`
 
-If `feature_branch` provided:
+   Subject = a short action summary.
 
-- use local branch if it exists
-- else use remote tracking branch if it exists
-- else create it
+   Subject fallbacks:
+   1. `update <file-basename>`
+   2. `update <directory>`
+   3. `update changed files`
 
-Else:
+6. **Create the branch name only when needed.**
+   Format:
+   - `<type>/<issue>-<slug>` when an issue exists
+   - `<type>/<slug>` otherwise
 
-- if current branch is `base_branch`, `main`, `master`, or empty: create branch
-- else use current branch
+   `slug` preference:
+   1. short summary of the selected changes
+   2. the single selected file basename without extension
+   3. `worktree-update-YYYYMMDD`
 
-### 3) Files
+   Use lowercase kebab-case.
 
-If staged changes exist:
+7. **Build the commit message and commit once.**
+   Format exactly:
 
-- commit staged changes only
+   ```text
+   <type>: <subject>
 
-Else select, in order:
+   Refs #123
+   Refs #456
+   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+   Co-authored-by: Jane <jane@example.com>
+   ```
 
-1. only changed file
-2. all changed files if all under one top-level directory
+   Rules:
+   - first line = `<type>: <subject>`
+   - blank line after the subject
+   - no blank lines between trailer lines
+   - include the default Copilot trailer unless the user explicitly asks not to
+   - append any extra `co_author` trailer after the Copilot trailer
 
-Else:
+   Create exactly one non-interactive commit. Do not push unless the user explicitly asked for a push or a PR.
 
-- stop and ask which files to commit
+8. **Push or open a PR only when requested.**
+   A PR is requested when `create_pr=true` or the user explicitly asks for one.
 
-Before selecting files to commit:
+   If push was requested, push the working branch.
 
-- exclude ignored files and paths matched by `.gitignore`
+   If a PR was requested:
+   - pushing becomes required even when the user did not separately ask for `push`;
+   - stop if `gh` is missing, unauthenticated, or the repo cannot create GitHub PRs;
+   - push the branch first if needed;
+   - if a PR already exists for the branch, return its URL;
+   - otherwise run `gh pr create --base <base_branch> --head <branch> --title ... --body ...`;
+   - always pass both `--title` and `--body`.
 
-### 4) Type
+## Specific Techniques
 
-Choose one:
+### PR body
 
-- `docs`: docs-only
-- `test`: tests-only
-- `fix`: user says fix/bug/bugfix, or diff clearly fixes error
-- `feat`: clearly adds user-facing capability
-- `refactor`: restructure without clear behavior change
-- `perf`: performance improvement
-- else `chore`
-
-### 5) New branch name
-
-Only if creating branch.
-
-- prefix = commit type, else `chore`
-- issue = first issue number if any
-- slug = first available:
-  1. short summary of selected changes
-  2. single selected file basename without extension
-  3. `worktree-update-YYYYMMDD`
-- slug must be lowercase kebab-case
-
-Format:
-
-- `<type>/<issue>-<slug>` if issue exists
-- `<type>/<slug>` otherwise
-
-### 6) Subject
-
-Use short action summary.
-
-Fallbacks:
-
-1. `update <file-basename>`
-2. `update <directory>`
-3. `update changed files`
-
-### 7) Commit message
-
-Format exactly:
-
-```text
-<type>: <subject>
-
-Refs #123
-Refs #456
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
-Co-authored-by: Jane <jane@example.com>
-```
-
-Rules:
-
-- first line = `<type>: <subject>`
-- blank line after subject
-- blank line before trailers
-- no blank lines between trailer lines
-
-### 8) Commit
-
-- create exactly 1 commit
-- prefer non-interactive commands
-- do not push unless user explicitly asks
-
-### 9) PR
-
-Only if PR requested.
-
-- if PR already exists for branch: return its URL
-- else run `gh pr create --base <base_branch> --head <branch> --title ... --body ...`
-- always pass both `--title` and `--body`
-- title = commit subject
-- include issue lines in body if any
-- omit `Issues:` if no issues
-- if PR creation fails: report failure and next action
-
-PR body with issues:
+With issues:
 
 ```text
 Summary:
@@ -180,14 +129,20 @@ Refs #123
 Fixes #456
 ```
 
-PR body without issues:
+Without issues:
 
 ```text
 Summary:
 - <commit subject>
 ```
 
-## Output
+- PR title = commit subject
+- For dry runs, use `status=commit` when ready and `status=stop` when blocked
+- For dry runs, use `branch_action=create` when making a branch and `branch_action=keep` otherwise
+- For dry runs, `push_requested` means the user explicitly asked for push; `should_push` means push is actually required
+- Omit `Issues:` when there are no issue lines
+
+### Output
 
 Return:
 
@@ -195,13 +150,34 @@ Return:
 - commit SHA
 - commit subject
 - PR URL if created
-- next action if stopped
+- exact blocker and next action if stopped
 
-## Guardrails
+## Common Rationalizations
 
-- never create more than 1 commit
-- stop on blocker
-- report exact blocker and next action
-- never stage or commit ignored files, tool-generated artifacts, local state files, traces, videos, screenshots, storage-state files, or scratch outputs unless the user explicitly asks for them to be versioned
-- before staging, verify candidate files are not ignored via git
-- if staged changes include ignored-looking or generated artifacts, stop and ask before committing
+| Rationalization | Reality |
+| --- | --- |
+| "I can just commit everything in the worktree." | The skill commits staged changes only, or stops when the unstaged scope is ambiguous. |
+| "The screenshot and trace are already staged, so they must belong." | Generated-looking artifacts require confirmation before they are versioned. |
+| "I'll use `Fixes` for every issue trailer." | `Fixes` changes issue state; use it only when the user explicitly says fix or close. |
+| "I can open the PR later without pushing." | PR creation needs a usable branch state; push first when the PR flow requires it. |
+
+## Red Flags
+
+- More than one commit is created
+- The branch stays on `main` or `master` when a new branch was required
+- Unstaged noise is included even though staged changes existed
+- Generated artifacts are staged or committed without confirmation
+- The commit message misses the blank line before trailers or uses the wrong trailer verb
+
+## Verification
+
+Before finishing, confirm:
+
+- [ ] Exactly one commit was created, or the run stopped before committing
+- [ ] The selected file scope followed the staged-then-single-file-then-one-directory order
+- [ ] Ignored or generated artifacts were excluded unless the user explicitly asked to version them
+- [ ] The branch decision followed `feature_branch`, current branch, and base-branch rules
+- [ ] The commit message used `<type>: <subject>`, a blank line before trailers, and the right issue verb
+- [ ] The Copilot trailer was included unless the user explicitly asked not to
+- [ ] Push happened only when explicitly requested or needed for a requested PR
+- [ ] PR creation used explicit `--title` and `--body`, or reported the exact blocker

@@ -1,0 +1,18 @@
+{
+  "status": "stop",
+  "stop_reason": "generated artifacts staged without explicit confirmation",
+  "next_action": "ask user to confirm including playwright-report/index.html and test-results/session-flow/video.mp4, or unstage them",
+  "branch": "feat/session-audit",
+  "branch_action": "keep",
+  "selected_paths": null,
+  "commit_type": null,
+  "subject": null,
+  "commit_message": null,
+  "push_requested": false,
+  "should_push": false,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": null,
+  "pr_title": null,
+  "pr_body": null
+}

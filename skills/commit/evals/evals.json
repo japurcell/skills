@@ -3,50 +3,60 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "I finished implementing the invoice export changes from specs/invoice-export.md. Please commit the current changes and push the branch.",
-      "expected_output": "Creates or reuses an appropriate branch, creates one conventional commit linked to the issue in the spec, pushes to origin, and returns branch and commit details. Commit message includes a Co-authored-by trailer.",
-      "assertions": [
-        "Exactly one new commit is created for the task",
-        "Branch is not main/master after execution",
-        "Commit message includes issue linkage to #123",
-        "Commit message contains a Co-authored-by trailer matching the format Co-authored-by: NAME <EMAIL>",
-        "Co-authored-by trailer is separated from the commit body by a blank line",
-        "Origin push succeeds for the working branch",
-        "Summary output includes branch, commit SHA, and commit subject"
-      ],
+      "prompt": "Read the fixture in evals/files/single-file-on-main/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required.",
+      "expected_output": "Plans one feature commit from an unstaged single-file change on main, creates a feature branch, pushes because the user asked, and does not create a PR.",
       "files": [
-        "specs/invoice-export.md"
+        "evals/files/single-file-on-main/input.json"
+      ],
+      "assertions": [
+        "Returns a commit decision instead of a stop.",
+        "Selects only src/invoice/export_csv.py.",
+        "Creates a non-main feature branch using issue 123.",
+        "Uses commit type feat and an issue trailer Refs #123.",
+        "Plans a push but no PR."
       ]
     },
     {
       "id": 1,
-      "prompt": "Turn my current working tree into one clean commit for the bugfix spec at specs/fix-rate-limit.md. I am already on a feature branch, and I want the branch pushed when you're done.",
-      "expected_output": "Keeps the current non-main branch, creates a single atomic commit, includes issue linkage when available, pushes successfully, and returns concise commit details. Commit message includes a Co-authored-by trailer.",
-      "assertions": [
-        "Exactly one new commit is created for the task",
-        "Existing feature branch is preserved",
-        "Commit message includes issue linkage to #456",
-        "Commit message contains a Co-authored-by trailer matching the format Co-authored-by: NAME <EMAIL>",
-        "Origin push succeeds for the working branch",
-        "Summary output includes branch, commit SHA, and commit subject"
-      ],
+      "prompt": "Read the fixture in evals/files/staged-bugfix-pr/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required. pr_title must equal subject, not the full conventional-commit first line.",
+      "expected_output": "Keeps the current bugfix branch, commits only the staged files, uses a fix commit with Fixes #456, and prepares a PR.",
       "files": [
-        "specs/fix-rate-limit.md"
+        "evals/files/staged-bugfix-pr/input.json"
+      ],
+      "assertions": [
+        "Returns a commit decision instead of a stop.",
+        "Selects only the staged bugfix files and excludes unstaged README noise.",
+        "Keeps branch fix/rate-limit-backoff.",
+        "Uses commit type fix and an issue trailer Fixes #456.",
+        "Plans both push and PR creation, with PR title matching the commit subject."
       ]
     },
     {
       "id": 2,
-      "prompt": "Use specs/add-audit-logs.md and save the current work as a proper git commit. If there is no linked issue in the spec, still push the branch cleanly.",
-      "expected_output": "Handles a missing issue reference gracefully, still creates a conventional commit, pushes it, and returns the branch and commit summary. Commit message still includes a Co-authored-by trailer even without issues.",
-      "assertions": [
-        "Exactly one new commit is created for the task",
-        "Execution proceeds without requiring an issue number",
-        "Commit message contains a Co-authored-by trailer matching the format Co-authored-by: NAME <EMAIL>",
-        "Origin push succeeds for the working branch",
-        "Summary output includes branch, commit SHA, and commit subject"
-      ],
+      "prompt": "Read the fixture in evals/files/ambiguous-multi-surface/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required.",
+      "expected_output": "Stops because the unstaged changes span multiple top-level directories and the user did not choose a scope.",
       "files": [
-        "specs/add-audit-logs.md"
+        "evals/files/ambiguous-multi-surface/input.json"
+      ],
+      "assertions": [
+        "Returns a stop decision.",
+        "Explains that the file scope is ambiguous.",
+        "Asks the user which files to commit next.",
+        "Does not plan a push or PR."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Read the fixture in evals/files/generated-artifact-stop/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required.",
+      "expected_output": "Stops because the staged set includes generated artifacts that require confirmation before commit.",
+      "files": [
+        "evals/files/generated-artifact-stop/input.json"
+      ],
+      "assertions": [
+        "Returns a stop decision.",
+        "Flags the staged generated artifacts instead of committing them automatically.",
+        "Asks for confirmation before versioning those artifacts.",
+        "Does not plan a push or PR."
       ]
     }
   ]

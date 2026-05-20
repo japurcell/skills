@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "ambiguous-multi-surface",
+  "prompt": "Read the fixture in evals/files/ambiguous-multi-surface/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required.",
+  "assertions": [
+    "Returns a stop decision.",
+    "Explains that the file scope is ambiguous.",
+    "Asks the user which files to commit next.",
+    "Does not plan a push or PR."
+  ]
+}
