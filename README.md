@@ -24,6 +24,13 @@ The installer copies:
 
 Workspace directories whose names end with `-workspace` are skipped during installation.
 
+## CLI dependencies
+
+- Core tooling: `bash`, `python3`, and `git`
+- Hook runtime: `jq` and `flock`
+- Hook formatting: `npx` (with `oxfmt`) for JS/TS files, `dotnet` SDK for C# files
+- Agent shell workflows: `rtk` (recommended wrapper for compact terminal output)
+
 ### [Session End Hook](./hooks/hooks.json)
 
 For the session-end hook to work, add these lines to your vscode settings.json file:

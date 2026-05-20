@@ -2,6 +2,13 @@
 
 There is no single repo-wide test command. Run the narrowest command that exercises the area you changed.
 
+## CLI prerequisites
+
+- Base commands in this repo assume `bash`, `python3`, and `git` are available.
+- Hook scripts require `jq` and `flock`.
+- Hook formatting paths require `npx` (with `oxfmt`) for JS/TS and `dotnet` for C#.
+- For interactive agent terminal work, prefer wrapping commands with `rtk`.
+
 ## Installer scripts
 
 - `./scripts/copilot-install.sh`: refresh installed skills, references, hooks, agents, and Copilot instructions after editing repo source and before checking live model behavior
