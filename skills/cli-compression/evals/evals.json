@@ -1,0 +1,79 @@
+{
+  "skill_name": "cli-compression",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Write the exact shell commands only and save them to `outputs/commands.sh`: inspect the current repository before review by showing status, a diff summary, and the last 5 commits. This benchmark specifically wants shell commands, so do not replace the shell with built-in tools.",
+      "expected_output": "A short git-inspection command list that wraps each command with rtk and keeps output compact.",
+      "files": [],
+      "expectations": [
+        "Every non-comment command line starts with `rtk`.",
+        "The command list includes repository status, a diff summary, and a short commit log.",
+        "Git status uses a compact form such as `status --short`.",
+        "Git diff uses a compact summary form such as `diff --stat`."
+      ],
+      "assertions": [
+        "Every non-comment command line starts with `rtk`.",
+        "The command list includes repository status, a diff summary, and a short commit log.",
+        "Git status uses a compact form such as `status --short`.",
+        "Git diff uses a compact summary form such as `diff --stat`."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Rewrite the noisy shell snippet in `evals/files/uncompressed-commands.sh` into a compressed version and save it to `outputs/commands.sh`. Preserve the same tasks, but make the file inspection and git output more token-efficient.",
+      "expected_output": "An RTK-wrapped rewrite that replaces the raw file read with `rtk read` or `rtk smart`, keeps the pytest step, and compresses git output.",
+      "files": [
+        "evals/files/uncompressed-commands.sh"
+      ],
+      "expectations": [
+        "Every non-comment command line starts with `rtk`.",
+        "The rewrite uses `rtk read` or `rtk smart` for `README.md`.",
+        "The rewrite keeps a pytest command.",
+        "The rewrite avoids raw `cat README.md`, `git status`, and `git diff` lines."
+      ],
+      "assertions": [
+        "Every non-comment command line starts with `rtk`.",
+        "The rewrite uses `rtk read` or `rtk smart` for `README.md`.",
+        "The rewrite keeps a pytest command.",
+        "The rewrite avoids raw `cat README.md`, `git status`, and `git diff` lines."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write `outputs/decision.md` deciding how to inspect lines 120-180 of `skills/context-engineering/SKILL.md` and search the repo for `report_intent`. Say whether shell plus RTK should be the first choice or whether built-in tools should win.",
+      "expected_output": "A short decision note that prefers built-in tools such as `view` and `rg`, with RTK left as a fallback rather than the default.",
+      "files": [],
+      "expectations": [
+        "The decision note prefers built-in tools first.",
+        "The note mentions `view` for line-range inspection.",
+        "The note mentions `rg` for repo search.",
+        "The note does not turn the answer into a shell command list."
+      ],
+      "assertions": [
+        "The decision note prefers built-in tools first.",
+        "The note mentions `view` for line-range inspection.",
+        "The note mentions `rg` for repo search.",
+        "The note does not turn the answer into a shell command list."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Write the exact shell commands only and save them to `outputs/commands.sh`: show the last 10 commits with extra compression while keeping Git semantics correct.",
+      "expected_output": "A compact git log command wrapped in rtk that uses `--ultra-compact` and does not misuse Git's `-u` flag.",
+      "files": [],
+      "expectations": [
+        "Every non-comment command line starts with `rtk`.",
+        "The command uses `git log -10` or an equivalent 10-commit form.",
+        "The command includes `--ultra-compact`.",
+        "The command does not use the standalone Git flag `-u`."
+      ],
+      "assertions": [
+        "Every non-comment command line starts with `rtk`.",
+        "The command uses `git log -10` or an equivalent 10-commit form.",
+        "The command includes `--ultra-compact`.",
+        "The command does not use the standalone Git flag `-u`."
+      ]
+    }
+  ]
+}

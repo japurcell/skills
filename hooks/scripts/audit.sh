@@ -31,7 +31,8 @@ rotate_audit_log() {
 
 append_audit_line() {
   local audit_log="${1:?append_audit_line: audit_log path is required}"
-  local line="${2-}"
+  local sender="${2:?append_audit_line: sender is required}"
+  local line="${3-}"
 
-  printf '%s\n' "$line" >> "$audit_log"
+  printf '[%s] %s\n' "$sender" "$line" >> "$audit_log"
 }

@@ -8,6 +8,18 @@
         "cwd": ".",
         "timeoutSec": 10
       }
+    ],
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/session-start.sh"
+      }
+    ],
+    "subagentStart": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/subagent-start.sh"
+      }
     ]
   }
 }
