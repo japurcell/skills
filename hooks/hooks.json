@@ -1,24 +1,46 @@
 {
   "version": 1,
   "hooks": {
-    "sessionEnd": [
+    "errorOccurred": [
       {
         "type": "command",
-        "bash": "echo -e '\\a'",
-        "cwd": ".",
-        "timeoutSec": 10
+        "bash": "$HOME/.copilot/hooks/scripts/log-error-occurred.sh"
       }
     ],
-    "sessionStart": [
+    "preToolUse": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/session-start.sh"
+        "bash": "$HOME/.copilot/hooks/scripts/log-pre-tooluse.sh"
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/log-tooluse-failure.sh"
       }
     ],
     "subagentStart": [
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/subagent-start.sh"
+      }
+    ],
+    "subagentStop": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/log-subagent-stop.sh"
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "echo -e '\\a'"
+      }
+    ],
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/session-start.sh"
       }
     ]
   }
