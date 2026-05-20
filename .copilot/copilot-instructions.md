@@ -12,11 +12,11 @@ Always load:
 
 ## RTK — Token-Optimized CLI
 
-**rtk** is a CLI proxy that filters and compresses command outputs, saving 60-90% tokens.
+**rtk** is a CLI proxy that filters and compresses command outputs, saving 60-99% tokens. When RTK is installed, supported commands are intercepted transparently; unsupported commands pass through unchanged.
 
 ### Rule
 
-Always prefix shell commands with `rtk`:
+**Always** prefix shell commands with `rtk`:
 
 ```bash
 # Instead of:              Use:
@@ -27,8 +27,24 @@ git status                 rtk git status
 git log -10                rtk git log -10
 cargo test                 rtk cargo test
 docker ps                  rtk docker ps
-kubectl get pods           rtk kubectl pods
+kubectl get pods           rtk kubectl get pods
 ```
+
+RTK already rewrites common tool output, including:
+
+- Git: `git status`, `git log`, `git diff`, `git show`, `git stash list`
+- GitHub CLI: `gh pr view`, `gh pr checks`, `gh run list`, `gh issue view`
+- Graphite: `gt log`, `gt status`
+- Rust / Cargo: `cargo test`, `cargo nextest`, `cargo build`, `cargo check`, `cargo clippy`
+- JavaScript / TypeScript: `jest`, `vitest`, `tsc`, `eslint`, `pnpm list`, `pnpm outdated`, `next build`, `prisma migrate`, `playwright test`
+- Python: `pytest`, `ruff check`, `mypy`, `pip install`
+- Go: `go test`, `golangci-lint run`, `go build`
+- Ruby: `rspec`, `rubocop`, `rake`
+- .NET: `dotnet build`, `dotnet test`, `dotnet format`
+- Docker / Kubernetes: `docker ps`, `docker images`, `docker logs`, `docker compose up`, `kubectl get pods`, `kubectl logs`
+- Files and search: `ls`, `find`, `grep`, `diff`, `wc`, `cat`, `head`, `tail`
+
+Prefer `rtk read <file>` and `rtk smart <file>` for compact file inspection when you need a summary instead of full contents.
 
 ### Meta commands (use directly)
 
@@ -36,8 +52,17 @@ kubectl get pods           rtk kubectl pods
 rtk gain              # Token savings dashboard
 rtk gain --history    # Per-command savings history
 rtk discover          # Find missed rtk opportunities
-rtk proxy <cmd>       # Run raw (no filtering) but track usage
+rtk proxy <cmd>       # Run unsupported commands with usage tracking
 ```
+
+### Global flags
+
+- `--ultra-compact` for extra token reduction
+- `-v` / `--verbose` for filtering details on stderr
+
+Use `--ultra-compact` rather than `-u` with Git commands; Git uses `-u` for `--set-upstream`.
+
+If a command isn't rewritten, RTK runs it through passthrough unchanged.
 
 ## Testing
 
