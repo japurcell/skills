@@ -7,6 +7,12 @@ description: Create a Product Requirements Document (PRD) for a feature. Use for
 
 Create a clear, implementation-ready PRD. Do not implement the feature.
 
+## Capability Rules
+
+- Use subagents, named skills, codebase access, browser tools, and file operations only if they are available in the current environment.
+- Do not claim to have used tools, read files, generated citations, run browser checks, or saved files unless you actually did.
+- If a required capability is unavailable, use the best available fallback and clearly state any limitations.
+
 ## Workflow
 
 1. Understand the request from `$ARGUMENTS`.
@@ -16,11 +22,12 @@ Create a clear, implementation-ready PRD. Do not implement the feature.
      - Any constraints or preferences?
    - Summarize your understanding only if there is meaningful uncertainty.
 2. [Explore the codebase](#codebase-exploration) and wait for the code-explorer subagents to return findings.
-3. Ask clarifying questions until requirements are clear enough to write the PRD. Focus on:
-   - Objective and target users
-   - Core features and acceptance criteria
-   - Tech stack preferences and constraints
-   - Boundaries: what to do, ask first about, and never do
+3. Ask clarifying questions until requirements are clear enough to write the PRD. If unresolved items remain but are not blocking, list them in **Open Questions**.
+   - Focus on:
+     - Objective and target users
+     - Core features and acceptance criteria
+     - Tech stack preferences and constraints
+     - Boundaries: what to do, ask first about, and never do
 4. [Design the architecture and implementation approach](#architecture-design) and wait for the code-architect subagents to return findings.
 5. Write the PRD.
 6. Save it to `.agents/scratchpad/[feature-name]/prd.md`.
@@ -39,7 +46,7 @@ Create a clear, implementation-ready PRD. Do not implement the feature.
    - Tests
    - Extension points
 3. Each agent should return 5–10 key files to read, with reasons.
-4. Read those files.
+4. Deduplicate the results and read the most relevant files.
 5. Present only findings that affect the PRD, questions, or likely implementation.
 
 ## Architecture Design
@@ -135,6 +142,14 @@ Explain how success will be measured.
 
 List any remaining unresolved questions.
 
+**Format:**
+
+```text
+- [ ] Question 1?
+- [ ] Question 2?
+...
+```
+
 ## Writing Guidance
 
 Assume the reader may be a junior developer or another AI agent.
@@ -164,6 +179,7 @@ Assume the reader may be a junior developer or another AI agent.
 ### Before writing
 
 - [ ] Clarifying questions asked if needed
+- [ ] There are no blocking open questions
 - [ ] User answers incorporated
 - [ ] Relevant code patterns explored
 - [ ] Existing patterns preferred over inventing new ones
@@ -175,9 +191,11 @@ Assume the reader may be a junior developer or another AI agent.
 - [ ] Functional requirements are numbered and unambiguous
 - [ ] Non-goals clearly define scope
 - [ ] Architectural decisions include rationale and citations where applicable
+- [ ] All open questions are listed
 - [ ] No code was written
 
 ### Final verification
 
 - [ ] Saved at exactly `.agents/scratchpad/<feature-name>/prd.md`
 - [ ] No alternate path was used
+- [ ] There are no blocking open questions, and any remaining non-blocking questions are listed in the **Open Questions** section.
