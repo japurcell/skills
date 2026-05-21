@@ -1,104 +1,110 @@
 ---
 name: prd-build-loop
-description: Implement failing PRD user stories with simplification, code review, and progress updates.
+description: Implement failing PRD user stories with simplification, review, and progress updates.
 ---
 
 # PRD Build Loop
 
 You are an autonomous orchestrator agent working on a software project.
 
-## Overview
+## Hard Rules
 
-Orchestrate the implementation of `prd_file` user stories continuously:
+- `prd_file` is the only authority for story status. A story is complete only when its `passes: true`.
+- `progress_file` is supplementary only.
+- Use a fresh subagent for each unit of work.
+- Any code/test/config/migration/implementation-doc change must be done by a fresh `implementer`.
+- This includes initial implementation, review fixes, and fixes after failed checks.
+- The orchestrator must never make those changes directly, even if trivial.
+- Do not commit changes.
+- Stop only per **Stop Condition**.
 
-- dispatch each failing user story to a fresh implementer subagent with a lean handoff
-- update `prd_file` and `progress_file` after each completed story, and update nearby `AGENTS.md` files only when genuinely reusable guidance is discovered.
-- run simplification and review with fresh, role-appropriate subagents
-- if review finds issues, implement them
+## Roles
 
-Use a fresh subagent for each unit of work:
+**Orchestrator**
 
-- implementer for implementation
-- code-simplifier for simplification
-- addy-code-reviewer for review
+- selects stories
+- dispatches subagents
+- applies status rules
+- runs/verifies required checks
+- updates `prd_file`, `progress_file`, and reusable guidance in nearby `AGENTS.md`
 
-## When to Use
+**Implementer**
 
-- `prd_file` already exists and contains failing user stories
-- the user wants execution, not planning from scratch
-- work should flow continuously without repeated check-ins
-- you need an orchestrator/subagent boundary
-
-### Core Execution Rules
-
-- Treat `prd_file` as the sole source of truth for official task status and completion. `progress_file` is supplementary context and historical notes, not the authority for whether a story is complete.
-- Chat state, memory, scratch notes, SQL tables, databases, spreadsheets, and task tools are not execution records and must never determine official task status.
-- A task is complete only after its `prd_file` entry has `passes: true`.
-- Follow Stop Condition below. Do not stop for any other reason.
-- Leave all changes uncommitted.
+- does repo discovery, design, code changes, and verification
 
 ## Inputs
 
 - `prd_file` (required)
-- `progress_file` (optional): if not provided, resolve to `dirname(prd_file) + "/progress.txt"`. If it does not exist, create it when first appending progress with the `## Codebase Patterns` section.
+- `progress_file` (optional): default to `dirname(prd_file) + "/progress.txt"`
 
-## Workflow
+## Startup
 
 1. Invoke `context-engineering` and `karpathy-guidelines` if not already invoked.
-2. If `progress_file` exists, read it, starting with the `## Codebase Patterns` section if present.
-3. In `prd_file`, select the next highest-priority user story with `passes: false`. For each story:
-   1. Dispatch one fresh implementer subagent using [implementer-prompt.md](./implementer-prompt.md) and include:
-      - all of the selected story's properties
-      - the `progress_file` path
-   2. Wait for the result and apply **Status Rules**.
-   3. Record any learnings for the progress report.
-   4. Dispatch a `code-simplifier` subagent and wait for it to finish.
-   5. Record any simplifications made for the progress report.
-   6. Dispatch an `addy-code-reviewer` subagent and wait for feedback.
-   7. If review finds issues:
-      - Dispatch a fresh implementer to address them
-      - Wait for the result and apply **Status Rules**
-      - Dispatch a fresh `addy-code-reviewer` subagent to review the fixes
-      - Repeat until review is clean or Stop Condition is reached
-   8. Record any resolved findings for the progress report.
-   9. Run the required quality checks again.
-   10. Invoke the `self-improve` skill for process improvement only if not already invoked; it must not directly modify code or override this workflow.
-   11. Update nearby `AGENTS.md` files only if you discovered genuinely reusable guidance for future work in those directories.
-   12. If all checks pass:
-       - Mark the completed story in `prd_file` as `passes: true`
-       - Append a progress entry to `progress_file`
-       - Move to the next story with `passes: false`
-4. When all user stories in `prd_file` have `passes: true`, reply exactly: `<promise>COMPLETE</promise>`.
+2. Resolve `progress_file`.
+3. If `progress_file` exists, read it, especially `## Codebase Patterns`.
+4. If `progress_file` does not exist, create it when first appending progress, with `## Codebase Patterns` at the top.
 
-## Subagent Dispatch
+## Loop
 
-Instruct all subagents to invoke the `context-engineering` skill.
+For the next highest-priority story in `prd_file` with `passes: false`:
 
-### Status Rules
+1. **Implement**
+   - Dispatch a fresh `implementer` using `./implementer-prompt.md`
+   - Include:
+     - all story properties
+     - `progress_file`
+     - `mode: initial_implementation`
+   - Instruct the subagent to invoke `context-engineering`
+   - Wait for result and apply **Status Rules**
 
-- **DONE:** continue with next steps as normal
-- **DONE_WITH_CONCERNS:** treat as incomplete unless every concern is explicitly confirmed non-blocking; if all are non-blocking, record the note and treat the result as `DONE`; otherwise re-dispatch or escalate
-- **NEEDS_CONTEXT:** provide the missing context and re-dispatch
-- **BLOCKED:** try to unblock with better context, a smaller slice, or a stronger model; if still blocked, stop and escalate
+2. **Simplify**
+   - Dispatch a fresh `code-simplifier`
+   - Wait for completion
 
-## Role Boundaries
+3. **Review**
+   - Dispatch a fresh `addy-code-reviewer`
+   - Wait for feedback
 
-**Orchestrator:**
+4. **Fix review findings**
+   - If review finds issues, dispatch a fresh `implementer` with:
+     - all story properties
+     - `progress_file`
+     - `mode: review_fix`
+     - full reviewer findings
+   - Never fix review findings directly
+   - Apply **Status Rules**
+   - Dispatch a fresh `addy-code-reviewer`
+   - Repeat until review is clean or **Stop Condition** is reached
 
-- owns story selection, dispatch, tracking, `prd_file`, `progress_file`, and `AGENTS.md` updates, and stop conditions
-- dispatches as soon as the task is clear enough
-- does not inspect files beyond what is needed to select work, dispatch subagents, verify status, update execution artifacts, and maintain reusable guidance
-- does not draft solutions, sketch patches, or change code directly
+5. **Verify**
+   - Run required quality checks again
 
-**Implementer:**
+6. **Improve process**
+   - Invoke `self-improve` only if not already invoked
+   - It must not modify code or override this workflow
 
-- owns repo discovery, pattern lookup, first-pass design, code changes, and verification
+7. **Record**
+   - Update nearby `AGENTS.md` only for genuinely reusable guidance
+   - If all checks pass:
+     - mark the story `passes: true` in `prd_file`
+     - append a progress entry to `progress_file`
+     - continue to the next story
 
-## Progress Report
+When all stories have `passes: true`, reply exactly:
+`<promise>COMPLETE</promise>`
 
-Append to `progress_file` only. Never replace its contents.
+## Status Rules
 
-Format:
+- **DONE:** continue
+- **DONE_WITH_CONCERNS:** treat as incomplete unless every concern is explicitly confirmed non-blocking
+- **NEEDS_CONTEXT:** provide missing context and re-dispatch a fresh subagent
+- **BLOCKED:** try better context, a smaller slice, or a stronger model; if still blocked, stop and escalate
+
+## Progress File
+
+Append only. Never replace contents.
+
+Required format:
 
 ```text
 ## [Date/Time] - [Story ID]
@@ -111,78 +117,44 @@ Format:
 ---
 ```
 
-The **Learnings for future iterations** section is required.
+Maintain a `## Codebase Patterns` section at the top.
+Add only general reusable patterns, never story-specific details.
 
-## Codebase Patterns
+## AGENTS.md
 
-Maintain a `## Codebase Patterns` section at the top of `progress_file` (create it if missing).
+Only add reusable guidance such as:
 
-Add only general, reusable patterns that will help with future stories. Do not add story-specific details.
+- module conventions
+- non-obvious gotchas
+- important file relationships
+- testing expectations
+- config/environment requirements
 
-Examples:
-
-- Use `sql<number>` templates for aggregations
-- Always use `IF NOT EXISTS` for migrations
-- Export types from `actions.ts` for UI components
-
-## AGENTS.md Updates
-
-When deciding whether to update `AGENTS.md` files:
-
-1. Look at the directories you edited.
-2. Check for `AGENTS.md` in those directories or their parents.
-3. Add only reusable guidance, such as:
-   - module-specific conventions or API patterns
-   - non-obvious gotchas or requirements
-   - important file relationships or dependencies
-   - testing expectations
-   - config or environment requirements
-
-Good examples:
-
-- When modifying X, also update Y to keep them in sync
-- This module uses pattern Z for API calls
-- Tests require the dev server on port 3000
-- Field names must match the template exactly
-
-Do not add:
-
-- story-specific implementation details
-- temporary debugging notes
-- information better kept only in `progress_file`
+Do not add story-specific notes.
 
 ## Required Quality Checks
 
-Required quality checks are the checks explicitly specified in the story, repository guidance, `AGENTS.md`, or standard project scripts needed to validate the changed area.
+Use the checks required by:
 
-## Quality Requirements
-
-- Keep changes focused and minimal.
-- Follow existing code patterns.
+- the story
+- repository guidance
+- `AGENTS.md`
+- standard project scripts needed to validate the changed area
 
 ## Stop Condition
 
-Stop only when one of these is true:
+Stop only if:
 
-- all user stories in `prd_file` have `passes: true`
+- all stories in `prd_file` have `passes: true`
 - a real blocker remains after reasonable unblocking attempts
-- `prd_file` has contradictory dependencies, invalid task order, missing required task details, or cannot support the required implementation/review loop and needs human correction
+- `prd_file` has contradictions, invalid ordering, missing required details, or otherwise cannot support this loop without human correction
 
 ## Red Flags
 
-- reading extra repo context, proposing patches, or running validation before dispatching a story to an implementer
-- treating chat state, memory, scratch notes, subagent reports, SQL tables, databases, or task-tracking tools as equivalent to `prd_file` for determining readiness or completion status
-- starting the next story before the current story has `passes: true` in `prd_file`
-- writing code directly instead of using the correct fresh subagent
-- skipping simplification or review after implementation completes
-- patching review findings inline instead of dispatching an implementer
-- stopping between story completions to ask for permission
-- committing changes or telling subagents to commit
-- recording story-specific implementation details in `AGENTS.md` instead of reusable patterns or gotchas
-- missing a progress report or leaving out the **Learnings for future iterations** section
-
-## Important
-
-- Do not introduce failures in the project’s required quality checks; if CI exists, aim to keep it green.
-- Always resolve `progress_file`; if it exists, read it, especially `## Codebase Patterns` to capture reusable patterns and context.
-- Read only the files needed to complete the workflow correctly.
+- reading extra repo context before dispatching implementer
+- drafting patches or changing code directly
+- skipping simplification or review
+- fixing review findings without a fresh implementer
+- starting the next story before current story has `passes: true`
+- using anything except `prd_file` to decide official completion
+- missing the progress entry or its learnings section
