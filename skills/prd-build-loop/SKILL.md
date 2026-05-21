@@ -7,6 +7,12 @@ description: Implement failing PRD stories with required simplification, review,
 
 You are an autonomous orchestrator for a software project.
 
+## Core Objective
+
+Keep running this workflow until every story in `prd_file` has `passes: true`.
+If any story in `prd_file` still has `passes: false`, remain in the loop and continue.
+Do not return control to the user after completing a story unless **Stop Condition** is met.
+
 ## Rules
 
 - `prd_file` is the only authority for story status. A story is complete only when `passes: true` in `prd_file`.
@@ -17,6 +23,7 @@ You are an autonomous orchestrator for a software project.
 - If no fresh `implementer` has handled the exact current unit of work, dispatch one before any code-affecting action.
 - Any new implementer change resets the requirement to review and verify.
 - Do not commit changes.
+- Do not stop after finishing one story if another story still has `passes: false`.
 - Stop only per **Stop Condition**.
 
 ## Roles
@@ -55,17 +62,14 @@ For the highest-priority story in `prd_file` with `passes: false`:
      - Instruct the subagent to invoke `context-engineering`
    - Wait for the result and apply **Status Rules**
    - Do not continue until resolved
-
 2. **Simplify**
    - Dispatch a fresh `code-simplifier`
    - Wait for completion
    - Do not skip
-
 3. **Review**
    - Dispatch a fresh `addy-code-reviewer`
    - Wait for feedback
    - Do not skip
-
 4. **Fix review findings**
    - If review finds issues:
      - Dispatch a fresh `implementer` with all story properties, `progress_file`, `mode: review_fix`, and full reviewer findings
@@ -73,23 +77,21 @@ For the highest-priority story in `prd_file` with `passes: false`:
      - Wait for the result and apply **Status Rules**
      - Then run **Review** again
      - Repeat until review is clean or **Stop Condition** is reached
-
 5. **Verify**
    - Run required quality checks after the final clean review
-
 6. **Improve process**
    - Invoke `self-improve` only if not already invoked
    - It must not modify code or override this workflow
-
 7. **Record**
    - Update nearby `AGENTS.md` only with reusable guidance
    - Set `passes: true` in `prd_file` only if the **Completion Gate** is satisfied
    - If the **Completion Gate** is not satisfied, do not mark complete and do not start another story
    - Append a progress entry to `progress_file`
-   - Continue to the next story
-
-When all stories have `passes: true`, reply exactly:
-`<promise>COMPLETE</promise>`
+   - Immediately re-read `prd_file`
+   - If any story still has `passes: false`, continue the loop with the next highest-priority story
+   - Do not return control to the user between stories
+     When all stories have `passes: true`, reply exactly:
+     `<promise>COMPLETE</promise>`
 
 ## Completion Gate
 
@@ -159,8 +161,17 @@ Stop only if:
 - a real blocker remains after reasonable unblocking attempts
 - `prd_file` has contradictions, invalid ordering, or missing required details that require human correction
 
+## Before Stopping
+
+Before any response that is not exactly `<promise>COMPLETE</promise>`:
+
+1. Re-read `prd_file`
+2. Confirm that at least one **Stop Condition** is true
+3. If any story still has `passes: false` and no **Stop Condition** applies, continue the loop instead of stopping
+
 ## Red Flags
 
+- returning control after completing one story while another story still has `passes: false`
 - reading extra repo context before dispatching the implementer
 - drafting patches or changing code directly
 - skipping simplify or review
