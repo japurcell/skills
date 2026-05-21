@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly CONTEXT_FILE="$REPO_ROOT/hooks/references/agent-start-context.json"
+readonly EXPECTED_CONTEXT="$(jq -r '.additionalContext' "$CONTEXT_FILE")"
+
+assert_equals() {
+  local expected="$1"
+  local actual="$2"
+  local message="$3"
+
+  if [[ "$actual" != "$expected" ]]; then
+    echo "$message" >&2
+    echo "Expected: $expected" >&2
+    echo "Actual:   $actual" >&2
+    exit 1
+  fi
+}
+
+assert_file_contains() {
+  local file="$1"
+  local needle="$2"
+  local message="$3"
+
+  if ! grep -Fq "$needle" "$file"; then
+    echo "$message" >&2
+    echo "Missing: $needle" >&2
+    echo "File: $file" >&2
+    exit 1
+  fi
+}
+
+run_session_start_hook() {
+  local audit_log="$1"
+  local payload="$2"
+
+  AUDIT_LOG="$audit_log" \
+    bash "$REPO_ROOT/hooks/scripts/session-start.sh" <<<"$payload"
+}
+
+run_subagent_start_hook() {
+  local audit_log="$1"
+  local payload="$2"
+
+  AUDIT_LOG="$audit_log" \
+    bash "$REPO_ROOT/hooks/scripts/subagent-start.sh" <<<"$payload"
+}
+
+test_session_start_outputs_cli_schema() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_session_start_hook "$audit_log" '{"sessionId":"cli-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}')"
+
+  assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$output")" \
+    "Expected Copilot CLI payloads to return top-level additionalContext."
+  assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
+    "Did not expect hookSpecificOutput for Copilot CLI payloads."
+  assert_equals "$EXPECTED_CONTEXT" "$(jq -r '.additionalContext' <<<"$output")" \
+    "Expected Copilot CLI payloads to inject the startup skill context."
+}
+
+test_session_start_outputs_vscode_schema() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_session_start_hook "$audit_log" '{"hook_event_name":"SessionStart","session_id":"vscode-session","timestamp":"2026-05-21T09:00:01Z","source":"vscode","initial_prompt":"hello"}')"
+
+  assert_equals "true" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
+    "Expected VS Code payloads to return hookSpecificOutput."
+  assert_equals "SessionStart" "$(jq -r '.hookSpecificOutput.hookEventName' <<<"$output")" \
+    "Expected VS Code SessionStart hooks to include hookEventName."
+  assert_equals "$EXPECTED_CONTEXT" "$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")" \
+    "Expected VS Code SessionStart hooks to inject startup context in hookSpecificOutput."
+}
+
+test_subagent_start_outputs_cli_schema() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_subagent_start_hook "$audit_log" '{"sessionId":"cli-subagent-session","timestamp":"2026-05-21T09:00:02Z","transcriptPath":"workspace/transcript.jsonl","agentName":"code-review","agentId":"agent-42"}')"
+
+  assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$output")" \
+    "Expected Copilot CLI subagent payloads to return top-level additionalContext."
+  assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
+    "Did not expect hookSpecificOutput for Copilot CLI subagent payloads."
+  assert_equals "$EXPECTED_CONTEXT" "$(jq -r '.additionalContext' <<<"$output")" \
+    "Expected Copilot CLI subagent payloads to inject the startup skill context."
+
+  assert_file_contains "$audit_log" "Agent: code-review" \
+    "Expected subagent-start hook to log the Copilot CLI agent name."
+  assert_file_contains "$audit_log" "Agent ID: agent-42" \
+    "Expected subagent-start hook to log the Copilot CLI agent ID."
+}
+
+test_subagent_start_outputs_vscode_schema() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(mktemp -d)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_subagent_start_hook "$audit_log" '{"hookEventName":"SubagentStart","sessionId":"vscode-subagent-session","timestamp":"2026-05-21T09:00:03Z","agent_id":"vscode-agent-42","agent_type":"Plan"}')"
+
+  assert_equals "true" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
+    "Expected VS Code SubagentStart payloads to return hookSpecificOutput."
+  assert_equals "SubagentStart" "$(jq -r '.hookSpecificOutput.hookEventName' <<<"$output")" \
+    "Expected VS Code SubagentStart hooks to include hookEventName."
+  assert_equals "$EXPECTED_CONTEXT" "$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")" \
+    "Expected VS Code SubagentStart hooks to inject startup context in hookSpecificOutput."
+
+  assert_file_contains "$audit_log" "Agent: Plan" \
+    "Expected subagent-start hook to log the VS Code agent type."
+  assert_file_contains "$audit_log" "Agent ID: vscode-agent-42" \
+    "Expected subagent-start hook to log the VS Code agent ID."
+}
+
+test_hooks_json_registers_vscode_subagent_start_event() {
+  assert_equals '$HOME/.copilot/hooks/scripts/subagent-start.sh' \
+    "$(jq -r '.hooks.SubagentStart[0].bash // empty' "$REPO_ROOT/hooks/hooks.json")" \
+    "Expected hooks.json to register a direct VS Code SubagentStart hook."
+}
+
+test_validation_doc_records_vscode_subagent_start_strategy() {
+  assert_file_contains "$REPO_ROOT/docs/agent-guides/validation.md" \
+    "If VS Code omits \`SubagentStart\` for \`runSubagent\` child sessions, verify the direct \`SubagentStart\` hook is installed and use \`SessionStart\` as the fallback evidence." \
+    "Expected validation guidance to codify the VS Code SubagentStart fallback strategy."
+}
+
+main() {
+  test_session_start_outputs_cli_schema
+  test_session_start_outputs_vscode_schema
+  test_subagent_start_outputs_cli_schema
+  test_subagent_start_outputs_vscode_schema
+  test_hooks_json_registers_vscode_subagent_start_event
+  test_validation_doc_records_vscode_subagent_start_strategy
+}
+
+main "$@"

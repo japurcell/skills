@@ -31,13 +31,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 AUDIT_LIB="$SCRIPT_DIR/audit.sh"
+STARTUP_CONTEXT_LIB="$SCRIPT_DIR/startup-context.sh"
 
 if [[ ! -f "$AUDIT_LIB" ]]; then
   echo "Missing audit library: $AUDIT_LIB" >&2
   exit 1
 fi
 
+if [[ ! -f "$STARTUP_CONTEXT_LIB" ]]; then
+  echo "Missing startup context library: $STARTUP_CONTEXT_LIB" >&2
+  exit 1
+fi
+
 source "$AUDIT_LIB"
+source "$STARTUP_CONTEXT_LIB"
 
 AUDIT_LOG="${AUDIT_LOG:-$HOOK_DIR/audit.log}"
 AUDIT_LOCK="${AUDIT_LOCK:-$AUDIT_LOG.lock}"
@@ -57,6 +64,8 @@ append_audit_line "$AUDIT_LOG" \
     Source: $SOURCE, \
     Initial Prompt: $INITIAL_PROMPT"
 
-cat "$HOOK_DIR/references/agent-start-context.json"
+CONTEXT="$(read_startup_additional_context "$HOOK_DIR/references/agent-start-context.json")"
+emit_startup_context_payload "$INPUT" "SessionStart" "$CONTEXT"
 
-# Optional — cannot block creation, but additionalContext is prepended to the subagent's prompt.
+# Optional — cannot block creation. This also provides fallback context for VS Code
+# child sessions if a runtime does not emit SubagentStart for runSubagent.

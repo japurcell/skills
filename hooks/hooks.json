@@ -49,6 +49,12 @@
         "bash": "$HOME/.copilot/hooks/scripts/subagent-start.sh"
       }
     ],
+    "SubagentStart": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/subagent-start.sh"
+      }
+    ],
     "subagentStop": [
       {
         "type": "command",

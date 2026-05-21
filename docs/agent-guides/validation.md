@@ -26,6 +26,12 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 - `python3 -m py_compile skills/<skill-name>/evals/grade_benchmark.py`: syntax-check a skill-local Python benchmark grader after editing it
 - `python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>`: grade benchmark-style eval artifacts when a skill ships a local `grade_benchmark.py` helper
 - `bash scripts/test-hooks-format.sh`: validate hook audit logging, rollover, and locking behavior
+- `bash scripts/test-hooks-startup.sh`: validate startup hook context emission across Copilot CLI and VS Code payload schemas, including direct `SubagentStart` registration
+- Hook source changes: run `./scripts/copilot-install.sh` before live validation; Copilot CLI and VS Code execute installed hooks from `~/.copilot/hooks`, not repository source files.
+- Hook event compatibility: keep CLI camelCase `subagentStart` and VS Code PascalCase `SubagentStart`; CLI returns top-level `additionalContext`, while VS Code returns `hookSpecificOutput.hookEventName` plus `additionalContext`.
+- Live VS Code hook debugging: inspect the matching `exthost*/GitHub.copilot-chat/GitHub Copilot Chat Hooks.log` for returned `SessionStart`/`SubagentStart` hook JSON, then confirm `GitHub Copilot Chat.log` records `SessionStart hook provided context for session` or `SubagentStart hook provided context for subagent ...`.
+- Live Copilot CLI hook debugging: launch a no-op `task` subagent if needed, then verify `~/.copilot/hooks/audit.log` contains `[subagent-start.sh]` and `[log-subagent-stop.sh]`; smoke-test installed CLI schema with `~/.copilot/hooks/scripts/subagent-start.sh` returning top-level `additionalContext`.
+- If VS Code omits `SubagentStart` for `runSubagent` child sessions, verify the direct `SubagentStart` hook is installed and use `SessionStart` as the fallback evidence.
 
 ## Workflow
 

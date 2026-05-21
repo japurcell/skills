@@ -15,6 +15,9 @@ This repository publishes custom coding skills from `skills/`, custom agent defi
 - Installer changes: `bash -n scripts/copilot-install.sh` and `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`
 - Skill definition changes: `python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>`
 - Hook formatter/audit changes: `bash scripts/test-hooks-format.sh`
+- Startup hook context/output changes: `bash scripts/test-hooks-startup.sh`
+- After hook source changes, run `./scripts/copilot-install.sh` before live CLI/VS Code validation because hooks execute from `~/.copilot/hooks`.
+- Live VS Code startup-hook validation: use the exact session's `exthost*/GitHub.copilot-chat/GitHub Copilot Chat Hooks.log` plus `GitHub Copilot Chat.log`; transcripts alone are not authoritative for `SessionStart` or `SubagentStart` context injection.
 
 ## Documentation
 
