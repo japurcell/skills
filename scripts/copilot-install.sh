@@ -8,6 +8,7 @@ AGENTS_SRC="${REPO_ROOT}/agents"
 REFERENCES_SRC="${REPO_ROOT}/references"
 HOOKS_SRC="${REPO_ROOT}/hooks"
 COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
+COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
 SKILLS_DEST="${HOME}/.agents/skills"
 REFERENCES_DEST="${HOME}/.agents/references"
 COPILOT_DEST="${HOME}/.copilot"
@@ -57,6 +58,10 @@ copy_copilot_instructions() {
   cp -p "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_DEST/"
 }
 
+copy_copilot_lsp() {
+  cp -p "$COPILOT_LSP_SRC" "$COPILOT_DEST/"
+}
+
 [[ -d "$SKILLS_SRC" ]] || {
   echo "Missing skills source directory: $SKILLS_SRC" >&2
   exit 1
@@ -69,6 +74,11 @@ copy_copilot_instructions() {
 
 [[ -f "$COPILOT_INSTRUCTIONS_SRC" ]] || {
   echo "Missing Copilot instructions file: $COPILOT_INSTRUCTIONS_SRC" >&2
+  exit 1
+}
+
+[[ -f "$COPILOT_LSP_SRC" ]] || {
+  echo "Missing Copilot LSP config file: $COPILOT_LSP_SRC" >&2
   exit 1
 }
 
@@ -85,6 +95,7 @@ if [[ -d "$HOOKS_SRC" ]]; then
   copy_hooks
 fi
 copy_copilot_instructions
+copy_copilot_lsp
 
 echo "Installed skills to $SKILLS_DEST"
 echo "Installed agents to $AGENTS_DEST"
@@ -95,3 +106,4 @@ if [[ -d "$HOOKS_SRC" ]]; then
   echo "Installed hooks to $HOOKS_DEST"
 fi
 echo "Installed Copilot instructions to $COPILOT_DEST/copilot-instructions.md"
+echo "Installed Copilot LSP config to $COPILOT_DEST/lsp-config.json"
