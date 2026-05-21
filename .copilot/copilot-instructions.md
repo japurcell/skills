@@ -1,5 +1,9 @@
 # Copilot Instructions
 
+## Skills
+
+Immediately load the `cli-compression`, `context-engineering`, `karpathy-guidelines`, and `concise-response` skills if not already loaded.
+
 ## Testing
 
 - Write tests before code (TDD)
