@@ -24,7 +24,9 @@ Load only context that changes the answer. Front-load rules, read the smallest r
    - `.github/copilot-instructions.md`
    - `AGENTS.md`
 
-   Do not stop after the first hit. If both global and repo Copilot instructions exist, load both.
+   **Important:**
+   - Do not stop after the first hit. If both global and repo Copilot instructions exist, load both.
+   - Check if the file exists before trying to read it.
 
 2. **Build the minimal task packet in this order. Do not stop early if the next category exists.**
    1. Relevant spec, PRD, or doc section only
