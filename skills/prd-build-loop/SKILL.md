@@ -59,7 +59,7 @@ Use a fresh subagent for each unit of work:
       - Repeat until review is clean or Stop Condition is reached
    7. Record any resolved findings for the progress report.
    8. Run the required quality checks again.
-   9. Invoke the `self-improve` skill for process improvement only; it must not directly modify code or override this workflow.
+   9. Invoke the `self-improve` skill for process improvement only if not already invoked; it must not directly modify code or override this workflow.
    10. Update nearby `AGENTS.md` files only if you discovered genuinely reusable guidance for future work in those directories.
    11. If all checks pass:
        - Mark the completed story in `prd_file` as `passes: true`
