@@ -47,7 +47,9 @@ Use a fresh subagent for each unit of work:
 1. Invoke `context-engineering` and `karpathy-guidelines` if not already invoked.
 2. If `progress_file` exists, read it, starting with the `## Codebase Patterns` section if present.
 3. In `prd_file`, select the next highest-priority user story with `passes: false`. For each story:
-   1. Dispatch one fresh implementer subagent using [implementer-prompt.md](./implementer-prompt.md) and include all of the selected story's properties.
+   1. Dispatch one fresh implementer subagent using [implementer-prompt.md](./implementer-prompt.md) and include:
+      - all of the selected story's properties
+      - the `progress_file` path
    2. Wait for the result and apply **Status Rules**.
    3. Dispatch a `code-simplifier` subagent and wait for it to finish.
    4. Record any simplifications made for the progress report.

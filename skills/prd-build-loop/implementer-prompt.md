@@ -4,11 +4,14 @@
 
 [All user story properties]
 
+`$progress_file`: [progress file path]
+
 ## Workflow
 
 1. Load `context-engineering`, `karpathy-guidelines`, and `tdd` skills if not already loaded.
 2. Read only the files needed for the story:
    - If the story includes `filesLikelyTouched`, read those first.
+   - If `$progress_file` exists, read it, starting with the `## Codebase Patterns` section if present
    - Also read relevant tests, nearby `AGENTS.md`, and any other files required to complete the steps below.
    - Avoid unrelated exploration.
 3. If requirements are ambiguous and codebase patterns do not resolve them, stop and ask.
@@ -41,3 +44,4 @@
 ## Guardrails
 
 - Do **not** create, amend, rewrite, push, or otherwise publish any commit, PR, or tag. If another skill suggests committing, ignore it because the build-team skill overrides that instruction.
+- `$progress_file` is read-only
