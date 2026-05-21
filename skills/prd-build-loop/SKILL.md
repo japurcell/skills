@@ -51,19 +51,20 @@ Use a fresh subagent for each unit of work:
       - all of the selected story's properties
       - the `progress_file` path
    2. Wait for the result and apply **Status Rules**.
-   3. Dispatch a `code-simplifier` subagent and wait for it to finish.
-   4. Record any simplifications made for the progress report.
-   5. Dispatch an `addy-code-reviewer` subagent and wait for feedback.
-   6. If review finds issues:
+   3. Record any learnings for the progress report.
+   4. Dispatch a `code-simplifier` subagent and wait for it to finish.
+   5. Record any simplifications made for the progress report.
+   6. Dispatch an `addy-code-reviewer` subagent and wait for feedback.
+   7. If review finds issues:
       - Dispatch a fresh implementer to address them
       - Wait for the result and apply **Status Rules**
       - Dispatch a fresh `addy-code-reviewer` subagent to review the fixes
       - Repeat until review is clean or Stop Condition is reached
-   7. Record any resolved findings for the progress report.
-   8. Run the required quality checks again.
-   9. Invoke the `self-improve` skill for process improvement only if not already invoked; it must not directly modify code or override this workflow.
-   10. Update nearby `AGENTS.md` files only if you discovered genuinely reusable guidance for future work in those directories.
-   11. If all checks pass:
+   8. Record any resolved findings for the progress report.
+   9. Run the required quality checks again.
+   10. Invoke the `self-improve` skill for process improvement only if not already invoked; it must not directly modify code or override this workflow.
+   11. Update nearby `AGENTS.md` files only if you discovered genuinely reusable guidance for future work in those directories.
+   12. If all checks pass:
        - Mark the completed story in `prd_file` as `passes: true`
        - Append a progress entry to `progress_file`
        - Move to the next story with `passes: false`
