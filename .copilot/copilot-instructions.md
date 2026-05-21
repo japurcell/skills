@@ -1,13 +1,5 @@
 # Copilot Instructions
 
-## Skills
-
-Always load:
-
-- `cli-compression` - Optimizes shell command output for low-token usage.
-
-**Subagent Dispatch**: When dispatching subagents, always instruct them to load the `cli-compression` skill.
-
 ## Testing
 
 - Write tests before code (TDD)

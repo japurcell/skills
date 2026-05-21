@@ -15,7 +15,6 @@ Create a continuation document for the next agent so that it can continue the wo
 ## The Workflow
 
 1. **Gather context**
-   - If available, invoke `addy-context-engineering` first.
    - If unavailable, apply the same principle directly.
    - Read applicable instruction files already in scope, including relevant `AGENTS.md` files.
    - Read the active scratchpad `spec.md` or `plan.md` if one exists.
@@ -42,9 +41,9 @@ Create a continuation document for the next agent so that it can continue the wo
 
 5. **Report Output**
    In your final reply, include:
-     - the absolute path of the generated file
-     - whether it is feature-scoped or root-scoped
-     - the single most important note for the next agent
+   - the absolute path of the generated file
+   - whether it is feature-scoped or root-scoped
+   - the single most important note for the next agent
 
 ## Durable Learnings
 
@@ -125,19 +124,21 @@ Allow explicit empties:
 ### Keep / Skip
 
 Keep:
-   - goal
-   - done / in progress / next
-   - useful suggested skills
-   - decisions, constraints, blockers
-   - durable learnings
-   - smallest useful set of relevant files, each with a reason
-   - one best next step
+
+- goal
+- done / in progress / next
+- useful suggested skills
+- decisions, constraints, blockers
+- durable learnings
+- smallest useful set of relevant files, each with a reason
+- one best next step
 
 Skip:
-   - full transcript
-   - routine investigation details
-   - raw command logs unless an error is the blocker
-   - speculative future work not grounded in this session
+
+- full transcript
+- routine investigation details
+- raw command logs unless an error is the blocker
+- speculative future work not grounded in this session
 
 ## Validation
 

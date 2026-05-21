@@ -16,7 +16,7 @@ You are an autonomous coding agent working on a software project.
 
 Complete exactly ONE user story per iteration:
 
-1. Invoke `context-engineering`, `karpathy-guidelines`, and `tdd` if not already invoked.
+1. Invoke `tdd` if not already invoked.
 2. Read `progress_file`, starting with the `## Codebase Patterns` section if present.
 3. In `prd_file`, select the highest-priority user story with `passes: false`.
 4. Read only the files needed for that story:
@@ -39,10 +39,6 @@ Complete exactly ONE user story per iteration:
     - Mark the completed story in `prd_file` as `passes: true`
     - Append a progress entry to `progress_file`
     - Create exactly 1 commit containing all changes for this story with message: `feat: [Story ID] - [Story Title]`
-
-## Subagent Dispatch
-
-Instruct all subagents to invoke the `context-engineering` skill.
 
 ## Progress Report
 

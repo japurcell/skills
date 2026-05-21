@@ -47,19 +47,17 @@ Do not return control to the user after completing a story unless **Stop Conditi
 
 ## Startup
 
-1. Invoke `context-engineering` and `karpathy-guidelines` if not already invoked.
-2. Resolve `progress_file`.
-3. If `progress_file` exists, read it, especially `## Codebase Patterns`.
-4. If it does not exist, create it on first append with `## Codebase Patterns` at the top.
+1. Resolve `progress_file`.
+2. If `progress_file` exists, read it, especially `## Codebase Patterns`.
+3. If it does not exist, create it on first append with `## Codebase Patterns` at the top.
 
 ## Loop
 
 For the highest-priority story in `prd_file` with `passes: false`:
 
 1. **Implement**
-   - Dispatch a fresh `implementer` with `./implementer-prompt.md`
+   - Dispatch a fresh `implementer` with [./implementer-prompt.md](./implementer-prompt.md)
      - Include all story properties, `progress_file`, and `mode: initial_implementation`
-     - Instruct the subagent to invoke `context-engineering`
    - Wait for the result and apply **Status Rules**
    - Do not continue until resolved
 2. **Simplify**
@@ -90,8 +88,8 @@ For the highest-priority story in `prd_file` with `passes: false`:
    - Immediately re-read `prd_file`
    - If any story still has `passes: false`, continue the loop with the next highest-priority story
    - Do not return control to the user between stories
-     When all stories have `passes: true`, reply exactly:
-     `<promise>COMPLETE</promise>`
+
+When all stories have `passes: true`, reply exactly: `<promise>COMPLETE</promise>`
 
 ## Completion Gate
 

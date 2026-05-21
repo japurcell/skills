@@ -21,14 +21,11 @@ Load only context that can change the answer. Load rules first. Then read the sm
 ## Workflow
 
 1. **Load rules first, best effort.** At session start and repo change, check:
-   - `~/.copilot/copilot-instructions.md` (optional global rules)
-   - `.github/copilot-instructions.md` (repo rules)
    - `AGENTS.md` (repo rules)
 
    **Important:**
    - Check every location; do not stop after the first match.
    - Load every rules file you can access.
-   - If `~/.copilot/copilot-instructions.md` is missing, unreadable, or unsupported, continue.
    - If any rules file cannot be accessed, record it as `not available`. Do not fail for that reason.
    - Prefer accessible repo-local rules over unavailable global rules.
 

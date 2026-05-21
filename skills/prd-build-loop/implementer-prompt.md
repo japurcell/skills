@@ -10,7 +10,7 @@
 
 ## Workflow
 
-1. Load `context-engineering`, `karpathy-guidelines`, and `tdd` if not already loaded.
+1. Load `tdd` if not already loaded.
 2. Read only the files needed:
    - if provided, start with `filesLikelyTouched`
    - if `progress_file` exists, read it, especially `## Codebase Patterns`
