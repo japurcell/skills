@@ -27,6 +27,10 @@
 - What you implemented (or what you attempted, if blocked)
 - Files changed
 - Summarized and concise verification results (test output, build output, lint output)
+- **Learnings for future iterations:**
+  - Patterns discovered
+  - Gotchas encountered
+  - Useful context
 - Any issues or concerns
 
 **Status definitions:**
