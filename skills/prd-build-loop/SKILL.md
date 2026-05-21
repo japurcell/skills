@@ -51,8 +51,8 @@ For the highest-priority story in `prd_file` with `passes: false`:
 
 1. **Implement**
    - Dispatch a fresh `implementer` with `./implementer-prompt.md`
-   - Include all story properties, `progress_file`, and `mode: initial_implementation`
-   - Instruct the subagent to invoke `context-engineering`
+     - Include all story properties, `progress_file`, and `mode: initial_implementation`
+     - Instruct the subagent to invoke `context-engineering`
    - Wait for the result and apply **Status Rules**
    - Do not continue until resolved
 
