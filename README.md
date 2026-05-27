@@ -20,7 +20,7 @@ The installer copies:
 - top-level `references/` entries into `~/.agents/references` when that directory exists
 - `agents/` files into `~/.copilot/agents`
 - top-level `hooks/` entries into `~/.copilot/hooks` when that directory exists
-- `.gemini/GEMINI.md` into `~/.gemini`
+- `.gemini/` contents into `~/.gemini`
 - `.copilot/copilot-instructions.md` into `~/.copilot/copilot-instructions.md`
 
 Workspace directories whose names end with `-workspace` are skipped during installation.
@@ -57,7 +57,7 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 - `.copilot/`: local Copilot instructions copied by the installer
 - `docs/agent-guides/`: repo-specific guidance for layout, authoring, and validation
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts; ignore their `outputs/` subdirectories during normal work
-- `scripts/install.sh`: installs `skills/` → `~/.agents/skills`, optional top-level `references/` → `~/.agents/references`, `agents/` → `~/.copilot/agents`, optional top-level `hooks/` → `~/.copilot/hooks`, `.gemini/GEMINI.md` → `~/.gemini`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
+- `scripts/install.sh`: installs `skills/` → `~/.agents/skills`, optional top-level `references/` → `~/.agents/references`, `agents/` → `~/.copilot/agents`, optional top-level `hooks/` → `~/.copilot/hooks`, `.gemini/` contents → `~/.gemini`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
 - `scripts/addy-install.sh`: syncs `../addy-agent-skills` from `https://github.com/addyosmani/agent-skills` by cloning or fast-forward pulling, then imports addy agents, skills, and top-level references into this repository, prefixing imported addy agent and skill names with `addy-`; pass `--skills foo,bar` or `--skills-file path` to copy specific source skill names and their referenced skills, and each successful run refreshes `.addy-skills` with the installed source skill names
 
 ## Working in this repo
@@ -90,6 +90,7 @@ Run the narrowest command that covers your change:
 ```bash
 # Installer changes
 bash -n scripts/install.sh
+bash scripts/test-install.sh
 bash -n scripts/addy-install.sh
 bash scripts/test-addy-install.sh
 

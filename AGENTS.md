@@ -12,7 +12,7 @@ This repository publishes custom coding skills from `skills/`, custom agent defi
 
 ## Quick Validation
 
-- Installer changes: `bash -n scripts/install.sh` and `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`
+- Installer changes: `bash -n scripts/install.sh && bash scripts/test-install.sh` and `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`
 - Skill definition changes: `python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>`
 - Hook formatter/audit changes: `bash scripts/test-hooks-format.sh`
 - Startup hook context/output changes: `bash scripts/test-hooks-startup.sh`

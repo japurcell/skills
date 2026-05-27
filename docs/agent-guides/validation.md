@@ -12,7 +12,7 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 ## Installer scripts
 
 - `./scripts/install.sh`: refresh installed skills, references, hooks, agents, Gemini instructions, and Copilot instructions after editing repo source and before checking live model behavior
-- `bash -n scripts/install.sh`: syntax-check the local installer
+- `bash -n scripts/install.sh && bash scripts/test-install.sh`: syntax-check and exercise the local installer, including recursive Gemini copying
 - `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`: syntax-check and exercise the addy importer, including upstream sync, dependency-copying, and reference-copying behavior
 
 ## Skill validation and packaging
