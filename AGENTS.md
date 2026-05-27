@@ -25,3 +25,7 @@ This repository publishes custom coding skills from `skills/`, custom agent defi
 - [Authoring rules](docs/agent-guides/authoring.md) — skill, agent, and script conventions
 - [Validation & workflow](docs/agent-guides/validation.md) — targeted validation commands and narrowest checks per area
 - [Benchmarking](docs/agent-guides/benchmarking.md) — snapshot, iteration, and grading workflows
+
+## Learnings
+
+- **Path preservation** — `code-simplifier` may revert PRD-required paths (e.g., `.gemini/` to `.copilot/`) if it thinks they are legacy typos. Explicitly warn the simplifier when non-standard paths are intentional.
