@@ -46,7 +46,7 @@ This skill is published in the `japurcell/skills` repository under `skills/codin
 ```bash
 git clone https://github.com/japurcell/skills.git
 cd skills
-./scripts/copilot-install.sh
+./scripts/install.sh
 ```
 
 This copies `skills/coding-task-workflow/` (and all other skills) to `~/.agents/skills/`. The agent runtime reads skills from that directory automatically.

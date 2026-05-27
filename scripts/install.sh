@@ -7,11 +7,13 @@ SKILLS_SRC="${REPO_ROOT}/skills"
 AGENTS_SRC="${REPO_ROOT}/agents"
 REFERENCES_SRC="${REPO_ROOT}/references"
 HOOKS_SRC="${REPO_ROOT}/hooks"
+GEMINI_SRC="${REPO_ROOT}/.gemini/GEMINI.md"
 COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
 COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
 SKILLS_DEST="${HOME}/.agents/skills"
 REFERENCES_DEST="${HOME}/.agents/references"
 COPILOT_DEST="${HOME}/.copilot"
+GEMINI_DEST="${HOME}/.gemini"
 AGENTS_DEST="${HOME}/.copilot/agents"
 HOOKS_DEST="${HOME}/.copilot/hooks"
 
@@ -54,6 +56,10 @@ copy_hooks() {
   done < <(find "$HOOKS_SRC" -mindepth 1 -maxdepth 1 -print0)
 }
 
+copy_gemini() {
+  cp -p "$GEMINI_SRC" "$GEMINI_DEST/"
+}
+
 copy_copilot_instructions() {
   cp -p "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_DEST/"
 }
@@ -77,12 +83,17 @@ copy_copilot_lsp() {
   exit 1
 }
 
+[[ -f "$GEMINI_SRC" ]] || {
+  echo "Missing Gemini instructions file: $GEMINI_SRC" >&2
+  exit 1
+}
+
 [[ -f "$COPILOT_LSP_SRC" ]] || {
   echo "Missing Copilot LSP config file: $COPILOT_LSP_SRC" >&2
   exit 1
 }
 
-mkdir -p "$SKILLS_DEST" "$COPILOT_DEST" "$AGENTS_DEST"
+mkdir -p "$SKILLS_DEST" "$COPILOT_DEST" "$GEMINI_DEST" "$AGENTS_DEST"
 
 copy_skills
 copy_agents
@@ -94,6 +105,7 @@ if [[ -d "$HOOKS_SRC" ]]; then
   mkdir -p "$HOOKS_DEST"
   copy_hooks
 fi
+copy_gemini
 copy_copilot_instructions
 copy_copilot_lsp
 
@@ -105,5 +117,6 @@ fi
 if [[ -d "$HOOKS_SRC" ]]; then
   echo "Installed hooks to $HOOKS_DEST"
 fi
+echo "Installed Gemini instructions to $GEMINI_DEST/GEMINI.md"
 echo "Installed Copilot instructions to $COPILOT_DEST/copilot-instructions.md"
 echo "Installed Copilot LSP config to $COPILOT_DEST/lsp-config.json"

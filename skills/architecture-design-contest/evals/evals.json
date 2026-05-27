@@ -49,11 +49,10 @@
     },
     {
       "id": 3,
-      "prompt": "Can you propose several architecture directions for making `copilot-install.sh` and `scripts/copilot-install.sh` converge into one maintainable installation pipeline? I want something that preserves current behavior but removes duplication and makes future agent/skill sync changes safer. Explore the repo first and then give me competing designs; no code yet.",
+      "prompt": "Can you propose several architecture directions for making `scripts/install.sh` converge into one maintainable installation pipeline? I want something that preserves current behavior but removes duplication and makes future agent/skill sync changes safer. Explore the repo first and then give me competing designs; no code yet.",
       "expected_output": "A codebase-grounded comparison that reads both installer paths and related docs, proposes different convergence strategies, evaluates change-safety and duplication reduction, and recommends a migration path without implementing it.",
       "files": [
-        "/home/adam/dev/personal/skills/copilot-install.sh",
-        "/home/adam/dev/personal/skills/scripts/copilot-install.sh",
+        "/home/adam/dev/personal/skills/scripts/install.sh",
         "/home/adam/dev/personal/skills/README.md",
         "/home/adam/dev/personal/skills/docs/agent-guides/validation.md"
       ],

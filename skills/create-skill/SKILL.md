@@ -49,7 +49,7 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
    - Run `python3 -m py_compile skills/<skill-name>/evals/grade_benchmark.py` when the skill ships a grader.
    - Run `python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>` when benchmark artifacts exist.
    - If the user wants a packaged archive, run `PYTHONPATH=skills/skill-creator python3 skills/skill-creator/scripts/package_skill.py skills/<skill-name> /tmp/skill-dist`.
-   - Run `./scripts/copilot-install.sh` after source edits so installed skills, references, hooks, and instructions stay in sync.
+   - Run `./scripts/install.sh` after source edits so installed skills, references, hooks, and instructions stay in sync.
 
 ## Specific Techniques
 
@@ -101,4 +101,4 @@ After completing the workflow, confirm:
 - [ ] The final `SKILL.md` is concise, trigger-oriented, and follows the anatomy section pattern.
 - [ ] `evals/evals.json` covers create, modify, and at least one dedupe or negative case.
 - [ ] `evals/grade_benchmark.py` exists when deterministic grading is practical, and its syntax is valid.
-- [ ] The narrow repo validation commands were run, and `./scripts/copilot-install.sh` refreshed installed copies after edits.
+- [ ] The narrow repo validation commands were run, and `./scripts/install.sh` refreshed installed copies after edits.

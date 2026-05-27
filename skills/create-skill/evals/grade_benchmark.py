@@ -170,8 +170,8 @@ def grade_eval_zero(run_dir: Path) -> list[dict]:
         ),
         expectation("Generated grade_benchmark.py compiles.", grader_ok, grader_evidence),
         expectation(
-            "output.md lists quick_validate and ./scripts/copilot-install.sh.",
-            "quick_validate.py" in output_md and "./scripts/copilot-install.sh" in output_md,
+            "output.md lists quick_validate and ./scripts/install.sh.",
+            "quick_validate.py" in output_md and "./scripts/install.sh" in output_md,
             output_md or "missing output.md",
         ),
         expectation(
@@ -263,7 +263,7 @@ def grade_eval_three(run_dir: Path) -> list[dict]:
     eval_count = evals_count(skill_dir / "evals" / "evals.json")
     repo_specific = (
         "python3 skills/skill-creator/scripts/quick_validate.py" in skill_text
-        and "./scripts/copilot-install.sh" in skill_text
+        and "./scripts/install.sh" in skill_text
         and not has_positive_generic_npm_instruction(skill_text)
     )
     workspace_layout = has_workspace_layout_reference(output_md)
