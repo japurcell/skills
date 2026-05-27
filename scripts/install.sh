@@ -12,9 +12,10 @@ COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
 COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
 SKILLS_DEST="${HOME}/.agents/skills"
 REFERENCES_DEST="${HOME}/.agents/references"
-COPILOT_DEST="${HOME}/.copilot"
 GEMINI_DEST="${HOME}/.gemini"
-AGENTS_DEST="${HOME}/.copilot/agents"
+COPILOT_DEST="${HOME}/.copilot"
+AGENTS_DEST="${GEMINI_DEST}/agents"
+COPILOT_AGENTS_DEST="${COPILOT_DEST}/agents"
 HOOKS_DEST="${HOME}/.copilot/hooks"
 
 copy_skills() {
@@ -33,11 +34,8 @@ copy_skills() {
 }
 
 copy_agents() {
-  local file
-
-  while IFS= read -r -d '' file; do
-    cp -p "$file" "$AGENTS_DEST/"
-  done < <(find "$AGENTS_SRC" -mindepth 1 -maxdepth 1 -type f -print0)
+  cp -Rp "$AGENTS_SRC/." "$AGENTS_DEST/"
+  cp -Rp "$AGENTS_SRC/." "$COPILOT_AGENTS_DEST/"
 }
 
 copy_references() {
@@ -93,7 +91,7 @@ copy_copilot_lsp() {
   exit 1
 }
 
-mkdir -p "$SKILLS_DEST" "$COPILOT_DEST" "$GEMINI_DEST" "$AGENTS_DEST"
+mkdir -p "$SKILLS_DEST" "$COPILOT_DEST" "$GEMINI_DEST" "$AGENTS_DEST" "$COPILOT_AGENTS_DEST"
 
 copy_skills
 copy_agents
@@ -110,7 +108,7 @@ copy_copilot_instructions
 copy_copilot_lsp
 
 echo "Installed skills to $SKILLS_DEST"
-echo "Installed agents to $AGENTS_DEST"
+echo "Installed agents to $AGENTS_DEST and $COPILOT_AGENTS_DEST"
 if [[ -d "$REFERENCES_SRC" ]]; then
   echo "Installed references to $REFERENCES_DEST"
 fi
