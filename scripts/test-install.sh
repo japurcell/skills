@@ -10,6 +10,9 @@ create_fixture_repo() {
   mkdir -p \
     "$repo/scripts" \
     "$repo/skills/alpha" \
+    "$repo/skills/alpha/evals" \
+    "$repo/skills/beta-workspace" \
+    "$repo/skills/archive" \
     "$repo/agents" \
     "$repo/agents/nested" \
     "$repo/references" \
@@ -18,6 +21,9 @@ create_fixture_repo() {
 
   cp -p "$REPO_ROOT/scripts/install.sh" "$repo/scripts/install.sh"
   printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$repo/skills/alpha/SKILL.md"
+  printf '%s\n' 'fixture eval content' > "$repo/skills/alpha/evals/evals.json"
+  printf '%s\n' 'workspace skill should not copy' > "$repo/skills/beta-workspace/SKILL.md"
+  printf '%s\n' 'archive entry should not copy' > "$repo/skills/archive/README.md"
   printf '%s\n' '---' 'name: helper' '---' 'Use alpha.' > "$repo/agents/helper.md"
   printf '%s\n' '---' 'name: nested-helper' '---' 'Use alpha deeply.' > "$repo/agents/nested/helper.md"
   printf '%s\n' 'Gemini root.' > "$repo/.gemini/GEMINI.md"
@@ -26,6 +32,46 @@ create_fixture_repo() {
   printf '%s\n' 'Copilot instructions.' > "$repo/.copilot/copilot-instructions.md"
   printf '%s\n' '{}' > "$repo/.copilot/lsp-config.json"
   printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.copilot/hooks/test-hook.sh"
+}
+
+test_excludes_and_prunes_skill_evals() {
+  local workdir
+  local repo
+  local home
+  local copied_skill
+  local copied_existing_note
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+
+  create_fixture_repo "$repo"
+  mkdir -p "$home/.agents/skills/alpha/evals"
+  printf '%s\n' 'stale eval content' > "$home/.agents/skills/alpha/evals/stale.txt"
+  printf '%s\n' 'keep this installed note' > "$home/.agents/skills/alpha/existing-note.txt"
+
+  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+
+  copied_skill="$(<"$home/.agents/skills/alpha/SKILL.md")"
+  copied_existing_note="$(<"$home/.agents/skills/alpha/existing-note.txt")"
+  assert_equals $'---\nname: alpha\n---\nStandalone.' "$copied_skill" "Expected non-evals skill content to remain installed."
+  assert_equals "keep this installed note" "$copied_existing_note" "Expected existing non-evals installed content to remain after eval cleanup."
+
+  if [[ -d "$home/.agents/skills/alpha/evals" ]]; then
+    echo "Expected ~/.agents/skills/alpha/evals to be removed during install." >&2
+    exit 1
+  fi
+
+  if [[ -e "$home/.agents/skills/beta-workspace" ]]; then
+    echo "Expected *-workspace skills to remain excluded from top-level selection." >&2
+    exit 1
+  fi
+
+  if [[ -e "$home/.agents/skills/archive" ]]; then
+    echo "Expected archive entries to remain excluded from top-level selection." >&2
+    exit 1
+  fi
 }
 
 test_copies_full_gemini_tree() {
@@ -76,6 +122,7 @@ test_copies_full_gemini_tree() {
 }
 
 main() {
+  test_excludes_and_prunes_skill_evals
   test_copies_full_gemini_tree
 }
 

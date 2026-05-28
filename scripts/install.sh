@@ -29,8 +29,8 @@ copy_skills() {
     if [[ "$name" == *-workspace || "$name" == "archive" ]]; then
       continue
     fi
-
     cp -Rp "$entry" "$SKILLS_DEST/"
+    rm -rf "${SKILLS_DEST}/${name}/evals"
   done < <(find "$SKILLS_SRC" -mindepth 1 -maxdepth 1 -print0)
 }
 

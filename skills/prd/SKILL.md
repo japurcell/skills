@@ -2,9 +2,7 @@
 name: prd
 description: Create a Product Requirements Document (PRD) for a feature. Use for requests like- create a PRD, write a PRD for, plan this feature, requirements for, spec out.
 ---
-
 # PRD Generator
-
 Create a clear, implementation-ready PRD. Do not implement the feature or write code.
 
 ## Rules
@@ -12,6 +10,7 @@ Create a clear, implementation-ready PRD. Do not implement the feature or write 
 - Apply YAGNI: exclude unnecessary features.
 - Resolve ambiguities before designing.
 - If the user says “whatever you think is best,” give a recommendation and get explicit confirmation.
+- Never overwrite an existing PRD.
 
 ## Workflow
 1. Understand `$ARGUMENTS`.
@@ -20,25 +19,28 @@ Create a clear, implementation-ready PRD. Do not implement the feature or write 
      - What should it do?
      - Any constraints or preferences?
    - Summarize only if there is meaningful uncertainty.
-2. [Explore the codebase](#codebase-exploration) and wait for subagent results.
-3. Ask clarifying questions based on the request and codebase findings.
+2. Resolve `[feature-name]`:
+   - Create a short kebab-case name from the request.
+   - Check `.agents/scratchpad/[feature-name]/prd.md`.
+   - If it exists, try `[feature-name]-2`, then `-3`, and so on until the path is unused.
+   - Do not overwrite, rename, or delete an existing PRD.
+3. [Explore the codebase](#codebase-exploration) and wait for subagent results.
+4. Ask clarifying questions based on the request and codebase findings.
    - Cover gaps such as edge cases, error handling, integrations, scope, backward compatibility, and performance.
    - Wait for answers before designing.
-4. [Design the architecture](#architecture-design) options and wait for subagent results.
-5. Present options, trade-offs, and your recommendation.
-6. Ask the user to choose an approach.
-7. Write the PRD.
-8. Save it to `.agents/scratchpad/[feature-name]/prd.md`.
-9. Final response must include:
+5. [Design the architecture](#architecture-design) options and wait for subagent results.
+6. Present options, trade-offs, and your recommendation.
+7. Ask the user to choose an approach.
+8. Write the PRD.
+9. Save it to `.agents/scratchpad/[feature-name]/prd.md`.
+10. Final response must include:
    - feature short name
    - PRD path
    - validation status (pass/fail)
    - readiness for `/prd-to-tasks`
 
 ## Codebase Exploration
-
 **Goal:** Understand existing patterns and relevant code.
-
 1. Launch 1-3 parallel `code-explorer` subagents, where the number matches feature complexity.
 2. Each agent should inspect a different aspect of the codebase, such as:
    - Similar features
@@ -51,9 +53,7 @@ Create a clear, implementation-ready PRD. Do not implement the feature or write 
 5. Present comprehensive summary of findings and patterns discovered.
 
 ## Architecture Design
-
 **Goal:** Design multiple implementation approaches with different trade-offs
-
 1. Launch 2-3 parallel `code-architect` subagents, where the number matches feature complexity.
 2. Each agent should propose a different approach, such as:
    - Minimal changes (smallest change, maximum reuse)
@@ -68,7 +68,6 @@ Create a clear, implementation-ready PRD. Do not implement the feature or write 
 7. **Ask user which approach they prefer**
 
 ## PRD Structure
-
 ### 1. Introduction / Overview
 Briefly describe the feature and the problem it solves.
 
@@ -92,17 +91,14 @@ Each story should be small enough for one focused implementation session.
 ```markdown
 ### US-001: [Title]
 **Description:** As a [user], I want [feature] so that [benefit].
-
 **Acceptance Criteria:**
 - [ ] Specific verifiable criterion
 - [ ] Another verifiable criterion
 - [ ] Typecheck/lint passes
 - [ ] **[UI stories only]** Verify in browser using playwright-cli skill
-
 **Files likely touched:**
 - `src/path/to/file.ts`
 - `tests/path/to/test.ts`
-
 **Design Guidance:**
 - [Source link]
   - Guidance: [What the implementer should do and how to apply it]
@@ -150,11 +146,11 @@ Assume the reader may be a junior developer or another AI agent.
 - Use exactly `.agents/scratchpad/[feature-name]/prd.md`.
 - Do not use any other directory.
 - If the directory does not exist, create it.
+- If `.agents/scratchpad/[feature-name]/prd.md` exists, choose a different `[feature-name]` by adding `-2`, `-3`, and so on until the path is unused.
 - Before finishing, verify the file exists at that exact path.
 - If you cannot write to that exact path, say so and stop.
 
 ## Checklist
-
 ### Before writing
 - [ ] Clarifying questions asked and answered
 - [ ] No open questions remain
@@ -169,8 +165,9 @@ Assume the reader may be a junior developer or another AI agent.
 - [ ] Non-goals clearly define scope
 - [ ] Architectural decisions include rationale and citations
 - [ ] No code was written
+- [ ] Target path does not already exist
 
 ### Final verification
 - [ ] Saved at exactly `.agents/scratchpad/[feature-name]/prd.md`
-- [ ] No alternate path was used
+- [ ] No existing PRD was overwritten
 - [ ] No design gaps, open questions, or ambiguities remain
