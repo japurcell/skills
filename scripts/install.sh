@@ -2,21 +2,22 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SKILLS_SRC="${REPO_ROOT}/skills"
-AGENTS_SRC="${REPO_ROOT}/agents"
-REFERENCES_SRC="${REPO_ROOT}/references"
-HOOKS_SRC="${REPO_ROOT}/hooks"
-GEMINI_SRC="${REPO_ROOT}/.gemini"
-COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
-COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
-SKILLS_DEST="${HOME}/.agents/skills"
-REFERENCES_DEST="${HOME}/.agents/references"
-GEMINI_DEST="${HOME}/.gemini"
-COPILOT_DEST="${HOME}/.copilot"
-AGENTS_DEST="${GEMINI_DEST}/agents"
-COPILOT_AGENTS_DEST="${COPILOT_DEST}/agents"
-HOOKS_DEST="${HOME}/.copilot/hooks"
+readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly SKILLS_SRC="${REPO_ROOT}/skills"
+readonly AGENTS_SRC="${REPO_ROOT}/agents"
+readonly REFERENCES_SRC="${REPO_ROOT}/references"
+readonly HOOKS_SRC="${REPO_ROOT}/.copilot/hooks"
+readonly GEMINI_SRC="${REPO_ROOT}/.gemini"
+readonly COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
+readonly COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
+
+readonly SKILLS_DEST="${HOME}/.agents/skills"
+readonly REFERENCES_DEST="${HOME}/.agents/references"
+readonly GEMINI_DEST="${HOME}/.gemini"
+readonly COPILOT_DEST="${HOME}/.copilot"
+readonly AGENTS_DEST="${GEMINI_DEST}/agents"
+readonly COPILOT_AGENTS_DEST="${COPILOT_DEST}/agents"
+readonly HOOKS_DEST="${HOME}/.copilot/hooks"
 
 copy_skills() {
   local entry
@@ -39,19 +40,11 @@ copy_agents() {
 }
 
 copy_references() {
-  local entry
-
-  while IFS= read -r -d '' entry; do
-    cp -Rp "$entry" "$REFERENCES_DEST/"
-  done < <(find "$REFERENCES_SRC" -mindepth 1 -maxdepth 1 -print0)
+  cp -Rp "$REFERENCES_SRC/." "$REFERENCES_DEST/"
 }
 
 copy_hooks() {
-  local entry
-
-  while IFS= read -r -d '' entry; do
-    cp -Rp "$entry" "$HOOKS_DEST/"
-  done < <(find "$HOOKS_SRC" -mindepth 1 -maxdepth 1 -print0)
+  cp -Rp "$HOOKS_SRC/." "$HOOKS_DEST/"
 }
 
 copy_gemini() {
@@ -66,30 +59,13 @@ copy_copilot_lsp() {
   cp -p "$COPILOT_LSP_SRC" "$COPILOT_DEST/"
 }
 
-[[ -d "$SKILLS_SRC" ]] || {
-  echo "Missing skills source directory: $SKILLS_SRC" >&2
-  exit 1
-}
+for src in "$SKILLS_SRC" "$AGENTS_SRC" "$GEMINI_SRC"; do
+  [[ -d "$src" ]] || { echo "Missing source directory: $src" >&2; exit 1; }
+done
 
-[[ -d "$AGENTS_SRC" ]] || {
-  echo "Missing agents source directory: $AGENTS_SRC" >&2
-  exit 1
-}
-
-[[ -f "$COPILOT_INSTRUCTIONS_SRC" ]] || {
-  echo "Missing Copilot instructions file: $COPILOT_INSTRUCTIONS_SRC" >&2
-  exit 1
-}
-
-[[ -d "$GEMINI_SRC" ]] || {
-  echo "Missing Gemini instructions directory: $GEMINI_SRC" >&2
-  exit 1
-}
-
-[[ -f "$COPILOT_LSP_SRC" ]] || {
-  echo "Missing Copilot LSP config file: $COPILOT_LSP_SRC" >&2
-  exit 1
-}
+for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC"; do
+  [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
+done
 
 mkdir -p "$SKILLS_DEST" "$COPILOT_DEST" "$GEMINI_DEST" "$AGENTS_DEST" "$COPILOT_AGENTS_DEST"
 

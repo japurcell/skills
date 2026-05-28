@@ -2,50 +2,23 @@
 
 set -euo pipefail
 
-readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-readonly CONTEXT_FILE="$REPO_ROOT/hooks/references/agent-start-context.json"
+source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+
+readonly CONTEXT_FILE="$REPO_ROOT/.copilot/hooks/references/agent-start-context.json"
 readonly EXPECTED_CONTEXT="$(jq -r '.additionalContext' "$CONTEXT_FILE")"
-
-assert_equals() {
-  local expected="$1"
-  local actual="$2"
-  local message="$3"
-
-  if [[ "$actual" != "$expected" ]]; then
-    echo "$message" >&2
-    echo "Expected: $expected" >&2
-    echo "Actual:   $actual" >&2
-    exit 1
-  fi
-}
-
-assert_file_contains() {
-  local file="$1"
-  local needle="$2"
-  local message="$3"
-
-  if ! grep -Fq "$needle" "$file"; then
-    echo "$message" >&2
-    echo "Missing: $needle" >&2
-    echo "File: $file" >&2
-    exit 1
-  fi
-}
 
 run_session_start_hook() {
   local audit_log="$1"
   local payload="$2"
 
-  AUDIT_LOG="$audit_log" \
-    bash "$REPO_ROOT/hooks/scripts/session-start.sh" <<<"$payload"
+  run_copilot_hook "session-start.sh" "$audit_log" "$payload"
 }
 
 run_subagent_start_hook() {
   local audit_log="$1"
   local payload="$2"
 
-  AUDIT_LOG="$audit_log" \
-    bash "$REPO_ROOT/hooks/scripts/subagent-start.sh" <<<"$payload"
+  run_copilot_hook "subagent-start.sh" "$audit_log" "$payload"
 }
 
 test_session_start_outputs_cli_schema() {
@@ -53,7 +26,7 @@ test_session_start_outputs_cli_schema() {
   local audit_log
   local output
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
 
@@ -72,7 +45,7 @@ test_session_start_outputs_vscode_schema() {
   local audit_log
   local output
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
 
@@ -91,7 +64,7 @@ test_subagent_start_outputs_cli_schema() {
   local audit_log
   local output
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
 
@@ -115,7 +88,7 @@ test_subagent_start_outputs_vscode_schema() {
   local audit_log
   local output
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
 
@@ -136,7 +109,7 @@ test_subagent_start_outputs_vscode_schema() {
 
 test_hooks_json_registers_vscode_subagent_start_event() {
   assert_equals '$HOME/.copilot/hooks/scripts/subagent-start.sh' \
-    "$(jq -r '.hooks.SubagentStart[0].bash // empty' "$REPO_ROOT/hooks/hooks.json")" \
+    "$(jq -r '.hooks.SubagentStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register a direct VS Code SubagentStart hook."
 }
 

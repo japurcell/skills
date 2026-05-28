@@ -14,15 +14,14 @@ readonly REFERENCES_SRC="${ADDY_REFERENCES_SRC:-${SOURCE_ROOT}/references}"
 readonly AGENTS_DEST="${ADDY_AGENTS_DEST:-${DEFAULT_DEST_ROOT}/agents}"
 readonly SKILLS_DEST="${ADDY_SKILLS_DEST:-${DEFAULT_DEST_ROOT}/skills}"
 readonly REFERENCES_DEST="${ADDY_REFERENCES_DEST:-${DEFAULT_DEST_ROOT}/references}"
-readonly HOOKS_SRC="${ADDY_HOOKS_SRC:-${SOURCE_ROOT}/hooks}"
-readonly HOOKS_DEST="${ADDY_HOOKS_DEST:-${DEFAULT_DEST_ROOT}/hooks}"
+readonly HOOKS_SRC="${ADDY_HOOKS_SRC:-${SOURCE_ROOT}/.copilot/hooks}"
+readonly HOOKS_DEST="${ADDY_HOOKS_DEST:-${DEFAULT_DEST_ROOT}/.copilot/hooks}"
 readonly DEFAULT_SKILLS_STATE_FILE="${REPO_ROOT}/.addy-skills"
 readonly SKILLS_STATE_FILE="${ADDY_SKILLS_STATE_FILE:-${DEFAULT_SKILLS_STATE_FILE}}"
 
 declare -a COPIED_AGENT_FILES=()
 declare -a COPIED_SKILL_DIRS=()
 declare -a COPIED_REFERENCE_DIRS=()
-declare -a COPIED_HOOK_FILES=()
 declare -a SELECTED_SKILLS=()
 
 usage() {
@@ -477,18 +476,9 @@ copy_references() {
 }
 
 copy_hooks() {
-  local source_file
-  local target_file
-
   [[ -d "$HOOKS_SRC" ]] || return 0
-
   mkdir -p "$HOOKS_DEST"
-
-  while IFS= read -r -d '' source_file; do
-    target_file="$HOOKS_DEST/$(basename "$source_file")"
-    cp -p "$source_file" "$target_file"
-    COPIED_HOOK_FILES+=("$target_file")
-  done < <(find "$HOOKS_SRC" -mindepth 1 -maxdepth 1 -print0 | sort -z)
+  cp -Rp "$HOOKS_SRC/." "$HOOKS_DEST/"
 }
 
 write_skills_state_file() {
@@ -517,20 +507,9 @@ parse_args "$@"
 
 sync_source_root
 
-[[ -d "$AGENTS_SRC" ]] || {
-  echo "Missing agents source directory: $AGENTS_SRC" >&2
-  exit 1
-}
-
-[[ -d "$SKILLS_SRC" ]] || {
-  echo "Missing skills source directory: $SKILLS_SRC" >&2
-  exit 1
-}
-
-[[ -d "$REFERENCES_SRC" ]] || {
-  echo "Missing references source directory: $REFERENCES_SRC" >&2
-  exit 1
-}
+for src in "$AGENTS_SRC" "$SKILLS_SRC" "$REFERENCES_SRC"; do
+  [[ -d "$src" ]] || { echo "Missing source directory: $src" >&2; exit 1; }
+done
 
 validate_selected_skills
 resolve_selected_skills
@@ -545,12 +524,12 @@ copy_agents
 prune_unselected_skills
 copy_skills
 copy_references
-# copy_hooks
+#copy_hooks
 rewrite_references "$NAME_MAP_FILE"
 write_skills_state_file
 
 echo "Installed addy agents to $AGENTS_DEST"
 echo "Installed addy skills to $SKILLS_DEST"
 echo "Installed addy references to $REFERENCES_DEST"
-# echo "Installed addy hooks to $HOOKS_DEST"
+#echo "Installed addy hooks to $HOOKS_DEST"
 echo "Updated addy skills state file at $SKILLS_STATE_FILE"

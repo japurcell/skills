@@ -2,33 +2,7 @@
 
 set -euo pipefail
 
-readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
-assert_equals() {
-  local expected="$1"
-  local actual="$2"
-  local message="$3"
-
-  if [[ "$actual" != "$expected" ]]; then
-    echo "$message" >&2
-    echo "Expected: $expected" >&2
-    echo "Actual:   $actual" >&2
-    exit 1
-  fi
-}
-
-assert_file_contains() {
-  local file="$1"
-  local needle="$2"
-  local message="$3"
-
-  if ! grep -Fq "$needle" "$file"; then
-    echo "$message" >&2
-    echo "Missing: $needle" >&2
-    echo "File: $file" >&2
-    exit 1
-  fi
-}
+source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
 run_hook() {
   local audit_log="$1"
@@ -36,38 +10,22 @@ run_hook() {
   local payload="$3"
   local copilot_home="${4:-}"
 
-  if [[ -n "$copilot_home" ]]; then
-    COPILOT_HOME="$copilot_home" \
-      AUDIT_LOG="$audit_log" \
-      AUDIT_LOG_MAX_BYTES="$max_bytes" \
-      bash "$REPO_ROOT/hooks/scripts/format.sh" <<<"$payload" >/dev/null
-  else
-    AUDIT_LOG="$audit_log" \
-      AUDIT_LOG_MAX_BYTES="$max_bytes" \
-      bash "$REPO_ROOT/hooks/scripts/format.sh" <<<"$payload" >/dev/null
-  fi
+  run_copilot_hook "format.sh" "$audit_log" "$payload" "$copilot_home" "AUDIT_LOG_MAX_BYTES=$max_bytes" >/dev/null
 }
 
 test_logs_csharp_apply_patch_command_before_formatter_failure() {
   local workdir
   local audit_log
-  local fake_bin
   local old_path
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
-  fake_bin="$workdir/bin"
-  mkdir -p "$fake_bin"
 
-  cat >"$fake_bin/dotnet" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-  chmod +x "$fake_bin/dotnet"
+  mock_bin "$workdir" "dotnet" '#!/usr/bin/env bash\nexit 1'
 
   old_path="$PATH"
-  PATH="$fake_bin:$PATH"
+  PATH="$workdir/bin:$PATH"
   if run_hook \
     "$audit_log" \
     1024 \
@@ -81,33 +39,26 @@ EOF
   assert_file_contains "$audit_log" "Session: cs, File: /tmp/Widget.cs" \
     "Expected the hook to detect C# edits reported via apply_patch."
 
-  assert_file_contains "$audit_log" "Session: cs, Command: dotnet format --include /tmp/Widget.cs" \
+  assert_file_contains "$audit_log" "Session: cs, Command: dotnet format --no-restore --include /tmp/Widget.cs" \
     "Expected the hook to log the formatter command before the formatter fails."
 
-  assert_file_contains "$audit_log" "Session: cs, Failure: dotnet format --include /tmp/Widget.cs (exit 1)" \
+  assert_file_contains "$audit_log" "Session: cs, Failure: dotnet format --no-restore --include /tmp/Widget.cs (exit 1)" \
     "Expected the hook to write the dotnet format failure to the audit log."
 }
 
 test_logs_js_formatter_failure() {
   local workdir
   local audit_log
-  local fake_bin
   local old_path
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
-  fake_bin="$workdir/bin"
-  mkdir -p "$fake_bin"
 
-  cat >"$fake_bin/npx" <<'EOF'
-#!/usr/bin/env bash
-exit 1
-EOF
-  chmod +x "$fake_bin/npx"
+  mock_bin "$workdir" "npx" '#!/usr/bin/env bash\nexit 1'
 
   old_path="$PATH"
-  PATH="$fake_bin:$PATH"
+  PATH="$workdir/bin:$PATH"
   if run_hook \
     "$audit_log" \
     1024 \
@@ -131,23 +82,16 @@ test_logs_subagent_csharp_file_from_task_session_events() {
   local copilot_home
   local session_id
   local task_result
-  local fake_bin
   local old_path
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
   copilot_home="$workdir/copilot-home"
   session_id="task-parent"
   task_result="The file was created using the create tool. A minimal valid C# class was written to /tmp/Widget.cs. No repository files were modified."
-  fake_bin="$workdir/bin"
 
-  mkdir -p "$fake_bin"
-  cat >"$fake_bin/dotnet" <<'EOF'
-#!/usr/bin/env bash
-exit 0
-EOF
-  chmod +x "$fake_bin/dotnet"
+  mock_bin "$workdir" "dotnet" '#!/usr/bin/env bash\nexit 0'
 
   mkdir -p "$copilot_home/session-state/$session_id"
   cat >"$copilot_home/session-state/$session_id/events.jsonl" <<EOF
@@ -157,7 +101,7 @@ EOF
 EOF
 
   old_path="$PATH"
-  PATH="$fake_bin:$PATH"
+  PATH="$workdir/bin:$PATH"
   run_hook \
     "$audit_log" \
     1024 \
@@ -177,22 +121,15 @@ test_logs_background_subagent_apply_patch_file_from_read_agent_events() {
   local audit_log
   local copilot_home
   local session_id
-  local fake_bin
   local old_path
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
   copilot_home="$workdir/copilot-home"
   session_id="background-agent"
-  fake_bin="$workdir/bin"
 
-  mkdir -p "$fake_bin"
-  cat >"$fake_bin/dotnet" <<'EOF'
-#!/usr/bin/env bash
-exit 0
-EOF
-  chmod +x "$fake_bin/dotnet"
+  mock_bin "$workdir" "dotnet" '#!/usr/bin/env bash\nexit 0'
 
   mkdir -p "$copilot_home/session-state/$session_id"
   cat >"$copilot_home/session-state/$session_id/events.jsonl" <<'EOF'
@@ -201,7 +138,7 @@ EOF
 EOF
 
   old_path="$PATH"
-  PATH="$fake_bin:$PATH"
+  PATH="$workdir/bin:$PATH"
   run_hook \
     "$audit_log" \
     1024 \
@@ -221,22 +158,15 @@ test_logs_background_subagent_apply_patch_file_from_read_agent_events_with_camel
   local audit_log
   local copilot_home
   local session_id
-  local fake_bin
   local old_path
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
   copilot_home="$workdir/copilot-home"
   session_id="background-agent-camel"
-  fake_bin="$workdir/bin"
 
-  mkdir -p "$fake_bin"
-  cat >"$fake_bin/dotnet" <<'EOF'
-#!/usr/bin/env bash
-exit 0
-EOF
-  chmod +x "$fake_bin/dotnet"
+  mock_bin "$workdir" "dotnet" '#!/usr/bin/env bash\nexit 0'
 
   mkdir -p "$copilot_home/session-state/$session_id"
   cat >"$copilot_home/session-state/$session_id/events.jsonl" <<'EOF'
@@ -245,7 +175,7 @@ EOF
 EOF
 
   old_path="$PATH"
-  PATH="$fake_bin:$PATH"
+  PATH="$workdir/bin:$PATH"
   run_hook \
     "$audit_log" \
     1024 \
@@ -264,7 +194,7 @@ test_ignores_tools_without_files() {
   local workdir
   local audit_log
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
 
@@ -281,7 +211,7 @@ test_rolls_over_audit_log() {
   local workdir
   local audit_log
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
 
@@ -317,7 +247,7 @@ test_waits_for_log_lock() {
   local elapsed_ms
   local locker_pid
 
-  workdir="$(mktemp -d)"
+  workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
   lock_file="$audit_log.lock"

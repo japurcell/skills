@@ -4,7 +4,8 @@ This repository publishes custom GitHub Copilot assets:
 
 - **Skills** in `skills/` for reusable task workflows such as `tdd`, `frontend-design`, `create-skill`, `prd`, `code-review`, and `commit`
 - **Custom agents** in `agents/` such as `code-architect`, `code-explorer`, `code-reviewer`, and `grader`
-- **Local Copilot instructions** in `.copilot/copilot-instructions.md`
+- **Copilot global configs** in `.copilot`
+- **Gemini global configs** in `.gemini`
 
 ## Installation
 
@@ -19,7 +20,7 @@ The installer copies:
 - `skills/` entries into `~/.agents/skills`
 - top-level `references/` entries into `~/.agents/references` when that directory exists
 - `agents/` files into both `~/.gemini/agents` and `~/.copilot/agents`
-- top-level `hooks/` entries into `~/.copilot/hooks` when that directory exists
+- `.copilot/hooks/` entries are copied to `~/.copilot/hooks` when that directory exists
 - `.gemini/` contents into `~/.gemini`
 - `.copilot/copilot-instructions.md` into `~/.copilot/copilot-instructions.md`
 
@@ -32,7 +33,7 @@ Workspace directories whose names end with `-workspace` are skipped during insta
 - Hook formatting: `npx` (with `oxfmt`) for JS/TS files, `dotnet` SDK for C# files
 - Agent shell workflows: `rtk` (recommended wrapper for compact terminal output)
 
-### [Session End Hook](./hooks/hooks.json)
+### [Session End Hook](./.copilot/hooks/hooks.json)
 
 For the session-end hook to work, add these lines to your vscode settings.json file:
 
@@ -55,14 +56,15 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 - `references/`: optional shared reference material installed to `~/.agents/references`
 - `scripts/`: repo helper and installation scripts
 - `.copilot/`: local Copilot instructions copied by the installer
+- `.copilot/hooks/`: hook scripts and configs installed to `~/.copilot/hooks`
 - `docs/agent-guides/`: repo-specific guidance for layout, authoring, and validation
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts; ignore their `outputs/` subdirectories during normal work
-- `scripts/install.sh`: installs `skills/` → `~/.agents/skills`, optional top-level `references/` → `~/.agents/references`, `agents/` → both `~/.gemini/agents` and `~/.copilot/agents`, optional top-level `hooks/` → `~/.copilot/hooks`, `.gemini/` contents → `~/.gemini`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
+- `scripts/install.sh`: installs `skills/` → `~/.agents/skills`, optional top-level `references/` → `~/.agents/references`, `agents/` → both `~/.gemini/agents` and `~/.copilot/agents`, optional `.copilot/hooks/` → `~/.copilot/hooks`, `.gemini/` contents → `~/.gemini`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
 - `scripts/addy-install.sh`: syncs `../addy-agent-skills` from `https://github.com/addyosmani/agent-skills` by cloning or fast-forward pulling, then imports addy agents, skills, and top-level references into this repository, prefixing imported addy agent and skill names with `addy-`; pass `--skills foo,bar` or `--skills-file path` to copy specific source skill names and their referenced skills, and each successful run refreshes `.addy-skills` with the installed source skill names
 
 ## Working in this repo
 
-1. Edit source files in `skills/`, `agents/`, or `.copilot/`.
+1. Edit source files in `skills/`, `agents/`, `.copilot/`, or `.gemini/`
 2. Rerun `./scripts/install.sh` to refresh the installed local copies.
 3. Use targeted checks for the area you changed; there is no single repo-wide test runner.
 
@@ -70,7 +72,7 @@ Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews. Those f
 
 ## Authoring notes
 
-### Skills
+### Skill format
 
 - Use `SKILL.md` as the entry point.
 - Start each `SKILL.md` with YAML frontmatter.
