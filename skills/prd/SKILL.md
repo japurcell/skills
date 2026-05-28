@@ -1,6 +1,6 @@
 ---
 name: prd
-description: Create a Product Requirements Document (PRD) for a feature. Use for requests like: create a PRD, write a PRD for, plan this feature, requirements for, spec out.
+description: Create a Product Requirements Document (PRD) for a feature. Use for requests like- create a PRD, write a PRD for, plan this feature, requirements for, spec out.
 ---
 
 # PRD Generator
