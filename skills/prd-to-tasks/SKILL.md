@@ -1,37 +1,46 @@
 ---
 name: prd-to-tasks
-description: Convert an existing PRD into prd.json for the autonomous agent system. Use for requests like - convert this PRD, turn this into JSON, create prd.json from this.
+description: Convert a PRD into `prd.json` for the autonomous agent system. Use for requests like - convert this PRD, turn this into JSON, create prd.json from this.
 ---
 
-# PRD Converter
+# PRD to `prd.json`
 
-Convert a PRD (markdown file or text) into `prd.json`.
+Convert a PRD (file path or raw markdown/text) into `prd.json`.
 
 ## Inputs
-
-- `prd_file` (required): PRD markdown file path or raw text.
-- `output_directory` (optional): Directory to save `prd.json`.
-  - If `prd_file` is a file path and `output_directory` is not provided, save `prd.json` next to the source file.
-  - Otherwise default to `.agents/scratchpad`.
+- `prd_file` (required): PRD file path or raw text.
+- `output_directory` (optional): Directory for `prd.json`.
+  - If `prd_file` is a file path and `output_directory` is omitted, save next to the source file.
+  - Otherwise save to `.agents/scratchpad`.
 
 ## Task
+1. Read `prd_file`.
+2. Produce `prd.json`.
+3. In the final response, report:
+   - total story count
+   - output file path
+   - readiness for `/prd-build-loop`
 
-Read `prd_file` and produce `prd.json`.
-
-## Output
-
+## Output format
 ```json
 {
   "project": "[Project Name]",
   "branchName": "[feature-name-kebab-case]",
-  "description": "[Feature description from PRD title/intro]",
+  "description": "[Short feature description]",
   "userStories": [
     {
       "id": "US-001",
       "title": "[Story title]",
       "description": "As a [user], I want [feature] so that [benefit]",
       "acceptanceCriteria": ["Criterion 1", "Criterion 2", "Typecheck passes"],
-      "filesLikelyTouched": ["src/path/to/file.ts", "tests/path/to/test.ts"],
+      "filesLikelyTouched": ["src/path/to/file.ts"],
+      "designGuidance": [
+        {
+          "source": "[doc link, repo pattern, design decision, etc.]",
+          "description": "[Guidance]",
+          "rationale": "[Why it matters]"
+        }
+      ],
       "priority": 1,
       "passes": false,
       "notes": ""
@@ -40,89 +49,74 @@ Read `prd_file` and produce `prd.json`.
 }
 ```
 
-## Core Rules
+## Rules
 
-### 1) Story size
+### 1) Create implementation-sized stories
+Create one story per unit of work that one agent can complete in one iteration without relying on prior unfinished work.
 
-Each story must be completable in one iteration by one agent with no memory of prior work.
-
-Split stories that are too large.
+Split items that are too large.
 
 Good:
-
 - Add a database column and migration
 - Add a UI component to an existing page
 - Update a server action
 - Add a filter dropdown
 
-Too big:
-
+Too large:
 - Build the entire dashboard
 - Add authentication
 - Refactor the API
 
-Rule of thumb: if the change cannot be described in 2–3 sentences, split it.
+Rule of thumb: if a change cannot be described in 2–3 sentences, split it.
 
-### 2) Story ordering
+### 2) Order by dependency
+Stories run in ascending `priority`. Earlier stories must not depend on later ones.
 
-Stories run in priority order. Earlier stories must not depend on later ones.
-
-Use this order when applicable:
-
+Use this order when relevant:
 1. Schema/database changes
 2. Backend/server logic
-3. UI components using that logic
+3. UI using that logic
 4. Aggregated/dashboard views
 
-### 3) Acceptance criteria
+Set priority by dependency first, then PRD source order.
 
-Criteria must be specific and verifiable.
+### 3) Write verifiable acceptance criteria
+Acceptance criteria must be concrete and testable.
 
 Good:
-
 - Add `status` column to tasks table with default `pending`
 - Filter dropdown has options: All, Active, Completed
-- Clicking delete shows confirmation dialog
+- Clicking delete shows a confirmation dialog
 - Typecheck passes
 - Tests pass
 
 Bad:
-
 - Works correctly
 - Good UX
 - Handles edge cases
 
 Always include:
-
 - `Typecheck passes`
 
-Also include when applicable:
-
+Include when applicable:
 - `Tests pass` for testable logic
 - `Verify in browser using playwright-cli skill` for UI changes
 
 UI stories are not complete until visually verified.
 
-## Conversion Rules
+### 4) Field rules
+- Use sequential IDs: `US-001`, `US-002`, etc.
+- Derive `branchName` from the feature name in kebab-case.
+- Set every story to `"passes": false` and `"notes": ""`.
+- Keep `description` short and based on the PRD title or intro.
+- Include `filesLikelyTouched` with likely paths when inferable.
+- Include `designGuidance` only when useful; otherwise use an empty array.
 
-1. Create one JSON story per implementation-sized unit of work, not necessarily one per PRD bullet.
-2. Split large PRD items into multiple stories when needed.
-3. Use sequential IDs: `US-001`, `US-002`, etc.
-4. Set priority by dependency order, then source order.
-5. Set every story to `"passes": false` and `"notes": ""`.
-6. Derive `branchName` from the feature name in kebab-case.
-7. Keep acceptance criteria verifiable.
-8. Add `Typecheck passes` to every story.
-9. Add `Tests pass` and browser verification only when applicable.
-
-## Splitting Example
-
+## Splitting example
 Original:
-
 - Add user notification system
 
-Split into:
-
+Split:
 1. Add notifications table
 2. Create notification service
 3. Add notification bell icon
@@ -131,9 +125,7 @@ Split into:
 6. Add notification preferences page
 
 ## Example
-
 Input PRD:
-
 ```markdown
 # Task Status Feature
 
@@ -148,7 +140,6 @@ Add ability to mark tasks with different statuses.
 ```
 
 Output:
-
 ```json
 {
   "project": "TaskApp",
@@ -165,6 +156,13 @@ Output:
         "Typecheck passes"
       ],
       "filesLikelyTouched": ["src/db/migrations/add-status-to-tasks.ts"],
+      "designGuidance": [
+        {
+          "source": "https://www.prisma.io/docs/concepts/components/prisma-schema/data-model#enum-types",
+          "description": "Use an enum type for the status column.",
+          "rationale": "Enforces valid values."
+        }
+      ],
       "priority": 1,
       "passes": false,
       "notes": ""
@@ -174,12 +172,24 @@ Output:
       "title": "Display status badge on task cards",
       "description": "As a user, I want to see task status at a glance.",
       "acceptanceCriteria": [
-        "Each task card shows colored status badge",
+        "Each task card shows a status badge",
         "Badge colors: gray=pending, blue=in_progress, green=done",
         "Typecheck passes",
         "Verify in browser using playwright-cli skill"
       ],
       "filesLikelyTouched": ["src/components/TaskCard.tsx"],
+      "designGuidance": [
+        {
+          "source": "https://web.dev/articles/color-and-contrast-accessibility",
+          "description": "Ensure badge colors meet accessibility contrast standards.",
+          "rationale": "Maintaining sufficient color contrast is essential for users with visual impairments to distinguish between different statuses effectively."
+        },
+        {
+          "source": "design-system/components/StatusBadge",
+          "description": "Use the existing status badge component.",
+          "rationale": "Keeps UI consistent."
+        }
+      ],
       "priority": 2,
       "passes": false,
       "notes": ""
@@ -187,15 +197,22 @@ Output:
     {
       "id": "US-003",
       "title": "Add status toggle to task list rows",
-      "description": "As a user, I want to change task status directly from the list.",
+      "description": "As a user, I want to change task status from the list.",
       "acceptanceCriteria": [
-        "Each row has status dropdown or toggle",
+        "Each row has a status dropdown or toggle",
         "Changing status saves immediately",
         "UI updates without page refresh",
         "Typecheck passes",
         "Verify in browser using playwright-cli skill"
       ],
       "filesLikelyTouched": ["src/components/TaskListRow.tsx"],
+      "designGuidance": [
+        {
+          "source": "design-system/components/StatusToggle",
+          "description": "Use the existing status toggle component.",
+          "rationale": "Keeps UI consistent."
+        }
+      ],
       "priority": 3,
       "passes": false,
       "notes": ""
@@ -203,14 +220,21 @@ Output:
     {
       "id": "US-004",
       "title": "Filter tasks by status",
-      "description": "As a user, I want to filter the list to see only certain statuses.",
+      "description": "As a user, I want to filter tasks by status.",
       "acceptanceCriteria": [
-        "Filter dropdown: All | Pending | In Progress | Done",
+        "Filter dropdown options: All | Pending | In Progress | Done",
         "Filter persists in URL params",
         "Typecheck passes",
         "Verify in browser using playwright-cli skill"
       ],
       "filesLikelyTouched": ["src/components/TaskList.tsx"],
+      "designGuidance": [
+        {
+          "source": "design-system/components/StatusFilter",
+          "description": "Use the existing status filter component.",
+          "rationale": "Keeps UI consistent."
+        }
+      ],
       "priority": 4,
       "passes": false,
       "notes": ""
@@ -219,7 +243,7 @@ Output:
 }
 ```
 
-## Final Check
+## Final check
 
 Before saving, verify:
 

@@ -1,38 +1,39 @@
 ---
 name: prd
-description: Create a Product Requirements Document (PRD) for a feature. Use for requests like - create a PRD, write a PRD for, plan this feature, requirements for, spec out.
+description: Create a Product Requirements Document (PRD) for a feature. Use for requests like: create a PRD, write a PRD for, plan this feature, requirements for, spec out.
 ---
 
 # PRD Generator
 
-Create a clear, implementation-ready PRD. Do not implement the feature.
+Create a clear, implementation-ready PRD. Do not implement the feature or write code.
 
-## Capability Rules
-
-- Use subagents, named skills, codebase access, browser tools, and file operations only if they are available in the current environment.
-- Do not claim to have used tools, read files, generated citations, run browser checks, or saved files unless you actually did.
-- If a required capability is unavailable, use the best available fallback and clearly state any limitations.
+## Rules
+- Follow existing codebase patterns and conventions.
+- Apply YAGNI: exclude unnecessary features.
+- Resolve ambiguities before designing.
+- If the user says “whatever you think is best,” give a recommendation and get explicit confirmation.
 
 ## Workflow
-
-1. Understand the request from `$ARGUMENTS`.
-   - If unclear, ask only the minimum needed:
+1. Understand `$ARGUMENTS`.
+   - If needed, ask only the minimum:
      - What problem does this solve?
      - What should it do?
      - Any constraints or preferences?
-   - Summarize your understanding only if there is meaningful uncertainty.
-2. [Explore the codebase](#codebase-exploration) and wait for the code-explorer subagents to return findings.
-3. Ask clarifying questions until requirements are clear enough to write the PRD. If unresolved items remain but are not blocking, list them in **Open Questions**.
-   - Focus on:
-     - Objective and target users
-     - Core features and acceptance criteria
-     - Tech stack preferences and constraints
-     - Boundaries: what to do, ask first about, and never do
-4. [Design the architecture and implementation approach](#architecture-design) and wait for the code-architect subagents to return findings.
-5. Write the PRD.
-6. Save it to `.agents/scratchpad/[feature-name]/prd.md`.
-
-**Important:** Do not write code.
+   - Summarize only if there is meaningful uncertainty.
+2. [Explore the codebase](#codebase-exploration) and wait for subagent results.
+3. Ask clarifying questions based on the request and codebase findings.
+   - Cover gaps such as edge cases, error handling, integrations, scope, backward compatibility, and performance.
+   - Wait for answers before designing.
+4. [Design the architecture](#architecture-design) options and wait for subagent results.
+5. Present options, trade-offs, and your recommendation.
+6. Ask the user to choose an approach.
+7. Write the PRD.
+8. Save it to `.agents/scratchpad/[feature-name]/prd.md`.
+9. Final response must include:
+   - feature short name
+   - PRD path
+   - validation status (pass/fail)
+   - readiness for `/prd-to-tasks`
 
 ## Codebase Exploration
 
@@ -46,156 +47,130 @@ Create a clear, implementation-ready PRD. Do not implement the feature.
    - Tests
    - Extension points
 3. Each agent should return 5–10 key files to read, with reasons.
-4. Deduplicate the results and read the most relevant files.
-5. Present only findings that affect the PRD, questions, or likely implementation.
+4. Read all files identified by agents to build deep understanding.
+5. Present comprehensive summary of findings and patterns discovered.
 
 ## Architecture Design
 
-**Goal:** Identify implementation options and recommend one.
+**Goal:** Design multiple implementation approaches with different trade-offs
 
 1. Launch 2-3 parallel `code-architect` subagents, where the number matches feature complexity.
-2. Instruct each subagent to invoke the `official-sources` skill so implementation decisions are grounded in current official documentation.
-3. Each agent should propose a different approach, such as:
-   - Minimal changes
-   - Clean architecture
-   - Pragmatic balance
+2. Each agent should propose a different approach, such as:
+   - Minimal changes (smallest change, maximum reuse)
+   - Clean architecture (maintainability, elegant abstractions)
+   - Pragmatic balance (speed + quality)
+3. Instruct each subagent to invoke the `official-sources` skill so that each proposal is grounded in current official documentation.
+   - For every language, framework, library, platform, infrastructure service, or contract standard that affects the PRD, check the latest official web documentation before finalizing proposal.
+   - Treat official/vendor/framework docs as the primary source; use repository context only to adapt them.
 4. For each approach, include rationale, trade-offs, risks, and citations.
-5. Recommend one approach.
-6. Ask the user to choose only if there is a real product or architectural fork. Otherwise, choose the best option and continue.
+5. Review all approaches and form your opinion on which fits best (consider: small fix vs large feature, urgency, complexity, team context).
+6. Present to user: brief summary of each approach, trade-offs comparison, **your recommendation with reasoning**, concrete implementation differences.
+7. **Ask user which approach they prefer**
 
 ## PRD Structure
 
 ### 1. Introduction / Overview
-
 Briefly describe the feature and the problem it solves.
 
 ### 2. Goals
-
 Bullet list of specific, measurable objectives.
 
-### 3. User Stories
+### 3. Tech Stack
+Bullet list of key technologies/libraries and versions.
 
+### 4. User Stories
 Each story must include:
-
 - **Title**
 - **Description:** `As a [user], I want [feature] so that [benefit].`
-- **Acceptance Criteria:** Verifiable checklist
-- **Files likely touched:** Best-effort guess based on code exploration
+- **Acceptance Criteria:** specific, verifiable checklist
+- **Files likely touched:** best-effort guess from code exploration
+- **Design Guidance:** implementation guidance, rationale, and sources from architecture/design work
 
 Each story should be small enough for one focused implementation session.
 
 **Format:**
-
 ```markdown
 ### US-001: [Title]
-
 **Description:** As a [user], I want [feature] so that [benefit].
 
 **Acceptance Criteria:**
-
 - [ ] Specific verifiable criterion
 - [ ] Another verifiable criterion
 - [ ] Typecheck/lint passes
 - [ ] **[UI stories only]** Verify in browser using playwright-cli skill
 
 **Files likely touched:**
-
 - `src/path/to/file.ts`
 - `tests/path/to/test.ts`
+
+**Design Guidance:**
+- [Source link]
+  - Guidance: [What the implementer should do and how to apply it]
+  - Rationale: [Why this guidance was chosen]
 ```
 
-**Rules:**
-
+**User Story Rules**
 - Acceptance criteria must be specific and testable.
-- Do not use vague criteria like "works correctly".
+- Do not use vague criteria like “works correctly.”
 - For any story with UI changes, always include: `Verify in browser using playwright-cli skill`.
 - `Files likely touched` is a best-effort estimate, not a guarantee.
 
-### 4. Functional Requirements
-
+### 5. Functional Requirements
 Numbered, explicit requirements, for example:
-
 - `FR-1: The system must allow users to...`
 - `FR-2: When a user clicks X, the system must...`
 
-### 5. Non-Goals
-
+### 6. Non-Goals
 State what is out of scope.
 
-### 6. Design Considerations (Optional)
+### 7. Design Considerations (Optional)
+Relevant UI/UX notes, mockups, or reusable components.
 
-Include relevant UI/UX notes, mockups, or reusable components.
+### 8. Technical Considerations
+Constraints, dependencies, integrations, and performance requirements.
 
-### 7. Technical Considerations (Optional)
+### 9. Architectural Decisions
+Key decisions, trade-offs, rationale, alternatives considered, and citations.
 
-Include constraints, dependencies, integrations, and performance requirements.
-
-### 8. Architectural Decisions (Optional)
-
-Document key decisions, trade-offs, rationale, alternatives considered, and citations.
-
-### 9. Success Metrics
-
-Explain how success will be measured.
-
-### 10. Open Questions
-
-List any remaining unresolved questions.
-
-**Format:**
-
-```text
-- [ ] Question 1?
-- [ ] Question 2?
-...
-```
+### 10. Success Metrics
+How success will be measured.
 
 ## Writing Guidance
-
 Assume the reader may be a junior developer or another AI agent.
-
 - Be explicit and unambiguous.
-- Avoid jargon or explain it.
+- Avoid jargon, or explain it.
 - Use numbered requirements.
 - Use concrete examples when helpful.
 
 ## Output
-
 - **Format:** Markdown
 - **Path:** `.agents/scratchpad/[feature-name]/prd.md`
 
 ### Path Rules
-
-- This exact path is required.
-- Do not use any other scratchpad, temp, workspace, home, tool-default, or session-state path.
-- Do not write to `/tmp`, `/var/tmp`, `~/.copilot/`, `/session-state/`, or any alternate directory.
+- Use exactly `.agents/scratchpad/[feature-name]/prd.md`.
+- Do not use any other directory.
 - If the directory does not exist, create it.
-- Before finishing, verify the file exists at exactly `.agents/scratchpad/<feature-name>/prd.md`.
-- In the final response, include the exact saved path.
+- Before finishing, verify the file exists at that exact path.
 - If you cannot write to that exact path, say so and stop.
 
 ## Checklist
 
 ### Before writing
-
-- [ ] Clarifying questions asked if needed
-- [ ] There are no blocking open questions
+- [ ] Clarifying questions asked and answered
+- [ ] No open questions remain
 - [ ] User answers incorporated
 - [ ] Relevant code patterns explored
-- [ ] Existing patterns preferred over inventing new ones
+- [ ] Existing patterns preferred over new ones
 - [ ] Requirements are clear enough to proceed
 
 ### Before saving
-
 - [ ] User stories are small and specific
 - [ ] Functional requirements are numbered and unambiguous
 - [ ] Non-goals clearly define scope
-- [ ] Architectural decisions include rationale and citations where applicable
-- [ ] All open questions are listed
+- [ ] Architectural decisions include rationale and citations
 - [ ] No code was written
 
 ### Final verification
-
-- [ ] Saved at exactly `.agents/scratchpad/<feature-name>/prd.md`
+- [ ] Saved at exactly `.agents/scratchpad/[feature-name]/prd.md`
 - [ ] No alternate path was used
-- [ ] There are no blocking open questions, and any remaining non-blocking questions are listed in the **Open Questions** section.
+- [ ] No design gaps, open questions, or ambiguities remain

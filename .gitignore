@@ -63,7 +63,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
-!skills/build/
+!skills/archive/build/
 !skills/build-review/
 develop-eggs/
 dist/
