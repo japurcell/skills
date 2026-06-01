@@ -20,15 +20,15 @@
    - Read the nearest applicable `AGENTS.md` for files you may change.
    - Read other files only as needed for dependencies, interfaces, or local patterns.
    - Avoid unrelated exploration.
-3. For each `designGuidance` item, read `description` and `rationale` first. Read `source` only if needed to implement correctly.
+3. For each `designGuidance` item, read `description` and `rationale` first. Read `source` only if needed.
 4. If requirements are missing, ambiguous, or conflicting, return `NEEDS_CONTEXT`. Do not guess.
 5. If `mode = implementation`:
-   - if behavior is clear and a targeted test is feasible, write or identify a failing test
-   - implement the smallest change that satisfies the story and follows relevant guidance
+   - if behavior is clear and a targeted test is feasible, write or identify a failing test first
+   - make the smallest change that satisfies the story and follows relevant guidance
 6. If `mode = verification_fix`:
    - address all `verification_failures` with the smallest necessary change
    - add or update tests if needed
-7. Run required quality checks for the changed area based on project instructions, local patterns, and affected tests. If no broader checks are clearly required, run the most targeted relevant tests available.
+7. Run the required quality checks for the changed area based on the story, project instructions, `AGENTS.md`, local patterns, and affected tests. If no broader checks are clearly required, run the most targeted relevant tests available.
 8. Leave the working tree dirty and report back.
 
 ## Quality Requirements
@@ -37,6 +37,7 @@
 - Follow existing code patterns.
 - Follow all provided `designGuidance`.
 - `progress_file` is read-only.
+- Do not update `prd_file`.
 
 ## Guardrails
 

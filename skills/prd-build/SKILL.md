@@ -1,45 +1,47 @@
 ---
 name: prd-build
-description: Implement failing PRD stories with verification and progress tracking.
+description: Implement PRD stories until all pass, with verification and progress tracking.
 ---
 
 # PRD Build Loop
 
-You are an autonomous orchestrator for a software project.
+You are the orchestrator for a software project.
 
-## Core Objective
+## Objective
 
-Keep running this workflow until every story in `prd_file` has `passes: true`.
-If any story in `prd_file` still has `passes: false`, remain in the loop and continue.
-Do not return control to the user after completing a story unless **Stop Condition** is met.
+Continue until every story in `prd_file` has `passes: true`.
 
-## Rules
-
-- `prd_file` is the only authority for story status. A story is complete only when `passes: true` in `prd_file`.
+- `prd_file` is the only source of truth for story status.
 - `progress_file` is supplementary only.
-- Use a fresh subagent for each unit of work.
-- Any code-affecting change (code, tests, config, migrations, implementation docs) must be done by a fresh `implementer`.
-- The orchestrator must never make code-affecting changes directly.
-- If no fresh `implementer` has handled the exact current unit of work, dispatch one before any code-affecting action.
-- Any new implementer change resets the requirement to verify.
-- Do not commit changes.
-- Do not stop after finishing one story if another story still has `passes: false`.
-- Stop only per **Stop Condition**.
-- Keep instructions compact and explicit so the workflow remains reliable on weaker models.
+- Do not return control to the user unless a **Stop Condition** applies.
+- When all stories pass, reply exactly: `<promise>COMPLETE</promise>`
 
 ## Roles
 
 **Orchestrator**
 
-- selects stories
+- selects the current highest-priority story with `passes: false`
 - dispatches subagents
-- applies status rules
-- runs or verifies required checks
-- updates `prd_file`, `progress_file`, and reusable guidance in nearby `AGENTS.md`
+- runs verification
+- updates `prd_file`, `progress_file`, and nearby `AGENTS.md`
+- never makes code-affecting changes directly
 
 **Implementer**
 
-- performs repo discovery, design, code changes, and verification support
+- does repo discovery, design, code changes, and verification-support work
+
+## Hard Rules
+
+- Use a fresh subagent for each unit of work.
+- Any code-affecting change must be done by a fresh `implementer`.
+- Code-affecting changes include code, tests, config, migrations, and implementation docs.
+- If more code-affecting work is needed, dispatch a fresh `implementer`; never fix it directly.
+- Any new implementer change resets verification; verify again after it.
+- Never commit changes.
+- Never start another story until the current story is either:
+  - marked `passes: true` in `prd_file`, or
+  - blocked under **Stop Condition**.
+- Keep instructions compact and explicit.
 
 ## Inputs
 
@@ -49,57 +51,64 @@ Do not return control to the user after completing a story unless **Stop Conditi
 ## Startup
 
 1. Resolve `progress_file`.
-2. If `progress_file` exists, read it, especially `## Codebase Patterns`.
-3. If it does not exist, create it on first append with `## Codebase Patterns` at the top.
+2. If it exists, read it, especially `## Codebase Patterns`.
+3. If not, create it on first append with `## Codebase Patterns` at the top.
 
 ## Loop
 
 For the highest-priority story in `prd_file` with `passes: false`:
 
 1. **Implement**
-   - Dispatch a fresh `implementer` with [./implementer-prompt.md](./implementer-prompt.md)
-   - Include all story properties, `progress_file`, and `mode: implementation`
+   - Dispatch a fresh `implementer` with `./implementer-prompt.md`
+   - Pass all story properties, `progress_file`, and `mode: implementation`
    - Wait for the result and apply **Status Rules**
    - Do not continue until resolved
 
 2. **Verify**
-   - Run required quality checks for the current state after the latest implementer change
-   - If verification fails and more code-affecting work is required:
-     - Dispatch a fresh `implementer` with all story properties, `progress_file`, `mode: verification_fix`, and full failure details
-     - Never fix issues directly
-     - Wait for the result and apply **Status Rules**
-     - Then run **Verify** again
-     - Repeat until verification passes or **Stop Condition** is reached
+   - Run the required quality checks for the current state
+   - If verification fails and code-affecting work is needed:
+     - Dispatch a fresh `implementer`
+     - Pass all story properties, `progress_file`, `mode: verification_fix`, and full failure details
+     - Apply **Status Rules**
+     - Verify again
+     - Repeat until verification passes or a **Stop Condition** applies
 
 3. **Improve process**
-   - Invoke `self-improve` only if not already invoked
+   - Invoke `self-improve` once, if not already invoked
    - It must not modify code or override this workflow
 
 4. **Record**
-   - Update nearby `AGENTS.md` only with reusable guidance
-   - Set `passes: true` in `prd_file` only if the **Completion Gate** is satisfied
-   - If the **Completion Gate** is not satisfied, do not mark complete and do not start another story
-   - Append a progress entry to `progress_file`
-   - Immediately re-read `prd_file`
-   - If any story still has `passes: false`, continue the loop with the next highest-priority story
-   - Do not return control to the user between stories
-
-When all stories have `passes: true`, reply exactly: `<promise>COMPLETE</promise>`
+   Perform in this order:
+   1. Update nearby `AGENTS.md` with reusable guidance only.
+   2. Evaluate the **Completion Gate**.
+   3. If the gate passes:
+      - update the current story in `prd_file` to `passes: true`
+      - save and re-read `prd_file`
+      - confirm the story now shows `passes: true`
+   4. If the gate fails:
+      - do not change `passes`
+      - do not append a completion entry
+      - do not start another story
+      - continue the current story unless a **Stop Condition** applies
+   5. Only after confirming `passes: true`, append a progress entry to `progress_file`.
+   6. Re-read `prd_file`.
+   7. If any story still has `passes: false`, continue with the next highest-priority story.
+   8. Do not return control to the user between stories.
 
 ## Completion Gate
 
-A story may be marked complete only if, for its current state:
+Mark a story complete only if all are true for the current state:
 
 1. the latest code-affecting change was made by a fresh `implementer`
 2. required quality checks passed after that latest change
-3. all story requirements reflected in `prd_file` are satisfied for the current state
+3. all story requirements in `prd_file` are satisfied
 
 Implementer `DONE`, confidence, or `progress_file` updates do not satisfy this gate.
 
 ## Status Rules
 
 - **DONE:** continue
-- **DONE_WITH_CONCERNS:** treat as incomplete unless every concern is explicitly confirmed non-blocking
+- **DONE_WITH_CONCERNS:** incomplete unless every concern is explicitly confirmed non-blocking
 - **NEEDS_CONTEXT:** provide missing context and re-dispatch a fresh subagent
 - **BLOCKED:** try better context, a smaller slice, or a stronger model; if still blocked, stop and escalate
 
@@ -115,8 +124,8 @@ Use checks required by:
 ## Progress File
 
 - Append only; never replace contents
-- Keep a `## Codebase Patterns` section at the top
-- Add only reusable general patterns there, never story-specific details
+- Keep `## Codebase Patterns` at the top
+- Put only reusable general patterns there, never story-specific details
 
 Required entry format:
 
@@ -147,26 +156,25 @@ Do not add story-specific notes.
 
 Stop only if:
 
-- all stories in `prd_file` have `passes: true`
-- a real blocker remains after reasonable unblocking attempts
-- `prd_file` has contradictions, invalid ordering, or missing required details that require human correction
+- all stories in `prd_file` have `passes: true`, or
+- a real blocker remains after reasonable unblocking attempts, or
+- `prd_file` has contradictions, invalid ordering, or missing required details that need human correction
 
 ## Before Stopping
 
-Before any response that is not exactly `<promise>COMPLETE</promise>`:
+Before any response other than `<promise>COMPLETE</promise>`:
 
 1. Re-read `prd_file`
-2. Confirm that at least one **Stop Condition** is true
-3. If any story still has `passes: false` and no **Stop Condition** applies, continue the loop instead of stopping
+2. Confirm a **Stop Condition** is true
+3. If any story still has `passes: false` and no **Stop Condition** applies, continue the loop
 
 ## Red Flags
 
-- returning control after completing one story while another story still has `passes: false`
-- reading extra repo context before dispatching the implementer
-- drafting patches or changing code directly
+- returning control after one story while another still has `passes: false`
+- making code-affecting changes directly
 - verifying before the latest implementer change is complete
 - fixing verification failures without a fresh `implementer`
-- treating implementer `DONE` or passing checks alone as sufficient for completion when story requirements are not satisfied
-- starting the next story before the current one has `passes: true`
-- using anything except `prd_file` to decide official completion
+- using anything except `prd_file` as the official completion source
+- appending a completion progress entry before confirming `passes: true`
+- starting the next story before the current story is complete or blocked
 - missing the progress entry or its learnings section
