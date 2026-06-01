@@ -54,7 +54,7 @@ Create a clear, implementation-ready PRD. Do not implement the feature or write 
 
 ## Architecture Design
 **Goal:** Design multiple implementation approaches with different trade-offs
-1. Launch 2-3 parallel `code-architect` subagents, where the number matches feature complexity.
+1. Launch 1-3 parallel `code-architect` subagents, where the number matches feature complexity.
 2. Each agent should propose a different approach, such as:
    - Minimal changes (smallest change, maximum reuse)
    - Clean architecture (maintainability, elegant abstractions)
