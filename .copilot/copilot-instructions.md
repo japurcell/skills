@@ -2,7 +2,7 @@
 
 ## Skills
 
-Immediately load the `cli-compression`, `context-engineering`, `karpathy-guidelines`, and `concise-response` skills if not already loaded.
+Immediately load the `cli-compression`, `context-engineering`, `karpathy-guidelines`, and `caveman` skills if not already loaded.
 
 ## Testing
 
