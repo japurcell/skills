@@ -50,9 +50,10 @@ Continue until every story in `prd_file` has `passes: true`.
 
 ## Startup
 
-1. Resolve `progress_file`.
-2. If it exists, read it, especially `## Codebase Patterns`.
-3. If not, create it on first append with `## Codebase Patterns` at the top.
+1. Invoke the `subagent-model-router` skill.
+2. Resolve `progress_file`.
+3. If it exists, read it, especially `## Codebase Patterns`.
+4. If not, create it on first append with `## Codebase Patterns` at the top.
 
 ## Loop
 

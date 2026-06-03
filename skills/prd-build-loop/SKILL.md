@@ -47,9 +47,10 @@ Do not return control to the user after completing a story unless **Stop Conditi
 
 ## Startup
 
-1. Resolve `progress_file`.
-2. If `progress_file` exists, read it, especially `## Codebase Patterns`.
-3. If it does not exist, create it on first append with `## Codebase Patterns` at the top.
+1. Invoke the `subagent-model-router` skill.
+2. Resolve `progress_file`.
+3. If `progress_file` exists, read it, especially `## Codebase Patterns`.
+4. If it does not exist, create it on first append with `## Codebase Patterns` at the top.
 
 ## Loop
 
