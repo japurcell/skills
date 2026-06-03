@@ -1,8 +1,8 @@
 ---
-name: subagent-model-selection
+name: subagent-model-router
 description: Chooses the least powerful subagent model that can reliably finish delegated work. Use whenever you are about to launch, spawn, delegate to, or set `model:` for a subagent, task agent, background agent, or parallel worker. Use this before any task-tool launch that needs model selection, especially for exploration, test execution, grading, code review, debugging, or implementation research where a fast cheap model often suffices.
 ---
-# Subagent Model Selection
+# Subagent Model Router
 
 ## Overview
 Before launching delegated work, pick:

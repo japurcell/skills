@@ -7,7 +7,7 @@ description: Implement the next task incrementally — build, test, verify
 
 ## Workflow
 
-1. Invoke the `addy-context-engineering` and `subagent-model-selection` skills.
+1. Invoke the `addy-context-engineering` and `subagent-model-router` skills.
 2. Pick the next pending task from the plan. For each task:
    a. Prepare a lean handoff: task text, acceptance criteria, known constraints, relevant commands, and file hints only if they are already obvious from the task or plan
    b. Dispatch an implementer subagent immediately with the [implementer-prompt.md](./implementer-prompt.md) template

@@ -3,13 +3,13 @@ I’ll read the specified local skill file, then answer the eval prompt without 
 ● skill(addy-using-agent-skills)
 
 ● Read SKILL.md
-  │ skills/build-team-workspace/skill-snapshot-current/SKILL.md
-  └ 128 lines read
+│ skills/build-team-workspace/skill-snapshot-current/SKILL.md
+└ 128 lines read
 
 I would run the **build-team orchestration workflow** from the existing `plan.md` without implementing inline.
 
 1. Read `plan.md` and identify **T014: add pagination to `GET /api/issues`** as the next ready pending task.
-2. Invoke `subagent-model-selection` to choose the least powerful capable implementer model/agent for T014.
+2. Invoke `subagent-model-router` to choose the least powerful capable implementer model/agent for T014.
 3. Dispatch a **fresh implementer subagent** with:
    - the exact T014 task text
    - the relevant `plan.md` excerpt
@@ -25,4 +25,3 @@ I would run the **build-team orchestration workflow** from the existing `plan.md
 8. If review returns `DONE_WITH_FINDINGS`, re-open the affected `plan.md` task and route the fix to a fresh implementer, then repeat simplification and review for affected files.
 9. Before stopping, invoke `self-improve` only if the session produced durable reusable lessons.
 10. Leave all repository changes uncommitted.
-

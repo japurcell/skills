@@ -27,7 +27,7 @@ Use a fresh implementer per task so coordination stays clean and each task gets 
 ### Phase 1: Implementation Orchestration
 
 1. Read `$plan` and pick the next ready pending task from the file.
-2. Based on the task's size or scope, invoke the `subagent-model-selection` skill to determine the least powerful model and most appropriate agent type for the implementer subagent.
+2. Based on the task's size or scope, invoke the `subagent-model-router` skill to determine the least powerful model and most appropriate agent type for the implementer subagent.
 3. Dispatch one fresh implementer subagent with the exact task text, the relevant `$plan` excerpt, and the [implementer-prompt.md](./implementer-prompt.md) template.
 4. Wait for the implementer to report back.
 5. Handle the status exactly:
@@ -46,7 +46,7 @@ Use a fresh implementer per task so coordination stays clean and each task gets 
 ### Phase 2: Code Simplification
 
 1. Add a "Code Simplification" task to `$plan` with the full `$review_scope_files` list in the description. This makes simplification part of the execution record and ensures it doesn't get lost.
-2. Based on the task's size or scope, invoke the `subagent-model-selection` skill to determine the least powerful model and most appropriate agent type for the code-simplifier subagent.
+2. Based on the task's size or scope, invoke the `subagent-model-router` skill to determine the least powerful model and most appropriate agent type for the code-simplifier subagent.
 3. Dispatch code-simplifier subagents over `$review_scope_files` partitions with the [code-simplifier-prompt.md](./code-simplifier-prompt.md) template. Include the exact file list for each subagent. Scale based on the number of files:
    - **≤5 files**: launch 1 agent covering all changed files
    - **>5 files**: partition files into non-overlapping groups (by module, directory, or logical area) and launch one agent per group in parallel. Each file must appear in exactly one agent's scope — overlapping scopes cause conflicting writes.
@@ -61,7 +61,7 @@ Use a fresh implementer per task so coordination stays clean and each task gets 
 ### Phase 3: Code Review
 
 1. Add a "Code Review" task to `$plan` with the full `$review_scope_files` list in the description. This makes code review part of the execution record and ensures it doesn't get lost.
-2. Based on the task's size or scope, invoke the `subagent-model-selection` skill to determine the least powerful model and most appropriate agent type for the code-reviewer subagent.
+2. Based on the task's size or scope, invoke the `subagent-model-router` skill to determine the least powerful model and most appropriate agent type for the code-reviewer subagent.
 3. Dispatch code-reviewer subagents over `$review_scope_files` with the [code-reviewer-prompt.md](./code-reviewer-prompt.md) template. Include the exact file list for each subagent. Scale based on the number of files:
    - **≤5 files**: launch 1 agent covering all changed files
    - **>5 files**: launch multiple agents in parallel with different focuses (e.g., correctness, security, performance).

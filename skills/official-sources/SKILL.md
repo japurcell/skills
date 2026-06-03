@@ -1,170 +1,123 @@
 ---
 name: official-sources
-description: Base framework-specific code on official documentation. Use when correctness, current best practices, and source-cited implementations matter.
+description: For framework- or library-specific code, verify against official docs, use the documented pattern for the detected version, and cite sources for non-trivial decisions.
 ---
-
 # Official Sources
 
-## Overview
+Use this skill for framework- or library-specific code when correctness, current patterns, and verifiable sources matter.
 
-For framework- or library-specific code, verify against official documentation before implementing. Do not rely on memory alone: APIs change, patterns are deprecated, and training data becomes stale. The goal is code the user can trust and verify.
+## Trigger
 
-## When to Use
-
-Use this skill when:
-
-- Writing framework- or library-specific code
+Use when:
+- Writing, changing, reviewing, or upgrading framework-, library-, or SDK-specific code
 - Creating boilerplate, starter code, or reusable patterns
-- The user asks for documented, verified, or current implementation
-- Implementing features where recommended patterns matter, such as forms, routing, data fetching, state, or auth
-- Reviewing or updating framework-specific code
-- You are about to write framework-specific code from memory
+- The user asks for documented, verified, or current best practice
+- Recommended patterns may matter, such as routing, forms, auth, state, data fetching, config, or platform APIs
+- The task names a framework, library, SDK, or versioned API
 
-Do not use this skill when:
-
-- The task is framework-agnostic and version-independent, such as renaming variables, fixing typos, moving files, or basic logic
+Do not use when:
+- The task is framework-agnostic or version-independent
 - The user explicitly prefers speed over verification
 
 ## Process
 
-Follow this sequence:
+Follow: DETECT → FETCH → IMPLEMENT → CITE
 
-DETECT → FETCH → IMPLEMENT → CITE
+### 1) DETECT
 
-### 1) Detect stack and versions
+Identify the stack and exact versions from project files when available, such as:
+- `package.json`
+- `requirements.txt`, `pyproject.toml`
+- `composer.json`
+- `go.mod`
+- `Cargo.toml`
+- `Gemfile`
+- `*.csproj`
+- `Directory.Packages.props`
 
-Read dependency files to identify the exact stack and versions.
+State the result explicitly.
 
-Examples:
+If a relevant framework or library version is missing or unclear, ask the user. Do not guess.
 
-- `package.json` → Node, React, Vue, Angular, Svelte
-- `composer.json` → PHP, Laravel, Symfony
-- `requirements.txt`, `pyproject.toml` → Python, Django, Flask
-- `go.mod` → Go
-- `Cargo.toml` → Rust
-- `Gemfile` → Ruby, Rails
+### 2) FETCH
 
-State the result explicitly, for example:
+Fetch the specific official documentation page for the feature being implemented, not the docs homepage.
 
-```text
-STACK DETECTED:
-- React 19.1.0
-- Vite 6.2.0
-- Tailwind CSS 4.0.3
-→ Fetching official docs for the relevant patterns.
-```
+Rules:
+- MUST use official docs as the primary source
+- MUST NOT rely on memory alone
+- MUST fetch web pages through a markdown converter when possible
+- MUST NOT use third-party tutorials, Stack Overflow, or AI summaries as primary authority
 
-If versions are missing or unclear, ask the user. Do not guess.
+Fetch priority:
+1. `WebFetch("https://markdown.new/<target-url>")`
+2. `WebFetch("https://r.jina.ai/<target-url>")` if needed
+3. Raw `WebFetch("<target-url>")` only for JSON/API endpoints or authenticated pages
+4. Use `gh` CLI when GitHub is the official source
 
-### 2) Fetch the relevant official documentation
-
-Fetch the specific page for the feature being implemented, not the docs homepage.
-
-Prefer sources in this order:
-
-1. Official documentation
+Source priority:
+1. Official docs
 2. Official migration guides, changelogs, or official blog posts
 3. Standards references, such as MDN or specifications
 4. Compatibility references, such as caniuse or node.green
 
-Do not use these as primary sources:
+If official sources conflict, surface the conflict, cite both sources, and identify which guidance matches the detected version.
 
-- Stack Overflow
-- Third-party blog posts or tutorials
-- AI-generated summaries
-- Training-data memory
+### 3) IMPLEMENT
 
-Be precise:
-
-- Bad: React homepage
-- Good: `https://react.dev/reference/react/useActionState`
-- Bad: Search for “django auth best practices”
-- Good: `https://docs.djangoproject.com/en/6.0/topics/auth/`
-
-Extract the relevant pattern, including deprecations or migration guidance.
-
-If official sources conflict, surface the conflict and verify which guidance applies to the detected version.
-
-### 3) Implement using the documented pattern
-
-Write code that matches the detected version’s documentation.
+Implement the documented pattern for the detected version.
 
 Rules:
-
 - Use documented API names and signatures
 - Prefer the current recommended pattern
 - Avoid deprecated APIs
-- If the docs do not cover a pattern, mark it as unverified
+- If docs do not cover the pattern, mark it `UNVERIFIED`
 
-If the docs conflict with the existing codebase, do not silently choose. Surface the tradeoff:
+If docs conflict with the existing codebase, do not silently choose. Surface the conflict and ask whether to follow:
+- the documented current pattern, or
+- the existing codebase pattern
 
-```text
-CONFLICT DETECTED:
-The codebase uses useState for form loading state,
-but React 19 docs recommend useActionState.
-Source: https://react.dev/reference/react/useActionState
+### 4) CITE
 
-Options:
-A) Use the current documented pattern
-B) Match the existing codebase pattern
-→ Which do you prefer?
-```
+Cite sources for non-trivial framework-specific decisions, especially:
+- API or hook choice
+- Architectural or pattern choice
+- Deprecation or migration decisions
+- Compatibility-sensitive features
 
-### 4) Cite sources
+Use full URLs and deep links when possible. Include a short quote only when the reason is non-obvious.
 
-Cite the source for each non-trivial framework-specific decision so the user can verify it.
+If something cannot be verified, say:
+`UNVERIFIED: I could not find official documentation for this pattern.`
 
-Use:
+## Output pattern
 
-- Full URLs
-- Deep links when possible
-- Short quotes for non-obvious decisions
-- Compatibility references when recommending platform features
+When useful, summarize work like this:
 
-Example in code comments:
+    STACK DETECTED:
+    - ...
 
-```ts
-// React 19 form handling with useActionState
-// Source: https://react.dev/reference/react/useActionState#usage
-const [state, formAction, isPending] = useActionState(
-  submitOrder,
-  initialState,
-);
-```
+    OFFICIAL SOURCES:
+    - ...
 
-Example in conversation:
+    IMPLEMENTATION NOTES:
+    - ...
 
-```text
-I used useActionState for form submission state because React 19 documents it for this pattern.
-Source: https://react.dev/reference/react/useActionState
-```
+    UNVERIFIED:
+    - none
 
-If you cannot verify something, say so clearly:
+## Red flags
 
-```text
-UNVERIFIED: I could not find official documentation for this pattern.
-This may be outdated and should be verified before production use.
-```
+- Framework-specific code written without checking docs
+- Unknown version treated as known
+- Deprecated or undocumented APIs used
+- Third-party sources treated as primary
+- Non-trivial decisions given without citations
 
-## Red Flags
+## Final check
 
-- Writing framework-specific code without checking the docs
-- Not knowing the version
-- Using undocumented or deprecated APIs
-- Citing third-party sources as primary authority
-- Delivering framework-specific code without citations
-- Fetching broad docs when one specific page is sufficient
-- Saying “I think” or “I believe” instead of citing a source
-
-## Checklist
-
-Before finalizing:
-
-- [ ] Detected framework/library versions from dependency files or the user
-- [ ] Fetched the relevant official documentation
-- [ ] Used official sources as primary authority
-- [ ] Followed current documented patterns for the detected version
-- [ ] Cited non-trivial framework-specific decisions
-- [ ] Checked for deprecations or migration guidance
-- [ ] Surfaced conflicts between docs and the existing codebase
-- [ ] Marked anything unverifiable as unverified
+- [ ] Versions detected or explicitly requested
+- [ ] Relevant official docs fetched
+- [ ] Documented pattern used for that version
+- [ ] Non-trivial decisions cited
+- [ ] Conflicts or unverifiable parts surfaced clearly

@@ -1,10 +1,11 @@
 # 🤖 Copilot CLI Session
 
 > [!NOTE]
-> - **Session ID:** `f4bc2c41-b8b5-453c-873d-d49f19417b33`  
-> - **Started:** 5/6/2026, 10:23:25 PM  
-> - **Duration:** 6m 1s  
-> - **Exported:** 5/6/2026, 10:29:26 PM  
+>
+> - **Session ID:** `f4bc2c41-b8b5-453c-873d-d49f19417b33`
+> - **Started:** 5/6/2026, 10:23:25 PM
+> - **Duration:** 6m 1s
+> - **Exported:** 5/6/2026, 10:29:26 PM
 
 ---
 
@@ -42,100 +43,100 @@ I’m reading the authoring skill and the draft in parallel, then I’ll tighten
 2. name: create-skill
 3. description: Creates or updates skills in this repository using the repo's anatomy, eval, and benchmark conventions while delegating the broader authoring loop to `skill-creator`. Use whenever the user asks to create, modify, refactor, dedupe, benchmark, or improve a skill under `skills/`, mentions `SKILL.md`, `evals/evals.json`, `grade_benchmark.py`, or wants a skill to work better on weaker models.
 4. ---
-5. 
+5.
 6. # Create Skill
-7. 
+7.
 8. ## Overview
-9. 
+9.
 10. Create or revise a repository skill so it is ready to live under `skills/` with the right structure, concise instructions, realistic evals, and benchmark support.
-11. 
+11.
 12. Use `skill-creator` for the broader authoring and iteration loop, but enforce this repository's anatomy, validation commands, and workspace layout here so the result matches local conventions instead of a generic skill draft.
-13. 
+13.
 14. ## When to Use
-15. 
+15.
 16. - Create a new skill directory under `skills/`.
 17. - Revise an existing `SKILL.md`, skill description, eval set, or benchmark grader.
 18. - Tighten a skill that has grown repetitive, vague, or too long.
 19. - Add weaker-model guardrails so a skill stays explicit and reliable on smaller or older models.
 20. - Add or repair `evals/evals.json`, `evals/grade_benchmark.py`, or `skills/<skill>-workspace/` benchmark artifacts.
 21. - Not for merely extracting the just-finished session into a one-off personal skill when `skillify` is the more direct fit.
-22. 
+22.
 23. ## Workflow
-24. 
+24.
 25. 1. **Scope the request**
 26.    - Decide whether this is a new skill or a modification.
 27.    - If modifying, preserve the existing directory name and frontmatter `name` unless the user explicitly wants a rename.
 28.    - Search `skills/` for near-duplicate names or overlapping descriptions before creating anything new. If a nearby skill already covers the request, refine that skill instead of creating a shadow skill.
-29. 
+29.
 30. 2. **Load the required references**
 31.    - Invoke `skill-creator` immediately and use it for the authoring, eval, and benchmark loop instead of recreating that workflow from memory.
 32.    - Read `references/skill-anatomy.md` before drafting or editing the body. Use its section pattern as the default template.
 33.    - Read `docs/agent-guides/authoring.md` and `docs/agent-guides/validation.md` so the result follows repository-specific rules.
-34. 
+34.
 35. 3. **Draft or revise the skill**
 36.    - Use this section order unless the request has a strong reason to differ: `Overview`, `When to Use`, `Workflow`, `Specific Techniques`, `Common Rationalizations`, `Red Flags`, `Verification`.
 37.    - Keep the description trigger-oriented: say what the skill does, then add clear `Use when ...` conditions. Do not stuff numbered workflow steps into the description.
 38.    - Keep the body concise. Reuse nearby skills and root references by name instead of copying long guidance blocks into the new skill.
 39.    - When the skill needs exact commands or exact paths, spell them out. Weaker models follow concrete instructions more reliably than implied conventions.
-40. 
+40.
 41. 4. **Add eval and benchmark support**
 42.    - Add or update `evals/evals.json` with at least 3 realistic evals. Cover create, modify, and a negative or dedupe edge case. Add a weaker-model or benchmark-focused case when that behavior matters.
 43.    - When assertions can be checked objectively, add `evals/grade_benchmark.py` and prefer deterministic file/content checks over subjective grading.
 44.    - Put generated run artifacts in `skills/<skill>-workspace/iteration-N/eval-*/...`, never inside the skill directory itself.
 45.    - Benchmark the skill against a baseline. For a new skill use `without_skill`; for an edited skill use `old_skill` or another explicit snapshot.
-46. 
+46.
 47. 5. **Validate and refresh**
 48.    - Run `python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>`.
 49.    - Run `python3 -m py_compile skills/<skill-name>/evals/grade_benchmark.py` when the skill ships a grader.
 50.    - Run `python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>` when benchmark artifacts exist.
 51.    - If the user wants a packaged archive, run `PYTHONPATH=skills/skill-creator python3 skills/skill-creator/scripts/package_skill.py skills/<skill-name> /tmp/skill-dist`.
 52.    - Run `./scripts/copilot-install.sh` after source edits so installed skills, references, hooks, and instructions stay in sync.
-53. 
+53.
 54. ## Specific Techniques
-55. 
+55.
 56. ### Duplicate control
-57. 
+57.
 58. - Compare the requested skill against existing names, descriptions, and nearby workflows before creating a new directory.
 59. - If the only meaningful change is tighter triggering, better evals, or clearer wording, update the existing skill instead of creating a sibling duplicate.
 60. - When you decide to reuse or refine an existing skill, name the closest existing skill explicitly and explain why it is a better fit than creating a new one.
 61. - Reuse `references/skill-anatomy.md` as structure, not as copy source. Keep the reference deduped by avoiding verbatim prose unless a short quote is truly necessary.
-62. 
+62.
 63. ### Weaker-model guardrails
-64. 
+64.
 65. - Prefer short numbered steps over prose paragraphs.
 66. - Name the exact files to create or edit.
 67. - Explain validation selection in order: infer the edited surface first, then choose the matching validation command. Do not fall back to generic `npm test` or other repo-wide commands that do not exist here.
 68. - Keep the core workflow in `SKILL.md`. Move bulky examples or long supporting material into bundled files only when they materially improve reliability.
-69. 
+69.
 70. ### Benchmarking guidance
-71. 
+71.
 72. - For live `copilot -p` benchmark runs, point the prompt at the exact local `skills/<skill>/SKILL.md` or snapshot path and tell the model to ignore other installed copies of the same skill name.
 73. - Save response and transcript artifacts before grading so `evals/grade_benchmark.py` and `aggregate_benchmark.py` have stable inputs.
 74. - For a brand-new skill, compare against `without_skill`. For a modified skill, compare against an explicit `old_skill` or snapshot baseline.
 75. - When you document workspace layout, show the abstract pattern `skills/<skill>-workspace/iteration-N/` and, when helpful, a concrete example for the skill you are editing.
 76. - Prefer assertions that catch flattering but shallow drafts: missing negative cases, copied reference prose, absent baseline, or missing refresh/validation commands.
-77. 
+77.
 78. ## Common Rationalizations
-79. 
+79.
 80. | Rationalization | Reality |
 81. | --- | --- |
 82. | "This is only a small skill edit, so I can skip eval work." | Small description or structure changes often break triggering and benchmark behavior first. Keep evals current. |
 83. | "I can just paste the anatomy reference into the skill." | That bloats context and duplicates repo references. Reuse the section structure and only inline what changes behavior. |
 84. | "The repo probably has a generic test command." | It does not. Choose the narrow validation command that matches the changed files. |
 85. | "A baseline is optional because the new draft looks better." | Without a baseline, you cannot show the skill actually improves outcomes instead of just adding instructions. |
-86. 
+86.
 87. ## Red Flags
-88. 
+88.
 89. - The description reads like a workflow summary instead of a trigger description.
 90. - `SKILL.md` duplicates long passages from `references/skill-anatomy.md` or nearby skills.
 91. - The skill says "run the usual tests" or invents generic frontend commands.
 92. - Evals cover only happy paths and never test duplicate avoidance or weaker-model behavior.
 93. - Benchmark artifacts are written inside `skills/<skill>/` instead of the sibling workspace.
-94. 
+94.
 95. ## Verification
-96. 
+96.
 97. After completing the workflow, confirm:
-98. 
+98.
 99. - [ ] The skill request was classified as create vs modify, and duplicate checking happened before new files were added.
 100. - [ ] `skill-creator` was invoked and `references/skill-anatomy.md` was used as the drafting template.
 101. - [ ] The final `SKILL.md` is concise, trigger-oriented, and follows the anatomy section pattern.
@@ -146,7 +147,6 @@ I’m reading the authoring skill and the draft in parallel, then I’ll tighten
 ```
 
 </details>
-
 
 ---
 
@@ -161,7 +161,6 @@ I’m reading the authoring skill and the draft in parallel, then I’ll tighten
 ```
 SKILL.md
 ```
-
 
 ---
 
@@ -178,9 +177,9 @@ SKILL.md
 
 ```
 1. # Authoring rules
-2. 
+2.
 3. ## Skills
-4. 
+4.
 5. - Use `SKILL.md` as the entry point for each skill.
 6. - Start `SKILL.md` with YAML frontmatter.
 7. - Keep `name` lowercase kebab-case.
@@ -189,15 +188,15 @@ SKILL.md
 10. - For weaker models, spell out verification selection in order: infer the slice's surface and stack first, then choose matching test/build-review/manual checks instead of defaulting to generic frontend commands.
 11. - Keep bundled resources next to the skill instead of scattering supporting files elsewhere.
 12. - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
-13. 
+13.
 14. ## Agents
-15. 
+15.
 16. - Store each custom agent as a single Markdown file in `agents/`.
 17. - Use YAML frontmatter with `name` and `description`.
 18. - Keep the body focused on execution guidance, output shape, and decision criteria.
-19. 
+19.
 20. ## Helper scripts
-21. 
+21.
 22. - Follow the existing shebang style: `#!/usr/bin/env bash` or `#!/usr/bin/env python3`.
 23. - Keep scripts directly executable and simple.
 24. - Prefer standard-library solutions unless a dependency is already implied by the existing script.
@@ -205,7 +204,6 @@ SKILL.md
 ```
 
 </details>
-
 
 ---
 
@@ -222,35 +220,34 @@ SKILL.md
 
 ```
 1. # Validation commands
-2. 
+2.
 3. There is no single repo-wide test command. Run the narrowest command that exercises the area you changed.
-4. 
+4.
 5. ## Installer scripts
-6. 
+6.
 7. - `./scripts/copilot-install.sh`: refresh installed skills, references, hooks, agents, and Copilot instructions after editing repo source and before checking live model behavior
 8. - `bash -n scripts/copilot-install.sh`: syntax-check the local Copilot installer
 9. - `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`: syntax-check and exercise the addy importer, including upstream sync, dependency-copying, and hook-copying behavior
-10. 
+10.
 11. ## Skill validation and packaging
-12. 
+12.
 13. - `python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>`: validate a skill definition
 14. - `PYTHONPATH=skills/skill-creator python3 skills/skill-creator/scripts/package_skill.py skills/<skill-name> /tmp/skill-dist`: package a skill into a `.skill` archive
-15. 
+15.
 16. ## Other targeted checks
-17. 
+17.
 18. - `bash skills/agent-sop-author/validate-sop.sh path/to/file.sop.md`: validate an Agent SOP file
 19. - `python3 -m py_compile skills/<skill-name>/evals/grade_benchmark.py`: syntax-check a skill-local Python benchmark grader after editing it
 20. - `python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>`: grade benchmark-style eval artifacts when a skill ships a local `grade_benchmark.py` helper
 21. - `python3 skills/security-review/evals/grade_reports.py <run-dir>`: grade a `security-review` eval run
-22. 
+22.
 23. ## Workflow
-24. 
+24.
 25. - If you change a helper script, run the most specific command that covers that script instead of looking for a nonexistent monorepo test runner.
 26.
 ```
 
 </details>
-
 
 ---
 
@@ -267,163 +264,162 @@ SKILL.md
 
 ````
 1. # Skill Anatomy
-2. 
+2.
 3. This document describes the structure and format of agent-skills skill files. Use this as a guide when contributing new skills or understanding existing ones.
-4. 
+4.
 5. ## File Location
-6. 
+6.
 7. Every skill lives in its own directory under `skills/`:
-8. 
+8.
 9. ```
 10. skills/
 11.   skill-name/
 12.     SKILL.md           # Required: The skill definition
 13.     supporting-file.md # Optional: Reference material loaded on demand
 14. ```
-15. 
+15.
 16. ## SKILL.md Format
-17. 
+17.
 18. ### Frontmatter (Required)
-19. 
+19.
 20. ```yaml
 21. ---
 22. name: skill-name-with-hyphens
 23. description: Guides agents through [task/workflow]. Use when [specific trigger conditions].
 24. ---
 25. ```
-26. 
+26.
 27. **Rules:**
-28. 
+28.
 29. - `name`: Lowercase, hyphen-separated. Must match the directory name.
 30. - `description`: Start with what the skill does in third person, then include one or more clear "Use when" trigger conditions. Include both _what_ and _when_. Maximum 1024 characters.
-31. 
+31.
 32. **Why this matters:** Agents discover skills by reading descriptions. The description is injected into the system prompt, so it must tell the agent both what the skill provides and when to activate it. Do not summarize the workflow — if the description contains process steps, the agent may follow the summary instead of reading the full skill.
-33. 
+33.
 34. ### Standard Sections (Recommended Pattern)
-35. 
+35.
 36. ```markdown
 37. # Skill Title
-38. 
+38.
 39. ## Overview
-40. 
+40.
 41. One-two sentences explaining what this skill does and why it matters.
-42. 
+42.
 43. ## When to Use
-44. 
+44.
 45. - Bullet list of triggering conditions (symptoms, task types)
 46. - When NOT to use (exclusions)
-47. 
+47.
 48. ## [Core Process / The Workflow / Steps]
-49. 
+49.
 50. The main workflow, broken into numbered steps or phases.
 51. Include code examples where they help.
 52. Use flowcharts (ASCII) where decision points exist.
-53. 
+53.
 54. ## [Specific Techniques / Patterns]
-55. 
+55.
 56. Detailed guidance for specific scenarios.
 57. Code examples, templates, configuration.
-58. 
+58.
 59. ## Common Rationalizations
-60. 
+60.
 61. | Rationalization                 | Reality                 |
 62. | ------------------------------- | ----------------------- |
 63. | Excuse agents use to skip steps | Why the excuse is wrong |
-64. 
+64.
 65. ## Red Flags
-66. 
+66.
 67. - Behavioral patterns indicating the skill is being violated
 68. - Things to watch for during review
-69. 
+69.
 70. ## Verification
-71. 
+71.
 72. After completing the skill's process, confirm:
-73. 
+73.
 74. - [ ] Checklist of exit criteria
 75. - [ ] Evidence requirements
 76. ```
-77. 
+77.
 78. ## Section Purposes
-79. 
+79.
 80. ### Overview
-81. 
+81.
 82. The "elevator pitch" for the skill. Should answer: What does this skill do, and why should an agent follow it?
-83. 
+83.
 84. ### When to Use
-85. 
+85.
 86. Helps agents and humans decide if this skill applies to the current task. Include both positive triggers ("Use when X") and negative exclusions ("NOT for Y").
-87. 
+87.
 88. ### Core Process
-89. 
+89.
 90. The heart of the skill. This is the step-by-step workflow the agent follows. Must be specific and actionable — not vague advice.
-91. 
+91.
 92. **Good:** "Run `npm test` and verify all tests pass"
 93. **Bad:** "Make sure the tests work"
-94. 
+94.
 95. ### Common Rationalizations
-96. 
+96.
 97. The most distinctive feature of well-crafted skills. These are excuses agents use to skip important steps, paired with rebuttals. They prevent the agent from rationalizing its way out of following the process.
-98. 
+98.
 99. Think of every time an agent has said "I'll add tests later" or "This is simple enough to skip the spec" — those go here with a factual counter-argument.
-100. 
+100.
 101. ### Red Flags
-102. 
+102.
 103. Observable signs that the skill is being violated. Useful during code review and self-monitoring.
-104. 
+104.
 105. ### Verification
-106. 
+106.
 107. The exit criteria. A checklist the agent uses to confirm the skill's process is complete. Every checkbox should be verifiable with evidence (test output, build result, screenshot, etc.).
-108. 
+108.
 109. ## Supporting Files
-110. 
+110.
 111. Create supporting files only when:
-112. 
+112.
 113. - Reference material exceeds 100 lines (keep the main SKILL.md focused)
 114. - Code tools or scripts are needed
 115. - Checklists are long enough to justify separate files
-116. 
+116.
 117. Keep patterns and principles inline when under 50 lines.
-118. 
+118.
 119. ## Writing Principles
-120. 
+120.
 121. 1. **Process over knowledge.** Skills are workflows, not reference docs. Steps, not facts.
 122. 2. **Specific over general.** "Run `npm test`" beats "verify the tests".
 123. 3. **Evidence over assumption.** Every verification checkbox requires proof.
 124. 4. **Anti-rationalization.** Every skip-worthy step needs a counter-argument in the rationalizations table.
 125. 5. **Progressive disclosure.** Main SKILL.md is the entry point. Supporting files are loaded only when needed.
 126. 6. **Token-conscious.** Every section must justify its inclusion. If removing it wouldn't change agent behavior, remove it.
-127. 
+127.
 128. ## Naming Conventions
-129. 
+129.
 130. - Skill directories: `lowercase-hyphen-separated`
 131. - Skill files: `SKILL.md` (always uppercase)
 132. - Supporting files: `lowercase-hyphen-separated.md`
 133. - References: stored in `references/` at the project root, not inside skill directories
-134. 
+134.
 135. ## Cross-Skill References
-136. 
+136.
 137. Reference other skills by name:
-138. 
+138.
 139. ```markdown
 140. Follow the `test-driven-development` skill for writing tests.
 141. If the build breaks, use the `debugging-and-error-recovery` skill.
 142. ```
-143. 
+143.
 144. Don't duplicate content between skills — reference and link instead.
-145. 
+145.
 146. Reference other skills by name:
-147. 
+147.
 148. ```markdown
 149. Follow the `test-driven-development` skill for writing tests.
 150. If the build breaks, use the `debugging-and-error-recovery` skill.
 151. ```
-152. 
+152.
 153. Don't duplicate content between skills — reference and link instead.
 154.
 ````
 
 </details>
-
 
 ---
 
@@ -439,14 +435,13 @@ I have the repo authoring rules and the draft inputs; next I’m inspecting the 
 
 ### ✅ `glob`
 
-****/***
+\***_/_**
 
-"**/*" in skills/create-skill/evals/files/review-handoff-draft, skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs
+"\*_/_" in skills/create-skill/evals/files/review-handoff-draft, skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs
 
 ```
 /Users/adam/Development/skills/skills/create-skill/evals/files/review-handoff-draft/SKILL.md
 ```
-
 
 ---
 
@@ -454,9 +449,9 @@ I have the repo authoring rules and the draft inputs; next I’m inspecting the 
 
 ### ✅ `glob`
 
-**skills/*/SKILL.md**
+**skills/\*/SKILL.md**
 
-"skills/*/SKILL.md"
+"skills/\*/SKILL.md"
 
 <details>
 <summary>63 matches</summary>
@@ -475,7 +470,7 @@ I have the repo authoring rules and the draft inputs; next I’m inspecting the 
 /Users/adam/Development/skills/skills/security-review/SKILL.md
 /Users/adam/Development/skills/skills/addy-frontend-ui-engineering/SKILL.md
 /Users/adam/Development/skills/skills/create-skill/SKILL.md
-/Users/adam/Development/skills/skills/subagent-model-selection/SKILL.md
+/Users/adam/Development/skills/skills/subagent-model-router/SKILL.md
 /Users/adam/Development/skills/skills/skillify/SKILL.md
 /Users/adam/Development/skills/skills/create-spec/SKILL.md
 /Users/adam/Development/skills/skills/addy-idea-refine/SKILL.md
@@ -529,7 +524,6 @@ I have the repo authoring rules and the draft inputs; next I’m inspecting the 
 
 </details>
 
-
 ---
 
 <sub>⏱️ 21s</sub>
@@ -538,7 +532,7 @@ I have the repo authoring rules and the draft inputs; next I’m inspecting the 
 
 **review-handoff**
 
-"review-handoff" in **/*
+"review-handoff" in \*_/_
 
 <details>
 <summary>5 matches</summary>
@@ -553,7 +547,6 @@ Preview (first 500 chars):
 ```
 
 </details>
-
 
 ---
 
@@ -581,49 +574,49 @@ I found prior benchmark artifacts for this exact exercise, so I’m reading the 
 2. name: review-handoff
 3. description: Helps with review handoffs for code changes and handoffs and reviews and teammate review context.
 4. ---
-5. 
+5.
 6. # Review Handoff
-7. 
+7.
 8. This skill helps with review handoffs. It helps with review handoffs for code changes and keeps review handoffs detailed.
-9. 
+9.
 10. ## Overview
-11. 
+11.
 12. Write a review handoff for the next person. Include what changed. Include what changed again if needed. Make it clear. Make it detailed. Be detailed enough that the next person can understand what changed and why it changed and what changed.
-13. 
+13.
 14. ## When to Use
-15. 
+15.
 16. - Use when writing a review handoff.
 17. - Use when somebody needs context for review.
 18. - Use when handing work to another person for review.
 19. - Use when the work needs review and the reviewer needs a handoff.
-20. 
+20.
 21. ## Steps
-22. 
+22.
 23. 1. Read the changed files and understand the changed files before you talk about the changed files.
 24. 2. Summarize the changed files and the changes.
 25. 3. Summarize risks and concerns and risks and concerns again if the changes are risky.
 26. 4. Mention validation and say to run the normal tests.
 27. 5. Mention follow-up work and follow-up work again if there are follow-ups.
-28. 
+28.
 29. ## Details
-30. 
+30.
 31. - Repeat the summary if the change is important.
 32. - Repeat the validation if the change is scary.
 33. - Mention files, risks, tests, and context.
 34. - Mention tests and validation, including the normal tests.
 35. - Mention any risks, risks, and more risks.
-36. 
+36.
 37. ## More Details
-38. 
+38.
 39. - Include an overview.
 40. - Include a summary.
 41. - Include risks.
 42. - Include validation.
 43. - Include follow-up.
 44. - Include overview, summary, risks, validation, and follow-up in a concise way if you can.
-45. 
+45.
 46. ## Verification
-47. 
+47.
 48. - [ ] A handoff exists
 49. - [ ] The handoff mentions changed files
 50. - [ ] The handoff mentions validation
@@ -631,7 +624,6 @@ I found prior benchmark artifacts for this exact exercise, so I’m reading the 
 ```
 
 </details>
-
 
 ---
 
@@ -651,98 +643,98 @@ I found prior benchmark artifacts for this exact exercise, so I’m reading the 
 2. name: handoff
 3. description: Save a concise session handoff that another agent can continue from. Use this whenever the user asks to save progress, write a handoff, capture current session state, create a continuation note, or preserve enough context for a future agent session to resume work. Before writing, invoke addy-context-engineering to decide what context is worth carrying forward, then write handoff.md under .agents/scratchpad/ or the active feature subfolder when a scratchpad spec.md or plan.md is already in scope.
 4. ---
-5. 
+5.
 6. # Handoff
-7. 
+7.
 8. Create `handoff.md`: a short continuation artifact for the next agent. Preserve only the durable context needed to resume cleanly. Do not turn the handoff into a transcript.
-9. 
+9.
 10. ## Use this skill when
-11. 
+11.
 12. - The user asks to save progress, write a handoff, capture current state, or leave resumable context for another agent session.
 13. - Work is stopping midstream and the next agent will need the goal, current status, blockers, and next step.
 14. - A `.agents/scratchpad/<feature>/spec.md` or `plan.md` is already in scope and the handoff should stay with that feature folder.
-15. 
+15.
 16. Do not use this to create a full spec, a full implementation plan, repo documentation, or a transcript archive. Do not use it when the user wants execution to continue now.
-17. 
+17.
 18. ## Fast path
-19. 
+19.
 20. Use the checklist below even if you do not need the full text of `addy-context-engineering`.
-21. 
+21.
 22. 1. **Invoke `addy-context-engineering` first**
 23.    - Keep only the minimum durable context: rules/conventions, active scratchpad artifacts, touched files, blockers, and the next task boundary.
-24. 
+24.
 25. 2. **Resolve the output path**
 26.    - If the request explicitly names `.agents/scratchpad/<feature>/plan.md` or `spec.md`, use `.agents/scratchpad/<feature>/handoff.md`.
 27.    - Otherwise reuse the most recent `.agents/scratchpad/<feature>/plan.md` or `spec.md` already in scope this session.
 28.    - If no feature-scoped scratchpad artifact is in scope, use `.agents/scratchpad/handoff.md`.
 29.    - If two feature folders are equally plausible, ask instead of guessing.
 30.    - Never write outside `.agents/scratchpad/`.
-31. 
+31.
 32. 3. **Load only what matters**
 33.    - Read `AGENTS.md` and narrower instruction files already in scope.
 34.    - Read the active scratchpad `spec.md` or `plan.md` if one exists.
 35.    - Read only the specific files, diffs, or errors needed to explain current status and the next step.
 36.    - Do not reread the whole repo just to produce a handoff.
-37. 
+37.
 38. 4. **Write the handoff**
 39.    - Aim for roughly 150-300 words plus short file bullets. Be shorter if little progress exists.
 40.    - Capture the goal, current status, decisions/constraints, relevant files, blockers, and the single best next step.
 41.    - If work has not started, say so plainly in `Current Status`.
-42. 
+42.
 43. 5. **Reply with status**
 44.    - Report the absolute path to `handoff.md`.
 45.    - Say whether it is feature-scoped or root-scoped.
 46.    - Add one line about the most important thing the next agent should know.
-47. 
+47.
 48. ## Keep / Skip
-49. 
+49.
 50. Keep:
-51. 
+51.
 52. - goal and active work item
 53. - what is done, in progress, and next
 54. - decisions, constraints, and real blockers
 55. - 3-8 relevant files, each with a short reason
 56. - the single best next step
-57. 
+57.
 58. Skip:
-59. 
+59.
 60. - full chat transcripts
 61. - raw command logs unless a specific error message is the blocker
 62. - routine investigation narration
 63. - speculative future work that is not grounded in this session
-64. 
+64.
 65. ## Handoff Template
-66. 
+66.
 67. Write `handoff.md` using this exact structure:
-68. 
+68.
 69. ```markdown
 70. # Handoff
-71. 
+71.
 72. ## Goal
 73. - ...
-74. 
+74.
 75. ## Current Status
 76. - Done: ...
 77. - In progress: ...
 78. - Next up: ...
-79. 
+79.
 80. ## Decisions and Constraints
 81. - ...
-82. 
+82.
 83. ## Relevant Files
 84. - `path` — why it matters
-85. 
+85.
 86. ## Open Questions or Blockers
 87. - None.
 88. or
 89. - ...
-90. 
+90.
 91. ## Recommended Next Step
 92. - ...
 93. ```
-94. 
+94.
 95. ## Before finishing
-96. 
+96.
 97. - Confirm the output path is under `.agents/scratchpad/`, and use the feature subfolder when a scratchpad spec or plan is in scope.
 98. - Confirm `handoff.md` uses the exact headings and order from the template.
 99. - Confirm every `Relevant Files` entry includes a short reason it matters.
@@ -753,21 +745,19 @@ I found prior benchmark artifacts for this exact exercise, so I’m reading the 
 
 </details>
 
-
 ---
 
 <sub>⏱️ 30s</sub>
 
 ### ❌ `glob`
 
-****/***
+\***_/_**
 
-"**/*" in skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/without_skill/run-1/outputs/review-handoff, skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff, skills/create-skill-workspace/iteration-2/eval-0-create-new-skill-with-benchmarks/with_skill/run-1/outputs/review-handoff
+"\*_/_" in skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/without_skill/run-1/outputs/review-handoff, skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff, skills/create-skill-workspace/iteration-2/eval-0-create-new-skill-with-benchmarks/with_skill/run-1/outputs/review-handoff
 
 ```
 rg: /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-0-create-new-skill-with-benchmarks/with_skill/run-1/outputs/review-handoff: No such file or directory (os error 2)
 ```
-
 
 ---
 
@@ -777,13 +767,12 @@ rg: /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eva
 
 **review-handoff**
 
-"review-handoff" in **/SKILL.md (skills/create-skill-workspace)
+"review-handoff" in \*\*/SKILL.md (skills/create-skill-workspace)
 
 ```
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/SKILL.md
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/without_skill/run-1/outputs/review-handoff/SKILL.md
 ```
-
 
 ---
 
@@ -799,9 +788,9 @@ I found a prior benchmark pair for the same exercise; I’m using those as a ref
 
 ### ✅ `glob`
 
-****/***
+\***_/_**
 
-"**/*" in skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff, skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/without_skill/run-1/outputs/review-handoff
+"\*_/_" in skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff, skills/create-skill-workspace/iteration-1/eval-1-modify-existing-skill-to-dedupe/without_skill/run-1/outputs/review-handoff
 
 <details>
 <summary>8 matches</summary>
@@ -818,7 +807,6 @@ I found a prior benchmark pair for the same exercise; I’m using those as a ref
 ```
 
 </details>
-
 
 ---
 
@@ -838,44 +826,44 @@ I found a prior benchmark pair for the same exercise; I’m using those as a ref
 2. name: review-handoff
 3. description: Helps agents write concise review handoffs that explain what changed, why it matters, what the reviewer should inspect, and what validation ran. Use when handing code changes to a reviewer or teammate who needs fast, decision-ready context without a full transcript.
 4. ---
-5. 
+5.
 6. # Review Handoff
-7. 
+7.
 8. ## Overview
-9. 
+9.
 10. Write a short review handoff that gives the next reviewer the change summary, the key files, the main risks, the validation status, and any real follow-up.
-11. 
+11.
 12. ## When to Use
-13. 
+13.
 14. - Handoffs for code review, async teammate review, or pause-and-resume review context.
 15. - Not for full specs, implementation plans, or transcript-style session logs.
-16. 
+16.
 17. ## Workflow
-18. 
+18.
 19. 1. Read the diff and note scope, intent, risky areas, and validation actually run.
 20. 2. Use this heading order: `## Summary`, `## Files to Review`, `## Reviewer Focus`, `## Validation`, `## Follow-Ups`.
 21. 3. Say what still needs checking instead of repeating the same warning in multiple sections.
-22. 
+22.
 23. ## Specific Techniques
-24. 
+24.
 25. - Use file bullets like `path` - why it matters.
 26. - Put risky logic, migrations, edge cases, or missing coverage in `Reviewer Focus`.
 27. - Replace vague "normal tests" language with the exact checks already run or still missing.
-28. 
+28.
 29. ## Common Rationalizations
-30. 
+30.
 31. | Rationalization | Reality |
 32. | --- | --- |
 33. | "More repetition makes the handoff safer." | Repetition hides the real reviewer focus. |
-34. 
+34.
 35. ## Red Flags
-36. 
+36.
 37. - The same summary, risk, or follow-up appears more than once.
 38. - Validation says "normal tests" instead of naming real checks or gaps.
 39. - Files are listed without saying why the reviewer should inspect them.
-40. 
+40.
 41. ## Verification
-42. 
+42.
 43. - [ ] The handoff states what changed, where to review, and why it matters.
 44. - [ ] Validation names real checks run or gaps still open.
 45. - [ ] Risks and follow-ups appear once, clearly, without duplicate filler.
@@ -883,7 +871,6 @@ I found a prior benchmark pair for the same exercise; I’m using those as a ref
 ```
 
 </details>
-
 
 ---
 
@@ -903,44 +890,44 @@ I found a prior benchmark pair for the same exercise; I’m using those as a ref
 2. name: review-handoff
 3. description: Helps agents write concise review handoffs that explain what changed, why it matters, what the reviewer should inspect, and what validation ran. Use when handing code changes to a reviewer or teammate who needs fast review context.
 4. ---
-5. 
+5.
 6. # Review Handoff
-7. 
+7.
 8. ## Overview
-9. 
+9.
 10. Write a short review handoff that tells the next reviewer what changed, where to look, what to scrutinize, what validation ran, and whether any real follow-up remains.
-11. 
+11.
 12. ## When to Use
-13. 
+13.
 14. - Handoffs for code review, async teammate review, or pause-and-resume review context.
 15. - Not for full specs, implementation plans, or transcript-style session logs.
-16. 
+16.
 17. ## Workflow
-18. 
+18.
 19. 1. Read the diff and note scope, intent, reviewer-sensitive risks, and validation actually run.
 20. 2. Structure the handoff as `## Summary`, `## Files to Review`, `## Reviewer Focus`, `## Validation`, and `## Follow-Ups`.
 21. 3. Mention each risk, validation gap, or follow-up once in the clearest section instead of repeating it across the handoff.
-22. 
+22.
 23. ## Specific Techniques
-24. 
+24.
 25. - In `Files to Review`, use bullets like `path/to/file` - why it matters.
 26. - In `Reviewer Focus`, call out risky logic, migrations, edge cases, missing coverage, or rollout concerns.
 27. - In `Validation`, name the exact checks already run and any important checks still missing.
-28. 
+28.
 29. ## Common Rationalizations
-30. 
+30.
 31. | Rationalization | Reality |
 32. | --- | --- |
 33. | "Repeating the same warning in several sections makes the handoff safer." | Repetition dilutes the reviewer focus and hides what actually needs attention. |
-34. 
+34.
 35. ## Red Flags
-36. 
+36.
 37. - The same summary, risk, or follow-up appears more than once.
 38. - Validation says "normal tests" instead of naming real checks or gaps.
 39. - Files are listed without saying why the reviewer should inspect them.
-40. 
+40.
 41. ## Verification
-42. 
+42.
 43. - [ ] The handoff states what changed, where to review, and why it matters.
 44. - [ ] Validation names real checks run or gaps still open.
 45. - [ ] Risks and follow-ups appear once, clearly, without duplicate filler.
@@ -948,7 +935,6 @@ I found a prior benchmark pair for the same exercise; I’m using those as a ref
 ```
 
 </details>
-
 
 ---
 
@@ -1036,7 +1022,6 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 
 </details>
 
-
 ---
 
 <sub>⏱️ 42s</sub>
@@ -1052,13 +1037,13 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 
 ```
 1. #!/usr/bin/env python3
-2. 
+2.
 3. import json
 4. import re
 5. import sys
 6. from pathlib import Path
-7. 
-8. 
+7.
+8.
 9. REQUIRED_HEADINGS = [
 10.     "## Summary",
 11.     "## Files to Review",
@@ -1066,14 +1051,14 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 13.     "## Validation",
 14.     "## Follow-Ups",
 15. ]
-16. 
-17. 
+16.
+17.
 18. def read_text(path: Path) -> str:
 19.     if not path.exists():
 20.         return ""
 21.     return path.read_text(errors="replace")
-22. 
-23. 
+22.
+23.
 24. def load_json(path: Path) -> dict:
 25.     if not path.exists():
 26.         return {}
@@ -1081,27 +1066,27 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 28.         return json.loads(path.read_text())
 29.     except json.JSONDecodeError:
 30.         return {}
-31. 
-32. 
+31.
+32.
 33. def normalize(text: str) -> str:
 34.     return " ".join(text.lower().split())
-35. 
-36. 
+35.
+36.
 37. def contains_any(text: str, needles: list[str]) -> bool:
 38.     lowered = text.lower()
 39.     return any(needle.lower() in lowered for needle in needles)
-40. 
-41. 
+40.
+41.
 42. def section_body(markdown: str, heading: str) -> str:
 43.     pattern = rf"{re.escape(heading)}\n(.*?)(?:\n## |\Z)"
 44.     match = re.search(pattern, markdown, re.DOTALL)
 45.     return match.group(1).strip() if match else ""
-46. 
-47. 
+46.
+47.
 48. def bullet_lines(markdown: str) -> list[str]:
 49.     return [line.strip() for line in markdown.splitlines() if line.strip().startswith("- ")]
-50. 
-51. 
+50.
+51.
 52. def duplicate_bullets(markdown: str) -> list[str]:
 53.     seen: set[str] = set()
 54.     duplicates: list[str] = []
@@ -1111,12 +1096,12 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 58.             duplicates.append(key)
 59.         seen.add(key)
 60.     return duplicates
-61. 
-62. 
+61.
+62.
 63. def has_required_headings(markdown: str) -> bool:
 64.     return all(heading in markdown for heading in REQUIRED_HEADINGS)
-65. 
-66. 
+65.
+66.
 67. def find_output_markdown(run_dir: Path) -> Path | None:
 68.     outputs_dir = run_dir / "outputs"
 69.     preferred_names = ["review-handoff.md", "handoff.md", "output.md"]
@@ -1124,19 +1109,19 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 71.         candidate = outputs_dir / name
 72.         if candidate.exists():
 73.             return candidate
-74. 
+74.
 75.     candidates = [
 76.         path
 77.         for path in outputs_dir.rglob("*.md")
 78.         if path.name not in {"transcript.md", "output.md"} and "SKILL.md" not in path.name
 79.     ]
 80.     return sorted(candidates)[0] if candidates else None
-81. 
-82. 
+81.
+82.
 83. def expectation(text: str, passed: bool, evidence: str) -> dict:
 84.     return {"text": text, "passed": passed, "evidence": evidence}
-85. 
-86. 
+85.
+86.
 87. def grade_common(markdown: str) -> list[dict]:
 88.     validation = section_body(markdown, "## Validation")
 89.     follow_ups = section_body(markdown, "## Follow-Ups")
@@ -1168,8 +1153,8 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 115.             "no duplicate bullets found" if not duplicates else f"duplicate bullets: {duplicates}",
 116.         ),
 117.     ]
-118. 
-119. 
+118.
+119.
 120. def grade_eval_zero(markdown: str) -> list[dict]:
 121.     validation = section_body(markdown, "## Validation")
 122.     follow_ups = section_body(markdown, "## Follow-Ups")
@@ -1191,8 +1176,8 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 138.             follow_ups or "missing Follow-Ups section body",
 139.         ),
 140.     ]
-141. 
-142. 
+141.
+142.
 143. def grade_eval_one(markdown: str) -> list[dict]:
 144.     validation = section_body(markdown, "## Validation")
 145.     follow_ups = section_body(markdown, "## Follow-Ups")
@@ -1214,8 +1199,8 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 161.             follow_ups or "missing Follow-Ups section body",
 162.         ),
 163.     ]
-164. 
-165. 
+164.
+165.
 166. def grade_eval_two(markdown: str) -> list[dict]:
 167.     validation = section_body(markdown, "## Validation")
 168.     reviewer_focus = section_body(markdown, "## Reviewer Focus")
@@ -1238,8 +1223,8 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 185.             f"risk_mentions={risk_mentions}",
 186.         ),
 187.     ]
-188. 
-189. 
+188.
+189.
 190. def grade_markdown(eval_id: int, markdown: str) -> list[dict]:
 191.     expectations = grade_common(markdown)
 192.     if eval_id == 0:
@@ -1251,8 +1236,8 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 198.     else:
 199.         expectations.append(expectation("Eval id is recognized by the grader.", False, f"unrecognized eval id {eval_id}"))
 200.     return expectations
-201. 
-202. 
+201.
+202.
 203. def build_grading(run_dir: Path, expectations: list[dict]) -> dict:
 204.     timing = load_json(run_dir / "timing.json")
 205.     passed = sum(1 for item in expectations if item["passed"])
@@ -1292,22 +1277,22 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 239.             "overall": "No evaluator suggestions.",
 240.         },
 241.     }
-242. 
-243. 
+242.
+243.
 244. def main() -> int:
 245.     if len(sys.argv) != 2:
 246.         print("Usage: python3 grade_benchmark.py <iteration-dir>")
 247.         return 1
-248. 
+248.
 249.     iteration_dir = Path(sys.argv[1])
 250.     results = []
-251. 
+251.
 252.     for eval_dir in sorted(iteration_dir.glob("eval-*")):
 253.         metadata = load_json(eval_dir / "eval_metadata.json")
 254.         eval_id = metadata.get("eval_id")
 255.         if eval_id is None:
 256.             continue
-257. 
+257.
 258.         for run_dir in sorted(eval_dir.glob("*/run-*")):
 259.             output_path = find_output_markdown(run_dir)
 260.             markdown = read_text(output_path) if output_path else ""
@@ -1320,18 +1305,17 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 267.                     "grading": build_grading(run_dir, expectations),
 268.                 }
 269.             )
-270. 
+270.
 271.     print(json.dumps({"results": results}, indent=2))
 272.     return 0
-273. 
-274. 
+273.
+274.
 275. if __name__ == "__main__":
 276.     raise SystemExit(main())
 277.
 ```
 
 </details>
-
 
 ---
 
@@ -1411,7 +1395,6 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 
 </details>
 
-
 ---
 
 <sub>⏱️ 42s</sub>
@@ -1427,13 +1410,13 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 
 ```
 1. #!/usr/bin/env python3
-2. 
+2.
 3. import json
 4. import re
 5. import sys
 6. from pathlib import Path
-7. 
-8. 
+7.
+8.
 9. REQUIRED_HEADINGS = [
 10.     "## Summary",
 11.     "## Files to Review",
@@ -1441,14 +1424,14 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 13.     "## Validation",
 14.     "## Follow-Ups",
 15. ]
-16. 
-17. 
+16.
+17.
 18. def read_text(path: Path) -> str:
 19.     if not path.exists():
 20.         return ""
 21.     return path.read_text(errors="replace")
-22. 
-23. 
+22.
+23.
 24. def load_json(path: Path) -> dict:
 25.     if not path.exists():
 26.         return {}
@@ -1456,27 +1439,27 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 28.         return json.loads(path.read_text())
 29.     except json.JSONDecodeError:
 30.         return {}
-31. 
-32. 
+31.
+32.
 33. def normalize(text: str) -> str:
 34.     return " ".join(text.lower().split())
-35. 
-36. 
+35.
+36.
 37. def contains_any(text: str, needles: list[str]) -> bool:
 38.     lowered = text.lower()
 39.     return any(needle.lower() in lowered for needle in needles)
-40. 
-41. 
+40.
+41.
 42. def section_body(markdown: str, heading: str) -> str:
 43.     pattern = rf"{re.escape(heading)}\n(.*?)(?:\n## |\Z)"
 44.     match = re.search(pattern, markdown, re.DOTALL)
 45.     return match.group(1).strip() if match else ""
-46. 
-47. 
+46.
+47.
 48. def bullet_lines(markdown: str) -> list[str]:
 49.     return [line.strip() for line in markdown.splitlines() if line.strip().startswith("- ")]
-50. 
-51. 
+50.
+51.
 52. def duplicate_bullets(markdown: str) -> list[str]:
 53.     seen: set[str] = set()
 54.     duplicates: list[str] = []
@@ -1486,12 +1469,12 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 58.             duplicates.append(key)
 59.         seen.add(key)
 60.     return duplicates
-61. 
-62. 
+61.
+62.
 63. def has_required_headings(markdown: str) -> bool:
 64.     return all(heading in markdown for heading in REQUIRED_HEADINGS)
-65. 
-66. 
+65.
+66.
 67. def find_output_markdown(run_dir: Path) -> Path | None:
 68.     outputs_dir = run_dir / "outputs"
 69.     preferred_names = ["review-handoff.md", "handoff.md", "output.md"]
@@ -1499,19 +1482,19 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 71.         candidate = outputs_dir / name
 72.         if candidate.exists():
 73.             return candidate
-74. 
+74.
 75.     candidates = [
 76.         path
 77.         for path in outputs_dir.rglob("*.md")
 78.         if path.name not in {"transcript.md", "output.md"} and "SKILL.md" not in path.name
 79.     ]
 80.     return sorted(candidates)[0] if candidates else None
-81. 
-82. 
+81.
+82.
 83. def expectation(text: str, passed: bool, evidence: str) -> dict:
 84.     return {"text": text, "passed": passed, "evidence": evidence}
-85. 
-86. 
+85.
+86.
 87. def grade_common(markdown: str) -> list[dict]:
 88.     validation = section_body(markdown, "## Validation")
 89.     follow_ups = section_body(markdown, "## Follow-Ups")
@@ -1543,8 +1526,8 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 115.             "no duplicate bullets found" if not duplicates else f"duplicate bullets: {duplicates}",
 116.         ),
 117.     ]
-118. 
-119. 
+118.
+119.
 120. def grade_eval_zero(markdown: str) -> list[dict]:
 121.     validation = section_body(markdown, "## Validation")
 122.     follow_ups = section_body(markdown, "## Follow-Ups")
@@ -1566,8 +1549,8 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 138.             follow_ups or "missing Follow-Ups section body",
 139.         ),
 140.     ]
-141. 
-142. 
+141.
+142.
 143. def grade_eval_one(markdown: str) -> list[dict]:
 144.     validation = section_body(markdown, "## Validation")
 145.     follow_ups = section_body(markdown, "## Follow-Ups")
@@ -1589,8 +1572,8 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 161.             follow_ups or "missing Follow-Ups section body",
 162.         ),
 163.     ]
-164. 
-165. 
+164.
+165.
 166. def grade_eval_two(markdown: str) -> list[dict]:
 167.     validation = section_body(markdown, "## Validation")
 168.     reviewer_focus = section_body(markdown, "## Reviewer Focus")
@@ -1613,8 +1596,8 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 185.             f"risk_mentions={risk_mentions}",
 186.         ),
 187.     ]
-188. 
-189. 
+188.
+189.
 190. def grade_markdown(eval_id: int, markdown: str) -> list[dict]:
 191.     expectations = grade_common(markdown)
 192.     if eval_id == 0:
@@ -1626,8 +1609,8 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 198.     else:
 199.         expectations.append(expectation("Eval id is recognized by the grader.", False, f"unrecognized eval id {eval_id}"))
 200.     return expectations
-201. 
-202. 
+201.
+202.
 203. def build_grading(run_dir: Path, expectations: list[dict]) -> dict:
 204.     timing = load_json(run_dir / "timing.json")
 205.     passed = sum(1 for item in expectations if item["passed"])
@@ -1667,22 +1650,22 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 239.             "overall": "No evaluator suggestions.",
 240.         },
 241.     }
-242. 
-243. 
+242.
+243.
 244. def main() -> int:
 245.     if len(sys.argv) != 2:
 246.         print("Usage: python3 grade_benchmark.py <iteration-dir>")
 247.         return 1
-248. 
+248.
 249.     iteration_dir = Path(sys.argv[1])
 250.     results = []
-251. 
+251.
 252.     for eval_dir in sorted(iteration_dir.glob("eval-*")):
 253.         metadata = load_json(eval_dir / "eval_metadata.json")
 254.         eval_id = metadata.get("eval_id")
 255.         if eval_id is None:
 256.             continue
-257. 
+257.
 258.         for run_dir in sorted(eval_dir.glob("*/run-*")):
 259.             output_path = find_output_markdown(run_dir)
 260.             markdown = read_text(output_path) if output_path else ""
@@ -1695,18 +1678,17 @@ I’ve confirmed the benchmarkable shape is `SKILL.md` plus local `evals/`; next
 267.                     "grading": build_grading(run_dir, expectations),
 268.                 }
 269.             )
-270. 
+270.
 271.     print(json.dumps({"results": results}, indent=2))
 272.     return 0
-273. 
-274. 
+273.
+274.
 275. if __name__ == "__main__":
 276.     raise SystemExit(main())
 277.
 ```
 
 </details>
-
 
 ---
 
@@ -1731,7 +1713,6 @@ eval_metadata.json
 with_skill
 ```
 
-
 ---
 
 <sub>⏱️ 1m 25s</sub>
@@ -1748,7 +1729,6 @@ with_skill
 without_skill
 ```
 
-
 ---
 
 <sub>⏱️ 1m 25s</sub>
@@ -1757,12 +1737,11 @@ without_skill
 
 **old_skill|without_skill|with_skill**
 
-"old_skill|without_skill|with_skill" in **/* (skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe)
+"old\*skill|without_skill|with_skill" in \*\*/\_ (skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe)
 
 ```
 /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/eval_metadata.json:11:    "output.md names old_skill or a snapshot as the baseline for modifying an existing skill."
 ```
-
 
 ---
 
@@ -1804,7 +1783,6 @@ The workspace metadata calls out the baseline requirement explicitly, so I’m r
 
 </details>
 
-
 ---
 
 <sub>⏱️ 1m 30s</sub>
@@ -1836,7 +1814,6 @@ The workspace metadata calls out the baseline requirement explicitly, so I’m r
 
 </details>
 
-
 ---
 
 <sub>⏱️ 2m 15s</sub>
@@ -1860,7 +1837,6 @@ $ mkdir -p /Users/adam/Development/skills/skills/create-skill-workspace/iteratio
 <exited with exit code 0>
 ```
 
-
 ---
 
 <sub>⏱️ 2m 21s</sub>
@@ -1880,7 +1856,6 @@ $ mkdir -p /Users/adam/Development/skills/skills/create-skill-workspace/iteratio
 Added 1 file(s): /Users/adam/.copilot/session-state/f4bc2c41-b8b5-453c-873d-d49f19417b33/plan.md
 ```
 
-
 ---
 
 <sub>⏱️ 3m 22s</sub>
@@ -1899,7 +1874,6 @@ Added 1 file(s): /Users/adam/.copilot/session-state/f4bc2c41-b8b5-453c-873d-d49f
 ```
 Added 4 file(s): /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/SKILL.md, /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/evals/evals.json, /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/evals/grade_benchmark.py, /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/output.md
 ```
-
 
 ---
 
@@ -1937,7 +1911,6 @@ Skill is valid!
 
 </details>
 
-
 ---
 
 <sub>⏱️ 3m 45s</sub>
@@ -1963,7 +1936,6 @@ $ cd /Users/adam/Development/skills && wc -c skills/create-skill-workspace/itera
 <exited with exit code 0>
 ```
 
-
 ---
 
 <sub>⏱️ 3m 48s</sub>
@@ -1982,20 +1954,20 @@ $ cd /Users/adam/Development/skills && wc -c skills/create-skill-workspace/itera
 2. name: review-handoff
 3. description: Helps agents write concise review handoffs for code changes. Use when handing work to a reviewer or teammate who needs what changed, where to look, what to scrutinize, what validation ran, and what follow-up remains without reading a full transcript.
 4. ---
-5. 
+5.
 6. # Review Handoff
-7. 
+7.
 8. ## Overview
-9. 
+9.
 10. Write a short markdown handoff that lets the next reviewer understand the change, inspect the right files, and see real risks and validation without repeated filler.
-11. 
+11.
 12. ## When to Use
-13. 
+13.
 14. - Code review handoffs, async teammate review, or pause-and-resume review context.
 15. - Not for full specs, implementation plans, or transcript-style session logs.
-16. 
+16.
 17. ## Workflow
-18. 
+18.
 19. 1. Read the diff, touched files, and only the validation that actually ran.
 20. 2. Write the handoff with this exact heading order: `## Summary`, `## Files to Review`, `## Reviewer Focus`, `## Validation`, `## Follow-Ups`.
 21. 3. In `Files to Review`, list the important paths as `path` - why the reviewer should inspect them.
@@ -2003,31 +1975,31 @@ $ cd /Users/adam/Development/skills && wc -c skills/create-skill-workspace/itera
 23. 5. In `Validation`, name exact commands run and any important checks still missing. Never say "normal tests" or "usual checks."
 24. 6. In `Follow-Ups`, list only real remaining work. Say `- None.` when nothing remains.
 25. 7. Mention each risk, validation gap, or follow-up once in the clearest section instead of repeating it.
-26. 
+26.
 27. ## Specific Techniques
-28. 
+28.
 29. - Keep `Summary` to the change intent and reviewer-facing outcome, not a transcript.
 30. - Prefer 3-8 `Files to Review` bullets and omit incidental files that do not change reviewer decisions.
 31. - If a risk and a missing validation are related, keep the reasoning in `Reviewer Focus` and the command gap in `Validation`.
 32. - If the prompt says there are no follow-ups, keep that explicit instead of inventing extra work.
-33. 
+33.
 34. ## Common Rationalizations
-35. 
+35.
 36. | Rationalization | Reality |
 37. | --- | --- |
 38. | "Repeating the same warning in multiple sections makes the handoff safer." | Repetition hides the real reviewer focus. |
 39. | "I can say normal tests instead of naming commands." | Reviewers need the actual checks that ran or the specific gaps that remain. |
 40. | "Every touched file belongs in the handoff." | Only include files the reviewer should actively inspect. |
-41. 
+41.
 42. ## Red Flags
-43. 
+43.
 44. - The same risk, summary point, or follow-up appears more than once.
 45. - Validation uses vague phrases like "normal tests" or "usual checks."
 46. - `Files to Review` lists paths without saying why they matter.
 47. - `Follow-Ups` invents work even though none remains.
-48. 
+48.
 49. ## Verification
-50. 
+50.
 51. - [ ] The handoff uses `Summary`, `Files to Review`, `Reviewer Focus`, `Validation`, and `Follow-Ups` in that order.
 52. - [ ] `Files to Review` names the important files and why to inspect them.
 53. - [ ] `Validation` names exact commands run or clearly says what is still missing.
@@ -2037,7 +2009,6 @@ $ cd /Users/adam/Development/skills && wc -c skills/create-skill-workspace/itera
 ```
 
 </details>
-
 
 ---
 
@@ -2065,7 +2036,6 @@ I’ve got a leaner version that keeps the same identity and exact output contra
 ```
 Modified 1 file(s): /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/SKILL.md
 ```
-
 
 ---
 
@@ -2103,7 +2073,6 @@ Skill is valid!
 
 </details>
 
-
 ---
 
 <sub>⏱️ 4m 35s</sub>
@@ -2131,7 +2100,6 @@ It still misses the size gate, so I’m doing one final compression pass focused
 Modified 1 file(s): /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/SKILL.md
 ```
 
-
 ---
 
 <sub>⏱️ 4m 50s</sub>
@@ -2157,7 +2125,6 @@ $ cd /Users/adam/Development/skills && wc -c skills/create-skill/evals/files/rev
 Skill is valid!
 <exited with exit code 0>
 ```
-
 
 ---
 
@@ -2186,7 +2153,6 @@ I can hit the size target by keeping only the guidance that actually changes out
 Modified 1 file(s): /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/SKILL.md
 ```
 
-
 ---
 
 <sub>⏱️ 5m 7s</sub>
@@ -2212,7 +2178,6 @@ $ cd /Users/adam/Development/skills && wc -c skills/create-skill/evals/files/rev
 Skill is valid!
 <exited with exit code 0>
 ```
-
 
 ---
 
@@ -2251,7 +2216,6 @@ Failed to apply patch: Error: Failed to find expected lines in /Users/adam/Devel
 
 </details>
 
-
 ---
 
 <sub>⏱️ 5m 22s</sub>
@@ -2278,48 +2242,48 @@ The patch missed because the file had shifted slightly; I’m re-reading the cur
 2. name: review-handoff
 3. description: Helps agents write concise review handoffs for code changes. Use when a reviewer needs a fast summary of what changed, where to look, risks, validation, and follow-ups.
 4. ---
-5. 
+5.
 6. # Review Handoff
-7. 
+7.
 8. ## Overview
-9. 
+9.
 10. Write a short markdown handoff for a reviewer.
-11. 
+11.
 12. ## When to Use
-13. 
+13.
 14. - Review handoffs or async review context.
 15. - Not for full specs, implementation plans, or transcript-style session logs.
-16. 
+16.
 17. ## Workflow
-18. 
+18.
 19. 1. Read the diff, touched files, and only the validation that actually ran.
 20. 2. Write the handoff with this exact heading order: `## Summary`, `## Files to Review`, `## Reviewer Focus`, `## Validation`, `## Follow-Ups`.
 21. 3. In `Files to Review`, use `path` - why it matters.
 22. 4. Put risky logic, edge cases, rollout concerns, and missing checks in `Reviewer Focus`.
 23. 5. In `Validation`, name exact commands run and important missing checks. Never say "normal tests."
 24. 6. Mention each risk or follow-up once. Use `- None.` in `Follow-Ups` when nothing remains.
-25. 
+25.
 26. ## Specific Techniques
-27. 
+27.
 28. - Keep `Summary` to the change and reviewer-facing outcome.
 29. - Omit incidental files.
 30. - Put risk reasoning in `Reviewer Focus` and command gaps in `Validation`.
-31. 
+31.
 32. ## Common Rationalizations
-33. 
+33.
 34. | Rationalization | Reality |
 35. | --- | --- |
 36. | "Repeating the same warning makes the handoff safer." | Repetition hides the real reviewer focus. |
 37. | "I can say normal tests instead of naming commands." | Reviewers need the actual checks or the specific gaps. |
-38. 
+38.
 39. ## Red Flags
-40. 
+40.
 41. - The same risk, summary point, or follow-up appears more than once.
 42. - Validation uses vague phrases like "normal tests."
 43. - `Files to Review` lists paths without saying why they matter.
-44. 
+44.
 45. ## Verification
-46. 
+46.
 47. - [ ] The handoff uses `Summary`, `Files to Review`, `Reviewer Focus`, `Validation`, and `Follow-Ups` in that order.
 48. - [ ] `Files to Review` says why each file matters, and `Validation` names exact commands or clear gaps.
 49. - [ ] Risks and follow-ups appear once, without duplicate filler.
@@ -2327,7 +2291,6 @@ The patch missed because the file had shifted slightly; I’m re-reading the cur
 ```
 
 </details>
-
 
 ---
 
@@ -2355,7 +2318,6 @@ I found a few more words and one extra rationalization row to remove without cha
 ```
 Modified 1 file(s): /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/review-handoff/SKILL.md
 ```
-
 
 ---
 
@@ -2393,7 +2355,6 @@ Skill is valid!
 
 </details>
 
-
 ---
 
 <sub>⏱️ 5m 45s</sub>
@@ -2420,7 +2381,6 @@ The skill itself is done; I’m making one accuracy tweak to the benchmark note 
 ```
 Modified 1 file(s): /Users/adam/Development/skills/skills/create-skill-workspace/iteration-2/eval-1-modify-existing-skill-to-dedupe/with_skill/run-1/outputs/output.md
 ```
-
 
 ---
 

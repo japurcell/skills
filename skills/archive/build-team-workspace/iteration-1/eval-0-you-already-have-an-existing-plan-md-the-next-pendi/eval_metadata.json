@@ -2,10 +2,10 @@
   "eval_id": 0,
   "eval_name": "eval-0-you-already-have-an-existing-plan-md-the-next-pendi",
   "prompt": "You already have an existing `plan.md`. The next pending task is T014: add pagination to `GET /api/issues`, and it is the final pending implementation task. Show the build workflow you will follow, including how you pick the implementer, what you wait for, how you update `plan.md`, and what happens after implementation tasks are complete.",
-  "expected_output": "Explains the orchestrator flow: reads `plan.md`, selects the next pending task, uses `subagent-model-selection`, dispatches a fresh implementer with `implementer-prompt.md`, waits for `DONE`, updates and re-reads `plan.md`, builds the post-implementation review scope, adds simplification and review tasks, and leaves the work uncommitted.",
+  "expected_output": "Explains the orchestrator flow: reads `plan.md`, selects the next pending task, uses `subagent-model-router`, dispatches a fresh implementer with `implementer-prompt.md`, waits for `DONE`, updates and re-reads `plan.md`, builds the post-implementation review scope, adds simplification and review tasks, and leaves the work uncommitted.",
   "assertions": [
     "Mentions selecting the next pending task from `plan.md`",
-    "Mentions invoking `subagent-model-selection`",
+    "Mentions invoking `subagent-model-router`",
     "Mentions dispatching a fresh implementer subagent with `implementer-prompt.md`",
     "Mentions updating and re-reading `plan.md` only after `DONE`",
     "Mentions building the post-implementation review scope from touched and uncommitted files",

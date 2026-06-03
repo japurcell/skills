@@ -130,8 +130,8 @@ def grade(eval_id: int, response_text: str) -> list[dict]:
                 response_text or "missing response",
             ),
             expectation(
-                "Invokes `subagent-model-selection`.",
-                contains_any(text, ["subagent-model-selection", "model selection"]),
+                "Invokes `subagent-model-router`.",
+                contains_any(text, ["subagent-model-router", "model selection"]),
                 response_text or "missing response",
             ),
             expectation(
