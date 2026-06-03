@@ -17,38 +17,39 @@ Create a clear, implementation-ready PRD. Do not implement the feature or includ
 
 ## Workflow
 
-1. Understand `$ARGUMENTS`.
+1. Invoke the `subagent-model-router` skill.
+2. Understand `$ARGUMENTS`.
    - If needed, ask:
      - What problem does this solve?
      - What should it do?
      - Any constraints or preferences?
-2. Resolve `[feature-name]`.
+3. Resolve `[feature-name]`.
    - Create a short kebab-case name from the request.
    - Target path: `.agents/scratchpad/[feature-name]/prd.md`
    - If the path exists, try `[feature-name]-2`, then `-3`, and so on until unused.
-3. Discovery
+4. Discovery
    - Gather relevant codebase context: similar features, architecture, APIs/contracts, data models, UI patterns, tests, config/flags, permissions, observability, and extension points.
    - Use parallel subagents:
      - `code-explorer`: 1-3 agents, one per independent area
      - research via `official-sources` in parallel: latest official docs and best practices for all materially relevant technologies/standards
    - Read the most relevant references and summarize patterns, constraints, risks, and open questions.
-4. Clarify
+5. Clarify
    - Ask focused questions based on the request and discovery.
    - Cover relevant gaps such as scope boundaries, edge cases, failure modes, integrations, backward compatibility, migration/rollout, security/privacy, and performance.
    - If answers materially change scope or assumptions, repeat **Discovery**.
    - Wait for answers before designing.
-5. Architecture design
+6. Architecture design
    - Launch parallel `code-architect` subagents to produce 1-3 meaningfully different approaches, such as:
      - Minimal changes
      - Clean architecture
      - Pragmatic balance
    - For each approach, include: high-level design, impacted components, data/control flow, testing strategy, rollout/migration considerations, risks, trade-offs, and citations.
-6. Recommend
+7. Recommend
    - Present concise summaries of the approaches, key trade-offs, and your recommendation with reasoning.
    - Ask the user to choose an approach before writing the PRD.
-7. Write the PRD.
-8. Save it to `.agents/scratchpad/[feature-name]/prd.md`.
-9. Final response must include:
+8. Write the PRD.
+9. Save it to `.agents/scratchpad/[feature-name]/prd.md`.
+10. Final response must include:
    - feature short name
    - PRD path
    - validation status: pass/fail
