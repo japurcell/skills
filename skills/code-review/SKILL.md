@@ -16,6 +16,9 @@ Review only the requested change scope and anchor every conclusion to that chang
 ## Scope
 Review for correctness, readability, architecture, security, performance, standards adherence, spec adherence if a spec exists, and maintainability. Report only issues introduced by, exposed by, or clearly reachable through the reviewed change.
 
+## Non-substitution rule
+If this skill requires a dedicated agent, run that dedicated agent. Do not merge, combine, substitute, skip, or manually emulate required agents. Manual checking is not a substitute for the Spec agent, History agent, Related-PR agent, or Code-comment agent.
+
 ## Process
 1. Invoke `subagent-model-router` and `addy-code-review-and-quality`.
 2. Make a todo list.
@@ -26,26 +29,40 @@ Review for correctness, readability, architecture, security, performance, standa
    - For fixed-point reviews, capture:
      - `git diff <fixed-point>...HEAD`
      - `git log <fixed-point>..HEAD --oneline`
-4. For PRs, use a fast tier subagent to stop early if the PR is closed, draft, does not need review, or already has a review from you.
+4. For PRs, use a fast-tier subagent to stop early if the PR is closed, draft, does not need review, or already has a review from you.
 5. Gather context:
    - Use `gh` for GitHub interactions, not web fetch.
-   - For PRs, use a fast tier subagent to summarize the PR.
+   - For PRs, use a fast-tier subagent to summarize the PR.
    - Read only relevant standards/context files: root or touched-path `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `CONTRIBUTING.md`, `CONTEXT.md`, `CONTEXT-MAP.md`, `STYLE.md`, `STANDARDS.md`, `STYLEGUIDE.md`, `docs/adr/*`, `.editorconfig`, `eslint.config.*`, `biome.json`, `prettier.config.*`, `tsconfig.json`.
 6. Identify the spec source in this order:
    1. issue references in commit messages or PR metadata
    2. a user-supplied path
    3. a matching spec / PRD under `docs/`, `specs/`, `.scratch/`, or `.agents/scratchpad/**`
-   4. if none is found, ask where the spec is; if there is no spec, skip spec review and report `no spec available`
-7. Run review agents in parallel.
-   - For PRs, also run:
+   4. if none is found, ask where the spec is; if there is no spec, record `no spec available` and skip the Spec agent
+7. Preflight required agents. Complete before synthesis.
+   - Always required:
+     - [ ] `addy-code-reviewer`
+     - [ ] `addy-security-auditor`
+     - [ ] `addy-test-engineer`
+     - [ ] Maintainability agent
+     - [ ] Standards agent
+   - Required only if a spec exists:
+     - [ ] Spec agent
+   - Required only for PR reviews:
+     - [ ] History agent
+     - [ ] Related-PR agent
+     - [ ] Code-comment agent
+   - Hard stop: if any required box is unchecked, do not continue to synthesis, output, or commenting.
+8. Run agents in parallel.
+   - For PRs, run these dedicated agents:
      1. History agent: use git blame and history of modified code to identify historically supported issues.
      2. Related-PR agent: read prior PRs touching the same files for comments that still apply.
      3. Code-comment agent: check whether the change violates guidance in comments within modified files.
-   - For all reviews, run:
+   - For all reviews, run these dedicated agents:
      1. `addy-code-reviewer`: correctness, readability, architecture, security, performance.
      2. `addy-security-auditor`: OWASP Top 10, secrets, auth/authz, threat model, dependency CVEs.
      3. `addy-test-engineer`: test gaps in happy path, edge cases, error paths, concurrency.
-     4. Spec agent: if a spec exists, report missing or partial requirements, scope creep, or incorrect implementation.
+     4. Spec agent: run only if a spec exists; report missing or partial requirements, scope creep, or incorrect implementation.
      5. Maintainability agent: do a strict maintainability review. Prefer deleting complexity over rearranging it; direct, boring code over hacky or magical code. Aggressively flag:
         - a file growing from under 1000 lines to over 1000 without strong justification
         - new ad-hoc conditionals, spaghetti growth, one-off booleans, nullable modes, or flags that complicate control flow
@@ -56,8 +73,8 @@ Review for correctness, readability, architecture, security, performance, standa
         - sequential orchestration or non-atomic updates when a cleaner structure is obvious
         Treat unjustified file-size explosions, spaghetti growth, unnecessary abstraction layers, wrong-layer logic, and obvious duplication of canonical helpers as presumptive blockers unless clearly justified. Prefer a small number of high-conviction structural findings over cosmetic notes.
      6. Standards agent: report only documented standards violations; cite file and rule; skip anything tooling enforces.
-8. Filter false positives:
-   - For each issue, launch a parallel fast tier subagent to score whether it is real or a false positive using the issue, reviewed change, and relevant standards files.
+9. Filter false positives:
+   - For each issue, launch a parallel fast-tier subagent to score whether it is real or a false positive using the issue, reviewed change, and relevant standards files.
    - Use this rubric verbatim:
      - 0: Not confident at all. This is a false positive that doesn't stand up to light scrutiny, or is a pre-existing issue.
      - 25: Somewhat confident. This might be a real issue, but may also be a false positive. The agent wasn't able to verify that it's a real issue. If the issue is stylistic, it is one that was not explicitly called out in the relevant standards file.
@@ -66,7 +83,7 @@ Review for correctness, readability, architecture, security, performance, standa
      - 100: Absolutely certain. The agent confirmed it is definitely real and will happen frequently in practice; the evidence directly confirms this.
    - For standards findings, confirm the standards file explicitly supports the finding.
    - Filter out issues with score below 80.
-9. Exclusions:
+10. Exclusions:
    - Do not report pre-existing issues, speculative bugs that do not survive light scrutiny, pedantic nitpicks, issues tooling should catch, generic requests for more tests or docs or generic security concerns unless explicitly required by a standards file or clearly broken in the change, likely intentional functional changes tied to the broader change, or issues on unchanged lines unless the change clearly exposes or activates them.
    - Do not run builds, typechecks, linters, or benchmarks unless the user explicitly asks.
 
@@ -134,6 +151,9 @@ Be direct, serious, and brief. Do not be rude. Do not soften major maintainabili
 
 ## Final checks
 Before returning or commenting, verify:
+- every required dedicated agent for this review type was run
+- no required agent was merged, combined, substituted, skipped, or manually emulated
+- the preflight required-agents checklist is fully satisfied
 - every finding is tied to the reviewed change
 - every finding has a concrete file reference
 - every standards-based finding is explicitly supported by a standards file
