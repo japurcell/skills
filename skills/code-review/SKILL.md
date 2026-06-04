@@ -1,6 +1,7 @@
 ---
 name: code-review
 description: Review a pull request, branch, recent commits, staged or unstaged changes, or AI-generated code for correctness, readability, architecture, security, performance, standards, spec adherence, and maintainability. Use when reviewing a PR before merge, reviewing changes since a fixed point, reviewing work-in-progress changes, reviewing another agent's code, asking to "review since X", requesting a thermo-nuclear / thermonuclear / deep code quality / especially harsh maintainability review, or when machine-readable output is needed.
+disable-model-invocation: true
 ---
 # Code Review
 Review only the requested change scope and anchor every conclusion to that change. Be ambitious about structural simplification: prefer "code judo" moves that preserve behavior while making code simpler, smaller, more direct, and more maintainable.
