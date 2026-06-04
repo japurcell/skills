@@ -86,15 +86,15 @@ If this skill requires a dedicated agent, run that dedicated agent. Do not merge
 10. Filter false positives:
    - For each issue, launch a parallel fast-tier subagent to score whether it is real or a false positive using the issue, reviewed change, and relevant standards files.
    - Use this rubric verbatim:
-     - 0: Not confident at all. This is a false positive that doesn't stand up to light scrutiny, or is a pre-existing issue.
+     - 0: Not confident at all. This is a false positive that doesn't stand up to light scrutiny.
      - 25: Somewhat confident. This might be a real issue, but may also be a false positive. The agent wasn't able to verify that it's a real issue. If the issue is stylistic, it is one that was not explicitly called out in the relevant standards file.
      - 50: Moderately confident. The agent verified this is real, but it may be minor or uncommon.
      - 75: Highly confident. The agent verified it is very likely real and important, will be hit in practice, or is directly mentioned in the relevant standards file.
      - 100: Absolutely certain. The agent confirmed it is definitely real and will happen frequently in practice; the evidence directly confirms this.
    - For standards findings, confirm the standards file explicitly supports the finding.
-   - Filter out issues with score below 80.
+   - Filter out issues with score below 70.
 11. Exclusions:
-   - Do not report pre-existing issues, speculative bugs that do not survive light scrutiny, pedantic nitpicks, issues tooling should catch, generic requests for more tests or docs or generic security concerns unless explicitly required by a standards file or clearly broken in the change, likely intentional functional changes tied to the broader change, or issues on unchanged lines unless the change clearly exposes or activates them.
+   - Do not report speculative bugs that do not survive light scrutiny, pedantic nitpicks, issues tooling should catch, generic requests for more tests or docs or generic security concerns unless explicitly required by a standards file or clearly broken in the change, likely intentional functional changes tied to the broader change, or issues on unchanged lines unless the change clearly exposes or activates them.
    - Do not run builds, typechecks, linters, or benchmarks unless the user explicitly asks.
 
 ## Primary review questions
