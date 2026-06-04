@@ -1,6 +1,7 @@
 # Implement User Story: [title]
 
 ## Context
+
 [All user story properties]
 
 - `designGuidance`: [optional list of items with `description`, `rationale`, `source`]
@@ -10,6 +11,7 @@
 - `review_findings`: [only for `review_fix`]
 
 ## Workflow
+
 1. Load the `tdd` skill if not loaded.
 2. Read only what is needed:
    - Start with `filesLikelyTouched` if provided.
@@ -30,15 +32,19 @@
 8. Leave the working tree dirty and report back.
 
 ## Quality Requirements
+
 - Keep changes minimal and focused.
 - Follow existing code patterns.
 - Follow all provided `designGuidance`.
-- `progress_file` is read-only.
+- `progress_file` is read-only. Do not modify it.
+- Include a short `Progress block` in your report for the orchestrator to append.
 
 ## Guardrails
+
 - Do not create, amend, rewrite, push, or otherwise publish any commit, PR, or tag.
 
 ## Report Format
+
 - **Status:** DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
 - What you implemented
 - Files changed
@@ -47,9 +53,19 @@
   - Patterns discovered
   - Gotchas encountered
   - Useful context
+- **Progress block:**
+  - Role: implementer
+  - Summary
+  - Files changed/reviewed
+  - Verification or outcome
+  - **Learnings for future iterations:**
+    - Patterns discovered
+    - Gotchas encountered
+    - Useful context
 - Any issues or concerns
 
 ## Status Definitions
+
 - **DONE:** task completed and required checks passed
 - **DONE_WITH_CONCERNS:** completed, but correctness or completeness is uncertain
 - **BLOCKED:** cannot complete due to external dependency or issue
