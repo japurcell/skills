@@ -28,3 +28,7 @@ Immediately load the `cli-compression`, `context-engineering`, `karpathy-guideli
 - Always: Run tests before commits, validate user input
 - Ask first: Database schema changes, new dependencies
 - Never: Commit secrets, remove failing tests, skip verification
+
+## Learnings
+
+- RTK preToolUse hooks may be blocked because cli commands were not prefixed by `rtk` as required by the `cli-compression` skill.
