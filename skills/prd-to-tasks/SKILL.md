@@ -2,21 +2,21 @@
 name: prd-to-tasks
 description: Convert a PRD into `prd.json` for the autonomous agent system. Use for requests like - convert this PRD, turn this into JSON, create prd.json from this.
 ---
-
 # PRD to `prd.json`
-
 Convert a PRD (file path or raw markdown/text) into `prd.json`.
 
 ## Inputs
 - `prd_file` (required): PRD file path or raw text.
 - `output_directory` (optional): Directory for `prd.json`.
-  - If `prd_file` is a file path and `output_directory` is omitted, save next to the source file.
-  - Otherwise save to `.agents/scratchpad`.
+  - If provided, save to `output_directory/prd.json`.
+  - Else if `prd_file` is a file path, save next to it.
+  - Else save to `.agents/scratchpad/prd.json`.
 
-## Task
+## Workflow
 1. Read `prd_file`.
-2. Produce `prd.json`.
-3. In the final response, report:
+2. Create `prd.json`.
+3. Save it.
+4. In the final response, report:
    - total story count
    - output file path
    - readiness for `/prd-build-loop`
@@ -51,10 +51,8 @@ Convert a PRD (file path or raw markdown/text) into `prd.json`.
 
 ## Rules
 
-### 1) Create implementation-sized stories
-Create one story per unit of work that one agent can complete in one iteration without relying on prior unfinished work.
-
-Split items that are too large.
+### 1) Make stories implementation-sized
+Create one story per unit of work that one agent can finish in one iteration without depending on unfinished prior work. Split anything too large.
 
 Good:
 - Add a database column and migration
@@ -67,10 +65,10 @@ Too large:
 - Add authentication
 - Refactor the API
 
-Rule of thumb: if a change cannot be described in 2–3 sentences, split it.
+Rule of thumb: if a change cannot be described in 2-3 sentences, split it.
 
 ### 2) Order by dependency
-Stories run in ascending `priority`. Earlier stories must not depend on later ones.
+Stories run in ascending `priority`. No story may depend on a later story.
 
 Use this order when relevant:
 1. Schema/database changes
@@ -80,8 +78,8 @@ Use this order when relevant:
 
 Set priority by dependency first, then PRD source order.
 
-### 3) Write verifiable acceptance criteria
-Acceptance criteria must be concrete and testable.
+### 3) Make acceptance criteria testable
+Acceptance criteria must be concrete and verifiable.
 
 Good:
 - Add `status` column to tasks table with default `pending`
@@ -107,10 +105,10 @@ UI stories are not complete until visually verified.
 ### 4) Field rules
 - Use sequential IDs: `US-001`, `US-002`, etc.
 - Derive `branchName` from the feature name in kebab-case.
-- Set every story to `"passes": false` and `"notes": ""`.
 - Keep `description` short and based on the PRD title or intro.
-- Include `filesLikelyTouched` with likely paths when inferable.
-- Include `designGuidance` only when useful; otherwise use an empty array.
+- Set every story to `"passes": false` and `"notes": ""`.
+- Include `filesLikelyTouched` when inferable. Exclude files matched by repository `.gitignore`.
+- Use `designGuidance` only when useful; otherwise set it to `[]`.
 
 ## Splitting example
 Original:
@@ -128,11 +126,9 @@ Split:
 Input PRD:
 ```markdown
 # Task Status Feature
-
 Add ability to mark tasks with different statuses.
 
 ## Requirements
-
 - Toggle between pending/in-progress/done on task list
 - Filter list by status
 - Show status badge on each task
@@ -244,12 +240,11 @@ Output:
 ```
 
 ## Final check
-
 Before saving, verify:
-
 - [ ] Each story is small enough for one iteration
 - [ ] Stories are ordered by dependency
 - [ ] No story depends on a later story
 - [ ] Every story includes `Typecheck passes`
-- [ ] UI stories include browser verification
+- [ ] UI stories include `Verify in browser using playwright-cli skill`
+- [ ] `filesLikelyTouched` excludes files matched by repository `.gitignore`
 - [ ] Acceptance criteria are concrete and testable
