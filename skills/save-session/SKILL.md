@@ -2,19 +2,19 @@
 name: save-session
 description: Save concise continuation context for a future agent session in `save-session.md` under `.agents/scratchpad/` or the active feature folder. Use when compacting the current session, or the user asks to save progress, capture session state, or leave resumable context.
 ---
-
 # Save Session
-Create a short continuation document so another agent can resume work without repeating investigation.
+Create a short handoff so another agent can resume work without repeating investigation.
 
 ## Use this skill when
 - The user asks to save progress, capture session state, or leave resumable context.
 - Work is stopping mid-task and another agent may continue later.
+- You are compacting the current session.
 
 ## Workflow
 1. **Gather context**
    - Read relevant in-scope instructions, including applicable `AGENTS.md`.
    - Read the active `spec.md`, `prd.md`, or `plan.md` if present.
-   - Read only the files, diffs, or errors needed to explain status and next steps.
+   - Read only the files, diffs, commands, test results, or errors needed to explain status and next steps.
    - Do not reread the whole repo.
 
 2. **Choose `$output_path`**
@@ -26,8 +26,9 @@ Create a short continuation document so another agent can resume work without re
 3. **Write or update `save-session.md`**
    - If `.agents/scratchpad/` does not exist, create it.
    - Write `$output_path/save-session.md`.
-   - If it already exists, update it in place and keep only still-useful blockers, learnings, and file references.
+   - If it already exists, update it in place and keep only still-useful status, blockers, learnings, file references, and next steps.
    - If no work has started, say so in `Current Status`.
+   - Do not copy full chat logs, raw screenshots, or large log dumps unless needed.
    - Do not duplicate content already captured in PRDs, plans, ADRs, issues, commits, or diffs; reference them by path or URL instead.
 
 4. **Handle problems**
@@ -48,7 +49,7 @@ Good examples:
 - tests that worked
 - environment quirks
 - warnings or gotchas
-- human decisions or interventions that changed direction
+- human decisions that changed direction
 
 Format:
 - `<command-or-pattern>` - `<brief-description>`
@@ -65,13 +66,10 @@ Write `$output_path/save-session.md` as:
 - ...
 
 ## Current Status
+- Branch/task: ...
 - Done: ...
 - In progress: ...
 - Next up: ...
-
-## Suggested Skills
-- <skill-name> - reason
-- ...
 
 ## Decisions and Constraints
 - ...
@@ -79,33 +77,45 @@ Write `$output_path/save-session.md` as:
 ## Relevant Files
 - `path` — why it matters
 
+## Commands and Results
+- `command` — result
+
+## Tests
+- Passed: ...
+- Still needed: ...
+
 ## Durable Learnings
 - <command-or-pattern> - <brief-description>
-- ...
 
 ## Open Questions or Blockers
 - None.
   or
 - ...
 
+## Next-Agent Briefing
+- <1 short paragraph with what changed, why, current state, and exact next step>
+
 ## Recommended Next Step
 - ...
 ```
 
 Allowed empty sections:
-- `## Suggested Skills` → `- None.`
 - `## Relevant Files` → `- None.`
+- `## Commands and Results` → `- None.`
+- `## Tests` → `- None.`
 - `## Durable Learnings` → `- None.`
 
 ## Rules
 - Never write outside `.agents/scratchpad/`.
-- Keep the document concise and continuation-oriented.
-- Redact any sensitive information, such as API keys, passwords, or personally identifiable information.
+- Keep it concise, specific, and resume-ready.
+- Include exact file paths when relevant.
+- Include the exact next step; avoid vague “done”.
+- Redact sensitive information, such as API keys, passwords, or personally identifiable information.
 
 ## Validation
 Before finishing, confirm:
-
 - [ ] the file is under `.agents/scratchpad/`
 - [ ] headings and order match the template
 - [ ] each `Relevant Files` entry includes a reason
 - [ ] the document is concise and useful for the next agent
+- [ ] the next step is explicit
