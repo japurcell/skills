@@ -1,194 +1,179 @@
 ---
 name: self-improve
-description: Capture durable session learnings into AGENTS.md files. When requested or clearly warranted, also reorganize AGENTS.md structure to reduce duplication and improve scope. Use this skill when the user asks to update AGENTS.md, record lessons learned, codify discoveries, or clean up/refactor agent instructions.
+description: Capture durable session learnings in AGENTS.md files. When requested or clearly warranted, also refactor AGENTS.md structure to reduce duplication, fix scope, and keep linked docs in sync. Use this skill when the user asks to update AGENTS.md, record lessons learned, codify discoveries, or clean up/refactor agent instructions.
 ---
 
 # Self Improve
 
-Capture durable session learnings into the appropriate AGENTS.md files. If structural issues are present or the user asks for cleanup, also perform a refactor pass.
+Capture durable, reusable session learnings in the correct AGENTS.md files. If the user asks or structure is clearly weak, also refactor. Never remove guidance unless it is low-value or moved to an existing or new linked doc in the same change.
 
-## The Workflow
+## Workflow
 
 ### Phase 0: Extract durable learnings
 
-Review the session for durable, reusable guidance. Ask: _what context was missing that would have helped me work more effectively?_
+Review the session and ask: _what missing context would help future agents?_
 
 Look for:
 
-- Bash commands that were used or discovered
-- Code style patterns followed
-- Testing approaches that worked
-- Environment or configuration quirks
-- Warnings or gotchas encountered
-- Human interventions, re-directions or corrections
+- Bash commands used or discovered
+- Code style or patterns
+- Test/validation steps
+- Environment/config quirks
+- Warnings/gotchas
+- Human corrections or redirects
 
-Filter out one-off incidents, temporary noise, and obvious facts.
+Exclude temporary noise and obvious facts.
 
-When context is incomplete, prefer proposed candidate updates over direct modifications, and clearly label confidence/assumptions.
+### Phase 1: Find files and map rules
 
-### Phase 1: Find AGENTS.md Files
-
-1. Find all AGENTS.md files:
+1. Find AGENTS.md files using a fast-tier subagent:
    ```bash
    find . -name "AGENTS.md" 2>/dev/null | head -20
    ```
-2. Read each file.
-3. Read directly linked instruction/topic docs if they exist.
-4. Build a quick map of where each rule currently lives.
+2. Read each AGENTS.md.
+3. Read any directly linked docs that exist.
+4. Build a quick map of where rules live.
 
-If no AGENTS.md files exist:
+If no AGENTS.md exists:
 
-- Say so clearly
+- Say so
 - Create `./AGENTS.md` with only the strongest 3-7 learnings
 
-Decide where each addition belongs:
+Placement:
 
-| Type             | Location            | Purpose                           |
-| ---------------- | ------------------- | --------------------------------- |
-| Project root     | `./AGENTS.md`       | Primary project-wide context      |
-| Package-specific | `./**/AGENTS.md`    | Module-level context in monorepos |
-| Subdirectory     | Any nested location | Feature/domain-specific context   |
+- `./AGENTS.md` - project-wide guidance
+- `./**/AGENTS.md` - scoped/module/subdirectory guidance
+- Linked docs - detailed topic guidance referenced from AGENTS.md
 
-### Phase 2: Apply Additions
+### Phase 2: Apply additions
 
-Apply durable learnings as concise additions to identified file(s).
+Add concise, durable guidance to the right file.
 
-**Keep it concise** - one line per concept. AGENTS.md is part of the prompt, so brevity matters.
+Rules:
 
-Format: `<command or pattern>` - `<brief description>`
+- One line per concept when possible
+- Prefer specific, actionable rules
+- Keep AGENTS.md brief because it is prompt-loaded
+- Use `<command or pattern>` - `<brief description>` when helpful
 
-Prioritize additions that are:
-
-- Recurring: likely to matter again in future tasks
-- Actionable: directly changes what an agent should do
-- Specific: concrete command, file pattern, or decision rule
+Prioritize guidance that is recurring, actionable, and specific.
 
 Avoid:
 
-- Verbose explanations
-- Obvious information
-- One-off fixes unlikely to recur
+- Verbose explanation
+- Obvious facts
 
 ### Phase 3: Refactor
 
-1. **Assess whether a structural refactor is warranted**. Signals that it is:
-   - Root AGENTS.md exceeds ~120 lines
-   - Duplicated rules across files
-   - Contradictory rules across files
-   - Mixed scopes (domain-specific guidance sitting in root)
-   - Orphan links or missing linked docs
-   - User explicitly asked for cleanup or reorganization
+Refactor only if requested or clearly warranted.
 
-If refactor is not clearly warranted, skip to Phase 4.
+Signals:
 
-2. **Detect contradictions** — places where two rules conflict and can't both be followed. When rules truly conflict, pick one version to keep and explain why. Apply destructive changes because the user can review later.
+- Root AGENTS.md is over ~120 lines
+- Duplicated rules
+- Contradictory rules
+- Mixed scopes
+- Missing or orphaned linked docs
+- User asked for cleanup/reorganization
 
-3. **Extract root essentials** — keep only guidance relevant to nearly every task:
+If not warranted, skip to Phase 4.
+
+Steps:
+
+1. **Resolve contradictions** - if two rules cannot both be followed, keep one and explain why.
+2. **Trim root** - keep only near-universal guidance:
    - One-sentence project description
-   - Package manager (only if non-default or easily confused)
+   - Package manager if non-default or easy to confuse
    - Non-standard build/typecheck/test commands
    - One or two universal workflow constraints
-
-4. **Group and split** — move specialized content into topic files. Typical groups:
-   - Workflow
-   - Frontend conventions
-   - Backend conventions
-   - Validation/testing
-   - Environment/secrets
-   - Git/release process
-
-   Use concise filenames. Keep each file focused on one topic.
-
-5. **Extract deletion candidates** — call out instructions that are:
-   - Redundant (covered elsewhere)
-   - Non-actionable (too vague to change behavior)
+3. **Group by scope/topic** - move specialized guidance into scoped AGENTS.md files or linked docs.
+4. **Keep docs in sync** - if guidance is moved out of AGENTS.md, add it to the destination doc in the same change before deleting the source text.
+5. **Delete only true low-value content**:
+   - Redundant
+   - Non-actionable
    - Obvious boilerplate
-   - Contradictory flagged for deletion
-
-6. **Create final structure**:
+   - Superseded by a resolved contradiction
+6. **Finalize structure**:
    - Minimal root AGENTS.md with links
-   - Updated scoped AGENTS.md files where needed
-   - New/updated topic docs
-   - Docs tree if folders do not exist yet
+   - Updated scoped AGENTS.md files
+   - New or updated linked docs as needed
+   - Fixed or removed orphan links
 
-### Phase 4: Report final changes and assumptions
+### Phase 4: Report changes
 
-In the final response, include:
+In the final response include:
 
-**Always**:
+**Always**
 
-1. **Learnings**: list concise learnings or a statement that none qualified
-2. **Applied updates**: grouped by AGENTS.md or topic docs path with diff blocks
-3. **Assumptions** (only when needed): explicit assumptions used to produce best-effort proposals despite partial context
+1. **Learnings** - concise list, or say none qualified
+2. **Applied updates** - grouped by file path, with diff blocks
+3. **Assumptions** - only if needed
 
 **If refactor was performed**:
 
-4. **Contradictions**: For each contradiction:
-   - Conflict summary
-   - Source A (file + short quote)
-   - Source B (file + short quote)
-   - Version chosen and reason
-5. **Deletions**: List deleted text, reason, and original location
-6. **Grouped files**: List each topic file and what rules it now owns
-7. **Folder structure**: If new folders were created, show the new structure in a tree-style layout
+4. **Contradictions** - summary, sources, chosen rule, reason
+5. **Deletions** - deleted text, reason, original location
+6. **Moved guidance** - source location -> destination file for every moved rule
+7. **Grouped files** - each scoped/topic file and what it owns
+8. **Folder structure** - tree view if new folders were created
 
 ## Quality Bar
 
-- Root AGENTS.md should stay under ~120 lines and always-load safe
-- Every linked file should have a clear purpose and no mixed scopes
-- Orphan links should be removed or resolved
-- No duplicated rule text unless duplication is explicitly justified
-- Avoid duplicate guidance across files; link instead
+- Root AGENTS.md stays under ~120 lines and safe to always load
+- Scope stays clean across root, scoped AGENTS.md, and linked docs
+- No orphan links
+- No duplicated guidance unless explicitly justified
+- Prefer linking over repeating
 - New learnings are concise, actionable, and likely to recur
-- Prefer actionable rules over vague advice
-- Preserve scope boundaries (root vs subdirectory AGENTS files)
-- If no changes meet the quality bar, say so explicitly — don't force updates
+- If guidance is removed from one file, it must appear in its new destination or be explicitly reported as deleted
+- If nothing meets the bar, say so and make no changes
 
 ## Common Rationalizations
 
-| Rationalization                                        | Reality                                                         |
-| ------------------------------------------------------ | --------------------------------------------------------------- |
-| "I can't decide which conflicting rule to keep."       | Use your best judgment to pick one. The human can review later. |
-| "The root file is enough for this change."             | Linked docs may contain scope-defining guidance.                |
-| "That command is obvious."                             | Non-default commands are often exactly what future agents need. |
-| "The user didn't explicitly ask me to remember this."  | Capture durable guidance even when the request is implicit.     |
-| "Broader wording is safer."                            | Vague rules are less useful than specific, actionable ones.     |
-| "Leaving redundant rules is harmless."                 | Redundancy creates drift and inconsistency.                     |
-| "I should make some update even if nothing qualifies." | Do not force low-value changes.                                 |
+| Rationalization                                   | Reality                                                    |
+| ------------------------------------------------- | ---------------------------------------------------------- |
+| "I can't decide which conflicting rule to keep."  | Use best judgment and explain the choice.                  |
+| "The root file is enough."                        | Scoped or linked docs may own that guidance.               |
+| "That command is obvious."                        | Non-default commands are often high-value.                 |
+| "The user didn't ask me to remember this."        | Capture durable guidance when warranted.                   |
+| "Broader wording is safer."                       | Specific rules are more useful.                            |
+| "Leaving redundant rules is harmless."            | Redundancy causes drift.                                   |
+| "I should update something anyway."               | Do not force low-value changes.                            |
+| "I moved it, so deleting the old text is enough." | Verify the destination doc was updated in the same change. |
 
 ## Red Flags
 
-- Root `AGENTS.md` is missing, empty, or overly long
-- Files mix global and scoped guidance
-- Rules are duplicated across files
-- Linked docs are missing, stale, or orphaned
-- Rules are vague or non-actionable
-- Durable learnings from the session were not captured
-- Non-standard commands or validation steps are undocumented
-- User corrections were not preserved
-- One-off incidents were added as standing instructions
-- Conflicting rules exist and were not resolved
-- An `AGENTS.md` file was edited without checking directly linked instruction/topic docs
-- Redundant or obsolete guidance was added but not pruned
+- Missing, empty, or overly long root `AGENTS.md`
+- Mixed global and scoped guidance
+- Duplicate or conflicting rules
+- Missing, stale, or orphaned linked docs
+- Vague or non-actionable rules
+- Durable learnings not captured
+- Non-standard commands or validation undocumented
+- User corrections not preserved
+- One-offs added as standing instructions
+- Linked docs not checked before editing AGENTS.md
+- Guidance removed from AGENTS.md without appearing in the destination doc
 
 ## Verification
 
 Before concluding, confirm:
 
-**Always**:
+**Always**
 
 - [ ] All relevant `AGENTS.md` files were found
-- [ ] Linked instruction files were reviewed
-- [ ] Durable learnings were applied to the right files
+- [ ] Directly linked docs were reviewed
+- [ ] Durable learnings were placed in the right files
 - [ ] One-off and low-value items were excluded
-- [ ] Assumptions were clearly stated when needed
+- [ ] Assumptions were stated when needed
 
-**If refactor was performed**:
+**If refactor was performed**
 
-- [ ] Root `AGENTS.md` stays minimal
-- [ ] Scoped guidance was placed in the right file
-- [ ] Deletion candidates were applied where appropriate
+- [ ] Root `AGENTS.md` remains minimal
+- [ ] Scoped guidance is in the right file
+- [ ] Every moved rule was added to its destination doc in the same change
+- [ ] Deletions were applied only where appropriate
 - [ ] Duplicate rules were removed or justified
-- [ ] Conflicts were surfaced explicitly and resolved
+- [ ] Conflicts were surfaced and resolved
 - [ ] No orphan links remain
 - [ ] Structural changes were explained clearly
