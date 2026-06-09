@@ -14,11 +14,13 @@ Reduce technical debt by removing duplicated logic and repeated patterns while p
 
 ## 2) Determine scope
 
+If candidates are already in context or passed as an argument, skip to Section 4 and use them as the candidate list.
+
 Using a fast-tier subagent:
 
 1. Check for a user-provided scope like `scope:git diff main..HEAD`.
 2. If present, treat everything after `scope:` as the scope expression and inspect it.
-3. If that scope is invalid, empty, or yields no meaningful results, report that clearly and fall back to:
+3. If the scope is invalid, empty, or yields no meaningful results, report that clearly and fall back to:
    - `git status`
    - `git diff HEAD`
 4. If there is still no meaningful diff, inspect:
@@ -26,6 +28,8 @@ Using a fast-tier subagent:
 5. Build a shortlist of added or edited functions, classes, modules, handlers, tests, configs, or scripts from the resolved scope.
 
 ## 3) Find duplication
+
+If candidates are already in context or passed as an argument, skip this section.
 
 Spawn three `code-explorer` subagents to compare the shortlist against the codebase using patterns appropriate to the repository language mix.
 
@@ -124,9 +128,9 @@ Require the validation subagent to report:
 
 1. Read the refactoring and validation reports for each candidate.
 2. If meaningful duplication was found, do not return discovery only unless every candidate was unsafe, ambiguous, or out of scope. If so, list each blocked candidate and why.
-3. If the run stops before all candidates are handled, explicitly state why each remaining candidate was not attempted.
+3. If the run stops before all candidates are handled, state why each remaining candidate was not attempted.
 4. Provide a concise summary:
-   - resolved scope used
+   - resolved scope used, or that candidate input/context was used directly
    - what was deduplicated
    - what shared abstractions were introduced
    - what validations were run and their results
