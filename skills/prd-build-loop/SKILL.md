@@ -77,7 +77,7 @@ For the highest-priority story in `prd_file` with `passes: false`:
    - Do not continue until a terminal status is handled.
 
 2. **Simplify**
-   - Dispatch a fresh `code-simplifier`.
+   - Dispatch a fresh `code-simplifier` using a model that is at least stronger than `gpt-5-mini`.
    - Require it to check the repository `.gitignore` first and treat ignored files as out of scope.
    - Require a short `Progress block` with:
      - Role: code-simplifier
