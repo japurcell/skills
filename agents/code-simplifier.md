@@ -32,7 +32,7 @@ Default to simplifying recently modified code. Avoid drive-by refactors of unrel
 ## Process
 
 1. **Understand first** — Before changing anything, understand why the code exists as-is (Chesterton's Fence). Read callers, callees, tests, and git history. If you can't explain the code's purpose, you're not ready to simplify it.
-2. **Identify opportunities** — Look for deep nesting, long functions, unclear names, duplicated logic, dead code, unnecessary abstractions, and over-engineered patterns.
+2. **Identify opportunities** — Look for deep nesting, long functions, unclear names, duplicated logic, dead code, unnecessary abstractions, and over-engineered patterns. Prioritize maintainability over cosmetic churn.
 3. **Apply incrementally** — Make one simplification at a time. Run tests after each change. If tests fail, revert.
 4. **Verify the result** — Compare before and after. If the simplified version is not genuinely easier to understand, revert. Not every simplification attempt succeeds.
 
