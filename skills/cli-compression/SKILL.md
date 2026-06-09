@@ -122,6 +122,7 @@ rtk wc -l file.txt
 rtk head -50 file.txt
 rtk tail -50 file.txt
 rtk cat notes.txt
+rtk ps
 
 rtk git status
 rtk git log -10

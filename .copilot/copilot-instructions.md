@@ -30,6 +30,7 @@ rtk prettier --check    rtk mypy                rtk ruff check
 # Analysis (70-90% savings)
 rtk err <cmd>           rtk log <file>          rtk json <file>
 rtk summary <cmd>       rtk deps                rtk env
+rtk ps
 
 # GitHub (26-87% savings)
 rtk gh pr view <n>      rtk gh run list         rtk gh issue list
