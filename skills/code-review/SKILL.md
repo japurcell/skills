@@ -58,17 +58,15 @@ If this skill requires a dedicated agent, run it. Do not merge, combine, substit
      - compact summary of linked or referenced GitHub issues relevant to scope or spec
      - likely spec-source candidates in priority order
    - If not reviewing a PR but GitHub issues are referenced, fetch and summarize them.
-6. Stop early for PRs if intake says the PR is closed, draft, does not need review, or already has a review from you.
-7. Gather standards/context and identify the spec source via a fast-tier subagent:
-   - Read and summarize only relevant files among:
-     `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `CONTRIBUTING.md`, `CONTEXT.md`, `CONTEXT-MAP.md`, `STYLE.md`, `STANDARDS.md`, `STYLEGUIDE.md`, `docs/adr/*`, `.editorconfig`, `eslint.config.*`, `biome.json`, `prettier.config.*`, `tsconfig.json`
-   - Check root and touched paths where applicable.
-   - Identify spec source in this order:
-     1. issue references from commit messages or PR metadata
-     2. user-supplied path
-     3. matching spec / PRD under `docs/`, `specs/`, `.scratch/`, or `.agents/scratchpad/**`
-     4. if none is found, ask where the spec is; if there is no spec, record `no spec available` and skip the Spec agent
-8. Preflight required agents. Hard stop if any required agent is missing.
+6. Stop early if intake says a PR is closed, draft, does not need review, or already has a review from you.
+7. Gather only relevant standards/context files via a fast-tier subagent, checking repo root and touched paths as applicable:
+   - `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `CONTRIBUTING.md`, `CONTEXT.md`, `CONTEXT-MAP.md`, `STYLE.md`, `STANDARDS.md`, `STYLEGUIDE.md`, `docs/adr/*`, `.editorconfig`, `eslint.config.*`, `biome.json`, `prettier.config.*`, `tsconfig.json`
+8. Identify the spec source in this order:
+   1. issue references from commit messages or PR metadata
+   2. user-supplied path
+   3. matching spec / PRD under `docs/`, `specs/`, `.scratch/`, or `.agents/scratchpad/**`
+   4. if none is found, ask where the spec is; if there is no spec, record `no spec available` and skip the Spec agent
+9. Preflight required agents. Hard stop if any required agent is missing.
    - Always required:
      - `addy-code-reviewer`
      - `addy-security-auditor`
@@ -81,36 +79,39 @@ If this skill requires a dedicated agent, run it. Do not merge, combine, substit
      - History agent
      - Related-PR agent
      - Code-comment agent
-9. Spawn required agents in parallel.
-   - PR-only agents:
-     - History agent: use `git blame` and modified-code history to identify historically supported issues.
-     - Related-PR agent: read prior PRs touching the same files for comments that still apply.
-     - Code-comment agent: check whether the change violates guidance in comments within modified files.
-   - All reviews:
-     - `addy-code-reviewer`: correctness, readability, architecture, security, performance
-     - `addy-security-auditor`: OWASP Top 10, secrets, auth/authz, threat model, dependency CVEs
-     - `addy-test-engineer`: test gaps in happy path, edge cases, error paths, concurrency
-     - Spec agent if a spec exists: missing or partial requirements, scope creep, incorrect implementation
-     - Maintainability agent: do a strict maintainability review. Prefer deleting complexity over rearranging it. Aggressively flag:
-       - file growth from under 1000 lines to over 1000 without strong justification
-       - new ad-hoc conditionals, spaghetti growth, one-off booleans, nullable modes, or flags that complicate control flow
-       - unnecessary wrappers, casts, optionality, indirection, `any`, `unknown`, ad-hoc object shapes, or cast-heavy contracts that obscure invariants
-       - hacky or magical behavior, or generic mechanisms hiding simple data-shape assumptions
-       - logic in the wrong layer, duplication of canonical helpers, or copy-pasted logic instead of extracted helpers
-       - narrow edge-case handling inserted into an already busy function
-       - sequential orchestration or non-atomic updates when a cleaner structure is obvious
-       - Treat unjustified file-size explosions, spaghetti growth, unnecessary abstraction layers, wrong-layer logic, and obvious duplication of canonical helpers as presumptive blockers unless clearly justified. Prefer a small number of high-conviction structural findings over cosmetic notes.
-     - Standards agent: report only documented standards violations; cite file and rule; skip anything tooling enforces.
-10. Filter false positives.
-    - For each issue, spawn a parallel fast-tier subagent to score whether it is real or a false positive using the issue, reviewed change, and relevant standards files.
-    - Use this rubric verbatim:
-      - 0: Not confident at all. This is a false positive that doesn't stand up to light scrutiny.
-      - 25: Somewhat confident. This might be a real issue, but may also be a false positive. The agent wasn't able to verify that it's a real issue. If the issue is stylistic, it is one that was not explicitly called out in the relevant standards file.
-      - 50: Moderately confident. The agent verified this is real, but it may be minor or uncommon.
-      - 75: Highly confident. The agent verified it is very likely real and important, will be hit in practice, or is directly mentioned in the relevant standards file.
-      - 100: Absolutely certain. The agent confirmed it is definitely real and will happen frequently in practice; the evidence directly confirms this.
-    - For standards findings, confirm the standards file explicitly supports the finding.
-    - Filter out issues with score below 70.
+10. Spawn required agents in parallel.
+
+- PR-only:
+  - History agent: use `git blame` and modified-code history to identify historically supported issues.
+  - Related-PR agent: review prior PRs touching the same files for comments that still apply.
+  - Code-comment agent: check whether the change violates guidance in comments within modified files.
+- All reviews:
+  - `addy-code-reviewer`: correctness, readability, architecture, security, performance
+  - `addy-security-auditor`: OWASP Top 10, secrets, auth/authz, threat model, dependency CVEs
+  - `addy-test-engineer`: test gaps in happy path, edge cases, error paths, concurrency
+  - Spec agent if a spec exists: missing or partial requirements, scope creep, incorrect implementation
+  - Maintainability agent: do a strict maintainability review. Prefer deleting complexity over rearranging it. Aggressively flag:
+    - file growth from under 1000 lines to over 1000 without strong justification
+    - new ad-hoc conditionals, spaghetti growth, one-off booleans, nullable modes, or flags that complicate control flow
+    - unnecessary wrappers, casts, optionality, indirection, `any`, `unknown`, ad-hoc object shapes, or cast-heavy contracts that obscure invariants
+    - hacky or magical behavior, generic mechanisms hiding simple data-shape assumptions
+    - logic in the wrong layer, duplication of canonical helpers, copy-pasted logic instead of extracted helpers
+    - narrow edge-case handling inserted into an already busy function
+    - sequential orchestration or non-atomic updates when a cleaner structure is obvious
+    - Treat unjustified file-size explosions, spaghetti growth, unnecessary abstraction layers, wrong-layer logic, and obvious duplication of canonical helpers as presumptive blockers unless clearly justified. Prefer a small number of high-conviction structural findings over cosmetic notes.
+  - Standards agent: report only documented standards violations; cite file and rule; skip anything tooling enforces.
+
+11. Filter false positives.
+
+- For each issue, spawn a parallel fast-tier subagent to score whether it is real or a false positive using the issue, reviewed change, and relevant standards files.
+- Use this rubric verbatim:
+  - 0: Not confident at all. This is a false positive that doesn't stand up to light scrutiny.
+  - 25: Somewhat confident. This might be a real issue, but may also be a false positive. The agent wasn't able to verify that it's a real issue. If the issue is stylistic, it is one that was not explicitly called out in the relevant standards file.
+  - 50: Moderately confident. The agent verified this is real, but it may be minor or uncommon.
+  - 75: Highly confident. The agent verified it is very likely real and important, will be hit in practice, or is directly mentioned in the relevant standards file.
+  - 100: Absolutely certain. The agent confirmed it is definitely real and will happen frequently in practice; the evidence directly confirms this.
+- For standards findings, confirm the standards file explicitly supports the finding.
+- Filter out issues with score below 75.
 
 ## Exclusions
 
@@ -140,9 +141,7 @@ If qualifying findings remain, use this format exactly:
 
 ```text
 ### Code review
-
 Found <N> issues:
-
 1. <brief description>
    <link to file and line with full sha and line range>
 2. <brief description>
@@ -157,7 +156,6 @@ If no qualifying findings remain, use:
 
 ```text
 ### Code review
-
 ## No issues found. Checked for bugs, standards compliance, and maintainability.
 ```
 
@@ -203,7 +201,6 @@ Before returning or commenting, verify:
 
 - [ ] every required dedicated agent for this review type was run
 - [ ] no required agent was merged, combined, substituted, skipped, or manually emulated
-- [ ] the preflight required-agents checklist is satisfied
 - [ ] every finding is tied to the reviewed change
 - [ ] every finding has a concrete file reference
 - [ ] every standards-based finding is explicitly supported by a standards file
