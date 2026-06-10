@@ -42,6 +42,15 @@ rtk docker ps           rtk kubectl get         rtk docker logs <c>
 rtk pip list            rtk pnpm install        rtk npm run <script>
 ```
 
+### Meta commands (use directly)
+
+```bash
+rtk gain              # Token savings dashboard
+rtk gain --history    # Per-command savings history
+rtk discover          # Find missed rtk opportunities
+rtk proxy <cmd>       # Run raw (no filtering) but track usage
+```
+
 ### Rules
 
 - In command chains, prefix each segment: `rtk git add . && rtk git commit -m "msg"`
