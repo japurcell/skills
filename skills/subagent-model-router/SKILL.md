@@ -123,10 +123,10 @@ All prices below are **per 1 million tokens**.
 
 Use first for bounded, repeatable, low-ambiguity work.
 
-- `gpt-5.4-nano`
 - `gpt-5-mini`
 - `gemini-3-flash`
 - `gpt-5.4-mini`
+- `gpt-5.4-nano`
 - `haiku`
 
 ### Standard tier
@@ -182,7 +182,7 @@ Reserve the premium tier for:
 ## Examples
 
 - "Spawn three agents to search the repo for where auth tokens are created, refreshed, and revoked."  
-  -> Use focused `explore`-style agents on a fast-tier model such as `gpt-5.4-nano`, `gpt-5-mini`, `gpt-5.4-mini`, or `haiku`.
+  -> Use focused `explore`-style agents on a fast-tier model such as `gpt-5-mini`, `gpt-5.4-mini`, `gpt-5.4-nano`, or `haiku`.
 
 - "Launch a reviewer to inspect this 40-file security-sensitive diff for auth and data exposure bugs."  
   -> Use a review-focused agent on a standard-tier model such as `gpt-5.3-codex`, `gpt-4.1`, or `sonnet`; escalate only if unusually deep cross-system reasoning is needed.
@@ -194,7 +194,7 @@ Reserve the premium tier for:
   -> Use a `task` agent on a fast-tier model.
 
 - "Have a subagent make simple code changes."  
-  -> Use another suitable fast-tier model such as `gpt-5.4-nano`, `gpt-5.4-mini`, or `haiku`; do **not** recommend `gpt-5-mini`.
+  -> Use another suitable fast-tier model such as `gpt-5.4-mini`, `gpt-5.4-nano`, or `haiku`; do **not** recommend `gpt-5-mini`.
 
 - "Have a subagent edit code across several files."  
   -> Use a standard-tier model such as `gpt-5.3-codex`, `gpt-4.1`, `gpt-5.4`, or `sonnet`; do **not** recommend `gpt-5-mini`.
