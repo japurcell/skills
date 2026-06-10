@@ -1,6 +1,6 @@
 ---
 name: prd-to-tasks
-description: Convert a PRD into `prd.json` for the autonomous agent system. Use for requests like - convert this PRD, turn this into JSON, create prd.json from this.
+description: Convert a PRD into `prd.json` for the autonomous agent system. Use when requesting to convert this PRD into tasks, turn this into JSON, create prd.json from this.
 ---
 
 # PRD to `prd.json`
@@ -10,17 +10,14 @@ Convert a PRD (file path or raw markdown/text) into `prd.json`.
 ## Inputs
 
 - `prd_file` (required): PRD file path or raw text.
-- `output_directory` (optional): Directory for `prd.json`.
-  - If provided, save to `output_directory/prd.json`.
-  - Else if `prd_file` is a file path, save next to it.
-  - Else save to `.agents/scratchpad/prd.json`.
+- `output_directory` (optional): If set, save to `output_directory/prd.json`; otherwise save next to `prd_file` if it is a path, else save to `.agents/scratchpad/prd.json`.
 
 ## Workflow
 
 1. Read `prd_file`.
-2. Create `prd.json`.
-3. Save it.
-4. In the final response, report:
+2. Convert it to `prd.json`.
+3. Save the file.
+4. Final response must report:
    - total story count
    - output file path
    - readiness for `/prd-build-loop`
@@ -56,24 +53,37 @@ Convert a PRD (file path or raw markdown/text) into `prd.json`.
 
 ## Rules
 
-### 1) Make stories implementation-sized
+### 1) Make stories small, independent, and implementation-sized
 
-Create one story per unit of work that one agent can finish in one iteration without depending on unfinished prior work. Split anything too large.
+Break the PRD into **thin vertical slices**. Each story should be a narrow, complete, end-to-end change one agent can finish in one iteration.
+
+Requirements:
+
+- Each story must be independently completable once lower-priority prerequisites are done.
+- Prefer many small stories over a few large ones.
+- If a story spans multiple features, pages, flows, UI surfaces, or broad refactors, split it.
+- If a story cannot be explained in 2-3 sentences, split it.
+- Avoid horizontal slices like “build backend”, “build frontend”, or “write all tests” unless the PRD truly asks for only that layer.
 
 Good:
 
 - Add a database column and migration
-- Add a UI component to an existing page
-- Update a server action
-- Add a filter dropdown
+- Add a server action for status updates
+- Show a status badge on task cards
+- Add a filter dropdown to the task list
 
 Too large:
 
 - Build the entire dashboard
 - Add authentication
 - Refactor the API
+- Implement task status end-to-end across all screens
 
-Rule of thumb: if a change cannot be described in 2-3 sentences, split it.
+A good story is:
+
+- narrow
+- demoable or verifiable on its own
+- unlikely to block unrelated stories
 
 ### 2) Order by dependency
 
@@ -88,14 +98,14 @@ Use this order when relevant:
 
 Set priority by dependency first, then PRD source order.
 
-### 3) Make acceptance criteria testable
+### 3) Make acceptance criteria concrete and testable
 
-Acceptance criteria must be concrete and verifiable.
+Acceptance criteria must be specific and verifiable.
 
 Good:
 
 - Add `status` column to tasks table with default `pending`
-- Filter dropdown has options: All, Active, Completed
+- Filter dropdown options: All, Active, Completed
 - Clicking delete shows a confirmation dialog
 - Typecheck passes
 - Tests pass
@@ -123,7 +133,7 @@ UI stories are not complete until visually verified.
 - Derive `branchName` from the feature name in kebab-case.
 - Keep `description` short and based on the PRD title or intro.
 - Set every story to `"passes": false` and `"notes": ""`.
-- Include `filesLikelyTouched` when inferable. Exclude files matched by repository `.gitignore`.
+- Include `filesLikelyTouched` when inferable; exclude files matched by repository `.gitignore`.
 - Use `designGuidance` only when useful; otherwise set it to `[]`.
 
 ## Splitting example
@@ -202,7 +212,7 @@ Output:
         {
           "source": "https://web.dev/articles/color-and-contrast-accessibility",
           "description": "Ensure badge colors meet accessibility contrast standards.",
-          "rationale": "Maintaining sufficient color contrast is essential for users with visual impairments to distinguish between different statuses effectively."
+          "rationale": "Users must be able to distinguish statuses."
         },
         {
           "source": "design-system/components/StatusBadge",
@@ -267,8 +277,7 @@ Output:
 
 Before saving, verify:
 
-- [ ] Each story is small enough for one iteration
-- [ ] Stories are ordered by dependency
+- [ ] Each story is a small, independent vertical slice
 - [ ] No story depends on a later story
 - [ ] Every story includes `Typecheck passes`
 - [ ] UI stories include `Verify in browser using playwright-cli skill`
