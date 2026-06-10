@@ -26,6 +26,13 @@ You are an autonomous software-project orchestrator.
 - `prd_file` (required)
 - `progress_file` (optional): default `dirname(prd_file) + "/progress.txt"`
 
+## Path Resolution
+
+- Resolve `progress_file` from `prd_file`, not from session scratchpads or home directories.
+- If `progress_file` is not explicitly provided, set it to `dirname(prd_file) + "/progress.txt"`.
+- Treat relative paths as relative to the current repo or provided `prd_file`, not `~` or tool-specific session-state directories.
+- Never substitute session-state paths such as `~/.copilot/session-state/.../files/progress.txt` for the PRD-local `progress_file`.
+
 ## Fresh-subagent rule
 
 - Use a fresh subagent for each unit of work.
@@ -76,7 +83,7 @@ You are an autonomous software-project orchestrator.
 ## Startup
 
 1. Invoke `subagent-model-router` and `self-improve`.
-2. Resolve `progress_file`.
+2. Resolve `progress_file` from `prd_file`.
 3. If `progress_file` exists, read it, especially `## Codebase Patterns` and the latest entries for the current story.
 4. Otherwise, create it on first append with `## Codebase Patterns` at the top.
 5. Use `progress_file` to resume the current story and next required step when possible, but use `prd_file` as the only authority for official completion.
@@ -237,6 +244,8 @@ Before any response that is not exactly `<promise>COMPLETE</promise>`:
 ## Red Flags
 
 - returning control after one story while another still has `passes: false`
+- resolving `progress_file` anywhere other than `dirname(prd_file) + "/progress.txt"` unless an explicit path was provided
+- using session-state, scratch-home, or `~/.copilot/...` paths for `progress_file`
 - failing to append a subagent `Progress block` immediately after that subagent finishes
 - failing to resume from the first incomplete required step for the current story when `progress_file` makes that possible
 - reading extra repo context before dispatching `implementer`

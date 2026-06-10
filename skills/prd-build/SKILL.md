@@ -48,10 +48,17 @@ Continue until every story in `prd_file` has `passes: true`.
 - `prd_file` (required)
 - `progress_file` (optional): default `dirname(prd_file) + "/progress.txt"`
 
+## Path Resolution
+
+- Resolve `progress_file` from `prd_file`, not from session scratchpads or home directories.
+- If `progress_file` is not explicitly provided, set it to `dirname(prd_file) + "/progress.txt"`.
+- Treat relative paths as relative to the current repo or provided `prd_file`, not `~` or tool-specific session-state directories.
+- Never substitute session-state paths such as `~/.copilot/session-state/.../files/progress.txt` for the PRD-local `progress_file`.
+
 ## Startup
 
 1. Invoke the `subagent-model-router` skill.
-2. Resolve `progress_file`.
+2. Resolve `progress_file` from `prd_file`.
 3. If it exists, read it, especially `## Codebase Patterns`.
 4. If not, create it on first append with `## Codebase Patterns` at the top.
 
@@ -172,6 +179,8 @@ Before any response other than `<promise>COMPLETE</promise>`:
 ## Red Flags
 
 - returning control after one story while another still has `passes: false`
+- resolving `progress_file` anywhere other than `dirname(prd_file) + "/progress.txt"` unless an explicit path was provided
+- using session-state, scratch-home, or `~/.copilot/...` paths for `progress_file`
 - making code-affecting changes directly
 - verifying before the latest implementer change is complete
 - fixing verification failures without a fresh `implementer`
