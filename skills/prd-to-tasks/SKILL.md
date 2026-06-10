@@ -2,10 +2,13 @@
 name: prd-to-tasks
 description: Convert a PRD into `prd.json` for the autonomous agent system. Use for requests like - convert this PRD, turn this into JSON, create prd.json from this.
 ---
+
 # PRD to `prd.json`
+
 Convert a PRD (file path or raw markdown/text) into `prd.json`.
 
 ## Inputs
+
 - `prd_file` (required): PRD file path or raw text.
 - `output_directory` (optional): Directory for `prd.json`.
   - If provided, save to `output_directory/prd.json`.
@@ -13,6 +16,7 @@ Convert a PRD (file path or raw markdown/text) into `prd.json`.
   - Else save to `.agents/scratchpad/prd.json`.
 
 ## Workflow
+
 1. Read `prd_file`.
 2. Create `prd.json`.
 3. Save it.
@@ -22,6 +26,7 @@ Convert a PRD (file path or raw markdown/text) into `prd.json`.
    - readiness for `/prd-build-loop`
 
 ## Output format
+
 ```json
 {
   "project": "[Project Name]",
@@ -52,15 +57,18 @@ Convert a PRD (file path or raw markdown/text) into `prd.json`.
 ## Rules
 
 ### 1) Make stories implementation-sized
+
 Create one story per unit of work that one agent can finish in one iteration without depending on unfinished prior work. Split anything too large.
 
 Good:
+
 - Add a database column and migration
 - Add a UI component to an existing page
 - Update a server action
 - Add a filter dropdown
 
 Too large:
+
 - Build the entire dashboard
 - Add authentication
 - Refactor the API
@@ -68,9 +76,11 @@ Too large:
 Rule of thumb: if a change cannot be described in 2-3 sentences, split it.
 
 ### 2) Order by dependency
+
 Stories run in ascending `priority`. No story may depend on a later story.
 
 Use this order when relevant:
+
 1. Schema/database changes
 2. Backend/server logic
 3. UI using that logic
@@ -79,9 +89,11 @@ Use this order when relevant:
 Set priority by dependency first, then PRD source order.
 
 ### 3) Make acceptance criteria testable
+
 Acceptance criteria must be concrete and verifiable.
 
 Good:
+
 - Add `status` column to tasks table with default `pending`
 - Filter dropdown has options: All, Active, Completed
 - Clicking delete shows a confirmation dialog
@@ -89,20 +101,24 @@ Good:
 - Tests pass
 
 Bad:
+
 - Works correctly
 - Good UX
 - Handles edge cases
 
 Always include:
+
 - `Typecheck passes`
 
 Include when applicable:
+
 - `Tests pass` for testable logic
 - `Verify in browser using playwright-cli skill` for UI changes
 
 UI stories are not complete until visually verified.
 
 ### 4) Field rules
+
 - Use sequential IDs: `US-001`, `US-002`, etc.
 - Derive `branchName` from the feature name in kebab-case.
 - Keep `description` short and based on the PRD title or intro.
@@ -111,10 +127,13 @@ UI stories are not complete until visually verified.
 - Use `designGuidance` only when useful; otherwise set it to `[]`.
 
 ## Splitting example
+
 Original:
+
 - Add user notification system
 
 Split:
+
 1. Add notifications table
 2. Create notification service
 3. Add notification bell icon
@@ -123,12 +142,16 @@ Split:
 6. Add notification preferences page
 
 ## Example
+
 Input PRD:
+
 ```markdown
 # Task Status Feature
+
 Add ability to mark tasks with different statuses.
 
 ## Requirements
+
 - Toggle between pending/in-progress/done on task list
 - Filter list by status
 - Show status badge on each task
@@ -136,6 +159,7 @@ Add ability to mark tasks with different statuses.
 ```
 
 Output:
+
 ```json
 {
   "project": "TaskApp",
@@ -240,7 +264,9 @@ Output:
 ```
 
 ## Final check
+
 Before saving, verify:
+
 - [ ] Each story is small enough for one iteration
 - [ ] Stories are ordered by dependency
 - [ ] No story depends on a later story
