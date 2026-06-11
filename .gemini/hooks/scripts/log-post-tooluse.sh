@@ -12,6 +12,6 @@ tool_name=$(jq -r '.tool_name // empty' <<< "$payload")
 tool_result=$(jq -r '.tool_response.llmContent // .tool_response.returnDisplay // .tool_response.error // empty' <<< "$payload")
 
 # Log the tool result
-audit_log_event "post-tooluse" "[$timestamp] Session: $session_id, Tool: $tool_name, Result: $tool_result"
+audit_log_event "post-tooluse" "[$timestamp] Session: $session_id, Tool: $tool_name"
 
 echo '{"decision": "allow"}'
