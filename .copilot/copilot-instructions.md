@@ -10,6 +10,14 @@ When running shell commands, **always prefix with `rtk`**. This reduces context
 usage by 60-90% with zero behavior change. If rtk has no filter for a command,
 it passes through unchanged — so it is always safe to use.
 
+### Installation Verification
+
+```bash
+rtk --version         # Should show: rtk X.Y.Z
+rtk gain              # Should work (not "command not found")
+which rtk             # Verify correct binary
+```
+
 ### Key Commands
 
 ```bash

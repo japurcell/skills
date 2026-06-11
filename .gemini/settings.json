@@ -1,0 +1,124 @@
+{
+  "context": {
+    "fileName": ["AGENTS.md", "GEMINI.md"]
+  },
+  "experimental": {
+    "modelSteering": true
+  },
+  "general": {
+    "enableNotifications": true,
+    "plan": {
+      "directory": ".agents/scratchpad"
+    }
+  },
+  "ide": {
+    "hasSeenNudge": true,
+    "enabled": true
+  },
+  "model": {
+    "name": "auto"
+  },
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    }
+  },
+  "ui": {
+    "footer": {
+      "hideContextPercentage": false,
+      "showLabels": true,
+      "items": [
+        "workspace",
+        "git-branch",
+        "model-name",
+        "context-used",
+        "token-count",
+        "quota"
+      ]
+    },
+    "showMemoryUsage": true,
+    "showModelInfoInChat": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "BeforeAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/log-before-agent.sh"
+          }
+        ]
+      }
+    ],
+    "AfterAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/log-after-agent.sh"
+          }
+        ]
+      }
+    ],
+    "BeforeTool": [
+      {
+        "sequential": false,
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/log-pre-tooluse.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "run_shell_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/rtk-hook-gemini.sh"
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/log-post-tooluse.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/log-notification.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/log-session-end.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
