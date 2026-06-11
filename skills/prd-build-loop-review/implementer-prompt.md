@@ -12,7 +12,7 @@
 
 ## Workflow
 
-1. Load the `tdd` skill if not loaded.
+1. Invoke `tdd`.
 2. Read only what is needed:
    - Start with `filesLikelyTouched` if provided.
    - Read `progress_file` if it exists, especially `## Codebase Patterns`.
