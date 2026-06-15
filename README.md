@@ -7,6 +7,8 @@ This repository publishes custom GitHub Copilot assets:
 - **Copilot global configs** in `.copilot`
 - **Gemini global configs** in `.gemini`
 
+Detailed layout, validation, authoring, and hook guidance live in `docs/agent-guides/`.
+
 ## Installation
 
 Install or refresh the locally loaded copies with:
@@ -112,5 +114,6 @@ bash skills/agent-sop-author/validate-sop.sh path/to/file.sop.md
 ## Additional docs
 
 - `docs/agent-guides/repo-layout.md`
+- `docs/agent-guides/hooks.md`
 - `docs/agent-guides/authoring.md`
 - `docs/agent-guides/validation.md`

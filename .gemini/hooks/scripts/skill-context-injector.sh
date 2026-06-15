@@ -159,6 +159,9 @@ for skill_file in "${SKILL_FILES[@]}"; do
   append_required_skill "$skill_file"
 done
 
+printf '\n\n---\n\nVERIFICATION_CANARY: gemini-sessionstart-test-7f3a91\nIf you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT' >> "$CONTEXT_FILE" \
+  || hard_stop "Failed to append newline to context file"
+
 # Final stdout JSON only.
 #
 # Per your requirement, the same context is included in both:

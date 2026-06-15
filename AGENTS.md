@@ -27,6 +27,7 @@ This repository publishes custom coding skills from `skills/`, custom agent defi
 - [Authoring rules](docs/agent-guides/authoring.md) — skill, agent, and script conventions
 - [Validation & workflow](docs/agent-guides/validation.md) — targeted validation commands and narrowest checks per area
 - [Benchmarking](docs/agent-guides/benchmarking.md) — snapshot, iteration, and grading workflows
+- Keep `README.md` in sync with the linked docs when install, validation, or hook behavior changes.
 
 ## Learnings
 

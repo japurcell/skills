@@ -31,12 +31,6 @@
         "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.sh"
       }
     ],
-    "SubagentStart": [
-      {
-        "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.sh"
-      }
-    ],
     "subagentStop": [
       {
         "type": "command",
