@@ -1,5 +1,9 @@
 # Gemini Instructions
 
+## Skills
+
+Immediately load the `cli-compression`, `context-engineering`, `karpathy-guidelines`, and `caveman` skills if not already loaded.
+
 ## RTK (Rust Token Killer) - Token-Optimized Commands
 
 When running shell commands, **always prefix with `rtk`**. This reduces context
