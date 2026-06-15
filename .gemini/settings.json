@@ -45,17 +45,20 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/session-start.sh"
+            "command": "$HOME/.gemini/hooks/scripts/log-session-start.sh"
           }
         ]
       }
     ],
     "BeforeAgent": [
       {
+        "matcher": "*",
         "hooks": [
           {
+            "name": "skill-context-injector",
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/log-before-agent.sh"
+            "command": "$HOME/.gemini/hooks/scripts/skill-context-injector.sh",
+            "description": "Loads required skill files and injects them as context before each agent turn."
           }
         ]
       }
