@@ -14,9 +14,9 @@ audit_init
 SESSION_ID=$(jq -r '.session_id // empty' <<< "$INPUT")
 TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$INPUT")
 HOOK_EVENT_NAME=$(jq -r '.hook_event_name // empty' <<< "$INPUT")
-SOURCE=$(jq -r '.source // empty' <<< "$INPUT")
+CWD=$(jq -r '.cwd // empty' <<< "$INPUT")
 
-audit_log_event "$(basename "$0")" "[$TIMESTAMP] Source: $SOURCE, Hook: $HOOK_EVENT_NAME, Session: $SESSION_ID"
+audit_log_event "$(basename "$0")" "[$TIMESTAMP] Hook: $HOOK_EVENT_NAME, CWD: $CWD, Session: $SESSION_ID"
 
 # Emit startup context
 CONTEXT="$(read_startup_additional_context "$HOOK_DIR/references/agent-start-context.json")"
