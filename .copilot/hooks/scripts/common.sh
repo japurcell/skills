@@ -36,7 +36,6 @@ fi
 
 # Library paths
 AUDIT_LIB="$SCRIPT_DIR/audit.sh"
-STARTUP_CONTEXT_LIB="$SCRIPT_DIR/startup-context.sh"
 
 # Input parsing helpers
 parse_input() {
