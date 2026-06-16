@@ -1,28 +1,32 @@
 ---
 name: prd-to-tasks
-description: Convert a PRD into `prd.json` for the autonomous agent system. Use when requesting to convert this PRD into tasks, turn this into JSON, create prd.json from this.
+description: Use when the user asks to convert, decompose, split, or transform a PRD, product requirements document, feature spec, planning doc, markdown file, or raw requirements into implementation tasks, user stories, `userStories`, JSON, `prd.json`, or input for `/prd-build-loop`. Trigger on phrases such as "convert this PRD into tasks", "create prd.json", "turn this into JSON", "break this PRD into stories", "generate userStories", "split this into tasks", "decompose this feature", "make implementation stories", "prepare for /prd-build-loop", "tasks from requirements", or "convert requirements to stories". Always split broad PRD requirements into small implementation-sized stories; never copy PRD sections or stories unchanged unless they already satisfy the atomic story rules.
 ---
 
 # PRD to `prd.json`
 
-Convert a PRD (file path or raw markdown/text) into `prd.json`.
+Convert `prd_file` into a decomposed `prd.json` for the autonomous agent system.
 
 ## Inputs
 
-- `prd_file` (required): PRD file path or raw text.
-- `output_directory` (optional): If set, save to `output_directory/prd.json`; otherwise save next to `prd_file` if it is a path, else save to `.agents/scratchpad/prd.json`.
+- `prd_file` required: PRD file path or raw PRD text.
+- `output_directory` optional:
+  - If set, save to `output_directory/prd.json`.
+  - Else if `prd_file` is a path, save next to it.
+  - Else save to `.agents/scratchpad/prd.json`.
 
-## Workflow
+## Required workflow
 
 1. Read `prd_file`.
-2. Convert it to `prd.json`.
-3. Save the file.
-4. Final response must report:
+2. Decompose every broad requirement into atomic implementation stories.
+3. Order stories by dependency, then PRD source order.
+4. Write valid JSON to the target `prd.json` path.
+5. Final response must include:
    - total story count
    - output file path
    - readiness for `/prd-build-loop`
 
-## Output format
+## Output JSON schema
 
 ```json
 {
@@ -32,9 +36,9 @@ Convert a PRD (file path or raw markdown/text) into `prd.json`.
   "userStories": [
     {
       "id": "US-001",
-      "title": "[Story title]",
-      "description": "As a [user], I want [feature] so that [benefit]",
-      "acceptanceCriteria": ["Criterion 1", "Criterion 2", "Typecheck passes"],
+      "title": "[Small implementation story title]",
+      "description": "As a [user], I want [single capability] so that [benefit].",
+      "acceptanceCriteria": ["Concrete criterion", "Typecheck passes"],
       "filesLikelyTouched": ["src/path/to/file.ts"],
       "designGuidance": [
         {
@@ -51,70 +55,96 @@ Convert a PRD (file path or raw markdown/text) into `prd.json`.
 }
 ```
 
-## Rules
+## Atomic story requirement
 
-### 1) Make stories small, independent, and implementation-sized
+`userStories` must contain decomposed implementation stories, not copied PRD sections.
 
-Break the PRD into **thin vertical slices**. Each story should be a narrow, complete, end-to-end change one agent can finish in one iteration.
+Each story must be a narrow, complete, verifiable change that one agent can finish in one iteration.
 
-Requirements:
+A story should usually cover only one of these:
 
-- Each story must be independently completable once lower-priority prerequisites are done.
-- Prefer many small stories over a few large ones.
-- If a story spans multiple features, pages, flows, UI surfaces, or broad refactors, split it.
-- If a story cannot be explained in 2-3 sentences, split it.
-- Avoid horizontal slices like “build backend”, “build frontend”, or “write all tests” unless the PRD truly asks for only that layer.
+- one schema or migration change
+- one model or type update
+- one backend action, endpoint, service, or query
+- one UI component or UI surface
+- one user interaction
+- one filter, sort, search, badge, toggle, modal, or form
+- one integration point
+- one dashboard or aggregate view
+- one focused testable behavior
 
-Good:
+Never create a story that means:
 
-- Add a database column and migration
-- Add a server action for status updates
-- Show a status badge on task cards
-- Add a filter dropdown to the task list
+- implement the whole PRD
+- build the whole feature
+- add the whole system
+- complete an epic
+- implement a full page with many behaviors
+- implement a full workflow end-to-end when it can be staged
+- copy a PRD story unchanged when it contains multiple capabilities
 
-Too large:
+Split smaller when unsure.
 
-- Build the entire dashboard
-- Add authentication
-- Refactor the API
-- Implement task status end-to-end across all screens
+## Split rules
 
-A good story is:
+Split a requirement or story if it:
 
-- narrow
-- demoable or verifiable on its own
-- unlikely to block unrelated stories
+- includes multiple features, pages, flows, roles, entities, or UI surfaces
+- has multiple unrelated verbs, such as create, edit, delete, filter, export, or notify
+- combines schema, backend, and UI work that can be staged
+- cannot be explained in 2–3 sentences
+- would touch many unrelated files
+- is not independently demoable after earlier prerequisites are complete
+- contains “and” between separate capabilities
 
-### 2) Order by dependency
+Avoid horizontal stories such as “build backend,” “build frontend,” or “write all tests” unless the PRD only asks for that layer.
+
+## Decomposition algorithm
+
+For each PRD requirement:
+
+1. Identify the smallest user-visible or system-visible capability.
+2. Split prerequisites first:
+   - database/schema
+   - models/types
+   - server actions/API/service/query
+3. Split each UI surface separately:
+   - list view
+   - detail view
+   - form
+   - modal
+   - navigation
+   - dashboard
+4. Split each user action separately:
+   - create
+   - update
+   - delete
+   - filter
+   - sort
+   - search
+   - export
+   - notify
+5. Split cross-cutting requirements only when independently implementable.
+6. If a generated story still contains multiple capabilities, split it again.
+
+## Ordering rules
 
 Stories run in ascending `priority`. No story may depend on a later story.
 
-Use this order when relevant:
+Order by dependency first:
 
-1. Schema/database changes
-2. Backend/server logic
-3. UI using that logic
-4. Aggregated/dashboard views
+1. schema/database changes
+2. shared types/models
+3. backend/server logic
+4. UI that uses that logic
+5. aggregate/dashboard views
+6. polish, validation, and follow-up enhancements
 
-Set priority by dependency first, then PRD source order.
+Then preserve PRD source order where dependencies allow.
 
-### 3) Make acceptance criteria concrete and testable
+## Acceptance criteria rules
 
-Acceptance criteria must be specific and verifiable.
-
-Good:
-
-- Add `status` column to tasks table with default `pending`
-- Filter dropdown options: All, Active, Completed
-- Clicking delete shows a confirmation dialog
-- Typecheck passes
-- Tests pass
-
-Bad:
-
-- Works correctly
-- Good UX
-- Handles edge cases
+Acceptance criteria must be concrete and testable.
 
 Always include:
 
@@ -125,161 +155,67 @@ Include when applicable:
 - `Tests pass` for testable logic
 - `Verify in browser using playwright-cli skill` for UI changes
 
-UI stories are not complete until visually verified.
+Good criteria:
 
-### 4) Field rules
+- `Add status column to tasks table with default 'pending'`
+- `Filter dropdown options are All, Active, and Completed`
+- `Changing status saves immediately`
+- `Clicking delete shows a confirmation dialog`
+- `Typecheck passes`
+
+Bad criteria:
+
+- `Works correctly`
+- `Good UX`
+- `Handles edge cases`
+- `Implement the feature`
+
+UI stories are incomplete unless they include visual/browser verification.
+
+## Field rules
 
 - Use sequential IDs: `US-001`, `US-002`, etc.
 - Derive `branchName` from the feature name in kebab-case.
-- Keep `description` short and based on the PRD title or intro.
-- Set every story to `"passes": false` and `"notes": ""`.
-- Include `filesLikelyTouched` when inferable; exclude files matched by repository `.gitignore`.
+- Keep top-level `description` short and based on the PRD title or intro.
+- Set every story to `"passes": false`.
+- Set every story to `"notes": ""`.
+- Include `filesLikelyTouched` when inferable.
+- Do not include files excluded by repository `.gitignore`.
 - Use `designGuidance` only when useful; otherwise set it to `[]`.
+- Output must be valid JSON with no comments or trailing commas.
 
-## Splitting example
+## Minimal example
 
-Original:
-
-- Add user notification system
-
-Split:
-
-1. Add notifications table
-2. Create notification service
-3. Add notification bell icon
-4. Create notification dropdown
-5. Add mark-as-read action
-6. Add notification preferences page
-
-## Example
-
-Input PRD:
+Input requirement:
 
 ```markdown
-# Task Status Feature
-
-Add ability to mark tasks with different statuses.
-
-## Requirements
-
-- Toggle between pending/in-progress/done on task list
-- Filter list by status
-- Show status badge on each task
-- Persist status in database
+Add task statuses. Users can set a task to pending, in progress, or done, see badges, and filter the task list by status.
 ```
 
-Output:
+Correct split:
 
-```json
-{
-  "project": "TaskApp",
-  "branchName": "task-status",
-  "description": "Task Status Feature - Track task progress with status indicators",
-  "userStories": [
-    {
-      "id": "US-001",
-      "title": "Add status field to tasks table",
-      "description": "As a developer, I need to store task status in the database.",
-      "acceptanceCriteria": [
-        "Add status column: 'pending' | 'in_progress' | 'done' (default 'pending')",
-        "Generate and run migration successfully",
-        "Typecheck passes"
-      ],
-      "filesLikelyTouched": ["src/db/migrations/add-status-to-tasks.ts"],
-      "designGuidance": [
-        {
-          "source": "https://www.prisma.io/docs/concepts/components/prisma-schema/data-model#enum-types",
-          "description": "Use an enum type for the status column.",
-          "rationale": "Enforces valid values."
-        }
-      ],
-      "priority": 1,
-      "passes": false,
-      "notes": ""
-    },
-    {
-      "id": "US-002",
-      "title": "Display status badge on task cards",
-      "description": "As a user, I want to see task status at a glance.",
-      "acceptanceCriteria": [
-        "Each task card shows a status badge",
-        "Badge colors: gray=pending, blue=in_progress, green=done",
-        "Typecheck passes",
-        "Verify in browser using playwright-cli skill"
-      ],
-      "filesLikelyTouched": ["src/components/TaskCard.tsx"],
-      "designGuidance": [
-        {
-          "source": "https://web.dev/articles/color-and-contrast-accessibility",
-          "description": "Ensure badge colors meet accessibility contrast standards.",
-          "rationale": "Users must be able to distinguish statuses."
-        },
-        {
-          "source": "design-system/components/StatusBadge",
-          "description": "Use the existing status badge component.",
-          "rationale": "Keeps UI consistent."
-        }
-      ],
-      "priority": 2,
-      "passes": false,
-      "notes": ""
-    },
-    {
-      "id": "US-003",
-      "title": "Add status toggle to task list rows",
-      "description": "As a user, I want to change task status from the list.",
-      "acceptanceCriteria": [
-        "Each row has a status dropdown or toggle",
-        "Changing status saves immediately",
-        "UI updates without page refresh",
-        "Typecheck passes",
-        "Verify in browser using playwright-cli skill"
-      ],
-      "filesLikelyTouched": ["src/components/TaskListRow.tsx"],
-      "designGuidance": [
-        {
-          "source": "design-system/components/StatusToggle",
-          "description": "Use the existing status toggle component.",
-          "rationale": "Keeps UI consistent."
-        }
-      ],
-      "priority": 3,
-      "passes": false,
-      "notes": ""
-    },
-    {
-      "id": "US-004",
-      "title": "Filter tasks by status",
-      "description": "As a user, I want to filter tasks by status.",
-      "acceptanceCriteria": [
-        "Filter dropdown options: All | Pending | In Progress | Done",
-        "Filter persists in URL params",
-        "Typecheck passes",
-        "Verify in browser using playwright-cli skill"
-      ],
-      "filesLikelyTouched": ["src/components/TaskList.tsx"],
-      "designGuidance": [
-        {
-          "source": "design-system/components/StatusFilter",
-          "description": "Use the existing status filter component.",
-          "rationale": "Keeps UI consistent."
-        }
-      ],
-      "priority": 4,
-      "passes": false,
-      "notes": ""
-    }
-  ]
-}
-```
+1. Add task status schema/migration.
+2. Add backend action to update task status.
+3. Show status badge on task cards.
+4. Add status control to task rows.
+5. Add status filter to task list.
 
-## Final check
+Incorrect:
 
-Before saving, verify:
+1. Implement task statuses.
 
-- [ ] Each story is a small, independent vertical slice
-- [ ] No story depends on a later story
-- [ ] Every story includes `Typecheck passes`
-- [ ] UI stories include `Verify in browser using playwright-cli skill`
-- [ ] `filesLikelyTouched` excludes files matched by repository `.gitignore`
-- [ ] Acceptance criteria are concrete and testable
+## Final check before saving
+
+Verify all are true:
+
+- [ ] The PRD is decomposed into small implementation stories.
+- [ ] No story is just copied from the original PRD.
+- [ ] Each story is narrow, independently verifiable, and implementation-sized.
+- [ ] No story depends on a later-priority story.
+- [ ] Every story has concrete acceptance criteria.
+- [ ] Every story includes `Typecheck passes`.
+- [ ] Every UI story includes `Verify in browser using playwright-cli skill`.
+- [ ] `filesLikelyTouched` excludes ignored files.
+- [ ] JSON is valid and saved to the correct `prd.json` path.
+
+If any story fails this check, split or revise it before saving.
