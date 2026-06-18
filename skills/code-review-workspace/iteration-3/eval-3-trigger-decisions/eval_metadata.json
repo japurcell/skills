@@ -1,0 +1,9 @@
+{
+  "eval_id": 3,
+  "eval_name": "eval-3-trigger-decisions",
+  "prompt": "Read and follow only the skill definition at `<SKILL_PATH>`. Ignore any other installed copy of `code-re...
+  "assertions": [
+    "The JSON marks `review_pr_before_merge`, `review_since_main`, and `harsh_wip_diff_review` as true.",
+    "The JSON marks `write_pr_description`, `implement_feature`, and `review_product_spec_only` as false."
+  ]
+}

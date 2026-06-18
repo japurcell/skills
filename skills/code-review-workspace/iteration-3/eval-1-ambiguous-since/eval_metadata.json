@@ -1,0 +1,8 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-1-ambiguous-since",
+  "prompt": "Read and follow only the skill definition at `<SKILL_PATH>`. Ignore any other installed copy of `code-re...
+  "assertions": [
+    "The output is exactly `Review against what — a branch, a commit, or main?`."
+  ]
+}

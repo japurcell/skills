@@ -1,0 +1,69 @@
+{
+  "skill_name": "code-review",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Read and follow only the skill definition at `<SKILL_PATH>`. Ignore any other installed copy of `code-review`. Do not inspect the repo or GitHub. The user says: `Review PR #482 before merge. Be thermonuclear about maintainability and post the final answer as a PR comment.` Write only a numbered workflow checklist to `outputs/review_plan.md`.",
+      "expected_output": "A PR-review workflow that routes through review skills, uses subagent-only GitHub intake, checks PR eligibility twice, and preserves comment-mode and false-positive rules.",
+      "files": [],
+      "expectations": [
+        "The checklist invokes `subagent-model-router` and `addy-code-review-and-quality`.",
+        "The checklist says the main agent must not read PR or issue content directly and must use `gh` through fast subagents.",
+        "The checklist includes the PR early-stop states and rechecks eligibility before `gh pr comment`.",
+        "The checklist keeps false-positive filtering with scores `75` or `100`."
+      ],
+      "assertions": [
+        "The checklist invokes `subagent-model-router` and `addy-code-review-and-quality`.",
+        "The checklist says the main agent must not read PR or issue content directly and must use `gh` through fast subagents.",
+        "The checklist includes the PR early-stop states and rechecks eligibility before `gh pr comment`.",
+        "The checklist keeps false-positive filtering with scores `75` or `100`."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Read and follow only the skill definition at `<SKILL_PATH>`. Ignore any other installed copy of `code-review`. Do not inspect the repo or GitHub. The user says: `review since Friday`. Write only the exact clarification question to `outputs/question.md`.",
+      "expected_output": "The exact fixed-point clarification question and nothing else.",
+      "files": [],
+      "expectations": [
+        "The output is exactly `Review against what — a branch, a commit, or main?`."
+      ],
+      "assertions": [
+        "The output is exactly `Review against what — a branch, a commit, or main?`."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Read and follow only the skill definition at `<SKILL_PATH>`. Ignore any other installed copy of `code-review`. Do not inspect the repo or GitHub. Assume the review target is the staged diff. The user says: `Review these staged changes from another agent and return machine-readable YAML. There is no spec.` Write only a compact preflight checklist to `outputs/preflight.md`.",
+      "expected_output": "A no-spec fixed-point preflight that preserves required review roles, machine-readable output mode, and no-extra-validation guardrails.",
+      "files": [],
+      "expectations": [
+        "The checklist names `addy-code-reviewer`, `addy-security-auditor`, and `addy-test-engineer`.",
+        "The checklist names maintainability review with `MAINTAINABILITY_CRITERIA.md` and standards review limited to explicit documented rules.",
+        "The checklist records `no spec available` and skips spec review.",
+        "The checklist points machine-readable output to `OUTPUT_FORMATS.md`.",
+        "The checklist says not to run builds, typechecks, linters, or benchmarks unless the user explicitly asks."
+      ],
+      "assertions": [
+        "The checklist names `addy-code-reviewer`, `addy-security-auditor`, and `addy-test-engineer`.",
+        "The checklist names maintainability review with `MAINTAINABILITY_CRITERIA.md` and standards review limited to explicit documented rules.",
+        "The checklist records `no spec available` and skips spec review.",
+        "The checklist points machine-readable output to `OUTPUT_FORMATS.md`.",
+        "The checklist says not to run builds, typechecks, linters, or benchmarks unless the user explicitly asks."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Read and follow only the skill definition at `<SKILL_PATH>`. Ignore any other installed copy of `code-review`. Do not inspect the repo or GitHub. This is a trigger-classification task only, so do not treat current tool or subagent availability as a blocker. Write `outputs/decisions.json` as JSON only with these boolean keys: `review_pr_before_merge`, `review_since_main`, `harsh_wip_diff_review`, `write_pr_description`, `implement_feature`, `review_product_spec_only`. Set each value to whether the skill should trigger for that request, based only on the skill definition.",
+      "expected_output": "A trigger-decision JSON where review tasks return true and near-miss non-review tasks return false.",
+      "files": [],
+      "expectations": [
+        "The JSON marks `review_pr_before_merge`, `review_since_main`, and `harsh_wip_diff_review` as true.",
+        "The JSON marks `write_pr_description`, `implement_feature`, and `review_product_spec_only` as false."
+      ],
+      "assertions": [
+        "The JSON marks `review_pr_before_merge`, `review_since_main`, and `harsh_wip_diff_review` as true.",
+        "The JSON marks `write_pr_description`, `implement_feature`, and `review_product_spec_only` as false."
+      ]
+    }
+  ]
+}

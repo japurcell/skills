@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The checklist invokes `subagent-model-router` and `addy-code-review-and-quality`.",
+      "passed": true,
+      "evidence": "1. Invoke `subagent-model-router` and `addy-code-review-and-quality`, make a todo list, and lock the review target to **PR #482**.\n2. Do GitHub intake through fast subagents only: the main agent must not read PR or issue content directly, and subagents must use `gh` to capture PR eligibility, title/body summary, branch info, changed files, linked issues/specs, and compact issue summaries.\n3. Stop early if intake says the PR is `closed`, `draft`, `review not needed`, or `already reviewed by you`; otherwise continue in PR comment mode.\n4. Gather only relevant standards/context files from the repo root and touched paths, then find the spec in the required order; if none is found, record `no spec available` and skip spec review.\n5. Preflight the required distinct review roles: `addy-code-reviewer`, `addy-security-auditor`, `addy-test-engineer`, maintainability review using `MAINTAINABILITY_CRITERIA.md` with a thermonuclear lens, standards review limited to explicit documented rules, plus spec/history/related-PR/code-comment review where required for a PR.\n6. Run the required review roles in parallel, keeping maintainability findings high-conviction and focused on complexity, wrong-layer logic, duplication, flags, casts, and other regressions introduced by the change.\n7. Filter candidate findings with `FALSE_POSITIVE_RUBRIC.md`, keep only scores `75` or `100`, and require concrete file evidence plus explicit standards-file support for any standards finding.\n8. Prepare the final PR comment exactly per `OUTPUT_FORMATS.md`, keeping it brief, evidence-backed, and limited to issues introduced by or clearly reachable through the PR.\n9. Repeat the PR eligibility check immediately before `gh pr comment`; if still eligible, post the final comment, otherwise stop without commenting.\n"
+    },
+    {
+      "text": "The checklist says the main agent must not read PR or issue content directly and must use `gh` through fast subagents.",
+      "passed": true,
+      "evidence": "1. Invoke `subagent-model-router` and `addy-code-review-and-quality`, make a todo list, and lock the review target to **PR #482**.\n2. Do GitHub intake through fast subagents only: the main agent must not read PR or issue content directly, and subagents must use `gh` to capture PR eligibility, title/body summary, branch info, changed files, linked issues/specs, and compact issue summaries.\n3. Stop early if intake says the PR is `closed`, `draft`, `review not needed`, or `already reviewed by you`; otherwise continue in PR comment mode.\n4. Gather only relevant standards/context files from the repo root and touched paths, then find the spec in the required order; if none is found, record `no spec available` and skip spec review.\n5. Preflight the required distinct review roles: `addy-code-reviewer`, `addy-security-auditor`, `addy-test-engineer`, maintainability review using `MAINTAINABILITY_CRITERIA.md` with a thermonuclear lens, standards review limited to explicit documented rules, plus spec/history/related-PR/code-comment review where required for a PR.\n6. Run the required review roles in parallel, keeping maintainability findings high-conviction and focused on complexity, wrong-layer logic, duplication, flags, casts, and other regressions introduced by the change.\n7. Filter candidate findings with `FALSE_POSITIVE_RUBRIC.md`, keep only scores `75` or `100`, and require concrete file evidence plus explicit standards-file support for any standards finding.\n8. Prepare the final PR comment exactly per `OUTPUT_FORMATS.md`, keeping it brief, evidence-backed, and limited to issues introduced by or clearly reachable through the PR.\n9. Repeat the PR eligibility check immediately before `gh pr comment`; if still eligible, post the final comment, otherwise stop without commenting.\n"
+    },
+    {
+      "text": "The checklist includes the PR early-stop states and rechecks eligibility before `gh pr comment`.",
+      "passed": true,
+      "evidence": "1. Invoke `subagent-model-router` and `addy-code-review-and-quality`, make a todo list, and lock the review target to **PR #482**.\n2. Do GitHub intake through fast subagents only: the main agent must not read PR or issue content directly, and subagents must use `gh` to capture PR eligibility, title/body summary, branch info, changed files, linked issues/specs, and compact issue summaries.\n3. Stop early if intake says the PR is `closed`, `draft`, `review not needed`, or `already reviewed by you`; otherwise continue in PR comment mode.\n4. Gather only relevant standards/context files from the repo root and touched paths, then find the spec in the required order; if none is found, record `no spec available` and skip spec review.\n5. Preflight the required distinct review roles: `addy-code-reviewer`, `addy-security-auditor`, `addy-test-engineer`, maintainability review using `MAINTAINABILITY_CRITERIA.md` with a thermonuclear lens, standards review limited to explicit documented rules, plus spec/history/related-PR/code-comment review where required for a PR.\n6. Run the required review roles in parallel, keeping maintainability findings high-conviction and focused on complexity, wrong-layer logic, duplication, flags, casts, and other regressions introduced by the change.\n7. Filter candidate findings with `FALSE_POSITIVE_RUBRIC.md`, keep only scores `75` or `100`, and require concrete file evidence plus explicit standards-file support for any standards finding.\n8. Prepare the final PR comment exactly per `OUTPUT_FORMATS.md`, keeping it brief, evidence-backed, and limited to issues introduced by or clearly reachable through the PR.\n9. Repeat the PR eligibility check immediately before `gh pr comment`; if still eligible, post the final comment, otherwise stop without commenting.\n"
+    },
+    {
+      "text": "The checklist keeps false-positive filtering with scores `75` or `100`.",
+      "passed": true,
+      "evidence": "1. Invoke `subagent-model-router` and `addy-code-review-and-quality`, make a todo list, and lock the review target to **PR #482**.\n2. Do GitHub intake through fast subagents only: the main agent must not read PR or issue content directly, and subagents must use `gh` to capture PR eligibility, title/body summary, branch info, changed files, linked issues/specs, and compact issue summaries.\n3. Stop early if intake says the PR is `closed`, `draft`, `review not needed`, or `already reviewed by you`; otherwise continue in PR comment mode.\n4. Gather only relevant standards/context files from the repo root and touched paths, then find the spec in the required order; if none is found, record `no spec available` and skip spec review.\n5. Preflight the required distinct review roles: `addy-code-reviewer`, `addy-security-auditor`, `addy-test-engineer`, maintainability review using `MAINTAINABILITY_CRITERIA.md` with a thermonuclear lens, standards review limited to explicit documented rules, plus spec/history/related-PR/code-comment review where required for a PR.\n6. Run the required review roles in parallel, keeping maintainability findings high-conviction and focused on complexity, wrong-layer logic, duplication, flags, casts, and other regressions introduced by the change.\n7. Filter candidate findings with `FALSE_POSITIVE_RUBRIC.md`, keep only scores `75` or `100`, and require concrete file evidence plus explicit standards-file support for any standards finding.\n8. Prepare the final PR comment exactly per `OUTPUT_FORMATS.md`, keeping it brief, evidence-backed, and limited to issues introduced by or clearly reachable through the PR.\n9. Repeat the PR eligibility check immediately before `gh pr comment`; if still eligible, post the final comment, otherwise stop without commenting.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1799,
+    "transcript_chars": 480941
+  },
+  "timing": {
+    "executor_duration_seconds": 49.82,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 49.82
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

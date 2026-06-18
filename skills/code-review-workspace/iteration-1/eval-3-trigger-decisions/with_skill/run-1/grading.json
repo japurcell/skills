@@ -1,0 +1,43 @@
+{
+  "expectations": [
+    {
+      "text": "The JSON marks `review_pr_before_merge`, `review_since_main`, and `harsh_wip_diff_review` as true.",
+      "passed": false,
+      "evidence": "The workspace only contains `session.jsonl`, the request text is truncated after `Do not...`, and there is no repo, P...\n"
+    },
+    {
+      "text": "The JSON marks `write_pr_description`, `implement_feature`, and `review_product_spec_only` as false.",
+      "passed": false,
+      "evidence": "The workspace only contains `session.jsonl`, the request text is truncated after `Do not...`, and there is no repo, P...\n"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 2,
+    "total": 2,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 121,
+    "transcript_chars": 229209
+  },
+  "timing": {
+    "executor_duration_seconds": 30.892,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 30.892
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

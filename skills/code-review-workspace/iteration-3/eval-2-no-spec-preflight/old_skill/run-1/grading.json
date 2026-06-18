@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "The checklist names `addy-code-reviewer`, `addy-security-auditor`, and `addy-test-engineer`.",
+      "passed": false,
+      "evidence": "Per `/home/adam/dev/personal/skills/skills/code-review-workspace/skill-snapshot-old/SKILL.md`, the process requires r...\n"
+    },
+    {
+      "text": "The checklist names maintainability review with `MAINTAINABILITY_CRITERIA.md` and standards review limited to explicit documented rules.",
+      "passed": false,
+      "evidence": "Per `/home/adam/dev/personal/skills/skills/code-review-workspace/skill-snapshot-old/SKILL.md`, the process requires r...\n"
+    },
+    {
+      "text": "The checklist records `no spec available` and skips spec review.",
+      "passed": false,
+      "evidence": "Per `/home/adam/dev/personal/skills/skills/code-review-workspace/skill-snapshot-old/SKILL.md`, the process requires r...\n"
+    },
+    {
+      "text": "The checklist points machine-readable output to `OUTPUT_FORMATS.md`.",
+      "passed": false,
+      "evidence": "Per `/home/adam/dev/personal/skills/skills/code-review-workspace/skill-snapshot-old/SKILL.md`, the process requires r...\n"
+    },
+    {
+      "text": "The checklist says not to run builds, typechecks, linters, or benchmarks unless the user explicitly asks.",
+      "passed": false,
+      "evidence": "Per `/home/adam/dev/personal/skills/skills/code-review-workspace/skill-snapshot-old/SKILL.md`, the process requires r...\n"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 5,
+    "total": 5,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 121,
+    "transcript_chars": 97970
+  },
+  "timing": {
+    "executor_duration_seconds": 25.383,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 25.383
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

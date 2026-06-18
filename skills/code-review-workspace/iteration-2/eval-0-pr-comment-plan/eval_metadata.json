@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "eval-0-pr-comment-plan",
+  "prompt": "Read and follow only the skill definition at `<SKILL_PATH>`. Ignore any other installed copy of `code-re...
+  "assertions": [
+    "The checklist invokes `subagent-model-router` and `addy-code-review-and-quality`.",
+    "The checklist says the main agent must not read PR or issue content directly and must use `gh` through fast suba...
+    "The checklist includes the PR early-stop states and rechecks eligibility before `gh pr comment`.",
+    "The checklist keeps false-positive filtering with scores `75` or `100`."
+  ]
+}

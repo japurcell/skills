@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "skill_name": "code-review",
+    "skill_path": "/home/adam/dev/personal/skills/skills/code-review",
+    "executor_model": "gpt-5.4-mini",
+    "analyzer_model": "gpt-5.4-mini",
+    "timestamp": "2026-06-18T19:25:28Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 43.304,
+        "tokens": 1167,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The checklist invokes `subagent-model-router` and `addy-code-review-and-quality`.",
+          "passed": true,
+          "evidence": "1. Lock the review target to PR #482 and review only that PR's changes.\n2. Invoke `subagent-m...
+        },
+        {
+          "text": "The checklist says the main agent must not read PR or issue content directly and must use `gh` thr...
+          "passed": true,
+          "evidence": "1. Lock the review target to PR #482 and review only that PR's changes.\n2. Invoke `subagent-m...
+... (290 lines truncated)

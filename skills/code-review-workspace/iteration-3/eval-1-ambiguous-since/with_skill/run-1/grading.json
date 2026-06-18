@@ -1,0 +1,38 @@
+{
+  "expectations": [
+    {
+      "text": "The output is exactly `Review against what \u2014 a branch, a commit, or main?`.",
+      "passed": false,
+      "evidence": "**Blocked:** there is no reviewable change scope available from the provided context. I only have `session.jsonl` in ...\n"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 121,
+    "transcript_chars": 242525
+  },
+  "timing": {
+    "executor_duration_seconds": 63.438,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 63.438
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

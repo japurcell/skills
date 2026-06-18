@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The checklist invokes `subagent-model-router` and `addy-code-review-and-quality`.",
+      "passed": false,
+      "evidence": "The request also does not include a concrete review target/scope to set in step 3.\n"
+    },
+    {
+      "text": "The checklist says the main agent must not read PR or issue content directly and must use `gh` through fast subagents.",
+      "passed": false,
+      "evidence": "The request also does not include a concrete review target/scope to set in step 3.\n"
+    },
+    {
+      "text": "The checklist includes the PR early-stop states and rechecks eligibility before `gh pr comment`.",
+      "passed": false,
+      "evidence": "The request also does not include a concrete review target/scope to set in step 3.\n"
+    },
+    {
+      "text": "The checklist keeps false-positive filtering with scores `75` or `100`.",
+      "passed": false,
+      "evidence": "The request also does not include a concrete review target/scope to set in step 3.\n"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 83,
+    "transcript_chars": 169479
+  },
+  "timing": {
+    "executor_duration_seconds": 24.973,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 24.973
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

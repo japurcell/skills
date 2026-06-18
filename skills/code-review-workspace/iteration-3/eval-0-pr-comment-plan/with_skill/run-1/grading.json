@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The checklist invokes `subagent-model-router` and `addy-code-review-and-quality`.",
+      "passed": false,
+      "evidence": "That skill requires assigning and running dedicated review roles (`subagent-model-router`, `addy-code-review-and-qual...\n"
+    },
+    {
+      "text": "The checklist says the main agent must not read PR or issue content directly and must use `gh` through fast subagents.",
+      "passed": false,
+      "evidence": "That skill requires assigning and running dedicated review roles (`subagent-model-router`, `addy-code-review-and-qual...\n"
+    },
+    {
+      "text": "The checklist includes the PR early-stop states and rechecks eligibility before `gh pr comment`.",
+      "passed": false,
+      "evidence": "That skill requires assigning and running dedicated review roles (`subagent-model-router`, `addy-code-review-and-qual...\n"
+    },
+    {
+      "text": "The checklist keeps false-positive filtering with scores `75` or `100`.",
+      "passed": false,
+      "evidence": "That skill requires assigning and running dedicated review roles (`subagent-model-router`, `addy-code-review-and-qual...\n"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 121,
+    "transcript_chars": 718018
+  },
+  "timing": {
+    "executor_duration_seconds": 92.806,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 92.806
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

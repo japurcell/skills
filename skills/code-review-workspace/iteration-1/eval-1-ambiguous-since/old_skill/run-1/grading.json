@@ -1,0 +1,38 @@
+{
+  "expectations": [
+    {
+      "text": "The output is exactly `Review against what \u2014 a branch, a commit, or main?`.",
+      "passed": false,
+      "evidence": "That skill requires dedicated agents and says to **hard-stop** if any are missing, without substituting or manually e...\n"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 121,
+    "transcript_chars": 286321
+  },
+  "timing": {
+    "executor_duration_seconds": 32.311,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 32.311
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

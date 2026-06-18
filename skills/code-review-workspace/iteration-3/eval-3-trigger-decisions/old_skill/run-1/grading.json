@@ -1,0 +1,43 @@
+{
+  "expectations": [
+    {
+      "text": "The JSON marks `review_pr_before_merge`, `review_since_main`, and `harsh_wip_diff_review` as true.",
+      "passed": false,
+      "evidence": "**Blocked:** I followed the specified `SKILL.md` and stopped, because its required-agent rules cannot be satisfied he...\n"
+    },
+    {
+      "text": "The JSON marks `write_pr_description`, `implement_feature`, and `review_product_spec_only` as false.",
+      "passed": false,
+      "evidence": "**Blocked:** I followed the specified `SKILL.md` and stopped, because its required-agent rules cannot be satisfied he...\n"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 2,
+    "total": 2,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 121,
+    "transcript_chars": 149357
+  },
+  "timing": {
+    "executor_duration_seconds": 27.063,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 27.063
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

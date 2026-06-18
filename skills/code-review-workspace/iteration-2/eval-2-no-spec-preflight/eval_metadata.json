@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-2-no-spec-preflight",
+  "prompt": "Read and follow only the skill definition at `<SKILL_PATH>`. Ignore any other installed copy of `code-re...
+  "assertions": [
+    "The checklist names `addy-code-reviewer`, `addy-security-auditor`, and `addy-test-engineer`.",
+    "The checklist names maintainability review with `MAINTAINABILITY_CRITERIA.md` and standards review limited to ex...
+    "The checklist records `no spec available` and skips spec review.",
+    "The checklist points machine-readable output to `OUTPUT_FORMATS.md`.",
+    "The checklist says not to run builds, typechecks, linters, or benchmarks unless the user explicitly asks."
+  ]
+}
