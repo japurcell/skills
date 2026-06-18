@@ -1,0 +1,73 @@
+{
+  "expectations": [
+    {
+      "text": "The rewritten skill keeps the standard anatomy headings.",
+      "passed": true,
+      "evidence": "all anatomy headings present"
+    },
+    {
+      "text": "Returns a commit decision instead of a stop.",
+      "passed": true,
+      "evidence": "commit"
+    },
+    {
+      "text": "Selects only src/invoice/export_csv.py.",
+      "passed": true,
+      "evidence": "['src/invoice/export_csv.py']"
+    },
+    {
+      "text": "Creates a non-main feature branch using issue 123.",
+      "passed": true,
+      "evidence": "feat/123-invoice-csv-export"
+    },
+    {
+      "text": "Uses commit type feat.",
+      "passed": true,
+      "evidence": "feat"
+    },
+    {
+      "text": "Uses commit message shape with Summary, Rationale, Tests, and trailer block.",
+      "passed": true,
+      "evidence": "feat(invoice): add invoice CSV export"
+    },
+    {
+      "text": "Uses Refs #123 and the default Copilot trailer.",
+      "passed": true,
+      "evidence": "feat(invoice): add invoice CSV export\n\nSummary:\n- Add invoice CSV export support in src/invoice/export_csv.py.\nRationale:\n- Support accountants who need invoice data in CSV format.\nTests:\n- not run (dry run fixture)\nRefs #123\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+    },
+    {
+      "text": "Plans a push but no PR.",
+      "passed": true,
+      "evidence": "{\"should_push\": true, \"should_create_pr\": false}"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1411,
+    "transcript_chars": 56381
+  },
+  "timing": {
+    "executor_duration_seconds": 72.3,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 72.3
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "status": "commit",
+  "stop_reason": null,
+  "next_action": "Run git commit to commit the staged changes, then push to the remote and create a pull request.",
+  "branch": "fix/rate-limit-backoff",
+  "branch_action": "keep",
+  "selected_paths": [
+    "src/rate_limit.py",
+    "tests/test_rate_limit.py"
+  ],
+  "commit_type": "fix",
+  "subject": "fix rate-limit retry backoff",
+  "commit_message": "fix: fix rate-limit retry backoff\n\nSummary:\n- Fix retry backoff for rate-limit bug\n- Add test coverage\nRationale:\n- Resolves rate-limiting failure in the bug report\nTests:\n- Run tests/test_rate_limit.py\nFixes #456\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+  "push_requested": false,
+  "should_push": true,
+  "pr_requested": true,
+  "should_create_pr": true,
+  "pr_blocker": null,
+  "pr_title": "fix rate-limit retry backoff",
+  "pr_body": "Summary:\n- fix rate-limit retry backoff\n\nIssues:\nFixes #456"
+}

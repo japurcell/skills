@@ -1,0 +1,18 @@
+{
+  "status": "stop",
+  "stop_reason": "Unstaged changes span multiple top-level directories (src/, docs/), so commit scope is ambiguous.",
+  "next_action": "Ask user to choose which files to commit (or stage the exact intended set), then continue with one commit.",
+  "branch": "feat/report-api",
+  "branch_action": "keep",
+  "selected_paths": [],
+  "commit_type": null,
+  "subject": null,
+  "commit_message": null,
+  "push_requested": false,
+  "should_push": false,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": null,
+  "pr_title": null,
+  "pr_body": null
+}

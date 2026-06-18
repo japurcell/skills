@@ -1,0 +1,18 @@
+{
+  "status": "stop",
+  "stop_reason": "ambiguous_scope: 2 unstaged files in different top-level directories (src/report/api.py, docs/report-api.md); cannot auto-select",
+  "next_action": "ask_user: which files should be included in this commit?",
+  "branch": "feat/report-api",
+  "branch_action": "keep",
+  "selected_paths": null,
+  "commit_type": null,
+  "subject": null,
+  "commit_message": null,
+  "push_requested": false,
+  "should_push": false,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": null,
+  "pr_title": null,
+  "pr_body": null
+}

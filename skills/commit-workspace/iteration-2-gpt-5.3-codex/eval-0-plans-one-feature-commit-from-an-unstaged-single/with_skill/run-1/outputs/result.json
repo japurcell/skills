@@ -1,0 +1,20 @@
+{
+  "status": "commit",
+  "stop_reason": null,
+  "next_action": "Create branch feat/123-invoice-csv-export, stage src/invoice/export_csv.py, create one commit, then push branch.",
+  "branch": "feat/123-invoice-csv-export",
+  "branch_action": "create",
+  "selected_paths": [
+    "src/invoice/export_csv.py"
+  ],
+  "commit_type": "feat",
+  "subject": "add invoice CSV export for accountants",
+  "commit_message": "feat(invoice): add invoice CSV export for accountants\n\nSummary:\n- Add invoice CSV export implementation in src/invoice/export_csv.py.\nRationale:\n- Enable accountants to export invoice data in CSV format.\nTests:\n- not run (dry run)\nRefs #123\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+  "push_requested": true,
+  "should_push": true,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": null,
+  "pr_title": null,
+  "pr_body": null
+}

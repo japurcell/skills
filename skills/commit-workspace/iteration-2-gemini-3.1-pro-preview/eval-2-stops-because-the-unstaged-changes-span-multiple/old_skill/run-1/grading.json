@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Returns a stop decision.",
+      "passed": true,
+      "evidence": "stop"
+    },
+    {
+      "text": "Explains that the file scope is ambiguous.",
+      "passed": true,
+      "evidence": "Unstaged files span multiple top-level directories and must be selected manually."
+    },
+    {
+      "text": "Asks the user which files to commit next.",
+      "passed": true,
+      "evidence": "Ask user which files to commit"
+    },
+    {
+      "text": "Does not plan a push or PR.",
+      "passed": true,
+      "evidence": "{\"should_push\": false, \"should_create_pr\": false}"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1037,
+    "transcript_chars": 14037
+  },
+  "timing": {
+    "executor_duration_seconds": 50.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 50.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

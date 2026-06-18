@@ -12,7 +12,7 @@
         "Returns a commit decision instead of a stop.",
         "Selects only src/invoice/export_csv.py.",
         "Creates a non-main feature branch using issue 123.",
-        "Uses commit type feat and an issue trailer Refs #123.",
+        "Uses commit type feat plus Summary, Rationale, Tests, Refs #123, and the default Copilot trailer.",
         "Plans a push but no PR."
       ]
     },
@@ -27,7 +27,7 @@
         "Returns a commit decision instead of a stop.",
         "Selects only the staged bugfix files and excludes unstaged README noise.",
         "Keeps branch fix/rate-limit-backoff.",
-        "Uses commit type fix and an issue trailer Fixes #456.",
+        "Uses commit type fix plus Summary, Rationale, Tests, Fixes #456, and the default Copilot trailer.",
         "Plans both push and PR creation, with PR title matching the commit subject."
       ]
     },

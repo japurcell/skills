@@ -1,0 +1,6 @@
+{
+  "total_tokens": 3763,
+  "duration_ms": 63594,
+  "total_duration_seconds": 63.6,
+  "token_source": "assistant.message.outputTokens"
+}

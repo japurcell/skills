@@ -49,14 +49,35 @@ def has_required_skill_shape() -> tuple[bool, str]:
 
 def has_commit_message_shape(commit_message: str, commit_type: str, subject: str) -> tuple[bool, str]:
     lines = commit_message.splitlines()
-    if len(lines) < 3:
+    if len(lines) < 8:
         return False, commit_message or "missing commit_message"
-    if lines[0] != f"{commit_type}: {subject}":
+    header_pattern = rf"^{re.escape(commit_type)}(?:\([^)]+\))?: {re.escape(subject)}$"
+    if re.match(header_pattern, lines[0]) is None:
         return False, lines[0]
     if lines[1] != "":
         return False, "missing blank line after subject"
-    if "" in lines[2:]:
+    index = 2
+    for heading in ("Summary:", "Rationale:", "Tests:"):
+        while index < len(lines) and lines[index] == "":
+            index += 1
+        if index >= len(lines) or lines[index] != heading:
+            return False, f"missing {heading}"
+        index += 1
+        bullet_count = 0
+        while index < len(lines) and lines[index].startswith("- "):
+            bullet_count += 1
+            index += 1
+        if bullet_count == 0:
+            return False, f"missing bullet under {heading}"
+    while index < len(lines) and lines[index] == "":
+        index += 1
+    trailer_lines = lines[index:]
+    if not trailer_lines:
+        return False, "missing issue/co-author trailers"
+    if "" in trailer_lines:
         return False, "blank line found inside trailers"
+    if not any(line.startswith("Co-authored-by: ") for line in trailer_lines):
+        return False, "missing Co-authored-by trailer"
     return True, lines[0]
 
 
@@ -128,10 +149,10 @@ def eval_zero(result: dict) -> list[dict]:
             branch or "<missing branch>",
         ),
         expectation("Uses commit type feat.", result.get("commit_type") == "feat", result.get("commit_type", "<missing>")),
-        expectation("Uses commit message shape <type>: <subject> plus trailer block.", commit_ok, commit_evidence),
+        expectation("Uses commit message shape with Summary, Rationale, Tests, and trailer block.", commit_ok, commit_evidence),
         expectation(
             "Uses Refs #123 and the default Copilot trailer.",
-            "Refs #123" in result.get("commit_message", "") and COPILOT_TRAILER in result.get("commit_message", ""),
+            "Summary:" in result.get("commit_message", "") and "Rationale:" in result.get("commit_message", "") and "Tests:" in result.get("commit_message", "") and "Refs #123" in result.get("commit_message", "") and COPILOT_TRAILER in result.get("commit_message", ""),
             result.get("commit_message", "<missing commit_message>"),
         ),
         expectation(
@@ -161,10 +182,10 @@ def eval_one(result: dict) -> list[dict]:
             result.get("branch", "<missing branch>"),
         ),
         expectation("Uses commit type fix.", result.get("commit_type") == "fix", result.get("commit_type", "<missing>")),
-        expectation("Uses commit message shape <type>: <subject> plus trailer block.", commit_ok, commit_evidence),
+        expectation("Uses commit message shape with Summary, Rationale, Tests, and trailer block.", commit_ok, commit_evidence),
         expectation(
             "Uses Fixes #456 and the default Copilot trailer.",
-            "Fixes #456" in result.get("commit_message", "") and COPILOT_TRAILER in result.get("commit_message", ""),
+            "Summary:" in result.get("commit_message", "") and "Rationale:" in result.get("commit_message", "") and "Tests:" in result.get("commit_message", "") and "Fixes #456" in result.get("commit_message", "") and COPILOT_TRAILER in result.get("commit_message", ""),
             result.get("commit_message", "<missing commit_message>"),
         ),
         expectation(

@@ -1,0 +1,73 @@
+{
+  "expectations": [
+    {
+      "text": "Returns a commit decision instead of a stop.",
+      "passed": true,
+      "evidence": "commit"
+    },
+    {
+      "text": "Selects only the staged bugfix files and excludes unstaged README noise.",
+      "passed": true,
+      "evidence": "['src/rate_limit.py', 'tests/test_rate_limit.py']"
+    },
+    {
+      "text": "Keeps branch fix/rate-limit-backoff.",
+      "passed": true,
+      "evidence": "fix/rate-limit-backoff"
+    },
+    {
+      "text": "Uses commit type fix.",
+      "passed": true,
+      "evidence": "fix"
+    },
+    {
+      "text": "Uses commit message shape with Summary, Rationale, Tests, and trailer block.",
+      "passed": true,
+      "evidence": "fix(rate-limit): correct retry backoff and add coverage"
+    },
+    {
+      "text": "Uses Fixes #456 and the default Copilot trailer.",
+      "passed": true,
+      "evidence": "fix(rate-limit): correct retry backoff and add coverage\n\nSummary:\n- Correct the retry backoff logic for rate limiting.\n- Add coverage for the updated behavior.\nRationale:\n- Keep retry timing correct when the rate limit is hit.\nTests:\n- not run (dry run)\nFixes #456\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+    },
+    {
+      "text": "Plans both push and PR creation.",
+      "passed": true,
+      "evidence": "{\"should_push\": true, \"should_create_pr\": true}"
+    },
+    {
+      "text": "Sets the PR title to the commit subject and includes the issue in the body.",
+      "passed": true,
+      "evidence": "{\"pr_title\": \"correct retry backoff and add coverage\", \"subject\": \"correct retry backoff and add coverage\", \"pr_body\": \"Summary:\\n- correct retry backoff and add coverage\\n\\nIssues:\\nFixes #456\"}"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1700,
+    "transcript_chars": 45057
+  },
+  "timing": {
+    "executor_duration_seconds": 56.2,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 56.2
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

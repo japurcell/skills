@@ -1,0 +1,20 @@
+{
+  "status": "commit",
+  "stop_reason": null,
+  "next_action": "Run git checkout -b feat/123-export-csv, git add src/invoice/export_csv.py, git commit -F <file>, and git push",
+  "branch": "feat/123-export-csv",
+  "branch_action": "create",
+  "selected_paths": [
+    "src/invoice/export_csv.py"
+  ],
+  "commit_type": "feat",
+  "subject": "add invoice CSV export support",
+  "commit_message": "feat: add invoice CSV export support\n\nSummary:\n- Adds invoice CSV export support for accountants\nRationale:\n- Implements user request for invoice CSV export\nTests:\n- not run (reason: dry run)\nRefs #123\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+  "push_requested": true,
+  "should_push": true,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": null,
+  "pr_title": null,
+  "pr_body": null
+}

@@ -1,33 +1,25 @@
 ---
 name: commit
-description: Create exactly one well-formed git commit from the current working tree using session history for rationale and summary; can also push the branch or open a PR when asked. Use when the user asks to commit, save, stage, push, or open a PR for current changes and wants safe file selection, branch handling, conventional commit typing, issue trailers, or PR text.
+description: Creates exactly one safe non-interactive git commit from the current worktree and can push or open a PR. Use whenever the user asks to commit, save, stage, push, or open a PR for current changes—even if they only say "save this", "commit my work", or "push this branch"—and when file selection, branch choice, conventional-commit typing, issue trailers, or PR text must be handled safely.
 ---
 
 # Commit
 
 ## Overview
 
-Create exactly one non-interactive, well-formed commit from the current worktree using session history for scope, rationale, and summary. Push only when the user explicitly asks, except when a requested PR requires it.
-
-Honor these inputs when present:
-
-- `issue_numbers`
-- `base_branch` (default `main`)
-- `feature_branch`
-- `co_author` (default `Copilot <223556219+Copilot@users.noreply.github.com>`)
-- `create_pr` (default `false`)
+Create exactly one clean commit from current changes using session history plus git state for scope, rationale, and summary. Push only when the user asks, except a requested PR requires it.
 
 ## When to Use
 
-- User asks to commit current changes, save staged work, or turn the worktree into one clean commit
-- User also wants the branch pushed or a PR opened after the commit
+- User wants current changes committed, saved, staged into one commit, pushed, or turned into a PR
+- User needs help choosing files, branch, commit type/subject, issue trailers, or PR title/body
 - Not for splitting work into multiple commits, rewriting history, or merge/rebase/cherry-pick cleanup
 
 ## Workflow
 
-1. **Read session history** to determine intent, scope, and rationale.
+1. **Read session history** for intent, scope, and rationale.
 
-2. **Inspect first and stop on blockers.** Run:
+2. **Inspect first.** Run:
    - `git status --short --branch`
    - `git diff --cached`
    - `git diff`
@@ -36,72 +28,55 @@ Honor these inputs when present:
    - `git branch --show-current`
    - `git log --oneline -10`
 
-   Stop if: not in a git repo; git author is unset; no changes exist; merge, rebase, or cherry-pick is in progress; conflicts or unmerged paths exist; `HEAD` is detached and no branch will be created; the chosen commit scope is empty; or any required git command fails.
+   Stop if not in a git repo; git author is unset; no changes exist; merge, rebase, or cherry-pick is in progress; conflicts or unmerged paths exist; `HEAD` is detached and no branch will be created; the chosen scope is empty; or a required git command fails.
 
-3. **Parse issues.**
-   - Accept `#123` or `123`
-   - Deduplicate while preserving order
-   - Use `Fixes` only when the user explicitly says fix, close, bug, or bugfix
-   - Otherwise use `Refs`
+3. **Parse inputs and PR intent.**
+   - `issue_numbers`: accept `#123` or `123`; dedupe, keep order
+   - `base_branch`: default `main`
+   - `feature_branch`: prefer local branch, else remote tracking, else create it
+   - `co_author`: default `Copilot <223556219+Copilot@users.noreply.github.com>`
+   - PR is requested when `create_pr=true` or the user explicitly asks
+   - Use `Fixes` only when the user explicitly says fix, close, bug, or bugfix; otherwise use `Refs`
 
 4. **Choose the branch.**
-   - If `feature_branch` is provided: use the local branch if it exists, else the remote tracking branch if it exists, else create it
-   - Otherwise keep the current branch unless it is empty, `base_branch`, `main`, or `master`; in those cases create a branch
+   - If `feature_branch` is provided, reuse or create it
+   - Otherwise keep the current branch unless it is empty, `base_branch`, `main`, or `master`; then create a branch
 
 5. **Choose commit scope.**
    - If staged changes exist, commit staged changes only
-   - Otherwise select, in order:
+   - Otherwise auto-select, in order:
      1. the only changed file
-     2. all changed files if they are all under one top-level directory
+     2. all changed files under one top-level directory
      3. otherwise stop and ask which files to commit
-
-   Before staging or selecting files, verify candidates are not ignored. Never include ignored files, generated artifacts, local state files, traces, videos, screenshots, storage-state files, or scratch outputs unless the user explicitly asks to version them. If staged changes contain generated-looking artifacts, stop and ask.
+   - Never include ignored files, generated artifacts, local state, traces, videos, screenshots, storage-state files, or scratch outputs unless the user explicitly asks. If staged changes contain generated-looking artifacts, stop and ask.
 
 6. **Choose type and subject.**
-   Type precedence:
-   - `docs` for docs-only
-   - `test` for tests-only
-   - `fix` when the user says fix, bug, or bugfix, or the diff clearly fixes an error
-   - `feat` for a clear user-facing capability
-   - `refactor` for structural change without clear behavior change
-   - `perf` for performance work
-   - otherwise `chore`
-
-   Optionally use scope: `<type>(<scope>): <subject>`
-
-   Subject rules:
-   - imperative mood
-   - <= 72 characters
-   - no trailing period
-
-   Subject fallbacks:
-   1. `update <file-basename>`
-   2. `update <directory>`
-   3. `update changed files`
+   - Type precedence: `docs`, `test`, `fix`, `feat`, `refactor`, `perf`, else `chore`
+   - First line may be `<type>: <subject>` or `<type>(<scope>): <subject>`
+   - Subject: imperative, <= 72 characters, no trailing period
+   - Subject fallbacks:
+     1. `update <file-basename>`
+     2. `update <directory>`
+     3. `update changed files`
 
 7. **Create a branch name only when needed.**
-   Format:
-   - `<type>/<issue>-<slug>` if an issue exists
-   - `<type>/<slug>` otherwise
-
-   `slug` preference:
-   1. short summary of selected changes
-   2. single selected file basename without extension
-   3. `worktree-update-YYYYMMDD`
-
-   Use lowercase kebab-case.
+   - Format: `<type>/<issue>-<slug>` or `<type>/<slug>`
+   - `slug` preference:
+     1. short summary of selected changes
+     2. single selected file basename without extension
+     3. `worktree-update-YYYYMMDD`
+   - Use lowercase kebab-case
 
 8. **Build the commit message and commit once.**
-   Format exactly:
+   - Write the message with a here-doc or temp file and use `git commit -F <file>`
+   - Format:
 
    ```text
    <type>(<scope>): <subject>
 
    Summary:
    - <what changed>
-   - <what changed>
    Rationale:
-   - <why>
    - <why>
    Tests:
    - <command or "not run (reason)">
@@ -111,88 +86,72 @@ Honor these inputs when present:
    Co-authored-by: Jane <jane@example.com>
    ```
 
-   Rules:
-   - first line is `<type>(<scope>): <subject>`
-   - include the blank line after the subject
-   - no blank lines between trailer lines
-   - wrap body lines at 72 characters
-   - include the default Copilot trailer unless the user explicitly asks not to
-   - append any extra `co_author` trailer after the Copilot trailer
-   - create the message with a here-doc or temp file and use `git commit -F <file>` so newlines are literal; do not use `-m` with `\n`
-
-   Create exactly one commit. Do not push unless explicitly requested or required for a requested PR.
+   - Keep the blank line after the subject
+   - Keep `Summary`, `Rationale`, and `Tests` in that order with at least one bullet each
+   - Keep issue and co-author trailers contiguous with no blank lines between them
+   - Include the default Copilot trailer unless the user explicitly declines it
+   - Append any extra `co_author` trailer after the Copilot trailer
+   - Create exactly one commit. Do not push yet unless required below
 
 9. **Push or open a PR only when requested.**
-   A PR is requested when `create_pr=true` or the user explicitly asks.
-   - If push was requested, push the working branch
-   - If a PR was requested:
-     - pushing is required even if push was not separately requested
-     - stop if `gh` is missing, unauthenticated, or PR creation is unavailable for the repo
-     - push first if needed
-     - if a PR already exists for the branch, return its URL
-     - otherwise run `gh pr create --base <base_branch> --head <branch> --title ... --body ...`
-     - always pass both `--title` and `--body`
+   - Push only when the user explicitly asks or a PR is requested
+   - For PRs, stop if `gh` is missing, unauthenticated, or unavailable for the repo
+   - Push first if needed
+   - If a PR already exists for the branch, return its URL
+   - Otherwise run `gh pr create --base <base_branch> --head <branch> --title ... --body ...` and always pass both `--title` and `--body`
 
-## PR Body
+## Specific Techniques
 
-With issues:
+- PR body with issues:
 
-```text
-Summary:
-- <commit subject>
-Issues:
-Refs #123
-Fixes #456
-```
+  ```text
+  Summary:
+  - <commit subject>
 
-Without issues:
+  Issues:
+  Refs #123
+  Fixes #456
+  ```
 
-```text
-Summary:
-- <commit subject>
-```
+- PR body without issues:
 
-Rules:
+  ```text
+  Summary:
+  - <commit subject>
+  ```
 
-- PR title = commit subject
-- Omit `Issues:` when there are no issue lines
+- PR title = commit subject; omit `Issues:` when there are no issue lines
+- Return branch name, commit SHA, commit subject, PR URL if created, or exact blocker and next action if stopped
+- For dry runs:
+  - `status=commit` when ready and `status=stop` when blocked
+  - `branch_action=create` when creating a branch, else `branch_action=keep`
+  - `push_requested` means the user explicitly asked for push
+  - `should_push` means push is actually required
 
-## Dry-Run Status
+## Common Rationalizations
 
-For dry runs:
-
-- use `status=commit` when ready and `status=stop` when blocked
-- use `branch_action=create` when creating a branch, else `branch_action=keep`
-- `push_requested` means the user explicitly asked for push
-- `should_push` means push is actually required
-
-## Output
-
-Return:
-
-- branch name
-- commit SHA
-- commit subject
-- PR URL if created
-- exact blocker and next action if stopped
+| Rationalization | Reality |
+| --- | --- |
+| "Everything changed together, so I should commit it all." | Auto-scope only covers staged, single-file, or one-directory cases. Anything broader needs user confirmation. |
+| "The user said push, so staying on main is fine." | Push does not waive branch rules; create a feature branch when current branch is base/main/master. |
+| "Generated artifacts are already staged, so they must be intentional." | Generated or local-state files still need explicit confirmation. |
+| "I can use `-m` with escaped newlines for speed." | Use `git commit -F <file>` so the exact multi-line message survives intact. |
 
 ## Red Flags
 
 - More than one commit is created
-- The branch remains on `main` or `master` when a new branch was required
+- Base branch is reused when a new branch was required
 - Unstaged noise is included when staged changes existed
 - Generated artifacts are committed without confirmation
-- The commit message misses the blank line after the subject or uses the wrong issue verb
+- Commit message misses the blank line after the subject, body section order, or correct issue verb
 
 ## Verification
-
-Before finishing, confirm:
 
 - [ ] Exactly one commit was created, or the run stopped before committing
 - [ ] Scope followed staged, then single-file, then one-directory selection order
 - [ ] Ignored or generated artifacts were excluded unless explicitly requested
-- [ ] Branch choice followed `feature_branch`, current branch, and base-branch rules
-- [ ] Commit message used `<type>(<scope>): <subject>`, included the blank line after the subject, and used the correct issue verb
+- [ ] Branch choice followed `feature_branch`, current-branch, and base-branch rules
+- [ ] Commit message used a conventional first line, `Summary`, `Rationale`, `Tests`, and correct issue/co-author trailers
 - [ ] Copilot trailer was included unless explicitly declined
 - [ ] Push happened only when explicitly requested or required for a requested PR
 - [ ] PR creation used explicit `--title` and `--body`, or reported the exact blocker

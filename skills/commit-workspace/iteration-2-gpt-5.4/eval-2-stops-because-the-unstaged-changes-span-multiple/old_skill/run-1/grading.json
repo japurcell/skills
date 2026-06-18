@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Returns a stop decision.",
+      "passed": true,
+      "evidence": "stop"
+    },
+    {
+      "text": "Explains that the file scope is ambiguous.",
+      "passed": true,
+      "evidence": "Unstaged changes span multiple top-level directories (src, docs). Auto-selection requires a single changed file or one top-level directory, so scope is ambiguous without user confirmation."
+    },
+    {
+      "text": "Asks the user which files to commit next.",
+      "passed": true,
+      "evidence": "Ask which files to include in the commit, or have the user stage the intended scope and re-run. Candidate paths: src/report/api.py, docs/report-api.md."
+    },
+    {
+      "text": "Does not plan a push or PR.",
+      "passed": true,
+      "evidence": "{\"should_push\": false, \"should_create_pr\": false}"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1356,
+    "transcript_chars": 49064
+  },
+  "timing": {
+    "executor_duration_seconds": 46.3,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 46.3
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "status": "commit",
+  "stop_reason": null,
+  "next_action": "Commit staged paths on the current branch, push for the requested PR, then open PR #456.",
+  "branch": "fix/rate-limit-backoff",
+  "branch_action": "keep",
+  "selected_paths": [
+    "src/rate_limit.py",
+    "tests/test_rate_limit.py"
+  ],
+  "commit_type": "fix",
+  "subject": "handle rate-limit backoff",
+  "commit_message": "fix(rate-limit): handle rate-limit backoff\n\nSummary:\n- Fix the retry backoff logic for the rate-limit bug.\n- Add coverage for the updated behavior.\nRationale:\n- Keep retry timing correct when the limit is hit.\nTests:\n- not run (dry run)\nFixes #456\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+  "push_requested": false,
+  "should_push": true,
+  "pr_requested": true,
+  "should_create_pr": true,
+  "pr_blocker": null,
+  "pr_title": "handle rate-limit backoff",
+  "pr_body": "Summary:\n- handle rate-limit backoff\n\nIssues:\nFixes #456"
+}

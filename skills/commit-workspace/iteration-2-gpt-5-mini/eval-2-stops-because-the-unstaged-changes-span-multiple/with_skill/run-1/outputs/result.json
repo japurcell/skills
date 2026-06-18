@@ -1,0 +1,18 @@
+{
+  "status": "stop",
+  "stop_reason": "Unstaged changes span multiple top-level directories (src, docs). Auto-selection requires single file or one top-level directory; user confirmation required.",
+  "next_action": "Ask which files to include or stage desired changes. Suggested choices: ['src/report/api.py', 'docs/report-api.md'].",
+  "branch": "feat/report-api",
+  "branch_action": "keep",
+  "selected_paths": [],
+  "commit_type": null,
+  "subject": null,
+  "commit_message": null,
+  "push_requested": false,
+  "should_push": false,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": null,
+  "pr_title": null,
+  "pr_body": null
+}

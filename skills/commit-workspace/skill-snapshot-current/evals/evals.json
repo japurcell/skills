@@ -1,0 +1,63 @@
+{
+  "skill_name": "commit",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Read the fixture in evals/files/single-file-on-main/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required.",
+      "expected_output": "Plans one feature commit from an unstaged single-file change on main, creates a feature branch, pushes because the user asked, and does not create a PR.",
+      "files": [
+        "evals/files/single-file-on-main/input.json"
+      ],
+      "assertions": [
+        "Returns a commit decision instead of a stop.",
+        "Selects only src/invoice/export_csv.py.",
+        "Creates a non-main feature branch using issue 123.",
+        "Uses commit type feat and an issue trailer Refs #123.",
+        "Plans a push but no PR."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Read the fixture in evals/files/staged-bugfix-pr/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required. pr_title must equal subject, not the full conventional-commit first line.",
+      "expected_output": "Keeps the current bugfix branch, commits only the staged files, uses a fix commit with Fixes #456, and prepares a PR.",
+      "files": [
+        "evals/files/staged-bugfix-pr/input.json"
+      ],
+      "assertions": [
+        "Returns a commit decision instead of a stop.",
+        "Selects only the staged bugfix files and excludes unstaged README noise.",
+        "Keeps branch fix/rate-limit-backoff.",
+        "Uses commit type fix and an issue trailer Fixes #456.",
+        "Plans both push and PR creation, with PR title matching the commit subject."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Read the fixture in evals/files/ambiguous-multi-surface/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required.",
+      "expected_output": "Stops because the unstaged changes span multiple top-level directories and the user did not choose a scope.",
+      "files": [
+        "evals/files/ambiguous-multi-surface/input.json"
+      ],
+      "assertions": [
+        "Returns a stop decision.",
+        "Explains that the file scope is ambiguous.",
+        "Asks the user which files to commit next.",
+        "Does not plan a push or PR."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Read the fixture in evals/files/generated-artifact-stop/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required.",
+      "expected_output": "Stops because the staged set includes generated artifacts that require confirmation before commit.",
+      "files": [
+        "evals/files/generated-artifact-stop/input.json"
+      ],
+      "assertions": [
+        "Returns a stop decision.",
+        "Flags the staged generated artifacts instead of committing them automatically.",
+        "Asks for confirmation before versioning those artifacts.",
+        "Does not plan a push or PR."
+      ]
+    }
+  ]
+}

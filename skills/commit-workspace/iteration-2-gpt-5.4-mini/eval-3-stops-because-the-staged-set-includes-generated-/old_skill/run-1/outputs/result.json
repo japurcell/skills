@@ -1,0 +1,18 @@
+{
+  "status": "stop",
+  "stop_reason": "Staged set includes generated browser artifacts (playwright-report/index.html, test-results/session-flow/video.mp4). Stop and ask for confirmation before committing them.",
+  "next_action": "Unstage or explicitly confirm the generated browser artifacts, then rerun the commit skill.",
+  "branch": "feat/session-audit",
+  "branch_action": "keep",
+  "selected_paths": [],
+  "commit_type": null,
+  "subject": null,
+  "commit_message": null,
+  "push_requested": false,
+  "should_push": false,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": null,
+  "pr_title": null,
+  "pr_body": null
+}

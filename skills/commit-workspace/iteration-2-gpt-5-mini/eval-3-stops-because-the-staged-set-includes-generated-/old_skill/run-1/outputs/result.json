@@ -1,0 +1,22 @@
+{
+  "status": "stop",
+  "stop_reason": "Staged set contains generated artifacts: playwright-report/index.html, test-results/session-flow/video.mp4",
+  "next_action": "Confirm whether to include generated artifacts or unstage them. Reply with 'include generated' to proceed, or unstage the generated files and re-run the commit.",
+  "branch": "feat/session-audit",
+  "branch_action": "keep",
+  "selected_paths": [
+    "src/audit/session_log.py",
+    "playwright-report/index.html",
+    "test-results/session-flow/video.mp4"
+  ],
+  "commit_type": null,
+  "subject": null,
+  "commit_message": null,
+  "push_requested": false,
+  "should_push": false,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": "Staged set contains generated artifacts and requires confirmation before committing.",
+  "pr_title": "",
+  "pr_body": ""
+}

@@ -1,0 +1,20 @@
+{
+  "status": "stop",
+  "stop_reason": "staged set includes generated artifacts (playwright-report/index.html, test-results/session-flow/video.mp4)",
+  "next_action": "Unstage generated files or explicitly confirm including them; then proceed with commit scope.",
+  "branch": "feat/session-audit",
+  "branch_action": "keep",
+  "selected_paths": [
+    "src/audit/session_log.py"
+  ],
+  "commit_type": "",
+  "subject": "",
+  "commit_message": "",
+  "push_requested": false,
+  "should_push": false,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": "generated artifacts are staged and require explicit user confirmation",
+  "pr_title": "",
+  "pr_body": ""
+}

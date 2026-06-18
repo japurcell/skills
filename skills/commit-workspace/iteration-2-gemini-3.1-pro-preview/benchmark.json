@@ -1,0 +1,420 @@
+{
+  "metadata": {
+    "skill_name": "commit",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-18T20:57:39Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 57.4,
+        "tokens": 1499,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The rewritten skill keeps the standard anatomy headings.",
+          "passed": true,
+          "evidence": "all anatomy headings present"
+        },
+        {
+          "text": "Returns a commit decision instead of a stop.",
+          "passed": true,
+          "evidence": "commit"
+        },
+        {
+          "text": "Selects only src/invoice/export_csv.py.",
+          "passed": true,
+          "evidence": "['src/invoice/export_csv.py']"
+        },
+        {
+          "text": "Creates a non-main feature branch using issue 123.",
+          "passed": true,
+          "evidence": "feat/123-export-csv"
+        },
+        {
+          "text": "Uses commit type feat.",
+          "passed": true,
+          "evidence": "feat"
+        },
+        {
+          "text": "Uses commit message shape with Summary, Rationale, Tests, and trailer block.",
+          "passed": true,
+          "evidence": "feat: add invoice CSV export support"
+        },
+        {
+          "text": "Uses Refs #123 and the default Copilot trailer.",
+          "passed": true,
+          "evidence": "feat: add invoice CSV export support\n\nSummary:\n- Adds invoice CSV export support for accountants\nRationale:\n- Implements user request for invoice CSV export\nTests:\n- not run (reason: dry run)\nRefs #123\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+        },
+        {
+          "text": "Plans a push but no PR.",
+          "passed": true,
+          "evidence": "{\"should_push\": true, \"should_create_pr\": false}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 79.7,
+        "tokens": 1837,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Returns a commit decision instead of a stop.",
+          "passed": true,
+          "evidence": "commit"
+        },
+        {
+          "text": "Selects only the staged bugfix files and excludes unstaged README noise.",
+          "passed": true,
+          "evidence": "['src/rate_limit.py', 'tests/test_rate_limit.py']"
+        },
+        {
+          "text": "Keeps branch fix/rate-limit-backoff.",
+          "passed": true,
+          "evidence": "fix/rate-limit-backoff"
+        },
+        {
+          "text": "Uses commit type fix.",
+          "passed": true,
+          "evidence": "fix"
+        },
+        {
+          "text": "Uses commit message shape with Summary, Rationale, Tests, and trailer block.",
+          "passed": true,
+          "evidence": "fix: fix rate-limit retry backoff"
+        },
+        {
+          "text": "Uses Fixes #456 and the default Copilot trailer.",
+          "passed": true,
+          "evidence": "fix: fix rate-limit retry backoff\n\nSummary:\n- Fix retry backoff for rate-limit bug\n- Add test coverage\nRationale:\n- Resolves rate-limiting failure in the bug report\nTests:\n- Run tests/test_rate_limit.py\nFixes #456\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+        },
+        {
+          "text": "Plans both push and PR creation.",
+          "passed": true,
+          "evidence": "{\"should_push\": true, \"should_create_pr\": true}"
+        },
+        {
+          "text": "Sets the PR title to the commit subject and includes the issue in the body.",
+          "passed": true,
+          "evidence": "{\"pr_title\": \"fix rate-limit retry backoff\", \"subject\": \"fix rate-limit retry backoff\", \"pr_body\": \"Summary:\\n- fix rate-limit retry backoff\\n\\nIssues:\\nFixes #456\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "time_seconds": 19.6,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "result.json exists and is valid JSON.",
+          "passed": false,
+          "evidence": "missing or invalid outputs/result.json"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 52.9,
+        "tokens": 1107,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Returns a stop decision.",
+          "passed": true,
+          "evidence": "stop"
+        },
+        {
+          "text": "Flags generated artifacts instead of committing them automatically.",
+          "passed": true,
+          "evidence": "Staged changes contain generated-looking artifacts (playwright-report/index.html, test-results/session-flow/video.mp4)."
+        },
+        {
+          "text": "Asks for confirmation before versioning those artifacts.",
+          "passed": true,
+          "evidence": "Ask the user if they want to commit these generated artifacts or unstage them."
+        },
+        {
+          "text": "Does not plan a push or PR.",
+          "passed": true,
+          "evidence": "{\"should_push\": false, \"should_create_pr\": false}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 53.5,
+        "tokens": 1395,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The rewritten skill keeps the standard anatomy headings.",
+          "passed": true,
+          "evidence": "all anatomy headings present"
+        },
+        {
+          "text": "Returns a commit decision instead of a stop.",
+          "passed": true,
+          "evidence": "commit"
+        },
+        {
+          "text": "Selects only src/invoice/export_csv.py.",
+          "passed": true,
+          "evidence": "['src/invoice/export_csv.py']"
+        },
+        {
+          "text": "Creates a non-main feature branch using issue 123.",
+          "passed": true,
+          "evidence": "feat/123-invoice-csv-export"
+        },
+        {
+          "text": "Uses commit type feat.",
+          "passed": true,
+          "evidence": "feat"
+        },
+        {
+          "text": "Uses commit message shape with Summary, Rationale, Tests, and trailer block.",
+          "passed": true,
+          "evidence": "feat: add invoice CSV export"
+        },
+        {
+          "text": "Uses Refs #123 and the default Copilot trailer.",
+          "passed": true,
+          "evidence": "feat: add invoice CSV export\n\nSummary:\n- Adds invoice CSV export support for accountants.\nRationale:\n- Required to fulfill the user request for the invoice CSV export work.\nTests:\n- not run (reason: dry run)\nRefs #123\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+        },
+        {
+          "text": "Plans a push but no PR.",
+          "passed": true,
+          "evidence": "{\"should_push\": true, \"should_create_pr\": false}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 67.4,
+        "tokens": 1534,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Returns a commit decision instead of a stop.",
+          "passed": true,
+          "evidence": "commit"
+        },
+        {
+          "text": "Selects only the staged bugfix files and excludes unstaged README noise.",
+          "passed": true,
+          "evidence": "['src/rate_limit.py', 'tests/test_rate_limit.py']"
+        },
+        {
+          "text": "Keeps branch fix/rate-limit-backoff.",
+          "passed": true,
+          "evidence": "fix/rate-limit-backoff"
+        },
+        {
+          "text": "Uses commit type fix.",
+          "passed": true,
+          "evidence": "fix"
+        },
+        {
+          "text": "Uses commit message shape with Summary, Rationale, Tests, and trailer block.",
+          "passed": true,
+          "evidence": "fix: update retry backoff"
+        },
+        {
+          "text": "Uses Fixes #456 and the default Copilot trailer.",
+          "passed": true,
+          "evidence": "fix: update retry backoff\n\nSummary:\n- Fix the retry backoff logic\n- Add test coverage\nRationale:\n- Resolve rate-limit bug\nTests:\n- not run\nFixes #456\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\n"
+        },
+        {
+          "text": "Plans both push and PR creation.",
+          "passed": true,
+          "evidence": "{\"should_push\": true, \"should_create_pr\": true}"
+        },
+        {
+          "text": "Sets the PR title to the commit subject and includes the issue in the body.",
+          "passed": true,
+          "evidence": "{\"pr_title\": \"update retry backoff\", \"subject\": \"update retry backoff\", \"pr_body\": \"Summary:\\n- update retry backoff\\nIssues:\\nFixes #456\\n\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 50.4,
+        "tokens": 1037,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Returns a stop decision.",
+          "passed": true,
+          "evidence": "stop"
+        },
+        {
+          "text": "Explains that the file scope is ambiguous.",
+          "passed": true,
+          "evidence": "Unstaged files span multiple top-level directories and must be selected manually."
+        },
+        {
+          "text": "Asks the user which files to commit next.",
+          "passed": true,
+          "evidence": "Ask user which files to commit"
+        },
+        {
+          "text": "Does not plan a push or PR.",
+          "passed": true,
+          "evidence": "{\"should_push\": false, \"should_create_pr\": false}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "time_seconds": 20.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "result.json exists and is valid JSON.",
+          "passed": false,
+          "evidence": "missing or invalid outputs/result.json"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.75,
+        "stddev": 0.5,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 52.4,
+        "stddev": 24.8085,
+        "min": 19.6,
+        "max": 79.7
+      },
+      "tokens": {
+        "mean": 1110.75,
+        "stddev": 798.3226,
+        "min": 0,
+        "max": 1837
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.75,
+        "stddev": 0.5,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 47.825,
+        "stddev": 19.9687,
+        "min": 20.0,
+        "max": 67.4
+      },
+      "tokens": {
+        "mean": 991.5,
+        "stddev": 693.364,
+        "min": 0,
+        "max": 1534
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+4.6",
+      "tokens": "+119"
+    }
+  },
+  "notes": []
+}

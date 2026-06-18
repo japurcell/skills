@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "Returns a stop decision.",
+      "passed": true,
+      "evidence": "stop"
+    },
+    {
+      "text": "Flags generated artifacts instead of committing them automatically.",
+      "passed": true,
+      "evidence": "Staged set includes generated browser artifacts (playwright-report/index.html, test-results/session-flow/video.mp4). Stop and ask for confirmation before committing them."
+    },
+    {
+      "text": "Asks for confirmation before versioning those artifacts.",
+      "passed": true,
+      "evidence": "Unstage or explicitly confirm the generated browser artifacts, then rerun the commit skill."
+    },
+    {
+      "text": "Does not plan a push or PR.",
+      "passed": true,
+      "evidence": "{\"should_push\": false, \"should_create_pr\": false}"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 885,
+    "transcript_chars": 52386
+  },
+  "timing": {
+    "executor_duration_seconds": 47.1,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 47.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

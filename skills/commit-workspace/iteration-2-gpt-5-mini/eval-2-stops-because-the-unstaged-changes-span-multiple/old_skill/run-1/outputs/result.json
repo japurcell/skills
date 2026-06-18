@@ -1,0 +1,18 @@
+{
+  "status": "stop",
+  "stop_reason": "unstaged changes span multiple top-level directories (src and docs); selection required",
+  "next_action": "Ask user which files to include in the commit: 'src/report/api.py', 'docs/report-api.md', or both. User may stage desired files and rerun.",
+  "branch": "feat/report-api",
+  "branch_action": "keep",
+  "selected_paths": [],
+  "commit_type": null,
+  "subject": null,
+  "commit_message": null,
+  "push_requested": false,
+  "should_push": false,
+  "pr_requested": false,
+  "should_create_pr": false,
+  "pr_blocker": "file-selection required: unstaged changes span multiple top-level directories",
+  "pr_title": null,
+  "pr_body": null
+}

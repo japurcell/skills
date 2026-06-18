@@ -1,0 +1,21 @@
+{
+  "status": "commit",
+  "stop_reason": null,
+  "next_action": "Commit staged paths on the current branch, push because PR creation was requested, then open PR #456.",
+  "branch": "fix/rate-limit-backoff",
+  "branch_action": "keep",
+  "selected_paths": [
+    "src/rate_limit.py",
+    "tests/test_rate_limit.py"
+  ],
+  "commit_type": "fix",
+  "subject": "correct retry backoff and add coverage",
+  "commit_message": "fix(rate-limit): correct retry backoff and add coverage\n\nSummary:\n- Correct the retry backoff logic for rate limiting.\n- Add coverage for the updated behavior.\nRationale:\n- Keep retry timing correct when the rate limit is hit.\nTests:\n- not run (dry run)\nFixes #456\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+  "push_requested": false,
+  "should_push": true,
+  "pr_requested": true,
+  "should_create_pr": true,
+  "pr_blocker": null,
+  "pr_title": "correct retry backoff and add coverage",
+  "pr_body": "Summary:\n- correct retry backoff and add coverage\n\nIssues:\nFixes #456"
+}
