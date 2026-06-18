@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Repo: `evals/files/react-router-fixture/`\n- Dependencies from `package.json`:\n  - `react-router-dom`: `7.6.2`\n  - `react`: `^19.0.0`\n- Target file `src/nav.ts` currently uses `useHistory` + `history.push`.\n\nOFFICIAL SOURCES\n- React Router v7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate\n- React Router v7.6.2 declarative navigation guide: https://reactrouter.com/7.6.2/start/declarative/navigating\n- React Router v7.6.2 docs home/versioned nav (version context): https://reactrouter.com/7.6.2/home\n\nIMPLEMENTATION NOTES\n- For React Router `7.6.2`, official docs describe programmatic navigation via `useNavigate`, not `useHistory`.\n- Documented pattern is: get `navigate` from `useNavigate()` and call `navigate(\"/checkout\")` (or `navigate(\"/checkout\", { replace: true })` if replace semantics required).\n- This request asked for no code changes, so guidance only: `src/nav.ts` should be migrated from history API usage to `useNavigate` pattern per v7.6.2 docs.\n\nUNVERIFIED\n- Import path conventions in cited v7.6.2 docs show examples from `\"react-router\"`; this fixture depends on `\"react-router-dom\"`. The provided fixture context does not include additional project conventions to resolve whether import paths should be standardized now, so only the hook/API migration (`useHistory` \u2192 `useNavigate`) is fully verified here.\n"
+    },
+    {
+      "text": "The report detects `react-router-dom` version `7.6.2`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Repo: `evals/files/react-router-fixture/`\n- Dependencies from `package.json`:\n  - `react-router-dom`: `7.6.2`\n  - `react`: `^19.0.0`\n- Target file `src/nav.ts` currently uses `useHistory` + `history.push`.\n\nOFFICIAL SOURCES\n- React Router v7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate\n- React Router v7.6.2 declarative navigation guide: https://reactrouter.com/7.6.2/start/declarative/navigating\n- React Router v7.6.2 docs home/versioned nav (version context): https://reactrouter.com/7.6.2/home\n\nIMPLEMENTATION NOTES\n- For React Router `7.6.2`, official docs describe programmatic navigation via `useNavigate`, not `useHistory`.\n- Documented pattern is: get `navigate` from `useNavigate()` and call `navigate(\"/checkout\")` (or `navigate(\"/checkout\", { replace: true })` if replace semantics required).\n- This request asked for no code changes, so guidance only: `src/nav.ts` should be migrated from history API usage to `useNavigate` pattern per v7.6.2 docs.\n\nUNVERIFIED\n- Import path conventions in cited v7.6.2 docs show examples from `\"react-router\"`; this fixture depends on `\"react-router-dom\"`. The provided fixture context does not include additional project conventions to resolve whether import paths should be standardized now, so only the hook/API migration (`useHistory` \u2192 `useNavigate`) is fully verified here.\n"
+    },
+    {
+      "text": "The report cites an official `reactrouter.com` source.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Repo: `evals/files/react-router-fixture/`\n- Dependencies from `package.json`:\n  - `react-router-dom`: `7.6.2`\n  - `react`: `^19.0.0`\n- Target file `src/nav.ts` currently uses `useHistory` + `history.push`.\n\nOFFICIAL SOURCES\n- React Router v7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate\n- React Router v7.6.2 declarative navigation guide: https://reactrouter.com/7.6.2/start/declarative/navigating\n- React Router v7.6.2 docs home/versioned nav (version context): https://reactrouter.com/7.6.2/home\n\nIMPLEMENTATION NOTES\n- For React Router `7.6.2`, official docs describe programmatic navigation via `useNavigate`, not `useHistory`.\n- Documented pattern is: get `navigate` from `useNavigate()` and call `navigate(\"/checkout\")` (or `navigate(\"/checkout\", { replace: true })` if replace semantics required).\n- This request asked for no code changes, so guidance only: `src/nav.ts` should be migrated from history API usage to `useNavigate` pattern per v7.6.2 docs.\n\nUNVERIFIED\n- Import path conventions in cited v7.6.2 docs show examples from `\"react-router\"`; this fixture depends on `\"react-router-dom\"`. The provided fixture context does not include additional project conventions to resolve whether import paths should be standardized now, so only the hook/API migration (`useHistory` \u2192 `useNavigate`) is fully verified here.\n"
+    },
+    {
+      "text": "The implementation notes recommend `useNavigate`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Repo: `evals/files/react-router-fixture/`\n- Dependencies from `package.json`:\n  - `react-router-dom`: `7.6.2`\n  - `react`: `^19.0.0`\n- Target file `src/nav.ts` currently uses `useHistory` + `history.push`.\n\nOFFICIAL SOURCES\n- React Router v7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate\n- React Router v7.6.2 declarative navigation guide: https://reactrouter.com/7.6.2/start/declarative/navigating\n- React Router v7.6.2 docs home/versioned nav (version context): https://reactrouter.com/7.6.2/home\n\nIMPLEMENTATION NOTES\n- For React Router `7.6.2`, official docs describe programmatic navigation via `useNavigate`, not `useHistory`.\n- Documented pattern is: get `navigate` from `useNavigate()` and call `navigate(\"/checkout\")` (or `navigate(\"/checkout\", { replace: true })` if replace semantics required).\n- This request asked for no code changes, so guidance only: `src/nav.ts` should be migrated from history API usage to `useNavigate` pattern per v7.6.2 docs.\n\nUNVERIFIED\n- Import path conventions in cited v7.6.2 docs show examples from `\"react-router\"`; this fixture depends on `\"react-router-dom\"`. The provided fixture context does not include additional project conventions to resolve whether import paths should be standardized now, so only the hook/API migration (`useHistory` \u2192 `useNavigate`) is fully verified here.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1374,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

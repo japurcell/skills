@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision appends the implementer `Progress block` before acting on it.",
+      "passed": true,
+      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this `mode: review_fix` change, rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass.\n"
+    },
+    {
+      "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+      "passed": true,
+      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this `mode: review_fix` change, rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass.\n"
+    },
+    {
+      "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+      "passed": true,
+      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this `mode: review_fix` change, rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 317,
+    "transcript_chars": 210236
+  },
+  "timing": {
+    "executor_duration_seconds": 32.9,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 32.9
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

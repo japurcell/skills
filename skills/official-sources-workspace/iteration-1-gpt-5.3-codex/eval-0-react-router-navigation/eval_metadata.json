@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "react-router-navigation",
+  "prompt": "Use the skill under test for the fixture repo in `evals/files/react-router-fixture/`. The user asks: `I need current React Router guidance for programmatic navigation in src/nav.ts. Do not change code. Detect the stack and version from project files, verify against official docs, and write only outputs/report.md with sections STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED.`",
+  "assertions": [
+    "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+    "The report detects `react-router-dom` version `7.6.2`.",
+    "The report cites an official `reactrouter.com` source.",
+    "The implementation notes recommend `useNavigate`."
+  ]
+}

@@ -1,0 +1,13 @@
+## Codebase Patterns
+- Search index issues often involve race conditions and targeted tests.
+
+## 2026-06-10T12:10:00Z - FINALIZATION
+- Role: reviewer
+- Summary: Review still finds stale document race after latest fix.
+- Files changed/reviewed: src/search_index.py, tests/test_search_index.py
+- Verification or outcome: Review fix required. review-fix iteration count = 3
+- **Learnings for future iterations:**
+  - Current final state is still not clean.
+  - Review-fix loop reached cap.
+  - Human decision now required.
+---

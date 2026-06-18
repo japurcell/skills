@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The report says the FooSDK version is missing or unclear.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Python project\n- `requirements.txt` lists `foosdk` with no version specifier\n- `src/auth_flow.py` imports `Client` from `foosdk`\n\nOFFICIAL SOURCES\n- No official FooSDK documentation source was provided in the repo.\n- No version-specific FooSDK documentation could be verified from project files.\n\nIMPLEMENTATION NOTES\n- I cannot recommend a current auth middleware pattern for FooSDK without an exact SDK version and an official source for that version.\n- Any concrete middleware recommendation here would be a guess.\n\nUNVERIFIED\n- Version missing for `foosdk`.\n- Official documentation for this internal SDK was not available from the provided files, so the pattern cannot be verified.\n"
+    },
+    {
+      "text": "The report asks for the exact version instead of guessing.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Python project\n- `requirements.txt` lists `foosdk` with no version specifier\n- `src/auth_flow.py` imports `Client` from `foosdk`\n\nOFFICIAL SOURCES\n- No official FooSDK documentation source was provided in the repo.\n- No version-specific FooSDK documentation could be verified from project files.\n\nIMPLEMENTATION NOTES\n- I cannot recommend a current auth middleware pattern for FooSDK without an exact SDK version and an official source for that version.\n- Any concrete middleware recommendation here would be a guess.\n\nUNVERIFIED\n- Version missing for `foosdk`.\n- Official documentation for this internal SDK was not available from the provided files, so the pattern cannot be verified.\n"
+    },
+    {
+      "text": "The report marks the pattern `UNVERIFIED`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Python project\n- `requirements.txt` lists `foosdk` with no version specifier\n- `src/auth_flow.py` imports `Client` from `foosdk`\n\nOFFICIAL SOURCES\n- No official FooSDK documentation source was provided in the repo.\n- No version-specific FooSDK documentation could be verified from project files.\n\nIMPLEMENTATION NOTES\n- I cannot recommend a current auth middleware pattern for FooSDK without an exact SDK version and an official source for that version.\n- Any concrete middleware recommendation here would be a guess.\n\nUNVERIFIED\n- Version missing for `foosdk`.\n- Official documentation for this internal SDK was not available from the provided files, so the pattern cannot be verified.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 704,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

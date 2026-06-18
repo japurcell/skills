@@ -1,0 +1,14 @@
+{
+  "stories": [
+    {
+      "id": "story-billing-retry",
+      "title": "Billing retry covers duplicate charge edge case",
+      "priority": 1,
+      "passes": false,
+      "requirements": [
+        "Handle duplicate charge retries safely",
+        "Add regression coverage for duplicate charge path"
+      ]
+    }
+  ]
+}

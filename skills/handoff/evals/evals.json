@@ -1,0 +1,83 @@
+{
+  "skill_name": "handoff",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use the handoff skill on the fixture repo in `evals/files/root-create-fixture/`. Treat `session_notes.md`, `plans/refresh-plan.md`, `logs/test-failure.txt`, `src/auth_refresh.py`, and `tests/test_auth_refresh.py` as the relevant session artifacts. Copy the fixture repo to `outputs/repo/`, create a handoff for the next session, and write `outputs/result.json` with `written_path`, `scope`, and `next_step`. The user says: `save this for later; next agent should finish auth refresh retry backoff and keep the flaky token out of any notes.` Do not ask follow-up questions.",
+      "expected_output": "Creates a root-scoped handoff with goal, status, next step, relevant artifacts, and redaction of the secret token.",
+      "files": [
+        "evals/files/root-create-fixture/session_notes.md",
+        "evals/files/root-create-fixture/plans/refresh-plan.md",
+        "evals/files/root-create-fixture/logs/test-failure.txt",
+        "evals/files/root-create-fixture/src/auth_refresh.py",
+        "evals/files/root-create-fixture/tests/test_auth_refresh.py"
+      ],
+      "expectations": [
+        "outputs/repo/.agents/scratchpad/handoff.md is created.",
+        "The handoff captures goal, status, and exact next step.",
+        "The handoff names `src/auth_refresh.py`, `tests/test_auth_refresh.py`, and `logs/test-failure.txt`.",
+        "The handoff includes the retry-backoff focus and redacts the secret token.",
+        "outputs/result.json reports the root-scoped handoff path and next step."
+      ],
+      "assertions": [
+        "outputs/repo/.agents/scratchpad/handoff.md is created.",
+        "The handoff captures goal, status, and exact next step.",
+        "The handoff names `src/auth_refresh.py`, `tests/test_auth_refresh.py`, and `logs/test-failure.txt`.",
+        "The handoff includes the retry-backoff focus and redacts the secret token.",
+        "outputs/result.json reports the root-scoped handoff path and next step."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Use the handoff skill on the fixture repo in `evals/files/feature-update-fixture/`. Copy the repo to `outputs/repo/`. There is an existing feature-scoped handoff at `.agents/scratchpad/payments/handoff.md`; update it in place using `session_notes.md`, `reports/benchmark.txt`, `src/payment_retry.py`, and `tests/test_payment_retry.py`. Write `outputs/result.json` with `written_path`, `scope`, and `next_step`. The user says: `handoff to next agent; focus on retry metrics and docs.` Do not ask follow-up questions.",
+      "expected_output": "Updates the existing feature-scoped handoff in place, removes stale duplicate guidance, and shifts focus to retry metrics and docs.",
+      "files": [
+        "evals/files/feature-update-fixture/.agents/scratchpad/payments/handoff.md",
+        "evals/files/feature-update-fixture/session_notes.md",
+        "evals/files/feature-update-fixture/reports/benchmark.txt",
+        "evals/files/feature-update-fixture/src/payment_retry.py",
+        "evals/files/feature-update-fixture/tests/test_payment_retry.py"
+      ],
+      "expectations": [
+        "outputs/repo/.agents/scratchpad/payments/handoff.md is updated in place.",
+        "The updated handoff includes retry-metrics and docs focus.",
+        "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
+        "The stale `inspect legacy YAML toggles` step is removed.",
+        "outputs/result.json reports the feature-scoped handoff path."
+      ],
+      "assertions": [
+        "outputs/repo/.agents/scratchpad/payments/handoff.md is updated in place.",
+        "The updated handoff includes retry-metrics and docs focus.",
+        "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
+        "The stale `inspect legacy YAML toggles` step is removed.",
+        "outputs/result.json reports the feature-scoped handoff path."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use the handoff skill on the fixture repo in `evals/files/fallback-noise-fixture/`. Copy the repo to `outputs/repo/`. The user says: `write this to docs/handoff.md so I can find it later. We were debugging sync retries; next time start with the failing integration test.` Use `session_notes.md`, `logs/retry.log`, `diffs/patch.diff`, `src/sync_retry.py`, and `tests/test_sync_retry.py` as the relevant artifacts. Create or update the handoff, write `outputs/result.json` with `written_path`, `scope`, and `next_step`, and do not ask follow-up questions.",
+      "expected_output": "Falls back to an allowed root handoff, references noisy artifacts by path instead of pasting them, and keeps the handoff concise.",
+      "files": [
+        "evals/files/fallback-noise-fixture/session_notes.md",
+        "evals/files/fallback-noise-fixture/logs/retry.log",
+        "evals/files/fallback-noise-fixture/diffs/patch.diff",
+        "evals/files/fallback-noise-fixture/src/sync_retry.py",
+        "evals/files/fallback-noise-fixture/tests/test_sync_retry.py"
+      ],
+      "expectations": [
+        "outputs/repo/.agents/scratchpad/handoff.md is created.",
+        "`outputs/repo/docs/handoff.md` is not created.",
+        "The handoff references `logs/retry.log` and `diffs/patch.diff` by path.",
+        "The handoff stays concise and does not expose the secret token or raw stack frame spam.",
+        "outputs/result.json reports the root-scoped fallback path."
+      ],
+      "assertions": [
+        "outputs/repo/.agents/scratchpad/handoff.md is created.",
+        "`outputs/repo/docs/handoff.md` is not created.",
+        "The handoff references `logs/retry.log` and `diffs/patch.diff` by path.",
+        "The handoff stays concise and does not expose the secret token or raw stack frame spam.",
+        "outputs/result.json reports the root-scoped fallback path."
+      ]
+    }
+  ]
+}

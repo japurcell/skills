@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The conflict note detects `next` version `15.3.1`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1 from package.json\n- React ^19.0.0 from package.json\n\nOFFICIAL SOURCES\n- App Router useRouter: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n- Pages Router useRouter: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n- App Router migration guide: https://nextjs.org/docs/15/app/guides/migrating/app-router-migration\n\nCONFLICT\n- Existing code in src/use-dashboard-router.ts imports useRouter from next/router, which matches Next.js Pages Router docs.\n- Current official App Router docs say: \"The useRouter hook should be imported from next/navigation and not next/router when using the App Router\".\n- Next.js 15 docs also say pages and app can coexist during migration, so correct import depends on which router this helper is meant to serve.\n- Fixture repo does not include app/ or pages/ directories, so router mode is not verifiable from codebase as given.\n\nWHAT THIS MEANS FOR src/use-dashboard-router.ts\n- If helper is for Pages Router, current code pattern is still documented: import { useRouter } from next/router.\n- If helper is for App Router or migration target, current docs require switching to import { useRouter } from next/navigation.\n\nRECOMMENDED NEXT DECISION\n- Choose one explicitly before changing code:\n  1. Keep Pages Router pattern (next/router) because helper serves pages routes.\n  2. Migrate helper to App Router pattern (next/navigation) because helper serves app routes.\n\nUNVERIFIED\n- Exact patch-level docs for 15.3.1 were not available; official Next 15 docs currently resolve to 15.5.19, which is closest official version stream.\n"
+    },
+    {
+      "text": "The conflict note cites an official `nextjs.org` source.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1 from package.json\n- React ^19.0.0 from package.json\n\nOFFICIAL SOURCES\n- App Router useRouter: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n- Pages Router useRouter: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n- App Router migration guide: https://nextjs.org/docs/15/app/guides/migrating/app-router-migration\n\nCONFLICT\n- Existing code in src/use-dashboard-router.ts imports useRouter from next/router, which matches Next.js Pages Router docs.\n- Current official App Router docs say: \"The useRouter hook should be imported from next/navigation and not next/router when using the App Router\".\n- Next.js 15 docs also say pages and app can coexist during migration, so correct import depends on which router this helper is meant to serve.\n- Fixture repo does not include app/ or pages/ directories, so router mode is not verifiable from codebase as given.\n\nWHAT THIS MEANS FOR src/use-dashboard-router.ts\n- If helper is for Pages Router, current code pattern is still documented: import { useRouter } from next/router.\n- If helper is for App Router or migration target, current docs require switching to import { useRouter } from next/navigation.\n\nRECOMMENDED NEXT DECISION\n- Choose one explicitly before changing code:\n  1. Keep Pages Router pattern (next/router) because helper serves pages routes.\n  2. Migrate helper to App Router pattern (next/navigation) because helper serves app routes.\n\nUNVERIFIED\n- Exact patch-level docs for 15.3.1 were not available; official Next 15 docs currently resolve to 15.5.19, which is closest official version stream.\n"
+    },
+    {
+      "text": "The conflict note names both `next/navigation` and `next/router`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1 from package.json\n- React ^19.0.0 from package.json\n\nOFFICIAL SOURCES\n- App Router useRouter: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n- Pages Router useRouter: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n- App Router migration guide: https://nextjs.org/docs/15/app/guides/migrating/app-router-migration\n\nCONFLICT\n- Existing code in src/use-dashboard-router.ts imports useRouter from next/router, which matches Next.js Pages Router docs.\n- Current official App Router docs say: \"The useRouter hook should be imported from next/navigation and not next/router when using the App Router\".\n- Next.js 15 docs also say pages and app can coexist during migration, so correct import depends on which router this helper is meant to serve.\n- Fixture repo does not include app/ or pages/ directories, so router mode is not verifiable from codebase as given.\n\nWHAT THIS MEANS FOR src/use-dashboard-router.ts\n- If helper is for Pages Router, current code pattern is still documented: import { useRouter } from next/router.\n- If helper is for App Router or migration target, current docs require switching to import { useRouter } from next/navigation.\n\nRECOMMENDED NEXT DECISION\n- Choose one explicitly before changing code:\n  1. Keep Pages Router pattern (next/router) because helper serves pages routes.\n  2. Migrate helper to App Router pattern (next/navigation) because helper serves app routes.\n\nUNVERIFIED\n- Exact patch-level docs for 15.3.1 were not available; official Next 15 docs currently resolve to 15.5.19, which is closest official version stream.\n"
+    },
+    {
+      "text": "The conflict note asks which path to follow or presents explicit options.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1 from package.json\n- React ^19.0.0 from package.json\n\nOFFICIAL SOURCES\n- App Router useRouter: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n- Pages Router useRouter: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n- App Router migration guide: https://nextjs.org/docs/15/app/guides/migrating/app-router-migration\n\nCONFLICT\n- Existing code in src/use-dashboard-router.ts imports useRouter from next/router, which matches Next.js Pages Router docs.\n- Current official App Router docs say: \"The useRouter hook should be imported from next/navigation and not next/router when using the App Router\".\n- Next.js 15 docs also say pages and app can coexist during migration, so correct import depends on which router this helper is meant to serve.\n- Fixture repo does not include app/ or pages/ directories, so router mode is not verifiable from codebase as given.\n\nWHAT THIS MEANS FOR src/use-dashboard-router.ts\n- If helper is for Pages Router, current code pattern is still documented: import { useRouter } from next/router.\n- If helper is for App Router or migration target, current docs require switching to import { useRouter } from next/navigation.\n\nRECOMMENDED NEXT DECISION\n- Choose one explicitly before changing code:\n  1. Keep Pages Router pattern (next/router) because helper serves pages routes.\n  2. Migrate helper to App Router pattern (next/navigation) because helper serves app routes.\n\nUNVERIFIED\n- Exact patch-level docs for 15.3.1 were not available; official Next 15 docs currently resolve to 15.5.19, which is closest official version stream.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1629,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision appends the implementer `Progress block` before acting on it.",
+      "passed": true,
+      "evidence": "- Append the implementer **Progress block** for the latest `mode: review_fix` return to `progress_file` **before** consuming that result (if already recorded, continue from the recorded entry).\n- Because this review fix is the latest code-affecting change, **rerun** finalization on the combined final state: dispatch fresh `code-simplifier`, append its Progress block, then dispatch fresh `requirements-collector` and fresh `addy-code-reviewer`, appending each Progress block immediately.\n- Keep `passes: true` blocked; do not set it until **review is clean** and required final-state **checks/verification** pass after this rerun. If review still finds blocking issues and the review-fix limit is not reached, dispatch another fresh `implementer` with `mode: review_fix`, then rerun simplify/review again.\n"
+    },
+    {
+      "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+      "passed": true,
+      "evidence": "- Append the implementer **Progress block** for the latest `mode: review_fix` return to `progress_file` **before** consuming that result (if already recorded, continue from the recorded entry).\n- Because this review fix is the latest code-affecting change, **rerun** finalization on the combined final state: dispatch fresh `code-simplifier`, append its Progress block, then dispatch fresh `requirements-collector` and fresh `addy-code-reviewer`, appending each Progress block immediately.\n- Keep `passes: true` blocked; do not set it until **review is clean** and required final-state **checks/verification** pass after this rerun. If review still finds blocking issues and the review-fix limit is not reached, dispatch another fresh `implementer` with `mode: review_fix`, then rerun simplify/review again.\n"
+    },
+    {
+      "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+      "passed": true,
+      "evidence": "- Append the implementer **Progress block** for the latest `mode: review_fix` return to `progress_file` **before** consuming that result (if already recorded, continue from the recorded entry).\n- Because this review fix is the latest code-affecting change, **rerun** finalization on the combined final state: dispatch fresh `code-simplifier`, append its Progress block, then dispatch fresh `requirements-collector` and fresh `addy-code-reviewer`, appending each Progress block immediately.\n- Keep `passes: true` blocked; do not set it until **review is clean** and required final-state **checks/verification** pass after this rerun. If review still finds blocking issues and the review-fix limit is not reached, dispatch another fresh `implementer` with `mode: review_fix`, then rerun simplify/review again.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 808,
+    "transcript_chars": 248701
+  },
+  "timing": {
+    "executor_duration_seconds": 54.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 54.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

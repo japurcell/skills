@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/.agents/scratchpad/payments/handoff.md is updated in place.",
+      "passed": true,
+      "evidence": "## Goal\nFinish payment retry rollout.\n\n## Status\n- **Done:**\n  - Landed retry cap logic in `src/payment_retry.py`.\n  - Confirmed test coverage for the cap logic in `tests/test_payment_retry.py`.\n  - Benchmarked retry latency: p95 fell from 480ms to 310ms.\n- **Remaining:**\n  - Wire retry metrics.\n  - Update rollout docs.\n\n## Next-agent focus\nRetry metrics and docs.\n\n## Exact next step\nWire retry metrics.\n\n## Relevant files\n- `src/payment_retry.py`: Contains `next_delay` with retry cap logic.\n- `tests/test_payment_retry.py`: Tests for the retry cap logic.\n- `session_notes.md`: Contains session rollout status.\n- `reports/benchmark.txt`: Performance benchmark results showing improved p95.\n"
+    },
+    {
+      "text": "The updated handoff includes retry-metrics and docs focus.",
+      "passed": true,
+      "evidence": "## Goal\nFinish payment retry rollout.\n\n## Status\n- **Done:**\n  - Landed retry cap logic in `src/payment_retry.py`.\n  - Confirmed test coverage for the cap logic in `tests/test_payment_retry.py`.\n  - Benchmarked retry latency: p95 fell from 480ms to 310ms.\n- **Remaining:**\n  - Wire retry metrics.\n  - Update rollout docs.\n\n## Next-agent focus\nRetry metrics and docs.\n\n## Exact next step\nWire retry metrics.\n\n## Relevant files\n- `src/payment_retry.py`: Contains `next_delay` with retry cap logic.\n- `tests/test_payment_retry.py`: Tests for the retry cap logic.\n- `session_notes.md`: Contains session rollout status.\n- `reports/benchmark.txt`: Performance benchmark results showing improved p95.\n"
+    },
+    {
+      "text": "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
+      "passed": true,
+      "evidence": "## Goal\nFinish payment retry rollout.\n\n## Status\n- **Done:**\n  - Landed retry cap logic in `src/payment_retry.py`.\n  - Confirmed test coverage for the cap logic in `tests/test_payment_retry.py`.\n  - Benchmarked retry latency: p95 fell from 480ms to 310ms.\n- **Remaining:**\n  - Wire retry metrics.\n  - Update rollout docs.\n\n## Next-agent focus\nRetry metrics and docs.\n\n## Exact next step\nWire retry metrics.\n\n## Relevant files\n- `src/payment_retry.py`: Contains `next_delay` with retry cap logic.\n- `tests/test_payment_retry.py`: Tests for the retry cap logic.\n- `session_notes.md`: Contains session rollout status.\n- `reports/benchmark.txt`: Performance benchmark results showing improved p95.\n"
+    },
+    {
+      "text": "The stale `inspect legacy YAML toggles` step is removed.",
+      "passed": true,
+      "evidence": "## Goal\nFinish payment retry rollout.\n\n## Status\n- **Done:**\n  - Landed retry cap logic in `src/payment_retry.py`.\n  - Confirmed test coverage for the cap logic in `tests/test_payment_retry.py`.\n  - Benchmarked retry latency: p95 fell from 480ms to 310ms.\n- **Remaining:**\n  - Wire retry metrics.\n  - Update rollout docs.\n\n## Next-agent focus\nRetry metrics and docs.\n\n## Exact next step\nWire retry metrics.\n\n## Relevant files\n- `src/payment_retry.py`: Contains `next_delay` with retry cap logic.\n- `tests/test_payment_retry.py`: Tests for the retry cap logic.\n- `session_notes.md`: Contains session rollout status.\n- `reports/benchmark.txt`: Performance benchmark results showing improved p95.\n"
+    },
+    {
+      "text": "outputs/result.json reports the feature-scoped handoff path.",
+      "passed": true,
+      "evidence": "{\"written_path\": \".agents/scratchpad/payments/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Wire retry metrics.\"}"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1301,
+    "transcript_chars": 168616
+  },
+  "timing": {
+    "executor_duration_seconds": 59.6,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 59.6
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

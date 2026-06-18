@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+      "passed": true,
+      "evidence": "# Handoff\n\n## Goal\n- Fix sync retry behavior without losing failing integration signal.\n\n## Status\n- Done: inspected `src/sync_retry.py`, `tests/test_sync_retry.py`, and `session_notes.md`.\n- In progress: narrowing retry logic bug and preserving timeout failure visibility.\n- Remaining: stop swallowing vendor timeouts, then verify with focused test coverage.\n\n## Next focus\n- Resume in retry flow and start from failing integration coverage, not from broad repo exploration.\n\n## Next step\n- Run failing integration test in `tests/test_sync_retry.py` first, then adjust `src/sync_retry.py` based on that failure.\n\n## Decisions and constraints\n- User asked for `docs/handoff.md`, but handoff must stay under `.agents/scratchpad/`, so this was written to `.agents/scratchpad/handoff.md`.\n- Keep artifacts referenced by path instead of pasted inline.\n\n## Relevant files and artifacts\n- `session_notes.md` \u2014 compact status and requested resume point.\n- `src/sync_retry.py` \u2014 current retry helper still returns `True` unconditionally.\n- `tests/test_sync_retry.py` \u2014 current failing retry-limit test to start from next time.\n- `logs/retry.log` \u2014 retry failure log; inspect directly if timeout details needed.\n- `diffs/patch.diff` \u2014 proposed minimal retry-limit fix; inspect directly before applying.\n\n## Durable learnings\n- Likely code fix is changing retry gate from unconditional success to attempt-limit check.\n- Preserve failing integration signal while fixing retry behavior; do not mask vendor timeout path.\n\n## Briefing\n- Start with `tests/test_sync_retry.py`. Confirm failure, then compare `src/sync_retry.py` against `diffs/patch.diff` and inspect `logs/retry.log` only as needed.\n"
+    },
+    {
+      "text": "`outputs/repo/docs/handoff.md` is not created.",
+      "passed": true,
+      "evidence": "docs/handoff.md absent"
+    },
+    {
+      "text": "The handoff references `logs/retry.log` and `diffs/patch.diff` by path.",
+      "passed": true,
+      "evidence": "# Handoff\n\n## Goal\n- Fix sync retry behavior without losing failing integration signal.\n\n## Status\n- Done: inspected `src/sync_retry.py`, `tests/test_sync_retry.py`, and `session_notes.md`.\n- In progress: narrowing retry logic bug and preserving timeout failure visibility.\n- Remaining: stop swallowing vendor timeouts, then verify with focused test coverage.\n\n## Next focus\n- Resume in retry flow and start from failing integration coverage, not from broad repo exploration.\n\n## Next step\n- Run failing integration test in `tests/test_sync_retry.py` first, then adjust `src/sync_retry.py` based on that failure.\n\n## Decisions and constraints\n- User asked for `docs/handoff.md`, but handoff must stay under `.agents/scratchpad/`, so this was written to `.agents/scratchpad/handoff.md`.\n- Keep artifacts referenced by path instead of pasted inline.\n\n## Relevant files and artifacts\n- `session_notes.md` \u2014 compact status and requested resume point.\n- `src/sync_retry.py` \u2014 current retry helper still returns `True` unconditionally.\n- `tests/test_sync_retry.py` \u2014 current failing retry-limit test to start from next time.\n- `logs/retry.log` \u2014 retry failure log; inspect directly if timeout details needed.\n- `diffs/patch.diff` \u2014 proposed minimal retry-limit fix; inspect directly before applying.\n\n## Durable learnings\n- Likely code fix is changing retry gate from unconditional success to attempt-limit check.\n- Preserve failing integration signal while fixing retry behavior; do not mask vendor timeout path.\n\n## Briefing\n- Start with `tests/test_sync_retry.py`. Confirm failure, then compare `src/sync_retry.py` against `diffs/patch.diff` and inspect `logs/retry.log` only as needed.\n"
+    },
+    {
+      "text": "The handoff stays concise and does not expose the secret token or raw stack frame spam.",
+      "passed": true,
+      "evidence": "# Handoff\n\n## Goal\n- Fix sync retry behavior without losing failing integration signal.\n\n## Status\n- Done: inspected `src/sync_retry.py`, `tests/test_sync_retry.py`, and `session_notes.md`.\n- In progress: narrowing retry logic bug and preserving timeout failure visibility.\n- Remaining: stop swallowing vendor timeouts, then verify with focused test coverage.\n\n## Next focus\n- Resume in retry flow and start from failing integration coverage, not from broad repo exploration.\n\n## Next step\n- Run failing integration test in `tests/test_sync_retry.py` first, then adjust `src/sync_retry.py` based on that failure.\n\n## Decisions and constraints\n- User asked for `docs/handoff.md`, but handoff must stay under `.agents/scratchpad/`, so this was written to `.agents/scratchpad/handoff.md`.\n- Keep artifacts referenced by path instead of pasted inline.\n\n## Relevant files and artifacts\n- `session_notes.md` \u2014 compact status and requested resume point.\n- `src/sync_retry.py` \u2014 current retry helper still returns `True` unconditionally.\n- `tests/test_sync_retry.py` \u2014 current failing retry-limit test to start from next time.\n- `logs/retry.log` \u2014 retry failure log; inspect directly if timeout details needed.\n- `diffs/patch.diff` \u2014 proposed minimal retry-limit fix; inspect directly before applying.\n\n## Durable learnings\n- Likely code fix is changing retry gate from unconditional success to attempt-limit check.\n- Preserve failing integration signal while fixing retry behavior; do not mask vendor timeout path.\n\n## Briefing\n- Start with `tests/test_sync_retry.py`. Confirm failure, then compare `src/sync_retry.py` against `diffs/patch.diff` and inspect `logs/retry.log` only as needed.\n"
+    },
+    {
+      "text": "outputs/result.json reports the root-scoped fallback path.",
+      "passed": true,
+      "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"root-scoped\", \"next_step\": \"Run the failing integration test in tests/test_sync_retry.py first, then adjust src/sync_retry.py based on that failure.\"}"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2665,
+    "transcript_chars": 238640
+  },
+  "timing": {
+    "executor_duration_seconds": 47.1,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 47.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

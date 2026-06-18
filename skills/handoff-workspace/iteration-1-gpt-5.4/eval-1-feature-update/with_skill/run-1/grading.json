@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/.agents/scratchpad/payments/handoff.md is updated in place.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Done: retry cap landed in `src/payment_retry.py`.\n- Done: cap coverage exists in `tests/test_payment_retry.py`.\n- Remaining: wire retry metrics.\n- Remaining: update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Wire retry metrics in `src/payment_retry.py`, then document emitted metrics and the p95 improvement from `reports/benchmark.txt`.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` - current retry logic caps delay at 8 seconds; metrics are not wired yet.\n- `tests/test_payment_retry.py` - covers delay cap only; extend if metric behavior becomes testable.\n- `session_notes.md` - source of remaining work and stated next-agent focus.\n- `reports/benchmark.txt` - benchmark note: p95 improved from 480ms to 310ms with no new retry test failures.\n\n## Durable learnings\n- Active scope is retry metrics plus docs; legacy YAML toggle inspection was stale and removed.\n- Keep handoff/docs grounded in existing artifacts instead of replaying session history.\n"
+    },
+    {
+      "text": "The updated handoff includes retry-metrics and docs focus.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Done: retry cap landed in `src/payment_retry.py`.\n- Done: cap coverage exists in `tests/test_payment_retry.py`.\n- Remaining: wire retry metrics.\n- Remaining: update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Wire retry metrics in `src/payment_retry.py`, then document emitted metrics and the p95 improvement from `reports/benchmark.txt`.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` - current retry logic caps delay at 8 seconds; metrics are not wired yet.\n- `tests/test_payment_retry.py` - covers delay cap only; extend if metric behavior becomes testable.\n- `session_notes.md` - source of remaining work and stated next-agent focus.\n- `reports/benchmark.txt` - benchmark note: p95 improved from 480ms to 310ms with no new retry test failures.\n\n## Durable learnings\n- Active scope is retry metrics plus docs; legacy YAML toggle inspection was stale and removed.\n- Keep handoff/docs grounded in existing artifacts instead of replaying session history.\n"
+    },
+    {
+      "text": "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Done: retry cap landed in `src/payment_retry.py`.\n- Done: cap coverage exists in `tests/test_payment_retry.py`.\n- Remaining: wire retry metrics.\n- Remaining: update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Wire retry metrics in `src/payment_retry.py`, then document emitted metrics and the p95 improvement from `reports/benchmark.txt`.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` - current retry logic caps delay at 8 seconds; metrics are not wired yet.\n- `tests/test_payment_retry.py` - covers delay cap only; extend if metric behavior becomes testable.\n- `session_notes.md` - source of remaining work and stated next-agent focus.\n- `reports/benchmark.txt` - benchmark note: p95 improved from 480ms to 310ms with no new retry test failures.\n\n## Durable learnings\n- Active scope is retry metrics plus docs; legacy YAML toggle inspection was stale and removed.\n- Keep handoff/docs grounded in existing artifacts instead of replaying session history.\n"
+    },
+    {
+      "text": "The stale `inspect legacy YAML toggles` step is removed.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Done: retry cap landed in `src/payment_retry.py`.\n- Done: cap coverage exists in `tests/test_payment_retry.py`.\n- Remaining: wire retry metrics.\n- Remaining: update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Wire retry metrics in `src/payment_retry.py`, then document emitted metrics and the p95 improvement from `reports/benchmark.txt`.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` - current retry logic caps delay at 8 seconds; metrics are not wired yet.\n- `tests/test_payment_retry.py` - covers delay cap only; extend if metric behavior becomes testable.\n- `session_notes.md` - source of remaining work and stated next-agent focus.\n- `reports/benchmark.txt` - benchmark note: p95 improved from 480ms to 310ms with no new retry test failures.\n\n## Durable learnings\n- Active scope is retry metrics plus docs; legacy YAML toggle inspection was stale and removed.\n- Keep handoff/docs grounded in existing artifacts instead of replaying session history.\n"
+    },
+    {
+      "text": "outputs/result.json reports the feature-scoped handoff path.",
+      "passed": true,
+      "evidence": "{\"written_path\": \".agents/scratchpad/payments/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Wire retry metrics in src/payment_retry.py, then update rollout docs with the emitted metrics and p95 benchmark result.\"}"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1754,
+    "transcript_chars": 272052
+  },
+  "timing": {
+    "executor_duration_seconds": 74.5,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 74.5
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

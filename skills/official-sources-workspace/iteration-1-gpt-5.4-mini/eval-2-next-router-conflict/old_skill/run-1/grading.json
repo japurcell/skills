@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The conflict note detects `next` version `15.3.1`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- react ^19.0.0\n\nOFFICIAL SOURCES\n- App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n  - Docs show `useRouter` imported from `next/navigation`.\n  - Migration note: import from `next/navigation`, not `next/router`, when using the App Router.\n- Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n  - Docs keep `useRouter` from `next/router` for Pages Router.\n\nCONFLICT\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n- Current App Router docs for Next.js recommend `next/navigation` instead.\n- If this fixture is App Router code, helper should change.\n- If this fixture is Pages Router code, existing import is correct.\n- Need repo/router-context confirmation before editing.\n\nUNVERIFIED\n- App Router vs Pages Router structure is not visible in fixture.\n"
+    },
+    {
+      "text": "The conflict note cites an official `nextjs.org` source.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- react ^19.0.0\n\nOFFICIAL SOURCES\n- App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n  - Docs show `useRouter` imported from `next/navigation`.\n  - Migration note: import from `next/navigation`, not `next/router`, when using the App Router.\n- Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n  - Docs keep `useRouter` from `next/router` for Pages Router.\n\nCONFLICT\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n- Current App Router docs for Next.js recommend `next/navigation` instead.\n- If this fixture is App Router code, helper should change.\n- If this fixture is Pages Router code, existing import is correct.\n- Need repo/router-context confirmation before editing.\n\nUNVERIFIED\n- App Router vs Pages Router structure is not visible in fixture.\n"
+    },
+    {
+      "text": "The conflict note names both `next/navigation` and `next/router`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- react ^19.0.0\n\nOFFICIAL SOURCES\n- App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n  - Docs show `useRouter` imported from `next/navigation`.\n  - Migration note: import from `next/navigation`, not `next/router`, when using the App Router.\n- Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n  - Docs keep `useRouter` from `next/router` for Pages Router.\n\nCONFLICT\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n- Current App Router docs for Next.js recommend `next/navigation` instead.\n- If this fixture is App Router code, helper should change.\n- If this fixture is Pages Router code, existing import is correct.\n- Need repo/router-context confirmation before editing.\n\nUNVERIFIED\n- App Router vs Pages Router structure is not visible in fixture.\n"
+    },
+    {
+      "text": "The conflict note asks which path to follow or presents explicit options.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- react ^19.0.0\n\nOFFICIAL SOURCES\n- App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n  - Docs show `useRouter` imported from `next/navigation`.\n  - Migration note: import from `next/navigation`, not `next/router`, when using the App Router.\n- Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n  - Docs keep `useRouter` from `next/router` for Pages Router.\n\nCONFLICT\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n- Current App Router docs for Next.js recommend `next/navigation` instead.\n- If this fixture is App Router code, helper should change.\n- If this fixture is Pages Router code, existing import is correct.\n- Need repo/router-context confirmation before editing.\n\nUNVERIFIED\n- App Router vs Pages Router structure is not visible in fixture.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 886,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

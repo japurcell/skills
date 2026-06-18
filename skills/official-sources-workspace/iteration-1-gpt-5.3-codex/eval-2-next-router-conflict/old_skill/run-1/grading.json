@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The conflict note detects `next` version `15.3.1`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- next: 15.3.1 (from `evals/files/next-conflict-fixture/package.json`)\n- react: ^19.0.0\n\nOFFICIAL SOURCES\n- Next.js 15 App Router `useRouter`: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n  - Says App Router should import `useRouter` from `next/navigation` (\"The `useRouter` hook should be imported from `next/navigation` and not `next/router` when using the App Router\").\n- Next.js 15 Pages Router `useRouter`: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n  - Documents `useRouter` import from `next/router` for Pages Router.\n\nCONFLICT\n- Current code (`src/use-dashboard-router.ts`) imports `useRouter` from `next/router`.\n- File is under `src/` with no explicit `pages/` or `app/` context in fixture, so router mode is ambiguous.\n- Official docs support both imports, but for different router systems:\n  - App Router pattern: `next/navigation`\n  - Pages Router pattern: `next/router`\n- Because repo context does not prove which router system this helper targets, changing import now would be a silent assumption.\n\nIMPLEMENTATION DECISION (DEFERRED)\n- Do not change code yet.\n- Resolve first: is this helper for App Router or Pages Router?\n  - If App Router: migrate to `next/navigation` per Next.js 15 App Router docs.\n  - If Pages Router: keep `next/router` per Next.js 15 Pages Router docs.\n"
+    },
+    {
+      "text": "The conflict note cites an official `nextjs.org` source.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- next: 15.3.1 (from `evals/files/next-conflict-fixture/package.json`)\n- react: ^19.0.0\n\nOFFICIAL SOURCES\n- Next.js 15 App Router `useRouter`: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n  - Says App Router should import `useRouter` from `next/navigation` (\"The `useRouter` hook should be imported from `next/navigation` and not `next/router` when using the App Router\").\n- Next.js 15 Pages Router `useRouter`: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n  - Documents `useRouter` import from `next/router` for Pages Router.\n\nCONFLICT\n- Current code (`src/use-dashboard-router.ts`) imports `useRouter` from `next/router`.\n- File is under `src/` with no explicit `pages/` or `app/` context in fixture, so router mode is ambiguous.\n- Official docs support both imports, but for different router systems:\n  - App Router pattern: `next/navigation`\n  - Pages Router pattern: `next/router`\n- Because repo context does not prove which router system this helper targets, changing import now would be a silent assumption.\n\nIMPLEMENTATION DECISION (DEFERRED)\n- Do not change code yet.\n- Resolve first: is this helper for App Router or Pages Router?\n  - If App Router: migrate to `next/navigation` per Next.js 15 App Router docs.\n  - If Pages Router: keep `next/router` per Next.js 15 Pages Router docs.\n"
+    },
+    {
+      "text": "The conflict note names both `next/navigation` and `next/router`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- next: 15.3.1 (from `evals/files/next-conflict-fixture/package.json`)\n- react: ^19.0.0\n\nOFFICIAL SOURCES\n- Next.js 15 App Router `useRouter`: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n  - Says App Router should import `useRouter` from `next/navigation` (\"The `useRouter` hook should be imported from `next/navigation` and not `next/router` when using the App Router\").\n- Next.js 15 Pages Router `useRouter`: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n  - Documents `useRouter` import from `next/router` for Pages Router.\n\nCONFLICT\n- Current code (`src/use-dashboard-router.ts`) imports `useRouter` from `next/router`.\n- File is under `src/` with no explicit `pages/` or `app/` context in fixture, so router mode is ambiguous.\n- Official docs support both imports, but for different router systems:\n  - App Router pattern: `next/navigation`\n  - Pages Router pattern: `next/router`\n- Because repo context does not prove which router system this helper targets, changing import now would be a silent assumption.\n\nIMPLEMENTATION DECISION (DEFERRED)\n- Do not change code yet.\n- Resolve first: is this helper for App Router or Pages Router?\n  - If App Router: migrate to `next/navigation` per Next.js 15 App Router docs.\n  - If Pages Router: keep `next/router` per Next.js 15 Pages Router docs.\n"
+    },
+    {
+      "text": "The conflict note asks which path to follow or presents explicit options.",
+      "passed": false,
+      "evidence": "STACK DETECTED\n- next: 15.3.1 (from `evals/files/next-conflict-fixture/package.json`)\n- react: ^19.0.0\n\nOFFICIAL SOURCES\n- Next.js 15 App Router `useRouter`: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n  - Says App Router should import `useRouter` from `next/navigation` (\"The `useRouter` hook should be imported from `next/navigation` and not `next/router` when using the App Router\").\n- Next.js 15 Pages Router `useRouter`: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n  - Documents `useRouter` import from `next/router` for Pages Router.\n\nCONFLICT\n- Current code (`src/use-dashboard-router.ts`) imports `useRouter` from `next/router`.\n- File is under `src/` with no explicit `pages/` or `app/` context in fixture, so router mode is ambiguous.\n- Official docs support both imports, but for different router systems:\n  - App Router pattern: `next/navigation`\n  - Pages Router pattern: `next/router`\n- Because repo context does not prove which router system this helper targets, changing import now would be a silent assumption.\n\nIMPLEMENTATION DECISION (DEFERRED)\n- Do not change code yet.\n- Resolve first: is this helper for App Router or Pages Router?\n  - If App Router: migrate to `next/navigation` per Next.js 15 App Router docs.\n  - If Pages Router: keep `next/router` per Next.js 15 Pages Router docs.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1354,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+      "passed": true,
+      "evidence": "## STACK DETECTED\n- Fixture path: `evals/files/react-router-fixture/`\n- React: `^19.0.0` (from `package.json`)\n- React Router DOM: `7.6.2` (from `package.json`)\n- Target file: `src/nav.ts` currently uses `useHistory().push(...)`.\n\n## OFFICIAL SOURCES\n- React Router `useNavigate` API (official): https://reactrouter.com/api/hooks/useNavigate\n- React Router declarative navigation guide (official): https://reactrouter.com/start/declarative/navigating\n- React Router upgrade guidance noting `useNavigate()` for navigation (official): https://reactrouter.com/6.30.1/upgrading/v5\n\n## IMPLEMENTATION NOTES\n- Current official programmatic navigation hook is `useNavigate` (returns `navigate(to, options?)` / `navigate(delta)`).\n- Official guidance says use `Link`/`NavLink` for normal user-click navigation; reserve `useNavigate` for non-interactive/programmatic flows.\n- For `src/nav.ts` checkout navigation intent, current documented pattern is a navigate function call like `navigate(\"/checkout\")`.\n- Existing file uses legacy `useHistory().push(\"/checkout\")`, which conflicts with current documented guidance.\n\n## UNVERIFIED\n- none\n"
+    },
+    {
+      "text": "The report detects `react-router-dom` version `7.6.2`.",
+      "passed": false,
+      "evidence": "## STACK DETECTED\n- Fixture path: `evals/files/react-router-fixture/`\n- React: `^19.0.0` (from `package.json`)\n- React Router DOM: `7.6.2` (from `package.json`)\n- Target file: `src/nav.ts` currently uses `useHistory().push(...)`.\n\n## OFFICIAL SOURCES\n- React Router `useNavigate` API (official): https://reactrouter.com/api/hooks/useNavigate\n- React Router declarative navigation guide (official): https://reactrouter.com/start/declarative/navigating\n- React Router upgrade guidance noting `useNavigate()` for navigation (official): https://reactrouter.com/6.30.1/upgrading/v5\n\n## IMPLEMENTATION NOTES\n- Current official programmatic navigation hook is `useNavigate` (returns `navigate(to, options?)` / `navigate(delta)`).\n- Official guidance says use `Link`/`NavLink` for normal user-click navigation; reserve `useNavigate` for non-interactive/programmatic flows.\n- For `src/nav.ts` checkout navigation intent, current documented pattern is a navigate function call like `navigate(\"/checkout\")`.\n- Existing file uses legacy `useHistory().push(\"/checkout\")`, which conflicts with current documented guidance.\n\n## UNVERIFIED\n- none\n"
+    },
+    {
+      "text": "The report cites an official `reactrouter.com` source.",
+      "passed": true,
+      "evidence": "## STACK DETECTED\n- Fixture path: `evals/files/react-router-fixture/`\n- React: `^19.0.0` (from `package.json`)\n- React Router DOM: `7.6.2` (from `package.json`)\n- Target file: `src/nav.ts` currently uses `useHistory().push(...)`.\n\n## OFFICIAL SOURCES\n- React Router `useNavigate` API (official): https://reactrouter.com/api/hooks/useNavigate\n- React Router declarative navigation guide (official): https://reactrouter.com/start/declarative/navigating\n- React Router upgrade guidance noting `useNavigate()` for navigation (official): https://reactrouter.com/6.30.1/upgrading/v5\n\n## IMPLEMENTATION NOTES\n- Current official programmatic navigation hook is `useNavigate` (returns `navigate(to, options?)` / `navigate(delta)`).\n- Official guidance says use `Link`/`NavLink` for normal user-click navigation; reserve `useNavigate` for non-interactive/programmatic flows.\n- For `src/nav.ts` checkout navigation intent, current documented pattern is a navigate function call like `navigate(\"/checkout\")`.\n- Existing file uses legacy `useHistory().push(\"/checkout\")`, which conflicts with current documented guidance.\n\n## UNVERIFIED\n- none\n"
+    },
+    {
+      "text": "The implementation notes recommend `useNavigate`.",
+      "passed": true,
+      "evidence": "## STACK DETECTED\n- Fixture path: `evals/files/react-router-fixture/`\n- React: `^19.0.0` (from `package.json`)\n- React Router DOM: `7.6.2` (from `package.json`)\n- Target file: `src/nav.ts` currently uses `useHistory().push(...)`.\n\n## OFFICIAL SOURCES\n- React Router `useNavigate` API (official): https://reactrouter.com/api/hooks/useNavigate\n- React Router declarative navigation guide (official): https://reactrouter.com/start/declarative/navigating\n- React Router upgrade guidance noting `useNavigate()` for navigation (official): https://reactrouter.com/6.30.1/upgrading/v5\n\n## IMPLEMENTATION NOTES\n- Current official programmatic navigation hook is `useNavigate` (returns `navigate(to, options?)` / `navigate(delta)`).\n- Official guidance says use `Link`/`NavLink` for normal user-click navigation; reserve `useNavigate` for non-interactive/programmatic flows.\n- For `src/nav.ts` checkout navigation intent, current documented pattern is a navigate function call like `navigate(\"/checkout\")`.\n- Existing file uses legacy `useHistory().push(\"/checkout\")`, which conflicts with current documented guidance.\n\n## UNVERIFIED\n- none\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1131,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

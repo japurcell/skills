@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says the skill does not apply.",
+      "passed": true,
+      "evidence": "No. This is framework-agnostic Python logic, not a named framework/library/SDK/API decision. Official framework docs are not needed to write a function that deduplicates case-insensitive email addresses.\n"
+    },
+    {
+      "text": "The decision explains that the task is framework-agnostic or version-independent.",
+      "passed": true,
+      "evidence": "No. This is framework-agnostic Python logic, not a named framework/library/SDK/API decision. Official framework docs are not needed to write a function that deduplicates case-insensitive email addresses.\n"
+    },
+    {
+      "text": "The decision does not cite or instruct fetching official docs.",
+      "passed": true,
+      "evidence": "No. This is framework-agnostic Python logic, not a named framework/library/SDK/API decision. Official framework docs are not needed to write a function that deduplicates case-insensitive email addresses.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 204,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

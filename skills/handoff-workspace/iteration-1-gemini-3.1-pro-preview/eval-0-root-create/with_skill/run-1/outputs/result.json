@@ -1,0 +1,5 @@
+{
+  "written_path": ".agents/scratchpad/handoff.md",
+  "scope": "root-scoped",
+  "next_step": "Update build_retry_schedule() in src/auth_refresh.py, then rerun tests/test_auth_refresh.py"
+}

@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/.agents/scratchpad/payments/handoff.md is updated in place.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- **Done:** retry cap landed in `src/payment_retry.py`; cap behavior covered in `tests/test_payment_retry.py`.\n- **In progress:** no retry metrics instrumentation yet.\n- **Remaining:** add retry metrics and update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Add retry metrics emission in `src/payment_retry.py`, then document the metric names and rollout notes in docs based on `session_notes.md` and `reports/benchmark.txt`.\n\n## Relevant artifacts\n- `session_notes.md` \u2014 confirms remaining work is retry metrics + rollout docs.\n- `reports/benchmark.txt` \u2014 benchmark context for docs (`p95 fell 480ms -> 310ms`, no new retry unit test failures).\n- `src/payment_retry.py` \u2014 current retry cap implementation (`next_delay`).\n- `tests/test_payment_retry.py` \u2014 existing cap test to extend after metrics wiring.\n"
+    },
+    {
+      "text": "The updated handoff includes retry-metrics and docs focus.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- **Done:** retry cap landed in `src/payment_retry.py`; cap behavior covered in `tests/test_payment_retry.py`.\n- **In progress:** no retry metrics instrumentation yet.\n- **Remaining:** add retry metrics and update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Add retry metrics emission in `src/payment_retry.py`, then document the metric names and rollout notes in docs based on `session_notes.md` and `reports/benchmark.txt`.\n\n## Relevant artifacts\n- `session_notes.md` \u2014 confirms remaining work is retry metrics + rollout docs.\n- `reports/benchmark.txt` \u2014 benchmark context for docs (`p95 fell 480ms -> 310ms`, no new retry unit test failures).\n- `src/payment_retry.py` \u2014 current retry cap implementation (`next_delay`).\n- `tests/test_payment_retry.py` \u2014 existing cap test to extend after metrics wiring.\n"
+    },
+    {
+      "text": "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- **Done:** retry cap landed in `src/payment_retry.py`; cap behavior covered in `tests/test_payment_retry.py`.\n- **In progress:** no retry metrics instrumentation yet.\n- **Remaining:** add retry metrics and update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Add retry metrics emission in `src/payment_retry.py`, then document the metric names and rollout notes in docs based on `session_notes.md` and `reports/benchmark.txt`.\n\n## Relevant artifacts\n- `session_notes.md` \u2014 confirms remaining work is retry metrics + rollout docs.\n- `reports/benchmark.txt` \u2014 benchmark context for docs (`p95 fell 480ms -> 310ms`, no new retry unit test failures).\n- `src/payment_retry.py` \u2014 current retry cap implementation (`next_delay`).\n- `tests/test_payment_retry.py` \u2014 existing cap test to extend after metrics wiring.\n"
+    },
+    {
+      "text": "The stale `inspect legacy YAML toggles` step is removed.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- **Done:** retry cap landed in `src/payment_retry.py`; cap behavior covered in `tests/test_payment_retry.py`.\n- **In progress:** no retry metrics instrumentation yet.\n- **Remaining:** add retry metrics and update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Add retry metrics emission in `src/payment_retry.py`, then document the metric names and rollout notes in docs based on `session_notes.md` and `reports/benchmark.txt`.\n\n## Relevant artifacts\n- `session_notes.md` \u2014 confirms remaining work is retry metrics + rollout docs.\n- `reports/benchmark.txt` \u2014 benchmark context for docs (`p95 fell 480ms -> 310ms`, no new retry unit test failures).\n- `src/payment_retry.py` \u2014 current retry cap implementation (`next_delay`).\n- `tests/test_payment_retry.py` \u2014 existing cap test to extend after metrics wiring.\n"
+    },
+    {
+      "text": "outputs/result.json reports the feature-scoped handoff path.",
+      "passed": true,
+      "evidence": "{\"written_path\": \".agents/scratchpad/payments/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Add retry metrics emission in src/payment_retry.py and update rollout docs with metric names and benchmark context.\"}"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1588,
+    "transcript_chars": 203170
+  },
+  "timing": {
+    "executor_duration_seconds": 63.9,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 63.9
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

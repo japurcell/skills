@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+      "passed": true,
+      "evidence": "Source of truth: evals/files/startup-fixture/prd.json\nResolved progress_file: evals/files/startup-fixture/progress.txt\nStory selection: story-auth-timeout (highest priority with passes: false)\nFirst orchestrator actions:\n- Invoke subagent-model-router.\n- Read ## Codebase Patterns and latest entries from the existing progress_file.\n- Read nearby AGENTS.md.\n- Dispatch fresh implementer for story-auth-timeout.\nWhat must happen before any story-specific repo discovery: Orchestrator must read only prd_file, progress_file, and nearby AGENTS.md needed to dispatch work. Orchestrator must not read story-specific repo files, tests, code, or behavior before dispatching the first implementer for the current code-affecting unit.\n"
+    },
+    {
+      "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+      "passed": true,
+      "evidence": "Source of truth: evals/files/startup-fixture/prd.json\nResolved progress_file: evals/files/startup-fixture/progress.txt\nStory selection: story-auth-timeout (highest priority with passes: false)\nFirst orchestrator actions:\n- Invoke subagent-model-router.\n- Read ## Codebase Patterns and latest entries from the existing progress_file.\n- Read nearby AGENTS.md.\n- Dispatch fresh implementer for story-auth-timeout.\nWhat must happen before any story-specific repo discovery: Orchestrator must read only prd_file, progress_file, and nearby AGENTS.md needed to dispatch work. Orchestrator must not read story-specific repo files, tests, code, or behavior before dispatching the first implementer for the current code-affecting unit.\n"
+    },
+    {
+      "text": "The decision selects the highest-priority `passes: false` story.",
+      "passed": true,
+      "evidence": "Source of truth: evals/files/startup-fixture/prd.json\nResolved progress_file: evals/files/startup-fixture/progress.txt\nStory selection: story-auth-timeout (highest priority with passes: false)\nFirst orchestrator actions:\n- Invoke subagent-model-router.\n- Read ## Codebase Patterns and latest entries from the existing progress_file.\n- Read nearby AGENTS.md.\n- Dispatch fresh implementer for story-auth-timeout.\nWhat must happen before any story-specific repo discovery: Orchestrator must read only prd_file, progress_file, and nearby AGENTS.md needed to dispatch work. Orchestrator must not read story-specific repo files, tests, code, or behavior before dispatching the first implementer for the current code-affecting unit.\n"
+    },
+    {
+      "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+      "passed": true,
+      "evidence": "Source of truth: evals/files/startup-fixture/prd.json\nResolved progress_file: evals/files/startup-fixture/progress.txt\nStory selection: story-auth-timeout (highest priority with passes: false)\nFirst orchestrator actions:\n- Invoke subagent-model-router.\n- Read ## Codebase Patterns and latest entries from the existing progress_file.\n- Read nearby AGENTS.md.\n- Dispatch fresh implementer for story-auth-timeout.\nWhat must happen before any story-specific repo discovery: Orchestrator must read only prd_file, progress_file, and nearby AGENTS.md needed to dispatch work. Orchestrator must not read story-specific repo files, tests, code, or behavior before dispatching the first implementer for the current code-affecting unit.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 726,
+    "transcript_chars": 131740
+  },
+  "timing": {
+    "executor_duration_seconds": 36.7,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 36.7
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

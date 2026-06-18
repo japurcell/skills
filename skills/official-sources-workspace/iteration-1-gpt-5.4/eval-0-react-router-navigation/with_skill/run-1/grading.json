@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n\n- Inspected `package.json` and `src/nav.ts`.\n- React: declared dependency `^19.0.0` (exact resolved install version not present in inspected files).\n- React Router DOM: `7.6.2`.\n- `src/nav.ts` currently uses `useHistory()` and `history.push(\"/checkout\")`.\n- Router mode is likely declarative/client-side routing, but router setup is not present in inspected files.\n\nOFFICIAL SOURCES\n\n- React Router 7.6.2 Declarative Navigating: https://reactrouter.com/7.6.2/start/declarative/navigating  \n  Says declarative apps navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and recommends `Link`/`NavLink` for normal navigation while reserving `useNavigate` for programmatic flows.\n- React Router 7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate  \n  Documents programmatic navigation as `navigate(to, options?)` / `navigate(delta)`, including `replace` and `state` options.\n- React Router 7.6.2 Declarative Installation: https://reactrouter.com/7.6.2/start/declarative/installation  \n  Current v7 declarative docs show router APIs imported from `react-router`.\n\nIMPLEMENTATION NOTES\n\n- Current official React Router 7.6.2 guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Documented equivalent to `history.push(\"/checkout\")` is `navigate(\"/checkout\")`.\n- If this navigation is triggered by ordinary user interaction whose main purpose is changing pages, official docs prefer `<Link>` or `<NavLink>` over imperative navigation.\n- If imperative navigation is still desired in a hook/callback, current 7.6.2 declarative docs show `useNavigate` imported from `react-router`.\n- If replace semantics are needed, official API is `navigate(\"/checkout\", { replace: true })`; if location state is needed, pass `state` in the options object.\n\nUNVERIFIED\n\n- Exact installed React version cannot be confirmed from inspected files; only declared range `^19.0.0` is visible.\n- Router mode is inferred, not proven, because no router setup file was included in the fixture.\n- Whether this repo intentionally depends on `react-router-dom` re-exports instead of current `react-router` imports cannot be confirmed from inspected files alone.\n"
+    },
+    {
+      "text": "The report detects `react-router-dom` version `7.6.2`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n\n- Inspected `package.json` and `src/nav.ts`.\n- React: declared dependency `^19.0.0` (exact resolved install version not present in inspected files).\n- React Router DOM: `7.6.2`.\n- `src/nav.ts` currently uses `useHistory()` and `history.push(\"/checkout\")`.\n- Router mode is likely declarative/client-side routing, but router setup is not present in inspected files.\n\nOFFICIAL SOURCES\n\n- React Router 7.6.2 Declarative Navigating: https://reactrouter.com/7.6.2/start/declarative/navigating  \n  Says declarative apps navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and recommends `Link`/`NavLink` for normal navigation while reserving `useNavigate` for programmatic flows.\n- React Router 7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate  \n  Documents programmatic navigation as `navigate(to, options?)` / `navigate(delta)`, including `replace` and `state` options.\n- React Router 7.6.2 Declarative Installation: https://reactrouter.com/7.6.2/start/declarative/installation  \n  Current v7 declarative docs show router APIs imported from `react-router`.\n\nIMPLEMENTATION NOTES\n\n- Current official React Router 7.6.2 guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Documented equivalent to `history.push(\"/checkout\")` is `navigate(\"/checkout\")`.\n- If this navigation is triggered by ordinary user interaction whose main purpose is changing pages, official docs prefer `<Link>` or `<NavLink>` over imperative navigation.\n- If imperative navigation is still desired in a hook/callback, current 7.6.2 declarative docs show `useNavigate` imported from `react-router`.\n- If replace semantics are needed, official API is `navigate(\"/checkout\", { replace: true })`; if location state is needed, pass `state` in the options object.\n\nUNVERIFIED\n\n- Exact installed React version cannot be confirmed from inspected files; only declared range `^19.0.0` is visible.\n- Router mode is inferred, not proven, because no router setup file was included in the fixture.\n- Whether this repo intentionally depends on `react-router-dom` re-exports instead of current `react-router` imports cannot be confirmed from inspected files alone.\n"
+    },
+    {
+      "text": "The report cites an official `reactrouter.com` source.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n\n- Inspected `package.json` and `src/nav.ts`.\n- React: declared dependency `^19.0.0` (exact resolved install version not present in inspected files).\n- React Router DOM: `7.6.2`.\n- `src/nav.ts` currently uses `useHistory()` and `history.push(\"/checkout\")`.\n- Router mode is likely declarative/client-side routing, but router setup is not present in inspected files.\n\nOFFICIAL SOURCES\n\n- React Router 7.6.2 Declarative Navigating: https://reactrouter.com/7.6.2/start/declarative/navigating  \n  Says declarative apps navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and recommends `Link`/`NavLink` for normal navigation while reserving `useNavigate` for programmatic flows.\n- React Router 7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate  \n  Documents programmatic navigation as `navigate(to, options?)` / `navigate(delta)`, including `replace` and `state` options.\n- React Router 7.6.2 Declarative Installation: https://reactrouter.com/7.6.2/start/declarative/installation  \n  Current v7 declarative docs show router APIs imported from `react-router`.\n\nIMPLEMENTATION NOTES\n\n- Current official React Router 7.6.2 guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Documented equivalent to `history.push(\"/checkout\")` is `navigate(\"/checkout\")`.\n- If this navigation is triggered by ordinary user interaction whose main purpose is changing pages, official docs prefer `<Link>` or `<NavLink>` over imperative navigation.\n- If imperative navigation is still desired in a hook/callback, current 7.6.2 declarative docs show `useNavigate` imported from `react-router`.\n- If replace semantics are needed, official API is `navigate(\"/checkout\", { replace: true })`; if location state is needed, pass `state` in the options object.\n\nUNVERIFIED\n\n- Exact installed React version cannot be confirmed from inspected files; only declared range `^19.0.0` is visible.\n- Router mode is inferred, not proven, because no router setup file was included in the fixture.\n- Whether this repo intentionally depends on `react-router-dom` re-exports instead of current `react-router` imports cannot be confirmed from inspected files alone.\n"
+    },
+    {
+      "text": "The implementation notes recommend `useNavigate`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n\n- Inspected `package.json` and `src/nav.ts`.\n- React: declared dependency `^19.0.0` (exact resolved install version not present in inspected files).\n- React Router DOM: `7.6.2`.\n- `src/nav.ts` currently uses `useHistory()` and `history.push(\"/checkout\")`.\n- Router mode is likely declarative/client-side routing, but router setup is not present in inspected files.\n\nOFFICIAL SOURCES\n\n- React Router 7.6.2 Declarative Navigating: https://reactrouter.com/7.6.2/start/declarative/navigating  \n  Says declarative apps navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and recommends `Link`/`NavLink` for normal navigation while reserving `useNavigate` for programmatic flows.\n- React Router 7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate  \n  Documents programmatic navigation as `navigate(to, options?)` / `navigate(delta)`, including `replace` and `state` options.\n- React Router 7.6.2 Declarative Installation: https://reactrouter.com/7.6.2/start/declarative/installation  \n  Current v7 declarative docs show router APIs imported from `react-router`.\n\nIMPLEMENTATION NOTES\n\n- Current official React Router 7.6.2 guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Documented equivalent to `history.push(\"/checkout\")` is `navigate(\"/checkout\")`.\n- If this navigation is triggered by ordinary user interaction whose main purpose is changing pages, official docs prefer `<Link>` or `<NavLink>` over imperative navigation.\n- If imperative navigation is still desired in a hook/callback, current 7.6.2 declarative docs show `useNavigate` imported from `react-router`.\n- If replace semantics are needed, official API is `navigate(\"/checkout\", { replace: true })`; if location state is needed, pass `state` in the options object.\n\nUNVERIFIED\n\n- Exact installed React version cannot be confirmed from inspected files; only declared range `^19.0.0` is visible.\n- Router mode is inferred, not proven, because no router setup file was included in the fixture.\n- Whether this repo intentionally depends on `react-router-dom` re-exports instead of current `react-router` imports cannot be confirmed from inspected files alone.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2187,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

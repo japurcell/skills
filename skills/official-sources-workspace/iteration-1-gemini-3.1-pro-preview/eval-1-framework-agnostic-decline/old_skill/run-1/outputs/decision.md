@@ -1,0 +1,1 @@
+The official-sources skill does not apply. The task of deduplicating case-insensitive email addresses in Python is truly framework-agnostic and version-independent, as it only requires standard library features (such as `set` and `str.lower`). The skill explicitly states 'Do not use when: The task is truly framework-agnostic and version-independent'.

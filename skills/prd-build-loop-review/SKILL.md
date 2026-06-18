@@ -29,6 +29,7 @@ Drive every `passes: false` story in `prd_file` to completion. `prd_file` is off
 2. **Phase 1: Implementation loop**
    - Pick highest-priority story in `prd_file` with `passes: false`.
    - Before first `implementer` for current code-affecting unit, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work.
+   - When describing startup or resume state, say explicitly: `prd_file` is official source of truth; `progress_file` is supplemental resume data only.
    - Dispatch fresh `implementer` with `./implementer-prompt.md`, all story properties, `progress_file`, nearby `AGENTS.md`, and mode such as `initial_implementation` or follow-up.
    - Require `Progress block`; append it to `progress_file` immediately before interpreting or acting on it.
    - Apply **Status Rules**.
@@ -95,6 +96,39 @@ Required entry format:
   - Gotchas encountered
   - Useful context
 ---
+```
+
+### Decision templates for weaker models
+
+Use these exact action shapes when they fit.
+
+**Startup or resume before first implementer**
+
+```text
+Source of truth: `prd_file` official; `progress_file` supplemental resume data only.
+Resolved `progress_file`: dirname(prd_file) + "/progress.txt" or explicit provided path.
+Selected story: highest-priority `passes: false` story.
+Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`.
+```
+
+**After `mode: review_fix` implementer returns**
+
+```text
+1. Append implementer `Progress block` before acting on it.
+2. After this review fix, rerun `code-simplifier` on combined final state.
+3. After this review fix and simplification, rerun `requirements-collector`, then rerun `addy-code-reviewer`.
+4. Do not set `passes: true` until review is clean and final checks pass after this review fix.
+```
+
+**When review-fix iteration limit is reached**
+
+```text
+1. Stop.
+2. Do not fix findings directly.
+3. Do not dispatch another review-fix implementer.
+4. Reread `prd_file`.
+5. Append stop-state entry to `progress_file`.
+6. Ask user to decide blocker.
 ```
 
 ### Completion Gate

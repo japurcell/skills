@@ -1,0 +1,320 @@
+{
+  "metadata": {
+    "skill_name": "prd-build-loop-review",
+    "skill_path": "/home/adam/dev/personal/skills/skills/prd-build-loop-review",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-18T19:56:14Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 72.1,
+        "tokens": 654,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` (from `dirname(prd_file) + \"/progress.txt\"`; it exists, so read `## Codebase Patterns` and latest entries first).\nSelected story: `story-auth-timeout` (highest-priority story with `passes: false`).\nBefore story-specific discovery: invoke `subagent-model-router` in principle (dry-run: do not spawn), then read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch a fresh `implementer` with `./implementer-prompt.md`.\n"
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` (from `dirname(prd_file) + \"/progress.txt\"`; it exists, so read `## Codebase Patterns` and latest entries first).\nSelected story: `story-auth-timeout` (highest-priority story with `passes: false`).\nBefore story-specific discovery: invoke `subagent-model-router` in principle (dry-run: do not spawn), then read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch a fresh `implementer` with `./implementer-prompt.md`.\n"
+        },
+        {
+          "text": "The decision selects the highest-priority `passes: false` story.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` (from `dirname(prd_file) + \"/progress.txt\"`; it exists, so read `## Codebase Patterns` and latest entries first).\nSelected story: `story-auth-timeout` (highest-priority story with `passes: false`).\nBefore story-specific discovery: invoke `subagent-model-router` in principle (dry-run: do not spawn), then read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch a fresh `implementer` with `./implementer-prompt.md`.\n"
+        },
+        {
+          "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` (from `dirname(prd_file) + \"/progress.txt\"`; it exists, so read `## Codebase Patterns` and latest entries first).\nSelected story: `story-auth-timeout` (highest-priority story with `passes: false`).\nBefore story-specific discovery: invoke `subagent-model-router` in principle (dry-run: do not spawn), then read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch a fresh `implementer` with `./implementer-prompt.md`.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.67,
+        "passed": 2,
+        "failed": 1,
+        "total": 3,
+        "time_seconds": 57.3,
+        "tokens": 275,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass.\n"
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+          "passed": false,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass.\n"
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 68.1,
+        "tokens": 265,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit reached; iteration count is 3 and blocking issues remain.\nDo not fix directly, and do not dispatch another review-fix implementer.\nReread prd_file, append a stop-state entry to progress_file, and ask the user to decide the blocker.\n"
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit reached; iteration count is 3 and blocking issues remain.\nDo not fix directly, and do not dispatch another review-fix implementer.\nReread prd_file, append a stop-state entry to progress_file, and ask the user to decide the blocker.\n"
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit reached; iteration count is 3 and blocking issues remain.\nDo not fix directly, and do not dispatch another review-fix implementer.\nReread prd_file, append a stop-state entry to progress_file, and ask the user to decide the blocker.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 36.0,
+        "tokens": 28,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 40.3,
+        "tokens": 924,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "## Source of truth\n`evals/files/startup-fixture/prd.json` is the only official source for story status/completion.\n\n## Resolved progress_file\n`evals/files/startup-fixture/progress.txt` (resolved via `dirname(prd_file) + \"/progress.txt\"`). It exists, so startup uses its `## Codebase Patterns` and latest entries for resume context.\n\n## Story selection\n`story-auth-timeout` \u2014 **Auth timeout matches spec** (highest-priority story with `passes: false`, `priority: 1`).\n\n## Before any story-specific repo discovery\nNo story-specific code/test/file discovery by orchestrator yet. First, orchestration is constrained to `prd_file`, resolved `progress_file`, and nearby `AGENTS.md` needed for dispatch; then model routing and fresh `implementer` dispatch (`./implementer-prompt.md` + full story properties + `progress_file` + nearby `AGENTS.md`, mode `initial_implementation`) must occur before any story-specific repo discovery.\n"
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+          "passed": true,
+          "evidence": "## Source of truth\n`evals/files/startup-fixture/prd.json` is the only official source for story status/completion.\n\n## Resolved progress_file\n`evals/files/startup-fixture/progress.txt` (resolved via `dirname(prd_file) + \"/progress.txt\"`). It exists, so startup uses its `## Codebase Patterns` and latest entries for resume context.\n\n## Story selection\n`story-auth-timeout` \u2014 **Auth timeout matches spec** (highest-priority story with `passes: false`, `priority: 1`).\n\n## Before any story-specific repo discovery\nNo story-specific code/test/file discovery by orchestrator yet. First, orchestration is constrained to `prd_file`, resolved `progress_file`, and nearby `AGENTS.md` needed for dispatch; then model routing and fresh `implementer` dispatch (`./implementer-prompt.md` + full story properties + `progress_file` + nearby `AGENTS.md`, mode `initial_implementation`) must occur before any story-specific repo discovery.\n"
+        },
+        {
+          "text": "The decision selects the highest-priority `passes: false` story.",
+          "passed": true,
+          "evidence": "## Source of truth\n`evals/files/startup-fixture/prd.json` is the only official source for story status/completion.\n\n## Resolved progress_file\n`evals/files/startup-fixture/progress.txt` (resolved via `dirname(prd_file) + \"/progress.txt\"`). It exists, so startup uses its `## Codebase Patterns` and latest entries for resume context.\n\n## Story selection\n`story-auth-timeout` \u2014 **Auth timeout matches spec** (highest-priority story with `passes: false`, `priority: 1`).\n\n## Before any story-specific repo discovery\nNo story-specific code/test/file discovery by orchestrator yet. First, orchestration is constrained to `prd_file`, resolved `progress_file`, and nearby `AGENTS.md` needed for dispatch; then model routing and fresh `implementer` dispatch (`./implementer-prompt.md` + full story properties + `progress_file` + nearby `AGENTS.md`, mode `initial_implementation`) must occur before any story-specific repo discovery.\n"
+        },
+        {
+          "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+          "passed": true,
+          "evidence": "## Source of truth\n`evals/files/startup-fixture/prd.json` is the only official source for story status/completion.\n\n## Resolved progress_file\n`evals/files/startup-fixture/progress.txt` (resolved via `dirname(prd_file) + \"/progress.txt\"`). It exists, so startup uses its `## Codebase Patterns` and latest entries for resume context.\n\n## Story selection\n`story-auth-timeout` \u2014 **Auth timeout matches spec** (highest-priority story with `passes: false`, `priority: 1`).\n\n## Before any story-specific repo discovery\nNo story-specific code/test/file discovery by orchestrator yet. First, orchestration is constrained to `prd_file`, resolved `progress_file`, and nearby `AGENTS.md` needed for dispatch; then model routing and fresh `implementer` dispatch (`./implementer-prompt.md` + full story properties + `progress_file` + nearby `AGENTS.md`, mode `initial_implementation`) must occur before any story-specific repo discovery.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 56.5,
+        "tokens": 736,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "Append the returned implementer `Progress block` for `mode: review_fix` to `progress_file` **before** acting on it, then apply Status Rules (`DONE` means continue).\n\nRerun finalization on the combined final state after this review fix: run fresh `code-simplifier` and append its `Progress block`; then rerun review (fresh requirements collection, then fresh `addy-code-reviewer`) and append those `Progress block` entries.\n\nKeep `passes: true` blocked: do not set it yet. Set `passes: true` only after review is clean and required final checks/verification pass. If review still finds issues and review-fix iterations are below limit, increment count and dispatch fresh implementer `mode: review_fix`, then rerun simplify/review again.\n"
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+          "passed": true,
+          "evidence": "Append the returned implementer `Progress block` for `mode: review_fix` to `progress_file` **before** acting on it, then apply Status Rules (`DONE` means continue).\n\nRerun finalization on the combined final state after this review fix: run fresh `code-simplifier` and append its `Progress block`; then rerun review (fresh requirements collection, then fresh `addy-code-reviewer`) and append those `Progress block` entries.\n\nKeep `passes: true` blocked: do not set it yet. Set `passes: true` only after review is clean and required final checks/verification pass. If review still finds issues and review-fix iterations are below limit, increment count and dispatch fresh implementer `mode: review_fix`, then rerun simplify/review again.\n"
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "Append the returned implementer `Progress block` for `mode: review_fix` to `progress_file` **before** acting on it, then apply Status Rules (`DONE` means continue).\n\nRerun finalization on the combined final state after this review fix: run fresh `code-simplifier` and append its `Progress block`; then rerun review (fresh requirements collection, then fresh `addy-code-reviewer`) and append those `Progress block` entries.\n\nKeep `passes: true` blocked: do not set it yet. Set `passes: true` only after review is clean and required final checks/verification pass. If review still finds issues and review-fix iterations are below limit, increment count and dispatch fresh implementer `mode: review_fix`, then rerun simplify/review again.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 37.6,
+        "tokens": 288,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit reached (iteration count is 3) and latest review still has blocking issues. Do not fix directly or dispatch another review-fix implementer. Reread prd_file, append an orchestrator stop-state entry to progress_file, and ask the user to decide the blocker.\n"
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit reached (iteration count is 3) and latest review still has blocking issues. Do not fix directly or dispatch another review-fix implementer. Reread prd_file, append an orchestrator stop-state entry to progress_file, and ask the user to decide the blocker.\n"
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit reached (iteration count is 3) and latest review still has blocking issues. Do not fix directly or dispatch another review-fix implementer. Reread prd_file, append an orchestrator stop-state entry to progress_file, and ask the user to decide the blocker.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 31.1,
+        "tokens": 28,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.9175,
+        "stddev": 0.165,
+        "min": 0.67,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 58.375,
+        "stddev": 16.1735,
+        "min": 36.0,
+        "max": 72.1
+      },
+      "tokens": {
+        "mean": 305.5,
+        "stddev": 258.8623,
+        "min": 28,
+        "max": 654
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 41.375,
+        "stddev": 10.7973,
+        "min": 31.1,
+        "max": 56.5
+      },
+      "tokens": {
+        "mean": 494.0,
+        "stddev": 409.494,
+        "min": 28,
+        "max": 924
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.08",
+      "time_seconds": "+17.0",
+      "tokens": "-188"
+    }
+  },
+  "notes": []
+}

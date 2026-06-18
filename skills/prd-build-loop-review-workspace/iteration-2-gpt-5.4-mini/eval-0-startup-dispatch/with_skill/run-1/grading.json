@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+      "passed": true,
+      "evidence": "- Source of truth: `prd.json` is official; `progress.txt` is supplemental resume data only.\n- Resolved `progress_file`: `evals/files/startup-fixture/progress.txt` (`dirname(prd_file) + \"/progress.txt\"`).\n- Selected story: `story-auth-timeout` (`Auth timeout matches spec`) \u2014 highest-priority `passes: false` story.\n- Before any story-specific repo discovery: dispatch a fresh implementer for that story, and read only `prd.json`, `progress.txt`, and any nearby `AGENTS.md` needed to dispatch. Do not inspect story-specific code, tests, or behavior yet.\n"
+    },
+    {
+      "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+      "passed": true,
+      "evidence": "- Source of truth: `prd.json` is official; `progress.txt` is supplemental resume data only.\n- Resolved `progress_file`: `evals/files/startup-fixture/progress.txt` (`dirname(prd_file) + \"/progress.txt\"`).\n- Selected story: `story-auth-timeout` (`Auth timeout matches spec`) \u2014 highest-priority `passes: false` story.\n- Before any story-specific repo discovery: dispatch a fresh implementer for that story, and read only `prd.json`, `progress.txt`, and any nearby `AGENTS.md` needed to dispatch. Do not inspect story-specific code, tests, or behavior yet.\n"
+    },
+    {
+      "text": "The decision selects the highest-priority `passes: false` story.",
+      "passed": true,
+      "evidence": "- Source of truth: `prd.json` is official; `progress.txt` is supplemental resume data only.\n- Resolved `progress_file`: `evals/files/startup-fixture/progress.txt` (`dirname(prd_file) + \"/progress.txt\"`).\n- Selected story: `story-auth-timeout` (`Auth timeout matches spec`) \u2014 highest-priority `passes: false` story.\n- Before any story-specific repo discovery: dispatch a fresh implementer for that story, and read only `prd.json`, `progress.txt`, and any nearby `AGENTS.md` needed to dispatch. Do not inspect story-specific code, tests, or behavior yet.\n"
+    },
+    {
+      "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+      "passed": true,
+      "evidence": "- Source of truth: `prd.json` is official; `progress.txt` is supplemental resume data only.\n- Resolved `progress_file`: `evals/files/startup-fixture/progress.txt` (`dirname(prd_file) + \"/progress.txt\"`).\n- Selected story: `story-auth-timeout` (`Auth timeout matches spec`) \u2014 highest-priority `passes: false` story.\n- Before any story-specific repo discovery: dispatch a fresh implementer for that story, and read only `prd.json`, `progress.txt`, and any nearby `AGENTS.md` needed to dispatch. Do not inspect story-specific code, tests, or behavior yet.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 553,
+    "transcript_chars": 155009
+  },
+  "timing": {
+    "executor_duration_seconds": 25.7,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 25.7
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

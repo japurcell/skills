@@ -1,0 +1,84 @@
+{
+  "skill_name": "official-sources",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use the skill under test for the fixture repo in `evals/files/react-router-fixture/`. The user asks: `I need current React Router guidance for programmatic navigation in src/nav.ts. Do not change code. Detect the stack and version from project files, verify against official docs, and write only outputs/report.md with sections STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED.`",
+      "expected_output": "A docs-backed report that detects react-router-dom 7.6.2, cites the official React Router docs, and recommends the current navigation hook instead of the old v5 pattern.",
+      "files": [
+        "evals/files/react-router-fixture/package.json",
+        "evals/files/react-router-fixture/src/nav.ts"
+      ],
+      "expectations": [
+        "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+        "The report detects `react-router-dom` version `7.6.2`.",
+        "The report cites an official `reactrouter.com` source.",
+        "The implementation notes recommend `useNavigate`."
+      ],
+      "assertions": [
+        "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+        "The report detects `react-router-dom` version `7.6.2`.",
+        "The report cites an official `reactrouter.com` source.",
+        "The implementation notes recommend `useNavigate`."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Use the skill under test for the fixture repo in `evals/files/agnostic-fixture/`. The user asks: `Before you code, decide whether I need official framework docs for writing a Python function that deduplicates case-insensitive email addresses.` Do not write code. Write only outputs/decision.md saying whether this skill applies and why.",
+      "expected_output": "A short decision note that says the skill does not apply because the task is framework-agnostic and version-independent.",
+      "files": [
+        "evals/files/agnostic-fixture/README.md"
+      ],
+      "expectations": [
+        "The decision says the skill does not apply.",
+        "The decision explains that the task is framework-agnostic or version-independent.",
+        "The decision does not cite or instruct fetching official docs."
+      ],
+      "assertions": [
+        "The decision says the skill does not apply.",
+        "The decision explains that the task is framework-agnostic or version-independent.",
+        "The decision does not cite or instruct fetching official docs."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use the skill under test for the fixture repo in `evals/files/next-conflict-fixture/`. The user asks: `Update routing helper in src/use-dashboard-router.ts for current Next.js docs, but do not change code yet.` Detect version, verify current official docs, and write only outputs/conflict.md. Because current docs and the existing codebase may disagree, surface the conflict instead of silently choosing one side.",
+      "expected_output": "A conflict note that detects Next.js 15.3.1, cites official Next.js docs, identifies `next/navigation` as the documented current pattern versus `next/router` in the codebase, and asks which path to follow.",
+      "files": [
+        "evals/files/next-conflict-fixture/package.json",
+        "evals/files/next-conflict-fixture/src/use-dashboard-router.ts"
+      ],
+      "expectations": [
+        "The conflict note detects `next` version `15.3.1`.",
+        "The conflict note cites an official `nextjs.org` source.",
+        "The conflict note names both `next/navigation` and `next/router`.",
+        "The conflict note asks which path to follow or presents explicit options."
+      ],
+      "assertions": [
+        "The conflict note detects `next` version `15.3.1`.",
+        "The conflict note cites an official `nextjs.org` source.",
+        "The conflict note names both `next/navigation` and `next/router`.",
+        "The conflict note asks which path to follow or presents explicit options."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use the skill under test for the fixture repo in `evals/files/missing-version-fixture/`. The user asks: `Tell me the current recommended auth middleware pattern for our internal FooSDK.` Do not change code. Write only outputs/report.md. If the version is missing or the pattern cannot be verified from official docs, do not guess.",
+      "expected_output": "A report that refuses to guess: it notes the missing FooSDK version, asks for clarification, and marks unverifiable guidance as UNVERIFIED.",
+      "files": [
+        "evals/files/missing-version-fixture/requirements.txt",
+        "evals/files/missing-version-fixture/src/auth_flow.py"
+      ],
+      "expectations": [
+        "The report says the FooSDK version is missing or unclear.",
+        "The report asks for the exact version instead of guessing.",
+        "The report marks the pattern `UNVERIFIED`."
+      ],
+      "assertions": [
+        "The report says the FooSDK version is missing or unclear.",
+        "The report asks for the exact version instead of guessing.",
+        "The report marks the pattern `UNVERIFIED`."
+      ]
+    }
+  ]
+}

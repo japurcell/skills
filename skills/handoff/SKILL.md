@@ -1,87 +1,85 @@
 ---
 name: handoff
-description: Capture concise continuation context for another agent. Use before compaction, context reset, handoff, handover, saving progress, ending mid-task, or when the user asks to preserve session state, resume later, or continue in a new session.
-argument-hint: "Optional focus for the next agent"
+description: Writes a resume-ready handoff in `.agents/scratchpad/` so another agent can continue without rereading the session. Use whenever work may pause, compact, reset, switch models, move to another agent, or when the user asks to save progress, preserve context, resume later, continue in a new session, or leave notes for whoever picks this up next.
 ---
 
 # Handoff
 
-Create a concise, resume-ready handoff so another agent can continue without rereading the whole conversation or repeating investigation.
+## Overview
 
-## Use this skill when
+Capture one concise handoff another agent can resume from immediately. Preserve state, next action, constraints, and key artifacts without copying the whole chat.
 
-- The user asks to hand off, handover, save progress, capture context, preserve session state, resume later, continue later, continue in a new session, or pass work to another agent.
-- A compaction, context reset, session end, or model switch may happen.
-- Work is paused mid-task and another agent, human, or async worker may continue.
-- The user gives a next-session focus, task, or instruction for another agent.
+## When to Use
+
+- User asks to hand off, save progress, preserve context, resume later, continue in a new session, or leave notes for another agent.
+- Context compaction, reset, session end, async transfer, or model switch may happen.
+- Work stops mid-task and someone else must continue.
+- Not for long transcripts or notes outside `.agents/scratchpad/`.
 
 ## Workflow
 
-1. **Identify scope**
-   - Use any user-provided argument as the next agent’s focus.
-   - Determine the active goal, current status, completed work, unfinished work, blockers, and exact next step.
-   - Read only the relevant instructions, files, diffs, command outputs, errors, plans, PRDs, specs, issues, or notes needed to summarize status.
-   - Do not reread the whole repository or copy the full chat.
+1. **Gather only active context**
+   - Capture goal, status, next focus, exact next step, blockers, decisions, constraints, important files, commands/results, and durable learnings.
+   - Read only artifacts needed to summarize accurately. Do not reread the whole repo or paste full chat, logs, or diffs.
 
-2. **Choose output path**
-   - If the user names a path, use it only if it is under `.agents/scratchpad/`.
-   - If one active feature folder under `.agents/scratchpad/` clearly applies, write there.
-   - Otherwise write to `.agents/scratchpad/handoff.md`.
-   - If multiple feature folders are plausible, ask the user.
+2. **Choose an allowed path**
+   - Use user-provided focus as next-agent focus.
+   - If the user names a path, honor it only when it stays under `.agents/scratchpad/`.
+   - Otherwise, if one feature folder under `.agents/scratchpad/` clearly matches, write `<that-folder>/handoff.md`.
+   - Otherwise write `.agents/scratchpad/handoff.md`.
+   - If the requested path is invalid or multiple folders are plausible, fall back to the root handoff and note why.
+
+3. **Write or update `handoff.md`**
    - Create `.agents/scratchpad/` if needed.
+   - Update an existing handoff in place and remove stale or duplicate content.
+   - Prefer compact bullets or short sections. Default shape when it fits: Goal, Status, Next focus, Next step, Decisions/constraints, Relevant files/artifacts, Commands/results, Errors/blockers, Durable learnings, Suggested skills, Briefing.
+   - Include exact paths, commands, errors, and verification state when relevant.
+   - Reference artifacts by path or URL instead of copying them.
+   - Redact secrets and unnecessary personal data.
+   - If file write fails, emit the handoff inline and explain the failure.
 
-3. **Write or update the handoff**
-   - Save as `handoff.md`.
-   - If a handoff already exists, update it in place and remove stale or duplicate information.
-   - Use clear Markdown with whatever headings best preserve the important context.
-   - Prefer concise bullets, but include enough detail for a weaker model to continue safely.
-   - Include exact paths, commands, test results, errors, decisions, constraints, and next steps when relevant.
-   - Reference existing artifacts by path or URL instead of duplicating them.
-   - Redact secrets, credentials, tokens, private keys, passwords, and unnecessary personal information.
-   - If writing fails, provide the handoff inline and explain why.
+4. **Report outcome**
+   - State the written path.
+   - State whether it is `root-scoped` or `feature-scoped`.
+   - State the single most important next step.
 
-4. **Report result**
-   - State the path written.
-   - State whether it is root-scoped or feature-scoped.
-   - Give the single most important next step.
+## Specific Techniques
 
-## Content to include
+### Keep it resume-ready
 
-Use a free-form structure, but capture the following when relevant:
+- Distinguish done, in-progress, and remaining work.
+- Preserve unresolved questions and rejected options.
+- Make the first action obvious for a fresh, weaker model.
+- Include suggested skills only when they materially help.
 
-- **Goal** — what the user is trying to accomplish.
-- **Current status** — what is done, what is in progress, and what remains.
-- **Next-agent focus** — the requested or likely focus for the next session.
-- **Exact next step** — the first concrete action the next agent should take.
-- **Suggested skills** — skills the next agent should invoke, with a brief reason for each.
-- **Decisions and constraints** — user preferences, requirements, assumptions, rejected options, or non-goals.
-- **Relevant files and artifacts** — paths or URLs with a short reason each matters.
-- **Commands and results** — important commands run, outputs summarized, and tests passed or still needed.
-- **Errors and blockers** — unresolved failures, ambiguity, missing access, or questions for the user.
-- **Durable learnings** — reusable commands, repo conventions, environment quirks, gotchas, or patterns discovered.
-- **Briefing** — a short plain-language summary of what changed, why, current state, and what to do first.
+### Keep it small
 
-## Rules
+- Prefer one page.
+- Omit empty sections.
+- Never dump raw logs, screenshots, large diffs, or full chat unless essential.
 
-- Never write outside `.agents/scratchpad/`.
-- Prefer one concise page over a long transcript.
-- Do not force a rigid template if it would omit important context.
-- Do not include raw logs, full screenshots, large diffs, or full chat history unless essential.
-- Do not duplicate content already captured in PRDs, plans, ADRs, issues, commits, or diffs; reference it instead.
-- Do not claim work is complete unless it has been verified.
-- Preserve important user preferences, constraints, decisions, and unresolved questions.
-- Redact sensitive information.
-- Make the handoff understandable to a fresh, weaker model with no hidden context.
+## Common Rationalizations
 
-## Validation
+| Rationalization | Reality |
+| --- | --- |
+| "Copying chat is safest." | Fresh agent needs state, not transcript noise. Summarize and point at artifacts. |
+| "User asked for `docs/handoff.md`, so path rules can bend." | Never write outside `.agents/scratchpad/`; use an allowed path and say so. |
+| "Existing handoff is close enough." | Update it in place; stale next steps waste the next session. |
+| "Concise means skip blockers or constraints." | Remove noise, not decision-critical context. |
 
-Before finishing, confirm:
+## Red Flags
 
-- [ ] File path is under `.agents/scratchpad/`
-- [ ] Handoff is concise but complete enough to resume
-- [ ] Relevant files and artifacts include reasons
-- [ ] Sensitive information is redacted
+- Writes outside `.agents/scratchpad/`.
+- Pastes logs, diffs, or chat instead of referencing them.
+- Leaves stale next steps, duplicate bullets, or unverifiable completion claims.
+- Omits blockers, constraints, or the first next action.
+
+## Verification
+
+- [ ] Output path is under `.agents/scratchpad/`
+- [ ] Handoff is concise and free of stale or duplicate context
 - [ ] Done, in-progress, and remaining work are distinguishable
-- [ ] Suggested skills are included when useful
-- [ ] The exact next step is clear
-- [ ] Important context was not omitted to satisfy formatting
+- [ ] Exact next step is explicit
+- [ ] Relevant files or artifacts include why they matter
+- [ ] Sensitive information is redacted
+- [ ] Suggested skills appear only when useful

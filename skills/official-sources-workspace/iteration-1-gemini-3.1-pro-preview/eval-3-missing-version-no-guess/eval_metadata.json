@@ -1,0 +1,10 @@
+{
+  "eval_id": 3,
+  "eval_name": "missing-version-no-guess",
+  "prompt": "Use the skill under test for the fixture repo in `evals/files/missing-version-fixture/`. The user asks: `Tell me the current recommended auth middleware pattern for our internal FooSDK.` Do not change code. Write only outputs/report.md. If the version is missing or the pattern cannot be verified from official docs, do not guess.",
+  "assertions": [
+    "The report says the FooSDK version is missing or unclear.",
+    "The report asks for the exact version instead of guessing.",
+    "The report marks the pattern `UNVERIFIED`."
+  ]
+}

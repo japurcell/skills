@@ -1,0 +1,10 @@
+{
+  "eval_id": 1,
+  "eval_name": "framework-agnostic-decline",
+  "prompt": "Use the skill under test for the fixture repo in `evals/files/agnostic-fixture/`. The user asks: `Before you code, decide whether I need official framework docs for writing a Python function that deduplicates case-insensitive email addresses.` Do not write code. Write only outputs/decision.md saying whether this skill applies and why.",
+  "assertions": [
+    "The decision says the skill does not apply.",
+    "The decision explains that the task is framework-agnostic or version-independent.",
+    "The decision does not cite or instruct fetching official docs."
+  ]
+}

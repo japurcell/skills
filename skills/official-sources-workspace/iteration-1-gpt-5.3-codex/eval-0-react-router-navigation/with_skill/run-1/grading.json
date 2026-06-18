@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Fixture: `evals/files/react-router-fixture/`\n- `react-router-dom`: `7.6.2` (from `package.json`)\n- `react`: `^19.0.0` (from `package.json`)\n- Target file: `src/nav.ts` currently uses `useHistory()` + `history.push(\"/checkout\")`.\n\nOFFICIAL SOURCES\n- React Router API: `useNavigate` (programmatic navigation): https://reactrouter.com/api/hooks/useNavigate\n- React Router guide (Framework/Data): navigating guidance and when to prefer `redirect`/links: https://reactrouter.com/start/framework/navigating\n- React Router guide (Declarative): `Link`/`NavLink` preferred, `useNavigate` for non-interactive flows: https://reactrouter.com/start/declarative/navigating\n- React Router API: `redirect` utility (recommended in loaders/actions): https://reactrouter.com/api/utils/redirect\n- React Router API route for `useHistory` returns 404 in current docs: https://reactrouter.com/api/hooks/useHistory\n\nIMPLEMENTATION NOTES\n- Current official programmatic navigation hook is `useNavigate`, with `navigate(\"/checkout\")`.\n- Official docs explicitly recommend using `Link`/`NavLink` for normal user-initiated navigation.\n- Official docs also say it is often better to use `redirect(...)` in loader/action flows than `useNavigate`.\n- For `src/nav.ts` intent (imperative navigation helper), current documented pattern aligns with `useNavigate` + returned callback that calls `navigate(\"/checkout\")`.\n- `useHistory` is not documented in current React Router docs; current API index lists `useNavigate` instead.\n\nUNVERIFIED\n- Could not confirm from fetched official pages whether this fixture is using Declarative mode vs Data/Framework mode; guidance above uses docs that are consistent across those modes for `useNavigate` usage.\n- Did not verify from fetched docs whether this project should import hook from `react-router` vs `react-router-dom` in this exact setup; docs examples show `react-router` on current site.\n"
+    },
+    {
+      "text": "The report detects `react-router-dom` version `7.6.2`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Fixture: `evals/files/react-router-fixture/`\n- `react-router-dom`: `7.6.2` (from `package.json`)\n- `react`: `^19.0.0` (from `package.json`)\n- Target file: `src/nav.ts` currently uses `useHistory()` + `history.push(\"/checkout\")`.\n\nOFFICIAL SOURCES\n- React Router API: `useNavigate` (programmatic navigation): https://reactrouter.com/api/hooks/useNavigate\n- React Router guide (Framework/Data): navigating guidance and when to prefer `redirect`/links: https://reactrouter.com/start/framework/navigating\n- React Router guide (Declarative): `Link`/`NavLink` preferred, `useNavigate` for non-interactive flows: https://reactrouter.com/start/declarative/navigating\n- React Router API: `redirect` utility (recommended in loaders/actions): https://reactrouter.com/api/utils/redirect\n- React Router API route for `useHistory` returns 404 in current docs: https://reactrouter.com/api/hooks/useHistory\n\nIMPLEMENTATION NOTES\n- Current official programmatic navigation hook is `useNavigate`, with `navigate(\"/checkout\")`.\n- Official docs explicitly recommend using `Link`/`NavLink` for normal user-initiated navigation.\n- Official docs also say it is often better to use `redirect(...)` in loader/action flows than `useNavigate`.\n- For `src/nav.ts` intent (imperative navigation helper), current documented pattern aligns with `useNavigate` + returned callback that calls `navigate(\"/checkout\")`.\n- `useHistory` is not documented in current React Router docs; current API index lists `useNavigate` instead.\n\nUNVERIFIED\n- Could not confirm from fetched official pages whether this fixture is using Declarative mode vs Data/Framework mode; guidance above uses docs that are consistent across those modes for `useNavigate` usage.\n- Did not verify from fetched docs whether this project should import hook from `react-router` vs `react-router-dom` in this exact setup; docs examples show `react-router` on current site.\n"
+    },
+    {
+      "text": "The report cites an official `reactrouter.com` source.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Fixture: `evals/files/react-router-fixture/`\n- `react-router-dom`: `7.6.2` (from `package.json`)\n- `react`: `^19.0.0` (from `package.json`)\n- Target file: `src/nav.ts` currently uses `useHistory()` + `history.push(\"/checkout\")`.\n\nOFFICIAL SOURCES\n- React Router API: `useNavigate` (programmatic navigation): https://reactrouter.com/api/hooks/useNavigate\n- React Router guide (Framework/Data): navigating guidance and when to prefer `redirect`/links: https://reactrouter.com/start/framework/navigating\n- React Router guide (Declarative): `Link`/`NavLink` preferred, `useNavigate` for non-interactive flows: https://reactrouter.com/start/declarative/navigating\n- React Router API: `redirect` utility (recommended in loaders/actions): https://reactrouter.com/api/utils/redirect\n- React Router API route for `useHistory` returns 404 in current docs: https://reactrouter.com/api/hooks/useHistory\n\nIMPLEMENTATION NOTES\n- Current official programmatic navigation hook is `useNavigate`, with `navigate(\"/checkout\")`.\n- Official docs explicitly recommend using `Link`/`NavLink` for normal user-initiated navigation.\n- Official docs also say it is often better to use `redirect(...)` in loader/action flows than `useNavigate`.\n- For `src/nav.ts` intent (imperative navigation helper), current documented pattern aligns with `useNavigate` + returned callback that calls `navigate(\"/checkout\")`.\n- `useHistory` is not documented in current React Router docs; current API index lists `useNavigate` instead.\n\nUNVERIFIED\n- Could not confirm from fetched official pages whether this fixture is using Declarative mode vs Data/Framework mode; guidance above uses docs that are consistent across those modes for `useNavigate` usage.\n- Did not verify from fetched docs whether this project should import hook from `react-router` vs `react-router-dom` in this exact setup; docs examples show `react-router` on current site.\n"
+    },
+    {
+      "text": "The implementation notes recommend `useNavigate`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Fixture: `evals/files/react-router-fixture/`\n- `react-router-dom`: `7.6.2` (from `package.json`)\n- `react`: `^19.0.0` (from `package.json`)\n- Target file: `src/nav.ts` currently uses `useHistory()` + `history.push(\"/checkout\")`.\n\nOFFICIAL SOURCES\n- React Router API: `useNavigate` (programmatic navigation): https://reactrouter.com/api/hooks/useNavigate\n- React Router guide (Framework/Data): navigating guidance and when to prefer `redirect`/links: https://reactrouter.com/start/framework/navigating\n- React Router guide (Declarative): `Link`/`NavLink` preferred, `useNavigate` for non-interactive flows: https://reactrouter.com/start/declarative/navigating\n- React Router API: `redirect` utility (recommended in loaders/actions): https://reactrouter.com/api/utils/redirect\n- React Router API route for `useHistory` returns 404 in current docs: https://reactrouter.com/api/hooks/useHistory\n\nIMPLEMENTATION NOTES\n- Current official programmatic navigation hook is `useNavigate`, with `navigate(\"/checkout\")`.\n- Official docs explicitly recommend using `Link`/`NavLink` for normal user-initiated navigation.\n- Official docs also say it is often better to use `redirect(...)` in loader/action flows than `useNavigate`.\n- For `src/nav.ts` intent (imperative navigation helper), current documented pattern aligns with `useNavigate` + returned callback that calls `navigate(\"/checkout\")`.\n- `useHistory` is not documented in current React Router docs; current API index lists `useNavigate` instead.\n\nUNVERIFIED\n- Could not confirm from fetched official pages whether this fixture is using Declarative mode vs Data/Framework mode; guidance above uses docs that are consistent across those modes for `useNavigate` usage.\n- Did not verify from fetched docs whether this project should import hook from `react-router` vs `react-router-dom` in this exact setup; docs examples show `react-router` on current site.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1920,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

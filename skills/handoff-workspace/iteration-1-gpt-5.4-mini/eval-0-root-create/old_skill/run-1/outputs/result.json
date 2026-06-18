@@ -1,0 +1,5 @@
+{
+  "written_path": ".agents/scratchpad/handoff.md",
+  "scope": "feature-scoped",
+  "next_step": "Update `src/auth_refresh.py` so the retry backoff matches `tests/test_auth_refresh.py`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`."
+}

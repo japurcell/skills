@@ -1,122 +1,64 @@
 ---
 name: official-sources
-description: Use for framework-, library-, SDK-, or versioned API work when correctness and current documented patterns matter. Use whenever code depends on a named framework/library/version, or whenever any web page is fetched/webfetched/WebFetch’d to verify implementation details. Verify against official docs for the detected version, implement the documented pattern, and cite sources for non-trivial decisions.
+description: Verifies framework-, library-, SDK-, and versioned API work against official docs. Use whenever a task names a stack or version, asks for official/current/best-practice guidance, depends on documented framework behavior, or you fetch docs/web pages to confirm implementation details before coding, reviewing, debugging, or upgrading.
 ---
 
 # Official Sources
 
-Use this skill for framework-, library-, SDK-, or versioned API code when correctness, current patterns, and verifiable sources matter.
+## Overview
 
-## Use when
+Use for named-stack work where memory, tutorials, or stale patterns are risky. Detect version, verify against official docs, implement documented pattern, cite non-trivial choices.
 
-- Writing, changing, reviewing, debugging, or upgrading framework-, library-, or SDK-specific code
-- Creating boilerplate, starter code, or reusable patterns for a named stack
-- The user asks for documented, verified, official, or current best practice
-- Recommended patterns may matter, such as routing, forms, auth, state, data fetching, config, platform APIs, or migrations
-- The task names a framework, library, SDK, or versioned API
-- You fetch, webfetch, or WebFetch any web page to verify implementation details
+## When to Use
 
-## Do not use when
+- Task names framework, library, SDK, platform API, or versioned dependency
+- User wants official, current, verified, best-practice, or migration guidance
+- Work is stack-specific: coding, review, debugging, upgrades, boilerplate, reusable patterns
+- Decision depends on documented behavior such as routing, forms, auth, state, data fetching, config, platform APIs, or migrations
+- You fetch docs or other web pages to verify implementation details
+- Not for framework-agnostic, version-independent work
+- If user explicitly accepts speed over verification, say guidance is unverified if you skip docs
 
-- The task is truly framework-agnostic and version-independent
-- The user explicitly prefers speed over verification and accepts unverified guidance
+## Workflow
 
-## Process
+1. **Detect stack and version.** Read relevant project files such as `package.json`, `requirements.txt`, `pyproject.toml`, `composer.json`, `go.mod`, `Cargo.toml`, `Gemfile`, `*.csproj`, and `Directory.Packages.props`. State exact version. If version is missing or unclear, explicitly ask user for exact version before recommending pattern. If they cannot provide it, stop at version status plus `UNVERIFIED`. Do not guess.
+2. **Fetch official docs.** Read feature page, not docs homepage. Fetch priority: `markdown.new/<url>`; `r.jina.ai/http://<url>`; raw fetch for JSON, API, or auth-gated pages; `gh` when GitHub is official source. Official docs are primary. Official migration guides, changelogs, or blog posts are secondary. Standards refs such as MDN or specs, plus compatibility refs such as caniuse or node.green, support but do not replace official docs.
+3. **Implement documented pattern.** Use documented API names and signatures, prefer recommended pattern for detected version, avoid deprecated APIs. If docs do not cover pattern, mark it `UNVERIFIED`. If docs and codebase disagree, surface choice between documented current pattern and existing codebase pattern instead of silently picking one. If multiple official patterns are valid but depend on missing repo context, do not choose from version alone; present explicit options and ask which context applies.
+4. **Cite non-trivial decisions.** Cite deep links for API, architectural, migration, deprecation, and compatibility-sensitive choices. Quote briefly only when reason is not obvious.
 
-Follow: DETECT → FETCH → IMPLEMENT → CITE
+## Specific Techniques
 
-### 1) DETECT
+- If official sources conflict, cite both and explain which one matches detected version.
+- If docs leave more than one valid path, write explicit options and name missing context that decides between them.
+- When useful, format answer as:
+  - `STACK DETECTED`
+  - `OFFICIAL SOURCES`
+  - `IMPLEMENTATION NOTES`
+  - `UNVERIFIED`
+- Use `UNVERIFIED: I could not find official documentation for this pattern.` when docs do not confirm pattern.
 
-Identify the stack and exact versions from project files when available, for example:
+## Common Rationalizations
 
-- `package.json`
-- `requirements.txt`, `pyproject.toml`
-- `composer.json`
-- `go.mod`
-- `Cargo.toml`
-- `Gemfile`
-- `*.csproj`
-- `Directory.Packages.props`
+| Rationalization | Reality |
+| --- | --- |
+| "I know this API already." | Versions drift. Check docs for version in repo. |
+| "Docs homepage is enough." | Feature pages remove ambiguity and usually show current API. |
+| "Tutorial/blog/AI summary is fine." | Third-party sources can help later, not as primary authority. |
+| "Existing code already does it this way." | Surface doc/codebase conflict instead of inheriting stale pattern silently. |
 
-State the detected stack and versions explicitly. If a relevant version is missing or unclear, ask the user. Do not guess.
+## Red Flags
 
-### 2) FETCH
+- Stack-specific guidance given without version detection
+- Official docs skipped even though task depends on named framework or API behavior
+- Deprecated or undocumented APIs recommended
+- Third-party source treated as primary authority
+- Non-trivial decision given without citation
+- Missing-version case handled by guessing
 
-Fetch the specific official documentation page for the feature being implemented, not the docs homepage.
+## Verification
 
-Rules:
-
-- MUST use official docs as the primary source
-- MUST NOT rely on memory alone
-- Prefer fetching pages through a markdown converter when possible
-- MUST NOT use third-party tutorials, Stack Overflow, or AI summaries as primary authority
-
-Fetch priority:
-
-1. `WebFetch("https://markdown.new/<target-url>")`
-2. `WebFetch("https://r.jina.ai/http://<target-url>")` or `WebFetch("https://r.jina.ai/http://<full-url>")` if needed
-3. Raw `WebFetch("<target-url>")` only for JSON/API endpoints or authenticated pages
-4. Use `gh` CLI when GitHub is the official source
-
-Source priority:
-
-1. Official docs
-2. Official migration guides, changelogs, or official blog posts
-3. Standards references, such as MDN or specifications
-4. Compatibility references, such as caniuse or node.green
-
-If official sources conflict, surface the conflict, cite both, and identify which guidance matches the detected version.
-
-### 3) IMPLEMENT
-
-Implement the documented pattern for the detected version.
-
-Rules:
-
-- Use documented API names and signatures
-- Prefer the current recommended pattern for that version
-- Avoid deprecated APIs
-- If docs do not cover the pattern, mark it `UNVERIFIED`
-
-If docs conflict with the existing codebase, do not silently choose. Surface the conflict and ask whether to follow:
-
-- the documented current pattern, or
-- the existing codebase pattern
-
-### 4) CITE
-
-Cite sources for non-trivial framework-specific decisions, especially:
-
-- API or hook choice
-- Architectural or pattern choice
-- Deprecation or migration decisions
-- Compatibility-sensitive features
-
-Use full URLs and deep links when possible. Include a short quote only when the reason is non-obvious.
-
-If something cannot be verified, say:
-`UNVERIFIED: I could not find official documentation for this pattern.`
-
-## Output pattern
-
-When useful, summarize:
-STACK DETECTED: - ...
-OFFICIAL SOURCES: - ...
-IMPLEMENTATION NOTES: - ...
-UNVERIFIED: - none
-
-## Red flags
-
-- Framework-specific code written without checking docs
-- Unknown version treated as known
-- Deprecated or undocumented APIs used
-- Third-party sources treated as primary
-- Non-trivial decisions given without citations
-
-## Final check
-
-- [ ] Versions detected or explicitly requested
-- [ ] Relevant official docs fetched
-- [ ] Documented pattern used for that version
-- [ ] Non-trivial decisions cited
-- [ ] Conflicts or unverifiable parts surfaced clearly
+- [ ] Relevant stack and version detected or user asked to clarify
+- [ ] Official feature docs fetched, with secondary sources only as support
+- [ ] Recommended pattern matches detected version
+- [ ] Non-trivial decisions cite official sources
+- [ ] Conflicts and unverifiable parts surfaced explicitly

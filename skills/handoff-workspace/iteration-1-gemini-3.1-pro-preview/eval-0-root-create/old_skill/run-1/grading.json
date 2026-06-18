@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+      "passed": true,
+      "evidence": "# Handoff: Auth Refresh Retry Backoff\n\n## Goal\nMake auth refresh retries deterministic and stop the flaky retry failure.\n\n## Current Status\n- **Done**: Traced retry flow in `src/auth_refresh.py`. Ran `python3 -m pytest tests/test_auth_refresh.py -q`.\n- **In Progress**: Comparing fixed backoff vs jittered backoff for `build_retry_schedule`.\n- **Remaining**: Update retry schedule and rerun the auth refresh test.\n\n## Relevant Artifacts\n- `src/auth_refresh.py`: Target file for fix (`build_retry_schedule()`).\n- `tests/test_auth_refresh.py`: Test file (`test_refresh_retries_backoff`).\n- `logs/test-failure.txt`: Contains error output. Actual is `[0.5, 0.5, 0.5]`, expected `[0.5, 1.0, 2.0]`.\n- `plans/refresh-plan.md`: Retry plan (keep first at 0.5s, add bounded jitter, rerun test).\n\n## Next Step\nUpdate `build_retry_schedule` in `src/auth_refresh.py` to implement the backoff logic and rerun `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Notes\n- Token redacted for security.\n"
+    },
+    {
+      "text": "The handoff captures goal, status, and exact next step.",
+      "passed": true,
+      "evidence": "# Handoff: Auth Refresh Retry Backoff\n\n## Goal\nMake auth refresh retries deterministic and stop the flaky retry failure.\n\n## Current Status\n- **Done**: Traced retry flow in `src/auth_refresh.py`. Ran `python3 -m pytest tests/test_auth_refresh.py -q`.\n- **In Progress**: Comparing fixed backoff vs jittered backoff for `build_retry_schedule`.\n- **Remaining**: Update retry schedule and rerun the auth refresh test.\n\n## Relevant Artifacts\n- `src/auth_refresh.py`: Target file for fix (`build_retry_schedule()`).\n- `tests/test_auth_refresh.py`: Test file (`test_refresh_retries_backoff`).\n- `logs/test-failure.txt`: Contains error output. Actual is `[0.5, 0.5, 0.5]`, expected `[0.5, 1.0, 2.0]`.\n- `plans/refresh-plan.md`: Retry plan (keep first at 0.5s, add bounded jitter, rerun test).\n\n## Next Step\nUpdate `build_retry_schedule` in `src/auth_refresh.py` to implement the backoff logic and rerun `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Notes\n- Token redacted for security.\n"
+    },
+    {
+      "text": "The handoff names `src/auth_refresh.py`, `tests/test_auth_refresh.py`, and `logs/test-failure.txt`.",
+      "passed": true,
+      "evidence": "# Handoff: Auth Refresh Retry Backoff\n\n## Goal\nMake auth refresh retries deterministic and stop the flaky retry failure.\n\n## Current Status\n- **Done**: Traced retry flow in `src/auth_refresh.py`. Ran `python3 -m pytest tests/test_auth_refresh.py -q`.\n- **In Progress**: Comparing fixed backoff vs jittered backoff for `build_retry_schedule`.\n- **Remaining**: Update retry schedule and rerun the auth refresh test.\n\n## Relevant Artifacts\n- `src/auth_refresh.py`: Target file for fix (`build_retry_schedule()`).\n- `tests/test_auth_refresh.py`: Test file (`test_refresh_retries_backoff`).\n- `logs/test-failure.txt`: Contains error output. Actual is `[0.5, 0.5, 0.5]`, expected `[0.5, 1.0, 2.0]`.\n- `plans/refresh-plan.md`: Retry plan (keep first at 0.5s, add bounded jitter, rerun test).\n\n## Next Step\nUpdate `build_retry_schedule` in `src/auth_refresh.py` to implement the backoff logic and rerun `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Notes\n- Token redacted for security.\n"
+    },
+    {
+      "text": "The handoff includes the retry-backoff focus and redacts the secret token.",
+      "passed": true,
+      "evidence": "# Handoff: Auth Refresh Retry Backoff\n\n## Goal\nMake auth refresh retries deterministic and stop the flaky retry failure.\n\n## Current Status\n- **Done**: Traced retry flow in `src/auth_refresh.py`. Ran `python3 -m pytest tests/test_auth_refresh.py -q`.\n- **In Progress**: Comparing fixed backoff vs jittered backoff for `build_retry_schedule`.\n- **Remaining**: Update retry schedule and rerun the auth refresh test.\n\n## Relevant Artifacts\n- `src/auth_refresh.py`: Target file for fix (`build_retry_schedule()`).\n- `tests/test_auth_refresh.py`: Test file (`test_refresh_retries_backoff`).\n- `logs/test-failure.txt`: Contains error output. Actual is `[0.5, 0.5, 0.5]`, expected `[0.5, 1.0, 2.0]`.\n- `plans/refresh-plan.md`: Retry plan (keep first at 0.5s, add bounded jitter, rerun test).\n\n## Next Step\nUpdate `build_retry_schedule` in `src/auth_refresh.py` to implement the backoff logic and rerun `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Notes\n- Token redacted for security.\n"
+    },
+    {
+      "text": "outputs/result.json reports the root-scoped handoff path and next step.",
+      "passed": true,
+      "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"root-scoped\", \"next_step\": \"Update build_retry_schedule in src/auth_refresh.py to implement backoff and rerun test_refresh_retries_backoff.\"}"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2195,
+    "transcript_chars": 115647
+  },
+  "timing": {
+    "executor_duration_seconds": 32.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 32.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

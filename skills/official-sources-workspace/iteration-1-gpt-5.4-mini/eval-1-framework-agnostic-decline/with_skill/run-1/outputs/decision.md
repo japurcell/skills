@@ -1,0 +1,1 @@
+No. This is framework-agnostic Python logic, not a named framework/library/SDK/API decision. Official framework docs are not needed to write a function that deduplicates case-insensitive email addresses.

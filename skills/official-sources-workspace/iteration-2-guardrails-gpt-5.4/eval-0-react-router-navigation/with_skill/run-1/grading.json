@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- `src/nav.ts` uses `useHistory()` plus `history.push(\"/checkout\")`.\n\nOFFICIAL SOURCES\n- React Router `useNavigate`: https://reactrouter.com/api/hooks/useNavigate\n- React Router declarative navigation guide: https://reactrouter.com/start/declarative/navigating\n- React Router declarative installation guide: https://reactrouter.com/start/declarative/installation\n\nIMPLEMENTATION NOTES\n- Current official programmatic-navigation hook is `useNavigate`, which returns a navigate function and documents `navigate(\"/some/route\")` for path changes.\n- Current declarative-mode docs say normal user-triggered navigation should prefer `<Link>` or `<NavLink>` and reserve `useNavigate` for programmatic flows such as post-submit redirects or time-based redirects.\n- `useHistory` does not appear in the current official hook reference; this file is using an older pattern relative to the current docs.\n- Current official declarative docs show imports from `react-router`, not `react-router-dom`.\n\nUNVERIFIED\n- I did not verify a React Router 7.6.2 patch-specific doc page. The fetched official docs are current React Router docs, so exact package-import guidance for this repo's pinned `react-router-dom@7.6.2` remains unverified.\n"
+    },
+    {
+      "text": "The report detects `react-router-dom` version `7.6.2`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- `src/nav.ts` uses `useHistory()` plus `history.push(\"/checkout\")`.\n\nOFFICIAL SOURCES\n- React Router `useNavigate`: https://reactrouter.com/api/hooks/useNavigate\n- React Router declarative navigation guide: https://reactrouter.com/start/declarative/navigating\n- React Router declarative installation guide: https://reactrouter.com/start/declarative/installation\n\nIMPLEMENTATION NOTES\n- Current official programmatic-navigation hook is `useNavigate`, which returns a navigate function and documents `navigate(\"/some/route\")` for path changes.\n- Current declarative-mode docs say normal user-triggered navigation should prefer `<Link>` or `<NavLink>` and reserve `useNavigate` for programmatic flows such as post-submit redirects or time-based redirects.\n- `useHistory` does not appear in the current official hook reference; this file is using an older pattern relative to the current docs.\n- Current official declarative docs show imports from `react-router`, not `react-router-dom`.\n\nUNVERIFIED\n- I did not verify a React Router 7.6.2 patch-specific doc page. The fetched official docs are current React Router docs, so exact package-import guidance for this repo's pinned `react-router-dom@7.6.2` remains unverified.\n"
+    },
+    {
+      "text": "The report cites an official `reactrouter.com` source.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- `src/nav.ts` uses `useHistory()` plus `history.push(\"/checkout\")`.\n\nOFFICIAL SOURCES\n- React Router `useNavigate`: https://reactrouter.com/api/hooks/useNavigate\n- React Router declarative navigation guide: https://reactrouter.com/start/declarative/navigating\n- React Router declarative installation guide: https://reactrouter.com/start/declarative/installation\n\nIMPLEMENTATION NOTES\n- Current official programmatic-navigation hook is `useNavigate`, which returns a navigate function and documents `navigate(\"/some/route\")` for path changes.\n- Current declarative-mode docs say normal user-triggered navigation should prefer `<Link>` or `<NavLink>` and reserve `useNavigate` for programmatic flows such as post-submit redirects or time-based redirects.\n- `useHistory` does not appear in the current official hook reference; this file is using an older pattern relative to the current docs.\n- Current official declarative docs show imports from `react-router`, not `react-router-dom`.\n\nUNVERIFIED\n- I did not verify a React Router 7.6.2 patch-specific doc page. The fetched official docs are current React Router docs, so exact package-import guidance for this repo's pinned `react-router-dom@7.6.2` remains unverified.\n"
+    },
+    {
+      "text": "The implementation notes recommend `useNavigate`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- `src/nav.ts` uses `useHistory()` plus `history.push(\"/checkout\")`.\n\nOFFICIAL SOURCES\n- React Router `useNavigate`: https://reactrouter.com/api/hooks/useNavigate\n- React Router declarative navigation guide: https://reactrouter.com/start/declarative/navigating\n- React Router declarative installation guide: https://reactrouter.com/start/declarative/installation\n\nIMPLEMENTATION NOTES\n- Current official programmatic-navigation hook is `useNavigate`, which returns a navigate function and documents `navigate(\"/some/route\")` for path changes.\n- Current declarative-mode docs say normal user-triggered navigation should prefer `<Link>` or `<NavLink>` and reserve `useNavigate` for programmatic flows such as post-submit redirects or time-based redirects.\n- `useHistory` does not appear in the current official hook reference; this file is using an older pattern relative to the current docs.\n- Current official declarative docs show imports from `react-router`, not `react-router-dom`.\n\nUNVERIFIED\n- I did not verify a React Router 7.6.2 patch-specific doc page. The fetched official docs are current React Router docs, so exact package-import guidance for this repo's pinned `react-router-dom@7.6.2` remains unverified.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1275,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

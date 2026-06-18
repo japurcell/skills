@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The report says the FooSDK version is missing or unclear.",
+      "passed": true,
+      "evidence": "STACK DETECTED:\n- SDK: foosdk\n- Version: missing (requirements.txt lists `foosdk` with no pinned or minimum version)\n\nOFFICIAL SOURCES:\n- No official FooSDK documentation URL is provided in the fixture.\n- Without a verified official source tied to a specific FooSDK version, the auth middleware pattern cannot be confirmed.\n\nIMPLEMENTATION NOTES:\n- I cannot provide a \"current recommended auth middleware pattern\" for an internal FooSDK from this fixture without guessing.\n- Please provide the exact FooSDK version and official docs location for auth middleware guidance.\n\nUNVERIFIED: I could not find official documentation for this pattern.\n"
+    },
+    {
+      "text": "The report asks for the exact version instead of guessing.",
+      "passed": true,
+      "evidence": "STACK DETECTED:\n- SDK: foosdk\n- Version: missing (requirements.txt lists `foosdk` with no pinned or minimum version)\n\nOFFICIAL SOURCES:\n- No official FooSDK documentation URL is provided in the fixture.\n- Without a verified official source tied to a specific FooSDK version, the auth middleware pattern cannot be confirmed.\n\nIMPLEMENTATION NOTES:\n- I cannot provide a \"current recommended auth middleware pattern\" for an internal FooSDK from this fixture without guessing.\n- Please provide the exact FooSDK version and official docs location for auth middleware guidance.\n\nUNVERIFIED: I could not find official documentation for this pattern.\n"
+    },
+    {
+      "text": "The report marks the pattern `UNVERIFIED`.",
+      "passed": true,
+      "evidence": "STACK DETECTED:\n- SDK: foosdk\n- Version: missing (requirements.txt lists `foosdk` with no pinned or minimum version)\n\nOFFICIAL SOURCES:\n- No official FooSDK documentation URL is provided in the fixture.\n- Without a verified official source tied to a specific FooSDK version, the auth middleware pattern cannot be confirmed.\n\nIMPLEMENTATION NOTES:\n- I cannot provide a \"current recommended auth middleware pattern\" for an internal FooSDK from this fixture without guessing.\n- Please provide the exact FooSDK version and official docs location for auth middleware guidance.\n\nUNVERIFIED: I could not find official documentation for this pattern.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 643,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

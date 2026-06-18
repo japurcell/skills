@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The report says the FooSDK version is missing or unclear.",
+      "passed": true,
+      "evidence": "# STACK DETECTED\n- FooSDK is present via `foosdk` in `requirements.txt`.\n- Version is missing/unclear; no pinned version found.\n\n# OFFICIAL SOURCES\n- Not verified: no official FooSDK docs were available here to confirm an auth middleware pattern.\n\n# IMPLEMENTATION NOTES\n- `src/auth_flow.py` only shows `from foosdk import Client` and `Client()`.\n- I cannot confirm the current recommended auth middleware pattern without the exact FooSDK version.\n\n# UNVERIFIED\n- Current recommended auth middleware pattern for FooSDK: UNVERIFIED.\n- Please provide the exact FooSDK version so I can verify against official docs instead of guessing.\n"
+    },
+    {
+      "text": "The report asks for the exact version instead of guessing.",
+      "passed": true,
+      "evidence": "# STACK DETECTED\n- FooSDK is present via `foosdk` in `requirements.txt`.\n- Version is missing/unclear; no pinned version found.\n\n# OFFICIAL SOURCES\n- Not verified: no official FooSDK docs were available here to confirm an auth middleware pattern.\n\n# IMPLEMENTATION NOTES\n- `src/auth_flow.py` only shows `from foosdk import Client` and `Client()`.\n- I cannot confirm the current recommended auth middleware pattern without the exact FooSDK version.\n\n# UNVERIFIED\n- Current recommended auth middleware pattern for FooSDK: UNVERIFIED.\n- Please provide the exact FooSDK version so I can verify against official docs instead of guessing.\n"
+    },
+    {
+      "text": "The report marks the pattern `UNVERIFIED`.",
+      "passed": true,
+      "evidence": "# STACK DETECTED\n- FooSDK is present via `foosdk` in `requirements.txt`.\n- Version is missing/unclear; no pinned version found.\n\n# OFFICIAL SOURCES\n- Not verified: no official FooSDK docs were available here to confirm an auth middleware pattern.\n\n# IMPLEMENTATION NOTES\n- `src/auth_flow.py` only shows `from foosdk import Client` and `Client()`.\n- I cannot confirm the current recommended auth middleware pattern without the exact FooSDK version.\n\n# UNVERIFIED\n- Current recommended auth middleware pattern for FooSDK: UNVERIFIED.\n- Please provide the exact FooSDK version so I can verify against official docs instead of guessing.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 633,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

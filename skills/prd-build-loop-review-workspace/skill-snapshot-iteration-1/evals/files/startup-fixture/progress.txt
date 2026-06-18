@@ -1,0 +1,14 @@
+## Codebase Patterns
+- Keep auth changes and auth tests together.
+- Let implementer perform story-specific discovery.
+
+## 2026-06-10T09:00:00Z - RESUME
+- Role: orchestrator
+- Summary: Session resumed before selecting next story.
+- Files changed/reviewed: prd.json, progress.txt
+- Verification or outcome: No story dispatched yet.
+- **Learnings for future iterations:**
+  - Pick work from `prd_file`, not from memory.
+  - `progress_file` is resume data only.
+  - Story-specific code reading waits for implementer.
+---

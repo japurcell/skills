@@ -1,0 +1,352 @@
+{
+  "metadata": {
+    "skill_name": "official-sources",
+    "skill_path": "/home/adam/dev/personal/skills/skills/official-sources/SKILL.md",
+    "executor_model": "gpt-5.4",
+    "analyzer_model": "gpt-5.4",
+    "timestamp": "2026-06-18T20:10:26Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 2187,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n\n- Inspected `package.json` and `src/nav.ts`.\n- React: declared dependency `^19.0.0` (exact resolved install version not present in inspected files).\n- React Router DOM: `7.6.2`.\n- `src/nav.ts` currently uses `useHistory()` and `history.push(\"/checkout\")`.\n- Router mode is likely declarative/client-side routing, but router setup is not present in inspected files.\n\nOFFICIAL SOURCES\n\n- React Router 7.6.2 Declarative Navigating: https://reactrouter.com/7.6.2/start/declarative/navigating  \n  Says declarative apps navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and recommends `Link`/`NavLink` for normal navigation while reserving `useNavigate` for programmatic flows.\n- React Router 7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate  \n  Documents programmatic navigation as `navigate(to, options?)` / `navigate(delta)`, including `replace` and `state` options.\n- React Router 7.6.2 Declarative Installation: https://reactrouter.com/7.6.2/start/declarative/installation  \n  Current v7 declarative docs show router APIs imported from `react-router`.\n\nIMPLEMENTATION NOTES\n\n- Current official React Router 7.6.2 guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Documented equivalent to `history.push(\"/checkout\")` is `navigate(\"/checkout\")`.\n- If this navigation is triggered by ordinary user interaction whose main purpose is changing pages, official docs prefer `<Link>` or `<NavLink>` over imperative navigation.\n- If imperative navigation is still desired in a hook/callback, current 7.6.2 declarative docs show `useNavigate` imported from `react-router`.\n- If replace semantics are needed, official API is `navigate(\"/checkout\", { replace: true })`; if location state is needed, pass `state` in the options object.\n\nUNVERIFIED\n\n- Exact installed React version cannot be confirmed from inspected files; only declared range `^19.0.0` is visible.\n- Router mode is inferred, not proven, because no router setup file was included in the fixture.\n- Whether this repo intentionally depends on `react-router-dom` re-exports instead of current `react-router` imports cannot be confirmed from inspected files alone.\n"
+        },
+        {
+          "text": "The report detects `react-router-dom` version `7.6.2`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n\n- Inspected `package.json` and `src/nav.ts`.\n- React: declared dependency `^19.0.0` (exact resolved install version not present in inspected files).\n- React Router DOM: `7.6.2`.\n- `src/nav.ts` currently uses `useHistory()` and `history.push(\"/checkout\")`.\n- Router mode is likely declarative/client-side routing, but router setup is not present in inspected files.\n\nOFFICIAL SOURCES\n\n- React Router 7.6.2 Declarative Navigating: https://reactrouter.com/7.6.2/start/declarative/navigating  \n  Says declarative apps navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and recommends `Link`/`NavLink` for normal navigation while reserving `useNavigate` for programmatic flows.\n- React Router 7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate  \n  Documents programmatic navigation as `navigate(to, options?)` / `navigate(delta)`, including `replace` and `state` options.\n- React Router 7.6.2 Declarative Installation: https://reactrouter.com/7.6.2/start/declarative/installation  \n  Current v7 declarative docs show router APIs imported from `react-router`.\n\nIMPLEMENTATION NOTES\n\n- Current official React Router 7.6.2 guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Documented equivalent to `history.push(\"/checkout\")` is `navigate(\"/checkout\")`.\n- If this navigation is triggered by ordinary user interaction whose main purpose is changing pages, official docs prefer `<Link>` or `<NavLink>` over imperative navigation.\n- If imperative navigation is still desired in a hook/callback, current 7.6.2 declarative docs show `useNavigate` imported from `react-router`.\n- If replace semantics are needed, official API is `navigate(\"/checkout\", { replace: true })`; if location state is needed, pass `state` in the options object.\n\nUNVERIFIED\n\n- Exact installed React version cannot be confirmed from inspected files; only declared range `^19.0.0` is visible.\n- Router mode is inferred, not proven, because no router setup file was included in the fixture.\n- Whether this repo intentionally depends on `react-router-dom` re-exports instead of current `react-router` imports cannot be confirmed from inspected files alone.\n"
+        },
+        {
+          "text": "The report cites an official `reactrouter.com` source.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n\n- Inspected `package.json` and `src/nav.ts`.\n- React: declared dependency `^19.0.0` (exact resolved install version not present in inspected files).\n- React Router DOM: `7.6.2`.\n- `src/nav.ts` currently uses `useHistory()` and `history.push(\"/checkout\")`.\n- Router mode is likely declarative/client-side routing, but router setup is not present in inspected files.\n\nOFFICIAL SOURCES\n\n- React Router 7.6.2 Declarative Navigating: https://reactrouter.com/7.6.2/start/declarative/navigating  \n  Says declarative apps navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and recommends `Link`/`NavLink` for normal navigation while reserving `useNavigate` for programmatic flows.\n- React Router 7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate  \n  Documents programmatic navigation as `navigate(to, options?)` / `navigate(delta)`, including `replace` and `state` options.\n- React Router 7.6.2 Declarative Installation: https://reactrouter.com/7.6.2/start/declarative/installation  \n  Current v7 declarative docs show router APIs imported from `react-router`.\n\nIMPLEMENTATION NOTES\n\n- Current official React Router 7.6.2 guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Documented equivalent to `history.push(\"/checkout\")` is `navigate(\"/checkout\")`.\n- If this navigation is triggered by ordinary user interaction whose main purpose is changing pages, official docs prefer `<Link>` or `<NavLink>` over imperative navigation.\n- If imperative navigation is still desired in a hook/callback, current 7.6.2 declarative docs show `useNavigate` imported from `react-router`.\n- If replace semantics are needed, official API is `navigate(\"/checkout\", { replace: true })`; if location state is needed, pass `state` in the options object.\n\nUNVERIFIED\n\n- Exact installed React version cannot be confirmed from inspected files; only declared range `^19.0.0` is visible.\n- Router mode is inferred, not proven, because no router setup file was included in the fixture.\n- Whether this repo intentionally depends on `react-router-dom` re-exports instead of current `react-router` imports cannot be confirmed from inspected files alone.\n"
+        },
+        {
+          "text": "The implementation notes recommend `useNavigate`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n\n- Inspected `package.json` and `src/nav.ts`.\n- React: declared dependency `^19.0.0` (exact resolved install version not present in inspected files).\n- React Router DOM: `7.6.2`.\n- `src/nav.ts` currently uses `useHistory()` and `history.push(\"/checkout\")`.\n- Router mode is likely declarative/client-side routing, but router setup is not present in inspected files.\n\nOFFICIAL SOURCES\n\n- React Router 7.6.2 Declarative Navigating: https://reactrouter.com/7.6.2/start/declarative/navigating  \n  Says declarative apps navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and recommends `Link`/`NavLink` for normal navigation while reserving `useNavigate` for programmatic flows.\n- React Router 7.6.2 `useNavigate` API: https://reactrouter.com/7.6.2/api/hooks/useNavigate  \n  Documents programmatic navigation as `navigate(to, options?)` / `navigate(delta)`, including `replace` and `state` options.\n- React Router 7.6.2 Declarative Installation: https://reactrouter.com/7.6.2/start/declarative/installation  \n  Current v7 declarative docs show router APIs imported from `react-router`.\n\nIMPLEMENTATION NOTES\n\n- Current official React Router 7.6.2 guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Documented equivalent to `history.push(\"/checkout\")` is `navigate(\"/checkout\")`.\n- If this navigation is triggered by ordinary user interaction whose main purpose is changing pages, official docs prefer `<Link>` or `<NavLink>` over imperative navigation.\n- If imperative navigation is still desired in a hook/callback, current 7.6.2 declarative docs show `useNavigate` imported from `react-router`.\n- If replace semantics are needed, official API is `navigate(\"/checkout\", { replace: true })`; if location state is needed, pass `state` in the options object.\n\nUNVERIFIED\n\n- Exact installed React version cannot be confirmed from inspected files; only declared range `^19.0.0` is visible.\n- Router mode is inferred, not proven, because no router setup file was included in the fixture.\n- Whether this repo intentionally depends on `react-router-dom` re-exports instead of current `react-router` imports cannot be confirmed from inspected files alone.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 314,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says the skill does not apply.",
+          "passed": true,
+          "evidence": "Skill does not apply.\n\nWhy: request is for plain Python function to deduplicate case-insensitive email addresses. No named framework, library, SDK, platform API, or versioned dependency is involved, so behavior is framework-agnostic and not version-sensitive. Official framework docs are not needed before coding.\n"
+        },
+        {
+          "text": "The decision explains that the task is framework-agnostic or version-independent.",
+          "passed": true,
+          "evidence": "Skill does not apply.\n\nWhy: request is for plain Python function to deduplicate case-insensitive email addresses. No named framework, library, SDK, platform API, or versioned dependency is involved, so behavior is framework-agnostic and not version-sensitive. Official framework docs are not needed before coding.\n"
+        },
+        {
+          "text": "The decision does not cite or instruct fetching official docs.",
+          "passed": true,
+          "evidence": "Skill does not apply.\n\nWhy: request is for plain Python function to deduplicate case-insensitive email addresses. No named framework, library, SDK, platform API, or versioned dependency is involved, so behavior is framework-agnostic and not version-sensitive. Official framework docs are not needed before coding.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 2403,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The conflict note detects `next` version `15.3.1`.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n\n- Fixture dependency: `next` **15.3.1** (`evals/files/next-conflict-fixture/package.json`)\n- Current helper: `src/use-dashboard-router.ts` imports `useRouter` from `next/router`\n\n# OFFICIAL SOURCES\n\n1. App Router `useRouter` docs: https://nextjs.org/docs/app/api-reference/functions/use-router  \n   - Current official guidance: import `useRouter` from `next/navigation`, not `next/router`, when using App Router.\n   - Example also shows App Router usage inside a Client Component.\n2. Pages Router `useRouter` docs: https://nextjs.org/docs/pages/api-reference/functions/use-router  \n   - Official Pages Router API still uses `import { useRouter } from 'next/router'`.\n3. App Router migration guide: https://nextjs.org/docs/app/guides/migrating/app-router-migration  \n   - Official guide says `app` and `pages` can coexist during migration.\n4. `next/compat/router` docs: https://nextjs.org/docs/pages/api-reference/functions/use-router#the-nextcompatrouter-export  \n   - Official bridge for components that must work in both `app` and `pages`.\n\n# CONFLICT\n\nCurrent docs do **not** support one silent answer here:\n\n- If `use-dashboard-router.ts` is meant for **Pages Router**, existing `next/router` import is still officially correct.\n- If it is meant for **App Router**, official docs say this should move to `next/navigation` instead, and App Router examples assume Client Component usage.\n\nThis fixture provides only `src/use-dashboard-router.ts` plus `package.json`; it does **not** show whether this hook is consumed from `pages/`, `app/`, or both. Because Next.js **15.3.1** supports both router systems, choosing `next/router` vs `next/navigation` from version alone would be guesswork.\n\n# IMPLEMENTATION NOTES\n\nDo **not** change code yet without deciding intended router mode:\n\n- **Choose Pages Router path** if this helper is only used from `pages/*` components. Then `next/router` remains aligned with official docs.\n- **Choose App Router path** if this helper is for `app/*` Client Components. Then align with official docs by using `next/navigation` instead of `next/router`.\n- **Choose migration/dual-support path** only if this helper must work across both systems. Official docs point to `next/compat/router` as transition aid, with App Router hooks from `next/navigation` where needed.\n\nResult: **documented doc/codebase conflict surfaced; no code change selected yet.**\n"
+        },
+        {
+          "text": "The conflict note cites an official `nextjs.org` source.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n\n- Fixture dependency: `next` **15.3.1** (`evals/files/next-conflict-fixture/package.json`)\n- Current helper: `src/use-dashboard-router.ts` imports `useRouter` from `next/router`\n\n# OFFICIAL SOURCES\n\n1. App Router `useRouter` docs: https://nextjs.org/docs/app/api-reference/functions/use-router  \n   - Current official guidance: import `useRouter` from `next/navigation`, not `next/router`, when using App Router.\n   - Example also shows App Router usage inside a Client Component.\n2. Pages Router `useRouter` docs: https://nextjs.org/docs/pages/api-reference/functions/use-router  \n   - Official Pages Router API still uses `import { useRouter } from 'next/router'`.\n3. App Router migration guide: https://nextjs.org/docs/app/guides/migrating/app-router-migration  \n   - Official guide says `app` and `pages` can coexist during migration.\n4. `next/compat/router` docs: https://nextjs.org/docs/pages/api-reference/functions/use-router#the-nextcompatrouter-export  \n   - Official bridge for components that must work in both `app` and `pages`.\n\n# CONFLICT\n\nCurrent docs do **not** support one silent answer here:\n\n- If `use-dashboard-router.ts` is meant for **Pages Router**, existing `next/router` import is still officially correct.\n- If it is meant for **App Router**, official docs say this should move to `next/navigation` instead, and App Router examples assume Client Component usage.\n\nThis fixture provides only `src/use-dashboard-router.ts` plus `package.json`; it does **not** show whether this hook is consumed from `pages/`, `app/`, or both. Because Next.js **15.3.1** supports both router systems, choosing `next/router` vs `next/navigation` from version alone would be guesswork.\n\n# IMPLEMENTATION NOTES\n\nDo **not** change code yet without deciding intended router mode:\n\n- **Choose Pages Router path** if this helper is only used from `pages/*` components. Then `next/router` remains aligned with official docs.\n- **Choose App Router path** if this helper is for `app/*` Client Components. Then align with official docs by using `next/navigation` instead of `next/router`.\n- **Choose migration/dual-support path** only if this helper must work across both systems. Official docs point to `next/compat/router` as transition aid, with App Router hooks from `next/navigation` where needed.\n\nResult: **documented doc/codebase conflict surfaced; no code change selected yet.**\n"
+        },
+        {
+          "text": "The conflict note names both `next/navigation` and `next/router`.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n\n- Fixture dependency: `next` **15.3.1** (`evals/files/next-conflict-fixture/package.json`)\n- Current helper: `src/use-dashboard-router.ts` imports `useRouter` from `next/router`\n\n# OFFICIAL SOURCES\n\n1. App Router `useRouter` docs: https://nextjs.org/docs/app/api-reference/functions/use-router  \n   - Current official guidance: import `useRouter` from `next/navigation`, not `next/router`, when using App Router.\n   - Example also shows App Router usage inside a Client Component.\n2. Pages Router `useRouter` docs: https://nextjs.org/docs/pages/api-reference/functions/use-router  \n   - Official Pages Router API still uses `import { useRouter } from 'next/router'`.\n3. App Router migration guide: https://nextjs.org/docs/app/guides/migrating/app-router-migration  \n   - Official guide says `app` and `pages` can coexist during migration.\n4. `next/compat/router` docs: https://nextjs.org/docs/pages/api-reference/functions/use-router#the-nextcompatrouter-export  \n   - Official bridge for components that must work in both `app` and `pages`.\n\n# CONFLICT\n\nCurrent docs do **not** support one silent answer here:\n\n- If `use-dashboard-router.ts` is meant for **Pages Router**, existing `next/router` import is still officially correct.\n- If it is meant for **App Router**, official docs say this should move to `next/navigation` instead, and App Router examples assume Client Component usage.\n\nThis fixture provides only `src/use-dashboard-router.ts` plus `package.json`; it does **not** show whether this hook is consumed from `pages/`, `app/`, or both. Because Next.js **15.3.1** supports both router systems, choosing `next/router` vs `next/navigation` from version alone would be guesswork.\n\n# IMPLEMENTATION NOTES\n\nDo **not** change code yet without deciding intended router mode:\n\n- **Choose Pages Router path** if this helper is only used from `pages/*` components. Then `next/router` remains aligned with official docs.\n- **Choose App Router path** if this helper is for `app/*` Client Components. Then align with official docs by using `next/navigation` instead of `next/router`.\n- **Choose migration/dual-support path** only if this helper must work across both systems. Official docs point to `next/compat/router` as transition aid, with App Router hooks from `next/navigation` where needed.\n\nResult: **documented doc/codebase conflict surfaced; no code change selected yet.**\n"
+        },
+        {
+          "text": "The conflict note asks which path to follow or presents explicit options.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n\n- Fixture dependency: `next` **15.3.1** (`evals/files/next-conflict-fixture/package.json`)\n- Current helper: `src/use-dashboard-router.ts` imports `useRouter` from `next/router`\n\n# OFFICIAL SOURCES\n\n1. App Router `useRouter` docs: https://nextjs.org/docs/app/api-reference/functions/use-router  \n   - Current official guidance: import `useRouter` from `next/navigation`, not `next/router`, when using App Router.\n   - Example also shows App Router usage inside a Client Component.\n2. Pages Router `useRouter` docs: https://nextjs.org/docs/pages/api-reference/functions/use-router  \n   - Official Pages Router API still uses `import { useRouter } from 'next/router'`.\n3. App Router migration guide: https://nextjs.org/docs/app/guides/migrating/app-router-migration  \n   - Official guide says `app` and `pages` can coexist during migration.\n4. `next/compat/router` docs: https://nextjs.org/docs/pages/api-reference/functions/use-router#the-nextcompatrouter-export  \n   - Official bridge for components that must work in both `app` and `pages`.\n\n# CONFLICT\n\nCurrent docs do **not** support one silent answer here:\n\n- If `use-dashboard-router.ts` is meant for **Pages Router**, existing `next/router` import is still officially correct.\n- If it is meant for **App Router**, official docs say this should move to `next/navigation` instead, and App Router examples assume Client Component usage.\n\nThis fixture provides only `src/use-dashboard-router.ts` plus `package.json`; it does **not** show whether this hook is consumed from `pages/`, `app/`, or both. Because Next.js **15.3.1** supports both router systems, choosing `next/router` vs `next/navigation` from version alone would be guesswork.\n\n# IMPLEMENTATION NOTES\n\nDo **not** change code yet without deciding intended router mode:\n\n- **Choose Pages Router path** if this helper is only used from `pages/*` components. Then `next/router` remains aligned with official docs.\n- **Choose App Router path** if this helper is for `app/*` Client Components. Then align with official docs by using `next/navigation` instead of `next/router`.\n- **Choose migration/dual-support path** only if this helper must work across both systems. Official docs point to `next/compat/router` as transition aid, with App Router hooks from `next/navigation` where needed.\n\nResult: **documented doc/codebase conflict surfaced; no code change selected yet.**\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 1042,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report says the FooSDK version is missing or unclear.",
+          "passed": true,
+          "evidence": "# Report\n\n## STACK DETECTED\n- Python fixture using `foosdk` (`evals/files/missing-version-fixture/requirements.txt:1`).\n- Installed version is **not pinned or stated**; `requirements.txt` contains only `foosdk` with no version specifier.\n- Code sample only constructs `Client()` and shows no auth middleware usage (`evals/files/missing-version-fixture/src/auth_flow.py:1-5`).\n\n## OFFICIAL SOURCES\n- No official FooSDK auth-middleware documentation URL is provided in the fixture.\n- Because FooSDK version is missing, I cannot determine which official versioned docs would be authoritative.\n\n## IMPLEMENTATION NOTES\nI cannot recommend a **current** auth middleware pattern for FooSDK from this fixture without guessing. Per the skill rules, version detection is required before giving stack-specific guidance, and missing-version cases must not be guessed.\n\n## UNVERIFIED\nUNVERIFIED: I could not verify this pattern from official docs. Need exact FooSDK version and official FooSDK auth documentation before recommending a middleware pattern.\n"
+        },
+        {
+          "text": "The report asks for the exact version instead of guessing.",
+          "passed": true,
+          "evidence": "# Report\n\n## STACK DETECTED\n- Python fixture using `foosdk` (`evals/files/missing-version-fixture/requirements.txt:1`).\n- Installed version is **not pinned or stated**; `requirements.txt` contains only `foosdk` with no version specifier.\n- Code sample only constructs `Client()` and shows no auth middleware usage (`evals/files/missing-version-fixture/src/auth_flow.py:1-5`).\n\n## OFFICIAL SOURCES\n- No official FooSDK auth-middleware documentation URL is provided in the fixture.\n- Because FooSDK version is missing, I cannot determine which official versioned docs would be authoritative.\n\n## IMPLEMENTATION NOTES\nI cannot recommend a **current** auth middleware pattern for FooSDK from this fixture without guessing. Per the skill rules, version detection is required before giving stack-specific guidance, and missing-version cases must not be guessed.\n\n## UNVERIFIED\nUNVERIFIED: I could not verify this pattern from official docs. Need exact FooSDK version and official FooSDK auth documentation before recommending a middleware pattern.\n"
+        },
+        {
+          "text": "The report marks the pattern `UNVERIFIED`.",
+          "passed": true,
+          "evidence": "# Report\n\n## STACK DETECTED\n- Python fixture using `foosdk` (`evals/files/missing-version-fixture/requirements.txt:1`).\n- Installed version is **not pinned or stated**; `requirements.txt` contains only `foosdk` with no version specifier.\n- Code sample only constructs `Client()` and shows no auth middleware usage (`evals/files/missing-version-fixture/src/auth_flow.py:1-5`).\n\n## OFFICIAL SOURCES\n- No official FooSDK auth-middleware documentation URL is provided in the fixture.\n- Because FooSDK version is missing, I cannot determine which official versioned docs would be authoritative.\n\n## IMPLEMENTATION NOTES\nI cannot recommend a **current** auth middleware pattern for FooSDK from this fixture without guessing. Per the skill rules, version detection is required before giving stack-specific guidance, and missing-version cases must not be guessed.\n\n## UNVERIFIED\nUNVERIFIED: I could not verify this pattern from official docs. Need exact FooSDK version and official FooSDK auth documentation before recommending a middleware pattern.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 2187,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- React app fixture with TypeScript source (`src/nav.ts`).\n- `package.json` declares `react` `^19.0.0` and `react-router-dom` `7.6.2`.\n- `src/nav.ts` currently imports `useHistory` from `react-router-dom` and calls `history.push(\"/checkout\")`.\n\n# OFFICIAL SOURCES\n- https://reactrouter.com/7.6.2/api/hooks/useNavigate \u2014 official v7.6.2 API for programmatic navigation; documents `useNavigate()` and `navigate(\"/some/route\")`.\n- https://reactrouter.com/7.6.2/start/declarative/navigating \u2014 official declarative-mode guide; says users navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and to reserve `useNavigate` for imperative cases.\n- https://reactrouter.com/7.6.2/start/declarative/installation \u2014 official v7.6.2 setup guide; shows `<BrowserRouter>` imported from `react-router`.\n- https://reactrouter.com/7.6.2/upgrading/v6 \u2014 official v7 upgrade guide; says v7 no longer needs `react-router-dom` and imports should be updated to `react-router`.\n- https://reactrouter.com/7.6.2/api/hooks/useHistory \u2014 official 7.6.2 docs page resolves to 404, which is consistent with `useHistory` not being a documented v7 hook.\n\n# IMPLEMENTATION NOTES\n- Current React Router 7.6.2 guidance for programmatic navigation is `useNavigate()`, then call `navigate(\"/checkout\")`.\n- `useHistory().push(...)` is not the documented v7.6.2 programmatic-navigation API.\n- Official v7 docs prefer imports from `react-router` for declarative routing APIs. If `src/nav.ts` is updated later to match docs, documented shape is `import { useNavigate } from \"react-router\"; const navigate = useNavigate(); return () => navigate(\"/checkout\");`.\n- Official docs also say `Link`/`NavLink` are preferred for normal user-driven navigation; keep imperative navigation only if this hook is needed outside normal link interactions.\n\n# UNVERIFIED\n- Whether this repo intentionally relies on `react-router-dom` re-exports in v7; fetched official 7.6.2 docs here verify `react-router` imports, not a `react-router-dom`-specific recommendation for this hook.\n- Router mode/bootstrap file is not present in fixture, so `BrowserRouter` usage in this specific repo cannot be confirmed from project files alone.\n"
+        },
+        {
+          "text": "The report detects `react-router-dom` version `7.6.2`.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- React app fixture with TypeScript source (`src/nav.ts`).\n- `package.json` declares `react` `^19.0.0` and `react-router-dom` `7.6.2`.\n- `src/nav.ts` currently imports `useHistory` from `react-router-dom` and calls `history.push(\"/checkout\")`.\n\n# OFFICIAL SOURCES\n- https://reactrouter.com/7.6.2/api/hooks/useNavigate \u2014 official v7.6.2 API for programmatic navigation; documents `useNavigate()` and `navigate(\"/some/route\")`.\n- https://reactrouter.com/7.6.2/start/declarative/navigating \u2014 official declarative-mode guide; says users navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and to reserve `useNavigate` for imperative cases.\n- https://reactrouter.com/7.6.2/start/declarative/installation \u2014 official v7.6.2 setup guide; shows `<BrowserRouter>` imported from `react-router`.\n- https://reactrouter.com/7.6.2/upgrading/v6 \u2014 official v7 upgrade guide; says v7 no longer needs `react-router-dom` and imports should be updated to `react-router`.\n- https://reactrouter.com/7.6.2/api/hooks/useHistory \u2014 official 7.6.2 docs page resolves to 404, which is consistent with `useHistory` not being a documented v7 hook.\n\n# IMPLEMENTATION NOTES\n- Current React Router 7.6.2 guidance for programmatic navigation is `useNavigate()`, then call `navigate(\"/checkout\")`.\n- `useHistory().push(...)` is not the documented v7.6.2 programmatic-navigation API.\n- Official v7 docs prefer imports from `react-router` for declarative routing APIs. If `src/nav.ts` is updated later to match docs, documented shape is `import { useNavigate } from \"react-router\"; const navigate = useNavigate(); return () => navigate(\"/checkout\");`.\n- Official docs also say `Link`/`NavLink` are preferred for normal user-driven navigation; keep imperative navigation only if this hook is needed outside normal link interactions.\n\n# UNVERIFIED\n- Whether this repo intentionally relies on `react-router-dom` re-exports in v7; fetched official 7.6.2 docs here verify `react-router` imports, not a `react-router-dom`-specific recommendation for this hook.\n- Router mode/bootstrap file is not present in fixture, so `BrowserRouter` usage in this specific repo cannot be confirmed from project files alone.\n"
+        },
+        {
+          "text": "The report cites an official `reactrouter.com` source.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- React app fixture with TypeScript source (`src/nav.ts`).\n- `package.json` declares `react` `^19.0.0` and `react-router-dom` `7.6.2`.\n- `src/nav.ts` currently imports `useHistory` from `react-router-dom` and calls `history.push(\"/checkout\")`.\n\n# OFFICIAL SOURCES\n- https://reactrouter.com/7.6.2/api/hooks/useNavigate \u2014 official v7.6.2 API for programmatic navigation; documents `useNavigate()` and `navigate(\"/some/route\")`.\n- https://reactrouter.com/7.6.2/start/declarative/navigating \u2014 official declarative-mode guide; says users navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and to reserve `useNavigate` for imperative cases.\n- https://reactrouter.com/7.6.2/start/declarative/installation \u2014 official v7.6.2 setup guide; shows `<BrowserRouter>` imported from `react-router`.\n- https://reactrouter.com/7.6.2/upgrading/v6 \u2014 official v7 upgrade guide; says v7 no longer needs `react-router-dom` and imports should be updated to `react-router`.\n- https://reactrouter.com/7.6.2/api/hooks/useHistory \u2014 official 7.6.2 docs page resolves to 404, which is consistent with `useHistory` not being a documented v7 hook.\n\n# IMPLEMENTATION NOTES\n- Current React Router 7.6.2 guidance for programmatic navigation is `useNavigate()`, then call `navigate(\"/checkout\")`.\n- `useHistory().push(...)` is not the documented v7.6.2 programmatic-navigation API.\n- Official v7 docs prefer imports from `react-router` for declarative routing APIs. If `src/nav.ts` is updated later to match docs, documented shape is `import { useNavigate } from \"react-router\"; const navigate = useNavigate(); return () => navigate(\"/checkout\");`.\n- Official docs also say `Link`/`NavLink` are preferred for normal user-driven navigation; keep imperative navigation only if this hook is needed outside normal link interactions.\n\n# UNVERIFIED\n- Whether this repo intentionally relies on `react-router-dom` re-exports in v7; fetched official 7.6.2 docs here verify `react-router` imports, not a `react-router-dom`-specific recommendation for this hook.\n- Router mode/bootstrap file is not present in fixture, so `BrowserRouter` usage in this specific repo cannot be confirmed from project files alone.\n"
+        },
+        {
+          "text": "The implementation notes recommend `useNavigate`.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- React app fixture with TypeScript source (`src/nav.ts`).\n- `package.json` declares `react` `^19.0.0` and `react-router-dom` `7.6.2`.\n- `src/nav.ts` currently imports `useHistory` from `react-router-dom` and calls `history.push(\"/checkout\")`.\n\n# OFFICIAL SOURCES\n- https://reactrouter.com/7.6.2/api/hooks/useNavigate \u2014 official v7.6.2 API for programmatic navigation; documents `useNavigate()` and `navigate(\"/some/route\")`.\n- https://reactrouter.com/7.6.2/start/declarative/navigating \u2014 official declarative-mode guide; says users navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and to reserve `useNavigate` for imperative cases.\n- https://reactrouter.com/7.6.2/start/declarative/installation \u2014 official v7.6.2 setup guide; shows `<BrowserRouter>` imported from `react-router`.\n- https://reactrouter.com/7.6.2/upgrading/v6 \u2014 official v7 upgrade guide; says v7 no longer needs `react-router-dom` and imports should be updated to `react-router`.\n- https://reactrouter.com/7.6.2/api/hooks/useHistory \u2014 official 7.6.2 docs page resolves to 404, which is consistent with `useHistory` not being a documented v7 hook.\n\n# IMPLEMENTATION NOTES\n- Current React Router 7.6.2 guidance for programmatic navigation is `useNavigate()`, then call `navigate(\"/checkout\")`.\n- `useHistory().push(...)` is not the documented v7.6.2 programmatic-navigation API.\n- Official v7 docs prefer imports from `react-router` for declarative routing APIs. If `src/nav.ts` is updated later to match docs, documented shape is `import { useNavigate } from \"react-router\"; const navigate = useNavigate(); return () => navigate(\"/checkout\");`.\n- Official docs also say `Link`/`NavLink` are preferred for normal user-driven navigation; keep imperative navigation only if this hook is needed outside normal link interactions.\n\n# UNVERIFIED\n- Whether this repo intentionally relies on `react-router-dom` re-exports in v7; fetched official 7.6.2 docs here verify `react-router` imports, not a `react-router-dom`-specific recommendation for this hook.\n- Router mode/bootstrap file is not present in fixture, so `BrowserRouter` usage in this specific repo cannot be confirmed from project files alone.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 350,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says the skill does not apply.",
+          "passed": true,
+          "evidence": "Decision: official-sources does not apply.\n\nWhy:\n- Task is framework-agnostic and version-independent.\n- Writing a Python function to deduplicate case-insensitive email addresses does not depend on a named framework, library, SDK, or versioned API.\n- Skill explicitly says not to use it when task is truly framework-agnostic and version-independent.\n"
+        },
+        {
+          "text": "The decision explains that the task is framework-agnostic or version-independent.",
+          "passed": true,
+          "evidence": "Decision: official-sources does not apply.\n\nWhy:\n- Task is framework-agnostic and version-independent.\n- Writing a Python function to deduplicate case-insensitive email addresses does not depend on a named framework, library, SDK, or versioned API.\n- Skill explicitly says not to use it when task is truly framework-agnostic and version-independent.\n"
+        },
+        {
+          "text": "The decision does not cite or instruct fetching official docs.",
+          "passed": true,
+          "evidence": "Decision: official-sources does not apply.\n\nWhy:\n- Task is framework-agnostic and version-independent.\n- Writing a Python function to deduplicate case-insensitive email addresses does not depend on a named framework, library, SDK, or versioned API.\n- Skill explicitly says not to use it when task is truly framework-agnostic and version-independent.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1629,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The conflict note detects `next` version `15.3.1`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Next.js 15.3.1 from package.json\n- React ^19.0.0 from package.json\n\nOFFICIAL SOURCES\n- App Router useRouter: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n- Pages Router useRouter: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n- App Router migration guide: https://nextjs.org/docs/15/app/guides/migrating/app-router-migration\n\nCONFLICT\n- Existing code in src/use-dashboard-router.ts imports useRouter from next/router, which matches Next.js Pages Router docs.\n- Current official App Router docs say: \"The useRouter hook should be imported from next/navigation and not next/router when using the App Router\".\n- Next.js 15 docs also say pages and app can coexist during migration, so correct import depends on which router this helper is meant to serve.\n- Fixture repo does not include app/ or pages/ directories, so router mode is not verifiable from codebase as given.\n\nWHAT THIS MEANS FOR src/use-dashboard-router.ts\n- If helper is for Pages Router, current code pattern is still documented: import { useRouter } from next/router.\n- If helper is for App Router or migration target, current docs require switching to import { useRouter } from next/navigation.\n\nRECOMMENDED NEXT DECISION\n- Choose one explicitly before changing code:\n  1. Keep Pages Router pattern (next/router) because helper serves pages routes.\n  2. Migrate helper to App Router pattern (next/navigation) because helper serves app routes.\n\nUNVERIFIED\n- Exact patch-level docs for 15.3.1 were not available; official Next 15 docs currently resolve to 15.5.19, which is closest official version stream.\n"
+        },
+        {
+          "text": "The conflict note cites an official `nextjs.org` source.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Next.js 15.3.1 from package.json\n- React ^19.0.0 from package.json\n\nOFFICIAL SOURCES\n- App Router useRouter: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n- Pages Router useRouter: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n- App Router migration guide: https://nextjs.org/docs/15/app/guides/migrating/app-router-migration\n\nCONFLICT\n- Existing code in src/use-dashboard-router.ts imports useRouter from next/router, which matches Next.js Pages Router docs.\n- Current official App Router docs say: \"The useRouter hook should be imported from next/navigation and not next/router when using the App Router\".\n- Next.js 15 docs also say pages and app can coexist during migration, so correct import depends on which router this helper is meant to serve.\n- Fixture repo does not include app/ or pages/ directories, so router mode is not verifiable from codebase as given.\n\nWHAT THIS MEANS FOR src/use-dashboard-router.ts\n- If helper is for Pages Router, current code pattern is still documented: import { useRouter } from next/router.\n- If helper is for App Router or migration target, current docs require switching to import { useRouter } from next/navigation.\n\nRECOMMENDED NEXT DECISION\n- Choose one explicitly before changing code:\n  1. Keep Pages Router pattern (next/router) because helper serves pages routes.\n  2. Migrate helper to App Router pattern (next/navigation) because helper serves app routes.\n\nUNVERIFIED\n- Exact patch-level docs for 15.3.1 were not available; official Next 15 docs currently resolve to 15.5.19, which is closest official version stream.\n"
+        },
+        {
+          "text": "The conflict note names both `next/navigation` and `next/router`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Next.js 15.3.1 from package.json\n- React ^19.0.0 from package.json\n\nOFFICIAL SOURCES\n- App Router useRouter: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n- Pages Router useRouter: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n- App Router migration guide: https://nextjs.org/docs/15/app/guides/migrating/app-router-migration\n\nCONFLICT\n- Existing code in src/use-dashboard-router.ts imports useRouter from next/router, which matches Next.js Pages Router docs.\n- Current official App Router docs say: \"The useRouter hook should be imported from next/navigation and not next/router when using the App Router\".\n- Next.js 15 docs also say pages and app can coexist during migration, so correct import depends on which router this helper is meant to serve.\n- Fixture repo does not include app/ or pages/ directories, so router mode is not verifiable from codebase as given.\n\nWHAT THIS MEANS FOR src/use-dashboard-router.ts\n- If helper is for Pages Router, current code pattern is still documented: import { useRouter } from next/router.\n- If helper is for App Router or migration target, current docs require switching to import { useRouter } from next/navigation.\n\nRECOMMENDED NEXT DECISION\n- Choose one explicitly before changing code:\n  1. Keep Pages Router pattern (next/router) because helper serves pages routes.\n  2. Migrate helper to App Router pattern (next/navigation) because helper serves app routes.\n\nUNVERIFIED\n- Exact patch-level docs for 15.3.1 were not available; official Next 15 docs currently resolve to 15.5.19, which is closest official version stream.\n"
+        },
+        {
+          "text": "The conflict note asks which path to follow or presents explicit options.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Next.js 15.3.1 from package.json\n- React ^19.0.0 from package.json\n\nOFFICIAL SOURCES\n- App Router useRouter: https://nextjs.org/docs/15/app/api-reference/functions/use-router\n- Pages Router useRouter: https://nextjs.org/docs/15/pages/api-reference/functions/use-router\n- App Router migration guide: https://nextjs.org/docs/15/app/guides/migrating/app-router-migration\n\nCONFLICT\n- Existing code in src/use-dashboard-router.ts imports useRouter from next/router, which matches Next.js Pages Router docs.\n- Current official App Router docs say: \"The useRouter hook should be imported from next/navigation and not next/router when using the App Router\".\n- Next.js 15 docs also say pages and app can coexist during migration, so correct import depends on which router this helper is meant to serve.\n- Fixture repo does not include app/ or pages/ directories, so router mode is not verifiable from codebase as given.\n\nWHAT THIS MEANS FOR src/use-dashboard-router.ts\n- If helper is for Pages Router, current code pattern is still documented: import { useRouter } from next/router.\n- If helper is for App Router or migration target, current docs require switching to import { useRouter } from next/navigation.\n\nRECOMMENDED NEXT DECISION\n- Choose one explicitly before changing code:\n  1. Keep Pages Router pattern (next/router) because helper serves pages routes.\n  2. Migrate helper to App Router pattern (next/navigation) because helper serves app routes.\n\nUNVERIFIED\n- Exact patch-level docs for 15.3.1 were not available; official Next 15 docs currently resolve to 15.5.19, which is closest official version stream.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 550,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report says the FooSDK version is missing or unclear.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Python fixture imports `foosdk` (`evals/files/missing-version-fixture/src/auth_flow.py:1`).\n- `requirements.txt` lists `foosdk` with no version specifier (`evals/files/missing-version-fixture/requirements.txt:1`).\n\nOFFICIAL SOURCES\n- None verifiable from this fixture for internal FooSDK auth middleware.\n\nUNVERIFIED\n- I cannot recommend a current auth middleware pattern for internal FooSDK without an exact SDK version and official documentation.\n- Providing a pattern here would be guesswork, so I am not making a recommendation.\n"
+        },
+        {
+          "text": "The report asks for the exact version instead of guessing.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Python fixture imports `foosdk` (`evals/files/missing-version-fixture/src/auth_flow.py:1`).\n- `requirements.txt` lists `foosdk` with no version specifier (`evals/files/missing-version-fixture/requirements.txt:1`).\n\nOFFICIAL SOURCES\n- None verifiable from this fixture for internal FooSDK auth middleware.\n\nUNVERIFIED\n- I cannot recommend a current auth middleware pattern for internal FooSDK without an exact SDK version and official documentation.\n- Providing a pattern here would be guesswork, so I am not making a recommendation.\n"
+        },
+        {
+          "text": "The report marks the pattern `UNVERIFIED`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Python fixture imports `foosdk` (`evals/files/missing-version-fixture/src/auth_flow.py:1`).\n- `requirements.txt` lists `foosdk` with no version specifier (`evals/files/missing-version-fixture/requirements.txt:1`).\n\nOFFICIAL SOURCES\n- None verifiable from this fixture for internal FooSDK auth middleware.\n\nUNVERIFIED\n- I cannot recommend a current auth middleware pattern for internal FooSDK without an exact SDK version and official documentation.\n- Providing a pattern here would be guesswork, so I am not making a recommendation.\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 1486.5,
+        "stddev": 983.702,
+        "min": 314,
+        "max": 2403
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 1179.0,
+        "stddev": 875.8702,
+        "min": 350,
+        "max": 2187
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+0.0",
+      "tokens": "+308"
+    }
+  },
+  "notes": [
+    "Timing was not available from task-tool benchmark runs, so time columns are 0.0s and token columns fall back to grading output-size proxy."
+  ]
+}

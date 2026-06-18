@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish auth refresh retry backoff behavior and stabilize the flaky auth refresh test.\n\n## Status\n- **Done**\n  - Traced retry flow in `src/auth_refresh.py`.\n  - Ran focused test for auth refresh retries.\n- **In progress**\n  - Aligning retry schedule behavior with expectations.\n- **Remaining**\n  - Implement correct retry backoff in `src/auth_refresh.py`.\n  - Re-run `tests/test_auth_refresh.py` and confirm retry test passes.\n\n## Next focus\n- Complete auth refresh retry backoff while keeping sensitive token values out of all notes and handoff artifacts.\n\n## Next step\n- Update `build_retry_schedule` in `src/auth_refresh.py` so it produces the expected backoff `[0.5, 1.0, 2.0]`, then run `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions and constraints\n- Do not include live token strings in any notes or handoff text.\n- Keep this handoff concise and artifact-referenced (no raw log dumps).\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` \u2014 current retry schedule implementation.\n- `tests/test_auth_refresh.py` \u2014 expected backoff assertion.\n- `logs/test-failure.txt` \u2014 failing output showing expected vs actual schedule.\n- `plans/refresh-plan.md` \u2014 retry plan notes to reconcile with test expectation.\n- `session_notes.md` \u2014 current progress summary and redaction requirement.\n\n## Errors/blockers\n- `test_refresh_retries_backoff` currently fails because schedule is constant (`[0.5, 0.5, 0.5]`) instead of expected backoff.\n- Plan note mentions jitter, but test expects deterministic values; resolve by matching current test contract first.\n"
+    },
+    {
+      "text": "The handoff captures goal, status, and exact next step.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish auth refresh retry backoff behavior and stabilize the flaky auth refresh test.\n\n## Status\n- **Done**\n  - Traced retry flow in `src/auth_refresh.py`.\n  - Ran focused test for auth refresh retries.\n- **In progress**\n  - Aligning retry schedule behavior with expectations.\n- **Remaining**\n  - Implement correct retry backoff in `src/auth_refresh.py`.\n  - Re-run `tests/test_auth_refresh.py` and confirm retry test passes.\n\n## Next focus\n- Complete auth refresh retry backoff while keeping sensitive token values out of all notes and handoff artifacts.\n\n## Next step\n- Update `build_retry_schedule` in `src/auth_refresh.py` so it produces the expected backoff `[0.5, 1.0, 2.0]`, then run `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions and constraints\n- Do not include live token strings in any notes or handoff text.\n- Keep this handoff concise and artifact-referenced (no raw log dumps).\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` \u2014 current retry schedule implementation.\n- `tests/test_auth_refresh.py` \u2014 expected backoff assertion.\n- `logs/test-failure.txt` \u2014 failing output showing expected vs actual schedule.\n- `plans/refresh-plan.md` \u2014 retry plan notes to reconcile with test expectation.\n- `session_notes.md` \u2014 current progress summary and redaction requirement.\n\n## Errors/blockers\n- `test_refresh_retries_backoff` currently fails because schedule is constant (`[0.5, 0.5, 0.5]`) instead of expected backoff.\n- Plan note mentions jitter, but test expects deterministic values; resolve by matching current test contract first.\n"
+    },
+    {
+      "text": "The handoff names `src/auth_refresh.py`, `tests/test_auth_refresh.py`, and `logs/test-failure.txt`.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish auth refresh retry backoff behavior and stabilize the flaky auth refresh test.\n\n## Status\n- **Done**\n  - Traced retry flow in `src/auth_refresh.py`.\n  - Ran focused test for auth refresh retries.\n- **In progress**\n  - Aligning retry schedule behavior with expectations.\n- **Remaining**\n  - Implement correct retry backoff in `src/auth_refresh.py`.\n  - Re-run `tests/test_auth_refresh.py` and confirm retry test passes.\n\n## Next focus\n- Complete auth refresh retry backoff while keeping sensitive token values out of all notes and handoff artifacts.\n\n## Next step\n- Update `build_retry_schedule` in `src/auth_refresh.py` so it produces the expected backoff `[0.5, 1.0, 2.0]`, then run `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions and constraints\n- Do not include live token strings in any notes or handoff text.\n- Keep this handoff concise and artifact-referenced (no raw log dumps).\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` \u2014 current retry schedule implementation.\n- `tests/test_auth_refresh.py` \u2014 expected backoff assertion.\n- `logs/test-failure.txt` \u2014 failing output showing expected vs actual schedule.\n- `plans/refresh-plan.md` \u2014 retry plan notes to reconcile with test expectation.\n- `session_notes.md` \u2014 current progress summary and redaction requirement.\n\n## Errors/blockers\n- `test_refresh_retries_backoff` currently fails because schedule is constant (`[0.5, 0.5, 0.5]`) instead of expected backoff.\n- Plan note mentions jitter, but test expects deterministic values; resolve by matching current test contract first.\n"
+    },
+    {
+      "text": "The handoff includes the retry-backoff focus and redacts the secret token.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish auth refresh retry backoff behavior and stabilize the flaky auth refresh test.\n\n## Status\n- **Done**\n  - Traced retry flow in `src/auth_refresh.py`.\n  - Ran focused test for auth refresh retries.\n- **In progress**\n  - Aligning retry schedule behavior with expectations.\n- **Remaining**\n  - Implement correct retry backoff in `src/auth_refresh.py`.\n  - Re-run `tests/test_auth_refresh.py` and confirm retry test passes.\n\n## Next focus\n- Complete auth refresh retry backoff while keeping sensitive token values out of all notes and handoff artifacts.\n\n## Next step\n- Update `build_retry_schedule` in `src/auth_refresh.py` so it produces the expected backoff `[0.5, 1.0, 2.0]`, then run `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions and constraints\n- Do not include live token strings in any notes or handoff text.\n- Keep this handoff concise and artifact-referenced (no raw log dumps).\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` \u2014 current retry schedule implementation.\n- `tests/test_auth_refresh.py` \u2014 expected backoff assertion.\n- `logs/test-failure.txt` \u2014 failing output showing expected vs actual schedule.\n- `plans/refresh-plan.md` \u2014 retry plan notes to reconcile with test expectation.\n- `session_notes.md` \u2014 current progress summary and redaction requirement.\n\n## Errors/blockers\n- `test_refresh_retries_backoff` currently fails because schedule is constant (`[0.5, 0.5, 0.5]`) instead of expected backoff.\n- Plan note mentions jitter, but test expects deterministic values; resolve by matching current test contract first.\n"
+    },
+    {
+      "text": "outputs/result.json reports the root-scoped handoff path and next step.",
+      "passed": true,
+      "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"root-scoped\", \"next_step\": \"Update build_retry_schedule in src/auth_refresh.py to return [0.5, 1.0, 2.0], then run python3 -m pytest tests/test_auth_refresh.py -q.\"}"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2802,
+    "transcript_chars": 202032
+  },
+  "timing": {
+    "executor_duration_seconds": 62.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 62.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

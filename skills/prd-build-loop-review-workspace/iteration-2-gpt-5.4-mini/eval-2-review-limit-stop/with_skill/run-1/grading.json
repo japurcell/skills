@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision stops because the review-fix iteration limit is reached.",
+      "passed": true,
+      "evidence": "Stop: review-fix iteration limit reached (iteration count is 3), and latest reviewer still found blocking issues.\n\nDo not fix findings directly. Do not dispatch another review-fix implementer.\n\nReread `prd_file`, append a stop-state entry to `progress_file`, and ask the user to decide the blocker.\n"
+    },
+    {
+      "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+      "passed": true,
+      "evidence": "Stop: review-fix iteration limit reached (iteration count is 3), and latest reviewer still found blocking issues.\n\nDo not fix findings directly. Do not dispatch another review-fix implementer.\n\nReread `prd_file`, append a stop-state entry to `progress_file`, and ask the user to decide the blocker.\n"
+    },
+    {
+      "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+      "passed": true,
+      "evidence": "Stop: review-fix iteration limit reached (iteration count is 3), and latest reviewer still found blocking issues.\n\nDo not fix findings directly. Do not dispatch another review-fix implementer.\n\nReread `prd_file`, append a stop-state entry to `progress_file`, and ask the user to decide the blocker.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 299,
+    "transcript_chars": 202972
+  },
+  "timing": {
+    "executor_duration_seconds": 30.7,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 30.7
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

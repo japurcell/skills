@@ -1,0 +1,4 @@
+- **Source of truth:** `evals/files/startup-fixture/prd.json` is official source for story status and completion. `evals/files/startup-fixture/progress.txt` is resume data only, not official completion.
+- **Resolved progress_file:** `evals/files/startup-fixture/progress.txt` (`dirname(prd_file) + "/progress.txt"`). It already exists, so first startup read is its `## Codebase Patterns` section and latest entry.
+- **Story selection:** `story-auth-timeout` (`Auth timeout matches spec`) because it is highest-priority story with `passes: false`.
+- **Before any story-specific repo discovery:** orchestrator may read only `prd.json`, `progress.txt`, and nearby `AGENTS.md` needed to dispatch work; then it must invoke `subagent-model-router` and hand story-specific discovery to a fresh `implementer`. Orchestrator must not inspect story-specific files, tests, code, or behavior before that first implementer.

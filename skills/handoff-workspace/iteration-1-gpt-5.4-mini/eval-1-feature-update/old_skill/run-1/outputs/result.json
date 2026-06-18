@@ -1,0 +1,5 @@
+{
+  "written_path": ".agents/scratchpad/payments/handoff.md",
+  "scope": "feature-scoped",
+  "next_step": "Add retry metric emission in the payment retry flow, then update rollout docs to describe the cap and metrics."
+}

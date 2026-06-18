@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The report says the FooSDK version is missing or unclear.",
+      "passed": true,
+      "evidence": "# Report\n\n## STACK DETECTED\n- Python fixture using `foosdk` (`evals/files/missing-version-fixture/requirements.txt:1`).\n- Installed version is **not pinned or stated**; `requirements.txt` contains only `foosdk` with no version specifier.\n- Code sample only constructs `Client()` and shows no auth middleware usage (`evals/files/missing-version-fixture/src/auth_flow.py:1-5`).\n\n## OFFICIAL SOURCES\n- No official FooSDK auth-middleware documentation URL is provided in the fixture.\n- Because FooSDK version is missing, I cannot determine which official versioned docs would be authoritative.\n\n## IMPLEMENTATION NOTES\nI cannot recommend a **current** auth middleware pattern for FooSDK from this fixture without guessing. Per the skill rules, version detection is required before giving stack-specific guidance, and missing-version cases must not be guessed.\n\n## UNVERIFIED\nUNVERIFIED: I could not verify this pattern from official docs. Need exact FooSDK version and official FooSDK auth documentation before recommending a middleware pattern.\n"
+    },
+    {
+      "text": "The report asks for the exact version instead of guessing.",
+      "passed": true,
+      "evidence": "# Report\n\n## STACK DETECTED\n- Python fixture using `foosdk` (`evals/files/missing-version-fixture/requirements.txt:1`).\n- Installed version is **not pinned or stated**; `requirements.txt` contains only `foosdk` with no version specifier.\n- Code sample only constructs `Client()` and shows no auth middleware usage (`evals/files/missing-version-fixture/src/auth_flow.py:1-5`).\n\n## OFFICIAL SOURCES\n- No official FooSDK auth-middleware documentation URL is provided in the fixture.\n- Because FooSDK version is missing, I cannot determine which official versioned docs would be authoritative.\n\n## IMPLEMENTATION NOTES\nI cannot recommend a **current** auth middleware pattern for FooSDK from this fixture without guessing. Per the skill rules, version detection is required before giving stack-specific guidance, and missing-version cases must not be guessed.\n\n## UNVERIFIED\nUNVERIFIED: I could not verify this pattern from official docs. Need exact FooSDK version and official FooSDK auth documentation before recommending a middleware pattern.\n"
+    },
+    {
+      "text": "The report marks the pattern `UNVERIFIED`.",
+      "passed": true,
+      "evidence": "# Report\n\n## STACK DETECTED\n- Python fixture using `foosdk` (`evals/files/missing-version-fixture/requirements.txt:1`).\n- Installed version is **not pinned or stated**; `requirements.txt` contains only `foosdk` with no version specifier.\n- Code sample only constructs `Client()` and shows no auth middleware usage (`evals/files/missing-version-fixture/src/auth_flow.py:1-5`).\n\n## OFFICIAL SOURCES\n- No official FooSDK auth-middleware documentation URL is provided in the fixture.\n- Because FooSDK version is missing, I cannot determine which official versioned docs would be authoritative.\n\n## IMPLEMENTATION NOTES\nI cannot recommend a **current** auth middleware pattern for FooSDK from this fixture without guessing. Per the skill rules, version detection is required before giving stack-specific guidance, and missing-version cases must not be guessed.\n\n## UNVERIFIED\nUNVERIFIED: I could not verify this pattern from official docs. Need exact FooSDK version and official FooSDK auth documentation before recommending a middleware pattern.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1042,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

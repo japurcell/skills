@@ -1,0 +1,5 @@
+{
+  "written_path": ".agents/scratchpad/payments/handoff.md",
+  "scope": "feature-scoped",
+  "next_step": "Add retry attempt/success/failure metric hooks in src/payment_retry.py and extend tests/test_payment_retry.py to cover them."
+}

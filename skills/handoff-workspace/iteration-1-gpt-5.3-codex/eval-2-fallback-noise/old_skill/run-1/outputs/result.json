@@ -1,0 +1,5 @@
+{
+  "written_path": ".agents/scratchpad/handoff.md",
+  "scope": "root-scoped",
+  "next_step": "Run the failing integration test in tests/test_sync_retry.py first, then fix src/sync_retry.py to stop retries at the max attempt limit."
+}

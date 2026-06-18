@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/.agents/scratchpad/payments/handoff.md is updated in place.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Current status\n- Done: retry delay cap landed in `src/payment_retry.py`.\n- Done: cap behavior covered by `tests/test_payment_retry.py`.\n- Remaining: add retry metrics and update rollout docs.\n\n## Next-agent focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry attempt/success/failure metric hooks in `src/payment_retry.py` and extend `tests/test_payment_retry.py` to cover emitted metrics.\n\n## Suggested skills\n- `context-engineering` \u2014 reload only retry code, tests, and rollout notes before editing.\n- `tdd` \u2014 add or update tests around metrics instrumentation before changing retry logic.\n\n## Decisions and constraints\n- Keep handoff feature-scoped under `.agents/scratchpad/payments/`.\n- Treat legacy YAML toggle inspection as stale; do not resume that step unless new evidence appears.\n- Focus remaining work on observability and documentation, not retry cap behavior.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` \u2014 current retry delay logic; place metrics instrumentation here.\n- `tests/test_payment_retry.py` \u2014 existing retry cap test; extend for metrics coverage.\n- `session_notes.md` \u2014 source of current done/remaining status and stated next-agent focus.\n- `reports/benchmark.txt` \u2014 benchmark evidence: p95 improved from 480ms to 310ms and no new unit-test failures.\n\n## Commands and results\n- No new repo commands were run in this handoff update.\n- Existing benchmark artifact reports lower retry p95 latency and no new payment retry unit-test failures.\n\n## Errors and blockers\n- No active blocker recorded.\n- Docs target file is not identified yet; find the rollout doc location after metrics wiring lands.\n\n## Briefing\n- Retry cap work is in place and benchmark notes are positive. Remaining rollout work is to add retry metrics in code, prove them with tests, then update the rollout docs to describe the new observability and any follow-up rollout steps.\n"
+    },
+    {
+      "text": "The updated handoff includes retry-metrics and docs focus.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Current status\n- Done: retry delay cap landed in `src/payment_retry.py`.\n- Done: cap behavior covered by `tests/test_payment_retry.py`.\n- Remaining: add retry metrics and update rollout docs.\n\n## Next-agent focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry attempt/success/failure metric hooks in `src/payment_retry.py` and extend `tests/test_payment_retry.py` to cover emitted metrics.\n\n## Suggested skills\n- `context-engineering` \u2014 reload only retry code, tests, and rollout notes before editing.\n- `tdd` \u2014 add or update tests around metrics instrumentation before changing retry logic.\n\n## Decisions and constraints\n- Keep handoff feature-scoped under `.agents/scratchpad/payments/`.\n- Treat legacy YAML toggle inspection as stale; do not resume that step unless new evidence appears.\n- Focus remaining work on observability and documentation, not retry cap behavior.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` \u2014 current retry delay logic; place metrics instrumentation here.\n- `tests/test_payment_retry.py` \u2014 existing retry cap test; extend for metrics coverage.\n- `session_notes.md` \u2014 source of current done/remaining status and stated next-agent focus.\n- `reports/benchmark.txt` \u2014 benchmark evidence: p95 improved from 480ms to 310ms and no new unit-test failures.\n\n## Commands and results\n- No new repo commands were run in this handoff update.\n- Existing benchmark artifact reports lower retry p95 latency and no new payment retry unit-test failures.\n\n## Errors and blockers\n- No active blocker recorded.\n- Docs target file is not identified yet; find the rollout doc location after metrics wiring lands.\n\n## Briefing\n- Retry cap work is in place and benchmark notes are positive. Remaining rollout work is to add retry metrics in code, prove them with tests, then update the rollout docs to describe the new observability and any follow-up rollout steps.\n"
+    },
+    {
+      "text": "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Current status\n- Done: retry delay cap landed in `src/payment_retry.py`.\n- Done: cap behavior covered by `tests/test_payment_retry.py`.\n- Remaining: add retry metrics and update rollout docs.\n\n## Next-agent focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry attempt/success/failure metric hooks in `src/payment_retry.py` and extend `tests/test_payment_retry.py` to cover emitted metrics.\n\n## Suggested skills\n- `context-engineering` \u2014 reload only retry code, tests, and rollout notes before editing.\n- `tdd` \u2014 add or update tests around metrics instrumentation before changing retry logic.\n\n## Decisions and constraints\n- Keep handoff feature-scoped under `.agents/scratchpad/payments/`.\n- Treat legacy YAML toggle inspection as stale; do not resume that step unless new evidence appears.\n- Focus remaining work on observability and documentation, not retry cap behavior.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` \u2014 current retry delay logic; place metrics instrumentation here.\n- `tests/test_payment_retry.py` \u2014 existing retry cap test; extend for metrics coverage.\n- `session_notes.md` \u2014 source of current done/remaining status and stated next-agent focus.\n- `reports/benchmark.txt` \u2014 benchmark evidence: p95 improved from 480ms to 310ms and no new unit-test failures.\n\n## Commands and results\n- No new repo commands were run in this handoff update.\n- Existing benchmark artifact reports lower retry p95 latency and no new payment retry unit-test failures.\n\n## Errors and blockers\n- No active blocker recorded.\n- Docs target file is not identified yet; find the rollout doc location after metrics wiring lands.\n\n## Briefing\n- Retry cap work is in place and benchmark notes are positive. Remaining rollout work is to add retry metrics in code, prove them with tests, then update the rollout docs to describe the new observability and any follow-up rollout steps.\n"
+    },
+    {
+      "text": "The stale `inspect legacy YAML toggles` step is removed.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Current status\n- Done: retry delay cap landed in `src/payment_retry.py`.\n- Done: cap behavior covered by `tests/test_payment_retry.py`.\n- Remaining: add retry metrics and update rollout docs.\n\n## Next-agent focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry attempt/success/failure metric hooks in `src/payment_retry.py` and extend `tests/test_payment_retry.py` to cover emitted metrics.\n\n## Suggested skills\n- `context-engineering` \u2014 reload only retry code, tests, and rollout notes before editing.\n- `tdd` \u2014 add or update tests around metrics instrumentation before changing retry logic.\n\n## Decisions and constraints\n- Keep handoff feature-scoped under `.agents/scratchpad/payments/`.\n- Treat legacy YAML toggle inspection as stale; do not resume that step unless new evidence appears.\n- Focus remaining work on observability and documentation, not retry cap behavior.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` \u2014 current retry delay logic; place metrics instrumentation here.\n- `tests/test_payment_retry.py` \u2014 existing retry cap test; extend for metrics coverage.\n- `session_notes.md` \u2014 source of current done/remaining status and stated next-agent focus.\n- `reports/benchmark.txt` \u2014 benchmark evidence: p95 improved from 480ms to 310ms and no new unit-test failures.\n\n## Commands and results\n- No new repo commands were run in this handoff update.\n- Existing benchmark artifact reports lower retry p95 latency and no new payment retry unit-test failures.\n\n## Errors and blockers\n- No active blocker recorded.\n- Docs target file is not identified yet; find the rollout doc location after metrics wiring lands.\n\n## Briefing\n- Retry cap work is in place and benchmark notes are positive. Remaining rollout work is to add retry metrics in code, prove them with tests, then update the rollout docs to describe the new observability and any follow-up rollout steps.\n"
+    },
+    {
+      "text": "outputs/result.json reports the feature-scoped handoff path.",
+      "passed": true,
+      "evidence": "{\"written_path\": \".agents/scratchpad/payments/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Add retry attempt/success/failure metric hooks in src/payment_retry.py and extend tests/test_payment_retry.py to cover them.\"}"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2650,
+    "transcript_chars": 276512
+  },
+  "timing": {
+    "executor_duration_seconds": 55.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 55.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

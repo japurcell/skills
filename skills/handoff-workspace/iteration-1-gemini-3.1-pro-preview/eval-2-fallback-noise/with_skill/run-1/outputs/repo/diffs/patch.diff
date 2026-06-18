@@ -1,0 +1,4 @@
+diff --git a/src/sync_retry.py b/src/sync_retry.py
+@@
+-    return True
++    return attempt < max_attempts

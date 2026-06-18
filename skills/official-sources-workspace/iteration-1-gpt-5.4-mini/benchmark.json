@@ -1,0 +1,353 @@
+{
+  "metadata": {
+    "skill_name": "official-sources",
+    "skill_path": "/home/adam/dev/personal/skills/skills/official-sources/SKILL.md",
+    "executor_model": "gpt-5.4-mini",
+    "analyzer_model": "gpt-5.4-mini",
+    "timestamp": "2026-06-18T20:12:33Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1180,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- Target file: `src/nav.ts`\n- Current code uses `useHistory` from `react-router-dom`\n\n# OFFICIAL SOURCES\n- React Router v7.6.2 `useNavigate`: https://reactrouter.com/7.6.2/api/hooks/useNavigate\n- React Router v7.6.2 Navigating guide: https://reactrouter.com/7.6.2/start/framework/navigating\n- React Router v7.6.2 upgrade guide: https://reactrouter.com/7.6.2/upgrading/v6\n\n# IMPLEMENTATION NOTES\n- Current guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Docs show `useNavigate()` returns a navigation function and is meant for user-driven effects or uncommon programmatic redirects.\n- For this repo/version, import hooks from `react-router` in v7 docs examples.\n- The code in `src/nav.ts` should be updated conceptually to:\n  - replace `useHistory()` with `useNavigate()`\n  - replace `history.push(\"/checkout\")` with `navigate(\"/checkout\")`\n\n# UNVERIFIED\n- I did not verify whether this fixture uses `BrowserRouter`, `RouterProvider`, or framework/data mode, so return type details (`void` vs `Promise<void>`) are unverified for this app.\n- I did not change code, only reviewed official guidance.\n"
+        },
+        {
+          "text": "The report detects `react-router-dom` version `7.6.2`.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- Target file: `src/nav.ts`\n- Current code uses `useHistory` from `react-router-dom`\n\n# OFFICIAL SOURCES\n- React Router v7.6.2 `useNavigate`: https://reactrouter.com/7.6.2/api/hooks/useNavigate\n- React Router v7.6.2 Navigating guide: https://reactrouter.com/7.6.2/start/framework/navigating\n- React Router v7.6.2 upgrade guide: https://reactrouter.com/7.6.2/upgrading/v6\n\n# IMPLEMENTATION NOTES\n- Current guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Docs show `useNavigate()` returns a navigation function and is meant for user-driven effects or uncommon programmatic redirects.\n- For this repo/version, import hooks from `react-router` in v7 docs examples.\n- The code in `src/nav.ts` should be updated conceptually to:\n  - replace `useHistory()` with `useNavigate()`\n  - replace `history.push(\"/checkout\")` with `navigate(\"/checkout\")`\n\n# UNVERIFIED\n- I did not verify whether this fixture uses `BrowserRouter`, `RouterProvider`, or framework/data mode, so return type details (`void` vs `Promise<void>`) are unverified for this app.\n- I did not change code, only reviewed official guidance.\n"
+        },
+        {
+          "text": "The report cites an official `reactrouter.com` source.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- Target file: `src/nav.ts`\n- Current code uses `useHistory` from `react-router-dom`\n\n# OFFICIAL SOURCES\n- React Router v7.6.2 `useNavigate`: https://reactrouter.com/7.6.2/api/hooks/useNavigate\n- React Router v7.6.2 Navigating guide: https://reactrouter.com/7.6.2/start/framework/navigating\n- React Router v7.6.2 upgrade guide: https://reactrouter.com/7.6.2/upgrading/v6\n\n# IMPLEMENTATION NOTES\n- Current guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Docs show `useNavigate()` returns a navigation function and is meant for user-driven effects or uncommon programmatic redirects.\n- For this repo/version, import hooks from `react-router` in v7 docs examples.\n- The code in `src/nav.ts` should be updated conceptually to:\n  - replace `useHistory()` with `useNavigate()`\n  - replace `history.push(\"/checkout\")` with `navigate(\"/checkout\")`\n\n# UNVERIFIED\n- I did not verify whether this fixture uses `BrowserRouter`, `RouterProvider`, or framework/data mode, so return type details (`void` vs `Promise<void>`) are unverified for this app.\n- I did not change code, only reviewed official guidance.\n"
+        },
+        {
+          "text": "The implementation notes recommend `useNavigate`.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- Target file: `src/nav.ts`\n- Current code uses `useHistory` from `react-router-dom`\n\n# OFFICIAL SOURCES\n- React Router v7.6.2 `useNavigate`: https://reactrouter.com/7.6.2/api/hooks/useNavigate\n- React Router v7.6.2 Navigating guide: https://reactrouter.com/7.6.2/start/framework/navigating\n- React Router v7.6.2 upgrade guide: https://reactrouter.com/7.6.2/upgrading/v6\n\n# IMPLEMENTATION NOTES\n- Current guidance for programmatic navigation is `useNavigate`, not `useHistory`.\n- Docs show `useNavigate()` returns a navigation function and is meant for user-driven effects or uncommon programmatic redirects.\n- For this repo/version, import hooks from `react-router` in v7 docs examples.\n- The code in `src/nav.ts` should be updated conceptually to:\n  - replace `useHistory()` with `useNavigate()`\n  - replace `history.push(\"/checkout\")` with `navigate(\"/checkout\")`\n\n# UNVERIFIED\n- I did not verify whether this fixture uses `BrowserRouter`, `RouterProvider`, or framework/data mode, so return type details (`void` vs `Promise<void>`) are unverified for this app.\n- I did not change code, only reviewed official guidance.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 204,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says the skill does not apply.",
+          "passed": true,
+          "evidence": "No. This is framework-agnostic Python logic, not a named framework/library/SDK/API decision. Official framework docs are not needed to write a function that deduplicates case-insensitive email addresses.\n"
+        },
+        {
+          "text": "The decision explains that the task is framework-agnostic or version-independent.",
+          "passed": true,
+          "evidence": "No. This is framework-agnostic Python logic, not a named framework/library/SDK/API decision. Official framework docs are not needed to write a function that deduplicates case-insensitive email addresses.\n"
+        },
+        {
+          "text": "The decision does not cite or instruct fetching official docs.",
+          "passed": true,
+          "evidence": "No. This is framework-agnostic Python logic, not a named framework/library/SDK/API decision. Official framework docs are not needed to write a function that deduplicates case-insensitive email addresses.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1104,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The conflict note detects `next` version `15.3.1`.",
+          "passed": true,
+          "evidence": "STACK DETECTED: next 15.3.1\nOFFICIAL SOURCES:\n- https://nextjs.org/docs/app/api-reference/functions/use-router\n- https://nextjs.org/docs/pages/api-reference/functions/use-router\n\nROUTER-CONTEXT CHOICE: App Router. Use `next/navigation`, not `next/router`.\n\nIMPLEMENTATION NOTES:\n- `next/navigation` is the App Router hook for Client Components.\n- `next/router` is the Pages Router hook.\n- Current file imports `useRouter` from `next/router`, which conflicts with Next 15 App Router usage.\n- Change import to `next/navigation` before any behavior code.\n"
+        },
+        {
+          "text": "The conflict note cites an official `nextjs.org` source.",
+          "passed": true,
+          "evidence": "STACK DETECTED: next 15.3.1\nOFFICIAL SOURCES:\n- https://nextjs.org/docs/app/api-reference/functions/use-router\n- https://nextjs.org/docs/pages/api-reference/functions/use-router\n\nROUTER-CONTEXT CHOICE: App Router. Use `next/navigation`, not `next/router`.\n\nIMPLEMENTATION NOTES:\n- `next/navigation` is the App Router hook for Client Components.\n- `next/router` is the Pages Router hook.\n- Current file imports `useRouter` from `next/router`, which conflicts with Next 15 App Router usage.\n- Change import to `next/navigation` before any behavior code.\n"
+        },
+        {
+          "text": "The conflict note names both `next/navigation` and `next/router`.",
+          "passed": true,
+          "evidence": "STACK DETECTED: next 15.3.1\nOFFICIAL SOURCES:\n- https://nextjs.org/docs/app/api-reference/functions/use-router\n- https://nextjs.org/docs/pages/api-reference/functions/use-router\n\nROUTER-CONTEXT CHOICE: App Router. Use `next/navigation`, not `next/router`.\n\nIMPLEMENTATION NOTES:\n- `next/navigation` is the App Router hook for Client Components.\n- `next/router` is the Pages Router hook.\n- Current file imports `useRouter` from `next/router`, which conflicts with Next 15 App Router usage.\n- Change import to `next/navigation` before any behavior code.\n"
+        },
+        {
+          "text": "The conflict note asks which path to follow or presents explicit options.",
+          "passed": false,
+          "evidence": "STACK DETECTED: next 15.3.1\nOFFICIAL SOURCES:\n- https://nextjs.org/docs/app/api-reference/functions/use-router\n- https://nextjs.org/docs/pages/api-reference/functions/use-router\n\nROUTER-CONTEXT CHOICE: App Router. Use `next/navigation`, not `next/router`.\n\nIMPLEMENTATION NOTES:\n- `next/navigation` is the App Router hook for Client Components.\n- `next/router` is the Pages Router hook.\n- Current file imports `useRouter` from `next/router`, which conflicts with Next 15 App Router usage.\n- Change import to `next/navigation` before any behavior code.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.67,
+        "passed": 2,
+        "failed": 1,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 345,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report says the FooSDK version is missing or unclear.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Dependency: `foosdk`\n- Version: missing in `requirements.txt`\n\nOFFICIAL SOURCES\n- Not verified. No versioned official docs could be checked without a detected FooSDK version.\n\nUNVERIFIED\n- I could not verify any recommended auth middleware pattern from official docs.\n- Do not guess a pattern until the FooSDK version is known.\n"
+        },
+        {
+          "text": "The report asks for the exact version instead of guessing.",
+          "passed": false,
+          "evidence": "STACK DETECTED\n- Dependency: `foosdk`\n- Version: missing in `requirements.txt`\n\nOFFICIAL SOURCES\n- Not verified. No versioned official docs could be checked without a detected FooSDK version.\n\nUNVERIFIED\n- I could not verify any recommended auth middleware pattern from official docs.\n- Do not guess a pattern until the FooSDK version is known.\n"
+        },
+        {
+          "text": "The report marks the pattern `UNVERIFIED`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Dependency: `foosdk`\n- Version: missing in `requirements.txt`\n\nOFFICIAL SOURCES\n- Not verified. No versioned official docs could be checked without a detected FooSDK version.\n\nUNVERIFIED\n- I could not verify any recommended auth middleware pattern from official docs.\n- Do not guess a pattern until the FooSDK version is known.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1157,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- Target file: src/nav.ts\n- Current pattern: `useHistory().push(\"/checkout\")`\n\nOFFICIAL SOURCES\n- https://reactrouter.com/api/hooks/useNavigate\n  - `useNavigate` returns a function for programmatic navigation.\n  - Signature: `navigate(to, options?)` / `navigate(delta)`.\n  - Docs show `navigate(\"/some/route\")` and `navigate(\"/some/route\", { replace: true })`.\n- https://reactrouter.com/start/framework/navigating\n  - `useNavigate` is listed as one of the navigation APIs.\n  - Docs say usage should be uncommon and best reserved for non-interactive navigation.\n\nIMPLEMENTATION NOTES\n- Current code should use `useNavigate` instead of `useHistory`.\n- `history.push(\"/checkout\")` maps to `navigate(\"/checkout\")`.\n- If this flow should replace the current entry, use `navigate(\"/checkout\", { replace: true })`.\n- React Router v7 docs examples import from `react-router`.\n\nUNVERIFIED\n- I did not verify whether this fixture's build setup requires the import path to stay `react-router-dom` instead of `react-router`.\n- I did not verify any app-specific reason to prefer `replace: true` over push behavior.\n"
+        },
+        {
+          "text": "The report detects `react-router-dom` version `7.6.2`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- Target file: src/nav.ts\n- Current pattern: `useHistory().push(\"/checkout\")`\n\nOFFICIAL SOURCES\n- https://reactrouter.com/api/hooks/useNavigate\n  - `useNavigate` returns a function for programmatic navigation.\n  - Signature: `navigate(to, options?)` / `navigate(delta)`.\n  - Docs show `navigate(\"/some/route\")` and `navigate(\"/some/route\", { replace: true })`.\n- https://reactrouter.com/start/framework/navigating\n  - `useNavigate` is listed as one of the navigation APIs.\n  - Docs say usage should be uncommon and best reserved for non-interactive navigation.\n\nIMPLEMENTATION NOTES\n- Current code should use `useNavigate` instead of `useHistory`.\n- `history.push(\"/checkout\")` maps to `navigate(\"/checkout\")`.\n- If this flow should replace the current entry, use `navigate(\"/checkout\", { replace: true })`.\n- React Router v7 docs examples import from `react-router`.\n\nUNVERIFIED\n- I did not verify whether this fixture's build setup requires the import path to stay `react-router-dom` instead of `react-router`.\n- I did not verify any app-specific reason to prefer `replace: true` over push behavior.\n"
+        },
+        {
+          "text": "The report cites an official `reactrouter.com` source.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- Target file: src/nav.ts\n- Current pattern: `useHistory().push(\"/checkout\")`\n\nOFFICIAL SOURCES\n- https://reactrouter.com/api/hooks/useNavigate\n  - `useNavigate` returns a function for programmatic navigation.\n  - Signature: `navigate(to, options?)` / `navigate(delta)`.\n  - Docs show `navigate(\"/some/route\")` and `navigate(\"/some/route\", { replace: true })`.\n- https://reactrouter.com/start/framework/navigating\n  - `useNavigate` is listed as one of the navigation APIs.\n  - Docs say usage should be uncommon and best reserved for non-interactive navigation.\n\nIMPLEMENTATION NOTES\n- Current code should use `useNavigate` instead of `useHistory`.\n- `history.push(\"/checkout\")` maps to `navigate(\"/checkout\")`.\n- If this flow should replace the current entry, use `navigate(\"/checkout\", { replace: true })`.\n- React Router v7 docs examples import from `react-router`.\n\nUNVERIFIED\n- I did not verify whether this fixture's build setup requires the import path to stay `react-router-dom` instead of `react-router`.\n- I did not verify any app-specific reason to prefer `replace: true` over push behavior.\n"
+        },
+        {
+          "text": "The implementation notes recommend `useNavigate`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- React 19.0.0\n- react-router-dom 7.6.2\n- Target file: src/nav.ts\n- Current pattern: `useHistory().push(\"/checkout\")`\n\nOFFICIAL SOURCES\n- https://reactrouter.com/api/hooks/useNavigate\n  - `useNavigate` returns a function for programmatic navigation.\n  - Signature: `navigate(to, options?)` / `navigate(delta)`.\n  - Docs show `navigate(\"/some/route\")` and `navigate(\"/some/route\", { replace: true })`.\n- https://reactrouter.com/start/framework/navigating\n  - `useNavigate` is listed as one of the navigation APIs.\n  - Docs say usage should be uncommon and best reserved for non-interactive navigation.\n\nIMPLEMENTATION NOTES\n- Current code should use `useNavigate` instead of `useHistory`.\n- `history.push(\"/checkout\")` maps to `navigate(\"/checkout\")`.\n- If this flow should replace the current entry, use `navigate(\"/checkout\", { replace: true })`.\n- React Router v7 docs examples import from `react-router`.\n\nUNVERIFIED\n- I did not verify whether this fixture's build setup requires the import path to stay `react-router-dom` instead of `react-router`.\n- I did not verify any app-specific reason to prefer `replace: true` over push behavior.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 224,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says the skill does not apply.",
+          "passed": true,
+          "evidence": "Skill does not apply.\nTask is framework-agnostic Python string/data processing, not framework-, library-, SDK-, or version-specific code.\nOfficial docs needed only when named stack/version or documented API pattern matters.\n"
+        },
+        {
+          "text": "The decision explains that the task is framework-agnostic or version-independent.",
+          "passed": true,
+          "evidence": "Skill does not apply.\nTask is framework-agnostic Python string/data processing, not framework-, library-, SDK-, or version-specific code.\nOfficial docs needed only when named stack/version or documented API pattern matters.\n"
+        },
+        {
+          "text": "The decision does not cite or instruct fetching official docs.",
+          "passed": true,
+          "evidence": "Skill does not apply.\nTask is framework-agnostic Python string/data processing, not framework-, library-, SDK-, or version-specific code.\nOfficial docs needed only when named stack/version or documented API pattern matters.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 886,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The conflict note detects `next` version `15.3.1`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- react ^19.0.0\n\nOFFICIAL SOURCES\n- App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n  - Docs show `useRouter` imported from `next/navigation`.\n  - Migration note: import from `next/navigation`, not `next/router`, when using the App Router.\n- Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n  - Docs keep `useRouter` from `next/router` for Pages Router.\n\nCONFLICT\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n- Current App Router docs for Next.js recommend `next/navigation` instead.\n- If this fixture is App Router code, helper should change.\n- If this fixture is Pages Router code, existing import is correct.\n- Need repo/router-context confirmation before editing.\n\nUNVERIFIED\n- App Router vs Pages Router structure is not visible in fixture.\n"
+        },
+        {
+          "text": "The conflict note cites an official `nextjs.org` source.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- react ^19.0.0\n\nOFFICIAL SOURCES\n- App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n  - Docs show `useRouter` imported from `next/navigation`.\n  - Migration note: import from `next/navigation`, not `next/router`, when using the App Router.\n- Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n  - Docs keep `useRouter` from `next/router` for Pages Router.\n\nCONFLICT\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n- Current App Router docs for Next.js recommend `next/navigation` instead.\n- If this fixture is App Router code, helper should change.\n- If this fixture is Pages Router code, existing import is correct.\n- Need repo/router-context confirmation before editing.\n\nUNVERIFIED\n- App Router vs Pages Router structure is not visible in fixture.\n"
+        },
+        {
+          "text": "The conflict note names both `next/navigation` and `next/router`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- react ^19.0.0\n\nOFFICIAL SOURCES\n- App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n  - Docs show `useRouter` imported from `next/navigation`.\n  - Migration note: import from `next/navigation`, not `next/router`, when using the App Router.\n- Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n  - Docs keep `useRouter` from `next/router` for Pages Router.\n\nCONFLICT\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n- Current App Router docs for Next.js recommend `next/navigation` instead.\n- If this fixture is App Router code, helper should change.\n- If this fixture is Pages Router code, existing import is correct.\n- Need repo/router-context confirmation before editing.\n\nUNVERIFIED\n- App Router vs Pages Router structure is not visible in fixture.\n"
+        },
+        {
+          "text": "The conflict note asks which path to follow or presents explicit options.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- react ^19.0.0\n\nOFFICIAL SOURCES\n- App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n  - Docs show `useRouter` imported from `next/navigation`.\n  - Migration note: import from `next/navigation`, not `next/router`, when using the App Router.\n- Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n  - Docs keep `useRouter` from `next/router` for Pages Router.\n\nCONFLICT\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n- Current App Router docs for Next.js recommend `next/navigation` instead.\n- If this fixture is App Router code, helper should change.\n- If this fixture is Pages Router code, existing import is correct.\n- Need repo/router-context confirmation before editing.\n\nUNVERIFIED\n- App Router vs Pages Router structure is not visible in fixture.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 633,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report says the FooSDK version is missing or unclear.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- FooSDK is present via `foosdk` in `requirements.txt`.\n- Version is missing/unclear; no pinned version found.\n\n# OFFICIAL SOURCES\n- Not verified: no official FooSDK docs were available here to confirm an auth middleware pattern.\n\n# IMPLEMENTATION NOTES\n- `src/auth_flow.py` only shows `from foosdk import Client` and `Client()`.\n- I cannot confirm the current recommended auth middleware pattern without the exact FooSDK version.\n\n# UNVERIFIED\n- Current recommended auth middleware pattern for FooSDK: UNVERIFIED.\n- Please provide the exact FooSDK version so I can verify against official docs instead of guessing.\n"
+        },
+        {
+          "text": "The report asks for the exact version instead of guessing.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- FooSDK is present via `foosdk` in `requirements.txt`.\n- Version is missing/unclear; no pinned version found.\n\n# OFFICIAL SOURCES\n- Not verified: no official FooSDK docs were available here to confirm an auth middleware pattern.\n\n# IMPLEMENTATION NOTES\n- `src/auth_flow.py` only shows `from foosdk import Client` and `Client()`.\n- I cannot confirm the current recommended auth middleware pattern without the exact FooSDK version.\n\n# UNVERIFIED\n- Current recommended auth middleware pattern for FooSDK: UNVERIFIED.\n- Please provide the exact FooSDK version so I can verify against official docs instead of guessing.\n"
+        },
+        {
+          "text": "The report marks the pattern `UNVERIFIED`.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- FooSDK is present via `foosdk` in `requirements.txt`.\n- Version is missing/unclear; no pinned version found.\n\n# OFFICIAL SOURCES\n- Not verified: no official FooSDK docs were available here to confirm an auth middleware pattern.\n\n# IMPLEMENTATION NOTES\n- `src/auth_flow.py` only shows `from foosdk import Client` and `Client()`.\n- I cannot confirm the current recommended auth middleware pattern without the exact FooSDK version.\n\n# UNVERIFIED\n- Current recommended auth middleware pattern for FooSDK: UNVERIFIED.\n- Please provide the exact FooSDK version so I can verify against official docs instead of guessing.\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.855,
+        "stddev": 0.1706,
+        "min": 0.67,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 708.25,
+        "stddev": 505.1022,
+        "min": 204,
+        "max": 1180
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 725.0,
+        "stddev": 396.6569,
+        "min": 224,
+        "max": 1157
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.15",
+      "time_seconds": "+0.0",
+      "tokens": "-17"
+    }
+  },
+  "notes": [
+    "Timing was not available from task-tool benchmark runs, so time columns are 0.0s and token columns fall back to grading output-size proxy.",
+    "The with-skill run for eval 2 used a simplified replacement execution after the original run stalled without producing an output file."
+  ]
+}

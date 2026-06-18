@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "next-router-conflict",
+  "prompt": "Use the skill under test for the fixture repo in `evals/files/next-conflict-fixture/`. The user asks: `Update routing helper in src/use-dashboard-router.ts for current Next.js docs, but do not change code yet.` Detect version, verify current official docs, and write only outputs/conflict.md. Because current docs and the existing codebase may disagree, surface the conflict instead of silently choosing one side.",
+  "assertions": [
+    "The conflict note detects `next` version `15.3.1`.",
+    "The conflict note cites an official `nextjs.org` source.",
+    "The conflict note names both `next/navigation` and `next/router`.",
+    "The conflict note asks which path to follow or presents explicit options."
+  ]
+}

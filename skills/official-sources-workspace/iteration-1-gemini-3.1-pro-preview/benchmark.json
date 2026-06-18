@@ -1,0 +1,353 @@
+{
+  "metadata": {
+    "skill_name": "official-sources",
+    "skill_path": "/home/adam/dev/personal/skills/skills/official-sources/SKILL.md",
+    "executor_model": "gemini-3.1-pro-preview",
+    "analyzer_model": "gemini-3.1-pro-preview",
+    "timestamp": "2026-06-18T20:12:33Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 616,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- `react-router-dom` version `7.6.2`\n\n# OFFICIAL SOURCES\n- [useNavigate - React Router](https://reactrouter.com/en/main/hooks/use-navigate)\n\n# IMPLEMENTATION NOTES\nFor programmatic navigation in React Router v7, the recommended approach is to use the `useNavigate` hook. \n\n# UNVERIFIED\nNone."
+        },
+        {
+          "text": "The report detects `react-router-dom` version `7.6.2`.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- `react-router-dom` version `7.6.2`\n\n# OFFICIAL SOURCES\n- [useNavigate - React Router](https://reactrouter.com/en/main/hooks/use-navigate)\n\n# IMPLEMENTATION NOTES\nFor programmatic navigation in React Router v7, the recommended approach is to use the `useNavigate` hook. \n\n# UNVERIFIED\nNone."
+        },
+        {
+          "text": "The report cites an official `reactrouter.com` source.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- `react-router-dom` version `7.6.2`\n\n# OFFICIAL SOURCES\n- [useNavigate - React Router](https://reactrouter.com/en/main/hooks/use-navigate)\n\n# IMPLEMENTATION NOTES\nFor programmatic navigation in React Router v7, the recommended approach is to use the `useNavigate` hook. \n\n# UNVERIFIED\nNone."
+        },
+        {
+          "text": "The implementation notes recommend `useNavigate`.",
+          "passed": true,
+          "evidence": "# STACK DETECTED\n- `react-router-dom` version `7.6.2`\n\n# OFFICIAL SOURCES\n- [useNavigate - React Router](https://reactrouter.com/en/main/hooks/use-navigate)\n\n# IMPLEMENTATION NOTES\nFor programmatic navigation in React Router v7, the recommended approach is to use the `useNavigate` hook. \n\n# UNVERIFIED\nNone."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 231,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says the skill does not apply.",
+          "passed": true,
+          "evidence": "Skill does not apply.\n\nTask is framework-agnostic. `official-sources` explicitly states: \"Not for framework-agnostic, version-independent work\". Writing a standard Python function to deduplicate strings requires no framework docs.\n"
+        },
+        {
+          "text": "The decision explains that the task is framework-agnostic or version-independent.",
+          "passed": true,
+          "evidence": "Skill does not apply.\n\nTask is framework-agnostic. `official-sources` explicitly states: \"Not for framework-agnostic, version-independent work\". Writing a standard Python function to deduplicate strings requires no framework docs.\n"
+        },
+        {
+          "text": "The decision does not cite or instruct fetching official docs.",
+          "passed": true,
+          "evidence": "Skill does not apply.\n\nTask is framework-agnostic. `official-sources` explicitly states: \"Not for framework-agnostic, version-independent work\". Writing a standard Python function to deduplicate strings requires no framework docs.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1077,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The conflict note detects `next` version `15.3.1`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\nNext.js v15.3.1 (from `package.json`)\n\nOFFICIAL SOURCES\n- [Next.js App Router API Reference for `useRouter`](https://nextjs.org/docs/app/api-reference/functions/use-router)\n- [Next.js Pages Router API Reference for `useRouter`](https://nextjs.org/docs/pages/api-reference/functions/use-router)\n\nIMPLEMENTATION NOTES\nThe official Next.js documentation highlights a difference between routing APIs depending on the architecture in use:\n- **App Router:** `useRouter` should be imported from `next/navigation`.\n- **Pages Router:** `useRouter` is imported from `next/router`.\n\nThe existing code in `src/use-dashboard-router.ts` relies on the Pages Router API:\n```typescript\nimport { useRouter } from \"next/router\";\n```\n\n**Conflict:** The current App Router documentation recommends `next/navigation` for `useRouter`, but the codebase is using `next/router`. Before updating the code, please confirm whether this project is migrating to the App Router (requiring `next/navigation` and other hook changes like `usePathname`), or if it should remain on the Pages Router."
+        },
+        {
+          "text": "The conflict note cites an official `nextjs.org` source.",
+          "passed": true,
+          "evidence": "STACK DETECTED\nNext.js v15.3.1 (from `package.json`)\n\nOFFICIAL SOURCES\n- [Next.js App Router API Reference for `useRouter`](https://nextjs.org/docs/app/api-reference/functions/use-router)\n- [Next.js Pages Router API Reference for `useRouter`](https://nextjs.org/docs/pages/api-reference/functions/use-router)\n\nIMPLEMENTATION NOTES\nThe official Next.js documentation highlights a difference between routing APIs depending on the architecture in use:\n- **App Router:** `useRouter` should be imported from `next/navigation`.\n- **Pages Router:** `useRouter` is imported from `next/router`.\n\nThe existing code in `src/use-dashboard-router.ts` relies on the Pages Router API:\n```typescript\nimport { useRouter } from \"next/router\";\n```\n\n**Conflict:** The current App Router documentation recommends `next/navigation` for `useRouter`, but the codebase is using `next/router`. Before updating the code, please confirm whether this project is migrating to the App Router (requiring `next/navigation` and other hook changes like `usePathname`), or if it should remain on the Pages Router."
+        },
+        {
+          "text": "The conflict note names both `next/navigation` and `next/router`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\nNext.js v15.3.1 (from `package.json`)\n\nOFFICIAL SOURCES\n- [Next.js App Router API Reference for `useRouter`](https://nextjs.org/docs/app/api-reference/functions/use-router)\n- [Next.js Pages Router API Reference for `useRouter`](https://nextjs.org/docs/pages/api-reference/functions/use-router)\n\nIMPLEMENTATION NOTES\nThe official Next.js documentation highlights a difference between routing APIs depending on the architecture in use:\n- **App Router:** `useRouter` should be imported from `next/navigation`.\n- **Pages Router:** `useRouter` is imported from `next/router`.\n\nThe existing code in `src/use-dashboard-router.ts` relies on the Pages Router API:\n```typescript\nimport { useRouter } from \"next/router\";\n```\n\n**Conflict:** The current App Router documentation recommends `next/navigation` for `useRouter`, but the codebase is using `next/router`. Before updating the code, please confirm whether this project is migrating to the App Router (requiring `next/navigation` and other hook changes like `usePathname`), or if it should remain on the Pages Router."
+        },
+        {
+          "text": "The conflict note asks which path to follow or presents explicit options.",
+          "passed": false,
+          "evidence": "STACK DETECTED\nNext.js v15.3.1 (from `package.json`)\n\nOFFICIAL SOURCES\n- [Next.js App Router API Reference for `useRouter`](https://nextjs.org/docs/app/api-reference/functions/use-router)\n- [Next.js Pages Router API Reference for `useRouter`](https://nextjs.org/docs/pages/api-reference/functions/use-router)\n\nIMPLEMENTATION NOTES\nThe official Next.js documentation highlights a difference between routing APIs depending on the architecture in use:\n- **App Router:** `useRouter` should be imported from `next/navigation`.\n- **Pages Router:** `useRouter` is imported from `next/router`.\n\nThe existing code in `src/use-dashboard-router.ts` relies on the Pages Router API:\n```typescript\nimport { useRouter } from \"next/router\";\n```\n\n**Conflict:** The current App Router documentation recommends `next/navigation` for `useRouter`, but the codebase is using `next/router`. Before updating the code, please confirm whether this project is migrating to the App Router (requiring `next/navigation` and other hook changes like `usePathname`), or if it should remain on the Pages Router."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 442,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report says the FooSDK version is missing or unclear.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- FooSDK (version missing in `requirements.txt`)\n\nUNVERIFIED: I could not find official documentation for this pattern because the version is missing.\n\nI cannot determine the exact version of FooSDK from the project files. Please provide the FooSDK version so I can fetch the correct official documentation and provide the verified recommended auth middleware pattern. I will not guess the pattern without knowing the version.\n"
+        },
+        {
+          "text": "The report asks for the exact version instead of guessing.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- FooSDK (version missing in `requirements.txt`)\n\nUNVERIFIED: I could not find official documentation for this pattern because the version is missing.\n\nI cannot determine the exact version of FooSDK from the project files. Please provide the FooSDK version so I can fetch the correct official documentation and provide the verified recommended auth middleware pattern. I will not guess the pattern without knowing the version.\n"
+        },
+        {
+          "text": "The report marks the pattern `UNVERIFIED`.",
+          "passed": true,
+          "evidence": "STACK DETECTED\n- FooSDK (version missing in `requirements.txt`)\n\nUNVERIFIED: I could not find official documentation for this pattern because the version is missing.\n\nI cannot determine the exact version of FooSDK from the project files. Please provide the FooSDK version so I can fetch the correct official documentation and provide the verified recommended auth middleware pattern. I will not guess the pattern without knowing the version.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1462,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+          "passed": true,
+          "evidence": "# React Router Programmatic Navigation Guidance\n\n## STACK DETECTED\n- React: ^19.0.0\n- React Router: 7.6.2 (from `react-router-dom` in `package.json`)\n\n## OFFICIAL SOURCES\n- [useNavigate hook - React Router](https://reactrouter.com/api/hooks/useNavigate)\n\n## IMPLEMENTATION NOTES\n- Programmatic navigation in React Router 7 is handled by the `useNavigate` hook.\n- Import `useNavigate` from `\"react-router\"`.\n- Call `useNavigate()` inside a component to obtain the `navigate` function.\n- The `navigate` function signature is `navigate(to, options?)` or `navigate(delta)`:\n  - `to` can be a string path (e.g., `\"/some/route\"`), a `To` object (e.g., `{ pathname: \"/some/route\", search: \"?search=param\" }`), or a number to traverse the history stack (e.g., `navigate(-1)` to go back).\n  - `options` can include `replace: true` (to replace the current history entry), `state: { ... }` (to pass state to the new location), and `preventScrollReset: true` (to prevent scrolling to the top).\n- It is often better to use `redirect` in `action` or `loader` functions rather than `useNavigate` if programmatic navigation is needed as part of data fetching/mutations.\n- Example:\n  ```tsx\n  import { useNavigate } from \"react-router\";\n\n  export function SomeComponent() {\n    let navigate = useNavigate();\n    \n    return (\n      <button onClick={() => navigate(\"/next-page\", { replace: true })}>\n        Go to Next Page\n      </button>\n    );\n  }\n  ```\n\n## UNVERIFIED\n- None.\n"
+        },
+        {
+          "text": "The report detects `react-router-dom` version `7.6.2`.",
+          "passed": true,
+          "evidence": "# React Router Programmatic Navigation Guidance\n\n## STACK DETECTED\n- React: ^19.0.0\n- React Router: 7.6.2 (from `react-router-dom` in `package.json`)\n\n## OFFICIAL SOURCES\n- [useNavigate hook - React Router](https://reactrouter.com/api/hooks/useNavigate)\n\n## IMPLEMENTATION NOTES\n- Programmatic navigation in React Router 7 is handled by the `useNavigate` hook.\n- Import `useNavigate` from `\"react-router\"`.\n- Call `useNavigate()` inside a component to obtain the `navigate` function.\n- The `navigate` function signature is `navigate(to, options?)` or `navigate(delta)`:\n  - `to` can be a string path (e.g., `\"/some/route\"`), a `To` object (e.g., `{ pathname: \"/some/route\", search: \"?search=param\" }`), or a number to traverse the history stack (e.g., `navigate(-1)` to go back).\n  - `options` can include `replace: true` (to replace the current history entry), `state: { ... }` (to pass state to the new location), and `preventScrollReset: true` (to prevent scrolling to the top).\n- It is often better to use `redirect` in `action` or `loader` functions rather than `useNavigate` if programmatic navigation is needed as part of data fetching/mutations.\n- Example:\n  ```tsx\n  import { useNavigate } from \"react-router\";\n\n  export function SomeComponent() {\n    let navigate = useNavigate();\n    \n    return (\n      <button onClick={() => navigate(\"/next-page\", { replace: true })}>\n        Go to Next Page\n      </button>\n    );\n  }\n  ```\n\n## UNVERIFIED\n- None.\n"
+        },
+        {
+          "text": "The report cites an official `reactrouter.com` source.",
+          "passed": true,
+          "evidence": "# React Router Programmatic Navigation Guidance\n\n## STACK DETECTED\n- React: ^19.0.0\n- React Router: 7.6.2 (from `react-router-dom` in `package.json`)\n\n## OFFICIAL SOURCES\n- [useNavigate hook - React Router](https://reactrouter.com/api/hooks/useNavigate)\n\n## IMPLEMENTATION NOTES\n- Programmatic navigation in React Router 7 is handled by the `useNavigate` hook.\n- Import `useNavigate` from `\"react-router\"`.\n- Call `useNavigate()` inside a component to obtain the `navigate` function.\n- The `navigate` function signature is `navigate(to, options?)` or `navigate(delta)`:\n  - `to` can be a string path (e.g., `\"/some/route\"`), a `To` object (e.g., `{ pathname: \"/some/route\", search: \"?search=param\" }`), or a number to traverse the history stack (e.g., `navigate(-1)` to go back).\n  - `options` can include `replace: true` (to replace the current history entry), `state: { ... }` (to pass state to the new location), and `preventScrollReset: true` (to prevent scrolling to the top).\n- It is often better to use `redirect` in `action` or `loader` functions rather than `useNavigate` if programmatic navigation is needed as part of data fetching/mutations.\n- Example:\n  ```tsx\n  import { useNavigate } from \"react-router\";\n\n  export function SomeComponent() {\n    let navigate = useNavigate();\n    \n    return (\n      <button onClick={() => navigate(\"/next-page\", { replace: true })}>\n        Go to Next Page\n      </button>\n    );\n  }\n  ```\n\n## UNVERIFIED\n- None.\n"
+        },
+        {
+          "text": "The implementation notes recommend `useNavigate`.",
+          "passed": true,
+          "evidence": "# React Router Programmatic Navigation Guidance\n\n## STACK DETECTED\n- React: ^19.0.0\n- React Router: 7.6.2 (from `react-router-dom` in `package.json`)\n\n## OFFICIAL SOURCES\n- [useNavigate hook - React Router](https://reactrouter.com/api/hooks/useNavigate)\n\n## IMPLEMENTATION NOTES\n- Programmatic navigation in React Router 7 is handled by the `useNavigate` hook.\n- Import `useNavigate` from `\"react-router\"`.\n- Call `useNavigate()` inside a component to obtain the `navigate` function.\n- The `navigate` function signature is `navigate(to, options?)` or `navigate(delta)`:\n  - `to` can be a string path (e.g., `\"/some/route\"`), a `To` object (e.g., `{ pathname: \"/some/route\", search: \"?search=param\" }`), or a number to traverse the history stack (e.g., `navigate(-1)` to go back).\n  - `options` can include `replace: true` (to replace the current history entry), `state: { ... }` (to pass state to the new location), and `preventScrollReset: true` (to prevent scrolling to the top).\n- It is often better to use `redirect` in `action` or `loader` functions rather than `useNavigate` if programmatic navigation is needed as part of data fetching/mutations.\n- Example:\n  ```tsx\n  import { useNavigate } from \"react-router\";\n\n  export function SomeComponent() {\n    let navigate = useNavigate();\n    \n    return (\n      <button onClick={() => navigate(\"/next-page\", { replace: true })}>\n        Go to Next Page\n      </button>\n    );\n  }\n  ```\n\n## UNVERIFIED\n- None.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 353,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says the skill does not apply.",
+          "passed": true,
+          "evidence": "The official-sources skill does not apply. The task of deduplicating case-insensitive email addresses in Python is truly framework-agnostic and version-independent, as it only requires standard library features (such as `set` and `str.lower`). The skill explicitly states 'Do not use when: The task is truly framework-agnostic and version-independent'.\n"
+        },
+        {
+          "text": "The decision explains that the task is framework-agnostic or version-independent.",
+          "passed": true,
+          "evidence": "The official-sources skill does not apply. The task of deduplicating case-insensitive email addresses in Python is truly framework-agnostic and version-independent, as it only requires standard library features (such as `set` and `str.lower`). The skill explicitly states 'Do not use when: The task is truly framework-agnostic and version-independent'.\n"
+        },
+        {
+          "text": "The decision does not cite or instruct fetching official docs.",
+          "passed": true,
+          "evidence": "The official-sources skill does not apply. The task of deduplicating case-insensitive email addresses in Python is truly framework-agnostic and version-independent, as it only requires standard library features (such as `set` and `str.lower`). The skill explicitly states 'Do not use when: The task is truly framework-agnostic and version-independent'.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 535,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The conflict note detects `next` version `15.3.1`.",
+          "passed": true,
+          "evidence": "STACK DETECTED:\n- Next.js (15.3.1)\n- React (^19.0.0)\n\nOFFICIAL SOURCES:\n- https://nextjs.org/docs/app/api-reference/functions/use-router\n\nIMPLEMENTATION NOTES:\n- Codebase conflict detected.\n- Existing code `src/use-dashboard-router.ts` imports `useRouter` from `next/router` (Pages Router).\n- Official docs for Next.js 15 state `useRouter` should be imported from `next/navigation` for App Router.\n- Need guidance: Follow documented current pattern (`next/navigation`) or existing codebase pattern (`next/router`)?\n\nUNVERIFIED:\n- none\n"
+        },
+        {
+          "text": "The conflict note cites an official `nextjs.org` source.",
+          "passed": true,
+          "evidence": "STACK DETECTED:\n- Next.js (15.3.1)\n- React (^19.0.0)\n\nOFFICIAL SOURCES:\n- https://nextjs.org/docs/app/api-reference/functions/use-router\n\nIMPLEMENTATION NOTES:\n- Codebase conflict detected.\n- Existing code `src/use-dashboard-router.ts` imports `useRouter` from `next/router` (Pages Router).\n- Official docs for Next.js 15 state `useRouter` should be imported from `next/navigation` for App Router.\n- Need guidance: Follow documented current pattern (`next/navigation`) or existing codebase pattern (`next/router`)?\n\nUNVERIFIED:\n- none\n"
+        },
+        {
+          "text": "The conflict note names both `next/navigation` and `next/router`.",
+          "passed": true,
+          "evidence": "STACK DETECTED:\n- Next.js (15.3.1)\n- React (^19.0.0)\n\nOFFICIAL SOURCES:\n- https://nextjs.org/docs/app/api-reference/functions/use-router\n\nIMPLEMENTATION NOTES:\n- Codebase conflict detected.\n- Existing code `src/use-dashboard-router.ts` imports `useRouter` from `next/router` (Pages Router).\n- Official docs for Next.js 15 state `useRouter` should be imported from `next/navigation` for App Router.\n- Need guidance: Follow documented current pattern (`next/navigation`) or existing codebase pattern (`next/router`)?\n\nUNVERIFIED:\n- none\n"
+        },
+        {
+          "text": "The conflict note asks which path to follow or presents explicit options.",
+          "passed": false,
+          "evidence": "STACK DETECTED:\n- Next.js (15.3.1)\n- React (^19.0.0)\n\nOFFICIAL SOURCES:\n- https://nextjs.org/docs/app/api-reference/functions/use-router\n\nIMPLEMENTATION NOTES:\n- Codebase conflict detected.\n- Existing code `src/use-dashboard-router.ts` imports `useRouter` from `next/router` (Pages Router).\n- Official docs for Next.js 15 state `useRouter` should be imported from `next/navigation` for App Router.\n- Need guidance: Follow documented current pattern (`next/navigation`) or existing codebase pattern (`next/router`)?\n\nUNVERIFIED:\n- none\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.67,
+        "passed": 2,
+        "failed": 1,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 258,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The report says the FooSDK version is missing or unclear.",
+          "passed": true,
+          "evidence": "I_CAN_SEE_SESSIONSTART_CONTEXT\n\nSTACK DETECTED:\n- `foosdk` (version missing)\n\nOFFICIAL SOURCES:\n- None\n\nIMPLEMENTATION NOTES:\n- None\n\nUNVERIFIED:\n- Auth middleware pattern\n\n`foosdk` version missing in `requirements.txt`. Can not verify docs. Provide version."
+        },
+        {
+          "text": "The report asks for the exact version instead of guessing.",
+          "passed": false,
+          "evidence": "I_CAN_SEE_SESSIONSTART_CONTEXT\n\nSTACK DETECTED:\n- `foosdk` (version missing)\n\nOFFICIAL SOURCES:\n- None\n\nIMPLEMENTATION NOTES:\n- None\n\nUNVERIFIED:\n- Auth middleware pattern\n\n`foosdk` version missing in `requirements.txt`. Can not verify docs. Provide version."
+        },
+        {
+          "text": "The report marks the pattern `UNVERIFIED`.",
+          "passed": true,
+          "evidence": "I_CAN_SEE_SESSIONSTART_CONTEXT\n\nSTACK DETECTED:\n- `foosdk` (version missing)\n\nOFFICIAL SOURCES:\n- None\n\nIMPLEMENTATION NOTES:\n- None\n\nUNVERIFIED:\n- Auth middleware pattern\n\n`foosdk` version missing in `requirements.txt`. Can not verify docs. Provide version."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.9375,
+        "stddev": 0.125,
+        "min": 0.75,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 591.5,
+        "stddev": 359.9171,
+        "min": 231,
+        "max": 1077
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.855,
+        "stddev": 0.1706,
+        "min": 0.67,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 652.0,
+        "stddev": 552.0948,
+        "min": 258,
+        "max": 1462
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.08",
+      "time_seconds": "+0.0",
+      "tokens": "-60"
+    }
+  },
+  "notes": [
+    "Timing was not available from task-tool benchmark runs, so time columns are 0.0s and token columns fall back to grading output-size proxy.",
+    "The with-skill run for eval 0 used a simplified replacement execution after the original run stalled without producing an output file."
+  ]
+}

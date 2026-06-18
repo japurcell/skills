@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+      "passed": true,
+      "evidence": "# STACK DETECTED\n- React app fixture with TypeScript source (`src/nav.ts`).\n- `package.json` declares `react` `^19.0.0` and `react-router-dom` `7.6.2`.\n- `src/nav.ts` currently imports `useHistory` from `react-router-dom` and calls `history.push(\"/checkout\")`.\n\n# OFFICIAL SOURCES\n- https://reactrouter.com/7.6.2/api/hooks/useNavigate \u2014 official v7.6.2 API for programmatic navigation; documents `useNavigate()` and `navigate(\"/some/route\")`.\n- https://reactrouter.com/7.6.2/start/declarative/navigating \u2014 official declarative-mode guide; says users navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and to reserve `useNavigate` for imperative cases.\n- https://reactrouter.com/7.6.2/start/declarative/installation \u2014 official v7.6.2 setup guide; shows `<BrowserRouter>` imported from `react-router`.\n- https://reactrouter.com/7.6.2/upgrading/v6 \u2014 official v7 upgrade guide; says v7 no longer needs `react-router-dom` and imports should be updated to `react-router`.\n- https://reactrouter.com/7.6.2/api/hooks/useHistory \u2014 official 7.6.2 docs page resolves to 404, which is consistent with `useHistory` not being a documented v7 hook.\n\n# IMPLEMENTATION NOTES\n- Current React Router 7.6.2 guidance for programmatic navigation is `useNavigate()`, then call `navigate(\"/checkout\")`.\n- `useHistory().push(...)` is not the documented v7.6.2 programmatic-navigation API.\n- Official v7 docs prefer imports from `react-router` for declarative routing APIs. If `src/nav.ts` is updated later to match docs, documented shape is `import { useNavigate } from \"react-router\"; const navigate = useNavigate(); return () => navigate(\"/checkout\");`.\n- Official docs also say `Link`/`NavLink` are preferred for normal user-driven navigation; keep imperative navigation only if this hook is needed outside normal link interactions.\n\n# UNVERIFIED\n- Whether this repo intentionally relies on `react-router-dom` re-exports in v7; fetched official 7.6.2 docs here verify `react-router` imports, not a `react-router-dom`-specific recommendation for this hook.\n- Router mode/bootstrap file is not present in fixture, so `BrowserRouter` usage in this specific repo cannot be confirmed from project files alone.\n"
+    },
+    {
+      "text": "The report detects `react-router-dom` version `7.6.2`.",
+      "passed": true,
+      "evidence": "# STACK DETECTED\n- React app fixture with TypeScript source (`src/nav.ts`).\n- `package.json` declares `react` `^19.0.0` and `react-router-dom` `7.6.2`.\n- `src/nav.ts` currently imports `useHistory` from `react-router-dom` and calls `history.push(\"/checkout\")`.\n\n# OFFICIAL SOURCES\n- https://reactrouter.com/7.6.2/api/hooks/useNavigate \u2014 official v7.6.2 API for programmatic navigation; documents `useNavigate()` and `navigate(\"/some/route\")`.\n- https://reactrouter.com/7.6.2/start/declarative/navigating \u2014 official declarative-mode guide; says users navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and to reserve `useNavigate` for imperative cases.\n- https://reactrouter.com/7.6.2/start/declarative/installation \u2014 official v7.6.2 setup guide; shows `<BrowserRouter>` imported from `react-router`.\n- https://reactrouter.com/7.6.2/upgrading/v6 \u2014 official v7 upgrade guide; says v7 no longer needs `react-router-dom` and imports should be updated to `react-router`.\n- https://reactrouter.com/7.6.2/api/hooks/useHistory \u2014 official 7.6.2 docs page resolves to 404, which is consistent with `useHistory` not being a documented v7 hook.\n\n# IMPLEMENTATION NOTES\n- Current React Router 7.6.2 guidance for programmatic navigation is `useNavigate()`, then call `navigate(\"/checkout\")`.\n- `useHistory().push(...)` is not the documented v7.6.2 programmatic-navigation API.\n- Official v7 docs prefer imports from `react-router` for declarative routing APIs. If `src/nav.ts` is updated later to match docs, documented shape is `import { useNavigate } from \"react-router\"; const navigate = useNavigate(); return () => navigate(\"/checkout\");`.\n- Official docs also say `Link`/`NavLink` are preferred for normal user-driven navigation; keep imperative navigation only if this hook is needed outside normal link interactions.\n\n# UNVERIFIED\n- Whether this repo intentionally relies on `react-router-dom` re-exports in v7; fetched official 7.6.2 docs here verify `react-router` imports, not a `react-router-dom`-specific recommendation for this hook.\n- Router mode/bootstrap file is not present in fixture, so `BrowserRouter` usage in this specific repo cannot be confirmed from project files alone.\n"
+    },
+    {
+      "text": "The report cites an official `reactrouter.com` source.",
+      "passed": true,
+      "evidence": "# STACK DETECTED\n- React app fixture with TypeScript source (`src/nav.ts`).\n- `package.json` declares `react` `^19.0.0` and `react-router-dom` `7.6.2`.\n- `src/nav.ts` currently imports `useHistory` from `react-router-dom` and calls `history.push(\"/checkout\")`.\n\n# OFFICIAL SOURCES\n- https://reactrouter.com/7.6.2/api/hooks/useNavigate \u2014 official v7.6.2 API for programmatic navigation; documents `useNavigate()` and `navigate(\"/some/route\")`.\n- https://reactrouter.com/7.6.2/start/declarative/navigating \u2014 official declarative-mode guide; says users navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and to reserve `useNavigate` for imperative cases.\n- https://reactrouter.com/7.6.2/start/declarative/installation \u2014 official v7.6.2 setup guide; shows `<BrowserRouter>` imported from `react-router`.\n- https://reactrouter.com/7.6.2/upgrading/v6 \u2014 official v7 upgrade guide; says v7 no longer needs `react-router-dom` and imports should be updated to `react-router`.\n- https://reactrouter.com/7.6.2/api/hooks/useHistory \u2014 official 7.6.2 docs page resolves to 404, which is consistent with `useHistory` not being a documented v7 hook.\n\n# IMPLEMENTATION NOTES\n- Current React Router 7.6.2 guidance for programmatic navigation is `useNavigate()`, then call `navigate(\"/checkout\")`.\n- `useHistory().push(...)` is not the documented v7.6.2 programmatic-navigation API.\n- Official v7 docs prefer imports from `react-router` for declarative routing APIs. If `src/nav.ts` is updated later to match docs, documented shape is `import { useNavigate } from \"react-router\"; const navigate = useNavigate(); return () => navigate(\"/checkout\");`.\n- Official docs also say `Link`/`NavLink` are preferred for normal user-driven navigation; keep imperative navigation only if this hook is needed outside normal link interactions.\n\n# UNVERIFIED\n- Whether this repo intentionally relies on `react-router-dom` re-exports in v7; fetched official 7.6.2 docs here verify `react-router` imports, not a `react-router-dom`-specific recommendation for this hook.\n- Router mode/bootstrap file is not present in fixture, so `BrowserRouter` usage in this specific repo cannot be confirmed from project files alone.\n"
+    },
+    {
+      "text": "The implementation notes recommend `useNavigate`.",
+      "passed": true,
+      "evidence": "# STACK DETECTED\n- React app fixture with TypeScript source (`src/nav.ts`).\n- `package.json` declares `react` `^19.0.0` and `react-router-dom` `7.6.2`.\n- `src/nav.ts` currently imports `useHistory` from `react-router-dom` and calls `history.push(\"/checkout\")`.\n\n# OFFICIAL SOURCES\n- https://reactrouter.com/7.6.2/api/hooks/useNavigate \u2014 official v7.6.2 API for programmatic navigation; documents `useNavigate()` and `navigate(\"/some/route\")`.\n- https://reactrouter.com/7.6.2/start/declarative/navigating \u2014 official declarative-mode guide; says users navigate with `<Link>`, `<NavLink>`, and `useNavigate`, and to reserve `useNavigate` for imperative cases.\n- https://reactrouter.com/7.6.2/start/declarative/installation \u2014 official v7.6.2 setup guide; shows `<BrowserRouter>` imported from `react-router`.\n- https://reactrouter.com/7.6.2/upgrading/v6 \u2014 official v7 upgrade guide; says v7 no longer needs `react-router-dom` and imports should be updated to `react-router`.\n- https://reactrouter.com/7.6.2/api/hooks/useHistory \u2014 official 7.6.2 docs page resolves to 404, which is consistent with `useHistory` not being a documented v7 hook.\n\n# IMPLEMENTATION NOTES\n- Current React Router 7.6.2 guidance for programmatic navigation is `useNavigate()`, then call `navigate(\"/checkout\")`.\n- `useHistory().push(...)` is not the documented v7.6.2 programmatic-navigation API.\n- Official v7 docs prefer imports from `react-router` for declarative routing APIs. If `src/nav.ts` is updated later to match docs, documented shape is `import { useNavigate } from \"react-router\"; const navigate = useNavigate(); return () => navigate(\"/checkout\");`.\n- Official docs also say `Link`/`NavLink` are preferred for normal user-driven navigation; keep imperative navigation only if this hook is needed outside normal link interactions.\n\n# UNVERIFIED\n- Whether this repo intentionally relies on `react-router-dom` re-exports in v7; fetched official 7.6.2 docs here verify `react-router` imports, not a `react-router-dom`-specific recommendation for this hook.\n- Router mode/bootstrap file is not present in fixture, so `BrowserRouter` usage in this specific repo cannot be confirmed from project files alone.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2187,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

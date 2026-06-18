@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+      "passed": true,
+      "evidence": "# React Router Programmatic Navigation Guidance\n\n## STACK DETECTED\n- React: ^19.0.0\n- React Router: 7.6.2 (from `react-router-dom` in `package.json`)\n\n## OFFICIAL SOURCES\n- [useNavigate hook - React Router](https://reactrouter.com/api/hooks/useNavigate)\n\n## IMPLEMENTATION NOTES\n- Programmatic navigation in React Router 7 is handled by the `useNavigate` hook.\n- Import `useNavigate` from `\"react-router\"`.\n- Call `useNavigate()` inside a component to obtain the `navigate` function.\n- The `navigate` function signature is `navigate(to, options?)` or `navigate(delta)`:\n  - `to` can be a string path (e.g., `\"/some/route\"`), a `To` object (e.g., `{ pathname: \"/some/route\", search: \"?search=param\" }`), or a number to traverse the history stack (e.g., `navigate(-1)` to go back).\n  - `options` can include `replace: true` (to replace the current history entry), `state: { ... }` (to pass state to the new location), and `preventScrollReset: true` (to prevent scrolling to the top).\n- It is often better to use `redirect` in `action` or `loader` functions rather than `useNavigate` if programmatic navigation is needed as part of data fetching/mutations.\n- Example:\n  ```tsx\n  import { useNavigate } from \"react-router\";\n\n  export function SomeComponent() {\n    let navigate = useNavigate();\n    \n    return (\n      <button onClick={() => navigate(\"/next-page\", { replace: true })}>\n        Go to Next Page\n      </button>\n    );\n  }\n  ```\n\n## UNVERIFIED\n- None.\n"
+    },
+    {
+      "text": "The report detects `react-router-dom` version `7.6.2`.",
+      "passed": true,
+      "evidence": "# React Router Programmatic Navigation Guidance\n\n## STACK DETECTED\n- React: ^19.0.0\n- React Router: 7.6.2 (from `react-router-dom` in `package.json`)\n\n## OFFICIAL SOURCES\n- [useNavigate hook - React Router](https://reactrouter.com/api/hooks/useNavigate)\n\n## IMPLEMENTATION NOTES\n- Programmatic navigation in React Router 7 is handled by the `useNavigate` hook.\n- Import `useNavigate` from `\"react-router\"`.\n- Call `useNavigate()` inside a component to obtain the `navigate` function.\n- The `navigate` function signature is `navigate(to, options?)` or `navigate(delta)`:\n  - `to` can be a string path (e.g., `\"/some/route\"`), a `To` object (e.g., `{ pathname: \"/some/route\", search: \"?search=param\" }`), or a number to traverse the history stack (e.g., `navigate(-1)` to go back).\n  - `options` can include `replace: true` (to replace the current history entry), `state: { ... }` (to pass state to the new location), and `preventScrollReset: true` (to prevent scrolling to the top).\n- It is often better to use `redirect` in `action` or `loader` functions rather than `useNavigate` if programmatic navigation is needed as part of data fetching/mutations.\n- Example:\n  ```tsx\n  import { useNavigate } from \"react-router\";\n\n  export function SomeComponent() {\n    let navigate = useNavigate();\n    \n    return (\n      <button onClick={() => navigate(\"/next-page\", { replace: true })}>\n        Go to Next Page\n      </button>\n    );\n  }\n  ```\n\n## UNVERIFIED\n- None.\n"
+    },
+    {
+      "text": "The report cites an official `reactrouter.com` source.",
+      "passed": true,
+      "evidence": "# React Router Programmatic Navigation Guidance\n\n## STACK DETECTED\n- React: ^19.0.0\n- React Router: 7.6.2 (from `react-router-dom` in `package.json`)\n\n## OFFICIAL SOURCES\n- [useNavigate hook - React Router](https://reactrouter.com/api/hooks/useNavigate)\n\n## IMPLEMENTATION NOTES\n- Programmatic navigation in React Router 7 is handled by the `useNavigate` hook.\n- Import `useNavigate` from `\"react-router\"`.\n- Call `useNavigate()` inside a component to obtain the `navigate` function.\n- The `navigate` function signature is `navigate(to, options?)` or `navigate(delta)`:\n  - `to` can be a string path (e.g., `\"/some/route\"`), a `To` object (e.g., `{ pathname: \"/some/route\", search: \"?search=param\" }`), or a number to traverse the history stack (e.g., `navigate(-1)` to go back).\n  - `options` can include `replace: true` (to replace the current history entry), `state: { ... }` (to pass state to the new location), and `preventScrollReset: true` (to prevent scrolling to the top).\n- It is often better to use `redirect` in `action` or `loader` functions rather than `useNavigate` if programmatic navigation is needed as part of data fetching/mutations.\n- Example:\n  ```tsx\n  import { useNavigate } from \"react-router\";\n\n  export function SomeComponent() {\n    let navigate = useNavigate();\n    \n    return (\n      <button onClick={() => navigate(\"/next-page\", { replace: true })}>\n        Go to Next Page\n      </button>\n    );\n  }\n  ```\n\n## UNVERIFIED\n- None.\n"
+    },
+    {
+      "text": "The implementation notes recommend `useNavigate`.",
+      "passed": true,
+      "evidence": "# React Router Programmatic Navigation Guidance\n\n## STACK DETECTED\n- React: ^19.0.0\n- React Router: 7.6.2 (from `react-router-dom` in `package.json`)\n\n## OFFICIAL SOURCES\n- [useNavigate hook - React Router](https://reactrouter.com/api/hooks/useNavigate)\n\n## IMPLEMENTATION NOTES\n- Programmatic navigation in React Router 7 is handled by the `useNavigate` hook.\n- Import `useNavigate` from `\"react-router\"`.\n- Call `useNavigate()` inside a component to obtain the `navigate` function.\n- The `navigate` function signature is `navigate(to, options?)` or `navigate(delta)`:\n  - `to` can be a string path (e.g., `\"/some/route\"`), a `To` object (e.g., `{ pathname: \"/some/route\", search: \"?search=param\" }`), or a number to traverse the history stack (e.g., `navigate(-1)` to go back).\n  - `options` can include `replace: true` (to replace the current history entry), `state: { ... }` (to pass state to the new location), and `preventScrollReset: true` (to prevent scrolling to the top).\n- It is often better to use `redirect` in `action` or `loader` functions rather than `useNavigate` if programmatic navigation is needed as part of data fetching/mutations.\n- Example:\n  ```tsx\n  import { useNavigate } from \"react-router\";\n\n  export function SomeComponent() {\n    let navigate = useNavigate();\n    \n    return (\n      <button onClick={() => navigate(\"/next-page\", { replace: true })}>\n        Go to Next Page\n      </button>\n    );\n  }\n  ```\n\n## UNVERIFIED\n- None.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1462,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,323 @@
+{
+  "metadata": {
+    "skill_name": "handoff",
+    "skill_path": "/home/adam/dev/personal/skills/skills/handoff",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-18T20:39:48Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 42.9,
+        "tokens": 3127,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish auth refresh retry backoff so the focused auth refresh test stops failing.\n\n## Status\n- Done: traced retry flow in `src/auth_refresh.py`; captured focused failure details from `logs/test-failure.txt`; confirmed plan in `plans/refresh-plan.md`.\n- In progress: deciding between fixed backoff expected by test and earlier jitter idea.\n- Remaining: update retry schedule logic and rerun focused auth refresh test.\n\n## Next focus\n- Align implementation with the current test expectation before considering any jitter changes.\n\n## Next step\n- Update `build_retry_schedule()` in `src/auth_refresh.py` so the retry schedule matches `[0.5, 1.0, 2.0]`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions and constraints\n- Keep this handoff root-scoped: no matching feature folder existed under `.agents/scratchpad/`.\n- Do not copy or quote the live token referenced in `session_notes.md` into any notes, commits, or logs.\n- `tests/test_auth_refresh.py` currently expects deterministic backoff, not jittered retries.\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` \u2014 current `build_retry_schedule()` returns `[0.5, 0.5, 0.5]`.\n- `tests/test_auth_refresh.py` \u2014 `test_refresh_retries_backoff` expects `[0.5, 1.0, 2.0]`.\n- `logs/test-failure.txt` \u2014 exact failure output showing expected vs actual retry schedule.\n- `plans/refresh-plan.md` \u2014 retry plan notes; first retry stays at `0.5s`.\n- `session_notes.md` \u2014 progress summary and sensitive-token warning; reference only, do not copy sensitive value.\n\n## Commands and results\n- `python3 -m pytest tests/test_auth_refresh.py -q` -> failed at `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Briefing\n- Fresh agent should start in `src/auth_refresh.py`, make the retry schedule match the failing test, rerun the focused test, and keep sensitive token material out of any written notes.\n"
+        },
+        {
+          "text": "The handoff captures goal, status, and exact next step.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish auth refresh retry backoff so the focused auth refresh test stops failing.\n\n## Status\n- Done: traced retry flow in `src/auth_refresh.py`; captured focused failure details from `logs/test-failure.txt`; confirmed plan in `plans/refresh-plan.md`.\n- In progress: deciding between fixed backoff expected by test and earlier jitter idea.\n- Remaining: update retry schedule logic and rerun focused auth refresh test.\n\n## Next focus\n- Align implementation with the current test expectation before considering any jitter changes.\n\n## Next step\n- Update `build_retry_schedule()` in `src/auth_refresh.py` so the retry schedule matches `[0.5, 1.0, 2.0]`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions and constraints\n- Keep this handoff root-scoped: no matching feature folder existed under `.agents/scratchpad/`.\n- Do not copy or quote the live token referenced in `session_notes.md` into any notes, commits, or logs.\n- `tests/test_auth_refresh.py` currently expects deterministic backoff, not jittered retries.\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` \u2014 current `build_retry_schedule()` returns `[0.5, 0.5, 0.5]`.\n- `tests/test_auth_refresh.py` \u2014 `test_refresh_retries_backoff` expects `[0.5, 1.0, 2.0]`.\n- `logs/test-failure.txt` \u2014 exact failure output showing expected vs actual retry schedule.\n- `plans/refresh-plan.md` \u2014 retry plan notes; first retry stays at `0.5s`.\n- `session_notes.md` \u2014 progress summary and sensitive-token warning; reference only, do not copy sensitive value.\n\n## Commands and results\n- `python3 -m pytest tests/test_auth_refresh.py -q` -> failed at `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Briefing\n- Fresh agent should start in `src/auth_refresh.py`, make the retry schedule match the failing test, rerun the focused test, and keep sensitive token material out of any written notes.\n"
+        },
+        {
+          "text": "The handoff names `src/auth_refresh.py`, `tests/test_auth_refresh.py`, and `logs/test-failure.txt`.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish auth refresh retry backoff so the focused auth refresh test stops failing.\n\n## Status\n- Done: traced retry flow in `src/auth_refresh.py`; captured focused failure details from `logs/test-failure.txt`; confirmed plan in `plans/refresh-plan.md`.\n- In progress: deciding between fixed backoff expected by test and earlier jitter idea.\n- Remaining: update retry schedule logic and rerun focused auth refresh test.\n\n## Next focus\n- Align implementation with the current test expectation before considering any jitter changes.\n\n## Next step\n- Update `build_retry_schedule()` in `src/auth_refresh.py` so the retry schedule matches `[0.5, 1.0, 2.0]`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions and constraints\n- Keep this handoff root-scoped: no matching feature folder existed under `.agents/scratchpad/`.\n- Do not copy or quote the live token referenced in `session_notes.md` into any notes, commits, or logs.\n- `tests/test_auth_refresh.py` currently expects deterministic backoff, not jittered retries.\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` \u2014 current `build_retry_schedule()` returns `[0.5, 0.5, 0.5]`.\n- `tests/test_auth_refresh.py` \u2014 `test_refresh_retries_backoff` expects `[0.5, 1.0, 2.0]`.\n- `logs/test-failure.txt` \u2014 exact failure output showing expected vs actual retry schedule.\n- `plans/refresh-plan.md` \u2014 retry plan notes; first retry stays at `0.5s`.\n- `session_notes.md` \u2014 progress summary and sensitive-token warning; reference only, do not copy sensitive value.\n\n## Commands and results\n- `python3 -m pytest tests/test_auth_refresh.py -q` -> failed at `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Briefing\n- Fresh agent should start in `src/auth_refresh.py`, make the retry schedule match the failing test, rerun the focused test, and keep sensitive token material out of any written notes.\n"
+        },
+        {
+          "text": "The handoff includes the retry-backoff focus and redacts the secret token.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish auth refresh retry backoff so the focused auth refresh test stops failing.\n\n## Status\n- Done: traced retry flow in `src/auth_refresh.py`; captured focused failure details from `logs/test-failure.txt`; confirmed plan in `plans/refresh-plan.md`.\n- In progress: deciding between fixed backoff expected by test and earlier jitter idea.\n- Remaining: update retry schedule logic and rerun focused auth refresh test.\n\n## Next focus\n- Align implementation with the current test expectation before considering any jitter changes.\n\n## Next step\n- Update `build_retry_schedule()` in `src/auth_refresh.py` so the retry schedule matches `[0.5, 1.0, 2.0]`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions and constraints\n- Keep this handoff root-scoped: no matching feature folder existed under `.agents/scratchpad/`.\n- Do not copy or quote the live token referenced in `session_notes.md` into any notes, commits, or logs.\n- `tests/test_auth_refresh.py` currently expects deterministic backoff, not jittered retries.\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` \u2014 current `build_retry_schedule()` returns `[0.5, 0.5, 0.5]`.\n- `tests/test_auth_refresh.py` \u2014 `test_refresh_retries_backoff` expects `[0.5, 1.0, 2.0]`.\n- `logs/test-failure.txt` \u2014 exact failure output showing expected vs actual retry schedule.\n- `plans/refresh-plan.md` \u2014 retry plan notes; first retry stays at `0.5s`.\n- `session_notes.md` \u2014 progress summary and sensitive-token warning; reference only, do not copy sensitive value.\n\n## Commands and results\n- `python3 -m pytest tests/test_auth_refresh.py -q` -> failed at `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Briefing\n- Fresh agent should start in `src/auth_refresh.py`, make the retry schedule match the failing test, rerun the focused test, and keep sensitive token material out of any written notes.\n"
+        },
+        {
+          "text": "outputs/result.json reports the root-scoped handoff path and next step.",
+          "passed": true,
+          "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"root-scoped\", \"next_step\": \"Update `build_retry_schedule()` in `src/auth_refresh.py` so it produces `[0.5, 1.0, 2.0]`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 74.5,
+        "tokens": 1754,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/payments/handoff.md is updated in place.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Done: retry cap landed in `src/payment_retry.py`.\n- Done: cap coverage exists in `tests/test_payment_retry.py`.\n- Remaining: wire retry metrics.\n- Remaining: update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Wire retry metrics in `src/payment_retry.py`, then document emitted metrics and the p95 improvement from `reports/benchmark.txt`.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` - current retry logic caps delay at 8 seconds; metrics are not wired yet.\n- `tests/test_payment_retry.py` - covers delay cap only; extend if metric behavior becomes testable.\n- `session_notes.md` - source of remaining work and stated next-agent focus.\n- `reports/benchmark.txt` - benchmark note: p95 improved from 480ms to 310ms with no new retry test failures.\n\n## Durable learnings\n- Active scope is retry metrics plus docs; legacy YAML toggle inspection was stale and removed.\n- Keep handoff/docs grounded in existing artifacts instead of replaying session history.\n"
+        },
+        {
+          "text": "The updated handoff includes retry-metrics and docs focus.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Done: retry cap landed in `src/payment_retry.py`.\n- Done: cap coverage exists in `tests/test_payment_retry.py`.\n- Remaining: wire retry metrics.\n- Remaining: update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Wire retry metrics in `src/payment_retry.py`, then document emitted metrics and the p95 improvement from `reports/benchmark.txt`.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` - current retry logic caps delay at 8 seconds; metrics are not wired yet.\n- `tests/test_payment_retry.py` - covers delay cap only; extend if metric behavior becomes testable.\n- `session_notes.md` - source of remaining work and stated next-agent focus.\n- `reports/benchmark.txt` - benchmark note: p95 improved from 480ms to 310ms with no new retry test failures.\n\n## Durable learnings\n- Active scope is retry metrics plus docs; legacy YAML toggle inspection was stale and removed.\n- Keep handoff/docs grounded in existing artifacts instead of replaying session history.\n"
+        },
+        {
+          "text": "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Done: retry cap landed in `src/payment_retry.py`.\n- Done: cap coverage exists in `tests/test_payment_retry.py`.\n- Remaining: wire retry metrics.\n- Remaining: update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Wire retry metrics in `src/payment_retry.py`, then document emitted metrics and the p95 improvement from `reports/benchmark.txt`.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` - current retry logic caps delay at 8 seconds; metrics are not wired yet.\n- `tests/test_payment_retry.py` - covers delay cap only; extend if metric behavior becomes testable.\n- `session_notes.md` - source of remaining work and stated next-agent focus.\n- `reports/benchmark.txt` - benchmark note: p95 improved from 480ms to 310ms with no new retry test failures.\n\n## Durable learnings\n- Active scope is retry metrics plus docs; legacy YAML toggle inspection was stale and removed.\n- Keep handoff/docs grounded in existing artifacts instead of replaying session history.\n"
+        },
+        {
+          "text": "The stale `inspect legacy YAML toggles` step is removed.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Done: retry cap landed in `src/payment_retry.py`.\n- Done: cap coverage exists in `tests/test_payment_retry.py`.\n- Remaining: wire retry metrics.\n- Remaining: update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Next step\n- Wire retry metrics in `src/payment_retry.py`, then document emitted metrics and the p95 improvement from `reports/benchmark.txt`.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` - current retry logic caps delay at 8 seconds; metrics are not wired yet.\n- `tests/test_payment_retry.py` - covers delay cap only; extend if metric behavior becomes testable.\n- `session_notes.md` - source of remaining work and stated next-agent focus.\n- `reports/benchmark.txt` - benchmark note: p95 improved from 480ms to 310ms with no new retry test failures.\n\n## Durable learnings\n- Active scope is retry metrics plus docs; legacy YAML toggle inspection was stale and removed.\n- Keep handoff/docs grounded in existing artifacts instead of replaying session history.\n"
+        },
+        {
+          "text": "outputs/result.json reports the feature-scoped handoff path.",
+          "passed": true,
+          "evidence": "{\"written_path\": \".agents/scratchpad/payments/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Wire retry metrics in src/payment_retry.py, then update rollout docs with the emitted metrics and p95 benchmark result.\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 47.1,
+        "tokens": 2665,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\n- Fix sync retry behavior without losing failing integration signal.\n\n## Status\n- Done: inspected `src/sync_retry.py`, `tests/test_sync_retry.py`, and `session_notes.md`.\n- In progress: narrowing retry logic bug and preserving timeout failure visibility.\n- Remaining: stop swallowing vendor timeouts, then verify with focused test coverage.\n\n## Next focus\n- Resume in retry flow and start from failing integration coverage, not from broad repo exploration.\n\n## Next step\n- Run failing integration test in `tests/test_sync_retry.py` first, then adjust `src/sync_retry.py` based on that failure.\n\n## Decisions and constraints\n- User asked for `docs/handoff.md`, but handoff must stay under `.agents/scratchpad/`, so this was written to `.agents/scratchpad/handoff.md`.\n- Keep artifacts referenced by path instead of pasted inline.\n\n## Relevant files and artifacts\n- `session_notes.md` \u2014 compact status and requested resume point.\n- `src/sync_retry.py` \u2014 current retry helper still returns `True` unconditionally.\n- `tests/test_sync_retry.py` \u2014 current failing retry-limit test to start from next time.\n- `logs/retry.log` \u2014 retry failure log; inspect directly if timeout details needed.\n- `diffs/patch.diff` \u2014 proposed minimal retry-limit fix; inspect directly before applying.\n\n## Durable learnings\n- Likely code fix is changing retry gate from unconditional success to attempt-limit check.\n- Preserve failing integration signal while fixing retry behavior; do not mask vendor timeout path.\n\n## Briefing\n- Start with `tests/test_sync_retry.py`. Confirm failure, then compare `src/sync_retry.py` against `diffs/patch.diff` and inspect `logs/retry.log` only as needed.\n"
+        },
+        {
+          "text": "`outputs/repo/docs/handoff.md` is not created.",
+          "passed": true,
+          "evidence": "docs/handoff.md absent"
+        },
+        {
+          "text": "The handoff references `logs/retry.log` and `diffs/patch.diff` by path.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\n- Fix sync retry behavior without losing failing integration signal.\n\n## Status\n- Done: inspected `src/sync_retry.py`, `tests/test_sync_retry.py`, and `session_notes.md`.\n- In progress: narrowing retry logic bug and preserving timeout failure visibility.\n- Remaining: stop swallowing vendor timeouts, then verify with focused test coverage.\n\n## Next focus\n- Resume in retry flow and start from failing integration coverage, not from broad repo exploration.\n\n## Next step\n- Run failing integration test in `tests/test_sync_retry.py` first, then adjust `src/sync_retry.py` based on that failure.\n\n## Decisions and constraints\n- User asked for `docs/handoff.md`, but handoff must stay under `.agents/scratchpad/`, so this was written to `.agents/scratchpad/handoff.md`.\n- Keep artifacts referenced by path instead of pasted inline.\n\n## Relevant files and artifacts\n- `session_notes.md` \u2014 compact status and requested resume point.\n- `src/sync_retry.py` \u2014 current retry helper still returns `True` unconditionally.\n- `tests/test_sync_retry.py` \u2014 current failing retry-limit test to start from next time.\n- `logs/retry.log` \u2014 retry failure log; inspect directly if timeout details needed.\n- `diffs/patch.diff` \u2014 proposed minimal retry-limit fix; inspect directly before applying.\n\n## Durable learnings\n- Likely code fix is changing retry gate from unconditional success to attempt-limit check.\n- Preserve failing integration signal while fixing retry behavior; do not mask vendor timeout path.\n\n## Briefing\n- Start with `tests/test_sync_retry.py`. Confirm failure, then compare `src/sync_retry.py` against `diffs/patch.diff` and inspect `logs/retry.log` only as needed.\n"
+        },
+        {
+          "text": "The handoff stays concise and does not expose the secret token or raw stack frame spam.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\n- Fix sync retry behavior without losing failing integration signal.\n\n## Status\n- Done: inspected `src/sync_retry.py`, `tests/test_sync_retry.py`, and `session_notes.md`.\n- In progress: narrowing retry logic bug and preserving timeout failure visibility.\n- Remaining: stop swallowing vendor timeouts, then verify with focused test coverage.\n\n## Next focus\n- Resume in retry flow and start from failing integration coverage, not from broad repo exploration.\n\n## Next step\n- Run failing integration test in `tests/test_sync_retry.py` first, then adjust `src/sync_retry.py` based on that failure.\n\n## Decisions and constraints\n- User asked for `docs/handoff.md`, but handoff must stay under `.agents/scratchpad/`, so this was written to `.agents/scratchpad/handoff.md`.\n- Keep artifacts referenced by path instead of pasted inline.\n\n## Relevant files and artifacts\n- `session_notes.md` \u2014 compact status and requested resume point.\n- `src/sync_retry.py` \u2014 current retry helper still returns `True` unconditionally.\n- `tests/test_sync_retry.py` \u2014 current failing retry-limit test to start from next time.\n- `logs/retry.log` \u2014 retry failure log; inspect directly if timeout details needed.\n- `diffs/patch.diff` \u2014 proposed minimal retry-limit fix; inspect directly before applying.\n\n## Durable learnings\n- Likely code fix is changing retry gate from unconditional success to attempt-limit check.\n- Preserve failing integration signal while fixing retry behavior; do not mask vendor timeout path.\n\n## Briefing\n- Start with `tests/test_sync_retry.py`. Confirm failure, then compare `src/sync_retry.py` against `diffs/patch.diff` and inspect `logs/retry.log` only as needed.\n"
+        },
+        {
+          "text": "outputs/result.json reports the root-scoped fallback path.",
+          "passed": true,
+          "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"root-scoped\", \"next_step\": \"Run the failing integration test in tests/test_sync_retry.py first, then adjust src/sync_retry.py based on that failure.\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 67.6,
+        "tokens": 3834,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\n- Finish auth refresh retry backoff work without leaking the flaky live token into saved notes.\n\n## Current status\n- Done: traced retry flow in `src/auth_refresh.py`.\n- Done: ran `python3 -m pytest tests/test_auth_refresh.py -q`.\n- In progress: retry policy is still unsettled between deterministic backoff and jitter after the first failure.\n- Remaining: update retry schedule, rerun focused test, then decide whether broader validation is needed.\n\n## Next-agent focus\n- Finish auth refresh retry backoff.\n- Keep any token value redacted in future notes and artifacts.\n\n## Exact next step\n- Update `src/auth_refresh.py` so `build_retry_schedule()` matches the intended policy from `plans/refresh-plan.md`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Suggested skills\n- `tdd` - change retry behavior against the focused failing test before widening scope.\n\n## Decisions and constraints\n- Do not save the flaky live token in notes, handoffs, or other artifacts.\n- User asked for a no-follow-up save-for-later handoff, so capture enough context for a fresh agent to resume directly.\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` - current implementation returns a flat schedule from `build_retry_schedule()`.\n- `tests/test_auth_refresh.py` - failing expectation for retry backoff behavior.\n- `logs/test-failure.txt` - exact failure summary from the last focused test run.\n- `plans/refresh-plan.md` - current retry plan notes: first retry stays at 0.5s, then bounded jitter is being considered.\n- `session_notes.md` - progress log; contains a token reminder that must stay redacted in any new notes.\n\n## Commands and results\n- `python3 -m pytest tests/test_auth_refresh.py -q` -> failed on `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Errors and blockers\n- `logs/test-failure.txt` shows expected schedule `[0.5, 1.0, 2.0]` but actual output is `[0.5, 0.5, 0.5]`.\n- `src/auth_refresh.py` currently returns:\n  - `build_retry_schedule() -> [0.5, 0.5, 0.5]`\n- `plans/refresh-plan.md` suggests bounded jitter after the first failure, so the next agent should reconcile that note with the current deterministic test expectation instead of changing one side accidentally.\n\n## Briefing\n- Auth refresh retry backoff is not finished. Implementation is still flat, focused test is failing, and notes show an unresolved choice between deterministic doubling and bounded jitter. Start in `src/auth_refresh.py`, keep secrets redacted, and use `tests/test_auth_refresh.py` plus `logs/test-failure.txt` to confirm the change.\n"
+        },
+        {
+          "text": "The handoff captures goal, status, and exact next step.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\n- Finish auth refresh retry backoff work without leaking the flaky live token into saved notes.\n\n## Current status\n- Done: traced retry flow in `src/auth_refresh.py`.\n- Done: ran `python3 -m pytest tests/test_auth_refresh.py -q`.\n- In progress: retry policy is still unsettled between deterministic backoff and jitter after the first failure.\n- Remaining: update retry schedule, rerun focused test, then decide whether broader validation is needed.\n\n## Next-agent focus\n- Finish auth refresh retry backoff.\n- Keep any token value redacted in future notes and artifacts.\n\n## Exact next step\n- Update `src/auth_refresh.py` so `build_retry_schedule()` matches the intended policy from `plans/refresh-plan.md`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Suggested skills\n- `tdd` - change retry behavior against the focused failing test before widening scope.\n\n## Decisions and constraints\n- Do not save the flaky live token in notes, handoffs, or other artifacts.\n- User asked for a no-follow-up save-for-later handoff, so capture enough context for a fresh agent to resume directly.\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` - current implementation returns a flat schedule from `build_retry_schedule()`.\n- `tests/test_auth_refresh.py` - failing expectation for retry backoff behavior.\n- `logs/test-failure.txt` - exact failure summary from the last focused test run.\n- `plans/refresh-plan.md` - current retry plan notes: first retry stays at 0.5s, then bounded jitter is being considered.\n- `session_notes.md` - progress log; contains a token reminder that must stay redacted in any new notes.\n\n## Commands and results\n- `python3 -m pytest tests/test_auth_refresh.py -q` -> failed on `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Errors and blockers\n- `logs/test-failure.txt` shows expected schedule `[0.5, 1.0, 2.0]` but actual output is `[0.5, 0.5, 0.5]`.\n- `src/auth_refresh.py` currently returns:\n  - `build_retry_schedule() -> [0.5, 0.5, 0.5]`\n- `plans/refresh-plan.md` suggests bounded jitter after the first failure, so the next agent should reconcile that note with the current deterministic test expectation instead of changing one side accidentally.\n\n## Briefing\n- Auth refresh retry backoff is not finished. Implementation is still flat, focused test is failing, and notes show an unresolved choice between deterministic doubling and bounded jitter. Start in `src/auth_refresh.py`, keep secrets redacted, and use `tests/test_auth_refresh.py` plus `logs/test-failure.txt` to confirm the change.\n"
+        },
+        {
+          "text": "The handoff names `src/auth_refresh.py`, `tests/test_auth_refresh.py`, and `logs/test-failure.txt`.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\n- Finish auth refresh retry backoff work without leaking the flaky live token into saved notes.\n\n## Current status\n- Done: traced retry flow in `src/auth_refresh.py`.\n- Done: ran `python3 -m pytest tests/test_auth_refresh.py -q`.\n- In progress: retry policy is still unsettled between deterministic backoff and jitter after the first failure.\n- Remaining: update retry schedule, rerun focused test, then decide whether broader validation is needed.\n\n## Next-agent focus\n- Finish auth refresh retry backoff.\n- Keep any token value redacted in future notes and artifacts.\n\n## Exact next step\n- Update `src/auth_refresh.py` so `build_retry_schedule()` matches the intended policy from `plans/refresh-plan.md`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Suggested skills\n- `tdd` - change retry behavior against the focused failing test before widening scope.\n\n## Decisions and constraints\n- Do not save the flaky live token in notes, handoffs, or other artifacts.\n- User asked for a no-follow-up save-for-later handoff, so capture enough context for a fresh agent to resume directly.\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` - current implementation returns a flat schedule from `build_retry_schedule()`.\n- `tests/test_auth_refresh.py` - failing expectation for retry backoff behavior.\n- `logs/test-failure.txt` - exact failure summary from the last focused test run.\n- `plans/refresh-plan.md` - current retry plan notes: first retry stays at 0.5s, then bounded jitter is being considered.\n- `session_notes.md` - progress log; contains a token reminder that must stay redacted in any new notes.\n\n## Commands and results\n- `python3 -m pytest tests/test_auth_refresh.py -q` -> failed on `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Errors and blockers\n- `logs/test-failure.txt` shows expected schedule `[0.5, 1.0, 2.0]` but actual output is `[0.5, 0.5, 0.5]`.\n- `src/auth_refresh.py` currently returns:\n  - `build_retry_schedule() -> [0.5, 0.5, 0.5]`\n- `plans/refresh-plan.md` suggests bounded jitter after the first failure, so the next agent should reconcile that note with the current deterministic test expectation instead of changing one side accidentally.\n\n## Briefing\n- Auth refresh retry backoff is not finished. Implementation is still flat, focused test is failing, and notes show an unresolved choice between deterministic doubling and bounded jitter. Start in `src/auth_refresh.py`, keep secrets redacted, and use `tests/test_auth_refresh.py` plus `logs/test-failure.txt` to confirm the change.\n"
+        },
+        {
+          "text": "The handoff includes the retry-backoff focus and redacts the secret token.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\n- Finish auth refresh retry backoff work without leaking the flaky live token into saved notes.\n\n## Current status\n- Done: traced retry flow in `src/auth_refresh.py`.\n- Done: ran `python3 -m pytest tests/test_auth_refresh.py -q`.\n- In progress: retry policy is still unsettled between deterministic backoff and jitter after the first failure.\n- Remaining: update retry schedule, rerun focused test, then decide whether broader validation is needed.\n\n## Next-agent focus\n- Finish auth refresh retry backoff.\n- Keep any token value redacted in future notes and artifacts.\n\n## Exact next step\n- Update `src/auth_refresh.py` so `build_retry_schedule()` matches the intended policy from `plans/refresh-plan.md`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Suggested skills\n- `tdd` - change retry behavior against the focused failing test before widening scope.\n\n## Decisions and constraints\n- Do not save the flaky live token in notes, handoffs, or other artifacts.\n- User asked for a no-follow-up save-for-later handoff, so capture enough context for a fresh agent to resume directly.\n\n## Relevant files and artifacts\n- `src/auth_refresh.py` - current implementation returns a flat schedule from `build_retry_schedule()`.\n- `tests/test_auth_refresh.py` - failing expectation for retry backoff behavior.\n- `logs/test-failure.txt` - exact failure summary from the last focused test run.\n- `plans/refresh-plan.md` - current retry plan notes: first retry stays at 0.5s, then bounded jitter is being considered.\n- `session_notes.md` - progress log; contains a token reminder that must stay redacted in any new notes.\n\n## Commands and results\n- `python3 -m pytest tests/test_auth_refresh.py -q` -> failed on `tests/test_auth_refresh.py::test_refresh_retries_backoff`.\n\n## Errors and blockers\n- `logs/test-failure.txt` shows expected schedule `[0.5, 1.0, 2.0]` but actual output is `[0.5, 0.5, 0.5]`.\n- `src/auth_refresh.py` currently returns:\n  - `build_retry_schedule() -> [0.5, 0.5, 0.5]`\n- `plans/refresh-plan.md` suggests bounded jitter after the first failure, so the next agent should reconcile that note with the current deterministic test expectation instead of changing one side accidentally.\n\n## Briefing\n- Auth refresh retry backoff is not finished. Implementation is still flat, focused test is failing, and notes show an unresolved choice between deterministic doubling and bounded jitter. Start in `src/auth_refresh.py`, keep secrets redacted, and use `tests/test_auth_refresh.py` plus `logs/test-failure.txt` to confirm the change.\n"
+        },
+        {
+          "text": "outputs/result.json reports the root-scoped handoff path and next step.",
+          "passed": true,
+          "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"root-scoped\", \"next_step\": \"Update src/auth_refresh.py so build_retry_schedule() matches the intended policy from plans/refresh-plan.md, then rerun python3 -m pytest tests/test_auth_refresh.py -q.\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 55.4,
+        "tokens": 2650,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/payments/handoff.md is updated in place.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Current status\n- Done: retry delay cap landed in `src/payment_retry.py`.\n- Done: cap behavior covered by `tests/test_payment_retry.py`.\n- Remaining: add retry metrics and update rollout docs.\n\n## Next-agent focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry attempt/success/failure metric hooks in `src/payment_retry.py` and extend `tests/test_payment_retry.py` to cover emitted metrics.\n\n## Suggested skills\n- `context-engineering` \u2014 reload only retry code, tests, and rollout notes before editing.\n- `tdd` \u2014 add or update tests around metrics instrumentation before changing retry logic.\n\n## Decisions and constraints\n- Keep handoff feature-scoped under `.agents/scratchpad/payments/`.\n- Treat legacy YAML toggle inspection as stale; do not resume that step unless new evidence appears.\n- Focus remaining work on observability and documentation, not retry cap behavior.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` \u2014 current retry delay logic; place metrics instrumentation here.\n- `tests/test_payment_retry.py` \u2014 existing retry cap test; extend for metrics coverage.\n- `session_notes.md` \u2014 source of current done/remaining status and stated next-agent focus.\n- `reports/benchmark.txt` \u2014 benchmark evidence: p95 improved from 480ms to 310ms and no new unit-test failures.\n\n## Commands and results\n- No new repo commands were run in this handoff update.\n- Existing benchmark artifact reports lower retry p95 latency and no new payment retry unit-test failures.\n\n## Errors and blockers\n- No active blocker recorded.\n- Docs target file is not identified yet; find the rollout doc location after metrics wiring lands.\n\n## Briefing\n- Retry cap work is in place and benchmark notes are positive. Remaining rollout work is to add retry metrics in code, prove them with tests, then update the rollout docs to describe the new observability and any follow-up rollout steps.\n"
+        },
+        {
+          "text": "The updated handoff includes retry-metrics and docs focus.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Current status\n- Done: retry delay cap landed in `src/payment_retry.py`.\n- Done: cap behavior covered by `tests/test_payment_retry.py`.\n- Remaining: add retry metrics and update rollout docs.\n\n## Next-agent focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry attempt/success/failure metric hooks in `src/payment_retry.py` and extend `tests/test_payment_retry.py` to cover emitted metrics.\n\n## Suggested skills\n- `context-engineering` \u2014 reload only retry code, tests, and rollout notes before editing.\n- `tdd` \u2014 add or update tests around metrics instrumentation before changing retry logic.\n\n## Decisions and constraints\n- Keep handoff feature-scoped under `.agents/scratchpad/payments/`.\n- Treat legacy YAML toggle inspection as stale; do not resume that step unless new evidence appears.\n- Focus remaining work on observability and documentation, not retry cap behavior.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` \u2014 current retry delay logic; place metrics instrumentation here.\n- `tests/test_payment_retry.py` \u2014 existing retry cap test; extend for metrics coverage.\n- `session_notes.md` \u2014 source of current done/remaining status and stated next-agent focus.\n- `reports/benchmark.txt` \u2014 benchmark evidence: p95 improved from 480ms to 310ms and no new unit-test failures.\n\n## Commands and results\n- No new repo commands were run in this handoff update.\n- Existing benchmark artifact reports lower retry p95 latency and no new payment retry unit-test failures.\n\n## Errors and blockers\n- No active blocker recorded.\n- Docs target file is not identified yet; find the rollout doc location after metrics wiring lands.\n\n## Briefing\n- Retry cap work is in place and benchmark notes are positive. Remaining rollout work is to add retry metrics in code, prove them with tests, then update the rollout docs to describe the new observability and any follow-up rollout steps.\n"
+        },
+        {
+          "text": "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Current status\n- Done: retry delay cap landed in `src/payment_retry.py`.\n- Done: cap behavior covered by `tests/test_payment_retry.py`.\n- Remaining: add retry metrics and update rollout docs.\n\n## Next-agent focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry attempt/success/failure metric hooks in `src/payment_retry.py` and extend `tests/test_payment_retry.py` to cover emitted metrics.\n\n## Suggested skills\n- `context-engineering` \u2014 reload only retry code, tests, and rollout notes before editing.\n- `tdd` \u2014 add or update tests around metrics instrumentation before changing retry logic.\n\n## Decisions and constraints\n- Keep handoff feature-scoped under `.agents/scratchpad/payments/`.\n- Treat legacy YAML toggle inspection as stale; do not resume that step unless new evidence appears.\n- Focus remaining work on observability and documentation, not retry cap behavior.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` \u2014 current retry delay logic; place metrics instrumentation here.\n- `tests/test_payment_retry.py` \u2014 existing retry cap test; extend for metrics coverage.\n- `session_notes.md` \u2014 source of current done/remaining status and stated next-agent focus.\n- `reports/benchmark.txt` \u2014 benchmark evidence: p95 improved from 480ms to 310ms and no new unit-test failures.\n\n## Commands and results\n- No new repo commands were run in this handoff update.\n- Existing benchmark artifact reports lower retry p95 latency and no new payment retry unit-test failures.\n\n## Errors and blockers\n- No active blocker recorded.\n- Docs target file is not identified yet; find the rollout doc location after metrics wiring lands.\n\n## Briefing\n- Retry cap work is in place and benchmark notes are positive. Remaining rollout work is to add retry metrics in code, prove them with tests, then update the rollout docs to describe the new observability and any follow-up rollout steps.\n"
+        },
+        {
+          "text": "The stale `inspect legacy YAML toggles` step is removed.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Current status\n- Done: retry delay cap landed in `src/payment_retry.py`.\n- Done: cap behavior covered by `tests/test_payment_retry.py`.\n- Remaining: add retry metrics and update rollout docs.\n\n## Next-agent focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry attempt/success/failure metric hooks in `src/payment_retry.py` and extend `tests/test_payment_retry.py` to cover emitted metrics.\n\n## Suggested skills\n- `context-engineering` \u2014 reload only retry code, tests, and rollout notes before editing.\n- `tdd` \u2014 add or update tests around metrics instrumentation before changing retry logic.\n\n## Decisions and constraints\n- Keep handoff feature-scoped under `.agents/scratchpad/payments/`.\n- Treat legacy YAML toggle inspection as stale; do not resume that step unless new evidence appears.\n- Focus remaining work on observability and documentation, not retry cap behavior.\n\n## Relevant files and artifacts\n- `src/payment_retry.py` \u2014 current retry delay logic; place metrics instrumentation here.\n- `tests/test_payment_retry.py` \u2014 existing retry cap test; extend for metrics coverage.\n- `session_notes.md` \u2014 source of current done/remaining status and stated next-agent focus.\n- `reports/benchmark.txt` \u2014 benchmark evidence: p95 improved from 480ms to 310ms and no new unit-test failures.\n\n## Commands and results\n- No new repo commands were run in this handoff update.\n- Existing benchmark artifact reports lower retry p95 latency and no new payment retry unit-test failures.\n\n## Errors and blockers\n- No active blocker recorded.\n- Docs target file is not identified yet; find the rollout doc location after metrics wiring lands.\n\n## Briefing\n- Retry cap work is in place and benchmark notes are positive. Remaining rollout work is to add retry metrics in code, prove them with tests, then update the rollout docs to describe the new observability and any follow-up rollout steps.\n"
+        },
+        {
+          "text": "outputs/result.json reports the feature-scoped handoff path.",
+          "passed": true,
+          "evidence": "{\"written_path\": \".agents/scratchpad/payments/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Add retry attempt/success/failure metric hooks in src/payment_retry.py and extend tests/test_payment_retry.py to cover them.\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 40.1,
+        "tokens": 2889,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\n\n- Fix sync retry behavior without losing failing integration signal.\n\n## Current status\n\n- Done: inspected `src/sync_retry.py` and identified the failing test focus in `tests/test_sync_retry.py`.\n- In progress: tracing why sync retries keep masking vendor timeouts.\n- Remaining: make retry logic stop at limit, then confirm the failing test covers the regression.\n\n## Next-agent focus\n\n- Continue debugging sync retries.\n- Start from the failing integration test before changing implementation.\n\n## Exact next step\n\n- Run the failing integration test in `tests/test_sync_retry.py` before editing `src/sync_retry.py`.\n\n## Relevant files and artifacts\n\n- `tests/test_sync_retry.py` \u2014 first place to reproduce current failure and confirm expected retry-stop behavior.\n- `src/sync_retry.py` \u2014 current implementation still returns `True` unconditionally in `should_retry`.\n- `diffs/patch.diff` \u2014 candidate fix to review instead of re-deriving prior patch attempt.\n- `logs/retry.log` \u2014 timeout trace to inspect by path; do not paste into notes.\n- `session_notes.md` \u2014 prior session summary and requested next-session focus.\n\n## Decisions and constraints\n\n- User wanted this saved to `docs/handoff.md`, but handoff output must stay under `.agents/scratchpad/`, so this note lives here instead.\n- Reference existing artifacts by path; do not paste raw log or diff contents into follow-up notes.\n- Keep sensitive values redacted when reviewing logs.\n\n## Suggested skills\n\n- `context-engineering` \u2014 rebuild minimal context from test, implementation, and referenced artifacts only.\n- `tdd` \u2014 reproduce failure first, then adjust retry logic to satisfy test.\n\n## Briefing\n\n- Retry bug likely in `should_retry`: implementation always returns `True`, while current test expects retries to stop at limit. Review `diffs/patch.diff`, inspect `logs/retry.log` by path for timeout context, and begin with `tests/test_sync_retry.py`.\n"
+        },
+        {
+          "text": "`outputs/repo/docs/handoff.md` is not created.",
+          "passed": true,
+          "evidence": "docs/handoff.md absent"
+        },
+        {
+          "text": "The handoff references `logs/retry.log` and `diffs/patch.diff` by path.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\n\n- Fix sync retry behavior without losing failing integration signal.\n\n## Current status\n\n- Done: inspected `src/sync_retry.py` and identified the failing test focus in `tests/test_sync_retry.py`.\n- In progress: tracing why sync retries keep masking vendor timeouts.\n- Remaining: make retry logic stop at limit, then confirm the failing test covers the regression.\n\n## Next-agent focus\n\n- Continue debugging sync retries.\n- Start from the failing integration test before changing implementation.\n\n## Exact next step\n\n- Run the failing integration test in `tests/test_sync_retry.py` before editing `src/sync_retry.py`.\n\n## Relevant files and artifacts\n\n- `tests/test_sync_retry.py` \u2014 first place to reproduce current failure and confirm expected retry-stop behavior.\n- `src/sync_retry.py` \u2014 current implementation still returns `True` unconditionally in `should_retry`.\n- `diffs/patch.diff` \u2014 candidate fix to review instead of re-deriving prior patch attempt.\n- `logs/retry.log` \u2014 timeout trace to inspect by path; do not paste into notes.\n- `session_notes.md` \u2014 prior session summary and requested next-session focus.\n\n## Decisions and constraints\n\n- User wanted this saved to `docs/handoff.md`, but handoff output must stay under `.agents/scratchpad/`, so this note lives here instead.\n- Reference existing artifacts by path; do not paste raw log or diff contents into follow-up notes.\n- Keep sensitive values redacted when reviewing logs.\n\n## Suggested skills\n\n- `context-engineering` \u2014 rebuild minimal context from test, implementation, and referenced artifacts only.\n- `tdd` \u2014 reproduce failure first, then adjust retry logic to satisfy test.\n\n## Briefing\n\n- Retry bug likely in `should_retry`: implementation always returns `True`, while current test expects retries to stop at limit. Review `diffs/patch.diff`, inspect `logs/retry.log` by path for timeout context, and begin with `tests/test_sync_retry.py`.\n"
+        },
+        {
+          "text": "The handoff stays concise and does not expose the secret token or raw stack frame spam.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\n\n- Fix sync retry behavior without losing failing integration signal.\n\n## Current status\n\n- Done: inspected `src/sync_retry.py` and identified the failing test focus in `tests/test_sync_retry.py`.\n- In progress: tracing why sync retries keep masking vendor timeouts.\n- Remaining: make retry logic stop at limit, then confirm the failing test covers the regression.\n\n## Next-agent focus\n\n- Continue debugging sync retries.\n- Start from the failing integration test before changing implementation.\n\n## Exact next step\n\n- Run the failing integration test in `tests/test_sync_retry.py` before editing `src/sync_retry.py`.\n\n## Relevant files and artifacts\n\n- `tests/test_sync_retry.py` \u2014 first place to reproduce current failure and confirm expected retry-stop behavior.\n- `src/sync_retry.py` \u2014 current implementation still returns `True` unconditionally in `should_retry`.\n- `diffs/patch.diff` \u2014 candidate fix to review instead of re-deriving prior patch attempt.\n- `logs/retry.log` \u2014 timeout trace to inspect by path; do not paste into notes.\n- `session_notes.md` \u2014 prior session summary and requested next-session focus.\n\n## Decisions and constraints\n\n- User wanted this saved to `docs/handoff.md`, but handoff output must stay under `.agents/scratchpad/`, so this note lives here instead.\n- Reference existing artifacts by path; do not paste raw log or diff contents into follow-up notes.\n- Keep sensitive values redacted when reviewing logs.\n\n## Suggested skills\n\n- `context-engineering` \u2014 rebuild minimal context from test, implementation, and referenced artifacts only.\n- `tdd` \u2014 reproduce failure first, then adjust retry logic to satisfy test.\n\n## Briefing\n\n- Retry bug likely in `should_retry`: implementation always returns `True`, while current test expects retries to stop at limit. Review `diffs/patch.diff`, inspect `logs/retry.log` by path for timeout context, and begin with `tests/test_sync_retry.py`.\n"
+        },
+        {
+          "text": "outputs/result.json reports the root-scoped fallback path.",
+          "passed": true,
+          "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"root-scoped\", \"next_step\": \"Run the failing integration test in tests/test_sync_retry.py before editing src/sync_retry.py.\"}"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 54.8333,
+        "stddev": 17.1608,
+        "min": 42.9,
+        "max": 74.5
+      },
+      "tokens": {
+        "mean": 2515.3333,
+        "stddev": 698.6289,
+        "min": 1754,
+        "max": 3127
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 54.3667,
+        "stddev": 13.7791,
+        "min": 40.1,
+        "max": 67.6
+      },
+      "tokens": {
+        "mean": 3124.3333,
+        "stddev": 626.0993,
+        "min": 2650,
+        "max": 3834
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+0.5",
+      "tokens": "-609"
+    }
+  },
+  "notes": []
+}

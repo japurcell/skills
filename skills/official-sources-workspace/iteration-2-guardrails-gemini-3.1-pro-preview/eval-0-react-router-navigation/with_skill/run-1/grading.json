@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The report uses the requested STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED sections.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n`react-router-dom@7.6.2`\n\nOFFICIAL SOURCES\nhttps://reactrouter.com/7.3.0/hooks/use-navigate\n\nIMPLEMENTATION NOTES\nUse the `useNavigate` hook for programmatic navigation in components, or `redirect` for data routers.\n\nUNVERIFIED\nNone."
+    },
+    {
+      "text": "The report detects `react-router-dom` version `7.6.2`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n`react-router-dom@7.6.2`\n\nOFFICIAL SOURCES\nhttps://reactrouter.com/7.3.0/hooks/use-navigate\n\nIMPLEMENTATION NOTES\nUse the `useNavigate` hook for programmatic navigation in components, or `redirect` for data routers.\n\nUNVERIFIED\nNone."
+    },
+    {
+      "text": "The report cites an official `reactrouter.com` source.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n`react-router-dom@7.6.2`\n\nOFFICIAL SOURCES\nhttps://reactrouter.com/7.3.0/hooks/use-navigate\n\nIMPLEMENTATION NOTES\nUse the `useNavigate` hook for programmatic navigation in components, or `redirect` for data routers.\n\nUNVERIFIED\nNone."
+    },
+    {
+      "text": "The implementation notes recommend `useNavigate`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n`react-router-dom@7.6.2`\n\nOFFICIAL SOURCES\nhttps://reactrouter.com/7.3.0/hooks/use-navigate\n\nIMPLEMENTATION NOTES\nUse the `useNavigate` hook for programmatic navigation in components, or `redirect` for data routers.\n\nUNVERIFIED\nNone."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 248,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

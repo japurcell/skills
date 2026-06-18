@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish auth refresh retry backoff and stabilize the refresh retry test.\n\n## Status\n- **Done:** traced retry flow in `src/auth_refresh.py`; ran focused test (`python3 -m pytest tests/test_auth_refresh.py -q`); confirmed failure details in `logs/test-failure.txt`.\n- **In progress:** choosing final retry schedule behavior in `build_retry_schedule`.\n- **Remaining:** implement schedule update and re-run focused test.\n\n## Next focus\n- Retry backoff behavior in auth refresh.\n\n## Next step\n- Update `src/auth_refresh.py` so `build_retry_schedule()` produces the expected backoff progression for `tests/test_auth_refresh.py::test_refresh_retries_backoff`, then run `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions / constraints\n- Keep first retry at `0.5s`.\n- Current plan in `plans/refresh-plan.md` says to add bounded jitter only after first failure.\n- Do not record the flaky live token value in notes or handoff content.\n\n## Relevant files / artifacts\n- `src/auth_refresh.py` \u2014 current implementation returns constant retry delays.\n- `tests/test_auth_refresh.py` \u2014 expected retry schedule assertion.\n- `logs/test-failure.txt` \u2014 exact expected vs actual failure output.\n- `plans/refresh-plan.md` \u2014 intended backoff/jitter direction.\n- `session_notes.md` \u2014 prior progress notes (contains sensitive token that must stay redacted in future notes).\n\n## Errors / blockers\n- `FAILED tests/test_auth_refresh.py::test_refresh_retries_backoff`\n- Expected `[0.5, 1.0, 2.0]`, actual `[0.5, 0.5, 0.5]`.\n"
+    },
+    {
+      "text": "The handoff captures goal, status, and exact next step.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish auth refresh retry backoff and stabilize the refresh retry test.\n\n## Status\n- **Done:** traced retry flow in `src/auth_refresh.py`; ran focused test (`python3 -m pytest tests/test_auth_refresh.py -q`); confirmed failure details in `logs/test-failure.txt`.\n- **In progress:** choosing final retry schedule behavior in `build_retry_schedule`.\n- **Remaining:** implement schedule update and re-run focused test.\n\n## Next focus\n- Retry backoff behavior in auth refresh.\n\n## Next step\n- Update `src/auth_refresh.py` so `build_retry_schedule()` produces the expected backoff progression for `tests/test_auth_refresh.py::test_refresh_retries_backoff`, then run `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions / constraints\n- Keep first retry at `0.5s`.\n- Current plan in `plans/refresh-plan.md` says to add bounded jitter only after first failure.\n- Do not record the flaky live token value in notes or handoff content.\n\n## Relevant files / artifacts\n- `src/auth_refresh.py` \u2014 current implementation returns constant retry delays.\n- `tests/test_auth_refresh.py` \u2014 expected retry schedule assertion.\n- `logs/test-failure.txt` \u2014 exact expected vs actual failure output.\n- `plans/refresh-plan.md` \u2014 intended backoff/jitter direction.\n- `session_notes.md` \u2014 prior progress notes (contains sensitive token that must stay redacted in future notes).\n\n## Errors / blockers\n- `FAILED tests/test_auth_refresh.py::test_refresh_retries_backoff`\n- Expected `[0.5, 1.0, 2.0]`, actual `[0.5, 0.5, 0.5]`.\n"
+    },
+    {
+      "text": "The handoff names `src/auth_refresh.py`, `tests/test_auth_refresh.py`, and `logs/test-failure.txt`.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish auth refresh retry backoff and stabilize the refresh retry test.\n\n## Status\n- **Done:** traced retry flow in `src/auth_refresh.py`; ran focused test (`python3 -m pytest tests/test_auth_refresh.py -q`); confirmed failure details in `logs/test-failure.txt`.\n- **In progress:** choosing final retry schedule behavior in `build_retry_schedule`.\n- **Remaining:** implement schedule update and re-run focused test.\n\n## Next focus\n- Retry backoff behavior in auth refresh.\n\n## Next step\n- Update `src/auth_refresh.py` so `build_retry_schedule()` produces the expected backoff progression for `tests/test_auth_refresh.py::test_refresh_retries_backoff`, then run `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions / constraints\n- Keep first retry at `0.5s`.\n- Current plan in `plans/refresh-plan.md` says to add bounded jitter only after first failure.\n- Do not record the flaky live token value in notes or handoff content.\n\n## Relevant files / artifacts\n- `src/auth_refresh.py` \u2014 current implementation returns constant retry delays.\n- `tests/test_auth_refresh.py` \u2014 expected retry schedule assertion.\n- `logs/test-failure.txt` \u2014 exact expected vs actual failure output.\n- `plans/refresh-plan.md` \u2014 intended backoff/jitter direction.\n- `session_notes.md` \u2014 prior progress notes (contains sensitive token that must stay redacted in future notes).\n\n## Errors / blockers\n- `FAILED tests/test_auth_refresh.py::test_refresh_retries_backoff`\n- Expected `[0.5, 1.0, 2.0]`, actual `[0.5, 0.5, 0.5]`.\n"
+    },
+    {
+      "text": "The handoff includes the retry-backoff focus and redacts the secret token.",
+      "passed": true,
+      "evidence": "## Goal\n- Finish auth refresh retry backoff and stabilize the refresh retry test.\n\n## Status\n- **Done:** traced retry flow in `src/auth_refresh.py`; ran focused test (`python3 -m pytest tests/test_auth_refresh.py -q`); confirmed failure details in `logs/test-failure.txt`.\n- **In progress:** choosing final retry schedule behavior in `build_retry_schedule`.\n- **Remaining:** implement schedule update and re-run focused test.\n\n## Next focus\n- Retry backoff behavior in auth refresh.\n\n## Next step\n- Update `src/auth_refresh.py` so `build_retry_schedule()` produces the expected backoff progression for `tests/test_auth_refresh.py::test_refresh_retries_backoff`, then run `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Decisions / constraints\n- Keep first retry at `0.5s`.\n- Current plan in `plans/refresh-plan.md` says to add bounded jitter only after first failure.\n- Do not record the flaky live token value in notes or handoff content.\n\n## Relevant files / artifacts\n- `src/auth_refresh.py` \u2014 current implementation returns constant retry delays.\n- `tests/test_auth_refresh.py` \u2014 expected retry schedule assertion.\n- `logs/test-failure.txt` \u2014 exact expected vs actual failure output.\n- `plans/refresh-plan.md` \u2014 intended backoff/jitter direction.\n- `session_notes.md` \u2014 prior progress notes (contains sensitive token that must stay redacted in future notes).\n\n## Errors / blockers\n- `FAILED tests/test_auth_refresh.py::test_refresh_retries_backoff`\n- Expected `[0.5, 1.0, 2.0]`, actual `[0.5, 0.5, 0.5]`.\n"
+    },
+    {
+      "text": "outputs/result.json reports the root-scoped handoff path and next step.",
+      "passed": true,
+      "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"root-scoped\", \"next_step\": \"Update src/auth_refresh.py so build_retry_schedule matches the expected backoff in tests/test_auth_refresh.py, then run python3 -m pytest tests/test_auth_refresh.py -q.\"}"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2772,
+    "transcript_chars": 336210
+  },
+  "timing": {
+    "executor_duration_seconds": 129.2,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 129.2
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

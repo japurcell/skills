@@ -1,0 +1,38 @@
+{
+  "expectations": [
+    {
+      "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+      "passed": false,
+      "evidence": "I_CAN_SEE_SESSIONSTART_CONTEXT<current_datetime>2026-06-18T13:09:05.517-07:00</current_datetime>\n<promise>COMPLETE</promise>\n"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 125,
+    "transcript_chars": 136585
+  },
+  "timing": {
+    "executor_duration_seconds": 42.9,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 42.9
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The report says the FooSDK version is missing or unclear.",
+      "passed": true,
+      "evidence": "# STACK DETECTED\n- Dependency: `foosdk`\n- Version: missing or unclear from `requirements.txt`\n\n# OFFICIAL SOURCES\n- Not verified. I could not check versioned official docs because the exact FooSDK version is missing.\n\n# UNVERIFIED\n- Please provide the exact FooSDK version before I recommend an auth middleware pattern.\n- I could not verify a current recommended auth middleware pattern from official docs.\n"
+    },
+    {
+      "text": "The report asks for the exact version instead of guessing.",
+      "passed": true,
+      "evidence": "# STACK DETECTED\n- Dependency: `foosdk`\n- Version: missing or unclear from `requirements.txt`\n\n# OFFICIAL SOURCES\n- Not verified. I could not check versioned official docs because the exact FooSDK version is missing.\n\n# UNVERIFIED\n- Please provide the exact FooSDK version before I recommend an auth middleware pattern.\n- I could not verify a current recommended auth middleware pattern from official docs.\n"
+    },
+    {
+      "text": "The report marks the pattern `UNVERIFIED`.",
+      "passed": true,
+      "evidence": "# STACK DETECTED\n- Dependency: `foosdk`\n- Version: missing or unclear from `requirements.txt`\n\n# OFFICIAL SOURCES\n- Not verified. I could not check versioned official docs because the exact FooSDK version is missing.\n\n# UNVERIFIED\n- Please provide the exact FooSDK version before I recommend an auth middleware pattern.\n- I could not verify a current recommended auth middleware pattern from official docs.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 407,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "stories": [
+    {
+      "id": "story-search-index",
+      "title": "Search index stays consistent after deletes",
+      "priority": 1,
+      "passes": false,
+      "requirements": [
+        "Delete path removes stale documents from index",
+        "Add regression coverage for delete race"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "written_path": ".agents/scratchpad/payments/handoff.md",
+  "scope": "feature-scoped",
+  "next_step": "Add retry metrics emission in src/payment_retry.py, then document the new metrics and rollout checks in session_notes.md."
+}

@@ -1,0 +1,3 @@
+- Append the fresh implementer `Progress block` from `mode: review_fix` to `evals/files/finalization-reset-fixture/progress.txt` before acting on it, then apply Status Rules (`DONE` means continue).
+- Because that review fix is the latest code-affecting change, rerun finalization on the updated combined final state: dispatch fresh `code-simplifier`, then fresh `requirements-collector`, then fresh `addy-code-reviewer`; append each `Progress block` immediately before consuming it.
+- Leave `story-billing-retry` at `passes: false`; do not set `passes: true` until review is clean and final checks/verification pass after the rerun.

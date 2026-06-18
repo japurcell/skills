@@ -1,0 +1,323 @@
+{
+  "metadata": {
+    "skill_name": "handoff",
+    "skill_path": "/home/adam/dev/personal/skills/skills/handoff",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-18T20:39:48Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 49.4,
+        "tokens": 2047,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\nFinish auth refresh retry backoff and keep notes clean.\n\n## Status\n- Read `session_notes.md`, `plans/refresh-plan.md`, `logs/test-failure.txt`, `src/auth_refresh.py`, and `tests/test_auth_refresh.py`.\n- Current retry schedule is still fixed at `[0.5, 0.5, 0.5]`.\n- Focused test expects `[0.5, 1.0, 2.0]`.\n- Keep secret token material out of any saved notes.\n\n## Next focus\nUpdate `build_retry_schedule()` in `src/auth_refresh.py`.\n\n## Next step\nChange `build_retry_schedule()` to return the expected backoff, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Relevant files\n- `src/auth_refresh.py`\n- `tests/test_auth_refresh.py`\n- `logs/test-failure.txt`\n- `plans/refresh-plan.md`\n\n## Constraints\n- Do not copy the token string into this or any later handoff.\n- Keep scope narrow: retry backoff only.\n"
+        },
+        {
+          "text": "The handoff captures goal, status, and exact next step.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\nFinish auth refresh retry backoff and keep notes clean.\n\n## Status\n- Read `session_notes.md`, `plans/refresh-plan.md`, `logs/test-failure.txt`, `src/auth_refresh.py`, and `tests/test_auth_refresh.py`.\n- Current retry schedule is still fixed at `[0.5, 0.5, 0.5]`.\n- Focused test expects `[0.5, 1.0, 2.0]`.\n- Keep secret token material out of any saved notes.\n\n## Next focus\nUpdate `build_retry_schedule()` in `src/auth_refresh.py`.\n\n## Next step\nChange `build_retry_schedule()` to return the expected backoff, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Relevant files\n- `src/auth_refresh.py`\n- `tests/test_auth_refresh.py`\n- `logs/test-failure.txt`\n- `plans/refresh-plan.md`\n\n## Constraints\n- Do not copy the token string into this or any later handoff.\n- Keep scope narrow: retry backoff only.\n"
+        },
+        {
+          "text": "The handoff names `src/auth_refresh.py`, `tests/test_auth_refresh.py`, and `logs/test-failure.txt`.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\nFinish auth refresh retry backoff and keep notes clean.\n\n## Status\n- Read `session_notes.md`, `plans/refresh-plan.md`, `logs/test-failure.txt`, `src/auth_refresh.py`, and `tests/test_auth_refresh.py`.\n- Current retry schedule is still fixed at `[0.5, 0.5, 0.5]`.\n- Focused test expects `[0.5, 1.0, 2.0]`.\n- Keep secret token material out of any saved notes.\n\n## Next focus\nUpdate `build_retry_schedule()` in `src/auth_refresh.py`.\n\n## Next step\nChange `build_retry_schedule()` to return the expected backoff, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Relevant files\n- `src/auth_refresh.py`\n- `tests/test_auth_refresh.py`\n- `logs/test-failure.txt`\n- `plans/refresh-plan.md`\n\n## Constraints\n- Do not copy the token string into this or any later handoff.\n- Keep scope narrow: retry backoff only.\n"
+        },
+        {
+          "text": "The handoff includes the retry-backoff focus and redacts the secret token.",
+          "passed": true,
+          "evidence": "# Handoff\n\n## Goal\nFinish auth refresh retry backoff and keep notes clean.\n\n## Status\n- Read `session_notes.md`, `plans/refresh-plan.md`, `logs/test-failure.txt`, `src/auth_refresh.py`, and `tests/test_auth_refresh.py`.\n- Current retry schedule is still fixed at `[0.5, 0.5, 0.5]`.\n- Focused test expects `[0.5, 1.0, 2.0]`.\n- Keep secret token material out of any saved notes.\n\n## Next focus\nUpdate `build_retry_schedule()` in `src/auth_refresh.py`.\n\n## Next step\nChange `build_retry_schedule()` to return the expected backoff, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n## Relevant files\n- `src/auth_refresh.py`\n- `tests/test_auth_refresh.py`\n- `logs/test-failure.txt`\n- `plans/refresh-plan.md`\n\n## Constraints\n- Do not copy the token string into this or any later handoff.\n- Keep scope narrow: retry backoff only.\n"
+        },
+        {
+          "text": "outputs/result.json reports the root-scoped handoff path and next step.",
+          "passed": true,
+          "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"root-scoped\", \"next_step\": \"Change build_retry_schedule() to return the expected backoff, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 53.2,
+        "tokens": 1343,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/payments/handoff.md is updated in place.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Retry cap landed in `src/payment_retry.py`.\n- Cap logic is covered by `tests/test_payment_retry.py`.\n- Benchmark notes show p95 dropped from 480ms to 310ms.\n- Remaining work: retry metrics and rollout docs.\n\n## Next focus\n- Wire retry metrics and update docs for the rollout.\n\n## Next step\n- Add retry metrics in `src/payment_retry.py`, extend tests if needed, then update rollout docs to match.\n\n## Relevant artifacts\n- `session_notes.md` \u2014 current rollout state.\n- `reports/benchmark.txt` \u2014 benchmark result and test signal.\n- `src/payment_retry.py` \u2014 retry implementation.\n- `tests/test_payment_retry.py` \u2014 cap coverage.\n"
+        },
+        {
+          "text": "The updated handoff includes retry-metrics and docs focus.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Retry cap landed in `src/payment_retry.py`.\n- Cap logic is covered by `tests/test_payment_retry.py`.\n- Benchmark notes show p95 dropped from 480ms to 310ms.\n- Remaining work: retry metrics and rollout docs.\n\n## Next focus\n- Wire retry metrics and update docs for the rollout.\n\n## Next step\n- Add retry metrics in `src/payment_retry.py`, extend tests if needed, then update rollout docs to match.\n\n## Relevant artifacts\n- `session_notes.md` \u2014 current rollout state.\n- `reports/benchmark.txt` \u2014 benchmark result and test signal.\n- `src/payment_retry.py` \u2014 retry implementation.\n- `tests/test_payment_retry.py` \u2014 cap coverage.\n"
+        },
+        {
+          "text": "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Retry cap landed in `src/payment_retry.py`.\n- Cap logic is covered by `tests/test_payment_retry.py`.\n- Benchmark notes show p95 dropped from 480ms to 310ms.\n- Remaining work: retry metrics and rollout docs.\n\n## Next focus\n- Wire retry metrics and update docs for the rollout.\n\n## Next step\n- Add retry metrics in `src/payment_retry.py`, extend tests if needed, then update rollout docs to match.\n\n## Relevant artifacts\n- `session_notes.md` \u2014 current rollout state.\n- `reports/benchmark.txt` \u2014 benchmark result and test signal.\n- `src/payment_retry.py` \u2014 retry implementation.\n- `tests/test_payment_retry.py` \u2014 cap coverage.\n"
+        },
+        {
+          "text": "The stale `inspect legacy YAML toggles` step is removed.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Retry cap landed in `src/payment_retry.py`.\n- Cap logic is covered by `tests/test_payment_retry.py`.\n- Benchmark notes show p95 dropped from 480ms to 310ms.\n- Remaining work: retry metrics and rollout docs.\n\n## Next focus\n- Wire retry metrics and update docs for the rollout.\n\n## Next step\n- Add retry metrics in `src/payment_retry.py`, extend tests if needed, then update rollout docs to match.\n\n## Relevant artifacts\n- `session_notes.md` \u2014 current rollout state.\n- `reports/benchmark.txt` \u2014 benchmark result and test signal.\n- `src/payment_retry.py` \u2014 retry implementation.\n- `tests/test_payment_retry.py` \u2014 cap coverage.\n"
+        },
+        {
+          "text": "outputs/result.json reports the feature-scoped handoff path.",
+          "passed": true,
+          "evidence": "{\"written_path\": \".agents/scratchpad/payments/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Add retry metrics in src/payment_retry.py, then update rollout docs to match.\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 40.0,
+        "tokens": 1695,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+          "passed": true,
+          "evidence": "Goal: finish sync-retry debugging without losing the failing integration signal.\n\nStatus:\n- Repo copied to outputs/repo.\n- Evidence lives in `session_notes.md`, `logs/retry.log`, `diffs/patch.diff`, `src/sync_retry.py`, and `tests/test_sync_retry.py`.\n- Current patch is tiny: `should_retry(attempt, max_attempts)` now returns `attempt < max_attempts`.\n\nNext focus:\n- Start with `tests/test_sync_retry.py` and reproduce the failure before changing code.\n\nNext step:\n- Run the focused integration test first, then inspect `src/sync_retry.py` only if it still fails.\n\nConstraints:\n- Write future handoff notes under `.agents/scratchpad/` only.\n- Reference `logs/retry.log` and `diffs/patch.diff` by path, not by pasting their contents.\n- Keep secret values and raw stack frames out of the handoff.\n"
+        },
+        {
+          "text": "`outputs/repo/docs/handoff.md` is not created.",
+          "passed": true,
+          "evidence": "docs/handoff.md absent"
+        },
+        {
+          "text": "The handoff references `logs/retry.log` and `diffs/patch.diff` by path.",
+          "passed": true,
+          "evidence": "Goal: finish sync-retry debugging without losing the failing integration signal.\n\nStatus:\n- Repo copied to outputs/repo.\n- Evidence lives in `session_notes.md`, `logs/retry.log`, `diffs/patch.diff`, `src/sync_retry.py`, and `tests/test_sync_retry.py`.\n- Current patch is tiny: `should_retry(attempt, max_attempts)` now returns `attempt < max_attempts`.\n\nNext focus:\n- Start with `tests/test_sync_retry.py` and reproduce the failure before changing code.\n\nNext step:\n- Run the focused integration test first, then inspect `src/sync_retry.py` only if it still fails.\n\nConstraints:\n- Write future handoff notes under `.agents/scratchpad/` only.\n- Reference `logs/retry.log` and `diffs/patch.diff` by path, not by pasting their contents.\n- Keep secret values and raw stack frames out of the handoff.\n"
+        },
+        {
+          "text": "The handoff stays concise and does not expose the secret token or raw stack frame spam.",
+          "passed": true,
+          "evidence": "Goal: finish sync-retry debugging without losing the failing integration signal.\n\nStatus:\n- Repo copied to outputs/repo.\n- Evidence lives in `session_notes.md`, `logs/retry.log`, `diffs/patch.diff`, `src/sync_retry.py`, and `tests/test_sync_retry.py`.\n- Current patch is tiny: `should_retry(attempt, max_attempts)` now returns `attempt < max_attempts`.\n\nNext focus:\n- Start with `tests/test_sync_retry.py` and reproduce the failure before changing code.\n\nNext step:\n- Run the focused integration test first, then inspect `src/sync_retry.py` only if it still fails.\n\nConstraints:\n- Write future handoff notes under `.agents/scratchpad/` only.\n- Reference `logs/retry.log` and `diffs/patch.diff` by path, not by pasting their contents.\n- Keep secret values and raw stack frames out of the handoff.\n"
+        },
+        {
+          "text": "outputs/result.json reports the root-scoped fallback path.",
+          "passed": false,
+          "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Run tests/test_sync_retry.py first.\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 47.1,
+        "tokens": 2331,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+          "passed": true,
+          "evidence": "# Handoff\n\n**Goal:** finish auth refresh retry backoff without carrying forward any sensitive token text.\n\n**Current status**\n- `src/auth_refresh.py` still returns a flat retry schedule: `build_retry_schedule()` -> `[0.5, 0.5, 0.5]`.\n- `tests/test_auth_refresh.py::test_refresh_retries_backoff` expects `[0.5, 1.0, 2.0]`.\n- `logs/test-failure.txt` captures the exact mismatch.\n- `session_notes.md` already notes the work-in-progress and explicitly says to keep the live token out of notes.\n\n**Relevant files**\n- `src/auth_refresh.py` \u2014 code to update.\n- `tests/test_auth_refresh.py` \u2014 failing expectation to satisfy.\n- `logs/test-failure.txt` \u2014 baseline failure output.\n- `plans/refresh-plan.md` \u2014 intended retry plan.\n\n**Next step**\n- Update `build_retry_schedule()` so the retry backoff matches the test, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n**Constraints**\n- Do not copy any live token text into notes or summaries.\n- Keep the fix narrow to auth refresh retry behavior.\n\n**Suggested skills**\n- `tdd` \u2014 make the retry test pass with the smallest behavior change.\n"
+        },
+        {
+          "text": "The handoff captures goal, status, and exact next step.",
+          "passed": true,
+          "evidence": "# Handoff\n\n**Goal:** finish auth refresh retry backoff without carrying forward any sensitive token text.\n\n**Current status**\n- `src/auth_refresh.py` still returns a flat retry schedule: `build_retry_schedule()` -> `[0.5, 0.5, 0.5]`.\n- `tests/test_auth_refresh.py::test_refresh_retries_backoff` expects `[0.5, 1.0, 2.0]`.\n- `logs/test-failure.txt` captures the exact mismatch.\n- `session_notes.md` already notes the work-in-progress and explicitly says to keep the live token out of notes.\n\n**Relevant files**\n- `src/auth_refresh.py` \u2014 code to update.\n- `tests/test_auth_refresh.py` \u2014 failing expectation to satisfy.\n- `logs/test-failure.txt` \u2014 baseline failure output.\n- `plans/refresh-plan.md` \u2014 intended retry plan.\n\n**Next step**\n- Update `build_retry_schedule()` so the retry backoff matches the test, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n**Constraints**\n- Do not copy any live token text into notes or summaries.\n- Keep the fix narrow to auth refresh retry behavior.\n\n**Suggested skills**\n- `tdd` \u2014 make the retry test pass with the smallest behavior change.\n"
+        },
+        {
+          "text": "The handoff names `src/auth_refresh.py`, `tests/test_auth_refresh.py`, and `logs/test-failure.txt`.",
+          "passed": true,
+          "evidence": "# Handoff\n\n**Goal:** finish auth refresh retry backoff without carrying forward any sensitive token text.\n\n**Current status**\n- `src/auth_refresh.py` still returns a flat retry schedule: `build_retry_schedule()` -> `[0.5, 0.5, 0.5]`.\n- `tests/test_auth_refresh.py::test_refresh_retries_backoff` expects `[0.5, 1.0, 2.0]`.\n- `logs/test-failure.txt` captures the exact mismatch.\n- `session_notes.md` already notes the work-in-progress and explicitly says to keep the live token out of notes.\n\n**Relevant files**\n- `src/auth_refresh.py` \u2014 code to update.\n- `tests/test_auth_refresh.py` \u2014 failing expectation to satisfy.\n- `logs/test-failure.txt` \u2014 baseline failure output.\n- `plans/refresh-plan.md` \u2014 intended retry plan.\n\n**Next step**\n- Update `build_retry_schedule()` so the retry backoff matches the test, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n**Constraints**\n- Do not copy any live token text into notes or summaries.\n- Keep the fix narrow to auth refresh retry behavior.\n\n**Suggested skills**\n- `tdd` \u2014 make the retry test pass with the smallest behavior change.\n"
+        },
+        {
+          "text": "The handoff includes the retry-backoff focus and redacts the secret token.",
+          "passed": true,
+          "evidence": "# Handoff\n\n**Goal:** finish auth refresh retry backoff without carrying forward any sensitive token text.\n\n**Current status**\n- `src/auth_refresh.py` still returns a flat retry schedule: `build_retry_schedule()` -> `[0.5, 0.5, 0.5]`.\n- `tests/test_auth_refresh.py::test_refresh_retries_backoff` expects `[0.5, 1.0, 2.0]`.\n- `logs/test-failure.txt` captures the exact mismatch.\n- `session_notes.md` already notes the work-in-progress and explicitly says to keep the live token out of notes.\n\n**Relevant files**\n- `src/auth_refresh.py` \u2014 code to update.\n- `tests/test_auth_refresh.py` \u2014 failing expectation to satisfy.\n- `logs/test-failure.txt` \u2014 baseline failure output.\n- `plans/refresh-plan.md` \u2014 intended retry plan.\n\n**Next step**\n- Update `build_retry_schedule()` so the retry backoff matches the test, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\n\n**Constraints**\n- Do not copy any live token text into notes or summaries.\n- Keep the fix narrow to auth refresh retry behavior.\n\n**Suggested skills**\n- `tdd` \u2014 make the retry test pass with the smallest behavior change.\n"
+        },
+        {
+          "text": "outputs/result.json reports the root-scoped handoff path and next step.",
+          "passed": false,
+          "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Update `src/auth_refresh.py` so the retry backoff matches `tests/test_auth_refresh.py`, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`.\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 44.4,
+        "tokens": 1385,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/payments/handoff.md is updated in place.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Retry cap landed in `src/payment_retry.py`.\n- Unit test coverage exists in `tests/test_payment_retry.py`.\n- Benchmark notes in `reports/benchmark.txt` show p95 fell from 480ms to 310ms.\n\n## Remaining\n- Wire retry metrics.\n- Update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry metric emission in the payment retry flow, then update rollout docs to describe the cap and metrics.\n\n## Relevant files\n- `src/payment_retry.py` \u2014 current retry logic.\n- `tests/test_payment_retry.py` \u2014 cap coverage.\n- `reports/benchmark.txt` \u2014 latest performance note.\n- `session_notes.md` \u2014 concise state summary.\n"
+        },
+        {
+          "text": "The updated handoff includes retry-metrics and docs focus.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Retry cap landed in `src/payment_retry.py`.\n- Unit test coverage exists in `tests/test_payment_retry.py`.\n- Benchmark notes in `reports/benchmark.txt` show p95 fell from 480ms to 310ms.\n\n## Remaining\n- Wire retry metrics.\n- Update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry metric emission in the payment retry flow, then update rollout docs to describe the cap and metrics.\n\n## Relevant files\n- `src/payment_retry.py` \u2014 current retry logic.\n- `tests/test_payment_retry.py` \u2014 cap coverage.\n- `reports/benchmark.txt` \u2014 latest performance note.\n- `session_notes.md` \u2014 concise state summary.\n"
+        },
+        {
+          "text": "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Retry cap landed in `src/payment_retry.py`.\n- Unit test coverage exists in `tests/test_payment_retry.py`.\n- Benchmark notes in `reports/benchmark.txt` show p95 fell from 480ms to 310ms.\n\n## Remaining\n- Wire retry metrics.\n- Update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry metric emission in the payment retry flow, then update rollout docs to describe the cap and metrics.\n\n## Relevant files\n- `src/payment_retry.py` \u2014 current retry logic.\n- `tests/test_payment_retry.py` \u2014 cap coverage.\n- `reports/benchmark.txt` \u2014 latest performance note.\n- `session_notes.md` \u2014 concise state summary.\n"
+        },
+        {
+          "text": "The stale `inspect legacy YAML toggles` step is removed.",
+          "passed": true,
+          "evidence": "## Goal\n- Finish payment retry rollout.\n\n## Status\n- Retry cap landed in `src/payment_retry.py`.\n- Unit test coverage exists in `tests/test_payment_retry.py`.\n- Benchmark notes in `reports/benchmark.txt` show p95 fell from 480ms to 310ms.\n\n## Remaining\n- Wire retry metrics.\n- Update rollout docs.\n\n## Next focus\n- Retry metrics and docs.\n\n## Exact next step\n- Add retry metric emission in the payment retry flow, then update rollout docs to describe the cap and metrics.\n\n## Relevant files\n- `src/payment_retry.py` \u2014 current retry logic.\n- `tests/test_payment_retry.py` \u2014 cap coverage.\n- `reports/benchmark.txt` \u2014 latest performance note.\n- `session_notes.md` \u2014 concise state summary.\n"
+        },
+        {
+          "text": "outputs/result.json reports the feature-scoped handoff path.",
+          "passed": true,
+          "evidence": "{\"written_path\": \".agents/scratchpad/payments/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Add retry metric emission in the payment retry flow, then update rollout docs to describe the cap and metrics.\"}"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 43.7,
+        "tokens": 1876,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/.agents/scratchpad/handoff.md is created.",
+          "passed": true,
+          "evidence": "# Handoff\n\n- **Goal:** debug sync retry behavior while keeping the failing integration signal visible.\n- **Current status:** `src/sync_retry.py` still returns `True` unconditionally, but `tests/test_sync_retry.py` expects retrying to stop at the attempt limit. `session_notes.md` says the next move is to start with the failing integration test.\n- **Relevant artifacts:** `logs/retry.log` shows the vendor timeout during retrying; `diffs/patch.diff` contains the prior tweak from always-true retry to `attempt < max_attempts`.\n- **Next agent focus:** start from `tests/test_sync_retry.py`, then reconcile `src/sync_retry.py` with the intended stop-at-limit behavior without hiding the timeout failure.\n- **Constraints:** do not paste raw log contents; reference `logs/retry.log` and `diffs/patch.diff` by path; keep any secrets redacted.\n\n**Exact next step:** run `tests/test_sync_retry.py` first, then update `src/sync_retry.py` only if the test confirms the retry-limit bug.\n"
+        },
+        {
+          "text": "`outputs/repo/docs/handoff.md` is not created.",
+          "passed": true,
+          "evidence": "docs/handoff.md absent"
+        },
+        {
+          "text": "The handoff references `logs/retry.log` and `diffs/patch.diff` by path.",
+          "passed": true,
+          "evidence": "# Handoff\n\n- **Goal:** debug sync retry behavior while keeping the failing integration signal visible.\n- **Current status:** `src/sync_retry.py` still returns `True` unconditionally, but `tests/test_sync_retry.py` expects retrying to stop at the attempt limit. `session_notes.md` says the next move is to start with the failing integration test.\n- **Relevant artifacts:** `logs/retry.log` shows the vendor timeout during retrying; `diffs/patch.diff` contains the prior tweak from always-true retry to `attempt < max_attempts`.\n- **Next agent focus:** start from `tests/test_sync_retry.py`, then reconcile `src/sync_retry.py` with the intended stop-at-limit behavior without hiding the timeout failure.\n- **Constraints:** do not paste raw log contents; reference `logs/retry.log` and `diffs/patch.diff` by path; keep any secrets redacted.\n\n**Exact next step:** run `tests/test_sync_retry.py` first, then update `src/sync_retry.py` only if the test confirms the retry-limit bug.\n"
+        },
+        {
+          "text": "The handoff stays concise and does not expose the secret token or raw stack frame spam.",
+          "passed": true,
+          "evidence": "# Handoff\n\n- **Goal:** debug sync retry behavior while keeping the failing integration signal visible.\n- **Current status:** `src/sync_retry.py` still returns `True` unconditionally, but `tests/test_sync_retry.py` expects retrying to stop at the attempt limit. `session_notes.md` says the next move is to start with the failing integration test.\n- **Relevant artifacts:** `logs/retry.log` shows the vendor timeout during retrying; `diffs/patch.diff` contains the prior tweak from always-true retry to `attempt < max_attempts`.\n- **Next agent focus:** start from `tests/test_sync_retry.py`, then reconcile `src/sync_retry.py` with the intended stop-at-limit behavior without hiding the timeout failure.\n- **Constraints:** do not paste raw log contents; reference `logs/retry.log` and `diffs/patch.diff` by path; keep any secrets redacted.\n\n**Exact next step:** run `tests/test_sync_retry.py` first, then update `src/sync_retry.py` only if the test confirms the retry-limit bug.\n"
+        },
+        {
+          "text": "outputs/result.json reports the root-scoped fallback path.",
+          "passed": false,
+          "evidence": "{\"written_path\": \".agents/scratchpad/handoff.md\", \"scope\": \"feature-scoped\", \"next_step\": \"Run tests/test_sync_retry.py first.\"}"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.9333,
+        "stddev": 0.1155,
+        "min": 0.8,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 47.5333,
+        "stddev": 6.7951,
+        "min": 40.0,
+        "max": 53.2
+      },
+      "tokens": {
+        "mean": 1695.0,
+        "stddev": 352.0,
+        "min": 1343,
+        "max": 2047
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.8667,
+        "stddev": 0.1155,
+        "min": 0.8,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 45.0667,
+        "stddev": 1.7954,
+        "min": 43.7,
+        "max": 47.1
+      },
+      "tokens": {
+        "mean": 1864.0,
+        "stddev": 473.1142,
+        "min": 1385,
+        "max": 2331
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.07",
+      "time_seconds": "+2.5",
+      "tokens": "-169"
+    }
+  },
+  "notes": []
+}

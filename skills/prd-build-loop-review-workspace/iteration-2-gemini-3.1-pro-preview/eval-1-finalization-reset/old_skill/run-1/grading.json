@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision appends the implementer `Progress block` before acting on it.",
+      "passed": true,
+      "evidence": "I_CAN_SEE_SESSIONSTART_CONTEXT\n\n- Append the implementer `Progress block` before acting on it.\n- Rerun `code-simplifier` and `addy-code-reviewer` on the combined final state after the review fix.\n- Keep `passes: true` blocked until review is clean and final checks pass.\n"
+    },
+    {
+      "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+      "passed": true,
+      "evidence": "I_CAN_SEE_SESSIONSTART_CONTEXT\n\n- Append the implementer `Progress block` before acting on it.\n- Rerun `code-simplifier` and `addy-code-reviewer` on the combined final state after the review fix.\n- Keep `passes: true` blocked until review is clean and final checks pass.\n"
+    },
+    {
+      "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+      "passed": true,
+      "evidence": "I_CAN_SEE_SESSIONSTART_CONTEXT\n\n- Append the implementer `Progress block` before acting on it.\n- Rerun `code-simplifier` and `addy-code-reviewer` on the combined final state after the review fix.\n- Keep `passes: true` blocked until review is clean and final checks pass.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 271,
+    "transcript_chars": 1075916
+  },
+  "timing": {
+    "executor_duration_seconds": 165.5,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 165.5
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

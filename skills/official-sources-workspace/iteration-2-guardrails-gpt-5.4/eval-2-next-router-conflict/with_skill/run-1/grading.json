@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The conflict note detects `next` version `15.3.1`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- React 19.0.0\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n\nOFFICIAL SOURCES\n- Next.js App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n- Next.js Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n\nCONFLICT\n- Existing code matches the Pages Router API: official Pages Router docs document `useRouter` from `next/router`.\n- Current App Router docs say `useRouter` should be imported from `next/navigation`, not `next/router`, when using the App Router.\n- Repo fixture does not include enough routing structure (`app/` vs `pages/`) to determine which router architecture this project uses.\n- Because current official docs support different imports based on router mode, I cannot recommend keeping `next/router` or switching to `next/navigation` without first resolving whether this app is Pages Router or App Router.\n\nNEEDS DECISION\n- If this code belongs to a Pages Router app, current helper is aligned with official docs.\n- If this code belongs to an App Router client component, official docs indicate it should use `next/navigation` instead.\n\nUNVERIFIED\n- Router mode is not identifiable from the provided project files alone.\n"
+    },
+    {
+      "text": "The conflict note cites an official `nextjs.org` source.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- React 19.0.0\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n\nOFFICIAL SOURCES\n- Next.js App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n- Next.js Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n\nCONFLICT\n- Existing code matches the Pages Router API: official Pages Router docs document `useRouter` from `next/router`.\n- Current App Router docs say `useRouter` should be imported from `next/navigation`, not `next/router`, when using the App Router.\n- Repo fixture does not include enough routing structure (`app/` vs `pages/`) to determine which router architecture this project uses.\n- Because current official docs support different imports based on router mode, I cannot recommend keeping `next/router` or switching to `next/navigation` without first resolving whether this app is Pages Router or App Router.\n\nNEEDS DECISION\n- If this code belongs to a Pages Router app, current helper is aligned with official docs.\n- If this code belongs to an App Router client component, official docs indicate it should use `next/navigation` instead.\n\nUNVERIFIED\n- Router mode is not identifiable from the provided project files alone.\n"
+    },
+    {
+      "text": "The conflict note names both `next/navigation` and `next/router`.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- React 19.0.0\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n\nOFFICIAL SOURCES\n- Next.js App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n- Next.js Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n\nCONFLICT\n- Existing code matches the Pages Router API: official Pages Router docs document `useRouter` from `next/router`.\n- Current App Router docs say `useRouter` should be imported from `next/navigation`, not `next/router`, when using the App Router.\n- Repo fixture does not include enough routing structure (`app/` vs `pages/`) to determine which router architecture this project uses.\n- Because current official docs support different imports based on router mode, I cannot recommend keeping `next/router` or switching to `next/navigation` without first resolving whether this app is Pages Router or App Router.\n\nNEEDS DECISION\n- If this code belongs to a Pages Router app, current helper is aligned with official docs.\n- If this code belongs to an App Router client component, official docs indicate it should use `next/navigation` instead.\n\nUNVERIFIED\n- Router mode is not identifiable from the provided project files alone.\n"
+    },
+    {
+      "text": "The conflict note asks which path to follow or presents explicit options.",
+      "passed": true,
+      "evidence": "STACK DETECTED\n- Next.js 15.3.1\n- React 19.0.0\n- `src/use-dashboard-router.ts` imports `useRouter` from `next/router`.\n\nOFFICIAL SOURCES\n- Next.js App Router `useRouter`: https://nextjs.org/docs/app/api-reference/functions/use-router\n- Next.js Pages Router `useRouter`: https://nextjs.org/docs/pages/api-reference/functions/use-router\n\nCONFLICT\n- Existing code matches the Pages Router API: official Pages Router docs document `useRouter` from `next/router`.\n- Current App Router docs say `useRouter` should be imported from `next/navigation`, not `next/router`, when using the App Router.\n- Repo fixture does not include enough routing structure (`app/` vs `pages/`) to determine which router architecture this project uses.\n- Because current official docs support different imports based on router mode, I cannot recommend keeping `next/router` or switching to `next/navigation` without first resolving whether this app is Pages Router or App Router.\n\nNEEDS DECISION\n- If this code belongs to a Pages Router app, current helper is aligned with official docs.\n- If this code belongs to an App Router client component, official docs indicate it should use `next/navigation` instead.\n\nUNVERIFIED\n- Router mode is not identifiable from the provided project files alone.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1268,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

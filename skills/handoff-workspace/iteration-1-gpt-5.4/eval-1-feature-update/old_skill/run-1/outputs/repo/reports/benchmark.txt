@@ -1,0 +1,3 @@
+retry benchmark
+- p95 fell from 480ms to 310ms
+- no new failures in payment retry unit tests
