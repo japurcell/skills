@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+      "passed": true,
+      "evidence": "Source of truth: prd_file = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json. progress_file resolved from prd_file directory = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt.\n\nStory selection: next highest-priority `passes: false` story is `story-auth-timeout` (priority 1). Do not touch `story-status-badge` yet.\n\nBefore any story-specific repo discovery, first dispatch a fresh implementer with only the story block, `progress_file`, and nearby `AGENTS.md` needed for dispatch. No code/test/behavior reading before that dispatch.\n"
+    },
+    {
+      "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+      "passed": true,
+      "evidence": "Source of truth: prd_file = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json. progress_file resolved from prd_file directory = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt.\n\nStory selection: next highest-priority `passes: false` story is `story-auth-timeout` (priority 1). Do not touch `story-status-badge` yet.\n\nBefore any story-specific repo discovery, first dispatch a fresh implementer with only the story block, `progress_file`, and nearby `AGENTS.md` needed for dispatch. No code/test/behavior reading before that dispatch.\n"
+    },
+    {
+      "text": "The decision selects the highest-priority `passes: false` story.",
+      "passed": true,
+      "evidence": "Source of truth: prd_file = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json. progress_file resolved from prd_file directory = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt.\n\nStory selection: next highest-priority `passes: false` story is `story-auth-timeout` (priority 1). Do not touch `story-status-badge` yet.\n\nBefore any story-specific repo discovery, first dispatch a fresh implementer with only the story block, `progress_file`, and nearby `AGENTS.md` needed for dispatch. No code/test/behavior reading before that dispatch.\n"
+    },
+    {
+      "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+      "passed": true,
+      "evidence": "Source of truth: prd_file = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json. progress_file resolved from prd_file directory = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt.\n\nStory selection: next highest-priority `passes: false` story is `story-auth-timeout` (priority 1). Do not touch `story-status-badge` yet.\n\nBefore any story-specific repo discovery, first dispatch a fresh implementer with only the story block, `progress_file`, and nearby `AGENTS.md` needed for dispatch. No code/test/behavior reading before that dispatch.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 634,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 62.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 62.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

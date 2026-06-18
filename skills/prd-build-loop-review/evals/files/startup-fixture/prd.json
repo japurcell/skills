@@ -1,0 +1,24 @@
+{
+  "stories": [
+    {
+      "id": "story-auth-timeout",
+      "title": "Auth timeout matches spec",
+      "priority": 1,
+      "passes": false,
+      "requirements": [
+        "Update auth timeout behavior to match spec",
+        "Keep related tests green"
+      ]
+    },
+    {
+      "id": "story-status-badge",
+      "title": "Status badge reflects sync health",
+      "priority": 2,
+      "passes": false,
+      "requirements": [
+        "Add sync status badge",
+        "Cover success and failure states"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision appends the implementer `Progress block` before acting on it.",
+      "passed": true,
+      "evidence": "Orchestrator next actions:\n1. Append implementer Progress block from mode: review_fix before acting on it.\n2. Rerun code-simplifier on combined final state.\n3. Rerun requirements-collector on prd.json, progress.txt, and any relevant sibling docs / issue refs.\n4. Rerun addy-code-reviewer on combined final state after simplification.\n5. If review is clean, run final checks, then set passes: true only after review is clean and final checks pass.\n\nDo not mark completion yet. Do not set passes: true until review is clean and final checks pass."
+    },
+    {
+      "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+      "passed": true,
+      "evidence": "Orchestrator next actions:\n1. Append implementer Progress block from mode: review_fix before acting on it.\n2. Rerun code-simplifier on combined final state.\n3. Rerun requirements-collector on prd.json, progress.txt, and any relevant sibling docs / issue refs.\n4. Rerun addy-code-reviewer on combined final state after simplification.\n5. If review is clean, run final checks, then set passes: true only after review is clean and final checks pass.\n\nDo not mark completion yet. Do not set passes: true until review is clean and final checks pass."
+    },
+    {
+      "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+      "passed": true,
+      "evidence": "Orchestrator next actions:\n1. Append implementer Progress block from mode: review_fix before acting on it.\n2. Rerun code-simplifier on combined final state.\n3. Rerun requirements-collector on prd.json, progress.txt, and any relevant sibling docs / issue refs.\n4. Rerun addy-code-reviewer on combined final state after simplification.\n5. If review is clean, run final checks, then set passes: true only after review is clean and final checks pass.\n\nDo not mark completion yet. Do not set passes: true until review is clean and final checks pass."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 544,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 53.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 53.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

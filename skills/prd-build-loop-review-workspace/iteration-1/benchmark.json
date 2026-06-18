@@ -1,0 +1,320 @@
+{
+  "metadata": {
+    "skill_name": "prd-build-loop-review",
+    "skill_path": "/home/adam/dev/personal/skills/skills/prd-build-loop-review",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-18T18:12:51Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 62.0,
+        "tokens": 532,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` only.\nResolved `progress_file`: `dirname(/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json)/progress.txt` \u2192 `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\nStory selection: pick highest-priority `passes: false` story, `story-auth-timeout`.\nBefore any story-specific repo discovery, read only `prd_file`, resolved `progress_file`, and nearby `AGENTS.md` needed to dispatch the first fresh implementer.\n"
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` only.\nResolved `progress_file`: `dirname(/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json)/progress.txt` \u2192 `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\nStory selection: pick highest-priority `passes: false` story, `story-auth-timeout`.\nBefore any story-specific repo discovery, read only `prd_file`, resolved `progress_file`, and nearby `AGENTS.md` needed to dispatch the first fresh implementer.\n"
+        },
+        {
+          "text": "The decision selects the highest-priority `passes: false` story.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` only.\nResolved `progress_file`: `dirname(/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json)/progress.txt` \u2192 `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\nStory selection: pick highest-priority `passes: false` story, `story-auth-timeout`.\nBefore any story-specific repo discovery, read only `prd_file`, resolved `progress_file`, and nearby `AGENTS.md` needed to dispatch the first fresh implementer.\n"
+        },
+        {
+          "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` only.\nResolved `progress_file`: `dirname(/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json)/progress.txt` \u2192 `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\nStory selection: pick highest-priority `passes: false` story, `story-auth-timeout`.\nBefore any story-specific repo discovery, read only `prd_file`, resolved `progress_file`, and nearby `AGENTS.md` needed to dispatch the first fresh implementer.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 53.0,
+        "tokens": 544,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "Orchestrator next actions:\n1. Append implementer Progress block from mode: review_fix before acting on it.\n2. Rerun code-simplifier on combined final state.\n3. Rerun requirements-collector on prd.json, progress.txt, and any relevant sibling docs / issue refs.\n4. Rerun addy-code-reviewer on combined final state after simplification.\n5. If review is clean, run final checks, then set passes: true only after review is clean and final checks pass.\n\nDo not mark completion yet. Do not set passes: true until review is clean and final checks pass."
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+          "passed": true,
+          "evidence": "Orchestrator next actions:\n1. Append implementer Progress block from mode: review_fix before acting on it.\n2. Rerun code-simplifier on combined final state.\n3. Rerun requirements-collector on prd.json, progress.txt, and any relevant sibling docs / issue refs.\n4. Rerun addy-code-reviewer on combined final state after simplification.\n5. If review is clean, run final checks, then set passes: true only after review is clean and final checks pass.\n\nDo not mark completion yet. Do not set passes: true until review is clean and final checks pass."
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "Orchestrator next actions:\n1. Append implementer Progress block from mode: review_fix before acting on it.\n2. Rerun code-simplifier on combined final state.\n3. Rerun requirements-collector on prd.json, progress.txt, and any relevant sibling docs / issue refs.\n4. Rerun addy-code-reviewer on combined final state after simplification.\n5. If review is clean, run final checks, then set passes: true only after review is clean and final checks pass.\n\nDo not mark completion yet. Do not set passes: true until review is clean and final checks pass."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 49.0,
+        "tokens": 196,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit is reached.\nDo not fix directly or dispatch another review-fix implementer.\nReread prd_file.\nAppend stop-state entry to progress_file.\nAsk user to decide blocker.\n"
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit is reached.\nDo not fix directly or dispatch another review-fix implementer.\nReread prd_file.\nAppend stop-state entry to progress_file.\nAsk user to decide blocker.\n"
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit is reached.\nDo not fix directly or dispatch another review-fix implementer.\nReread prd_file.\nAppend stop-state entry to progress_file.\nAsk user to decide blocker.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 62.0,
+        "tokens": 28,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 62.0,
+        "tokens": 634,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "Source of truth: prd_file = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json. progress_file resolved from prd_file directory = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt.\n\nStory selection: next highest-priority `passes: false` story is `story-auth-timeout` (priority 1). Do not touch `story-status-badge` yet.\n\nBefore any story-specific repo discovery, first dispatch a fresh implementer with only the story block, `progress_file`, and nearby `AGENTS.md` needed for dispatch. No code/test/behavior reading before that dispatch.\n"
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+          "passed": true,
+          "evidence": "Source of truth: prd_file = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json. progress_file resolved from prd_file directory = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt.\n\nStory selection: next highest-priority `passes: false` story is `story-auth-timeout` (priority 1). Do not touch `story-status-badge` yet.\n\nBefore any story-specific repo discovery, first dispatch a fresh implementer with only the story block, `progress_file`, and nearby `AGENTS.md` needed for dispatch. No code/test/behavior reading before that dispatch.\n"
+        },
+        {
+          "text": "The decision selects the highest-priority `passes: false` story.",
+          "passed": true,
+          "evidence": "Source of truth: prd_file = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json. progress_file resolved from prd_file directory = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt.\n\nStory selection: next highest-priority `passes: false` story is `story-auth-timeout` (priority 1). Do not touch `story-status-badge` yet.\n\nBefore any story-specific repo discovery, first dispatch a fresh implementer with only the story block, `progress_file`, and nearby `AGENTS.md` needed for dispatch. No code/test/behavior reading before that dispatch.\n"
+        },
+        {
+          "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+          "passed": true,
+          "evidence": "Source of truth: prd_file = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json. progress_file resolved from prd_file directory = /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt.\n\nStory selection: next highest-priority `passes: false` story is `story-auth-timeout` (priority 1). Do not touch `story-status-badge` yet.\n\nBefore any story-specific repo discovery, first dispatch a fresh implementer with only the story block, `progress_file`, and nearby `AGENTS.md` needed for dispatch. No code/test/behavior reading before that dispatch.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.33,
+        "passed": 1,
+        "failed": 2,
+        "total": 3,
+        "time_seconds": 62.0,
+        "tokens": 444,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": false,
+          "evidence": "Next orchestrator actions:\n\n1. Treat latest review-fix implementer change as new final-state baseline.\n2. Rerun fresh code-simplifier on combined final state.\n3. Run fresh requirements-collector and fresh reviewer after simplification.\n4. If review is clean, run required verification checks.\n5. If checks pass, record final-state entry and set `passes: true` in `prd.json`.\n\nDo not mark complete yet; finalization must rerun after review-fix.\n"
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+          "passed": false,
+          "evidence": "Next orchestrator actions:\n\n1. Treat latest review-fix implementer change as new final-state baseline.\n2. Rerun fresh code-simplifier on combined final state.\n3. Run fresh requirements-collector and fresh reviewer after simplification.\n4. If review is clean, run required verification checks.\n5. If checks pass, record final-state entry and set `passes: true` in `prd.json`.\n\nDo not mark complete yet; finalization must rerun after review-fix.\n"
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "Next orchestrator actions:\n\n1. Treat latest review-fix implementer change as new final-state baseline.\n2. Rerun fresh code-simplifier on combined final state.\n3. Run fresh requirements-collector and fresh reviewer after simplification.\n4. If review is clean, run required verification checks.\n5. If checks pass, record final-state entry and set `passes: true` in `prd.json`.\n\nDo not mark complete yet; finalization must rerun after review-fix.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.33,
+        "passed": 1,
+        "failed": 2,
+        "total": 3,
+        "time_seconds": 62.0,
+        "tokens": 177,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "Review-fix iteration limit reached at 3. Stop now and ask human for decision on stale document race in search index. No more implement/review loops until user resolves blocker.\n"
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": false,
+          "evidence": "Review-fix iteration limit reached at 3. Stop now and ask human for decision on stale document race in search index. No more implement/review loops until user resolves blocker.\n"
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": false,
+          "evidence": "Review-fix iteration limit reached at 3. Stop now and ask human for decision on stale document race in search index. No more implement/review loops until user resolves blocker.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 62.0,
+        "tokens": 28,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 56.5,
+        "stddev": 6.5574,
+        "min": 49.0,
+        "max": 62.0
+      },
+      "tokens": {
+        "mean": 325.0,
+        "stddev": 255.3821,
+        "min": 28,
+        "max": 544
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.665,
+        "stddev": 0.3868,
+        "min": 0.33,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 62.0,
+        "stddev": 0.0,
+        "min": 62.0,
+        "max": 62.0
+      },
+      "tokens": {
+        "mean": 320.75,
+        "stddev": 270.606,
+        "min": 28,
+        "max": 634
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.33",
+      "time_seconds": "-5.5",
+      "tokens": "+4"
+    }
+  },
+  "notes": []
+}

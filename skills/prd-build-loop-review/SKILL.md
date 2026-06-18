@@ -1,172 +1,86 @@
 ---
 name: prd-build-loop-review
-description: Use when asked to autonomously implement every failing PRD story, complete all non-passing items in `prd_file`, run a final combined simplify/review/verify/record pass, resume from `progress_file`, or continue until PRD completion without handing control back between stories.
+description: "Orchestrates autonomous end-to-end PRD implementation loops from `prd_file`, including resume-from-`progress_file`, multi-story completion, and final simplify/review/verify/record passes. Use when user asks to implement every `passes: false` PRD story, resume PRD work from progress, finish PRD without pausing between stories, run final PRD simplify/review/verify/record after implementation, or continue until whole PRD is complete."
 ---
 
-# PRD Build Loop
+# PRD Build Loop Review
 
-Autonomously implement all `passes: false` stories in `prd_file`; stop only for a **Stop Condition**. Do not commit.
+## Overview
 
-## Inputs
-
-- `prd_file` required.
-- `progress_file` optional; default: `dirname(prd_file) + "/progress.txt"`.
-
-## Non-Negotiables
-
-- `prd_file` is the only official source for story status/completion.
-- `progress_file` is append-only resume/tracking data; never use it as official completion.
-- If all stories already have `passes: true`, reply exactly: `<promise>COMPLETE</promise>`.
-- If required details are missing, ambiguous, contradictory, invalidly ordered, or require a human choice, stop and ask.
-- Orchestrator never makes code-affecting changes directly.
-- Any code-affecting change must be made by a fresh `implementer`.
-- Any new implementer change resets finalization: simplify, review, and verify must rerun on the combined final state.
-- Never simplify, review, analyze, or change files ignored by repository `.gitignore`; if ignore status is unclear, skip those files and report uncertainty.
+Drive every `passes: false` story in `prd_file` to completion. `prd_file` is official status; `progress_file` is append-only resume data. Orchestrator never makes code-affecting changes directly, never commits, and stops only for a **Stop Condition**.
 
 ## When to Use
 
-Use this skill for requests like:
+- Implement all failing PRD stories from `prd_file`.
+- Resume autonomous PRD work from `progress_file`.
+- Finish PRD without handing control back between stories.
+- Run final combined simplify, review, verify, and record pass after implementation.
+- Not for one-off story implementation, PRD authoring, or planning-only decomposition.
 
-- “Implement all failing PRD stories.”
-- “Complete every `passes: false` item in this PRD.”
-- “Run the PRD build loop.”
-- “Resume PRD implementation from progress.”
-- “Finish the PRD without stopping between stories.”
-- “Implement, simplify, review, verify, and mark PRD stories complete.”
-- “Use `prd_file` and `progress_file` to continue until complete.”
+## Workflow
 
-## Path Rules
+1. **Startup**
+   - Invoke `subagent-model-router`.
+   - Resolve `progress_file` to explicit path or `dirname(prd_file) + "/progress.txt"`.
+   - If `progress_file` exists, read `## Codebase Patterns` and latest entries. Otherwise create it on first append with `## Codebase Patterns` at top.
+   - If every story already has `passes: true`, reply exactly: `<promise>COMPLETE</promise>`.
+   - If `prd_file` is ambiguous, contradictory, invalidly ordered, missing required details, or needs human choice, stop and ask.
 
-- Resolve `progress_file` from `prd_file`, not from session state, scratchpads, home directories, or `~/.copilot/...`.
-- Relative paths are relative to the repo or provided `prd_file`.
-- Use the explicit `progress_file` only if provided; otherwise use the default.
+2. **Phase 1: Implementation loop**
+   - Pick highest-priority story in `prd_file` with `passes: false`.
+   - Before first `implementer` for current code-affecting unit, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work.
+   - Dispatch fresh `implementer` with `./implementer-prompt.md`, all story properties, `progress_file`, nearby `AGENTS.md`, and mode such as `initial_implementation` or follow-up.
+   - Require `Progress block`; append it to `progress_file` immediately before interpreting or acting on it.
+   - Apply **Status Rules**.
+   - If story is implemented but not finalized, record that state and leave `passes: false`.
+   - Repeat until every failing story is implemented and awaiting finalization, or a **Stop Condition** applies.
 
-## Roles
+3. **Phase 2: Single finalization pass**
+   - Restore review-fix iteration count from `progress_file`; otherwise use `0`.
+   - **Simplify:** dispatch fresh `code-simplifier` on all relevant non-ignored changes in combined final state; append its `Progress block` immediately.
+   - **Review:** dispatch fresh `requirements-collector` for `prd_file`, relevant sibling docs, and GitHub issue references from commit messages, PR metadata, or PRD docs when available; append its `Progress block`. Then dispatch fresh `addy-code-reviewer` on all relevant non-ignored changes after simplification; append its `Progress block`.
+   - **Fix review findings:** if review finds issues, stop and ask when iteration count is already `3`; otherwise increment count in `progress_file`, dispatch fresh `implementer` with `mode: review_fix` and full findings, append its `Progress block`, apply **Status Rules**, then rerun simplify and review on updated combined state.
 
-- **Orchestrator:** selects stories, resumes from `progress_file`, dispatches subagents, applies status rules, verifies after clean review, updates `prd_file`, appends `progress_file`, invokes `self-improve`, and updates reusable nearby `AGENTS.md` guidance.
-- **Implementer:** performs story-specific discovery, reads relevant code/tests/docs, designs and makes code changes, runs initial verification, returns a `Progress block`.
-- **Requirements collector:** fast-tier subagent that collects/dedupes requirements before final review, returns a `Progress block`.
-- **Code simplifier:** runs after all implementation and after every review-fix implementation; scopes only relevant non-ignored changes; returns a `Progress block`.
-- **Reviewer:** runs after simplification; reviews relevant non-ignored changes for missing/partial requirements, scope creep, correctness, readability, architecture, security, performance, and similar issues; returns a `Progress block`.
+4. **Verify and record**
+   - Only after review is clean, run required final-state checks from stories, repo guidance, nearby `AGENTS.md`, and standard project scripts for changed areas; append orchestrator verification entry immediately.
+   - Invoke `self-improve` to update nearby `AGENTS.md` with reusable guidance only.
+   - Set `passes: true` only for stories that satisfy **Completion Gate**.
+   - Append orchestrator final-state entry and reread `prd_file`.
 
-## Progress Discipline
+5. **Before any non-`<promise>COMPLETE</promise>` response**
+   - Reread `prd_file`.
+   - Confirm a **Stop Condition** applies.
+   - Append latest orchestrator stop-state entry to `progress_file`.
+   - Ask user to decide or unblock specific open issue.
 
-Subagent output is not “consumed” until recorded.
+## Specific Techniques
 
-- Every subagent must return a `Progress block`.
-- The orchestrator must append every subagent `Progress block` to `progress_file` immediately after the subagent returns and before interpreting, acting on, summarizing, discarding, or moving to another phase.
-- This applies to `implementer`, `requirements-collector`, `code-simplifier`, and `reviewer`, including `DONE`, `DONE_WITH_CONCERNS`, `NEEDS_CONTEXT`, and `BLOCKED`.
-- Missing a subagent progress entry is a rule violation; append a corrective orchestrator entry if discovered.
+### Source of truth and paths
 
-## Startup
+- `prd_file` is only official source for story completion and status.
+- `progress_file` is append-only resume and tracking data; never treat it as official completion.
+- Resolve relative paths from repo or provided `prd_file`, never from session state, scratchpads, home directories, or `~/.copilot/...`.
 
-1. Invoke `subagent-model-router`.
-2. Resolve `progress_file`.
-3. If `progress_file` exists, read `## Codebase Patterns` and latest entries.
-4. Otherwise create it on first append with `## Codebase Patterns` at the top.
+### Role boundaries
 
-## Fresh-Subagent Rule
+- **Orchestrator:** selects stories, resumes from `progress_file`, dispatches subagents, applies status rules, verifies final state, updates `prd_file`, appends `progress_file`, invokes `self-improve`, and updates nearby `AGENTS.md`.
+- **Implementer:** does story-specific discovery, code and test changes, and initial verification.
+- **Requirements collector:** dedupes requirements before final review.
+- **Code simplifier:** runs after all implementation and after every review-fix implementation.
+- **Reviewer:** reviews combined final state after simplification.
+- Any code-affecting change must be made by fresh `implementer`. Code-affecting includes code, tests, config, migrations, and implementation docs.
+- Do not read story-specific repo files, tests, code, or behavior before first `implementer` for current code-affecting unit.
+- Any new `implementer` change resets finalization: rerun simplify, review, and final verification on combined final state.
+- Never simplify, review, analyze, or change `.gitignore`-ignored files; if ignore status is unclear, skip and report uncertainty.
 
-- Use a fresh subagent for each unit of work.
-- Before dispatching an `implementer`, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to select/dispatch work.
-- Do not do story-specific repo discovery, code/test reading, behavior verification, or code-affecting work before dispatching an `implementer`.
-- If no fresh `implementer` has handled the current code-affecting unit, dispatch one before investigation or changes.
+### Progress discipline
 
-## Phase 1: Implementation Loop
-
-Repeat for the highest-priority `passes: false` story until all failing stories are implemented and awaiting finalization, or a **Stop Condition** applies:
-
-1. Determine next step from `prd_file` and `progress_file`.
-2. Dispatch a fresh `implementer` using `./implementer-prompt.md`.
-   - Include all story properties, `progress_file`, nearby `AGENTS.md`, and mode such as `initial_implementation` or follow-up.
-   - Require a `Progress block`.
-   - Do not pre-read story-specific repo files, tests, code, or behavior.
-3. Append the returned `Progress block` immediately.
-4. Apply **Status Rules**.
-5. If implemented but awaiting finalization, record that in `progress_file`; leave `passes: false`.
-
-## Phase 2: Single Finalization Pass
-
-Run once across the combined final state of all Phase 1 changes. Restore review-fix iteration count from `progress_file`; otherwise use `0`.
-
-### 1. Simplify
-
-1. Dispatch a fresh `code-simplifier`.
-2. Scope: all relevant non-ignored changes in the combined final state.
-3. Do not skip.
-4. Append its `Progress block` immediately.
-
-### 2. Review
-
-1. Dispatch a fast-tier `requirements-collector` to collect/dedupe requirements from:
-   - `prd_file` and relevant docs in the same directory.
-   - GitHub issue references from commit messages, PR metadata, or PRD docs, when available.
-2. Append its `Progress block` immediately.
-3. Dispatch a fresh `addy-code-reviewer`.
-4. Scope: all relevant non-ignored changes after simplification.
-5. Do not skip.
-6. Append its `Progress block` immediately.
-
-### 3. Fix Review Findings
-
-If review finds issues:
-
-1. If review-fix iteration count is already `3`, stop and ask the user.
-2. Increment review-fix iteration count by `1` and append/update it in `progress_file`.
-3. Dispatch a fresh `implementer` with `mode: review_fix` and full reviewer findings.
-4. Never fix findings directly.
-5. Append the implementer `Progress block` immediately.
-6. Apply **Status Rules**.
-7. Rerun **Simplify** and **Review** on the updated combined final state.
-8. Repeat until review is clean, the limit is reached, or a **Stop Condition** applies.
-
-### 4. Verify
-
-- Only after review is clean, run required quality checks for the final state.
-- Use checks required by stories, repo guidance, nearby `AGENTS.md`, and standard project scripts needed to validate changed areas.
-- Append an orchestrator verification entry immediately.
-
-### 5. Record
-
-1. Invoke `self-improve` to update nearby `AGENTS.md` with reusable guidance only.
-2. Set `passes: true` in `prd_file` only for stories satisfying the **Completion Gate**.
-3. Append an orchestrator final-state entry.
-4. Re-read `prd_file`.
-
-## Completion Gate
-
-Mark a story complete only if:
-
-1. Required implementation was completed by a fresh `implementer`.
-2. Latest code-affecting change, including any review fix, was made by a fresh `implementer`.
-3. Fresh `code-simplifier` ran after the latest code-affecting change.
-4. Fresh `addy-code-reviewer` ran after the latest code-affecting change.
-5. If review found issues, a fresh `implementer` fixed them and simplification/review reran after that fix.
-6. Review is clean for the final state.
-7. Required final-state quality checks passed.
-
-Never treat implementer `DONE`, passing checks alone, confidence, or `progress_file` entries as sufficient.
-
-## Status Rules
-
-- **DONE:** continue.
-- **DONE_WITH_CONCERNS:** incomplete unless every concern is explicitly confirmed non-blocking.
-- **NEEDS_CONTEXT:** if human decision is required, stop and ask; otherwise provide context and re-dispatch a fresh subagent.
-- **BLOCKED:** try better context, a smaller slice, or stronger model; if still blocked, stop and ask.
-
-## Progress File
-
-- Append only; never replace contents.
-- Maintain `## Codebase Patterns` at the top.
-- Store only reusable general patterns there; never story-specific details.
+- Subagent output is not consumed until recorded.
+- Every `implementer`, `requirements-collector`, `code-simplifier`, and `reviewer` must return `Progress block`.
+- Orchestrator appends each `Progress block` immediately, including `DONE`, `DONE_WITH_CONCERNS`, `NEEDS_CONTEXT`, and `BLOCKED`.
+- Missing subagent progress entry is rule violation; append corrective orchestrator entry if discovered.
+- Maintain `## Codebase Patterns` at top and store only reusable general patterns there.
 - Subagents never write `progress_file` directly.
-- Record enough to resume exactly:
-  - current story
-  - implementation state
-  - finalization state
-  - latest review outcome
-  - review-fix iteration count
-  - final verification state
 
 Required entry format:
 
@@ -183,7 +97,28 @@ Required entry format:
 ---
 ```
 
-## AGENTS.md
+### Completion Gate
+
+Mark story complete only if all are true:
+
+1. Required implementation was completed by fresh `implementer`.
+2. Latest code-affecting change, including any review fix, was made by fresh `implementer`.
+3. Fresh `code-simplifier` ran after latest code-affecting change.
+4. Fresh `addy-code-reviewer` ran after latest code-affecting change.
+5. If review found issues, fresh `implementer` fixed them and simplify/review reran after that fix.
+6. Review is clean for final state.
+7. Required final-state quality checks passed.
+
+Never treat implementer `DONE`, confidence, passing checks alone, or `progress_file` entries as sufficient.
+
+### Status Rules
+
+- **DONE:** continue.
+- **DONE_WITH_CONCERNS:** incomplete unless every concern is explicitly confirmed non-blocking.
+- **NEEDS_CONTEXT:** if human decision is required, stop and ask; otherwise provide context and redispatch fresh subagent.
+- **BLOCKED:** try better context, smaller slice, or stronger model; if still blocked, stop and ask.
+
+### AGENTS.md
 
 Add only reusable guidance:
 
@@ -191,43 +126,55 @@ Add only reusable guidance:
 - non-obvious gotchas
 - important file relationships
 - testing expectations
-- config/environment requirements
+- config or environment requirements
 
 Do not add story-specific notes.
 
-## Stop Conditions
+### Stop Conditions
 
 Stop only if:
 
 - all stories in `prd_file` have `passes: true`
-- a real blocker remains after reasonable unblocking attempts
+- real blocker remains after reasonable unblocking attempts
 - `prd_file` has contradictions, invalid ordering, or missing required details needing human correction
-- a required human decision is needed
+- required human decision is needed
 - review-fix iteration limit is reached
-- verification failed and needs a human decision
+- final verification failed and needs human decision
 
-## Before Stopping
+## Common Rationalizations
 
-Before any response other than exactly `<promise>COMPLETE</promise>`:
-
-1. Re-read `prd_file`.
-2. Confirm a **Stop Condition** applies.
-3. Append the latest stop-state orchestrator entry to `progress_file`.
-4. Ask the user to decide the open question causing the stop.
+| Rationalization | Reality |
+| --- | --- |
+| "I already know repo; I can inspect story files before dispatching implementer." | No. Before first `implementer`, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch. |
+| "Review fix is tiny; I can patch it directly." | No. Any code-affecting change requires fresh `implementer`, then simplify/review/verify must rerun. |
+| "Tests passed, so story can be marked complete." | No. Completion gate also requires fresh simplifier and reviewer after latest code change. |
+| "Progress file says done, so PRD can be updated." | No. `prd_file` is only official completion source. |
+| "Reviewer already ran earlier; rerunning is wasteful." | Any new `implementer` change resets finalization on combined final state. |
 
 ## Red Flags
 
-- Returning control before all stories have `passes: true` when no **Stop Condition** applies.
+- Returning control while any story still has `passes: false` and no **Stop Condition** applies.
 - Resolving `progress_file` anywhere except explicit path or `dirname(prd_file) + "/progress.txt"`.
-- Using session-state, scratchpads, home directories, or `~/.copilot/...` for `progress_file`.
+- Using session-state, scratchpad, home, or `~/.copilot/...` paths for `progress_file`.
 - Treating subagent output as consumed before appending its `Progress block`.
-- Missing any subagent progress entry, especially `code-simplifier` or `reviewer`.
-- Reading story-specific files, tests, code, or behavior before dispatching an `implementer`.
+- Reading story-specific files, tests, code, or behavior before first `implementer`.
 - Making code-affecting changes directly.
-- Simplifying, reviewing, analyzing, or changing `.gitignore`-ignored files.
 - Skipping simplify or review.
+- Fixing review findings without fresh `implementer`.
 - Verifying before review is clean.
-- Fixing review findings without a fresh `implementer`.
-- Exceeding review-fix limit.
-- Using anything except `prd_file` for official completion.
-- Marking `passes: true` before finalization is complete.
+- Using anything except `prd_file` as official completion source.
+- Marking `passes: true` before **Completion Gate** is satisfied.
+- Simplifying, reviewing, analyzing, or changing `.gitignore`-ignored files.
+
+## Verification
+
+Before stopping or marking completion, confirm:
+
+- [ ] `prd_file` remained official source of story status and completion.
+- [ ] `progress_file` path was resolved from explicit path or `dirname(prd_file) + "/progress.txt"`.
+- [ ] Every code-affecting change came from fresh `implementer`.
+- [ ] Every subagent `Progress block` was appended before being consumed.
+- [ ] Simplify and review ran on combined final state after latest code-affecting change.
+- [ ] Final checks ran only after clean review.
+- [ ] `passes: true` was set only for stories that satisfied **Completion Gate**.
+- [ ] Any non-`<promise>COMPLETE</promise>` response followed **Stop Conditions** and recorded stop state first.
