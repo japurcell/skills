@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+      "passed": true,
+      "evidence": "The orchestrator must pass the following to `self-improve`:\n- The aggregated reusable learnings extracted from the progress file.\n- Instructions to update the nearby `AGENTS.md` (or nearby auth docs, as noted by the reviewer) with these findings.\n\nThe orchestrator must mine the following progress-file sections:\n- The `**Learnings for future iterations:**` blocks from all subagent and orchestrator entries (including `Patterns discovered`, `Gotchas encountered`, and `Useful context`).\n- The `## Codebase Patterns` section at the top of the file.\n\nThe orchestrator must preserve the following kinds of reusable learnings:\n- Module conventions.\n- Non-obvious gotchas.\n- Important file relationships.\n- Testing expectations.\n- Config or environment requirements.\n(Story-specific notes must be excluded.)"
+    },
+    {
+      "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+      "passed": false,
+      "evidence": "The orchestrator must pass the following to `self-improve`:\n- The aggregated reusable learnings extracted from the progress file.\n- Instructions to update the nearby `AGENTS.md` (or nearby auth docs, as noted by the reviewer) with these findings.\n\nThe orchestrator must mine the following progress-file sections:\n- The `**Learnings for future iterations:**` blocks from all subagent and orchestrator entries (including `Patterns discovered`, `Gotchas encountered`, and `Useful context`).\n- The `## Codebase Patterns` section at the top of the file.\n\nThe orchestrator must preserve the following kinds of reusable learnings:\n- Module conventions.\n- Non-obvious gotchas.\n- Important file relationships.\n- Testing expectations.\n- Config or environment requirements.\n(Story-specific notes must be excluded.)"
+    },
+    {
+      "text": "The decision preserves the staged production-artifact startup-test learning.",
+      "passed": false,
+      "evidence": "The orchestrator must pass the following to `self-improve`:\n- The aggregated reusable learnings extracted from the progress file.\n- Instructions to update the nearby `AGENTS.md` (or nearby auth docs, as noted by the reviewer) with these findings.\n\nThe orchestrator must mine the following progress-file sections:\n- The `**Learnings for future iterations:**` blocks from all subagent and orchestrator entries (including `Patterns discovered`, `Gotchas encountered`, and `Useful context`).\n- The `## Codebase Patterns` section at the top of the file.\n\nThe orchestrator must preserve the following kinds of reusable learnings:\n- Module conventions.\n- Non-obvious gotchas.\n- Important file relationships.\n- Testing expectations.\n- Config or environment requirements.\n(Story-specific notes must be excluded.)"
+    },
+    {
+      "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+      "passed": false,
+      "evidence": "The orchestrator must pass the following to `self-improve`:\n- The aggregated reusable learnings extracted from the progress file.\n- Instructions to update the nearby `AGENTS.md` (or nearby auth docs, as noted by the reviewer) with these findings.\n\nThe orchestrator must mine the following progress-file sections:\n- The `**Learnings for future iterations:**` blocks from all subagent and orchestrator entries (including `Patterns discovered`, `Gotchas encountered`, and `Useful context`).\n- The `## Codebase Patterns` section at the top of the file.\n\nThe orchestrator must preserve the following kinds of reusable learnings:\n- Module conventions.\n- Non-obvious gotchas.\n- Important file relationships.\n- Testing expectations.\n- Config or environment requirements.\n(Story-specific notes must be excluded.)"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 3,
+    "total": 4,
+    "pass_rate": 0.25
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 804,
+    "transcript_chars": 182215
+  },
+  "timing": {
+    "executor_duration_seconds": 41.2,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 41.2
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

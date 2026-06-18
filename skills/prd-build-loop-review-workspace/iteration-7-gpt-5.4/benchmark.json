@@ -1,0 +1,397 @@
+{
+  "metadata": {
+    "skill_name": "prd-build-loop-review",
+    "skill_path": "/home/adam/dev/personal/skills/skills/prd-build-loop-review",
+    "executor_model": "gpt-5.4",
+    "analyzer_model": "gpt-5.4",
+    "timestamp": "2026-06-18T23:00:58Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 34.7,
+        "tokens": 833,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Selected story: `story-auth-timeout` (`Auth timeout matches spec`), highest-priority `passes: false` story.\n4. Before story-specific discovery: dispatch fresh implementer; read only `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json`, `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`, and nearby `AGENTS.md` needed to dispatch work."
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+          "passed": true,
+          "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Selected story: `story-auth-timeout` (`Auth timeout matches spec`), highest-priority `passes: false` story.\n4. Before story-specific discovery: dispatch fresh implementer; read only `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json`, `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`, and nearby `AGENTS.md` needed to dispatch work."
+        },
+        {
+          "text": "The decision selects the highest-priority `passes: false` story.",
+          "passed": true,
+          "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Selected story: `story-auth-timeout` (`Auth timeout matches spec`), highest-priority `passes: false` story.\n4. Before story-specific discovery: dispatch fresh implementer; read only `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json`, `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`, and nearby `AGENTS.md` needed to dispatch work."
+        },
+        {
+          "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+          "passed": true,
+          "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Selected story: `story-auth-timeout` (`Auth timeout matches spec`), highest-priority `passes: false` story.\n4. Before story-specific discovery: dispatch fresh implementer; read only `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json`, `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`, and nearby `AGENTS.md` needed to dispatch work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 33.1,
+        "tokens": 250,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass."
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass."
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 27.8,
+        "tokens": 554,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n\n1. Review-fix iteration limit is reached for `story-search-index`.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. `prd_file` reread confirms `story-search-index` still has `passes: false`.\n5. Append stop-state entry to `progress_file`.\n6. Human decision required: latest review still finds stale document race after latest fix. Should we allow another review-fix iteration beyond cap, change the requirements, or stop with this blocker?"
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n\n1. Review-fix iteration limit is reached for `story-search-index`.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. `prd_file` reread confirms `story-search-index` still has `passes: false`.\n5. Append stop-state entry to `progress_file`.\n6. Human decision required: latest review still finds stale document race after latest fix. Should we allow another review-fix iteration beyond cap, change the requirements, or stop with this blocker?"
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n\n1. Review-fix iteration limit is reached for `story-search-index`.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. `prd_file` reread confirms `story-search-index` still has `passes: false`.\n5. Append stop-state entry to `progress_file`.\n6. Human decision required: latest review still finds stale document race after latest fix. Should we allow another review-fix iteration beyond cap, change the requirements, or stop with this blocker?"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 18.0,
+        "tokens": 28,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 24.3,
+        "tokens": 2116,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+          "passed": true,
+          "evidence": "Self-improve handoff must pass a distilled reusable-summary, not raw progress blocks. Target destination should be nearby auth-focused `AGENTS.md` or linked auth docs, not root notes. Keep precise technical tokens when they are part of standing guidance, but exclude story IDs, timestamps, temporary blockers, and one-off file-tracking details.\n\nMine these `progress.txt` sections before invoking `self-improve`:\n- `## Codebase Patterns`\n- `## 2026-06-12T10:00:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T10:40:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T11:10:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T11:45:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T12:00:00Z - FINALIZATION`\n\nPreserve reusable learnings across these categories:\n- **Validation/safety:** validate return-url prefix safety on decoded forms, not only raw strings; reuse shared return-url policy across guard/login/startup paths; preserve single-rule targeting and avoid placeholder defaults that trigger unrelated validators.\n- **Cache/state/replay:** keep cached stream for reads, but use fresh-fetch command path for mutations; replay bugs around `shareReplay(1)` need split read-vs-mutation flow to avoid stale-first success regressions.\n- **UX/accessibility:** preserve existing failed-login behavior, focus handling, and error behavior; compose `aria-describedby` in stable order with helper text first and contextual errors after it.\n- **Testing/anti-flake:** keep targeted auth tests filtered and focused; keep Jasmine `it` blocks at describe root; use time-claim assertion ranges instead of exact timestamps; preserve existing UX coverage while extending auth helpers.\n- **Environment/setup:** browser `/login` checks may miss dev-route behavior; startup production-route tests may require staged dist artifact at `wwwroot/dist/browser/index.html`.\n\nAlso preserve two placement rules: auth/login guidance should stay in one scoped auth location instead of scattered root guidance, and final recording must capture all durable auth/validation/accessibility/startup-test rules rather than only one obvious note."
+        },
+        {
+          "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+          "passed": true,
+          "evidence": "Self-improve handoff must pass a distilled reusable-summary, not raw progress blocks. Target destination should be nearby auth-focused `AGENTS.md` or linked auth docs, not root notes. Keep precise technical tokens when they are part of standing guidance, but exclude story IDs, timestamps, temporary blockers, and one-off file-tracking details.\n\nMine these `progress.txt` sections before invoking `self-improve`:\n- `## Codebase Patterns`\n- `## 2026-06-12T10:00:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T10:40:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T11:10:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T11:45:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T12:00:00Z - FINALIZATION`\n\nPreserve reusable learnings across these categories:\n- **Validation/safety:** validate return-url prefix safety on decoded forms, not only raw strings; reuse shared return-url policy across guard/login/startup paths; preserve single-rule targeting and avoid placeholder defaults that trigger unrelated validators.\n- **Cache/state/replay:** keep cached stream for reads, but use fresh-fetch command path for mutations; replay bugs around `shareReplay(1)` need split read-vs-mutation flow to avoid stale-first success regressions.\n- **UX/accessibility:** preserve existing failed-login behavior, focus handling, and error behavior; compose `aria-describedby` in stable order with helper text first and contextual errors after it.\n- **Testing/anti-flake:** keep targeted auth tests filtered and focused; keep Jasmine `it` blocks at describe root; use time-claim assertion ranges instead of exact timestamps; preserve existing UX coverage while extending auth helpers.\n- **Environment/setup:** browser `/login` checks may miss dev-route behavior; startup production-route tests may require staged dist artifact at `wwwroot/dist/browser/index.html`.\n\nAlso preserve two placement rules: auth/login guidance should stay in one scoped auth location instead of scattered root guidance, and final recording must capture all durable auth/validation/accessibility/startup-test rules rather than only one obvious note."
+        },
+        {
+          "text": "The decision preserves the staged production-artifact startup-test learning.",
+          "passed": true,
+          "evidence": "Self-improve handoff must pass a distilled reusable-summary, not raw progress blocks. Target destination should be nearby auth-focused `AGENTS.md` or linked auth docs, not root notes. Keep precise technical tokens when they are part of standing guidance, but exclude story IDs, timestamps, temporary blockers, and one-off file-tracking details.\n\nMine these `progress.txt` sections before invoking `self-improve`:\n- `## Codebase Patterns`\n- `## 2026-06-12T10:00:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T10:40:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T11:10:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T11:45:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T12:00:00Z - FINALIZATION`\n\nPreserve reusable learnings across these categories:\n- **Validation/safety:** validate return-url prefix safety on decoded forms, not only raw strings; reuse shared return-url policy across guard/login/startup paths; preserve single-rule targeting and avoid placeholder defaults that trigger unrelated validators.\n- **Cache/state/replay:** keep cached stream for reads, but use fresh-fetch command path for mutations; replay bugs around `shareReplay(1)` need split read-vs-mutation flow to avoid stale-first success regressions.\n- **UX/accessibility:** preserve existing failed-login behavior, focus handling, and error behavior; compose `aria-describedby` in stable order with helper text first and contextual errors after it.\n- **Testing/anti-flake:** keep targeted auth tests filtered and focused; keep Jasmine `it` blocks at describe root; use time-claim assertion ranges instead of exact timestamps; preserve existing UX coverage while extending auth helpers.\n- **Environment/setup:** browser `/login` checks may miss dev-route behavior; startup production-route tests may require staged dist artifact at `wwwroot/dist/browser/index.html`.\n\nAlso preserve two placement rules: auth/login guidance should stay in one scoped auth location instead of scattered root guidance, and final recording must capture all durable auth/validation/accessibility/startup-test rules rather than only one obvious note."
+        },
+        {
+          "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+          "passed": true,
+          "evidence": "Self-improve handoff must pass a distilled reusable-summary, not raw progress blocks. Target destination should be nearby auth-focused `AGENTS.md` or linked auth docs, not root notes. Keep precise technical tokens when they are part of standing guidance, but exclude story IDs, timestamps, temporary blockers, and one-off file-tracking details.\n\nMine these `progress.txt` sections before invoking `self-improve`:\n- `## Codebase Patterns`\n- `## 2026-06-12T10:00:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T10:40:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T11:10:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T11:45:00Z - story-local-auth-returnurl`\n- `## 2026-06-12T12:00:00Z - FINALIZATION`\n\nPreserve reusable learnings across these categories:\n- **Validation/safety:** validate return-url prefix safety on decoded forms, not only raw strings; reuse shared return-url policy across guard/login/startup paths; preserve single-rule targeting and avoid placeholder defaults that trigger unrelated validators.\n- **Cache/state/replay:** keep cached stream for reads, but use fresh-fetch command path for mutations; replay bugs around `shareReplay(1)` need split read-vs-mutation flow to avoid stale-first success regressions.\n- **UX/accessibility:** preserve existing failed-login behavior, focus handling, and error behavior; compose `aria-describedby` in stable order with helper text first and contextual errors after it.\n- **Testing/anti-flake:** keep targeted auth tests filtered and focused; keep Jasmine `it` blocks at describe root; use time-claim assertion ranges instead of exact timestamps; preserve existing UX coverage while extending auth helpers.\n- **Environment/setup:** browser `/login` checks may miss dev-route behavior; startup production-route tests may require staged dist artifact at `wwwroot/dist/browser/index.html`.\n\nAlso preserve two placement rules: auth/login guidance should stay in one scoped auth location instead of scattered root guidance, and final recording must capture all durable auth/validation/accessibility/startup-test rules rather than only one obvious note."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 21.8,
+        "tokens": 593,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\nSelected story: `story-auth-timeout` (highest-priority `passes: false` story).\nBefore story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+          "passed": true,
+          "evidence": "Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\nSelected story: `story-auth-timeout` (highest-priority `passes: false` story).\nBefore story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+        },
+        {
+          "text": "The decision selects the highest-priority `passes: false` story.",
+          "passed": true,
+          "evidence": "Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\nSelected story: `story-auth-timeout` (highest-priority `passes: false` story).\nBefore story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+        },
+        {
+          "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+          "passed": true,
+          "evidence": "Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\nSelected story: `story-auth-timeout` (highest-priority `passes: false` story).\nBefore story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 18.3,
+        "tokens": 341,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this review fix, rerun `code-simplifier` on combined final state.\n3. After this review fix and simplification, rerun `requirements-collector`, then rerun `addy-code-reviewer`.\n4. Do not set `passes: true` until review is clean and final checks pass after this review fix."
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this review fix, rerun `code-simplifier` on combined final state.\n3. After this review fix and simplification, rerun `requirements-collector`, then rerun `addy-code-reviewer`.\n4. Do not set `passes: true` until review is clean and final checks pass after this review fix."
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this review fix, rerun `code-simplifier` on combined final state.\n3. After this review fix and simplification, rerun `requirements-collector`, then rerun `addy-code-reviewer`.\n4. Do not set `passes: true` until review is clean and final checks pass after this review fix."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.33,
+        "passed": 1,
+        "failed": 2,
+        "total": 3,
+        "time_seconds": 29.1,
+        "tokens": 458,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n\nStop. `story-search-index` still has `passes: false`. Latest reviewer still found a blocking stale document race after the latest fix, and `progress.txt` shows `review-fix iteration count = 3`, so the review-fix iteration limit is reached.\n\nPlease decide the blocker: what should the next attempt change about delete/index race handling to satisfy the story requirements?"
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": false,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n\nStop. `story-search-index` still has `passes: false`. Latest reviewer still found a blocking stale document race after the latest fix, and `progress.txt` shows `review-fix iteration count = 3`, so the review-fix iteration limit is reached.\n\nPlease decide the blocker: what should the next attempt change about delete/index race handling to satisfy the story requirements?"
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": false,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n\nStop. `story-search-index` still has `passes: false`. Latest reviewer still found a blocking stale document race after the latest fix, and `progress.txt` shows `review-fix iteration count = 3`, so the review-fix iteration limit is reached.\n\nPlease decide the blocker: what should the next attempt change about delete/index race handling to satisfy the story requirements?"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 27.3,
+        "tokens": 28,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 49.3,
+        "tokens": 1946,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+          "passed": true,
+          "evidence": "Pass `self-improve` the nearby auth-scoped `AGENTS.md` update target (or its linked auth guidance doc if that `AGENTS.md` delegates there), plus a distilled evidence packet from `progress.txt`. Tell it that `progress.txt` is mined only for durable guidance, not story completion, and that it must keep only reusable auth guidance rather than story-specific notes or timestamps.\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`\n2. Every `## 2026-06-12... - story-local-auth-returnurl` entry, but only the `**Learnings for future iterations:**` subsections (`Patterns discovered`, `Gotchas encountered`, `Useful context`)\n3. `## 2026-06-12T12:00:00Z - FINALIZATION`, especially the reviewer note that final recording must capture reusable auth, validation, accessibility, and startup-test rules, and that nearby auth docs should own them instead of root guidance\n\nPreserve reusable learnings in these categories:\n1. Module conventions and file relationships: keep auth/login guidance in one scoped location; reuse one shared return-url policy across login, validation, guard, and startup paths; validate decoded prefixes, not only raw strings\n2. Non-obvious implementation gotchas: replay-prone login flows should keep cached read streams and use fresh-fetch command paths for mutations; `shareReplay(1)` can cause stale-first failures; compose `aria-describedby` in stable order with helper text before contextual errors while preserving existing focus/error UX\n3. Testing expectations: preserve existing failed-login behavior coverage; filtered auth tests are useful fast coverage; Jasmine forbids nested `it`; time-based claim assertions should use ranges; keep single-rule validator targeting; avoid placeholder defaults that trigger unrelated validators\n4. Environment and route requirements: dev route prefix matters for browser checks, and startup production-route coverage may require staged `wwwroot/dist/browser/index.html`"
+        },
+        {
+          "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+          "passed": true,
+          "evidence": "Pass `self-improve` the nearby auth-scoped `AGENTS.md` update target (or its linked auth guidance doc if that `AGENTS.md` delegates there), plus a distilled evidence packet from `progress.txt`. Tell it that `progress.txt` is mined only for durable guidance, not story completion, and that it must keep only reusable auth guidance rather than story-specific notes or timestamps.\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`\n2. Every `## 2026-06-12... - story-local-auth-returnurl` entry, but only the `**Learnings for future iterations:**` subsections (`Patterns discovered`, `Gotchas encountered`, `Useful context`)\n3. `## 2026-06-12T12:00:00Z - FINALIZATION`, especially the reviewer note that final recording must capture reusable auth, validation, accessibility, and startup-test rules, and that nearby auth docs should own them instead of root guidance\n\nPreserve reusable learnings in these categories:\n1. Module conventions and file relationships: keep auth/login guidance in one scoped location; reuse one shared return-url policy across login, validation, guard, and startup paths; validate decoded prefixes, not only raw strings\n2. Non-obvious implementation gotchas: replay-prone login flows should keep cached read streams and use fresh-fetch command paths for mutations; `shareReplay(1)` can cause stale-first failures; compose `aria-describedby` in stable order with helper text before contextual errors while preserving existing focus/error UX\n3. Testing expectations: preserve existing failed-login behavior coverage; filtered auth tests are useful fast coverage; Jasmine forbids nested `it`; time-based claim assertions should use ranges; keep single-rule validator targeting; avoid placeholder defaults that trigger unrelated validators\n4. Environment and route requirements: dev route prefix matters for browser checks, and startup production-route coverage may require staged `wwwroot/dist/browser/index.html`"
+        },
+        {
+          "text": "The decision preserves the staged production-artifact startup-test learning.",
+          "passed": true,
+          "evidence": "Pass `self-improve` the nearby auth-scoped `AGENTS.md` update target (or its linked auth guidance doc if that `AGENTS.md` delegates there), plus a distilled evidence packet from `progress.txt`. Tell it that `progress.txt` is mined only for durable guidance, not story completion, and that it must keep only reusable auth guidance rather than story-specific notes or timestamps.\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`\n2. Every `## 2026-06-12... - story-local-auth-returnurl` entry, but only the `**Learnings for future iterations:**` subsections (`Patterns discovered`, `Gotchas encountered`, `Useful context`)\n3. `## 2026-06-12T12:00:00Z - FINALIZATION`, especially the reviewer note that final recording must capture reusable auth, validation, accessibility, and startup-test rules, and that nearby auth docs should own them instead of root guidance\n\nPreserve reusable learnings in these categories:\n1. Module conventions and file relationships: keep auth/login guidance in one scoped location; reuse one shared return-url policy across login, validation, guard, and startup paths; validate decoded prefixes, not only raw strings\n2. Non-obvious implementation gotchas: replay-prone login flows should keep cached read streams and use fresh-fetch command paths for mutations; `shareReplay(1)` can cause stale-first failures; compose `aria-describedby` in stable order with helper text before contextual errors while preserving existing focus/error UX\n3. Testing expectations: preserve existing failed-login behavior coverage; filtered auth tests are useful fast coverage; Jasmine forbids nested `it`; time-based claim assertions should use ranges; keep single-rule validator targeting; avoid placeholder defaults that trigger unrelated validators\n4. Environment and route requirements: dev route prefix matters for browser checks, and startup production-route coverage may require staged `wwwroot/dist/browser/index.html`"
+        },
+        {
+          "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+          "passed": false,
+          "evidence": "Pass `self-improve` the nearby auth-scoped `AGENTS.md` update target (or its linked auth guidance doc if that `AGENTS.md` delegates there), plus a distilled evidence packet from `progress.txt`. Tell it that `progress.txt` is mined only for durable guidance, not story completion, and that it must keep only reusable auth guidance rather than story-specific notes or timestamps.\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`\n2. Every `## 2026-06-12... - story-local-auth-returnurl` entry, but only the `**Learnings for future iterations:**` subsections (`Patterns discovered`, `Gotchas encountered`, `Useful context`)\n3. `## 2026-06-12T12:00:00Z - FINALIZATION`, especially the reviewer note that final recording must capture reusable auth, validation, accessibility, and startup-test rules, and that nearby auth docs should own them instead of root guidance\n\nPreserve reusable learnings in these categories:\n1. Module conventions and file relationships: keep auth/login guidance in one scoped location; reuse one shared return-url policy across login, validation, guard, and startup paths; validate decoded prefixes, not only raw strings\n2. Non-obvious implementation gotchas: replay-prone login flows should keep cached read streams and use fresh-fetch command paths for mutations; `shareReplay(1)` can cause stale-first failures; compose `aria-describedby` in stable order with helper text before contextual errors while preserving existing focus/error UX\n3. Testing expectations: preserve existing failed-login behavior coverage; filtered auth tests are useful fast coverage; Jasmine forbids nested `it`; time-based claim assertions should use ranges; keep single-rule validator targeting; avoid placeholder defaults that trigger unrelated validators\n4. Environment and route requirements: dev route prefix matters for browser checks, and startup production-route coverage may require staged `wwwroot/dist/browser/index.html`"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 27.58,
+        "stddev": 6.7777,
+        "min": 18.0,
+        "max": 34.7
+      },
+      "tokens": {
+        "mean": 756.2,
+        "stddev": 818.8945,
+        "min": 28,
+        "max": 2116
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.816,
+        "stddev": 0.2925,
+        "min": 0.33,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 29.16,
+        "stddev": 12.054,
+        "min": 18.3,
+        "max": 49.3
+      },
+      "tokens": {
+        "mean": 673.2,
+        "stddev": 741.5192,
+        "min": 28,
+        "max": 1946
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.18",
+      "time_seconds": "-1.6",
+      "tokens": "+83"
+    }
+  },
+  "notes": []
+}

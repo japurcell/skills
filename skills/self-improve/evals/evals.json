@@ -88,6 +88,28 @@
         "No new scoped AGENTS.md files are created.",
         "outputs/report.md says none qualified or no changes were made."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Use the skill under test on the fixture repo in `evals/files/progress-fixture/`. Durable learnings are in `evals/files/progress-fixture/progress.txt`. Root `AGENTS.md` already routes auth/login detail to `docs/auth.md`; keep that structure unless the learnings justify something else. Treat this as a benchmark run with no live user and do not ask follow-up questions. Copy the fixture repo to `outputs/repo/`, mine the progress file, update the right file, and write `outputs/report.md` with sections `Learnings`, `Applied updates`, and `Assumptions`.",
+      "expected_output": "Updates the linked auth doc with durable progress-file learnings while keeping the root AGENTS.md concise.",
+      "files": [
+        "evals/files/progress-fixture/AGENTS.md",
+        "evals/files/progress-fixture/docs/auth.md",
+        "evals/files/progress-fixture/progress.txt"
+      ],
+      "expectations": [
+        "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+        "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+        "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+        "outputs/report.md includes Learnings, Applied updates, and Assumptions."
+      ],
+      "assertions": [
+        "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+        "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+        "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+        "outputs/report.md includes Learnings, Applied updates, and Assumptions."
+      ]
     }
   ]
 }

@@ -1,0 +1,397 @@
+{
+  "metadata": {
+    "skill_name": "prd-build-loop-review",
+    "skill_path": "/home/adam/dev/personal/skills/skills/prd-build-loop-review",
+    "executor_model": "gpt-5-mini",
+    "analyzer_model": "gpt-5-mini",
+    "timestamp": "2026-06-18T23:01:30Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 30.2,
+        "tokens": 1087,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "Source of truth: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json (prd_file is official source of truth)\n\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt (append-only resume data; already exists)\n\nSelected story: id=story-auth-timeout, title=\"Auth timeout matches spec\", priority=1, passes=false\n\nBefore any story-specific repo discovery (startup prerequisites):\n- Reread prd_file (official) and progress_file (supplemental) to confirm state.\n- Read nearby AGENTS.md only if needed to dispatch implementer.\n- Do NOT inspect repo code, tests, or story-specific files before a fresh implementer is dispatched.\n- Dispatch fresh implementer with full story properties, prd_file path, progress_file path, and mode.\n- Require implementer to return a Progress block and append it to progress_file before any orchestrator consumption of its output.\n- If progress_file missing, create it on first append with a leading \"## Codebase Patterns\" section (dry-run: note only)."
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+          "passed": true,
+          "evidence": "Source of truth: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json (prd_file is official source of truth)\n\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt (append-only resume data; already exists)\n\nSelected story: id=story-auth-timeout, title=\"Auth timeout matches spec\", priority=1, passes=false\n\nBefore any story-specific repo discovery (startup prerequisites):\n- Reread prd_file (official) and progress_file (supplemental) to confirm state.\n- Read nearby AGENTS.md only if needed to dispatch implementer.\n- Do NOT inspect repo code, tests, or story-specific files before a fresh implementer is dispatched.\n- Dispatch fresh implementer with full story properties, prd_file path, progress_file path, and mode.\n- Require implementer to return a Progress block and append it to progress_file before any orchestrator consumption of its output.\n- If progress_file missing, create it on first append with a leading \"## Codebase Patterns\" section (dry-run: note only)."
+        },
+        {
+          "text": "The decision selects the highest-priority `passes: false` story.",
+          "passed": true,
+          "evidence": "Source of truth: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json (prd_file is official source of truth)\n\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt (append-only resume data; already exists)\n\nSelected story: id=story-auth-timeout, title=\"Auth timeout matches spec\", priority=1, passes=false\n\nBefore any story-specific repo discovery (startup prerequisites):\n- Reread prd_file (official) and progress_file (supplemental) to confirm state.\n- Read nearby AGENTS.md only if needed to dispatch implementer.\n- Do NOT inspect repo code, tests, or story-specific files before a fresh implementer is dispatched.\n- Dispatch fresh implementer with full story properties, prd_file path, progress_file path, and mode.\n- Require implementer to return a Progress block and append it to progress_file before any orchestrator consumption of its output.\n- If progress_file missing, create it on first append with a leading \"## Codebase Patterns\" section (dry-run: note only)."
+        },
+        {
+          "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+          "passed": true,
+          "evidence": "Source of truth: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json (prd_file is official source of truth)\n\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt (append-only resume data; already exists)\n\nSelected story: id=story-auth-timeout, title=\"Auth timeout matches spec\", priority=1, passes=false\n\nBefore any story-specific repo discovery (startup prerequisites):\n- Reread prd_file (official) and progress_file (supplemental) to confirm state.\n- Read nearby AGENTS.md only if needed to dispatch implementer.\n- Do NOT inspect repo code, tests, or story-specific files before a fresh implementer is dispatched.\n- Dispatch fresh implementer with full story properties, prd_file path, progress_file path, and mode.\n- Require implementer to return a Progress block and append it to progress_file before any orchestrator consumption of its output.\n- If progress_file missing, create it on first append with a leading \"## Codebase Patterns\" section (dry-run: note only)."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 29.5,
+        "tokens": 2867,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "Next orchestrator actions (dry-run) after implementer returned from mode: review_fix for story-billing-retry\n\n1. Confirm implementer Progress block appended.\n   - Evidence: progress.txt shows implementer return at 2026-06-10T11:50:00Z with Status = DONE and note that latest code-affecting change was the review fix.\n   - If missing: append corrective orchestrator entry and STOP.\n\n2. Rerun code-simplifier on combined final state (dry-run).\n   - Append code-simplifier Progress block to progress_file immediately.\n\n3. Run requirements-collector on combined final state (dry-run).\n   - Append requirements-collector Progress block immediately.\n\n4. Run addy-code-reviewer on simplified, requirement-checked combined state (dry-run).\n   - Append reviewer Progress block immediately. Record review findings and whether review is clean.\n\n5. Branch on reviewer outcome:\n   A) If review is clean:\n      - Run final verification checks specified by story and repo guidance (dry-run).\n      - Append orchestrator verification entry.\n      - If Completion Gate satisfied, set story `passes: true` in prd_file (record planned change) and append finalization orchestrator entry.\n      - Produce distilled self-improve summary from progress_file and prepare AGENTS.md handoff (dry-run note).\n\n   B) If review finds issues:\n      - Read review-fix iteration count from progress_file (current = 1).\n      - If count < 3:\n         - Increment iteration count (record in progress_file as planned append) to count+1.\n         - Dispatch fresh implementer with mode: review_fix and full findings; require Progress block appended before consuming.\n         - After implementer Progress block, go to step 2 (rerun simplifier -> reqs -> review).\n      - If count >= 3:\n         - Append orchestrator stop-state entry stating review-fix iteration limit reached.\n         - Do not dispatch another review-fix implementer.\n         - Reread prd_file, append stop-state, and ask user to decide/unblock.\n\n6. Verification checklist before marking `passes: true` (dry-run assertions):\n   - Latest code-affecting change came from fresh implementer.\n   - Code-simplifier ran after that change.\n   - addy-code-reviewer ran after that change and review is clean.\n   - Final verification checks passed.\n   - All subagent Progress blocks were appended before consumption.\n\n7. Recording and handoff (dry-run):\n   - Append orchestrator final-state entry to progress_file with summary, files, verification outcomes, and learnings.\n   - Distill durable learnings from progress_file and prepare concise handoff for AGENTS.md (validation rules, testing anti-flakes, UX constraints, env/setup notes).\n\nNotes (dry-run):\n- Do not modify repository files in this run; record planned changes only.\n- If any Stop Condition arises (contradiction, missing details, or real blocker), append stop-state and ask user."
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+          "passed": true,
+          "evidence": "Next orchestrator actions (dry-run) after implementer returned from mode: review_fix for story-billing-retry\n\n1. Confirm implementer Progress block appended.\n   - Evidence: progress.txt shows implementer return at 2026-06-10T11:50:00Z with Status = DONE and note that latest code-affecting change was the review fix.\n   - If missing: append corrective orchestrator entry and STOP.\n\n2. Rerun code-simplifier on combined final state (dry-run).\n   - Append code-simplifier Progress block to progress_file immediately.\n\n3. Run requirements-collector on combined final state (dry-run).\n   - Append requirements-collector Progress block immediately.\n\n4. Run addy-code-reviewer on simplified, requirement-checked combined state (dry-run).\n   - Append reviewer Progress block immediately. Record review findings and whether review is clean.\n\n5. Branch on reviewer outcome:\n   A) If review is clean:\n      - Run final verification checks specified by story and repo guidance (dry-run).\n      - Append orchestrator verification entry.\n      - If Completion Gate satisfied, set story `passes: true` in prd_file (record planned change) and append finalization orchestrator entry.\n      - Produce distilled self-improve summary from progress_file and prepare AGENTS.md handoff (dry-run note).\n\n   B) If review finds issues:\n      - Read review-fix iteration count from progress_file (current = 1).\n      - If count < 3:\n         - Increment iteration count (record in progress_file as planned append) to count+1.\n         - Dispatch fresh implementer with mode: review_fix and full findings; require Progress block appended before consuming.\n         - After implementer Progress block, go to step 2 (rerun simplifier -> reqs -> review).\n      - If count >= 3:\n         - Append orchestrator stop-state entry stating review-fix iteration limit reached.\n         - Do not dispatch another review-fix implementer.\n         - Reread prd_file, append stop-state, and ask user to decide/unblock.\n\n6. Verification checklist before marking `passes: true` (dry-run assertions):\n   - Latest code-affecting change came from fresh implementer.\n   - Code-simplifier ran after that change.\n   - addy-code-reviewer ran after that change and review is clean.\n   - Final verification checks passed.\n   - All subagent Progress blocks were appended before consumption.\n\n7. Recording and handoff (dry-run):\n   - Append orchestrator final-state entry to progress_file with summary, files, verification outcomes, and learnings.\n   - Distill durable learnings from progress_file and prepare concise handoff for AGENTS.md (validation rules, testing anti-flakes, UX constraints, env/setup notes).\n\nNotes (dry-run):\n- Do not modify repository files in this run; record planned changes only.\n- If any Stop Condition arises (contradiction, missing details, or real blocker), append stop-state and ask user."
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "Next orchestrator actions (dry-run) after implementer returned from mode: review_fix for story-billing-retry\n\n1. Confirm implementer Progress block appended.\n   - Evidence: progress.txt shows implementer return at 2026-06-10T11:50:00Z with Status = DONE and note that latest code-affecting change was the review fix.\n   - If missing: append corrective orchestrator entry and STOP.\n\n2. Rerun code-simplifier on combined final state (dry-run).\n   - Append code-simplifier Progress block to progress_file immediately.\n\n3. Run requirements-collector on combined final state (dry-run).\n   - Append requirements-collector Progress block immediately.\n\n4. Run addy-code-reviewer on simplified, requirement-checked combined state (dry-run).\n   - Append reviewer Progress block immediately. Record review findings and whether review is clean.\n\n5. Branch on reviewer outcome:\n   A) If review is clean:\n      - Run final verification checks specified by story and repo guidance (dry-run).\n      - Append orchestrator verification entry.\n      - If Completion Gate satisfied, set story `passes: true` in prd_file (record planned change) and append finalization orchestrator entry.\n      - Produce distilled self-improve summary from progress_file and prepare AGENTS.md handoff (dry-run note).\n\n   B) If review finds issues:\n      - Read review-fix iteration count from progress_file (current = 1).\n      - If count < 3:\n         - Increment iteration count (record in progress_file as planned append) to count+1.\n         - Dispatch fresh implementer with mode: review_fix and full findings; require Progress block appended before consuming.\n         - After implementer Progress block, go to step 2 (rerun simplifier -> reqs -> review).\n      - If count >= 3:\n         - Append orchestrator stop-state entry stating review-fix iteration limit reached.\n         - Do not dispatch another review-fix implementer.\n         - Reread prd_file, append stop-state, and ask user to decide/unblock.\n\n6. Verification checklist before marking `passes: true` (dry-run assertions):\n   - Latest code-affecting change came from fresh implementer.\n   - Code-simplifier ran after that change.\n   - addy-code-reviewer ran after that change and review is clean.\n   - Final verification checks passed.\n   - All subagent Progress blocks were appended before consumption.\n\n7. Recording and handoff (dry-run):\n   - Append orchestrator final-state entry to progress_file with summary, files, verification outcomes, and learnings.\n   - Distill durable learnings from progress_file and prepare concise handoff for AGENTS.md (validation rules, testing anti-flakes, UX constraints, env/setup notes).\n\nNotes (dry-run):\n- Do not modify repository files in this run; record planned changes only.\n- If any Stop Condition arises (contradiction, missing details, or real blocker), append stop-state and ask user."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 33.4,
+        "tokens": 807,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "Review-fix iteration limit reached.\n\nContext:\n- Story: story-search-index (Search index stays consistent after deletes)\n- Latest reviewer: review still finds stale document race after latest fix\n- review-fix iteration count: 3\n\nAction (dry-run):\n1. State: review-fix iteration limit reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread prd_file.\n5. Append orchestrator stop-state entry to progress_file (dry-run).\n\nDecision required from user:\nChoose one:\nA) Provide additional context/tests to unblock and allow another review-fix iteration.\nB) Escalate to maintainer for manual resolution.\nC) Declare issue non-blocking and proceed, with justification.\nD) Stop work and leave PRD incomplete.\n\nStop-state recorded in progress_file (dry-run). Awaiting user decision."
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": true,
+          "evidence": "Review-fix iteration limit reached.\n\nContext:\n- Story: story-search-index (Search index stays consistent after deletes)\n- Latest reviewer: review still finds stale document race after latest fix\n- review-fix iteration count: 3\n\nAction (dry-run):\n1. State: review-fix iteration limit reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread prd_file.\n5. Append orchestrator stop-state entry to progress_file (dry-run).\n\nDecision required from user:\nChoose one:\nA) Provide additional context/tests to unblock and allow another review-fix iteration.\nB) Escalate to maintainer for manual resolution.\nC) Declare issue non-blocking and proceed, with justification.\nD) Stop work and leave PRD incomplete.\n\nStop-state recorded in progress_file (dry-run). Awaiting user decision."
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": true,
+          "evidence": "Review-fix iteration limit reached.\n\nContext:\n- Story: story-search-index (Search index stays consistent after deletes)\n- Latest reviewer: review still finds stale document race after latest fix\n- review-fix iteration count: 3\n\nAction (dry-run):\n1. State: review-fix iteration limit reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread prd_file.\n5. Append orchestrator stop-state entry to progress_file (dry-run).\n\nDecision required from user:\nChoose one:\nA) Provide additional context/tests to unblock and allow another review-fix iteration.\nB) Escalate to maintainer for manual resolution.\nC) Declare issue non-blocking and proceed, with justification.\nD) Stop work and leave PRD incomplete.\n\nStop-state recorded in progress_file (dry-run). Awaiting user decision."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 21.1,
+        "tokens": 27,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 25.8,
+        "tokens": 833,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+          "passed": true,
+          "evidence": "Pass to self-improve: distilled reusable rules (no raw progress blocks).\n\nMine: '## Codebase Patterns' + every 'Learnings for future iterations' block (including FINALIZATION). Preserve categories and at least one precise technical token per category.\n\nKeep rules examples:\n- Validation: decoded-prefix validation; avoid placeholder defaults.\n- Cache/replay: cached-read vs fresh-fetch; shareReplay(1).\n- UX/accessibility: aria-describedby order; preserve focus/error UX.\n- Testing/anti-flake: time-based claim ranges; filtered auth tests; dist path wwwroot/dist/browser/index.html.\n- Env/setup: dev-route vs prod startup-route.\n- Fix shapes: shared return-url policy; split cached-read+fresh-fetch.\n\nDestination: nearby AGENTS.md (prompt rules); linked docs for extended guidance. Exclude story IDs, timestamps, transient blockers."
+        },
+        {
+          "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+          "passed": true,
+          "evidence": "Pass to self-improve: distilled reusable rules (no raw progress blocks).\n\nMine: '## Codebase Patterns' + every 'Learnings for future iterations' block (including FINALIZATION). Preserve categories and at least one precise technical token per category.\n\nKeep rules examples:\n- Validation: decoded-prefix validation; avoid placeholder defaults.\n- Cache/replay: cached-read vs fresh-fetch; shareReplay(1).\n- UX/accessibility: aria-describedby order; preserve focus/error UX.\n- Testing/anti-flake: time-based claim ranges; filtered auth tests; dist path wwwroot/dist/browser/index.html.\n- Env/setup: dev-route vs prod startup-route.\n- Fix shapes: shared return-url policy; split cached-read+fresh-fetch.\n\nDestination: nearby AGENTS.md (prompt rules); linked docs for extended guidance. Exclude story IDs, timestamps, transient blockers."
+        },
+        {
+          "text": "The decision preserves the staged production-artifact startup-test learning.",
+          "passed": true,
+          "evidence": "Pass to self-improve: distilled reusable rules (no raw progress blocks).\n\nMine: '## Codebase Patterns' + every 'Learnings for future iterations' block (including FINALIZATION). Preserve categories and at least one precise technical token per category.\n\nKeep rules examples:\n- Validation: decoded-prefix validation; avoid placeholder defaults.\n- Cache/replay: cached-read vs fresh-fetch; shareReplay(1).\n- UX/accessibility: aria-describedby order; preserve focus/error UX.\n- Testing/anti-flake: time-based claim ranges; filtered auth tests; dist path wwwroot/dist/browser/index.html.\n- Env/setup: dev-route vs prod startup-route.\n- Fix shapes: shared return-url policy; split cached-read+fresh-fetch.\n\nDestination: nearby AGENTS.md (prompt rules); linked docs for extended guidance. Exclude story IDs, timestamps, transient blockers."
+        },
+        {
+          "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+          "passed": true,
+          "evidence": "Pass to self-improve: distilled reusable rules (no raw progress blocks).\n\nMine: '## Codebase Patterns' + every 'Learnings for future iterations' block (including FINALIZATION). Preserve categories and at least one precise technical token per category.\n\nKeep rules examples:\n- Validation: decoded-prefix validation; avoid placeholder defaults.\n- Cache/replay: cached-read vs fresh-fetch; shareReplay(1).\n- UX/accessibility: aria-describedby order; preserve focus/error UX.\n- Testing/anti-flake: time-based claim ranges; filtered auth tests; dist path wwwroot/dist/browser/index.html.\n- Env/setup: dev-route vs prod startup-route.\n- Fix shapes: shared return-url policy; split cached-read+fresh-fetch.\n\nDestination: nearby AGENTS.md (prompt rules); linked docs for extended guidance. Exclude story IDs, timestamps, transient blockers."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 22.8,
+        "tokens": 662,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` is official; `progress_file` is supplemental resume data only.\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\nSelected story: story-auth-timeout (priority 1) \u2014 Auth timeout matches spec\nBefore story-specific discovery:\n- Dispatch fresh implementer for story-auth-timeout.\n- Read only `prd_file`, resolved `progress_file`, and nearby AGENTS.md needed to dispatch.\n- Require implementer to return a Progress block; append it immediately before consuming or acting on it.\n- Do not read story-specific repo files, tests, code, or behavior prior to implementer."
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` is official; `progress_file` is supplemental resume data only.\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\nSelected story: story-auth-timeout (priority 1) \u2014 Auth timeout matches spec\nBefore story-specific discovery:\n- Dispatch fresh implementer for story-auth-timeout.\n- Read only `prd_file`, resolved `progress_file`, and nearby AGENTS.md needed to dispatch.\n- Require implementer to return a Progress block; append it immediately before consuming or acting on it.\n- Do not read story-specific repo files, tests, code, or behavior prior to implementer."
+        },
+        {
+          "text": "The decision selects the highest-priority `passes: false` story.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` is official; `progress_file` is supplemental resume data only.\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\nSelected story: story-auth-timeout (priority 1) \u2014 Auth timeout matches spec\nBefore story-specific discovery:\n- Dispatch fresh implementer for story-auth-timeout.\n- Read only `prd_file`, resolved `progress_file`, and nearby AGENTS.md needed to dispatch.\n- Require implementer to return a Progress block; append it immediately before consuming or acting on it.\n- Do not read story-specific repo files, tests, code, or behavior prior to implementer."
+        },
+        {
+          "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` is official; `progress_file` is supplemental resume data only.\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\nSelected story: story-auth-timeout (priority 1) \u2014 Auth timeout matches spec\nBefore story-specific discovery:\n- Dispatch fresh implementer for story-auth-timeout.\n- Read only `prd_file`, resolved `progress_file`, and nearby AGENTS.md needed to dispatch.\n- Require implementer to return a Progress block; append it immediately before consuming or acting on it.\n- Do not read story-specific repo files, tests, code, or behavior prior to implementer."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.67,
+        "passed": 2,
+        "failed": 1,
+        "total": 3,
+        "time_seconds": 27.4,
+        "tokens": 1169,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "Restore review-fix iteration count from progress_file (value recorded = 1).\n\n1. Append fresh implementer `Progress block` from `mode: review_fix` to `progress_file` before acting on it.\n2. Rerun `code-simplifier` on combined final state; append its `Progress block`.\n3. Rerun `requirements-collector`; append its `Progress block`.\n4. Rerun `addy-code-reviewer` on simplified combined state; append its `Progress block`.\n5. If reviewer finds issues:\n   a. If review-fix iteration count >= 3: append orchestrator stop-state entry to `progress_file` and ask user to decide/blocker.\n   b. Else: increment review-fix iteration count in `progress_file`, dispatch fresh `implementer` with `mode: review_fix` and full findings, append its `Progress block`, then go to step 2.\n6. If review is clean: run required final-state verification checks, append orchestrator verification entry, then set `passes: true` only if Completion Gate satisfied.\n7. After setting any `passes: true`, reread `prd_file`. If every story has `passes: true`, respond exactly: <promise>COMPLETE</promise>. Otherwise append orchestrator stop-state entry and ask user to unblock specific remaining items."
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+          "passed": true,
+          "evidence": "Restore review-fix iteration count from progress_file (value recorded = 1).\n\n1. Append fresh implementer `Progress block` from `mode: review_fix` to `progress_file` before acting on it.\n2. Rerun `code-simplifier` on combined final state; append its `Progress block`.\n3. Rerun `requirements-collector`; append its `Progress block`.\n4. Rerun `addy-code-reviewer` on simplified combined state; append its `Progress block`.\n5. If reviewer finds issues:\n   a. If review-fix iteration count >= 3: append orchestrator stop-state entry to `progress_file` and ask user to decide/blocker.\n   b. Else: increment review-fix iteration count in `progress_file`, dispatch fresh `implementer` with `mode: review_fix` and full findings, append its `Progress block`, then go to step 2.\n6. If review is clean: run required final-state verification checks, append orchestrator verification entry, then set `passes: true` only if Completion Gate satisfied.\n7. After setting any `passes: true`, reread `prd_file`. If every story has `passes: true`, respond exactly: <promise>COMPLETE</promise>. Otherwise append orchestrator stop-state entry and ask user to unblock specific remaining items."
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": false,
+          "evidence": "Restore review-fix iteration count from progress_file (value recorded = 1).\n\n1. Append fresh implementer `Progress block` from `mode: review_fix` to `progress_file` before acting on it.\n2. Rerun `code-simplifier` on combined final state; append its `Progress block`.\n3. Rerun `requirements-collector`; append its `Progress block`.\n4. Rerun `addy-code-reviewer` on simplified combined state; append its `Progress block`.\n5. If reviewer finds issues:\n   a. If review-fix iteration count >= 3: append orchestrator stop-state entry to `progress_file` and ask user to decide/blocker.\n   b. Else: increment review-fix iteration count in `progress_file`, dispatch fresh `implementer` with `mode: review_fix` and full findings, append its `Progress block`, then go to step 2.\n6. If review is clean: run required final-state verification checks, append orchestrator verification entry, then set `passes: true` only if Completion Gate satisfied.\n7. After setting any `passes: true`, reread `prd_file`. If every story has `passes: true`, respond exactly: <promise>COMPLETE</promise>. Otherwise append orchestrator stop-state entry and ask user to unblock specific remaining items."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.67,
+        "passed": 2,
+        "failed": 1,
+        "total": 3,
+        "time_seconds": 25.8,
+        "tokens": 670,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit reached (3) for story 'story-search-index'. Reviewer found blocking issues.\n\nRequired stop actions (per SKILL.md):\n- Do not fix findings directly.\n- Do not dispatch another review-fix implementer.\n- Reread /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/review-limit-fixture/prd.json.\n- Append stop-state entry to /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/review-limit-fixture/progress.txt.\n- Ask user to decide how to unblock (human decision required: provide guidance, accept risk, or supply extra context/data).\n\nDry-run note: no subagents were spawned and no files were modified."
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": true,
+          "evidence": "Stop: review-fix iteration limit reached (3) for story 'story-search-index'. Reviewer found blocking issues.\n\nRequired stop actions (per SKILL.md):\n- Do not fix findings directly.\n- Do not dispatch another review-fix implementer.\n- Reread /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/review-limit-fixture/prd.json.\n- Append stop-state entry to /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/review-limit-fixture/progress.txt.\n- Ask user to decide how to unblock (human decision required: provide guidance, accept risk, or supply extra context/data).\n\nDry-run note: no subagents were spawned and no files were modified."
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": false,
+          "evidence": "Stop: review-fix iteration limit reached (3) for story 'story-search-index'. Reviewer found blocking issues.\n\nRequired stop actions (per SKILL.md):\n- Do not fix findings directly.\n- Do not dispatch another review-fix implementer.\n- Reread /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/review-limit-fixture/prd.json.\n- Append stop-state entry to /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/review-limit-fixture/progress.txt.\n- Ask user to decide how to unblock (human decision required: provide guidance, accept risk, or supply extra context/data).\n\nDry-run note: no subagents were spawned and no files were modified."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 22.4,
+        "tokens": 27,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 20.7,
+        "tokens": 757,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+          "passed": true,
+          "evidence": "Orchestrator -> self-improve inputs:\n- Provide: dirname(prd_file)+\"/progress.txt\" `## Codebase Patterns` block; all Progress blocks (per-story and FINALIZATION) plus prd.json story metadata (id, title, priority, passes).\n\nMining scope:\n- From every Progress block extract: \"Patterns discovered\", \"Gotchas encountered\", \"Useful context\"; include FINALIZATION notes.\n\nPreserve as durable guidance:\n- Module conventions, non-obvious gotchas, testing expectations (time ranges, staged dist), config/env requirements, UX invariants, validation rules (decoded-prefix), accessibility rules (aria-describedby order), cache vs fresh-fetch pattern, test-framework quirks.\n\nDo NOT record story-specific step-by-step fixes or file lists; generalize into reusable rules."
+        },
+        {
+          "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+          "passed": true,
+          "evidence": "Orchestrator -> self-improve inputs:\n- Provide: dirname(prd_file)+\"/progress.txt\" `## Codebase Patterns` block; all Progress blocks (per-story and FINALIZATION) plus prd.json story metadata (id, title, priority, passes).\n\nMining scope:\n- From every Progress block extract: \"Patterns discovered\", \"Gotchas encountered\", \"Useful context\"; include FINALIZATION notes.\n\nPreserve as durable guidance:\n- Module conventions, non-obvious gotchas, testing expectations (time ranges, staged dist), config/env requirements, UX invariants, validation rules (decoded-prefix), accessibility rules (aria-describedby order), cache vs fresh-fetch pattern, test-framework quirks.\n\nDo NOT record story-specific step-by-step fixes or file lists; generalize into reusable rules."
+        },
+        {
+          "text": "The decision preserves the staged production-artifact startup-test learning.",
+          "passed": false,
+          "evidence": "Orchestrator -> self-improve inputs:\n- Provide: dirname(prd_file)+\"/progress.txt\" `## Codebase Patterns` block; all Progress blocks (per-story and FINALIZATION) plus prd.json story metadata (id, title, priority, passes).\n\nMining scope:\n- From every Progress block extract: \"Patterns discovered\", \"Gotchas encountered\", \"Useful context\"; include FINALIZATION notes.\n\nPreserve as durable guidance:\n- Module conventions, non-obvious gotchas, testing expectations (time ranges, staged dist), config/env requirements, UX invariants, validation rules (decoded-prefix), accessibility rules (aria-describedby order), cache vs fresh-fetch pattern, test-framework quirks.\n\nDo NOT record story-specific step-by-step fixes or file lists; generalize into reusable rules."
+        },
+        {
+          "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+          "passed": false,
+          "evidence": "Orchestrator -> self-improve inputs:\n- Provide: dirname(prd_file)+\"/progress.txt\" `## Codebase Patterns` block; all Progress blocks (per-story and FINALIZATION) plus prd.json story metadata (id, title, priority, passes).\n\nMining scope:\n- From every Progress block extract: \"Patterns discovered\", \"Gotchas encountered\", \"Useful context\"; include FINALIZATION notes.\n\nPreserve as durable guidance:\n- Module conventions, non-obvious gotchas, testing expectations (time ranges, staged dist), config/env requirements, UX invariants, validation rules (decoded-prefix), accessibility rules (aria-describedby order), cache vs fresh-fetch pattern, test-framework quirks.\n\nDo NOT record story-specific step-by-step fixes or file lists; generalize into reusable rules."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 28.0,
+        "stddev": 4.709,
+        "min": 21.1,
+        "max": 33.4
+      },
+      "tokens": {
+        "mean": 1124.2,
+        "stddev": 1052.1403,
+        "min": 27,
+        "max": 2867
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.768,
+        "stddev": 0.2229,
+        "min": 0.5,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 23.82,
+        "stddev": 2.717,
+        "min": 20.7,
+        "max": 27.4
+      },
+      "tokens": {
+        "mean": 657.0,
+        "stddev": 409.0348,
+        "min": 27,
+        "max": 1169
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.23",
+      "time_seconds": "+4.2",
+      "tokens": "+467"
+    }
+  },
+  "notes": []
+}

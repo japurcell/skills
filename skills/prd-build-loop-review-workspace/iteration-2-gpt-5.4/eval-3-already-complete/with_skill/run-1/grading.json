@@ -3,7 +3,7 @@
     {
       "text": "The output is exactly `<promise>COMPLETE</promise>`.",
       "passed": true,
-      "evidence": "<promise>COMPLETE</promise>\n"
+      "evidence": "<promise>COMPLETE</promise>"
     }
   ],
   "summary": {

@@ -3,17 +3,17 @@
     {
       "text": "The decision appends the implementer `Progress block` before acting on it.",
       "passed": true,
-      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this `mode: review_fix` change, rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass.\n"
+      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this `mode: review_fix` change, rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass."
     },
     {
       "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
       "passed": true,
-      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this `mode: review_fix` change, rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass.\n"
+      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this `mode: review_fix` change, rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass."
     },
     {
       "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
       "passed": true,
-      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this `mode: review_fix` change, rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass.\n"
+      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this `mode: review_fix` change, rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then rerun `addy-code-reviewer` after simplification.\n4. Do not set `passes: true` until review is clean and final checks pass."
     }
   ],
   "summary": {

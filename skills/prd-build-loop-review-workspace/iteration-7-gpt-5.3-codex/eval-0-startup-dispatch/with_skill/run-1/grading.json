@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` is official story status/completion source; `progress_file` is supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Selected story: `story-auth-timeout` (highest-priority story with `passes: false`, `priority: 1`).\n4. Before story-specific discovery: invoke `subagent-model-router`, then dispatch fresh `implementer`; before that first implementer dispatch, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work."
+    },
+    {
+      "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` is official story status/completion source; `progress_file` is supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Selected story: `story-auth-timeout` (highest-priority story with `passes: false`, `priority: 1`).\n4. Before story-specific discovery: invoke `subagent-model-router`, then dispatch fresh `implementer`; before that first implementer dispatch, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work."
+    },
+    {
+      "text": "The decision selects the highest-priority `passes: false` story.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` is official story status/completion source; `progress_file` is supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Selected story: `story-auth-timeout` (highest-priority story with `passes: false`, `priority: 1`).\n4. Before story-specific discovery: invoke `subagent-model-router`, then dispatch fresh `implementer`; before that first implementer dispatch, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work."
+    },
+    {
+      "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` is official story status/completion source; `progress_file` is supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Selected story: `story-auth-timeout` (highest-priority story with `passes: false`, `priority: 1`).\n4. Before story-specific discovery: invoke `subagent-model-router`, then dispatch fresh `implementer`; before that first implementer dispatch, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 590,
+    "transcript_chars": 170247
+  },
+  "timing": {
+    "executor_duration_seconds": 47.3,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 47.3
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

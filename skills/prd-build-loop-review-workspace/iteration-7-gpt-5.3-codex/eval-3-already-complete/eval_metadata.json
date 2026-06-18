@@ -1,0 +1,8 @@
+{
+  "eval_id": 3,
+  "eval_name": "already-complete",
+  "prompt": "Use skill under test in dry-run mode for `evals/files/complete-fixture/`. User says: `Resume PRD build loop from progress.` Do not change files or spawn real subagents. If the skill says work is already complete, write exact final response to `outputs/decision.md` and nothing else.",
+  "assertions": [
+    "The output is exactly `<promise>COMPLETE</promise>`."
+  ]
+}

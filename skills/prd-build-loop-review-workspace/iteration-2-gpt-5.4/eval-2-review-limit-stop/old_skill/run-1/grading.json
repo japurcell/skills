@@ -3,17 +3,17 @@
     {
       "text": "The decision stops because the review-fix iteration limit is reached.",
       "passed": true,
-      "evidence": "Stop. Review-fix iteration limit already reached at 3, and latest reviewer still found blocking stale-document race in `src/search_index.py` and `tests/test_search_index.py`.\n\nBefore responding, reread `prd_file` and append latest orchestrator stop-state entry to `progress_file`. Do not fix findings directly and do not dispatch another review-fix implementer. Ask the user to decide the blocker and how to proceed with the unresolved delete-race issue.\n"
+      "evidence": "Stop. Review-fix iteration limit already reached at 3, and latest reviewer still found blocking stale-document race in `src/search_index.py` and `tests/test_search_index.py`.\n\nBefore responding, reread `prd_file` and append latest orchestrator stop-state entry to `progress_file`. Do not fix findings directly and do not dispatch another review-fix implementer. Ask the user to decide the blocker and how to proceed with the unresolved delete-race issue."
     },
     {
       "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
       "passed": true,
-      "evidence": "Stop. Review-fix iteration limit already reached at 3, and latest reviewer still found blocking stale-document race in `src/search_index.py` and `tests/test_search_index.py`.\n\nBefore responding, reread `prd_file` and append latest orchestrator stop-state entry to `progress_file`. Do not fix findings directly and do not dispatch another review-fix implementer. Ask the user to decide the blocker and how to proceed with the unresolved delete-race issue.\n"
+      "evidence": "Stop. Review-fix iteration limit already reached at 3, and latest reviewer still found blocking stale-document race in `src/search_index.py` and `tests/test_search_index.py`.\n\nBefore responding, reread `prd_file` and append latest orchestrator stop-state entry to `progress_file`. Do not fix findings directly and do not dispatch another review-fix implementer. Ask the user to decide the blocker and how to proceed with the unresolved delete-race issue."
     },
     {
       "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
       "passed": true,
-      "evidence": "Stop. Review-fix iteration limit already reached at 3, and latest reviewer still found blocking stale-document race in `src/search_index.py` and `tests/test_search_index.py`.\n\nBefore responding, reread `prd_file` and append latest orchestrator stop-state entry to `progress_file`. Do not fix findings directly and do not dispatch another review-fix implementer. Ask the user to decide the blocker and how to proceed with the unresolved delete-race issue.\n"
+      "evidence": "Stop. Review-fix iteration limit already reached at 3, and latest reviewer still found blocking stale-document race in `src/search_index.py` and `tests/test_search_index.py`.\n\nBefore responding, reread `prd_file` and append latest orchestrator stop-state entry to `progress_file`. Do not fix findings directly and do not dispatch another review-fix implementer. Ask the user to decide the blocker and how to proceed with the unresolved delete-race issue."
     }
   ],
   "summary": {

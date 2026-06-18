@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision appends the implementer `Progress block` before acting on it.",
+      "passed": true,
+      "evidence": "Restore review-fix iteration count from progress_file (value recorded = 1).\n\n1. Append fresh implementer `Progress block` from `mode: review_fix` to `progress_file` before acting on it.\n2. Rerun `code-simplifier` on combined final state; append its `Progress block`.\n3. Rerun `requirements-collector`; append its `Progress block`.\n4. Rerun `addy-code-reviewer` on simplified combined state; append its `Progress block`.\n5. If reviewer finds issues:\n   a. If review-fix iteration count >= 3: append orchestrator stop-state entry to `progress_file` and ask user to decide/blocker.\n   b. Else: increment review-fix iteration count in `progress_file`, dispatch fresh `implementer` with `mode: review_fix` and full findings, append its `Progress block`, then go to step 2.\n6. If review is clean: run required final-state verification checks, append orchestrator verification entry, then set `passes: true` only if Completion Gate satisfied.\n7. After setting any `passes: true`, reread `prd_file`. If every story has `passes: true`, respond exactly: <promise>COMPLETE</promise>. Otherwise append orchestrator stop-state entry and ask user to unblock specific remaining items."
+    },
+    {
+      "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+      "passed": true,
+      "evidence": "Restore review-fix iteration count from progress_file (value recorded = 1).\n\n1. Append fresh implementer `Progress block` from `mode: review_fix` to `progress_file` before acting on it.\n2. Rerun `code-simplifier` on combined final state; append its `Progress block`.\n3. Rerun `requirements-collector`; append its `Progress block`.\n4. Rerun `addy-code-reviewer` on simplified combined state; append its `Progress block`.\n5. If reviewer finds issues:\n   a. If review-fix iteration count >= 3: append orchestrator stop-state entry to `progress_file` and ask user to decide/blocker.\n   b. Else: increment review-fix iteration count in `progress_file`, dispatch fresh `implementer` with `mode: review_fix` and full findings, append its `Progress block`, then go to step 2.\n6. If review is clean: run required final-state verification checks, append orchestrator verification entry, then set `passes: true` only if Completion Gate satisfied.\n7. After setting any `passes: true`, reread `prd_file`. If every story has `passes: true`, respond exactly: <promise>COMPLETE</promise>. Otherwise append orchestrator stop-state entry and ask user to unblock specific remaining items."
+    },
+    {
+      "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+      "passed": false,
+      "evidence": "Restore review-fix iteration count from progress_file (value recorded = 1).\n\n1. Append fresh implementer `Progress block` from `mode: review_fix` to `progress_file` before acting on it.\n2. Rerun `code-simplifier` on combined final state; append its `Progress block`.\n3. Rerun `requirements-collector`; append its `Progress block`.\n4. Rerun `addy-code-reviewer` on simplified combined state; append its `Progress block`.\n5. If reviewer finds issues:\n   a. If review-fix iteration count >= 3: append orchestrator stop-state entry to `progress_file` and ask user to decide/blocker.\n   b. Else: increment review-fix iteration count in `progress_file`, dispatch fresh `implementer` with `mode: review_fix` and full findings, append its `Progress block`, then go to step 2.\n6. If review is clean: run required final-state verification checks, append orchestrator verification entry, then set `passes: true` only if Completion Gate satisfied.\n7. After setting any `passes: true`, reread `prd_file`. If every story has `passes: true`, respond exactly: <promise>COMPLETE</promise>. Otherwise append orchestrator stop-state entry and ask user to unblock specific remaining items."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.67
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1169,
+    "transcript_chars": 118542
+  },
+  "timing": {
+    "executor_duration_seconds": 27.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 27.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

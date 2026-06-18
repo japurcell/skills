@@ -1,6 +1,6 @@
 ---
 name: self-improve
-description: Captures durable session learnings in the right `AGENTS.md` files and refactors instruction structure when needed to remove duplication, fix scope, and keep linked docs in sync. Use when the user asks to update `AGENTS.md`, record lessons learned, codify repo-specific commands or gotchas, preserve human corrections, clean up agent instructions, or says things like "remember this", "document this workflow", or "make future agents know this."
+description: Captures durable learnings from session notes, handoff artifacts, or other work records into the right `AGENTS.md` or linked docs, and refactors instruction structure when scope or duplication is wrong. Use when the user asks to update `AGENTS.md`, remember lessons, preserve human corrections, mine prior work notes for reusable guidance, clean up instruction scope, or make future agents follow repo-specific commands, gotchas, or validation steps.
 ---
 
 # Self Improve
@@ -9,12 +9,12 @@ description: Captures durable session learnings in the right `AGENTS.md` files a
 
 Capture only durable guidance future agents will reuse. Update the smallest correct `AGENTS.md` surface first; refactor structure only when the current layout would cause drift, duplication, or bad scoping.
 
-Use `SELF_IMPROVE_REFERENCE.md` for refactor judgment, placement examples, rationalizations, and failure modes.
+Use `SELF_IMPROVE_REFERENCE.md` for refactor judgment, artifact-mining examples, placement examples, rationalizations, and failure modes.
 
 ## When to Use
 
 - The user asks to update or refactor `AGENTS.md`, record lessons learned, or preserve a workflow/discovery.
-- The session surfaced non-default commands, validation steps, code patterns, environment quirks, warnings, or human corrections worth reusing.
+- The session surfaced non-default commands, validation steps, code patterns, environment quirks, warnings, human corrections, or durable learnings from prior work artifacts worth reusing.
 - Current `AGENTS.md` structure is duplicated, conflicting, stale, or poorly scoped.
 - Not for one-off notes, obvious facts, speculative advice, or transient debugging noise.
 
@@ -24,6 +24,7 @@ Use `SELF_IMPROVE_REFERENCE.md` for refactor judgment, placement examples, ratio
    - Ask: _what missing context would help future agents?_
    - Keep only items likely to recur, actionable, repo/user-specific, and not already documented.
    - Look for non-default commands, code patterns, validation/build/typecheck steps, environment quirks, warnings, and human corrections.
+   - If session notes, handoff notes, or similar work artifacts exist, mine the sections that actually carry reusable guidance; durable guidance can come from patterns, gotchas, or useful context.
    - Never turn excluded noise into an inverse standing rule.
    - Exclude temporary noise and obvious facts.
 
@@ -69,6 +70,13 @@ Skip:
 - Navigation/process heuristics inferred from one run unless the user wants them as standing policy
 - Generic reminders like "be careful"
 
+### Artifact mining
+
+- Treat prior work artifacts as high-signal source material, not just status metadata.
+- Keep durable rules that explain future implementation or test behavior, such as framework constraints, validation rules, stable fix shapes, UX-preservation rules, anti-flake testing tactics, and environment/setup requirements.
+- Translate task-specific wording into reusable instructions; keep the lesson, drop ticket names and transient path noise.
+- If an existing AGENTS rule captured only one obvious learning while the artifact contains several durable ones, treat that as incomplete and keep mining.
+
 ### Placement
 
 - `./AGENTS.md` - near-universal project rules
@@ -86,6 +94,7 @@ Keep root `AGENTS.md` minimal and safe to always load. Prefer linking over repea
 | "The root file is enough." | Scoped files or linked docs may own the rule better. |
 | "That command is obvious." | Non-default commands are often high-value. |
 | "The user didn't ask me to remember this." | Capture durable guidance when warranted. |
+| "Only the obvious summary section matters; detailed learnings are too specific." | Durable rules often live in gotchas and useful context, not just the header summary. |
 | "Leaving redundant rules is harmless." | Redundancy causes drift. |
 | "I moved it, so deleting the old text is enough." | Verify the destination was updated in the same change. |
 | "I should update something anyway." | Do not force low-value changes. |
@@ -98,6 +107,7 @@ Keep root `AGENTS.md` minimal and safe to always load. Prefer linking over repea
 - Missing, stale, or orphaned linked docs
 - Vague or non-actionable rules
 - Durable learnings not captured
+- A prior work artifact was read but its durable learnings were not preserved
 - One-offs added as standing instructions
 - Guidance removed from one file without appearing in its destination
 
@@ -110,6 +120,7 @@ Keep root `AGENTS.md` minimal and safe to always load. Prefer linking over repea
 - [ ] Assumptions were stated when needed
 - [ ] Root `AGENTS.md` remains minimal
 - [ ] Scoped guidance is in the right file
+- [ ] Session-note or work-artifact learnings were mined beyond the obvious summary bullets
 - [ ] Every moved rule was added to its destination doc in the same change
 - [ ] Deletions were applied only where appropriate
 - [ ] Duplicate rules were removed or justified

@@ -219,6 +219,46 @@ def grade_noop(run_dir: Path) -> list[dict]:
     ]
 
 
+def grade_progress_fixture(run_dir: Path) -> list[dict]:
+    repo_dir = run_dir / "outputs" / "repo"
+    root_text = read_text(repo_dir / "AGENTS.md")
+    auth_text = read_text(repo_dir / "docs" / "auth.md")
+    report_text = read_text(run_dir / "outputs" / "report.md")
+    normalized_auth = normalize(auth_text)
+    return [
+        expectation(
+            "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+            (
+                ("decoded" in normalized_auth or "prefix" in normalized_auth)
+                and ("nested `it`" in auth_text or "nested it" in normalized_auth)
+                and ("cached stream" in normalized_auth or "fresh-fetch" in normalized_auth or "replay" in normalized_auth or "sharereplay(1)" in normalized_auth)
+                and "aria-describedby" in normalized_auth
+                and ("time-based" in normalized_auth or "time range" in normalized_auth or "avoid flake" in normalized_auth or "single-rule" in normalized_auth or "placeholder" in normalized_auth)
+            ),
+            auth_text or "missing outputs/repo/docs/auth.md",
+        ),
+        expectation(
+            "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+            "wwwroot/dist/browser/index.html" in auth_text
+            or ("production" in normalized_auth and "startup" in normalized_auth and "artifact" in normalized_auth),
+            auth_text or "missing outputs/repo/docs/auth.md",
+        ),
+        expectation(
+            "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+            "docs/auth.md" in root_text
+            and "aria-describedby" not in root_text
+            and "shareReplay(1)" not in root_text
+            and "decoded" not in normalize(root_text),
+            root_text or "missing outputs/repo/AGENTS.md",
+        ),
+        expectation(
+            "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+            report_has_sections(report_text, ["Learnings", "Applied updates", "Assumptions"]),
+            report_text or "missing outputs/report.md",
+        ),
+    ]
+
+
 def grade(eval_id: int, run_dir: Path) -> list[dict]:
     if eval_id == 0:
         return grade_create_root(run_dir)
@@ -228,6 +268,8 @@ def grade(eval_id: int, run_dir: Path) -> list[dict]:
         return grade_linked_doc(run_dir)
     if eval_id == 3:
         return grade_noop(run_dir)
+    if eval_id == 4:
+        return grade_progress_fixture(run_dir)
     return [expectation(f"Unknown eval id {eval_id}.", False, "Unsupported eval")]
 
 

@@ -1,0 +1,397 @@
+{
+  "metadata": {
+    "skill_name": "prd-build-loop-review",
+    "skill_path": "/home/adam/dev/personal/skills/skills/prd-build-loop-review",
+    "executor_model": "gpt-5.4-mini",
+    "analyzer_model": "gpt-5.4-mini",
+    "timestamp": "2026-06-18T23:01:30Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 21.1,
+        "tokens": 529,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "Source of truth: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json is official; progress_file is supplemental resume data only.\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\nSelected story: story-auth-timeout (highest-priority passes:false story).\nBefore any story-specific repo discovery: dispatch a fresh implementer and read only prd.json, progress.txt, and nearby AGENTS.md needed to dispatch work."
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+          "passed": true,
+          "evidence": "Source of truth: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json is official; progress_file is supplemental resume data only.\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\nSelected story: story-auth-timeout (highest-priority passes:false story).\nBefore any story-specific repo discovery: dispatch a fresh implementer and read only prd.json, progress.txt, and nearby AGENTS.md needed to dispatch work."
+        },
+        {
+          "text": "The decision selects the highest-priority `passes: false` story.",
+          "passed": true,
+          "evidence": "Source of truth: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json is official; progress_file is supplemental resume data only.\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\nSelected story: story-auth-timeout (highest-priority passes:false story).\nBefore any story-specific repo discovery: dispatch a fresh implementer and read only prd.json, progress.txt, and nearby AGENTS.md needed to dispatch work."
+        },
+        {
+          "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+          "passed": true,
+          "evidence": "Source of truth: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json is official; progress_file is supplemental resume data only.\nResolved progress_file: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\nSelected story: story-auth-timeout (highest-priority passes:false story).\nBefore any story-specific repo discovery: dispatch a fresh implementer and read only prd.json, progress.txt, and nearby AGENTS.md needed to dispatch work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 20.4,
+        "tokens": 440,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\nSelected story: `story-billing-retry`.\n\nNext orchestrator actions:\n1. Append the fresh implementer `Progress block` from `mode: review_fix` before acting on it.\n2. Rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass."
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\nSelected story: `story-billing-retry`.\n\nNext orchestrator actions:\n1. Append the fresh implementer `Progress block` from `mode: review_fix` before acting on it.\n2. Rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass."
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\nSelected story: `story-billing-retry`.\n\nNext orchestrator actions:\n1. Append the fresh implementer `Progress block` from `mode: review_fix` before acting on it.\n2. Rerun `code-simplifier` on the combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 28.8,
+        "tokens": 256,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "Review-fix iteration limit is reached (count = 3).\n\nDo not fix directly.\nDo not dispatch another review-fix implementer.\nReread `prd_file`, append a stop-state entry to `progress_file`, and ask the user to decide how to unblock the remaining review issue."
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": true,
+          "evidence": "Review-fix iteration limit is reached (count = 3).\n\nDo not fix directly.\nDo not dispatch another review-fix implementer.\nReread `prd_file`, append a stop-state entry to `progress_file`, and ask the user to decide how to unblock the remaining review issue."
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": true,
+          "evidence": "Review-fix iteration limit is reached (count = 3).\n\nDo not fix directly.\nDo not dispatch another review-fix implementer.\nReread `prd_file`, append a stop-state entry to `progress_file`, and ask the user to decide how to unblock the remaining review issue."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 18.5,
+        "tokens": 28,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 23.3,
+        "tokens": 938,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+          "passed": true,
+          "evidence": "Pass `self-improve` a distilled reusable summary, not raw progress blocks. Mine `## Codebase Patterns` first, then each entry's `Learnings for future iterations` fields, especially `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPreserve the reusable rules that repeat across entries: validate decoded return URLs, reuse shared return-url policy in login/guard paths, keep cached read streams separate from fresh mutation fetches to avoid replay bugs, compose `aria-describedby` in stable helper-first order, keep error/focus UX unchanged, use time ranges for claim assertions, target one validation rule at a time, avoid placeholder defaults, and account for dev-route / staged-dist startup paths.\n\nAlso preserve the standing guidance that final recording belongs in nearby `AGENTS.md` or linked docs, and that one-off story IDs, timestamps, and transient blockers should be omitted."
+        },
+        {
+          "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+          "passed": true,
+          "evidence": "Pass `self-improve` a distilled reusable summary, not raw progress blocks. Mine `## Codebase Patterns` first, then each entry's `Learnings for future iterations` fields, especially `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPreserve the reusable rules that repeat across entries: validate decoded return URLs, reuse shared return-url policy in login/guard paths, keep cached read streams separate from fresh mutation fetches to avoid replay bugs, compose `aria-describedby` in stable helper-first order, keep error/focus UX unchanged, use time ranges for claim assertions, target one validation rule at a time, avoid placeholder defaults, and account for dev-route / staged-dist startup paths.\n\nAlso preserve the standing guidance that final recording belongs in nearby `AGENTS.md` or linked docs, and that one-off story IDs, timestamps, and transient blockers should be omitted."
+        },
+        {
+          "text": "The decision preserves the staged production-artifact startup-test learning.",
+          "passed": true,
+          "evidence": "Pass `self-improve` a distilled reusable summary, not raw progress blocks. Mine `## Codebase Patterns` first, then each entry's `Learnings for future iterations` fields, especially `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPreserve the reusable rules that repeat across entries: validate decoded return URLs, reuse shared return-url policy in login/guard paths, keep cached read streams separate from fresh mutation fetches to avoid replay bugs, compose `aria-describedby` in stable helper-first order, keep error/focus UX unchanged, use time ranges for claim assertions, target one validation rule at a time, avoid placeholder defaults, and account for dev-route / staged-dist startup paths.\n\nAlso preserve the standing guidance that final recording belongs in nearby `AGENTS.md` or linked docs, and that one-off story IDs, timestamps, and transient blockers should be omitted."
+        },
+        {
+          "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+          "passed": true,
+          "evidence": "Pass `self-improve` a distilled reusable summary, not raw progress blocks. Mine `## Codebase Patterns` first, then each entry's `Learnings for future iterations` fields, especially `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPreserve the reusable rules that repeat across entries: validate decoded return URLs, reuse shared return-url policy in login/guard paths, keep cached read streams separate from fresh mutation fetches to avoid replay bugs, compose `aria-describedby` in stable helper-first order, keep error/focus UX unchanged, use time ranges for claim assertions, target one validation rule at a time, avoid placeholder defaults, and account for dev-route / staged-dist startup paths.\n\nAlso preserve the standing guidance that final recording belongs in nearby `AGENTS.md` or linked docs, and that one-off story IDs, timestamps, and transient blockers should be omitted."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 27.3,
+        "tokens": 472,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` is official; `progress_file` is supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`\nSelected story: `story-auth-timeout` (highest-priority `passes: false` story).\nBefore any story-specific repo discovery: dispatch a fresh `implementer`, and read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` is official; `progress_file` is supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`\nSelected story: `story-auth-timeout` (highest-priority `passes: false` story).\nBefore any story-specific repo discovery: dispatch a fresh `implementer`, and read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+        },
+        {
+          "text": "The decision selects the highest-priority `passes: false` story.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` is official; `progress_file` is supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`\nSelected story: `story-auth-timeout` (highest-priority `passes: false` story).\nBefore any story-specific repo discovery: dispatch a fresh `implementer`, and read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+        },
+        {
+          "text": "The decision dispatches a fresh implementer before story-specific repo discovery.",
+          "passed": true,
+          "evidence": "Source of truth: `prd_file` is official; `progress_file` is supplemental resume data only.\nResolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`\nSelected story: `story-auth-timeout` (highest-priority `passes: false` story).\nBefore any story-specific repo discovery: dispatch a fresh `implementer`, and read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 28.1,
+        "tokens": 341,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this review fix, rerun `code-simplifier` on combined final state.\n3. After this review fix and simplification, rerun `requirements-collector`, then rerun `addy-code-reviewer`.\n4. Do not set `passes: true` until review is clean and final checks pass after this review fix."
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this review fix, rerun `code-simplifier` on combined final state.\n3. After this review fix and simplification, rerun `requirements-collector`, then rerun `addy-code-reviewer`.\n4. Do not set `passes: true` until review is clean and final checks pass after this review fix."
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. After this review fix, rerun `code-simplifier` on combined final state.\n3. After this review fix and simplification, rerun `requirements-collector`, then rerun `addy-code-reviewer`.\n4. Do not set `passes: true` until review is clean and final checks pass after this review fix."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.33,
+        "passed": 1,
+        "failed": 2,
+        "total": 3,
+        "time_seconds": 21.0,
+        "tokens": 265,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": false,
+          "evidence": "Stop. Do not fix findings directly. Do not dispatch another review-fix implementer. review-fix iteration count is already 3 and the latest review is still blocking. Reread prd.json, append a stop-state entry to progress.txt, and ask the user to decide the blocker."
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": true,
+          "evidence": "Stop. Do not fix findings directly. Do not dispatch another review-fix implementer. review-fix iteration count is already 3 and the latest review is still blocking. Reread prd.json, append a stop-state entry to progress.txt, and ask the user to decide the blocker."
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": false,
+          "evidence": "Stop. Do not fix findings directly. Do not dispatch another review-fix implementer. review-fix iteration count is already 3 and the latest review is still blocking. Reread prd.json, append a stop-state entry to progress.txt, and ask the user to decide the blocker."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 16.5,
+        "tokens": 28,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 28.6,
+        "tokens": 1340,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+          "passed": true,
+          "evidence": "Pass `self-improve` the reusable guidance distilled from `progress.txt`, plus the nearby `AGENTS.md` that should receive the update. Treat `progress.txt` as resume data only; do not copy story-specific details or completion status into guidance.\n\nMine these sections from `progress.txt`:\n- `## Codebase Patterns`\n- every latest story entry, including the final `FINALIZATION` entry\n\nPreserve only reusable learnings:\n- auth/login guidance belongs in one scoped place; do not scatter it\n- preserve existing focus and error behavior when extending auth helpers\n- validate decoded prefixes, not just raw strings\n- reuse shared return-url policy coverage across login and guard paths\n- keep cached read streams separate from fresh-fetch mutation paths\n- compose `aria-describedby` in stable order: helper first, then contextual errors\n- keep time-based assertions range-based to avoid flake\n- use single-rule targeting to avoid unrelated validator noise\n- avoid placeholder defaults that trigger unrelated validation failures\n- startup-route tests may need the staged dist artifact path\n- final recording should capture reusable auth, validation, accessibility, and startup-test rules\n\nDo not preserve:\n- per-run timestamps\n- story IDs\n- implementation-only file lists\n- pass/fail metadata\n- one-off troubleshooting notes that are not reusable"
+        },
+        {
+          "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+          "passed": true,
+          "evidence": "Pass `self-improve` the reusable guidance distilled from `progress.txt`, plus the nearby `AGENTS.md` that should receive the update. Treat `progress.txt` as resume data only; do not copy story-specific details or completion status into guidance.\n\nMine these sections from `progress.txt`:\n- `## Codebase Patterns`\n- every latest story entry, including the final `FINALIZATION` entry\n\nPreserve only reusable learnings:\n- auth/login guidance belongs in one scoped place; do not scatter it\n- preserve existing focus and error behavior when extending auth helpers\n- validate decoded prefixes, not just raw strings\n- reuse shared return-url policy coverage across login and guard paths\n- keep cached read streams separate from fresh-fetch mutation paths\n- compose `aria-describedby` in stable order: helper first, then contextual errors\n- keep time-based assertions range-based to avoid flake\n- use single-rule targeting to avoid unrelated validator noise\n- avoid placeholder defaults that trigger unrelated validation failures\n- startup-route tests may need the staged dist artifact path\n- final recording should capture reusable auth, validation, accessibility, and startup-test rules\n\nDo not preserve:\n- per-run timestamps\n- story IDs\n- implementation-only file lists\n- pass/fail metadata\n- one-off troubleshooting notes that are not reusable"
+        },
+        {
+          "text": "The decision preserves the staged production-artifact startup-test learning.",
+          "passed": true,
+          "evidence": "Pass `self-improve` the reusable guidance distilled from `progress.txt`, plus the nearby `AGENTS.md` that should receive the update. Treat `progress.txt` as resume data only; do not copy story-specific details or completion status into guidance.\n\nMine these sections from `progress.txt`:\n- `## Codebase Patterns`\n- every latest story entry, including the final `FINALIZATION` entry\n\nPreserve only reusable learnings:\n- auth/login guidance belongs in one scoped place; do not scatter it\n- preserve existing focus and error behavior when extending auth helpers\n- validate decoded prefixes, not just raw strings\n- reuse shared return-url policy coverage across login and guard paths\n- keep cached read streams separate from fresh-fetch mutation paths\n- compose `aria-describedby` in stable order: helper first, then contextual errors\n- keep time-based assertions range-based to avoid flake\n- use single-rule targeting to avoid unrelated validator noise\n- avoid placeholder defaults that trigger unrelated validation failures\n- startup-route tests may need the staged dist artifact path\n- final recording should capture reusable auth, validation, accessibility, and startup-test rules\n\nDo not preserve:\n- per-run timestamps\n- story IDs\n- implementation-only file lists\n- pass/fail metadata\n- one-off troubleshooting notes that are not reusable"
+        },
+        {
+          "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+          "passed": true,
+          "evidence": "Pass `self-improve` the reusable guidance distilled from `progress.txt`, plus the nearby `AGENTS.md` that should receive the update. Treat `progress.txt` as resume data only; do not copy story-specific details or completion status into guidance.\n\nMine these sections from `progress.txt`:\n- `## Codebase Patterns`\n- every latest story entry, including the final `FINALIZATION` entry\n\nPreserve only reusable learnings:\n- auth/login guidance belongs in one scoped place; do not scatter it\n- preserve existing focus and error behavior when extending auth helpers\n- validate decoded prefixes, not just raw strings\n- reuse shared return-url policy coverage across login and guard paths\n- keep cached read streams separate from fresh-fetch mutation paths\n- compose `aria-describedby` in stable order: helper first, then contextual errors\n- keep time-based assertions range-based to avoid flake\n- use single-rule targeting to avoid unrelated validator noise\n- avoid placeholder defaults that trigger unrelated validation failures\n- startup-route tests may need the staged dist artifact path\n- final recording should capture reusable auth, validation, accessibility, and startup-test rules\n\nDo not preserve:\n- per-run timestamps\n- story IDs\n- implementation-only file lists\n- pass/fail metadata\n- one-off troubleshooting notes that are not reusable"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 22.42,
+        "stddev": 3.9582,
+        "min": 18.5,
+        "max": 28.8
+      },
+      "tokens": {
+        "mean": 438.2,
+        "stddev": 338.9354,
+        "min": 28,
+        "max": 938
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.866,
+        "stddev": 0.2996,
+        "min": 0.33,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 24.3,
+        "stddev": 5.3306,
+        "min": 16.5,
+        "max": 28.6
+      },
+      "tokens": {
+        "mean": 489.2,
+        "stddev": 502.2676,
+        "min": 28,
+        "max": 1340
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.13",
+      "time_seconds": "-1.9",
+      "tokens": "-51"
+    }
+  },
+  "notes": []
+}

@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision stops because the review-fix iteration limit is reached.",
+      "passed": true,
+      "evidence": "Review-fix iteration limit reached.\n\nContext:\n- Story: story-search-index (Search index stays consistent after deletes)\n- Latest reviewer: review still finds stale document race after latest fix\n- review-fix iteration count: 3\n\nAction (dry-run):\n1. State: review-fix iteration limit reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread prd_file.\n5. Append orchestrator stop-state entry to progress_file (dry-run).\n\nDecision required from user:\nChoose one:\nA) Provide additional context/tests to unblock and allow another review-fix iteration.\nB) Escalate to maintainer for manual resolution.\nC) Declare issue non-blocking and proceed, with justification.\nD) Stop work and leave PRD incomplete.\n\nStop-state recorded in progress_file (dry-run). Awaiting user decision."
+    },
+    {
+      "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+      "passed": true,
+      "evidence": "Review-fix iteration limit reached.\n\nContext:\n- Story: story-search-index (Search index stays consistent after deletes)\n- Latest reviewer: review still finds stale document race after latest fix\n- review-fix iteration count: 3\n\nAction (dry-run):\n1. State: review-fix iteration limit reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread prd_file.\n5. Append orchestrator stop-state entry to progress_file (dry-run).\n\nDecision required from user:\nChoose one:\nA) Provide additional context/tests to unblock and allow another review-fix iteration.\nB) Escalate to maintainer for manual resolution.\nC) Declare issue non-blocking and proceed, with justification.\nD) Stop work and leave PRD incomplete.\n\nStop-state recorded in progress_file (dry-run). Awaiting user decision."
+    },
+    {
+      "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+      "passed": true,
+      "evidence": "Review-fix iteration limit reached.\n\nContext:\n- Story: story-search-index (Search index stays consistent after deletes)\n- Latest reviewer: review still finds stale document race after latest fix\n- review-fix iteration count: 3\n\nAction (dry-run):\n1. State: review-fix iteration limit reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread prd_file.\n5. Append orchestrator stop-state entry to progress_file (dry-run).\n\nDecision required from user:\nChoose one:\nA) Provide additional context/tests to unblock and allow another review-fix iteration.\nB) Escalate to maintainer for manual resolution.\nC) Declare issue non-blocking and proceed, with justification.\nD) Stop work and leave PRD incomplete.\n\nStop-state recorded in progress_file (dry-run). Awaiting user decision."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 807,
+    "transcript_chars": 135499
+  },
+  "timing": {
+    "executor_duration_seconds": 33.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 33.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

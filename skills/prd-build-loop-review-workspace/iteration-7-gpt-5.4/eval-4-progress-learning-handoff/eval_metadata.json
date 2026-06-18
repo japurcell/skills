@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "progress-learning-handoff",
+  "prompt": "Use skill under test in dry-run mode for `evals/files/progress-learning-fixture/`. User says: `Finish PRD finalization and record durable guidance from progress.` Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` describing what the orchestrator must pass to `self-improve`, which progress-file sections it must mine, and which kinds of reusable learnings it must preserve.",
+  "assertions": [
+    "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+    "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+    "The decision preserves the staged production-artifact startup-test learning.",
+    "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes."
+  ]
+}

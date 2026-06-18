@@ -51,6 +51,15 @@ Poor examples:
 - The repository has a README.
 - Remember to be careful.
 
+## Work-Artifact Mining
+
+When session logs, handoff notes, or similar work artifacts exist, mine more than the summary:
+
+- Read the summary and the detailed learning sections.
+- Keep reusable rules from patterns, gotchas, or useful context when they explain future coding, testing, validation, or environment behavior.
+- Good examples: test-framework constraints, validation rules that prevent false negatives, stable cache or replay fix shapes, anti-flake assertion tactics, and setup needed to reach production-only branches in tests.
+- Poor examples: story IDs, temporary blockers, one-off filenames, or "this specific test failed once."
+
 ## Refactor Judgment Guide
 
 Refactor when the current structure makes future behavior worse.
