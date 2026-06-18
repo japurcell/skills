@@ -1,0 +1,11 @@
+PROJECT CONTEXT:
+- Goal: Fix login timeout in `src/auth_service.py` so web sessions expire after 15 minutes of inactivity, matching spec and existing unit test.
+- Stack: Python
+- Rules checked: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`
+- Rules loaded: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`
+- Unavailable: none
+- Spec: `docs/spec.md` says: "Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity."
+- Constraints: Prefer unit tests before code changes. Use Python for edits in this fixture repo and read target files before changing them. Use smallest relevant error or log slice. Always load repo rules before planning work. Find one real example before editing a target file.
+- Files: `src/auth_service.py`, `tests/test_auth_service.py`
+- Pattern: `src/session_service.py` sets `DEFAULT_TIMEOUT_MINUTES = 15` and returns that value from `build_session()`.
+- Gotchas: Fixture benchmark only; do not edit fixture repo files. Current implementation returns 60, while spec, unit test, and sibling example all point to 15. Spec is about inactivity timeout, not absolute lifetime.

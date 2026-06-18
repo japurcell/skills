@@ -1,0 +1,102 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Add a notification center with unread state and filtering.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Persisting notification read state",
+      "description": "As a user, I want notification read state stored so that it persists across sessions.",
+      "acceptanceCriteria": [
+        "Read and unread state is stored for each notification.",
+        "State survives reloads and new sessions.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/notification-store.ts",
+        "src/notifications/notification-model.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Updating notification read state",
+      "description": "As a user, I want to mark notifications read or unread so that I can manage what still needs attention.",
+      "acceptanceCriteria": [
+        "Notifications can be marked read and unread.",
+        "State changes persist for the selected notification.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/read-state-actions.ts",
+        "src/notifications/notification-service.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Showing notification badge and list",
+      "description": "As a user, I want an unread badge and notification list so that I can see what needs attention.",
+      "acceptanceCriteria": [
+        "Unread badge reflects the count of unread notifications.",
+        "Notification list opens and shows stored notifications.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/notification-center.tsx",
+        "src/notifications/unread-badge.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Filtering notifications by read state",
+      "description": "As a user, I want to filter notifications by read state so that I can focus on unread work.",
+      "acceptanceCriteria": [
+        "Filter options include all, unread, and read.",
+        "Changing the filter updates visible notifications without altering stored state.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/read-state-filter.tsx",
+        "src/notifications/notification-center.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Clearing read notifications",
+      "description": "As a user, I want to clear all read notifications so that the list stays focused on active items.",
+      "acceptanceCriteria": [
+        "Clearing read notifications removes only read items.",
+        "Unread notifications remain after the action completes.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/clear-read.ts",
+        "src/notifications/notification-service.ts"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

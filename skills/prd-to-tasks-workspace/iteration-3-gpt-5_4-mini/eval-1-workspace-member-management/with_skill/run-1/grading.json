@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The output is saved to outputs/generated/prd.json.",
+      "passed": false,
+      "evidence": "missing outputs/generated/prd.json"
+    },
+    {
+      "text": "branchName is derived from the feature title.",
+      "passed": false,
+      "evidence": "missing outputs/generated/prd.json"
+    },
+    {
+      "text": "The stories separately cover invite, role change, revoke access, and audit-log or audit-view work.",
+      "passed": false,
+      "evidence": "missing outputs/generated/prd.json"
+    },
+    {
+      "text": "No story title is a horizontal layer split such as build backend or build frontend.",
+      "passed": true,
+      "evidence": "missing outputs/generated/prd.json"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 3,
+    "total": 4,
+    "pass_rate": 0.25
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 0,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0014853940010652877,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0014853940010652877
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

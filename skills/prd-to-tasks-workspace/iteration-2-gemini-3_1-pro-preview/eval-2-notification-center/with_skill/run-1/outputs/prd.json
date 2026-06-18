@@ -1,0 +1,162 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Users need a notification center where they can see unread badges, open a notification list, mark notifications read or unread, filter by read state, and clear all read notifications. Store read state so it persists across sessions.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add notification schema with read state",
+      "description": "As a developer, I want to add schema for notifications that persists read state across sessions.",
+      "acceptanceCriteria": [
+        "Add schema for notifications with boolean read state",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/db/schema.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add shared types for notifications",
+      "description": "As a developer, I want to define types for notifications.",
+      "acceptanceCriteria": [
+        "Define notification type with read state",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/types/notification.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add backend action to fetch notifications",
+      "description": "As a user, I want the backend to return my notifications.",
+      "acceptanceCriteria": [
+        "Backend endpoint returns list of notifications",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/actions/notifications.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add UI for notification list and badge",
+      "description": "As a user, I want to see an unread badge and open my notification list.",
+      "acceptanceCriteria": [
+        "UI includes unread badge based on fetch data",
+        "Clicking badge opens notification list",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/NotificationCenter.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add backend action to toggle read state",
+      "description": "As a user, I want the backend to support marking notifications read or unread.",
+      "acceptanceCriteria": [
+        "Backend endpoint updates read state",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/actions/notifications.ts"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add UI to mark notifications read/unread",
+      "description": "As a user, I want to toggle read state from the notification list.",
+      "acceptanceCriteria": [
+        "Notification list items have read/unread toggle control",
+        "Toggling calls the backend action",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/NotificationList.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Add UI to filter by read state",
+      "description": "As a user, I want to filter my notification list to see only unread items.",
+      "acceptanceCriteria": [
+        "Notification list includes filter control for read state",
+        "List updates when filter is applied",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/NotificationList.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Add backend action to clear read notifications",
+      "description": "As a user, I want the backend to support clearing all read notifications.",
+      "acceptanceCriteria": [
+        "Backend endpoint deletes or archives read notifications",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/actions/notifications.ts"
+      ],
+      "designGuidance": [],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Add UI to clear read notifications",
+      "description": "As a user, I want a button to clear all my read notifications.",
+      "acceptanceCriteria": [
+        "Notification list includes a button to clear read items",
+        "Clicking button calls backend action",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/NotificationCenter.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

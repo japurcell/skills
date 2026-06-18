@@ -1,0 +1,105 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Let admins manage workspace membership and review audit history.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add membership change audit persistence",
+      "description": "As a system administrator, I want membership changes recorded in durable storage so that invite, role, and revoke actions can be reviewed later.",
+      "acceptanceCriteria": [
+        "Workspace membership change events are stored with actor, target member, action, and timestamp fields",
+        "Audit storage accepts invite, role-change, and revoke event types",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/schema/workspace_audit.sql",
+        "src/server/workspaces/auditRepository.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Invite workspace members by email",
+      "description": "As a workspace admin, I want to invite a member by email from workspace settings so that I can grant access without editing the database directly.",
+      "acceptanceCriteria": [
+        "Workspace settings include an invite flow that accepts an email address",
+        "Submitting a valid invite creates pending membership access for the selected workspace",
+        "The invite action records an audit event",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/server/workspaces/inviteMember.ts",
+        "src/ui/workspaces/InviteMemberForm.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Change workspace member roles",
+      "description": "As a workspace admin, I want to change a member role between viewer, editor, and admin so that access matches current responsibilities.",
+      "acceptanceCriteria": [
+        "Workspace settings expose role choices for viewer, editor, and admin",
+        "Changing a role persists the new role and updates the member list display",
+        "The role-change action records an audit event",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/server/workspaces/updateMemberRole.ts",
+        "src/ui/workspaces/WorkspaceMembersTable.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Revoke workspace access",
+      "description": "As a workspace admin, I want to revoke member access so that former members cannot continue using the workspace.",
+      "acceptanceCriteria": [
+        "Workspace settings provide a revoke action for each current member",
+        "Revoking access removes the member from active workspace access lists",
+        "The revoke action records an audit event",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/server/workspaces/revokeMemberAccess.ts",
+        "src/ui/workspaces/WorkspaceMembersTable.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Review recent membership changes in settings",
+      "description": "As a workspace admin, I want to review recent membership changes on the settings page so that I can confirm who changed access and when.",
+      "acceptanceCriteria": [
+        "Workspace settings show a recent membership activity view sourced from audit events",
+        "The view includes invite, role-change, and revoke entries with actor and timestamp details",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/server/workspaces/listMembershipAuditEvents.ts",
+        "src/ui/workspaces/MembershipAuditLog.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

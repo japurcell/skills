@@ -1,0 +1,102 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Add task statuses for pending, in progress, and done work.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Adding task status storage",
+      "description": "As a product user, I want each task to store a status so that work can be tracked consistently.",
+      "acceptanceCriteria": [
+        "Task records persist a status field with allowed values pending, in-progress, and done.",
+        "Existing tasks without a stored status resolve to pending.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/tasks/task-schema.ts",
+        "src/tasks/task-model.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Updating task status from the list",
+      "description": "As a product user, I want to change a task status from the task list so that progress stays current.",
+      "acceptanceCriteria": [
+        "Changing a task status persists the selected value.",
+        "Invalid status values are rejected.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/tasks/task-actions.ts",
+        "src/tasks/task-service.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Showing task status badges",
+      "description": "As a product user, I want task cards to show the current status badge so that I can scan work state quickly.",
+      "acceptanceCriteria": [
+        "Task cards render the current status badge for pending, in-progress, and done.",
+        "Badge text matches the stored status.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/tasks/task-badges.tsx",
+        "src/tasks/task-card.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Adding task status controls",
+      "description": "As a product user, I want status controls in the task list so that I can change work state without leaving the list.",
+      "acceptanceCriteria": [
+        "The task list exposes controls for pending, in-progress, and done.",
+        "Selecting a control updates the task status.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/tasks/task-list.tsx",
+        "src/tasks/task-status-control.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Filtering tasks by status",
+      "description": "As a product user, I want to filter the task list by status so that I can focus on one work state at a time.",
+      "acceptanceCriteria": [
+        "The list can filter to pending, in-progress, done, or all tasks.",
+        "Filter state updates the visible task set without changing stored statuses.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/tasks/task-filters.tsx",
+        "src/tasks/task-list.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

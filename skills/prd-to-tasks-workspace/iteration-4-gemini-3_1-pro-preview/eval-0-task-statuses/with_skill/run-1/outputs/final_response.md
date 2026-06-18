@@ -1,0 +1,1 @@
+Created 5 stories in `outputs/prd.json`. The feature has been broken down into atomic stories covering schema, backend updates, badge display, status controls, and filtering, and is ready for `/prd-build-loop`.

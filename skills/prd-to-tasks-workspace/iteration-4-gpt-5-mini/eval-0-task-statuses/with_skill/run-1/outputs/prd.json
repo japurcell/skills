@@ -1,0 +1,62 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Add task statuses with schema, backend, and UI support",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add status column to tasks table with default 'pending'",
+      "description": "As a user, I want each task to have a status so that work state is tracked.",
+      "acceptanceCriteria": ["Add non-null status column with default 'pending'", "Migration applied without data loss", "Typecheck passes"],
+      "filesLikelyTouched": ["db/migrations/", "src/models/task.ts"],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add backend action to update task status",
+      "description": "As a user, I want to change a task's status so that the system records progress.",
+      "acceptanceCriteria": ["Add API or server action to update status", "Validation for allowed status values (pending,in_progress,done)", "Tests pass", "Typecheck passes"],
+      "filesLikelyTouched": ["src/services/taskService.ts", "src/routes/tasks.ts"],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Show status badge on task cards",
+      "description": "As a user, I want to see a badge on each task card showing current status so I can scan progress.",
+      "acceptanceCriteria": ["Badge displays pending/in_progress/done", "Badge color differs by status", "Verify in browser using playwright-cli skill", "Typecheck passes"],
+      "filesLikelyTouched": ["src/components/TaskCard.tsx", "src/styles/task.css"],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add status control to task rows for inline edits",
+      "description": "As a user, I want a control in task row to change status so I can update quickly from list.",
+      "acceptanceCriteria": ["Inline control updates status via backend action", "Optimistic UI or loading indicator", "Verify in browser using playwright-cli skill", "Typecheck passes"],
+      "filesLikelyTouched": ["src/components/TaskRow.tsx", "src/hooks/useTaskActions.ts"],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add status filter to task list",
+      "description": "As a user, I want to filter the task list by status so I can focus on specific work state.",
+      "acceptanceCriteria": ["Filter options: All, Pending, In Progress, Done", "Filter persists per session or via query params", "Verify in browser using playwright-cli skill", "Typecheck passes"],
+      "filesLikelyTouched": ["src/pages/TaskList.tsx", "src/components/StatusFilter.tsx"],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Add notification center with badges, list, read/unread state, filtering, and persistence.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add notifications schema and persistence",
+      "description": "As a user, I want notifications stored so read state persists across sessions.",
+      "acceptanceCriteria": [
+        "Add notifications table with read flag and timestamp",
+        "Migrations apply and existing data unaffected",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["db/migrations/xxxx_create_notifications.sql", "src/models/notification.ts"],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Backend API to fetch and update notifications",
+      "description": "As a user, I want APIs to fetch notifications, mark read/unread, and clear read notifications.",
+      "acceptanceCriteria": [
+        "List endpoint returns notifications with read state",
+        "Endpoints to mark read/unread and clear read notifications",
+        "Tests for server behavior pass",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/routes/notifications.ts", "src/services/notificationService.ts"],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Show unread badge in header",
+      "description": "As a user, I want an unread badge on header icon so I know there are new notifications.",
+      "acceptanceCriteria": [
+        "Header shows unread count badge when unread > 0",
+        "Badge updates after marking notifications read",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/components/Header.tsx", "src/components/NotificationBadge.tsx"],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Notification list UI with filters",
+      "description": "As a user, I want to open a notification list and filter by read/unread state.",
+      "acceptanceCriteria": [
+        "List UI shows notifications, supports filter All/Unread/Read",
+        "Infinite scroll or pagination for long lists",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/pages/NotificationsPage.tsx", "src/components/NotificationList.tsx"],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Mark notification read/unread",
+      "description": "As a user, I want to mark notifications read or unread so my read state is accurate.",
+      "acceptanceCriteria": [
+        "Tapping mark read/unread calls backend and updates UI immediately",
+        "Unread badge and counts update correctly",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/components/NotificationItem.tsx", "src/services/notificationService.ts"],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Clear all read notifications",
+      "description": "As a user, I want to clear all read notifications to reduce clutter.",
+      "acceptanceCriteria": [
+        "Add Clear All Read action that removes read notifications",
+        "Action confirms before destructive clear",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/pages/NotificationsPage.tsx", "src/services/notificationService.ts"],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

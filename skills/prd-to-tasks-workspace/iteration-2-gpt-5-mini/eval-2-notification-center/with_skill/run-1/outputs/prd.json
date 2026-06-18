@@ -1,0 +1,84 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Notification center with unread badges, list, read-state, filtering, and clearing read notifications",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Persist notification read state",
+      "description": "As a user, read/unread state persists across sessions so notifications stay consistent.",
+      "acceptanceCriteria": [
+        "Store read state server-side or in persisted store",
+        "Read state survives logout/login",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/services/notificationService.ts", "db/migrations/XXXX_notifications_read_state.sql"],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Show unread badge and notification list UI",
+      "description": "As a user, see unread badge and open list of notifications so I can inspect messages.",
+      "acceptanceCriteria": [
+        "Badge shows unread count",
+        "Notification list opens and displays items",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/ui/NotificationBell.tsx", "src/ui/NotificationList.tsx"],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Mark notification read/unread",
+      "description": "As a user, mark single notifications read or unread so I track what I have handled.",
+      "acceptanceCriteria": [
+        "Toggle read state via API",
+        "UI reflects change immediately",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/services/notificationService.ts", "src/ui/NotificationList.tsx"],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Filter notifications by read state",
+      "description": "As a user, filter notifications to show All, Unread, or Read so I focus on relevant items.",
+      "acceptanceCriteria": [
+        "Add filter control and apply server or client-side filter",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/ui/NotificationList.tsx"],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Clear all read notifications",
+      "description": "As a user, clear all read notifications to declutter my list.",
+      "acceptanceCriteria": [
+        "Action removes read notifications from list",
+        "Server-side action eventually cleans storage",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/services/notificationService.ts", "src/ui/NotificationList.tsx"],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

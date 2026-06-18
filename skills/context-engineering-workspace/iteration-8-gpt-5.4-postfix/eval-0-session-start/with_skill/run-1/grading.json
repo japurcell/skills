@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `PROJECT CONTEXT` block.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix login timeout in `src/auth_service.py` so it matches spec.\n- Stack: Python\n- Rules checked: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`\n- Rules loaded: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`\n- Unavailable: none\n- Spec: `docs/spec.md` says: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\"\n- Constraints: Read target files before editing; prefer unit tests before code changes; use smallest relevant error/log slice; find one real example before editing target file; repo is benchmark fixture data, so stay grounded in files read.\n- Files: `docs/spec.md`, `src/auth_service.py`, `tests/test_auth_service.py`\n- Pattern: `src/session_service.py` sets `DEFAULT_TIMEOUT_MINUTES = 15` and returns that value from `build_session()`.\n- Gotchas: Fixture repo content under `evals/files/session-start-fixture/` is benchmark data; current target code returns `60`, while spec, test, and sibling example all point to `15`.\n"
+    },
+    {
+      "text": "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and names every present rules file: `.github/copilot-instructions.md`, `AGENTS.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix login timeout in `src/auth_service.py` so it matches spec.\n- Stack: Python\n- Rules checked: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`\n- Rules loaded: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`\n- Unavailable: none\n- Spec: `docs/spec.md` says: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\"\n- Constraints: Read target files before editing; prefer unit tests before code changes; use smallest relevant error/log slice; find one real example before editing target file; repo is benchmark fixture data, so stay grounded in files read.\n- Files: `docs/spec.md`, `src/auth_service.py`, `tests/test_auth_service.py`\n- Pattern: `src/session_service.py` sets `DEFAULT_TIMEOUT_MINUTES = 15` and returns that value from `build_session()`.\n- Gotchas: Fixture repo content under `evals/files/session-start-fixture/` is benchmark data; current target code returns `60`, while spec, test, and sibling example all point to `15`.\n"
+    },
+    {
+      "text": "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections such as billing exports.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix login timeout in `src/auth_service.py` so it matches spec.\n- Stack: Python\n- Rules checked: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`\n- Rules loaded: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`\n- Unavailable: none\n- Spec: `docs/spec.md` says: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\"\n- Constraints: Read target files before editing; prefer unit tests before code changes; use smallest relevant error/log slice; find one real example before editing target file; repo is benchmark fixture data, so stay grounded in files read.\n- Files: `docs/spec.md`, `src/auth_service.py`, `tests/test_auth_service.py`\n- Pattern: `src/session_service.py` sets `DEFAULT_TIMEOUT_MINUTES = 15` and returns that value from `build_session()`.\n- Gotchas: Fixture repo content under `evals/files/session-start-fixture/` is benchmark data; current target code returns `60`, while spec, test, and sibling example all point to `15`.\n"
+    },
+    {
+      "text": "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix login timeout in `src/auth_service.py` so it matches spec.\n- Stack: Python\n- Rules checked: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`\n- Rules loaded: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`\n- Unavailable: none\n- Spec: `docs/spec.md` says: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\"\n- Constraints: Read target files before editing; prefer unit tests before code changes; use smallest relevant error/log slice; find one real example before editing target file; repo is benchmark fixture data, so stay grounded in files read.\n- Files: `docs/spec.md`, `src/auth_service.py`, `tests/test_auth_service.py`\n- Pattern: `src/session_service.py` sets `DEFAULT_TIMEOUT_MINUTES = 15` and returns that value from `build_session()`.\n- Gotchas: Fixture repo content under `evals/files/session-start-fixture/` is benchmark data; current target code returns `60`, while spec, test, and sibling example all point to `15`.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 4367,
+    "transcript_chars": 171340
+  },
+  "timing": {
+    "executor_duration_seconds": 43.9,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 43.9
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

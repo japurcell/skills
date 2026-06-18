@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The output is saved to outputs/generated/prd.json.",
+      "passed": true,
+      "evidence": "/home/adam/dev/personal/skills/skills/prd-to-tasks-workspace/iteration-3-gpt-5-mini/eval-1-workspace-member-management/with_skill/run-1/outputs/generated/prd.json"
+    },
+    {
+      "text": "branchName is derived from the feature title.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Workspace\",\n  \"branchName\": \"workspace-member-management\",\n  \"description\": \"Manage workspace membership: invite, change roles, revoke access, audit log.\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"Invite member by email\",\n      \"description\": \"As admin, invite a member by email so they receive onboarding link.\",\n      \"acceptanceCriteria\": [\n        \"Invite endpoint validates email and creates pending member record\",\n        \"Invite sends email with invite link\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [\n        \"src/api/invites.py\",\n        \"src/services/membership.py\"\n      ],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"Change member role\",\n      \"description\": \"As admin, change a member's role between viewer, editor, admin.\",\n      \"acceptanceCriteria\": [\n        \"Role change endpoint updates role and enforces permissions\",\n        \"Role change recorded in audit log\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [\n        \"src/api/members.py\",\n        \"src/services/permissions.py\"\n      ],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"Revoke workspace access\",\n      \"description\": \"As admin, revoke a member's access immediately.\",\n      \"acceptanceCriteria\": [\n        \"Revoke endpoint disables access and invalidates sessions/tokens\",\n        \"Revoke recorded in audit log\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [\n        \"src/api/members.py\",\n        \"src/services/session_manager.py\"\n      ],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-004\",\n      \"title\": \"Record membership changes in audit log and surface recent changes\",\n      \"description\": \"As admin, see recent membership changes in workspace settings page with audit details.\",\n      \"acceptanceCriteria\": [\n        \"Membership changes (invite, role change, revoke) are persisted in audit log\",\n        \"Workspace settings page lists recent membership changes with timestamp and actor\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [\n        \"src/services/audit.py\",\n        \"src/ui/pages/workspaceSettings.tsx\"\n      ],\n      \"designGuidance\": [],\n      \"priority\": 4,\n      \"passes\": false,\n      \"notes\": \"\"\n    }\n  ]\n}"
+    },
+    {
+      "text": "The stories separately cover invite, role change, revoke access, and audit-log or audit-view work.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Workspace\",\n  \"branchName\": \"workspace-member-management\",\n  \"description\": \"Manage workspace membership: invite, change roles, revoke access, audit log.\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"Invite member by email\",\n      \"description\": \"As admin, invite a member by email so they receive onboarding link.\",\n      \"acceptanceCriteria\": [\n        \"Invite endpoint validates email and creates pending member record\",\n        \"Invite sends email with invite link\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [\"src/api/invites.py\", \"src/services/membership.py\"],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"Change member role\",\n      \"description\": \"As admin, change a member's role between viewer, editor, admin.\",\n      \"acceptanceCriteria\": [\n        \"Role change endpoint updates role and enforces permissions\",\n        \"Role change recorded in audit log\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [\"src/api/members.py\", \"src/services/permissions.py\"],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"Revoke workspace access\",\n      \"description\": \"As admin, revoke a member's access immediately.\",\n      \"acceptanceCriteria\": [\n        \"Revoke endpoint disables access and invalidates sessions/tokens\",\n        \"Revoke recorded in audit log\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [\"src/api/members.py\", \"src/services/session_manager.py\"],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-004\",\n      \"title\": \"Record membership changes in audit log and surface recent changes\",\n      \"description\": \"As admin, see recent membership changes in workspace settings page with audit details.\",\n      \"acceptanceCriteria\": [\n        \"Membership changes (invite, role change, revoke) are persisted in audit log\",\n        \"Workspace settings page lists recent membership changes with timestamp and actor\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [\"src/services/audit.py\", \"src/ui/pages/workspaceSettings.tsx\"],\n      \"designGuidance\": [],\n      \"priority\": 4,\n      \"passes\": false,\n      \"notes\": \"\"\n    }\n  ]\n}\n"
+    },
+    {
+      "text": "No story title is a horizontal layer split such as build backend or build frontend.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Workspace\",\n  \"branchName\": \"workspace-member-management\",\n  \"description\": \"Manage workspace membership: invite, change roles, revoke access, audit log.\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"Invite member by email\",\n      \"description\": \"As admin, invite a member by email so they receive onboarding link.\",\n      \"acceptanceCriteria\": [\n        \"Invite endpoint validates email and creates pending member record\",\n        \"Invite sends email with invite link\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [\"src/api/invites.py\", \"src/services/membership.py\"],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"Change member role\",\n      \"description\": \"As admin, change a member's role between viewer, editor, admin.\",\n      \"acceptanceCriteria\": [\n        \"Role change endpoint updates role and enforces permissions\",\n        \"Role change recorded in audit log\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [\"src/api/members.py\", \"src/services/permissions.py\"],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"Revoke workspace access\",\n      \"description\": \"As admin, revoke a member's access immediately.\",\n      \"acceptanceCriteria\": [\n        \"Revoke endpoint disables access and invalidates sessions/tokens\",\n        \"Revoke recorded in audit log\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [\"src/api/members.py\", \"src/services/session_manager.py\"],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-004\",\n      \"title\": \"Record membership changes in audit log and surface recent changes\",\n      \"description\": \"As admin, see recent membership changes in workspace settings page with audit details.\",\n      \"acceptanceCriteria\": [\n        \"Membership changes (invite, role change, revoke) are persisted in audit log\",\n        \"Workspace settings page lists recent membership changes with timestamp and actor\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [\"src/services/audit.py\", \"src/ui/pages/workspaceSettings.tsx\"],\n      \"designGuidance\": [],\n      \"priority\": 4,\n      \"passes\": false,\n      \"notes\": \"\"\n    }\n  ]\n}\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2508,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 19.337,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 19.337
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `CONFUSION` block.",
+      "passed": true,
+      "evidence": "CONFUSION:\n- Rules say: AGENTS.md requires asking for approval before changing financial behavior.\n- Spec says: docs/spec.md requires \"round half up\" (round halves up).\n- Code says: src/invoice_math.py currently implements rounding away from zero (not bankers rounding).\n- Missing: explicit stakeholder approval to change invoice rounding to bankers rounding (round-half-to-even) and explicit precedence decision.\nOptions:\nA) Update code to bankers rounding (round half to even) \u2014 requires explicit approval per AGENTS.md.\nB) Keep current implementation (away-from-zero) \u2014 preserves code but conflicts with spec.\nC) Ask before proceeding (follows AGENTS.md; recommended).\nWhich should I follow?\n"
+    },
+    {
+      "text": "The output has `Rules say`, `Spec says`, `Code says`, and `Missing` lines.",
+      "passed": true,
+      "evidence": "CONFUSION:\n- Rules say: AGENTS.md requires asking for approval before changing financial behavior.\n- Spec says: docs/spec.md requires \"round half up\" (round halves up).\n- Code says: src/invoice_math.py currently implements rounding away from zero (not bankers rounding).\n- Missing: explicit stakeholder approval to change invoice rounding to bankers rounding (round-half-to-even) and explicit precedence decision.\nOptions:\nA) Update code to bankers rounding (round half to even) \u2014 requires explicit approval per AGENTS.md.\nB) Keep current implementation (away-from-zero) \u2014 preserves code but conflicts with spec.\nC) Ask before proceeding (follows AGENTS.md; recommended).\nWhich should I follow?\n"
+    },
+    {
+      "text": "The output includes options A, B, and C and ends by asking which path to follow.",
+      "passed": true,
+      "evidence": "CONFUSION:\n- Rules say: AGENTS.md requires asking for approval before changing financial behavior.\n- Spec says: docs/spec.md requires \"round half up\" (round halves up).\n- Code says: src/invoice_math.py currently implements rounding away from zero (not bankers rounding).\n- Missing: explicit stakeholder approval to change invoice rounding to bankers rounding (round-half-to-even) and explicit precedence decision.\nOptions:\nA) Update code to bankers rounding (round half to even) \u2014 requires explicit approval per AGENTS.md.\nB) Keep current implementation (away-from-zero) \u2014 preserves code but conflicts with spec.\nC) Ask before proceeding (follows AGENTS.md; recommended).\nWhich should I follow?\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1806,
+    "transcript_chars": 107930
+  },
+  "timing": {
+    "executor_duration_seconds": 79.8,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 79.8
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "total_tokens": 144,
+  "duration_ms": 61465,
+  "total_duration_seconds": 61.5,
+  "api_duration_ms": 56763,
+  "executor_model": "gpt-5.4",
+  "token_measure": "output_tokens_only",
+  "exit_code": 0
+}

@@ -1,0 +1,101 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Let workspace admins manage members and inspect membership activity.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Recording membership audit data",
+      "description": "As an admin, I want membership changes recorded so the workspace keeps an audit trail.",
+      "acceptanceCriteria": [
+        "Membership changes create audit records",
+        "Audit records include action, actor, target, and timestamp",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/workspace/audit-log.ts",
+        "src/workspace/migrations/*"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Inviting workspace members",
+      "description": "As an admin, I want to invite members by email so I can add people without database edits.",
+      "acceptanceCriteria": [
+        "Admin can submit an invite by email",
+        "Invite creates a pending or active membership record",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/workspace/invite-member.ts",
+        "src/workspace/components/invite-member-form.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Changing member roles",
+      "description": "As an admin, I want to change a member role so I can adjust access from viewer to editor or admin.",
+      "acceptanceCriteria": [
+        "Role changes persist the selected role",
+        "Allowed roles are viewer, editor, and admin",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/workspace/change-member-role.ts",
+        "src/workspace/components/member-role-select.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Revoking workspace access",
+      "description": "As an admin, I want to revoke a member so I can remove access when needed.",
+      "acceptanceCriteria": [
+        "Revoking access removes or disables the member in the workspace",
+        "Revocation is recorded in the audit trail",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/workspace/revoke-member-access.ts",
+        "src/workspace/components/revoke-access-button.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Viewing membership audit history",
+      "description": "As an admin, I want to review recent membership changes so I can see who changed access.",
+      "acceptanceCriteria": [
+        "Settings page shows recent membership audit entries",
+        "Audit view includes invite, role change, and revoke events",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/workspace/audit-view.tsx",
+        "src/workspace/settings/page.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

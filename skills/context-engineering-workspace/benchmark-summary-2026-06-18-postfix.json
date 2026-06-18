@@ -1,0 +1,49 @@
+{
+  "models": [
+    {
+      "model": "gpt-5.4",
+      "iteration": "iteration-8-gpt-5.4-postfix",
+      "with_skill_pass_rate": 1.0,
+      "old_skill_pass_rate": 1.0,
+      "delta_pass_rate": "+0.00",
+      "delta_time_seconds": "-12.0",
+      "delta_tokens": "+376"
+    },
+    {
+      "model": "gpt-5.4-mini",
+      "iteration": "iteration-9-gpt-5.4-mini-postfix",
+      "with_skill_pass_rate": 1.0,
+      "old_skill_pass_rate": 1.0,
+      "delta_pass_rate": "+0.00",
+      "delta_time_seconds": "-8.4",
+      "delta_tokens": "+68"
+    },
+    {
+      "model": "gpt-5.3-codex",
+      "iteration": "iteration-10-gpt-5.3-codex-postfix",
+      "with_skill_pass_rate": 1.0,
+      "old_skill_pass_rate": 0.9375,
+      "delta_pass_rate": "+0.06",
+      "delta_time_seconds": "+14.1",
+      "delta_tokens": "+991"
+    },
+    {
+      "model": "gemini-3.1-pro-preview",
+      "iteration": "iteration-11-gemini-3.1-pro-preview-postfix",
+      "with_skill_pass_rate": 0.9375,
+      "old_skill_pass_rate": 0.875,
+      "delta_pass_rate": "+0.06",
+      "delta_time_seconds": "-21.4",
+      "delta_tokens": "+1148"
+    },
+    {
+      "model": "gpt-5-mini",
+      "iteration": "iteration-12-gpt-5-mini-postfix",
+      "with_skill_pass_rate": 0.825,
+      "old_skill_pass_rate": 0.8875,
+      "delta_pass_rate": "-0.06",
+      "delta_time_seconds": "+8.3",
+      "delta_tokens": "+207"
+    }
+  ]
+}

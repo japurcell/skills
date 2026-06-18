@@ -1,0 +1,116 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Users need a notification center where they can see unread badges, open a notification list, mark notifications read or unread, filter by read state, and clear all read notifications. Store read state so it persists across sessions.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add schema for notification read state",
+      "description": "As a developer, I want a schema to store notification read state so it persists across sessions.",
+      "acceptanceCriteria": [
+        "Database schema includes read state for notifications",
+        "Default is unread",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add backend actions for read state updates",
+      "description": "As a developer, I want backend actions to mark notifications as read, unread, and clear all read notifications.",
+      "acceptanceCriteria": [
+        "Backend action to mark notification as read",
+        "Backend action to mark notification as unread",
+        "Backend action to clear all read notifications",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add notification unread badge UI",
+      "description": "As a user, I want to see a badge indicating unread notifications.",
+      "acceptanceCriteria": [
+        "Badge shows number of unread notifications",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add notification list UI",
+      "description": "As a user, I want to open a notification list to see my notifications.",
+      "acceptanceCriteria": [
+        "Notification list UI displays notifications",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add read/unread toggle controls in notification list",
+      "description": "As a user, I want to mark notifications as read or unread from the list.",
+      "acceptanceCriteria": [
+        "UI controls to toggle read/unread state",
+        "Action updates backend and UI",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add filter for read state in notification list",
+      "description": "As a user, I want to filter my notifications by read state.",
+      "acceptanceCriteria": [
+        "Filter UI allows selecting read or unread",
+        "List updates to show matching notifications",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Add clear all read notifications button",
+      "description": "As a user, I want a button to clear all my read notifications.",
+      "acceptanceCriteria": [
+        "Button to clear read notifications is visible",
+        "Clicking triggers the backend clear action and updates list",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

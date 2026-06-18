@@ -1,0 +1,121 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Add task status tracking, editing, badges, and filtering.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add task status persistence with pending default",
+      "description": "As a product team member, I want each task to persist a status value so that workflow progress is tracked reliably.",
+      "acceptanceCriteria": [
+        "Tasks storage includes a status field with allowed values pending, in_progress, and done",
+        "Existing tasks are backfilled or default to pending",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/db/migrations/*add-task-status*",
+        "src/db/schema/tasks.*"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Define shared task status model contract",
+      "description": "As an engineer, I want one shared task-status type so that API handlers and UI components use consistent status values.",
+      "acceptanceCriteria": [
+        "A shared TaskStatus type or enum is defined and exported",
+        "Task read/write paths use the shared TaskStatus contract",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/types/task.*",
+        "src/models/task.*"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Implement task status update operation",
+      "description": "As a user, I want to update a task status from supported values so that I can keep task progress current.",
+      "acceptanceCriteria": [
+        "A backend action or endpoint updates task status by task id",
+        "Invalid status values are rejected with a validation error",
+        "Updated status is returned to callers",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/tasks/*",
+        "src/api/tasks/*"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Show task status badge on task cards",
+      "description": "As a user, I want each task card to show a status badge so that I can scan progress quickly.",
+      "acceptanceCriteria": [
+        "Task cards render a visible badge for pending, in progress, and done states",
+        "Badge text updates when task status changes",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/task-card.*",
+        "src/components/status-badge.*"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add status control in task list rows",
+      "description": "As a user, I want to change status directly in the task list so that I can update progress without leaving the list.",
+      "acceptanceCriteria": [
+        "Each task row includes a status control with pending, in progress, and done options",
+        "Changing status triggers the status update operation and refreshes row state",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/task-list-row.*",
+        "src/components/task-status-select.*"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Filter task list by status",
+      "description": "As a user, I want to filter tasks by status so that I can focus on pending, in-progress, or completed work.",
+      "acceptanceCriteria": [
+        "Task list includes filter options All, Pending, In Progress, and Done",
+        "Selecting a filter updates visible rows to matching statuses",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/task-list-filter.*",
+        "src/pages/tasks/*"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

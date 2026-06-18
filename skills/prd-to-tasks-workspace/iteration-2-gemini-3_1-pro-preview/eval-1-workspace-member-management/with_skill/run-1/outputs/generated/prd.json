@@ -1,0 +1,183 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Workspace admins need to manage membership without editing the database directly.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add audit log schema",
+      "description": "As a developer, I want to add an audit log schema so membership changes can be recorded.",
+      "acceptanceCriteria": [
+        "Add audit log table/schema",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/db/schema.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add shared types for member management",
+      "description": "As a developer, I want to define types for member roles and audit logs.",
+      "acceptanceCriteria": [
+        "Define member role enum (viewer, editor, admin)",
+        "Define audit log type",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/types/member.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add backend action to invite members",
+      "description": "As an admin, I want the backend to support inviting members by email, recording this in the audit log.",
+      "acceptanceCriteria": [
+        "Backend endpoint handles email invitations",
+        "Membership change is recorded in audit log",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/actions/members.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add UI to invite members",
+      "description": "As an admin, I want a UI to invite new members by email.",
+      "acceptanceCriteria": [
+        "UI includes a form to invite members by email",
+        "Form submission calls the invite backend action",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/MemberInviteForm.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add backend action to change roles",
+      "description": "As an admin, I want the backend to support changing a member's role, recording this in the audit log.",
+      "acceptanceCriteria": [
+        "Backend endpoint handles role updates",
+        "Membership change is recorded in audit log",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/actions/members.ts"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add UI to change member role",
+      "description": "As an admin, I want to change a member's role from the UI.",
+      "acceptanceCriteria": [
+        "Member list includes a dropdown to change roles",
+        "Role change is saved via backend action",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/MemberList.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Add backend action to revoke access",
+      "description": "As an admin, I want the backend to support revoking workspace access, recording this in the audit log.",
+      "acceptanceCriteria": [
+        "Backend endpoint handles access revocation",
+        "Membership change is recorded in audit log",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/actions/members.ts"
+      ],
+      "designGuidance": [],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Add UI to revoke access",
+      "description": "As an admin, I want a button to revoke access for a member in the UI.",
+      "acceptanceCriteria": [
+        "UI includes a button to revoke member access",
+        "Revocation calls the backend action and shows confirmation dialog",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/MemberList.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Add backend action to view audit log",
+      "description": "As an admin, I want the backend to serve audit log records for membership changes.",
+      "acceptanceCriteria": [
+        "Backend endpoint returns audit log records",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/actions/audit.ts"
+      ],
+      "designGuidance": [],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Add UI to view audit log in settings",
+      "description": "As an admin, I want to review recent membership changes in the workspace settings page.",
+      "acceptanceCriteria": [
+        "Settings page includes an audit log view",
+        "Audit log shows recent membership changes",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/pages/WorkspaceSettings.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

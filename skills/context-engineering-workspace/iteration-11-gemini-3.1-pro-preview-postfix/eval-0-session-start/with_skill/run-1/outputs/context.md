@@ -1,0 +1,11 @@
+PROJECT CONTEXT:
+- Goal: Fix the login timeout in src/auth_service.py so it matches the spec.
+- Stack: Python
+- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md
+- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md
+- Unavailable: none
+- Spec: Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.
+- Constraints: none
+- Files: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/auth_service.py
+- Pattern: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/session_service.py
+- Gotchas: none

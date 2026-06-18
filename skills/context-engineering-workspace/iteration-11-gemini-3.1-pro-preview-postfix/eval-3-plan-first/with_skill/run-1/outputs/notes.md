@@ -1,0 +1,17 @@
+- Rules checked:
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/AGENTS.md
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/.github/copilot-instructions.md
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/.cursorrules
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/.cursor/rules/*.md
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/.windsurfrules
+- Rules loaded: (none)
+- Unavailable:
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/AGENTS.md
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/.github/copilot-instructions.md
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/.cursorrules
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/.cursor/rules/
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/.windsurfrules
+- Files read:
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/src/report_builder.py
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/src/report_serializer.py
+  - /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/tests/test_report_builder.py

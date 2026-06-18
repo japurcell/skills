@@ -1,0 +1,140 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Add task status tracking and filtering.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add task status schema default",
+      "description": "As a product team, I want tasks to store a status value so that task progress persists reliably.",
+      "acceptanceCriteria": [
+        "Add a `status` column or field to tasks with allowed values `pending`, `in_progress`, and `done`",
+        "Existing tasks default to `pending` after migration or backfill",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/add-task-status.sql",
+        "src/db/schema/tasks.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Expose task status in shared models",
+      "description": "As a developer, I want shared task types to include status so that backend and UI code use one contract.",
+      "acceptanceCriteria": [
+        "Shared task model or DTO includes the status field and enum values",
+        "Task list data returned to the UI includes status for each task",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/models/task.ts",
+        "src/types/task.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add backend task status update action",
+      "description": "As a user, I want task status changes to save immediately so that the task list reflects current progress.",
+      "acceptanceCriteria": [
+        "Provide a server action, endpoint, or service that updates a task status to pending, in_progress, or done",
+        "Reject invalid status values before persistence",
+        "Updated task status is returned or revalidated for the task list",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/tasks/updateTaskStatus.ts",
+        "src/server/routes/tasks.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add backend task list status filter",
+      "description": "As a user, I want the task list query to filter by status so that I can focus on a subset of work.",
+      "acceptanceCriteria": [
+        "Task list data source accepts an optional status filter",
+        "Filtering returns only tasks matching the selected status",
+        "The default task list still returns all tasks when no filter is selected",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/tasks/listTasks.ts",
+        "src/server/routes/tasks.ts"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Show task status badge on cards",
+      "description": "As a user, I want each task card to show its current status so that I can scan progress quickly.",
+      "acceptanceCriteria": [
+        "Task cards display a visible badge for pending, in progress, or done",
+        "Badge text matches the task status returned by the data model",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/tasks/TaskCard.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add task list status control",
+      "description": "As a user, I want to change task status from the task list so that I do not have to open a separate detail view.",
+      "acceptanceCriteria": [
+        "Each task row or card exposes a status control with pending, in progress, and done options",
+        "Changing the control invokes the backend status update and refreshes the visible task state",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/tasks/TaskRow.tsx",
+        "src/components/tasks/TaskCard.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Add task list status filter UI",
+      "description": "As a user, I want a task list filter for status so that I can quickly view pending, active, or completed work.",
+      "acceptanceCriteria": [
+        "Task list includes filter options for All, Pending, In Progress, and Done",
+        "Changing the filter reloads or refines the list using the backend status filter",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/tasks/TaskListFilters.tsx",
+        "src/pages/tasks/index.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

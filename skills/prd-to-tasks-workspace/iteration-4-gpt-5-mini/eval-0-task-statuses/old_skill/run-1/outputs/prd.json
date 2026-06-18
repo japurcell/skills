@@ -1,0 +1,86 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Add task statuses (pending, in progress, done)",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add task status column and migration",
+      "description": "As a user, I want each task to store a status so the system can track pending, in progress, or done.",
+      "acceptanceCriteria": [
+        "Add status column to tasks table with default 'pending'",
+        "Migration applies without data loss",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["db/migrations/xxxx_add_task_status.sql", "src/models/task.ts"],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Backend action to update task status",
+      "description": "As a user, I want to change a task's status so the system records status changes.",
+      "acceptanceCriteria": [
+        "Add API or server action to update task status",
+        "Status change persists to DB",
+        "Unit tests for server logic pass",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/services/taskService.ts", "src/routes/tasks.ts"],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Show status badge on task cards",
+      "description": "As a user, I want to see a status badge on task cards so I can quickly identify status.",
+      "acceptanceCriteria": [
+        "Task cards display status badge with text Pending/In progress/Done",
+        "Visual matches design guidance",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/components/TaskCard.tsx", "src/styles/task-badge.css"],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add status control to task rows/list",
+      "description": "As a user, I want to change status from the task list so I can update tasks inline.",
+      "acceptanceCriteria": [
+        "Add control (dropdown or quick-action) to change status from list",
+        "Changing status calls backend action and updates UI immediately",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/components/TaskList.tsx", "src/components/StatusControl.tsx"],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add status filter to task list",
+      "description": "As a user, I want to filter tasks by status so I can focus on pending or completed work.",
+      "acceptanceCriteria": [
+        "Add filter UI with options All, Pending, In progress, Done",
+        "Filter queries backend or client-side list correctly",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/pages/TaskListPage.tsx", "src/hooks/useTaskFilter.ts"],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

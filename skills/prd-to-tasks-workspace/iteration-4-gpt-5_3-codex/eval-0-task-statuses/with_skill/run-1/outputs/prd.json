@@ -1,0 +1,101 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Add task status tracking and filtering to task list.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add task status persistence with pending default",
+      "description": "As a product team, I want each task to store a status value so that task state persists and existing records default to pending.",
+      "acceptanceCriteria": [
+        "Add `status` field to task storage with allowed values `pending`, `in_progress`, and `done`",
+        "Existing tasks are backfilled to `pending` and new tasks default to `pending`",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/*add-task-status*",
+        "src/db/schema/tasks.*"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Implement backend task status update action",
+      "description": "As a user, I want status changes saved so that task progress updates persist.",
+      "acceptanceCriteria": [
+        "Provide backend action or endpoint to update task status by task id",
+        "Reject unsupported status values with validation errors",
+        "Persist status changes and return updated task payload",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/server/tasks/*",
+        "src/api/tasks/*"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Show task status badge on task cards",
+      "description": "As a user, I want each task card to show a status badge so that I can scan progress quickly.",
+      "acceptanceCriteria": [
+        "Task cards render status badge for pending, in_progress, and done",
+        "Badge text is distinct for each status",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/tasks/TaskCard.*",
+        "src/components/tasks/StatusBadge.*"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add task-row status control",
+      "description": "As a user, I want to change a task status from task list rows so that updates are fast.",
+      "acceptanceCriteria": [
+        "Task rows include status selector with pending, in_progress, and done options",
+        "Changing selector triggers backend status update and refreshes row state",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/tasks/TaskListRow.*",
+        "src/hooks/tasks/*"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Filter task list by status",
+      "description": "As a user, I want to filter tasks by status so that I can focus on pending, in-progress, or done work.",
+      "acceptanceCriteria": [
+        "Task list has filter options All, Pending, In Progress, and Done",
+        "Selected filter limits visible tasks to matching status",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/tasks/TaskFilters.*",
+        "src/components/tasks/TaskList.*"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

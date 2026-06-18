@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `PLAN` block.",
+      "passed": true,
+      "evidence": "PLAN:\n1. Read the three target files and map the current report-builder symbol across builder, serializer, and tests.\n2. Apply the cross-file rename in all references, keeping names and serialized output aligned.\n3. Verify the renamed symbol and outputs still match the tests, then stop.\nExecuting unless you redirect.\n"
+    },
+    {
+      "text": "The output contains exactly three numbered steps.",
+      "passed": true,
+      "evidence": "PLAN:\n1. Read the three target files and map the current report-builder symbol across builder, serializer, and tests.\n2. Apply the cross-file rename in all references, keeping names and serialized output aligned.\n3. Verify the renamed symbol and outputs still match the tests, then stop.\nExecuting unless you redirect.\n"
+    },
+    {
+      "text": "The output ends with `Executing unless you redirect.`",
+      "passed": true,
+      "evidence": "PLAN:\n1. Read the three target files and map the current report-builder symbol across builder, serializer, and tests.\n2. Apply the cross-file rename in all references, keeping names and serialized output aligned.\n3. Verify the renamed symbol and outputs still match the tests, then stop.\nExecuting unless you redirect.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 934,
+    "transcript_chars": 156311
+  },
+  "timing": {
+    "executor_duration_seconds": 46.8,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 46.8
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Workspace admins need to manage membership without editing the database directly.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add audit log schema",
+      "description": "As a system, I want to store audit logs for membership changes.",
+      "acceptanceCriteria": [
+        "Add audit log table to schema",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["schema.ts"],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add invite member feature",
+      "description": "As an admin, I want to invite members by email.",
+      "acceptanceCriteria": [
+        "Backend endpoint to send invite",
+        "UI form to input email and send invite",
+        "Records to audit log",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": ["api/invite.ts", "components/InviteForm.tsx"],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add member role change feature",
+      "description": "As an admin, I want to change a member role between viewer, editor, and admin.",
+      "acceptanceCriteria": [
+        "Backend endpoint to change role",
+        "UI dropdown in member list to select role",
+        "Records to audit log",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": ["api/role.ts", "components/MemberList.tsx"],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add revoke access feature",
+      "description": "As an admin, I want to revoke workspace access.",
+      "acceptanceCriteria": [
+        "Backend endpoint to revoke access",
+        "UI button in member list to remove user",
+        "Records to audit log",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": ["api/revoke.ts", "components/MemberList.tsx"],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add audit log review view",
+      "description": "As an admin, I want to review recent membership changes in the workspace settings page.",
+      "acceptanceCriteria": [
+        "Backend endpoint to fetch audit logs",
+        "UI view in settings page to display recent logs",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": ["api/audit.ts", "pages/settings.tsx"],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+Rules checked:
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/AGENTS.md
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/.github/copilot-instructions.md
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/.cursorrules
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/.cursor/rules/*
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/.windsurfrules
+
+Rules loaded:
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/AGENTS.md
+
+Unavailable:
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/.github/copilot-instructions.md
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/.cursorrules
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/.cursor/rules/*
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/.windsurfrules
+
+Files read:
+- /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/AGENTS.md
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/docs/spec.md
+- /home/adam/dev/personal/skills/skills/context-engineering/evals/files/conflict-fixture/src/invoice_math.py

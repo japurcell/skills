@@ -1,0 +1,121 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Add task status tracking and filtering.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add task status persistence",
+      "description": "As a developer, I want each task to store a status with a pending default so that task progress persists for new and existing tasks.",
+      "acceptanceCriteria": [
+        "Add a status field to task storage with allowed values 'pending', 'in_progress', and 'done'",
+        "Existing tasks default to 'pending' after the migration or backfill runs",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/schema/tasks.sql",
+        "src/server/tasks/repository.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Expose task status in shared task data",
+      "description": "As a developer, I want task status included in shared task types and task list responses so that UI features can read and render it consistently.",
+      "acceptanceCriteria": [
+        "Task list payloads include the task status field",
+        "Shared task types accept only pending, in_progress, or done values",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/shared/task.ts",
+        "src/server/tasks/serializers.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Allow updating task status from task list logic",
+      "description": "As a user, I want to change a task status so that I can keep task progress up to date from the list experience.",
+      "acceptanceCriteria": [
+        "A task status update action accepts pending, in_progress, and done values",
+        "Saving a new status persists the change and returns the updated task state",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/tasks/updateTaskStatus.ts",
+        "src/server/tasks/routes.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Show task status badges on task cards",
+      "description": "As a user, I want each task card to display its current status so that I can scan progress without opening task details.",
+      "acceptanceCriteria": [
+        "Task cards render a visible badge for pending, in progress, and done states",
+        "Badge styling changes when the task status changes in list data",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/ui/tasks/TaskCard.tsx",
+        "src/ui/tasks/taskStatusBadge.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add task status control to task list rows",
+      "description": "As a user, I want an inline task status control so that I can change status directly from the task list.",
+      "acceptanceCriteria": [
+        "Each task row exposes a control for pending, in progress, and done",
+        "Changing the control saves the selected status and refreshes the visible task state",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/ui/tasks/TaskRow.tsx",
+        "src/ui/tasks/TaskStatusSelect.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Filter task list by status",
+      "description": "As a user, I want to filter the task list by status so that I can focus on pending, in-progress, or completed work.",
+      "acceptanceCriteria": [
+        "The task list exposes All, Pending, In Progress, and Done filter options",
+        "Selecting a filter shows only tasks that match the chosen status",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/ui/tasks/TaskListFilters.tsx",
+        "src/ui/tasks/TaskList.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

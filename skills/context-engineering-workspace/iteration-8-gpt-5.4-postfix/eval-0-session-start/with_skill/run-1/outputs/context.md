@@ -1,0 +1,11 @@
+PROJECT CONTEXT:
+- Goal: Fix login timeout in `src/auth_service.py` so it matches spec.
+- Stack: Python
+- Rules checked: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`
+- Rules loaded: `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md`, `/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules`
+- Unavailable: none
+- Spec: `docs/spec.md` says: "Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity."
+- Constraints: Read target files before editing; prefer unit tests before code changes; use smallest relevant error/log slice; find one real example before editing target file; repo is benchmark fixture data, so stay grounded in files read.
+- Files: `docs/spec.md`, `src/auth_service.py`, `tests/test_auth_service.py`
+- Pattern: `src/session_service.py` sets `DEFAULT_TIMEOUT_MINUTES = 15` and returns that value from `build_session()`.
+- Gotchas: Fixture repo content under `evals/files/session-start-fixture/` is benchmark data; current target code returns `60`, while spec, test, and sibling example all point to `15`.

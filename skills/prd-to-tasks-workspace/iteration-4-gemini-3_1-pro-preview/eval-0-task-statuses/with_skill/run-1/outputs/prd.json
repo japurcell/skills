@@ -1,0 +1,86 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Add task statuses so users can track whether work is pending, in progress, or done.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add task status schema and migration",
+      "description": "As a developer, I want a status column on the tasks table defaulting to 'pending' so that statuses can be persisted.",
+      "acceptanceCriteria": [
+        "Status column added to tasks table",
+        "Allowed values are pending, in progress, and done",
+        "Default value is pending",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add backend action to update task status",
+      "description": "As a user, I want the backend to support updating a task's status so that progress is saved.",
+      "acceptanceCriteria": [
+        "Backend endpoint/action handles status updates",
+        "Validates status input",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Show status badge on task cards",
+      "description": "As a user, I want to see the current status badge on task cards so that I know its progress.",
+      "acceptanceCriteria": [
+        "Task cards display status badge",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add status control to task rows",
+      "description": "As a user, I want to change a task's status from the task list so that I can easily update my work.",
+      "acceptanceCriteria": [
+        "Task list row has a control to change status",
+        "Selecting a new status triggers the backend update",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add status filter to task list",
+      "description": "As a user, I want to filter the task list by status so that I can see only relevant tasks.",
+      "acceptanceCriteria": [
+        "Task list includes a filter for status",
+        "Selecting a status updates the list to show only matching tasks",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

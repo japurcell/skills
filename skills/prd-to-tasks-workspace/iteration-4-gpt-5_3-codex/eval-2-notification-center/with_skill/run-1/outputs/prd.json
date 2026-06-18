@@ -1,0 +1,119 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Build persistent notification center with unread indicators, filtering, and clear-read controls.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Persist notification read state",
+      "description": "As a user, I want read state saved so that notification state persists across sessions.",
+      "acceptanceCriteria": [
+        "Store per-user notification read state and read timestamp in persistent storage",
+        "Existing notifications default to unread where read state is absent",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/*notification-read-state*",
+        "src/db/schema/notifications.*"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add backend notification list and unread-count query",
+      "description": "As a user, I want notification data and unread counts so that the interface can show current state.",
+      "acceptanceCriteria": [
+        "Query returns notifications for current user with read state ordered newest first",
+        "Query returns unread count for current user",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/server/notifications/query*",
+        "src/api/notifications/*"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Implement mark read and mark unread actions",
+      "description": "As a user, I want to mark notifications read or unread so that I can manage my unread queue.",
+      "acceptanceCriteria": [
+        "Provide action to toggle read state for a user-owned notification",
+        "Marking read sets read timestamp and marking unread clears read timestamp",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/server/notifications/updateReadState*",
+        "src/api/notifications/*"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Show unread badge and notification list surface",
+      "description": "As a user, I want unread badge and notification list UI so that I can see and open notifications.",
+      "acceptanceCriteria": [
+        "Navigation or header shows unread badge count from notification query",
+        "Notification center list shows notifications with read/unread visual state",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/notifications/NotificationBadge.*",
+        "src/components/notifications/NotificationCenterPanel.*"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Filter notification list by read state",
+      "description": "As a user, I want to filter notifications by read state so that I can focus on unread or read items.",
+      "acceptanceCriteria": [
+        "Notification center offers All, Unread, and Read filters",
+        "Selected filter updates displayed notifications accordingly",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/notifications/NotificationFilters.*",
+        "src/components/notifications/NotificationCenterPanel.*"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Clear all read notifications",
+      "description": "As a user, I want to clear all read notifications so that the list stays focused on pending items.",
+      "acceptanceCriteria": [
+        "Provide action that clears read notifications for current user only",
+        "After clear action, notification list and unread badge refresh correctly",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/server/notifications/clearRead*",
+        "src/components/notifications/ClearReadButton.*",
+        "src/components/notifications/NotificationCenterPanel.*"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

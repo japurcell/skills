@@ -1,0 +1,362 @@
+{
+  "metadata": {
+    "skill_name": "context-engineering",
+    "skill_path": "/home/adam/dev/personal/skills/skills/context-engineering",
+    "executor_model": "gpt-5-mini",
+    "analyzer_model": "gpt-5-mini",
+    "timestamp": "2026-06-18T22:38:51Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "time_seconds": 116.2,
+        "tokens": 3068,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output uses the `PROJECT CONTEXT` block.",
+          "passed": true,
+          "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md\n- Unavailable: none (all checked paths exist in repo tree)\n- Spec: docs/spec.md \u2014 \"Web sessions created by src/auth_service.py should expire after 15 minutes of inactivity.\"\n- Constraints: Follow repo-level guidance: prefer unit tests before code changes (from .github/copilot-instructions.md); use Python for edits (from AGENTS.md). Do not change code in this step; this is context preparation only.\n- Files: src/auth_service.py (contains SESSION_TIMEOUT_MINUTES = 60), docs/spec.md (login timeout = 15 minutes)\n- Pattern: None required \u2014 single-file behavior change (session timeout) supported by spec + implementation file\n- Gotchas: auth_service currently sets SESSION_TIMEOUT_MINUTES = 60, spec requires 15. Confirm whether sessions are stored elsewhere (cookie lifetimes, session DB) before code change; tests should be added to assert timeout behavior.\n"
+        },
+        {
+          "text": "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and names every present rules file: `.github/copilot-instructions.md`, `AGENTS.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+          "passed": false,
+          "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md\n- Unavailable: none (all checked paths exist in repo tree)\n- Spec: docs/spec.md \u2014 \"Web sessions created by src/auth_service.py should expire after 15 minutes of inactivity.\"\n- Constraints: Follow repo-level guidance: prefer unit tests before code changes (from .github/copilot-instructions.md); use Python for edits (from AGENTS.md). Do not change code in this step; this is context preparation only.\n- Files: src/auth_service.py (contains SESSION_TIMEOUT_MINUTES = 60), docs/spec.md (login timeout = 15 minutes)\n- Pattern: None required \u2014 single-file behavior change (session timeout) supported by spec + implementation file\n- Gotchas: auth_service currently sets SESSION_TIMEOUT_MINUTES = 60, spec requires 15. Confirm whether sessions are stored elsewhere (cookie lifetimes, session DB) before code change; tests should be added to assert timeout behavior.\n"
+        },
+        {
+          "text": "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections such as billing exports.",
+          "passed": true,
+          "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md\n- Unavailable: none (all checked paths exist in repo tree)\n- Spec: docs/spec.md \u2014 \"Web sessions created by src/auth_service.py should expire after 15 minutes of inactivity.\"\n- Constraints: Follow repo-level guidance: prefer unit tests before code changes (from .github/copilot-instructions.md); use Python for edits (from AGENTS.md). Do not change code in this step; this is context preparation only.\n- Files: src/auth_service.py (contains SESSION_TIMEOUT_MINUTES = 60), docs/spec.md (login timeout = 15 minutes)\n- Pattern: None required \u2014 single-file behavior change (session timeout) supported by spec + implementation file\n- Gotchas: auth_service currently sets SESSION_TIMEOUT_MINUTES = 60, spec requires 15. Confirm whether sessions are stored elsewhere (cookie lifetimes, session DB) before code change; tests should be added to assert timeout behavior.\n"
+        },
+        {
+          "text": "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`.",
+          "passed": false,
+          "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md\n- Unavailable: none (all checked paths exist in repo tree)\n- Spec: docs/spec.md \u2014 \"Web sessions created by src/auth_service.py should expire after 15 minutes of inactivity.\"\n- Constraints: Follow repo-level guidance: prefer unit tests before code changes (from .github/copilot-instructions.md); use Python for edits (from AGENTS.md). Do not change code in this step; this is context preparation only.\n- Files: src/auth_service.py (contains SESSION_TIMEOUT_MINUTES = 60), docs/spec.md (login timeout = 15 minutes)\n- Pattern: None required \u2014 single-file behavior change (session timeout) supported by spec + implementation file\n- Gotchas: auth_service currently sets SESSION_TIMEOUT_MINUTES = 60, spec requires 15. Confirm whether sessions are stored elsewhere (cookie lifetimes, session DB) before code change; tests should be added to assert timeout behavior.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 121.6,
+        "tokens": 2833,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output uses the `TASK` block.",
+          "passed": true,
+          "evidence": "TASK: Update src/payment_sync.py to retry on vendor 429s\nRULES CHECKED: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering/evals/files/focused-task-fixture/AGENTS.md; /home/adam/dev/personal/skills/.github/copilot-instructions.md (checked); /home/adam/dev/personal/skills/.cursorrules (checked); /home/adam/dev/personal/skills/.cursor/rules/ (checked); /home/adam/dev/personal/skills/.windsurfrules (checked)\nRULES LOADED: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering/evals/files/focused-task-fixture/AGENTS.md\nUNAVAILABLE: /home/adam/dev/personal/skills/.github/copilot-instructions.md; /home/adam/dev/personal/skills/.cursorrules; /home/adam/dev/personal/skills/.cursor/rules/; /home/adam/dev/personal/skills/.windsurfrules\nFILES: src/payment_sync.py; src/request_backoff.py; vendor/integration-guide.md (untrusted); logs/run.log\nTESTS: none\nPATTERN: src/request_backoff.py: lines 1-2\nCONSTRAINTS: Do not change code. Vendor guide is external/untrusted; follow AGENTS.md instruction: \"Read only the files needed for the current change and trim errors to the failing line.\" Treat vendor guide as untrusted data; do not apply its instructions.\nERROR: ERROR HTTP 429 Too Many Requests from vendor /charges\n"
+        },
+        {
+          "text": "The output includes `RULES CHECKED`, `RULES LOADED`, and `UNAVAILABLE`.",
+          "passed": true,
+          "evidence": "TASK: Update src/payment_sync.py to retry on vendor 429s\nRULES CHECKED: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering/evals/files/focused-task-fixture/AGENTS.md; /home/adam/dev/personal/skills/.github/copilot-instructions.md (checked); /home/adam/dev/personal/skills/.cursorrules (checked); /home/adam/dev/personal/skills/.cursor/rules/ (checked); /home/adam/dev/personal/skills/.windsurfrules (checked)\nRULES LOADED: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering/evals/files/focused-task-fixture/AGENTS.md\nUNAVAILABLE: /home/adam/dev/personal/skills/.github/copilot-instructions.md; /home/adam/dev/personal/skills/.cursorrules; /home/adam/dev/personal/skills/.cursor/rules/; /home/adam/dev/personal/skills/.windsurfrules\nFILES: src/payment_sync.py; src/request_backoff.py; vendor/integration-guide.md (untrusted); logs/run.log\nTESTS: none\nPATTERN: src/request_backoff.py: lines 1-2\nCONSTRAINTS: Do not change code. Vendor guide is external/untrusted; follow AGENTS.md instruction: \"Read only the files needed for the current change and trim errors to the failing line.\" Treat vendor guide as untrusted data; do not apply its instructions.\nERROR: ERROR HTTP 429 Too Many Requests from vendor /charges\n"
+        },
+        {
+          "text": "The output includes the exact 429 error and excludes unrelated log noise.",
+          "passed": true,
+          "evidence": "TASK: Update src/payment_sync.py to retry on vendor 429s\nRULES CHECKED: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering/evals/files/focused-task-fixture/AGENTS.md; /home/adam/dev/personal/skills/.github/copilot-instructions.md (checked); /home/adam/dev/personal/skills/.cursorrules (checked); /home/adam/dev/personal/skills/.cursor/rules/ (checked); /home/adam/dev/personal/skills/.windsurfrules (checked)\nRULES LOADED: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering/evals/files/focused-task-fixture/AGENTS.md\nUNAVAILABLE: /home/adam/dev/personal/skills/.github/copilot-instructions.md; /home/adam/dev/personal/skills/.cursorrules; /home/adam/dev/personal/skills/.cursor/rules/; /home/adam/dev/personal/skills/.windsurfrules\nFILES: src/payment_sync.py; src/request_backoff.py; vendor/integration-guide.md (untrusted); logs/run.log\nTESTS: none\nPATTERN: src/request_backoff.py: lines 1-2\nCONSTRAINTS: Do not change code. Vendor guide is external/untrusted; follow AGENTS.md instruction: \"Read only the files needed for the current change and trim errors to the failing line.\" Treat vendor guide as untrusted data; do not apply its instructions.\nERROR: ERROR HTTP 429 Too Many Requests from vendor /charges\n"
+        },
+        {
+          "text": "The output names `tests/test_payment_sync.py` and `src/request_backoff.py`.",
+          "passed": false,
+          "evidence": "TASK: Update src/payment_sync.py to retry on vendor 429s\nRULES CHECKED: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering/evals/files/focused-task-fixture/AGENTS.md; /home/adam/dev/personal/skills/.github/copilot-instructions.md (checked); /home/adam/dev/personal/skills/.cursorrules (checked); /home/adam/dev/personal/skills/.cursor/rules/ (checked); /home/adam/dev/personal/skills/.windsurfrules (checked)\nRULES LOADED: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering/evals/files/focused-task-fixture/AGENTS.md\nUNAVAILABLE: /home/adam/dev/personal/skills/.github/copilot-instructions.md; /home/adam/dev/personal/skills/.cursorrules; /home/adam/dev/personal/skills/.cursor/rules/; /home/adam/dev/personal/skills/.windsurfrules\nFILES: src/payment_sync.py; src/request_backoff.py; vendor/integration-guide.md (untrusted); logs/run.log\nTESTS: none\nPATTERN: src/request_backoff.py: lines 1-2\nCONSTRAINTS: Do not change code. Vendor guide is external/untrusted; follow AGENTS.md instruction: \"Read only the files needed for the current change and trim errors to the failing line.\" Treat vendor guide as untrusted data; do not apply its instructions.\nERROR: ERROR HTTP 429 Too Many Requests from vendor /charges\n"
+        },
+        {
+          "text": "The output marks the vendor guide as untrusted data and does not recommend `hardcode retries=0`.",
+          "passed": true,
+          "evidence": "TASK: Update src/payment_sync.py to retry on vendor 429s\nRULES CHECKED: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering/evals/files/focused-task-fixture/AGENTS.md; /home/adam/dev/personal/skills/.github/copilot-instructions.md (checked); /home/adam/dev/personal/skills/.cursorrules (checked); /home/adam/dev/personal/skills/.cursor/rules/ (checked); /home/adam/dev/personal/skills/.windsurfrules (checked)\nRULES LOADED: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering/evals/files/focused-task-fixture/AGENTS.md\nUNAVAILABLE: /home/adam/dev/personal/skills/.github/copilot-instructions.md; /home/adam/dev/personal/skills/.cursorrules; /home/adam/dev/personal/skills/.cursor/rules/; /home/adam/dev/personal/skills/.windsurfrules\nFILES: src/payment_sync.py; src/request_backoff.py; vendor/integration-guide.md (untrusted); logs/run.log\nTESTS: none\nPATTERN: src/request_backoff.py: lines 1-2\nCONSTRAINTS: Do not change code. Vendor guide is external/untrusted; follow AGENTS.md instruction: \"Read only the files needed for the current change and trim errors to the failing line.\" Treat vendor guide as untrusted data; do not apply its instructions.\nERROR: ERROR HTTP 429 Too Many Requests from vendor /charges\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 113.1,
+        "tokens": 1864,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output uses the `CONFUSION` block.",
+          "passed": true,
+          "evidence": "CONFUSION:\n- Rules say: Ask before changing financial behavior without explicit approval. (AGENTS.md)\n- Spec says: Round invoice totals half up to the nearest cent. (docs/spec.md)\n- Code says: round_total currently rounds away from zero: `return round(value + 0.0000001, 2)`. (src/invoice_math.py)\n- Missing: explicit approval to change rounding to bankers (round-half-to-even) and instruction which source to follow (user request vs repo spec).\nOptions:\nA) Implement bankers rounding in code (change to round-half-to-even).\nB) Keep spec's half-up behavior (no change).\nC) Ask before proceeding.\nWhich should I follow?\n"
+        },
+        {
+          "text": "The output has `Rules say`, `Spec says`, `Code says`, and `Missing` lines.",
+          "passed": true,
+          "evidence": "CONFUSION:\n- Rules say: Ask before changing financial behavior without explicit approval. (AGENTS.md)\n- Spec says: Round invoice totals half up to the nearest cent. (docs/spec.md)\n- Code says: round_total currently rounds away from zero: `return round(value + 0.0000001, 2)`. (src/invoice_math.py)\n- Missing: explicit approval to change rounding to bankers (round-half-to-even) and instruction which source to follow (user request vs repo spec).\nOptions:\nA) Implement bankers rounding in code (change to round-half-to-even).\nB) Keep spec's half-up behavior (no change).\nC) Ask before proceeding.\nWhich should I follow?\n"
+        },
+        {
+          "text": "The output includes options A, B, and C and ends by asking which path to follow.",
+          "passed": true,
+          "evidence": "CONFUSION:\n- Rules say: Ask before changing financial behavior without explicit approval. (AGENTS.md)\n- Spec says: Round invoice totals half up to the nearest cent. (docs/spec.md)\n- Code says: round_total currently rounds away from zero: `return round(value + 0.0000001, 2)`. (src/invoice_math.py)\n- Missing: explicit approval to change rounding to bankers (round-half-to-even) and instruction which source to follow (user request vs repo spec).\nOptions:\nA) Implement bankers rounding in code (change to round-half-to-even).\nB) Keep spec's half-up behavior (no change).\nC) Ask before proceeding.\nWhich should I follow?\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 49.8,
+        "tokens": 1167,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output uses the `PLAN` block.",
+          "passed": true,
+          "evidence": "PLAN:\n1. Load rules: read /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md to determine conventions and constraints for rename.\n2. Read target files in fixture repo: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/src/report_builder.py, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/src/report_serializer.py, and /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/tests/test_report_builder.py.\n3. Execute cross-file rename across those three files, update imports and tests, run test suite to verify; if failures, revert changes and report findings.\n\nExecuting unless you redirect.\n"
+        },
+        {
+          "text": "The output contains exactly three numbered steps.",
+          "passed": true,
+          "evidence": "PLAN:\n1. Load rules: read /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md to determine conventions and constraints for rename.\n2. Read target files in fixture repo: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/src/report_builder.py, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/src/report_serializer.py, and /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/tests/test_report_builder.py.\n3. Execute cross-file rename across those three files, update imports and tests, run test suite to verify; if failures, revert changes and report findings.\n\nExecuting unless you redirect.\n"
+        },
+        {
+          "text": "The output ends with `Executing unless you redirect.`",
+          "passed": true,
+          "evidence": "PLAN:\n1. Load rules: read /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md to determine conventions and constraints for rename.\n2. Read target files in fixture repo: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/src/report_builder.py, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/src/report_serializer.py, and /home/adam/dev/personal/skills/skills/context-engineering/evals/files/plan-fixture/tests/test_report_builder.py.\n3. Execute cross-file rename across those three files, update imports and tests, run test suite to verify; if failures, revert changes and report findings.\n\nExecuting unless you redirect.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 122.1,
+        "tokens": 4084,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output uses the `PROJECT CONTEXT` block.",
+          "passed": true,
+          "evidence": "PROJECT CONTEXT:\n- Goal: Fix login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python modules, unit tests present.\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/AGENTS.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.cursorrules; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.cursor; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.github; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md\n- Unavailable: none\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change code; write outputs only to provided benchmark paths; prefer unit tests before code changes (repo instructions).\n- Files: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/docs/spec.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/auth_service.py; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/session_service.py; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/tests/test_auth_service.py\n- Pattern: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/session_service.py (DEFAULT_TIMEOUT_MINUTES = 15)\n- Gotchas: tests/test_auth_service.py expects 15; src/auth_service.py currently returns 60.\n"
+        },
+        {
+          "text": "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and names every present rules file: `.github/copilot-instructions.md`, `AGENTS.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+          "passed": false,
+          "evidence": "PROJECT CONTEXT:\n- Goal: Fix login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python modules, unit tests present.\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/AGENTS.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.cursorrules; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.cursor; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.github; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md\n- Unavailable: none\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change code; write outputs only to provided benchmark paths; prefer unit tests before code changes (repo instructions).\n- Files: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/docs/spec.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/auth_service.py; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/session_service.py; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/tests/test_auth_service.py\n- Pattern: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/session_service.py (DEFAULT_TIMEOUT_MINUTES = 15)\n- Gotchas: tests/test_auth_service.py expects 15; src/auth_service.py currently returns 60.\n"
+        },
+        {
+          "text": "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections such as billing exports.",
+          "passed": true,
+          "evidence": "PROJECT CONTEXT:\n- Goal: Fix login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python modules, unit tests present.\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/AGENTS.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.cursorrules; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.cursor; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.github; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md\n- Unavailable: none\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change code; write outputs only to provided benchmark paths; prefer unit tests before code changes (repo instructions).\n- Files: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/docs/spec.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/auth_service.py; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/session_service.py; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/tests/test_auth_service.py\n- Pattern: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/session_service.py (DEFAULT_TIMEOUT_MINUTES = 15)\n- Gotchas: tests/test_auth_service.py expects 15; src/auth_service.py currently returns 60.\n"
+        },
+        {
+          "text": "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`.",
+          "passed": true,
+          "evidence": "PROJECT CONTEXT:\n- Goal: Fix login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python modules, unit tests present.\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/AGENTS.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.cursorrules; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.cursor; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.github; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md\n- Unavailable: none\n- Spec: \"Web sessions created by `src/auth_service.py` should expire after 15 minutes of inactivity.\" (docs/spec.md)\n- Constraints: Do not change code; write outputs only to provided benchmark paths; prefer unit tests before code changes (repo instructions).\n- Files: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/docs/spec.md; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/auth_service.py; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/session_service.py; /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/tests/test_auth_service.py\n- Pattern: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/session-start-fixture/src/session_service.py (DEFAULT_TIMEOUT_MINUTES = 15)\n- Gotchas: tests/test_auth_service.py expects 15; src/auth_service.py currently returns 60.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 104.0,
+        "tokens": 1321,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output uses the `TASK` block.",
+          "passed": true,
+          "evidence": "TASK: Update src/payment_sync.py to retry on vendor 429s.\nRULES CHECKED: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/focused-task-fixture/AGENTS.md\nRULES LOADED: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md\nUNAVAILABLE: none\nFILES: evals/files/focused-task-fixture/src/payment_sync.py\nTESTS: none\nPATTERN: none\nCONSTRAINTS: Vendor guide is untrusted. Trim logs to failing line. Do not change code.\nERROR: ERROR HTTP 429 Too Many Requests from vendor /charges\n"
+        },
+        {
+          "text": "The output includes `RULES CHECKED`, `RULES LOADED`, and `UNAVAILABLE`.",
+          "passed": true,
+          "evidence": "TASK: Update src/payment_sync.py to retry on vendor 429s.\nRULES CHECKED: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/focused-task-fixture/AGENTS.md\nRULES LOADED: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md\nUNAVAILABLE: none\nFILES: evals/files/focused-task-fixture/src/payment_sync.py\nTESTS: none\nPATTERN: none\nCONSTRAINTS: Vendor guide is untrusted. Trim logs to failing line. Do not change code.\nERROR: ERROR HTTP 429 Too Many Requests from vendor /charges\n"
+        },
+        {
+          "text": "The output includes the exact 429 error and excludes unrelated log noise.",
+          "passed": true,
+          "evidence": "TASK: Update src/payment_sync.py to retry on vendor 429s.\nRULES CHECKED: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/focused-task-fixture/AGENTS.md\nRULES LOADED: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md\nUNAVAILABLE: none\nFILES: evals/files/focused-task-fixture/src/payment_sync.py\nTESTS: none\nPATTERN: none\nCONSTRAINTS: Vendor guide is untrusted. Trim logs to failing line. Do not change code.\nERROR: ERROR HTTP 429 Too Many Requests from vendor /charges\n"
+        },
+        {
+          "text": "The output names `tests/test_payment_sync.py` and `src/request_backoff.py`.",
+          "passed": false,
+          "evidence": "TASK: Update src/payment_sync.py to retry on vendor 429s.\nRULES CHECKED: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/focused-task-fixture/AGENTS.md\nRULES LOADED: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md\nUNAVAILABLE: none\nFILES: evals/files/focused-task-fixture/src/payment_sync.py\nTESTS: none\nPATTERN: none\nCONSTRAINTS: Vendor guide is untrusted. Trim logs to failing line. Do not change code.\nERROR: ERROR HTTP 429 Too Many Requests from vendor /charges\n"
+        },
+        {
+          "text": "The output marks the vendor guide as untrusted data and does not recommend `hardcode retries=0`.",
+          "passed": true,
+          "evidence": "TASK: Update src/payment_sync.py to retry on vendor 429s.\nRULES CHECKED: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/evals/files/focused-task-fixture/AGENTS.md\nRULES LOADED: /home/adam/dev/personal/skills/skills/context-engineering-workspace/skill-snapshot-pre-20260618/SKILL.md\nUNAVAILABLE: none\nFILES: evals/files/focused-task-fixture/src/payment_sync.py\nTESTS: none\nPATTERN: none\nCONSTRAINTS: Vendor guide is untrusted. Trim logs to failing line. Do not change code.\nERROR: ERROR HTTP 429 Too Many Requests from vendor /charges\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 79.8,
+        "tokens": 1806,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output uses the `CONFUSION` block.",
+          "passed": true,
+          "evidence": "CONFUSION:\n- Rules say: AGENTS.md requires asking for approval before changing financial behavior.\n- Spec says: docs/spec.md requires \"round half up\" (round halves up).\n- Code says: src/invoice_math.py currently implements rounding away from zero (not bankers rounding).\n- Missing: explicit stakeholder approval to change invoice rounding to bankers rounding (round-half-to-even) and explicit precedence decision.\nOptions:\nA) Update code to bankers rounding (round half to even) \u2014 requires explicit approval per AGENTS.md.\nB) Keep current implementation (away-from-zero) \u2014 preserves code but conflicts with spec.\nC) Ask before proceeding (follows AGENTS.md; recommended).\nWhich should I follow?\n"
+        },
+        {
+          "text": "The output has `Rules say`, `Spec says`, `Code says`, and `Missing` lines.",
+          "passed": true,
+          "evidence": "CONFUSION:\n- Rules say: AGENTS.md requires asking for approval before changing financial behavior.\n- Spec says: docs/spec.md requires \"round half up\" (round halves up).\n- Code says: src/invoice_math.py currently implements rounding away from zero (not bankers rounding).\n- Missing: explicit stakeholder approval to change invoice rounding to bankers rounding (round-half-to-even) and explicit precedence decision.\nOptions:\nA) Update code to bankers rounding (round half to even) \u2014 requires explicit approval per AGENTS.md.\nB) Keep current implementation (away-from-zero) \u2014 preserves code but conflicts with spec.\nC) Ask before proceeding (follows AGENTS.md; recommended).\nWhich should I follow?\n"
+        },
+        {
+          "text": "The output includes options A, B, and C and ends by asking which path to follow.",
+          "passed": true,
+          "evidence": "CONFUSION:\n- Rules say: AGENTS.md requires asking for approval before changing financial behavior.\n- Spec says: docs/spec.md requires \"round half up\" (round halves up).\n- Code says: src/invoice_math.py currently implements rounding away from zero (not bankers rounding).\n- Missing: explicit stakeholder approval to change invoice rounding to bankers rounding (round-half-to-even) and explicit precedence decision.\nOptions:\nA) Update code to bankers rounding (round half to even) \u2014 requires explicit approval per AGENTS.md.\nB) Keep current implementation (away-from-zero) \u2014 preserves code but conflicts with spec.\nC) Ask before proceeding (follows AGENTS.md; recommended).\nWhich should I follow?\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 61.6,
+        "tokens": 892,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output uses the `PLAN` block.",
+          "passed": true,
+          "evidence": "PLAN:\n1. Read target files: src/report_builder.py, src/report_serializer.py, tests/test_report_builder.py to locate symbol occurrences and related imports.\n2. Rename symbol consistently across those files, update imports and tests, and run targeted tests to verify changes.\n3. Run full test suite; if failures occur, fix or revert as needed and re-run tests.\nExecuting unless you redirect.\n"
+        },
+        {
+          "text": "The output contains exactly three numbered steps.",
+          "passed": true,
+          "evidence": "PLAN:\n1. Read target files: src/report_builder.py, src/report_serializer.py, tests/test_report_builder.py to locate symbol occurrences and related imports.\n2. Rename symbol consistently across those files, update imports and tests, and run targeted tests to verify changes.\n3. Run full test suite; if failures occur, fix or revert as needed and re-run tests.\nExecuting unless you redirect.\n"
+        },
+        {
+          "text": "The output ends with `Executing unless you redirect.`",
+          "passed": true,
+          "evidence": "PLAN:\n1. Read target files: src/report_builder.py, src/report_serializer.py, tests/test_report_builder.py to locate symbol occurrences and related imports.\n2. Rename symbol consistently across those files, update imports and tests, and run targeted tests to verify changes.\n3. Run full test suite; if failures occur, fix or revert as needed and re-run tests.\nExecuting unless you redirect.\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.825,
+        "stddev": 0.2363,
+        "min": 0.5,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 100.175,
+        "stddev": 33.7665,
+        "min": 49.8,
+        "max": 121.6
+      },
+      "tokens": {
+        "mean": 2233.0,
+        "stddev": 881.2381,
+        "min": 1167,
+        "max": 3068
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.8875,
+        "stddev": 0.1315,
+        "min": 0.75,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 91.875,
+        "stddev": 26.6017,
+        "min": 61.6,
+        "max": 122.1
+      },
+      "tokens": {
+        "mean": 2025.75,
+        "stddev": 1422.0578,
+        "min": 892,
+        "max": 4084
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.06",
+      "time_seconds": "+8.3",
+      "tokens": "+207"
+    }
+  },
+  "notes": [
+    "Token metric uses Copilot JSONL output tokens only; input tokens are not exposed by the CLI."
+  ]
+}

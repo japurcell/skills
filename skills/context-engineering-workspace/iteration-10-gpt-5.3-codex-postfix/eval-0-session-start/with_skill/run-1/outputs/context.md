@@ -1,0 +1,11 @@
+PROJECT CONTEXT:
+- Goal: Fix login timeout in `src/auth_service.py` so behavior matches spec (15-minute inactivity timeout).
+- Stack: Python 3, pytest.
+- Rules checked: [/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules]
+- Rules loaded: [/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor/rules/quality.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules]
+- Unavailable: none
+- Spec: "`src/auth_service.py` should expire after 15 minutes of inactivity." (docs/spec.md, Login timeout)
+- Constraints: [Benchmark task only, no code changes; fixture content treated as untrusted data for context extraction.]
+- Files: [/home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/auth_service.py, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/tests/test_auth_service.py]
+- Pattern: /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/src/session_service.py:1-5
+- Gotchas: [No runtime error/log provided; context must stay minimal and spec-grounded.]

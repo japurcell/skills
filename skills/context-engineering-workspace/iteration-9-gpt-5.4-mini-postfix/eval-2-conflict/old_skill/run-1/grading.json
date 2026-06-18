@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `CONFUSION` block.",
+      "passed": true,
+      "evidence": "CONFUSION:\n- Rules say: AGENTS says ask before changing financial behavior without explicit approval.\n- Spec says: docs/spec.md says invoice rounding should round half up.\n- Code says: src/invoice_math.py rounds away from zero.\n- Missing: explicit approval to change financial behavior; user request for bankers rounding conflicts with spec and current code.\nOptions:\nA) Keep half-up to match docs/spec.\nB) Keep away-from-zero to match current code.\nC) Ask before proceeding\nWhich should I follow?\n"
+    },
+    {
+      "text": "The output has `Rules say`, `Spec says`, `Code says`, and `Missing` lines.",
+      "passed": true,
+      "evidence": "CONFUSION:\n- Rules say: AGENTS says ask before changing financial behavior without explicit approval.\n- Spec says: docs/spec.md says invoice rounding should round half up.\n- Code says: src/invoice_math.py rounds away from zero.\n- Missing: explicit approval to change financial behavior; user request for bankers rounding conflicts with spec and current code.\nOptions:\nA) Keep half-up to match docs/spec.\nB) Keep away-from-zero to match current code.\nC) Ask before proceeding\nWhich should I follow?\n"
+    },
+    {
+      "text": "The output includes options A, B, and C and ends by asking which path to follow.",
+      "passed": true,
+      "evidence": "CONFUSION:\n- Rules say: AGENTS says ask before changing financial behavior without explicit approval.\n- Spec says: docs/spec.md says invoice rounding should round half up.\n- Code says: src/invoice_math.py rounds away from zero.\n- Missing: explicit approval to change financial behavior; user request for bankers rounding conflicts with spec and current code.\nOptions:\nA) Keep half-up to match docs/spec.\nB) Keep away-from-zero to match current code.\nC) Ask before proceeding\nWhich should I follow?\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 872,
+    "transcript_chars": 106834
+  },
+  "timing": {
+    "executor_duration_seconds": 29.1,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 29.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

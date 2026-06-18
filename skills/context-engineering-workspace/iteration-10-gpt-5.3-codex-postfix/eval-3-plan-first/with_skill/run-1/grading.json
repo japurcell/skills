@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `PLAN` block.",
+      "passed": true,
+      "evidence": "PLAN:\n1. Check fixture repo rules files (`AGENTS.md`, `.github/copilot-instructions.md`, `.cursorrules`, concrete files under `.cursor/rules/`, and `.windsurfrules`) and record available vs unavailable paths.\n2. Read only rename-relevant files: `src/report_builder.py`, `src/report_serializer.py`, and `tests/test_report_builder.py`, plus one sibling source/helper/type example if needed for naming consistency.\n3. Apply consistent cross-file rename and align affected tests to preserve behavior.\nExecuting unless you redirect.\n"
+    },
+    {
+      "text": "The output contains exactly three numbered steps.",
+      "passed": true,
+      "evidence": "PLAN:\n1. Check fixture repo rules files (`AGENTS.md`, `.github/copilot-instructions.md`, `.cursorrules`, concrete files under `.cursor/rules/`, and `.windsurfrules`) and record available vs unavailable paths.\n2. Read only rename-relevant files: `src/report_builder.py`, `src/report_serializer.py`, and `tests/test_report_builder.py`, plus one sibling source/helper/type example if needed for naming consistency.\n3. Apply consistent cross-file rename and align affected tests to preserve behavior.\nExecuting unless you redirect.\n"
+    },
+    {
+      "text": "The output ends with `Executing unless you redirect.`",
+      "passed": true,
+      "evidence": "PLAN:\n1. Check fixture repo rules files (`AGENTS.md`, `.github/copilot-instructions.md`, `.cursorrules`, concrete files under `.cursor/rules/`, and `.windsurfrules`) and record available vs unavailable paths.\n2. Read only rename-relevant files: `src/report_builder.py`, `src/report_serializer.py`, and `tests/test_report_builder.py`, plus one sibling source/helper/type example if needed for naming consistency.\n3. Apply consistent cross-file rename and align affected tests to preserve behavior.\nExecuting unless you redirect.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 794,
+    "transcript_chars": 116914
+  },
+  "timing": {
+    "executor_duration_seconds": 56.2,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 56.2
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

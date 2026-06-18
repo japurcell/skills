@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `PROJECT CONTEXT` block.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md\n- Unavailable: none (all checked paths exist in repo tree)\n- Spec: docs/spec.md \u2014 \"Web sessions created by src/auth_service.py should expire after 15 minutes of inactivity.\"\n- Constraints: Follow repo-level guidance: prefer unit tests before code changes (from .github/copilot-instructions.md); use Python for edits (from AGENTS.md). Do not change code in this step; this is context preparation only.\n- Files: src/auth_service.py (contains SESSION_TIMEOUT_MINUTES = 60), docs/spec.md (login timeout = 15 minutes)\n- Pattern: None required \u2014 single-file behavior change (session timeout) supported by spec + implementation file\n- Gotchas: auth_service currently sets SESSION_TIMEOUT_MINUTES = 60, spec requires 15. Confirm whether sessions are stored elsewhere (cookie lifetimes, session DB) before code change; tests should be added to assert timeout behavior.\n"
+    },
+    {
+      "text": "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and names every present rules file: `.github/copilot-instructions.md`, `AGENTS.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+      "passed": false,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md\n- Unavailable: none (all checked paths exist in repo tree)\n- Spec: docs/spec.md \u2014 \"Web sessions created by src/auth_service.py should expire after 15 minutes of inactivity.\"\n- Constraints: Follow repo-level guidance: prefer unit tests before code changes (from .github/copilot-instructions.md); use Python for edits (from AGENTS.md). Do not change code in this step; this is context preparation only.\n- Files: src/auth_service.py (contains SESSION_TIMEOUT_MINUTES = 60), docs/spec.md (login timeout = 15 minutes)\n- Pattern: None required \u2014 single-file behavior change (session timeout) supported by spec + implementation file\n- Gotchas: auth_service currently sets SESSION_TIMEOUT_MINUTES = 60, spec requires 15. Confirm whether sessions are stored elsewhere (cookie lifetimes, session DB) before code change; tests should be added to assert timeout behavior.\n"
+    },
+    {
+      "text": "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections such as billing exports.",
+      "passed": true,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md\n- Unavailable: none (all checked paths exist in repo tree)\n- Spec: docs/spec.md \u2014 \"Web sessions created by src/auth_service.py should expire after 15 minutes of inactivity.\"\n- Constraints: Follow repo-level guidance: prefer unit tests before code changes (from .github/copilot-instructions.md); use Python for edits (from AGENTS.md). Do not change code in this step; this is context preparation only.\n- Files: src/auth_service.py (contains SESSION_TIMEOUT_MINUTES = 60), docs/spec.md (login timeout = 15 minutes)\n- Pattern: None required \u2014 single-file behavior change (session timeout) supported by spec + implementation file\n- Gotchas: auth_service currently sets SESSION_TIMEOUT_MINUTES = 60, spec requires 15. Confirm whether sessions are stored elsewhere (cookie lifetimes, session DB) before code change; tests should be added to assert timeout behavior.\n"
+    },
+    {
+      "text": "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`.",
+      "passed": false,
+      "evidence": "PROJECT CONTEXT:\n- Goal: Fix the login timeout in src/auth_service.py so it matches the spec.\n- Stack: Python\n- Rules checked: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/AGENTS.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.github/copilot-instructions.md, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursorrules, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.cursor, /home/adam/dev/personal/skills/skills/context-engineering/evals/files/session-start-fixture/.windsurfrules\n- Rules loaded: /home/adam/dev/personal/skills/skills/context-engineering/SKILL.md\n- Unavailable: none (all checked paths exist in repo tree)\n- Spec: docs/spec.md \u2014 \"Web sessions created by src/auth_service.py should expire after 15 minutes of inactivity.\"\n- Constraints: Follow repo-level guidance: prefer unit tests before code changes (from .github/copilot-instructions.md); use Python for edits (from AGENTS.md). Do not change code in this step; this is context preparation only.\n- Files: src/auth_service.py (contains SESSION_TIMEOUT_MINUTES = 60), docs/spec.md (login timeout = 15 minutes)\n- Pattern: None required \u2014 single-file behavior change (session timeout) supported by spec + implementation file\n- Gotchas: auth_service currently sets SESSION_TIMEOUT_MINUTES = 60, spec requires 15. Confirm whether sessions are stored elsewhere (cookie lifetimes, session DB) before code change; tests should be added to assert timeout behavior.\n"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 3068,
+    "transcript_chars": 144406
+  },
+  "timing": {
+    "executor_duration_seconds": 116.2,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 116.2
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Workspace Member Management feature decomposition",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Invite member by email",
+      "description": "Admins can invite a member by email; invite creates pending membership and sends email.",
+      "acceptanceCriteria": [
+        "Invite API accepts email and role",
+        "Pending member record created",
+        "Email invitation sent (or queued)",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/server/routes/members.ts",
+        "src/server/services/inviteService.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Change member role",
+      "description": "Admins can change role between viewer, editor, admin.",
+      "acceptanceCriteria": [
+        "Role change persists to DB",
+        "Permissions reflect role change",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/services/rolesService.ts",
+        "src/web/pages/WorkspaceSettings.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Revoke workspace access",
+      "description": "Admins can revoke access, removing membership and invalidating sessions if applicable.",
+      "acceptanceCriteria": [
+        "Revoke API removes membership or marks revoked",
+        "Access denied after revoke",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/services/membershipService.ts",
+        "src/web/pages/WorkspaceSettings.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Record membership changes in audit log",
+      "description": "Membership invites, role changes, and revokes write an audit entry.",
+      "acceptanceCriteria": [
+        "Audit entries created for invite/role/revoke",
+        "Audit schema and query exist",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "migrations/20260618_add_audit_log.sql",
+        "src/server/services/auditService.ts"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Review recent membership changes UI",
+      "description": "Workspace settings page shows recent membership changes with pagination.",
+      "acceptanceCriteria": [
+        "Audit view shows recent entries",
+        "Admins can filter by action and date",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/web/pages/WorkspaceSettings.tsx",
+        "src/web/components/AuditList.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

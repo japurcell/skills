@@ -1,0 +1,103 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Add persistent notification read state, list controls, and filtering.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Persist notification read state",
+      "description": "As a user, I want notification read state saved across sessions so that unread and read items stay consistent when I return.",
+      "acceptanceCriteria": [
+        "Notification records persist read and unread state per user",
+        "Existing unread notifications default to unread until changed by the user",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/models/notification.ts",
+        "db/migrations/*notification-read-state*.sql"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Show unread badge and open notification list",
+      "description": "As a user, I want an unread badge and notification center entry point so that I can see when attention is needed and open my notifications quickly.",
+      "acceptanceCriteria": [
+        "Navigation or header shows unread notification count when unread items exist",
+        "Clicking the notification entry point opens the notification center list",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/layout/HeaderNotifications.tsx",
+        "src/components/notifications/NotificationCenter.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Mark notifications read or unread",
+      "description": "As a user, I want to mark notifications read or unread so that I can manage which items still need attention.",
+      "acceptanceCriteria": [
+        "Each notification item provides read and unread actions",
+        "Changing read state updates persisted notification state for the current user",
+        "Unread badge count updates after read-state changes",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/notifications/NotificationItem.tsx",
+        "src/server/notifications/updateNotificationReadState.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Filter notification list by read state",
+      "description": "As a user, I want to filter notifications by read state so that I can focus on unread or previously handled items.",
+      "acceptanceCriteria": [
+        "Notification center provides filter options for All, Unread, and Read",
+        "Changing the filter updates the visible notification list without mutating notification data",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/notifications/NotificationFilters.tsx",
+        "src/components/notifications/NotificationCenter.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Clear all read notifications",
+      "description": "As a user, I want to clear all read notifications so that I can remove completed items from my list.",
+      "acceptanceCriteria": [
+        "Notification center provides a clear action that targets only read notifications",
+        "Clear action removes or archives read notifications while leaving unread notifications intact",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/notifications/NotificationCenterToolbar.tsx",
+        "src/server/notifications/clearReadNotifications.ts"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Enable workspace admins to invite members, manage roles, revoke access, and review membership audit history.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add membership invitation and audit persistence",
+      "description": "As a product team, I want membership and audit records stored consistently so that admin changes are durable and traceable.",
+      "acceptanceCriteria": [
+        "Workspace membership data stores role and access state for each member",
+        "Audit records can capture invite, role change, and revoke membership events",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/add_workspace_membership_audit.sql",
+        "src/db/schema/workspace-members.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add backend member invitation flow",
+      "description": "As a workspace admin, I want to invite a member by email so that new collaborators can join without direct database edits.",
+      "acceptanceCriteria": [
+        "Invite action validates email and requested workspace role",
+        "Creating an invite records an audit event for the membership change",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/invite-workspace-member.ts",
+        "src/server/routes/workspace-members.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add backend member role change flow",
+      "description": "As a workspace admin, I want to change a member role between viewer, editor, and admin so that permissions stay accurate.",
+      "acceptanceCriteria": [
+        "Role change action only accepts viewer, editor, and admin roles",
+        "Successful role changes persist the new role and record an audit event",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/update-workspace-member-role.ts",
+        "src/server/routes/workspace-members.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add backend member access revocation flow",
+      "description": "As a workspace admin, I want to revoke workspace access so that former collaborators no longer retain permissions.",
+      "acceptanceCriteria": [
+        "Revocation action removes or disables workspace access for the selected member",
+        "Revoking access records an audit event for the membership change",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/revoke-workspace-member.ts",
+        "src/server/routes/workspace-members.ts"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add workspace settings member management panel",
+      "description": "As a workspace admin, I want invite, role change, and revoke controls in workspace settings so that I can manage membership from one UI surface.",
+      "acceptanceCriteria": [
+        "Workspace settings shows invite form and per-member role and revoke controls",
+        "Submitting any membership control reflects the persisted result in the settings view",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/pages/workspace/settings.tsx",
+        "src/components/workspace/member-management-panel.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add membership audit log view in workspace settings",
+      "description": "As a workspace admin, I want to review recent membership changes so that I can confirm who was invited, updated, or removed.",
+      "acceptanceCriteria": [
+        "Workspace settings displays recent membership audit entries with actor, action, and timestamp",
+        "Audit view refreshes after invite, role change, and revoke actions",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/pages/workspace/settings.tsx",
+        "src/components/workspace/member-audit-log.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

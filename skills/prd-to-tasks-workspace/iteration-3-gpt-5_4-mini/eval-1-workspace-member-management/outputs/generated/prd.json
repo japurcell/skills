@@ -1,0 +1,102 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Let workspace admins manage membership and review changes.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Inviting workspace members",
+      "description": "As a workspace admin, I want to invite members by email so that I can add people without database edits.",
+      "acceptanceCriteria": [
+        "An admin can submit an email invite for a workspace member.",
+        "The invite is recorded for the target workspace.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/workspaces/members.ts",
+        "src/workspaces/invites.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Changing member roles",
+      "description": "As a workspace admin, I want to change a member role so that access matches responsibility.",
+      "acceptanceCriteria": [
+        "An admin can switch a member between viewer, editor, and admin.",
+        "Role changes persist for the selected member.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/workspaces/member-roles.ts",
+        "src/workspaces/members.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Revoking workspace access",
+      "description": "As a workspace admin, I want to revoke workspace access so that removed users no longer retain membership.",
+      "acceptanceCriteria": [
+        "An admin can revoke a member from the workspace.",
+        "Revoked members no longer appear as active workspace members.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/workspaces/member-access.ts",
+        "src/workspaces/members.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Recording membership audit events",
+      "description": "As a workspace admin, I want membership changes recorded in an audit log so that access changes are traceable.",
+      "acceptanceCriteria": [
+        "Invite, role change, and revoke actions create audit entries.",
+        "Audit entries capture actor, target member, action, and timestamp.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/workspaces/membership-audit.ts",
+        "src/workspaces/audit-log.ts"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Viewing recent membership changes",
+      "description": "As a workspace admin, I want to review recent membership changes in settings so that I can audit activity quickly.",
+      "acceptanceCriteria": [
+        "Workspace settings show recent membership changes.",
+        "The view reflects stored audit entries in reverse chronological order.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/workspaces/settings/membership-audit-page.tsx",
+        "src/workspaces/membership-audit.ts"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

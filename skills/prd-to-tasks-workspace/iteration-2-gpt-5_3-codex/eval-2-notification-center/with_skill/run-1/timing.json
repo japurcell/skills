@@ -1,0 +1,9 @@
+{
+  "total_tokens": 0,
+  "duration_ms": 1,
+  "total_duration_seconds": 0.0005918369970459025,
+  "executor_start": "2026-06-18T21:21:18.739161+00:00",
+  "executor_end": "2026-06-18T21:21:18.739738+00:00",
+  "executor_duration_seconds": 0.0005918369970459025,
+  "status": "success"
+}

@@ -1,0 +1,68 @@
+{
+  "project": "Workspace",
+  "branchName": "workspace-member-management",
+  "description": "Manage workspace membership: invite, change roles, revoke access, audit log.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Invite member by email",
+      "description": "As admin, invite a member by email so they receive onboarding link.",
+      "acceptanceCriteria": [
+        "Invite endpoint validates email and creates pending member record",
+        "Invite sends email with invite link",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/api/invites.py", "src/services/membership.py"],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Change member role",
+      "description": "As admin, change a member's role between viewer, editor, admin.",
+      "acceptanceCriteria": [
+        "Role change endpoint updates role and enforces permissions",
+        "Role change recorded in audit log",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/api/members.py", "src/services/permissions.py"],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Revoke workspace access",
+      "description": "As admin, revoke a member's access immediately.",
+      "acceptanceCriteria": [
+        "Revoke endpoint disables access and invalidates sessions/tokens",
+        "Revoke recorded in audit log",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/api/members.py", "src/services/session_manager.py"],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Record membership changes in audit log and surface recent changes",
+      "description": "As admin, see recent membership changes in workspace settings page with audit details.",
+      "acceptanceCriteria": [
+        "Membership changes (invite, role change, revoke) are persisted in audit log",
+        "Workspace settings page lists recent membership changes with timestamp and actor",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": ["src/services/audit.py", "src/ui/pages/workspaceSettings.tsx"],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

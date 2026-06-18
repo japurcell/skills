@@ -1,0 +1,133 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Workspace admins need to manage membership without editing the database directly.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add schema for workspace members and audit log",
+      "description": "As a developer, I want a schema for workspace members (with roles) and an audit log table to record membership changes.",
+      "acceptanceCriteria": [
+        "Workspace members table tracks user, workspace, and role",
+        "Audit log table tracks changes",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add backend action to invite members",
+      "description": "As a developer, I want a backend action to invite a member by email and record it in the audit log.",
+      "acceptanceCriteria": [
+        "Backend handles email invitations",
+        "Records event in audit log",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add UI form to invite workspace members",
+      "description": "As an admin, I want to invite members by email from the workspace settings.",
+      "acceptanceCriteria": [
+        "Settings page includes an invite form",
+        "Submitting the form invites the member via the backend action",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add backend action to change member roles",
+      "description": "As a developer, I want a backend action to update a member's role (viewer, editor, admin) and record it in the audit log.",
+      "acceptanceCriteria": [
+        "Backend handles role updates",
+        "Validates roles (viewer, editor, admin)",
+        "Records event in audit log",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add UI control to change member roles",
+      "description": "As an admin, I want to change a member's role between viewer, editor, and admin in the member list.",
+      "acceptanceCriteria": [
+        "Member list shows current role",
+        "Admins can change the role via a UI control",
+        "Role changes are saved via the backend action",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add backend action to revoke access",
+      "description": "As a developer, I want a backend action to remove a member from the workspace and record it in the audit log.",
+      "acceptanceCriteria": [
+        "Backend handles member removal",
+        "Records event in audit log",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Add UI control to revoke workspace access",
+      "description": "As an admin, I want to revoke a user's access from the workspace member list.",
+      "acceptanceCriteria": [
+        "Member list includes a revoke access button",
+        "Clicking the button calls the backend to remove the member",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Add UI to review membership audit log",
+      "description": "As an admin, I want to see a log of membership changes in the workspace settings.",
+      "acceptanceCriteria": [
+        "Settings page includes an audit log section",
+        "Shows recent membership changes",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

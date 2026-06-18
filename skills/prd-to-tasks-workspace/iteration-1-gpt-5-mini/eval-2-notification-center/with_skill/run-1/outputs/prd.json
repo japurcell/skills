@@ -1,0 +1,119 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Notification Center feature decomposition",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add notification persistence schema",
+      "description": "Create notifications table and read-state storage so read/unread persists across sessions.",
+      "acceptanceCriteria": [
+        "Notifications table exists with read flag",
+        "Migrations added",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "migrations/20260618_create_notifications.sql",
+        "src/server/models/notifications.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Backend: notification read-state updates",
+      "description": "APIs to mark read/unread and to fetch notifications with read state.",
+      "acceptanceCriteria": [
+        "Endpoints exist for fetch/mark read/unread",
+        "State persists",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/routes/notifications.ts",
+        "src/server/services/notificationsService.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Unread badge and count",
+      "description": "Show unread badge count in header and update in real-time as read state changes.",
+      "acceptanceCriteria": [
+        "Badge shows correct unread count",
+        "Updates after marking read",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/web/components/NotificationsBadge.tsx",
+        "src/web/state/notifications.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Notification list UI",
+      "description": "List notifications with content, timestamp, and read state; clicking opens notification.",
+      "acceptanceCriteria": [
+        "List shows notifications ordered by time",
+        "Click opens linked resource",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/web/pages/NotificationsCenter.tsx",
+        "src/web/components/NotificationItem.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Read/unread toggle and mark all read",
+      "description": "Allow toggling individual read state and clearing all read notifications.",
+      "acceptanceCriteria": [
+        "Toggle updates backend and UI",
+        "Clear all read removes or archives read notifications",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/web/components/NotificationControls.tsx",
+        "src/server/routes/notifications.ts"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Filter notifications by read state",
+      "description": "Filter list by read/unread/all.",
+      "acceptanceCriteria": [
+        "Filter UI works and preserves selection",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/web/components/Filters.tsx",
+        "src/web/pages/NotificationsCenter.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

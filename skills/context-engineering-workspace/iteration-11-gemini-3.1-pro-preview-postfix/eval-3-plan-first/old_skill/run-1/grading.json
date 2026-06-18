@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The output uses the `PLAN` block.",
+      "passed": true,
+      "evidence": "PLAN:\n1. Rename display_name key to title in src/report_builder.py.\n2. Update display_name reference to title in src/report_serializer.py.\n3. Update test_build_report_uses_display_name to test_build_report_uses_title in tests/test_report_builder.py.\nExecuting unless you redirect.\n"
+    },
+    {
+      "text": "The output contains exactly three numbered steps.",
+      "passed": true,
+      "evidence": "PLAN:\n1. Rename display_name key to title in src/report_builder.py.\n2. Update display_name reference to title in src/report_serializer.py.\n3. Update test_build_report_uses_display_name to test_build_report_uses_title in tests/test_report_builder.py.\nExecuting unless you redirect.\n"
+    },
+    {
+      "text": "The output ends with `Executing unless you redirect.`",
+      "passed": true,
+      "evidence": "PLAN:\n1. Rename display_name key to title in src/report_builder.py.\n2. Update display_name reference to title in src/report_serializer.py.\n3. Update test_build_report_uses_display_name to test_build_report_uses_title in tests/test_report_builder.py.\nExecuting unless you redirect.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 438,
+    "transcript_chars": 146633
+  },
+  "timing": {
+    "executor_duration_seconds": 56.7,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 56.7
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

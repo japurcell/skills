@@ -1,0 +1,109 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Enable admins to invite, manage roles, revoke access, and review membership audit history.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add membership audit-log persistence",
+      "description": "As a workspace admin, I want membership changes stored as audit events so that administrative actions are traceable.",
+      "acceptanceCriteria": [
+        "Create audit-log storage for membership events including actor, target member, action, and timestamp",
+        "Define event types for invite_sent, role_changed, and access_revoked",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/*membership-audit*",
+        "src/db/schema/membership_audit.*"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Invite workspace members by email",
+      "description": "As a workspace admin, I want to invite members by email so that new collaborators can join without database edits.",
+      "acceptanceCriteria": [
+        "Provide admin action to create an invitation for a valid email address",
+        "Invitation flow assigns requested role (viewer, editor, or admin) and sends invite notification/email hook",
+        "Successful invite writes invite_sent membership audit event",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/server/workspace/members/invite*",
+        "src/components/workspace/settings/InviteMemberForm.*"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Change workspace member roles",
+      "description": "As a workspace admin, I want to change member roles so that access level matches responsibilities.",
+      "acceptanceCriteria": [
+        "Provide admin action to change role between viewer, editor, and admin",
+        "Role changes update membership record and enforce role enum validation",
+        "Successful role change writes role_changed membership audit event",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/server/workspace/members/updateRole*",
+        "src/components/workspace/settings/MembersTable.*"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Revoke workspace member access",
+      "description": "As a workspace admin, I want to revoke member access so that former collaborators no longer access workspace data.",
+      "acceptanceCriteria": [
+        "Provide admin action to remove member workspace access by membership id",
+        "Revocation removes access immediately from authorization checks",
+        "Successful revocation writes access_revoked membership audit event",
+        "Tests pass",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/server/workspace/members/revoke*",
+        "src/components/workspace/settings/MembersTable.*"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Show recent membership changes in settings audit view",
+      "description": "As a workspace admin, I want to review recent membership changes on the settings page so that I can audit who changed access.",
+      "acceptanceCriteria": [
+        "Workspace settings page renders recent membership audit events sorted newest first",
+        "Audit view shows action type, actor, target member, and timestamp columns",
+        "Audit view limits to workspace scope and paginates or caps result count for performance",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/server/workspace/members/auditQuery*",
+        "src/components/workspace/settings/MembershipAuditLog.*"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

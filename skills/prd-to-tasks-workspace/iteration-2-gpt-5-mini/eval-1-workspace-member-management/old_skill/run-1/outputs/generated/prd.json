@@ -1,0 +1,84 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Manage workspace membership: invite, roles, revoke, and audit.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add membership schema and invitation token",
+      "description": "As an admin, I want a membership table and invitation tokens so members can be invited by email.",
+      "acceptanceCriteria": [
+        "Add memberships table or extend users->workspaces relation",
+        "Add invitation token table or field and expiry",
+        "Existing data unaffected",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["db/migrations/xxxx_create_membership.sql", "src/models/membership.ts"],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Invite member by email",
+      "description": "As an admin, I want to invite a member by email so they can join the workspace via invitation link.",
+      "acceptanceCriteria": [
+        "Invite endpoint accepts email and sends invitation link with token",
+        "Invitation flow creates pending membership and redeems token to create member",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/routes/invite.ts", "src/services/inviteService.ts"],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Change member role",
+      "description": "As an admin, I want to change a member's role between viewer, editor, and admin so permissions update.",
+      "acceptanceCriteria": [
+        "Add endpoint to change role and persist change",
+        "Role change appears immediately in UI",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/routes/members.ts", "src/services/roleService.ts"],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Revoke workspace access",
+      "description": "As an admin, I want to revoke a member's access so they can no longer access workspace resources.",
+      "acceptanceCriteria": [
+        "Add revoke endpoint that disables membership",
+        "Revoked member cannot access workspace resources",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/routes/members.ts", "src/services/membershipService.ts"],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Record membership changes in audit log and UI view",
+      "description": "As an admin, I want membership changes recorded and reviewable so I can audit invites, role changes, and revocations.",
+      "acceptanceCriteria": [
+        "Persist audit events for invite, role change, revoke",
+        "Expose recent membership changes in workspace settings page",
+        "Verify in browser using playwright-cli skill",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["src/services/auditLogger.ts", "src/pages/WorkspaceSettings.tsx"],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

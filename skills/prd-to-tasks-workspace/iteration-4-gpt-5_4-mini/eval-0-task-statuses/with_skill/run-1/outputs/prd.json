@@ -1,0 +1,87 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Add task statuses for tasks.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add task status schema",
+      "description": "As a user, I want each task to store a status so that work can be tracked as pending, in progress, or done.",
+      "acceptanceCriteria": [
+        "Tasks have a persisted status field with allowed values pending, in progress, and done",
+        "Existing tasks default to pending",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Update task status backend action",
+      "description": "As a user, I want task status changes to persist so that updates survive reloads.",
+      "acceptanceCriteria": [
+        "Updating a task status persists the selected value",
+        "Invalid status values are rejected",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Show task status badge on task cards",
+      "description": "As a user, I want to see each task status on its card so that I can scan progress quickly.",
+      "acceptanceCriteria": [
+        "Task cards display the current status badge",
+        "Badge reflects the stored task status",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add task status control to task rows",
+      "description": "As a user, I want to change status from each task row so that I can update work inline.",
+      "acceptanceCriteria": [
+        "Each task row exposes a status control",
+        "Changing the control updates the selected task status",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Filter tasks by status",
+      "description": "As a user, I want to filter the task list by status so that I can focus on specific work states.",
+      "acceptanceCriteria": [
+        "The task list can filter by status",
+        "Filter results show only tasks with the selected status",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

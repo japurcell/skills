@@ -1,29 +1,37 @@
 ---
 name: prd-to-tasks
-description: Use when the user asks to convert, decompose, split, transform, or prepare a PRD, product requirements document, feature spec, planning doc, requirements-like markdown file, raw requirements, or feature description into atomic implementation tasks, userStories, JSON, prd.json, or input for /prd-build-loop. Trigger on requests like "convert PRD to tasks", "create prd.json", "break this into stories", "generate userStories", "decompose this feature", "requirements to stories", "tasks from requirements", "agent-ready stories", or "prepare for /prd-build-loop". Always split broad requirements into small, dependency-ordered, implementation-sized stories; never copy PRD sections unchanged unless already atomic.
+description: Converts a PRD, feature spec, planning doc, or raw requirements into dependency-ordered atomic implementation stories in `prd.json`. Use when the user wants to split a feature into implementable tasks, user stories, `prd.json`, or `/prd-build-loop` input—even if they say "break this down," "make this implementable," "turn this spec into tickets," or "prepare agent-ready stories." Not for writing the PRD itself or implementing the feature.
 ---
 
-# PRD to `prd.json`
+# PRD to Tasks
 
-Convert `prd_file` into an agent-ready `prd.json` with atomic implementation stories.
+## Overview
 
-## Inputs
+Convert `prd_file` into agent-ready `prd.json`. Split until each story is narrow, independently verifiable, dependency-ordered, and small enough for one implementation loop.
 
-- `prd_file` required: PRD path or raw PRD text.
-- `output_directory` optional:
-  - If provided, save `output_directory/prd.json`.
-  - Else if `prd_file` is a path, save beside it.
-  - Else save `.agents/scratchpad/prd.json`.
+## When to Use
+
+- Turn a PRD, spec, planning doc, or raw requirements into atomic implementation stories.
+- Prepare `prd.json`, user stories, or agent-ready work items for `/prd-build-loop`.
+- Decompose broad requirements into stageable backend, UI, data, and integration work.
+- Not for PRD authoring (`prd`) or story implementation (`prd-build`, `prd-build-loop-review`).
 
 ## Workflow
 
-1. Read `prd_file`.
-2. Decompose broad requirements into atomic implementation stories.
-3. Order stories by dependency, then PRD source order where possible.
-4. Save valid JSON to the target `prd.json`.
+1. Resolve inputs and output path.
+   - `prd_file` is required: file path or raw PRD text.
+   - `output_directory` is optional:
+     - if provided, save `output_directory/prd.json`
+     - else if `prd_file` is a path, save beside it
+     - else save `.agents/scratchpad/prd.json`
+2. Read the PRD and identify the smallest stageable capabilities.
+3. Split broad requirements into atomic stories, then order by dependency and source order.
+4. Write valid JSON only to `prd.json`.
 5. Final response: story count, output path, and readiness for `/prd-build-loop`.
 
-## Output schema
+## Specific Techniques
+
+### Output schema
 
 ```json
 {
@@ -52,129 +60,104 @@ Convert `prd_file` into an agent-ready `prd.json` with atomic implementation sto
 }
 ```
 
-## Atomic story rules
+### Atomic story rules
 
-`userStories` must be decomposed implementation stories, not copied PRD sections.
+- Each story must be narrow, complete, independently verifiable, and finishable by one agent in one iteration.
+- A story usually covers one stageable capability, such as:
+  - schema or migration
+  - shared model or type
+  - backend action, endpoint, service, or query
+  - one UI surface
+  - one user interaction
+  - one integration point
+  - one dashboard or aggregate view
+  - one focused testable behavior
+- If a source requirement is already atomic and implementation-sized, keep it as one story. Otherwise split it. Never copy broad PRD sections unchanged.
+- Never create stories that mean:
+  - implement whole feature, page, epic, or workflow
+  - combine unrelated stageable behaviors
+  - split only by technical layer when user-visible capabilities can be staged
 
-Each story must be narrow, complete, independently verifiable, and finishable by one agent in one iteration. A story usually covers exactly one:
-
-- schema or migration change
-- model or type update
-- backend action, endpoint, service, or query
-- UI component or surface
-- user interaction
-- filter, sort, search, badge, toggle, modal, or form
-- integration point
-- dashboard or aggregate view
-- focused testable behavior
-
-Never create stories that mean:
-
-- implement the whole PRD, feature, system, epic, page, or full workflow
-- combine multiple stageable behaviors
-- copy a multi-capability PRD story unchanged
-
-Split smaller when unsure.
-
-## Split rules
+### Split rules
 
 Split any requirement that:
 
-- spans multiple features, pages, flows, roles, entities, or UI surfaces
-- has multiple unrelated verbs, such as create, edit, delete, filter, export, or notify
+- spans multiple features, pages, flows, roles, entities, or surfaces
+- uses multiple unrelated verbs like create, edit, delete, filter, export, or notify
 - combines schema, backend, and UI work that can be staged
-- cannot be explained in 2–3 sentences
+- cannot be explained in 2-3 sentences
 - would touch many unrelated files
-- is not independently demoable after prerequisites
-- uses “and” to join separate capabilities
+- is not demoable after its prerequisites
+- joins separate capabilities with `and`
 
-Avoid horizontal stories like “build backend,” “build frontend,” or “write all tests” unless the PRD only asks for that layer.
+Avoid horizontal stories like `build backend`, `build frontend`, or `write all tests` unless the PRD only asks for that layer.
 
-## Decomposition algorithm
+### Decomposition sequence
 
 For each requirement:
 
-1. Identify the smallest user-visible or system-visible capability.
-2. Create prerequisite stories first:
-   - database/schema
-   - models/types
-   - server actions/API/service/query
-3. Split UI surfaces:
-   - list view
-   - detail view
-   - form
-   - modal
-   - navigation
-   - dashboard
-4. Split user actions:
-   - create
-   - update
-   - delete
-   - filter
-   - sort
-   - search
-   - export
-   - notify
-5. Split cross-cutting requirements only when independently implementable.
-6. Re-split any generated story that still contains multiple capabilities.
+1. Find smallest user-visible or system-visible capability.
+2. Create prerequisite stories first: schema/database, then shared types/models, then backend logic.
+3. Split UI by surface when needed: list, detail, form, modal, navigation, dashboard.
+4. Split user actions when needed: create, update, delete, filter, sort, search, export, notify.
+5. Re-split any draft story that still bundles multiple capabilities.
 
-## Ordering rules
+For weaker models, apply this exact rule:
 
-Stories run in ascending `priority`; no story may depend on a later story.
+- If one requirement includes both backend persistence and a visible UI surface, split them into separate stories.
+- Backend-only stories should describe storage, types, actions, endpoints, validation, or persistence; do not describe visible cards, rows, lists, controls, filters, or other UI surfaces there.
+- Backend-only stories also must not describe where a user clicks, which page triggers the action, or task-list/card/row behavior. Leave those details to separate UI stories.
+- Any story that describes a visible UI surface must include browser verification.
 
-Dependency order:
+### Ordering rules
 
-1. schema/database
-2. shared types/models
-3. backend/server logic
-4. UI using that logic
-5. aggregate/dashboard views
-6. polish, validation, and follow-up enhancements
+- `priority` ascends; no story may depend on a later story.
+- Preferred order:
+  1. schema/database
+  2. shared types/models
+  3. backend/server logic
+  4. UI using that logic
+  5. aggregate/dashboard views
+  6. polish, validation, follow-up enhancements
+- Preserve PRD source order when dependencies allow.
 
-Preserve PRD source order where dependencies allow.
+### Acceptance criteria rules
 
-## Acceptance criteria rules
+- Criteria must be concrete and testable.
+- Every story includes `Typecheck passes`.
+- Add `Tests pass` for testable logic when applicable.
+- Add `Verify in browser using playwright-cli skill` for every story that changes visible UI.
+- Treat badges, cards, rows, lists, filters, forms, dropdowns, modals, pages, and controls as UI even when the same story also wires backend behavior.
+- If a draft story mentions both backend work and any visible UI surface, split it before saving instead of keeping one mixed story.
+- UI stories are incomplete without browser verification.
 
-Criteria must be concrete and testable.
-
-Always include:
-
-- `Typecheck passes`
-
-Include when applicable:
-
-- `Tests pass` for testable logic
-- `Verify in browser using playwright-cli skill` for UI changes
-
-Good criteria:
+Good:
 
 - `Add status column to tasks table with default 'pending'`
 - `Filter dropdown options are All, Active, and Completed`
 - `Changing status saves immediately`
 - `Clicking delete shows a confirmation dialog`
 
-Bad criteria:
+Bad:
 
 - `Works correctly`
 - `Good UX`
 - `Handles edge cases`
 - `Implement the feature`
 
-UI stories are incomplete without visual/browser verification.
+### Field rules
 
-## Field rules
-
-- Use sequential IDs: `US-001`, `US-002`, etc.
+- Use sequential IDs: `US-001`, `US-002`, ...
 - Derive `branchName` from the feature name in kebab-case.
 - Keep top-level `description` short and based on the PRD title or intro.
 - Set every story `passes` to `false`.
 - Set every story `notes` to `""`.
 - Include `filesLikelyTouched` when inferable.
 - Exclude files ignored by repository `.gitignore`.
-- Use `designGuidance` only when useful; otherwise set `[]`.
-- The saved `prd.json` must contain valid JSON only: no markdown, comments, or trailing commas.
+- Use `designGuidance` only when useful; otherwise `[]`.
+- Save valid JSON only: no markdown, comments, or trailing commas.
 
-## Minimal example
+### Minimal example
 
 Input:
 
@@ -184,7 +167,7 @@ Add task statuses. Users can set a task to pending, in progress, or done, see ba
 
 Correct split:
 
-1. Add task status schema/migration.
+1. Add task status schema or migration.
 2. Add backend action to update task status.
 3. Show status badge on task cards.
 4. Add status control to task rows.
@@ -194,18 +177,39 @@ Incorrect:
 
 1. Implement task statuses.
 
-## Final check before saving
+## Common Rationalizations
 
-Verify:
+| Rationalization | Reality |
+| --- | --- |
+| "PRD already has sections, so I can reuse them as stories." | Only reuse wording when a requirement is already atomic and implementation-sized. Broad sections must be split. |
+| "One story for backend and one for frontend is enough." | Horizontal layer splits hide stageable capabilities and block dependency ordering. |
+| "Acceptance criteria can stay vague because implementer will figure it out." | Criteria must be concrete so stories are independently verifiable. |
+| "This story is mostly backend, so inline UI control does not need browser verification." | If the story changes any visible control or other UI surface, include `Verify in browser using playwright-cli skill`. |
+| "I can keep backend update logic in one story that also describes task-list behavior." | No. Split backend persistence/action work from visible list, row, card, filter, or control work before saving. |
+| "Backend story can still say users change status from the list as long as UI is separate." | No. Pure backend stories should avoid UI entry-point wording entirely; keep list, row, card, page, and control language in UI stories only. |
 
-- [ ] PRD is decomposed into small implementation stories.
-- [ ] No story is merely copied from the PRD.
-- [ ] Each story is narrow, independently verifiable, and implementation-sized.
+## Red Flags
+
+- Story titles read like epics, phases, or full workflows.
+- One story contains multiple unrelated verbs or multiple UI surfaces.
+- A later-priority story is prerequisite for an earlier one.
+- Acceptance criteria use vague language.
+- UI stories omit browser verification.
+- Output is markdown or commented JSON instead of valid `prd.json`.
+
+## Verification
+
+Before saving, confirm:
+
+- [ ] Broad requirements were split into implementation-sized stories.
+- [ ] Any unchanged source requirement was already atomic.
+- [ ] Each story is narrow, independently verifiable, and dependency-ordered.
 - [ ] No story depends on a later-priority story.
 - [ ] Every story has concrete acceptance criteria.
 - [ ] Every story includes `Typecheck passes`.
 - [ ] Every UI story includes `Verify in browser using playwright-cli skill`.
+- [ ] Mixed UI/backend stories still include browser verification when they change visible UI.
+- [ ] Backend-only stories do not describe visible UI surfaces.
+- [ ] Backend-only stories do not describe UI entry points like list, row, card, page, or control interactions.
 - [ ] `filesLikelyTouched` excludes ignored files.
 - [ ] `prd.json` is valid and saved to the correct path.
-
-If any story fails, split or revise it before saving.

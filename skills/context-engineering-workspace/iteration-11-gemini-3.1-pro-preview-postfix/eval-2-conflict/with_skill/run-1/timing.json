@@ -1,0 +1,9 @@
+{
+  "total_tokens": 102,
+  "duration_ms": 34728,
+  "total_duration_seconds": 34.7,
+  "api_duration_ms": 31034,
+  "executor_model": "gemini-3.1-pro-preview",
+  "token_measure": "output_tokens_only",
+  "exit_code": 0
+}

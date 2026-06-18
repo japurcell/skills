@@ -1,0 +1,127 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Workspace admins need to manage membership without editing the database directly.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add backend logic to invite members",
+      "description": "As a system, I need backend support to invite new members by email.",
+      "acceptanceCriteria": [
+        "Backend endpoint accepts email for invitation",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add member invitation UI",
+      "description": "As an admin, I want to invite members by email from the workspace UI.",
+      "acceptanceCriteria": [
+        "Invitation form is visible",
+        "Form submission triggers the backend invitation",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add backend logic to change member roles",
+      "description": "As a system, I need backend support to update member roles.",
+      "acceptanceCriteria": [
+        "Backend endpoint allows updating role to viewer, editor, or admin",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add role change UI",
+      "description": "As an admin, I want to change a member's role from the UI.",
+      "acceptanceCriteria": [
+        "Role selection control is available for each member",
+        "Changing role updates the backend",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add backend logic to revoke access",
+      "description": "As a system, I need backend support to revoke a member's workspace access.",
+      "acceptanceCriteria": [
+        "Backend endpoint allows removing member access",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add revoke access UI",
+      "description": "As an admin, I want to revoke member access from the UI.",
+      "acceptanceCriteria": [
+        "Revoke access button/action is visible for members",
+        "Action requires confirmation and triggers the backend",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Record membership changes in audit log",
+      "description": "As a system, I want to log all membership changes so that there is a history.",
+      "acceptanceCriteria": [
+        "Schema/backend logs invite, role change, and revoke actions",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Review audit log in settings UI",
+      "description": "As an admin, I want to see recent membership changes in the settings page.",
+      "acceptanceCriteria": [
+        "Audit log view is visible in workspace settings",
+        "Shows recent membership changes",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

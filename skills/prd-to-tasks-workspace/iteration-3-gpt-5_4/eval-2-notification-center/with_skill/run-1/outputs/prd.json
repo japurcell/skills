@@ -1,0 +1,121 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Add a notification center with persisted read state, unread indicators, filtering, and clearing read notifications.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add notification read-state persistence",
+      "description": "As a product team, I want notifications to persist read state per user so that read and unread status survives across sessions.",
+      "acceptanceCriteria": [
+        "Notification storage tracks whether each notification is read for the current user",
+        "Persisted read state remains available when the user starts a new session",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/add_notification_read_state.sql",
+        "src/db/schema/notifications.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add backend notification read-state update actions",
+      "description": "As a user, I want to mark notifications read or unread so that the notification center reflects what I still need to review.",
+      "acceptanceCriteria": [
+        "Backend actions toggle a notification between read and unread states",
+        "Updated read state is returned consistently to notification queries",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/update-notification-read-state.ts",
+        "src/server/routes/notifications.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add backend action to clear all read notifications",
+      "description": "As a user, I want to clear read notifications so that old completed items no longer clutter my notification history.",
+      "acceptanceCriteria": [
+        "Clear action removes or archives only notifications already marked read",
+        "Unread notifications remain available after a clear operation",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/clear-read-notifications.ts",
+        "src/server/routes/notifications.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Show unread notification badge",
+      "description": "As a user, I want an unread badge so that I can see at a glance when new notifications need attention.",
+      "acceptanceCriteria": [
+        "Application chrome displays unread notification count badge when unread items exist",
+        "Unread badge count updates after read-state changes and clear actions",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/navigation/notification-badge.tsx",
+        "src/components/navigation/app-header.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add notification center list surface",
+      "description": "As a user, I want to open a notification list so that I can review notifications from a dedicated center.",
+      "acceptanceCriteria": [
+        "Users can open the notification center and see a list of notifications with current read state",
+        "Notification list reflects persisted read-state changes without stale rows",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/pages/notifications/index.tsx",
+        "src/components/notifications/notification-list.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add read-state filter and clear-read controls",
+      "description": "As a user, I want to filter notifications by read state and clear read items so that I can focus on what still matters.",
+      "acceptanceCriteria": [
+        "Notification center offers All, Unread, and Read filters",
+        "Clear read control removes read items from the list after confirmation and refresh",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/components/notifications/notification-filters.tsx",
+        "src/components/notifications/notification-list.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
