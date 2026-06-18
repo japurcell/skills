@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "code-review",
+  "model_tier": "standard",
+  "model": "gpt-5.3-codex",
+  "justification": "large architectural refactor diff needs review-focused judgment but not premium escalation; with gpt-5.4 unavailable, the skill says stay in standard tier and choose the next cheapest suitable same-tier model, which is gpt-5.3-codex.",
+  "fallback_strategy": "because gpt-5.4 is unavailable, use gpt-5.3-codex; if that is also unavailable, continue within standard tier with gpt-4.1 before changing tiers."
+}

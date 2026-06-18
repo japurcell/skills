@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "general-purpose",
+  "model_tier": "standard",
+  "model": "gpt-5.3-codex",
+  "justification": "cross-file bug fix plus test updates is non-trivial code editing, so standard tier with capable coding model is appropriate.",
+  "fallback_strategy": "if gpt-5.3-codex unavailable, stay standard tier and use gpt-4.1 or gemini-3.1-pro."
+}

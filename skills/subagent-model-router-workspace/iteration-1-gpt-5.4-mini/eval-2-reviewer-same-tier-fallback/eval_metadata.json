@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "reviewer-same-tier-fallback",
+  "prompt": "Use the skill under test to route this delegated task: `Launch a reviewer for a 35-file architectural refactor diff. The first-choice standard model gpt-5.4 is unavailable right now.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+  "assertions": [
+    "The decision marks the skill as applicable.",
+    "The agent type is a review specialist.",
+    "The model tier stays `standard`.",
+    "The chosen model is not `gpt-5.4` and the fallback mentions availability or same-tier fallback."
+  ]
+}

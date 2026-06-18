@@ -1,0 +1,8 @@
+{
+  "applicable": false,
+  "agent_type": "none",
+  "model_tier": "none",
+  "model": "none",
+  "justification": "request explicitly says do not spawn anything, so routing skill does not apply.",
+  "fallback_strategy": "none"
+}

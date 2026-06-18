@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "task",
+  "model_tier": "fast",
+  "model": "gpt-5-mini",
+  "justification": "bounded test execution and failure summarization fits task agent with cheapest fast-tier model.",
+  "fallback_strategy": "if gpt-5-mini unavailable, stay in fast tier and use gpt-5.4-mini next."
+}

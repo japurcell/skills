@@ -1,0 +1,75 @@
+{
+  "skill_name": "subagent-model-router",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use the skill under test to route this delegated task: `Launch a worker to run the backend pytest suite, capture failing tests, and summarize the failures.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+      "expected_output": "A routing decision that applies the skill, picks the `task` agent, uses the fast tier, and avoids an expensive reasoning model for bounded execution.",
+      "files": [],
+      "expectations": [
+        "The decision marks the skill as applicable.",
+        "The agent type is `task`.",
+        "The model tier is `fast`.",
+        "The chosen model is a fast-tier model rather than a standard or premium model."
+      ],
+      "assertions": [
+        "The decision marks the skill as applicable.",
+        "The agent type is `task`.",
+        "The model tier is `fast`.",
+        "The chosen model is a fast-tier model rather than a standard or premium model."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Use the skill under test to route this delegated task: `Launch an agent to edit code across src/auth.py, src/session.py, and tests/test_auth.py to fix an expiry bug and update tests.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+      "expected_output": "A routing decision that treats cross-file code editing as applicable, uses `general-purpose`, selects the standard tier, and avoids `gpt-5-mini` for code editing.",
+      "files": [],
+      "expectations": [
+        "The decision marks the skill as applicable.",
+        "The agent type is `general-purpose`.",
+        "The model tier is `standard`.",
+        "The chosen model is not `gpt-5-mini`."
+      ],
+      "assertions": [
+        "The decision marks the skill as applicable.",
+        "The agent type is `general-purpose`.",
+        "The model tier is `standard`.",
+        "The chosen model is not `gpt-5-mini`."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use the skill under test to route this delegated task: `Launch a reviewer for a 35-file architectural refactor diff. The first-choice standard model gpt-5.4 is unavailable right now.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+      "expected_output": "A routing decision that keeps the task in a review-specialist lane, stays in the standard tier, avoids unavailable `gpt-5.4`, and explains the same-tier fallback.",
+      "files": [],
+      "expectations": [
+        "The decision marks the skill as applicable.",
+        "The agent type is a review specialist.",
+        "The model tier stays `standard`.",
+        "The chosen model is not `gpt-5.4` and the fallback mentions availability or same-tier fallback."
+      ],
+      "assertions": [
+        "The decision marks the skill as applicable.",
+        "The agent type is a review specialist.",
+        "The model tier stays `standard`.",
+        "The chosen model is not `gpt-5.4` and the fallback mentions availability or same-tier fallback."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use the skill under test for this request: `Do not spawn anything; just inspect skills/subagent-model-router/SKILL.md and tell me whether the wording is repetitive.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+      "expected_output": "A decision that says the skill is not applicable because no delegated launch is happening.",
+      "files": [],
+      "expectations": [
+        "The decision marks the skill as not applicable.",
+        "The decision does not choose a real agent type.",
+        "The justification says there is no delegated launch."
+      ],
+      "assertions": [
+        "The decision marks the skill as not applicable.",
+        "The decision does not choose a real agent type.",
+        "The justification says there is no delegated launch."
+      ]
+    }
+  ]
+}

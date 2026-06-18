@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "general-purpose",
+  "model_tier": "standard",
+  "model": "gpt-5.3-codex",
+  "justification": "Cross-file code edit with debugging and test updates needs standard tier.",
+  "fallback_strategy": "Use next-cheapest standard-tier model."
+}

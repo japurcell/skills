@@ -1,0 +1,360 @@
+{
+  "metadata": {
+    "skill_name": "subagent-model-router",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-18T20:00:47Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 53.0,
+        "tokens": 435,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision marks the skill as applicable.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5-mini\",\n  \"justification\": \"bounded test execution and failure summarization fit task agent; fast tier is enough, and gpt-5-mini is cheapest suitable available fast model for non-editing work.\",\n  \"fallback_strategy\": \"if gpt-5-mini unavailable, stay in fast tier and use gpt-5.4-mini next; only change tiers if fast tier becomes unavailable.\"\n}\n"
+        },
+        {
+          "text": "The agent type is `task`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5-mini\",\n  \"justification\": \"bounded test execution and failure summarization fit task agent; fast tier is enough, and gpt-5-mini is cheapest suitable available fast model for non-editing work.\",\n  \"fallback_strategy\": \"if gpt-5-mini unavailable, stay in fast tier and use gpt-5.4-mini next; only change tiers if fast tier becomes unavailable.\"\n}\n"
+        },
+        {
+          "text": "The model tier is `fast`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5-mini\",\n  \"justification\": \"bounded test execution and failure summarization fit task agent; fast tier is enough, and gpt-5-mini is cheapest suitable available fast model for non-editing work.\",\n  \"fallback_strategy\": \"if gpt-5-mini unavailable, stay in fast tier and use gpt-5.4-mini next; only change tiers if fast tier becomes unavailable.\"\n}\n"
+        },
+        {
+          "text": "The chosen model is a fast-tier model rather than a standard or premium model.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5-mini\",\n  \"justification\": \"bounded test execution and failure summarization fit task agent; fast tier is enough, and gpt-5-mini is cheapest suitable available fast model for non-editing work.\",\n  \"fallback_strategy\": \"if gpt-5-mini unavailable, stay in fast tier and use gpt-5.4-mini next; only change tiers if fast tier becomes unavailable.\"\n}\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 53.0,
+        "tokens": 500,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision marks the skill as applicable.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fix with test updates is code editing beyond small isolated change, so use general-purpose agent and standard tier; gpt-5.3-codex is cheapest suitable available standard model.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex unavailable, stay in standard tier and use gemini-3.1-pro-preview or gpt-5.4; do not drop to fast tier for cross-file editing.\"\n}\n"
+        },
+        {
+          "text": "The agent type is `general-purpose`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fix with test updates is code editing beyond small isolated change, so use general-purpose agent and standard tier; gpt-5.3-codex is cheapest suitable available standard model.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex unavailable, stay in standard tier and use gemini-3.1-pro-preview or gpt-5.4; do not drop to fast tier for cross-file editing.\"\n}\n"
+        },
+        {
+          "text": "The model tier is `standard`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fix with test updates is code editing beyond small isolated change, so use general-purpose agent and standard tier; gpt-5.3-codex is cheapest suitable available standard model.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex unavailable, stay in standard tier and use gemini-3.1-pro-preview or gpt-5.4; do not drop to fast tier for cross-file editing.\"\n}\n"
+        },
+        {
+          "text": "The chosen model is not `gpt-5-mini`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fix with test updates is code editing beyond small isolated change, so use general-purpose agent and standard tier; gpt-5.3-codex is cheapest suitable available standard model.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex unavailable, stay in standard tier and use gemini-3.1-pro-preview or gpt-5.4; do not drop to fast tier for cross-file editing.\"\n}\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 53.0,
+        "tokens": 479,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision marks the skill as applicable.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"code-review\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"large architectural refactor diff needs review specialist with standard-tier judgment; with gpt-5.4 unavailable, next cheapest suitable same-tier model is gpt-5.3-codex.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex unavailable, keep standard tier and use gemini-3.1-pro-preview before any tier change; only escalate if standard tier is exhausted.\"\n}\n"
+        },
+        {
+          "text": "The agent type is a review specialist.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"code-review\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"large architectural refactor diff needs review specialist with standard-tier judgment; with gpt-5.4 unavailable, next cheapest suitable same-tier model is gpt-5.3-codex.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex unavailable, keep standard tier and use gemini-3.1-pro-preview before any tier change; only escalate if standard tier is exhausted.\"\n}\n"
+        },
+        {
+          "text": "The model tier stays `standard`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"code-review\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"large architectural refactor diff needs review specialist with standard-tier judgment; with gpt-5.4 unavailable, next cheapest suitable same-tier model is gpt-5.3-codex.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex unavailable, keep standard tier and use gemini-3.1-pro-preview before any tier change; only escalate if standard tier is exhausted.\"\n}\n"
+        },
+        {
+          "text": "The chosen model is not `gpt-5.4` and the fallback mentions availability or same-tier fallback.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"code-review\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"large architectural refactor diff needs review specialist with standard-tier judgment; with gpt-5.4 unavailable, next cheapest suitable same-tier model is gpt-5.3-codex.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex unavailable, keep standard tier and use gemini-3.1-pro-preview before any tier change; only escalate if standard tier is exhausted.\"\n}\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 53.0,
+        "tokens": 253,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision marks the skill as not applicable.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": false,\n  \"agent_type\": \"none\",\n  \"model_tier\": \"none\",\n  \"model\": \"none\",\n  \"justification\": \"no delegated launch is happening, and skill says not to use it when no subagent or task launch will occur.\",\n  \"fallback_strategy\": \"none\"\n}\n"
+        },
+        {
+          "text": "The decision does not choose a real agent type.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": false,\n  \"agent_type\": \"none\",\n  \"model_tier\": \"none\",\n  \"model\": \"none\",\n  \"justification\": \"no delegated launch is happening, and skill says not to use it when no subagent or task launch will occur.\",\n  \"fallback_strategy\": \"none\"\n}\n"
+        },
+        {
+          "text": "The justification says there is no delegated launch.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": false,\n  \"agent_type\": \"none\",\n  \"model_tier\": \"none\",\n  \"model\": \"none\",\n  \"justification\": \"no delegated launch is happening, and skill says not to use it when no subagent or task launch will occur.\",\n  \"fallback_strategy\": \"none\"\n}\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 53.0,
+        "tokens": 412,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision marks the skill as applicable.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5-mini\",\n  \"justification\": \"bounded test execution and failure summarization fit the task agent, and gpt-5-mini is the cheapest suitable available fast-tier model for non-editing work.\",\n  \"fallback_strategy\": \"if gpt-5-mini is unavailable, stay in fast tier and use gpt-5.4-mini as the next cheapest suitable fallback.\"\n}\n"
+        },
+        {
+          "text": "The agent type is `task`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5-mini\",\n  \"justification\": \"bounded test execution and failure summarization fit the task agent, and gpt-5-mini is the cheapest suitable available fast-tier model for non-editing work.\",\n  \"fallback_strategy\": \"if gpt-5-mini is unavailable, stay in fast tier and use gpt-5.4-mini as the next cheapest suitable fallback.\"\n}\n"
+        },
+        {
+          "text": "The model tier is `fast`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5-mini\",\n  \"justification\": \"bounded test execution and failure summarization fit the task agent, and gpt-5-mini is the cheapest suitable available fast-tier model for non-editing work.\",\n  \"fallback_strategy\": \"if gpt-5-mini is unavailable, stay in fast tier and use gpt-5.4-mini as the next cheapest suitable fallback.\"\n}\n"
+        },
+        {
+          "text": "The chosen model is a fast-tier model rather than a standard or premium model.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5-mini\",\n  \"justification\": \"bounded test execution and failure summarization fit the task agent, and gpt-5-mini is the cheapest suitable available fast-tier model for non-editing work.\",\n  \"fallback_strategy\": \"if gpt-5-mini is unavailable, stay in fast tier and use gpt-5.4-mini as the next cheapest suitable fallback.\"\n}\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 53.0,
+        "tokens": 481,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision marks the skill as applicable.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fixing and test updates are code editing work with judgment across connected files, so use general-purpose with a standard-tier model; gpt-5.3-codex is the cheapest suitable standard option.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex is unavailable, stay in standard tier and use gpt-4.1 as the next cheapest suitable fallback.\"\n}\n"
+        },
+        {
+          "text": "The agent type is `general-purpose`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fixing and test updates are code editing work with judgment across connected files, so use general-purpose with a standard-tier model; gpt-5.3-codex is the cheapest suitable standard option.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex is unavailable, stay in standard tier and use gpt-4.1 as the next cheapest suitable fallback.\"\n}\n"
+        },
+        {
+          "text": "The model tier is `standard`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fixing and test updates are code editing work with judgment across connected files, so use general-purpose with a standard-tier model; gpt-5.3-codex is the cheapest suitable standard option.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex is unavailable, stay in standard tier and use gpt-4.1 as the next cheapest suitable fallback.\"\n}\n"
+        },
+        {
+          "text": "The chosen model is not `gpt-5-mini`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fixing and test updates are code editing work with judgment across connected files, so use general-purpose with a standard-tier model; gpt-5.3-codex is the cheapest suitable standard option.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex is unavailable, stay in standard tier and use gpt-4.1 as the next cheapest suitable fallback.\"\n}\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 53.0,
+        "tokens": 540,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision marks the skill as applicable.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"code-review\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"large architectural refactor diff needs review-focused judgment but not premium escalation; with gpt-5.4 unavailable, the skill says stay in standard tier and choose the next cheapest suitable same-tier model, which is gpt-5.3-codex.\",\n  \"fallback_strategy\": \"because gpt-5.4 is unavailable, use gpt-5.3-codex; if that is also unavailable, continue within standard tier with gpt-4.1 before changing tiers.\"\n}\n"
+        },
+        {
+          "text": "The agent type is a review specialist.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"code-review\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"large architectural refactor diff needs review-focused judgment but not premium escalation; with gpt-5.4 unavailable, the skill says stay in standard tier and choose the next cheapest suitable same-tier model, which is gpt-5.3-codex.\",\n  \"fallback_strategy\": \"because gpt-5.4 is unavailable, use gpt-5.3-codex; if that is also unavailable, continue within standard tier with gpt-4.1 before changing tiers.\"\n}\n"
+        },
+        {
+          "text": "The model tier stays `standard`.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"code-review\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"large architectural refactor diff needs review-focused judgment but not premium escalation; with gpt-5.4 unavailable, the skill says stay in standard tier and choose the next cheapest suitable same-tier model, which is gpt-5.3-codex.\",\n  \"fallback_strategy\": \"because gpt-5.4 is unavailable, use gpt-5.3-codex; if that is also unavailable, continue within standard tier with gpt-4.1 before changing tiers.\"\n}\n"
+        },
+        {
+          "text": "The chosen model is not `gpt-5.4` and the fallback mentions availability or same-tier fallback.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"code-review\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"large architectural refactor diff needs review-focused judgment but not premium escalation; with gpt-5.4 unavailable, the skill says stay in standard tier and choose the next cheapest suitable same-tier model, which is gpt-5.3-codex.\",\n  \"fallback_strategy\": \"because gpt-5.4 is unavailable, use gpt-5.3-codex; if that is also unavailable, continue within standard tier with gpt-4.1 before changing tiers.\"\n}\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 53.0,
+        "tokens": 301,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision marks the skill as not applicable.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": false,\n  \"agent_type\": \"none\",\n  \"model_tier\": \"none\",\n  \"model\": \"none\",\n  \"justification\": \"the skill is not applicable because the prompt explicitly says not to spawn anything, and the skill says not to use it when no subagent is being launched.\",\n  \"fallback_strategy\": \"none\"\n}\n"
+        },
+        {
+          "text": "The decision does not choose a real agent type.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": false,\n  \"agent_type\": \"none\",\n  \"model_tier\": \"none\",\n  \"model\": \"none\",\n  \"justification\": \"the skill is not applicable because the prompt explicitly says not to spawn anything, and the skill says not to use it when no subagent is being launched.\",\n  \"fallback_strategy\": \"none\"\n}\n"
+        },
+        {
+          "text": "The justification says there is no delegated launch.",
+          "passed": true,
+          "evidence": "{\n  \"applicable\": false,\n  \"agent_type\": \"none\",\n  \"model_tier\": \"none\",\n  \"model\": \"none\",\n  \"justification\": \"the skill is not applicable because the prompt explicitly says not to spawn anything, and the skill says not to use it when no subagent is being launched.\",\n  \"fallback_strategy\": \"none\"\n}\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 53.0,
+        "stddev": 0.0,
+        "min": 53.0,
+        "max": 53.0
+      },
+      "tokens": {
+        "mean": 416.75,
+        "stddev": 112.4763,
+        "min": 253,
+        "max": 500
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 53.0,
+        "stddev": 0.0,
+        "min": 53.0,
+        "max": 53.0
+      },
+      "tokens": {
+        "mean": 433.5,
+        "stddev": 102.6596,
+        "min": 301,
+        "max": 540
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+0.0",
+      "tokens": "-17"
+    }
+  },
+  "notes": []
+}

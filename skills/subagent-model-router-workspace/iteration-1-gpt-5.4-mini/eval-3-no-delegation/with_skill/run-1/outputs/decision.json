@@ -1,0 +1,8 @@
+{
+  "applicable": false,
+  "agent_type": "none",
+  "model_tier": "none",
+  "model": "none",
+  "justification": "No delegated launch; direct inspection only.",
+  "fallback_strategy": "none"
+}

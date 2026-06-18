@@ -1,0 +1,8 @@
+{
+  "applicable": false,
+  "agent_type": "none",
+  "model_tier": "none",
+  "model": "none",
+  "justification": "The skill is not applicable because no delegated subagent launch is happening.",
+  "fallback_strategy": "none"
+}

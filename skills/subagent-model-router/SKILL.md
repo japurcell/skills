@@ -1,87 +1,59 @@
 ---
 name: subagent-model-router
-description: Chooses the narrowest capable subagent type and cheapest capable model for delegated work. Use whenever you are about to launch, spawn, delegate to, or set `model:` for a subagent, task agent, background agent, or parallel worker. Use this before any task-tool launch that needs model selection, especially for exploration, test execution, grading, code review, debugging, implementation, or implementation research.
+description: Routes delegated work to the narrowest capable agent type and cheapest capable model. Use before every subagent, task, background agent, parallel worker, or `task`-tool launch that still needs `agent_type` or `model` selection, especially for exploration, test execution, grading, code review, debugging, implementation, or research. If a model is pinned or auto-selected, still use this skill to route the remaining choices and state the constraint.
 ---
 
 # Subagent Model Router
 
-Before delegated work, choose:
+## Overview
 
-1. the **narrowest capable agent type**
-2. the **cheapest capable model**
-
-Default to cheaper, faster models for bounded work. Escalate only for a concrete reason. When pricing is available, route by actual token cost, not intuition.
-
-For current prices, see [`PRICING.md`](PRICING.md).  
-For common routing examples, see [`PATTERNS.md`](PATTERNS.md).
+Choose smallest agent and cheapest model that can succeed. Default cheap and specialized. Escalate only for a concrete capability, ambiguity, or quality reason. When exact cost matters, use [`PRICING.md`](PRICING.md). For common examples, use [`PATTERNS.md`](PATTERNS.md).
 
 ## When to Use
 
-Use this skill when you are about to launch a subagent, task agent, background agent, parallel worker, or task-tool call and must decide:
+- Before any delegated launch where `agent_type`, `model`, or both are still open.
+- Especially for exploration, test/build/log execution, grading, code review, debugging, implementation planning, implementation, research, or parallel fan-out.
+- If the user or platform already fixed the model, route the remaining choices and note that model control is constrained.
+- Do not use this skill when no delegated launch is happening.
 
-- `agent_type`
-- `model`
-- both `agent_type` and `model`
+## Workflow
 
-Especially use it for:
+### 1. Classify work first
 
-- repository exploration
-- test execution
-- grading or validation
-- code review
-- debugging
-- implementation planning
-- implementation research
-- parallel worker launches
+| Class | Meaning | Examples |
+| --- | --- | --- |
+| **Bounded** | Low ambiguity, repeatable execution or collection | run tests, collect logs, search files, summarize known output, deterministic grading |
+| **Focused** | Some judgment, limited scope | inspect a diff, trace a bug through a few files, draft a small plan |
+| **Broad** | High ambiguity or multi-system synthesis | architecture design, unclear debugging, multi-file refactoring, tradeoff analysis |
 
-Do **not** use this skill when:
+### 2. Pick narrowest capable agent type
 
-- no subagent is being launched
-- the user explicitly pinned the model
-- the platform fixes or auto-selects the model
+| Work type | Prefer |
+| --- | --- |
+| Bounded execution | `task` |
+| Repository search or investigation | `explore` |
+| Diff or PR review | `code-review` or comparable review specialist |
+| Open-ended multi-step reasoning or editing | `general-purpose` only when a specialist will not do |
 
-## Core Process
+### 3. Map complexity to tier
 
-### 1. Classify the delegated work
+| Task shape | Tier |
+| --- | --- |
+| Bounded / simple | **Fast** |
+| Focused / moderate | **Standard** |
+| Broad / complex | high end of **Standard** first |
+| Repeated lower-tier failure, unusually high stakes, or best-available reasoning by request | **Premium**, with justification |
 
-Classify the task before choosing a model.
+### 4. Pick cheapest suitable model inside that tier
 
-| Class       | Meaning                                                   | Examples                                                                                  |
-| ----------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| **Bounded** | Low ambiguity, repeatable, mostly execution or collection | run tests, collect logs, search files, summarize known output, deterministic grading      |
-| **Focused** | Some judgment, limited scope                              | inspect a diff, trace a bug through a few files, draft a small plan, review one component |
-| **Broad**   | High ambiguity, synthesis, or multi-system reasoning      | architecture design, unclear debugging, multi-file refactoring, tradeoff analysis         |
-
-### 2. Pick the narrowest capable agent type
-
-Prefer specialized agents when possible. Specialized agents often allow a cheaper model.
-
-| Work type                                  | Prefer                                |
-| ------------------------------------------ | ------------------------------------- |
-| Bounded execution                          | `task`                                |
-| Repository search or investigation         | `explore`                             |
-| Diff or PR review                          | `code-review` or similar reviewer     |
-| Open-ended multi-step reasoning or editing | `general-purpose` only when necessary |
-
-### 3. Map complexity to a model tier
-
-| Task complexity                                             | Default tier                         |
-| ----------------------------------------------------------- | ------------------------------------ |
-| Bounded / Simple                                            | **Fast**                             |
-| Focused / Moderate                                          | **Standard**                         |
-| Broad / Complex                                             | **Strong standard**                  |
-| Creative, high-stakes, or repeatedly failed lower-tier work | **Premium**, only with justification |
-
-### 4. Choose the cheapest suitable model within the tier
-
-Within the chosen tier, compare:
+Compare:
 
 - input cost
 - output cost
 - cached input cost
-- Anthropic cache write cost, when relevant
+- Anthropic cache write, when relevant
 - task fit
-- model availability
+- availability
 
 Use token shape:
 
@@ -90,10 +62,10 @@ Use token shape:
 - repeated context -> consider **cached input**
 - Anthropic cached context -> include **cache write**
 
-If the selected model is unavailable:
+If first choice is unavailable:
 
 1. choose the next cheapest suitable model in the same tier
-2. do **not** drop to a lower tier while a suitable same-tier fallback exists
+2. do **not** change tiers while a same-tier fallback exists
 3. if the whole tier is unavailable, move one tier lower for bounded work or one tier higher for reasoning-heavy work
 4. if availability forced a tier change, say so in one sentence
 
@@ -109,71 +81,68 @@ Move up one tier only when:
 
 If you cannot justify the stronger model in one sentence, do not use it.
 
-## Model Tier Guide
+## Specific Techniques
 
-Route by **task fit, availability, and cost**, not vendor marketing labels.
+### Tier guide
 
-### Fast tier
+Route by task fit, availability, and current pricing, not brand reputation. Models below are examples; only choose from models the environment actually offers.
 
-Use first for bounded, repeatable, low-ambiguity work.
+| Tier | Use for | Typical models |
+| --- | --- | --- |
+| **Fast** | bounded execution, collection, deterministic grading, small non-code transforms | `gpt-5-mini`, `gpt-5.4-mini`, `gpt-5.4-nano`, `gemini-3-flash`, `haiku` |
+| **Standard** | cross-file reading, judgment, debugging, code review, non-trivial code edits | `gpt-5.3-codex`, `gpt-4.1`, `gemini-3.1-pro`, `gpt-5.4`, `sonnet` |
+| **Premium** | repeated lower-tier failure, subtle high-stakes analysis, best-available reasoning by request | `gpt-5.5`, `opus` |
 
-- `gpt-5-mini`
-- `gemini-3-flash`
-- `gpt-5.4-mini`
-- `gpt-5.4-nano`
-- `haiku`
+### Code editing exception
 
-### Standard tier
+- Do **not** recommend `gpt-5-mini` for code editing.
+- Use fast-tier editing only for very small isolated changes with clear acceptance criteria.
+- Use standard tier for cross-file reasoning, debugging, refactoring, or design-sensitive edits.
 
-Use when the task needs judgment, cross-file reading, moderate ambiguity, or code editing beyond a very small isolated change.
+### Decision shape
 
-- `gpt-5.3-codex`
-- `gpt-4.1`
-- `gemini-3.1-pro`
-- `gpt-5.4`
-- `sonnet`
+Return the routing decision explicitly:
 
-### Premium tier
+- chosen `agent_type`
+- chosen model or constrained-model note
+- tier
+- one-sentence justification for any escalation or availability fallback
 
-Use only when complexity or quality needs clearly justify the cost.
+## Common Rationalizations
 
-- `opus`
-- `gpt-5.5`
-
-## Code Editing Exception
-
-Do **not** recommend `gpt-5-mini` for code editing tasks.
-
-For code editing:
-
-- use another suitable fast-tier model only for very small, isolated edits with clear acceptance criteria
-- use a standard-tier model when the edit requires judgment, cross-file reasoning, debugging, refactoring, or design awareness
+| Rationalization | Reality |
+| --- | --- |
+| "It is only a test runner; use the strongest model to be safe." | Bounded execution should start with `task` plus a fast-tier model. |
+| "First-choice model is unavailable, so drop a tier immediately." | Stay in the same tier until same-tier options are exhausted. |
+| "User pinned the model, so this skill is irrelevant." | Route the remaining choices and state that model control is constrained. |
+| "This code edit is small enough for `gpt-5-mini`." | `gpt-5-mini` is excluded for code editing; use another fast model or standard tier. |
 
 ## Red Flags
 
 Avoid:
 
+- using this skill when no delegated launch exists
 - choosing a premium model before classifying the task
 - using the same strong model for test runners, search agents, reviewers, and editors
 - choosing `general-purpose` when a specialized agent can do the work
 - escalating after vague dissatisfaction instead of a concrete capability gap
 - ignoring token shape and choosing only by model reputation
-- dropping to a lower tier when a suitable same-tier fallback is available
+- dropping tiers while same-tier fallback exists
+- ignoring the code-editing exception
+- treating an auto-selected model as a reason to skip agent routing
 - using stale pricing when current pricing is available
 
-## Verification Checklist
+## Verification
 
 Before launch, confirm:
 
 - [ ] The work was classified as bounded, focused, or broad.
 - [ ] The chosen agent type is the narrowest capable type.
 - [ ] The selected tier matches task complexity.
-- [ ] The selected model is the cheapest suitable model in that tier.
-- [ ] Availability was checked.
-- [ ] Same-tier fallback was preferred when the first-choice model was unavailable.
+- [ ] The selected model is the cheapest suitable available option in that tier, or the model constraint was stated.
 - [ ] Input/output token mix was considered when relevant.
 - [ ] Cached input and Anthropic cache write were considered when relevant.
-- [ ] Any escalation has a concrete one-sentence justification.
-- [ ] Premium models are reserved for exceptional cases.
+- [ ] Same-tier fallback was preferred when the first-choice model was unavailable.
+- [ ] Any escalation or availability-driven tier change has a concrete one-sentence justification.
 - [ ] The code editing exception was checked.
-- [ ] Pricing matches the current source of truth.
+- [ ] Pricing matched the current source of truth when exact cost mattered.

@@ -1,0 +1,8 @@
+{
+  "applicable": false,
+  "agent_type": "none",
+  "model_tier": "none",
+  "model": "none",
+  "justification": "No subagent launch.",
+  "fallback_strategy": "none"
+}

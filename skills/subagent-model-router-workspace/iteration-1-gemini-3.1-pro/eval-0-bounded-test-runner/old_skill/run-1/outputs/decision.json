@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "task",
+  "model_tier": "fast",
+  "model": "gpt-5.4-nano",
+  "justification": "Running tests and summarizing failures is a bounded execution task, which is best handled by the task agent and the cheapest fast tier model.",
+  "fallback_strategy": "use next cheapest fast tier model if unavailable"
+}

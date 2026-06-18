@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision marks the skill as applicable.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5.4-nano\",\n  \"justification\": \"Bounded test execution and summary; task agent with cheapest fast-tier model fits.\",\n  \"fallback_strategy\": \"Stay in fast tier; if gpt-5.4-nano unavailable, use next cheapest fast model.\"\n}\n"
+    },
+    {
+      "text": "The agent type is `task`.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5.4-nano\",\n  \"justification\": \"Bounded test execution and summary; task agent with cheapest fast-tier model fits.\",\n  \"fallback_strategy\": \"Stay in fast tier; if gpt-5.4-nano unavailable, use next cheapest fast model.\"\n}\n"
+    },
+    {
+      "text": "The model tier is `fast`.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5.4-nano\",\n  \"justification\": \"Bounded test execution and summary; task agent with cheapest fast-tier model fits.\",\n  \"fallback_strategy\": \"Stay in fast tier; if gpt-5.4-nano unavailable, use next cheapest fast model.\"\n}\n"
+    },
+    {
+      "text": "The chosen model is a fast-tier model rather than a standard or premium model.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"task\",\n  \"model_tier\": \"fast\",\n  \"model\": \"gpt-5.4-nano\",\n  \"justification\": \"Bounded test execution and summary; task agent with cheapest fast-tier model fits.\",\n  \"fallback_strategy\": \"Stay in fast tier; if gpt-5.4-nano unavailable, use next cheapest fast model.\"\n}\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 309,
+    "transcript_chars": 5
+  },
+  "timing": {
+    "executor_duration_seconds": 53.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 53.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

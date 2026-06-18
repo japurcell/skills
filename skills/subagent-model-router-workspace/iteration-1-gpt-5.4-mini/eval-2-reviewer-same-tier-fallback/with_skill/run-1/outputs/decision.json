@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "code-review",
+  "model_tier": "standard",
+  "model": "gpt-5.3-codex",
+  "justification": "Large architectural diff review needs a review specialist; stay in standard tier because gpt-5.4 is unavailable.",
+  "fallback_strategy": "Use the next cheapest standard-tier model; do not change tiers unless all standard options are unavailable."
+}

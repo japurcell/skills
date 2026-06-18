@@ -1,0 +1,5 @@
+{
+  "model": "gpt-5.3-codex",
+  "skill_path": "/home/adam/dev/personal/skills/skills/subagent-model-router/SKILL.md",
+  "returncode": 0
+}

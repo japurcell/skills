@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "bounded-test-runner",
+  "prompt": "Use the skill under test to route this delegated task: `Launch a worker to run the backend pytest suite, capture failing tests, and summarize the failures.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+  "assertions": [
+    "The decision marks the skill as applicable.",
+    "The agent type is `task`.",
+    "The model tier is `fast`.",
+    "The chosen model is a fast-tier model rather than a standard or premium model."
+  ]
+}

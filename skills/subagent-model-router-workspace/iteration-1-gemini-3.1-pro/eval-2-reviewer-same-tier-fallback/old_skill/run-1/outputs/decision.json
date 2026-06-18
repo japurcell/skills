@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "code-review",
+  "model_tier": "standard",
+  "model": "gpt-5.3-codex",
+  "justification": "Large code reviews heavily optimize for input costs. With gpt-5.4 unavailable, we fallback to gpt-5.3-codex as the cheapest suitable standard tier alternative.",
+  "fallback_strategy": "use next cheapest standard tier model"
+}

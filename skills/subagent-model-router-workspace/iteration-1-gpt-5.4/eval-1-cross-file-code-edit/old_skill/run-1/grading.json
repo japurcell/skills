@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision marks the skill as applicable.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fixing and test updates are code editing work with judgment across connected files, so use general-purpose with a standard-tier model; gpt-5.3-codex is the cheapest suitable standard option.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex is unavailable, stay in standard tier and use gpt-4.1 as the next cheapest suitable fallback.\"\n}\n"
+    },
+    {
+      "text": "The agent type is `general-purpose`.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fixing and test updates are code editing work with judgment across connected files, so use general-purpose with a standard-tier model; gpt-5.3-codex is the cheapest suitable standard option.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex is unavailable, stay in standard tier and use gpt-4.1 as the next cheapest suitable fallback.\"\n}\n"
+    },
+    {
+      "text": "The model tier is `standard`.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fixing and test updates are code editing work with judgment across connected files, so use general-purpose with a standard-tier model; gpt-5.3-codex is the cheapest suitable standard option.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex is unavailable, stay in standard tier and use gpt-4.1 as the next cheapest suitable fallback.\"\n}\n"
+    },
+    {
+      "text": "The chosen model is not `gpt-5-mini`.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-5.3-codex\",\n  \"justification\": \"cross-file bug fixing and test updates are code editing work with judgment across connected files, so use general-purpose with a standard-tier model; gpt-5.3-codex is the cheapest suitable standard option.\",\n  \"fallback_strategy\": \"if gpt-5.3-codex is unavailable, stay in standard tier and use gpt-4.1 as the next cheapest suitable fallback.\"\n}\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 481,
+    "transcript_chars": 5
+  },
+  "timing": {
+    "executor_duration_seconds": 53.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 53.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

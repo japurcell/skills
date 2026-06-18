@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "task",
+  "model_tier": "fast",
+  "model": "gpt-5.4-nano",
+  "justification": "Bounded test execution and summary; task agent with cheapest fast-tier model fits.",
+  "fallback_strategy": "Stay in fast tier; if gpt-5.4-nano unavailable, use next cheapest fast model."
+}

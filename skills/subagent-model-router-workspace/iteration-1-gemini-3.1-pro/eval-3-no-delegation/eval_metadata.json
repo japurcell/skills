@@ -1,0 +1,10 @@
+{
+  "eval_id": 3,
+  "eval_name": "no-delegation",
+  "prompt": "Use the skill under test for this request: `Do not spawn anything; just inspect skills/subagent-model-router/SKILL.md and tell me whether the wording is repetitive.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+  "assertions": [
+    "The decision marks the skill as not applicable.",
+    "The decision does not choose a real agent type.",
+    "The justification says there is no delegated launch."
+  ]
+}

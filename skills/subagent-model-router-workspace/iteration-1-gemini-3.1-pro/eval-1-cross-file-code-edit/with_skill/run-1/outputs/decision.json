@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "general-purpose",
+  "model_tier": "standard",
+  "model": "gpt-4.1",
+  "justification": "Cross-file code editing requires standard-tier reasoning and a general-purpose agent per the code editing exception.",
+  "fallback_strategy": "Use another standard-tier model like gpt-5.3-codex if gpt-4.1 is unavailable."
+}

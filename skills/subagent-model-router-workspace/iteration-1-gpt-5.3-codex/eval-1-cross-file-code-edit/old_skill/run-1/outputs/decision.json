@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "general-purpose",
+  "model_tier": "standard",
+  "model": "gpt-5.3-codex",
+  "justification": "cross-file bug fix plus test updates is non-trivial code editing with judgment across connected files, so use standard-tier model and general-purpose editing agent.",
+  "fallback_strategy": "if gpt-5.3-codex unavailable, stay in standard tier and use next suitable standard model (gpt-4.1, then gemini-3.1-pro, then sonnet); only change tier if standard tier unavailable."
+}

@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "code-review",
+  "model_tier": "standard",
+  "model": "gpt-5.3-codex",
+  "justification": "Reviewing a large architectural refactor needs standard tier; gpt-5.4 is unavailable, so use same-tier fallback.",
+  "fallback_strategy": "Stay in standard tier and choose the next-cheapest available reviewer-capable model."
+}

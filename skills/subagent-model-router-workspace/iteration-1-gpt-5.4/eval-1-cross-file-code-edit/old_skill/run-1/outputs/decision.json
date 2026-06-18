@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "general-purpose",
+  "model_tier": "standard",
+  "model": "gpt-5.3-codex",
+  "justification": "cross-file bug fixing and test updates are code editing work with judgment across connected files, so use general-purpose with a standard-tier model; gpt-5.3-codex is the cheapest suitable standard option.",
+  "fallback_strategy": "if gpt-5.3-codex is unavailable, stay in standard tier and use gpt-4.1 as the next cheapest suitable fallback."
+}

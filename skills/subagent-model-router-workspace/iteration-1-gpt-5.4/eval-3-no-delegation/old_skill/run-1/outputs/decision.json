@@ -1,0 +1,8 @@
+{
+  "applicable": false,
+  "agent_type": "none",
+  "model_tier": "none",
+  "model": "none",
+  "justification": "the skill is not applicable because the prompt explicitly says not to spawn anything, and the skill says not to use it when no subagent is being launched.",
+  "fallback_strategy": "none"
+}

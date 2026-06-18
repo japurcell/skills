@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision marks the skill as applicable.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-4.1\",\n  \"justification\": \"Cross-file code editing requires standard-tier reasoning and a general-purpose agent per the code editing exception.\",\n  \"fallback_strategy\": \"Use another standard-tier model like gpt-5.3-codex if gpt-4.1 is unavailable.\"\n}\n"
+    },
+    {
+      "text": "The agent type is `general-purpose`.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-4.1\",\n  \"justification\": \"Cross-file code editing requires standard-tier reasoning and a general-purpose agent per the code editing exception.\",\n  \"fallback_strategy\": \"Use another standard-tier model like gpt-5.3-codex if gpt-4.1 is unavailable.\"\n}\n"
+    },
+    {
+      "text": "The model tier is `standard`.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-4.1\",\n  \"justification\": \"Cross-file code editing requires standard-tier reasoning and a general-purpose agent per the code editing exception.\",\n  \"fallback_strategy\": \"Use another standard-tier model like gpt-5.3-codex if gpt-4.1 is unavailable.\"\n}\n"
+    },
+    {
+      "text": "The chosen model is not `gpt-5-mini`.",
+      "passed": true,
+      "evidence": "{\n  \"applicable\": true,\n  \"agent_type\": \"general-purpose\",\n  \"model_tier\": \"standard\",\n  \"model\": \"gpt-4.1\",\n  \"justification\": \"Cross-file code editing requires standard-tier reasoning and a general-purpose agent per the code editing exception.\",\n  \"fallback_strategy\": \"Use another standard-tier model like gpt-5.3-codex if gpt-4.1 is unavailable.\"\n}\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 353,
+    "transcript_chars": 5
+  },
+  "timing": {
+    "executor_duration_seconds": 53.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 53.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

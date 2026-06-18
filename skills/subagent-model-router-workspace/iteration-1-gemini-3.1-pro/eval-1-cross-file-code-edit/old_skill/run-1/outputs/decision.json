@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "general-purpose",
+  "model_tier": "standard",
+  "model": "gpt-4.1",
+  "justification": "Cross-file code editing requires a standard tier model due to the code editing exception, optimizing for output cost since code generation is required.",
+  "fallback_strategy": "use next cheapest standard tier model if unavailable"
+}

@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "task",
+  "model_tier": "fast",
+  "model": "gpt-5.4-nano",
+  "justification": "delegated test execution and failure summarization is bounded work, so use narrow task agent with cheapest suitable fast-tier model for low-cost command-heavy runs.",
+  "fallback_strategy": "if gpt-5.4-nano unavailable, stay in fast tier and use next cheapest suitable fast model (gpt-5-mini, then gpt-5.4-mini, then gemini-3-flash, then haiku)."
+}

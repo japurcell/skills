@@ -1,0 +1,8 @@
+{
+  "applicable": false,
+  "agent_type": "none",
+  "model_tier": "none",
+  "model": "none",
+  "justification": "The user is not launching or delegating to a subagent, so model routing is not applicable.",
+  "fallback_strategy": "none"
+}

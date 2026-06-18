@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "general-purpose",
+  "model_tier": "standard",
+  "model": "gpt-5.3-codex",
+  "justification": "Cross-file code edit with test updates needs standard-tier reasoning; gpt-5-mini is excluded for code editing.",
+  "fallback_strategy": "Stay in standard tier; if gpt-5.3-codex is unavailable, use the next cheapest standard model."
+}

@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "code-review",
+  "model_tier": "standard",
+  "model": "gpt-4.1",
+  "justification": "Reviewing a 35-file architectural diff requires standard-tier reasoning, and since the first-choice gpt-5.4 is unavailable, we fall back to another standard-tier model.",
+  "fallback_strategy": "Stay in the standard tier and use the next cheapest available standard-tier model."
+}

@@ -1,0 +1,8 @@
+{
+  "applicable": false,
+  "agent_type": "none",
+  "model_tier": "none",
+  "model": "none",
+  "justification": "no delegated launch is happening, and skill says not to use it when no subagent or task launch will occur.",
+  "fallback_strategy": "none"
+}

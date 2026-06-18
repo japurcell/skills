@@ -1,0 +1,8 @@
+{
+  "applicable": true,
+  "agent_type": "code-review",
+  "model_tier": "standard",
+  "model": "gpt-5.3-codex",
+  "justification": "large architectural diff review needs review-specialized agent and standard-tier reasoning; with gpt-5.4 unavailable, choose next cheapest suitable model in same tier.",
+  "fallback_strategy": "keep standard tier: if gpt-5.3-codex unavailable, use gpt-4.1 or gemini-3.1-pro, then sonnet; do not drop tier while same-tier fallback exists."
+}

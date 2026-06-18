@@ -1,0 +1,8 @@
+{
+  "applicable": false,
+  "agent_type": "none",
+  "model_tier": "none",
+  "model": "none",
+  "justification": "request explicitly says do not spawn anything; no delegated subagent routing decision is needed.",
+  "fallback_strategy": "none"
+}
