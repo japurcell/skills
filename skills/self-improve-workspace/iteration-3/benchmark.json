@@ -1,0 +1,350 @@
+{
+  "metadata": {
+    "skill_name": "self-improve",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-18T19:19:19Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1136,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/AGENTS.md is created.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n## Repo guidance\n\n- After editing anything under `deploy/`, run `python3 scripts/check-config.py`.\n- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- Generated API clients live in `src/generated/`; extend them instead of hand-writing request/response types.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n## Repo guidance\n\n- After editing anything under `deploy/`, run `python3 scripts/check-config.py`.\n- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- Generated API clients live in `src/generated/`; extend them instead of hand-writing request/response types.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n## Repo guidance\n\n- After editing anything under `deploy/`, run `python3 scripts/check-config.py`.\n- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- Generated API clients live in `src/generated/`; extend them instead of hand-writing request/response types.\n"
+        },
+        {
+          "text": "outputs/report.md includes Learnings and Applied updates.",
+          "passed": true,
+          "evidence": "# Learnings\n\n- `python3 scripts/check-config.py` - run after editing files under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` - run for sync pipeline changes.\n- `src/generated/` - extend generated API clients/types instead of hand-writing request/response types.\n- Excluded as non-durable: opening README first, laptop fan noise during a run.\n\n# Applied updates\n\n- Copied fixture repo into `outputs/repo/` (excluding `session_notes.md`).\n- Reviewed instruction surface: one relevant `AGENTS.md` at repo root.\n- No repo file edits required: existing `outputs/repo/AGENTS.md` already captured all durable learnings with correct project-wide scope.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1431,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Run `pnpm --dir web test -- --runInBand` after changing files under `web/`.\n- Keep `web/` tests serial because shared fixtures fail in parallel.\n"
+        },
+        {
+          "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- API contract details live under `api/`.\n- After editing `api/schema/*.json`, run `python3 scripts/validate_schema.py`.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\nProject uses `pnpm` and `python3`.\n\n- `web/` guidance: see `web/AGENTS.md`.\n- `api/` guidance: see `api/AGENTS.md`.\n"
+        },
+        {
+          "text": "outputs/report.md includes Moved guidance and Grouped files.",
+          "passed": true,
+          "evidence": "# Learnings\n\n- `pnpm --dir web test -- --runInBand` is durable `web/` validation command because shared fixtures fail in parallel.\n- `python3 scripts/validate_schema.py` is required after editing `api/schema/*.json`.\n- API contract guidance belongs under `api/`, not root instructions.\n\n# Applied updates\n\n- Slimmed root `AGENTS.md` to repo-wide guidance only.\n- Added `web/AGENTS.md` for frontend-specific test command and serial-fixture constraint.\n- Added `api/AGENTS.md` for API contract scope and schema validation command.\n\n# Moved guidance\n\n- Moved `web/` test guidance out of root and merged it into one exact command: `pnpm --dir web test -- --runInBand`.\n- Moved API contract and schema-validation guidance from root into `api/AGENTS.md`.\n- Dropped README mention from session notes because it is not durable guidance.\n\n# Grouped files\n\n- Root: `outputs/repo/AGENTS.md`\n- Web scope: `outputs/repo/web/AGENTS.md`\n- API scope: `outputs/repo/api/AGENTS.md`\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 822,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/docs/release.md includes the new release sanity command.",
+          "passed": true,
+          "evidence": "# Release process\n\n1. Update rollout manifests.\n2. Run `python3 scripts/release_sanity.py`.\n3. Run `./scripts/check-release`.\n4. Tag the release.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md still links release detail to docs/release.md and does not inline the new command.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Release process details live in `docs/release.md`.\n- Keep root guidance short and link to detailed docs instead of copying long checklists here.\n"
+        },
+        {
+          "text": "outputs/report.md includes Learnings and Applied updates.",
+          "passed": true,
+          "evidence": "# Report\n\n## Learnings\n\n- After editing rollout manifests, run `python3 scripts/release_sanity.py`.\n- Release process detail belongs in `docs/release.md`, not root `AGENTS.md`.\n\n## Applied updates\n\n- Copied fixture repo into `outputs/repo/`, excluding `session_notes.md`.\n- Updated `outputs/repo/docs/release.md` to add `python3 scripts/release_sanity.py` immediately after rollout manifest edits.\n- Left `outputs/repo/AGENTS.md` unchanged because it already points release detail to `docs/release.md`.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 669,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Use `python3` for repo scripts.\n- Run `pytest tests/unit -q` for unit-test-only changes.\n"
+        },
+        {
+          "text": "No new scoped AGENTS.md files are created.",
+          "passed": true,
+          "evidence": "no extra scoped AGENTS.md files"
+        },
+        {
+          "text": "outputs/report.md says none qualified or no changes were made.",
+          "passed": true,
+          "evidence": "# Report\n\n## Result\nNo durable learning qualified from `session_notes.md`, so `outputs/repo/AGENTS.md` was left unchanged.\n\n## Why no change\n- `The agent opened README.md.` \u2014 one-off action, not reusable guidance.\n- `One local branch had a temporary name.` \u2014 transient repo state, not durable instruction.\n- `A test run took longer than expected once.` \u2014 isolated observation without actionable rule.\n\n## Files written\n- `outputs/repo/AGENTS.md` \u2014 copied from fixture, unchanged\n- `outputs/repo/README.md` \u2014 copied from fixture\n- `outputs/report.md`\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1568,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/AGENTS.md is created.",
+          "passed": true,
+          "evidence": "# Project guidance\n\n- After editing files under `deploy/`, run `python3 scripts/check-config.py`.\n- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- API client request/response types belong in `src/generated/`; extend generated clients instead of hand-writing parallel types.\n- Start investigations from feature directories (`deploy/`, `src/`, `tests/`) instead of reading `README` first.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+          "passed": true,
+          "evidence": "# Project guidance\n\n- After editing files under `deploy/`, run `python3 scripts/check-config.py`.\n- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- API client request/response types belong in `src/generated/`; extend generated clients instead of hand-writing parallel types.\n- Start investigations from feature directories (`deploy/`, `src/`, `tests/`) instead of reading `README` first.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+          "passed": false,
+          "evidence": "# Project guidance\n\n- After editing files under `deploy/`, run `python3 scripts/check-config.py`.\n- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- API client request/response types belong in `src/generated/`; extend generated clients instead of hand-writing parallel types.\n- Start investigations from feature directories (`deploy/`, `src/`, `tests/`) instead of reading `README` first.\n"
+        },
+        {
+          "text": "outputs/report.md includes Learnings and Applied updates.",
+          "passed": true,
+          "evidence": "## Learnings\n\n- After editing files under `deploy/`, run `python3 scripts/check-config.py`.\n- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- API client request/response types belong in `src/generated/`; extend generated clients instead of hand-writing parallel types.\n- Start investigations from feature directories (`deploy/`, `src/`, `tests/`) instead of opening `README` first.\n- Excluded as non-durable noise: user laptop fan noise during a test run.\n\n## Applied updates\n\n### `outputs/repo/AGENTS.md`\n\n```diff\n+# Project guidance\n+\n+- After editing files under `deploy/`, run `python3 scripts/check-config.py`.\n+- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n+- API client request/response types belong in `src/generated/`; extend generated clients instead of hand-writing parallel types.\n+- Start investigations from feature directories (`deploy/`, `src/`, `tests/`) instead of reading `README` first.\n```\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 0.0,
+        "tokens": 1749,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- For `web/` changes, run `pnpm --dir web test -- --runInBand`.\n- `web/` uses shared fixtures, so test runs must stay serial.\n"
+        },
+        {
+          "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+          "passed": false,
+          "evidence": "# AGENTS.md\n\n- API contract details live under `api/`.\n- Schema-specific validation lives in `api/schema/AGENTS.md`.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\nProject uses `pnpm` and `python3`.\n\n- Keep the root file short.\n- Web-specific workflow lives in `web/AGENTS.md`.\n- API- and schema-specific workflow lives in `api/AGENTS.md`.\n"
+        },
+        {
+          "text": "outputs/report.md includes Moved guidance and Grouped files.",
+          "passed": true,
+          "evidence": "# Learnings\n\n- Keep root prompt-light by moving API- and web-specific guidance into scoped `AGENTS.md` files.\n- For `web/` changes, run `pnpm --dir web test -- --runInBand` because shared fixtures fail in parallel.\n- After editing `api/schema/*.json`, run `python3 scripts/validate_schema.py`.\n\n# Applied updates\n\n## `outputs/repo/AGENTS.md`\n- Removed web/API/schema operational rules from root.\n- Kept root minimal and added pointers to `web/AGENTS.md` and `api/AGENTS.md`.\n\n## `outputs/repo/api/schema/AGENTS.md`\n- Tightened schema rule to explicit path: `api/schema/*.json`.\n\n# Moved guidance\n\n- `outputs/repo/AGENTS.md` \u2192 `outputs/repo/web/AGENTS.md`: web test command and serial-fixture rule.\n- `outputs/repo/AGENTS.md` \u2192 `outputs/repo/api/AGENTS.md` and `outputs/repo/api/schema/AGENTS.md`: API ownership + schema validation scope.\n\n# Grouped files\n\n- `outputs/repo/AGENTS.md` - project-wide runtime/tooling and links only.\n- `outputs/repo/web/AGENTS.md` - web test command + serial execution constraint.\n- `outputs/repo/api/AGENTS.md` - API contract ownership and schema guidance pointer.\n- `outputs/repo/api/schema/AGENTS.md` - schema JSON validation command.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 716,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/docs/release.md includes the new release sanity command.",
+          "passed": true,
+          "evidence": "# Release process\n\n1. Update rollout manifests.\n2. Run `python3 scripts/release_sanity.py`.\n3. Run `./scripts/check-release`.\n4. Tag the release.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md still links release detail to docs/release.md and does not inline the new command.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Release process details live in `docs/release.md`.\n- Keep root guidance short and link to detailed docs instead of copying long checklists here.\n"
+        },
+        {
+          "text": "outputs/report.md includes Learnings and Applied updates.",
+          "passed": true,
+          "evidence": "# Learnings\n\n- After editing rollout manifests, run `python3 scripts/release_sanity.py`.\n- Keep release-process detail in `docs/release.md`; root `AGENTS.md` should stay short and link there.\n\n# Applied updates\n\n- `outputs/repo/docs/release.md` - added rollout-specific sanity check to release checklist.\n- `outputs/repo/AGENTS.md` - no change; already points release detail to `docs/release.md`.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 0.0,
+        "tokens": 669,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Use `python3` for repo scripts.\n- Run `pytest tests/unit -q` for unit-test-only changes.\n"
+        },
+        {
+          "text": "No new scoped AGENTS.md files are created.",
+          "passed": true,
+          "evidence": "no extra scoped AGENTS.md files"
+        },
+        {
+          "text": "outputs/report.md says none qualified or no changes were made.",
+          "passed": true,
+          "evidence": "# Report\n\n## Result\nNo durable learning qualified from `session_notes.md`, so `outputs/repo/AGENTS.md` was left unchanged.\n\n## Why no change\n- `The agent opened README.md.` \u2014 one-off action, not reusable guidance.\n- `One local branch had a temporary name.` \u2014 transient repo state, not durable instruction.\n- `A test run took longer than expected once.` \u2014 isolated observation without actionable rule.\n\n## Files written\n- `outputs/repo/AGENTS.md` \u2014 copied from fixture, unchanged\n- `outputs/repo/README.md` \u2014 copied from fixture\n- `outputs/report.md`\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 1014.5,
+        "stddev": 338.9498,
+        "min": 669,
+        "max": 1431
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.875,
+        "stddev": 0.1443,
+        "min": 0.75,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 1175.5,
+        "stddev": 562.9212,
+        "min": 669,
+        "max": 1749
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.12",
+      "time_seconds": "+0.0",
+      "tokens": "-161"
+    }
+  },
+  "notes": []
+}

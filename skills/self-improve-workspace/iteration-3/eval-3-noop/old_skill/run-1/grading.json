@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Use `python3` for repo scripts.\n- Run `pytest tests/unit -q` for unit-test-only changes.\n"
+    },
+    {
+      "text": "No new scoped AGENTS.md files are created.",
+      "passed": true,
+      "evidence": "no extra scoped AGENTS.md files"
+    },
+    {
+      "text": "outputs/report.md says none qualified or no changes were made.",
+      "passed": true,
+      "evidence": "# Report\n\n## Result\nNo durable learning qualified from `session_notes.md`, so `outputs/repo/AGENTS.md` was left unchanged.\n\n## Why no change\n- `The agent opened README.md.` \u2014 one-off action, not reusable guidance.\n- `One local branch had a temporary name.` \u2014 transient repo state, not durable instruction.\n- `A test run took longer than expected once.` \u2014 isolated observation without actionable rule.\n\n## Files written\n- `outputs/repo/AGENTS.md` \u2014 copied from fixture, unchanged\n- `outputs/repo/README.md` \u2014 copied from fixture\n- `outputs/report.md`\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 669,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

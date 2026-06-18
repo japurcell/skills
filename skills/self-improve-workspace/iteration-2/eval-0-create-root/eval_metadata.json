@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "create-root",
+  "prompt": "Use the skill under test on the fixture repo in `evals/files/create-root-fixture/`. Session learnings are in `evals/files/create-root-fixture/session_notes.md`. Treat this as a benchmark run with no live user and do not ask follow-up questions. Copy the fixture repo to `outputs/repo/`, apply the skill there, and write `outputs/report.md` with sections `Learnings` and `Applied updates`.",
+  "assertions": [
+    "outputs/repo/AGENTS.md is created.",
+    "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+    "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+    "outputs/report.md includes Learnings and Applied updates."
+  ]
+}

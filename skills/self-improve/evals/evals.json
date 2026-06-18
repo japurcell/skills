@@ -1,0 +1,93 @@
+{
+  "skill_name": "self-improve",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use the skill under test on the fixture repo in `evals/files/create-root-fixture/`. Session learnings are in `evals/files/create-root-fixture/session_notes.md`. Treat this as a benchmark run with no live user and do not ask follow-up questions. Copy the fixture repo to `outputs/repo/`, apply the skill there, and write `outputs/report.md` with sections `Learnings` and `Applied updates`.",
+      "expected_output": "Creates a minimal root AGENTS.md that captures only the durable learnings from the notes and excludes noise.",
+      "files": [
+        "evals/files/create-root-fixture/session_notes.md",
+        "evals/files/create-root-fixture/deploy/service.yml",
+        "evals/files/create-root-fixture/scripts/check-config.py",
+        "evals/files/create-root-fixture/src/generated/client.py",
+        "evals/files/create-root-fixture/tests/integration/test_sync.py"
+      ],
+      "expectations": [
+        "outputs/repo/AGENTS.md is created.",
+        "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+        "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+        "outputs/report.md includes Learnings and Applied updates."
+      ],
+      "assertions": [
+        "outputs/repo/AGENTS.md is created.",
+        "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+        "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+        "outputs/report.md includes Learnings and Applied updates."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Use the skill under test on the fixture repo in `evals/files/scoped-refactor-fixture/`. Session learnings are in `evals/files/scoped-refactor-fixture/session_notes.md`. The user asked for AGENTS cleanup, scoping, and durable documentation. Treat the request as fully specified and do not ask follow-up questions. Copy the fixture repo to `outputs/repo/`, keep the root prompt-light, move scoped guidance into better files, and write `outputs/report.md` with sections `Learnings`, `Applied updates`, `Moved guidance`, and `Grouped files`.",
+      "expected_output": "Refactors mixed-scope root guidance into `web/AGENTS.md` and `api/AGENTS.md`, keeps the root shorter, and reports the moves.",
+      "files": [
+        "evals/files/scoped-refactor-fixture/AGENTS.md",
+        "evals/files/scoped-refactor-fixture/session_notes.md",
+        "evals/files/scoped-refactor-fixture/web/src/app.ts",
+        "evals/files/scoped-refactor-fixture/api/schema/user.json"
+      ],
+      "expectations": [
+        "outputs/repo/web/AGENTS.md includes the serial web test command.",
+        "outputs/repo/api/AGENTS.md includes the schema validation command.",
+        "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+        "outputs/report.md includes Moved guidance and Grouped files."
+      ],
+      "assertions": [
+        "outputs/repo/web/AGENTS.md includes the serial web test command.",
+        "outputs/repo/api/AGENTS.md includes the schema validation command.",
+        "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+        "outputs/report.md includes Moved guidance and Grouped files."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use the skill under test on the fixture repo in `evals/files/linked-doc-fixture/`. Session learnings are in `evals/files/linked-doc-fixture/session_notes.md`. Root `AGENTS.md` already points release details at `docs/release.md`; keep that structure unless the notes justify something else. Treat this as a benchmark run with no live user. Copy the fixture repo to `outputs/repo/`, update the right file, and write `outputs/report.md` with sections `Learnings` and `Applied updates`.",
+      "expected_output": "Updates the linked release doc with the new durable command while keeping the root AGENTS.md brief.",
+      "files": [
+        "evals/files/linked-doc-fixture/AGENTS.md",
+        "evals/files/linked-doc-fixture/session_notes.md",
+        "evals/files/linked-doc-fixture/docs/release.md",
+        "evals/files/linked-doc-fixture/rollout/prod.yml"
+      ],
+      "expectations": [
+        "outputs/repo/docs/release.md includes the new release sanity command.",
+        "outputs/repo/AGENTS.md still links release detail to docs/release.md and does not inline the new command.",
+        "outputs/report.md includes Learnings and Applied updates."
+      ],
+      "assertions": [
+        "outputs/repo/docs/release.md includes the new release sanity command.",
+        "outputs/repo/AGENTS.md still links release detail to docs/release.md and does not inline the new command.",
+        "outputs/report.md includes Learnings and Applied updates."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use the skill under test on the fixture repo in `evals/files/noop-fixture/`. Session notes are in `evals/files/noop-fixture/session_notes.md`. If nothing qualifies as durable guidance, make no AGENTS changes. Treat this as a benchmark run with no live user and do not ask follow-up questions. Copy the fixture repo to `outputs/repo/`, leave it unchanged when appropriate, and write `outputs/report.md` explaining the result.",
+      "expected_output": "Recognizes that the notes are low-value and leaves the AGENTS files unchanged while explicitly saying none qualified.",
+      "files": [
+        "evals/files/noop-fixture/AGENTS.md",
+        "evals/files/noop-fixture/session_notes.md",
+        "evals/files/noop-fixture/README.md"
+      ],
+      "expectations": [
+        "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+        "No new scoped AGENTS.md files are created.",
+        "outputs/report.md says none qualified or no changes were made."
+      ],
+      "assertions": [
+        "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+        "No new scoped AGENTS.md files are created.",
+        "outputs/report.md says none qualified or no changes were made."
+      ]
+    }
+  ]
+}
