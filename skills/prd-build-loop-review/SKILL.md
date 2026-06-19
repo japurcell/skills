@@ -1,6 +1,6 @@
 ---
 name: prd-build-loop-review
-description: "Runs dependency-aware `prd-to-tasks` execution from `prd.json` with append-only `progress.txt`: resume the current PRD, execute the lowest ready `parallelBatch` in safe implementer waves, finalize with simplification, requirements collection, review, verification, update `passes`, then continue until exact `<promise>COMPLETE</promise>` or stop-state reply. Use whenever the user wants `/prd-build-loop`, to resume, keep going, continue, finish, or finish the rest of a PRD from `prd.json` and `progress.txt`, including vague requests like 'keep going', 'resume', 'continue', or 'finish rest of PRD'. Do not use for single-story implementation, PRD authoring, or task decomposition."
+description: "Runs dependency-aware `prd-to-tasks` execution from `prd.json` with append-only `progress.txt`: resume the current PRD, execute all ready implementation waves by lowest `parallelBatch`, then run simplification, requirements collection, review, verification, update `passes`, and continue until exact `<promise>COMPLETE</promise>` or stop-state reply. Use whenever the user wants `/prd-build-loop`, to resume, keep going, continue, finish, or finish the rest of a PRD from `prd.json` and `progress.txt`, including vague requests like 'keep going', 'resume', 'continue', or 'finish rest of PRD'. Do not use for single-story implementation, PRD authoring, or task decomposition."
 disable-model-invocation: true
 ---
 
@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 Resume and finish a `prd-to-tasks` `prd.json` using append-only `progress.txt`.
 
-The orchestrator coordinates only: resolve files, choose ready work, dispatch subagents, append progress, apply status rules, verify, update `passes`, invoke `self-improve`, and record final/stop state. It never edits code directly and never commits.
+The orchestrator coordinates only: resolve files, select dependency-ready work, dispatch subagents, append progress, finalize implemented work, verify, update `passes`, invoke `self-improve`, and record final/stop state. It never edits code directly and never commits.
 
 Final execution reply must be exactly `<promise>COMPLETE</promise>` or a stop-state response. For dry-run/status requests, use **Action Shapes**.
 
@@ -20,16 +20,15 @@ Use for `/prd-build-loop`, “keep going,” “resume,” “continue,” “fi
 
 Do not use for single-story implementation, PRD authoring, or task decomposition.
 
-## Non-Negotiable Rules
+## Core Rules
 
-- `prd_file` is the only official source for story status and completion.
+- `prd_file` is the official source for story completion: only `passes: true` means complete.
 - `progress_file` is append-only supplemental resume/tracking data.
 - Subagents never write `progress_file`; append every subagent `Progress block` before acting on it.
-- Feature work and reviewer fixes must be done by a fresh `implementer`.
-- The orchestrator never makes code-affecting changes.
-- Never commit.
-- Before the first `implementer` in a wave, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch; do not read story-specific code/tests/behavior.
-- `code-simplifier` may edit only non-`.gitignore`-ignored files for simplification/refactor. It must not add scope, change requirements, fix reviewer findings, or edit ignored files.
+- Feature work and reviewer fixes must be done by fresh `implementer` subagents.
+- The orchestrator never makes code-affecting changes and never commits.
+- Before the first `implementer` in a wave, read only `prd_file`, `progress_file`, and needed nearby `AGENTS.md`; do not read story-specific code/tests/behavior.
+- `code-simplifier` may edit only non-ignored files for simplification/refactor. It must not add scope, change requirements, fix reviewer findings, or edit ignored files.
 - `requirements-collector` and `addy-code-reviewer` are read-only.
 - Do not simplify, review, analyze, or change ignored files, except `requirements-collector` may read ignored requirements/source-of-truth docs read-only.
 - If an ignored file is not clearly a requirements/source-of-truth doc, skip it and report uncertainty.
@@ -40,41 +39,55 @@ Do not use for single-story implementation, PRD authoring, or task decomposition
 1. Invoke `subagent-model-router`.
 2. Resolve paths:
    - If `progress_file` is explicit, use it.
-   - Otherwise resolve `prd_file`, then set `progress_file = dirname(resolved prd_file) + "/progress.txt"`.
-   - Resolve relative paths from the repo or provided `prd_file`.
+   - Otherwise resolve `prd_file`, then set `progress_file = dirname(prd_file) + "/progress.txt"`.
+   - Resolve relative paths from repo root or provided `prd_file`.
    - Never resolve from session state, scratchpads, home directories, or `~/.copilot/...`.
    - If sibling `progress.txt` is absent, reserve that exact path and create it on first append.
 3. Validate `prd_file`:
    - Must have top-level `userStories`.
    - Every unfinished story must have `id`, `title`, `priority`, `dependsOn`, `parallelBatch`, and `passes`.
-   - If legacy `stories` format, missing parallel fields, contradiction, invalid dependency order, ambiguity, missing required detail, or needed human choice: stop and ask.
-4. If `progress_file` exists, read `## Codebase Patterns` and latest relevant entries.
-5. If `progress_file` does not exist, create it on first append with `## Codebase Patterns` at the top.
-6. If every story has `passes: true`, reply exactly: `<promise>COMPLETE</promise>`.
+   - Stop and ask on legacy `stories`, missing fields, contradiction, invalid dependency order, ambiguity, missing required detail, or needed human choice.
+4. Read `progress_file` if present, especially `## Codebase Patterns` and latest entries. If absent, create it on first append with `## Codebase Patterns` at top.
+5. If every story has `passes: true`, reply exactly `<promise>COMPLETE</promise>`.
 
 ## Main Loop
 
 Repeat until all stories pass or a **Stop Condition** applies.
 
-1. Build ready set: `userStories` where `passes: false` and every `dependsOn` story has `passes: true`.
-2. If unfinished stories remain but none are ready, stop: dependency/prerequisite/PRD state is invalid.
-3. Select only the lowest ready `parallelBatch` as the active wave.
+### A. Implementation Phase
+
+Run all currently possible implementation waves before finalization.
+
+1. Build implementation-ready set: unfinished stories where every dependency is either:
+   - `passes: true` in `prd_file`, or
+   - already implemented with acceptable status in this run/resume state and not blocked.
+2. If no implementation-ready unfinished story exists, go to **Finalization Phase** for implemented-unfinalized stories.
+3. Select only the lowest ready `parallelBatch` as the active implementation wave.
 4. Recheck parallel safety:
    - Parallel only when `filesLikelyTouched` and owner surfaces are distinct.
    - Conflict signals: exact file overlap, same migration, same endpoint, same shared state owner, same page/form/table owner, or missing file hints on multiple stories.
-   - Serialize conflicts by priority, record why, and do not start higher-batch work.
+   - Serialize conflicts by priority, record why, and do not start unsafe parallel work.
 5. Dispatch one fresh `implementer` per parallel-safe story.
 6. If an implementer discovers sibling-owned overlap or unmet prerequisite work, it must return `NEEDS_CONTEXT` or `BLOCKED`; do not widen scope silently.
 7. Wait for all current-wave implementers.
 8. Append every implementer `Progress block`.
 9. Apply **Status Rules**.
-10. Run **Finalization and Review-Fix Loop** for the active wave.
-11. Mark `passes: true` only for stories satisfying **Completion Gate**.
-12. Reread `prd_file`; if all pass, reply exactly `<promise>COMPLETE</promise>`, else repeat from step 1.
+10. Continue with the next implementation-ready wave. Do not run finalization merely because one wave finished.
+
+### B. Finalization Phase
+
+Run finalization only when no more implementation-ready waves can run, or when all remaining unfinished stories require finalization before progress can continue.
+
+1. Finalize all implemented-unfinalized stories as one combined final state.
+2. Run **Finalization and Review-Fix Loop**.
+3. Mark `passes: true` only for stories satisfying **Completion Gate**.
+4. Reread `prd_file`.
+5. If all stories pass, reply exactly `<promise>COMPLETE</promise>`.
+6. Otherwise repeat **Main Loop**.
 
 ## Status Rules
 
-- `DONE`: continue.
+- `DONE`: story is implemented, not complete; it still needs finalization.
 - `DONE_WITH_CONCERNS`: incomplete unless every concern is explicitly confirmed non-blocking.
 - `NEEDS_CONTEXT`: if human decision is required, stop and ask; otherwise provide context and redispatch a fresh subagent.
 - `BLOCKED`: try better context, smaller slice, or stronger model; if still blocked, stop and ask.
@@ -138,7 +151,7 @@ Include:
 
 1. `prd_file`
 2. Every sibling requirements/source-of-truth doc next to `prd_file`
-3. `handoff.md` if present, or record that it is absent
+3. `handoff.md` if present, or record absence
 4. Other sibling docs whose filename or heading indicates requirements, handoff, PRD, spec, acceptance criteria, design constraints, issue context, or implementation guidance
 5. Linked issue context available to the session
 6. Ignored requirements/source-of-truth docs allowed by the read-only ignored-file exception
@@ -146,14 +159,11 @@ Include:
 Rules:
 
 - Inspect the sibling directory for candidates before dispatch.
-- Do not rely on memory or examples.
 - Pass the complete source set to `requirements-collector`.
 - Require files/docs read and skipped candidates with reasons.
 - If a required source was missed, finalization is invalid: add/read it, rerun `requirements-collector`, rerun `addy-code-reviewer`, and if new requirements require changes, dispatch fresh `implementer` then rerun full finalization.
 
 ## Finalization and Review-Fix Loop
-
-Run after active-wave implementation finishes and before starting any higher `parallelBatch`.
 
 1. Restore review-fix iteration count from `progress_file`; otherwise use `0`.
 2. Construct and record the complete **Requirements Source Set**.
@@ -199,8 +209,8 @@ After clean review:
 5. Set `passes: true` only for stories satisfying **Completion Gate**.
 6. Append orchestrator final-state entry.
 7. Reread `prd_file`.
-8. If every story has `passes: true`, reply exactly: `<promise>COMPLETE</promise>`.
-9. Otherwise continue to the next ready wave.
+8. If every story has `passes: true`, reply exactly `<promise>COMPLETE</promise>`.
+9. Otherwise continue to the next ready work.
 
 ## Stop Conditions
 
@@ -208,7 +218,7 @@ Stop only if one applies:
 
 - Real blocker remains after reasonable unblocking attempts
 - `prd_file` contradiction, invalid dependency ordering, or missing required detail needs human correction
-- No unfinished story is ready because prerequisite state is invalid/incomplete
+- No unfinished story is implementation-ready and no implemented-unfinalized story exists
 - Required human decision is needed
 - Review-fix iteration limit is reached
 - Final verification failed and needs human decision
@@ -268,17 +278,24 @@ Use these exact numbered lines verbatim in dry-run/status outputs. Choose exactl
 
 ### Startup or resume before first implementer wave
 
-1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.
+1. Source of truth: `prd_file` official for completion; `progress_file` supplemental resume data only.
 2. Resolved `progress_file`: explicit path or `dirname(prd_file) + "/progress.txt"`; if absent, create that sibling path on first append and never substitute session-state/home path.
-3. Active wave: lowest ready `parallelBatch` and ready story IDs.
-4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; if stories overlap, serialize instead of dispatching them in parallel, cite the shared owner surface or exact file, give dispatch order, and do not start higher-batch work.
+3. Active implementation wave: lowest ready `parallelBatch` and ready story IDs.
+4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; if stories overlap, serialize instead of dispatching them in parallel, cite the shared owner surface or exact file, give dispatch order, and do not start unsafe parallel work.
 
 ### After current-wave implementers return
 
 1. Append every implementer `Progress block` before acting on it.
-2. Record per-story status; unresolved stories stay `passes: false`.
-3. Run finalization and review for the active wave before starting higher `parallelBatch` work.
-4. Keep `passes: true` blocked until review is clean and final checks pass.
+2. Record per-story implementation status; unresolved stories stay `passes: false`.
+3. Continue to the next implementation-ready wave; do not run finalization merely because one wave finished.
+4. Keep `passes: true` blocked until finalization, clean review, and final checks pass.
+
+### When no more implementation-ready waves can run
+
+1. Append any missing current-wave `Progress block` before acting on it.
+2. Run finalization and review for all implemented-unfinalized stories as one combined final state.
+3. Keep unresolved stories `passes: false`.
+4. Continue remaining work only after finalization updates `passes` or a stop condition is confirmed.
 
 ### After `mode: review_fix` implementer returns
 
@@ -317,11 +334,11 @@ For serialization plans, say overlap stories are serialized instead of dispatche
 
 Before stopping or marking completion, confirm:
 
-- [ ] `prd_file` remained official source of story status/completion.
+- [ ] `prd_file` remained official source of story completion.
 - [ ] `progress_file` path followed path rules.
-- [ ] Ready work used `passes`, `dependsOn`, and lowest ready `parallelBatch`.
+- [ ] Ready work used dependencies and lowest ready `parallelBatch`.
+- [ ] All possible implementation waves ran before finalization unless a stop condition applied.
 - [ ] Parallel dispatch was limited to non-overlapping stories.
-- [ ] No higher-batch work started before current wave resolved and passed finalization.
 - [ ] No story-specific code/tests/behavior were read before first implementer in the wave.
 - [ ] Feature work and review fixes came from fresh `implementer` subagents.
 - [ ] `code-simplifier` edits were non-ignored simplification/refactor only.
