@@ -12,11 +12,11 @@ Use this rubric verbatim:
 
 ## Filtering rule
 
-Only keep findings with score 75 or higher.
+Only keep findings with score 80 or higher.
 
 ## Standards findings
 
-For standards findings, the relevant standards file must explicitly support the finding. If the standards file does not explicitly support the finding, score below 75 and filter it out.
+For standards findings, the relevant standards file must explicitly support the finding. If the standards file does not explicitly support the finding, score below 80 and filter it out.
 
 ## Evidence requirements
 

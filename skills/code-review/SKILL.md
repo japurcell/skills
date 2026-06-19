@@ -46,7 +46,7 @@ Review only the requested change scope. Report only issues introduced by, expose
 7. Run required review roles in parallel. Keep each role distinct; do not merge them into one generic pass.
 8. Filter false positives with fast subagents.
    - Use `FALSE_POSITIVE_RUBRIC.md` verbatim.
-   - Keep only scores `75` or `100`.
+   - Keep only scores `80` or higher.
    - Standards findings need explicit file-plus-rule support.
 9. Produce the requested output.
    - PR comment mode and machine-readable mode must follow `OUTPUT_FORMATS.md`.
@@ -99,7 +99,7 @@ Be brief, direct, and serious. Do not hide major correctness or maintainability 
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | "I can read the PR and issues myself."      | Main-agent GitHub intake stays in fast subagents using `gh`; the review should consume summaries, not raw PR/issue pages. |
 | "One broad review pass is enough."          | This skill requires distinct review roles; collapsing them loses coverage and breaks the workflow.                        |
-| "This probably counts as an issue."         | Findings survive only with change linkage, concrete file evidence, and a false-positive score of at least 75.             |
+| "This probably counts as an issue."         | Findings survive only with change linkage, concrete file evidence, and a false-positive score of at least 80.             |
 | "We should run tests or builds to be safe." | Not here unless the user asked. This skill reviews code; it does not expand scope on its own.                             |
 
 ## Red Flags

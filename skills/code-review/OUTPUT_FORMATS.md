@@ -66,7 +66,7 @@ review:
       lines: "<start-end>"
       link: "<full GitHub link if available>"
       introduced_by_change: true
-      confidence: 75 | 100
+      confidence_score: 80-100
       category: correctness | standards | spec | maintainability | architecture | security | performance | readability
       evidence: "<specific evidence>"
       impact: "<practical impact>"
