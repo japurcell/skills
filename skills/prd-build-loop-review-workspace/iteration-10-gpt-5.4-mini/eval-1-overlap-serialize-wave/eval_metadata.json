@@ -1,0 +1,10 @@
+{
+  "eval_id": 1,
+  "eval_name": "overlap-serialize-wave",
+  "prompt": "Use skill under test in dry-run mode for `evals/files/overlap-serialize-fixture/`. User says: `Resume PRD build loop for evals/files/overlap-serialize-fixture/prd.json and keep going.` Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` describing the active wave and the safe dispatch plan when two ready stories share the same likely-touched owner file.",
+  "assertions": [
+    "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+    "The decision says the stories must be serialized instead of dispatched in parallel.",
+    "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`."
+  ]
+}

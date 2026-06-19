@@ -1,24 +1,48 @@
 {
-  "stories": [
+  "project": "Billing Alert Paths",
+  "branchName": "billing-alert-paths",
+  "description": "Resume billing alert work with default progress path handling.",
+  "userStories": [
     {
-      "id": "story-billing-thresholds",
-      "title": "Billing thresholds honor policy",
+      "id": "US-001",
+      "title": "Persist billing threshold rules",
+      "description": "As an engineer, I want persisted billing threshold rules so warning UI reads one source of truth.",
+      "acceptanceCriteria": [
+        "Billing threshold rules are persisted",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/billing/threshold_rules.ts",
+        "tests/billing/threshold_rules.test.ts"
+      ],
+      "designGuidance": [],
       "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
       "passes": false,
-      "requirements": [
-        "Update billing threshold behavior to match policy",
-        "Keep billing tests green"
-      ]
+      "notes": ""
     },
     {
-      "id": "story-alert-banner",
-      "title": "Alert banner reflects billing failures",
+      "id": "US-002",
+      "title": "Show billing alert banner",
+      "description": "As a workspace owner, I want alert banner guidance so I know when billing needs attention.",
+      "acceptanceCriteria": [
+        "Alert banner reflects billing failures",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/ui/BillingAlertBanner.tsx",
+        "tests/ui/BillingAlertBanner.test.tsx"
+      ],
+      "designGuidance": [],
       "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
       "passes": false,
-      "requirements": [
-        "Add alert banner for billing failures",
-        "Cover warning and resolved states"
-      ]
+      "notes": ""
     }
   ]
 }

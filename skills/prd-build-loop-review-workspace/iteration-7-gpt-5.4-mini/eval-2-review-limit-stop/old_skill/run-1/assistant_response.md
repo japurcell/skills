@@ -1,1 +1,0 @@
-Stop. Do not fix findings directly. Do not dispatch another review-fix implementer. review-fix iteration count is already 3 and the latest review is still blocking. Reread prd.json, append a stop-state entry to progress.txt, and ask the user to decide the blocker.

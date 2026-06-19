@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+      "passed": true,
+      "evidence": "The orchestrator must append or create progress on first write at the explicit sibling path:\n/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt\n\nForbidden fallback path families include:\n- session-state paths\n- scratchpads\n- temp/session artifacts\n- home artifacts\n- ~/.copilot/... paths\n- any other path not inside dirname(prd_file)"
+    },
+    {
+      "text": "The decision says the sibling path should be created on first append if it does not exist yet.",
+      "passed": false,
+      "evidence": "The orchestrator must append or create progress on first write at the explicit sibling path:\n/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt\n\nForbidden fallback path families include:\n- session-state paths\n- scratchpads\n- temp/session artifacts\n- home artifacts\n- ~/.copilot/... paths\n- any other path not inside dirname(prd_file)"
+    },
+    {
+      "text": "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths.",
+      "passed": true,
+      "evidence": "The orchestrator must append or create progress on first write at the explicit sibling path:\n/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt\n\nForbidden fallback path families include:\n- session-state paths\n- scratchpads\n- temp/session artifacts\n- home artifacts\n- ~/.copilot/... paths\n- any other path not inside dirname(prd_file)"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.67
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 397,
+    "transcript_chars": 115695
+  },
+  "timing": {
+    "executor_duration_seconds": 25.8,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 25.8
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

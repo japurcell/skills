@@ -8,6 +8,8 @@
 - `filesLikelyTouched`: [optional list of likely relevant files]
 - `progress_file`: [progress file path]
 - `mode`: `initial_implementation` | `review_fix`
+- `current_wave`: [active `parallelBatch` story IDs/titles]
+- `parallel_siblings`: [optional sibling stories plus owned files/surfaces]
 - `review_findings`: [only for `review_fix`]
 
 ## Workflow
@@ -16,28 +18,30 @@
 2. Read only what is needed:
    - Start with `filesLikelyTouched` if provided.
    - Read `progress_file` if it exists, especially `## Codebase Patterns`.
-   - Read tests for the affected behavior.
-   - Read the nearest applicable `AGENTS.md` for files you may change.
+   - Read tests for affected behavior.
+   - Read nearest applicable `AGENTS.md` for files you may change.
    - Read other files only as needed for dependencies, interfaces, or local patterns.
    - Avoid unrelated exploration.
 3. For each `designGuidance` item, read `description` and `rationale` first. Read `source` only if needed to implement correctly.
-4. If requirements are missing, ambiguous, or conflicting, return `NEEDS_CONTEXT`. Do not guess.
-5. If `mode = initial_implementation`:
+4. Treat current story as exclusive scope. Do not implement sibling-wave stories or prerequisite work owned by another story.
+5. If requirements are missing, ambiguous, or conflicting, a dependency appears unfinished, or required change would overlap sibling-owned surface, return `NEEDS_CONTEXT`. Do not guess or widen scope.
+6. If `mode = initial_implementation`:
    - if behavior is clear and a targeted test is feasible, write or identify a failing test
-   - implement the smallest change that makes it pass and follows relevant guidance
-6. If `mode = review_fix`:
-   - address all `review_findings` with the smallest necessary change
+   - implement smallest change that makes it pass and follows relevant guidance
+7. If `mode = review_fix`:
+   - address all `review_findings` with smallest necessary change
    - add or update tests if needed
-7. Run required quality checks for the changed area based on project instructions, local patterns, and affected tests. If no broader checks are clearly required, run the most targeted relevant tests available.
-8. Leave the working tree dirty and report back.
+8. Run required quality checks for changed area based on project instructions, local patterns, and affected tests. If no broader checks are clearly required, run most targeted relevant tests available.
+9. Leave working tree dirty and report back.
 
 ## Quality Requirements
 
 - Keep changes minimal and focused.
 - Follow existing code patterns.
 - Follow all provided `designGuidance`.
+- `filesLikelyTouched` is starting scope. If unavoidable change goes outside it, explain why. If unavoidable change collides with sibling-owned file or surface, stop and report overlap instead of proceeding.
 - `progress_file` is read-only. Do not modify it.
-- Include a short `Progress block` in your report for the orchestrator to append.
+- Include short `Progress block` in your report for orchestrator to append.
 
 ## Guardrails
 

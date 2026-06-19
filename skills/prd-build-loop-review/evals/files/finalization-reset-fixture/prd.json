@@ -1,14 +1,27 @@
 {
-  "stories": [
+  "project": "Billing Retry Guard",
+  "branchName": "billing-retry-guard",
+  "description": "Finish billing retry hardening after review-fix work.",
+  "userStories": [
     {
-      "id": "story-billing-retry",
+      "id": "US-001",
       "title": "Billing retry covers duplicate charge edge case",
+      "description": "As a billing operator, I want duplicate charge retries handled safely so users are not charged twice.",
+      "acceptanceCriteria": [
+        "Duplicate charge retries are guarded",
+        "Tests cover duplicate charge retry path",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/billing_retry.py",
+        "tests/test_billing_retry.py"
+      ],
+      "designGuidance": [],
       "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
       "passes": false,
-      "requirements": [
-        "Handle duplicate charge retries safely",
-        "Add regression coverage for duplicate charge path"
-      ]
+      "notes": ""
     }
   ]
 }

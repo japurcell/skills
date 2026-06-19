@@ -1,1 +1,0 @@
-Stop: review-fix iteration limit reached (iteration count is 3) and latest review still has blocking issues. Do not fix directly or dispatch another review-fix implementer. Reread prd_file, append an orchestrator stop-state entry to progress_file, and ask the user to decide the blocker.

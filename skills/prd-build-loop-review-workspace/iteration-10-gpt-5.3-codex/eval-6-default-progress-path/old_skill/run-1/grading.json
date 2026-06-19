@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+      "passed": true,
+      "evidence": "Resolved default `progress_file` from provided `prd_file`:\n`/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nOn first write, orchestrator must create (if missing) and append at that exact sibling path only; do not substitute any other location. If creating new file, start it with `## Codebase Patterns` at top.\n\nForbidden fallback path families when no explicit `progress_file` is provided:\n- Session-state paths\n- Scratchpad paths\n- Temp/session artifact paths\n- Home-directory artifact paths (including `~/.copilot/...`)\n- Any path outside `dirname(prd_file)`"
+    },
+    {
+      "text": "The decision says the sibling path should be created on first append if it does not exist yet.",
+      "passed": true,
+      "evidence": "Resolved default `progress_file` from provided `prd_file`:\n`/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nOn first write, orchestrator must create (if missing) and append at that exact sibling path only; do not substitute any other location. If creating new file, start it with `## Codebase Patterns` at top.\n\nForbidden fallback path families when no explicit `progress_file` is provided:\n- Session-state paths\n- Scratchpad paths\n- Temp/session artifact paths\n- Home-directory artifact paths (including `~/.copilot/...`)\n- Any path outside `dirname(prd_file)`"
+    },
+    {
+      "text": "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths.",
+      "passed": true,
+      "evidence": "Resolved default `progress_file` from provided `prd_file`:\n`/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nOn first write, orchestrator must create (if missing) and append at that exact sibling path only; do not substitute any other location. If creating new file, start it with `## Codebase Patterns` at top.\n\nForbidden fallback path families when no explicit `progress_file` is provided:\n- Session-state paths\n- Scratchpad paths\n- Temp/session artifact paths\n- Home-directory artifact paths (including `~/.copilot/...`)\n- Any path outside `dirname(prd_file)`"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 632,
+    "transcript_chars": 189287
+  },
+  "timing": {
+    "executor_duration_seconds": 38.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 38.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

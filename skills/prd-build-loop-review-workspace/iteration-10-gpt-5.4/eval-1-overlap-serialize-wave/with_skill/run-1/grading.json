@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: explicit path or `dirname(prd_file) + \"/progress.txt\"`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs are `US-002` and `US-003`.\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery.\n\n`US-002` and `US-003` share likely-touched owner file `src/ui/BillingSettingsPage.tsx`, so they are not parallel-safe inside wave `2`. Safe dispatch plan: serialize by priority within current wave, dispatch `US-002` first, append and record its result, then dispatch fresh implementer for `US-003`. Keep `US-004` blocked until wave `2` fully resolves."
+    },
+    {
+      "text": "The decision says the stories must be serialized instead of dispatched in parallel.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: explicit path or `dirname(prd_file) + \"/progress.txt\"`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs are `US-002` and `US-003`.\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery.\n\n`US-002` and `US-003` share likely-touched owner file `src/ui/BillingSettingsPage.tsx`, so they are not parallel-safe inside wave `2`. Safe dispatch plan: serialize by priority within current wave, dispatch `US-002` first, append and record its result, then dispatch fresh implementer for `US-003`. Keep `US-004` blocked until wave `2` fully resolves."
+    },
+    {
+      "text": "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: explicit path or `dirname(prd_file) + \"/progress.txt\"`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs are `US-002` and `US-003`.\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery.\n\n`US-002` and `US-003` share likely-touched owner file `src/ui/BillingSettingsPage.tsx`, so they are not parallel-safe inside wave `2`. Safe dispatch plan: serialize by priority within current wave, dispatch `US-002` first, append and record its result, then dispatch fresh implementer for `US-003`. Keep `US-004` blocked until wave `2` fully resolves."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 836,
+    "transcript_chars": 192167
+  },
+  "timing": {
+    "executor_duration_seconds": 27.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 27.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

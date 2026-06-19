@@ -1,0 +1,91 @@
+{
+  "project": "Billing Settings Alerts",
+  "branchName": "billing-settings-alerts",
+  "description": "Add billing warning UI after shared billing status groundwork.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Expose shared billing status model",
+      "description": "As an engineer, I want one shared billing status model so settings surfaces agree on billing state.",
+      "acceptanceCriteria": [
+        "Shared billing status model exists",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/billing/status_model.ts",
+        "tests/billing/status_model.test.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Show billing threshold warning",
+      "description": "As a workspace owner, I want threshold warnings on billing settings so I can react before service interruption.",
+      "acceptanceCriteria": [
+        "Threshold warning appears on billing settings page",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/ui/BillingSettingsPage.tsx",
+        "tests/ui/BillingThresholdWarning.test.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Show billing retry banner",
+      "description": "As a workspace owner, I want retry guidance on billing settings so I know how to recover failed payments.",
+      "acceptanceCriteria": [
+        "Retry banner appears on billing settings page",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/ui/BillingSettingsPage.tsx",
+        "tests/ui/BillingRetryBanner.test.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Emit billing warning analytics",
+      "description": "As an operator, I want analytics for billing warnings so support can monitor alert frequency.",
+      "acceptanceCriteria": [
+        "Analytics event is emitted for warning impressions",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/analytics/billing_warning_events.ts",
+        "tests/analytics/billing_warning_events.test.ts"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "dependsOn": [
+        "US-002"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

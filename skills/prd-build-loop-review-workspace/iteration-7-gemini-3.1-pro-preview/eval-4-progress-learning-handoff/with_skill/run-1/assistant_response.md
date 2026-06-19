@@ -1,7 +1,0 @@
-1. Destination: nearby `AGENTS.md` or linked docs.
-2. Reusable guidance only; no raw progress blocks, story-only notes, or transient blockers.
-3. Validation/safety: Prefix safety must evaluate decoded forms, not only raw string. Existing guard/login paths should reuse shared return-url policy coverage.
-4. Cache/state/replay: Keep cached stream for reads; use fresh-fetch command path for mutations to avoid replay bugs. Fresh-fetch command path plus cached read stream split is stable fix shape for replay bugs. `shareReplay(1)` stale-first behavior can cause false UI failure on success flows.
-5. UX/accessibility: Compose `aria-describedby` in stable order: helper first, then contextual errors. Preserve existing error/focus UX while extending helper association through composed `aria-describedby`.
-6. Testing/anti-flake: Time-based claim assertions should use ranges to avoid flake. Preserve single-rule targeting to avoid false negatives from unrelated validators. Jasmine forbids nested `it`; keep test blocks at describe root.
-7. Environment/setup: Dev route prefix matters for browser checks. Browser direct `/login` may not hit the right dev route. Startup production-route tests may need staged dist artifact to hit intended branch: `wwwroot/dist/browser/index.html`.

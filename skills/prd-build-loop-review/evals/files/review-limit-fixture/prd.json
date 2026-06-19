@@ -1,14 +1,27 @@
 {
-  "stories": [
+  "project": "Search Index Delete Consistency",
+  "branchName": "search-index-delete-consistency",
+  "description": "Finish delete-path search index consistency work.",
+  "userStories": [
     {
-      "id": "story-search-index",
+      "id": "US-001",
       "title": "Search index stays consistent after deletes",
+      "description": "As a search user, I want deleted documents removed from search results so stale content never reappears.",
+      "acceptanceCriteria": [
+        "Delete path removes stale documents from search index",
+        "Regression coverage protects delete race",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/search_index.py",
+        "tests/test_search_index.py"
+      ],
+      "designGuidance": [],
       "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
       "passes": false,
-      "requirements": [
-        "Delete path removes stale documents from index",
-        "Add regression coverage for delete race"
-      ]
+      "notes": ""
     }
   ]
 }

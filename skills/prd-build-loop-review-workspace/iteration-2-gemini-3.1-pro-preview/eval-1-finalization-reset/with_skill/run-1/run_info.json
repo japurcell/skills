@@ -1,6 +1,0 @@
-{
-  "model": "gemini-3.1-pro-preview",
-  "skill_path": "/home/adam/dev/personal/skills/skills/prd-build-loop-review/SKILL.md",
-  "copilot_cwd": "/home/adam/dev/personal/skills/skills/prd-build-loop-review",
-  "returncode": 0
-}

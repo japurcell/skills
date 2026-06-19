@@ -1,1 +1,0 @@
-I have evaluated the `prd.json` file which indicates that all stories are already complete (`passes: true`). In accordance with the skill instructions for dry-run evaluations, I've written the exact final response `<promise>COMPLETE</promise>` to `outputs/decision.md`.

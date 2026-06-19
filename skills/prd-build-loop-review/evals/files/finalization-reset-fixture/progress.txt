@@ -1,7 +1,7 @@
 ## Codebase Patterns
 - Review findings usually require new tests plus rerun of finalization.
 
-## 2026-06-10T11:00:00Z - story-billing-retry
+## 2026-06-10T11:00:00Z - US-001
 - Role: implementer
 - Summary: Implemented duplicate charge retry guard.
 - Files changed/reviewed: src/billing_retry.py, tests/test_billing_retry.py
@@ -31,7 +31,7 @@
   - Story cannot be marked complete yet.
   - Review fix must come from fresh implementer.
 ---
-## 2026-06-10T11:50:00Z - story-billing-retry
+## 2026-06-10T11:50:00Z - US-001
 - Role: implementer
 - Summary: Returned from `mode: review_fix` after adding missing negative test.
 - Files changed/reviewed: tests/test_billing_retry.py

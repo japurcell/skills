@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+      "passed": true,
+      "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` (`prd_file`) official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` (`dirname(prd_file) + \"/progress.txt\"`); existing sibling resume path, never substitute session-state/home path.\n3. Active parallel wave: `parallelBatch` 2 with ready `passes: false` stories `US-002` and `US-003`; `US-004` waits on `US-002`.\n4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+    },
+    {
+      "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
+      "passed": true,
+      "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` (`prd_file`) official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` (`dirname(prd_file) + \"/progress.txt\"`); existing sibling resume path, never substitute session-state/home path.\n3. Active parallel wave: `parallelBatch` 2 with ready `passes: false` stories `US-002` and `US-003`; `US-004` waits on `US-002`.\n4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+    },
+    {
+      "text": "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+      "passed": true,
+      "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` (`prd_file`) official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` (`dirname(prd_file) + \"/progress.txt\"`); existing sibling resume path, never substitute session-state/home path.\n3. Active parallel wave: `parallelBatch` 2 with ready `passes: false` stories `US-002` and `US-003`; `US-004` waits on `US-002`.\n4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+    },
+    {
+      "text": "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work.",
+      "passed": false,
+      "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` (`prd_file`) official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` (`dirname(prd_file) + \"/progress.txt\"`); existing sibling resume path, never substitute session-state/home path.\n3. Active parallel wave: `parallelBatch` 2 with ready `passes: false` stories `US-002` and `US-003`; `US-004` waits on `US-002`.\n4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 690,
+    "transcript_chars": 211056
+  },
+  "timing": {
+    "executor_duration_seconds": 37.9,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 37.9
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

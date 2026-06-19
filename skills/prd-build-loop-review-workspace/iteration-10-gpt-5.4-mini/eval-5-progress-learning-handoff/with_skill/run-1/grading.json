@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+      "passed": true,
+      "evidence": "Pass `self-improve` a distilled handoff of reusable rules only, not raw progress history: validation/safety, cache/state/replay, UX/accessibility, testing/anti-flake, environment/setup guidance, plus any representative concrete rule that should live in nearby `AGENTS.md` or linked docs.\n\nMine `progress_file` from `## Codebase Patterns` and each entry's `**Learnings for future iterations:**` block, especially the FINALIZATION entry and the latest implementer notes.\n\nPreserve generalizable patterns and gotchas; drop story IDs, timestamps, temporary blockers, and one-off filenames."
+    },
+    {
+      "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+      "passed": true,
+      "evidence": "Pass `self-improve` a distilled handoff of reusable rules only, not raw progress history: validation/safety, cache/state/replay, UX/accessibility, testing/anti-flake, environment/setup guidance, plus any representative concrete rule that should live in nearby `AGENTS.md` or linked docs.\n\nMine `progress_file` from `## Codebase Patterns` and each entry's `**Learnings for future iterations:**` block, especially the FINALIZATION entry and the latest implementer notes.\n\nPreserve generalizable patterns and gotchas; drop story IDs, timestamps, temporary blockers, and one-off filenames."
+    },
+    {
+      "text": "The decision preserves the staged production-artifact startup-test learning.",
+      "passed": true,
+      "evidence": "Pass `self-improve` a distilled handoff of reusable rules only, not raw progress history: validation/safety, cache/state/replay, UX/accessibility, testing/anti-flake, environment/setup guidance, plus any representative concrete rule that should live in nearby `AGENTS.md` or linked docs.\n\nMine `progress_file` from `## Codebase Patterns` and each entry's `**Learnings for future iterations:**` block, especially the FINALIZATION entry and the latest implementer notes.\n\nPreserve generalizable patterns and gotchas; drop story IDs, timestamps, temporary blockers, and one-off filenames."
+    },
+    {
+      "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+      "passed": true,
+      "evidence": "Pass `self-improve` a distilled handoff of reusable rules only, not raw progress history: validation/safety, cache/state/replay, UX/accessibility, testing/anti-flake, environment/setup guidance, plus any representative concrete rule that should live in nearby `AGENTS.md` or linked docs.\n\nMine `progress_file` from `## Codebase Patterns` and each entry's `**Learnings for future iterations:**` block, especially the FINALIZATION entry and the latest implementer notes.\n\nPreserve generalizable patterns and gotchas; drop story IDs, timestamps, temporary blockers, and one-off filenames."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 586,
+    "transcript_chars": 197216
+  },
+  "timing": {
+    "executor_duration_seconds": 32.3,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 32.3
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

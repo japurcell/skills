@@ -2,7 +2,7 @@
 - Keep auth/login guidance in one scoped location instead of scattering it across root notes.
 - Preserve existing focus and error behavior when extending auth helpers.
 
-## 2026-06-12T10:00:00Z - story-local-auth-returnurl
+## 2026-06-12T10:00:00Z - US-001
 - Role: implementer
 - Summary: Hardened decoded prefix validation and login return-url policy reuse.
 - Files changed/reviewed: Auth tests, login helpers, shared return-url policy
@@ -16,7 +16,7 @@
   - Useful context
     - Filtered auth tests keep validation coverage fast and focused.
 ---
-## 2026-06-12T10:40:00Z - story-local-auth-returnurl
+## 2026-06-12T10:40:00Z - US-001
 - Role: implementer
 - Summary: Stabilized login success flow after cache/replay regression.
 - Files changed/reviewed: Login state stream, command path, UI tests
@@ -30,7 +30,7 @@
   - Useful context
     - Existing failed-login behavior already had coverage and should stay unchanged.
 ---
-## 2026-06-12T11:10:00Z - story-local-auth-returnurl
+## 2026-06-12T11:10:00Z - US-001
 - Role: implementer
 - Summary: Extended helper text association without regressing error handling.
 - Files changed/reviewed: Login field helper text, accessibility tests
@@ -44,7 +44,7 @@
   - Useful context
     - Browser direct `/login` may not hit the right dev route.
 ---
-## 2026-06-12T11:45:00Z - story-local-auth-returnurl
+## 2026-06-12T11:45:00Z - US-001
 - Role: implementer
 - Summary: Tightened validation and startup-route coverage.
 - Files changed/reviewed: Local login option tests, startup production-route tests

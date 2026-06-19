@@ -1,24 +1,90 @@
 {
-  "stories": [
+  "project": "Auth Timeout Fanout",
+  "branchName": "auth-timeout-fanout",
+  "description": "Apply shared auth timeout policy across login and status surfaces.",
+  "userStories": [
     {
-      "id": "story-auth-timeout",
-      "title": "Auth timeout matches spec",
+      "id": "US-001",
+      "title": "Persist shared auth timeout policy",
+      "description": "As a platform owner, I want one shared auth timeout policy so dependent flows use the same rules.",
+      "acceptanceCriteria": [
+        "Shared auth timeout policy exists in one reusable location",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/auth/timeout_policy.ts",
+        "tests/auth/timeout_policy.test.ts"
+      ],
+      "designGuidance": [],
       "priority": 1,
-      "passes": false,
-      "requirements": [
-        "Update auth timeout behavior to match spec",
-        "Keep related tests green"
-      ]
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": true,
+      "notes": ""
     },
     {
-      "id": "story-status-badge",
-      "title": "Status badge reflects sync health",
+      "id": "US-002",
+      "title": "Apply timeout policy to login flow",
+      "description": "As a user, I want login timeout handling to reuse shared policy so behavior stays consistent.",
+      "acceptanceCriteria": [
+        "Login flow reads shared auth timeout policy",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/auth/login_flow.ts",
+        "tests/auth/login_flow.test.ts"
+      ],
+      "designGuidance": [],
       "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
       "passes": false,
-      "requirements": [
-        "Add sync status badge",
-        "Cover success and failure states"
-      ]
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Show timeout status badge",
+      "description": "As a user, I want a timeout status badge so I can see when auth policy is active.",
+      "acceptanceCriteria": [
+        "Status badge reflects timeout policy state",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/ui/TimeoutStatusBadge.tsx",
+        "tests/ui/TimeoutStatusBadge.test.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Log timeout audit events",
+      "description": "As an operator, I want audit events for timeout enforcement so support can trace auth failures.",
+      "acceptanceCriteria": [
+        "Audit event records timeout enforcement",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/audit/timeout_events.ts",
+        "tests/audit/timeout_events.test.ts"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "dependsOn": [
+        "US-002"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
     }
   ]
 }

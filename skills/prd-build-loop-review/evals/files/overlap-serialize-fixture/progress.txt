@@ -1,0 +1,17 @@
+## Codebase Patterns
+- Billing settings page owns warning-state UI composition.
+- Let implementer perform story-specific discovery.
+
+## 2026-06-10T09:30:00Z - RESUME
+- Role: orchestrator
+- Summary: Session resumed before selecting current billing wave.
+- Files changed/reviewed: prd.json, progress.txt
+- Verification or outcome: No story dispatched yet.
+- **Learnings for future iterations:**
+  - Patterns discovered
+    - Ready work comes from `prd_file`, not memory.
+  - Gotchas encountered
+    - Shared owner files are conflict signals inside one wave.
+  - Useful context
+    - Serialize overlapping UI stories even when dependency-ready.
+---

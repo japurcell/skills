@@ -1,0 +1,10 @@
+{
+  "eval_id": 6,
+  "eval_name": "default-progress-path",
+  "prompt": "Use skill under test in dry-run mode for `evals/files/default-progress-path-fixture/prd.json`. User says: `Resume autonomous PRD work for evals/files/default-progress-path-fixture/prd.json.` No explicit `progress_file` was provided and no sibling `progress.txt` exists yet. Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` describing exactly where the orchestrator must append or create progress on first write and which fallback path families are forbidden.",
+  "assertions": [
+    "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+    "The decision says the sibling path should be created on first append if it does not exist yet.",
+    "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths."
+  ]
+}

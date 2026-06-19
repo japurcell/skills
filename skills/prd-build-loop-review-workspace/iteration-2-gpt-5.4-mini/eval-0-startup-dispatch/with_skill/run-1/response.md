@@ -1,4 +1,0 @@
-- Source of truth: `prd.json` is official; `progress.txt` is supplemental resume data only.
-- Resolved `progress_file`: `evals/files/startup-fixture/progress.txt` (`dirname(prd_file) + "/progress.txt"`).
-- Selected story: `story-auth-timeout` (`Auth timeout matches spec`) — highest-priority `passes: false` story.
-- Before any story-specific repo discovery: dispatch a fresh implementer for that story, and read only `prd.json`, `progress.txt`, and any nearby `AGENTS.md` needed to dispatch. Do not inspect story-specific code, tests, or behavior yet.

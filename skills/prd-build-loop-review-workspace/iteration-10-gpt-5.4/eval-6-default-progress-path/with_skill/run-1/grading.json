@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+      "passed": true,
+      "evidence": "Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nNo explicit `progress_file` given. No sibling `progress.txt` exists yet. Orchestrator must keep that sibling path reserved and create/append progress there on first write, with `## Codebase Patterns` at top. Missing sibling file is never permission to invent another location.\n\nForbidden fallback path families: session-state paths, scratchpads, home directories, and `~/.copilot/...` paths. More broadly, `progress_file` must never resolve anywhere except explicit path or `dirname(resolved prd_file) + \"/progress.txt\"`."
+    },
+    {
+      "text": "The decision says the sibling path should be created on first append if it does not exist yet.",
+      "passed": true,
+      "evidence": "Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nNo explicit `progress_file` given. No sibling `progress.txt` exists yet. Orchestrator must keep that sibling path reserved and create/append progress there on first write, with `## Codebase Patterns` at top. Missing sibling file is never permission to invent another location.\n\nForbidden fallback path families: session-state paths, scratchpads, home directories, and `~/.copilot/...` paths. More broadly, `progress_file` must never resolve anywhere except explicit path or `dirname(resolved prd_file) + \"/progress.txt\"`."
+    },
+    {
+      "text": "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths.",
+      "passed": true,
+      "evidence": "Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nNo explicit `progress_file` given. No sibling `progress.txt` exists yet. Orchestrator must keep that sibling path reserved and create/append progress there on first write, with `## Codebase Patterns` at top. Missing sibling file is never permission to invent another location.\n\nForbidden fallback path families: session-state paths, scratchpads, home directories, and `~/.copilot/...` paths. More broadly, `progress_file` must never resolve anywhere except explicit path or `dirname(resolved prd_file) + \"/progress.txt\"`."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 667,
+    "transcript_chars": 158400
+  },
+  "timing": {
+    "executor_duration_seconds": 18.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 18.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

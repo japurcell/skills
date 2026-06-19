@@ -3,8 +3,8 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "Use skill under test in dry-run mode for `evals/files/startup-fixture/`. User says: `Run PRD build loop on evals/files/startup-fixture/prd.json and do not stop between stories.` Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` with first orchestrator actions: source of truth, resolved `progress_file`, story selection, and what must happen before any story-specific repo discovery.",
-      "expected_output": "A startup decision that resolves default progress path, uses `prd_file` as source of truth, picks highest-priority failing story, and dispatches fresh implementer before story-specific discovery.",
+      "prompt": "Use skill under test in dry-run mode for `evals/files/startup-fixture/`. User says: `Run PRD build loop on evals/files/startup-fixture/prd.json and do not stop between stories.` Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` with first orchestrator actions: source of truth, resolved `progress_file`, active parallel wave, and what must happen before any story-specific repo discovery.",
+      "expected_output": "A startup decision that resolves sibling progress path, selects the lowest ready `parallelBatch`, dispatches one fresh implementer per ready story in parallel, and does not start later-batch work.",
       "files": [
         "evals/files/startup-fixture/prd.json",
         "evals/files/startup-fixture/progress.txt"
@@ -12,18 +12,37 @@
       "expectations": [
         "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
         "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
-        "The decision selects the highest-priority `passes: false` story.",
-        "The decision dispatches a fresh implementer before story-specific repo discovery."
+        "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+        "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work."
       ],
       "assertions": [
         "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
         "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
-        "The decision selects the highest-priority `passes: false` story.",
-        "The decision dispatches a fresh implementer before story-specific repo discovery."
+        "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+        "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work."
       ]
     },
     {
       "id": 1,
+      "prompt": "Use skill under test in dry-run mode for `evals/files/overlap-serialize-fixture/`. User says: `Resume PRD build loop for evals/files/overlap-serialize-fixture/prd.json and keep going.` Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` describing the active wave and the safe dispatch plan when two ready stories share the same likely-touched owner file.",
+      "expected_output": "A startup decision that keeps the current wave at `parallelBatch` 2 but serializes the overlapping stories because they share an owner surface or exact likely-touched file.",
+      "files": [
+        "evals/files/overlap-serialize-fixture/prd.json",
+        "evals/files/overlap-serialize-fixture/progress.txt"
+      ],
+      "expectations": [
+        "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+        "The decision says the stories must be serialized instead of dispatched in parallel.",
+        "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`."
+      ],
+      "assertions": [
+        "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+        "The decision says the stories must be serialized instead of dispatched in parallel.",
+        "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`."
+      ]
+    },
+    {
+      "id": 2,
       "prompt": "Use skill under test in dry-run mode for `evals/files/finalization-reset-fixture/`. User says: `Continue PRD work from progress and finish final review loop.` Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` with next orchestrator actions after a fresh implementer returned from `mode: review_fix`.",
       "expected_output": "A finalization-reset decision that records the implementer result first, reruns simplify and review on combined final state, and keeps `passes: true` blocked until the rerun is clean.",
       "files": [
@@ -42,9 +61,9 @@
       ]
     },
     {
-      "id": 2,
+      "id": 3,
       "prompt": "Use skill under test in dry-run mode for `evals/files/review-limit-fixture/`. User says: `Keep going until the PRD is done.` The progress file already shows review-fix iteration count `3` and latest reviewer still found blocking issues. Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` describing the required stop response.",
-      "expected_output": "A stop-state decision that honors review-fix limit, records stop state, avoids direct code changes, and asks the user to decide the blocker.",
+      "expected_output": "A stop-state decision that honors the review-fix limit, records stop state, avoids direct code changes, and asks the user to decide the blocker.",
       "files": [
         "evals/files/review-limit-fixture/prd.json",
         "evals/files/review-limit-fixture/progress.txt"
@@ -61,7 +80,7 @@
       ]
     },
     {
-      "id": 3,
+      "id": 4,
       "prompt": "Use skill under test in dry-run mode for `evals/files/complete-fixture/`. User says: `Resume PRD build loop from progress.` Do not change files or spawn real subagents. If the skill says work is already complete, write exact final response to `outputs/decision.md` and nothing else.",
       "expected_output": "The exact completion response `<promise>COMPLETE</promise>`.",
       "files": [
@@ -76,7 +95,7 @@
       ]
     },
     {
-      "id": 4,
+      "id": 5,
       "prompt": "Use skill under test in dry-run mode for `evals/files/progress-learning-fixture/`. User says: `Finish PRD finalization and record durable guidance from progress.` Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` describing what the orchestrator must pass to `self-improve`, which progress-file sections it must mine, and which kinds of reusable learnings it must preserve.",
       "expected_output": "A self-improve handoff that mines both the progress header and per-entry learnings, preserves representative durable auth/UI/test rules, and keeps the result scoped to reusable guidance.",
       "files": [
@@ -97,8 +116,8 @@
       ]
     },
     {
-      "id": 5,
-      "prompt": "Use skill under test in dry-run mode for `evals/files/default-progress-path-fixture/prd.json`. User says: `Resume autonomous PRD work for evals/files/default-progress-path-fixture/prd.json.` No explicit `progress_file` was provided and no sibling `progress.txt` exists yet. Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` describing exactly where the orchestrator must append/create progress on first write and which fallback path families are forbidden.",
+      "id": 6,
+      "prompt": "Use skill under test in dry-run mode for `evals/files/default-progress-path-fixture/prd.json`. User says: `Resume autonomous PRD work for evals/files/default-progress-path-fixture/prd.json.` No explicit `progress_file` was provided and no sibling `progress.txt` exists yet. Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` describing exactly where the orchestrator must append or create progress on first write and which fallback path families are forbidden.",
       "expected_output": "A startup decision that resolves the default progress path beside `prd_file`, keeps that same sibling path even before the file exists, and explicitly forbids session-state or scratchpad fallbacks.",
       "files": [
         "evals/files/default-progress-path-fixture/prd.json"

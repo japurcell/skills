@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs are `US-002` and `US-003`.\n4. Before any story-specific repo discovery: read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work; dispatch fresh implementer per parallel-safe story and serialize overlap cases first."
+    },
+    {
+      "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs are `US-002` and `US-003`.\n4. Before any story-specific repo discovery: read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work; dispatch fresh implementer per parallel-safe story and serialize overlap cases first."
+    },
+    {
+      "text": "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs are `US-002` and `US-003`.\n4. Before any story-specific repo discovery: read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work; dispatch fresh implementer per parallel-safe story and serialize overlap cases first."
+    },
+    {
+      "text": "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs are `US-002` and `US-003`.\n4. Before any story-specific repo discovery: read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work; dispatch fresh implementer per parallel-safe story and serialize overlap cases first."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 535,
+    "transcript_chars": 172123
+  },
+  "timing": {
+    "executor_duration_seconds": 21.8,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 21.8
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

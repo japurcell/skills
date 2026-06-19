@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\n3. Active wave: parallelBatch 2 (US-002, US-003)\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery."
+    },
+    {
+      "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\n3. Active wave: parallelBatch 2 (US-002, US-003)\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery."
+    },
+    {
+      "text": "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\n3. Active wave: parallelBatch 2 (US-002, US-003)\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery."
+    },
+    {
+      "text": "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt\n3. Active wave: parallelBatch 2 (US-002, US-003)\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 382,
+    "transcript_chars": 166443
+  },
+  "timing": {
+    "executor_duration_seconds": 49.1,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 49.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

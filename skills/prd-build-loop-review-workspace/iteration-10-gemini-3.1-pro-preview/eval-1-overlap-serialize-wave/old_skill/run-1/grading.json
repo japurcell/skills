@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+      "passed": true,
+      "evidence": "Active wave: parallelBatch 2 (US-002 and US-003).\nConflict: Both stories are dependency-ready but share the likely-touched owner file src/ui/BillingSettingsPage.tsx. According to progress.txt learnings (\"Shared owner files are conflict signals inside one wave\" and \"Serialize overlapping UI stories even when dependency-ready\"), they must be serialized.\n\nSafe dispatch plan:\n1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: explicit path or `dirname(prd_file) + \"/progress.txt\"`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Selected story: highest-priority `passes: false` story.\n4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`.\n\nThe orchestrator will pick US-002 (priority 2) first. Only after US-002 satisfies the Completion Gate will US-003 (priority 3) be selected."
+    },
+    {
+      "text": "The decision says the stories must be serialized instead of dispatched in parallel.",
+      "passed": false,
+      "evidence": "Active wave: parallelBatch 2 (US-002 and US-003).\nConflict: Both stories are dependency-ready but share the likely-touched owner file src/ui/BillingSettingsPage.tsx. According to progress.txt learnings (\"Shared owner files are conflict signals inside one wave\" and \"Serialize overlapping UI stories even when dependency-ready\"), they must be serialized.\n\nSafe dispatch plan:\n1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: explicit path or `dirname(prd_file) + \"/progress.txt\"`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Selected story: highest-priority `passes: false` story.\n4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`.\n\nThe orchestrator will pick US-002 (priority 2) first. Only after US-002 satisfies the Completion Gate will US-003 (priority 3) be selected."
+    },
+    {
+      "text": "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`.",
+      "passed": true,
+      "evidence": "Active wave: parallelBatch 2 (US-002 and US-003).\nConflict: Both stories are dependency-ready but share the likely-touched owner file src/ui/BillingSettingsPage.tsx. According to progress.txt learnings (\"Shared owner files are conflict signals inside one wave\" and \"Serialize overlapping UI stories even when dependency-ready\"), they must be serialized.\n\nSafe dispatch plan:\n1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: explicit path or `dirname(prd_file) + \"/progress.txt\"`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Selected story: highest-priority `passes: false` story.\n4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`.\n\nThe orchestrator will pick US-002 (priority 2) first. Only after US-002 satisfies the Completion Gate will US-003 (priority 3) be selected."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.67
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 972,
+    "transcript_chars": 203859
+  },
+  "timing": {
+    "executor_duration_seconds": 50.1,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 50.1
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

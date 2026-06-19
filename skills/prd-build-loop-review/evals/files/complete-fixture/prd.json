@@ -1,16 +1,48 @@
 {
-  "stories": [
+  "project": "Auth Timeout Fanout",
+  "branchName": "auth-timeout-fanout",
+  "description": "All auth timeout stories already completed.",
+  "userStories": [
     {
-      "id": "story-auth-timeout",
-      "title": "Auth timeout matches spec",
+      "id": "US-001",
+      "title": "Persist shared auth timeout policy",
+      "description": "As a platform owner, I want one shared auth timeout policy so dependent flows use the same rules.",
+      "acceptanceCriteria": [
+        "Shared auth timeout policy exists in one reusable location",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/auth/timeout_policy.ts",
+        "tests/auth/timeout_policy.test.ts"
+      ],
+      "designGuidance": [],
       "priority": 1,
-      "passes": true
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": true,
+      "notes": ""
     },
     {
-      "id": "story-status-badge",
-      "title": "Status badge reflects sync health",
+      "id": "US-002",
+      "title": "Show timeout status badge",
+      "description": "As a user, I want a timeout status badge so I can see when auth policy is active.",
+      "acceptanceCriteria": [
+        "Status badge reflects timeout policy state",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/ui/TimeoutStatusBadge.tsx",
+        "tests/ui/TimeoutStatusBadge.test.tsx"
+      ],
+      "designGuidance": [],
       "priority": 2,
-      "passes": true
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": true,
+      "notes": ""
     }
   ]
 }

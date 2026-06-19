@@ -1,14 +1,27 @@
 {
-  "stories": [
+  "project": "Local Auth Return URL Hardening",
+  "branchName": "local-auth-return-url-hardening",
+  "description": "Capture durable guidance after combined auth hardening work.",
+  "userStories": [
     {
-      "id": "story-local-auth-returnurl",
+      "id": "US-001",
       "title": "Local auth return-url hardening stays safe across login, validation, and startup paths",
+      "description": "As a user, I want return URL handling to stay safe across auth paths so redirects remain valid and predictable.",
+      "acceptanceCriteria": [
+        "Return URL handling is hardened across login, validation, and startup routes",
+        "Existing UX stays intact",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [
+        "src/auth/local_login_options.ts",
+        "tests/auth/local_login_options.test.ts"
+      ],
+      "designGuidance": [],
       "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
       "passes": false,
-      "requirements": [
-        "Harden local-auth return URL handling across login, validation, and startup routes",
-        "Preserve existing UX and add stable regression coverage"
-      ]
+      "notes": ""
     }
   ]
 }

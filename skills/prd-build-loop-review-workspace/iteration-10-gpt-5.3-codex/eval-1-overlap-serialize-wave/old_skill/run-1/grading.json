@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: explicit path or `dirname(prd_file) + \"/progress.txt\"`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Selected story: highest-priority `passes: false` story.\n4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`.\n\nActive wave: `parallelBatch: 2` with ready stories `US-002` and `US-003` (`US-001` already passes, `US-004` blocked by `US-002`).\n\nShared likely-touched owner file: `src/ui/BillingSettingsPage.tsx`.\n\nSafe dispatch plan (dry-run):\n1. Serialize wave-2 execution by shared owner file; do not dispatch `US-002` and `US-003` in parallel.\n2. Dispatch `US-002` first (higher priority), keep `US-003` queued.\n3. After `US-002` returns, append its `Progress block`, reread `prd_file`, then dispatch `US-003`.\n4. Recompute readiness after `US-003`; dispatch `US-004` only after `US-002` is marked passing in `prd_file`."
+    },
+    {
+      "text": "The decision says the stories must be serialized instead of dispatched in parallel.",
+      "passed": false,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: explicit path or `dirname(prd_file) + \"/progress.txt\"`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Selected story: highest-priority `passes: false` story.\n4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`.\n\nActive wave: `parallelBatch: 2` with ready stories `US-002` and `US-003` (`US-001` already passes, `US-004` blocked by `US-002`).\n\nShared likely-touched owner file: `src/ui/BillingSettingsPage.tsx`.\n\nSafe dispatch plan (dry-run):\n1. Serialize wave-2 execution by shared owner file; do not dispatch `US-002` and `US-003` in parallel.\n2. Dispatch `US-002` first (higher priority), keep `US-003` queued.\n3. After `US-002` returns, append its `Progress block`, reread `prd_file`, then dispatch `US-003`.\n4. Recompute readiness after `US-003`; dispatch `US-004` only after `US-002` is marked passing in `prd_file`."
+    },
+    {
+      "text": "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: explicit path or `dirname(prd_file) + \"/progress.txt\"`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Selected story: highest-priority `passes: false` story.\n4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`.\n\nActive wave: `parallelBatch: 2` with ready stories `US-002` and `US-003` (`US-001` already passes, `US-004` blocked by `US-002`).\n\nShared likely-touched owner file: `src/ui/BillingSettingsPage.tsx`.\n\nSafe dispatch plan (dry-run):\n1. Serialize wave-2 execution by shared owner file; do not dispatch `US-002` and `US-003` in parallel.\n2. Dispatch `US-002` first (higher priority), keep `US-003` queued.\n3. After `US-002` returns, append its `Progress block`, reread `prd_file`, then dispatch `US-003`.\n4. Recompute readiness after `US-003`; dispatch `US-004` only after `US-002` is marked passing in `prd_file`."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.67
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1068,
+    "transcript_chars": 249039
+  },
+  "timing": {
+    "executor_duration_seconds": 56.8,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 56.8
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

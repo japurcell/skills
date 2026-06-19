@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "parallel-startup-wave",
+  "prompt": "Use skill under test in dry-run mode for `evals/files/startup-fixture/`. User says: `Run PRD build loop on evals/files/startup-fixture/prd.json and do not stop between stories.` Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` with first orchestrator actions: source of truth, resolved `progress_file`, active parallel wave, and what must happen before any story-specific repo discovery.",
+  "assertions": [
+    "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+    "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
+    "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+    "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work."
+  ]
+}

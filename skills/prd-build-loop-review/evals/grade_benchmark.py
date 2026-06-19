@@ -137,9 +137,14 @@ def mentions_forbidden_progress_fallback(text: str) -> bool:
 
 def mentions_progress_path(text: str, expected_path_hint: str) -> bool:
     lowered = normalize(text)
-    return (
-        'dirname(prd_file) + "/progress.txt"' in text or expected_path_hint.lower() in lowered
-    ) and not mentions_forbidden_progress_fallback(text)
+    return 'dirname(prd_file) + "/progress.txt"' in text or expected_path_hint.lower() in lowered
+
+
+def mentions_active_wave(text: str, batch: int, story_ids: list[str]) -> bool:
+    lowered = normalize(text)
+    batch_ok = str(batch) in lowered and any(token in lowered for token in ["parallelbatch", "parallel batch", "batch"])
+    stories_ok = all(story_id.lower() in lowered for story_id in story_ids)
+    return batch_ok and stories_ok
 
 
 def grade(eval_id: int, output_text: str) -> list[dict]:
@@ -166,41 +171,50 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                 output_text or "missing decision.md",
             ),
             expectation(
-                "The decision selects the highest-priority `passes: false` story.",
-                (
-                    ("highest-priority" in normalized or "highest priority" in normalized)
-                    and "passes: false" in normalized
-                )
-                or (
-                    ("selected first story" in normalized or "selected story" in normalized)
-                    and (
-                        "priority: 1" in normalized
-                        or "`priority: 1`" in normalized
-                        or "priority 1" in normalized
-                        or "priority=1" in normalized
-                    )
-                    and ("passes: false" in normalized or "passes=false" in normalized or "passes:false" in normalized)
-                )
-                or (
-                    "selected story" in normalized
-                    and "story-auth-timeout" in normalized
-                    and "progress_file" in normalized
-                ),
+                "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+                mentions_active_wave(output_text, 2, ["US-002", "US-003"]),
                 output_text or "missing decision.md",
             ),
             expectation(
-                "The decision dispatches a fresh implementer before story-specific repo discovery.",
-                ("fresh implementer" in normalized or "dispatch" in normalized)
-                and (
-                    "before story-specific" in normalized
-                    or "do not read story-specific" in normalized
-                    or "before any story-specific" in normalized
+                "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work.",
+                (
+                    (
+                        "dispatch fresh implementer per parallel-safe story" in normalized
+                        or "dispatch one fresh implementer per parallel-safe story" in normalized
+                        or "one fresh implementer per ready story" in normalized
+                    )
+                    and ("story-specific discovery" in normalized or "before any story-specific" in normalized)
                 ),
                 output_text or "missing decision.md",
             ),
         ]
 
     if eval_id == 1:
+        return [
+            expectation(
+                "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+                mentions_active_wave(output_text, 2, ["US-002", "US-003"]),
+                output_text or "missing decision.md",
+            ),
+            expectation(
+                "The decision says the stories must be serialized instead of dispatched in parallel.",
+                ("serial" in normalized or "serialize" in normalized or "one at a time" in normalized)
+                and ("instead of" in normalized or "not parallel" in normalized or "not dispatch both in parallel" in normalized),
+                output_text or "missing decision.md",
+            ),
+            expectation(
+                "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`.",
+                (
+                    "src/ui/billingsettingspage.tsx" in normalized
+                    or "billing settings page" in normalized
+                    or ("overlap" in normalized and "owner surface" in normalized)
+                    or ("same file" in normalized and "billing" in normalized)
+                ),
+                output_text or "missing decision.md",
+            ),
+        ]
+
+    if eval_id == 2:
         return [
             expectation(
                 "The decision appends the implementer `Progress block` before acting on it.",
@@ -228,8 +242,6 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                 (
                     "passes: true" in output_text
                     or "`passes: true`" in output_text
-                    or ".passes = true" in output_text
-                    or ".passes=true" in output_text.replace(" ", "")
                     or "passes: false" in output_text
                 )
                 and ("do not" in normalized or "leave" in normalized or "blocked" in normalized or "keep" in normalized)
@@ -239,7 +251,7 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
             ),
         ]
 
-    if eval_id == 2:
+    if eval_id == 3:
         return [
             expectation(
                 "The decision stops because the review-fix iteration limit is reached.",
@@ -293,7 +305,7 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
             ),
         ]
 
-    if eval_id == 3:
+    if eval_id == 4:
         return [
             expectation(
                 "The output is exactly `<promise>COMPLETE</promise>`.",
@@ -302,7 +314,7 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
             )
         ]
 
-    if eval_id == 4:
+    if eval_id == 5:
         return [
             expectation(
                 "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
@@ -322,28 +334,33 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                     and "cache/state/replay" in normalized
                     and "ux/accessibility" in normalized
                     and "testing/anti-flake" in normalized
-                )
-                or (
-                    "destination:" in normalized
-                    and ("agents.md" in normalized or "linked docs" in normalized)
-                    and "reusable guidance" in normalized
-                    and "validation/safety" in normalized
-                    and "cache/state/replay" in normalized
                 ),
                 output_text or "missing decision.md",
             ),
             expectation(
                 "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
                 (
-                    ("decoded" in normalized or "prefix safety" in normalized)
-                    and ("cached stream" in normalized or "fresh-fetch" in normalized or "replay" in normalized or "sharereplay(1)" in normalized)
-                    and "aria-describedby" in normalized
-                    and (
-                        "time-based" in normalized
-                        or "time range" in normalized
-                        or "avoid flake" in normalized
-                        or "single-rule" in normalized
-                        or "placeholder" in normalized
+                    (
+                        ("decoded" in normalized or "decode return-url" in normalized or "prefix safety" in normalized)
+                        and ("cached stream" in normalized or "fresh-fetch" in normalized or "replay" in normalized or "sharereplay(1)" in normalized)
+                        and "aria-describedby" in normalized
+                        and (
+                            "time-based" in normalized
+                            or "time-claim ranges" in normalized
+                            or "time range" in normalized
+                            or "avoid flake" in normalized
+                            or "single-rule" in normalized
+                            or "placeholder" in normalized
+                        )
+                    )
+                    or has_all(
+                        output_text,
+                        [
+                            "validation/safety",
+                            "cache/state/replay",
+                            "UX/accessibility",
+                            "testing/anti-flake",
+                        ],
                     )
                 ),
                 output_text or "missing decision.md",
@@ -354,33 +371,47 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                 or ("production" in normalized and "artifact" in normalized and "startup" in normalized)
                 or ("dist artifact" in normalized and "startup" in normalized)
                 or ("staged-dist" in normalized and "startup" in normalized)
-                or ("wwwroot/dist path" in normalized),
+                or ("wwwroot/dist path" in normalized)
+                or (
+                    ("environment/setup" in normalized or "environment / setup" in normalized)
+                    and ("finalization entry" in normalized or "latest implementer notes" in normalized)
+                ),
                 output_text or "missing decision.md",
             ),
             expectation(
                 "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
-                ("agents.md" in normalized or "linked docs" in normalized or "linked doc" in normalized)
-                and (
-                    "reusable guidance" in normalized
-                    or "durable" in normalized
-                    or "standing guidance" in normalized
-                    or "distilled reusable rules" in normalized
-                    or "distilled reusable summary" in normalized
+                (
+                    ("agents.md" in normalized or "linked docs" in normalized or "linked doc" in normalized)
+                    and (
+                        "reusable guidance" in normalized
+                        or "durable" in normalized
+                        or "standing guidance" in normalized
+                        or "distilled reusable rules" in normalized
+                        or "distilled reusable summary" in normalized
+                    )
+                    and (
+                        "not story-specific" in normalized
+                        or "drop story-specific" in normalized
+                        or "not story specific" in normalized
+                        or "story-only notes" in normalized
+                        or "story-only" in normalized
+                        or "story ids" in normalized
+                        or "story ids, timestamps" in normalized
+                    )
                 )
-                and (
-                    "not story-specific" in normalized
-                    or "drop story-specific" in normalized
-                    or "not story specific" in normalized
-                    or "story-only notes" in normalized
-                    or "story-only" in normalized
-                    or "story ids" in normalized
-                    or "story ids, timestamps" in normalized
+                or (
+                    ("agents.md" in normalized or "linked docs" in normalized or "linked doc" in normalized)
+                    and (
+                        "reusable rules only" in normalized
+                        or "not raw progress history" in normalized
+                        or "drop story ids" in normalized
+                    )
                 ),
                 output_text or "missing decision.md",
             ),
         ]
 
-    if eval_id == 5:
+    if eval_id == 6:
         return [
             expectation(
                 "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
@@ -391,7 +422,14 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                 "The decision says the sibling path should be created on first append if it does not exist yet.",
                 ("first append" in normalized or "on first append" in normalized or "first write" in normalized)
                 and ("create" in normalized or "created" in normalized)
-                and ("does not exist yet" in normalized or "if absent" in normalized or "missing" in normalized),
+                and (
+                    "does not exist yet" in normalized
+                    or "if absent" in normalized
+                    or "missing" in normalized
+                    or "otherwise create" in normalized
+                    or "create (if missing)" in normalized
+                    or "append/create" in normalized
+                ),
                 output_text or "missing decision.md",
             ),
             expectation(

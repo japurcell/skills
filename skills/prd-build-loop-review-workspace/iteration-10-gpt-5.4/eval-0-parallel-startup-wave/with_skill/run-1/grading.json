@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+      "passed": true,
+      "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; existing sibling path under `dirname(prd_file)`, never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` = `2`; ready story IDs `US-002`, `US-003`.\n4. Before any story-specific repo discovery, read only `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json`, `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`, and nearby `AGENTS.md` needed to dispatch work (`/home/adam/dev/personal/skills/AGENTS.md`); then dispatch fresh implementer per parallel-safe story and serialize overlap cases before any story-specific discovery."
+    },
+    {
+      "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
+      "passed": true,
+      "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; existing sibling path under `dirname(prd_file)`, never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` = `2`; ready story IDs `US-002`, `US-003`.\n4. Before any story-specific repo discovery, read only `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json`, `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`, and nearby `AGENTS.md` needed to dispatch work (`/home/adam/dev/personal/skills/AGENTS.md`); then dispatch fresh implementer per parallel-safe story and serialize overlap cases before any story-specific discovery."
+    },
+    {
+      "text": "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+      "passed": true,
+      "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; existing sibling path under `dirname(prd_file)`, never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` = `2`; ready story IDs `US-002`, `US-003`.\n4. Before any story-specific repo discovery, read only `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json`, `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`, and nearby `AGENTS.md` needed to dispatch work (`/home/adam/dev/personal/skills/AGENTS.md`); then dispatch fresh implementer per parallel-safe story and serialize overlap cases before any story-specific discovery."
+    },
+    {
+      "text": "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work.",
+      "passed": true,
+      "evidence": "1. Source of truth: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json` official; `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; existing sibling path under `dirname(prd_file)`, never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` = `2`; ready story IDs `US-002`, `US-003`.\n4. Before any story-specific repo discovery, read only `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/prd.json`, `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`, and nearby `AGENTS.md` needed to dispatch work (`/home/adam/dev/personal/skills/AGENTS.md`); then dispatch fresh implementer per parallel-safe story and serialize overlap cases before any story-specific discovery."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1048,
+    "transcript_chars": 276195
+  },
+  "timing": {
+    "executor_duration_seconds": 50.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 50.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}
