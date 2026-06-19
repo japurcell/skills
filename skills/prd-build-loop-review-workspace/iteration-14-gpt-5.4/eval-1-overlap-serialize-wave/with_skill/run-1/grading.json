@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is 2 and ready story IDs are `US-002`, `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; if stories overlap, serialize instead of dispatching them in parallel, cite the shared owner surface or exact file, give dispatch order, and do not start higher-batch work. Here `US-002` and `US-003` overlap on shared owner file `src/ui/BillingSettingsPage.tsx` and shared owner surface Billing Settings page warning-state UI composition, so serialize dispatch order by priority: `US-002` then `US-003`; do not start `US-004` yet."
+    },
+    {
+      "text": "The decision says the stories must be serialized instead of dispatched in parallel.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is 2 and ready story IDs are `US-002`, `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; if stories overlap, serialize instead of dispatching them in parallel, cite the shared owner surface or exact file, give dispatch order, and do not start higher-batch work. Here `US-002` and `US-003` overlap on shared owner file `src/ui/BillingSettingsPage.tsx` and shared owner surface Billing Settings page warning-state UI composition, so serialize dispatch order by priority: `US-002` then `US-003`; do not start `US-004` yet."
+    },
+    {
+      "text": "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is 2 and ready story IDs are `US-002`, `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; if stories overlap, serialize instead of dispatching them in parallel, cite the shared owner surface or exact file, give dispatch order, and do not start higher-batch work. Here `US-002` and `US-003` overlap on shared owner file `src/ui/BillingSettingsPage.tsx` and shared owner surface Billing Settings page warning-state UI composition, so serialize dispatch order by priority: `US-002` then `US-003`; do not start `US-004` yet."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 949,
+    "transcript_chars": 195726
+  },
+  "timing": {
+    "executor_duration_seconds": 20.6,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 20.6
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+      "passed": true,
+      "evidence": "1. Mine `## Codebase Patterns` and every `Learnings for future iterations` block, including patterns, gotchas, and useful context.\n2. Pass only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes, raw tracking data, story IDs, timestamps, temporary blockers, or one-off filenames.\n3. Preserve durable rules under exact bucket labels: `Validation/safety`, `Cache/state/replay`, `UX/accessibility`, `Testing/anti-flake`, and `Environment/setup`.\n4. Preserve staged production-artifact startup-test guidance such as `wwwroot/dist/browser/index.html` when present."
+    },
+    {
+      "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+      "passed": true,
+      "evidence": "1. Mine `## Codebase Patterns` and every `Learnings for future iterations` block, including patterns, gotchas, and useful context.\n2. Pass only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes, raw tracking data, story IDs, timestamps, temporary blockers, or one-off filenames.\n3. Preserve durable rules under exact bucket labels: `Validation/safety`, `Cache/state/replay`, `UX/accessibility`, `Testing/anti-flake`, and `Environment/setup`.\n4. Preserve staged production-artifact startup-test guidance such as `wwwroot/dist/browser/index.html` when present."
+    },
+    {
+      "text": "The decision preserves the staged production-artifact startup-test learning.",
+      "passed": true,
+      "evidence": "1. Mine `## Codebase Patterns` and every `Learnings for future iterations` block, including patterns, gotchas, and useful context.\n2. Pass only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes, raw tracking data, story IDs, timestamps, temporary blockers, or one-off filenames.\n3. Preserve durable rules under exact bucket labels: `Validation/safety`, `Cache/state/replay`, `UX/accessibility`, `Testing/anti-flake`, and `Environment/setup`.\n4. Preserve staged production-artifact startup-test guidance such as `wwwroot/dist/browser/index.html` when present."
+    },
+    {
+      "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+      "passed": true,
+      "evidence": "1. Mine `## Codebase Patterns` and every `Learnings for future iterations` block, including patterns, gotchas, and useful context.\n2. Pass only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes, raw tracking data, story IDs, timestamps, temporary blockers, or one-off filenames.\n3. Preserve durable rules under exact bucket labels: `Validation/safety`, `Cache/state/replay`, `UX/accessibility`, `Testing/anti-flake`, and `Environment/setup`.\n4. Preserve staged production-artifact startup-test guidance such as `wwwroot/dist/browser/index.html` when present."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 591,
+    "transcript_chars": 177998
+  },
+  "timing": {
+    "executor_duration_seconds": 31.3,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 31.3
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

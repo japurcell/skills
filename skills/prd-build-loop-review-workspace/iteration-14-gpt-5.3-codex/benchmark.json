@@ -1,0 +1,541 @@
+{
+  "metadata": {
+    "skill_name": "prd-build-loop-review",
+    "skill_path": "/home/adam/dev/personal/skills/skills/prd-build-loop-review/SKILL.md",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-19T05:55:02Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 27.3,
+        "tokens": 605,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2` with ready story IDs `US-002` and `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; for this wave, dispatch `US-002` and `US-003` in parallel, and do not start higher-batch work."
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2` with ready story IDs `US-002` and `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; for this wave, dispatch `US-002` and `US-003` in parallel, and do not start higher-batch work."
+        },
+        {
+          "text": "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2` with ready story IDs `US-002` and `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; for this wave, dispatch `US-002` and `US-003` in parallel, and do not start higher-batch work."
+        },
+        {
+          "text": "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2` with ready story IDs `US-002` and `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; for this wave, dispatch `US-002` and `US-003` in parallel, and do not start higher-batch work."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 38.0,
+        "tokens": 769,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs: `US-002`, `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; stories overlap on shared owner surface/exact file `src/ui/BillingSettingsPage.tsx`, so serialize instead of dispatching them in parallel in priority order `US-002` then `US-003`, and do not start higher-batch work (`US-004`) until current wave resolves."
+        },
+        {
+          "text": "The decision says the stories must be serialized instead of dispatched in parallel.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs: `US-002`, `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; stories overlap on shared owner surface/exact file `src/ui/BillingSettingsPage.tsx`, so serialize instead of dispatching them in parallel in priority order `US-002` then `US-003`, and do not start higher-batch work (`US-004`) until current wave resolves."
+        },
+        {
+          "text": "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs: `US-002`, `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; stories overlap on shared owner surface/exact file `src/ui/BillingSettingsPage.tsx`, so serialize instead of dispatching them in parallel in priority order `US-002` then `US-003`, and do not start higher-batch work (`US-004`) until current wave resolves."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 45.5,
+        "tokens": 279,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` and `requirements-collector` in parallel on combined final state.\n3. After both return, rerun `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass."
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `requirements-collector` in parallel after the review fix.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` and `requirements-collector` in parallel on combined final state.\n3. After both return, rerun `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass."
+        },
+        {
+          "text": "The decision reruns `addy-code-reviewer` only after both helper runs finish and are recorded.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` and `requirements-collector` in parallel on combined final state.\n3. After both return, rerun `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass."
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` and `requirements-collector` in parallel on combined final state.\n3. After both return, rerun `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 50.7,
+        "tokens": 253,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "1. State that review-fix iteration limit is reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread `prd_file`.\n5. Append stop-state entry to `progress_file`.\n6. Human decision required: ask user to decide blocker."
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": true,
+          "evidence": "1. State that review-fix iteration limit is reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread `prd_file`.\n5. Append stop-state entry to `progress_file`.\n6. Human decision required: ask user to decide blocker."
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": true,
+          "evidence": "1. State that review-fix iteration limit is reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread `prd_file`.\n5. Append stop-state entry to `progress_file`.\n6. Human decision required: ask user to decide blocker."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 29.6,
+        "tokens": 28,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 42.2,
+        "tokens": 1843,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+          "passed": true,
+          "evidence": "Before invoking `self-improve`, orchestrator must pass a distilled summary mined from `progress.txt` that includes only reusable guidance destined for nearby `AGENTS.md` or linked docs (not raw tracking data).\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`.\n2. Every entry\u2019s `**Learnings for future iterations:**` block.\n3. Within each learnings block, mine all three subsections: `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPass reusable rules under these exact buckets:\n\n`Validation/safety`\n- Validate auth return-url prefix safety on decoded forms, not raw-only strings.\n- Reuse one shared return-url policy across guard/login paths.\n- Preserve single-rule validator targeting to avoid unrelated false negatives.\n- Avoid placeholder defaults that trigger unrelated validation failures.\n\n`Cache/state/replay`\n- Use cached stream for reads and fresh-fetch command path for mutations.\n- Treat `shareReplay(1)` stale-first behavior as replay-regression risk on success flows.\n\n`UX/accessibility`\n- Preserve existing focus/error UX when extending auth helpers.\n- Compose `aria-describedby` in stable order: helper text first, contextual errors second.\n- Keep auth/login guidance in scoped auth docs location instead of root-note sprawl.\n\n`Testing/anti-flake`\n- Keep auth validation checks focused via filtered targeted tests.\n- Use range-based assertions for time claims to reduce flake.\n- In Jasmine, do not nest `it` blocks; keep them at describe root.\n\n`Environment/setup`\n- Respect dev route prefix requirements for browser checks.\n- Preserve staged startup artifact guidance when needed for startup-route branch coverage: `wwwroot/dist/browser/index.html`.\n\nExclude from `self-improve` handoff: story IDs, timestamps, temporary blockers, per-run status text, and other non-durable tracking details."
+        },
+        {
+          "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+          "passed": true,
+          "evidence": "Before invoking `self-improve`, orchestrator must pass a distilled summary mined from `progress.txt` that includes only reusable guidance destined for nearby `AGENTS.md` or linked docs (not raw tracking data).\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`.\n2. Every entry\u2019s `**Learnings for future iterations:**` block.\n3. Within each learnings block, mine all three subsections: `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPass reusable rules under these exact buckets:\n\n`Validation/safety`\n- Validate auth return-url prefix safety on decoded forms, not raw-only strings.\n- Reuse one shared return-url policy across guard/login paths.\n- Preserve single-rule validator targeting to avoid unrelated false negatives.\n- Avoid placeholder defaults that trigger unrelated validation failures.\n\n`Cache/state/replay`\n- Use cached stream for reads and fresh-fetch command path for mutations.\n- Treat `shareReplay(1)` stale-first behavior as replay-regression risk on success flows.\n\n`UX/accessibility`\n- Preserve existing focus/error UX when extending auth helpers.\n- Compose `aria-describedby` in stable order: helper text first, contextual errors second.\n- Keep auth/login guidance in scoped auth docs location instead of root-note sprawl.\n\n`Testing/anti-flake`\n- Keep auth validation checks focused via filtered targeted tests.\n- Use range-based assertions for time claims to reduce flake.\n- In Jasmine, do not nest `it` blocks; keep them at describe root.\n\n`Environment/setup`\n- Respect dev route prefix requirements for browser checks.\n- Preserve staged startup artifact guidance when needed for startup-route branch coverage: `wwwroot/dist/browser/index.html`.\n\nExclude from `self-improve` handoff: story IDs, timestamps, temporary blockers, per-run status text, and other non-durable tracking details."
+        },
+        {
+          "text": "The decision preserves the staged production-artifact startup-test learning.",
+          "passed": true,
+          "evidence": "Before invoking `self-improve`, orchestrator must pass a distilled summary mined from `progress.txt` that includes only reusable guidance destined for nearby `AGENTS.md` or linked docs (not raw tracking data).\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`.\n2. Every entry\u2019s `**Learnings for future iterations:**` block.\n3. Within each learnings block, mine all three subsections: `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPass reusable rules under these exact buckets:\n\n`Validation/safety`\n- Validate auth return-url prefix safety on decoded forms, not raw-only strings.\n- Reuse one shared return-url policy across guard/login paths.\n- Preserve single-rule validator targeting to avoid unrelated false negatives.\n- Avoid placeholder defaults that trigger unrelated validation failures.\n\n`Cache/state/replay`\n- Use cached stream for reads and fresh-fetch command path for mutations.\n- Treat `shareReplay(1)` stale-first behavior as replay-regression risk on success flows.\n\n`UX/accessibility`\n- Preserve existing focus/error UX when extending auth helpers.\n- Compose `aria-describedby` in stable order: helper text first, contextual errors second.\n- Keep auth/login guidance in scoped auth docs location instead of root-note sprawl.\n\n`Testing/anti-flake`\n- Keep auth validation checks focused via filtered targeted tests.\n- Use range-based assertions for time claims to reduce flake.\n- In Jasmine, do not nest `it` blocks; keep them at describe root.\n\n`Environment/setup`\n- Respect dev route prefix requirements for browser checks.\n- Preserve staged startup artifact guidance when needed for startup-route branch coverage: `wwwroot/dist/browser/index.html`.\n\nExclude from `self-improve` handoff: story IDs, timestamps, temporary blockers, per-run status text, and other non-durable tracking details."
+        },
+        {
+          "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+          "passed": true,
+          "evidence": "Before invoking `self-improve`, orchestrator must pass a distilled summary mined from `progress.txt` that includes only reusable guidance destined for nearby `AGENTS.md` or linked docs (not raw tracking data).\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`.\n2. Every entry\u2019s `**Learnings for future iterations:**` block.\n3. Within each learnings block, mine all three subsections: `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPass reusable rules under these exact buckets:\n\n`Validation/safety`\n- Validate auth return-url prefix safety on decoded forms, not raw-only strings.\n- Reuse one shared return-url policy across guard/login paths.\n- Preserve single-rule validator targeting to avoid unrelated false negatives.\n- Avoid placeholder defaults that trigger unrelated validation failures.\n\n`Cache/state/replay`\n- Use cached stream for reads and fresh-fetch command path for mutations.\n- Treat `shareReplay(1)` stale-first behavior as replay-regression risk on success flows.\n\n`UX/accessibility`\n- Preserve existing focus/error UX when extending auth helpers.\n- Compose `aria-describedby` in stable order: helper text first, contextual errors second.\n- Keep auth/login guidance in scoped auth docs location instead of root-note sprawl.\n\n`Testing/anti-flake`\n- Keep auth validation checks focused via filtered targeted tests.\n- Use range-based assertions for time claims to reduce flake.\n- In Jasmine, do not nest `it` blocks; keep them at describe root.\n\n`Environment/setup`\n- Respect dev route prefix requirements for browser checks.\n- Preserve staged startup artifact guidance when needed for startup-route branch coverage: `wwwroot/dist/browser/index.html`.\n\nExclude from `self-improve` handoff: story IDs, timestamps, temporary blockers, per-run status text, and other non-durable tracking details."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 38.5,
+        "tokens": 471,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+          "passed": true,
+          "evidence": "1. Resolved `progress_file` must be `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt` (sibling of resolved `prd_file`).\n2. If that sibling `progress.txt` does not exist yet, orchestrator must create that exact sibling path on first append.\n3. Forbidden fallback path families: any session-state path, scratchpad path, home-directory path, or `~/.copilot/...` path; no alternate location may be invented."
+        },
+        {
+          "text": "The decision says the sibling path should be created on first append if it does not exist yet.",
+          "passed": true,
+          "evidence": "1. Resolved `progress_file` must be `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt` (sibling of resolved `prd_file`).\n2. If that sibling `progress.txt` does not exist yet, orchestrator must create that exact sibling path on first append.\n3. Forbidden fallback path families: any session-state path, scratchpad path, home-directory path, or `~/.copilot/...` path; no alternate location may be invented."
+        },
+        {
+          "text": "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths.",
+          "passed": true,
+          "evidence": "1. Resolved `progress_file` must be `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt` (sibling of resolved `prd_file`).\n2. If that sibling `progress.txt` does not exist yet, orchestrator must create that exact sibling path on first append.\n3. Forbidden fallback path families: any session-state path, scratchpad path, home-directory path, or `~/.copilot/...` path; no alternate location may be invented."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 29.5,
+        "tokens": 525,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs: `US-002`, `US-003`.\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery."
+        },
+        {
+          "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs: `US-002`, `US-003`.\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery."
+        },
+        {
+          "text": "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs: `US-002`, `US-003`.\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery."
+        },
+        {
+          "text": "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2`; ready story IDs: `US-002`, `US-003`.\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 48.6,
+        "tokens": 938,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` and ready story IDs: `parallelBatch` `2` with `US-002`, `US-003`.\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery.\n\nOverlap signal present in active wave: both ready stories likely touch same owner file `src/ui/BillingSettingsPage.tsx`. Safe dispatch plan is serialized within batch 2 by priority: dispatch fresh implementer for `US-002` first, append and record its `Progress block`, then dispatch fresh implementer for `US-003` with updated wave context and same ownership boundary enforcement."
+        },
+        {
+          "text": "The decision says the stories must be serialized instead of dispatched in parallel.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` and ready story IDs: `parallelBatch` `2` with `US-002`, `US-003`.\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery.\n\nOverlap signal present in active wave: both ready stories likely touch same owner file `src/ui/BillingSettingsPage.tsx`. Safe dispatch plan is serialized within batch 2 by priority: dispatch fresh implementer for `US-002` first, append and record its `Progress block`, then dispatch fresh implementer for `US-003` with updated wave context and same ownership boundary enforcement."
+        },
+        {
+          "text": "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`.",
+          "passed": true,
+          "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` and ready story IDs: `parallelBatch` `2` with `US-002`, `US-003`.\n4. Dispatch fresh implementer per parallel-safe story; serialize overlap cases before any story-specific discovery.\n\nOverlap signal present in active wave: both ready stories likely touch same owner file `src/ui/BillingSettingsPage.tsx`. Safe dispatch plan is serialized within batch 2 by priority: dispatch fresh implementer for `US-002` first, append and record its `Progress block`, then dispatch fresh implementer for `US-003` with updated wave context and same ownership boundary enforcement."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 44.3,
+        "tokens": 485,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision appends the implementer `Progress block` before acting on it.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass.\n5. Parallel helpers in this stage: none; do not run `code-simplifier` and `requirements-collector` concurrently.\n6. Required wait point: `addy-code-reviewer` must wait until both reruns finish and their `Progress block`s are appended."
+        },
+        {
+          "text": "The decision reruns `code-simplifier` and `requirements-collector` in parallel after the review fix.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass.\n5. Parallel helpers in this stage: none; do not run `code-simplifier` and `requirements-collector` concurrently.\n6. Required wait point: `addy-code-reviewer` must wait until both reruns finish and their `Progress block`s are appended."
+        },
+        {
+          "text": "The decision reruns `addy-code-reviewer` only after both helper runs finish and are recorded.",
+          "passed": false,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass.\n5. Parallel helpers in this stage: none; do not run `code-simplifier` and `requirements-collector` concurrently.\n6. Required wait point: `addy-code-reviewer` must wait until both reruns finish and their `Progress block`s are appended."
+        },
+        {
+          "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+          "passed": true,
+          "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass.\n5. Parallel helpers in this stage: none; do not run `code-simplifier` and `requirements-collector` concurrently.\n6. Required wait point: `addy-code-reviewer` must wait until both reruns finish and their `Progress block`s are appended."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 39.0,
+        "tokens": 253,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision stops because the review-fix iteration limit is reached.",
+          "passed": true,
+          "evidence": "1. State that review-fix iteration limit is reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread `prd_file`.\n5. Append stop-state entry to `progress_file`.\n6. Human decision required: ask user to decide blocker."
+        },
+        {
+          "text": "The decision says not to fix findings directly or dispatch another review-fix implementer.",
+          "passed": true,
+          "evidence": "1. State that review-fix iteration limit is reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread `prd_file`.\n5. Append stop-state entry to `progress_file`.\n6. Human decision required: ask user to decide blocker."
+        },
+        {
+          "text": "The decision rereads `prd_file`, appends stop state to `progress_file`, and asks the user to decide the blocker.",
+          "passed": true,
+          "evidence": "1. State that review-fix iteration limit is reached.\n2. Do not fix directly.\n3. Do not dispatch another review-fix implementer.\n4. Reread `prd_file`.\n5. Append stop-state entry to `progress_file`.\n6. Human decision required: ask user to decide blocker."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 35.0,
+        "tokens": 28,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The output is exactly `<promise>COMPLETE</promise>`.",
+          "passed": true,
+          "evidence": "<promise>COMPLETE</promise>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 52.7,
+        "tokens": 2296,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+          "passed": true,
+          "evidence": "## Self-improve handoff payload (what orchestrator must pass)\n\n- Distilled reusable guidance summary only (not raw progress transcript), grouped by:\n  - validation/safety rules\n  - cache/state/replay rules\n  - UX/accessibility rules\n  - testing/anti-flake rules\n  - environment/setup rules\n- Destination context: nearby `AGENTS.md` plus linked docs when detail is too long for `AGENTS.md`.\n- Scope instruction: preserve representative concrete rules; omit story tracking metadata.\n\n## Progress sections to mine\n\n1. `## Codebase Patterns` (top-level durable patterns).\n2. Every timestamped entry\u2019s `**Learnings for future iterations:**` block, including:\n   - `Patterns discovered`\n   - `Gotchas encountered`\n   - `Useful context`\n3. `## ... - FINALIZATION` reviewer entry learnings (explicitly includes what durable capture must cover).\n\n## Reusable learnings to preserve\n\n- Auth/return-url safety\n  - Validate redirect prefix safety on decoded values, not raw-only checks.\n  - Reuse shared return-url policy coverage across guard/login/startup paths.\n- Cache/state/replay stability\n  - Keep cached stream for read paths; use fresh-fetch command path for mutations.\n  - Treat `shareReplay(1)` stale-first behavior as replay-regression risk in success flows.\n- UX/accessibility invariants\n  - Compose `aria-describedby` in stable order: helper text first, contextual errors next.\n  - Extend helper association without regressing existing error/focus behavior.\n- Test reliability and scope discipline\n  - Avoid nested Jasmine `it` blocks.\n  - Use range-based assertions for time claims to reduce flake.\n  - Keep validator tests single-rule targeted to avoid unrelated false negatives.\n  - Avoid placeholder defaults that trigger unrelated validation failures.\n- Environment/setup execution context\n  - Dev route prefix can change browser route validation behavior.\n  - Startup production-route tests may require staged dist artifact: `wwwroot/dist/browser/index.html`.\n- Documentation placement guidance\n  - Keep auth/login durable rules in nearby scoped auth docs instead of root-level guidance sprawl.\n\n## Exclusions (must not be forwarded as durable rules)\n\n- Story IDs, timestamps, one-off blockers, and incidental per-run file lists.\n- Raw progress entry formatting/tracking structure itself."
+        },
+        {
+          "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+          "passed": true,
+          "evidence": "## Self-improve handoff payload (what orchestrator must pass)\n\n- Distilled reusable guidance summary only (not raw progress transcript), grouped by:\n  - validation/safety rules\n  - cache/state/replay rules\n  - UX/accessibility rules\n  - testing/anti-flake rules\n  - environment/setup rules\n- Destination context: nearby `AGENTS.md` plus linked docs when detail is too long for `AGENTS.md`.\n- Scope instruction: preserve representative concrete rules; omit story tracking metadata.\n\n## Progress sections to mine\n\n1. `## Codebase Patterns` (top-level durable patterns).\n2. Every timestamped entry\u2019s `**Learnings for future iterations:**` block, including:\n   - `Patterns discovered`\n   - `Gotchas encountered`\n   - `Useful context`\n3. `## ... - FINALIZATION` reviewer entry learnings (explicitly includes what durable capture must cover).\n\n## Reusable learnings to preserve\n\n- Auth/return-url safety\n  - Validate redirect prefix safety on decoded values, not raw-only checks.\n  - Reuse shared return-url policy coverage across guard/login/startup paths.\n- Cache/state/replay stability\n  - Keep cached stream for read paths; use fresh-fetch command path for mutations.\n  - Treat `shareReplay(1)` stale-first behavior as replay-regression risk in success flows.\n- UX/accessibility invariants\n  - Compose `aria-describedby` in stable order: helper text first, contextual errors next.\n  - Extend helper association without regressing existing error/focus behavior.\n- Test reliability and scope discipline\n  - Avoid nested Jasmine `it` blocks.\n  - Use range-based assertions for time claims to reduce flake.\n  - Keep validator tests single-rule targeted to avoid unrelated false negatives.\n  - Avoid placeholder defaults that trigger unrelated validation failures.\n- Environment/setup execution context\n  - Dev route prefix can change browser route validation behavior.\n  - Startup production-route tests may require staged dist artifact: `wwwroot/dist/browser/index.html`.\n- Documentation placement guidance\n  - Keep auth/login durable rules in nearby scoped auth docs instead of root-level guidance sprawl.\n\n## Exclusions (must not be forwarded as durable rules)\n\n- Story IDs, timestamps, one-off blockers, and incidental per-run file lists.\n- Raw progress entry formatting/tracking structure itself."
+        },
+        {
+          "text": "The decision preserves the staged production-artifact startup-test learning.",
+          "passed": true,
+          "evidence": "## Self-improve handoff payload (what orchestrator must pass)\n\n- Distilled reusable guidance summary only (not raw progress transcript), grouped by:\n  - validation/safety rules\n  - cache/state/replay rules\n  - UX/accessibility rules\n  - testing/anti-flake rules\n  - environment/setup rules\n- Destination context: nearby `AGENTS.md` plus linked docs when detail is too long for `AGENTS.md`.\n- Scope instruction: preserve representative concrete rules; omit story tracking metadata.\n\n## Progress sections to mine\n\n1. `## Codebase Patterns` (top-level durable patterns).\n2. Every timestamped entry\u2019s `**Learnings for future iterations:**` block, including:\n   - `Patterns discovered`\n   - `Gotchas encountered`\n   - `Useful context`\n3. `## ... - FINALIZATION` reviewer entry learnings (explicitly includes what durable capture must cover).\n\n## Reusable learnings to preserve\n\n- Auth/return-url safety\n  - Validate redirect prefix safety on decoded values, not raw-only checks.\n  - Reuse shared return-url policy coverage across guard/login/startup paths.\n- Cache/state/replay stability\n  - Keep cached stream for read paths; use fresh-fetch command path for mutations.\n  - Treat `shareReplay(1)` stale-first behavior as replay-regression risk in success flows.\n- UX/accessibility invariants\n  - Compose `aria-describedby` in stable order: helper text first, contextual errors next.\n  - Extend helper association without regressing existing error/focus behavior.\n- Test reliability and scope discipline\n  - Avoid nested Jasmine `it` blocks.\n  - Use range-based assertions for time claims to reduce flake.\n  - Keep validator tests single-rule targeted to avoid unrelated false negatives.\n  - Avoid placeholder defaults that trigger unrelated validation failures.\n- Environment/setup execution context\n  - Dev route prefix can change browser route validation behavior.\n  - Startup production-route tests may require staged dist artifact: `wwwroot/dist/browser/index.html`.\n- Documentation placement guidance\n  - Keep auth/login durable rules in nearby scoped auth docs instead of root-level guidance sprawl.\n\n## Exclusions (must not be forwarded as durable rules)\n\n- Story IDs, timestamps, one-off blockers, and incidental per-run file lists.\n- Raw progress entry formatting/tracking structure itself."
+        },
+        {
+          "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+          "passed": true,
+          "evidence": "## Self-improve handoff payload (what orchestrator must pass)\n\n- Distilled reusable guidance summary only (not raw progress transcript), grouped by:\n  - validation/safety rules\n  - cache/state/replay rules\n  - UX/accessibility rules\n  - testing/anti-flake rules\n  - environment/setup rules\n- Destination context: nearby `AGENTS.md` plus linked docs when detail is too long for `AGENTS.md`.\n- Scope instruction: preserve representative concrete rules; omit story tracking metadata.\n\n## Progress sections to mine\n\n1. `## Codebase Patterns` (top-level durable patterns).\n2. Every timestamped entry\u2019s `**Learnings for future iterations:**` block, including:\n   - `Patterns discovered`\n   - `Gotchas encountered`\n   - `Useful context`\n3. `## ... - FINALIZATION` reviewer entry learnings (explicitly includes what durable capture must cover).\n\n## Reusable learnings to preserve\n\n- Auth/return-url safety\n  - Validate redirect prefix safety on decoded values, not raw-only checks.\n  - Reuse shared return-url policy coverage across guard/login/startup paths.\n- Cache/state/replay stability\n  - Keep cached stream for read paths; use fresh-fetch command path for mutations.\n  - Treat `shareReplay(1)` stale-first behavior as replay-regression risk in success flows.\n- UX/accessibility invariants\n  - Compose `aria-describedby` in stable order: helper text first, contextual errors next.\n  - Extend helper association without regressing existing error/focus behavior.\n- Test reliability and scope discipline\n  - Avoid nested Jasmine `it` blocks.\n  - Use range-based assertions for time claims to reduce flake.\n  - Keep validator tests single-rule targeted to avoid unrelated false negatives.\n  - Avoid placeholder defaults that trigger unrelated validation failures.\n- Environment/setup execution context\n  - Dev route prefix can change browser route validation behavior.\n  - Startup production-route tests may require staged dist artifact: `wwwroot/dist/browser/index.html`.\n- Documentation placement guidance\n  - Keep auth/login durable rules in nearby scoped auth docs instead of root-level guidance sprawl.\n\n## Exclusions (must not be forwarded as durable rules)\n\n- Story IDs, timestamps, one-off blockers, and incidental per-run file lists.\n- Raw progress entry formatting/tracking structure itself."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.67,
+        "passed": 2,
+        "failed": 1,
+        "total": 3,
+        "time_seconds": 37.8,
+        "tokens": 654,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+          "passed": true,
+          "evidence": "Resolved first-write progress path: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nBecause `progress_file` was not provided, orchestrator must use `dirname(resolved prd_file) + \"/progress.txt\"` and, since sibling file does not yet exist, create it at that exact sibling path on first append.\n\nForbidden fallback path families: any non-sibling substitute location, including session-state paths (for example `/home/adam/.copilot/session-state/**`), scratchpad/temp paths, home-directory fallbacks (`~/**` or arbitrary `/home/adam/**`), and any `~/.copilot/**`-derived progress path."
+        },
+        {
+          "text": "The decision says the sibling path should be created on first append if it does not exist yet.",
+          "passed": false,
+          "evidence": "Resolved first-write progress path: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nBecause `progress_file` was not provided, orchestrator must use `dirname(resolved prd_file) + \"/progress.txt\"` and, since sibling file does not yet exist, create it at that exact sibling path on first append.\n\nForbidden fallback path families: any non-sibling substitute location, including session-state paths (for example `/home/adam/.copilot/session-state/**`), scratchpad/temp paths, home-directory fallbacks (`~/**` or arbitrary `/home/adam/**`), and any `~/.copilot/**`-derived progress path."
+        },
+        {
+          "text": "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths.",
+          "passed": true,
+          "evidence": "Resolved first-write progress path: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nBecause `progress_file` was not provided, orchestrator must use `dirname(resolved prd_file) + \"/progress.txt\"` and, since sibling file does not yet exist, create it at that exact sibling path on first append.\n\nForbidden fallback path families: any non-sibling substitute location, including session-state paths (for example `/home/adam/.copilot/session-state/**`), scratchpad/temp paths, home-directory fallbacks (`~/**` or arbitrary `/home/adam/**`), and any `~/.copilot/**`-derived progress path."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 38.8286,
+        "stddev": 8.3234,
+        "min": 27.3,
+        "max": 50.7
+      },
+      "tokens": {
+        "mean": 606.8571,
+        "stddev": 597.2968,
+        "min": 28,
+        "max": 1843
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.9171,
+        "stddev": 0.1434,
+        "min": 0.67,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 40.9857,
+        "stddev": 8.0419,
+        "min": 29.5,
+        "max": 52.7
+      },
+      "tokens": {
+        "mean": 739.8571,
+        "stddev": 744.2109,
+        "min": 28,
+        "max": 2296
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.08",
+      "time_seconds": "-2.2",
+      "tokens": "-133"
+    }
+  },
+  "notes": []
+}

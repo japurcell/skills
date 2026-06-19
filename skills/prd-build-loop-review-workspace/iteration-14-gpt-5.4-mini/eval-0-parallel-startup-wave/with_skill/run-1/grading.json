@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; sibling path already exists, and if it did not exist yet, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` 2 with `US-002` and `US-003`.\n4. Before any story-specific repo discovery: read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work; then dispatch one fresh implementer per parallel-safe story, and do not read story-specific files, tests, code, or behavior before that first implementer."
+    },
+    {
+      "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; sibling path already exists, and if it did not exist yet, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` 2 with `US-002` and `US-003`.\n4. Before any story-specific repo discovery: read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work; then dispatch one fresh implementer per parallel-safe story, and do not read story-specific files, tests, code, or behavior before that first implementer."
+    },
+    {
+      "text": "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; sibling path already exists, and if it did not exist yet, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` 2 with `US-002` and `US-003`.\n4. Before any story-specific repo discovery: read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work; then dispatch one fresh implementer per parallel-safe story, and do not read story-specific files, tests, code, or behavior before that first implementer."
+    },
+    {
+      "text": "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; sibling path already exists, and if it did not exist yet, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` 2 with `US-002` and `US-003`.\n4. Before any story-specific repo discovery: read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work; then dispatch one fresh implementer per parallel-safe story, and do not read story-specific files, tests, code, or behavior before that first implementer."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 728,
+    "transcript_chars": 199812
+  },
+  "timing": {
+    "executor_duration_seconds": 28.8,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 28.8
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

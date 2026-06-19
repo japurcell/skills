@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+      "passed": true,
+      "evidence": "Append progress to `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nIf that sibling file does not exist yet, create that exact path on first append.\n\nForbidden fallback path families: session-state paths, scratchpad paths, home-directory paths, and any `~/.copilot/...` path."
+    },
+    {
+      "text": "The decision says the sibling path should be created on first append if it does not exist yet.",
+      "passed": true,
+      "evidence": "Append progress to `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nIf that sibling file does not exist yet, create that exact path on first append.\n\nForbidden fallback path families: session-state paths, scratchpad paths, home-directory paths, and any `~/.copilot/...` path."
+    },
+    {
+      "text": "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths.",
+      "passed": true,
+      "evidence": "Append progress to `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nIf that sibling file does not exist yet, create that exact path on first append.\n\nForbidden fallback path families: session-state paths, scratchpad paths, home-directory paths, and any `~/.copilot/...` path."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 346,
+    "transcript_chars": 153849
+  },
+  "timing": {
+    "executor_duration_seconds": 19.7,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 19.7
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

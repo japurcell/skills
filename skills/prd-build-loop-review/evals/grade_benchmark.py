@@ -181,6 +181,7 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                     (
                         "dispatch fresh implementer per parallel-safe story" in normalized
                         or "dispatch one fresh implementer per parallel-safe story" in normalized
+                        or "dispatch a fresh implementer per parallel-safe story" in normalized
                         or "one fresh implementer per ready story" in normalized
                     )
                     and ("story-specific discovery" in normalized or "before any story-specific" in normalized)
@@ -199,7 +200,16 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
             expectation(
                 "The decision says the stories must be serialized instead of dispatched in parallel.",
                 ("serial" in normalized or "serialize" in normalized or "one at a time" in normalized)
-                and ("instead of" in normalized or "not parallel" in normalized or "not dispatch both in parallel" in normalized),
+                and (
+                    "instead of" in normalized
+                    or "not parallel" in normalized
+                    or "not dispatch both in parallel" in normalized
+                    or "dispatch order" in normalized
+                    or ("dispatch" in normalized and "first" in normalized and "then" in normalized)
+                    or "wait for it to resolve before dispatching" in normalized
+                    or "wait for it to resolve before dispatching" in normalized.replace("`", "")
+                    or "wait for the result, then dispatch" in normalized
+                ),
                 output_text or "missing decision.md",
             ),
             expectation(
@@ -224,8 +234,9 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                 output_text or "missing decision.md",
             ),
             expectation(
-                "The decision reruns `code-simplifier` and `addy-code-reviewer` after the review fix.",
-                has_all(output_text, ["code-simplifier", "addy-code-reviewer"])
+                "The decision reruns `code-simplifier` and `requirements-collector` in parallel after the review fix.",
+                has_all(output_text, ["code-simplifier", "requirements-collector"])
+                and ("parallel" in normalized or "in parallel" in normalized or "simultaneous" in normalized)
                 and ("rerun" in normalized or "run again" in normalized)
                 and (
                     "review fix" in normalized
@@ -234,6 +245,22 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                     or "implementer `progress block`" in normalized
                     or "fresh implementer `progress block`" in normalized
                     or "combined final state" in normalized
+                ),
+                output_text or "missing decision.md",
+            ),
+            expectation(
+                "The decision reruns `addy-code-reviewer` only after both helper runs finish and are recorded.",
+                "addy-code-reviewer" in normalized
+                and (
+                    "after both" in normalized
+                    or "once both" in normalized
+                    or "wait for both" in normalized
+                    or "only after both" in normalized
+                )
+                and (
+                    "progress block" in normalized
+                    or "recorded" in normalized
+                    or "appended" in normalized
                 ),
                 output_text or "missing decision.md",
             ),
@@ -346,6 +373,7 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                         and "aria-describedby" in normalized
                         and (
                             "time-based" in normalized
+                            or "time claims" in normalized
                             or "time-claim ranges" in normalized
                             or "time range" in normalized
                             or "avoid flake" in normalized
@@ -358,6 +386,15 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                         [
                             "validation/safety",
                             "cache/state/replay",
+                            "UX/accessibility",
+                            "testing/anti-flake",
+                        ],
+                    )
+                    or has_all(
+                        output_text,
+                        [
+                            "validation/safety",
+                            "state/cache/replay",
                             "UX/accessibility",
                             "testing/anti-flake",
                         ],
@@ -388,6 +425,7 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                         or "standing guidance" in normalized
                         or "distilled reusable rules" in normalized
                         or "distilled reusable summary" in normalized
+                        or "reusable rules" in normalized
                     )
                     and (
                         "not story-specific" in normalized
@@ -421,9 +459,10 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
             expectation(
                 "The decision says the sibling path should be created on first append if it does not exist yet.",
                 ("first append" in normalized or "on first append" in normalized or "first write" in normalized)
-                and ("create" in normalized or "created" in normalized)
+                and ("create" in normalized or "created" in normalized or "create/append" in normalized)
                 and (
                     "does not exist yet" in normalized
+                    or "exists yet" in normalized
                     or "if absent" in normalized
                     or "missing" in normalized
                     or "otherwise create" in normalized

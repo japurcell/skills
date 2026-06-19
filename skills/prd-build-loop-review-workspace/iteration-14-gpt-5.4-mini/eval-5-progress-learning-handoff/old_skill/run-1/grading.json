@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+      "passed": true,
+      "evidence": "Pass `self-improve` a distilled handoff, not raw tracking data: reusable rules only, plus nearby `AGENTS.md` and linked docs when they contain the destination guidance. Keep the handoff concise and implementation-oriented.\n\nMine `progress.txt` from `## Codebase Patterns` at the top and every per-entry `**Learnings for future iterations:**` block, especially `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPreserve durable learnings about validation/safety, cache/state/replay behavior, UX/accessibility, testing/anti-flake, and environment/setup guidance. Keep representative concrete rules when useful; drop story IDs, timestamps, temporary blockers, and one-off filenames."
+    },
+    {
+      "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+      "passed": true,
+      "evidence": "Pass `self-improve` a distilled handoff, not raw tracking data: reusable rules only, plus nearby `AGENTS.md` and linked docs when they contain the destination guidance. Keep the handoff concise and implementation-oriented.\n\nMine `progress.txt` from `## Codebase Patterns` at the top and every per-entry `**Learnings for future iterations:**` block, especially `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPreserve durable learnings about validation/safety, cache/state/replay behavior, UX/accessibility, testing/anti-flake, and environment/setup guidance. Keep representative concrete rules when useful; drop story IDs, timestamps, temporary blockers, and one-off filenames."
+    },
+    {
+      "text": "The decision preserves the staged production-artifact startup-test learning.",
+      "passed": false,
+      "evidence": "Pass `self-improve` a distilled handoff, not raw tracking data: reusable rules only, plus nearby `AGENTS.md` and linked docs when they contain the destination guidance. Keep the handoff concise and implementation-oriented.\n\nMine `progress.txt` from `## Codebase Patterns` at the top and every per-entry `**Learnings for future iterations:**` block, especially `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPreserve durable learnings about validation/safety, cache/state/replay behavior, UX/accessibility, testing/anti-flake, and environment/setup guidance. Keep representative concrete rules when useful; drop story IDs, timestamps, temporary blockers, and one-off filenames."
+    },
+    {
+      "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+      "passed": true,
+      "evidence": "Pass `self-improve` a distilled handoff, not raw tracking data: reusable rules only, plus nearby `AGENTS.md` and linked docs when they contain the destination guidance. Keep the handoff concise and implementation-oriented.\n\nMine `progress.txt` from `## Codebase Patterns` at the top and every per-entry `**Learnings for future iterations:**` block, especially `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPreserve durable learnings about validation/safety, cache/state/replay behavior, UX/accessibility, testing/anti-flake, and environment/setup guidance. Keep representative concrete rules when useful; drop story IDs, timestamps, temporary blockers, and one-off filenames."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 731,
+    "transcript_chars": 187705
+  },
+  "timing": {
+    "executor_duration_seconds": 22.9,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 22.9
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

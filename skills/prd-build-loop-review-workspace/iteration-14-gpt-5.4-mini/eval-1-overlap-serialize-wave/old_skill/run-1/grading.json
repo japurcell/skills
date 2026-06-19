@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision identifies the current wave as ready stories `US-002` and `US-003` in `parallelBatch` 2.",
+      "passed": true,
+      "evidence": "Source of truth: `prd.json` is official; `progress.txt` is supplemental resume data only.\nResolved progress file: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`.\nActive wave: `parallelBatch` 2, ready stories `US-002` and `US-003`.\nSafe dispatch plan: serialize the wave because both stories likely touch the same owner file `src/ui/BillingSettingsPage.tsx`; dispatch `US-002` first by priority, then `US-003` after `US-002` resolves."
+    },
+    {
+      "text": "The decision says the stories must be serialized instead of dispatched in parallel.",
+      "passed": true,
+      "evidence": "Source of truth: `prd.json` is official; `progress.txt` is supplemental resume data only.\nResolved progress file: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`.\nActive wave: `parallelBatch` 2, ready stories `US-002` and `US-003`.\nSafe dispatch plan: serialize the wave because both stories likely touch the same owner file `src/ui/BillingSettingsPage.tsx`; dispatch `US-002` first by priority, then `US-003` after `US-002` resolves."
+    },
+    {
+      "text": "The decision cites the overlap reason using the shared owner surface or `src/ui/BillingSettingsPage.tsx`.",
+      "passed": true,
+      "evidence": "Source of truth: `prd.json` is official; `progress.txt` is supplemental resume data only.\nResolved progress file: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/overlap-serialize-fixture/progress.txt`.\nActive wave: `parallelBatch` 2, ready stories `US-002` and `US-003`.\nSafe dispatch plan: serialize the wave because both stories likely touch the same owner file `src/ui/BillingSettingsPage.tsx`; dispatch `US-002` first by priority, then `US-003` after `US-002` resolves."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 500,
+    "transcript_chars": 178021
+  },
+  "timing": {
+    "executor_duration_seconds": 27.6,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 27.6
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

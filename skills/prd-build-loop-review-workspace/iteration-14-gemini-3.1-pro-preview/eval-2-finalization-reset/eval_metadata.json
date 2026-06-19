@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "finalization-reset",
+  "prompt": "Use skill under test in dry-run mode for `evals/files/finalization-reset-fixture/`. User says: `Continue PRD work from progress and finish final review loop.` Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` with next orchestrator actions after a fresh implementer returned from `mode: review_fix`, including which helpers may run in parallel and which review step must wait on them.",
+  "assertions": [
+    "The decision appends the implementer `Progress block` before acting on it.",
+    "The decision reruns `code-simplifier` and `requirements-collector` in parallel after the review fix.",
+    "The decision reruns `addy-code-reviewer` only after both helper runs finish and are recorded.",
+    "The decision keeps `passes: true` blocked until review is clean and final checks pass."
+  ]
+}

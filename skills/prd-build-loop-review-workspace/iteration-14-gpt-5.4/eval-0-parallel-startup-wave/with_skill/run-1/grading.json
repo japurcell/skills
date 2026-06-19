@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2` and ready story IDs are `US-002`, `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; `US-002` and `US-003` have distinct `filesLikelyTouched`, so they are parallel-safe for same-wave dispatch, and no higher-batch work may start before wave `2` resolves."
+    },
+    {
+      "text": "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2` and ready story IDs are `US-002`, `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; `US-002` and `US-003` have distinct `filesLikelyTouched`, so they are parallel-safe for same-wave dispatch, and no higher-batch work may start before wave `2` resolves."
+    },
+    {
+      "text": "The decision selects active `parallelBatch` 2 with ready stories `US-002` and `US-003`.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2` and ready story IDs are `US-002`, `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; `US-002` and `US-003` have distinct `filesLikelyTouched`, so they are parallel-safe for same-wave dispatch, and no higher-batch work may start before wave `2` resolves."
+    },
+    {
+      "text": "The decision dispatches one fresh implementer per parallel-safe story before story-specific discovery and does not start higher-batch work.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/startup-fixture/progress.txt`; if absent, create that sibling path on first append and never substitute session-state/home path.\n3. Active wave: lowest ready `parallelBatch` is `2` and ready story IDs are `US-002`, `US-003`.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; `US-002` and `US-003` have distinct `filesLikelyTouched`, so they are parallel-safe for same-wave dispatch, and no higher-batch work may start before wave `2` resolves."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 679,
+    "transcript_chars": 187223
+  },
+  "timing": {
+    "executor_duration_seconds": 33.4,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 33.4
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

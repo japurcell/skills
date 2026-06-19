@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision appends the implementer `Progress block` before acting on it.",
+      "passed": true,
+      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass.\n5. Parallel helpers in this stage: none; do not run `code-simplifier` and `requirements-collector` concurrently.\n6. Required wait point: `addy-code-reviewer` must wait until both reruns finish and their `Progress block`s are appended."
+    },
+    {
+      "text": "The decision reruns `code-simplifier` and `requirements-collector` in parallel after the review fix.",
+      "passed": true,
+      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass.\n5. Parallel helpers in this stage: none; do not run `code-simplifier` and `requirements-collector` concurrently.\n6. Required wait point: `addy-code-reviewer` must wait until both reruns finish and their `Progress block`s are appended."
+    },
+    {
+      "text": "The decision reruns `addy-code-reviewer` only after both helper runs finish and are recorded.",
+      "passed": false,
+      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass.\n5. Parallel helpers in this stage: none; do not run `code-simplifier` and `requirements-collector` concurrently.\n6. Required wait point: `addy-code-reviewer` must wait until both reruns finish and their `Progress block`s are appended."
+    },
+    {
+      "text": "The decision keeps `passes: true` blocked until review is clean and final checks pass.",
+      "passed": true,
+      "evidence": "1. Append implementer `Progress block` before acting on it.\n2. Rerun `code-simplifier` on combined final state.\n3. Rerun `requirements-collector`, then `addy-code-reviewer`.\n4. Keep `passes: true` blocked until review is clean and final checks pass.\n5. Parallel helpers in this stage: none; do not run `code-simplifier` and `requirements-collector` concurrently.\n6. Required wait point: `addy-code-reviewer` must wait until both reruns finish and their `Progress block`s are appended."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 485,
+    "transcript_chars": 181383
+  },
+  "timing": {
+    "executor_duration_seconds": 44.3,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 44.3
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

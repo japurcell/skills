@@ -1,0 +1,4 @@
+1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.
+2. Resolved `progress_file`: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt; if sibling progress.txt does not exist yet, create that sibling path on first append. Forbidden fallback path families: session state, scratchpads, home directories, or ~/.copilot/...
+3. Active wave: parallelBatch 1, US-001.
+4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; if stories overlap, serialize instead of dispatching them in parallel, cite the shared owner surface or exact file, give dispatch order, and do not start higher-batch work.

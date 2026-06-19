@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt; if sibling progress.txt does not exist yet, create that sibling path on first append. Forbidden fallback path families: session state, scratchpads, home directories, or ~/.copilot/...\n3. Active wave: parallelBatch 1, US-001.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; if stories overlap, serialize instead of dispatching them in parallel, cite the shared owner surface or exact file, give dispatch order, and do not start higher-batch work."
+    },
+    {
+      "text": "The decision says the sibling path should be created on first append if it does not exist yet.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt; if sibling progress.txt does not exist yet, create that sibling path on first append. Forbidden fallback path families: session state, scratchpads, home directories, or ~/.copilot/...\n3. Active wave: parallelBatch 1, US-001.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; if stories overlap, serialize instead of dispatching them in parallel, cite the shared owner surface or exact file, give dispatch order, and do not start higher-batch work."
+    },
+    {
+      "text": "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths.",
+      "passed": true,
+      "evidence": "1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.\n2. Resolved `progress_file`: /home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt; if sibling progress.txt does not exist yet, create that sibling path on first append. Forbidden fallback path families: session state, scratchpads, home directories, or ~/.copilot/...\n3. Active wave: parallelBatch 1, US-001.\n4. Dispatch one fresh implementer per parallel-safe story before any story-specific discovery; if stories overlap, serialize instead of dispatching them in parallel, cite the shared owner surface or exact file, give dispatch order, and do not start higher-batch work."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 725,
+    "transcript_chars": 191262
+  },
+  "timing": {
+    "executor_duration_seconds": 47.9,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 47.9
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

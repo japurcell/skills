@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+      "passed": true,
+      "evidence": "Resolved first-write progress path: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nBecause `progress_file` was not provided, orchestrator must use `dirname(resolved prd_file) + \"/progress.txt\"` and, since sibling file does not yet exist, create it at that exact sibling path on first append.\n\nForbidden fallback path families: any non-sibling substitute location, including session-state paths (for example `/home/adam/.copilot/session-state/**`), scratchpad/temp paths, home-directory fallbacks (`~/**` or arbitrary `/home/adam/**`), and any `~/.copilot/**`-derived progress path."
+    },
+    {
+      "text": "The decision says the sibling path should be created on first append if it does not exist yet.",
+      "passed": false,
+      "evidence": "Resolved first-write progress path: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nBecause `progress_file` was not provided, orchestrator must use `dirname(resolved prd_file) + \"/progress.txt\"` and, since sibling file does not yet exist, create it at that exact sibling path on first append.\n\nForbidden fallback path families: any non-sibling substitute location, including session-state paths (for example `/home/adam/.copilot/session-state/**`), scratchpad/temp paths, home-directory fallbacks (`~/**` or arbitrary `/home/adam/**`), and any `~/.copilot/**`-derived progress path."
+    },
+    {
+      "text": "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths.",
+      "passed": true,
+      "evidence": "Resolved first-write progress path: `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt`.\n\nBecause `progress_file` was not provided, orchestrator must use `dirname(resolved prd_file) + \"/progress.txt\"` and, since sibling file does not yet exist, create it at that exact sibling path on first append.\n\nForbidden fallback path families: any non-sibling substitute location, including session-state paths (for example `/home/adam/.copilot/session-state/**`), scratchpad/temp paths, home-directory fallbacks (`~/**` or arbitrary `/home/adam/**`), and any `~/.copilot/**`-derived progress path."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.67
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 654,
+    "transcript_chars": 182608
+  },
+  "timing": {
+    "executor_duration_seconds": 37.8,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 37.8
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

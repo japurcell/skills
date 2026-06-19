@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+      "passed": true,
+      "evidence": "Before invoking `self-improve`, orchestrator must pass a distilled summary mined from `progress.txt` that includes only reusable guidance destined for nearby `AGENTS.md` or linked docs (not raw tracking data).\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`.\n2. Every entry\u2019s `**Learnings for future iterations:**` block.\n3. Within each learnings block, mine all three subsections: `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPass reusable rules under these exact buckets:\n\n`Validation/safety`\n- Validate auth return-url prefix safety on decoded forms, not raw-only strings.\n- Reuse one shared return-url policy across guard/login paths.\n- Preserve single-rule validator targeting to avoid unrelated false negatives.\n- Avoid placeholder defaults that trigger unrelated validation failures.\n\n`Cache/state/replay`\n- Use cached stream for reads and fresh-fetch command path for mutations.\n- Treat `shareReplay(1)` stale-first behavior as replay-regression risk on success flows.\n\n`UX/accessibility`\n- Preserve existing focus/error UX when extending auth helpers.\n- Compose `aria-describedby` in stable order: helper text first, contextual errors second.\n- Keep auth/login guidance in scoped auth docs location instead of root-note sprawl.\n\n`Testing/anti-flake`\n- Keep auth validation checks focused via filtered targeted tests.\n- Use range-based assertions for time claims to reduce flake.\n- In Jasmine, do not nest `it` blocks; keep them at describe root.\n\n`Environment/setup`\n- Respect dev route prefix requirements for browser checks.\n- Preserve staged startup artifact guidance when needed for startup-route branch coverage: `wwwroot/dist/browser/index.html`.\n\nExclude from `self-improve` handoff: story IDs, timestamps, temporary blockers, per-run status text, and other non-durable tracking details."
+    },
+    {
+      "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+      "passed": true,
+      "evidence": "Before invoking `self-improve`, orchestrator must pass a distilled summary mined from `progress.txt` that includes only reusable guidance destined for nearby `AGENTS.md` or linked docs (not raw tracking data).\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`.\n2. Every entry\u2019s `**Learnings for future iterations:**` block.\n3. Within each learnings block, mine all three subsections: `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPass reusable rules under these exact buckets:\n\n`Validation/safety`\n- Validate auth return-url prefix safety on decoded forms, not raw-only strings.\n- Reuse one shared return-url policy across guard/login paths.\n- Preserve single-rule validator targeting to avoid unrelated false negatives.\n- Avoid placeholder defaults that trigger unrelated validation failures.\n\n`Cache/state/replay`\n- Use cached stream for reads and fresh-fetch command path for mutations.\n- Treat `shareReplay(1)` stale-first behavior as replay-regression risk on success flows.\n\n`UX/accessibility`\n- Preserve existing focus/error UX when extending auth helpers.\n- Compose `aria-describedby` in stable order: helper text first, contextual errors second.\n- Keep auth/login guidance in scoped auth docs location instead of root-note sprawl.\n\n`Testing/anti-flake`\n- Keep auth validation checks focused via filtered targeted tests.\n- Use range-based assertions for time claims to reduce flake.\n- In Jasmine, do not nest `it` blocks; keep them at describe root.\n\n`Environment/setup`\n- Respect dev route prefix requirements for browser checks.\n- Preserve staged startup artifact guidance when needed for startup-route branch coverage: `wwwroot/dist/browser/index.html`.\n\nExclude from `self-improve` handoff: story IDs, timestamps, temporary blockers, per-run status text, and other non-durable tracking details."
+    },
+    {
+      "text": "The decision preserves the staged production-artifact startup-test learning.",
+      "passed": true,
+      "evidence": "Before invoking `self-improve`, orchestrator must pass a distilled summary mined from `progress.txt` that includes only reusable guidance destined for nearby `AGENTS.md` or linked docs (not raw tracking data).\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`.\n2. Every entry\u2019s `**Learnings for future iterations:**` block.\n3. Within each learnings block, mine all three subsections: `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPass reusable rules under these exact buckets:\n\n`Validation/safety`\n- Validate auth return-url prefix safety on decoded forms, not raw-only strings.\n- Reuse one shared return-url policy across guard/login paths.\n- Preserve single-rule validator targeting to avoid unrelated false negatives.\n- Avoid placeholder defaults that trigger unrelated validation failures.\n\n`Cache/state/replay`\n- Use cached stream for reads and fresh-fetch command path for mutations.\n- Treat `shareReplay(1)` stale-first behavior as replay-regression risk on success flows.\n\n`UX/accessibility`\n- Preserve existing focus/error UX when extending auth helpers.\n- Compose `aria-describedby` in stable order: helper text first, contextual errors second.\n- Keep auth/login guidance in scoped auth docs location instead of root-note sprawl.\n\n`Testing/anti-flake`\n- Keep auth validation checks focused via filtered targeted tests.\n- Use range-based assertions for time claims to reduce flake.\n- In Jasmine, do not nest `it` blocks; keep them at describe root.\n\n`Environment/setup`\n- Respect dev route prefix requirements for browser checks.\n- Preserve staged startup artifact guidance when needed for startup-route branch coverage: `wwwroot/dist/browser/index.html`.\n\nExclude from `self-improve` handoff: story IDs, timestamps, temporary blockers, per-run status text, and other non-durable tracking details."
+    },
+    {
+      "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+      "passed": true,
+      "evidence": "Before invoking `self-improve`, orchestrator must pass a distilled summary mined from `progress.txt` that includes only reusable guidance destined for nearby `AGENTS.md` or linked docs (not raw tracking data).\n\nMine these `progress.txt` sections:\n1. `## Codebase Patterns`.\n2. Every entry\u2019s `**Learnings for future iterations:**` block.\n3. Within each learnings block, mine all three subsections: `Patterns discovered`, `Gotchas encountered`, and `Useful context`.\n\nPass reusable rules under these exact buckets:\n\n`Validation/safety`\n- Validate auth return-url prefix safety on decoded forms, not raw-only strings.\n- Reuse one shared return-url policy across guard/login paths.\n- Preserve single-rule validator targeting to avoid unrelated false negatives.\n- Avoid placeholder defaults that trigger unrelated validation failures.\n\n`Cache/state/replay`\n- Use cached stream for reads and fresh-fetch command path for mutations.\n- Treat `shareReplay(1)` stale-first behavior as replay-regression risk on success flows.\n\n`UX/accessibility`\n- Preserve existing focus/error UX when extending auth helpers.\n- Compose `aria-describedby` in stable order: helper text first, contextual errors second.\n- Keep auth/login guidance in scoped auth docs location instead of root-note sprawl.\n\n`Testing/anti-flake`\n- Keep auth validation checks focused via filtered targeted tests.\n- Use range-based assertions for time claims to reduce flake.\n- In Jasmine, do not nest `it` blocks; keep them at describe root.\n\n`Environment/setup`\n- Respect dev route prefix requirements for browser checks.\n- Preserve staged startup artifact guidance when needed for startup-route branch coverage: `wwwroot/dist/browser/index.html`.\n\nExclude from `self-improve` handoff: story IDs, timestamps, temporary blockers, per-run status text, and other non-durable tracking details."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1843,
+    "transcript_chars": 259654
+  },
+  "timing": {
+    "executor_duration_seconds": 42.2,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 42.2
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

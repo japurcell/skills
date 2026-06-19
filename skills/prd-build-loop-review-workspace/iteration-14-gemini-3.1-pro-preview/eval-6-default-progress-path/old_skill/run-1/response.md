@@ -1,0 +1,3 @@
+I_CAN_SEE_SESSIONSTART_CONTEXT2026-06-18T23:03:44.937-07:00
+The orchestrator must append or create progress on first write at evals/files/default-progress-path-fixture/progress.txt.
+Forbidden fallback path families are session state, scratchpads, home directories, and ~/.copilot/....

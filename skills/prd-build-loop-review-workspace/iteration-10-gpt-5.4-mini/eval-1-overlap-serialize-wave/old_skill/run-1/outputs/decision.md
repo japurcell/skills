@@ -1,3 +1,0 @@
-Active wave: parallelBatch 2. Ready stories are US-002 and US-003. Both are dependency-ready after US-001, but they share the same likely-touched owner file: `src/ui/BillingSettingsPage.tsx`.
-
-Safe dispatch plan: serialize the wave, do not fan out both stories at once. Dispatch US-002 first as the active story, keep US-003 queued, and treat the shared owner file as a contention point. After US-002 reaches its post-implementer review/simplify/verify checkpoint, refresh the combined state, then dispatch US-003 against that finalized baseline. If later review uncovers overlap in the shared file, preserve the same one-at-a-time rule until the file stabilizes.

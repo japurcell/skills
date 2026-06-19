@@ -1,0 +1,6 @@
+{
+  "model": "gpt-5.3-codex",
+  "skill_path": "/home/adam/dev/personal/skills/skills/prd-build-loop-review-workspace/skill-snapshot-pre-20260618-review-deps/SKILL.md",
+  "copilot_cwd": "/home/adam/dev/personal/skills/skills/prd-build-loop-review-workspace/iteration-14-gpt-5.3-codex/eval-6-default-progress-path/old_skill/run-1",
+  "returncode": 0
+}

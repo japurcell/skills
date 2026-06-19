@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+      "passed": true,
+      "evidence": "The orchestrator must invoke `self-improve` with a distilled summary of reusable rules, directing it to update nearby `AGENTS.md` or linked auth docs rather than bloating root guidance.\n\nIt must mine both the `## Codebase Patterns` section at the top of the `progress_file` and the detailed `Learnings for future iterations` blocks from every timestamped entry.\n\nIt must preserve representative concrete rules for:\n- Validation and safety (evaluating decoded forms for prefix safety, reusing shared return-url policies, single-rule targeting, avoiding placeholder defaults)\n- Cache, state, and replay (using fresh-fetch command paths for mutations vs cached streams for reads to avoid `shareReplay(1)` bugs)\n- UX and accessibility (stable `aria-describedby` composition ordering, preserving existing focus/error behavior)\n- Testing and anti-flake (avoiding nested Jasmine `it` blocks, using ranges for time-based claims)\n- Environment and setup guidance (using the staged dist artifact `wwwroot/dist/browser/index.html` for startup route tests)\n\nIt must explicitly drop story IDs, timestamps, temporary blockers, and one-off filenames before passing the summary to `self-improve`."
+    },
+    {
+      "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+      "passed": true,
+      "evidence": "The orchestrator must invoke `self-improve` with a distilled summary of reusable rules, directing it to update nearby `AGENTS.md` or linked auth docs rather than bloating root guidance.\n\nIt must mine both the `## Codebase Patterns` section at the top of the `progress_file` and the detailed `Learnings for future iterations` blocks from every timestamped entry.\n\nIt must preserve representative concrete rules for:\n- Validation and safety (evaluating decoded forms for prefix safety, reusing shared return-url policies, single-rule targeting, avoiding placeholder defaults)\n- Cache, state, and replay (using fresh-fetch command paths for mutations vs cached streams for reads to avoid `shareReplay(1)` bugs)\n- UX and accessibility (stable `aria-describedby` composition ordering, preserving existing focus/error behavior)\n- Testing and anti-flake (avoiding nested Jasmine `it` blocks, using ranges for time-based claims)\n- Environment and setup guidance (using the staged dist artifact `wwwroot/dist/browser/index.html` for startup route tests)\n\nIt must explicitly drop story IDs, timestamps, temporary blockers, and one-off filenames before passing the summary to `self-improve`."
+    },
+    {
+      "text": "The decision preserves the staged production-artifact startup-test learning.",
+      "passed": true,
+      "evidence": "The orchestrator must invoke `self-improve` with a distilled summary of reusable rules, directing it to update nearby `AGENTS.md` or linked auth docs rather than bloating root guidance.\n\nIt must mine both the `## Codebase Patterns` section at the top of the `progress_file` and the detailed `Learnings for future iterations` blocks from every timestamped entry.\n\nIt must preserve representative concrete rules for:\n- Validation and safety (evaluating decoded forms for prefix safety, reusing shared return-url policies, single-rule targeting, avoiding placeholder defaults)\n- Cache, state, and replay (using fresh-fetch command paths for mutations vs cached streams for reads to avoid `shareReplay(1)` bugs)\n- UX and accessibility (stable `aria-describedby` composition ordering, preserving existing focus/error behavior)\n- Testing and anti-flake (avoiding nested Jasmine `it` blocks, using ranges for time-based claims)\n- Environment and setup guidance (using the staged dist artifact `wwwroot/dist/browser/index.html` for startup route tests)\n\nIt must explicitly drop story IDs, timestamps, temporary blockers, and one-off filenames before passing the summary to `self-improve`."
+    },
+    {
+      "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+      "passed": true,
+      "evidence": "The orchestrator must invoke `self-improve` with a distilled summary of reusable rules, directing it to update nearby `AGENTS.md` or linked auth docs rather than bloating root guidance.\n\nIt must mine both the `## Codebase Patterns` section at the top of the `progress_file` and the detailed `Learnings for future iterations` blocks from every timestamped entry.\n\nIt must preserve representative concrete rules for:\n- Validation and safety (evaluating decoded forms for prefix safety, reusing shared return-url policies, single-rule targeting, avoiding placeholder defaults)\n- Cache, state, and replay (using fresh-fetch command paths for mutations vs cached streams for reads to avoid `shareReplay(1)` bugs)\n- UX and accessibility (stable `aria-describedby` composition ordering, preserving existing focus/error behavior)\n- Testing and anti-flake (avoiding nested Jasmine `it` blocks, using ranges for time-based claims)\n- Environment and setup guidance (using the staged dist artifact `wwwroot/dist/browser/index.html` for startup route tests)\n\nIt must explicitly drop story IDs, timestamps, temporary blockers, and one-off filenames before passing the summary to `self-improve`."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1180,
+    "transcript_chars": 147839
+  },
+  "timing": {
+    "executor_duration_seconds": 33.8,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 33.8
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

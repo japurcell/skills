@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+      "passed": true,
+      "evidence": "The orchestrator must resolve `progress_file` to `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt` and, because no sibling `progress.txt` exists yet, create that exact sibling path on first append and keep appending there. Forbidden fallback path families: session-state paths, scratchpad paths, home-directory paths, and any `~/.copilot/...` path; missing sibling `progress.txt` is never permission to invent another location."
+    },
+    {
+      "text": "The decision says the sibling path should be created on first append if it does not exist yet.",
+      "passed": true,
+      "evidence": "The orchestrator must resolve `progress_file` to `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt` and, because no sibling `progress.txt` exists yet, create that exact sibling path on first append and keep appending there. Forbidden fallback path families: session-state paths, scratchpad paths, home-directory paths, and any `~/.copilot/...` path; missing sibling `progress.txt` is never permission to invent another location."
+    },
+    {
+      "text": "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths.",
+      "passed": true,
+      "evidence": "The orchestrator must resolve `progress_file` to `/home/adam/dev/personal/skills/skills/prd-build-loop-review/evals/files/default-progress-path-fixture/progress.txt` and, because no sibling `progress.txt` exists yet, create that exact sibling path on first append and keep appending there. Forbidden fallback path families: session-state paths, scratchpad paths, home-directory paths, and any `~/.copilot/...` path; missing sibling `progress.txt` is never permission to invent another location."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 495,
+    "transcript_chars": 147200
+  },
+  "timing": {
+    "executor_duration_seconds": 19.3,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 19.3
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}
