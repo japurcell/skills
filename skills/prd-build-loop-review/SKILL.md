@@ -1,38 +1,39 @@
 ---
 name: prd-build-loop-review
-description: "Runs autonomous end-to-end PRD implementation from `prd_file`, resuming from `progress_file` and not handing control back until every remaining story is implemented, finalized, and recorded or a real stop condition applies. Use when the user says keep going until the PRD is done, resume from `progress.txt`, finish every `passes: false` story, or run the final simplify/review/verify/record loop without pausing."
+description: "Autonomously finishes a PRD execution loop: resume from `progress_file`, drive every remaining `passes: false` story in `prd_file`, then run one final simplify/review/verify/record pass before returning exact completion response. Use whenever user wants agent to keep going until PRD is done, resume `progress.txt`, finish all remaining stories without pausing, or complete final PRD finalization/review work—even if they only say 'keep going' or 'finish rest of PRD'. Not for single-story implementation, PRD authoring, or task decomposition."
+disable-model-invocation: true
 ---
 
 # PRD Build Loop Review
 
 ## Overview
 
-Drive every `passes: false` story in `prd_file` to completion. `prd_file` is official status; `progress_file` is append-only resume data. Orchestrator never makes code-affecting changes directly, never commits, and stops only for a real blocker or required human choice.
+Finish `prd_file` end to end. `prd_file` is official story status; `progress_file` is append-only resume data. Orchestrator never makes code-affecting changes or commits, and returns only for `<promise>COMPLETE</promise>` or a real stop condition.
 
 ## When to Use
 
-- Implement all failing PRD stories from `prd_file`.
+- Finish every remaining `passes: false` story in `prd_file`.
 - Resume autonomous PRD work from `progress_file` or `progress.txt`.
-- Keep going until the whole PRD is done instead of pausing after each story.
-- Run the final combined simplify, review, verify, and record pass after implementation.
-- Not for one-off story implementation, PRD authoring, or planning-only decomposition.
+- Keep going until whole PRD is done instead of pausing after each story.
+- Run final simplify/review/verify/record pass after implementation.
+- Not for one-off story implementation, PRD authoring, or planning/decomposition.
 
 ## Workflow
 
 1. **Startup**
    - Invoke `subagent-model-router`.
    - Resolve `progress_file` to explicit path or `dirname(prd_file) + "/progress.txt"`.
-   - If `progress_file` exists, read `## Codebase Patterns` plus the latest relevant entries. Otherwise create it on first append with `## Codebase Patterns` at top.
+   - If `progress_file` exists, read `## Codebase Patterns` plus latest relevant entries. Otherwise create it on first append with `## Codebase Patterns` at top.
    - If every story already has `passes: true`, reply exactly: `<promise>COMPLETE</promise>`.
    - If `prd_file` is ambiguous, contradictory, invalidly ordered, missing required detail, or needs human choice, stop and ask.
-   - In dry-run or status outputs, prefer the exact startup action shape in **Action shapes for weaker models** instead of paraphrasing.
+   - In dry-run or status outputs, use **Action shapes** below.
 
 2. **Implementation loop**
-   - Pick highest-priority story in `prd_file` with `passes: false`.
+   - Pick highest-priority `passes: false` story.
    - Before first `implementer` for current code-affecting unit, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch work.
    - State explicitly: `prd_file` is official source of truth; `progress_file` is supplemental resume data only.
    - Dispatch fresh `implementer` with `./implementer-prompt.md`, all story properties, `progress_file`, nearby `AGENTS.md`, and `mode`.
-   - Require `Progress block`; append it to `progress_file` before interpreting or acting on it.
+   - Require `Progress block`; append it to `progress_file` before acting on it.
    - Apply **Status Rules** exactly.
    - If story is implemented but not finalized, record that state and leave `passes: false`.
    - Repeat until every failing story is implemented and awaiting finalization, or a **Stop Condition** applies.
@@ -42,13 +43,12 @@ Drive every `passes: false` story in `prd_file` to completion. `prd_file` is off
    - Run fresh `code-simplifier` on relevant non-ignored changes in combined final state; append its `Progress block` immediately.
    - Run fresh `requirements-collector` for `prd_file`, relevant sibling docs, and available issue context; append its `Progress block`.
    - Run fresh `addy-code-reviewer` after simplification; append its `Progress block`.
-   - If review finds issues and count is already `3`, state that the review-fix iteration limit is reached, do not fix directly, do not dispatch another review-fix implementer, record stop state, and ask.
-   - Otherwise increment count in `progress_file`, dispatch fresh `implementer` with `mode: review_fix` and full findings, append its `Progress block`, apply **Status Rules**, then rerun simplify and review on the updated combined state.
-   - In dry-run or status outputs, prefer the exact review-fix and iteration-limit action shapes in **Action shapes for weaker models** instead of paraphrasing.
+   - If review finds issues and count is already `3`, state that limit is reached, do not fix directly, do not dispatch another review-fix implementer, record stop state, and ask.
+   - Otherwise increment count in `progress_file`, dispatch fresh `implementer` with `mode: review_fix` and full findings, append its `Progress block`, apply **Status Rules**, then rerun simplify, requirements collection, and review on combined final state.
 
 4. **Verify and record**
-   - Only after review is clean, run required final-state checks from stories, repo guidance, nearby `AGENTS.md`, and standard project scripts for changed areas; append orchestrator verification entry immediately.
-   - Distill durable learnings from `progress_file` first, then invoke `self-improve` with that distilled summary plus nearby `AGENTS.md` and linked docs. Pass reusable rules, not raw tracking structure.
+   - Only after review is clean, run final-state checks required by story requirements, repo guidance, nearby `AGENTS.md`, and standard project scripts for changed areas; append orchestrator verification entry immediately.
+   - Distill durable learnings from `progress_file`, then invoke `self-improve` with that distilled summary plus nearby `AGENTS.md` and linked docs. Pass reusable rules, not raw tracking structure.
    - Set `passes: true` only for stories that satisfy **Completion Gate**.
    - Append orchestrator final-state entry and reread `prd_file`.
 
@@ -60,14 +60,11 @@ Drive every `passes: false` story in `prd_file` to completion. `prd_file` is off
 
 ## Specific Techniques
 
-### Source of truth and paths
+### Source of truth, paths, and boundaries
 
 - `prd_file` is only official source for story completion and status.
 - `progress_file` is append-only resume and tracking data; never treat it as official completion.
 - Resolve relative paths from repo or provided `prd_file`, never from session state, scratchpads, home directories, or `~/.copilot/...`.
-
-### Role boundaries
-
 - **Orchestrator:** selects stories, resumes from `progress_file`, dispatches subagents, applies status rules, verifies final state, updates `prd_file`, appends `progress_file`, invokes `self-improve`, and records stop/final state.
 - **Implementer:** does story-specific discovery, code and test changes, and initial verification.
 - **Requirements collector:** dedupes requirements before final review.
@@ -80,10 +77,10 @@ Drive every `passes: false` story in `prd_file` to completion. `prd_file` is off
 
 ### Progress discipline
 
-- Subagent output is not consumed until recorded.
+- Do not consume subagent output until recorded.
 - Every `implementer`, `requirements-collector`, `code-simplifier`, and `reviewer` must return `Progress block`.
 - Orchestrator appends each `Progress block` immediately, including `DONE`, `DONE_WITH_CONCERNS`, `NEEDS_CONTEXT`, and `BLOCKED`.
-- Missing subagent progress entry is rule violation; append corrective orchestrator entry if discovered.
+- Missing subagent progress entry is a rule violation; append corrective orchestrator entry if discovered.
 - Maintain `## Codebase Patterns` at top and store only reusable general patterns there.
 - Subagents never write `progress_file` directly.
 
@@ -104,14 +101,16 @@ Required entry format:
 
 ### Self-improve handoff
 
-- Before invoking `self-improve`, mine `progress_file` yourself. Read both high-level pattern sections and detailed per-entry learnings; durable guidance can hide in patterns, gotchas, or useful context.
-- Pass `self-improve` a concise summary of reusable rules only: framework constraints, validation rules, stable fix shapes, UX-preservation rules, anti-flake testing tactics, environment/setup requirements, etc.
-- Keep precise technical tokens from the source when they are part of the reusable rule: framework names, operators, API names, helper names, and artifact paths can stay; story IDs, timestamps, and temporary blockers should not.
-- If the source artifact contains them, preserve at least one reusable rule for each present category: validation/safety, cache or replay behavior, UX/accessibility, testing or anti-flake tactics, and environment/setup requirements.
-- Name the destination in the handoff: nearby `AGENTS.md` when the rule is prompt-worthy, linked docs when the detail is too long for `AGENTS.md`.
-- Do not pass one-off filenames, temporary blockers, or story-only notes as standing guidance.
+- Before invoking `self-improve`, mine both `## Codebase Patterns` and detailed per-entry learnings in `progress_file`; durable guidance can hide in patterns, gotchas, or useful context.
+- Pass `self-improve` concise reusable rules only: framework constraints, validation/safety rules, stable fix shapes, UX-preservation rules, testing/anti-flake tactics, and environment/setup requirements.
+- Preserve representative concrete rules when present, not only category names: decoded return-url validation, shared return-url policy, cached reads vs fresh mutation fetches around `shareReplay(1)`, stable `aria-describedby` order, root-level Jasmine `it` with range-based time assertions, and staged startup artifact `wwwroot/dist/browser/index.html`.
+- Keep precise technical tokens when they are reusable guidance; drop story IDs, timestamps, temporary blockers, and one-off filenames.
+- If source contains them, preserve at least one reusable rule from each present category: validation/safety, cache/state/replay, UX/accessibility, testing/anti-flake, and environment/setup.
+- Name destination in handoff: nearby `AGENTS.md` when prompt-worthy, linked docs when detail is too long for `AGENTS.md`.
 
-### Action shapes for weaker models
+### Action shapes
+
+Use these exact numbered lines verbatim in dry-run/status outputs:
 
 - **Startup or resume before first implementer**
   1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.
@@ -124,20 +123,20 @@ Required entry format:
   3. Rerun `requirements-collector`, then `addy-code-reviewer`.
   4. Keep `passes: true` blocked until review is clean and final checks pass.
 - **When review-fix iteration limit is reached**
-  1. State that the review-fix iteration limit is reached.
+  1. State that review-fix iteration limit is reached.
   2. Do not fix directly.
   3. Do not dispatch another review-fix implementer.
   4. Reread `prd_file`.
   5. Append stop-state entry to `progress_file`.
-  6. Ask user to decide blocker.
+  6. Human decision required: ask the user to decide blocker.
 - **Self-improve handoff summary**
   1. Destination: nearby `AGENTS.md` or linked docs.
   2. Reusable guidance only; no raw progress blocks, story-only notes, or transient blockers.
-  3. Validation/safety: [reusable rules from source]
-  4. Cache/state/replay: [reusable rules from source]
-  5. UX/accessibility: [reusable rules from source]
-  6. Testing/anti-flake: [reusable rules from source]
-  7. Environment/setup: [reusable rules from source]
+  3. Validation/safety: [for example decoded return-url checks, shared return-url policy, single-rule targeting]
+  4. Cache/state/replay: [for example cached reads vs fresh mutations, `shareReplay(1)` replay hazards]
+  5. UX/accessibility: [for example stable `aria-describedby` order, preserve error/focus UX]
+  6. Testing/anti-flake: [for example root-level Jasmine `it`, range-based time assertions]
+  7. Environment/setup: [for example staged startup artifact `wwwroot/dist/browser/index.html`]
 
 ### Completion Gate
 
@@ -177,10 +176,10 @@ Stop only if:
 | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | "I already know repo; I can inspect story files before dispatching implementer." | No. Before first `implementer`, read only `prd_file`, `progress_file`, and nearby `AGENTS.md` needed to dispatch. |
 | "Review fix is tiny; I can patch it directly."                                   | No. Any code-affecting change requires fresh `implementer`, then simplify/review/verify must rerun.               |
-| "Tests passed, so story can be marked complete."                                 | No. Completion gate also requires fresh simplifier and reviewer after latest code change.                         |
+| "Tests passed, so story can be marked complete."                                 | No. **Completion Gate** also requires fresh simplifier and reviewer after latest code change.                     |
 | "Progress file says done, so PRD can be updated."                                | No. `prd_file` is only official completion source.                                                                |
 | "Reviewer already ran earlier; rerunning is wasteful."                           | Any new `implementer` change resets finalization on combined final state.                                         |
-| "One obvious note is enough; I can ignore the rest of the progress learnings."   | No. Final `self-improve` handoff must cover all durable learnings, not just the most visible one.                 |
+| "One obvious note is enough; I can ignore rest of progress learnings."           | No. Final `self-improve` handoff must cover all durable learnings, not only most visible one.                     |
 
 ## Red Flags
 
@@ -196,7 +195,7 @@ Stop only if:
 - Using anything except `prd_file` as official completion source.
 - Marking `passes: true` before **Completion Gate** is satisfied.
 - Simplifying, reviewing, analyzing, or changing `.gitignore`-ignored files.
-- Running `self-improve` without first distilling durable learnings from `progress_file` into a reusable summary.
+- Running `self-improve` without first distilling durable learnings from `progress_file`.
 
 ## Verification
 

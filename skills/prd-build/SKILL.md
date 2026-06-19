@@ -1,6 +1,7 @@
 ---
 name: prd-build
 description: Implement PRD stories until all pass, with verification and progress tracking.
+disable-model-invocation: true
 ---
 
 # PRD Build Loop

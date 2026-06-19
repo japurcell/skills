@@ -1,6 +1,7 @@
 ---
 name: code-review
 description: Reviews PRs, diffs, commits, staged or unstaged changes, or another agent's patch for correctness, standards/spec adherence, maintainability, architecture, security, performance, and readability. Use whenever the user asks to review code, inspect a PR/branch/diff, audit staged or work-in-progress changes, review AI-generated code, say `review since main` or `review since this commit`, ask `find issues in this patch`, request a harsh/deep/thermonuclear maintainability pass, or want PR-comment / machine-readable review output—even if they never say `code review` explicitly.
+disable-model-invocation: true
 ---
 
 # Code Review
@@ -94,12 +95,12 @@ Be brief, direct, and serious. Do not hide major correctness or maintainability 
 
 ## Common Rationalizations
 
-| Rationalization | Reality |
-| --- | --- |
-| "I can read the PR and issues myself." | Main-agent GitHub intake stays in fast subagents using `gh`; the review should consume summaries, not raw PR/issue pages. |
-| "One broad review pass is enough." | This skill requires distinct review roles; collapsing them loses coverage and breaks the workflow. |
-| "This probably counts as an issue." | Findings survive only with change linkage, concrete file evidence, and a false-positive score of at least 75. |
-| "We should run tests or builds to be safe." | Not here unless the user asked. This skill reviews code; it does not expand scope on its own. |
+| Rationalization                             | Reality                                                                                                                   |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| "I can read the PR and issues myself."      | Main-agent GitHub intake stays in fast subagents using `gh`; the review should consume summaries, not raw PR/issue pages. |
+| "One broad review pass is enough."          | This skill requires distinct review roles; collapsing them loses coverage and breaks the workflow.                        |
+| "This probably counts as an issue."         | Findings survive only with change linkage, concrete file evidence, and a false-positive score of at least 75.             |
+| "We should run tests or builds to be safe." | Not here unless the user asked. This skill reviews code; it does not expand scope on its own.                             |
 
 ## Red Flags
 
