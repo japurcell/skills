@@ -11,13 +11,13 @@
       ],
       "expectations": [
         "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
-        "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+        "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
         "The decision selects the highest-priority `passes: false` story.",
         "The decision dispatches a fresh implementer before story-specific repo discovery."
       ],
       "assertions": [
         "The decision says `prd_file` is official source of truth and `progress_file` is supplemental.",
-        "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
+        "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
         "The decision selects the highest-priority `passes: false` story.",
         "The decision dispatches a fresh implementer before story-specific repo discovery."
       ]
@@ -94,6 +94,24 @@
         "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
         "The decision preserves the staged production-artifact startup-test learning.",
         "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Use skill under test in dry-run mode for `evals/files/default-progress-path-fixture/prd.json`. User says: `Resume autonomous PRD work for evals/files/default-progress-path-fixture/prd.json.` No explicit `progress_file` was provided and no sibling `progress.txt` exists yet. Do not change files or spawn real subagents. Read only what you need, then write `outputs/decision.md` describing exactly where the orchestrator must append/create progress on first write and which fallback path families are forbidden.",
+      "expected_output": "A startup decision that resolves the default progress path beside `prd_file`, keeps that same sibling path even before the file exists, and explicitly forbids session-state or scratchpad fallbacks.",
+      "files": [
+        "evals/files/default-progress-path-fixture/prd.json"
+      ],
+      "expectations": [
+        "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+        "The decision says the sibling path should be created on first append if it does not exist yet.",
+        "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths."
+      ],
+      "assertions": [
+        "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+        "The decision says the sibling path should be created on first append if it does not exist yet.",
+        "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths."
       ]
     }
   ]

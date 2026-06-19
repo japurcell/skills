@@ -23,7 +23,8 @@ Finish `prd_file` end to end. `prd_file` is official story status; `progress_fil
 1. **Startup**
    - Invoke `subagent-model-router`.
    - Resolve `progress_file` to explicit path or `dirname(prd_file) + "/progress.txt"`.
-   - If `progress_file` exists, read `## Codebase Patterns` plus latest relevant entries. Otherwise create it on first append with `## Codebase Patterns` at top.
+   - Resolve `prd_file` first, then derive default `progress_file` from that exact directory. Example: `/repo/specs/prd.json` -> `/repo/specs/progress.txt`.
+   - If `progress_file` exists, read `## Codebase Patterns` plus latest relevant entries. Otherwise keep that sibling path reserved and create it there on first append with `## Codebase Patterns` at top.
    - If every story already has `passes: true`, reply exactly: `<promise>COMPLETE</promise>`.
    - If `prd_file` is ambiguous, contradictory, invalidly ordered, missing required detail, or needs human choice, stop and ask.
    - In dry-run or status outputs, use **Action shapes** below.
@@ -64,7 +65,10 @@ Finish `prd_file` end to end. `prd_file` is official story status; `progress_fil
 
 - `prd_file` is only official source for story completion and status.
 - `progress_file` is append-only resume and tracking data; never treat it as official completion.
+- Resolve the default path in two steps: `(1)` resolve `prd_file`, `(2)` set `progress_file = dirname(resolved prd_file) + "/progress.txt"`.
+- If that sibling `progress.txt` does not exist yet, keep the same path and create it on first append; missing file is never permission to invent a different location.
 - Resolve relative paths from repo or provided `prd_file`, never from session state, scratchpads, home directories, or `~/.copilot/...`.
+- Forbidden fallbacks for default `progress_file`: session-state paths, scratchpads, temp/session artifacts, or any other path not inside `dirname(prd_file)` unless user supplied an explicit `progress_file`.
 - **Orchestrator:** selects stories, resumes from `progress_file`, dispatches subagents, applies status rules, verifies final state, updates `prd_file`, appends `progress_file`, invokes `self-improve`, and records stop/final state.
 - **Implementer:** does story-specific discovery, code and test changes, and initial verification.
 - **Requirements collector:** dedupes requirements before final review.
@@ -114,7 +118,7 @@ Use these exact numbered lines verbatim in dry-run/status outputs:
 
 - **Startup or resume before first implementer**
   1. Source of truth: `prd_file` official; `progress_file` supplemental resume data only.
-  2. Resolved `progress_file`: explicit path or `dirname(prd_file) + "/progress.txt"`.
+  2. Resolved `progress_file`: explicit path or `dirname(prd_file) + "/progress.txt"`; if absent, create that sibling path on first append and never substitute session-state/home path.
   3. Selected story: highest-priority `passes: false` story.
   4. Before story-specific discovery: dispatch fresh implementer; read only `prd_file`, `progress_file`, and nearby `AGENTS.md`.
 - **After `mode: review_fix` implementer returns**
@@ -178,6 +182,7 @@ Stop only if:
 | "Review fix is tiny; I can patch it directly."                                   | No. Any code-affecting change requires fresh `implementer`, then simplify/review/verify must rerun.               |
 | "Tests passed, so story can be marked complete."                                 | No. **Completion Gate** also requires fresh simplifier and reviewer after latest code change.                     |
 | "Progress file says done, so PRD can be updated."                                | No. `prd_file` is only official completion source.                                                                |
+| "No sibling `progress.txt` exists yet, so I can write one in session state or scratchpad." | No. Default path stays `dirname(prd_file) + "/progress.txt"` and gets created there on first append. |
 | "Reviewer already ran earlier; rerunning is wasteful."                           | Any new `implementer` change resets finalization on combined final state.                                         |
 | "One obvious note is enough; I can ignore rest of progress learnings."           | No. Final `self-improve` handoff must cover all durable learnings, not only most visible one.                     |
 
@@ -185,7 +190,7 @@ Stop only if:
 
 - Returning control while any story still has `passes: false` and no **Stop Condition** applies.
 - Resolving `progress_file` anywhere except explicit path or `dirname(prd_file) + "/progress.txt"`.
-- Using session-state, scratchpad, home, or `~/.copilot/...` paths for `progress_file`.
+- Creating or planning to create default `progress_file` anywhere except beside `prd_file`, including session-state, scratchpad, temp, home-artifact, or `~/.copilot/...` paths.
 - Treating subagent output as consumed before appending its `Progress block`.
 - Reading story-specific files, tests, code, or behavior before first `implementer`.
 - Making code-affecting changes directly.
@@ -202,7 +207,7 @@ Stop only if:
 Before stopping or marking completion, confirm:
 
 - [ ] `prd_file` remained official source of story status and completion.
-- [ ] `progress_file` path was resolved from explicit path or `dirname(prd_file) + "/progress.txt"`.
+- [ ] `progress_file` path was resolved from explicit path or `dirname(prd_file) + "/progress.txt"`, even when sibling `progress.txt` did not exist yet.
 - [ ] Every code-affecting change came from fresh `implementer`.
 - [ ] Every subagent `Progress block` was appended before being consumed.
 - [ ] Simplify and review ran on combined final state after latest code-affecting change.

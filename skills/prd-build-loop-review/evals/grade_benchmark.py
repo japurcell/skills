@@ -118,13 +118,28 @@ def has_all(text: str, items: list[str]) -> bool:
     return all(item.lower() in lowered for item in items)
 
 
-def mentions_progress_path(text: str) -> bool:
+def mentions_forbidden_progress_fallback(text: str) -> bool:
+    lowered = normalize(text)
+    return any(
+        token in lowered
+        for token in [
+            "session-state",
+            "~/.copilot",
+            ".copilot/session-state",
+            "$home/.copilot",
+            "scratchpad",
+            "scratchpads",
+            "temp-artifact",
+            "temporary artifact",
+        ]
+    )
+
+
+def mentions_progress_path(text: str, expected_path_hint: str) -> bool:
     lowered = normalize(text)
     return (
-        'dirname(prd_file) + "/progress.txt"' in text
-        or "evals/files/startup-fixture/progress.txt" in text
-        or "progress.txt" in lowered
-    )
+        'dirname(prd_file) + "/progress.txt"' in text or expected_path_hint.lower() in lowered
+    ) and not mentions_forbidden_progress_fallback(text)
 
 
 def grade(eval_id: int, output_text: str) -> list[dict]:
@@ -146,8 +161,8 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                 output_text or "missing decision.md",
             ),
             expectation(
-                "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `progress.txt` path.",
-                mentions_progress_path(output_text),
+                "The decision resolves the default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `startup-fixture/progress.txt` path, not a session-state fallback.",
+                mentions_progress_path(output_text, "startup-fixture/progress.txt"),
                 output_text or "missing decision.md",
             ),
             expectation(
@@ -361,6 +376,28 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                     or "story ids" in normalized
                     or "story ids, timestamps" in normalized
                 ),
+                output_text or "missing decision.md",
+            ),
+        ]
+
+    if eval_id == 5:
+        return [
+            expectation(
+                "The decision resolves default `progress_file` to `dirname(prd_file) + \"/progress.txt\"` or the fixture `default-progress-path-fixture/progress.txt` path.",
+                mentions_progress_path(output_text, "default-progress-path-fixture/progress.txt"),
+                output_text or "missing decision.md",
+            ),
+            expectation(
+                "The decision says the sibling path should be created on first append if it does not exist yet.",
+                ("first append" in normalized or "on first append" in normalized or "first write" in normalized)
+                and ("create" in normalized or "created" in normalized)
+                and ("does not exist yet" in normalized or "if absent" in normalized or "missing" in normalized),
+                output_text or "missing decision.md",
+            ),
+            expectation(
+                "The decision explicitly forbids session-state, scratchpad, temp-artifact, or `~/.copilot/...` fallback paths.",
+                ("do not" in normalized or "never" in normalized or "forbid" in normalized)
+                and mentions_forbidden_progress_fallback(output_text),
                 output_text or "missing decision.md",
             ),
         ]

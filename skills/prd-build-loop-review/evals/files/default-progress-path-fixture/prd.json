@@ -1,0 +1,24 @@
+{
+  "stories": [
+    {
+      "id": "story-billing-thresholds",
+      "title": "Billing thresholds honor policy",
+      "priority": 1,
+      "passes": false,
+      "requirements": [
+        "Update billing threshold behavior to match policy",
+        "Keep billing tests green"
+      ]
+    },
+    {
+      "id": "story-alert-banner",
+      "title": "Alert banner reflects billing failures",
+      "priority": 2,
+      "passes": false,
+      "requirements": [
+        "Add alert banner for billing failures",
+        "Cover warning and resolved states"
+      ]
+    }
+  ]
+}
