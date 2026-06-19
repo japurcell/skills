@@ -1,0 +1,25 @@
+{
+  "model": "gemini-3.1-pro-preview",
+  "skill_file": "/home/adam/dev/personal/skills/skills/self-improve-workspace/skill-snapshot/SKILL.md",
+  "returncode": 0,
+  "stderr": "Session exported to: /home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-2-linked-doc/old_skill/run-1/transcript.md\n",
+  "result_event": {
+    "type": "result",
+    "timestamp": "2026-06-19T00:18:31.320Z",
+    "sessionId": "f275f42b-9852-4619-be31-e09ff8cf802a",
+    "exitCode": 0,
+    "usage": {
+      "premiumRequests": 1,
+      "totalApiDurationMs": 37493,
+      "sessionDurationMs": 43068,
+      "codeChanges": {
+        "linesAdded": 10,
+        "linesRemoved": 2,
+        "filesModified": [
+          "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-2-linked-doc/old_skill/run-1/outputs/repo/docs/release.md",
+          "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-2-linked-doc/old_skill/run-1/outputs/report.md"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "scoped-refactor",
+  "prompt": "Use the skill under test on the fixture repo in `evals/files/scoped-refactor-fixture/`. Session learnings are in `evals/files/scoped-refactor-fixture/session_notes.md`. The user asked for AGENTS cleanup, scoping, and durable documentation. Treat the request as fully specified and do not ask follow-up questions. Copy the fixture repo to `outputs/repo/`, keep the root prompt-light, move scoped guidance into better files, and write `outputs/report.md` with sections `Learnings`, `Applied updates`, `Moved guidance`, and `Grouped files`.",
+  "assertions": [
+    "outputs/repo/web/AGENTS.md includes the serial web test command.",
+    "outputs/repo/api/AGENTS.md includes the schema validation command.",
+    "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+    "outputs/report.md includes Moved guidance and Grouped files."
+  ]
+}

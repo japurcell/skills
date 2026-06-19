@@ -1,0 +1,9 @@
+{
+  "session_id": "524cca94-ca25-47b8-a655-5af28738f849",
+  "model": "gpt-5.4-mini",
+  "exit_code": 0,
+  "total_tokens": 0,
+  "duration_ms": 54837,
+  "total_duration_seconds": 54.837,
+  "api_duration_ms": 44557
+}

@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md is created.",
+      "passed": true,
+      "evidence": "# Repository Guidance\n\n- `python3 scripts/check-config.py` - Run after editing anything under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` - Run for sync pipeline changes.\n- `src/generated/` - Extend generated API clients here instead of hand-writing request/response types.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+      "passed": true,
+      "evidence": "# Repository Guidance\n\n- `python3 scripts/check-config.py` - Run after editing anything under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` - Run for sync pipeline changes.\n- `src/generated/` - Extend generated API clients here instead of hand-writing request/response types.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+      "passed": true,
+      "evidence": "# Repository Guidance\n\n- `python3 scripts/check-config.py` - Run after editing anything under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` - Run for sync pipeline changes.\n- `src/generated/` - Extend generated API clients here instead of hand-writing request/response types.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings and Applied updates.",
+      "passed": true,
+      "evidence": "## Learnings\n\nMined from `session_notes.md`:\n- `python3 scripts/check-config.py` - Run after editing anything under `deploy/`. (Actionable, non-default command)\n- `pytest tests/integration/test_sync.py -q` - Run for sync pipeline changes. (Actionable, non-default command)\n- `src/generated/` - Extend generated API clients here instead of hand-writing request/response types. (Actionable code pattern)\n\nExcluded transient noise:\n- \"The agent opened the README before finding the real files.\"\n- \"The user's laptop fan got loud during one test run.\"\n\n## Applied updates\n\nNo `AGENTS.md` existed in the repository. Created `AGENTS.md` at the root with the 3 strongest learnings.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1541,
+    "transcript_chars": 124059
+  },
+  "timing": {
+    "executor_duration_seconds": 48.746,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 48.746
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,59 @@
+## Codebase Patterns
+- Keep auth/login detail in `docs/auth.md`, not the root `AGENTS.md`.
+- Preserve existing focus and error behavior when extending login helpers.
+
+## 2026-06-12T10:00:00Z - story-local-auth-returnurl
+- Role: implementer
+- Summary: Hardened decoded prefix validation and login return-url policy reuse.
+- Files changed/reviewed: auth tests, login helpers, shared return-url policy
+- Verification or outcome: Targeted auth tests passed.
+- **Learnings for future iterations:**
+  - Patterns discovered
+    - Prefix safety must evaluate decoded forms, not only raw string.
+  - Gotchas encountered
+    - Jasmine forbids nested `it`; keep test blocks at describe root.
+  - Useful context
+    - Existing guard/login paths should reuse shared return-url policy coverage.
+---
+## 2026-06-12T10:40:00Z - story-local-auth-returnurl
+- Role: implementer
+- Summary: Stabilized login success flow after cache/replay regression.
+- Files changed/reviewed: login state stream, command path, UI tests
+- Verification or outcome: Success-path UI regression tests passed.
+- **Learnings for future iterations:**
+  - Patterns discovered
+    - Keep cached stream for reads; use fresh-fetch command path for mutations to avoid replay bugs.
+    - Fresh-fetch command path plus cached read stream split is stable fix shape for replay bugs.
+  - Gotchas encountered
+    - `shareReplay(1)` stale-first behavior can cause false UI failure on success flows.
+  - Useful context
+    - Existing failed-login behavior already had coverage and should stay unchanged.
+---
+## 2026-06-12T11:10:00Z - story-local-auth-returnurl
+- Role: implementer
+- Summary: Extended helper text association without regressing error handling.
+- Files changed/reviewed: login field helper text, accessibility tests
+- Verification or outcome: Accessibility checks passed.
+- **Learnings for future iterations:**
+  - Patterns discovered
+    - Compose `aria-describedby` in stable order: helper first, then contextual errors.
+    - Preserve existing error/focus UX while extending helper association through composed `aria-describedby`.
+  - Gotchas encountered
+    - Dev route prefix matters for browser checks.
+  - Useful context
+    - Browser direct `/login` may not hit the right dev route.
+---
+## 2026-06-12T11:45:00Z - story-local-auth-returnurl
+- Role: implementer
+- Summary: Tightened validation and startup-route coverage.
+- Files changed/reviewed: local login option tests, startup production-route tests
+- Verification or outcome: Validation and startup-route checks passed.
+- **Learnings for future iterations:**
+  - Patterns discovered
+    - Time-based claim assertions should use ranges to avoid flake.
+    - Preserve single-rule targeting to avoid false negatives from unrelated validators.
+  - Gotchas encountered
+    - Avoid placeholder defaults to prevent unrelated validation failures.
+  - Useful context
+    - Startup production-route tests may need staged dist artifact to hit intended branch: `wwwroot/dist/browser/index.html`.
+---

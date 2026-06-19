@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- Prefix safety for login and return-url validation must evaluate decoded forms, not only raw string values.\n- Reuse shared return-url policy coverage across guard and login paths so auth redirect behavior stays aligned.\n- Keep cached auth/login streams for reads; use fresh-fetch command paths for mutations to avoid replay bugs.\n- `shareReplay(1)` stale-first behavior can cause false UI failures on login success flows; keep success-path mutations off cached replayed reads.\n- Compose `aria-describedby` in stable order: helper text first, then contextual errors, while preserving existing error and focus behavior.\n- Keep auth test `it` blocks at describe root; Jasmine forbids nested `it`.\n- Time-based auth claim assertions should use ranges to avoid flake.\n- Preserve single-rule targeting in auth validation tests so unrelated validators do not hide failures.\n- Browser checks for login may need dev-route-prefixed URLs; direct `/login` can miss intended dev routing.\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n"
+    },
+    {
+      "text": "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- Prefix safety for login and return-url validation must evaluate decoded forms, not only raw string values.\n- Reuse shared return-url policy coverage across guard and login paths so auth redirect behavior stays aligned.\n- Keep cached auth/login streams for reads; use fresh-fetch command paths for mutations to avoid replay bugs.\n- `shareReplay(1)` stale-first behavior can cause false UI failures on login success flows; keep success-path mutations off cached replayed reads.\n- Compose `aria-describedby` in stable order: helper text first, then contextual errors, while preserving existing error and focus behavior.\n- Keep auth test `it` blocks at describe root; Jasmine forbids nested `it`.\n- Time-based auth claim assertions should use ranges to avoid flake.\n- Preserve single-rule targeting in auth validation tests so unrelated validators do not hide failures.\n- Browser checks for login may need dev-route-prefixed URLs; direct `/login` can miss intended dev routing.\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Authentication and login guidance lives in `docs/auth.md`.\n- Keep root guidance short and link to detailed docs instead of copying long auth checklists here.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+      "passed": true,
+      "evidence": "# Learnings\n\n- Prefix safety for login and return-url validation must evaluate decoded forms, not only raw values.\n- Guard and login paths should share return-url policy coverage.\n- Keep cached auth/login streams for reads and use fresh-fetch command paths for mutations; `shareReplay(1)` can surface stale-first success-flow failures.\n- Compose `aria-describedby` helper text before contextual errors without changing existing focus/error UX.\n- Auth tests need `it` blocks at describe root, time-based claim assertions as ranges, and single-rule targeting to avoid masked failures.\n- Browser login checks may need dev-route-prefixed URLs, and startup production-route tests may need a staged `wwwroot/dist/browser/index.html` artifact.\n\n# Applied updates\n\n- Copied fixture repo to `outputs/repo/`.\n- Updated `outputs/repo/docs/auth.md` with mined auth/login guidance from `progress.txt`.\n- Left `outputs/repo/AGENTS.md` unchanged because it already correctly routes auth detail to `docs/auth.md` and stays minimal.\n\n# Assumptions\n\n- `/home/adam/.agents/skills/self-improve/SELF_IMPROVE_REFERENCE.md` was not readable in this run, so updates relied on the exact provided `SKILL.md` plus fixture instruction files.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 5612,
+    "transcript_chars": 242534
+  },
+  "timing": {
+    "executor_duration_seconds": 41.471,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 41.471
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

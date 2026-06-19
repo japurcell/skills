@@ -1,0 +1,190 @@
+{
+  "gpt-5.4": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 25.02,
+        "stddev": 4.2599,
+        "min": 17.9,
+        "max": 29.3
+      },
+      "tokens": {
+        "mean": 612.8,
+        "stddev": 681.2809,
+        "min": 28,
+        "max": 1777
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.884,
+        "stddev": 0.1613,
+        "min": 0.67,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 24.48,
+        "stddev": 3.7036,
+        "min": 20.4,
+        "max": 28.3
+      },
+      "tokens": {
+        "mean": 645.2,
+        "stddev": 679.4098,
+        "min": 28,
+        "max": 1784
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.12",
+      "time_seconds": "+0.5",
+      "tokens": "-32"
+    }
+  },
+  "gpt-5.4-mini": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 24.94,
+        "stddev": 6.5584,
+        "min": 17.8,
+        "max": 32.5
+      },
+      "tokens": {
+        "mean": 399.6,
+        "stddev": 380.174,
+        "min": 28,
+        "max": 1029
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.834,
+        "stddev": 0.2351,
+        "min": 0.5,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 20.36,
+        "stddev": 4.1968,
+        "min": 16.5,
+        "max": 26.7
+      },
+      "tokens": {
+        "mean": 365.8,
+        "stddev": 340.5932,
+        "min": 28,
+        "max": 907
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.17",
+      "time_seconds": "+4.6",
+      "tokens": "+34"
+    }
+  },
+  "gpt-5.3-codex": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 46.48,
+        "stddev": 9.2367,
+        "min": 37.0,
+        "max": 60.0
+      },
+      "tokens": {
+        "mean": 533.4,
+        "stddev": 668.6664,
+        "min": 28,
+        "max": 1702
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.934,
+        "stddev": 0.1476,
+        "min": 0.67,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 41.66,
+        "stddev": 7.7261,
+        "min": 32.7,
+        "max": 50.4
+      },
+      "tokens": {
+        "mean": 707.2,
+        "stddev": 951.346,
+        "min": 28,
+        "max": 2382
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.07",
+      "time_seconds": "+4.8",
+      "tokens": "-174"
+    }
+  },
+  "gemini-3.1-pro-preview": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 34.32,
+        "stddev": 10.3132,
+        "min": 24.3,
+        "max": 51.6
+      },
+      "tokens": {
+        "mean": 308.2,
+        "stddev": 225.4156,
+        "min": 28,
+        "max": 649
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.8,
+        "stddev": 0.4472,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 36.46,
+        "stddev": 8.3868,
+        "min": 27.1,
+        "max": 47.2
+      },
+      "tokens": {
+        "mean": 178.2,
+        "stddev": 161.6066,
+        "min": 0,
+        "max": 383
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.20",
+      "time_seconds": "-2.1",
+      "tokens": "+130"
+    }
+  }
+}

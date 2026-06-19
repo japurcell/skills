@@ -1,32 +1,30 @@
 ---
 name: self-improve
-description: Captures durable learnings from session notes, handoff artifacts, or other work records into the right `AGENTS.md` or linked docs, and refactors instruction structure when scope or duplication is wrong. Use when the user asks to update `AGENTS.md`, remember lessons, preserve human corrections, mine prior work notes for reusable guidance, clean up instruction scope, or make future agents follow repo-specific commands, gotchas, or validation steps.
+description: Preserves durable repo-specific guidance by updating the right `AGENTS.md` or linked docs, and repairs instruction structure when scope, duplication, conflicts, or drift are wrong. Use whenever the user asks to update/refactor `AGENTS.md`, remember lessons, preserve human corrections, mine session notes, handoffs, or progress files, or make future agents follow non-default commands, validation steps, gotchas, or linked-doc structure even if they never mention `AGENTS.md`.
 ---
 
 # Self Improve
 
+Use `SELF_IMPROVE_REFERENCE.md` for examples, judgment calls, rationalizations, and failure modes.
+
 ## Overview
 
-Capture only durable guidance future agents will reuse. Update the smallest correct `AGENTS.md` surface first; refactor structure only when the current layout would cause drift, duplication, or bad scoping.
-
-Use `SELF_IMPROVE_REFERENCE.md` for refactor judgment, artifact-mining examples, placement examples, rationalizations, and failure modes.
+Capture durable, reusable learnings in the right `AGENTS.md` or linked doc. Prefer small, precise edits over broad rewrites.
 
 ## When to Use
 
-- The user asks to update or refactor `AGENTS.md`, record lessons learned, or preserve a workflow/discovery.
-- The session surfaced non-default commands, validation steps, code patterns, environment quirks, warnings, human corrections, or durable learnings from prior work artifacts worth reusing.
-- Current `AGENTS.md` structure is duplicated, conflicting, stale, or poorly scoped.
+- The user asks to update or refactor `AGENTS.md`, preserve lessons learned, or make future agents remember a workflow or correction.
+- Session notes, handoff artifacts, progress files, or similar work records contain reusable commands, validation steps, patterns, quirks, warnings, or human corrections.
+- Current instruction files are duplicated, conflicting, stale, poorly scoped, or too bulky to keep prompt-light.
 - Not for one-off notes, obvious facts, speculative advice, or transient debugging noise.
 
 ## Workflow
 
 1. **Qualify learnings**
-   - Ask: _what missing context would help future agents?_
-   - Keep only items likely to recur, actionable, repo/user-specific, and not already documented.
-   - Look for non-default commands, code patterns, validation/build/typecheck steps, environment quirks, warnings, and human corrections.
-   - If session notes, handoff notes, or similar work artifacts exist, mine the sections that actually carry reusable guidance; durable guidance can come from patterns, gotchas, or useful context.
+   - Keep only items likely to recur, actionable for a future agent, repo/workflow/user-specific, and not already documented.
+   - Look for non-default commands, validation/build/typecheck steps, code patterns, environment quirks, warnings, gotchas, and repeated human corrections.
+   - Mine session notes, handoffs, progress files, and similar artifacts beyond the summary when the details carry durable guidance.
    - Never turn excluded noise into an inverse standing rule.
-   - Exclude temporary noise and obvious facts.
 
 2. **Map the instruction surface**
    - Find every relevant `AGENTS.md`, then read each one plus any directly linked docs.
@@ -34,15 +32,16 @@ Use `SELF_IMPROVE_REFERENCE.md` for refactor judgment, artifact-mining examples,
    - If no `AGENTS.md` exists, say so and create `./AGENTS.md` with only the strongest 3-7 learnings.
 
 3. **Apply the smallest correct update**
-   - Put project-wide rules in `./AGENTS.md`, scoped rules in the nearest `./**/AGENTS.md`, and long topic detail in linked docs.
-   - Keep prompt-loaded files brief. Prefer one line per concept and specific, actionable wording.
+   - Put project-wide rules in `./AGENTS.md`, scoped rules in the nearest existing owning `./**/AGENTS.md`, and longer topic detail in linked docs.
+   - Keep prompt-loaded files brief. Prefer one concept per line and exact, actionable wording.
    - Use `<command or pattern>` - `<brief description>` when that makes the rule easier to scan.
+   - If root already routes a topic to a linked doc, update that doc instead of splitting related rules across root or new nested `AGENTS.md` files unless the task clearly requires re-scoping.
 
 4. **Refactor only when warranted**
-   - Do it when root `AGENTS.md` is over ~120 lines, scope is mixed, rules duplicate or conflict, linked docs are stale/orphaned, or the user asked for cleanup.
+   - Do it when root `AGENTS.md` is over ~120 lines, scope is mixed, rules duplicate or conflict, linked docs are stale or orphaned, or the user asked for cleanup.
    - Resolve contradictions first.
    - Keep root limited to near-universal guidance: short project description, non-default package manager, non-standard build/test/typecheck commands, and one or two universal workflow constraints.
-   - Move specialized guidance into scoped `AGENTS.md` files or linked docs, and update the destination in the same change before deleting the source text.
+   - Move specialized guidance into scoped `AGENTS.md` files or linked docs. Update the destination in the same change before deleting source text.
    - Delete only content that is redundant, non-actionable, obvious boilerplate, or superseded by a resolved contradiction.
 
 5. **Report the outcome**
@@ -52,62 +51,51 @@ Use `SELF_IMPROVE_REFERENCE.md` for refactor judgment, artifact-mining examples,
 
 ## Specific Techniques
 
-### Durable-learning filter
+### Durable-learning bar
 
-Keep:
+Keep items that are recurring, actionable, repo/workflow/user-specific, and not already documented. High-value examples: non-default commands, validation/build/typecheck steps, repo-specific constraints, environment quirks, warnings, gotchas, and repeated human corrections.
 
-- Non-default commands
-- Build, test, validation, or typecheck steps
-- Repo-specific patterns or constraints
-- Environment/configuration quirks
-- Warnings and gotchas
-- Repeated human corrections
-
-Skip:
-
-- Temporary debugging notes
-- Facts obvious from the tree or README
-- Navigation/process heuristics inferred from one run unless the user wants them as standing policy
-- Generic reminders like "be careful"
+Skip temporary debugging notes, obvious tree/README facts, one-run navigation heuristics, and generic reminders.
 
 ### Artifact mining
 
-- Treat prior work artifacts as high-signal source material, not just status metadata.
-- Keep durable rules that explain future implementation or test behavior, such as framework constraints, validation rules, stable fix shapes, UX-preservation rules, anti-flake testing tactics, and environment/setup requirements.
-- Translate task-specific wording into reusable instructions; keep the lesson, drop ticket names and transient path noise.
-- If an existing AGENTS rule captured only one obvious learning while the artifact contains several durable ones, treat that as incomplete and keep mining.
+- Treat session notes, handoffs, and progress files as high-signal source material, not just status metadata.
+- Preserve reusable rules from patterns, gotchas, and useful context; drop ticket names, temporary blockers, and path noise.
+- Do not stop at summary bullets when the detailed sections explain future coding, testing, validation, or environment behavior.
+- When one artifact contains several durable learnings, keep representative coverage across them instead of stopping after the first few.
+- Keep concrete technical terms when they carry the rule more exactly (`shareReplay(1)`, `aria-describedby`, `nested \`it\``, `single-rule`) instead of paraphrasing them away.
+- If the source phrase is itself the durable rule, keep that wording; `nested \`it\`` is stronger than a looser paraphrase like "keep test blocks at describe root."
+- Do not discard an artifact-local test or accessibility rule as "too generic" when it is required to preserve that workflow.
 
 ### Placement
 
 - `./AGENTS.md` - near-universal project rules
-- `./**/AGENTS.md` - directory/module rules
+- `./**/AGENTS.md` - directory or module rules
 - Linked docs - longer topic detail referenced from `AGENTS.md`
 
-### Refactor floor
-
-Keep root `AGENTS.md` minimal and safe to always load. Prefer linking over repeating. Never remove guidance unless it is low-value or moved to its new destination in the same change.
+Keep root minimal and safe to always load. Prefer linking over repeating.
+Prefer the existing owning scope over inventing a deeper one unless the deeper scope already exists or clearly prevents mixed guidance.
+If `api/AGENTS.md` can own API schema validation cleanly, prefer it over creating `api/schema/AGENTS.md` just because the path is narrower.
+If one topic doc already owns a workflow, keep related test, accessibility, or state-management learnings with that topic unless they clearly stand alone as repo-wide rules.
+Example: if an auth/login progress file says Jasmine forbids `nested \`it\``, keep that exact rule in `docs/auth.md` when that doc already owns the auth workflow.
 
 ## Common Rationalizations
 
 | Rationalization | Reality |
 | --- | --- |
-| "The root file is enough." | Scoped files or linked docs may own the rule better. |
-| "That command is obvious." | Non-default commands are often high-value. |
-| "The user didn't ask me to remember this." | Capture durable guidance when warranted. |
-| "Only the obvious summary section matters; detailed learnings are too specific." | Durable rules often live in gotchas and useful context, not just the header summary. |
-| "Leaving redundant rules is harmless." | Redundancy causes drift. |
-| "I moved it, so deleting the old text is enough." | Verify the destination was updated in the same change. |
+| "Root file is enough" or "broader wording is safer." | Scoped files or linked docs often own the rule better, and specific wording is more useful. |
+| "That command is obvious" or "user didn't ask me to remember this." | Non-default commands and repeated corrections are often the highest-value durable guidance. |
+| "Only the summary matters; detailed artifact notes are too specific." | Durable rules often live in gotchas and useful context, not only the header summary. |
+| "Leaving redundant rules is harmless" or "I moved it, so deleting the old text is enough." | Redundancy drifts; update the destination in the same change before deleting the source text. |
 | "I should update something anyway." | Do not force low-value changes. |
 
 ## Red Flags
 
-- Missing, empty, or overly long root `AGENTS.md`
 - Mixed global and scoped guidance
 - Duplicate or conflicting rules
 - Missing, stale, or orphaned linked docs
 - Vague or non-actionable rules
-- Durable learnings not captured
-- A prior work artifact was read but its durable learnings were not preserved
+- Durable learnings from work artifacts not captured
 - One-offs added as standing instructions
 - Guidance removed from one file without appearing in its destination
 
@@ -115,14 +103,13 @@ Keep root `AGENTS.md` minimal and safe to always load. Prefer linking over repea
 
 - [ ] All relevant `AGENTS.md` files were found
 - [ ] Directly linked docs were reviewed
+- [ ] Durable learnings were mined beyond obvious summary bullets when needed
 - [ ] Durable learnings were placed in the right files
 - [ ] One-off and low-value items were excluded
 - [ ] Assumptions were stated when needed
 - [ ] Root `AGENTS.md` remains minimal
 - [ ] Scoped guidance is in the right file
-- [ ] Session-note or work-artifact learnings were mined beyond the obvious summary bullets
 - [ ] Every moved rule was added to its destination doc in the same change
-- [ ] Deletions were applied only where appropriate
 - [ ] Duplicate rules were removed or justified
 - [ ] Conflicts were surfaced and resolved
 - [ ] No orphan links remain

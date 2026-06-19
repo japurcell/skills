@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Use `python3` for repo scripts.\n- Run `pytest tests/unit -q` for unit-test-only changes.\n"
+    },
+    {
+      "text": "No new scoped AGENTS.md files are created.",
+      "passed": true,
+      "evidence": "no extra scoped AGENTS.md files"
+    },
+    {
+      "text": "outputs/report.md says none qualified or no changes were made.",
+      "passed": true,
+      "evidence": "# Benchmark report\n\nResult: none qualified. No changes were made to `AGENTS.md`.\n\nReasoning:\n- Existing durable guidance already lives in `AGENTS.md` (`python3` for scripts, `pytest tests/unit -q` for unit-only changes).\n- `session_notes.md` only contained one-off observations: opening `README.md`, temporary branch naming, and one slow test run. These do not meet durable-learning bar.\n\nOutput:\n- Copied fixture repo to `outputs/repo/`.\n- Left copied repo unchanged.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 723,
+    "transcript_chars": 209016
+  },
+  "timing": {
+    "executor_duration_seconds": 47.017,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 47.017
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

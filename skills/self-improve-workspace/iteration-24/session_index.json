@@ -1,0 +1,82 @@
+[
+  {
+    "eval_id": 0,
+    "eval_name": "create-root",
+    "config": "with_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-24/eval-0-create-root/with_skill/run-1",
+    "session_id": "1f6d6f25-b890-4685-a11a-6b1ec0ac1123",
+    "model": "gpt-5.4-mini"
+  },
+  {
+    "eval_id": 0,
+    "eval_name": "create-root",
+    "config": "old_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-24/eval-0-create-root/old_skill/run-1",
+    "session_id": "c3340e44-6a91-4a0f-afbd-ede44a627cb7",
+    "model": "gpt-5.4-mini"
+  },
+  {
+    "eval_id": 1,
+    "eval_name": "scoped-refactor",
+    "config": "with_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-24/eval-1-scoped-refactor/with_skill/run-1",
+    "session_id": "778fb48a-aece-40d4-bd09-0451ecd7a5eb",
+    "model": "gpt-5.4-mini"
+  },
+  {
+    "eval_id": 1,
+    "eval_name": "scoped-refactor",
+    "config": "old_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-24/eval-1-scoped-refactor/old_skill/run-1",
+    "session_id": "74289939-b162-4efb-a009-64c878ee60c7",
+    "model": "gpt-5.4-mini"
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "linked-doc",
+    "config": "with_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-24/eval-2-linked-doc/with_skill/run-1",
+    "session_id": "97d358ef-161a-440a-be5c-4a8bae08047e",
+    "model": "gpt-5.4-mini"
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "linked-doc",
+    "config": "old_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-24/eval-2-linked-doc/old_skill/run-1",
+    "session_id": "e90018eb-f963-4c37-bde1-41552d84e25b",
+    "model": "gpt-5.4-mini"
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "noop",
+    "config": "with_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-24/eval-3-noop/with_skill/run-1",
+    "session_id": "94226f3d-a1f4-4ce9-919d-173cb0d150f7",
+    "model": "gpt-5.4-mini"
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "noop",
+    "config": "old_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-24/eval-3-noop/old_skill/run-1",
+    "session_id": "524cca94-ca25-47b8-a655-5af28738f849",
+    "model": "gpt-5.4-mini"
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "progress",
+    "config": "with_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-24/eval-4-progress/with_skill/run-1",
+    "session_id": "e13a414f-0d41-4b66-aa0d-f5e3c2c95e39",
+    "model": "gpt-5.4-mini"
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "progress",
+    "config": "old_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-24/eval-4-progress/old_skill/run-1",
+    "session_id": "20eab591-80e5-4f64-8ccc-f6a40a182e18",
+    "model": "gpt-5.4-mini"
+  }
+]

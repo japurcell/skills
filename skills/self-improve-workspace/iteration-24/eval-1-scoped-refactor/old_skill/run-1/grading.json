@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+      "passed": true,
+      "evidence": "Run `pnpm --dir web test -- --runInBand` after changing anything in `web/`.\n\n`web/` uses shared fixtures, so test runs must stay serial.\n"
+    },
+    {
+      "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+      "passed": false,
+      "evidence": "API contract details live under `api/`.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+      "passed": true,
+      "evidence": "Project uses `pnpm` and `python3`.\n"
+    },
+    {
+      "text": "outputs/report.md includes Moved guidance and Grouped files.",
+      "passed": true,
+      "evidence": "## Learnings\n- `web/` tests must run serially with `pnpm --dir web test -- --runInBand`.\n- Schema edits under `api/schema/*.json` should be validated with `python3 scripts/validate_schema.py`.\n- Root guidance should stay minimal; scoped rules belong beside the code they govern.\n\n## Applied updates\n- Reduced root `AGENTS.md` to the single project-wide dependency note.\n- Added `web/AGENTS.md` for serial web test guidance.\n- Added `api/schema/AGENTS.md` for schema validation guidance.\n- Added `api/AGENTS.md` for API contract location guidance.\n\n## Moved guidance\n- From root `AGENTS.md` to `web/AGENTS.md`: web test command and serial-fixture warning.\n- From root `AGENTS.md` to `api/schema/AGENTS.md`: schema validation command.\n- From root `AGENTS.md` to `api/AGENTS.md`: API contract location note.\n\n## Grouped files\n- `outputs/repo/AGENTS.md`\n- `outputs/repo/web/AGENTS.md`\n- `outputs/repo/api/AGENTS.md`\n- `outputs/repo/api/schema/AGENTS.md`\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1642,
+    "transcript_chars": 272545
+  },
+  "timing": {
+    "executor_duration_seconds": 83.949,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 83.949
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

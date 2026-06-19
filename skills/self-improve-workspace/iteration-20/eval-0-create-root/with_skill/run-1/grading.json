@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md is created.",
+      "passed": true,
+      "evidence": "# Repository guidance\n\n- After editing anything under `deploy/`, run `python3 scripts/check-config.py`.\n- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- Generated API clients live in `src/generated/`; extend them instead of hand-writing request/response types.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+      "passed": true,
+      "evidence": "# Repository guidance\n\n- After editing anything under `deploy/`, run `python3 scripts/check-config.py`.\n- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- Generated API clients live in `src/generated/`; extend them instead of hand-writing request/response types.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+      "passed": true,
+      "evidence": "# Repository guidance\n\n- After editing anything under `deploy/`, run `python3 scripts/check-config.py`.\n- For sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- Generated API clients live in `src/generated/`; extend them instead of hand-writing request/response types.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings and Applied updates.",
+      "passed": true,
+      "evidence": "## Learnings\n\n- `python3 scripts/check-config.py` after editing anything under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` for sync pipeline changes.\n- Generated API clients live in `src/generated/`; extend them instead of hand-writing request/response types.\n\n## Applied updates\n\n- No `AGENTS.md` existed in fixture repo, so created `outputs/repo/AGENTS.md`.\n- Kept root guidance minimal with only three durable repo-specific rules.\n- Excluded one-off notes about opening `README` first and laptop fan noise because they did not qualify as durable guidance.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1442,
+    "transcript_chars": 223353
+  },
+  "timing": {
+    "executor_duration_seconds": 37.169,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 37.169
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md is created.",
+      "passed": true,
+      "evidence": "# Agent Guidance\n\n- `python3 scripts/check-config.py` - run after any change under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` - run for sync pipeline changes.\n- `src/generated/` - extend generated API clients there; do not hand-write request/response types outside generated client surfaces.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+      "passed": true,
+      "evidence": "# Agent Guidance\n\n- `python3 scripts/check-config.py` - run after any change under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` - run for sync pipeline changes.\n- `src/generated/` - extend generated API clients there; do not hand-write request/response types outside generated client surfaces.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+      "passed": true,
+      "evidence": "# Agent Guidance\n\n- `python3 scripts/check-config.py` - run after any change under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` - run for sync pipeline changes.\n- `src/generated/` - extend generated API clients there; do not hand-write request/response types outside generated client surfaces.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings and Applied updates.",
+      "passed": true,
+      "evidence": "## Learnings\n\n- `python3 scripts/check-config.py` is required validation after edits under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` is required validation for sync pipeline changes.\n- API client types are generated in `src/generated/`; extend generated clients instead of hand-writing request/response types.\n\n## Applied updates\n\n- Copied fixture repository to `outputs/repo/`.\n- Added `outputs/repo/AGENTS.md` with durable, recurring guidance from session notes.\n- Excluded non-durable notes (`README` navigation detail, laptop fan noise) from standing instructions.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1468,
+    "transcript_chars": 248612
+  },
+  "timing": {
+    "executor_duration_seconds": 70.725,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 70.725
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

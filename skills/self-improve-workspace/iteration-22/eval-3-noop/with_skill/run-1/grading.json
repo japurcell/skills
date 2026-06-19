@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Use `python3` for repo scripts.\n- Run `pytest tests/unit -q` for unit-test-only changes.\n"
+    },
+    {
+      "text": "No new scoped AGENTS.md files are created.",
+      "passed": true,
+      "evidence": "no extra scoped AGENTS.md files"
+    },
+    {
+      "text": "outputs/report.md says none qualified or no changes were made.",
+      "passed": true,
+      "evidence": "# Self Improve Benchmark Report\n\n**Result:** No changes were made.\n\n**Reasoning:**\nThe `session_notes.md` file was reviewed for potential durable learnings. The notes contained:\n- \"The agent opened `README.md`.\" - This is an obvious fact/one-off action.\n- \"One local branch had a temporary name.\" - This is a transient, branch-specific issue.\n- \"A test run took longer than expected once.\" - This is a transient operational noise.\n\nNone of these items clear the durable-learning bar. They are all temporary, non-actionable, or obvious facts. Therefore, no `AGENTS.md` files were created or modified."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 853,
+    "transcript_chars": 104194
+  },
+  "timing": {
+    "executor_duration_seconds": 26.887,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 26.887
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

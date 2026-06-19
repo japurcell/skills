@@ -1,0 +1,9 @@
+{
+  "session_id": "bed1bcb3-450c-4c7c-9ab8-dc6ad83f17a8",
+  "model": "gpt-5.4",
+  "exit_code": 0,
+  "total_tokens": 0,
+  "duration_ms": 51699,
+  "total_duration_seconds": 51.699,
+  "api_duration_ms": 43245
+}

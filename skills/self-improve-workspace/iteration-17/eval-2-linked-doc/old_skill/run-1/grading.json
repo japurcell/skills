@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/docs/release.md includes the new release sanity command.",
+      "passed": true,
+      "evidence": "# Release process\n\n1. Update rollout manifests.\n2. Run `python3 scripts/release_sanity.py`.\n3. Run `./scripts/check-release`.\n4. Tag the release.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md still links release detail to docs/release.md and does not inline the new command.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Release process details live in `docs/release.md`.\n- Keep root guidance short and link to detailed docs instead of copying long checklists here.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings and Applied updates.",
+      "passed": true,
+      "evidence": "# Learnings\n\n- Durable guidance from session notes: after editing rollout manifests, run `python3 scripts/release_sanity.py`.\n- Placement correction: release workflow details belong in `docs/release.md` (linked from root `AGENTS.md`), not in root guidance.\n\n# Applied updates\n\n- Updated `outputs/repo/docs/release.md` to insert `python3 scripts/release_sanity.py` immediately after rollout manifest edits and before `./scripts/check-release`.\n- Left `outputs/repo/AGENTS.md` unchanged to preserve short root guidance and linked-doc ownership.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1138,
+    "transcript_chars": 198547
+  },
+  "timing": {
+    "executor_duration_seconds": 49.855,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 49.855
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

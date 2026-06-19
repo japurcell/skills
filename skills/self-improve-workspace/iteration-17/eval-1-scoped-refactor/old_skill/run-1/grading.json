@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Run `pnpm --dir web test -- --runInBand` after changing anything under `web/`.\n- `web/` uses shared fixtures; keep test runs serial.\n"
+    },
+    {
+      "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- API contract details live under `api/`.\n- Run `python3 scripts/validate_schema.py` after editing `api/schema/*.json`.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nProject uses `pnpm` and `python3`.\n\n- Keep the root file short.\n- Scoped guidance:\n  - `web/AGENTS.md` - web test command and serial-test constraint.\n  - `api/AGENTS.md` - API contract and schema validation guidance.\n"
+    },
+    {
+      "text": "outputs/report.md includes Moved guidance and Grouped files.",
+      "passed": true,
+      "evidence": "# Learnings\n\n- Durable: `web/` test runs must be serial because shared fixtures fail in parallel.\n- Durable: use `pnpm --dir web test -- --runInBand` for `web/` changes.\n- Durable: after `api/schema/*.json` edits, run `python3 scripts/validate_schema.py`.\n- Excluded as non-durable: \"repo has a README.\"\n\n# Applied updates\n\n- Refactored `outputs/repo/AGENTS.md` to stay prompt-light and route scoped rules to owning directories.\n- Added scoped instruction files in `outputs/repo/web/AGENTS.md` and `outputs/repo/api/AGENTS.md`.\n\n# Moved guidance\n\n- From root to `web/AGENTS.md`:\n  - Web test command moved and corrected to `pnpm --dir web test -- --runInBand`.\n  - Serial test constraint for shared fixtures.\n- From root to `api/AGENTS.md`:\n  - API contract ownership under `api/`.\n  - Schema validation command for `api/schema/*.json`.\n\n# Grouped files\n\n- Root (universal): `outputs/repo/AGENTS.md`\n- Web scope: `outputs/repo/web/AGENTS.md`\n- API scope: `outputs/repo/api/AGENTS.md`\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1899,
+    "transcript_chars": 277381
+  },
+  "timing": {
+    "executor_duration_seconds": 79.457,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 79.457
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "linked-doc",
+  "prompt": "Use the skill under test on the fixture repo in `evals/files/linked-doc-fixture/`. Session learnings are in `evals/files/linked-doc-fixture/session_notes.md`. Root `AGENTS.md` already points release details at `docs/release.md`; keep that structure unless the notes justify something else. Treat this as a benchmark run with no live user. Copy the fixture repo to `outputs/repo/`, update the right file, and write `outputs/report.md` with sections `Learnings` and `Applied updates`.",
+  "assertions": [
+    "outputs/repo/docs/release.md includes the new release sanity command.",
+    "outputs/repo/AGENTS.md still links release detail to docs/release.md and does not inline the new command.",
+    "outputs/report.md includes Learnings and Applied updates."
+  ]
+}

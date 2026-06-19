@@ -1,0 +1,27 @@
+{
+  "model": "gemini-3.1-pro-preview",
+  "skill_file": "/home/adam/dev/personal/skills/skills/self-improve-workspace/skill-snapshot/SKILL.md",
+  "returncode": 0,
+  "stderr": "Session exported to: /home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-1-scoped-refactor/old_skill/run-1/transcript.md\n",
+  "result_event": {
+    "type": "result",
+    "timestamp": "2026-06-19T00:17:11.962Z",
+    "sessionId": "0ef34e66-4e5e-4e64-be63-26ffe233ac65",
+    "exitCode": 0,
+    "usage": {
+      "premiumRequests": 1,
+      "totalApiDurationMs": 44554,
+      "sessionDurationMs": 50415,
+      "codeChanges": {
+        "linesAdded": 36,
+        "linesRemoved": 5,
+        "filesModified": [
+          "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-1-scoped-refactor/old_skill/run-1/outputs/repo/web/AGENTS.md",
+          "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-1-scoped-refactor/old_skill/run-1/outputs/repo/api/AGENTS.md",
+          "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-1-scoped-refactor/old_skill/run-1/outputs/repo/AGENTS.md",
+          "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-1-scoped-refactor/old_skill/run-1/outputs/report.md"
+        ]
+      }
+    }
+  }
+}

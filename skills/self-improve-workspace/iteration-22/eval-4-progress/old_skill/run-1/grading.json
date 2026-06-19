@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n- Prefix safety must evaluate decoded forms, not only raw strings.\n- Keep cached stream for reads; use fresh-fetch command path for mutations to avoid replay bugs (e.g. `shareReplay(1)` stale-first issues).\n- Compose `aria-describedby` in stable order: helper first, then contextual errors. Preserve existing error/focus UX.\n- Time-based claim assertions should use ranges to avoid flake. Avoid placeholder defaults to prevent unrelated validation failures.\n- Jasmine forbids nested `it`; keep test blocks at describe root.\n"
+    },
+    {
+      "text": "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n- Prefix safety must evaluate decoded forms, not only raw strings.\n- Keep cached stream for reads; use fresh-fetch command path for mutations to avoid replay bugs (e.g. `shareReplay(1)` stale-first issues).\n- Compose `aria-describedby` in stable order: helper first, then contextual errors. Preserve existing error/focus UX.\n- Time-based claim assertions should use ranges to avoid flake. Avoid placeholder defaults to prevent unrelated validation failures.\n- Jasmine forbids nested `it`; keep test blocks at describe root.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Authentication and login guidance lives in `docs/auth.md`.\n- Keep root guidance short and link to detailed docs instead of copying long auth checklists here.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+      "passed": true,
+      "evidence": "# Self-Improve Report\n\n## Learnings\nMined from `progress.txt`:\n- Prefix safety must evaluate decoded forms, not only raw string.\n- Jasmine forbids nested `it`; keep test blocks at describe root.\n- Keep cached stream for reads; use fresh-fetch command path for mutations to avoid replay bugs.\n- `shareReplay(1)` stale-first behavior can cause false UI failure on success flows.\n- Compose `aria-describedby` in stable order: helper first, then contextual errors.\n- Preserve existing error/focus UX while extending helper association.\n- Time-based claim assertions should use ranges to avoid flake.\n- Avoid placeholder defaults to prevent unrelated validation failures.\n- Startup production-route tests may need staged dist artifact to hit intended branch: `wwwroot/dist/browser/index.html`. (Already partially documented, reinforced).\n\n## Applied updates\n- Added learnings to `outputs/repo/docs/auth.md`, since the root `AGENTS.md` explicitly states auth/login guidance belongs there.\n- Kept root `AGENTS.md` unchanged to maintain its short length and specific focus.\n\n## Assumptions\n- General UI test gotchas (Jasmine `it` blocks) and state management patterns (RxJS `shareReplay`) discovered during auth implementation apply generally enough to the auth module to be documented in `auth.md`.\n- Consolidated related learnings (e.g. `shareReplay` gotcha and the fresh-fetch fix) into single actionable bullet points."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 5360,
+    "transcript_chars": 113528
+  },
+  "timing": {
+    "executor_duration_seconds": 47.361,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 47.361
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

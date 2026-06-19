@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Run `pnpm --dir web test -- --runInBand` after changing anything in `web/`.\n- `web/` uses shared fixtures, so test runs must stay serial.\n"
+    },
+    {
+      "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- API contract details live under `api/`.\n- Run `python3 scripts/validate_schema.py` after editing `api/schema/*.json`.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nProject uses `pnpm` and `python3`.\n\n- Keep this root file short; move scoped guidance into the nearest owning `AGENTS.md`.\n- `web/` - see `web/AGENTS.md` for test command and serial-fixture rule.\n- `api/` - see `api/AGENTS.md` for contract and schema-validation guidance.\n"
+    },
+    {
+      "text": "outputs/report.md includes Moved guidance and Grouped files.",
+      "passed": true,
+      "evidence": "## Learnings\n\n- `web/` changes need `pnpm --dir web test -- --runInBand`; shared fixtures fail in parallel.\n- `api/schema/*.json` edits need `python3 scripts/validate_schema.py`.\n- Root guidance should stay prompt-light and route scoped rules to owning directories.\n- README mention in session notes did not qualify.\n\n## Applied updates\n\n- Copied fixture repo to `outputs/repo/`.\n- Slimmed `outputs/repo/AGENTS.md` to project-wide guidance plus pointers to scoped files.\n- Added scoped `AGENTS.md` files under `outputs/repo/web/` and `outputs/repo/api/`.\n\n## Moved guidance\n\n- Moved `web/` test command and serial-fixture rule from root to `outputs/repo/web/AGENTS.md`.\n- Moved API contract ownership and schema validation rule from root to `outputs/repo/api/AGENTS.md`.\n- Tightened root wording to preserve short-root rule instead of repeating scoped details.\n\n## Grouped files\n\n- `outputs/repo/AGENTS.md` - project-wide runtime + scoping rules.\n- `outputs/repo/web/AGENTS.md` - `web/` test workflow.\n- `outputs/repo/api/AGENTS.md` - API contract + schema validation workflow.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2053,
+    "transcript_chars": 268682
+  },
+  "timing": {
+    "executor_duration_seconds": 49.067,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 49.067
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

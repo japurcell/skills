@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+      "passed": true,
+      "evidence": "Run `pnpm --dir web test -- --runInBand` after changing anything in `web/`.\n\n`web/` uses shared fixtures, so test runs must stay serial.\n"
+    },
+    {
+      "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+      "passed": true,
+      "evidence": "Run `python3 scripts/validate_schema.py` after editing `api/schema/*.json`.\n\nAPI contract details live under `api/`.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+      "passed": true,
+      "evidence": "Project uses `pnpm` and `python3`.\n"
+    },
+    {
+      "text": "outputs/report.md includes Moved guidance and Grouped files.",
+      "passed": true,
+      "evidence": "# Learnings\n\n- `web/` test runs must stay serial, so use `pnpm --dir web test -- --runInBand`.\n\n# Applied updates\n\n- Kept `outputs/repo/AGENTS.md` prompt-light with only the repo-wide toolchain note.\n- Added `outputs/repo/web/AGENTS.md` for web-only test guidance.\n- Added `outputs/repo/api/AGENTS.md` for API schema validation and contract scoping.\n\n# Moved guidance\n\n- `web/` test command and serial-fixture warning moved from root into `web/AGENTS.md`.\n- `api/schema/*.json` validation and API contract scoping moved from root into `api/AGENTS.md`.\n\n# Grouped files\n\n- `outputs/repo/AGENTS.md`\n- `outputs/repo/web/AGENTS.md`\n- `outputs/repo/api/AGENTS.md`\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1352,
+    "transcript_chars": 245870
+  },
+  "timing": {
+    "executor_duration_seconds": 58.091,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 58.091
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

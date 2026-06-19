@@ -1,0 +1,13 @@
+## Codebase Patterns
+- Completion comes from `prd_file`, not from progress notes.
+
+## 2026-06-10T12:30:00Z - FINALIZATION
+- Role: orchestrator
+- Summary: Final state recorded after clean review and verification.
+- Files changed/reviewed: prd.json, progress.txt
+- Verification or outcome: All stories already have `passes: true`.
+- **Learnings for future iterations:**
+  - Completion response must be exact.
+  - No extra prose after completion.
+  - Resume should short-circuit immediately.
+---

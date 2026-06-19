@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md is created.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nRepo durable guidance (mined from session notes)\n\nKeep root AGENTS.md minimal. Include non-default commands and validation steps.\n\npython3 scripts/check-config.py - Run after editing anything under deploy/ to validate deployment configuration.\n\npytest tests/integration/test_sync.py -q - Run for sync pipeline changes (integration tests for sync behavior).\n\nsrc/generated/ - Generated API clients live here; extend generated code instead of hand-writing request/response types.\n\nSource: evals/files/create-root-fixture/session_notes.md\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nRepo durable guidance (mined from session notes)\n\nKeep root AGENTS.md minimal. Include non-default commands and validation steps.\n\npython3 scripts/check-config.py - Run after editing anything under deploy/ to validate deployment configuration.\n\npytest tests/integration/test_sync.py -q - Run for sync pipeline changes (integration tests for sync behavior).\n\nsrc/generated/ - Generated API clients live here; extend generated code instead of hand-writing request/response types.\n\nSource: evals/files/create-root-fixture/session_notes.md\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nRepo durable guidance (mined from session notes)\n\nKeep root AGENTS.md minimal. Include non-default commands and validation steps.\n\npython3 scripts/check-config.py - Run after editing anything under deploy/ to validate deployment configuration.\n\npytest tests/integration/test_sync.py -q - Run for sync pipeline changes (integration tests for sync behavior).\n\nsrc/generated/ - Generated API clients live here; extend generated code instead of hand-writing request/response types.\n\nSource: evals/files/create-root-fixture/session_notes.md\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings and Applied updates.",
+      "passed": true,
+      "evidence": "Learnings\n\n- After editing anything under deploy/: run `python3 scripts/check-config.py` to validate deployment config.\n- For sync pipeline changes: run `pytest tests/integration/test_sync.py -q`.\n- Generated API clients live in `src/generated/`; extend generated code rather than hand-writing request/response types.\n\nApplied updates\n\n- Created `./AGENTS.md` at repository root with the three durable learnings above. File: outputs/repo/AGENTS.md\n\nSource: mined from evals/files/create-root-fixture/session_notes.md\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1646,
+    "transcript_chars": 186734
+  },
+  "timing": {
+    "executor_duration_seconds": 51.154,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 51.154
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

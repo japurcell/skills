@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/docs/release.md includes the new release sanity command.",
+      "passed": true,
+      "evidence": "# Release process\n\n1. Update rollout manifests.\n2. Run `python3 scripts/release_sanity.py`.\n3. Run `./scripts/check-release`.\n4. Tag the release.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md still links release detail to docs/release.md and does not inline the new command.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Release process details live in `docs/release.md`.\n- Keep root guidance short and link to detailed docs instead of copying long checklists here.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings and Applied updates.",
+      "passed": true,
+      "evidence": "# Learnings\n\n- Durable: after editing rollout manifests, run `python3 scripts/release_sanity.py`.\n- Durable placement: keep release-detail guidance in `docs/release.md`, not root `AGENTS.md`, because root already links there.\n- Excluded: `notes.txt` was one-off scratch noise and not durable guidance.\n\n# Applied updates\n\n- Copied fixture repo to `outputs/repo/`.\n- Updated `outputs/repo/docs/release.md` to add `python3 scripts/release_sanity.py` after rollout manifest edits and before the existing release check/tag steps.\n- Left `outputs/repo/AGENTS.md` unchanged so root guidance stays short and continues pointing release detail at `docs/release.md`.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1252,
+    "transcript_chars": 202887
+  },
+  "timing": {
+    "executor_duration_seconds": 38.119,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 38.119
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

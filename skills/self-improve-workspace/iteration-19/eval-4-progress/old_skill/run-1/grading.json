@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- Keep detailed auth/login guidance in this file (docs/auth.md); root AGENTS.md should link here and stay brief.\n\n- Prefix safety: validate decoded URL prefixes, not only raw strings.\n- Return-url policy: reuse shared return-url policy for guard/login paths.\n- Cache vs mutation: use cached read streams for reads; use fresh-fetch command path for mutations to avoid replay/replaybugs. Beware `shareReplay(1)` stale-first behavior causing false UI failures.\n- Accessibility: compose `aria-describedby` in stable order: helper text first, then contextual errors. Preserve existing error/focus UX when extending helper association.\n- Tests and timing: Jasmine forbids nested `it` blocks \u2014 keep tests at describe root. Use time ranges for claim assertions to avoid flake. Avoid placeholder defaults that create unrelated validation failures.\n- Startup tests: when exercising production `_Host` branch, stage a minimal `wwwroot/dist/browser/index.html` artifact so request path does not fall through to `/Error` + OIDC challenge behavior.\n- Preserve existing failed-login behavior and its test coverage.\n"
+    },
+    {
+      "text": "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- Keep detailed auth/login guidance in this file (docs/auth.md); root AGENTS.md should link here and stay brief.\n\n- Prefix safety: validate decoded URL prefixes, not only raw strings.\n- Return-url policy: reuse shared return-url policy for guard/login paths.\n- Cache vs mutation: use cached read streams for reads; use fresh-fetch command path for mutations to avoid replay/replaybugs. Beware `shareReplay(1)` stale-first behavior causing false UI failures.\n- Accessibility: compose `aria-describedby` in stable order: helper text first, then contextual errors. Preserve existing error/focus UX when extending helper association.\n- Tests and timing: Jasmine forbids nested `it` blocks \u2014 keep tests at describe root. Use time ranges for claim assertions to avoid flake. Avoid placeholder defaults that create unrelated validation failures.\n- Startup tests: when exercising production `_Host` branch, stage a minimal `wwwroot/dist/browser/index.html` artifact so request path does not fall through to `/Error` + OIDC challenge behavior.\n- Preserve existing failed-login behavior and its test coverage.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Authentication and login guidance lives in `docs/auth.md`.\n- Keep root guidance short and link to detailed docs instead of copying long auth checklists here.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+      "passed": true,
+      "evidence": "Learnings\n\n- Prefix safety must evaluate decoded forms, not only raw strings.\n- Reuse shared return-url policy across guard/login paths.\n- Use cached read streams for reads and fresh-fetch for mutations to avoid replay bugs; `shareReplay(1)` can be stale-first and cause false failures.\n- Compose `aria-describedby` helper first, then contextual errors; preserve focus/error UX.\n- Jasmine forbids nested `it`; keep tests at describe root.\n- Time-based claim assertions should use ranges to avoid flake.\n- Avoid placeholder defaults that cause unrelated validation failures.\n- Startup production-route tests may need staged `wwwroot/dist/browser/index.html` to hit `_Host` branch and avoid `/Error` + OIDC challenge.\n\nApplied updates\n\n- Updated outputs/repo/docs/auth.md with durable learnings mined from evals/files/progress-fixture/progress.txt. Added guidance on prefix validation, return-url policy reuse, cache vs mutation patterns, accessibility ordering, test gotchas, timing, and startup test artifact.\n- Did not modify root AGENTS.md; root guidance remains short and links to docs/auth.md per project rules.\n\nAssumptions\n\n- Source of learnings: evals/files/progress-fixture/progress.txt (copied into outputs/repo/progress.txt during fixture copy).\n- Work limited to current working directory; outputs/repo contains fixture copy.\n- Root AGENTS.md guidance preserved; detailed auth guidance belongs in docs/auth.md per repo conventions.\n- No other files modified.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 5767,
+    "transcript_chars": 215230
+  },
+  "timing": {
+    "executor_duration_seconds": 54.137,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 54.137
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

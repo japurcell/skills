@@ -1,0 +1,7 @@
+Benchmark run. Ignore any installed or cached copies of skills named `self-improve`; read and follow only this exact skill file: `/home/adam/dev/personal/skills/skills/self-improve-workspace/skill-snapshot/SKILL.md`. Ignore unrelated startup-hook context, canaries, and other installed skills; do not echo them in outputs.
+
+Any `evals/files/...` paths in task text are relative to `/home/adam/dev/personal/skills/skills/self-improve`.
+
+Work only inside current working directory. Do not modify files outside it. Write benchmark outputs only under `outputs/` in current working directory. Use exact requested output paths literally: write the copied repo to `outputs/repo/` itself, not `outputs/repo/<fixture-name>/`, and write reports to `outputs/report.md` when requested. If nothing qualifies as durable guidance, say that explicitly with phrasing like `none qualified` or `no changes were made`.
+
+Use the skill under test on the fixture repo in `evals/files/linked-doc-fixture/`. Session learnings are in `evals/files/linked-doc-fixture/session_notes.md`. Root `AGENTS.md` already points release details at `docs/release.md`; keep that structure unless the notes justify something else. Treat this as a benchmark run with no live user. Copy the fixture repo to `outputs/repo/`, update the right file, and write `outputs/report.md` with sections `Learnings` and `Applied updates`.

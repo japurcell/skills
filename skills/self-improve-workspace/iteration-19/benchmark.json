@@ -1,0 +1,427 @@
+{
+  "metadata": {
+    "skill_name": "self-improve",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "gpt-5-mini",
+    "analyzer_model": "gpt-5-mini",
+    "timestamp": "2026-06-19T00:10:17Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 51.154,
+        "tokens": 1646,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/AGENTS.md is created.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\nRepo durable guidance (mined from session notes)\n\nKeep root AGENTS.md minimal. Include non-default commands and validation steps.\n\npython3 scripts/check-config.py - Run after editing anything under deploy/ to validate deployment configuration.\n\npytest tests/integration/test_sync.py -q - Run for sync pipeline changes (integration tests for sync behavior).\n\nsrc/generated/ - Generated API clients live here; extend generated code instead of hand-writing request/response types.\n\nSource: evals/files/create-root-fixture/session_notes.md\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\nRepo durable guidance (mined from session notes)\n\nKeep root AGENTS.md minimal. Include non-default commands and validation steps.\n\npython3 scripts/check-config.py - Run after editing anything under deploy/ to validate deployment configuration.\n\npytest tests/integration/test_sync.py -q - Run for sync pipeline changes (integration tests for sync behavior).\n\nsrc/generated/ - Generated API clients live here; extend generated code instead of hand-writing request/response types.\n\nSource: evals/files/create-root-fixture/session_notes.md\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\nRepo durable guidance (mined from session notes)\n\nKeep root AGENTS.md minimal. Include non-default commands and validation steps.\n\npython3 scripts/check-config.py - Run after editing anything under deploy/ to validate deployment configuration.\n\npytest tests/integration/test_sync.py -q - Run for sync pipeline changes (integration tests for sync behavior).\n\nsrc/generated/ - Generated API clients live here; extend generated code instead of hand-writing request/response types.\n\nSource: evals/files/create-root-fixture/session_notes.md\n"
+        },
+        {
+          "text": "outputs/report.md includes Learnings and Applied updates.",
+          "passed": true,
+          "evidence": "Learnings\n\n- After editing anything under deploy/: run `python3 scripts/check-config.py` to validate deployment config.\n- For sync pipeline changes: run `pytest tests/integration/test_sync.py -q`.\n- Generated API clients live in `src/generated/`; extend generated code rather than hand-writing request/response types.\n\nApplied updates\n\n- Created `./AGENTS.md` at repository root with the three durable learnings above. File: outputs/repo/AGENTS.md\n\nSource: mined from evals/files/create-root-fixture/session_notes.md\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 62.034,
+        "tokens": 2492,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+          "passed": true,
+          "evidence": "# AGENTS.md (web)\n\n- Tests: run `pnpm --dir web test -- --runInBand` after changing anything in `web/`.\n  - Reason: shared fixtures require serial test runs; passing `--runInBand` forces serial execution.\n- Use `pnpm` as project package manager for web.\n- Keep scoped test guidance near the web code to avoid root bloat.\n"
+        },
+        {
+          "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+          "passed": true,
+          "evidence": "# AGENTS.md (api)\n\n- After editing `api/schema/*.json`, run: `python3 scripts/validate_schema.py` to validate changes.\n- API contract details live under `api/`; keep contract edits and validation steps together.\n- Keep any longer API-contract discussions in `api/README.md` or a linked doc; keep this file focused on actionable steps.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\nProject uses pnpm and python3.\n\n- See web/AGENTS.md for web test command and test runtime notes.\n- See api/AGENTS.md for API schema validation and contract notes.\n- Keep this root file short.\n"
+        },
+        {
+          "text": "outputs/report.md includes Moved guidance and Grouped files.",
+          "passed": true,
+          "evidence": "Learnings\n\n- Root AGENTS.md was too broad; scoped rules (web tests, api schema validation) belong near the code they affect.\n- Web tests require serial runs due to shared fixtures; use `pnpm --dir web test -- --runInBand`.\n- After editing `api/schema/*.json` run `python3 scripts/validate_schema.py`.\n- Repo has README (no durable changes required for README now).\n\nApplied updates\n\n- Edited: outputs/repo/AGENTS.md (made root file minimal, added pointers to scoped AGENTS files).\n- Created: outputs/repo/web/AGENTS.md (web test command + reason).\n- Created: outputs/repo/api/AGENTS.md (schema validation + location of API contract notes).\n\nMoved guidance\n\n- Moved web test command and serial-test note from root AGENTS.md \u2192 web/AGENTS.md.\n- Moved schema validation note from root AGENTS.md \u2192 api/AGENTS.md.\n- Root file now points to scoped AGENTS.md files.\n\nGrouped files\n\n- Root: outputs/repo/AGENTS.md\n- Web-scoped: outputs/repo/web/AGENTS.md\n- API-scoped: outputs/repo/api/AGENTS.md\n\nNotes\n\n- No other durable learnings qualified for root placement; no deletions beyond moving scoped lines were necessary.\n- If more detailed API-contract guidance is needed, create `outputs/repo/api/README.md` and link from api/AGENTS.md.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 72.136,
+        "tokens": 1043,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/docs/release.md includes the new release sanity command.",
+          "passed": true,
+          "evidence": "# Release process\n\n1. Update rollout manifests.\n2. Run `./scripts/check-release`.\n3. Tag the release.\n\n## Post-edit checklist\n\n- After editing rollout manifests, run `python3 scripts/release_sanity.py`.\n- Release details belong in docs/release.md (not root AGENTS.md).\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md still links release detail to docs/release.md and does not inline the new command.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Release process details live in `docs/release.md`.\n- Keep root guidance short and link to detailed docs instead of copying long checklists here.\n"
+        },
+        {
+          "text": "outputs/report.md includes Learnings and Applied updates.",
+          "passed": true,
+          "evidence": "Learnings\n\n- After editing rollout manifests, run `python3 scripts/release_sanity.py`.\n- Release details belong in docs/release.md, not root AGENTS.md.\n\nApplied updates\n\n- Added Post-edit checklist to docs/release.md: instruction to run `python3 scripts/release_sanity.py` and note to update docs/release.md (not AGENTS.md).\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 39.796,
+        "tokens": 603,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Use `python3` for repo scripts.\n- Run `pytest tests/unit -q` for unit-test-only changes.\n"
+        },
+        {
+          "text": "No new scoped AGENTS.md files are created.",
+          "passed": true,
+          "evidence": "no extra scoped AGENTS.md files"
+        },
+        {
+          "text": "outputs/report.md says none qualified or no changes were made.",
+          "passed": true,
+          "evidence": "Benchmark run result\nTimestamp: 2026-06-18T17:07:09.568-07:00\nCopied: /home/adam/dev/personal/skills/skills/self-improve/evals/files/noop-fixture -> outputs/repo/\nSkill used: /home/adam/dev/personal/skills/skills/self-improve/SKILL.md\nDecision: none qualified \u2014 no durable guidance found; no AGENTS changes made.\nNotes: fixture preserved unchanged.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 47.387,
+        "tokens": 5395,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+          "passed": true,
+          "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n\n## Durable learnings (from progress artifacts)\n\n- return-url prefix validation - Evaluate decoded form of return-url prefix, not only raw string; reuse shared return-url policy across guards/login paths.\n- tests - Jasmine forbids nested `it`; keep test blocks at `describe` root to avoid test framework errors.\n- streams - Use cached read stream for reads and a fresh-fetch command path for mutations to avoid replay bugs (pattern: cached-read + fresh-mutation).\n- rxjs/shareReplay - `shareReplay(1)` can surface stale-first behavior; prefer explicit caching or fresh-fetch on mutations.\n- aria-describedby composition - Append helper ID first, then contextual error IDs to preserve expected focus/error UX.\n- dev-route checks - Dev route prefix affects browser tests; direct `/login` may not hit intended dev route.\n- time-claims - Assert time-based claims with ranges to reduce flakiness.\n- single-rule targeting - Keep validators single-rule targeted to avoid false negatives from unrelated validators.\n- avoid placeholder defaults - Avoid placeholder defaults in validators to prevent unrelated validation failures.\n\nKeep root AGENTS.md short and link to this doc for auth/login details.\n"
+        },
+        {
+          "text": "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+          "passed": true,
+          "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n\n## Durable learnings (from progress artifacts)\n\n- return-url prefix validation - Evaluate decoded form of return-url prefix, not only raw string; reuse shared return-url policy across guards/login paths.\n- tests - Jasmine forbids nested `it`; keep test blocks at `describe` root to avoid test framework errors.\n- streams - Use cached read stream for reads and a fresh-fetch command path for mutations to avoid replay bugs (pattern: cached-read + fresh-mutation).\n- rxjs/shareReplay - `shareReplay(1)` can surface stale-first behavior; prefer explicit caching or fresh-fetch on mutations.\n- aria-describedby composition - Append helper ID first, then contextual error IDs to preserve expected focus/error UX.\n- dev-route checks - Dev route prefix affects browser tests; direct `/login` may not hit intended dev route.\n- time-claims - Assert time-based claims with ranges to reduce flakiness.\n- single-rule targeting - Keep validators single-rule targeted to avoid false negatives from unrelated validators.\n- avoid placeholder defaults - Avoid placeholder defaults in validators to prevent unrelated validation failures.\n\nKeep root AGENTS.md short and link to this doc for auth/login details.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Authentication and login guidance lives in `docs/auth.md`.\n- Keep root guidance short and link to detailed docs instead of copying long auth checklists here.\n"
+        },
+        {
+          "text": "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+          "passed": true,
+          "evidence": "Learnings\n\n- return-url prefix validation: evaluate decoded forms; reuse shared return-url policy.\n- Jasmine: no nested `it`; keep tests at describe root.\n- Streams: cached-read + fresh-fetch for mutations prevents replay bugs; `shareReplay(1)` can be stale-first.\n- aria-describedby: helper ID then errors.\n- Time-based claims: use ranges; avoid placeholder defaults; prefer single-rule targeting.\n\nApplied updates\n\n- Updated outputs/repo/docs/auth.md with durable learnings from progress.txt. Kept original startup-route artifact guidance.\n\nAssumptions\n\n- Root AGENTS.md intentionally routes auth/login to docs/auth.md; that routing remains unchanged.\n- No other AGENTS.md required changes.\n- Progress artifacts are authoritative source for durable learnings in this benchmark.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 3,
+        "failed": 1,
+        "total": 4,
+        "time_seconds": 36.708,
+        "tokens": 1784,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/AGENTS.md is created.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\nDurable, actionable guidance mined from recent session notes.\n\n- `python3 scripts/check-config.py` - Run after editing anything under `deploy/` to validate deployment configuration.\n- `pytest tests/integration/test_sync.py -q` - Run this integration test when making changes to the sync pipeline.\n- `src/generated/` - Generated API clients live here; extend generated clients rather than hand-writing request/response types.\n- Prefer inspecting `src/` and `deploy/` for authoritative implementation details; README may be summary or stale.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\nDurable, actionable guidance mined from recent session notes.\n\n- `python3 scripts/check-config.py` - Run after editing anything under `deploy/` to validate deployment configuration.\n- `pytest tests/integration/test_sync.py -q` - Run this integration test when making changes to the sync pipeline.\n- `src/generated/` - Generated API clients live here; extend generated clients rather than hand-writing request/response types.\n- Prefer inspecting `src/` and `deploy/` for authoritative implementation details; README may be summary or stale.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+          "passed": false,
+          "evidence": "# AGENTS.md\n\nDurable, actionable guidance mined from recent session notes.\n\n- `python3 scripts/check-config.py` - Run after editing anything under `deploy/` to validate deployment configuration.\n- `pytest tests/integration/test_sync.py -q` - Run this integration test when making changes to the sync pipeline.\n- `src/generated/` - Generated API clients live here; extend generated clients rather than hand-writing request/response types.\n- Prefer inspecting `src/` and `deploy/` for authoritative implementation details; README may be summary or stale.\n"
+        },
+        {
+          "text": "outputs/report.md includes Learnings and Applied updates.",
+          "passed": true,
+          "evidence": "Learnings\n\n- Non-default validation command: run `python3 scripts/check-config.py` after edits under `deploy/`.\n- Integration test to run for sync pipeline changes: `pytest tests/integration/test_sync.py -q`.\n- Generated API clients live in `src/generated/`; extend these rather than hand-writing types.\n\nApplied updates\n\n- Copied fixture repo to `outputs/repo/`.\n- Created `outputs/repo/AGENTS.md` containing the three durable learnings above and a note to prefer inspecting `src/` and `deploy/` over README when unsure.\n\nAssumptions\n\n- Session note items 1-3 classified as durable; items about laptop fan and README open were omitted or summarized.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 37.351,
+        "tokens": 2097,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+          "passed": true,
+          "evidence": "web/ scoped rules\n\n- Use pnpm.\n- Run tests serially (shared fixtures): `pnpm --dir web test -- --runInBand`.\n- Run `pnpm --dir web test` after changing anything in `web/`.\n"
+        },
+        {
+          "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+          "passed": true,
+          "evidence": "api/ scoped rules\n\n- API contract details live under `api/`.\n- After editing `api/schema/*.json`, run: `python3 scripts/validate_schema.py`.\n- Use python3 for schema validation and related scripts.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+          "passed": true,
+          "evidence": "Project uses pnpm and python3.\n\nSee web/AGENTS.md and api/AGENTS.md for scoped rules.\n\nKeep root file short.\n"
+        },
+        {
+          "text": "outputs/report.md includes Moved guidance and Grouped files.",
+          "passed": true,
+          "evidence": "Learnings\n\n- Durable guidance found: web tests must run serially; api schema validation command; project uses pnpm and python3.\n\nApplied updates\n\n- Root AGENTS.md shortened to minimal project-level notes.\n- Created scoped AGENTS.md under web/ and api/ with concrete commands.\n- Added SELF_IMPROVE_REFERENCE.md summarizing placement and durable-learning filter.\n\nMoved guidance\n\n- Moved test-running guidance into web/AGENTS.md.\n- Moved schema-validation guidance into api/AGENTS.md.\n\nGrouped files\n\n- outputs/repo/AGENTS.md (root, minimal)\n- outputs/repo/web/AGENTS.md (scoped test rules)\n- outputs/repo/api/AGENTS.md (scoped api rules)\n- outputs/repo/session_notes.md (original session notes)\n- outputs/repo/SELF_IMPROVE_REFERENCE.md (durable-guidance reference)\n\nNo other changes made. If nothing else requested, task complete.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 36.786,
+        "tokens": 952,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/docs/release.md includes the new release sanity command.",
+          "passed": true,
+          "evidence": "# Release process\n\n1. Update rollout manifests.\n2. Run `python3 scripts/release_sanity.py`.\n3. Run `./scripts/check-release`.\n4. Tag the release.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md still links release detail to docs/release.md and does not inline the new command.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Release process details live in `docs/release.md`.\n- Keep root guidance short and link to detailed docs instead of copying long checklists here.\n"
+        },
+        {
+          "text": "outputs/report.md includes Learnings and Applied updates.",
+          "passed": true,
+          "evidence": "Learnings\n\n- After editing rollout manifests, run `python3 scripts/release_sanity.py` to verify changes before running full release checks.\n\nApplied updates\n\n- docs/release.md: added step to run `python3 scripts/release_sanity.py` after updating rollout manifests.\n- AGENTS.md: no changes made (release details remain in docs/release.md per repo guidance).\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 29.837,
+        "tokens": 806,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Use `python3` for repo scripts.\n- Run `pytest tests/unit -q` for unit-test-only changes.\n"
+        },
+        {
+          "text": "No new scoped AGENTS.md files are created.",
+          "passed": true,
+          "evidence": "no extra scoped AGENTS.md files"
+        },
+        {
+          "text": "outputs/report.md says none qualified or no changes were made.",
+          "passed": true,
+          "evidence": "Report: self-improve skill run on noop-fixture\n\n- Copied fixture repo to outputs/repo/ (unchanged).\n- Session notes reviewed: opened README.md; temporary branch name; one test run slower than expected.\n- Durable learnings filter applied per SKILL.md: none qualified.\n- Action taken: no changes made to any AGENTS.md (no durable guidance found).\n\nPhrase for CI: none qualified\n\nAssumptions: used SELF_IMPROVE SKILL.md at /home/adam/dev/personal/skills/skills/self-improve-workspace/skill-snapshot/SKILL.md; worked only inside current working directory.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 54.137,
+        "tokens": 5767,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+          "passed": true,
+          "evidence": "# Auth guidance\n\n- Keep detailed auth/login guidance in this file (docs/auth.md); root AGENTS.md should link here and stay brief.\n\n- Prefix safety: validate decoded URL prefixes, not only raw strings.\n- Return-url policy: reuse shared return-url policy for guard/login paths.\n- Cache vs mutation: use cached read streams for reads; use fresh-fetch command path for mutations to avoid replay/replaybugs. Beware `shareReplay(1)` stale-first behavior causing false UI failures.\n- Accessibility: compose `aria-describedby` in stable order: helper text first, then contextual errors. Preserve existing error/focus UX when extending helper association.\n- Tests and timing: Jasmine forbids nested `it` blocks \u2014 keep tests at describe root. Use time ranges for claim assertions to avoid flake. Avoid placeholder defaults that create unrelated validation failures.\n- Startup tests: when exercising production `_Host` branch, stage a minimal `wwwroot/dist/browser/index.html` artifact so request path does not fall through to `/Error` + OIDC challenge behavior.\n- Preserve existing failed-login behavior and its test coverage.\n"
+        },
+        {
+          "text": "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+          "passed": true,
+          "evidence": "# Auth guidance\n\n- Keep detailed auth/login guidance in this file (docs/auth.md); root AGENTS.md should link here and stay brief.\n\n- Prefix safety: validate decoded URL prefixes, not only raw strings.\n- Return-url policy: reuse shared return-url policy for guard/login paths.\n- Cache vs mutation: use cached read streams for reads; use fresh-fetch command path for mutations to avoid replay/replaybugs. Beware `shareReplay(1)` stale-first behavior causing false UI failures.\n- Accessibility: compose `aria-describedby` in stable order: helper text first, then contextual errors. Preserve existing error/focus UX when extending helper association.\n- Tests and timing: Jasmine forbids nested `it` blocks \u2014 keep tests at describe root. Use time ranges for claim assertions to avoid flake. Avoid placeholder defaults that create unrelated validation failures.\n- Startup tests: when exercising production `_Host` branch, stage a minimal `wwwroot/dist/browser/index.html` artifact so request path does not fall through to `/Error` + OIDC challenge behavior.\n- Preserve existing failed-login behavior and its test coverage.\n"
+        },
+        {
+          "text": "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+          "passed": true,
+          "evidence": "# AGENTS.md\n\n- Authentication and login guidance lives in `docs/auth.md`.\n- Keep root guidance short and link to detailed docs instead of copying long auth checklists here.\n"
+        },
+        {
+          "text": "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+          "passed": true,
+          "evidence": "Learnings\n\n- Prefix safety must evaluate decoded forms, not only raw strings.\n- Reuse shared return-url policy across guard/login paths.\n- Use cached read streams for reads and fresh-fetch for mutations to avoid replay bugs; `shareReplay(1)` can be stale-first and cause false failures.\n- Compose `aria-describedby` helper first, then contextual errors; preserve focus/error UX.\n- Jasmine forbids nested `it`; keep tests at describe root.\n- Time-based claim assertions should use ranges to avoid flake.\n- Avoid placeholder defaults that cause unrelated validation failures.\n- Startup production-route tests may need staged `wwwroot/dist/browser/index.html` to hit `_Host` branch and avoid `/Error` + OIDC challenge.\n\nApplied updates\n\n- Updated outputs/repo/docs/auth.md with durable learnings mined from evals/files/progress-fixture/progress.txt. Added guidance on prefix validation, return-url policy reuse, cache vs mutation patterns, accessibility ordering, test gotchas, timing, and startup test artifact.\n- Did not modify root AGENTS.md; root guidance remains short and links to docs/auth.md per project rules.\n\nAssumptions\n\n- Source of learnings: evals/files/progress-fixture/progress.txt (copied into outputs/repo/progress.txt during fixture copy).\n- Work limited to current working directory; outputs/repo contains fixture copy.\n- Root AGENTS.md guidance preserved; detailed auth guidance belongs in docs/auth.md per repo conventions.\n- No other files modified.\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 54.5014,
+        "stddev": 12.7062,
+        "min": 39.796,
+        "max": 72.136
+      },
+      "tokens": {
+        "mean": 2235.8,
+        "stddev": 1902.8173,
+        "min": 603,
+        "max": 5395
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.95,
+        "stddev": 0.1118,
+        "min": 0.75,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 38.9638,
+        "stddev": 9.0271,
+        "min": 29.837,
+        "max": 54.137
+      },
+      "tokens": {
+        "mean": 2281.2,
+        "stddev": 2023.2972,
+        "min": 806,
+        "max": 5767
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.05",
+      "time_seconds": "+15.5",
+      "tokens": "-45"
+    }
+  },
+  "notes": []
+}

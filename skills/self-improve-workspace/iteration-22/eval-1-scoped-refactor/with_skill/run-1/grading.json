@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+      "passed": true,
+      "evidence": "# Web AGENTS\n\n- Run `pnpm --dir web test -- --runInBand` after changing anything in `web/`.\n- `web/` uses shared fixtures, so test runs must stay serial."
+    },
+    {
+      "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+      "passed": true,
+      "evidence": "# API AGENTS\n\n- Run `python3 scripts/validate_schema.py` after editing `api/schema/*.json`.\n- API contract details live under `api/`."
+    },
+    {
+      "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nProject uses `pnpm` and `python3`.\n\n- Keep the root file short.\n"
+    },
+    {
+      "text": "outputs/report.md includes Moved guidance and Grouped files.",
+      "passed": true,
+      "evidence": "# Report\n\n## Learnings\n- Web test command requires `--runInBand` due to shared fixtures.\n\n## Applied updates\n- Added `--runInBand` to the `web/` test command rule.\n\n## Moved guidance\n- Web testing rules moved to `web/AGENTS.md`.\n- API schema validation rules moved to `api/AGENTS.md`.\n\n## Grouped files\n- `web/AGENTS.md`\n- `api/AGENTS.md`"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1105,
+    "transcript_chars": 125382
+  },
+  "timing": {
+    "executor_duration_seconds": 37.899,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 37.899
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "stories": [
+    {
+      "id": "story-local-auth-returnurl",
+      "title": "Local auth return-url hardening stays safe across login, validation, and startup paths",
+      "priority": 1,
+      "passes": false,
+      "requirements": [
+        "Harden local-auth return URL handling across login, validation, and startup routes",
+        "Preserve existing UX and add stable regression coverage"
+      ]
+    }
+  ]
+}

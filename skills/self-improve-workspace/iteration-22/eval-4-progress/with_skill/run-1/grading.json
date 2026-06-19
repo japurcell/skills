@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n- Prefix safety must evaluate decoded forms, not only raw string.\n- Jasmine forbids nested `it`; keep test blocks at describe root.\n- Existing guard/login paths should reuse shared return-url policy coverage.\n- Keep cached stream for reads; use fresh-fetch command path for mutations to avoid replay bugs. Fresh-fetch command path plus cached read stream split is stable fix shape for replay bugs.\n- `shareReplay(1)` stale-first behavior can cause false UI failure on success flows.\n- Compose `aria-describedby` in stable order: helper first, then contextual errors. Preserve existing error/focus UX while extending helper association through composed `aria-describedby`.\n- Dev route prefix matters for browser checks. Browser direct `/login` may not hit the right dev route.\n- Time-based claim assertions should use ranges to avoid flake.\n- Preserve single-rule targeting to avoid false negatives from unrelated validators.\n- Avoid placeholder defaults to prevent unrelated validation failures.\n"
+    },
+    {
+      "text": "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n- Prefix safety must evaluate decoded forms, not only raw string.\n- Jasmine forbids nested `it`; keep test blocks at describe root.\n- Existing guard/login paths should reuse shared return-url policy coverage.\n- Keep cached stream for reads; use fresh-fetch command path for mutations to avoid replay bugs. Fresh-fetch command path plus cached read stream split is stable fix shape for replay bugs.\n- `shareReplay(1)` stale-first behavior can cause false UI failure on success flows.\n- Compose `aria-describedby` in stable order: helper first, then contextual errors. Preserve existing error/focus UX while extending helper association through composed `aria-describedby`.\n- Dev route prefix matters for browser checks. Browser direct `/login` may not hit the right dev route.\n- Time-based claim assertions should use ranges to avoid flake.\n- Preserve single-rule targeting to avoid false negatives from unrelated validators.\n- Avoid placeholder defaults to prevent unrelated validation failures.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Authentication and login guidance lives in `docs/auth.md`.\n- Keep root guidance short and link to detailed docs instead of copying long auth checklists here.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+      "passed": true,
+      "evidence": "## Learnings\nMined `progress.txt` for durable guidance related to the `story-local-auth-returnurl` feature:\n- Security/validation: evaluate decoded forms for prefix safety; avoid placeholder defaults to prevent unrelated validation failures.\n- Testing: Jasmine forbids nested `it`; keep test blocks at describe root. Time-based claim assertions should use ranges to avoid flake. Preserve single-rule targeting.\n- Architecture/State: Keep cached stream for reads; use fresh-fetch command path for mutations to avoid replay bugs. `shareReplay(1)` stale-first behavior can cause false UI failure on success flows.\n- Accessibility/UX: Compose `aria-describedby` in stable order: helper first, then contextual errors. Preserve existing error/focus UX.\n- Environment: Dev route prefix matters for browser checks. Browser direct `/login` may not hit the right dev route.\n\n## Applied updates\n- Updated `docs/auth.md` to append the extracted learnings.\n- Maintained the existing structure where auth/login guidance lives in `docs/auth.md` rather than polluting the root `AGENTS.md`.\n\n## Assumptions\n- The root `AGENTS.md` explicitly routes authentication and login detail to `docs/auth.md`. Following the rule \"If one topic doc already owns a workflow, keep related test, accessibility, or state-management learnings with that topic unless they clearly stand alone as repo-wide rules\", all learnings from the `story-local-auth-returnurl` sprint were grouped into `docs/auth.md` to avoid splitting related rules.\n- The learning about `wwwroot/dist/browser/index.html` was already present in `docs/auth.md` and was preserved without duplication.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 6053,
+    "transcript_chars": 169858
+  },
+  "timing": {
+    "executor_duration_seconds": 73.531,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 73.531
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

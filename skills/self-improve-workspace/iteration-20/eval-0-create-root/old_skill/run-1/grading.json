@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md is created.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- `python3 scripts/check-config.py` - run after edits under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` - run for sync pipeline changes.\n- `src/generated/` API clients - extend generated clients instead of hand-writing request/response types.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- `python3 scripts/check-config.py` - run after edits under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` - run for sync pipeline changes.\n- `src/generated/` API clients - extend generated clients instead of hand-writing request/response types.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- `python3 scripts/check-config.py` - run after edits under `deploy/`.\n- `pytest tests/integration/test_sync.py -q` - run for sync pipeline changes.\n- `src/generated/` API clients - extend generated clients instead of hand-writing request/response types.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings and Applied updates.",
+      "passed": true,
+      "evidence": "# Learnings\n\n- Qualified: after edits under `deploy/`, run `python3 scripts/check-config.py`.\n- Qualified: for sync pipeline changes, run `pytest tests/integration/test_sync.py -q`.\n- Qualified: API client work should extend code in `src/generated/` instead of hand-writing request/response types.\n- Excluded: README-navigation note and laptop fan note did not qualify as durable guidance.\n\n# Applied updates\n\n- Copied fixture repo to `outputs/repo/`.\n- Created `outputs/repo/AGENTS.md` because fixture had no existing `AGENTS.md`.\n- Added 3 durable, repo-specific instructions to root `AGENTS.md`.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1447,
+    "transcript_chars": 218710
+  },
+  "timing": {
+    "executor_duration_seconds": 48.079,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 48.079
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "eval_id": 0,
+    "eval_name": "create-root",
+    "config": "with_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-0-create-root/with_skill/run-1",
+    "session_id": "dbecb800-b1b4-4fe3-a24e-98843a8ba140",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "eval_id": 0,
+    "eval_name": "create-root",
+    "config": "old_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-0-create-root/old_skill/run-1",
+    "session_id": "1f088707-8df1-4606-848e-8e381212863f",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "eval_id": 1,
+    "eval_name": "scoped-refactor",
+    "config": "with_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-1-scoped-refactor/with_skill/run-1",
+    "session_id": "bddc015b-e4a5-4311-bcb2-a24aab0bf57d",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "eval_id": 1,
+    "eval_name": "scoped-refactor",
+    "config": "old_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-1-scoped-refactor/old_skill/run-1",
+    "session_id": "0ef34e66-4e5e-4e64-be63-26ffe233ac65",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "linked-doc",
+    "config": "with_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-2-linked-doc/with_skill/run-1",
+    "session_id": "605c399e-d88f-4e89-977d-ed8d6a4ea4f9",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "eval_id": 2,
+    "eval_name": "linked-doc",
+    "config": "old_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-2-linked-doc/old_skill/run-1",
+    "session_id": "f275f42b-9852-4619-be31-e09ff8cf802a",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "noop",
+    "config": "with_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-3-noop/with_skill/run-1",
+    "session_id": "feb1ac3f-d7ae-4208-a0a2-85453b7ceb2b",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "eval_id": 3,
+    "eval_name": "noop",
+    "config": "old_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-3-noop/old_skill/run-1",
+    "session_id": "07cc4846-ad05-4cfb-ab59-805c26d20610",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "progress",
+    "config": "with_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-4-progress/with_skill/run-1",
+    "session_id": "6734e322-e0dd-4e99-9087-37b3e49d6c49",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "eval_id": 4,
+    "eval_name": "progress",
+    "config": "old_skill",
+    "run_dir": "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-22/eval-4-progress/old_skill/run-1",
+    "session_id": "e2dc4d20-4c2f-4199-babe-f1998fb1e328",
+    "model": "gemini-3.1-pro-preview"
+  }
+]

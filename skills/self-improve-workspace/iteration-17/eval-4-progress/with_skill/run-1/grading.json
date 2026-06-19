@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n- Return-url prefix safety checks should validate decoded forms, not only raw strings.\n- Keep guard and login paths on shared return-url policy behavior and coverage.\n- For login state flows, keep cached stream reads and use a fresh-fetch command path for mutations to avoid replay regressions.\n- Treat `shareReplay(1)` stale-first behavior as a likely cause when success-path UI assertions fail.\n- Preserve existing failed-login behavior and coverage when fixing success-path regressions.\n- Compose `aria-describedby` in stable order: helper text ID first, then contextual error IDs.\n- Extend helper/error associations without changing existing error focus behavior.\n- In Jasmine suites, avoid nested `it`; keep test cases directly under the surrounding `describe`.\n- For time-based claim validation, assert acceptable ranges instead of exact timestamps.\n- Keep validator tests single-rule focused; avoid placeholder defaults that trigger unrelated validation failures.\n"
+    },
+    {
+      "text": "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n- Return-url prefix safety checks should validate decoded forms, not only raw strings.\n- Keep guard and login paths on shared return-url policy behavior and coverage.\n- For login state flows, keep cached stream reads and use a fresh-fetch command path for mutations to avoid replay regressions.\n- Treat `shareReplay(1)` stale-first behavior as a likely cause when success-path UI assertions fail.\n- Preserve existing failed-login behavior and coverage when fixing success-path regressions.\n- Compose `aria-describedby` in stable order: helper text ID first, then contextual error IDs.\n- Extend helper/error associations without changing existing error focus behavior.\n- In Jasmine suites, avoid nested `it`; keep test cases directly under the surrounding `describe`.\n- For time-based claim validation, assert acceptable ranges instead of exact timestamps.\n- Keep validator tests single-rule focused; avoid placeholder defaults that trigger unrelated validation failures.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Authentication and login guidance lives in `docs/auth.md`.\n- Keep root guidance short and link to detailed docs instead of copying long auth checklists here.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+      "passed": true,
+      "evidence": "# Learnings\n\n- Return-url safety checks should validate decoded prefixes, and guard/login coverage should stay aligned on shared policy behavior.\n- Login replay regressions are best handled by keeping cached read streams and using fresh-fetch command paths for mutations; `shareReplay(1)` stale-first behavior is a known success-path failure source.\n- Accessibility and UX updates should preserve existing error/focus behavior while composing `aria-describedby` in helper-first, error-second order.\n- Auth/login tests are more stable when Jasmine `it` blocks are not nested, time-based claims use ranges, and validator coverage stays single-rule focused.\n- Startup production-route tests may require staging `wwwroot/dist/browser/index.html` to exercise `_Host` instead of `/Error` + OIDC challenge fallback.\n\n# Applied updates\n\n- Copied fixture repository contents to `outputs/repo/`.\n- Updated `outputs/repo/docs/auth.md` with durable auth/login implementation and testing guidance mined from `progress.txt`.\n- Kept root `outputs/repo/AGENTS.md` unchanged so auth/login detail remains owned by `docs/auth.md`.\n\n# Assumptions\n\n- Since root guidance already routes auth/login detail to `docs/auth.md`, all qualified learnings from `progress.txt` were placed there rather than in root `AGENTS.md`.\n- `/home/adam/.agents/skills/self-improve/SELF_IMPROVE_REFERENCE.md` was not readable in this environment, so updates were derived from the requested `SKILL.md` and fixture artifacts.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 5874,
+    "transcript_chars": 243681
+  },
+  "timing": {
+    "executor_duration_seconds": 69.776,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 69.776
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

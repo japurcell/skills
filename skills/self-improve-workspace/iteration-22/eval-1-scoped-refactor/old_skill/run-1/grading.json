@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+      "passed": true,
+      "evidence": "# Web Guidelines\n\n- Run `pnpm --dir web test -- --runInBand` after changing anything. Test runs must stay serial because of shared fixtures.\n"
+    },
+    {
+      "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+      "passed": true,
+      "evidence": "# API Guidelines\n\n- Run `python3 scripts/validate_schema.py` after editing `schema/*.json`.\n- API contract details live here.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nProject uses `pnpm` and `python3`.\n\n- See scoped `AGENTS.md` files in `web/` and `api/` for directory-specific rules.\n\n"
+    },
+    {
+      "text": "outputs/report.md includes Moved guidance and Grouped files.",
+      "passed": true,
+      "evidence": "# Self Improve Report\n\n## Learnings\n\n- Captured the correct web test command (`pnpm --dir web test -- --runInBand`) from session notes to ensure tests run in serial.\n- Excluded the obvious fact that the repo has a README.\n\n## Applied updates\n\n- Updated root `AGENTS.md` to remove directory-specific details, keeping it prompt-light.\n- Created `web/AGENTS.md` with the updated web test command and shared fixtures context.\n- Created `api/AGENTS.md` with schema validation commands and API contract notes.\n\n## Moved guidance\n\n- Moved \"Run `pnpm --dir web test` after changing anything in `web/`\" to `web/AGENTS.md`.\n- Moved \"`web/` uses shared fixtures, so test runs must stay serial\" to `web/AGENTS.md`.\n- Moved \"Run `python3 scripts/validate_schema.py` after editing `api/schema/*.json`\" to `api/AGENTS.md`.\n- Moved \"API contract details live under `api/`\" to `api/AGENTS.md`.\n\n## Grouped files\n\n- `./AGENTS.md` (root, near-universal rules)\n- `./web/AGENTS.md` (web-scoped rules)\n- `./api/AGENTS.md` (api-scoped rules)"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1821,
+    "transcript_chars": 150850
+  },
+  "timing": {
+    "executor_duration_seconds": 50.415,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 50.415
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

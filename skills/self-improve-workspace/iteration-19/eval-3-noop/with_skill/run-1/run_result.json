@@ -1,0 +1,22 @@
+{
+  "model": "gpt-5-mini",
+  "skill_file": "/home/adam/dev/personal/skills/skills/self-improve/SKILL.md",
+  "returncode": 0,
+  "stderr": "Session exported to: /home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-19/eval-3-noop/with_skill/run-1/transcript.md\n",
+  "result_event": {
+    "type": "result",
+    "timestamp": "2026-06-19T00:07:47.250Z",
+    "sessionId": "dc393105-c646-479b-adaf-058115fffed7",
+    "exitCode": 0,
+    "usage": {
+      "premiumRequests": 0,
+      "totalApiDurationMs": 35634,
+      "sessionDurationMs": 39796,
+      "codeChanges": {
+        "linesAdded": 0,
+        "linesRemoved": 0,
+        "filesModified": []
+      }
+    }
+  }
+}

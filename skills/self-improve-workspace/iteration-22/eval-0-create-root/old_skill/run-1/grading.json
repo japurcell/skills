@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md is created.",
+      "passed": true,
+      "evidence": "# Project Guidance\n\n- `<python3 scripts/check-config.py>` - Run after editing anything under `deploy/`\n- `<pytest tests/integration/test_sync.py -q>` - Run for sync pipeline changes\n- `src/generated/` - Extend generated API clients instead of hand-writing request/response types\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+      "passed": true,
+      "evidence": "# Project Guidance\n\n- `<python3 scripts/check-config.py>` - Run after editing anything under `deploy/`\n- `<pytest tests/integration/test_sync.py -q>` - Run for sync pipeline changes\n- `src/generated/` - Extend generated API clients instead of hand-writing request/response types\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+      "passed": true,
+      "evidence": "# Project Guidance\n\n- `<python3 scripts/check-config.py>` - Run after editing anything under `deploy/`\n- `<pytest tests/integration/test_sync.py -q>` - Run for sync pipeline changes\n- `src/generated/` - Extend generated API clients instead of hand-writing request/response types\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings and Applied updates.",
+      "passed": true,
+      "evidence": "## Learnings\n\nFrom `session_notes.md`, the following durable learnings were qualified:\n- **Keep**: `python3 scripts/check-config.py` - Must run after editing anything under `deploy/`.\n- **Keep**: `pytest tests/integration/test_sync.py -q` - Must run for sync pipeline changes.\n- **Keep**: `src/generated/` - Extend generated API clients instead of hand-writing request/response types.\n- **Skip**: The agent opened the README before finding the real files (transient noise).\n- **Skip**: The user's laptop fan got loud during one test run (transient noise).\n\n## Applied updates\n\nNo `AGENTS.md` files existed. \n\nCreated `outputs/repo/AGENTS.md` with the top 3 durable learnings using the `<command or pattern> - <brief description>` format as instructed by the skill.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1624,
+    "transcript_chars": 140700
+  },
+  "timing": {
+    "executor_duration_seconds": 52.496,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 52.496
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

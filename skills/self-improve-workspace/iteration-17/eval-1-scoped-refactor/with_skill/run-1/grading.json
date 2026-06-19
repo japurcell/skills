@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nWeb package guidance.\n\n- After changing anything in `web/`, run `pnpm --dir web test -- --runInBand`.\n- Keep web test runs serial because shared fixtures fail in parallel.\n"
+    },
+    {
+      "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nAPI package guidance.\n\n- API contract details live under `api/`.\n- After editing `api/schema/*.json`, run `python3 scripts/validate_schema.py`.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nProject uses `pnpm` and `python3`.\n\n- Keep this root file short and project-wide.\n- `web/AGENTS.md` - web test workflow and fixture constraints.\n- `api/AGENTS.md` - API contract and schema validation workflow.\n"
+    },
+    {
+      "text": "outputs/report.md includes Moved guidance and Grouped files.",
+      "passed": true,
+      "evidence": "# Learnings\n\n- Durable: `web/` test runs must be serial; use `pnpm --dir web test -- --runInBand`.\n- Durable: after editing `api/schema/*.json`, run `python3 scripts/validate_schema.py`.\n- Durable: keep root `AGENTS.md` prompt-light and move scoped workflow details closer to owning folders.\n- Excluded as non-durable: \"repo has a README\".\n\n# Applied updates\n\n- Copied fixture repo to `outputs/repo/`.\n- Refactored `outputs/repo/AGENTS.md` to keep only project-wide routing guidance.\n- Added scoped guidance files:\n  - `outputs/repo/web/AGENTS.md`\n  - `outputs/repo/api/AGENTS.md`\n- Updated web test command to the corrected durable form with `-- --runInBand`.\n\n# Moved guidance\n\n| From | To | Guidance |\n| --- | --- | --- |\n| `outputs/repo/AGENTS.md` | `outputs/repo/web/AGENTS.md` | web test command + serial fixture constraint |\n| `outputs/repo/AGENTS.md` | `outputs/repo/api/AGENTS.md` | schema validation command + API contract location note |\n\n# Grouped files\n\n- Root (project-wide only): `outputs/repo/AGENTS.md`\n- Web scoped guidance: `outputs/repo/web/AGENTS.md`\n- API scoped guidance: `outputs/repo/api/AGENTS.md`\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2093,
+    "transcript_chars": 253265
+  },
+  "timing": {
+    "executor_duration_seconds": 63.769,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 63.769
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

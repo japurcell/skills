@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+      "passed": true,
+      "evidence": "# AGENTS.md (web)\n\n- Tests: run `pnpm --dir web test -- --runInBand` after changing anything in `web/`.\n  - Reason: shared fixtures require serial test runs; passing `--runInBand` forces serial execution.\n- Use `pnpm` as project package manager for web.\n- Keep scoped test guidance near the web code to avoid root bloat.\n"
+    },
+    {
+      "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+      "passed": true,
+      "evidence": "# AGENTS.md (api)\n\n- After editing `api/schema/*.json`, run: `python3 scripts/validate_schema.py` to validate changes.\n- API contract details live under `api/`; keep contract edits and validation steps together.\n- Keep any longer API-contract discussions in `api/README.md` or a linked doc; keep this file focused on actionable steps.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nProject uses pnpm and python3.\n\n- See web/AGENTS.md for web test command and test runtime notes.\n- See api/AGENTS.md for API schema validation and contract notes.\n- Keep this root file short.\n"
+    },
+    {
+      "text": "outputs/report.md includes Moved guidance and Grouped files.",
+      "passed": true,
+      "evidence": "Learnings\n\n- Root AGENTS.md was too broad; scoped rules (web tests, api schema validation) belong near the code they affect.\n- Web tests require serial runs due to shared fixtures; use `pnpm --dir web test -- --runInBand`.\n- After editing `api/schema/*.json` run `python3 scripts/validate_schema.py`.\n- Repo has README (no durable changes required for README now).\n\nApplied updates\n\n- Edited: outputs/repo/AGENTS.md (made root file minimal, added pointers to scoped AGENTS files).\n- Created: outputs/repo/web/AGENTS.md (web test command + reason).\n- Created: outputs/repo/api/AGENTS.md (schema validation + location of API contract notes).\n\nMoved guidance\n\n- Moved web test command and serial-test note from root AGENTS.md \u2192 web/AGENTS.md.\n- Moved schema validation note from root AGENTS.md \u2192 api/AGENTS.md.\n- Root file now points to scoped AGENTS.md files.\n\nGrouped files\n\n- Root: outputs/repo/AGENTS.md\n- Web-scoped: outputs/repo/web/AGENTS.md\n- API-scoped: outputs/repo/api/AGENTS.md\n\nNotes\n\n- No other durable learnings qualified for root placement; no deletions beyond moving scoped lines were necessary.\n- If more detailed API-contract guidance is needed, create `outputs/repo/api/README.md` and link from api/AGENTS.md.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2492,
+    "transcript_chars": 229485
+  },
+  "timing": {
+    "executor_duration_seconds": 62.034,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 62.034
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

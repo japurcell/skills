@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+      "passed": false,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n- Preserve existing focus and error behavior when extending login helpers.\n- Time-based claim assertions should use ranges to avoid flake.\n- Keep validation tests single-rule targeted to avoid false negatives from unrelated validators.\n- Avoid placeholder defaults that trigger unrelated validation failures.\n"
+    },
+    {
+      "text": "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n- Preserve existing focus and error behavior when extending login helpers.\n- Time-based claim assertions should use ranges to avoid flake.\n- Keep validation tests single-rule targeted to avoid false negatives from unrelated validators.\n- Avoid placeholder defaults that trigger unrelated validation failures.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Authentication and login guidance lives in `docs/auth.md`.\n- Keep root guidance short and link to detailed docs instead of copying long auth checklists here.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+      "passed": true,
+      "evidence": "# Learnings\n- Keep auth/login detail in `docs/auth.md`, not root `AGENTS.md`.\n- Stage and clean up a minimal `wwwroot/dist/browser/index.html` artifact when startup tests need the production `_Host` branch.\n- Preserve existing focus and error behavior when extending login helpers.\n- Use ranges for time-based claim assertions.\n- Keep validation tests single-rule targeted and avoid placeholder defaults.\n\n# Applied updates\n- Copied fixture repo into `outputs/repo/`.\n- Updated `outputs/repo/docs/auth.md` with the durable auth and test guidance from `progress.txt`.\n- Left `outputs/repo/AGENTS.md` unchanged so root guidance stays short.\n\n# Assumptions\n- `docs/auth.md` was the correct home for these auth/login learnings because root `AGENTS.md` already delegates there.\n- No other fixture files needed edits for this benchmark.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 4562,
+    "transcript_chars": 294319
+  },
+  "timing": {
+    "executor_duration_seconds": 66.692,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 66.692
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

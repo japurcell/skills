@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Use `python3` for repo scripts.\n- Run `pytest tests/unit -q` for unit-test-only changes.\n"
+    },
+    {
+      "text": "No new scoped AGENTS.md files are created.",
+      "passed": true,
+      "evidence": "no extra scoped AGENTS.md files"
+    },
+    {
+      "text": "outputs/report.md says none qualified or no changes were made.",
+      "passed": true,
+      "evidence": "Benchmark result: **none qualified**.\n\nI read only the specified skill file at `/home/adam/dev/personal/skills/skills/self-improve-workspace/skill-snapshot/SKILL.md`, reviewed fixture notes in `evals/files/noop-fixture/session_notes.md`, and found no durable, reusable guidance to add.\n\n`evals/files/noop-fixture/` was copied to `outputs/repo/` and left unchanged. **No AGENTS changes were made.**\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 652,
+    "transcript_chars": 163441
+  },
+  "timing": {
+    "executor_duration_seconds": 47.633,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 47.633
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

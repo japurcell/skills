@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The decision tells `self-improve` to mine both `## Codebase Patterns` and every `Learnings for future iterations` block.",
+      "passed": true,
+      "evidence": "Pass `self-improve` a concise reusable-rules summary, not raw progress blocks. Target nearby auth docs first because progress says auth/login guidance should stay scoped there; use nearby `AGENTS.md` only for short prompt-worthy rules and linked docs for longer auth/testing details. Exclude story IDs, timestamps, one-off file lists, and transient blockers.\n\nMine these `progress.txt` sections before handoff:\n- `## Codebase Patterns`\n- Every entry's `**Learnings for future iterations:**` block under `Patterns discovered`, `Gotchas encountered`, and `Useful context`\n- The `## 2026-06-12T12:00:00Z - FINALIZATION` reviewer entry, especially its reminder to capture auth, validation, accessibility, and startup-test rules\n\nPreserve reusable learnings in these categories:\n- **Validation/safety:** validate unsafe prefixes on decoded values, not only raw strings; reuse one shared return-url policy across login, guard, validation, and startup paths; preserve single-rule targeting; avoid placeholder defaults that trigger unrelated validators\n- **Cache/state/replay:** keep cached stream for reads and use fresh-fetch command path for mutations; treat `shareReplay(1)` stale-first behavior as replay-bug risk\n- **UX/accessibility:** preserve existing focus and error behavior; keep failed-login UX unchanged; compose `aria-describedby` in stable order with helper text first and contextual errors second\n- **Testing/anti-flake:** keep filtered auth tests for fast focused coverage; avoid nested Jasmine `it`; use ranged assertions for time-based claims to reduce flake\n- **Environment/setup:** browser checks must use correct dev route prefix; direct `/login` may miss intended dev route; startup production-route tests may require staged artifact `wwwroot/dist/browser/index.html`"
+    },
+    {
+      "text": "The decision preserves durable validation, replay/cache, accessibility, and test-stability learnings from progress.",
+      "passed": true,
+      "evidence": "Pass `self-improve` a concise reusable-rules summary, not raw progress blocks. Target nearby auth docs first because progress says auth/login guidance should stay scoped there; use nearby `AGENTS.md` only for short prompt-worthy rules and linked docs for longer auth/testing details. Exclude story IDs, timestamps, one-off file lists, and transient blockers.\n\nMine these `progress.txt` sections before handoff:\n- `## Codebase Patterns`\n- Every entry's `**Learnings for future iterations:**` block under `Patterns discovered`, `Gotchas encountered`, and `Useful context`\n- The `## 2026-06-12T12:00:00Z - FINALIZATION` reviewer entry, especially its reminder to capture auth, validation, accessibility, and startup-test rules\n\nPreserve reusable learnings in these categories:\n- **Validation/safety:** validate unsafe prefixes on decoded values, not only raw strings; reuse one shared return-url policy across login, guard, validation, and startup paths; preserve single-rule targeting; avoid placeholder defaults that trigger unrelated validators\n- **Cache/state/replay:** keep cached stream for reads and use fresh-fetch command path for mutations; treat `shareReplay(1)` stale-first behavior as replay-bug risk\n- **UX/accessibility:** preserve existing focus and error behavior; keep failed-login UX unchanged; compose `aria-describedby` in stable order with helper text first and contextual errors second\n- **Testing/anti-flake:** keep filtered auth tests for fast focused coverage; avoid nested Jasmine `it`; use ranged assertions for time-based claims to reduce flake\n- **Environment/setup:** browser checks must use correct dev route prefix; direct `/login` may miss intended dev route; startup production-route tests may require staged artifact `wwwroot/dist/browser/index.html`"
+    },
+    {
+      "text": "The decision preserves the staged production-artifact startup-test learning.",
+      "passed": true,
+      "evidence": "Pass `self-improve` a concise reusable-rules summary, not raw progress blocks. Target nearby auth docs first because progress says auth/login guidance should stay scoped there; use nearby `AGENTS.md` only for short prompt-worthy rules and linked docs for longer auth/testing details. Exclude story IDs, timestamps, one-off file lists, and transient blockers.\n\nMine these `progress.txt` sections before handoff:\n- `## Codebase Patterns`\n- Every entry's `**Learnings for future iterations:**` block under `Patterns discovered`, `Gotchas encountered`, and `Useful context`\n- The `## 2026-06-12T12:00:00Z - FINALIZATION` reviewer entry, especially its reminder to capture auth, validation, accessibility, and startup-test rules\n\nPreserve reusable learnings in these categories:\n- **Validation/safety:** validate unsafe prefixes on decoded values, not only raw strings; reuse one shared return-url policy across login, guard, validation, and startup paths; preserve single-rule targeting; avoid placeholder defaults that trigger unrelated validators\n- **Cache/state/replay:** keep cached stream for reads and use fresh-fetch command path for mutations; treat `shareReplay(1)` stale-first behavior as replay-bug risk\n- **UX/accessibility:** preserve existing focus and error behavior; keep failed-login UX unchanged; compose `aria-describedby` in stable order with helper text first and contextual errors second\n- **Testing/anti-flake:** keep filtered auth tests for fast focused coverage; avoid nested Jasmine `it`; use ranged assertions for time-based claims to reduce flake\n- **Environment/setup:** browser checks must use correct dev route prefix; direct `/login` may miss intended dev route; startup production-route tests may require staged artifact `wwwroot/dist/browser/index.html`"
+    },
+    {
+      "text": "The decision writes only reusable guidance into nearby `AGENTS.md` or linked docs, not story-specific notes.",
+      "passed": false,
+      "evidence": "Pass `self-improve` a concise reusable-rules summary, not raw progress blocks. Target nearby auth docs first because progress says auth/login guidance should stay scoped there; use nearby `AGENTS.md` only for short prompt-worthy rules and linked docs for longer auth/testing details. Exclude story IDs, timestamps, one-off file lists, and transient blockers.\n\nMine these `progress.txt` sections before handoff:\n- `## Codebase Patterns`\n- Every entry's `**Learnings for future iterations:**` block under `Patterns discovered`, `Gotchas encountered`, and `Useful context`\n- The `## 2026-06-12T12:00:00Z - FINALIZATION` reviewer entry, especially its reminder to capture auth, validation, accessibility, and startup-test rules\n\nPreserve reusable learnings in these categories:\n- **Validation/safety:** validate unsafe prefixes on decoded values, not only raw strings; reuse one shared return-url policy across login, guard, validation, and startup paths; preserve single-rule targeting; avoid placeholder defaults that trigger unrelated validators\n- **Cache/state/replay:** keep cached stream for reads and use fresh-fetch command path for mutations; treat `shareReplay(1)` stale-first behavior as replay-bug risk\n- **UX/accessibility:** preserve existing focus and error behavior; keep failed-login UX unchanged; compose `aria-describedby` in stable order with helper text first and contextual errors second\n- **Testing/anti-flake:** keep filtered auth tests for fast focused coverage; avoid nested Jasmine `it`; use ranged assertions for time-based claims to reduce flake\n- **Environment/setup:** browser checks must use correct dev route prefix; direct `/login` may miss intended dev route; startup production-route tests may require staged artifact `wwwroot/dist/browser/index.html`"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1784,
+    "transcript_chars": 246004
+  },
+  "timing": {
+    "executor_duration_seconds": 26.5,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 26.5
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

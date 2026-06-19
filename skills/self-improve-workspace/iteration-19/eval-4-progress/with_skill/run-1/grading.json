@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n\n## Durable learnings (from progress artifacts)\n\n- return-url prefix validation - Evaluate decoded form of return-url prefix, not only raw string; reuse shared return-url policy across guards/login paths.\n- tests - Jasmine forbids nested `it`; keep test blocks at `describe` root to avoid test framework errors.\n- streams - Use cached read stream for reads and a fresh-fetch command path for mutations to avoid replay bugs (pattern: cached-read + fresh-mutation).\n- rxjs/shareReplay - `shareReplay(1)` can surface stale-first behavior; prefer explicit caching or fresh-fetch on mutations.\n- aria-describedby composition - Append helper ID first, then contextual error IDs to preserve expected focus/error UX.\n- dev-route checks - Dev route prefix affects browser tests; direct `/login` may not hit intended dev route.\n- time-claims - Assert time-based claims with ranges to reduce flakiness.\n- single-rule targeting - Keep validators single-rule targeted to avoid false negatives from unrelated validators.\n- avoid placeholder defaults - Avoid placeholder defaults in validators to prevent unrelated validation failures.\n\nKeep root AGENTS.md short and link to this doc for auth/login details.\n"
+    },
+    {
+      "text": "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n\n## Durable learnings (from progress artifacts)\n\n- return-url prefix validation - Evaluate decoded form of return-url prefix, not only raw string; reuse shared return-url policy across guards/login paths.\n- tests - Jasmine forbids nested `it`; keep test blocks at `describe` root to avoid test framework errors.\n- streams - Use cached read stream for reads and a fresh-fetch command path for mutations to avoid replay bugs (pattern: cached-read + fresh-mutation).\n- rxjs/shareReplay - `shareReplay(1)` can surface stale-first behavior; prefer explicit caching or fresh-fetch on mutations.\n- aria-describedby composition - Append helper ID first, then contextual error IDs to preserve expected focus/error UX.\n- dev-route checks - Dev route prefix affects browser tests; direct `/login` may not hit intended dev route.\n- time-claims - Assert time-based claims with ranges to reduce flakiness.\n- single-rule targeting - Keep validators single-rule targeted to avoid false negatives from unrelated validators.\n- avoid placeholder defaults - Avoid placeholder defaults in validators to prevent unrelated validation failures.\n\nKeep root AGENTS.md short and link to this doc for auth/login details.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Authentication and login guidance lives in `docs/auth.md`.\n- Keep root guidance short and link to detailed docs instead of copying long auth checklists here.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+      "passed": true,
+      "evidence": "Learnings\n\n- return-url prefix validation: evaluate decoded forms; reuse shared return-url policy.\n- Jasmine: no nested `it`; keep tests at describe root.\n- Streams: cached-read + fresh-fetch for mutations prevents replay bugs; `shareReplay(1)` can be stale-first.\n- aria-describedby: helper ID then errors.\n- Time-based claims: use ranges; avoid placeholder defaults; prefer single-rule targeting.\n\nApplied updates\n\n- Updated outputs/repo/docs/auth.md with durable learnings from progress.txt. Kept original startup-route artifact guidance.\n\nAssumptions\n\n- Root AGENTS.md intentionally routes auth/login to docs/auth.md; that routing remains unchanged.\n- No other AGENTS.md required changes.\n- Progress artifacts are authoritative source for durable learnings in this benchmark.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 5395,
+    "transcript_chars": 211086
+  },
+  "timing": {
+    "executor_duration_seconds": 47.387,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 47.387
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

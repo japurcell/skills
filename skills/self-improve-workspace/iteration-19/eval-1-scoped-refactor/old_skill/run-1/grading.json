@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/web/AGENTS.md includes the serial web test command.",
+      "passed": true,
+      "evidence": "web/ scoped rules\n\n- Use pnpm.\n- Run tests serially (shared fixtures): `pnpm --dir web test -- --runInBand`.\n- Run `pnpm --dir web test` after changing anything in `web/`.\n"
+    },
+    {
+      "text": "outputs/repo/api/AGENTS.md includes the schema validation command.",
+      "passed": true,
+      "evidence": "api/ scoped rules\n\n- API contract details live under `api/`.\n- After editing `api/schema/*.json`, run: `python3 scripts/validate_schema.py`.\n- Use python3 for schema validation and related scripts.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md is shorter than the source root AGENTS.md and no longer owns the moved scoped commands.",
+      "passed": true,
+      "evidence": "Project uses pnpm and python3.\n\nSee web/AGENTS.md and api/AGENTS.md for scoped rules.\n\nKeep root file short.\n"
+    },
+    {
+      "text": "outputs/report.md includes Moved guidance and Grouped files.",
+      "passed": true,
+      "evidence": "Learnings\n\n- Durable guidance found: web tests must run serially; api schema validation command; project uses pnpm and python3.\n\nApplied updates\n\n- Root AGENTS.md shortened to minimal project-level notes.\n- Created scoped AGENTS.md under web/ and api/ with concrete commands.\n- Added SELF_IMPROVE_REFERENCE.md summarizing placement and durable-learning filter.\n\nMoved guidance\n\n- Moved test-running guidance into web/AGENTS.md.\n- Moved schema-validation guidance into api/AGENTS.md.\n\nGrouped files\n\n- outputs/repo/AGENTS.md (root, minimal)\n- outputs/repo/web/AGENTS.md (scoped test rules)\n- outputs/repo/api/AGENTS.md (scoped api rules)\n- outputs/repo/session_notes.md (original session notes)\n- outputs/repo/SELF_IMPROVE_REFERENCE.md (durable-guidance reference)\n\nNo other changes made. If nothing else requested, task complete.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2097,
+    "transcript_chars": 154349
+  },
+  "timing": {
+    "executor_duration_seconds": 37.351,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 37.351
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

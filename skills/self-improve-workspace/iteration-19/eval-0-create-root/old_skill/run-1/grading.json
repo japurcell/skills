@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md is created.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nDurable, actionable guidance mined from recent session notes.\n\n- `python3 scripts/check-config.py` - Run after editing anything under `deploy/` to validate deployment configuration.\n- `pytest tests/integration/test_sync.py -q` - Run this integration test when making changes to the sync pipeline.\n- `src/generated/` - Generated API clients live here; extend generated clients rather than hand-writing request/response types.\n- Prefer inspecting `src/` and `deploy/` for authoritative implementation details; README may be summary or stale.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md captures the deploy validation command, sync test command, and generated-client rule.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\nDurable, actionable guidance mined from recent session notes.\n\n- `python3 scripts/check-config.py` - Run after editing anything under `deploy/` to validate deployment configuration.\n- `pytest tests/integration/test_sync.py -q` - Run this integration test when making changes to the sync pipeline.\n- `src/generated/` - Generated API clients live here; extend generated clients rather than hand-writing request/response types.\n- Prefer inspecting `src/` and `deploy/` for authoritative implementation details; README may be summary or stale.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md excludes one-off noise like opening the README.",
+      "passed": false,
+      "evidence": "# AGENTS.md\n\nDurable, actionable guidance mined from recent session notes.\n\n- `python3 scripts/check-config.py` - Run after editing anything under `deploy/` to validate deployment configuration.\n- `pytest tests/integration/test_sync.py -q` - Run this integration test when making changes to the sync pipeline.\n- `src/generated/` - Generated API clients live here; extend generated clients rather than hand-writing request/response types.\n- Prefer inspecting `src/` and `deploy/` for authoritative implementation details; README may be summary or stale.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings and Applied updates.",
+      "passed": true,
+      "evidence": "Learnings\n\n- Non-default validation command: run `python3 scripts/check-config.py` after edits under `deploy/`.\n- Integration test to run for sync pipeline changes: `pytest tests/integration/test_sync.py -q`.\n- Generated API clients live in `src/generated/`; extend these rather than hand-writing types.\n\nApplied updates\n\n- Copied fixture repo to `outputs/repo/`.\n- Created `outputs/repo/AGENTS.md` containing the three durable learnings above and a note to prefer inspecting `src/` and `deploy/` over README when unsure.\n\nAssumptions\n\n- Session note items 1-3 classified as durable; items about laptop fan and README open were omitted or summarized.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1784,
+    "transcript_chars": 148944
+  },
+  "timing": {
+    "executor_duration_seconds": 36.708,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 36.708
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

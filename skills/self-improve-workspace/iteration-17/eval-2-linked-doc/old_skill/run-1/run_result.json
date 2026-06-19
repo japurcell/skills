@@ -1,0 +1,25 @@
+{
+  "model": "gpt-5.3-codex",
+  "skill_file": "/home/adam/dev/personal/skills/skills/self-improve-workspace/skill-snapshot/SKILL.md",
+  "returncode": 0,
+  "stderr": "Session exported to: /home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-17/eval-2-linked-doc/old_skill/run-1/transcript.md\n",
+  "result_event": {
+    "type": "result",
+    "timestamp": "2026-06-19T00:08:50.976Z",
+    "sessionId": "b0f8d0bd-349b-4d96-9c60-f2359ce5d9c6",
+    "exitCode": 0,
+    "usage": {
+      "premiumRequests": 1,
+      "totalApiDurationMs": 45760,
+      "sessionDurationMs": 49855,
+      "codeChanges": {
+        "linesAdded": 13,
+        "linesRemoved": 2,
+        "filesModified": [
+          "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-17/eval-2-linked-doc/old_skill/run-1/outputs/repo/docs/release.md",
+          "/home/adam/dev/personal/skills/skills/self-improve-workspace/iteration-17/eval-2-linked-doc/old_skill/run-1/outputs/report.md"
+        ]
+      }
+    }
+  }
+}

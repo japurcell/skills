@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Use `python3` for repo scripts.\n- Run `pytest tests/unit -q` for unit-test-only changes.\n"
+    },
+    {
+      "text": "No new scoped AGENTS.md files are created.",
+      "passed": true,
+      "evidence": "no extra scoped AGENTS.md files"
+    },
+    {
+      "text": "outputs/report.md says none qualified or no changes were made.",
+      "passed": true,
+      "evidence": "# Self-Improve Report\n\n## Analysis of Session Notes\n\nThe following items from `session_notes.md` were evaluated:\n- \"The agent opened `README.md`\" -> Obvious process fact / navigation noise, not actionable.\n- \"One local branch had a temporary name\" -> Transient environmental noise, not a repo-specific standing rule.\n- \"A test run took longer than expected once\" -> Temporary debugging noise, not actionable guidance.\n\n## Outcome\n\nNone qualified as durable guidance. No changes were made to `AGENTS.md`."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 757,
+    "transcript_chars": 117014
+  },
+  "timing": {
+    "executor_duration_seconds": 36.062,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 36.062
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

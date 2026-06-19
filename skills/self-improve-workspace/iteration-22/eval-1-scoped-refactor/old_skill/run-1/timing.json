@@ -1,0 +1,9 @@
+{
+  "session_id": "0ef34e66-4e5e-4e64-be63-26ffe233ac65",
+  "model": "gemini-3.1-pro-preview",
+  "exit_code": 0,
+  "total_tokens": 0,
+  "duration_ms": 50415,
+  "total_duration_seconds": 50.415,
+  "api_duration_ms": 44554
+}

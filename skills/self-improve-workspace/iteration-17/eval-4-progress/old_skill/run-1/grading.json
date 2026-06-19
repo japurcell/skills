@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/docs/auth.md captures representative progress-file learnings for validation, replay bugs, accessibility, and stable tests.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n- Validate return-url prefixes against decoded forms (not only raw strings) to avoid prefix-bypass bugs.\n- Reuse one shared return-url policy across guard and login helpers; preserve existing failed-login behavior while extending success-path logic.\n- For replay-prone login flows, keep cached streams for reads and use fresh-fetch command paths for mutations; avoid `shareReplay(1)` stale-first regressions on success paths.\n- When extending helper associations, compose `aria-describedby` in stable order: helper text first, then contextual error ids, without regressing focus/error UX.\n- In auth tests, avoid nested `it` blocks (Jasmine), assert time-based claims with ranges to reduce flakes, keep validator targeting focused to a single rule, and avoid placeholder defaults that trigger unrelated validators.\n- For browser checks in dev, use the correct dev route prefix because direct `/login` may bypass the intended route.\n"
+    },
+    {
+      "text": "outputs/repo/docs/auth.md preserves the staged production-artifact startup-test guidance.",
+      "passed": true,
+      "evidence": "# Auth guidance\n\n- When a startup test must exercise the production `_Host` branch, stage and clean up a minimal `wwwroot/dist/browser/index.html` test artifact so the request path does not fall through to `/Error` + OIDC challenge behavior.\n- Validate return-url prefixes against decoded forms (not only raw strings) to avoid prefix-bypass bugs.\n- Reuse one shared return-url policy across guard and login helpers; preserve existing failed-login behavior while extending success-path logic.\n- For replay-prone login flows, keep cached streams for reads and use fresh-fetch command paths for mutations; avoid `shareReplay(1)` stale-first regressions on success paths.\n- When extending helper associations, compose `aria-describedby` in stable order: helper text first, then contextual error ids, without regressing focus/error UX.\n- In auth tests, avoid nested `it` blocks (Jasmine), assert time-based claims with ranges to reduce flakes, keep validator targeting focused to a single rule, and avoid placeholder defaults that trigger unrelated validators.\n- For browser checks in dev, use the correct dev route prefix because direct `/login` may bypass the intended route.\n"
+    },
+    {
+      "text": "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Authentication and login guidance lives in `docs/auth.md`.\n- Keep root guidance short and link to detailed docs instead of copying long auth checklists here.\n"
+    },
+    {
+      "text": "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+      "passed": true,
+      "evidence": "# Learnings\n\n- Durable auth/login guidance belongs in `docs/auth.md`, not root `AGENTS.md`.\n- Return-url safety should validate decoded prefixes and reuse a shared return-url policy across guard/login paths.\n- Replay regressions are avoided by splitting cached-read streams from fresh-fetch mutation command paths (especially around `shareReplay(1)` stale-first behavior).\n- Accessibility-safe helper extensions should preserve existing focus/error UX and keep `aria-describedby` ordering stable (helper before contextual errors).\n- Durable test guidance: no nested Jasmine `it` blocks, time-claim assertions should use ranges, validator tests should target one rule and avoid placeholder defaults that trigger unrelated validators.\n- Startup branch coverage and dev browser checks have route/artifact gotchas (`wwwroot/dist/browser/index.html` staging and correct dev route prefix usage).\n\n# Applied updates\n\n- Copied fixture repo from `evals/files/progress-fixture/` to `outputs/repo/`.\n- Updated `outputs/repo/docs/auth.md` with mined durable auth/login patterns and gotchas from `progress.txt`.\n- Kept `outputs/repo/AGENTS.md` structure unchanged so root remains short and continues routing auth detail to `docs/auth.md`.\n\n# Assumptions\n\n- Treated all `evals/files/...` paths as relative to `/home/adam/dev/personal/skills/skills/self-improve`.\n- Considered the `progress.txt` \"Learnings for future iterations\" entries as the authoritative durable source for this benchmark run.\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 5836,
+    "transcript_chars": 225310
+  },
+  "timing": {
+    "executor_duration_seconds": 65.637,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 65.637
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

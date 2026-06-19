@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "outputs/repo/AGENTS.md matches the source fixture AGENTS.md.",
+      "passed": true,
+      "evidence": "# AGENTS.md\n\n- Use `python3` for repo scripts.\n- Run `pytest tests/unit -q` for unit-test-only changes.\n"
+    },
+    {
+      "text": "No new scoped AGENTS.md files are created.",
+      "passed": true,
+      "evidence": "no extra scoped AGENTS.md files"
+    },
+    {
+      "text": "outputs/report.md says none qualified or no changes were made.",
+      "passed": true,
+      "evidence": "Benchmark run result\nTimestamp: 2026-06-18T17:07:09.568-07:00\nCopied: /home/adam/dev/personal/skills/skills/self-improve/evals/files/noop-fixture -> outputs/repo/\nSkill used: /home/adam/dev/personal/skills/skills/self-improve/SKILL.md\nDecision: none qualified \u2014 no durable guidance found; no AGENTS changes made.\nNotes: fixture preserved unchanged.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 603,
+    "transcript_chars": 153324
+  },
+  "timing": {
+    "executor_duration_seconds": 39.796,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 39.796
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}
