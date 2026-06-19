@@ -1,0 +1,98 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Desc",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "persistence",
+      "description": "Do persistence",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [],
+      "parallelBatch": 1
+    },
+    {
+      "id": "US-002",
+      "title": "read-state updates",
+      "description": "Do read-state updates",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2
+    },
+    {
+      "id": "US-003",
+      "title": "badge or list UI",
+      "description": "Do badge or list UI",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2
+    },
+    {
+      "id": "US-004",
+      "title": "filtering",
+      "description": "Do filtering",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ],
+      "parallelBatch": 3
+    },
+    {
+      "id": "US-005",
+      "title": "clearing read notifications",
+      "description": "Do clearing read notifications",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ],
+      "parallelBatch": 3
+    }
+  ]
+}

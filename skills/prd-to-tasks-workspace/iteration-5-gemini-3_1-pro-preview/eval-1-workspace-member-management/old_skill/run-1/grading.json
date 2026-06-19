@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "The output is saved to outputs/generated/prd.json.",
+      "passed": true,
+      "evidence": "/home/adam/dev/personal/skills/skills/prd-to-tasks-workspace/iteration-5-gemini-3_1-pro-preview/eval-1-workspace-member-management/old_skill/run-1/outputs/generated/prd.json"
+    },
+    {
+      "text": "branchName is derived from the feature title.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Workspace Member Management\",\n  \"branchName\": \"workspace-member-management\",\n  \"description\": \"Desc\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"invite\",\n      \"description\": \"Do invite\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 1\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"role change\",\n      \"description\": \"Do role change\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 2\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"revoke access\",\n      \"description\": \"Do revoke access\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 3\n    },\n    {\n      \"id\": \"US-004\",\n      \"title\": \"audit-log or audit-view work\",\n      \"description\": \"Do audit-log or audit-view work\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 4,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 4\n    }\n  ]\n}"
+    },
+    {
+      "text": "The stories separately cover invite, role change, revoke access, and audit-log or audit-view work.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Workspace Member Management\",\n  \"branchName\": \"workspace-member-management\",\n  \"description\": \"Desc\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"invite\",\n      \"description\": \"Do invite\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 1\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"role change\",\n      \"description\": \"Do role change\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 2\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"revoke access\",\n      \"description\": \"Do revoke access\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 3\n    },\n    {\n      \"id\": \"US-004\",\n      \"title\": \"audit-log or audit-view work\",\n      \"description\": \"Do audit-log or audit-view work\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 4,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 4\n    }\n  ]\n}"
+    },
+    {
+      "text": "Dependencies point backward, batches are dense, and at least one batch contains parallel-safe stories.",
+      "passed": false,
+      "evidence": "{\n  \"project\": \"Workspace Member Management\",\n  \"branchName\": \"workspace-member-management\",\n  \"description\": \"Desc\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"invite\",\n      \"description\": \"Do invite\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 1\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"role change\",\n      \"description\": \"Do role change\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 2\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"revoke access\",\n      \"description\": \"Do revoke access\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 3\n    },\n    {\n      \"id\": \"US-004\",\n      \"title\": \"audit-log or audit-view work\",\n      \"description\": \"Do audit-log or audit-view work\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 4,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 4\n    }\n  ]\n}"
+    },
+    {
+      "text": "No story title is a horizontal layer split such as build backend or build frontend.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Workspace Member Management\",\n  \"branchName\": \"workspace-member-management\",\n  \"description\": \"Desc\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"invite\",\n      \"description\": \"Do invite\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 1\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"role change\",\n      \"description\": \"Do role change\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 2\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"revoke access\",\n      \"description\": \"Do revoke access\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 3\n    },\n    {\n      \"id\": \"US-004\",\n      \"title\": \"audit-log or audit-view work\",\n      \"description\": \"Do audit-log or audit-view work\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\",\n        \"Verify in browser using playwright-cli skill\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 4,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 4\n    }\n  ]\n}"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 2299,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

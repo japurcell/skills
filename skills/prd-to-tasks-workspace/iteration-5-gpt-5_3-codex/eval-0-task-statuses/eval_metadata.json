@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "task-statuses",
+  "prompt": "Use the skill under test to convert `evals/files/task-statuses-prd.md` into `outputs/prd.json`. Also write `outputs/summary.md` with the story count and output path.",
+  "assertions": [
+    "The output is valid prd.json with at least 5 user stories.",
+    "The stories separately cover status storage, backend status updates, badge display, status controls, and filtering.",
+    "Every story includes dependsOn, parallelBatch, passes=false, notes=\"\", and Typecheck passes.",
+    "Dependencies point backward, batches are dense, and at least one batch contains parallel-safe stories.",
+    "UI stories include Verify in browser using playwright-cli skill."
+  ]
+}

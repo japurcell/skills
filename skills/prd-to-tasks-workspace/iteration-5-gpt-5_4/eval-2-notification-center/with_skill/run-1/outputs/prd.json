@@ -1,0 +1,144 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Add persistent notification read state with badge, list, filters, and cleanup actions.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Persist notification read state",
+      "description": "As a user, I want notification read state stored across sessions so unread and read items stay consistent after refresh.",
+      "acceptanceCriteria": [
+        "Notification persistence stores whether each notification is read or unread for the current user.",
+        "Stored notification read state survives sign-out and sign-in cycles for the same user account.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/notification-read-state.*",
+        "src/notifications/notification-model.*"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add notification read-state update actions",
+      "description": "As a user, I want read and unread changes saved immediately so notification state remains accurate between sessions.",
+      "acceptanceCriteria": [
+        "Backend actions can mark one notification read or unread for the current user.",
+        "Read-state updates persist to stored notification data and reject invalid notification identifiers.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/update-read-state.*",
+        "src/notifications/repository.*"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Show unread badge entry point",
+      "description": "As a user, I want an unread badge on the notification entry point so I can see outstanding updates at a glance.",
+      "acceptanceCriteria": [
+        "Unread badge shows the current unread count from persisted notification read state.",
+        "Badge hides or shows zero-state behavior according to existing navigation patterns.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/components/unread-badge.*",
+        "src/navigation/app-header.*"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Open notification list surface",
+      "description": "As a user, I want to open a notification list so I can review recent updates in one place.",
+      "acceptanceCriteria": [
+        "Notification list opens from the badge or notification entry point and renders recent notifications.",
+        "Each notification row reflects stored read or unread state when the list loads.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/components/notification-list.*",
+        "src/notifications/components/notification-row.*"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Filter notification list by read state",
+      "description": "As a user, I want to filter notification list results by read state so I can focus on unread or previously handled updates.",
+      "acceptanceCriteria": [
+        "Notification list offers filter options for all, unread, and read notifications.",
+        "Applying a filter shows only notifications matching the chosen read state.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/components/notification-list.*",
+        "src/notifications/components/read-state-filter.*"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "dependsOn": [
+        "US-004"
+      ],
+      "parallelBatch": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Clear all read notifications",
+      "description": "As a user, I want to clear all read notifications so stale handled updates leave the notification list.",
+      "acceptanceCriteria": [
+        "Clear action removes or archives only notifications currently marked read.",
+        "Unread notifications remain visible after clear completes and badge count updates accordingly.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/clear-read-notifications.*",
+        "src/notifications/components/notification-list-toolbar.*"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "dependsOn": [
+        "US-002",
+        "US-004"
+      ],
+      "parallelBatch": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

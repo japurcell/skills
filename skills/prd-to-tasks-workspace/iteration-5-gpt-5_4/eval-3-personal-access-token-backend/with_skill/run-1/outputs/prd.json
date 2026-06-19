@@ -1,0 +1,74 @@
+{
+  "project": "Personal Access Token Backend",
+  "branchName": "personal-access-token-backend",
+  "description": "Add hashed personal access token persistence plus create and revoke server actions.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add hashed token storage with null deactivation marker",
+      "description": "As a developer, I want personal access tokens stored as hashes with a null deactivation marker for active records so server actions can manage tokens without persisting plaintext.",
+      "acceptanceCriteria": [
+        "Token persistence stores only hashed token values and the deactivation timestamp defaults to null for active tokens.",
+        "Storage layer can represent token label and audit metadata needed by server actions.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/personal-access-tokens.*",
+        "src/auth/personal-access-token-model.*"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Create token server action",
+      "description": "As a developer, I want a create-token server action that validates label length and returns plaintext token once so callers can present it at creation time only.",
+      "acceptanceCriteria": [
+        "Create-token server action validates label length before writing a new personal access token record.",
+        "Successful token creation returns the plaintext token exactly once while storing only its hash.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/auth/create-personal-access-token.*",
+        "src/auth/personal-access-token-service.*"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Revoke token server action",
+      "description": "As a developer, I want a revoke-token server action that marks a token revoked without deleting it so auditability and token history remain intact.",
+      "acceptanceCriteria": [
+        "Revoke-token server action sets revokedAt for the targeted token without deleting the record.",
+        "Revocation prevents future use of the token while preserving stored metadata.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/auth/revoke-personal-access-token.*",
+        "src/auth/personal-access-token-service.*"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

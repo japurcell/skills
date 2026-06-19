@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The output contains exactly 3 user stories and does not invent UI stories or browser verification.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Personal Access Token Backend\",\n  \"branchName\": \"personal-access-token-backend\",\n  \"description\": \"Add personal access token backend.\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"Add hashed token storage\",\n      \"description\": \"As a system, I want hashed token storage with a nullable revocation timestamp so token state is durable.\",\n      \"acceptanceCriteria\": [\n        \"Token hashes are stored.\",\n        \"Nullable revocation timestamp defaults to null.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"dependsOn\": [],\n      \"parallelBatch\": 1,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"Add create-token server action\",\n      \"description\": \"As a system, I want a create-token server action that validates label length and returns the plaintext token once.\",\n      \"acceptanceCriteria\": [\n        \"Label length is validated.\",\n        \"The plaintext token is returned once.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"Add revoke-token server action\",\n      \"description\": \"As a system, I want a revoke-token server action that marks the token revoked without deleting it.\",\n      \"acceptanceCriteria\": [\n        \"Revoked tokens stay stored.\",\n        \"Tokens are marked revoked without deletion.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    }\n  ]\n}\n"
+    },
+    {
+      "text": "The stories separately cover token storage, create token, and revoke token work.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Personal Access Token Backend\",\n  \"branchName\": \"personal-access-token-backend\",\n  \"description\": \"Add personal access token backend.\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"Add hashed token storage\",\n      \"description\": \"As a system, I want hashed token storage with a nullable revocation timestamp so token state is durable.\",\n      \"acceptanceCriteria\": [\n        \"Token hashes are stored.\",\n        \"Nullable revocation timestamp defaults to null.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"dependsOn\": [],\n      \"parallelBatch\": 1,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"Add create-token server action\",\n      \"description\": \"As a system, I want a create-token server action that validates label length and returns the plaintext token once.\",\n      \"acceptanceCriteria\": [\n        \"Label length is validated.\",\n        \"The plaintext token is returned once.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"Add revoke-token server action\",\n      \"description\": \"As a system, I want a revoke-token server action that marks the token revoked without deleting it.\",\n      \"acceptanceCriteria\": [\n        \"Revoked tokens stay stored.\",\n        \"Tokens are marked revoked without deletion.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    }\n  ]\n}\n"
+    },
+    {
+      "text": "Every story includes dependsOn, parallelBatch, passes=false, notes=\"\", and Typecheck passes.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Personal Access Token Backend\",\n  \"branchName\": \"personal-access-token-backend\",\n  \"description\": \"Add personal access token backend.\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"Add hashed token storage\",\n      \"description\": \"As a system, I want hashed token storage with a nullable revocation timestamp so token state is durable.\",\n      \"acceptanceCriteria\": [\n        \"Token hashes are stored.\",\n        \"Nullable revocation timestamp defaults to null.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"dependsOn\": [],\n      \"parallelBatch\": 1,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"Add create-token server action\",\n      \"description\": \"As a system, I want a create-token server action that validates label length and returns the plaintext token once.\",\n      \"acceptanceCriteria\": [\n        \"Label length is validated.\",\n        \"The plaintext token is returned once.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"Add revoke-token server action\",\n      \"description\": \"As a system, I want a revoke-token server action that marks the token revoked without deleting it.\",\n      \"acceptanceCriteria\": [\n        \"Revoked tokens stay stored.\",\n        \"Tokens are marked revoked without deletion.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    }\n  ]\n}\n"
+    },
+    {
+      "text": "The create-token and revoke-token stories share a later parallel batch after the storage story.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Personal Access Token Backend\",\n  \"branchName\": \"personal-access-token-backend\",\n  \"description\": \"Add personal access token backend.\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"Add hashed token storage\",\n      \"description\": \"As a system, I want hashed token storage with a nullable revocation timestamp so token state is durable.\",\n      \"acceptanceCriteria\": [\n        \"Token hashes are stored.\",\n        \"Nullable revocation timestamp defaults to null.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"dependsOn\": [],\n      \"parallelBatch\": 1,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"Add create-token server action\",\n      \"description\": \"As a system, I want a create-token server action that validates label length and returns the plaintext token once.\",\n      \"acceptanceCriteria\": [\n        \"Label length is validated.\",\n        \"The plaintext token is returned once.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"Add revoke-token server action\",\n      \"description\": \"As a system, I want a revoke-token server action that marks the token revoked without deleting it.\",\n      \"acceptanceCriteria\": [\n        \"Revoked tokens stay stored.\",\n        \"Tokens are marked revoked without deletion.\",\n        \"Typecheck passes\",\n        \"Tests pass\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2,\n      \"passes\": false,\n      \"notes\": \"\"\n    }\n  ]\n}\n"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1988,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.000427,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.000427
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

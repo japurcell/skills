@@ -1,0 +1,122 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Enable admins to manage workspace membership.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add membership and audit event storage",
+      "description": "As a system, I want membership state and audit event persistence so admin actions are tracked.",
+      "acceptanceCriteria": [
+        "Membership role and audit event persistence available for workspace membership operations.",
+        "Audit event persistence stores actor, action type, target member, and timestamp.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/add_workspace_membership_audit.sql",
+        "src/domain/workspaceMembership.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add member invite flow by email",
+      "description": "As an admin, I want invite members by email so I can grant workspace access.",
+      "acceptanceCriteria": [
+        "Invite action accepts email and role and creates pending membership invite.",
+        "Invite action records corresponding audit event.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/inviteWorkspaceMember.ts",
+        "src/server/repositories/workspaceMemberRepo.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add member role change action",
+      "description": "As an admin, I want change member role between viewer, editor, and admin so permissions stay correct.",
+      "acceptanceCriteria": [
+        "Role change action validates target role and updates stored membership role.",
+        "Role change action records audit event with previous and new roles.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/changeWorkspaceMemberRole.ts",
+        "src/server/repositories/workspaceMemberRepo.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add workspace access revoke action",
+      "description": "As an admin, I want revoke workspace access so removed members can no longer access workspace.",
+      "acceptanceCriteria": [
+        "Revoke action removes or deactivates membership for target user.",
+        "Revoke action records audit event for revocation action.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/revokeWorkspaceMember.ts",
+        "src/server/repositories/workspaceMemberRepo.ts"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Show recent membership changes in settings page",
+      "description": "As an admin, I want review recent membership changes in workspace settings page so I can audit access history.",
+      "acceptanceCriteria": [
+        "Settings page shows recent membership audit entries with action, actor, target, and timestamp.",
+        "Audit list includes invite, role change, and revoke events.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/ui/settings/WorkspaceMembershipAuditPanel.tsx",
+        "src/server/queries/listWorkspaceMembershipAudit.ts"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "dependsOn": [
+        "US-002",
+        "US-003",
+        "US-004"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

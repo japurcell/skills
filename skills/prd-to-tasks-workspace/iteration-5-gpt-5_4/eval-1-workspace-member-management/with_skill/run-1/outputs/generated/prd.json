@@ -1,0 +1,147 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Add admin-controlled member lifecycle management with auditable changes.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add membership invitation and role persistence rules",
+      "description": "As a workspace admin, I want membership records to store invite state and allowed roles so admin actions run against validated data.",
+      "acceptanceCriteria": [
+        "Membership persistence supports invite state and viewer, editor, and admin roles.",
+        "Validation rejects unsupported role values before persistence.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/workspace-members.*",
+        "src/workspaces/member-model.*"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add audit log storage for membership changes",
+      "description": "As a workspace owner, I want member changes recorded in structured audit storage so administrators can review what changed later.",
+      "acceptanceCriteria": [
+        "Audit log storage records invite, role-change, and revoke events with actor and timestamp.",
+        "Membership actions can append audit entries without schema changes in later stories.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/workspace-member-audit-log.*",
+        "src/workspaces/member-audit-model.*"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Invite members by email",
+      "description": "As a workspace admin, I want to invite a member by email so I can grant access without database edits.",
+      "acceptanceCriteria": [
+        "Admin invite flow creates or updates a pending membership for supplied email.",
+        "Successful invite writes a matching membership audit log entry.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/workspaces/invite-member.*",
+        "src/workspaces/member-service.*"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-001",
+        "US-002"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Change workspace member role",
+      "description": "As a workspace admin, I want to change a member role between viewer, editor, and admin so access matches responsibility.",
+      "acceptanceCriteria": [
+        "Admin role-change flow updates an existing membership to viewer, editor, or admin.",
+        "Successful role changes append an audit log entry describing old and new role values.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/workspaces/change-member-role.*",
+        "src/workspaces/member-service.*"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "dependsOn": [
+        "US-001",
+        "US-002"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Revoke workspace access",
+      "description": "As a workspace admin, I want to revoke workspace access so former members cannot keep using the workspace.",
+      "acceptanceCriteria": [
+        "Admin revoke flow removes or disables active membership access without direct database edits.",
+        "Successful revocation appends an audit log entry for the membership change.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/workspaces/revoke-member-access.*",
+        "src/workspaces/member-service.*"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "dependsOn": [
+        "US-001",
+        "US-002"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Show audit view in workspace settings page",
+      "description": "As a workspace admin, I want an audit view in workspace settings page so I can review recent membership changes.",
+      "acceptanceCriteria": [
+        "Workspace settings page shows recent membership audit log entries with action, actor, and timestamp.",
+        "Audit view refreshes after member invite, role change, and revoke actions complete.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/workspaces/settings/member-audit-view.*",
+        "src/workspaces/settings/page.*"
+      ],
+      "designGuidance": [],
+      "priority": 6,
+      "dependsOn": [
+        "US-002",
+        "US-003",
+        "US-004",
+        "US-005"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

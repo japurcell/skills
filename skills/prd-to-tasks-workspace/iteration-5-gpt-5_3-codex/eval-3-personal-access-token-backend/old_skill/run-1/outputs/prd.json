@@ -1,0 +1,61 @@
+{
+  "project": "Personal Access Token Backend",
+  "branchName": "personal-access-token-backend",
+  "description": "Add backend support for personal access tokens.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add hashed token storage with revokedAt",
+      "description": "As a developer, I want hashed token storage with revokedAt default null so token lifecycle is managed safely.",
+      "acceptanceCriteria": [
+        "Token storage persists hash and revokedAt default null.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/add_personal_access_tokens.sql"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "parallelBatch": 1
+    },
+    {
+      "id": "US-002",
+      "title": "Add create-token server action",
+      "description": "As a developer, I want create-token server action validating label length and returning plaintext token once.",
+      "acceptanceCriteria": [
+        "Action validates label length and returns plaintext token one time.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/createPersonalAccessToken.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "parallelBatch": 2
+    },
+    {
+      "id": "US-003",
+      "title": "Add revoke-token server action",
+      "description": "As a developer, I want revoke-token server action that marks token revoked without deleting record.",
+      "acceptanceCriteria": [
+        "Action sets revokedAt when revoking token.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/revokePersonalAccessToken.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "parallelBatch": 2
+    }
+  ]
+}

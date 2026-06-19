@@ -1,0 +1,65 @@
+{
+  "project": "Personal Access Token Backend",
+  "branchName": "personal-access-token-backend",
+  "description": "Add personal access token backend.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add hashed token storage",
+      "description": "As a system, I want hashed token storage with a nullable revocation timestamp so token state is durable.",
+      "acceptanceCriteria": [
+        "Token hashes are stored.",
+        "Nullable revocation timestamp defaults to null.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add create-token server action",
+      "description": "As a system, I want a create-token server action that validates label length and returns the plaintext token once.",
+      "acceptanceCriteria": [
+        "Label length is validated.",
+        "The plaintext token is returned once.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add revoke-token server action",
+      "description": "As a system, I want a revoke-token server action that marks the token revoked without deleting it.",
+      "acceptanceCriteria": [
+        "Revoked tokens stay stored.",
+        "Tokens are marked revoked without deletion.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Desc",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "status storage",
+      "description": "Do status storage",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [],
+      "parallelBatch": 1
+    },
+    {
+      "id": "US-002",
+      "title": "backend status updates",
+      "description": "Do backend status updates",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [],
+      "parallelBatch": 2
+    },
+    {
+      "id": "US-003",
+      "title": "badge display",
+      "description": "Do badge display",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [],
+      "parallelBatch": 3
+    },
+    {
+      "id": "US-004",
+      "title": "status controls",
+      "description": "Do status controls",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [],
+      "parallelBatch": 4
+    },
+    {
+      "id": "US-005",
+      "title": "filtering",
+      "description": "Do filtering",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [],
+      "parallelBatch": 5
+    }
+  ]
+}

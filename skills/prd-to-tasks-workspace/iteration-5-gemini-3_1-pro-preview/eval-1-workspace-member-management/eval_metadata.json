@@ -1,0 +1,15 @@
+{
+  "id": 1,
+  "prompt": "Use the skill under test to convert `evals/files/workspace-member-management-prd.md` and save the result to `outputs/generated/prd.json`. Also write `outputs/summary.md` with the story count and output path.",
+  "expected_output": "A dependency-ordered, parallel-ready prd.json saved to the requested output directory, with separate stories for inviting members, changing roles, revoking access, and viewing audit data.",
+  "files": [
+    "evals/files/workspace-member-management-prd.md"
+  ],
+  "assertions": [
+    "The output is saved to outputs/generated/prd.json.",
+    "branchName is derived from the feature title.",
+    "The stories separately cover invite, role change, revoke access, and audit-log or audit-view work.",
+    "Dependencies point backward, batches are dense, and at least one batch contains parallel-safe stories.",
+    "No story title is a horizontal layer split such as build backend or build frontend."
+  ]
+}

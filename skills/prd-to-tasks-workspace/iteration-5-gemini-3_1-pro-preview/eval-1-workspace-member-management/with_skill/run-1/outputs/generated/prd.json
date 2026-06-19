@@ -1,0 +1,81 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Desc",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "invite",
+      "description": "Do invite",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [],
+      "parallelBatch": 1
+    },
+    {
+      "id": "US-002",
+      "title": "role change",
+      "description": "Do role change",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2
+    },
+    {
+      "id": "US-003",
+      "title": "revoke access",
+      "description": "Do revoke access",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2
+    },
+    {
+      "id": "US-004",
+      "title": "audit-log or audit-view work",
+      "description": "Do audit-log or audit-view work",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ],
+      "parallelBatch": 3
+    }
+  ]
+}

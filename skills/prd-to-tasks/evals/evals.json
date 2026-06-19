@@ -4,21 +4,22 @@
     {
       "id": 0,
       "prompt": "Use the skill under test to convert `evals/files/task-statuses-prd.md` into `outputs/prd.json`. Also write `outputs/summary.md` with the story count and output path.",
-      "expected_output": "A dependency-ordered prd.json that splits the task-statuses feature into atomic schema, backend, and UI stories.",
+      "expected_output": "A parallel-ready prd.json that splits the task-statuses feature into atomic prerequisite and UI stories with explicit dependencies and safe batches.",
       "files": [
         "evals/files/task-statuses-prd.md"
       ],
       "assertions": [
         "The output is valid prd.json with at least 5 user stories.",
-        "The stories separately cover schema, backend status updates, badge display, status controls, and filtering.",
-        "Every story sets passes to false, notes to an empty string, and includes Typecheck passes.",
+        "The stories separately cover status storage, backend status updates, badge display, status controls, and filtering.",
+        "Every story includes dependsOn, parallelBatch, passes=false, notes=\"\", and Typecheck passes.",
+        "Dependencies point backward, batches are dense, and at least one batch contains parallel-safe stories.",
         "UI stories include Verify in browser using playwright-cli skill."
       ]
     },
     {
       "id": 1,
       "prompt": "Use the skill under test to convert `evals/files/workspace-member-management-prd.md` and save the result to `outputs/generated/prd.json`. Also write `outputs/summary.md` with the story count and output path.",
-      "expected_output": "A dependency-ordered prd.json saved to the requested output directory, with separate stories for inviting members, changing roles, revoking access, and viewing audit data.",
+      "expected_output": "A dependency-ordered, parallel-ready prd.json saved to the requested output directory, with separate stories for inviting members, changing roles, revoking access, and viewing audit data.",
       "files": [
         "evals/files/workspace-member-management-prd.md"
       ],
@@ -26,19 +27,32 @@
         "The output is saved to outputs/generated/prd.json.",
         "branchName is derived from the feature title.",
         "The stories separately cover invite, role change, revoke access, and audit-log or audit-view work.",
+        "Dependencies point backward, batches are dense, and at least one batch contains parallel-safe stories.",
         "No story title is a horizontal layer split such as build backend or build frontend."
       ]
     },
     {
       "id": 2,
       "prompt": "Use the skill under test to convert this raw PRD text into `outputs/prd.json`, then write `outputs/summary.md` with the story count and output path. PRD text: ```markdown\n# Notification Center\nUsers need a notification center where they can see unread badges, open a notification list, mark notifications read or unread, filter by read state, and clear all read notifications. Store read state so it persists across sessions.\n```",
-      "expected_output": "A prd.json that splits the notification-center feature into multiple atomic stories instead of one umbrella story.",
+      "expected_output": "A prd.json that splits the notification-center feature into multiple atomic stories with explicit dependencies and batches instead of one umbrella story.",
       "files": [],
       "assertions": [
         "The output is valid prd.json with multiple user stories.",
         "The stories separately cover persistence, badge or list UI, read-state updates, filtering, and clearing read notifications.",
         "The output does not collapse the feature into one umbrella implementation story.",
-        "Each story has sequential IDs and ascending priorities."
+        "Each story has sequential IDs, ascending priorities, valid dependsOn fields, and valid parallelBatch values."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use the skill under test to convert this raw PRD text into `outputs/prd.json`, then write `outputs/summary.md` with the story count and output path. PRD text: ```markdown\n# Personal Access Token Backend\n- Add hashed token storage with `revokedAt` defaulting to null.\n- Add a create-token server action that validates label length and returns the plaintext token once.\n- Add a revoke-token server action that marks the token revoked without deleting it.\n```",
+      "expected_output": "A backend-only prd.json that preserves the already-atomic requirements, keeps the work UI-free, and exposes create/revoke as parallel-ready follow-up stories after storage.",
+      "files": [],
+      "assertions": [
+        "The output contains exactly 3 user stories and does not invent UI stories or browser verification.",
+        "The stories separately cover token storage, create token, and revoke token work.",
+        "Every story includes dependsOn, parallelBatch, passes=false, notes=\"\", and Typecheck passes.",
+        "The create-token and revoke-token stories share a later parallel batch after the storage story."
       ]
     }
   ]

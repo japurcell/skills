@@ -1,0 +1,102 @@
+{
+  "project": "Task Statuses",
+  "branchName": "task-statuses",
+  "description": "Add task statuses.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add task status storage",
+      "description": "As a user, I want task status values stored so pending, in progress, and done persist.",
+      "acceptanceCriteria": [
+        "Task records store a status value.",
+        "Existing tasks default to pending.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add backend action to update task status",
+      "description": "As a user, I want a backend action that updates task status so changes save reliably.",
+      "acceptanceCriteria": [
+        "A backend action updates task status.",
+        "Invalid status values are rejected.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Show task status badge",
+      "description": "As a user, I want a status badge on each task card so I can see current state at a glance.",
+      "acceptanceCriteria": [
+        "Task cards show the current status as a badge.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-002"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add task status control",
+      "description": "As a user, I want a task status control in the list so I can change status without opening a separate flow.",
+      "acceptanceCriteria": [
+        "Users can change a task status from the task list.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "dependsOn": [
+        "US-002"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Filter tasks by status",
+      "description": "As a user, I want to filter the task list by status so I can focus on one state.",
+      "acceptanceCriteria": [
+        "The task list can be filtered by status.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 5,
+      "dependsOn": [
+        "US-002"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

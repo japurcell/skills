@@ -1,0 +1,74 @@
+{
+  "project": "Personal Access Token Backend",
+  "branchName": "personal-access-token-backend",
+  "description": "Add secure personal access token backend actions.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add hashed token storage with revocation timestamp",
+      "description": "As a system, I want hashed token storage with revocation timestamp default null so token records are revocable and secure.",
+      "acceptanceCriteria": [
+        "Token persistence stores token hash and revocation timestamp default null.",
+        "Stored token records keep label and ownership metadata for management operations.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/add_personal_access_tokens.sql",
+        "src/domain/personalAccessToken.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add create token server action",
+      "description": "As a developer, I want create-token server action validating label length and returning plaintext token once so callers can store token safely.",
+      "acceptanceCriteria": [
+        "Create-token action validates label length before issuing token.",
+        "Create-token action stores only token hash and returns plaintext token once in response.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/createPersonalAccessToken.ts",
+        "src/server/repositories/personalAccessTokenRepo.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add revoke token server action",
+      "description": "As a developer, I want revoke-token server action marking tokens revoked without deletion so revocation history stays intact.",
+      "acceptanceCriteria": [
+        "Revoke-token action sets revokedAt timestamp without deleting token record.",
+        "Revoke-token action rejects already revoked or missing token identifiers.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/revokePersonalAccessToken.ts",
+        "src/server/repositories/personalAccessTokenRepo.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

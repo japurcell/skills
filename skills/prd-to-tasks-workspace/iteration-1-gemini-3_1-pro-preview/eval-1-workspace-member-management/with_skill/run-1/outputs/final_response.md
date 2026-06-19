@@ -1,1 +1,0 @@
-Successfully processed PRD into 6 user stories and saved to `outputs/generated/prd.json`.

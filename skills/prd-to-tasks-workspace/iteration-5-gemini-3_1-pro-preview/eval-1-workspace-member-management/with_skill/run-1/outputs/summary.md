@@ -1,0 +1,1 @@
+Generated 4 stories. Output saved to /home/adam/dev/personal/skills/skills/prd-to-tasks-workspace/iteration-5-gemini-3_1-pro-preview/eval-1-workspace-member-management/with_skill/run-1/outputs/generated/prd.json.

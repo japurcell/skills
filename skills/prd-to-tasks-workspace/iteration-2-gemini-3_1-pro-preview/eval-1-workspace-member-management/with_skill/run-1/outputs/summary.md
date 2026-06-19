@@ -1,1 +1,0 @@
-Generated 10 user stories. Output path: outputs/generated/prd.json

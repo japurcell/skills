@@ -1,0 +1,77 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Enable admin membership management operations.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add member invite by email",
+      "description": "As an admin, I want invite members by email so access can be granted quickly.",
+      "acceptanceCriteria": [
+        "Invite flow validates email and creates membership invite.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/inviteWorkspaceMember.ts"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add role change action",
+      "description": "As an admin, I want change member role between viewer, editor, and admin so permissions stay correct.",
+      "acceptanceCriteria": [
+        "Role updates persist new role for member.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/changeWorkspaceMemberRole.ts"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add revoke workspace access action",
+      "description": "As an admin, I want revoke workspace access so users can be removed.",
+      "acceptanceCriteria": [
+        "Revoke action removes or disables membership.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "src/server/actions/revokeWorkspaceMember.ts"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Record and view membership audit changes",
+      "description": "As an admin, I want audit visibility for membership changes so compliance checks stay possible.",
+      "acceptanceCriteria": [
+        "Membership changes are written to audit log.",
+        "Workspace settings page shows recent membership changes.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/server/services/workspaceMembershipAudit.ts",
+        "src/ui/settings/WorkspaceMembershipAuditPanel.tsx"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

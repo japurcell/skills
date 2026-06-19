@@ -1,0 +1,83 @@
+{
+  "project": "Workspace Member Management",
+  "branchName": "workspace-member-management",
+  "description": "Manage workspace membership.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add member invitation flow",
+      "description": "As a workspace admin, I want to invite members by email so I can add people without database edits.",
+      "acceptanceCriteria": [
+        "Admins can invite members by email.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add member role change action",
+      "description": "As a workspace admin, I want to change a member role so permissions stay current.",
+      "acceptanceCriteria": [
+        "Admins can change a member role between viewer, editor, and admin.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add member revocation action",
+      "description": "As a workspace admin, I want to revoke workspace access so removed members no longer have access.",
+      "acceptanceCriteria": [
+        "Admins can revoke workspace access.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Review membership audit log in settings page",
+      "description": "As a workspace admin, I want to review recent membership changes in settings so I can audit access changes.",
+      "acceptanceCriteria": [
+        "The system records membership changes in an audit log.",
+        "Admins can review recent membership changes in the workspace settings page.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "dependsOn": [
+        "US-002",
+        "US-003"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

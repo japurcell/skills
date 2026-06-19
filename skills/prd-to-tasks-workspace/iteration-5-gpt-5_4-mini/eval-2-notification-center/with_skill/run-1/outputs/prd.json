@@ -1,0 +1,103 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Add a notification center.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Persist notification read state",
+      "description": "As a user, I want notification read state stored so it persists across sessions.",
+      "acceptanceCriteria": [
+        "Read state persists across sessions.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "dependsOn": [],
+      "parallelBatch": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Show unread badge and notification list",
+      "description": "As a user, I want an unread badge and notification list so I can see new activity.",
+      "acceptanceCriteria": [
+        "Unread badges are visible.",
+        "A notification list opens.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Mark notifications read or unread",
+      "description": "As a user, I want to update notification read state so I can track what I have seen.",
+      "acceptanceCriteria": [
+        "Notifications can be marked read or unread.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Filter notifications by read state",
+      "description": "As a user, I want to filter notifications by read state so I can focus on unread items.",
+      "acceptanceCriteria": [
+        "Notifications can be filtered by read state.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 4,
+      "dependsOn": [
+        "US-001",
+        "US-003"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Clear all read notifications",
+      "description": "As a user, I want to clear read notifications so cleanup stays easy.",
+      "acceptanceCriteria": [
+        "All read notifications can be cleared.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 5,
+      "dependsOn": [
+        "US-001",
+        "US-003"
+      ],
+      "parallelBatch": 3,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Story count: 5\nOutput path: /home/adam/dev/personal/skills/skills/prd-to-tasks-workspace/iteration-5-gpt-5_3-codex/eval-2-notification-center/old_skill/run-1/outputs/prd.json\n

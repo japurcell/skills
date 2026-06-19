@@ -1,1 +1,0 @@
-Generated 6 user stories for task statuses, splitting schema, types, backend, badges, controls, and filtering. Saved to outputs/prd.json.

@@ -1,0 +1,12 @@
+{
+  "id": 3,
+  "prompt": "Use the skill under test to convert this raw PRD text into `outputs/prd.json`, then write `outputs/summary.md` with the story count and output path. PRD text: ```markdown\n# Personal Access Token Backend\n- Add hashed token storage with `revokedAt` defaulting to null.\n- Add a create-token server action that validates label length and returns the plaintext token once.\n- Add a revoke-token server action that marks the token revoked without deleting it.\n```",
+  "expected_output": "A backend-only prd.json that preserves the already-atomic requirements, keeps the work UI-free, and exposes create/revoke as parallel-ready follow-up stories after storage.",
+  "files": [],
+  "assertions": [
+    "The output contains exactly 3 user stories and does not invent UI stories or browser verification.",
+    "The stories separately cover token storage, create token, and revoke token work.",
+    "Every story includes dependsOn, parallelBatch, passes=false, notes=\"\", and Typecheck passes.",
+    "The create-token and revoke-token stories share a later parallel batch after the storage story."
+  ]
+}

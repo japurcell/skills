@@ -1,3 +1,0 @@
-- Stories: 5
-- Output: `outputs/prd.json`
-- Ready for `/prd-build-loop`.

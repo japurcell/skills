@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The output contains exactly 3 user stories and does not invent UI stories or browser verification.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Personal Access Token Backend\",\n  \"branchName\": \"personal-access-token-backend\",\n  \"description\": \"Desc\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"token storage\",\n      \"description\": \"Do token storage\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 1\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"create token\",\n      \"description\": \"Do create token\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"revoke token\",\n      \"description\": \"Do revoke token\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2\n    }\n  ]\n}"
+    },
+    {
+      "text": "The stories separately cover token storage, create token, and revoke token work.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Personal Access Token Backend\",\n  \"branchName\": \"personal-access-token-backend\",\n  \"description\": \"Desc\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"token storage\",\n      \"description\": \"Do token storage\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 1\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"create token\",\n      \"description\": \"Do create token\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"revoke token\",\n      \"description\": \"Do revoke token\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2\n    }\n  ]\n}"
+    },
+    {
+      "text": "Every story includes dependsOn, parallelBatch, passes=false, notes=\"\", and Typecheck passes.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Personal Access Token Backend\",\n  \"branchName\": \"personal-access-token-backend\",\n  \"description\": \"Desc\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"token storage\",\n      \"description\": \"Do token storage\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 1\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"create token\",\n      \"description\": \"Do create token\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"revoke token\",\n      \"description\": \"Do revoke token\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2\n    }\n  ]\n}"
+    },
+    {
+      "text": "The create-token and revoke-token stories share a later parallel batch after the storage story.",
+      "passed": true,
+      "evidence": "{\n  \"project\": \"Personal Access Token Backend\",\n  \"branchName\": \"personal-access-token-backend\",\n  \"description\": \"Desc\",\n  \"userStories\": [\n    {\n      \"id\": \"US-001\",\n      \"title\": \"token storage\",\n      \"description\": \"Do token storage\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 1,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [],\n      \"parallelBatch\": 1\n    },\n    {\n      \"id\": \"US-002\",\n      \"title\": \"create token\",\n      \"description\": \"Do create token\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 2,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2\n    },\n    {\n      \"id\": \"US-003\",\n      \"title\": \"revoke token\",\n      \"description\": \"Do revoke token\",\n      \"acceptanceCriteria\": [\n        \"Concrete criterion\",\n        \"Typecheck passes\"\n      ],\n      \"filesLikelyTouched\": [],\n      \"designGuidance\": [],\n      \"priority\": 3,\n      \"passes\": false,\n      \"notes\": \"\",\n      \"dependsOn\": [\n        \"US-001\"\n      ],\n      \"parallelBatch\": 2\n    }\n  ]\n}"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {},
+    "total_tool_calls": 0,
+    "total_steps": 0,
+    "errors_encountered": 0,
+    "output_chars": 1722,
+    "transcript_chars": 0
+  },
+  "timing": {
+    "executor_duration_seconds": 0.0,
+    "grader_duration_seconds": 0.0,
+    "total_duration_seconds": 0.0
+  },
+  "claims": [],
+  "user_notes_summary": {
+    "uncertainties": [],
+    "needs_review": [],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "No evaluator suggestions."
+  }
+}

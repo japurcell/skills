@@ -1,0 +1,59 @@
+{
+  "project": "Personal Access Token Backend",
+  "branchName": "personal-access-token-backend",
+  "description": "Desc",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "token storage",
+      "description": "Do token storage",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [],
+      "parallelBatch": 1
+    },
+    {
+      "id": "US-002",
+      "title": "create token",
+      "description": "Do create token",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2
+    },
+    {
+      "id": "US-003",
+      "title": "revoke token",
+      "description": "Do revoke token",
+      "acceptanceCriteria": [
+        "Concrete criterion",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ],
+      "parallelBatch": 2
+    }
+  ]
+}

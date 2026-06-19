@@ -1,0 +1,102 @@
+{
+  "project": "Notification Center",
+  "branchName": "notification-center",
+  "description": "Add a notification center with persisted read state and list actions.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Persist notification read state",
+      "description": "As a user, I want notification read state stored across sessions so unread and read items stay consistent after refresh.",
+      "acceptanceCriteria": [
+        "Notification persistence stores read or unread state for each notification.",
+        "Stored read state persists across sessions for the same user.",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "filesLikelyTouched": [
+        "db/migrations/notification-read-state.*",
+        "src/notifications/notification-model.*"
+      ],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Show unread badge and notification list",
+      "description": "As a user, I want an unread badge and notification list so I can notice updates and review them in one place.",
+      "acceptanceCriteria": [
+        "Unread badge reflects current unread notification count.",
+        "Notification list opens and shows recent notifications with read-state styling.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/components/unread-badge.*",
+        "src/notifications/components/notification-list.*"
+      ],
+      "designGuidance": [],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Mark notifications read or unread",
+      "description": "As a user, I want to mark notifications read or unread so the list reflects what I have handled already.",
+      "acceptanceCriteria": [
+        "Users can mark a notification read or unread from the notification list.",
+        "Read-state updates persist immediately after the action completes.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/update-read-state.*",
+        "src/notifications/components/notification-row.*"
+      ],
+      "designGuidance": [],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Filter notification list by read state",
+      "description": "As a user, I want to filter notifications by read state so I can focus on unread or handled updates.",
+      "acceptanceCriteria": [
+        "Notification list offers all, unread, and read filter options.",
+        "Applying a filter updates the list to only matching notifications.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/components/read-state-filter.*",
+        "src/notifications/components/notification-list.*"
+      ],
+      "designGuidance": [],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Clear all read notifications",
+      "description": "As a user, I want to clear all read notifications so handled updates leave the notification center.",
+      "acceptanceCriteria": [
+        "Users can clear all read notifications from notification center controls.",
+        "Unread notifications remain after clear completes.",
+        "Typecheck passes",
+        "Verify in browser using playwright-cli skill"
+      ],
+      "filesLikelyTouched": [
+        "src/notifications/clear-read-notifications.*",
+        "src/notifications/components/notification-list-toolbar.*"
+      ],
+      "designGuidance": [],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

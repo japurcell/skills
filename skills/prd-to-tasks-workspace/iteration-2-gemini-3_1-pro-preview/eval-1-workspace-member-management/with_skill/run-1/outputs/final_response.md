@@ -1,1 +1,0 @@
-Generated 10 atomic user stories covering schema, invite, role change, revoke, and audit views. Saved to outputs/generated/prd.json.
