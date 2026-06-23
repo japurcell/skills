@@ -76,10 +76,15 @@ Create exactly one clean commit from current changes using session history plus 
 
    Summary:
    - <what changed>
+
    Rationale:
    - <why>
+
    Tests:
    - <command or "not run (reason)">
+
+   Session: 23 min, 87K tokens, 14 files read
+
    Refs #123
    Refs #456
    Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
