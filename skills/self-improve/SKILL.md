@@ -1,6 +1,6 @@
 ---
 name: self-improve
-description: Preserves durable repo-specific guidance by updating the right `AGENTS.md` or linked docs, and repairs instruction structure when scope, duplication, conflicts, or drift are wrong. Use whenever the user asks to update/refactor `AGENTS.md`, remember lessons, preserve human corrections, mine session notes, handoffs, or progress files, or make future agents follow non-default commands, validation steps, gotchas, or linked-doc structure even if they never mention `AGENTS.md`.
+description: Preserves durable repo-specific guidance by updating the right `AGENTS.md` or linked docs, and repairs instruction structure when scope, duplication, conflicts, or drift are wrong. Use whenever the user asks to update/refactor `AGENTS.md`, remember lessons, self improve, preserve human corrections, mine session notes, handoffs, or progress files, or make future agents follow non-default commands, validation steps, gotchas, or linked-doc structure even if they never mention `AGENTS.md`.
 ---
 
 # Self Improve
@@ -27,8 +27,13 @@ Capture durable, reusable learnings in the right `AGENTS.md` or linked doc. Pref
    - Never turn excluded noise into an inverse standing rule.
 
 2. **Map the instruction surface**
-   - Find every relevant `AGENTS.md`, then read each one plus any directly linked docs.
-   - If the search is large, invoke `subagent-model-router` and use a cheap finder subagent.
+   - Invoke `subagent-model-router` and spawn a fast-tier finder subagent to find every `AGENTS.md`:
+
+   ```bash
+   find . -name "AGENTS.md" 2>/dev/null | head -20
+   ```
+
+   - Read each one plus any directly linked docs.
    - If no `AGENTS.md` exists, say so and create `./AGENTS.md` with only the strongest 3-7 learnings.
 
 3. **Apply the smallest correct update**
@@ -81,13 +86,13 @@ Example: if an auth/login progress file says Jasmine forbids `nested \`it\``, ke
 
 ## Common Rationalizations
 
-| Rationalization | Reality |
-| --- | --- |
-| "Root file is enough" or "broader wording is safer." | Scoped files or linked docs often own the rule better, and specific wording is more useful. |
-| "That command is obvious" or "user didn't ask me to remember this." | Non-default commands and repeated corrections are often the highest-value durable guidance. |
-| "Only the summary matters; detailed artifact notes are too specific." | Durable rules often live in gotchas and useful context, not only the header summary. |
+| Rationalization                                                                            | Reality                                                                                       |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| "Root file is enough" or "broader wording is safer."                                       | Scoped files or linked docs often own the rule better, and specific wording is more useful.   |
+| "That command is obvious" or "user didn't ask me to remember this."                        | Non-default commands and repeated corrections are often the highest-value durable guidance.   |
+| "Only the summary matters; detailed artifact notes are too specific."                      | Durable rules often live in gotchas and useful context, not only the header summary.          |
 | "Leaving redundant rules is harmless" or "I moved it, so deleting the old text is enough." | Redundancy drifts; update the destination in the same change before deleting the source text. |
-| "I should update something anyway." | Do not force low-value changes. |
+| "I should update something anyway."                                                        | Do not force low-value changes.                                                               |
 
 ## Red Flags
 
