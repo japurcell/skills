@@ -29,8 +29,10 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 - `bash scripts/test-hooks-startup.sh`: validate startup hook context emission across Copilot CLI and VS Code payload schemas, including direct `SubagentStart` registration
 - `bash scripts/test-hooks-tool-guard.sh`: validate `preToolUse` guard output stays JSON-safe while handling both Copilot CLI and VS Code payload schemas
 - `bash scripts/test-hooks-hedge-detector.sh`: validate Copilot `agentStop` hedge detection blocks over-certain answers once and is wired in `.copilot/hooks/hooks.json`
+- `bash scripts/test-hooks-pride-check.sh`: validate Copilot `agentStop` Pride Check enforcement blocks changed turns without the required craft section and is wired in `.copilot/hooks/hooks.json`
 - `bash scripts/test-gemini-hooks-tool-guard.sh`: validate Gemini `BeforeTool` guard output stays JSON-safe and is wired in `.gemini/settings.json`
 - `bash scripts/test-gemini-hooks-hedge-detector.sh`: validate Gemini `AfterAgent` hedge detection retries over-certain answers once and is wired in `.gemini/settings.json`
+- `bash scripts/test-gemini-hooks-pride-check.sh`: validate Gemini `AfterAgent` Pride Check enforcement retries changed-code answers that omit the required craft section and is wired in `.gemini/settings.json`
 - Hook source changes: run `./scripts/install.sh` before live validation; Copilot CLI and VS Code execute installed hooks from `~/.copilot/hooks`, and Gemini CLI executes installed hooks from `~/.gemini/hooks`, not repository source files.
 - Hook event compatibility: keep CLI camelCase `subagentStart` and VS Code PascalCase `SubagentStart`; CLI returns top-level `additionalContext`, while VS Code returns `hookSpecificOutput.hookEventName` plus `additionalContext`.
 - Live VS Code hook debugging: inspect the matching `exthost*/GitHub.copilot-chat/GitHub Copilot Chat Hooks.log` for returned `SessionStart`/`SubagentStart` hook JSON, then confirm `GitHub Copilot Chat.log` records `SessionStart hook provided context for session` or `SubagentStart hook provided context for subagent ...`.

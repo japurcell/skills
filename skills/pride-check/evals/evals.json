@@ -1,0 +1,66 @@
+{
+  "skill_name": "pride-check",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use the skill under test for the fixture repo in `evals/files/token-refresh-fixture/`. The user has just finished a non-trivial auth bug fix: `src/auth_session.py` now refreshes tokens safely, and `tests/test_auth_session.py` covers the regression and boundary cases. Do not change code. Read the touched files and write only `outputs/pride.md` using the exact Pride Check template.",
+      "expected_output": "A Pride Check block with the five required labels, grounded in the touched auth file and test file, and mentioning at least one real edge case from the fixture.",
+      "files": [
+        "evals/files/token-refresh-fixture/src/auth_session.py",
+        "evals/files/token-refresh-fixture/tests/test_auth_session.py"
+      ],
+      "expectations": [
+        "The output starts with `Pride Check:`.",
+        "The output includes `Senior respect`, `Self-explaining`, `Edge cases`, `Simplicity`, and `Codebase better` labels.",
+        "The output mentions both `src/auth_session.py` and `tests/test_auth_session.py`.",
+        "The output mentions a real edge case from the fixture such as missing token, missing expiry, the refresh window, or a boundary timestamp."
+      ],
+      "assertions": [
+        "The output starts with `Pride Check:`.",
+        "The output includes `Senior respect`, `Self-explaining`, `Edge cases`, `Simplicity`, and `Codebase better` labels.",
+        "The output mentions both `src/auth_session.py` and `tests/test_auth_session.py`.",
+        "The output mentions a real edge case from the fixture such as missing token, missing expiry, the refresh window, or a boundary timestamp."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Use the skill under test for the fixture repo in `evals/files/report-refactor-fixture/`. The user has just finished a non-trivial refactor: row formatting was extracted from `src/report_builder.py` into `src/report_formatter.py`, and `tests/test_report_builder.py` was tightened. Do not change code. Read the touched files and write only `outputs/pride.md` using the exact Pride Check template.",
+      "expected_output": "A Pride Check block with the five required labels, grounded in the touched refactor files and test file, and mentioning the real maintainability or edge-case improvements from the fixture.",
+      "files": [
+        "evals/files/report-refactor-fixture/src/report_builder.py",
+        "evals/files/report-refactor-fixture/src/report_formatter.py",
+        "evals/files/report-refactor-fixture/tests/test_report_builder.py"
+      ],
+      "expectations": [
+        "The output starts with `Pride Check:`.",
+        "The output includes `Senior respect`, `Self-explaining`, `Edge cases`, `Simplicity`, and `Codebase better` labels.",
+        "The output mentions `src/report_builder.py`, `src/report_formatter.py`, and `tests/test_report_builder.py`.",
+        "The output mentions either duplicate formatting removal, blank-row handling, or missing-owner handling."
+      ],
+      "assertions": [
+        "The output starts with `Pride Check:`.",
+        "The output includes `Senior respect`, `Self-explaining`, `Edge cases`, `Simplicity`, and `Codebase better` labels.",
+        "The output mentions `src/report_builder.py`, `src/report_formatter.py`, and `tests/test_report_builder.py`.",
+        "The output mentions either duplicate formatting removal, blank-row handling, or missing-owner handling."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use the skill under test for the fixture repo in `evals/files/read-only-fixture/`. The user asks: `Before I touch anything, explain how src/cache.py works.` Do not change code and do not emit a Pride Check block. Write only `outputs/decision.md` saying whether this skill applies yet and why.",
+      "expected_output": "A short decision note that says the skill does not apply yet because no non-trivial code change has been completed.",
+      "files": [
+        "evals/files/read-only-fixture/src/cache.py"
+      ],
+      "expectations": [
+        "The decision says the skill does not apply yet or is not applicable yet.",
+        "The decision explains that no non-trivial code change has happened yet, or that the task is read-only / before coding.",
+        "The decision does not contain a `Pride Check:` block."
+      ],
+      "assertions": [
+        "The decision says the skill does not apply yet or is not applicable yet.",
+        "The decision explains that no non-trivial code change has happened yet, or that the task is read-only / before coding.",
+        "The decision does not contain a `Pride Check:` block."
+      ]
+    }
+  ]
+}

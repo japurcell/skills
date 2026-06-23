@@ -10,6 +10,11 @@
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/hedge-detector.sh",
         "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/pride-check.sh",
+        "timeoutSec": 10
       }
     ],
     "errorOccurred": [
