@@ -124,18 +124,19 @@ def grade_root_create(run_dir: Path) -> list[dict]:
             handoff_text or "missing outputs/repo/.agents/scratchpad/handoff.md",
         ),
         expectation(
-            "The handoff captures goal, status, and exact next step.",
-            has_all(handoff_text, ["goal", "status", "next step"]),
+            "The handoff captures goal, status, exact next step, and verification state.",
+            has_all(handoff_text, ["goal", "status", "next step", "verification state"]),
             handoff_text or "missing handoff.md",
         ),
         expectation(
-            "The handoff names `src/auth_refresh.py`, `tests/test_auth_refresh.py`, and `logs/test-failure.txt`.",
-            has_all(handoff_text, ["src/auth_refresh.py", "tests/test_auth_refresh.py", "logs/test-failure.txt"]),
+            "The handoff names `src/auth_refresh.py:2`, `tests/test_auth_refresh.py:5`, and `logs/test-failure.txt`.",
+            has_all(handoff_text, ["src/auth_refresh.py:2", "tests/test_auth_refresh.py:5", "logs/test-failure.txt"]),
             handoff_text or "missing handoff.md",
         ),
         expectation(
-            "The handoff includes the retry-backoff focus and redacts the secret token.",
+            "The handoff includes the retry-backoff focus, review correction or rejected jitter option, and redacts the secret token.",
             ("retry backoff" in normalized_handoff or "build_retry_schedule" in normalized_handoff)
+            and ("jitter" in normalized_handoff or "code review" in normalized_handoff or "review" in normalized_handoff)
             and "tok_live_abc123secret" not in normalized_handoff,
             handoff_text or "missing handoff.md",
         ),
@@ -162,18 +163,23 @@ def grade_feature_update(run_dir: Path) -> list[dict]:
             handoff_text or "missing outputs/repo/.agents/scratchpad/payments/handoff.md",
         ),
         expectation(
-            "The updated handoff includes retry-metrics and docs focus.",
-            "retry metrics" in normalized_handoff and "docs" in normalized_handoff,
+            "The updated handoff includes retry-metrics and docs focus plus the benchmark delta.",
+            "retry metrics" in normalized_handoff
+            and "docs" in normalized_handoff
+            and "p95" in normalized_handoff
+            and "480ms" in normalized_handoff
+            and "310ms" in normalized_handoff,
             handoff_text or "missing handoff.md",
         ),
         expectation(
-            "The updated handoff names `src/payment_retry.py` and `tests/test_payment_retry.py`.",
-            has_all(handoff_text, ["src/payment_retry.py", "tests/test_payment_retry.py"]),
+            "The updated handoff names `src/payment_retry.py:2` and `tests/test_payment_retry.py:5`.",
+            has_all(handoff_text, ["src/payment_retry.py:2", "tests/test_payment_retry.py:5"]),
             handoff_text or "missing handoff.md",
         ),
         expectation(
-            "The stale `inspect legacy YAML toggles` step is removed.",
-            "inspect legacy yaml toggles" not in normalized_handoff,
+            "The stale `inspect legacy YAML toggles` step is removed and review context is preserved.",
+            "inspect legacy yaml toggles" not in normalized_handoff
+            and ("code review" in normalized_handoff or "review" in normalized_handoff),
             handoff_text or "missing handoff.md",
         ),
         expectation(
@@ -205,15 +211,23 @@ def grade_fallback_noise(run_dir: Path) -> list[dict]:
             "docs/handoff.md absent" if not invalid_path.exists() else "unexpected docs/handoff.md created",
         ),
         expectation(
-            "The handoff references `logs/retry.log` and `diffs/patch.diff` by path.",
-            has_all(handoff_text, ["logs/retry.log", "diffs/patch.diff"]),
+            "The handoff references `logs/retry.log` and `diffs/patch.diff` by path and anchors `src/sync_retry.py:2` plus `tests/test_sync_retry.py:5`.",
+            has_all(
+                handoff_text,
+                [
+                    "logs/retry.log",
+                    "diffs/patch.diff",
+                    "src/sync_retry.py:2",
+                    "tests/test_sync_retry.py:5",
+                ],
+            ),
             handoff_text or "missing handoff.md",
         ),
         expectation(
             "The handoff stays concise and does not expose the secret token or raw stack frame spam.",
             "tok_prod_999secret" not in normalized_handoff
             and "stack frame 27" not in normalized_handoff
-            and line_count(handoff_text) <= 80,
+            and line_count(handoff_text) <= 90,
             handoff_text or "missing handoff.md",
         ),
         expectation(

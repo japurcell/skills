@@ -12,5 +12,8 @@ Remaining:
 - rerun the auth refresh test
 
 Important details:
-- failing test is `test_refresh_retries_backoff`
+- failing assertion is `tests/test_auth_refresh.py:5` in `test_refresh_retries_backoff`
+- code review called out `src/auth_refresh.py:2` because `build_retry_schedule()` repeats `0.5` instead of backing off
+- rejected option: keep jitter; reviewer wants deterministic retries until the flaky failure is gone
+- verification state: pytest still fails; rerun after editing `build_retry_schedule`
 - keep token `tok_live_ABC123SECRET` out of any saved handoff
