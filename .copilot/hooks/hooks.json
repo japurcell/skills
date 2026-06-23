@@ -5,6 +5,11 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/log-agent-stop.sh"
+      },
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/hedge-detector.sh",
+        "timeoutSec": 10
       }
     ],
     "errorOccurred": [
@@ -17,6 +22,16 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/log-notification.sh"
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/tool-guard.sh",
+        "env": {
+          "GUARD_MODE": "block"
+        },
+        "timeoutSec": 10
       }
     ],
     "postToolUseFailure": [

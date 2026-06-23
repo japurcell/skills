@@ -27,7 +27,11 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 - `python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>`: grade benchmark-style eval artifacts when a skill ships a local `grade_benchmark.py` helper
 - `bash scripts/test-hooks-format.sh`: validate hook audit logging, rollover, and locking behavior
 - `bash scripts/test-hooks-startup.sh`: validate startup hook context emission across Copilot CLI and VS Code payload schemas, including direct `SubagentStart` registration
-- Hook source changes: run `./scripts/install.sh` before live validation; Copilot CLI and VS Code execute installed hooks from `~/.copilot/hooks`, not repository source files.
+- `bash scripts/test-hooks-tool-guard.sh`: validate `preToolUse` guard output stays JSON-safe while handling both Copilot CLI and VS Code payload schemas
+- `bash scripts/test-hooks-hedge-detector.sh`: validate Copilot `agentStop` hedge detection blocks over-certain answers once and is wired in `.copilot/hooks/hooks.json`
+- `bash scripts/test-gemini-hooks-tool-guard.sh`: validate Gemini `BeforeTool` guard output stays JSON-safe and is wired in `.gemini/settings.json`
+- `bash scripts/test-gemini-hooks-hedge-detector.sh`: validate Gemini `AfterAgent` hedge detection retries over-certain answers once and is wired in `.gemini/settings.json`
+- Hook source changes: run `./scripts/install.sh` before live validation; Copilot CLI and VS Code execute installed hooks from `~/.copilot/hooks`, and Gemini CLI executes installed hooks from `~/.gemini/hooks`, not repository source files.
 - Hook event compatibility: keep CLI camelCase `subagentStart` and VS Code PascalCase `SubagentStart`; CLI returns top-level `additionalContext`, while VS Code returns `hookSpecificOutput.hookEventName` plus `additionalContext`.
 - Live VS Code hook debugging: inspect the matching `exthost*/GitHub.copilot-chat/GitHub Copilot Chat Hooks.log` for returned `SessionStart`/`SubagentStart` hook JSON, then confirm `GitHub Copilot Chat.log` records `SessionStart hook provided context for session` or `SubagentStart hook provided context for subagent ...`.
 - Live Copilot CLI hook debugging: launch a no-op `task` subagent if needed, then verify `~/.copilot/hooks/audit.log` contains `[subagent-start.sh]` and `[log-subagent-stop.sh]`; smoke-test installed CLI schema with `~/.copilot/hooks/scripts/subagent-start.sh` returning top-level `additionalContext`.

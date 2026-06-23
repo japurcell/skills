@@ -104,6 +104,12 @@ bash scripts/test-addy-install.sh
 # Skill validation
 python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>
 
+# Hook validation
+bash scripts/test-hooks-tool-guard.sh
+bash scripts/test-hooks-hedge-detector.sh
+bash scripts/test-gemini-hooks-tool-guard.sh
+bash scripts/test-gemini-hooks-hedge-detector.sh
+
 # Skill packaging
 PYTHONPATH=skills/skill-creator python3 skills/skill-creator/scripts/package_skill.py skills/<skill-name> /tmp/skill-dist
 

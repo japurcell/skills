@@ -1,6 +1,9 @@
 {
   "context": {
-    "fileName": ["AGENTS.md", "GEMINI.md"]
+    "fileName": [
+      "AGENTS.md",
+      "GEMINI.md"
+    ]
   },
   "experimental": {
     "modelSteering": true
@@ -69,11 +72,29 @@
           {
             "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/log-after-agent.sh"
+          },
+          {
+            "name": "hedge-detector",
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/hedge-detector.sh",
+            "description": "Rejects over-certain final answers that omit explicit evidence and uncertainty sections.",
+            "timeout": 10000
           }
         ]
       }
     ],
     "BeforeTool": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "name": "tool-guard",
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/tool-guard.sh",
+            "description": "Blocks dangerous Gemini tool invocations using same policy patterns as Copilot tool-guard."
+          }
+        ]
+      },
       {
         "matcher": "run_shell_command",
         "hooks": [

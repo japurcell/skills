@@ -179,9 +179,9 @@ else
 fi
 
 SKILL_FILES=(
+  "$SKILLS_DIR/universal-guidelines/SKILL.md"
   "$SKILLS_DIR/cli-compression/SKILL.md"
   "$SKILLS_DIR/context-engineering/SKILL.md"
-  "$SKILLS_DIR/karpathy-guidelines/SKILL.md"
   "$SKILLS_DIR/caveman/SKILL.md"
 )
 

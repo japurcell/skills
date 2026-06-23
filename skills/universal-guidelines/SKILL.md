@@ -1,9 +1,9 @@
 ---
-name: karpathy-guidelines
+name: universal-guidelines
 description: Behavioral guidelines to reduce common LLM coding mistakes. Use for any code task - writing, reading, reviewing, debugging, or refactoring.
 ---
 
-# Karpathy Guidelines
+# Universal Guidelines
 
 Prefer caution over speed.
 
@@ -36,8 +36,20 @@ Rule: every changed line must justify itself.
 ## 4. Verify
 
 - Define clear success criteria.
+- Write tests before code (TDD)
 - Bug fix: reproduce, then pass.
 - New behavior: test expected behavior.
 - Refactor: confirm behavior is unchanged.
+- No secrets in code or version control.
+- Ensure quality across five axes: correctness, readability, architecture, security, performance.
+- Every PR must pass: lint, type check, tests, build.
+
+## 5. Boundaries
+
+- Always: Run tests before commits, validate user input
+- Ask first: Database schema changes, new dependencies
+- Never: Commit secrets, remove failing tests, skip verification
 
 For multi-step tasks, give a short plan with a check for each step.
+
+INSTRUCTIONS: Push back if assumptions are wrong. Identify missing context before proceeding. Question your own reasoning at each step.
