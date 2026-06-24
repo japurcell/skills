@@ -46,6 +46,7 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 
 5. **Validate and refresh**
    - Run `python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>`.
+   - Run `npx tessl skill review skills/<skill-name>`.
    - Run `python3 -m py_compile skills/<skill-name>/evals/grade_benchmark.py` when the skill ships a grader.
    - Run `python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>` when benchmark artifacts exist.
    - If the user wants a packaged archive, run `PYTHONPATH=skills/skill-creator python3 skills/skill-creator/scripts/package_skill.py skills/<skill-name> /tmp/skill-dist`.
