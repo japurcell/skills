@@ -7,9 +7,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 get_expected_context() {
   local skills_dir="${HOME}/.agents/skills"
   local files=(
+    "$skills_dir/universal-guidelines/SKILL.md"
     "$skills_dir/cli-compression/SKILL.md"
     "$skills_dir/context-engineering/SKILL.md"
-    "$skills_dir/karpathy-guidelines/SKILL.md"
     "$skills_dir/caveman/SKILL.md"
   )
   local temp_file

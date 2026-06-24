@@ -43,10 +43,12 @@ audit_log_event() {
   local message="$2"
   local log="${AUDIT_LOG:-$HOME/.copilot/hooks/audit.log}"
   local lock="${AUDIT_LOCK:-$log.lock}"
+  local max_bytes="${AUDIT_LOG_MAX_BYTES:-1048576}"
+  local backups="${AUDIT_LOG_MAX_BACKUPS:-3}"
 
   (
     flock -x 9
-    rotate_audit_log "$log"
+    rotate_audit_log "$log" "$max_bytes" "$backups"
     append_audit_line "$log" "$sender" "$message"
   ) 9>"$lock"
 }

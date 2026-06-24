@@ -4,7 +4,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"
 
 require_cmd jq
-require_cmd flock
 
 INPUT="$(cat)"
 
@@ -25,7 +24,8 @@ if ! jq -e 'type == "object"' >/dev/null 2>&1 <<<"$INPUT"; then
   emit_decision "allow"
 fi
 
-parse_input "$INPUT"
+SESSION_ID=$(jq -r '.sessionId // .session_id // empty' <<< "$INPUT") || { SESSION_ID=""; }
+TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$INPUT") || { TIMESTAMP=""; }
 
 TRANSCRIPT_PATH="$(jq -r '.transcriptPath // .transcript_path // empty' <<<"$INPUT")"
 STOP_REASON="$(jq -r '.stopReason // .stop_reason // empty' <<<"$INPUT")"

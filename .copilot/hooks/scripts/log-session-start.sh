@@ -3,10 +3,10 @@ source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"
 
 require_cmd jq
-require_cmd flock
 
 INPUT="$(cat)"
-parse_input "$INPUT"
+SESSION_ID=$(jq -r '.sessionId // .session_id // empty' <<< "$INPUT") || { SESSION_ID=""; }
+TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$INPUT") || { TIMESTAMP=""; }
 SOURCE=$(jq -r '.source // empty' <<< "$INPUT")
 INITIAL_PROMPT=$(jq -r '.initialPrompt // .initial_prompt // empty' <<< "$INPUT")
 

@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"
 
 require_cmd jq
-require_cmd flock
 
 INPUT="$(cat)"
-parse_input "$INPUT"
+SESSION_ID=$(jq -r '.sessionId // .session_id // empty' <<< "$INPUT") || { SESSION_ID=""; }
+TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$INPUT") || { TIMESTAMP=""; }
 
-setup_audit_log
+audit_init
 
-append_audit_line "$AUDIT_LOG" \
-  "log-permission-request.sh" \
+audit_log_event \
+  "$(basename "$0")" \
   "[$TIMESTAMP] Session: $SESSION_ID, Input: $INPUT"
 
 # { behavior: "allow|deny", message: "reason given to LLM for denying", interrupt: true|false }

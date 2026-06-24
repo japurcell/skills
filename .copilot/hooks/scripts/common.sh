@@ -14,15 +14,6 @@ require_cmd() {
   }
 }
 
-cleanup_lock() {
-  local exit_code=$?
-  if [[ -n "${LOCK_FD_OPENED:-}" ]]; then
-    flock -u 9 || true
-    exec 9>&- || true
-  fi
-  exit "$exit_code"
-}
-
 # Directory resolution
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -33,36 +24,6 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 else
   REPO_ROOT="$(pwd)"
 fi
-
-# Library paths
-AUDIT_LIB="$SCRIPT_DIR/audit.sh"
-
-# Input parsing helpers
-parse_input() {
-  local input="$1"
-  SESSION_ID=$(jq -r '.sessionId // .session_id // empty' <<< "$input") || { SESSION_ID=""; }
-  TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$input") || { TIMESTAMP=""; }
-}
-
-setup_audit_log() {
-  if [[ ! -f "$AUDIT_LIB" ]]; then
-    echo "Missing audit library: $AUDIT_LIB" >&2
-    exit 1
-  fi
-  source "$AUDIT_LIB"
-
-  AUDIT_LOG="${AUDIT_LOG:-$HOOK_DIR/audit.log}"
-  AUDIT_LOCK="${AUDIT_LOCK:-$AUDIT_LOG.lock}"
-
-  mkdir -p "$(dirname "$AUDIT_LOG")"
-  trap cleanup_lock EXIT
-
-  exec 9>"$AUDIT_LOCK"
-  LOCK_FD_OPENED=1
-  flock -x 9
-
-  rotate_audit_log "$AUDIT_LOG" "${AUDIT_LOG_MAX_BYTES:-1048576}"
-}
 
 get_new_events() {
   local session_id="${1:?get_new_events: session_id is required}"

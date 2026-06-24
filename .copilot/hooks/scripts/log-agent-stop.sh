@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"
 
 require_cmd jq
-require_cmd flock
 
 INPUT="$(cat)"
-parse_input "$INPUT"
+SESSION_ID=$(jq -r '.sessionId // .session_id // empty' <<< "$INPUT") || { SESSION_ID=""; }
+TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$INPUT") || { TIMESTAMP=""; }
 TRANSCRIPT_PATH=$(jq -r '.transcriptPath // .transcript_path // empty' <<< "$INPUT")
 STOP_REASON=$(jq -r '.stopReason // .stop_reason // empty' <<< "$INPUT")
 
-setup_audit_log
+audit_init
 
-append_audit_line "$AUDIT_LOG" \
-  "log-agent-stop.sh" \
+audit_log_event \
+  "$(basename "$0")" \
   "[$TIMESTAMP] Session: $SESSION_ID, \
     Transcript: $TRANSCRIPT_PATH, \
     Stop Reason: $STOP_REASON"

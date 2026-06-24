@@ -13,6 +13,66 @@ run_hook() {
   run_copilot_hook "format.sh" "$audit_log" "$payload" "$copilot_home" "AUDIT_LOG_MAX_BYTES=$max_bytes" >/dev/null
 }
 
+test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
+  local scripts_dir="$REPO_ROOT/.copilot/hooks/scripts"
+  local script
+
+  if grep -Fq 'parse_input()' "$scripts_dir/common.sh"; then
+    echo "Expected common.sh to delete deprecated parse_input helper." >&2
+    exit 1
+  fi
+
+  if grep -Fq 'cleanup_lock()' "$scripts_dir/common.sh"; then
+    echo "Expected common.sh to delete deprecated cleanup_lock helper." >&2
+    exit 1
+  fi
+
+  if grep -Fq 'setup_audit_log()' "$scripts_dir/common.sh"; then
+    echo "Expected common.sh to delete deprecated setup_audit_log helper." >&2
+    exit 1
+  fi
+
+  while IFS= read -r script; do
+    if grep -Fq 'parse_input ' "$script"; then
+      echo "Expected parse_input usage to be removed from $script." >&2
+      exit 1
+    fi
+
+    if grep -Fq 'setup_audit_log' "$script"; then
+      echo "Expected deprecated setup_audit_log usage to be removed from $script." >&2
+      exit 1
+    fi
+  done < <(find "$scripts_dir" -maxdepth 1 -name '*.sh' | sort)
+
+  for script in \
+    "$scripts_dir/hedge-detector.sh" \
+    "$scripts_dir/log-agent-stop.sh" \
+    "$scripts_dir/log-error-occurred.sh" \
+    "$scripts_dir/log-notification.sh" \
+    "$scripts_dir/log-permission-request.sh" \
+    "$scripts_dir/log-post-tooluse.sh" \
+    "$scripts_dir/log-pre-tooluse.sh" \
+    "$scripts_dir/log-session-end.sh" \
+    "$scripts_dir/log-session-start.sh" \
+    "$scripts_dir/log-subagent-start.sh" \
+    "$scripts_dir/log-subagent-stop.sh" \
+    "$scripts_dir/log-tooluse-failure.sh" \
+    "$scripts_dir/pride-check.sh"
+  do
+    assert_file_contains "$script" 'source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"' \
+      "Expected $script to source audit.sh."
+    assert_file_contains "$script" 'audit_init' \
+      "Expected $script to initialize audit logging with audit_init."
+    assert_file_contains "$script" 'audit_log_event' \
+      "Expected $script to log through audit_log_event."
+  done
+
+  assert_file_contains "$scripts_dir/scan-secrets.sh" 'source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"' \
+    "Expected scan-secrets.sh to source audit.sh."
+  assert_file_contains "$scripts_dir/scan-secrets.sh" 'audit_init' \
+    "Expected scan-secrets.sh to initialize audit logging with audit_init."
+}
+
 test_logs_csharp_apply_patch_command_before_formatter_failure() {
   local workdir
   local audit_log
@@ -279,6 +339,7 @@ test_waits_for_log_lock() {
 }
 
 main() {
+  test_hook_scripts_use_audit_lib_without_deprecated_helpers
   test_logs_csharp_apply_patch_command_before_formatter_failure
   test_logs_js_formatter_failure
   test_logs_subagent_csharp_file_from_task_session_events

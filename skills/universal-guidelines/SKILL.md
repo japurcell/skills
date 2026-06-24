@@ -22,6 +22,7 @@ Prefer caution over speed.
 - No speculative abstractions or configurability.
 - No impossible-case handling.
 - Simplify if overbuilt.
+- Follow YAGNI principles and one-liner solutions.
 
 ## 3. Change surgically
 
