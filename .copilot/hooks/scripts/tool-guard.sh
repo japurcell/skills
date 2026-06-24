@@ -180,26 +180,9 @@ TOOL_INPUT="$(
 COMBINED="${TOOL_NAME} ${TOOL_INPUT}"
 
 ALLOWLIST=()
-if [[ -n "${TOOL_GUARD_ALLOWLIST:-}" ]]; then
-  IFS=',' read -ra ALLOWLIST <<< "$TOOL_GUARD_ALLOWLIST"
-fi
+parse_allowlist_csv "${TOOL_GUARD_ALLOWLIST:-}" ALLOWLIST
 
-is_allowlisted() {
-  local text="$1"
-  local pattern
-
-  for pattern in "${ALLOWLIST[@]}"; do
-    pattern="$(printf '%s' "$pattern" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-    [[ -z "$pattern" ]] && continue
-    if [[ "$text" == *"$pattern"* ]]; then
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-if [[ ${#ALLOWLIST[@]} -gt 0 ]] && is_allowlisted "$COMBINED"; then
+if [[ ${#ALLOWLIST[@]} -gt 0 ]] && allowlist_contains "$COMBINED" "${ALLOWLIST[@]}"; then
   append_log "guard_skipped" "$TOOL_NAME"
   emit_response "allow"
 fi

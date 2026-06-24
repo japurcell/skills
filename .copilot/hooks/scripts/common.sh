@@ -14,6 +14,33 @@ require_cmd() {
   }
 }
 
+parse_allowlist_csv() {
+  local raw_allowlist="${1-}"
+  local output_array_name="${2:?parse_allowlist_csv: output array name is required}"
+  local -n output_array="$output_array_name"
+
+  output_array=()
+  [[ -n "$raw_allowlist" ]] || return 0
+
+  IFS=',' read -ra output_array <<< "$raw_allowlist"
+}
+
+allowlist_contains() {
+  local text="$1"
+  shift || true
+  local entry
+
+  for entry in "$@"; do
+    entry="$(printf '%s' "$entry" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    [[ -z "$entry" ]] && continue
+    if [[ "$text" == *"$entry"* ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 # Directory resolution
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"

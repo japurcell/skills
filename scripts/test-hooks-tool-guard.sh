@@ -9,9 +9,36 @@ run_tool_guard() {
   local mode="$2"
   local payload="$3"
 
-  TOOL_GUARD_LOG_DIR="$log_dir" \
+  TOOL_GUARD_LOG_DIR="$log_dir/guard.log" \
   GUARD_MODE="$mode" \
   bash "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.sh" <<<"$payload"
+}
+
+test_common_allowlist_helpers_trim_and_match() {
+  local output
+
+  output="$(
+    bash -c '
+      set -euo pipefail
+      repo_root="$1"
+      risky_delete="rm -rf ""."
+      risky_db="DROP"" TABLE"
+
+      source "$repo_root/.copilot/hooks/scripts/common.sh"
+      parse_allowlist_csv " $risky_delete ,  $risky_db  ,   " ALLOWLIST
+
+      allowlist_contains "bash $risky_delete" "${ALLOWLIST[@]}" || exit 10
+      allowlist_contains "bash ${risky_db} users;" "${ALLOWLIST[@]}" || exit 11
+      if allowlist_contains "bash echo safe" "${ALLOWLIST[@]}"; then
+        exit 12
+      fi
+
+      printf "ok"
+    ' _ "$REPO_ROOT" 2>/dev/null || true
+  )"
+
+  assert_equals "ok" "$output" \
+    "Expected shared allowlist helpers to parse, trim, and match entries."
 }
 
 test_warn_mode_returns_json_for_cli_payload() {
@@ -85,6 +112,7 @@ test_block_mode_parses_cli_tool_args_objects() {
 }
 
 main() {
+  test_common_allowlist_helpers_trim_and_match
   test_warn_mode_returns_json_for_cli_payload
   test_block_mode_denies_vscode_payload
   test_block_mode_parses_cli_tool_args_objects

@@ -13,6 +13,30 @@ run_hook() {
   run_copilot_hook "format.sh" "$audit_log" "$payload" "$copilot_home" "AUDIT_LOG_MAX_BYTES=$max_bytes" >/dev/null
 }
 
+test_with_mock_bin_path_restores_path_after_failure() {
+  local workdir
+  local path_before
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  path_before="$PATH"
+  status=0
+
+  mock_bin "$workdir" "always-fail" '#!/usr/bin/env bash\nexit 23'
+
+  if with_mock_bin_path "$workdir" always-fail; then
+    status=0
+  else
+    status=$?
+  fi
+
+  assert_equals "23" "$status" \
+    "Expected with_mock_bin_path to return wrapped command exit code."
+  assert_equals "$path_before" "$PATH" \
+    "Expected with_mock_bin_path to restore PATH after failure."
+}
+
 test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
   local scripts_dir="$REPO_ROOT/.copilot/hooks/scripts"
   local script
@@ -85,7 +109,6 @@ test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
 test_logs_csharp_apply_patch_command_before_formatter_failure() {
   local workdir
   local audit_log
-  local old_path
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -93,9 +116,7 @@ test_logs_csharp_apply_patch_command_before_formatter_failure() {
 
   mock_bin "$workdir" "dotnet" '#!/usr/bin/env bash\nexit 1'
 
-  old_path="$PATH"
-  PATH="$workdir/bin:$PATH"
-  if run_hook \
+  if with_mock_bin_path "$workdir" run_hook \
     "$audit_log" \
     1024 \
     '{"sessionId":"cs","timestamp":"2026-05-12T19:00:03Z","toolName":"apply_patch","toolArgs":"*** Begin Patch\n*** Update File: /tmp/Widget.cs\n@@\n- old\n+ new\n*** End Patch"}'
@@ -103,7 +124,6 @@ test_logs_csharp_apply_patch_command_before_formatter_failure() {
     echo "Expected the hook to fail when dotnet format fails." >&2
     exit 1
   fi
-  PATH="$old_path"
 
   assert_file_contains "$audit_log" "Session: cs, File: /tmp/Widget.cs" \
     "Expected the hook to detect C# edits reported via apply_patch."
@@ -118,7 +138,6 @@ test_logs_csharp_apply_patch_command_before_formatter_failure() {
 test_logs_js_formatter_failure() {
   local workdir
   local audit_log
-  local old_path
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -126,9 +145,7 @@ test_logs_js_formatter_failure() {
 
   mock_bin "$workdir" "npx" '#!/usr/bin/env bash\nexit 1'
 
-  old_path="$PATH"
-  PATH="$workdir/bin:$PATH"
-  if run_hook \
+  if with_mock_bin_path "$workdir" run_hook \
     "$audit_log" \
     1024 \
     '{"sessionId":"js","timestamp":"2026-05-12T19:00:04Z","toolName":"edit","toolArgs":{"path":"/tmp/app.ts","file_text":"const value = 1;"}}'
@@ -136,7 +153,6 @@ test_logs_js_formatter_failure() {
     echo "Expected the hook to fail when npx oxfmt fails." >&2
     exit 1
   fi
-  PATH="$old_path"
 
   assert_file_contains "$audit_log" "Session: js, Command: npx oxfmt /tmp/app.ts" \
     "Expected the hook to log the formatter command before the formatter fails."
@@ -151,7 +167,6 @@ test_logs_subagent_csharp_file_from_task_session_events() {
   local copilot_home
   local session_id
   local task_result
-  local old_path
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -169,14 +184,11 @@ test_logs_subagent_csharp_file_from_task_session_events() {
 {"type":"tool.execution_complete","data":{"toolCallId":"parent-task","success":true,"result":{"content":"$task_result"},"toolTelemetry":{"restrictedProperties":{"agent_id":"subagent-hook-repro"}}}}
 EOF
 
-  old_path="$PATH"
-  PATH="$workdir/bin:$PATH"
-  run_hook \
+  with_mock_bin_path "$workdir" run_hook \
     "$audit_log" \
     1024 \
     "{\"sessionId\":\"$session_id\",\"timestamp\":\"2026-05-12T19:00:05Z\",\"toolName\":\"task\",\"toolArgs\":{\"description\":\"Reproducing subagent hook\",\"agent_type\":\"general-purpose\"},\"toolResult\":{\"resultType\":\"success\",\"textResultForLlm\":\"$task_result\",\"toolTelemetry\":{\"restrictedProperties\":{\"agent_id\":\"subagent-hook-repro\"}}}}" \
     "$copilot_home"
-  PATH="$old_path"
 
   assert_file_contains "$audit_log" "Session: $session_id, Tool: task" \
     "Expected the hook to log the parent task tool use."
@@ -190,7 +202,6 @@ test_logs_background_subagent_apply_patch_file_from_read_agent_events() {
   local audit_log
   local copilot_home
   local session_id
-  local old_path
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -206,14 +217,11 @@ test_logs_background_subagent_apply_patch_file_from_read_agent_events() {
 {"type":"tool.execution_start","data":{"parentToolCallId":"parent-task","toolCallId":"child-apply-patch","toolName":"apply_patch","arguments":"*** Begin Patch\n*** Update File: /tmp/ShareCartOperationalAssetSeedingTests.cs\n@@\n- old\n+ new\n*** End Patch"}}
 EOF
 
-  old_path="$PATH"
-  PATH="$workdir/bin:$PATH"
-  run_hook \
+  with_mock_bin_path "$workdir" run_hook \
     "$audit_log" \
     1024 \
     '{"sessionId":"background-agent","timestamp":"2026-05-13T14:10:17Z","toolName":"read_agent","toolArgs":{"agent_id":"share-cart-implementer","wait":true,"timeout":30},"toolResult":{"resultType":"success","textResultForLlm":"Agent is idle (waiting for messages). agent_id: share-cart-implementer"}}' \
     "$copilot_home"
-  PATH="$old_path"
 
   assert_file_contains "$audit_log" "Session: background-agent, Tool: read_agent" \
     "Expected the hook to log read_agent tool use for background subagents."
@@ -227,7 +235,6 @@ test_logs_background_subagent_apply_patch_file_from_read_agent_events_with_camel
   local audit_log
   local copilot_home
   local session_id
-  local old_path
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -243,14 +250,11 @@ test_logs_background_subagent_apply_patch_file_from_read_agent_events_with_camel
 {"type":"tool.execution_start","data":{"parentToolCallId":"parent-task","toolCallId":"child-apply-patch","toolName":"apply_patch","arguments":"*** Begin Patch\n*** Update File: /tmp/ShareCartCamelCase.cs\n@@\n- old\n+ new\n*** End Patch"}}
 EOF
 
-  old_path="$PATH"
-  PATH="$workdir/bin:$PATH"
-  run_hook \
+  with_mock_bin_path "$workdir" run_hook \
     "$audit_log" \
     1024 \
     '{"sessionId":"background-agent-camel","timestamp":"2026-05-13T14:10:18Z","toolName":"read_agent","toolArgs":{"agentId":"share-cart-implementer","wait":true,"timeout":30},"toolResult":{"resultType":"success","textResultForLlm":"Agent is idle (waiting for messages). agent_id: share-cart-implementer"}}' \
     "$copilot_home"
-  PATH="$old_path"
 
   assert_file_contains "$audit_log" "Session: background-agent-camel, Tool: read_agent" \
     "Expected the hook to log read_agent tool use for background subagents."
@@ -348,6 +352,7 @@ test_waits_for_log_lock() {
 }
 
 main() {
+  test_with_mock_bin_path_restores_path_after_failure
   test_hook_scripts_use_audit_lib_without_deprecated_helpers
   test_logs_csharp_apply_patch_command_before_formatter_failure
   test_logs_js_formatter_failure

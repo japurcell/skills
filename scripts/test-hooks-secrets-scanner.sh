@@ -13,7 +13,7 @@ run_scan_hook() {
   shift 5
 
   local env_cmd=(
-    "SECRETS_LOG_DIR=$log_dir"
+    "SECRETS_LOG_DIR=$log_dir/scan.log"
     "SCAN_MODE=$mode"
     "SCAN_SCOPE=$scope"
   )

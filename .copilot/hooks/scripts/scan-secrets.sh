@@ -41,9 +41,7 @@ PATTERNS=(
 ENV_FILES_SCANNED=()
 
 ALLOWLIST=()
-if [[ -n "${SECRETS_ALLOWLIST:-}" ]]; then
-  IFS=',' read -ra ALLOWLIST <<< "$SECRETS_ALLOWLIST"
-fi
+parse_allowlist_csv "${SECRETS_ALLOWLIST:-}" ALLOWLIST
 
 append_scan_log() {
   local status="$1"
@@ -85,21 +83,6 @@ append_scan_log() {
 
 build_string_array_json() {
   jq -nc '$ARGS.positional' --args "$@"
-}
-
-is_allowlisted() {
-  local text="$1"
-  local entry
-
-  for entry in "${ALLOWLIST[@]}"; do
-    entry="$(printf '%s' "$entry" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-    [[ -z "$entry" ]] && continue
-    if [[ "$text" == *"$entry"* ]]; then
-      return 0
-    fi
-  done
-
-  return 1
 }
 
 collect_files() {
@@ -322,7 +305,7 @@ for path in "${FILES[@]}"; do
 
   if is_credential_path "$path"; then
     allowlist_text="${path}:1:credential_path:[SENSITIVE PATH]"
-    if ! is_allowlisted "$allowlist_text"; then
+    if ! allowlist_contains "$allowlist_text" "${ALLOWLIST[@]}"; then
       FINDINGS+=("credential_path"$'\t'"critical"$'\t'"${path}"$'\t'"1"$'\t'"[SENSITIVE PATH]")
     fi
   fi
@@ -334,7 +317,7 @@ for path in "${FILES[@]}"; do
       IFS='|' read -r pattern_name severity regex <<< "$entry"
       while IFS= read -r match_value; do
         allowlist_text="${path}:${line_number}:${pattern_name}:${match_value}"
-        if is_allowlisted "$allowlist_text"; then
+        if allowlist_contains "$allowlist_text" "${ALLOWLIST[@]}"; then
           continue
         fi
         FINDINGS+=("${pattern_name}"$'\t'"${severity}"$'\t'"${path}"$'\t'"${line_number}"$'\t'"$(redact_match "$match_value")")

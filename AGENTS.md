@@ -17,7 +17,7 @@ This repository publishes custom coding skills from `skills/`, custom agent defi
 - Skill definition changes: `python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>`
 - Hook changes: run the narrowest matching `scripts/test-hooks-*.sh` or `scripts/test-gemini-hooks-*.sh` target from `docs/agent-guides/validation.md`
 - After changing `.copilot/hooks/` or `.gemini/hooks/`, run `./scripts/install.sh` before live validation; Copilot hooks execute from `~/.copilot/hooks` and Gemini hooks execute from `~/.gemini/hooks`.
-- Live VS Code startup-hook validation: use the exact session's `exthost*/GitHub.copilot-chat/GitHub Copilot Chat Hooks.log` plus `GitHub Copilot Chat.log`; transcripts alone are not authoritative for `SessionStart` or `SubagentStart` context injection.
+- Live VS Code startup-hook validation: see `docs/agent-guides/validation.md` for the canonical log locations and evidence to inspect.
 
 ## Documentation
 

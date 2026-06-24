@@ -54,6 +54,26 @@ mock_bin() {
   chmod +x "$bin_dir/$cmd_name"
 }
 
+# Temporarily prepend <workdir>/bin to PATH while running a command.
+# Usage: with_mock_bin_path <workdir> <command> [args...]
+with_mock_bin_path() {
+  local workdir="$1"
+  shift
+
+  local old_path="$PATH"
+  local status
+
+  PATH="$workdir/bin:$PATH"
+  if "$@"; then
+    status=0
+  else
+    status=$?
+  fi
+  PATH="$old_path"
+
+  return "$status"
+}
+
 # Run a Copilot hook script with standard environment variables
 # Usage: run_copilot_hook <hook_script_name> <audit_log> <payload> [copilot_home] [extra_env_vars...]
 run_copilot_hook() {
