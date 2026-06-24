@@ -12,6 +12,9 @@
 
 set -euo pipefail
 
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"
+
 if [[ "${SKIP_TOOL_GUARD:-}" == "true" ]]; then
   exit 0
 fi
@@ -25,8 +28,8 @@ if [[ "$MODE" != "warn" && "$MODE" != "block" ]]; then
   MODE="block"
 fi
 
-mkdir -p "$LOG_DIR"
-LOG_FILE="$LOG_DIR/guard.log"
+AUDIT_LOG="$LOG_DIR/guard.log"
+AUDIT_LOCK="$AUDIT_LOG.lock"
 
 emit_allow_without_jq() {
   printf 'Tool Guardian skipped: required command not found: jq\n' >&2
@@ -35,6 +38,7 @@ emit_allow_without_jq() {
 }
 
 command -v jq >/dev/null 2>&1 || emit_allow_without_jq
+audit_init
 
 emit_response() {
   local decision="$1"
@@ -65,22 +69,27 @@ append_log() {
   local tool_name="$2"
   local threat_count="${3:-0}"
   local threats_json="${4:-[]}"
+  local log_payload
 
-  jq -nc \
-    --arg timestamp "$TIMESTAMP" \
-    --arg event "$event" \
-    --arg mode "$MODE" \
-    --arg tool "$tool_name" \
-    --argjson threat_count "$threat_count" \
-    --argjson threats "$threats_json" '
-      {
-        timestamp: $timestamp,
-        event: $event,
-        mode: $mode,
-        tool: $tool
-      } +
-      (if $event == "threats_detected" then { threat_count: $threat_count, threats: $threats } else {} end)
-    ' >> "$LOG_FILE"
+  log_payload="$(
+    jq -nc \
+      --arg timestamp "$TIMESTAMP" \
+      --arg event "$event" \
+      --arg mode "$MODE" \
+      --arg tool "$tool_name" \
+      --argjson threat_count "$threat_count" \
+      --argjson threats "$threats_json" '
+        {
+          timestamp: $timestamp,
+          event: $event,
+          mode: $mode,
+          tool: $tool
+        } +
+        (if $event == "threats_detected" then { threat_count: $threat_count, threats: $threats } else {} end)
+      '
+  )"
+
+  audit_log_event "$(basename "$0")" "$log_payload"
 }
 
 build_threats_json() {

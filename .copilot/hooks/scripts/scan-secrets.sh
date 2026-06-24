@@ -52,14 +52,11 @@ append_scan_log() {
   local note="${3:-}"
   local timestamp="${TIMESTAMP:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}"
   local env_files_json
-  local max_bytes="${AUDIT_LOG_MAX_BYTES:-1048576}"
-  local backups="${AUDIT_LOG_MAX_BACKUPS:-3}"
+  local log_payload
 
   env_files_json="$(build_string_array_json "${ENV_FILES_SCANNED[@]}")"
 
-  (
-    flock -x 9
-    rotate_audit_log "$AUDIT_LOG" "$max_bytes" "$backups"
+  log_payload="$(
     jq -nc \
       --arg timestamp "$timestamp" \
       --arg session_id "${SESSION_ID:-}" \
@@ -81,8 +78,10 @@ append_scan_log() {
         (if $note != "" then { note: $note } else {} end) +
         (if ($env_files | length) > 0 then { envFiles: $env_files } else {} end) +
         (if ($findings | length) > 0 then { findings: $findings } else {} end)
-      ' >> "$AUDIT_LOG"
-  ) 9>"$AUDIT_LOCK"
+      '
+  )"
+
+  audit_log_event "$(basename "$0")" "$log_payload"
 }
 
 build_string_array_json() {

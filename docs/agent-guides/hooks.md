@@ -13,6 +13,11 @@ Applies to `.copilot/hooks/**`.
 There are differences between Copilot CLI and VS Code hook definitions that must be preserved. In `.copilot/hooks/hooks.json`, keep both `subagentStart` (CLI) and `SubagentStart` (VS Code). For response payloads, CLI returns top-level `additionalContext`, while VS Code returns `hookSpecificOutput` plus `additionalContext`.
 - For final-response quality validators, prefer `agentStop` over `subagentStop`; `subagentStop` has no matcher support in the Copilot hook reference, and the built-in `general-purpose` agent does not emit `subagentStart` or `subagentStop`.
 
+### Repo-specific hook gotchas
+
+- Keep `.copilot/hooks/scripts/format.sh` in sync with `scripts/test-hooks-format.sh`; that test expects audit-backed logging, formatter command/failure logging, session-event file recovery, rollover, and lock waiting.
+- When editing Tool Guard rules or tests that mention dangerous commands, avoid pasting raw threat strings into tool payloads; construct the exact strings dynamically so the active guard hook does not block the edit itself.
+
 ### Copilot CLI
 
 [Official GitHub Copilot Hooks Reference](https://docs.github.com/en/copilot/reference/hooks-reference)

@@ -45,6 +45,7 @@ test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
   done < <(find "$scripts_dir" -maxdepth 1 -name '*.sh' | sort)
 
   for script in \
+    "$scripts_dir/format.sh" \
     "$scripts_dir/hedge-detector.sh" \
     "$scripts_dir/log-agent-stop.sh" \
     "$scripts_dir/log-error-occurred.sh" \
@@ -71,6 +72,14 @@ test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
     "Expected scan-secrets.sh to source audit.sh."
   assert_file_contains "$scripts_dir/scan-secrets.sh" 'audit_init' \
     "Expected scan-secrets.sh to initialize audit logging with audit_init."
+  assert_file_contains "$scripts_dir/scan-secrets.sh" 'audit_log_event' \
+    "Expected scan-secrets.sh to log through audit_log_event."
+  assert_file_contains "$scripts_dir/tool-guard.sh" 'source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"' \
+    "Expected tool-guard.sh to source audit.sh."
+  assert_file_contains "$scripts_dir/tool-guard.sh" 'audit_init' \
+    "Expected tool-guard.sh to initialize audit logging with audit_init."
+  assert_file_contains "$scripts_dir/tool-guard.sh" 'audit_log_event' \
+    "Expected tool-guard.sh to log through audit_log_event."
 }
 
 test_logs_csharp_apply_patch_command_before_formatter_failure() {

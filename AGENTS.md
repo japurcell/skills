@@ -32,4 +32,3 @@ This repository publishes custom coding skills from `skills/`, custom agent defi
 
 - `code-simplifier` + intentional non-standard paths - explicitly state path intent (for example `.gemini/` vs `.copilot/`) so the simplifier does not "correct" required paths.
 - `scripts/test-common.sh` `mock_bin` - keep `printf "%b\n"` so escaped newlines render into executable mock scripts.
-- Editing code/tests with active Tool Guard - if files/test suites contain security-threat patterns (such as destructive rm, git push force, or database drop commands), any `replace` or tool call payload containing those strings as a literal will be blocked by the tool guard hook. To edit or assert on these patterns in test files, dynamically construct the threat strings (e.g., concatenate separate variable expansions like `local f="force"; expected="git push --${f}"`) to completely avoid triggering the payload's static regex scanner.
