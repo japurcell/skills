@@ -32,3 +32,4 @@ This repository publishes custom coding skills from `skills/`, custom agent defi
 
 - `code-simplifier` + intentional non-standard paths - explicitly state path intent (for example `.gemini/` vs `.copilot/`) so the simplifier does not "correct" required paths.
 - `scripts/test-common.sh` `mock_bin` - keep `printf "%b\n"` so escaped newlines render into executable mock scripts.
+- Static review findings - if a claim is inferred from file inspection or sub-review output without live reproduction, present it as a likely/candidate issue and include `Evidence:` plus `Uncertainty:` sections grounded in inspected files, tool outputs, and remaining assumptions.
