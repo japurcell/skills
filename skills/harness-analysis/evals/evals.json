@@ -1,0 +1,75 @@
+{
+  "skill_name": "harness-analysis",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use the harness-analysis skill to audit a repo where structured session queries return 0 rows, but local logs exist. The sample evidence is: 10 events.jsonl files, 6,623 hook start/end events out of 12,801 counted events, 959 view tool starts, and a hook script that injects four skill files totaling 15,586 bytes. Do not inspect real files. Write only outputs/report.md.",
+      "expected_output": "A concise harness report that includes Evidence and Uncertainty before recommendations, treats findings as candidate recommendations because impact is inferred from sampled counts, and does not claim benchmarked latency.",
+      "files": [],
+      "expectations": [
+        "The report includes `## Evidence:` and `## Uncertainty:` sections before recommendations.",
+        "The report mentions that structured session queries returned 0 rows and local logs were used instead.",
+        "The recommendations are phrased as candidate or tentative when impact is inferred from counts.",
+        "The report does not claim measured latency or proven token savings."
+      ],
+      "assertions": [
+        "The report includes `## Evidence:` and `## Uncertainty:` sections before recommendations.",
+        "The report mentions that structured session queries returned 0 rows and local logs were used instead.",
+        "The recommendations are phrased as candidate or tentative when impact is inferred from counts.",
+        "The report does not claim measured latency or proven token savings."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Use the harness-analysis skill to audit repeated failures. Evidence: hook logs show `Path does not exist` four times, `No LSP client available` five times, two failed official-doc URL variants, and one `rg: regex parse error`. Do not inspect real files. Write only outputs/report.md with recommendations to reduce churn.",
+      "expected_output": "A report that groups failures by root cause and recommends bounded stop conditions instead of retrying variants.",
+      "files": [],
+      "expectations": [
+        "The report groups path, LSP, fetch, and regex failures instead of listing every duplicate line.",
+        "The report recommends verifying paths after one miss.",
+        "The report recommends stopping LSP attempts after `No LSP client available`.",
+        "The report recommends capping guessed URL variants and switching to fixed-string or escaped search after regex parse errors."
+      ],
+      "assertions": [
+        "The report groups path, LSP, fetch, and regex failures instead of listing every duplicate line.",
+        "The report recommends verifying paths after one miss.",
+        "The report recommends stopping LSP attempts after `No LSP client available`.",
+        "The report recommends capping guessed URL variants and switching to fixed-string or escaped search after regex parse errors."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use the harness-analysis skill for a near-miss: the user asks, `please fix this failing hook and edit the script`. The task is normal implementation, not an audit. Write only outputs/report.md explaining whether the skill should proceed.",
+      "expected_output": "A refusal/redirect that says harness-analysis is not the right skill for implementation, does not audit logs broadly, and suggests using normal coding/debugging workflow.",
+      "files": [],
+      "expectations": [
+        "The output says this is not a harness-analysis audit task.",
+        "The output does not perform or invent an audit.",
+        "The output redirects to normal coding/debugging workflow."
+      ],
+      "assertions": [
+        "The output says this is not a harness-analysis audit task.",
+        "The output does not perform or invent an audit.",
+        "The output redirects to normal coding/debugging workflow."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use the harness-analysis skill with sparse evidence. Evidence available: only AGENTS.md and README.md were readable; no session logs or hook logs were found. Do not inspect real files. Write only outputs/report.md.",
+      "expected_output": "A sparse-evidence report that states the limit clearly, provides tentative recommendations only, avoids fabricated log evidence, and asks for recent logs only if they materially affect confidence.",
+      "files": [],
+      "expectations": [
+        "The report states that session and hook log evidence is unavailable.",
+        "Recommendations are tentative and grounded only in available instruction files.",
+        "The report does not fabricate counts, failures, or log paths.",
+        "The report includes `Evidence:` and `Uncertainty:` sections."
+      ],
+      "assertions": [
+        "The report states that session and hook log evidence is unavailable.",
+        "Recommendations are tentative and grounded only in available instruction files.",
+        "The report does not fabricate counts, failures, or log paths.",
+        "The report includes `Evidence:` and `Uncertainty:` sections."
+      ]
+    }
+  ]
+}
