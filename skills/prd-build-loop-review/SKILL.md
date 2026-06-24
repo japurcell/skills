@@ -248,6 +248,7 @@ Required entry format:
 - Role: implementer | requirements-collector | code-simplifier | reviewer | orchestrator
 - Summary
 - Files changed/reviewed
+- Issues or concerns
 - Verification or outcome
 - **Learnings for future iterations:**
   - Patterns discovered

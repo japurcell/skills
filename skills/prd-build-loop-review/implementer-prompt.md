@@ -60,6 +60,7 @@
 - Role: implementer
 - Summary
 - Files changed/reviewed
+- Issues or concerns
 - Verification or outcome
 - **Learnings for future iterations:**
   - Patterns discovered
