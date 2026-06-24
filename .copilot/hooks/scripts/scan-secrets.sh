@@ -18,7 +18,6 @@ TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$INPUT") || { TIMESTAMP=""; }
 
 MODE="${SCAN_MODE:-warn}"
 SCOPE="${SCAN_SCOPE:-diff}"
-LOG_DIR="${SECRETS_LOG_DIR:-$HOOK_DIR/secrets}"
 
 if [[ "$MODE" != "warn" && "$MODE" != "block" ]]; then
   MODE="warn"
@@ -28,7 +27,7 @@ if [[ "$SCOPE" != "diff" && "$SCOPE" != "staged" ]]; then
   SCOPE="diff"
 fi
 
-AUDIT_LOG="$LOG_DIR/scan.log"
+AUDIT_LOG="${SECRETS_LOG_DIR:-$HOME/.copilot/hooks/secrets/scan.log}"
 AUDIT_LOCK="$AUDIT_LOG.lock"
 audit_init
 

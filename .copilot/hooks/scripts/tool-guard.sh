@@ -21,14 +21,13 @@ fi
 
 INPUT="$(cat)"
 MODE="${GUARD_MODE:-block}"
-LOG_DIR="${TOOL_GUARD_LOG_DIR:-$HOME/.copilot/hooks/tool-guardian}"
 TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
 if [[ "$MODE" != "warn" && "$MODE" != "block" ]]; then
   MODE="block"
 fi
 
-AUDIT_LOG="$LOG_DIR/guard.log"
+AUDIT_LOG="${TOOL_GUARD_LOG_DIR:-$HOME/.copilot/hooks/tool-guardian/guard.log}"
 AUDIT_LOCK="$AUDIT_LOG.lock"
 
 emit_allow_without_jq() {
