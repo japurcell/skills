@@ -17,6 +17,7 @@ There are differences between Copilot CLI and VS Code hook definitions that must
 
 - Keep `.copilot/hooks/scripts/format.sh` in sync with `scripts/test-hooks-format.sh`; that test expects audit-backed logging, formatter command/failure logging, session-event file recovery, rollover, and lock waiting.
 - When editing Tool Guard rules or tests that mention dangerous commands, avoid pasting raw threat strings into tool payloads; construct the exact strings dynamically so the active guard hook does not block the edit itself.
+- Keep simple hook input parsing in the individual script when readability matters; do not move routine `jq` field extraction into `common.sh` just to reduce repetition.
 
 ### Copilot CLI
 
