@@ -67,8 +67,7 @@
         "bash": "$HOME/.copilot/hooks/scripts/scan-secrets.sh",
         "env": {
           "SCAN_MODE": "warn",
-          "SCAN_SCOPE": "diff",
-          "SECRETS_LOG_DIR": "$HOME/.copilot/hooks/secrets"
+          "SCAN_SCOPE": "diff"
         },
         "timeoutSec": 30
       },
