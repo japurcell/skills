@@ -148,19 +148,27 @@ update_existing_repo() {
 prepare_repo() {
   local repo_url="$1"
   local parent_dir="${REPO_ROOT}/.."
-  local repo_name preferred_dir temp_dir
+  local repo_name preferred_dir temp_dir repo_dir
 
   mkdir -p "$parent_dir"
   repo_name="$(repo_name_from_url "$repo_url")"
   preferred_dir="${parent_dir%/}/$repo_name"
 
-  if same_remote "$preferred_dir" "$repo_url"; then
-    if update_existing_repo "$preferred_dir"; then
-      printf '%s\n' "$preferred_dir"
+  for repo_dir in "$parent_dir"/*; do
+    [[ -d "$repo_dir" ]] || continue
+    [[ "$repo_dir" == *.clone.* ]] && continue
+
+    if ! same_remote "$repo_dir" "$repo_url"; then
+      continue
+    fi
+
+    if update_existing_repo "$repo_dir"; then
+      printf '%s\n' "$repo_dir"
       return 0
     fi
     warn "Could not safely update existing repo; falling back to fresh temp clone"
-  fi
+    break
+  done
 
   if [[ ! -e "$preferred_dir" ]]; then
     log "Cloning into preferred location: $preferred_dir"

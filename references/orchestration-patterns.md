@@ -323,7 +323,7 @@ An agent that calls `/spec`, then `/plan`, then `/build`, etc. on the user's beh
 - Doubles token cost: orchestrator turn + sub-agent turn for every step
 - Removes user agency at exactly the points where judgment matters most
 
-**What to do instead:** keep the user as the orchestrator. Document the recommended sequence in `addy-README.md` and let users invoke it.
+**What to do instead:** keep the user as the orchestrator. Document the recommended sequence in `README.md` and let users invoke it.
 
 ---
 

@@ -1,6 +1,6 @@
 # Testing Patterns Reference
 
-Quick reference for common testing patterns across the stack. Use alongside the `addy-test-driven-development` skill.
+Quick reference for common testing patterns across the stack. Use alongside the `test-driven-development` skill.
 
 ## Table of Contents
 

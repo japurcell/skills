@@ -68,7 +68,7 @@ Ship with confidence. The goal is not just to deploy — it's to deploy safely, 
 
 ### Documentation
 
-- [ ] addy-README updated with any new setup requirements
+- [ ] README updated with any new setup requirements
 - [ ] API documentation current
 - [ ] ADRs written for any architectural decisions
 - [ ] Changelog updated

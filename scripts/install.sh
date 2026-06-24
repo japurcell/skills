@@ -31,6 +31,9 @@ copy_skills() {
     fi
     cp -Rp "$entry" "$SKILLS_DEST/"
     rm -rf "${SKILLS_DEST}/${name}/evals"
+    rm -rf "${SKILLS_DEST}/${name}/README.md"
+    rm -rf "${SKILLS_DEST}/${name}/LICENSE.txt"
+    rm -rf "${SKILLS_DEST}/${name}/LICENSE.md"
   done < <(find "$SKILLS_SRC" -mindepth 1 -maxdepth 1 -print0)
 }
 
