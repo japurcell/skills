@@ -65,7 +65,6 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/scan-secrets.sh",
-        "cwd": ".",
         "env": {
           "SCAN_MODE": "warn",
           "SCAN_SCOPE": "diff",
