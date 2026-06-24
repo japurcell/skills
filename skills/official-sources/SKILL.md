@@ -40,6 +40,11 @@ Identify the stack and exact versions from project files when available, for exa
 
 State the detected stack and versions explicitly. If a relevant version is missing or unclear, ask the user. Do not guess.
 
+Reuse rule:
+
+- If stack, version, and requested API surface are unchanged from prior verified work in the same task/session, reuse those official-source findings and citations.
+- If framework, version, or requested API surface changed, rerun DETECT and FETCH before making claims.
+
 ### 2) FETCH
 
 Fetch the specific official documentation page for the feature being implemented, not the docs homepage.
@@ -50,6 +55,9 @@ Rules:
 - MUST NOT rely on memory alone
 - Prefer fetching pages through a markdown converter when possible
 - MUST NOT use third-party tutorials, Stack Overflow, or AI summaries as primary authority
+- For new verification work, fetch official docs again (do not skip source verification).
+- Stop URL guessing after two failed official deep-link URL variants for the same target page.
+- After two failed variants, switch to an official docs index/search page; if still unresolved, mark the guidance `UNVERIFIED`.
 
 Fetch priority:
 

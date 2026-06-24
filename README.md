@@ -89,35 +89,9 @@ Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews. Those f
 
 ## Validation
 
-Run the narrowest command that covers your change:
+Run the narrowest command that covers your change. Use the canonical validation guide for targeted commands and live-validation workflow:
 
-```bash
-# Installer changes
-bash -n scripts/install.sh
-bash scripts/test-install.sh
-bash -n scripts/addy-install.sh
-bash scripts/test-addy-install.sh
-
-# All validation
-./scripts/test-cleanup-skill-workspaces.sh
-
-# Skill validation
-python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>
-
-# Hook validation
-bash scripts/test-hooks-tool-guard.sh
-bash scripts/test-hooks-hedge-detector.sh
-bash scripts/test-hooks-pride-check.sh
-bash scripts/test-gemini-hooks-tool-guard.sh
-bash scripts/test-gemini-hooks-hedge-detector.sh
-bash scripts/test-gemini-hooks-pride-check.sh
-
-# Skill packaging
-PYTHONPATH=skills/skill-creator python3 skills/skill-creator/scripts/package_skill.py skills/<skill-name> /tmp/skill-dist
-
-# Agent SOP validation
-bash skills/agent-sop-author/validate-sop.sh path/to/file.sop.md
-```
+- [`docs/agent-guides/validation.md`](docs/agent-guides/validation.md)
 
 ## Additional docs
 

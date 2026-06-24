@@ -96,6 +96,47 @@
         "The output contains exactly three numbered steps.",
         "The output ends with `Executing unless you redirect.`"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Use the skill under test for `evals/files/session-start-fixture/`. While loading rules, `.cursor/rules/security.md` returns not found on first read attempt. Do not keep retrying that same missing path. Verify directory shape once, then continue. Assume an LSP request already failed with `No language server configured for python` in this session. Prepare a focused task packet for `Fix login timeout in src/auth_service.py` and write only the `TASK` block to `outputs/context.md`.",
+      "expected_output": "A focused-task block that marks the missing rule file unavailable after one directory-shape verification, does not repeat retries on the same path, and avoids further LSP retries by using alternate context-loading paths.",
+      "files": [
+        "evals/files/session-start-fixture/AGENTS.md",
+        "evals/files/session-start-fixture/.cursor/rules/quality.md",
+        "evals/files/session-start-fixture/src/auth_service.py",
+        "evals/files/session-start-fixture/tests/test_auth_service.py"
+      ],
+      "expectations": [
+        "The output uses the `TASK` block and includes `UNAVAILABLE` with `.cursor/rules/security.md`.",
+        "The output mentions a one-time directory-shape verification and does not include repeated retries for `.cursor/rules/security.md`.",
+        "The output says LSP is unavailable for this session and uses an alternate path/setup instead of retrying LSP."
+      ],
+      "assertions": [
+        "The output uses the `TASK` block and includes `UNAVAILABLE` with `.cursor/rules/security.md`.",
+        "The output mentions a one-time directory-shape verification and does not include repeated retries for `.cursor/rules/security.md`.",
+        "The output says LSP is unavailable for this session and uses an alternate path/setup instead of retrying LSP."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Use the skill under test for `evals/files/focused-task-fixture/`. You already prepared a valid focused-task packet in this session for `Update src/payment_sync.py to retry on vendor 429s`, and no boundary changed: same repo, same task goal, same files, same rules availability. Do not reread files; reuse the existing packet and write only the `TASK` block to `outputs/context.md`.",
+      "expected_output": "A focused-task block that explicitly reuses prior context because boundaries are unchanged and does not claim a refresh.",
+      "files": [
+        "evals/files/focused-task-fixture/AGENTS.md",
+        "evals/files/focused-task-fixture/src/payment_sync.py",
+        "evals/files/focused-task-fixture/tests/test_payment_sync.py"
+      ],
+      "expectations": [
+        "The output uses the `TASK` block.",
+        "The output explicitly says context packet is reused because repo, task, files, and rules surface are unchanged.",
+        "The output does not claim a refresh trigger such as repo/task/file/rules change."
+      ],
+      "assertions": [
+        "The output uses the `TASK` block.",
+        "The output explicitly says context packet is reused because repo, task, files, and rules surface are unchanged.",
+        "The output does not claim a refresh trigger such as repo/task/file/rules change."
+      ]
     }
   ]
 }

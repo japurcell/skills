@@ -111,11 +111,35 @@ test_block_mode_parses_cli_tool_args_objects() {
     "Expected guard log to capture threat details from object-valued toolArgs."
 }
 
+test_skip_mode_returns_explicit_allow_json() {
+  local workdir
+  local log_dir
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  log_dir="$workdir/logs"
+
+  output="$(
+    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" \
+    GUARD_MODE="block" \
+    SKIP_TOOL_GUARD="true" \
+    bash "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.sh" \
+      <<<'{"sessionId":"skip-session","toolName":"bash","toolArgs":"echo ok"}'
+  )"
+
+  assert_equals "allow" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected skip mode to return an explicit allow permissionDecision."
+  assert_equals "allow" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
+    "Expected skip mode to keep VS Code-compatible allow output."
+}
+
 main() {
   test_common_allowlist_helpers_trim_and_match
   test_warn_mode_returns_json_for_cli_payload
   test_block_mode_denies_vscode_payload
   test_block_mode_parses_cli_tool_args_objects
+  test_skip_mode_returns_explicit_allow_json
 }
 
 main "$@"

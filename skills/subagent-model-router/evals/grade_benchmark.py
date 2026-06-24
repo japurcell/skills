@@ -235,6 +235,49 @@ def grade(eval_id: int, decision: dict, raw_text: str) -> list[dict]:
             ),
         ]
 
+    if eval_id == 4:
+        reuse_terms = ("reuse", "re-use", "same launch group", "unchanged", "batch")
+        reuse_text = fallback + " " + justification
+        return [
+            expectation("The decision marks the skill as applicable.", applicable, evidence),
+            expectation(
+                "The route stays in `task` + `fast` for the bounded batch work.",
+                agent_type == "task" and model_tier == "fast" and model_is_fast(model),
+                evidence,
+            ),
+            expectation(
+                "The justification or fallback says to reuse prior routing for repeated launches because context is unchanged.",
+                justification_mentions(reuse_text, *reuse_terms),
+                evidence,
+            ),
+        ]
+
+    if eval_id == 5:
+        reroute_terms = (
+            "fresh routing",
+            "re-route",
+            "reroute",
+            "changed",
+            "material",
+            "stakes",
+            "ambigu",
+            "constraint",
+        )
+        reroute_text = fallback + " " + justification
+        return [
+            expectation("The decision marks the skill as applicable.", applicable, evidence),
+            expectation(
+                "The route does not keep the old bounded-run lane (`task` + `fast`) for this materially changed launch.",
+                not (agent_type == "task" and model_tier == "fast" and model_is_fast(model)),
+                evidence,
+            ),
+            expectation(
+                "The justification or fallback explicitly requires fresh routing because work class, stakes, ambiguity, or model constraint changed.",
+                justification_mentions(reroute_text, *reroute_terms),
+                evidence,
+            ),
+        ]
+
     return [expectation(f"Unknown eval id {eval_id}.", False, f"Unsupported eval: {eval_id}")]
 
 

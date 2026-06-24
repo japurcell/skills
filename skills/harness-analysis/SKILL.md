@@ -83,11 +83,11 @@ Weak evidence:
 
 ### Stop conditions
 
-- **Path miss:** after one missing path, use a directory listing or glob before any more reads under that path.
-- **Unavailable tool:** after one `No LSP client available`, stop LSP attempts for the session and report it as a setup finding.
-- **Failed web fetch:** after two failed URL variants, stop guessing URLs. Search official indexes or mark source retrieval as limited.
-- **Regex failure:** after one regex parse error, switch to fixed-string search or escape special characters.
-- **No structured rows:** if structured session queries return no rows, switch to local log metadata and mark the data gap. Do not keep re-querying the same source.
+- **Path miss:** after one missing path, stop path-guess retries. Run one directory listing or glob to verify shape; if still missing, escalate as a path/data-availability gap in the report.
+- **Unavailable tool:** after one `No LSP client available`, stop LSP attempts for the session. Fall back to `glob`/`rg` or file metadata inspection and report missing LSP setup as a finding.
+- **Failed doc URL guesses:** after two failed documentation URL guesses, stop guessing variants. Fall back to official docs indexes/search and mark source retrieval limits if docs still cannot be resolved.
+- **Regex failure:** after one regex parse error, stop retrying the same broken pattern. Fall back to fixed-string search or properly escaped regex; if still failing, record the search limitation.
+- **No structured rows:** after a structured-session query returns 0 rows, stop re-running equivalent queries against that source. Fall back to local log metadata and explicitly record the structured-data gap in `Uncertainty:`.
 - **Sensitive content:** stop reading that body, record that sensitive data was observed, and recommend redaction.
 
 ### What to analyze

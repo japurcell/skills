@@ -222,6 +222,32 @@ test_allowlist_suppresses_credential_path_finding() {
   fi
 }
 
+test_invalid_json_degrades_to_noop_json() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      'not-json'
+  )"
+
+  assert_json_output "$output" "Expected invalid-input Gemini secrets scan to emit JSON."
+  assert_equals "{}" "$output" \
+    "Expected invalid-input Gemini secrets scan to degrade to a no-op JSON response."
+}
+
 test_gemini_settings_register_session_end_scanner() {
   assert_equals '$HOME/.gemini/hooks/scripts/scan-secrets.sh' \
     "$(jq -r '.hooks.SessionEnd[0].hooks[] | select(.name == "scan-secrets") | .command // empty' "$REPO_ROOT/.gemini/settings.json")" \
@@ -234,6 +260,7 @@ main() {
   test_warn_mode_flags_sensitive_credential_paths_without_token_match
   test_generic_secrets_filename_stays_clean
   test_allowlist_suppresses_credential_path_finding
+  test_invalid_json_degrades_to_noop_json
   test_gemini_settings_register_session_end_scanner
 }
 

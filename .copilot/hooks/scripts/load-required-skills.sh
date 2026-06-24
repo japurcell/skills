@@ -16,7 +16,9 @@ set -o pipefail
 INPUT=""
 SESSION_ID=""
 EVENT_NAME=""
-CONTEXT_FILE=""
+CONTEXT_MODE=""
+CANARY_TEXT='VERIFICATION_CANARY: copilot-sessionstart-test-7f3a91
+If you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT'
 
 static_fail_no_jq() {
   printf 'Copilot/VS Code hook failure: Required command not found: jq\n' >&2
@@ -106,11 +108,6 @@ Instruction to agent: stop normal work, tell the user this hook failed, and ask 
     1
 }
 
-cleanup() {
-  [[ -n "$CONTEXT_FILE" ]] && rm -f "$CONTEXT_FILE"
-}
-trap cleanup EXIT
-
 INPUT="$(cat)"
 
 EVENT_NAME="$(
@@ -185,8 +182,29 @@ SKILL_FILES=(
   "$SKILLS_DIR/caveman/SKILL.md"
 )
 
-CONTEXT_FILE="$(mktemp "${TMPDIR:-/tmp}/copilot-hook-context.XXXXXX")" \
-  || fail_with_context "Failed to create temporary context file"
+SKILL_NAMES=(
+  "universal-guidelines"
+  "cli-compression"
+  "context-engineering"
+  "caveman"
+)
+
+SKILL_COMPACT_SUMMARIES=(
+  "Behavioral guardrails: keep scope tight, verify changes, and fail safely on missing context."
+  "CLI output compression: prefix shell commands with rtk and prefer concise command output."
+  "Context discipline: load exact rules/files first, then minimal task packet before edits."
+  "Compressed response style: terse language while preserving technical correctness and exact terms."
+)
+
+CONTEXT_MODE="${COPILOT_REQUIRED_SKILL_CONTEXT_MODE:-${COPILOT_REQUIRED_SKILLS_MODE:-compact}}"
+CONTEXT_MODE="$(printf '%s' "$CONTEXT_MODE" | tr '[:upper:]' '[:lower:]')"
+
+case "$CONTEXT_MODE" in
+  compact|full) ;;
+  *)
+    fail_with_context "Invalid COPILOT_REQUIRED_SKILL_CONTEXT_MODE: $CONTEXT_MODE (expected compact or full)"
+    ;;
+esac
 
 append_required_skill() {
   local path="${1:-}"
@@ -200,16 +218,12 @@ append_required_skill() {
   [[ -r "$path" ]] \
     || fail_with_context "Required skill file not readable: $path"
 
-  if [[ -s "$CONTEXT_FILE" ]]; then
-    printf '\n\n---\n\n' >>"$CONTEXT_FILE" \
-      || fail_with_context "Failed to append context separator"
-  fi
-
-  cat "$path" >>"$CONTEXT_FILE" \
+  cat "$path" >/dev/null \
     || fail_with_context "Failed to read skill file: $path"
 }
 
-for skill_file in "${SKILL_FILES[@]}"; do
+for index in "${!SKILL_FILES[@]}"; do
+  skill_file="${SKILL_FILES[$index]}"
   append_required_skill "$skill_file"
 
   safe_skill_file="$(sanitize_log_field "$skill_file")"
@@ -218,15 +232,54 @@ for skill_file in "${SKILL_FILES[@]}"; do
   audit_log_event \
     "$(basename "$0")" \
     "[$(date +'%Y-%m-%d %H:%M:%S')] Message: Appended skill $safe_skill_file, Event: $EVENT_NAME, Session: $safe_session_id" \
-    >/dev/null \
+    >/dev/null 2>&1 \
     || fail_with_context "Failed to write audit event for skill: $skill_file"
 done
 
-printf '\n\n---\n\nVERIFICATION_CANARY: copilot-sessionstart-test-7f3a91\nIf you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT' >> "$CONTEXT_FILE" \
-  || fail_with_context "Failed to append newline to context file"
+build_full_context() {
+  local full_context=""
+  local path
+
+  for path in "${SKILL_FILES[@]}"; do
+    if [[ -n "$full_context" ]]; then
+      full_context+=$'\n\n---\n\n'
+    fi
+
+    full_context+="$(cat "$path")"
+  done
+
+  full_context+=$'\n\n---\n\n'
+  full_context+="$CANARY_TEXT"
+
+  printf '%s' "$full_context"
+}
+
+build_compact_context() {
+  local compact_context
+  local index
+
+  compact_context=$'Required skill context loaded (compact).\n\n'
+  compact_context+=$'Mode: compact (set COPILOT_REQUIRED_SKILL_CONTEXT_MODE=full for full context).\n\n'
+  compact_context+=$'Required skills:\n'
+
+  for index in "${!SKILL_FILES[@]}"; do
+    compact_context+="- ${SKILL_NAMES[$index]}: ${SKILL_COMPACT_SUMMARIES[$index]} path=${SKILL_FILES[$index]}"$'\n'
+  done
+
+  compact_context+=$'\n---\n\n'
+  compact_context+="$CANARY_TEXT"
+
+  printf '%s' "$compact_context"
+}
+
+if [[ "$CONTEXT_MODE" == "compact" ]]; then
+  REQUIRED_SKILL_CONTEXT="$(build_compact_context)"
+else
+  REQUIRED_SKILL_CONTEXT="Required skill context loaded.
+
+$(build_full_context)"
+fi
 
 emit_output \
-  "Required skill context loaded.
-
-$(cat "$CONTEXT_FILE")" \
+  "$REQUIRED_SKILL_CONTEXT" \
   0

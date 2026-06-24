@@ -70,6 +70,38 @@
         "The decision does not choose a real agent type.",
         "The justification says there is no delegated launch."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Use the skill under test to route this delegated task: `Batch launch six workers in launch-group A to run the same deterministic fixture-check command and summarize failures. The model constraint is unchanged across all six launches.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+      "expected_output": "A routing decision that treats the task as applicable, uses task + fast tier, and explicitly reuses the prior routing decision for repeated launches because launch-group context is unchanged.",
+      "files": [],
+      "expectations": [
+        "The decision marks the skill as applicable.",
+        "The route stays in `task` + `fast` for the bounded batch work.",
+        "The justification or fallback says to reuse prior routing for repeated launches because context is unchanged."
+      ],
+      "assertions": [
+        "The decision marks the skill as applicable.",
+        "The route stays in `task` + `fast` for the bounded batch work.",
+        "The justification or fallback says to reuse prior routing for repeated launches because context is unchanged."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Use the skill under test to route this delegated task: `Two earlier launches in launch-group B were bounded test runs. Next launch in that same group is a high-stakes, ambiguous security architecture analysis, and model constraint changed from pinned standard-tier model to open choice.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+      "expected_output": "A routing decision that treats the task as applicable, requires fresh routing (not reuse) because work class/stakes/ambiguity/model constraint changed, and chooses a higher-capability route suitable for the new task shape.",
+      "files": [],
+      "expectations": [
+        "The decision marks the skill as applicable.",
+        "The route does not keep the old bounded-run lane (`task` + `fast`) for this materially changed launch.",
+        "The justification or fallback explicitly requires fresh routing because work class, stakes, ambiguity, or model constraint changed."
+      ],
+      "assertions": [
+        "The decision marks the skill as applicable.",
+        "The route does not keep the old bounded-run lane (`task` + `fast`) for this materially changed launch.",
+        "The justification or fallback explicitly requires fresh routing because work class, stakes, ambiguity, or model constraint changed."
+      ]
     }
   ]
 }

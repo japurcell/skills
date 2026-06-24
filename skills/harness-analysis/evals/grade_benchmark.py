@@ -125,6 +125,30 @@ def grade(eval_id: int, output: str) -> list[dict]:
                 output or "missing outputs/report.md",
             ),
         ]
+    if eval_id == 4:
+        return [
+            expectation(
+                "The report states that repeated 0-row structured-session queries should not be retried as variants.",
+                has_any(output, ["0 rows", "stop re-querying", "stop rerunning", "do not retry"]) and has_any(output, ["structured", "session query"]),
+                output or "missing outputs/report.md",
+            ),
+            expectation(
+                "The report switches analysis to local log metadata after structured query failures.",
+                has_all(output, ["local log", "metadata"]) and has_any(output, ["fallback", "switch"]),
+                output or "missing outputs/report.md",
+            ),
+            expectation(
+                "The report records the structured-data gap under `Uncertainty:`.",
+                "## Uncertainty:" in output and has_any(output, ["structured-data gap", "data gap", "0 rows"]),
+                output or "missing outputs/report.md",
+            ),
+            expectation(
+                "The report keeps recommendations evidence-backed and avoids claiming measured latency gains.",
+                "## Evidence:" in output
+                and not has_any(output, ["measured latency", "proven latency", "definitely saves", "guaranteed token savings"]),
+                output or "missing outputs/report.md",
+            ),
+        ]
     return [expectation(f"Unknown eval id {eval_id}.", False, "Unsupported eval")]
 
 

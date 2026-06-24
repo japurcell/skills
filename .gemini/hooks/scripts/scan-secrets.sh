@@ -2,13 +2,26 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"
+emit_noop_json() {
+  printf '%s\n' '{}'
+  exit 0
+}
+
+warn_and_noop() {
+  printf '%s\n' "$1" >&2
+  emit_noop_json
+}
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AUDIT_LIB="$SCRIPT_DIR/audit.sh"
+
+[[ -r "$AUDIT_LIB" ]] || warn_and_noop "scan-secrets: audit library unavailable; skipping hook."
+source "$AUDIT_LIB" >/dev/null 2>&1 || warn_and_noop "scan-secrets: failed to load audit helpers; skipping hook."
 
 require_cmd() {
   local cmd="${1:?require_cmd: command name required}"
   command -v "$cmd" >/dev/null 2>&1 || {
-    echo "Required command not found: $cmd" >&2
-    exit 1
+    warn_and_noop "scan-secrets: required command not found: $cmd"
   }
 }
 
@@ -20,13 +33,12 @@ require_cmd sed
 require_cmd sort
 require_cmd flock
 
-audit_init
+audit_init >/dev/null 2>&1 || warn_and_noop "scan-secrets: failed to initialize audit logging; skipping hook."
 
 INPUT="$(cat)"
 
 if ! jq -e 'type == "object"' >/dev/null 2>&1 <<<"$INPUT"; then
-  echo '{}' 
-  exit 0
+  warn_and_noop "scan-secrets: invalid JSON input; skipping hook."
 fi
 
 SESSION_ID="$(jq -r '.session_id // empty' <<<"$INPUT")"

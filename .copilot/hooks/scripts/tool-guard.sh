@@ -15,8 +15,13 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"
 
-if [[ "${SKIP_TOOL_GUARD:-}" == "true" ]]; then
+emit_skip_allow_response() {
+  printf '%s\n' '{"continue":true,"permissionDecision":"allow","hookSpecificOutput":{"permissionDecision":"allow"}}'
   exit 0
+}
+
+if [[ "${SKIP_TOOL_GUARD:-}" == "true" ]]; then
+  emit_skip_allow_response
 fi
 
 INPUT="$(cat)"

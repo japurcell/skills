@@ -2,6 +2,21 @@
 
 Use these examples after applying the core process in `SKILL.md`.
 
+## Reuse vs Fresh Routing
+
+Reuse prior routing decision across repeated launches in same launch group or batch when work class, stakes, ambiguity, and model constraint are unchanged.
+
+Do fresh routing when those inputs change materially.
+
+Examples:
+
+| Situation | Route |
+| --- | --- |
+| “Launch five workers to run same style of deterministic fixture checks in batch 2.” | route first launch (`task`, fast tier), then reuse same route for remaining launches in batch |
+| “Launch three reviewers in one batch for similar medium-size diffs, same pinned model.” | route first reviewer, then reuse for others while pinned-model constraint remains unchanged |
+| “First two launches were bounded test runs; now launch is broad architecture tradeoff analysis.” | fresh routing required because work class and ambiguity changed |
+| “Batch started as standard-stakes code review; next launch is high-stakes security audit.” | fresh routing required because stakes changed |
+
 ## Cheap by Default
 
 Use the fast tier for:
@@ -18,7 +33,7 @@ Examples:
 | Request | Route |
 | --- | --- |
 | “Have a subagent run the test suite and summarize the failures.” | `task` agent, fast-tier model |
-| “Spawn three agents to search the repo for where auth tokens are created, refreshed, and revoked.” | focused `explore` agents, fast-tier model |
+| “Spawn three agents to search the repo for where auth tokens are created, refreshed, and revoked.” | route first focused `explore` launch, then reuse same fast-tier route for remaining launches if constraints unchanged |
 | “Have a subagent read a very large log bundle and produce a short diagnosis.” | model with low input cost |
 | “Have a subagent compare generated fixtures against expected outputs.” | `task` agent, fast-tier model |
 
@@ -38,7 +53,7 @@ Examples:
 | Request | Route |
 | --- | --- |
 | “Launch a reviewer to inspect this 40-file security-sensitive diff for auth and data exposure bugs.” | review-focused agent, standard-tier model; escalate only if deep cross-system reasoning is needed |
-| “Launch a reviewer to inspect a medium-sized diff, and `gpt-4.1` is unavailable.” | keep standard tier; choose another available standard-tier model |
+| “Launch repeated reviewers for similar medium-sized diffs, and `gpt-4.1` is unavailable.” | keep standard tier; choose available same-tier model once, then reuse that same-tier fallback route while constraints stay unchanged |
 | “Have a subagent edit code across several files.” | standard-tier model |
 | “Debug this failure that appears to involve request routing, auth middleware, and caching.” | standard-tier model, possibly general-purpose if no specialized debugger exists |
 

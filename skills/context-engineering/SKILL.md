@@ -20,6 +20,8 @@ Load only context that can change the answer. Load rules first, then the smalles
 ## Workflow
 
 1. **Load rules first, best effort.** Check every relevant rules location you can access: repo-local rules such as `AGENTS.md`, `.github/copilot-instructions.md`, `.cursorrules`, concrete files under `.cursor/rules/`, and `.windsurfrules`, plus accessible user/global rules for the current tool. Expand globs into exact file paths, load every accessible file individually, record only missing or unreadable paths as unavailable, and do not stop after the first match. Do not treat one loaded rules file as covering another concrete file in the list.
+   - **Stop-condition for missing paths:** if a path read fails, verify directory shape once (for example, list the parent directory) to confirm whether the path exists under a different name/location. After that confirmation, stop retrying the same missing path and mark it unavailable.
+   - **Stop-condition for unavailable LSP:** if one LSP call confirms the relevant client/server is unavailable for the session, do not retry LSP for the same need in that session. Switch to alternate tools (`glob`/`rg`/direct file reads) or run an explicit setup flow before using LSP again.
 2. **Build the minimal task packet in this order.** Include only what exists and can change the answer:
    1. Relevant spec, PRD, or doc section
    2. Target files
@@ -32,6 +34,21 @@ Load only context that can change the answer. Load rules first, then the smalles
 ## Specific Techniques
 
 Use the matching block exactly when it fits. Keep headings and field labels unchanged. `PLAN` must contain exactly 3 numbered steps plus the closing sentence.
+
+## Context Reuse and Refresh Triggers
+
+Reuse existing context packet only when boundaries are unchanged:
+- Same repository/worktree
+- Same task goal and requested outcome
+- Same target files/scope
+- Same rules surface (same checked rule paths and availability status)
+
+Refresh context packet when any boundary changes:
+- Repository, branch/worktree, or fixture root changes
+- Task goal/scope changes (new behavior, new bug, new deliverable)
+- Target files/layers change
+- Rules surface changes (new rule file appears, previously missing path becomes available, or rule availability differs)
+- New errors or outputs become the decision driver
 
 - `Rules checked`: every exact rules path checked; expand wildcards into concrete files
 - `Rules loaded`: every accessible rules file actually loaded; if a concrete checked path existed and was readable, include that same path here instead of implying it through another file

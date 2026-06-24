@@ -79,6 +79,27 @@
         "The report asks for the exact version instead of guessing.",
         "The report marks the pattern `UNVERIFIED`."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Use the skill under test for the fixture repo in `evals/files/react-router-fixture/`. The user asks: `Find official docs for react-router-dom useTeleportNavigate in src/nav.ts. Detect version first. If two plausible official deep-link URL variants fail, stop guessing direct URLs, then use an official index/search page; if still unresolved, mark it UNVERIFIED.` Do not change code. Write only outputs/report.md with sections STACK DETECTED, OFFICIAL SOURCES, IMPLEMENTATION NOTES, and UNVERIFIED.",
+      "expected_output": "A report that detects react-router-dom 7.6.2, records that direct URL guessing stopped after two failed official variants, uses an official React Router index/search source, and marks the unverifiable hook guidance as UNVERIFIED.",
+      "files": [
+        "evals/files/react-router-fixture/package.json",
+        "evals/files/react-router-fixture/src/nav.ts"
+      ],
+      "expectations": [
+        "The report detects `react-router-dom` version `7.6.2`.",
+        "The report says it stopped guessing direct URLs after two failed official variants.",
+        "The report cites an official `reactrouter.com` source and mentions index or search fallback.",
+        "The report marks the unresolved pattern `UNVERIFIED`."
+      ],
+      "assertions": [
+        "The report detects `react-router-dom` version `7.6.2`.",
+        "The report says it stopped guessing direct URLs after two failed official variants.",
+        "The report cites an official `reactrouter.com` source and mentions index or search fallback.",
+        "The report marks the unresolved pattern `UNVERIFIED`."
+      ]
     }
   ]
 }

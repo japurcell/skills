@@ -167,6 +167,19 @@ def presents_router_choice(text: str) -> bool:
     )
 
 
+def mentions_two_failed_url_stop(text: str) -> bool:
+    lowered = normalize(text)
+    return (
+        ("two failed" in lowered or "2 failed" in lowered or "after two failures" in lowered)
+        and ("stop guessing" in lowered or "stopped guessing" in lowered or "stop url guessing" in lowered)
+    )
+
+
+def mentions_index_or_search_fallback(text: str) -> bool:
+    lowered = normalize(text)
+    return has_url_host(text, "reactrouter.com") and ("index" in lowered or "search" in lowered)
+
+
 def grade(eval_id: int, output_text: str) -> list[dict]:
     normalized = normalize(output_text)
 
@@ -254,6 +267,30 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
             ),
             expectation(
                 "The report marks the pattern `UNVERIFIED`.",
+                "unverified" in normalized,
+                output_text or "missing report.md",
+            ),
+        ]
+
+    if eval_id == 4:
+        return [
+            expectation(
+                "The report detects `react-router-dom` version `7.6.2`.",
+                "react-router-dom" in normalized and "7.6.2" in normalized,
+                output_text or "missing report.md",
+            ),
+            expectation(
+                "The report says it stopped guessing direct URLs after two failed official variants.",
+                mentions_two_failed_url_stop(output_text),
+                output_text or "missing report.md",
+            ),
+            expectation(
+                "The report cites an official `reactrouter.com` source and mentions index or search fallback.",
+                mentions_index_or_search_fallback(output_text),
+                output_text or "missing report.md",
+            ),
+            expectation(
+                "The report marks the unresolved pattern `UNVERIFIED`.",
                 "unverified" in normalized,
                 output_text or "missing report.md",
             ),

@@ -70,6 +70,24 @@
         "The report does not fabricate counts, failures, or log paths.",
         "The report includes `Evidence:` and `Uncertainty:` sections."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Use the harness-analysis skill to audit repeated query dead ends. Evidence: three structured-session queries for the same filter each returned 0 rows; local log metadata exists with 14 recent events.jsonl files; one attempt kept re-querying the same source. Do not inspect real files. Write only outputs/report.md.",
+      "expected_output": "A report that treats repeated 0-row structured queries as a stop condition, switches to local log metadata, and records the structured-data gap in uncertainty.",
+      "files": [],
+      "expectations": [
+        "The report states that repeated 0-row structured-session queries should not be retried as variants.",
+        "The report switches analysis to local log metadata after structured query failures.",
+        "The report records the structured-data gap under `Uncertainty:`.",
+        "The report keeps recommendations evidence-backed and avoids claiming measured latency gains."
+      ],
+      "assertions": [
+        "The report states that repeated 0-row structured-session queries should not be retried as variants.",
+        "The report switches analysis to local log metadata after structured query failures.",
+        "The report records the structured-data gap under `Uncertainty:`.",
+        "The report keeps recommendations evidence-backed and avoids claiming measured latency gains."
+      ]
     }
   ]
 }

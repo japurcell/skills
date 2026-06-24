@@ -26,7 +26,25 @@ Choose smallest agent and cheapest model that can succeed. Default cheap and spe
 | **Focused** | Some judgment, limited scope | inspect a diff, trace a bug through a few files, draft a small plan |
 | **Broad** | High ambiguity or multi-system synthesis | architecture design, unclear debugging, multi-file refactoring, tradeoff analysis |
 
-### 2. Pick narrowest capable agent type
+### 2. Reuse prior routing when context is materially unchanged
+
+Reuse prior routing decision for repeated launches in same launch group or batch when all remain true:
+
+- same work class (`bounded`, `focused`, or `broad`)
+- same delegated work shape and specialist lane
+- same stakes and ambiguity level
+- same model constraints (pinned model, auto-selected model, or open model choice)
+
+When reuse applies, restate reused `agent_type` and model choice/constraint briefly instead of recomputing full routing per launch.
+
+Do fresh routing before launch when any of these changed materially:
+
+- work class or work shape
+- stakes (for example routine execution vs high-stakes review)
+- ambiguity or reasoning depth needed
+- model constraint or availability state
+
+### 3. Pick narrowest capable agent type
 
 | Work type | Prefer |
 | --- | --- |
@@ -35,7 +53,7 @@ Choose smallest agent and cheapest model that can succeed. Default cheap and spe
 | Diff or PR review | `code-review` or comparable review specialist |
 | Open-ended multi-step reasoning or editing | `general-purpose` only when a specialist will not do |
 
-### 3. Map complexity to tier
+### 4. Map complexity to tier
 
 | Task shape | Tier |
 | --- | --- |
@@ -44,7 +62,7 @@ Choose smallest agent and cheapest model that can succeed. Default cheap and spe
 | Broad / complex | high end of **Standard** first |
 | Repeated lower-tier failure, unusually high stakes, or best-available reasoning by request | **Premium**, with justification |
 
-### 4. Pick cheapest suitable model inside that tier
+### 5. Pick cheapest suitable model inside that tier
 
 Compare:
 
@@ -69,7 +87,7 @@ If first choice is unavailable:
 3. if the whole tier is unavailable, move one tier lower for bounded work or one tier higher for reasoning-heavy work
 4. if availability forced a tier change, say so in one sentence
 
-### 5. Escalate only for a concrete reason
+### 6. Escalate only for a concrete reason
 
 Move up one tier only when:
 
@@ -137,6 +155,7 @@ Avoid:
 Before launch, confirm:
 
 - [ ] The work was classified as bounded, focused, or broad.
+- [ ] Prior routing was reused only when launch-group context was materially unchanged.
 - [ ] The chosen agent type is the narrowest capable type.
 - [ ] The selected tier matches task complexity.
 - [ ] The selected model is the cheapest suitable available option in that tier, or the model constraint was stated.
@@ -144,5 +163,6 @@ Before launch, confirm:
 - [ ] Cached input and Anthropic cache write were considered when relevant.
 - [ ] Same-tier fallback was preferred when the first-choice model was unavailable.
 - [ ] Any escalation or availability-driven tier change has a concrete one-sentence justification.
+- [ ] Fresh routing was done when work class, stakes, ambiguity, or model constraints changed materially.
 - [ ] The code editing exception was checked.
 - [ ] Pricing matched the current source of truth when exact cost mattered.

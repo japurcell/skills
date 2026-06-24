@@ -9,8 +9,12 @@ run_hook() {
   local max_bytes="$2"
   local payload="$3"
   local copilot_home="${4:-}"
+  local extra_env=()
+  if (( $# > 4 )); then
+    extra_env=("${@:5}")
+  fi
 
-  run_copilot_hook "format.sh" "$audit_log" "$payload" "$copilot_home" "AUDIT_LOG_MAX_BYTES=$max_bytes" >/dev/null
+  run_copilot_hook "format.sh" "$audit_log" "$payload" "$copilot_home" "AUDIT_LOG_MAX_BYTES=$max_bytes" "${extra_env[@]}" >/dev/null
 }
 
 test_with_mock_bin_path_restores_path_after_failure() {
@@ -35,6 +39,28 @@ test_with_mock_bin_path_restores_path_after_failure() {
     "Expected with_mock_bin_path to return wrapped command exit code."
   assert_equals "$path_before" "$PATH" \
     "Expected with_mock_bin_path to restore PATH after failure."
+}
+
+test_copilot_audit_init_returns_nonzero_without_exiting_shell() {
+  local output
+  local bash_path
+
+  bash_path="$(command -v bash)"
+
+  output="$(
+    env PATH=/nonexistent "$bash_path" -c '
+      set -euo pipefail
+      source "$1"
+      if audit_init; then
+        printf "unexpected-success"
+      else
+        printf "returned-%s" "$?"
+      fi
+    ' _ "$REPO_ROOT/.copilot/hooks/scripts/audit.sh" 2>/dev/null
+  )"
+
+  assert_equals "returned-1" "$output" \
+    "Expected Copilot audit_init to return nonzero instead of exiting the caller shell."
 }
 
 test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
@@ -351,8 +377,58 @@ test_waits_for_log_lock() {
     "Expected the hook to write after acquiring the log lock."
 }
 
+test_default_passive_log_mode_preserves_primary_log_only() {
+  local workdir
+  local audit_log
+  local shadow_log
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  shadow_log="$workdir/audit.shadow.log"
+
+  run_hook \
+    "$audit_log" \
+    1024 \
+    '{"sessionId":"default-mode","timestamp":"2026-05-12T19:00:07Z","toolName":"report_intent","toolArgs":{"intent":"Testing default mode"}}' \
+    "" \
+    "AUDIT_PASSIVE_LOG_SHADOW_LOG=$shadow_log"
+
+  assert_file_contains "$audit_log" "Session: default-mode, Tool: report_intent" \
+    "Expected default passive-log mode to keep writing to primary audit log."
+
+  assert_equals "no" "$([[ -f "$shadow_log" ]] && echo yes || echo no)" \
+    "Expected default passive-log mode to avoid creating a shadow log."
+}
+
+test_non_default_passive_log_mode_adds_shadow_log() {
+  local workdir
+  local audit_log
+  local shadow_log
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  shadow_log="$workdir/audit.shadow.log"
+
+  run_hook \
+    "$audit_log" \
+    1024 \
+    '{"sessionId":"shadow-mode","timestamp":"2026-05-12T19:00:08Z","toolName":"report_intent","toolArgs":{"intent":"Testing shadow mode"}}' \
+    "" \
+    "AUDIT_PASSIVE_LOG_MODE=shadow" \
+    "AUDIT_PASSIVE_LOG_SHADOW_LOG=$shadow_log"
+
+  assert_file_contains "$audit_log" "Session: shadow-mode, Tool: report_intent" \
+    "Expected non-default passive-log mode to remain additive by preserving primary audit logging."
+
+  assert_file_contains "$shadow_log" "[mode=shadow]" \
+    "Expected non-default passive-log mode to write a shadow-mode entry."
+}
+
 main() {
   test_with_mock_bin_path_restores_path_after_failure
+  test_copilot_audit_init_returns_nonzero_without_exiting_shell
   test_hook_scripts_use_audit_lib_without_deprecated_helpers
   test_logs_csharp_apply_patch_command_before_formatter_failure
   test_logs_js_formatter_failure
@@ -362,6 +438,8 @@ main() {
   test_ignores_tools_without_files
   test_rolls_over_audit_log
   test_waits_for_log_lock
+  test_default_passive_log_mode_preserves_primary_log_only
+  test_non_default_passive_log_mode_adds_shadow_log
 }
 
 main "$@"

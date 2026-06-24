@@ -6,9 +6,16 @@
 # Ensures dependencies and log directory exist
 audit_init() {
   for cmd in jq flock; do
-    command -v "$cmd" >/dev/null 2>&1 || { echo "Error: $cmd not found" >&2; exit 1; }
+    # Return instead of exiting so the calling hook can emit JSON-safe fallback
+    # responses when a dependency or init step is unavailable.
+    command -v "$cmd" >/dev/null 2>&1 || { echo "Error: $cmd not found" >&2; return 1; }
   done
-  mkdir -p "$(dirname "${AUDIT_LOG:-$HOME/.gemini/hooks/audit.log}")"
+  local log="${AUDIT_LOG:-$HOME/.gemini/hooks/audit.log}"
+  local mode="${GEMINI_PASSIVE_LOG_MODE:-default}"
+  mkdir -p "$(dirname "$log")"
+  if [[ "$mode" == "shadow" ]]; then
+    mkdir -p "$(dirname "${GEMINI_PASSIVE_SHADOW_LOG:-$log.shadow}")"
+  fi
 }
 
 # Rotates audit log if it exceeds size limit (default 1 MiB, 3 backups)
@@ -43,10 +50,33 @@ audit_log_event() {
   local message="$2"
   local log="${AUDIT_LOG:-$HOME/.gemini/hooks/audit.log}"
   local lock="${AUDIT_LOCK:-$log.lock}"
+  local max_bytes="${AUDIT_LOG_MAX_BYTES:-1048576}"
+  local backups="${AUDIT_LOG_MAX_BACKUPS:-3}"
 
   (
     flock -x 9
-    rotate_audit_log "$log"
+    rotate_audit_log "$log" "$max_bytes" "$backups"
     append_audit_line "$log" "$sender" "$message"
+  ) 9>"$lock"
+}
+
+audit_log_passive_event() {
+  local sender="$1"
+  local message="$2"
+  local log="${AUDIT_LOG:-$HOME/.gemini/hooks/audit.log}"
+  local mode="${GEMINI_PASSIVE_LOG_MODE:-default}"
+  local shadow_log="${GEMINI_PASSIVE_SHADOW_LOG:-$log.shadow}"
+  local lock="${AUDIT_LOCK:-$log.lock}"
+  local max_bytes="${AUDIT_LOG_MAX_BYTES:-1048576}"
+  local backups="${AUDIT_LOG_MAX_BACKUPS:-3}"
+
+  (
+    flock -x 9
+    rotate_audit_log "$log" "$max_bytes" "$backups"
+    append_audit_line "$log" "$sender" "$message"
+    if [[ "$mode" == "shadow" ]]; then
+      rotate_audit_log "$shadow_log" "$max_bytes" "$backups"
+      append_audit_line "$shadow_log" "$sender" "$message"
+    fi
   ) 9>"$lock"
 }

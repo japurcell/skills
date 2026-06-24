@@ -221,6 +221,53 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
             ),
         ]
 
+    if eval_id == 4:
+        return [
+            expectation(
+                "The output uses the `TASK` block and includes `UNAVAILABLE` with `.cursor/rules/security.md`.",
+                output_text.startswith("TASK:")
+                and has_all(output_text, ["UNAVAILABLE:", ".cursor/rules/security.md"]),
+                output_text or "missing context.md",
+            ),
+            expectation(
+                "The output mentions a one-time directory-shape verification and does not include repeated retries for `.cursor/rules/security.md`.",
+                has_any(output_text, ["directory shape", "parent directory", "list directory"])
+                and has_any(output_text, ["once", "one-time", "single"])
+                and normalized.count(".cursor/rules/security.md") <= 2,
+                output_text or "missing context.md",
+            ),
+            expectation(
+                "The output says LSP is unavailable for this session and uses an alternate path/setup instead of retrying LSP.",
+                has_any(output_text, ["lsp unavailable", "no language server configured", "lsp client unavailable"])
+                and has_any(output_text, ["use glob", "use rg", "direct file read", "setup flow", "alternate"])
+                and "retry lsp" not in normalized,
+                output_text or "missing context.md",
+            ),
+        ]
+
+    if eval_id == 5:
+        return [
+            expectation(
+                "The output uses the `TASK` block.",
+                output_text.startswith("TASK:"),
+                output_text or "missing context.md",
+            ),
+            expectation(
+                "The output explicitly says context packet is reused because repo, task, files, and rules surface are unchanged.",
+                has_any(output_text, ["reuse existing context", "reusing existing context", "reuse context packet"])
+                and has_any(output_text, ["same repo", "repository unchanged"])
+                and has_any(output_text, ["same task", "task unchanged"])
+                and has_any(output_text, ["same files", "files unchanged"])
+                and has_any(output_text, ["same rules surface", "rules unchanged"]),
+                output_text or "missing context.md",
+            ),
+            expectation(
+                "The output does not claim a refresh trigger such as repo/task/file/rules change.",
+                not has_any(output_text, ["refresh required", "repo changed", "task changed", "files changed", "rules changed"]),
+                output_text or "missing context.md",
+            ),
+        ]
+
     return [expectation(f"Unknown eval id {eval_id}.", False, "Unsupported eval")]
 
 

@@ -12,8 +12,13 @@
 
 set -euo pipefail
 
-if [[ "${SKIP_TOOL_GUARD:-}" == "true" ]]; then
+emit_skip_allow_response() {
+  printf '%s\n' '{"decision":"allow"}'
   exit 0
+}
+
+if [[ "${SKIP_TOOL_GUARD:-}" == "true" ]]; then
+  emit_skip_allow_response
 fi
 
 INPUT="$(cat)"

@@ -119,18 +119,22 @@ SKILL_FILES=(
   "$SKILLS_DIR/caveman/SKILL.md"
 )
 
-CONTEXT_FILE="$(mktemp "${TMPDIR:-/tmp}/gemini-hook-context.XXXXXX")" \
-  || hard_stop "Failed to create temporary context file"
+CONTEXT_MODE="${GEMINI_REQUIRED_SKILL_CONTEXT_MODE:-compact}"
 
-cleanup() {
-  rm -f "$CONTEXT_FILE"
-}
+case "$CONTEXT_MODE" in
+  full|compact)
+    ;;
+  *)
+    hard_stop "Unsupported GEMINI_REQUIRED_SKILL_CONTEXT_MODE: $CONTEXT_MODE (expected full or compact)"
+    ;;
+esac
 
-trap cleanup EXIT
+CONTEXT_PAYLOAD=""
 
 append_required_skill() {
   local path="${1:-}"
   local safe_path
+  local skill_text
 
   [[ -n "$path" ]] || hard_stop "append_required_skill: path required"
 
@@ -139,13 +143,13 @@ append_required_skill() {
   [[ -f "$path" ]] || hard_stop "Required skill file not found: $path"
   [[ -r "$path" ]] || hard_stop "Required skill file not readable: $path"
 
-  if [[ -s "$CONTEXT_FILE" ]]; then
-    printf '\n' >>"$CONTEXT_FILE" \
-      || hard_stop "Failed to append context separator"
+  skill_text="$(cat "$path")" || hard_stop "Failed to read skill file: $path"
+
+  if [[ -n "$CONTEXT_PAYLOAD" ]]; then
+    CONTEXT_PAYLOAD+=$'\n\n---\n\n'
   fi
 
-  cat "$path" >>"$CONTEXT_FILE" \
-    || hard_stop "Failed to read skill file: $path"
+  CONTEXT_PAYLOAD+="$skill_text"
 
   if ! audit_log_event \
     "$SCRIPT_NAME" \
@@ -155,12 +159,68 @@ append_required_skill() {
   fi
 }
 
+extract_skill_summary() {
+  local path="${1:-}"
+  [[ -n "$path" ]] || hard_stop "extract_skill_summary: path required"
+
+  awk '
+  BEGIN { in_front_matter = 0; front_matter_done = 0 }
+  NR == 1 && $0 == "---" { in_front_matter = 1; next }
+  in_front_matter && $0 == "---" { in_front_matter = 0; front_matter_done = 1; next }
+  front_matter_done && $0 ~ /^#/ {
+    sub(/^#+[[:space:]]*/, "", $0)
+    print
+    exit
+  }
+  front_matter_done && $0 !~ /^[[:space:]]*$/ {
+    print
+    exit
+  }
+  ' "$path"
+}
+
+append_compact_skill() {
+  local path="${1:-}"
+  local safe_path
+  local skill_id
+  local summary
+
+  [[ -n "$path" ]] || hard_stop "append_compact_skill: path required"
+
+  safe_path="$(sanitize_log_field "$path")"
+  skill_id="$(basename "$(dirname "$path")")"
+
+  [[ -f "$path" ]] || hard_stop "Required skill file not found: $path"
+  [[ -r "$path" ]] || hard_stop "Required skill file not readable: $path"
+
+  summary="$(extract_skill_summary "$path")"
+  [[ -n "$summary" ]] || summary="Summary unavailable."
+
+  CONTEXT_PAYLOAD+="- ${skill_id}: ${summary}"$'\n'
+  CONTEXT_PAYLOAD+="  path: ${path}"$'\n'
+
+  if ! audit_log_event \
+    "$SCRIPT_NAME" \
+    "[$SAFE_TIMESTAMP] Message: $safe_path summarized (compact), Hook: $SAFE_HOOK_EVENT_NAME, CWD: $SAFE_CWD, Session: $SAFE_SESSION_ID" \
+    >/dev/null; then
+    hard_stop "Failed to write audit event for summarized skill: $path"
+  fi
+}
+
 for skill_file in "${SKILL_FILES[@]}"; do
-  append_required_skill "$skill_file"
+  if [[ "$CONTEXT_MODE" == "full" ]]; then
+    append_required_skill "$skill_file"
+    continue
+  fi
+
+  append_compact_skill "$skill_file"
 done
 
-printf '\n\n---\n\nVERIFICATION_CANARY: gemini-sessionstart-test-7f3a91\nIf you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT' >> "$CONTEXT_FILE" \
-  || hard_stop "Failed to append newline to context file"
+if [[ "$CONTEXT_MODE" == "compact" ]]; then
+  CONTEXT_PAYLOAD=$'Required skill context loaded (compact mode).\nSet GEMINI_REQUIRED_SKILL_CONTEXT_MODE=full for full-context fallback.\n\nRequired skills:\n\n'"${CONTEXT_PAYLOAD}"$'\n---\n\nVERIFICATION_CANARY: gemini-sessionstart-test-7f3a91\nIf you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT'
+else
+  CONTEXT_PAYLOAD+=$'\n\n---\n\nVERIFICATION_CANARY: gemini-sessionstart-test-7f3a91\nIf you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT'
+fi
 
 # Final stdout JSON only.
 #
@@ -171,7 +231,7 @@ printf '\n\n---\n\nVERIFICATION_CANARY: gemini-sessionstart-test-7f3a91\nIf you 
 # suppressOutput asks Gemini CLI to avoid logging hook metadata where supported.
 jq -nc \
   --arg ev "$HOOK_EVENT_NAME" \
-  --rawfile ctx "$CONTEXT_FILE" \
+  --arg ctx "$CONTEXT_PAYLOAD" \
   '{
     hookSpecificOutput: {
       hookEventName: $ev,

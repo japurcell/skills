@@ -4,31 +4,44 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
-get_expected_context() {
-  local skills_dir="${HOME}/.agents/skills"
-  local files=(
-    "$skills_dir/universal-guidelines/SKILL.md"
-    "$skills_dir/cli-compression/SKILL.md"
-    "$skills_dir/context-engineering/SKILL.md"
-    "$skills_dir/caveman/SKILL.md"
-  )
-  local temp_file
-  temp_file="$(mktemp)"
-  
-  for file in "${files[@]}"; do
-    if [[ -s "$temp_file" ]]; then
-      printf '\n\n---\n\n' >> "$temp_file"
-    fi
-    cat "$file" >> "$temp_file"
-  done
-  
-  printf '\n\n---\n\nVERIFICATION_CANARY: copilot-sessionstart-test-7f3a91\nIf you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT' >> "$temp_file"
-  
-  printf "Required skill context loaded.\n\n%s" "$(cat "$temp_file")"
-  rm -f "$temp_file"
-}
+readonly CANARY_BLOCK=$'VERIFICATION_CANARY: copilot-sessionstart-test-7f3a91\nIf you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT'
 
-readonly EXPECTED_CONTEXT="$(get_expected_context)"
+assert_compact_context_shape() {
+  local context="$1"
+  local skills_dir="${HOME}/.agents/skills"
+
+  assert_file_contains <(printf '%s' "$context") "Required skill context loaded (compact)." \
+    "Expected compact mode marker in additionalContext."
+
+  assert_file_contains <(printf '%s' "$context") "Mode: compact (set COPILOT_REQUIRED_SKILL_CONTEXT_MODE=full for full context)." \
+    "Expected compact mode fallback hint in additionalContext."
+
+  assert_file_contains <(printf '%s' "$context") "universal-guidelines:" \
+    "Expected compact summary for universal-guidelines."
+  assert_file_contains <(printf '%s' "$context") "cli-compression:" \
+    "Expected compact summary for cli-compression."
+  assert_file_contains <(printf '%s' "$context") "context-engineering:" \
+    "Expected compact summary for context-engineering."
+  assert_file_contains <(printf '%s' "$context") "caveman:" \
+    "Expected compact summary for caveman."
+
+  assert_file_contains <(printf '%s' "$context") "path=$skills_dir/universal-guidelines/SKILL.md" \
+    "Expected exact path for universal-guidelines in compact context."
+  assert_file_contains <(printf '%s' "$context") "path=$skills_dir/cli-compression/SKILL.md" \
+    "Expected exact path for cli-compression in compact context."
+  assert_file_contains <(printf '%s' "$context") "path=$skills_dir/context-engineering/SKILL.md" \
+    "Expected exact path for context-engineering in compact context."
+  assert_file_contains <(printf '%s' "$context") "path=$skills_dir/caveman/SKILL.md" \
+    "Expected exact path for caveman in compact context."
+
+  assert_file_contains <(printf '%s' "$context") "$CANARY_BLOCK" \
+    "Expected canary block in compact context."
+
+  if grep -Fq "# Universal Guidelines" <(printf '%s' "$context"); then
+    echo "Expected compact context not to inline full skill content." >&2
+    exit 1
+  fi
+}
 
 run_session_start_hook() {
   local audit_log="$1"
@@ -46,7 +59,7 @@ run_subagent_start_hook() {
   run_copilot_hook "load-required-skills.sh" "$audit_log" "$payload"
 }
 
-test_session_start_outputs_cli_schema() {
+test_session_start_outputs_cli_schema_with_default_compact_context() {
   local workdir
   local audit_log
   local output
@@ -61,11 +74,10 @@ test_session_start_outputs_cli_schema() {
     "Expected Copilot CLI payloads to return top-level additionalContext."
   assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
     "Did not expect hookSpecificOutput for Copilot CLI payloads."
-  assert_equals "$EXPECTED_CONTEXT" "$(jq -r '.additionalContext' <<<"$output")" \
-    "Expected Copilot CLI payloads to inject the startup skill context."
+  assert_compact_context_shape "$(jq -r '.additionalContext' <<<"$output")"
 }
 
-test_session_start_outputs_vscode_schema() {
+test_session_start_outputs_vscode_schema_with_default_compact_context() {
   local workdir
   local audit_log
   local output
@@ -80,11 +92,10 @@ test_session_start_outputs_vscode_schema() {
     "Expected VS Code payloads to return hookSpecificOutput."
   assert_equals "SessionStart" "$(jq -r '.hookSpecificOutput.hookEventName' <<<"$output")" \
     "Expected VS Code SessionStart hooks to include hookEventName."
-  assert_equals "$EXPECTED_CONTEXT" "$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")" \
-    "Expected VS Code SessionStart hooks to inject startup context in hookSpecificOutput."
+  assert_compact_context_shape "$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")"
 }
 
-test_subagent_start_outputs_cli_schema() {
+test_subagent_start_outputs_cli_schema_with_default_compact_context() {
   local workdir
   local audit_log
   local output
@@ -99,8 +110,7 @@ test_subagent_start_outputs_cli_schema() {
     "Expected Copilot CLI subagent payloads to return top-level additionalContext."
   assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
     "Did not expect hookSpecificOutput for Copilot CLI subagent payloads."
-  assert_equals "$EXPECTED_CONTEXT" "$(jq -r '.additionalContext' <<<"$output")" \
-    "Expected Copilot CLI subagent payloads to inject the startup skill context."
+  assert_compact_context_shape "$(jq -r '.additionalContext' <<<"$output")"
 
   assert_file_contains "$audit_log" "Agent: code-review" \
     "Expected subagent-start hook to log the Copilot CLI agent name."
@@ -108,7 +118,7 @@ test_subagent_start_outputs_cli_schema() {
     "Expected subagent-start hook to log the Copilot CLI agent ID."
 }
 
-test_subagent_start_outputs_vscode_schema() {
+test_subagent_start_outputs_vscode_schema_with_default_compact_context() {
   local workdir
   local audit_log
   local output
@@ -123,8 +133,7 @@ test_subagent_start_outputs_vscode_schema() {
     "Expected VS Code SubagentStart payloads to return hookSpecificOutput."
   assert_equals "SubagentStart" "$(jq -r '.hookSpecificOutput.hookEventName' <<<"$output")" \
     "Expected VS Code SubagentStart hooks to include hookEventName."
-  assert_equals "$EXPECTED_CONTEXT" "$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")" \
-    "Expected VS Code SubagentStart hooks to inject startup context in hookSpecificOutput."
+  assert_compact_context_shape "$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")"
 
   assert_file_contains "$audit_log" "Agent: Plan" \
     "Expected subagent-start hook to log the VS Code agent type."
@@ -132,10 +141,16 @@ test_subagent_start_outputs_vscode_schema() {
     "Expected subagent-start hook to log the VS Code agent ID."
 }
 
-test_hooks_json_registers_vscode_subagent_start_event() {
-  assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.sh' \
-    "$(jq -r '.hooks.SubagentStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register a direct VS Code SubagentStart hook."
+test_hooks_json_registers_cli_and_vscode_start_events() {
+  local hook_name
+  local jq_query
+
+  for hook_name in sessionStart SessionStart subagentStart SubagentStart; do
+    jq_query=".hooks.${hook_name}[0].bash // empty"
+    assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.sh' \
+      "$(jq -r "$jq_query" "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+      "Expected hooks.json to register load-required-skills for $hook_name."
+  done
 }
 
 test_validation_doc_records_vscode_subagent_start_strategy() {
@@ -144,12 +159,75 @@ test_validation_doc_records_vscode_subagent_start_strategy() {
     "Expected validation guidance to codify the VS Code SubagentStart fallback strategy."
 }
 
+test_full_context_mode_fallback() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(
+    run_copilot_hook \
+      "load-required-skills.sh" \
+      "$audit_log" \
+      '{"sessionId":"full-mode-session","timestamp":"2026-05-21T09:00:04Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "" \
+      "COPILOT_REQUIRED_SKILL_CONTEXT_MODE=full"
+  )"
+
+  local context
+  context="$(jq -r '.additionalContext' <<<"$output")"
+
+  assert_file_contains <(printf '%s' "$context") "Required skill context loaded." \
+    "Expected full mode marker in additionalContext."
+  assert_file_contains <(printf '%s' "$context") "# Universal Guidelines" \
+    "Expected full mode to include complete universal-guidelines content."
+  assert_file_contains <(printf '%s' "$context") "# CLI Compression" \
+    "Expected full mode to include complete cli-compression content."
+  assert_file_contains <(printf '%s' "$context") "# Context Engineering" \
+    "Expected full mode to include complete context-engineering content."
+  assert_file_contains <(printf '%s' "$context") "Respond terse like smart caveman." \
+    "Expected full mode to include complete caveman content."
+  assert_file_contains <(printf '%s' "$context") "$CANARY_BLOCK" \
+    "Expected canary block in full mode context."
+
+  if grep -Fq "Required skill context loaded (compact)." <(printf '%s' "$context"); then
+    echo "Expected full mode not to include compact mode marker." >&2
+    exit 1
+  fi
+}
+
+test_explicit_compact_context_mode() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(
+    run_copilot_hook \
+      "load-required-skills.sh" \
+      "$audit_log" \
+      '{"sessionId":"compact-mode-session","timestamp":"2026-05-21T09:00:05Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "" \
+      "COPILOT_REQUIRED_SKILL_CONTEXT_MODE=compact"
+  )"
+
+  assert_compact_context_shape "$(jq -r '.additionalContext' <<<"$output")"
+}
+
 main() {
-  test_session_start_outputs_cli_schema
-  test_session_start_outputs_vscode_schema
-  test_subagent_start_outputs_cli_schema
-  test_subagent_start_outputs_vscode_schema
-  test_hooks_json_registers_vscode_subagent_start_event
+  test_session_start_outputs_cli_schema_with_default_compact_context
+  test_session_start_outputs_vscode_schema_with_default_compact_context
+  test_subagent_start_outputs_cli_schema_with_default_compact_context
+  test_subagent_start_outputs_vscode_schema_with_default_compact_context
+  test_full_context_mode_fallback
+  test_explicit_compact_context_mode
+  test_hooks_json_registers_cli_and_vscode_start_events
   test_validation_doc_records_vscode_subagent_start_strategy
 }
 
