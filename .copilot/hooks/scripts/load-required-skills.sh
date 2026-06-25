@@ -231,7 +231,7 @@ for index in "${!SKILL_FILES[@]}"; do
 
   audit_log_event \
     "$(basename "$0")" \
-    "[$(date +'%Y-%m-%d %H:%M:%S')] Message: Appended skill $safe_skill_file, Event: $EVENT_NAME, Session: $safe_session_id" \
+    "[$(date +'%Y-%m-%d %H:%M:%S')] Message: Appended skill $safe_skill_file ($CONTEXT_MODE), Event: $EVENT_NAME, Session: $safe_session_id" \
     >/dev/null 2>&1 \
     || fail_with_context "Failed to write audit event for skill: $skill_file"
 done
