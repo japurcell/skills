@@ -1,6 +1,7 @@
 ---
 name: prd-to-tasks
 description: Converts PRDs, feature specs, planning docs, or raw requirements into dependency-ordered, parallel-ready implementation stories in `prd.json`. Use whenever a user wants tickets, backlog items, agent-ready work, `/prd-build-loop` input, or asks how to split a feature so multiple agents can implement it safely in parallel—even if they do not mention `prd.json`. Not for writing the PRD itself or implementing the stories.
+disable-model-invocation: true
 ---
 
 # PRD to Tasks
@@ -123,13 +124,13 @@ Bad split:
 
 ## Common Rationalizations
 
-| Rationalization | Reality |
-| --- | --- |
-| "PRD already has sections, so I can reuse them as stories." | Reuse wording only when the requirement is already implementation-sized. Broad sections must be split. |
-| "One backend story and one frontend story is parallel enough." | Horizontal layer splits hide stageable capabilities and block safe fan-out. |
-| "Same batch is fine if the stories are logically independent." | If they likely edit the same page, table, endpoint, migration, or owner file, they will still conflict. |
-| "Priority alone is enough." | Serial order hides concurrency. `dependsOn` and `parallelBatch` make safe parallel work explicit without breaking current consumers. |
-| "This story is mostly backend, so UI verification can stay implicit." | Any visible UI change needs its own UI story or explicit browser verification. |
+| Rationalization                                                       | Reality                                                                                                                              |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| "PRD already has sections, so I can reuse them as stories."           | Reuse wording only when the requirement is already implementation-sized. Broad sections must be split.                               |
+| "One backend story and one frontend story is parallel enough."        | Horizontal layer splits hide stageable capabilities and block safe fan-out.                                                          |
+| "Same batch is fine if the stories are logically independent."        | If they likely edit the same page, table, endpoint, migration, or owner file, they will still conflict.                              |
+| "Priority alone is enough."                                           | Serial order hides concurrency. `dependsOn` and `parallelBatch` make safe parallel work explicit without breaking current consumers. |
+| "This story is mostly backend, so UI verification can stay implicit." | Any visible UI change needs its own UI story or explicit browser verification.                                                       |
 
 ## Red Flags
 

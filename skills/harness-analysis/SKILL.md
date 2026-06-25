@@ -1,6 +1,7 @@
 ---
 name: harness-analysis
 description: Audits recent agent sessions, harness logs, hook behavior, skills, and agent instructions for read-only, evidence-backed recommendations that reduce token use, tool churn, repeated failures, and slow workflows. Use when the user asks for a harness, session, process, agent-behavior, hook, skill, or agent-instruction audit. Do not use for normal coding, debugging, writing, or documentation work unless the user explicitly requests this audit.
+disable-model-invocation: true
 ---
 
 # Harness Analysis
@@ -72,11 +73,13 @@ Keep a short ledger while inspecting. Each evidence item should include:
 - limit or caveat if the source is incomplete
 
 Good evidence:
+
 - `session_store_sql` recent-session query returned 0 rows, so local logs were used.
 - `wc -c` showed four always-loaded skill files total 15,586 bytes.
 - Hook log search found repeated `No LSP client available`.
 
 Weak evidence:
+
 - "Hooks are slow" without latency data.
 - "Agents always over-read" from one transcript.
 - "This is highest impact" without counts, sizes, or observed repeats.
@@ -115,9 +118,11 @@ Each recommendation should be:
 - paired with validation that would confirm improvement
 
 Prefer:
+
 - "Gate passive log-only hooks behind `HOOK_DEBUG=1` if they are diagnostic only; compare hook event counts before/after."
 
 Avoid:
+
 - "Reduce token usage."
 - "Fix documentation."
 - "Disable hooks."
@@ -198,13 +203,13 @@ Use `Highest-Impact Recommendations` instead of `Candidate Recommendations` only
 
 ## Common Rationalizations
 
-| Rationalization | Reality |
-| --- | --- |
-| "I should inspect every log to be thorough." | Broad reading creates the churn this skill audits. Start with counts and recent metadata, then deep-read only repeated or high-impact clusters. |
-| "One failed path is probably a typo; I can try similar paths." | Guessing paths causes repeated failures. Verify directory shape before more reads. |
-| "The logs show many hook events, so hooks are slow." | Event volume is evidence of churn, not latency. Measure time before claiming speed impact. |
-| "Large always-loaded files definitely waste tokens." | Size plus repeated injection supports a candidate token finding; benchmark or token counts prove impact. |
-| "The user wants recommendations, so I can omit caveats." | This skill exists to prevent unsupported certainty. Always include Evidence and Uncertainty. |
+| Rationalization                                                | Reality                                                                                                                                         |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| "I should inspect every log to be thorough."                   | Broad reading creates the churn this skill audits. Start with counts and recent metadata, then deep-read only repeated or high-impact clusters. |
+| "One failed path is probably a typo; I can try similar paths." | Guessing paths causes repeated failures. Verify directory shape before more reads.                                                              |
+| "The logs show many hook events, so hooks are slow."           | Event volume is evidence of churn, not latency. Measure time before claiming speed impact.                                                      |
+| "Large always-loaded files definitely waste tokens."           | Size plus repeated injection supports a candidate token finding; benchmark or token counts prove impact.                                        |
+| "The user wants recommendations, so I can omit caveats."       | This skill exists to prevent unsupported certainty. Always include Evidence and Uncertainty.                                                    |
 
 ## Red Flags
 

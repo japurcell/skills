@@ -1,6 +1,7 @@
 ---
 name: code-simplify-team
 description: Simplify code for clarity and maintainability — reduce complexity without changing behavior
+disable-model-invocation: true
 ---
 
 Invoke the `addy-code-simplification` skill.

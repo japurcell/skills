@@ -1,6 +1,7 @@
 ---
 name: prd
 description: Use to create an implementation-ready Product Requirements Document (PRD) for a feature. Trigger on requests such as "create/write a PRD," "product requirements," "plan this feature," "requirements for," "spec out," "define user stories," or "prepare for /prd-to-tasks." Do not use to implement the feature or write implementation code.
+disable-model-invocation: true
 ---
 
 # PRD Generator
