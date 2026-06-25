@@ -58,77 +58,33 @@ run_skill_context_injector() {
   bash "$REPO_ROOT/.gemini/hooks/scripts/skill-context-injector.sh" <<<"$payload"
 }
 
-expected_full_context() {
+expected_caveman_context() {
   local skills_dir="$1"
-  cat <<EOF
-$(cat "$skills_dir/universal-guidelines/SKILL.md")
-
----
-
-$(cat "$skills_dir/cli-compression/SKILL.md")
-
----
-
-$(cat "$skills_dir/context-engineering/SKILL.md")
-
----
-
-$(cat "$skills_dir/caveman/SKILL.md")
-
----
-
-VERIFICATION_CANARY: gemini-sessionstart-test-7f3a91
-If you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT
-EOF
+  cat "$skills_dir/caveman/SKILL.md"
 }
 
-assert_compact_context_shape() {
+assert_caveman_context_shape() {
   local context="$1"
-  local skills_dir="$2"
 
-  [[ "$context" == *"GEMINI_REQUIRED_SKILL_CONTEXT_MODE=full"* ]] || {
-    echo "Expected compact payload to include full-context fallback instruction." >&2
+  [[ "$context" == *"# Caveman"* ]] || {
+    echo "Expected payload to include caveman content." >&2
     exit 1
   }
-  [[ "$context" == *"path: $skills_dir/universal-guidelines/SKILL.md"* ]] || {
-    echo "Expected compact payload to include universal-guidelines path." >&2
+  [[ "$context" != *"# Universal Guidelines"* ]] || {
+    echo "Expected payload to exclude universal-guidelines content." >&2
     exit 1
   }
-  [[ "$context" == *"path: $skills_dir/cli-compression/SKILL.md"* ]] || {
-    echo "Expected compact payload to include cli-compression path." >&2
+  [[ "$context" != *"# CLI Compression"* ]] || {
+    echo "Expected payload to exclude cli-compression content." >&2
     exit 1
   }
-  [[ "$context" == *"path: $skills_dir/context-engineering/SKILL.md"* ]] || {
-    echo "Expected compact payload to include context-engineering path." >&2
-    exit 1
-  }
-  [[ "$context" == *"path: $skills_dir/caveman/SKILL.md"* ]] || {
-    echo "Expected compact payload to include caveman path." >&2
-    exit 1
-  }
-  [[ "$context" == *"universal-guidelines: Universal Guidelines"* ]] || {
-    echo "Expected compact payload to include a short universal-guidelines summary." >&2
-    exit 1
-  }
-  [[ "$context" == *"cli-compression: CLI Compression"* ]] || {
-    echo "Expected compact payload to include a short cli-compression summary." >&2
-    exit 1
-  }
-  [[ "$context" == *"context-engineering: Context Engineering"* ]] || {
-    echo "Expected compact payload to include a short context-engineering summary." >&2
-    exit 1
-  }
-  [[ "$context" == *"caveman: Caveman"* ]] || {
-    echo "Expected compact payload to include a short caveman summary." >&2
-    exit 1
-  }
-  [[ "$context" != *"Line A."* ]] || {
-    echo "Did not expect compact payload to include full skill body text." >&2
+  [[ "$context" != *"# Context Engineering"* ]] || {
+    echo "Expected payload to exclude context-engineering content." >&2
     exit 1
   }
 }
 
-test_before_agent_default_mode_returns_compact_context() {
+test_before_agent_default_mode_returns_caveman_only_context() {
   local workdir
   local output
   local skills_dir
@@ -150,10 +106,12 @@ test_before_agent_default_mode_returns_compact_context() {
 
   assert_equals "BeforeAgent" "$(jq -r '.hookSpecificOutput.hookEventName' <<<"$output")" \
     "Expected hookSpecificOutput.hookEventName to reflect the Gemini event."
-  assert_compact_context_shape "$context" "$skills_dir"
+  assert_equals "$(expected_caveman_context "$skills_dir")" "$context" \
+    "Expected default mode to emit only caveman skill contents."
+  assert_caveman_context_shape "$context"
 }
 
-test_before_agent_full_mode_override_returns_full_context() {
+test_compact_mode_override_still_returns_caveman_only_context() {
   local workdir
   local output
   local skills_dir
@@ -167,21 +125,18 @@ test_before_agent_full_mode_override_returns_full_context() {
 
   output="$(
     AUDIT_LOG="$workdir/audit.log" \
-    GEMINI_REQUIRED_SKILL_CONTEXT_MODE="full" \
+    GEMINI_REQUIRED_SKILL_CONTEXT_MODE="compact" \
     run_skill_context_injector \
       "$skills_dir" \
-      '{"session_id":"gemini-full","timestamp":"2026-06-24T10:00:01Z","hook_event_name":"BeforeAgent","cwd":"/repo","prompt":"hello"}'
+      '{"session_id":"gemini-compact","timestamp":"2026-06-24T10:00:01Z","hook_event_name":"BeforeAgent","cwd":"/repo","prompt":"hello"}'
   )"
 
-  expected="$(expected_full_context "$skills_dir")"
+  expected="$(expected_caveman_context "$skills_dir")"
   context="$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")"
 
   assert_equals "$expected" "$context" \
-    "Expected full mode override to emit full required skill contents."
-  [[ "$context" != *"Required skill context loaded (compact mode)."* ]] || {
-    echo "Did not expect compact preamble when full mode is requested." >&2
-    exit 1
-  }
+    "Expected compact override to be ignored and only caveman skill contents to load."
+  assert_caveman_context_shape "$context"
 }
 
 test_missing_required_skill_file_fails_explicitly() {
@@ -211,8 +166,8 @@ test_missing_required_skill_file_fails_explicitly() {
 }
 
 main() {
-  test_before_agent_default_mode_returns_compact_context
-  test_before_agent_full_mode_override_returns_full_context
+  test_before_agent_default_mode_returns_caveman_only_context
+  test_compact_mode_override_still_returns_caveman_only_context
   test_missing_required_skill_file_fails_explicitly
 }
 

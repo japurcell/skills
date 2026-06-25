@@ -21,15 +21,6 @@ hard_stop() {
   exit 0
 }
 
-require_cmd() {
-  local cmd="${1:-}"
-  [[ -n "$cmd" ]] || hard_stop "require_cmd: command name required"
-
-  if ! command -v "$cmd" >/dev/null 2>&1; then
-    hard_stop "Required command not found: $cmd"
-  fi
-}
-
 sanitize_log_field() {
   # Prevent multi-line/control-character log injection.
   printf '%s' "${1:-}" | tr '\r\n\t' '   '
@@ -45,8 +36,6 @@ json_string_field() {
     if type == "string" then . else tostring end
   ' <<<"$INPUT"
 }
-
-require_cmd jq
 
 INPUT="$(cat)"
 
@@ -112,123 +101,29 @@ else
   hard_stop "Neither AGENTS_SKILLS_DIR nor HOME is set"
 fi
 
-SKILL_FILES=(
-  "$SKILLS_DIR/universal-guidelines/SKILL.md"
-  "$SKILLS_DIR/cli-compression/SKILL.md"
-  "$SKILLS_DIR/context-engineering/SKILL.md"
-  "$SKILLS_DIR/caveman/SKILL.md"
-)
+REQUIRED_SKILL_FILE="$SKILLS_DIR/caveman/SKILL.md"
 
-CONTEXT_MODE="${GEMINI_REQUIRED_SKILL_CONTEXT_MODE:-compact}"
+SAFE_REQUIRED_SKILL_FILE="$(sanitize_log_field "$REQUIRED_SKILL_FILE")"
 
-case "$CONTEXT_MODE" in
-  full|compact)
-    ;;
-  *)
-    hard_stop "Unsupported GEMINI_REQUIRED_SKILL_CONTEXT_MODE: $CONTEXT_MODE (expected full or compact)"
-    ;;
-esac
+[[ -n "$REQUIRED_SKILL_FILE" ]] || hard_stop "Required skill file path is empty"
+[[ -f "$REQUIRED_SKILL_FILE" ]] || hard_stop "Required skill file not found: $REQUIRED_SKILL_FILE"
+[[ -r "$REQUIRED_SKILL_FILE" ]] || hard_stop "Required skill file not readable: $REQUIRED_SKILL_FILE"
 
-CONTEXT_PAYLOAD=""
+CONTEXT_PAYLOAD="$(
+  cat "$REQUIRED_SKILL_FILE"
+)" || hard_stop "Failed to read skill file: $REQUIRED_SKILL_FILE"
 
-append_required_skill() {
-  local path="${1:-}"
-  local safe_path
-  local skill_text
-
-  [[ -n "$path" ]] || hard_stop "append_required_skill: path required"
-
-  safe_path="$(sanitize_log_field "$path")"
-
-  [[ -f "$path" ]] || hard_stop "Required skill file not found: $path"
-  [[ -r "$path" ]] || hard_stop "Required skill file not readable: $path"
-
-  skill_text="$(cat "$path")" || hard_stop "Failed to read skill file: $path"
-
-  if [[ -n "$CONTEXT_PAYLOAD" ]]; then
-    CONTEXT_PAYLOAD+=$'\n\n---\n\n'
-  fi
-
-  CONTEXT_PAYLOAD+="$skill_text"
-
-  if ! audit_log_event \
-    "$SCRIPT_NAME" \
-    "[$SAFE_TIMESTAMP] Message: $safe_path loaded, Hook: $SAFE_HOOK_EVENT_NAME, CWD: $SAFE_CWD, Session: $SAFE_SESSION_ID" \
-    >/dev/null; then
-    hard_stop "Failed to write audit event for loaded skill: $path"
-  fi
-}
-
-extract_skill_summary() {
-  local path="${1:-}"
-  [[ -n "$path" ]] || hard_stop "extract_skill_summary: path required"
-
-  awk '
-  BEGIN { in_front_matter = 0; front_matter_done = 0 }
-  NR == 1 && $0 == "---" { in_front_matter = 1; next }
-  in_front_matter && $0 == "---" { in_front_matter = 0; front_matter_done = 1; next }
-  front_matter_done && $0 ~ /^#/ {
-    sub(/^#+[[:space:]]*/, "", $0)
-    print
-    exit
-  }
-  front_matter_done && $0 !~ /^[[:space:]]*$/ {
-    print
-    exit
-  }
-  ' "$path"
-}
-
-append_compact_skill() {
-  local path="${1:-}"
-  local safe_path
-  local skill_id
-  local summary
-
-  [[ -n "$path" ]] || hard_stop "append_compact_skill: path required"
-
-  safe_path="$(sanitize_log_field "$path")"
-  skill_id="$(basename "$(dirname "$path")")"
-
-  [[ -f "$path" ]] || hard_stop "Required skill file not found: $path"
-  [[ -r "$path" ]] || hard_stop "Required skill file not readable: $path"
-
-  summary="$(extract_skill_summary "$path")"
-  [[ -n "$summary" ]] || summary="Summary unavailable."
-
-  CONTEXT_PAYLOAD+="- ${skill_id}: ${summary}"$'\n'
-  CONTEXT_PAYLOAD+="  path: ${path}"$'\n'
-
-  if ! audit_log_event \
-    "$SCRIPT_NAME" \
-    "[$SAFE_TIMESTAMP] Message: $safe_path summarized (compact), Hook: $SAFE_HOOK_EVENT_NAME, CWD: $SAFE_CWD, Session: $SAFE_SESSION_ID" \
-    >/dev/null; then
-    hard_stop "Failed to write audit event for summarized skill: $path"
-  fi
-}
-
-for skill_file in "${SKILL_FILES[@]}"; do
-  if [[ "$CONTEXT_MODE" == "full" ]]; then
-    append_required_skill "$skill_file"
-    continue
-  fi
-
-  append_compact_skill "$skill_file"
-done
-
-if [[ "$CONTEXT_MODE" == "compact" ]]; then
-  CONTEXT_PAYLOAD=$'Required skill context loaded (compact mode).\nSet GEMINI_REQUIRED_SKILL_CONTEXT_MODE=full for full-context fallback.\n\nRequired skills:\n\n'"${CONTEXT_PAYLOAD}"$'\n---\n\nVERIFICATION_CANARY: gemini-sessionstart-test-7f3a91\nIf you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT'
-else
-  CONTEXT_PAYLOAD+=$'\n\n---\n\nVERIFICATION_CANARY: gemini-sessionstart-test-7f3a91\nIf you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT'
+if ! audit_log_event \
+  "$SCRIPT_NAME" \
+  "[$SAFE_TIMESTAMP] Message: $SAFE_REQUIRED_SKILL_FILE loaded (caveman-only), Hook: $SAFE_HOOK_EVENT_NAME, CWD: $SAFE_CWD, Session: $SAFE_SESSION_ID" \
+  >/dev/null; then
+  hard_stop "Failed to write audit event for loaded skill: $REQUIRED_SKILL_FILE"
 fi
 
 # Final stdout JSON only.
 #
-# Per your requirement, the same context is included in both:
-# - hookSpecificOutput.additionalContext
-# - systemMessage
-#
-# suppressOutput asks Gemini CLI to avoid logging hook metadata where supported.
+# Required skill context stays in hookSpecificOutput.additionalContext. suppressOutput
+# asks Gemini CLI to avoid logging hook metadata where supported.
 jq -nc \
   --arg ev "$HOOK_EVENT_NAME" \
   --arg ctx "$CONTEXT_PAYLOAD" \

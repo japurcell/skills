@@ -16,9 +16,7 @@ set -o pipefail
 INPUT=""
 SESSION_ID=""
 EVENT_NAME=""
-CONTEXT_MODE=""
-CANARY_TEXT='VERIFICATION_CANARY: copilot-sessionstart-test-7f3a91
-If you can see this, say exactly: I_CAN_SEE_SESSIONSTART_CONTEXT'
+SCRIPT_NAME="$(basename "$0")"
 
 static_fail_no_jq() {
   printf 'Copilot/VS Code hook failure: Required command not found: jq\n' >&2
@@ -94,7 +92,7 @@ fail_with_context() {
 
   if declare -F audit_log_event >/dev/null; then
     audit_log_event \
-      "$(basename "$0")" \
+      "$SCRIPT_NAME" \
       "[$(date +'%Y-%m-%d %H:%M:%S')] Error: $safe_reason, Session: $safe_session_id" \
       >/dev/null 2>&1 || true
   fi
@@ -175,110 +173,33 @@ else
   fail_with_context "None of COPILOT_SKILLS_DIR, AGENTS_SKILLS_DIR, or HOME is set"
 fi
 
-SKILL_FILES=(
-  "$SKILLS_DIR/universal-guidelines/SKILL.md"
-  "$SKILLS_DIR/cli-compression/SKILL.md"
-  "$SKILLS_DIR/context-engineering/SKILL.md"
-  "$SKILLS_DIR/caveman/SKILL.md"
-)
+REQUIRED_SKILL_FILE="$SKILLS_DIR/caveman/SKILL.md"
 
-SKILL_NAMES=(
-  "universal-guidelines"
-  "cli-compression"
-  "context-engineering"
-  "caveman"
-)
+safe_session_id="$(sanitize_log_field "$SESSION_ID")"
+safe_skill_file="$(sanitize_log_field "$REQUIRED_SKILL_FILE")"
 
-SKILL_COMPACT_SUMMARIES=(
-  "Behavioral guardrails: keep scope tight, verify changes, and fail safely on missing context."
-  "CLI output compression: prefix shell commands with rtk and prefer concise command output."
-  "Context discipline: load exact rules/files first, then minimal task packet before edits."
-  "Compressed response style: terse language while preserving technical correctness and exact terms."
-)
+[[ -n "$REQUIRED_SKILL_FILE" ]] \
+  || fail_with_context "Required skill file path is empty"
 
-CONTEXT_MODE="${COPILOT_REQUIRED_SKILL_CONTEXT_MODE:-${COPILOT_REQUIRED_SKILLS_MODE:-compact}}"
-CONTEXT_MODE="$(printf '%s' "$CONTEXT_MODE" | tr '[:upper:]' '[:lower:]')"
+[[ -f "$REQUIRED_SKILL_FILE" ]] \
+  || fail_with_context "Required skill file not found: $REQUIRED_SKILL_FILE"
 
-case "$CONTEXT_MODE" in
-  compact|full) ;;
-  *)
-    fail_with_context "Invalid COPILOT_REQUIRED_SKILL_CONTEXT_MODE: $CONTEXT_MODE (expected compact or full)"
-    ;;
-esac
+[[ -r "$REQUIRED_SKILL_FILE" ]] \
+  || fail_with_context "Required skill file not readable: $REQUIRED_SKILL_FILE"
 
-append_required_skill() {
-  local path="${1:-}"
+REQUIRED_SKILL_CONTENT="$(
+  cat "$REQUIRED_SKILL_FILE"
+)" || fail_with_context "Failed to read skill file: $REQUIRED_SKILL_FILE"
 
-  [[ -n "$path" ]] \
-    || fail_with_context "append_required_skill: path required"
+audit_log_event \
+  "$SCRIPT_NAME" \
+  "[$(date +'%Y-%m-%d %H:%M:%S')] Message: Loaded skill $safe_skill_file (caveman-only), Event: $EVENT_NAME, Session: $safe_session_id" \
+  >/dev/null 2>&1 \
+  || fail_with_context "Failed to write audit event for skill: $REQUIRED_SKILL_FILE"
 
-  [[ -f "$path" ]] \
-    || fail_with_context "Required skill file not found: $path"
+REQUIRED_SKILL_CONTEXT="Required skill context loaded.
 
-  [[ -r "$path" ]] \
-    || fail_with_context "Required skill file not readable: $path"
-
-  cat "$path" >/dev/null \
-    || fail_with_context "Failed to read skill file: $path"
-}
-
-for index in "${!SKILL_FILES[@]}"; do
-  skill_file="${SKILL_FILES[$index]}"
-  append_required_skill "$skill_file"
-
-  safe_skill_file="$(sanitize_log_field "$skill_file")"
-  safe_session_id="$(sanitize_log_field "$SESSION_ID")"
-
-  audit_log_event \
-    "$(basename "$0")" \
-    "[$(date +'%Y-%m-%d %H:%M:%S')] Message: Appended skill $safe_skill_file ($CONTEXT_MODE), Event: $EVENT_NAME, Session: $safe_session_id" \
-    >/dev/null 2>&1 \
-    || fail_with_context "Failed to write audit event for skill: $skill_file"
-done
-
-build_full_context() {
-  local full_context=""
-  local path
-
-  for path in "${SKILL_FILES[@]}"; do
-    if [[ -n "$full_context" ]]; then
-      full_context+=$'\n\n---\n\n'
-    fi
-
-    full_context+="$(cat "$path")"
-  done
-
-  full_context+=$'\n\n---\n\n'
-  full_context+="$CANARY_TEXT"
-
-  printf '%s' "$full_context"
-}
-
-build_compact_context() {
-  local compact_context
-  local index
-
-  compact_context=$'Required skill context loaded (compact).\n\n'
-  compact_context+=$'Mode: compact (set COPILOT_REQUIRED_SKILL_CONTEXT_MODE=full for full context).\n\n'
-  compact_context+=$'Required skills:\n'
-
-  for index in "${!SKILL_FILES[@]}"; do
-    compact_context+="- ${SKILL_NAMES[$index]}: ${SKILL_COMPACT_SUMMARIES[$index]} path=${SKILL_FILES[$index]}"$'\n'
-  done
-
-  compact_context+=$'\n---\n\n'
-  compact_context+="$CANARY_TEXT"
-
-  printf '%s' "$compact_context"
-}
-
-if [[ "$CONTEXT_MODE" == "compact" ]]; then
-  REQUIRED_SKILL_CONTEXT="$(build_compact_context)"
-else
-  REQUIRED_SKILL_CONTEXT="Required skill context loaded.
-
-$(build_full_context)"
-fi
+$REQUIRED_SKILL_CONTENT"
 
 emit_output \
   "$REQUIRED_SKILL_CONTEXT" \

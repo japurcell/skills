@@ -22,7 +22,7 @@ Capture durable, reusable learnings in the right `AGENTS.md` or linked doc. Pref
 
 1. **Qualify learnings**
    - Keep only items likely to recur, actionable for a future agent, repo/workflow/user-specific, and not already documented.
-   - Look for non-default commands, validation/build/typecheck steps, code patterns, environment quirks, warnings, gotchas, and repeated human corrections.
+   - Look for non-default commands, validation/build/typecheck steps, code patterns, environment quirks, warnings, gotchas, repeated human corrections, and recurring agent/harness failure patterns.
    - Mine session notes, handoffs, progress files, and similar artifacts beyond the summary when the details carry durable guidance.
    - Never turn excluded noise into an inverse standing rule.
 
@@ -61,6 +61,16 @@ Capture durable, reusable learnings in the right `AGENTS.md` or linked doc. Pref
 Keep items that are recurring, actionable, repo/workflow/user-specific, and not already documented. High-value examples: non-default commands, validation/build/typecheck steps, repo-specific constraints, environment quirks, warnings, gotchas, and repeated human corrections.
 
 Skip temporary debugging notes, obvious tree/README facts, one-run navigation heuristics, and generic reminders.
+
+Also qualify agent/harness learnings when artifacts show a concrete prevention rule, narrower validation choice, or instruction cleanup that would likely save future work:
+
+- **Failures:** repeated failed commands, wrong paths, missing dependencies, timeouts, permission issues, retries without new information, and unclear hook errors.
+- **Excessive file reading:** repeated reads, full large-file reads, broad scans, always-read docs, and long linked docs loaded for simple tasks.
+- **Excessive tool calls:** repeated `ls`/`find`/`grep`, repeated full test runs, polling background work, and planning/search loops without progress.
+- **Token waste:** large always-loaded instructions, duplicated skill/doc guidance, verbose required formats, long examples, and copied logs in final answers.
+- **Accuracy problems:** contradictory instructions, stale docs, missing definitions of done, paths that do not match the repo, and over-certain claims not grounded in evidence.
+- **Execution-time problems:** expensive hooks, full builds where targeted checks would work, repeated dependency installs, avoidable timeouts, and missing cache guidance.
+- **Hook problems:** noisy output, unclear failures, unavailable tools, expensive checks on common events, and hooks that block safe workflows.
 
 ### Artifact mining
 

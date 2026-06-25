@@ -17,7 +17,7 @@ There are differences between Copilot CLI and VS Code hook definitions that must
 ### Repo-specific hook gotchas
 
 - Keep `.copilot/hooks/scripts/format.sh` in sync with `scripts/test-hooks-format.sh`; that test expects audit-backed logging, formatter command/failure logging, session-event file recovery, rollover, and lock waiting.
-- When adding compact/full required-skill injection modes, keep the default path and explicit override path covered in the surface-specific startup test; compact payloads still need exact skill paths plus explicit full-mode fallback text.
+- Keep required-skill injection startup tests focused on the caveman-only payload for each surface so context loading stays consistent across Copilot CLI, VS Code, and Gemini CLI.
 - For passive shadow logging on either hook surface, create the shadow-log parent directory before first write and keep primary + shadow writes inside the same lock/critical section so additive shadow mode preserves event ordering.
 - When editing Tool Guard rules or tests that mention dangerous commands, avoid pasting raw threat strings into tool payloads; construct the exact strings dynamically so the active guard hook does not block the edit itself.
 - Keep simple hook input parsing in the individual script when readability matters; do not move routine `jq` field extraction into `common.sh` just to reduce repetition.

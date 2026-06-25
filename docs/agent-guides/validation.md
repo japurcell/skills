@@ -33,7 +33,7 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 - `bash scripts/test-hooks-tool-guard.sh`: validate `preToolUse` guard output stays JSON-safe while handling both Copilot CLI and VS Code payload schemas
 - `bash scripts/test-hooks-hedge-detector.sh`: validate Copilot `agentStop` hedge detection blocks over-certain answers once and is wired in `.copilot/hooks/hooks.json`
 - `bash scripts/test-hooks-pride-check.sh`: validate Copilot `agentStop` Pride Check enforcement blocks changed turns without the required craft section and is wired in `.copilot/hooks/hooks.json`
-- `bash scripts/test-gemini-hooks-startup.sh`: validate Gemini startup/context injection payloads, including default compact mode and explicit full-mode fallback
+- `bash scripts/test-gemini-hooks-startup.sh`: validate Gemini startup/context injection payloads, including caveman-only required-skill loading
 - `bash scripts/test-gemini-hooks-tool-guard.sh`: validate Gemini `BeforeTool` guard output stays JSON-safe and is wired in `.gemini/settings.json`
 - `bash scripts/test-gemini-hooks-hedge-detector.sh`: validate Gemini `AfterAgent` hedge detection retries over-certain answers once and is wired in `.gemini/settings.json`
 - `bash scripts/test-gemini-hooks-pride-check.sh`: validate Gemini `AfterAgent` Pride Check enforcement retries changed-code answers that omit the required craft section and is wired in `.gemini/settings.json`
@@ -44,7 +44,7 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 ## Cross-surface live hook validation contracts
 
 - Hook source changes: run `./scripts/install.sh` before live validation; Copilot CLI and VS Code execute installed hooks from `~/.copilot/hooks`, and Gemini CLI executes installed hooks from `~/.gemini/hooks`, not repository source files.
-- Compact required-skill injection coverage:
+- Required-skill injection coverage:
   - Copilot surfaces: `bash scripts/test-hooks-startup.sh`
   - Gemini CLI: `bash scripts/test-gemini-hooks-startup.sh`
 - Passive-log mode coverage:
@@ -73,3 +73,6 @@ There is no single repo-wide test command. Run the narrowest command that exerci
 - If you change a helper script, run the most specific command that covers that script instead of looking for a nonexistent monorepo test runner.
 - `scripts/test-common.sh` `mock_bin` must keep `printf "%b\n"` so escaped newlines render into executable mock scripts.
 - Static review findings based on file inspection or sub-review output, without live reproduction, must be labeled likely/candidate and include `Evidence:` plus `Uncertainty:` grounded in inspected files, tool outputs, and remaining assumptions.
+- If asked to strengthen certainty or add evidence, gather at least one new concrete artifact first (for example a targeted `rg`, exact `view`, or narrower validation command). If no new artifact exists, say that directly instead of rewriting same claim with stronger wording.
+- Distinguish repo-source proof from installed/live proof. File reads and repo-local tests only prove repository state; installed hook behavior still requires `./scripts/install.sh` plus the live-evidence checks above.
+- To prove a mode or branch is gone, prefer one targeted search over repeated full-file rereads or rerunning same validation loop.
