@@ -19,7 +19,12 @@ Load only context that can change the answer. Load rules first, then the smalles
 
 ## Workflow
 
-1. **Load rules first, best effort.** Check every relevant rules location you can access: repo-local rules such as `AGENTS.md`, `.github/copilot-instructions.md`, `.gemini/GEMINI.md`, `.cursorrules`, concrete files under `.cursor/rules/`, and `.windsurfrules`, plus accessible user/global rules for the current tool (e.g. `~/.copilot/copilot-instructions.md`, `~/.gemini/GEMINI.md`). Expand globs into exact file paths, load every accessible file individually, record only missing or unreadable paths as unavailable, and do not stop after the first match. Do not treat one loaded rules file as covering another concrete file in the list.
+1. **Load rules first, best effort, scoped to the current agent.** Check shared rules such as relevant `AGENTS.md` files, then check only the current agent's rule files:
+   - Copilot: `.copilot/copilot-instructions.md`, `.github/copilot-instructions.md`, and `~/.copilot/copilot-instructions.md`
+   - Gemini: `GEMINI.md`, `.gemini/GEMINI.md`, and `~/.gemini/GEMINI.md`
+   - Cursor: `.cursorrules` and concrete files under `.cursor/rules/`
+   - Windsurf: `.windsurfrules`
+   If the current agent is unknown, infer it from the environment and loaded system context; if still unclear, ask before loading tool-specific rules. Do not load another agent's rule file as instructions. If a cross-agent file is the target of the task (for example, editing Gemini config from Copilot), read it as target/config data, not as rules, and note that it is other-agent config in `Constraints` or `Gotchas`. Expand current-agent globs into exact file paths, load every accessible current-agent rules file individually, record missing, unreadable, or other-agent rule paths as unavailable or not applicable, and do not stop after the first match. Do not treat one loaded rules file as covering another concrete file in the list.
    - **Stop-condition for missing paths:** if a path read fails, verify directory shape once (for example, list the parent directory) to confirm whether the path exists under a different name/location. After that confirmation, stop retrying the same missing path and mark it unavailable.
    - **Stop-condition for unavailable LSP:** if one LSP call confirms the relevant client/server is unavailable for the session, do not retry LSP for the same need in that session. Switch to alternate tools (`glob`/`rg`/direct file reads) or run an explicit setup flow before using LSP again.
 2. **Build the minimal task packet in this order.** Include only what exists and can change the answer:
@@ -52,9 +57,9 @@ Refresh context packet when any boundary changes:
 - Rules surface changes (new rule file appears, previously missing path becomes available, or rule availability differs)
 - New errors or outputs become the decision driver
 
-- `Rules checked`: every exact rules path checked; expand wildcards into concrete files
-- `Rules loaded`: every accessible rules file actually loaded; if a concrete checked path existed and was readable, include that same path here instead of implying it through another file
-- `Unavailable`: rules paths that were missing, unreadable, or unsupported
+- `Rules checked`: every exact shared and current-agent rules path checked; expand current-agent wildcards into concrete files
+- `Rules loaded`: every accessible shared or current-agent rules file actually loaded; if a concrete checked path existed and was readable, include that same path here instead of implying it through another file
+- `Unavailable`: rules paths that were missing, unreadable, unsupported, or intentionally skipped because they belong to another agent
 - `Files`: target files
 - `Tests`: related tests when they exist
 - `Pattern`: one similar example, not the target file; prefer a sibling source/helper/type file over the related test when available
@@ -122,6 +127,7 @@ Executing unless you redirect.
 | "One rules file is enough."                                                    | Missing repo-specific rules causes missed conventions. Check every location.                                               |
 | "Listing `.cursor/rules/*.md` is close enough."                                | Wildcards hide missed files. Expand them to the exact files you checked and loaded.                                        |
 | "Loading `.cursorrules` means the `.cursor/rules/*.md` files are covered too." | They are separate rule files. If a concrete `.cursor/rules/*.md` file exists and is readable, load and list it separately. |
+| "Copilot should read `.gemini/GEMINI.md` because it is a rules file."          | Agent-specific files are not shared rules. Copilot uses Copilot instructions; Gemini uses GEMINI files.                    |
 | "If global rules are unavailable, I should stop."                              | Global rules are optional. Continue with accessible local rules and report what was unavailable.                           |
 | "I'll load the whole spec or log to be safe."                                  | Full dumps crowd out the task. Load only the relevant slice or exact error.                                                |
 | "This API probably works like the last project."                               | Guessing creates fake constraints. Read the real files, tests, and example first.                                          |
@@ -130,6 +136,7 @@ Executing unless you redirect.
 ## Red Flags
 
 - A relevant rules location was not checked
+- A Copilot run loads `.gemini/GEMINI.md` as rules, or a Gemini run loads `copilot-instructions.md` as rules
 - A wildcard path was listed instead of the concrete rules files that actually existed
 - A concrete rules file appeared in `Rules checked` but disappeared from `Rules loaded`
 - An accessible rules file existed but was not loaded
@@ -146,6 +153,7 @@ Executing unless you redirect.
 Before acting, confirm:
 
 - [ ] All relevant rules locations were checked
+- [ ] Agent-specific rules were scoped to the current agent; other-agent rules were skipped or treated only as target/config data
 - [ ] Rules lists use exact file paths, not unresolved globs
 - [ ] All accessible rules files were loaded
 - [ ] Unavailable rules paths were reported without stopping

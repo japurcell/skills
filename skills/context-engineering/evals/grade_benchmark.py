@@ -111,10 +111,29 @@ def count_numbered_steps(text: str) -> int:
     return len(re.findall(r"(?m)^\s*\d+\.\s+", text))
 
 
+def field_text(text: str, label: str) -> str:
+    lines = text.splitlines()
+    start = None
+    label_normalized = label.lower()
+    for index, line in enumerate(lines):
+        if label_normalized in line.lower():
+            start = index
+            break
+    if start is None:
+        return ""
+    section = [lines[start]]
+    for line in lines[start + 1 :]:
+        if re.match(r"^\s*-\s+[A-Za-z /]+:", line):
+            break
+        section.append(line)
+    return "\n".join(section)
+
+
 def grade(eval_id: int, output_text: str) -> list[dict]:
     normalized = normalize(output_text)
 
     if eval_id == 0:
+        rules_loaded = field_text(output_text, "Rules loaded:")
         return [
             expectation(
                 "The output uses the `PROJECT CONTEXT` block.",
@@ -122,19 +141,27 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
                 output_text or "missing context.md",
             ),
             expectation(
-                "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and names every present rules file: `.github/copilot-instructions.md`, `AGENTS.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+                "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and loads shared plus Copilot rules: `AGENTS.md`, `.copilot/copilot-instructions.md`, and `.github/copilot-instructions.md`.",
                 has_all(
                     output_text,
                     [
                         "Rules checked:",
                         "Rules loaded:",
                         "Unavailable:",
-                        ".github/copilot-instructions.md",
                         "AGENTS.md",
-                        ".cursorrules",
-                        ".cursor/rules/quality.md",
-                        ".windsurfrules",
                     ],
+                )
+                and has_all(
+                    rules_loaded,
+                    ["AGENTS.md", ".copilot/copilot-instructions.md", ".github/copilot-instructions.md"],
+                ),
+                output_text or "missing context.md",
+            ),
+            expectation(
+                "The output does not load other-agent rules as Copilot rules: `.gemini/GEMINI.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules` are absent from `Rules loaded`.",
+                not has_any(
+                    rules_loaded,
+                    [".gemini/GEMINI.md", ".cursorrules", ".cursor/rules/quality.md", ".windsurfrules"],
                 ),
                 output_text or "missing context.md",
             ),
@@ -264,6 +291,46 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
             expectation(
                 "The output does not claim a refresh trigger such as repo/task/file/rules change.",
                 not has_any(output_text, ["refresh required", "repo changed", "task changed", "files changed", "rules changed"]),
+                output_text or "missing context.md",
+            ),
+        ]
+
+    if eval_id == 6:
+        rules_loaded = field_text(output_text, "Rules loaded:")
+        return [
+            expectation(
+                "The output uses the `PROJECT CONTEXT` block.",
+                output_text.startswith("PROJECT CONTEXT:"),
+                output_text or "missing context.md",
+            ),
+            expectation(
+                "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and loads shared plus Gemini rules: `AGENTS.md` and `.gemini/GEMINI.md`.",
+                has_all(output_text, ["Rules checked:", "Rules loaded:", "Unavailable:", "AGENTS.md"])
+                and has_all(rules_loaded, ["AGENTS.md", ".gemini/GEMINI.md"]),
+                output_text or "missing context.md",
+            ),
+            expectation(
+                "The output does not load other-agent rules as Gemini rules: `.copilot/copilot-instructions.md`, `.github/copilot-instructions.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules` are absent from `Rules loaded`.",
+                not has_any(
+                    rules_loaded,
+                    [
+                        ".copilot/copilot-instructions.md",
+                        ".github/copilot-instructions.md",
+                        ".cursorrules",
+                        ".cursor/rules/quality.md",
+                        ".windsurfrules",
+                    ],
+                ),
+                output_text or "missing context.md",
+            ),
+            expectation(
+                "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections such as billing exports.",
+                "15 minutes" in normalized and "billing exports run nightly" not in normalized,
+                output_text or "missing context.md",
+            ),
+            expectation(
+                "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`.",
+                has_all(output_text, ["src/auth_service.py", "tests/test_auth_service.py", "src/session_service.py"]),
                 output_text or "missing context.md",
             ),
         ]

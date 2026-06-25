@@ -3,11 +3,13 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "Use the skill under test to prepare startup context for the fixture repo in `evals/files/session-start-fixture/`. The user asks: `Fix the login timeout in src/auth_service.py so it matches the spec.` Do not change code. Read only the context you need and write only the `PROJECT CONTEXT` block to `outputs/context.md`.",
-      "expected_output": "A session-start block with rules checked/loaded/unavailable, every present rule file, only the relevant timeout spec excerpt, and the target file, related test, and one example file.",
+      "prompt": "Use the skill under test to prepare startup context for the fixture repo in `evals/files/session-start-fixture/`. Assume the current agent runtime is Copilot CLI. The user asks: `Fix the login timeout in src/auth_service.py so it matches the spec.` Do not change code. Read only the context you need and write only the `PROJECT CONTEXT` block to `outputs/context.md`.",
+      "expected_output": "A session-start block with rules checked/loaded/unavailable, shared plus Copilot rule files loaded, Gemini/Cursor/Windsurf rule files not loaded as Copilot rules, only the relevant timeout spec excerpt, and the target file, related test, and one example file.",
       "files": [
         "evals/files/session-start-fixture/AGENTS.md",
+        "evals/files/session-start-fixture/.copilot/copilot-instructions.md",
         "evals/files/session-start-fixture/.github/copilot-instructions.md",
+        "evals/files/session-start-fixture/.gemini/GEMINI.md",
         "evals/files/session-start-fixture/.cursorrules",
         "evals/files/session-start-fixture/.cursor/rules/quality.md",
         "evals/files/session-start-fixture/.windsurfrules",
@@ -18,13 +20,15 @@
       ],
       "expectations": [
         "The output uses the `PROJECT CONTEXT` block.",
-        "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and names every present rules file: `.github/copilot-instructions.md`, `AGENTS.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+        "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and loads shared plus Copilot rules: `AGENTS.md`, `.copilot/copilot-instructions.md`, and `.github/copilot-instructions.md`.",
+        "The output does not load other-agent rules as Copilot rules: `.gemini/GEMINI.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules` are absent from `Rules loaded`.",
         "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections such as billing exports.",
         "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`."
       ],
       "assertions": [
         "The output uses the `PROJECT CONTEXT` block.",
-        "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and names every present rules file: `.github/copilot-instructions.md`, `AGENTS.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules`.",
+        "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and loads shared plus Copilot rules: `AGENTS.md`, `.copilot/copilot-instructions.md`, and `.github/copilot-instructions.md`.",
+        "The output does not load other-agent rules as Copilot rules: `.gemini/GEMINI.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules` are absent from `Rules loaded`.",
         "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections such as billing exports.",
         "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`."
       ]
@@ -136,6 +140,38 @@
         "The output uses the `TASK` block.",
         "The output explicitly says context packet is reused because repo, task, files, and rules surface are unchanged.",
         "The output does not claim a refresh trigger such as repo/task/file/rules change."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Use the skill under test to prepare startup context for the fixture repo in `evals/files/session-start-fixture/`. Assume the current agent runtime is Gemini CLI. The user asks: `Fix the login timeout in src/auth_service.py so it matches the spec.` Do not change code. Read only the context you need and write only the `PROJECT CONTEXT` block to `outputs/context.md`.",
+      "expected_output": "A session-start block with rules checked/loaded/unavailable, shared plus Gemini rule files loaded, Copilot/Cursor/Windsurf rule files not loaded as Gemini rules, and the same minimal task context as the Copilot eval.",
+      "files": [
+        "evals/files/session-start-fixture/AGENTS.md",
+        "evals/files/session-start-fixture/.copilot/copilot-instructions.md",
+        "evals/files/session-start-fixture/.github/copilot-instructions.md",
+        "evals/files/session-start-fixture/.gemini/GEMINI.md",
+        "evals/files/session-start-fixture/.cursorrules",
+        "evals/files/session-start-fixture/.cursor/rules/quality.md",
+        "evals/files/session-start-fixture/.windsurfrules",
+        "evals/files/session-start-fixture/docs/spec.md",
+        "evals/files/session-start-fixture/src/auth_service.py",
+        "evals/files/session-start-fixture/src/session_service.py",
+        "evals/files/session-start-fixture/tests/test_auth_service.py"
+      ],
+      "expectations": [
+        "The output uses the `PROJECT CONTEXT` block.",
+        "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and loads shared plus Gemini rules: `AGENTS.md` and `.gemini/GEMINI.md`.",
+        "The output does not load other-agent rules as Gemini rules: `.copilot/copilot-instructions.md`, `.github/copilot-instructions.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules` are absent from `Rules loaded`.",
+        "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections such as billing exports.",
+        "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`."
+      ],
+      "assertions": [
+        "The output uses the `PROJECT CONTEXT` block.",
+        "The output includes `Rules checked`, `Rules loaded`, and `Unavailable`, and loads shared plus Gemini rules: `AGENTS.md` and `.gemini/GEMINI.md`.",
+        "The output does not load other-agent rules as Gemini rules: `.copilot/copilot-instructions.md`, `.github/copilot-instructions.md`, `.cursorrules`, `.cursor/rules/quality.md`, and `.windsurfrules` are absent from `Rules loaded`.",
+        "The output includes the relevant login-timeout spec excerpt and excludes unrelated spec sections such as billing exports.",
+        "The output names `src/auth_service.py`, `tests/test_auth_service.py`, and `src/session_service.py`."
       ]
     }
   ]
