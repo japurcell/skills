@@ -31,7 +31,7 @@ Review only the requested change scope. Report only issues introduced by, expose
    - Fixed-point intake: capture `git diff <target>...HEAD` and `git log <target>..HEAD --oneline`.
    - PR intake: capture eligibility (`open`, `closed`, `draft`, `review not needed`, `already reviewed by you`), title/body summary, branch info, changed files, linked issues/specs, and compact summaries of linked issues.
    - If intake says `closed`, `draft`, `review not needed`, or `already reviewed by you`, stop early.
-4. Gather only relevant standards/context files from repo root and touched paths: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `CONTRIBUTING.md`, `CONTEXT*.md`, `STYLE*.md`, `STANDARDS.md`, `docs/adr/*`, `.editorconfig`, `eslint.config.*`, `biome.json`, `prettier.config.*`, and `tsconfig.json`.
+4. Gather only relevant standards/context files from global, repo root and touched paths: `~/.copilot/copilot-instructions.md`, `~/.gemini/GEMINI.md`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `CONTRIBUTING.md`, `CONTEXT*.md`, `STYLE*.md`, `STANDARDS.md`, `.github/*.md`, `.gemini/*.md`, `docs/adr/*`, `.editorconfig`, `eslint.config.*`, `biome.json`, `prettier.config.*`, and `tsconfig.json`.
 5. Find the spec in this order:
    1. issue references from commit messages or PR metadata
    2. user-supplied path
