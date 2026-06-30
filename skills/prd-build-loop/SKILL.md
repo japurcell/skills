@@ -71,7 +71,6 @@ For the current highest-priority story with `passes: false`:
      - save `prd_file`
      - append a progress entry
      - update nearby `AGENTS.md` only with reusable guidance
-     - re-read `prd_file`
      - continue to the next failing story, or **Self Improve** if none remain
    - If the gate fails:
      - do not change `passes`
@@ -163,6 +162,5 @@ Stop only if:
 
 Before any response other than `<promise>COMPLETE</promise>`:
 
-1. re-read `prd_file`
-2. confirm a **Stop Condition** is true
-3. if any story still has `passes: false` and no **Stop Condition** applies, continue the loop
+1. confirm a **Stop Condition** is true
+2. if any story still has `passes: false` and no **Stop Condition** applies, continue the loop
