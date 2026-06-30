@@ -102,6 +102,22 @@
         "The route does not keep the old bounded-run lane (`task` + `fast`) for this materially changed launch.",
         "The justification or fallback explicitly requires fresh routing because work class, stakes, ambiguity, or model constraint changed."
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "Use the skill under test to route this delegated task: `Launch a code-simplifier agent to refactor a complex file. The first-choice standard-tier model gpt-4.1 was selected, but launching returned: '400 model gpt-4.1 is not supported via Responses API'.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+      "expected_output": "A routing decision that stays in standard tier, avoids failed gpt-4.1, and chooses an alternative standard-tier model to retry launching instead of performing manual work.",
+      "files": [],
+      "expectations": [
+        "The decision marks the skill as applicable.",
+        "The model tier stays `standard`.",
+        "The chosen model is not `gpt-4.1` and the fallback/justification explains switching models within the tier to retry instead of falling back to direct work."
+      ],
+      "assertions": [
+        "The decision marks the skill as applicable.",
+        "The model tier stays `standard`.",
+        "The chosen model is not `gpt-4.1` and the fallback/justification explains switching models within the tier to retry instead of falling back to direct work."
+      ]
     }
   ]
 }

@@ -278,6 +278,32 @@ def grade(eval_id: int, decision: dict, raw_text: str) -> list[dict]:
             ),
         ]
 
+    if eval_id == 6:
+        retry_terms = (
+            "retry",
+            "fail",
+            "support",
+            "api",
+            "tier",
+            "error",
+            "400",
+            "switch",
+            "alternative",
+            "fallback",
+        )
+        retry_text = fallback + " " + justification
+        return [
+            expectation("The decision marks the skill as applicable.", applicable, evidence),
+            expectation("The model tier stays `standard`.", model_tier == "standard", evidence),
+            expectation(
+                "The chosen model is not `gpt-4.1` and the fallback/justification explains switching models within the tier to retry instead of falling back to direct work.",
+                model != "gpt-4.1"
+                and model_is_standard(model)
+                and justification_mentions(retry_text, *retry_terms),
+                evidence,
+            ),
+        ]
+
     return [expectation(f"Unknown eval id {eval_id}.", False, f"Unsupported eval: {eval_id}")]
 
 

@@ -80,12 +80,14 @@ Use token shape:
 - repeated context -> consider **cached input**
 - Anthropic cached context -> include **cache write**
 
-If first choice is unavailable:
+If first choice is unavailable, or if a subagent launch/API call fails with a model support or access error (such as `400 model gpt-4.1 is not supported via Responses API`, 403, 404, or similar error indicating model/endpoint issues):
 
-1. choose the next cheapest suitable model in the same tier
-2. do **not** change tiers while a same-tier fallback exists
-3. if the whole tier is unavailable, move one tier lower for bounded work or one tier higher for reasoning-heavy work
-4. if availability forced a tier change, say so in one sentence
+1. **NEVER fall back to executing the complex or delegated work directly yourself.** Fallback to manual execution wastes token budget and context window capacity.
+2. **Stay in the same tier** and choose the next cheapest suitable model in that tier (e.g., switch from `gpt-4.1` to `gemini-3.1-pro` or `sonnet` in the standard tier).
+3. do **not** change tiers while a same-tier fallback exists.
+4. if the whole tier is unavailable, move one tier lower for bounded work or one tier higher for reasoning-heavy work.
+5. **Retry the subagent launch** with the new fallback model. Keep trying alternative models within the same tier until a model successfully executes.
+6. if availability or a launch error forced a tier change, say so in one sentence.
 
 ### 6. Escalate only for a concrete reason
 
@@ -134,6 +136,7 @@ Return the routing decision explicitly:
 | "First-choice model is unavailable, so drop a tier immediately." | Stay in the same tier until same-tier options are exhausted. |
 | "User pinned the model, so this skill is irrelevant." | Route the remaining choices and state that model control is constrained. |
 | "This code edit is small enough for `gpt-5-mini`." | `gpt-5-mini` is excluded for code editing; use another fast model or standard tier. |
+| "The API returned a 400 'model not supported' error when launching, so I should just do the work myself." | Do NOT fall back to manual execution. Switch models within the same tier and retry launching. |
 
 ## Red Flags
 
@@ -149,6 +152,7 @@ Avoid:
 - ignoring the code-editing exception
 - treating an auto-selected model as a reason to skip agent routing
 - using stale pricing when current pricing is available
+- falling back to manual/direct execution of a complex delegated task because a subagent launch failed with a model support or API error
 
 ## Verification
 
@@ -162,6 +166,7 @@ Before launch, confirm:
 - [ ] Input/output token mix was considered when relevant.
 - [ ] Cached input and Anthropic cache write were considered when relevant.
 - [ ] Same-tier fallback was preferred when the first-choice model was unavailable.
+- [ ] Fallback and retry strategy is prepared if the chosen model fails with an API/support error (e.g., 400 not supported).
 - [ ] Any escalation or availability-driven tier change has a concrete one-sentence justification.
 - [ ] Fresh routing was done when work class, stakes, ambiguity, or model constraints changed materially.
 - [ ] The code editing exception was checked.
