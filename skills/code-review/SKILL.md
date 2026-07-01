@@ -1,191 +1,126 @@
 ---
 name: code-review
-description: Reviews PRs, diffs, commits, staged or unstaged changes, or another agent's patch for correctness, standards/spec adherence, maintainability, architecture, security, performance, and readability. Use whenever the user asks to review code, inspect a PR/branch/diff, audit staged or work-in-progress changes, review AI-generated code, say `review since main` or `review since this commit`, ask `find issues in this patch`, request a harsh/deep/thermonuclear maintainability pass, or want PR-comment / machine-readable review output—even if they never say `code review` explicitly.
+description: Strict scoped review of PRs, diffs, commits, branches, staged/unstaged changes, or AI patches.
 disable-model-invocation: true
 ---
 
 # Code Review
 
-Review only the requested scope. Report only issues introduced by, exposed by, or clearly reachable through the change. Be brief, direct, and evidence-backed.
+Review only the requested change scope. Report only change-linked issues that survive false-positive filtering.
 
-## Required Setup
+## Hard Rules
 
-1. Invoke `subagent-model-router` and `addy-code-review-and-quality`.
-2. Create a todo list.
-3. Use fast-tier subagents for GitHub/git intake.
-4. Main agent must not read PR or issue content directly.
-5. Use `gh` for GitHub intake, not web fetch.
-6. Stop if any required role, subagent, or required external file cannot be used.
+- Use distinct subagents for required roles; do not merge roles.
+- If intake, required role, or required protocol file is unavailable, stop and explain.
+- Main agent must not read GitHub PR/issue pages directly; PR intake uses `gh` via fast subagents.
+- Do not run builds, tests, linters, typechecks, benchmarks, or broad validation unless asked.
+- Do not report unrelated or unchanged-line issues unless the change makes them reachable.
 
-## Scope
+## Workflow
 
-- PR: review the PR diff and relevant metadata.
-- Local changes: review staged, unstaged, or both exactly as requested.
-- Fixed/base review: review `target...HEAD` plus `git log target..HEAD --oneline`.
-- If the user says `review since` without a clear base, ask exactly: `Review against what — a branch, a commit, or main?` Then stop.
+1. Invoke `subagent-model-router` and `addy-code-review-and-quality`. Create todos.
 
-Do not expand scope, run builds/tests/linters/benchmarks, or fix code unless asked.
+2. Lock target:
+   - PR: review that PR.
+   - Local: review staged, unstaged, or both exactly as requested.
+   - Fixed point: review against provided branch/commit/base.
+   - If user says `review since X` and X is not fixed, ask exactly:
+     `Review against what — a branch, a commit, or main?`
+     Then stop.
 
-## Intake
+3. Intake:
+   - PR: use `gh` via fast subagents for status, labels/body conventions, title/body, base/head, files, linked issues/specs, compact issue summaries.
+   - Stop if PR is closed, draft, or explicitly review-not-needed.
+   - Local: collect `git diff --cached`, `git diff`, or both separately.
+   - Fixed point: collect `git diff <target>...HEAD` and `git log <target>..HEAD --oneline`.
 
-Use fast-tier subagents to gather only needed context.
+4. Spawn a subagent to gather only relevant context:
+   - repo/global instructions, standards, style, ADRs, contribution docs, formatter/linter/test/build/language configs from repo root and touched-path ancestors.
+   - Include common files:
+     - `~/.copilot/copilot-instructions.md`
+     - `~/.gemini/GEMINI.md`
+     - `AGENTS.md`
+     - `CLAUDE.md`
+     - `GEMINI.md`
+     - `CONTRIBUTING.md`
+     - `CONTEXT*.md`
+     - `STYLE*.md`
+     - `STANDARDS.md`
+     - `.github/*.md`
+     - `.gemini/*.md`
+     - `docs/adr/*`
+     - `.editorconfig`
+     - `eslint.config.*`
+     - `biome.json`
+     - `prettier.config.*`
+     - `tsconfig.json`
+   - Summarize large files; prefer relevant snippets over full documents. Standards findings require exact file/rule citation.
+   - Skip standards mechanically enforced by tooling unless the change bypasses or weakens that tooling.
 
-### Local changes
+5. Find spec:
+   - PR metadata/issues/commits
+   - user-supplied path
+   - obvious files under `docs/`, `specs/`, `.scratch/`, `.agents/scratchpad/**`
+   - otherwise record `no spec available` and skip spec review.
 
-- staged: `git diff --cached`
-- unstaged: `git diff`
-- both: capture both
+6. Run distinct review subagents in parallel:
+   - `addy-code-reviewer`: correctness, regressions, edge cases, architecture boundaries.
+   - `addy-security-auditor`: vuln, unsafe data handling, auth/authz, injection, secrets, attack surface.
+   - `addy-test-engineer`: inadequate, misleading, or broken tests for changed behavior.
+   - Maintainability reviewer using `MAINTAINABILITY_CRITERIA.md`.
+   - Standards reviewer for explicit documented repo rules only.
+   - If spec exists: spec compliance reviewer.
+   - If PR: history reviewer, related-PR reviewer, code-comment reviewer.
 
-### Fixed/base review
+7. Each subagent returns only:
+   - role
+   - file/line
+   - issue
+   - change linkage
+   - evidence
+   - impact
+   - severity
+   - suggested fix
+   - preliminary confidence
 
-- `git diff <target>...HEAD`
-- `git log <target>..HEAD --oneline`
+8. Filter false positives with fast subagents:
+   - Apply `FALSE_POSITIVE_RUBRIC.md`.
+   - Assign final false-positive score and final severity.
+   - Keep only findings scoring `80+`.
+   - Drop speculation, pedantry, generic requests for tests/docs/security review, and issues tooling should trivially catch.
 
-### PR review
+9. Output:
+   - Use requested mode.
+   - PR-comment and machine-readable modes follow `OUTPUT_FORMATS.md`.
+   - Before `gh pr comment`, re-check PR eligibility.
+   - Normal format:
+     - severity
+     - file/line
+     - issue
+     - impact
+     - suggested fix
+   - If none survive, say: `No change-linked issues were found.`
 
-Capture:
+### Tone
 
-- eligibility: `open`, `closed`, `draft`, or `review not needed` based on explicit PR labels/body/repo convention
-- title/body summary
-- branch/base info
-- changed files
-- linked issues/specs
-- compact linked-issue summaries
+Be brief, direct, and serious. Do not hide major correctness or maintainability problems behind soft wording.
 
-Stop early if PR is closed, draft, or marked review-not-needed. Before `gh pr comment`, repeat the eligibility check.
+## Red Flags
 
-## Context and Standards
-
-Spawn a subagent to gather only relevant standards/context files from global, repo root, and touched paths:
-
-- `~/.copilot/copilot-instructions.md`
-- `~/.gemini/GEMINI.md`
-- `AGENTS.md`
-- `CLAUDE.md`
-- `GEMINI.md`
-- `CONTRIBUTING.md`
-- `CONTEXT*.md`
-- `STYLE*.md`
-- `STANDARDS.md`
-- `.github/*.md`
-- `.gemini/*.md`
-- `docs/adr/*`
-- `.editorconfig`
-- `eslint.config.*`
-- `biome.json`
-- `prettier.config.*`
-- `tsconfig.json`
-
-Standards findings must cite the exact standards file and rule.
-
-## Spec Discovery
-
-Find the spec in this order:
-
-1. issue references from commit messages or PR metadata
-2. user-supplied path
-3. matching spec/PRD under `docs/`, `specs/`, `.scratch/`, or `.agents/scratchpad/**`
-4. if none exists, record `no spec available` and skip spec review
-
-## Required Review Roles
-
-Run each role distinctly in parallel. Do not merge them into one generic pass.
-
-Always run:
-
-- `addy-code-reviewer`
-- `addy-security-auditor`
-- `addy-test-engineer`
-- maintainability review using `MAINTAINABILITY_CRITERIA.md`
-- standards review limited to explicit documented rules; skip anything tooling already enforces
-
-Also run:
-
-- spec review if a spec exists
-- for PRs: history review using `git blame` and modified-code history
-- for PRs: related-PR review
-- for PRs: code-comment review
-
-Stop if any required role cannot be assigned.
-
-## Review Priorities
-
-1. correctness
-2. explicit repo standards
-3. spec mismatches
-4. maintainability regressions
-5. obvious simplification opportunities
-6. architecture/layering problems
-7. security or performance issues caused by the change
-8. readability issues that materially hurt comprehension
-
-## Finding Rules
-
-Keep a finding only if it has:
-
-- concrete file/line or code reference
-- clear link to the reviewed change
-- specific impact
-- actionable recommendation
-- low false-positive risk
-
-Filter findings with fast-tier subagents using `FALSE_POSITIVE_RUBRIC.md` verbatim. Keep only findings scoring `80` or higher.
-
-Do not report:
-
-- speculative issues
-- pedantic nits
-- generic requests for tests, docs, or security review
-- issues tooling should catch
-- unchanged-code problems unless activated by the change
-- likely intentional product changes unless they contradict an explicit spec
-
-## Output
-
-Use the requested output mode.
-
-- PR comment mode and machine-readable mode must follow `OUTPUT_FORMATS.md`.
-- Different output formats are allowed only if scope, filtering, evidence, and role requirements remain intact.
-
-Default format:
-
-## Findings
-
-### High
-
-- `file:line` — Issue. Impact. Recommendation.
-
-### Medium
-
-- `file:line` — Issue. Impact. Recommendation.
-
-### Low
-
-- `file:line` — Issue. Impact. Recommendation.
-
-## Notes
-
-- Scope reviewed: ...
-- Spec: found / not found
-- Validation not run unless requested.
-- Roles run: ...
-
-If no findings:
-
-No issues found in the requested scope.
+- Review scope drifts beyond the requested PR, diff, or fixed point
+- Main agent reads GitHub PR or issue content directly
+- Required review roles are skipped, merged, or hand-waved
+- Standards findings cite no explicit rule
+- Findings are not tied to the reviewed change
+- Machine-readable or PR-comment output ignores `OUTPUT_FORMATS.md`
 
 ## Verification
 
-Before final output, verify:
-
-- [ ] Review target is fixed or clarified
-- [ ] PR eligibility was checked, if applicable
+- [ ] Review target is fixed or clarified exactly
+- [ ] Early-stop eligibility was checked for PR reviews
 - [ ] Relevant standards/context files were gathered
 - [ ] Spec review ran or `no spec available` was recorded
-- [ ] Every required role ran distinctly
-- [ ] Findings are tied to the change with concrete file references
-- [ ] Findings survived `FALSE_POSITIVE_RUBRIC.md` filtering with score `80+`
-- [ ] Standards findings cite an explicit standards file/rule
-- [ ] Requested output mode follows `OUTPUT_FORMATS.md`
-
-Tone: concise, serious, and direct.
+- [ ] Every required review role ran distinctly
+- [ ] Every kept finding is tied to the change, has a concrete file reference, and survives false-positive filtering
+- [ ] Standards findings cite an explicit standards file
+- [ ] Output matches the requested mode exactly
