@@ -105,14 +105,7 @@
           {
             "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/log-session-start.sh"
-          }
-        ]
-      }
-    ],
-    "BeforeAgent": [
-      {
-        "matcher": "*",
-        "hooks": [
+          },
           {
             "name": "skill-context-injector",
             "type": "command",
