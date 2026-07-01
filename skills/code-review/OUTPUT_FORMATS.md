@@ -17,7 +17,6 @@ Found <N> issues:
    <link to file and line with full sha and line range>
 3. <brief description>
    <link to file and line with full sha and line range>
-   <sub>- If this code review was useful, please react with 👍. Otherwise, react with 👎.</sub>
 ...
 ```
 
