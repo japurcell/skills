@@ -1,0 +1,61 @@
+{
+  "skill_name": "explore",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "A new feature request asks to implement OAuth2 login. The repository has separate directories: `backend/auth/`, `frontend/src/pages/`, and `database/schema/`. Use the skill to explore this codebase and write only the subagent invocation details (agent_name, prompts, and parallelism settings) to `outputs/spawns.json`.",
+      "expected_output": "JSON file in outputs/spawns.json with 1-3 parallel code-explorer subagent invocations covering independent areas.",
+      "files": [],
+      "expectations": [
+        "The output is a valid JSON.",
+        "The JSON has 1 to 3 parallel subagent spawns.",
+        "Each spawn uses the 'code-explorer' agent.",
+        "Spawns cover distinct areas (e.g. backend/auth, frontend/src/pages, database/schema).",
+        "Wait-for-previous/sequential constraints are set to false or omitted."
+      ],
+      "assertions": [
+        "The output is a valid JSON.",
+        "The JSON has 1 to 3 parallel subagent spawns.",
+        "Each spawn uses the 'code-explorer' agent.",
+        "Spawns cover distinct areas (e.g. backend/auth, frontend/src/pages, database/schema).",
+        "Wait-for-previous/sequential constraints are set to false or omitted."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "We need to update OAuth2 login to support Google provider. There is already a file at `.agents/scratchpad/exploration_results.md` that contains full details of OAuth2 logins and files. Use the skill to determine if you should explore. Write your decision to `outputs/decision.json` (keys: `should_explore` (bool), `reason` (string)).",
+      "expected_output": "JSON file in outputs/decision.json indicating should_explore is false and citing reuse of existing scratchpad context.",
+      "files": [
+        ".agents/scratchpad/exploration_results.md"
+      ],
+      "expectations": [
+        "The output is a valid JSON.",
+        "The JSON key 'should_explore' is false.",
+        "The reason mentions reusing existing context or scratchpad."
+      ],
+      "assertions": [
+        "The output is a valid JSON.",
+        "The JSON key 'should_explore' is false.",
+        "The reason mentions reusing existing context or scratchpad."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A bug report says: 'Fix typo login_err in backend/auth/constants.py line 4'. The path is known and the bug is highly localized. Use the skill to decide if codebase exploration is needed. Write your decision to `outputs/decision.json` (keys: `should_explore` (bool), `reason` (string)).",
+      "expected_output": "JSON file in outputs/decision.json indicating should_explore is false because the task is highly localized and trivial.",
+      "files": [
+        "backend/auth/constants.py"
+      ],
+      "expectations": [
+        "The output is a valid JSON.",
+        "The JSON key 'should_explore' is false.",
+        "The reason mentions that the task is localized, known-path, or can be resolved with grep/read_file directly."
+      ],
+      "assertions": [
+        "The output is a valid JSON.",
+        "The JSON key 'should_explore' is false.",
+        "The reason mentions that the task is localized, known-path, or can be resolved with grep/read_file directly."
+      ]
+    }
+  ]
+}

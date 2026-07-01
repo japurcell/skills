@@ -1,11 +1,9 @@
 {
   "context": {
-    "fileName": [
-      "AGENTS.md",
-      "GEMINI.md"
-    ]
+    "fileName": ["AGENTS.md", "GEMINI.md"]
   },
   "experimental": {
+    "autoMemory": true,
     "modelSteering": true
   },
   "general": {
@@ -40,7 +38,65 @@
       ]
     },
     "showMemoryUsage": true,
-    "showModelInfoInChat": true
+    "showModelInfoInChat": true,
+    "showStatusInTitle": true
+  },
+  "agents": {
+    "overrides": {
+      "addy-code-reviewer": {
+        "runConfig": {
+          "maxTurns": 100
+        }
+      },
+      "addy-security-auditor": {
+        "runConfig": {
+          "maxTurns": 100
+        }
+      },
+      "addy-test-engineer": {
+        "runConfig": {
+          "maxTurns": 100
+        }
+      },
+      "browser_agent": {
+        "enabled": true
+      },
+      "code-architect": {
+        "runConfig": {
+          "maxTurns": 100
+        }
+      },
+      "code-explorer": {
+        "runConfig": {
+          "maxTurns": 100
+        }
+      },
+      "code-reviewer": {
+        "runConfig": {
+          "maxTurns": 100
+        }
+      },
+      "code-simplifier": {
+        "runConfig": {
+          "maxTurns": 100
+        }
+      },
+      "codebase_investigator": {
+        "runConfig": {
+          "maxTurns": 50
+        }
+      },
+      "generalist": {
+        "runConfig": {
+          "maxTurns": 50
+        }
+      },
+      "ui-auditor": {
+        "runConfig": {
+          "maxTurns": 100
+        }
+      }
+    }
   },
   "hooks": {
     "SessionStart": [

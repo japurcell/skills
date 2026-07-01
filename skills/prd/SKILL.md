@@ -41,7 +41,7 @@ Create a concise, unambiguous, implementation-ready PRD for a feature.
 2. **Discovery**
    - Explore relevant codebase context: similar features, architecture, APIs/contracts, data models, UI patterns, tests, config/flags, permissions, observability, and extension points.
    - Use parallel subagents:
-     - `code-explorer`: 1–3 agents, one per independent area.
+     - `code-explorer`: use `/explore` with 1–3 agents, one per independent area.
      - `research`: invoke `official-sources` for current official docs and best practices for materially relevant technologies/standards.
    - Read the most relevant references and summarize patterns, constraints, risks, and open questions.
 

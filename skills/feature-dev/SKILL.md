@@ -82,7 +82,7 @@ Goal: understand what should be built.
 
 Goal: understand architecture, patterns, flows, tests, data, integrations, and extension points.
 
-1. Scale exploration:
+1. Scale exploration and use `/explore`:
    - `Light`: direct exploration or 1 `code-explorer`
    - `Standard`: 2 parallel `code-explorer` agents
    - `Deep`: 2–3 parallel `code-explorer` agents

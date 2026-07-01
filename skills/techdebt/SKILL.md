@@ -31,7 +31,7 @@ Using a fast-tier subagent:
 
 If candidates are already in context or passed as an argument, skip this section.
 
-Spawn three `code-explorer` subagents to compare the shortlist against the codebase using patterns appropriate to the repository language mix.
+Use `/explore` to spawn three `code-explorer` subagents to compare the shortlist against the codebase using patterns appropriate to the repository language mix.
 
 1. Search for repeated:
    - literals
