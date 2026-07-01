@@ -296,6 +296,26 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
             ),
         ]
 
+    if eval_id == 5:
+        has_cache_note = "cache hit" in normalized or "cache_hit" in normalized or "official-sources-cache.json" in normalized or "scratchpad" in normalized
+        return [
+            expectation(
+                "The report detects `react-router-dom` version `7.6.2`.",
+                "react-router-dom" in normalized and "7.6.2" in normalized,
+                output_text or "missing report.md",
+            ),
+            expectation(
+                "The report notes a CACHE HIT or loading from `.agents/scratchpad/official-sources-cache.json`.",
+                has_cache_note,
+                output_text or "missing report.md",
+            ),
+            expectation(
+                "The report reuses the cached findings and citations.",
+                has_cache_note or "usenavigate" in normalized,
+                output_text or "missing report.md",
+            ),
+        ]
+
     return [expectation(f"Unknown eval id {eval_id}.", False, "Unsupported eval")]
 
 
