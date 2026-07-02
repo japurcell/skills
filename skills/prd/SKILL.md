@@ -1,196 +1,108 @@
 ---
 name: prd
-description: Use to create an implementation-ready Product Requirements Document (PRD) for a feature. Trigger on requests such as "create/write a PRD," "product requirements," "plan this feature," "requirements for," "spec out," "define user stories," or "prepare for /prd-to-tasks." Do not use to implement the feature or write implementation code.
+description: Create an implementation-ready PRD for a feature. Use when user wants to create/write PRD, product requirements, plan/spec feature, requirements, user stories, prepare for /prd-to-tasks. Do not implement or write code.
 disable-model-invocation: true
 ---
 
-# PRD Generator
+# /prd
 
-Create a concise, unambiguous, implementation-ready PRD for a feature.
+Create an unambiguous, implementation-ready PRD from the current conversation and codebase context.
 
-## Core rules
-
-- Invoke `subagent-model-router` first.
+## Rules
 - Do not implement the feature or include implementation code.
-- Follow existing codebase patterns and conventions.
-- Prefer YAGNI: exclude unnecessary features and abstractions.
-- Resolve ambiguities before design; ask only the minimum necessary clarifying questions.
-- If the user says “whatever you think is best,” recommend an approach and get explicit confirmation.
+- Do not interview the user; make reasonable assumptions and document them.
+- Follow existing codebase patterns. Prefer YAGNI:  exclude unnecessary features and abstractions.
 - Never overwrite, rename, or delete an existing PRD.
-- `Files likely touched` must be a best-effort estimate from code exploration and must exclude files matched by repository `.gitignore`.
 
-## Output path
+## Save path
+Derive `[feature-name]` in short kebab-case. Save to `.agents/scratchpad/[feature-name]/prd.md`.
 
-1. Derive `[feature-name]` as a short kebab-case name from the request.
-2. Target: `.agents/scratchpad/[feature-name]/prd.md`
-3. If the path exists, use `[feature-name]-2`, then `-3`, etc. until unused.
-4. Create the directory if needed.
-5. Save only to the final unused path.
-6. Verify the file exists at that exact path before finishing.
-7. If you cannot write to that exact path, say so and stop.
+If it exists, use `[feature-name]-2`, `-3`, etc. Create directories as needed. Verify the final file exists at the exact path. If saving fails, stop and report failure.
 
 ## Workflow
 
-1. **Understand request**
-   - Parse `$ARGUMENTS`.
-   - If needed, ask:
-     - What problem does this solve?
-     - What should it do?
-     - Any constraints or preferences?
+1. **Explore**
+   - If codebase context is missing, run `/explore`.
 
-2. **Discovery**
-   - Explore relevant codebase context: similar features, architecture, APIs/contracts, data models, UI patterns, tests, config/flags, permissions, observability, and extension points.
-   - Use parallel subagents:
-     - `code-explorer`: use `/explore` with 1–3 agents, one per independent area.
-     - `research`: invoke `official-sources` for current official docs and best practices for materially relevant technologies/standards.
-   - Read the most relevant references and summarize patterns, constraints, risks, and open questions.
+2. **Design**
+   - Sketch out the seams at which you're going to test the feature. Existing seams should be preferred to new ones. Use the highest seam possible. If new seams are needed, propose them at the highest point you can. The fewer seams across the codebase, the better - the ideal number is one.
 
-3. **Clarify**
-   - Ask focused questions based on request and discovery.
-   - Cover scope boundaries, edge cases, failure modes, integrations, backward compatibility, migration/rollout, security/privacy, and performance.
-   - If answers materially change scope or assumptions, repeat Discovery.
-   - Wait for answers before designing.
-
-4. **Architecture options**
-   - Launch parallel `code-architect` subagents to produce 1–3 meaningfully different approaches, such as:
-     - minimal change
-     - clean architecture
-     - pragmatic balance
-   - Each approach must include: high-level design, impacted components, data/control flow, testing strategy, rollout/migration, risks, trade-offs, and citations.
-
-5. **Recommend**
-   - Present concise approach summaries, key trade-offs, and a recommendation with rationale.
-   - Ask the user to choose or confirm an approach before writing the PRD.
-
-6. **Write and save PRD**
-   - Write the PRD using the selected approach.
+3. **Write and save PRD**
+   - Write the PRD using the template below.
    - Save to the verified unused path.
 
-7. **Final response**
+4. **Final response**
    - Include:
      - feature short name
      - PRD path
      - validation status: `pass` or `fail`
      - readiness for `/prd-to-tasks`
 
-## PRD structure
+<prd-template>
 
-### 1. Introduction / Overview
+# PRD: [Feature Name]
 
-Describe the feature, problem solved, target users, and why it matters.
+## Overview
 
-### 2. Goals
+Describe the problem, users, value, and proposed solution.
 
-List specific, measurable objectives.
+## Assumptions
 
-### 3. Tech Stack
+List assumptions made because the user was not interviewed.
 
-List relevant technologies, libraries, services, and versions.
+## Goals
 
-### 4. User Stories
+- Specific measurable goal
 
-Each story must be small enough for one focused implementation session and include:
+## User Stories
 
-- **Title**
-- **Description:** `As a [user], I want [feature] so that [benefit].`
-- **Acceptance Criteria:** specific, verifiable checklist
-- **Files likely touched:** best-effort estimate from code exploration; exclude files matched by repository `.gitignore`
-- **Design Guidance:** implementation guidance, rationale, and references from discovery/architecture work
+This list of user stories should be extremely extensive and cover all aspects of the feature. Each story must be small enough for one focused implementation session.
 
 Format:
 
 ```md
 ### US-001: [Title]
 
-**Description:** As a [user], I want [feature] so that [benefit].
-
+**Story:** As a [user], I want [capability] so that [benefit].
 **Acceptance Criteria:**
-
-- [ ] Specific verifiable criterion
-- [ ] Another verifiable criterion
-- [ ] Typecheck/lint passes
-- [ ] **[UI stories only]** Verify in browser using playwright-cli skill
-
-**Files likely touched:**
-
-- `src/path/to/file.ts`
-- `tests/path/to/test.ts`
-
+- [ ] Concrete, testable behavior
+- [ ] Relevant edge/failure case
+- [ ] Relevant build, typecheck, lint, and test commands pass
+- [ ] For UI: Verify in browser using playwright-cli skill
 **Design Guidance:**
-
-- [Reference link]
-  - Guidance: [What the implementer should do and how to apply it]
-  - Rationale: [Why this guidance was chosen]
+- Follow existing [pattern/module/component] because [rationale].
 ```
 
-User story rules:
+## Functional Requirements
 
-- Acceptance criteria must be concrete and testable.
-- Do not use vague criteria such as “works correctly.”
-- Include edge cases and failure cases where relevant.
-- For UI changes, always include: `Verify in browser using playwright-cli skill`.
-- Never list files matched by repository `.gitignore`.
+- FR-1: The system must...
+- FR-2: When..., the system must...
 
-### 5. Functional Requirements
+## Technical Decisions
 
-Number explicit requirements:
+Document only relevant decisions: affected modules/interfaces, contracts, dependencies, migrations, rollout, compatibility, security/privacy, observability, performance, UI/accessibility, and rationale tied to discovered patterns.
 
-- `FR-1: The system must allow users to...`
-- `FR-2: When a user clicks X, the system must...`
+Do not include file paths or code unless necessary to capture a decision precisely.
 
-### 6. Non-Goals
+## Testing Plan
 
-State what is explicitly out of scope.
+Test external behavior, not implementation details. Identify test levels and reference similar existing tests/patterns.
 
-### 7. Design Considerations Optional
+## Success Metrics
 
-Include relevant UI/UX notes, mockups, reusable components, copy considerations, and accessibility notes.
+- Measurable success conditions
 
-### 8. Technical Considerations
+## Out of Scope
 
-Document constraints, dependencies, integrations, contracts, backward compatibility, migration/rollout, security/privacy, observability, and performance requirements.
+List what this PRD explicitly does not include.
 
-### 9. Architectural Decisions
+</prd-template>
 
-Record key decisions, rationale, trade-offs, alternatives considered, and citations.
+## Validation
 
-### 10. Success Metrics
-
-Explain how success will be measured.
-
-## Writing guidance
-
-- Write for a junior developer or another AI agent.
-- Be explicit, concise, and unambiguous.
-- Avoid jargon or explain it.
-- Use numbered requirements and concrete examples where helpful.
-- Prefer existing patterns over new abstractions unless clearly justified.
-- Tie recommendations to discovered codebase patterns and official references.
-
-## Validation checklist
-
-Before writing:
-
-- [ ] Clarifying questions asked and answered where needed
-- [ ] No material ambiguities, open questions, or large assumptions remain
-- [ ] Relevant code patterns explored
-- [ ] Relevant official documentation reviewed
-- [ ] User confirmed selected approach
-
-Before saving:
-
-- [ ] User stories are small and independently actionable
-- [ ] Acceptance criteria are concrete and testable
-- [ ] `Files likely touched` excludes files matched by repository `.gitignore`
-- [ ] Functional requirements are numbered and unambiguous
-- [ ] Non-goals clearly define scope
-- [ ] Technical and architectural sections include rationale and citations
-- [ ] No implementation code was written
-- [ ] Target path does not already exist
-
-Final verification:
-
-- [ ] PRD saved at exactly `.agents/scratchpad/[feature-name]/prd.md`
+- [ ] Missing codebase context explored, but tokens were not wasted re-exploring the same context
+- [ ] Out-of-scope items clearly define scope
+- [ ] Technical decisions include rationale and references to discovered patterns
+- [ ] PRD saved at `.agents/scratchpad/[feature-name]/prd.md` with `[feature-name]` suffixed with `-2`, `-3`, etc. if needed
 - [ ] No existing PRD was overwritten
-- [ ] No design gaps, open questions, or ambiguities remain
 - [ ] Final response includes feature short name, PRD path, validation status, and readiness for `/prd-to-tasks`

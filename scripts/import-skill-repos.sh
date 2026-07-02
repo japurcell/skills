@@ -26,12 +26,10 @@ fi
   "skills/engineering/improve-codebase-architecture" "skills" \
   "skills/engineering/tdd" "skills" \
   "skills/engineering/to-issues" "skills" \
-  "skills/engineering/to-prd" "skills" \
   "skills/engineering/setup-matt-pocock-skills" "skills" \
   "skills/engineering/codebase-design" "skills" \
   "skills/engineering/prototype" "skills" \
   "skills/engineering/resolving-merge-conflicts" "skills" \
-  "skills/productivity/grill-me" "skills" \
   "skills/productivity/grilling" "skills" \
   "skills/productivity/teach" "skills" \
   "skills/productivity/writing-great-skills" "skills"
