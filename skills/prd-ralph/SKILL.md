@@ -11,6 +11,7 @@ disable-model-invocation: true
 - `prd_file` required: path to `prd.json`
 - `progress_file` optional: defaults to `dirname(prd_file) + "/progress.txt"`
 - `task_id` optional: specific task to implement; it must be incomplete and have all dependencies passing.
+- `commit` optional: defaults to `true`. If `false`, leave verified changes uncommitted.
 
 ## Workflow
 
@@ -20,6 +21,7 @@ disable-model-invocation: true
 4. If every `tasks[].passes` is `true`, reply with `<promise>COMPLETE</promise>`.
 5. Select the task to implement:
    - If `task_id` is provided, select that task only if it exists, has `passes: false`, and every `dependsOn` task has `passes: true`.
+   - If `task_id` is provided but missing, already passing, or dependency-blocked, stop and explain why.
    - Otherwise, select the incomplete task with the lowest numeric `priority` where every `dependsOn` task has `passes: true`.
    - If incomplete tasks exist but none are eligible, stop and explain the blocking dependencies.
 6. Run `/tdd` and implement only that task.
@@ -39,7 +41,9 @@ disable-model-invocation: true
    - Append progress to `progress_file`.
    - Add reusable patterns to the top `## Codebase Patterns` section only if broadly useful.
    - Run `/self-improve` only if you discovered durable, reusable repo knowledge worth preserving in nearby `AGENTS.md`.
-   - Commit all task-related changes with message: `feat: [Task ID] - [Task Title]`.
+   - If `commit` is not `false`, commit all task-related changes with message: `feat: [Task ID] - [Task Title]`.
+   - If committing is blocked, report the intended commit message and ask how to proceed.
+   - If `commit` is `false`, leave changes uncommitted and summarize verification.
 
 ## Progress append format
 
@@ -66,6 +70,7 @@ The learnings section is critical. It helps future iterations avoid repeating mi
 - Do not implement out-of-scope or unrelated work.
 - Do not invent commands, paths, or requirements.
 - Keep CI green.
+- If `commit` is not `false`, invoking this skill authorizes committing verified task-related changes.
 
 ## Stop condition
 
