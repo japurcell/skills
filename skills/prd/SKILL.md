@@ -1,44 +1,36 @@
 ---
 name: prd
-description: Create an implementation-ready PRD for a feature. Use when user wants to create/write PRD, product requirements, plan/spec feature, requirements, user stories, prepare for /prd-to-tasks. Do not implement or write code.
+description: Create an implementation-ready PRD for a feature. Use for product requirements, feature specs, user stories, planning, or preparing for `/prd-to-tasks`. Do not implement or write code.
 disable-model-invocation: true
 ---
 
 # /prd
 
-Create an unambiguous, implementation-ready PRD from the current conversation and codebase context.
+Create an unambiguous, implementation-ready PRD from the conversation and codebase context.
 
 ## Rules
 
-- Do not implement the feature or include implementation code.
-- Do not interview the user; make reasonable assumptions and document them.
+- Do not implement the feature or include code.
+- Do not interview the user; make reasonable assumptions and document them. If requirements are contradictory or unsafe to assume, stop and report the blocker.
 - Follow existing codebase patterns. Prefer YAGNI: exclude unnecessary features and abstractions.
+- Scan relevant workspace conventions when available: `AGENTS.md`, scoped docs, repo docs, package scripts, test setup, and existing patterns.
+- Do not invent commands, files, paths, schemas, or conventions. Use exact names only when verified or clearly inferable.
+- Define each path, schema, key format, command, contract, and rollout order in one canonical place, then reference it consistently.
 - Never overwrite, rename, or delete an existing PRD.
 
 ## Save path
 
-Derive `[feature-name]` in short kebab-case. Save to `.agents/scratchpad/[feature-name]/prd.md`.
-
-If it exists, use `[feature-name]-2`, `-3`, etc. Create directories as needed. Verify the final file exists at the exact path. If saving fails, stop and report failure.
+Save to `.agents/scratchpad/[feature-name]/prd.md`, where `[feature-name]` is short kebab-case. If it exists, use `[feature-name]-2`, `-3`, etc. Create directories as needed. Verify the final file exists. If saving fails, stop and report failure.
 
 ## Workflow
 
-1. **Explore**
-   - If codebase context is missing, run `/explore`.
-
-2. **Design**
-   - Sketch out the seams at which you're going to test the feature. Existing seams should be preferred to new ones. Use the highest seam possible. If new seams are needed, propose them at the highest point you can. The fewer seams across the codebase, the better - the ideal number is one.
-
-3. **Write and save PRD**
-   - Write the PRD using the template below.
-   - Save to the verified unused path.
-
-4. **Final response**
-   - Include:
-     - feature short name
-     - PRD path
-     - validation status: `pass` or `fail`
-     - readiness for `/prd-to-tasks`
+1. If codebase context is missing, run `/explore`.
+2. Identify existing patterns, affected modules, contracts, test seams, risks, edge cases, rollout constraints, and conflicts with workspace conventions.
+3. Draft the PRD using the template below.
+4. Validate consistency across sections, especially requirements, acceptance criteria, technical decisions, Definition of Done, paths, schemas, commands, examples, and execution order.
+5. Resolve conflicts by preferring the most specific implementation-nearest source; document assumptions. If unclear, stop and report the blocker.
+6. Save to the verified unused path.
+7. Final response: feature short name, PRD path, validation status `pass`/`fail`, readiness for `/prd-to-tasks`.
 
 <prd-template>
 
@@ -58,7 +50,7 @@ List assumptions made because the user was not interviewed.
 
 ## User Stories
 
-This list of user stories should be extremely extensive and cover all aspects of the feature. Each story must be small enough for one focused implementation session.
+List enough stories to cover user-visible capabilities, roles, states, and edge cases without turning implementation tasks into stories. Each story should describe one coherent behavior slice.
 
 Format:
 
@@ -69,9 +61,9 @@ Format:
 
 **Acceptance Criteria:**
 
-- [ ] Concrete, testable behavior
+- [ ] Concrete, observable behavior
 - [ ] Relevant edge/failure case
-- [ ] Relevant build, typecheck, lint, and test commands pass
+- [ ] Relevant build/typecheck/lint/test commands pass, using exact commands when inferable
 - [ ] For UI: Verify in browser using playwright-cli skill
 
 **Design Guidance:**
@@ -84,13 +76,15 @@ Acceptance criteria rules:
 - Describe observable outcomes, not implementation steps.
 - Define done using concrete inputs, outputs, states, side effects, and success/failure behavior.
 - Include relevant error paths: validation, permissions, timeouts, dependency failure, partial failure, invalid/corrupted state, and recovery.
-- For CLI/API/data features, specify relevant contracts: inputs, outputs, status codes, exit codes, stdout/stderr, schemas, and side effects.
+- For CLI/API/data features, specify contracts: inputs, outputs, status codes, exit codes, stdout/stderr, schemas, and side effects.
 - Use measurable performance targets when performance matters.
 
 ## Functional Requirements
 
-- FR-1: The system must...
-- FR-2: When..., the system must...
+- FR-1: The system must... Related: US-001
+- FR-2: When..., the system must... Related: US-002, US-003
+
+Every functional requirement must have a stable `FR-*` ID and map to at least one user story, acceptance criterion, testing-plan item, or execution-sequence item.
 
 ## Technical Decisions
 
@@ -100,19 +94,41 @@ Define each schema, key format, identifier, or contract in one canonical place a
 
 Do not include file paths or code unless necessary to capture a decision precisely.
 
+## Definition of Done
+
+- Relevant build, typecheck, lint, and test commands pass, using exact commands when inferable.
+- Required behavior is covered by automated tests at the highest practical seam.
+- Edge/failure cases listed in this PRD are verified.
+- For UI changes, browser verification using playwright-cli skill is completed.
+- Rollout, migration, cleanup, compatibility, observability, privacy/security, and accessibility requirements are satisfied where applicable.
+
 ## Execution Sequence
 
-List user stories in recommended implementation order. Note dependencies, parallelizable work, and rollout/migration steps.
+List user stories or requirement groups in recommended implementation order.
+
+For each sequence item, specify:
+
+- IDs covered, such as `US-001` or `FR-1`
+- Dependencies
+- Whether order is mandatory or recommended
+- Parallelizable work
+- Rollout, migration, cleanup, verification, or removal steps
+
+Do not imply mandatory ordering unless required by data, API, migration, rollout, safety, or compatibility constraints.
 
 ## Testing Plan
 
-Describe the highest practical test seam, preferring existing seams and minimizing new ones. Test external behavior, not implementation details. Identify test levels and reference similar existing tests/patterns. Include a compact edge-case matrix when relevant: invalid inputs, missing dependencies, permission/environment constraints, concurrency/races, partial failure, and recovery.
+Describe the highest practical test seam, preferring existing seams and minimizing new ones. Test external behavior, not implementation details. Reference similar existing tests/patterns.
+
+When inferable, include exact commands/scripts, such as `npm test`, `pnpm typecheck`, `pytest path/to/test.py`, or a repo-specific verification script. Do not invent commands.
+
+Include a compact edge-case matrix when relevant: invalid inputs, missing dependencies, permissions/environment constraints, concurrency/races, partial failure, fallback behavior, cleanup, and recovery.
 
 ## Success Metrics
 
 - Measurable success condition
 
-For performance metrics, specify the measurement protocol: environment, input size/dataset, warm vs. cold state, percentile/average, sample size, and threshold.
+For performance metrics, specify measurement protocol: environment, input size/dataset, warm vs. cold state, percentile/average, sample size, and threshold.
 
 ## Out of Scope
 
@@ -122,9 +138,16 @@ List what this PRD explicitly does not include.
 
 ## Validation
 
-- [ ] Missing codebase context explored, but tokens were not wasted re-exploring the same context
-- [ ] Out-of-scope items clearly define scope
-- [ ] Technical decisions include rationale and references to discovered patterns
-- [ ] PRD saved at `.agents/scratchpad/[feature-name]/prd.md` with `[feature-name]` suffixed with `-2`, `-3`, etc. if needed
-- [ ] No existing PRD was overwritten
-- [ ] Final response includes feature short name, PRD path, validation status, and readiness for `/prd-to-tasks`
+- [ ] Codebase context and workspace conventions were checked when available.
+- [ ] Existing PRD was not overwritten, renamed, or deleted.
+- [ ] Scope and out-of-scope items are clear.
+- [ ] Technical decisions include rationale and discovered-pattern references.
+- [ ] Sections are internally consistent across requirements, acceptance criteria, technical decisions, Definition of Done, paths, schemas, commands, and execution order.
+- [ ] Paths, schemas, commands, key formats, contracts, and rollout order are defined once and referenced consistently.
+- [ ] Functional requirements use stable IDs and map to stories, acceptance criteria, testing, or execution sequence.
+- [ ] Execution Sequence distinguishes mandatory dependencies from recommended order and identifies parallelizable work.
+- [ ] Edge cases and negative paths are captured in acceptance criteria or Testing Plan.
+- [ ] Exact verification commands are included when inferable; none are invented.
+- [ ] PRD saved at `.agents/scratchpad/[feature-name]/prd.md` with `[feature-name]` suffixed with `-2`, `-3`, etc. if needed.
+- [ ] No existing PRD was overwritten.
+- [ ] Final response includes feature short name, PRD path, validation status, and readiness for `/prd-to-tasks`.

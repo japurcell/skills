@@ -24,15 +24,13 @@ Convert `prd_file` into agent-ready `prd.json`: small, verifiable implementation
 2. Read the PRD; identify project, feature, stories, requirements, edge cases, rollout order, and shared prerequisites.
 3. If repo context is needed and missing, run `/explore`; look for prefactors that make the change easier.
 4. Scan relevant workspace rules when available: `AGENTS.md`, scoped docs, repo docs, package scripts, tests, and existing patterns.
-5. Check PRD/workspace consistency across requirements, technical decisions, acceptance criteria, Definition of Done, paths, schemas, commands, examples, and rollout order.
-6. Resolve conflicts before task splitting. Prefer the most specific implementation-nearest source: rollout/migration order, acceptance criteria/Definition of Done, technical decisions, functional requirements, then narrative. Document resolutions in task descriptions or `designGuidance`; ask the user if unclear.
-7. Split broad requirements into atomic implementation tasks.
-8. Pull shared prerequisites first, then fan out dependent tasks.
-9. Assign direct `dependsOn`, earliest safe `parallelBatch`, and unique ascending `priority`.
-10. Verify every requirement and edge case maps to at least one task or acceptance criterion.
-11. Validate IDs, dependencies, batches, priorities, files, traceability, and JSON syntax.
-12. Save valid JSON only to `prd.json`.
-13. Final chat response: task count, output path, readiness for `/prd-build-loop`.
+5. Check and resolve PRD/workspace inconsistencies before task splitting. Prefer the most specific implementation-nearest source: rollout/migration order, acceptance criteria/Definition of Done, technical decisions, functional requirements, then narrative. Document resolutions in task descriptions or `designGuidance`; ask the user if unclear.
+6. Split broad requirements into atomic tasks; pull shared prerequisites first, then fan out dependent tasks.
+7. Assign direct `dependsOn`, earliest safe `parallelBatch`, and unique ascending `priority`.
+8. Verify every requirement and edge case maps to at least one task or acceptance criterion.
+9. Validate IDs, dependencies, batches, priorities, files, traceability, and JSON syntax.
+10. Save valid JSON only to `prd.json`.
+11. Final chat response: task count, output path, readiness for `/prd-build-loop`.
 
 ## Required JSON shape
 
@@ -66,6 +64,15 @@ Convert `prd_file` into agent-ready `prd.json`: small, verifiable implementation
 }
 ```
 
+## PRD section handling
+
+- For `/prd`-style PRDs, treat Functional Requirements, Technical Decisions, Definition of Done, Execution Sequence, Testing Plan, and Out of Scope as canonical.
+- Do not create tasks for Out of Scope items.
+- Preserve `US-*` and `FR-*` IDs in task descriptions or acceptance criteria.
+- Mandatory execution order affects task array order, `dependsOn`, and `parallelBatch`; recommended order affects `priority` only when safe.
+- Use relevant Definition of Done and Testing Plan items to seed acceptance criteria, commands, and test seams without copying irrelevant criteria into every task.
+- Assume canonical definitions are intentional unless they conflict with workspace rules or are internally inconsistent.
+
 ## Task rules
 
 - Each task must be narrow, complete, independently verifiable, and implementable by one agent without extra context.
@@ -93,7 +100,6 @@ Convert `prd_file` into agent-ready `prd.json`: small, verifiable implementation
 
 - `dependsOn` lists only direct prerequisite task IDs, all earlier than the task; use `[]` when none.
 - Encode causal order in `dependsOn`: schemas, migrations, parsers, shared utilities, feature flags, API contracts, and upstream behavior before downstream behavior.
-- If the PRD has an explicit rollout, execution, migration, or cleanup order, preserve it in task array order, `dependsOn`, and `parallelBatch` for sequence-bound tasks.
 - Do not move cleanup, verification, removal, or downstream tasks earlier than stated prerequisites unless explicitly independent.
 - Do not add dependencies merely because of PRD document order; preserve parallelism when tasks are causally independent.
 - `parallelBatch` means all tasks in that batch can start after their dependencies finish.
@@ -106,7 +112,7 @@ Convert `prd_file` into agent-ready `prd.json`: small, verifiable implementation
 
 - Acceptance criteria must be concrete and testable.
 - Every task includes `Typecheck passes`.
-- Prefer exact repo commands/scripts when inferable, such as `npm test`, `pnpm typecheck`, `pytest path/to/test.py`, or `./scripts/verify-hooks.test.sh`.
+- Prefer exact repo commands/scripts when inferable, especially from the PRD Testing Plan, such as `npm test`, `pnpm typecheck`, `pytest path/to/test.py`, or `./scripts/verify-hooks.test.sh`.
 - Add the concrete typecheck command when known.
 - Add `Tests pass` only with the specific relevant test command or suite when inferable.
 - Do not invent commands, files, paths, or conventions.
@@ -128,13 +134,14 @@ Confirm:
 - [ ] Tasks are implementation-sized, agent-ready, and not epic/phase/workflow-sized.
 - [ ] No task has multiple unrelated verbs or unrelated UI surfaces.
 - [ ] All requirements and edge cases are mapped.
+- [ ] Out of Scope items were not converted into tasks.
 - [ ] PRD/workspace conflicts and internal PRD inconsistencies are resolved, documented, or escalated.
 - [ ] IDs are sequential and unique.
 - [ ] Dependencies are direct, earlier, minimal, and acyclic.
-- [ ] Explicit rollout/execution order is preserved for sequence-bound tasks.
+- [ ] Mandatory order is encoded in dependencies/batches; recommended order does not create unnecessary dependencies.
 - [ ] Same-batch tasks are conflict-free.
 - [ ] Priorities are unique, ascending, and batch-ordered.
-- [ ] Acceptance criteria are concrete, include `Typecheck passes`, and use exact commands when inferable.
+- [ ] Acceptance criteria are concrete, include `Typecheck passes`, and use exact commands when known.
 - [ ] UI tasks include browser verification.
 - [ ] Backend-only tasks avoid UI wording.
 - [ ] `filesLikelyTouched` includes named tests, scripts, fixtures, configs, migrations, and command targets when inferable.
