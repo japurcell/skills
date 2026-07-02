@@ -79,6 +79,14 @@ Format:
 - Follow existing [pattern/module/component] because [rationale].
 ```
 
+Acceptance criteria rules:
+
+- Describe observable outcomes, not implementation steps.
+- Define done using concrete inputs, outputs, states, side effects, and success/failure behavior.
+- Include relevant error paths: validation, permissions, timeouts, dependency failure, partial failure, invalid/corrupted state, and recovery.
+- For CLI/API/data features, specify relevant contracts: inputs, outputs, status codes, exit codes, stdout/stderr, schemas, and side effects.
+- Use measurable performance targets when performance matters.
+
 ## Functional Requirements
 
 - FR-1: The system must...
@@ -88,11 +96,13 @@ Format:
 
 Document only relevant decisions: affected modules/interfaces, contracts, dependencies, migrations, rollout, compatibility, security/privacy, observability, performance, UI/accessibility, and rationale tied to discovered patterns.
 
+Specify relevant data contracts, schemas, identifiers, state transitions, compatibility requirements, and migration/rollout behavior precisely. Include matrices only when they clarify compatibility, migration, or state behavior.
+
 Do not include file paths or code unless necessary to capture a decision precisely.
 
 ## Testing Plan
 
-Test external behavior, not implementation details. Identify test levels and reference similar existing tests/patterns.
+Describe the highest practical test seam, preferring existing seams and minimizing new ones. Test external behavior, not implementation details. Identify test levels and reference similar existing tests/patterns.
 
 ## Success Metrics
 
