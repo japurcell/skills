@@ -33,6 +33,76 @@ sanitize_log_field() {
   printf '%s' "${1:-}" | tr '\r\n\t' '   '
 }
 
+trim_ws() {
+  local s="${1:-}"
+
+  # Trim leading whitespace.
+  s="${s#"${s%%[![:space:]]*}"}"
+
+  # Trim trailing whitespace.
+  s="${s%"${s##*[![:space:]]}"}"
+
+  printf '%s' "$s"
+}
+
+append_unique_skill_file() {
+  local skill_file="${1:-}"
+  local existing=""
+
+  [[ -n "$skill_file" ]] || return 0
+
+  for existing in "${REQUIRED_SKILL_FILES[@]}"; do
+    if [[ "$existing" == "$skill_file" ]]; then
+      return 0
+    fi
+  done
+
+  REQUIRED_SKILL_FILES+=("$skill_file")
+}
+
+resolve_skill_file_path() {
+  local skill_file="${1:-}"
+
+  [[ -n "$skill_file" ]] || fail_with_context "Skill file path is empty"
+
+  # Support ~/path in env-provided values.
+  if [[ "$skill_file" == "~/"* ]]; then
+    [[ -n "${HOME:-}" ]] || fail_with_context "Cannot expand ~/: HOME is not set"
+    skill_file="$HOME/${skill_file#~/}"
+
+  # Treat non-absolute paths as relative to SKILLS_DIR.
+  elif [[ "$skill_file" != /* ]]; then
+    skill_file="$SKILLS_DIR/$skill_file"
+  fi
+
+  printf '%s' "$skill_file"
+}
+
+merge_env_skill_files() {
+  local raw="${1:-}"
+  local normalized=""
+  local item=""
+  local resolved=""
+
+  # AGENTS_REQUIRED_SKILL_FILES is optional.
+  # If it is unset or empty, do nothing.
+  [[ -n "$raw" ]] || return 0
+
+  # Accept newline-, colon-, or comma-separated values.
+  normalized="$raw"
+  normalized="${normalized//$'\r'/$'\n'}"
+  normalized="${normalized//:/$'\n'}"
+  normalized="${normalized//,/$'\n'}"
+
+  while IFS= read -r item || [[ -n "$item" ]]; do
+    item="$(trim_ws "$item")"
+    [[ -n "$item" ]] || continue
+
+    resolved="$(resolve_skill_file_path "$item")"
+    append_unique_skill_file "$resolved"
+  done <<<"$normalized"
+}
+
 emit_output() {
   local message="${1:-}"
   local is_failure="${2:-0}"
@@ -173,33 +243,74 @@ else
   fail_with_context "None of COPILOT_SKILLS_DIR, AGENTS_SKILLS_DIR, or HOME is set"
 fi
 
-REQUIRED_SKILL_FILE="$SKILLS_DIR/caveman/SKILL.md"
+declare -a REQUIRED_SKILL_FILES=()
+
+merge_env_skill_files "${AGENTS_REQUIRED_SKILL_FILES:-}"
 
 safe_session_id="$(sanitize_log_field "$SESSION_ID")"
-safe_skill_file="$(sanitize_log_field "$REQUIRED_SKILL_FILE")"
 
-[[ -n "$REQUIRED_SKILL_FILE" ]] \
-  || fail_with_context "Required skill file path is empty"
+if ((${#REQUIRED_SKILL_FILES[@]} == 0)); then
+  audit_log_event \
+    "$SCRIPT_NAME" \
+    "[$(date +'%Y-%m-%d %H:%M:%S')] Message: No skills loaded, Event: $EVENT_NAME, Session: $safe_session_id" \
+    >/dev/null 2>&1 \
+    || fail_with_context "Failed to write audit event: No skills loaded"
 
-[[ -f "$REQUIRED_SKILL_FILE" ]] \
-  || fail_with_context "Required skill file not found: $REQUIRED_SKILL_FILE"
+  printf '%s\n' '{"systemMessage":"No skills loaded"}'
+  exit 0
+fi
 
-[[ -r "$REQUIRED_SKILL_FILE" ]] \
-  || fail_with_context "Required skill file not readable: $REQUIRED_SKILL_FILE"
+CONTEXT_PAYLOAD=""
 
-REQUIRED_SKILL_CONTENT="$(
-  cat "$REQUIRED_SKILL_FILE"
-)" || fail_with_context "Failed to read skill file: $REQUIRED_SKILL_FILE"
+for REQUIRED_SKILL_FILE in "${REQUIRED_SKILL_FILES[@]}"; do
+  SAFE_REQUIRED_SKILL_FILE="$(sanitize_log_field "$REQUIRED_SKILL_FILE")"
 
-audit_log_event \
-  "$SCRIPT_NAME" \
-  "[$(date +'%Y-%m-%d %H:%M:%S')] Message: Loaded skill $safe_skill_file (caveman-only), Event: $EVENT_NAME, Session: $safe_session_id" \
-  >/dev/null 2>&1 \
-  || fail_with_context "Failed to write audit event for skill: $REQUIRED_SKILL_FILE"
+  [[ -n "$REQUIRED_SKILL_FILE" ]] || fail_with_context "Required skill file path is empty"
+  [[ -f "$REQUIRED_SKILL_FILE" ]] || fail_with_context "Required skill file not found: $REQUIRED_SKILL_FILE"
+  [[ -r "$REQUIRED_SKILL_FILE" ]] || fail_with_context "Required skill file not readable: $REQUIRED_SKILL_FILE"
+
+  SKILL_CONTEXT="$(
+    awk '
+      BEGIN { in_header = 0; first_line = 1 }
+      {
+        line = $0
+        sub(/\r$/, "", line)
+        if (first_line) {
+          first_line = 0
+          if (line == "---") {
+            in_header = 1
+            next
+          }
+        }
+        if (in_header) {
+          if (line == "---") {
+            in_header = 0
+          }
+          next
+        }
+        print
+      }
+    ' "$REQUIRED_SKILL_FILE"
+  )" || fail_with_context "Failed to read skill file: $REQUIRED_SKILL_FILE"
+
+  if [[ -n "$CONTEXT_PAYLOAD" ]]; then
+    CONTEXT_PAYLOAD+=$'\n\n'
+  fi
+
+  CONTEXT_PAYLOAD+="<!-- BEGIN REQUIRED SKILL: $REQUIRED_SKILL_FILE -->"$'\n'
+  CONTEXT_PAYLOAD+="$SKILL_CONTEXT"$'\n'
+  CONTEXT_PAYLOAD+="<!-- END REQUIRED SKILL: $REQUIRED_SKILL_FILE -->"
+
+  audit_log_event \
+    "$SCRIPT_NAME" \
+    "[$(date +'%Y-%m-%d %H:%M:%S')] Message: Loaded skill $SAFE_REQUIRED_SKILL_FILE, Event: $EVENT_NAME, Session: $safe_session_id" \
+    >/dev/null 2>&1 \
+    || fail_with_context "Failed to write audit event for skill: $REQUIRED_SKILL_FILE"
+done
 
 REQUIRED_SKILL_CONTEXT="Required skill context loaded.
 
-$REQUIRED_SKILL_CONTENT"
+$CONTEXT_PAYLOAD"
 
 emit_output \
   "$REQUIRED_SKILL_CONTEXT" \

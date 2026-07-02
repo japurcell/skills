@@ -26,6 +26,18 @@ sanitize_log_field() {
   printf '%s' "${1:-}" | tr '\r\n\t' '   '
 }
 
+trim_ws() {
+  local s="${1:-}"
+
+  # Trim leading whitespace.
+  s="${s#"${s%%[![:space:]]*}"}"
+
+  # Trim trailing whitespace.
+  s="${s%"${s##*[![:space:]]}"}"
+
+  printf '%s' "$s"
+}
+
 json_string_field() {
   local field="${1:-}"
   [[ -n "$field" ]] || hard_stop "json_string_field: field name required"
@@ -35,6 +47,64 @@ json_string_field() {
     empty |
     if type == "string" then . else tostring end
   ' <<<"$INPUT"
+}
+
+append_unique_skill_file() {
+  local skill_file="${1:-}"
+  local existing=""
+
+  [[ -n "$skill_file" ]] || return 0
+
+  for existing in "${REQUIRED_SKILL_FILES[@]}"; do
+    if [[ "$existing" == "$skill_file" ]]; then
+      return 0
+    fi
+  done
+
+  REQUIRED_SKILL_FILES+=("$skill_file")
+}
+
+resolve_skill_file_path() {
+  local skill_file="${1:-}"
+
+  [[ -n "$skill_file" ]] || hard_stop "Skill file path is empty"
+
+  # Support ~/path in env-provided values.
+  if [[ "$skill_file" == "~/"* ]]; then
+    [[ -n "${HOME:-}" ]] || hard_stop "Cannot expand ~/: HOME is not set"
+    skill_file="$HOME/${skill_file#~/}"
+
+  # Treat non-absolute paths as relative to SKILLS_DIR.
+  elif [[ "$skill_file" != /* ]]; then
+    skill_file="$SKILLS_DIR/$skill_file"
+  fi
+
+  printf '%s' "$skill_file"
+}
+
+merge_env_skill_files() {
+  local raw="${1:-}"
+  local normalized=""
+  local item=""
+  local resolved=""
+
+  # AGENTS_REQUIRED_SKILL_FILES is optional.
+  # If it is unset or empty, do nothing.
+  [[ -n "$raw" ]] || return 0
+
+  # Accept newline-, colon-, or comma-separated values.
+  normalized="$raw"
+  normalized="${normalized//$'\r'/$'\n'}"
+  normalized="${normalized//:/$'\n'}"
+  normalized="${normalized//,/$'\n'}"
+
+  while IFS= read -r item || [[ -n "$item" ]]; do
+    item="$(trim_ws "$item")"
+    [[ -n "$item" ]] || continue
+
+    resolved="$(resolve_skill_file_path "$item")"
+    append_unique_skill_file "$resolved"
+  done <<<"$normalized"
 }
 
 INPUT="$(cat)"
@@ -47,7 +117,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" \
   || hard_stop "Failed to resolve script directory"
 
 SCRIPT_NAME="$(basename "$0")"
-
 AUDIT_LIB="$SCRIPT_DIR/audit.sh"
 
 [[ -r "$AUDIT_LIB" ]] || hard_stop "Audit library not readable: $AUDIT_LIB"
@@ -101,24 +170,89 @@ else
   hard_stop "Neither AGENTS_SKILLS_DIR nor HOME is set"
 fi
 
-REQUIRED_SKILL_FILE="$SKILLS_DIR/caveman/SKILL.md"
+# Built-in required skill files.
+#
+# Add more default required skills here as needed.
+declare -a REQUIRED_SKILL_FILES=()
 
-SAFE_REQUIRED_SKILL_FILE="$(sanitize_log_field "$REQUIRED_SKILL_FILE")"
+# Optional env var merged into REQUIRED_SKILL_FILES.
+#
+# Supported delimiters:
+#   newline, colon, comma
+#
+# Relative paths are resolved under SKILLS_DIR.
+#
+# Examples:
+#   export AGENTS_REQUIRED_SKILL_FILES="python/SKILL.md:security/SKILL.md"
+#   export AGENTS_REQUIRED_SKILL_FILES="python/SKILL.md,security/SKILL.md"
+#   export AGENTS_REQUIRED_SKILL_FILES=$'python/SKILL.md\nsecurity/SKILL.md'
+merge_env_skill_files "${AGENTS_REQUIRED_SKILL_FILES:-}"
 
-[[ -n "$REQUIRED_SKILL_FILE" ]] || hard_stop "Required skill file path is empty"
-[[ -f "$REQUIRED_SKILL_FILE" ]] || hard_stop "Required skill file not found: $REQUIRED_SKILL_FILE"
-[[ -r "$REQUIRED_SKILL_FILE" ]] || hard_stop "Required skill file not readable: $REQUIRED_SKILL_FILE"
+if ((${#REQUIRED_SKILL_FILES[@]} == 0)); then
+  if ! audit_log_event \
+    "$SCRIPT_NAME" \
+    "[$SAFE_TIMESTAMP] Message: No skills loaded, Hook: $SAFE_HOOK_EVENT_NAME, CWD: $SAFE_CWD, Session: $SAFE_SESSION_ID" \
+    >/dev/null; then
+    hard_stop "Failed to write audit event"
+  fi
 
-CONTEXT_PAYLOAD="$(
-  cat "$REQUIRED_SKILL_FILE"
-)" || hard_stop "Failed to read skill file: $REQUIRED_SKILL_FILE"
-
-if ! audit_log_event \
-  "$SCRIPT_NAME" \
-  "[$SAFE_TIMESTAMP] Message: $SAFE_REQUIRED_SKILL_FILE loaded (caveman-only), Hook: $SAFE_HOOK_EVENT_NAME, CWD: $SAFE_CWD, Session: $SAFE_SESSION_ID" \
-  >/dev/null; then
-  hard_stop "Failed to write audit event for loaded skill: $REQUIRED_SKILL_FILE"
+  printf '%s\n' '{"systemMessage":"No skills loaded","suppressOutput":true}'
+  exit 0
 fi
+
+CONTEXT_PAYLOAD=""
+declare -a LOADED_SKILL_FILES=()
+
+for REQUIRED_SKILL_FILE in "${REQUIRED_SKILL_FILES[@]}"; do
+  SAFE_REQUIRED_SKILL_FILE="$(sanitize_log_field "$REQUIRED_SKILL_FILE")"
+
+  [[ -n "$REQUIRED_SKILL_FILE" ]] || hard_stop "Required skill file path is empty"
+  [[ -f "$REQUIRED_SKILL_FILE" ]] || hard_stop "Required skill file not found: $REQUIRED_SKILL_FILE"
+  [[ -r "$REQUIRED_SKILL_FILE" ]] || hard_stop "Required skill file not readable: $REQUIRED_SKILL_FILE"
+
+  SKILL_CONTEXT="$(
+    awk '
+      BEGIN { in_header = 0; first_line = 1 }
+      {
+        line = $0
+        sub(/\r$/, "", line)
+        if (first_line) {
+          first_line = 0
+          if (line == "---") {
+            in_header = 1
+            next
+          }
+        }
+        if (in_header) {
+          if (line == "---") {
+            in_header = 0
+          }
+          next
+        }
+        print
+      }
+    ' "$REQUIRED_SKILL_FILE"
+  )" || hard_stop "Failed to read skill file: $REQUIRED_SKILL_FILE"
+
+  if [[ -n "$CONTEXT_PAYLOAD" ]]; then
+    CONTEXT_PAYLOAD+=$'\n\n'
+  fi
+
+  CONTEXT_PAYLOAD+="<!-- BEGIN REQUIRED SKILL: $REQUIRED_SKILL_FILE -->"$'\n'
+  CONTEXT_PAYLOAD+="$SKILL_CONTEXT"$'\n'
+  CONTEXT_PAYLOAD+="<!-- END REQUIRED SKILL: $REQUIRED_SKILL_FILE -->"
+
+  LOADED_SKILL_FILES+=("$REQUIRED_SKILL_FILE")
+
+  if ! audit_log_event \
+    "$SCRIPT_NAME" \
+    "[$SAFE_TIMESTAMP] Message: loaded required skill file: $SAFE_REQUIRED_SKILL_FILE, Hook: $SAFE_HOOK_EVENT_NAME, CWD: $SAFE_CWD, Session: $SAFE_SESSION_ID" \
+    >/dev/null; then
+    hard_stop "Failed to write audit event for loaded skill: $REQUIRED_SKILL_FILE"
+  fi
+done
+
+LOADED_COUNT="${#LOADED_SKILL_FILES[@]}"
 
 # Final stdout JSON only.
 #
@@ -127,11 +261,12 @@ fi
 jq -nc \
   --arg ev "$HOOK_EVENT_NAME" \
   --arg ctx "$CONTEXT_PAYLOAD" \
+  --argjson count "$LOADED_COUNT" \
   '{
     hookSpecificOutput: {
       hookEventName: $ev,
       additionalContext: $ctx
     },
-    systemMessage: "Required skill context loaded.",
+    systemMessage: "Required skill context loaded from \($count) file(s).",
     suppressOutput: true
   }'

@@ -120,7 +120,10 @@
             "name": "skill-context-injector",
             "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/skill-context-injector.sh",
-            "description": "Loads required skill files and injects them as context before each agent turn."
+            "description": "Loads required skill files and injects them as context before each agent turn.",
+            "env": {
+              "AGENTS_REQUIRED_SKILL_FILES": "caveman/SKILL.md,context-engineering/SKILL.md"
+            }
           }
         ]
       }

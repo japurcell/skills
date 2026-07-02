@@ -24,7 +24,7 @@ run_session_start_hook() {
   local payload="$2"
 
   run_copilot_hook "log-session-start.sh" "$audit_log" "$payload" >/dev/null
-  run_copilot_hook "load-required-skills.sh" "$audit_log" "$payload"
+  run_copilot_hook "load-required-skills.sh" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
 }
 
 run_subagent_start_hook() {
@@ -32,7 +32,7 @@ run_subagent_start_hook() {
   local payload="$2"
 
   run_copilot_hook "log-subagent-start.sh" "$audit_log" "$payload" >/dev/null
-  run_copilot_hook "load-required-skills.sh" "$audit_log" "$payload"
+  run_copilot_hook "load-required-skills.sh" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
 }
 
 test_session_start_outputs_cli_schema_with_caveman_only_context() {
@@ -121,7 +121,7 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
   local hook_name
   local jq_query
 
-  for hook_name in sessionStart SessionStart subagentStart SubagentStart; do
+  for hook_name in sessionStart subagentStart; do
     jq_query=".hooks.${hook_name}[0].bash // empty"
     assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.sh' \
       "$(jq -r "$jq_query" "$REPO_ROOT/.copilot/hooks/hooks.json")" \
@@ -150,13 +150,77 @@ test_compact_mode_override_is_ignored() {
       "$audit_log" \
       '{"sessionId":"compact-mode-session","timestamp":"2026-05-21T09:00:04Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "" \
-      "COPILOT_REQUIRED_SKILL_CONTEXT_MODE=compact"
+      "COPILOT_REQUIRED_SKILL_CONTEXT_MODE=compact" \
+      "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
   )"
 
   local context
   context="$(jq -r '.additionalContext' <<<"$output")"
 
   assert_caveman_context_shape "$context"
+}
+
+test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(
+    run_copilot_hook \
+      "load-required-skills.sh" \
+      "$audit_log" \
+      '{"sessionId":"empty-skills-session","timestamp":"2026-05-21T09:00:06Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "" \
+      "AGENTS_REQUIRED_SKILL_FILES="
+  )"
+
+  assert_equals "No skills loaded" "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected empty skills output to have systemMessage 'No skills loaded'."
+  assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
+    "Expected no hookSpecificOutput for empty skills payload."
+  assert_equals "false" "$(jq -r 'has("additionalContext")' <<<"$output")" \
+    "Expected no additionalContext for empty skills payload."
+
+  assert_file_contains "$audit_log" "Message: No skills loaded" \
+    "Expected audit log to contain No skills loaded message."
+}
+
+test_multiple_skills_loading_works_correctly() {
+  local workdir
+  local audit_log
+  local output
+  local context
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(
+    run_copilot_hook \
+      "load-required-skills.sh" \
+      "$audit_log" \
+      '{"sessionId":"multiple-skills-session","timestamp":"2026-05-21T09:00:05Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "" \
+      "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md,context-engineering/SKILL.md"
+  )"
+
+  context="$(jq -r '.additionalContext' <<<"$output")"
+
+  assert_file_contains <(printf '%s' "$context") "Required skill context loaded." \
+    "Expected required skill context marker in additionalContext."
+
+  assert_file_contains <(printf '%s' "$context") "<!-- BEGIN REQUIRED SKILL:" \
+    "Expected BEGIN REQUIRED SKILL tag in context."
+
+  assert_file_contains <(printf '%s' "$context") "Respond terse like smart caveman." \
+    "Expected required context to include caveman content."
+
+  assert_file_contains <(printf '%s' "$context") "Goal: load only context" \
+    "Expected required context to include context-engineering content."
 }
 
 main() {
@@ -167,6 +231,8 @@ main() {
   test_compact_mode_override_is_ignored
   test_hooks_json_registers_cli_and_vscode_start_events
   test_validation_doc_records_vscode_subagent_start_strategy
+  test_multiple_skills_loading_works_correctly
+  test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output
 }
 
 main "$@"

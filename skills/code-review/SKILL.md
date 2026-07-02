@@ -34,7 +34,7 @@ Review only the requested change scope. Report only change-linked issues that su
    - Local: collect `git diff --cached`, `git diff`, or both separately.
    - Fixed point: collect `git diff <target>...HEAD` and `git log <target>..HEAD --oneline`.
 
-4. Spawn a subagent to gather only relevant context:
+4. Spawn a subagent to gather relevant standards/context:
    - repo/global instructions, standards, style, ADRs, contribution docs, formatter/linter/test/build/language configs from repo root and touched-path ancestors.
    - Include common files:
      - `~/.copilot/copilot-instructions.md`

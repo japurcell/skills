@@ -20,11 +20,11 @@ Use this before acting when:
 1. Check rules first.
    - Shared: check `AGENTS.md` files from the target path upward to repo root.
    - Claude: check `CLAUDE.md` files from the target path upward to repo root.
-   - Copilot: check `.github/copilot-instructions.md`, `.copilot/copilot-instructions.md`, `~/.copilot/copilot-instructions.md`
-   - Gemini: check `GEMINI.md`, `.gemini/GEMINI.md`, `~/.gemini/GEMINI.md`
+   - Copilot: check `~/.copilot/copilot-instructions.md`, `.github/copilot-instructions.md`, `.copilot/copilot-instructions.md` in that order.
+   - Gemini: check `~/.gemini/GEMINI.md`, `GEMINI.md`, `.gemini/GEMINI.md` in that order.
    - Cursor: check `.cursorrules` and exact files under `.cursor/rules/`
    - Windsurf: check `.windsurfrules`
-   - If the current agent is unknown, check shared rules only.
+   - If the current agent is unknown, check shared, Copilot, and Gemini rules.
    - Do not follow another agent's rule/config file unless the user's task is to inspect or edit that file.
    - Expand globs to exact paths. List missing or unreadable paths once. Do not keep retrying unavailable paths.
 

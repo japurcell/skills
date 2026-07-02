@@ -48,7 +48,10 @@
     "subagentStart": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.sh"
+        "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.sh",
+        "env": {
+          "AGENTS_REQUIRED_SKILL_FILES": "context-engineering/SKILL.md"
+        }
       }
     ],
     "subagentStop": [
@@ -79,7 +82,10 @@
     "sessionStart": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.sh"
+        "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.sh",
+        "env": {
+          "AGENTS_REQUIRED_SKILL_FILES": "caveman/SKILL.md,context-engineering/SKILL.md"
+        }
       }
     ]
   }
