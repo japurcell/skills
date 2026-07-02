@@ -9,12 +9,14 @@ disable-model-invocation: true
 Create an unambiguous, implementation-ready PRD from the current conversation and codebase context.
 
 ## Rules
+
 - Do not implement the feature or include implementation code.
 - Do not interview the user; make reasonable assumptions and document them.
-- Follow existing codebase patterns. Prefer YAGNI:  exclude unnecessary features and abstractions.
+- Follow existing codebase patterns. Prefer YAGNI: exclude unnecessary features and abstractions.
 - Never overwrite, rename, or delete an existing PRD.
 
 ## Save path
+
 Derive `[feature-name]` in short kebab-case. Save to `.agents/scratchpad/[feature-name]/prd.md`.
 
 If it exists, use `[feature-name]-2`, `-3`, etc. Create directories as needed. Verify the final file exists at the exact path. If saving fails, stop and report failure.
@@ -64,12 +66,16 @@ Format:
 ### US-001: [Title]
 
 **Story:** As a [user], I want [capability] so that [benefit].
+
 **Acceptance Criteria:**
+
 - [ ] Concrete, testable behavior
 - [ ] Relevant edge/failure case
 - [ ] Relevant build, typecheck, lint, and test commands pass
 - [ ] For UI: Verify in browser using playwright-cli skill
+
 **Design Guidance:**
+
 - Follow existing [pattern/module/component] because [rationale].
 ```
 
