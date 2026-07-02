@@ -96,17 +96,23 @@ Acceptance criteria rules:
 
 Document only relevant decisions: affected modules/interfaces, contracts, dependencies, migrations, rollout, compatibility, security/privacy, observability, performance, UI/accessibility, and rationale tied to discovered patterns.
 
-Specify relevant data contracts, schemas, identifiers, state transitions, compatibility requirements, and migration/rollout behavior precisely. Include matrices only when they clarify compatibility, migration, or state behavior.
+Define each schema, key format, identifier, or contract in one canonical place and reference it elsewhere. For cleanup, retries, fallbacks, cancellation, or recovery, specify triggers, guarantees, limits, and non-goals. For observability, specify event conditions, severity/cardinality, and rate limits when relevant.
 
 Do not include file paths or code unless necessary to capture a decision precisely.
 
+## Execution Sequence
+
+List user stories in recommended implementation order. Note dependencies, parallelizable work, and rollout/migration steps.
+
 ## Testing Plan
 
-Describe the highest practical test seam, preferring existing seams and minimizing new ones. Test external behavior, not implementation details. Identify test levels and reference similar existing tests/patterns.
+Describe the highest practical test seam, preferring existing seams and minimizing new ones. Test external behavior, not implementation details. Identify test levels and reference similar existing tests/patterns. Include a compact edge-case matrix when relevant: invalid inputs, missing dependencies, permission/environment constraints, concurrency/races, partial failure, and recovery.
 
 ## Success Metrics
 
-- Measurable success conditions
+- Measurable success condition
+
+For performance metrics, specify the measurement protocol: environment, input size/dataset, warm vs. cold state, percentile/average, sample size, and threshold.
 
 ## Out of Scope
 
