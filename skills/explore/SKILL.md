@@ -10,13 +10,13 @@ description: Explores the codebase given a topic, task, issue, or request by spa
 1. Check prior session context and, if available, `.agents/scratchpad/explore-<topic-slug>.md`. Reuse if relevant and current; refresh only gaps.
 2. Define the topic in one sentence and use a short filesystem-safe slug for `<topic-slug>`.
 3. Pick 1–3 independent areas to inspect.
-4. If subagents exist, run one focused explorer per area in parallel, using `code-explorer` if available; otherwise do bounded search/read directly.
+4. Run one focused `code-explorer` subagent per area in parallel.
 5. For each area, capture: key files, entry points, main flow, dependencies, tests/config, gotchas, unknowns, likely edit targets.
 6. Synthesize concise findings before editing. Save to `.agents/scratchpad/explore-<topic-slug>.md`.
 
 ## Subagent Prompt
 
-Investigate only `<area>` for `<topic>` in `<paths>`.
+Investigate only `<area>` for `<topic>`.
 Do not leave scope except to identify direct dependencies.
 Return concise bullets: key files, entry points, flow, dependencies, tests/config, gotchas/unknowns, likely edit targets.
 Avoid raw code dumps.
