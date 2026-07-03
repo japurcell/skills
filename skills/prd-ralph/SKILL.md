@@ -47,6 +47,11 @@ disable-model-invocation: true
    - If committing is blocked, report the intended commit message and ask how to proceed.
    - If `commit` is `false`, leave changes uncommitted and summarize verification.
 
+## TDD - Test Driven Development
+
+1. Write a failing test for the expected behavior (RED)
+2. Implement the minimum code to pass the test (GREEN)
+
 ## Progress append format
 
 APPEND to `progress_file`:
