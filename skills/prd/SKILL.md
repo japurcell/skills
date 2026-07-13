@@ -9,14 +9,15 @@ disable-model-invocation: true
 Create an unambiguous, implementation-ready PRD from the conversation and codebase context.
 
 ## Rules
-
-- Do not implement the feature or include code.
-- Do not interview the user; make reasonable assumptions and document them. If requirements are contradictory or unsafe to assume, stop and report the blocker.
-- Follow existing codebase patterns. Prefer YAGNI: exclude unnecessary features and abstractions.
-- Scan relevant workspace conventions when available: `AGENTS.md`, scoped docs, repo docs, package scripts, test setup, and existing patterns.
-- Do not invent commands, files, paths, schemas, or conventions. Use exact names only when verified or clearly inferable.
+- Do not implement or write code.
+- Do not interview the user; make reasonable assumptions and document them. If unsafe/contradictory, stop and report the blocker.
+- Follow existing codebase patterns. Prefer YAGNI.
+- If codebase context is missing, invoke `explore`.
+- Check available workspace conventions: `AGENTS.md`, scoped docs, repo docs, scripts, tests, existing modules/patterns.
+- Do not invent commands, files, paths, schemas, URLs, literals, DB objects, or conventions. Use exact names only when verified or clearly inferable.
 - Define each path, schema, key format, command, contract, and rollout order in one canonical place, then reference it consistently.
 - Never overwrite, rename, or delete an existing PRD.
+- Require named test targets when inferable: exact test file/class names and intended assertions. Avoid vague metrics such as “100% tests pass.”
 
 ## Save path
 
@@ -122,6 +123,11 @@ Describe the highest practical test seam, preferring existing seams and minimizi
 
 When inferable, include exact commands/scripts, such as `npm test`, `pnpm typecheck`, `pytest path/to/test.py`, or a repo-specific verification script. Do not invent commands.
 
+Specify named test targets when inferable:
+- File/class: `[ExactTestFileOrClass]`
+- Assertion: `[SpecificBehaviorOrContractAssertionName]`
+- Covers: `FR-*` / `US-*`
+
 Include a compact edge-case matrix when relevant: invalid inputs, missing dependencies, permissions/environment constraints, concurrency/races, partial failure, fallback behavior, cleanup, and recovery.
 
 ## Success Metrics
@@ -145,6 +151,7 @@ List what this PRD explicitly does not include.
 - [ ] Sections are internally consistent across requirements, acceptance criteria, technical decisions, Definition of Done, paths, schemas, commands, and execution order.
 - [ ] Paths, schemas, commands, key formats, contracts, and rollout order are defined once and referenced consistently.
 - [ ] Functional requirements use stable IDs and map to stories, acceptance criteria, testing, or execution sequence.
+- [ ] Testing Plan names exact test files/classes/assertions when inferable and avoids vague pass metrics.
 - [ ] Execution Sequence distinguishes mandatory dependencies from recommended order and identifies parallelizable work.
 - [ ] Edge cases and negative paths are captured in acceptance criteria or Testing Plan.
 - [ ] Exact verification commands are included when inferable; none are invented.
