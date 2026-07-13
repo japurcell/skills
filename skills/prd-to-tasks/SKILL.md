@@ -22,7 +22,7 @@ Convert `prd_file` into agent-ready `prd.json`: small, verifiable implementation
 
 1. Resolve `prd_file`, output path, and create the output directory if needed.
 2. Read the PRD; identify project, feature, stories, requirements, edge cases, rollout order, and shared prerequisites.
-3. If repo context is needed and missing, run `/explore`; look for prefactors that make the change easier.
+3. If repo context is needed and missing, invoke the `explore` skill; look for prefactors that make the change easier.
 4. Scan relevant workspace rules when available: `AGENTS.md`, scoped docs, repo docs, package scripts, tests, and existing patterns.
 5. Check and resolve PRD/workspace inconsistencies before task splitting. Prefer the most specific implementation-nearest source: rollout/migration order, acceptance criteria/Definition of Done, technical decisions, functional requirements, then narrative. Document resolutions in task descriptions or `designGuidance`; ask the user if unclear.
 6. Split broad requirements into atomic tasks; pull shared prerequisites first, then fan out dependent tasks.

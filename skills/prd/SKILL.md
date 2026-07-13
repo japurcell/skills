@@ -24,7 +24,7 @@ Save to `.agents/scratchpad/[feature-name]/prd.md`, where `[feature-name]` is sh
 
 ## Workflow
 
-1. If codebase context is missing, run `/explore`.
+1. If codebase context is missing, invoke the `explore` skill.
 2. Identify existing patterns, affected modules, contracts, test seams, risks, edge cases, rollout constraints, and conflicts with workspace conventions.
 3. Draft the PRD using the template below.
 4. Validate consistency across sections, especially requirements, acceptance criteria, technical decisions, Definition of Done, paths, schemas, commands, examples, and execution order.

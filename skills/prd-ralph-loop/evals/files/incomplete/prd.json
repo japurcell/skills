@@ -1,0 +1,18 @@
+{
+  "tasks": [
+    {
+      "id": "US-001",
+      "title": "Setup basic layout",
+      "priority": 1,
+      "dependsOn": [],
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Add sidebar navigation",
+      "priority": 2,
+      "dependsOn": ["US-001"],
+      "passes": false
+    }
+  ]
+}

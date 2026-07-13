@@ -1,7 +1,6 @@
 ---
 name: prd-ralph
 description: Implement one eligible task from prd.json, verify it, update progress, and commit.
-disable-model-invocation: true
 ---
 
 # /prd-ralph
@@ -26,7 +25,7 @@ disable-model-invocation: true
    - If `task_id` is provided but missing, already passing, or dependency-blocked, stop and explain why.
    - Otherwise, select the incomplete task with the lowest numeric `priority` where every `dependsOn` task has `passes: true`.
    - If incomplete tasks exist but none are eligible, stop and explain the blocking dependencies.
-4. Run `/tdd` and implement only that task.
+4. Invoke the `tdd` skill and implement only that task.
    - Use `description`, `acceptanceCriteria`, `filesLikelyTouched`, and `designGuidance`.
    - Keep changes focused and minimal.
    - Follow existing repo patterns and nearby `AGENTS.md`.
@@ -42,7 +41,7 @@ disable-model-invocation: true
    - Set that task’s `passes` to `true` in `prd_file`.
    - Append progress to `progress_file`.
    - Add reusable patterns to the top `## Codebase Patterns` section only if broadly useful.
-   - Run `/self-improve` only if you discovered durable, reusable repo knowledge worth preserving in nearby `AGENTS.md`.
+   - Invoke the `self-improve` skill only if you discovered durable, reusable repo knowledge worth preserving in nearby `AGENTS.md`.
    - If `commit` is not `false`, commit all task-related changes with descriptive message.
    - If committing is blocked, report the intended commit message and ask how to proceed.
    - If `commit` is `false`, leave changes uncommitted and summarize verification.

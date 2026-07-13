@@ -10,7 +10,7 @@ Remove duplicated code while preserving behavior. Prefer small, safe, validated 
 
 ## 1. Route
 
-Invoke `subagent-model-router`.
+Invoke the `subagent-model-router` skill.
 
 ## 2. Scope
 
@@ -27,7 +27,7 @@ Build a shortlist of changed functions, classes, modules, tests, configs, script
 
 ## 3. Find duplication
 
-Use `/explore` to spawn 1-3 `code-explorer` subagents scaled to scope size.
+Invoke the `explore` skill to spawn 1-3 `code-explorer` subagents scaled to scope size.
 
 Search shortlist items against relevant nearby/codebase patterns for:
 

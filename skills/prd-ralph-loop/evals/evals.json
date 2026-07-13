@@ -1,0 +1,44 @@
+{
+  "skill_name": "prd-ralph-loop",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Read the fixture in evals/files/complete/prd.json and apply the prd-ralph-loop skill as a dry run. Do not spawn real subagents. Save outputs/decision.json and outputs/decision.md. decision.json must include: status, next_action, target_task_id, routing_decision. Use status=complete, status=looping, or status=error. Since all tasks are complete, output exactly <promise>COMPLETE</promise> in the decision.md file.",
+      "expected_output": "Detects that all tasks in prd.json are complete, stops immediately, and outputs <promise>COMPLETE</promise>.",
+      "files": [
+        "evals/files/complete/prd.json"
+      ],
+      "assertions": [
+        "Returns a complete status.",
+        "Outputs exactly <promise>COMPLETE</promise>.",
+        "Has no target_task_id."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Read the fixture in evals/files/incomplete/prd.json and apply the prd-ralph-loop skill as a dry run. Do not spawn real subagents. Save outputs/decision.json and outputs/decision.md. decision.json must include: status, next_action, target_task_id, routing_decision. Use status=complete, status=looping, or status=error.",
+      "expected_output": "Detects that task US-002 is incomplete and eligible, invokes model router, and plans to spawn a subagent to run prd-ralph.",
+      "files": [
+        "evals/files/incomplete/prd.json"
+      ],
+      "assertions": [
+        "Returns a looping status.",
+        "Identifies US-002 as the next target task.",
+        "Plans to invoke subagent-model-router and spawn subagent for prd-ralph."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Read the fixture in evals/files/invalid/prd.json and apply the prd-ralph-loop skill as a dry run. Do not spawn real subagents. Save outputs/decision.json and outputs/decision.md. decision.json must include: status, next_action, target_task_id, routing_decision. Use status=complete, status=looping, or status=error.",
+      "expected_output": "Detects that the tasks array is missing or invalid, stops, and flags an error requiring user clarification.",
+      "files": [
+        "evals/files/invalid/prd.json"
+      ],
+      "assertions": [
+        "Returns an error status.",
+        "Explains that the tasks are missing or invalid.",
+        "Does not proceed with routing or looping."
+      ]
+    }
+  ]
+}
