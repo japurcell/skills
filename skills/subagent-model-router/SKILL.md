@@ -7,7 +7,12 @@ description: Routes delegated work to the narrowest capable agent type and cheap
 
 ## Overview
 
-Choose smallest agent and cheapest model that can succeed. Default cheap and specialized. Escalate only for a concrete capability, ambiguity, or quality reason. When exact cost matters, use [`PRICING.md`](PRICING.md). For common examples, use [`PATTERNS.md`](PATTERNS.md).
+Choose smallest agent and cheapest model that can succeed. Default cheap and specialized. Escalate only for a concrete capability, ambiguity, or quality reason.
+
+To optimize token efficiency and minimize context window usage, **lazy-load reference files**:
+- Read [`PRICING.md`](PRICING.md) only when the model choice is genuinely ambiguous or if the user/caller explicitly requests cost/pricing details.
+- Read [`PATTERNS.md`](PATTERNS.md) only when the classification of the work pattern is highly uncertain or ambiguous.
+- Skip reading these files on routine repeats.
 
 ## When to Use
 
@@ -120,8 +125,15 @@ Route by task fit, availability, and current pricing, not brand reputation. Mode
 
 ### Decision shape
 
-Return the routing decision explicitly:
+Provide the routing decision in one of two formats based on requested verbosity:
 
+#### Compact Output Mode (Default)
+By default, return exactly one line formatted as:
+`agent_type | model | tier | reason`
+Do not output any markdown headings, lists, verbose reasoning, or conversational preamble unless specifically requested.
+
+#### Verbose Mode (Explicitly Requested)
+If the user or caller explicitly requests a detailed justification or passes a `verbose` flag/intent, return:
 - chosen `agent_type`
 - chosen model or constrained-model note
 - tier
@@ -151,6 +163,8 @@ Avoid:
 - treating an auto-selected model as a reason to skip agent routing
 - using stale pricing when current pricing is available
 - falling back to manual/direct execution of a complex delegated task because a subagent launch failed with a model support or API error
+- reading or loading `PRICING.md` or `PATTERNS.md` unconditionally on routine routing requests
+- outputting verbose reasoning or multiple lines by default when compact output mode is expected
 
 ## Verification
 
@@ -169,3 +183,5 @@ Before launch, confirm:
 - [ ] Fresh routing was done when work class, stakes, ambiguity, or model constraints changed materially.
 - [ ] The code editing exception was checked.
 - [ ] Pricing matched the current source of truth when exact cost mattered.
+- [ ] Reference files `PRICING.md` and `PATTERNS.md` were lazy-loaded (only read if model choice was ambiguous or cost details were requested).
+- [ ] Output conforms to the single-line compact format (`agent_type | model | tier | reason`) by default.
