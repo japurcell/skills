@@ -1,27 +1,38 @@
 ---
 name: explore
-description: Explores the codebase given a topic, task, issue, or request by spawning fast-tier codebase-exploration subagents in parallel. Use when beginning a new investigation, researching a feature or bug, mapping dependencies, or before editing unfamiliar files, provided the codebase has not already been explored for the same topic in the current session.
+description: Use to understand unfamiliar code for a topic, task, bug, or feature before editing. Reuse current findings. For narrow scopes—1–3 known files, one request path, or one endpoint flow—explore directly without subagents.
 ---
 
-# Explore Codebase
+# Explore
 
-## Workflow
+Goal: produce a concise code map: files, entry points, flow, dependencies, tests/config, gotchas, and likely edit targets.
 
-1. Check prior session context and, if available, `.agents/scratchpad/explore-<topic-slug>.md`. Reuse if relevant and current; refresh only gaps.
-2. Define the topic in one sentence and use a short filesystem-safe slug for `<topic-slug>`.
-3. Pick 1–3 independent areas to inspect.
-4. Invoke the `subagent-model-router` skill and run one focused `code-explorer` subagent per area in parallel.
-5. For each area, capture: key files, entry points, main flow, dependencies, tests/config, gotchas, unknowns, likely edit targets.
-6. Synthesize concise findings before editing. Save to `.agents/scratchpad/explore-<topic-slug>.md`.
+## Steps
+
+1. Define `<topic>` in one sentence and create filesystem-safe `<slug>`.
+2. Reuse session context and `.agents/scratchpad/explore-<slug>.md` if relevant; fill only gaps.
+3. If scope is narrow (e.g. 1–3 known files / one request path / one endpoint flow), skip subagents. Use direct search/read tools, then synthesize findings.
+4. Otherwise, pick 1–3 independent areas. Use `subagent-model-router`, then run one focused `code-explorer` subagent per area in parallel.
+5. Synthesize findings before editing.
+6. Save new/updated findings to `.agents/scratchpad/explore-<slug>.md`.
 
 ## Subagent Prompt
 
-Investigate only `<area>` for `<topic>`.
-Do not leave scope except to identify direct dependencies.
-Return concise bullets: key files, entry points, flow, dependencies, tests/config, gotchas/unknowns, likely edit targets.
+Investigate only `<area>` for `<topic>`. Leave scope only for direct dependencies.
+
+Return concise bullets:
+
+- Key files
+- Entry points
+- Main flow
+- Dependencies
+- Tests/config
+- Gotchas/unknowns
+- Likely edit targets
+
 Avoid raw code dumps.
 
-## Stop Conditions
+## Stop
 
-Do not re-explore valid current findings.
-Do not use this for a single known-file change.
+- Do not re-explore relevant current findings.
+- Do not use subagents for narrow scopes.

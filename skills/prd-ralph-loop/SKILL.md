@@ -23,14 +23,16 @@ Orchestrate `prd-ralph` one task at a time. Never run tasks in parallel.
    - If all tasks pass, reply exactly:
      `<promise>COMPLETE</promise>`
 
-3. Start the loop.
-   - Before choosing an agent/model, invoke the `subagent-model-router` skill.
+3. Invoke the `subagent-model-router` skill.
+
+4. Start the loop.
+   - Choose an agent/model.
    - Select the next ready task:
      - incomplete task where `passes !== true`
      - all `dependsOn` tasks, if any, have `passes === true`
    - If no ready task exists, stop and report the blocked/cyclic dependencies.
 
-4. Run one subagent.
+5. Run one subagent.
    - Spawn exactly one subagent.
    - Prompt:
      ```text
@@ -40,7 +42,7 @@ Orchestrate `prd-ralph` one task at a time. Never run tasks in parallel.
    - Wait for completion.
    - Re-read `prd.json`.
 
-5. Detect failure.
+6. Detect failure.
    - Track consecutive attempts for the same task.
    - If the subagent fails, errors, or the same task is still not passing after 2 consecutive attempts, stop and report:
      - task id/title
@@ -49,8 +51,8 @@ Orchestrate `prd-ralph` one task at a time. Never run tasks in parallel.
      - current `passes` value
      - any relevant blocker
 
-6. Repeat.
-   - Continue steps 3–5 until every task has `passes === true`.
+7. Repeat.
+   - Continue steps 4–6 until every task has `passes === true`.
    - Then reply exactly:
      `<promise>COMPLETE</promise>`
 
