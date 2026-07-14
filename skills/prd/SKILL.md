@@ -9,10 +9,11 @@ disable-model-invocation: true
 Create an unambiguous, implementation-ready PRD from the conversation and codebase context.
 
 ## Rules
+
 - Do not implement or write code.
 - Do not interview the user; make reasonable assumptions and document them. If unsafe/contradictory, stop and report the blocker.
 - Follow existing codebase patterns. Prefer YAGNI.
-- If codebase context is missing, invoke `explore`.
+- If codebase context is missing, invoke the `explore` skill.
 - Check available workspace conventions: `AGENTS.md`, scoped docs, repo docs, scripts, tests, existing modules/patterns.
 - Do not invent commands, files, paths, schemas, URLs, literals, DB objects, or conventions. Use exact names only when verified or clearly inferable.
 - Define each path, schema, key format, command, contract, and rollout order in one canonical place, then reference it consistently.
@@ -124,6 +125,7 @@ Describe the highest practical test seam, preferring existing seams and minimizi
 When inferable, include exact commands/scripts, such as `npm test`, `pnpm typecheck`, `pytest path/to/test.py`, or a repo-specific verification script. Do not invent commands.
 
 Specify named test targets when inferable:
+
 - File/class: `[ExactTestFileOrClass]`
 - Assertion: `[SpecificBehaviorOrContractAssertionName]`
 - Covers: `FR-*` / `US-*`

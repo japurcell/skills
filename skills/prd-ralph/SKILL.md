@@ -14,6 +14,7 @@ description: Complete exactly one eligible unfinished task from prd.json, verify
 
 ## Rules
 
+- Do not interview the user; make reasonable assumptions and document them when appending your entry to `progress_file`. If unsafe/contradictory, stop and report the blocker.
 - Do at most one task.
 - `prd_file` is the source of truth.
 - Set `passes: true` only after verification passes.
@@ -26,35 +27,23 @@ description: Complete exactly one eligible unfinished task from prd.json, verify
 
 ## Workflow
 
-1. Load context:
+1. Get your bearings:
    - Read `prd_file`.
-   - Resolve `progress_file`; if missing, create it with:
-     ```text
-     ## Codebase Patterns
-     ```
-   - Read progress, especially `## Codebase Patterns`.
-   - Read applicable `AGENTS.md`.
-   - Run:
-     ```bash
-     git log --oneline -20
-     git status --short
-     ```
+   - Resolve `progress_file`. If missing, create it with `## Codebase Patterns` at the top.
+   - Read `progress_file` for notes from previous sessions (especially `## Codebase Patterns`).
+   - Check recent git history: `git log --oneline -20`.
 
-2. If all `tasks[].passes` are `true`, output exactly:
-
-   ```xml
-   <promise>COMPLETE</promise>
-   ```
+2. If all `tasks[].passes` are `true`, output exactly: `<promise>COMPLETE</promise>`.
 
    Then stop.
 
 3. Select one task:
    - If `task_id` is provided, use it only if it exists, has `passes: false`, and all `dependsOn` tasks have `passes: true`; otherwise stop with the reason.
-   - Otherwise choose the incomplete eligible task with the lowest numeric `priority`; break ties by array order.
+   - Otherwise, select the incomplete task with the lowest numeric `priority` where every `dependsOn` task has `passes: true`.
    - If incomplete tasks exist but none are eligible, stop and list blockers.
 
 4. Implement with TDD:
-   - Use the `tdd` skill.
+   - Invoke the `tdd` skill.
    - RED: add a failing test for the task behavior.
    - GREEN: make the minimum change to pass.
    - REFACTOR: only if needed while tests stay green.
@@ -78,15 +67,12 @@ description: Complete exactly one eligible unfinished task from prd.json, verify
    ---
    ```
 
+   - The learnings section is critical. It helps future iterations avoid repeating mistakes and understand the codebase better.
    - Use the real date/time and selected task ID.
    - Include every field.
-   - If no durable learnings, write:
-     ```text
-     - None beyond task-specific implementation details.
-     ```
    - Confirm the block was appended and well formed.
    - Add reusable repo notes to top `## Codebase Patterns` only when broadly useful.
-   - Use `self-improve` only for durable repo knowledge worth preserving in nearby `AGENTS.md`.
+   - Invoke the `self-improve` skill to capture durable learnings, and to update and refactor all `AGENTS.md` files and linked documentation.
 
 7. If verification failed:
    - Do not update `passes`.
@@ -109,8 +95,5 @@ description: Complete exactly one eligible unfinished task from prd.json, verify
 
 9. Final response:
    - Reread `prd_file`.
-   - If all `tasks[].passes` are `true`, output exactly:
-     ```xml
-     <promise>COMPLETE</promise>
-     ```
+   - If all `tasks[].passes` are `true`, output exactly: `<promise>COMPLETE</promise>`.
    - Otherwise give a concise summary of task, verification, files changed, and commit status.

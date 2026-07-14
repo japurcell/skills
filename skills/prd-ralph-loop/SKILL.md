@@ -10,14 +10,13 @@ Orchestrate `prd-ralph` one task at a time. Never run tasks in parallel.
 
 ## Inputs
 
-- `prd_file` optional path to `prd.json`.
+- `prd_file` required path to `prd.json`.
 
 ## Procedure
 
 1. Find `prd.json`.
    - If `prd_file` is provided, use it.
-   - Otherwise search the workspace for `prd.json`.
-   - If missing, unreadable, invalid JSON, missing `tasks`, or `tasks` is empty, stop and ask the user.
+   - Otherwise if missing, unreadable, invalid JSON, missing `tasks`, or `tasks` is empty, stop and ask the user.
 
 2. Read `prd.json`.
    - A task is complete only if `passes === true`.
@@ -25,7 +24,7 @@ Orchestrate `prd-ralph` one task at a time. Never run tasks in parallel.
      `<promise>COMPLETE</promise>`
 
 3. Start the loop.
-   - Before choosing an agent/model, invoke `subagent-model-router`.
+   - Before choosing an agent/model, invoke the `subagent-model-router` skill.
    - Select the next ready task:
      - incomplete task where `passes !== true`
      - all `dependsOn` tasks, if any, have `passes === true`
