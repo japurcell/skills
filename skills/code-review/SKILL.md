@@ -11,6 +11,7 @@ Review only the requested change. Report only high-confidence, change-linked fin
 ## Core rules
 
 - Use distinct subagents for required roles; do not merge roles.
+- Do not run the review yourself in the main thread.
 - Do not expand scope beyond the requested PR, diff, commit range, branch, or local changes.
 - If the review target is unclear, ask one clarifying question and stop.
 - Do not run builds, tests, linters, typechecks, benchmarks, or broad validation unless asked.
@@ -18,12 +19,13 @@ Review only the requested change. Report only high-confidence, change-linked fin
 - Do not report style preferences, speculation, generic test/doc requests, or issues tooling should catch.
 - Standards findings require an explicit cited repo rule.
 - Keep findings only if they score 80+ under `references/false-positive-rubric.md`.
+- If a required skill, subagent, intake source, or reference file is unavailable, stop and explain.
 
 ## Workflow
 
 1. **Setup**
    - Invoke the `addy-code-review-and-quality` skill.
-   - Invoke the `subagent-model-router` skill and delegate tasks to the most suitable subagents whenever possible.
+   - Invoke the `subagent-model-router` skill and delegate tasks to the most suitable subagents.
 
 2. **Lock target**
    - PR: review that PR.
@@ -46,14 +48,15 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - If none exists, record `no spec available` and skip spec compliance review.
 
 6. **Review**
-   Spawn distinct, parallel subagents:
+   Spawn distinct, parallel subagents for each required role:
    - `addy-code-reviewer`: correctness, regressions, edge cases, architecture boundaries
    - `addy-security-auditor`: vuln, unsafe data handling, auth/authz, injection, secrets, attack surface
    - `addy-test-engineer`: inadequate, misleading, or broken tests for changed behavior
-   - maintainability reviewer using `references/maintainability-criteria.md`
-   - standards reviewer: using explicit repo rules and coding standards in addition to `references/code-smells.md`
-   - spec compliance reviewer, if a spec exists
-   - PR-only checks from `references/pr-protocol.md`, if reviewing a PR
+   - `general`: maintainability review using `references/maintainability-criteria.md`
+   - `general`: standards review using explicit repo rules
+   - `general`: code-smell review using `references/code-smells.md`
+   - `general`: spec compliance review, if a spec exists
+   - `general`: PR-only checks from `references/pr-protocol.md`, if reviewing a PR
 
 7. **Each subagent result must include**
    - role
@@ -96,5 +99,6 @@ Be brief, direct, and serious. Do not soften important correctness, security, or
 - [ ] Required review passes stayed distinct.
 - [ ] Every kept finding is change-linked and has concrete evidence.
 - [ ] Standards findings cite explicit repo rules.
+- [ ] Parallel review subagents were spawned for each required role.
 - [ ] False-positive score is 80+ for every kept finding.
 - [ ] Output matches the requested mode.
