@@ -36,11 +36,10 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - Local: collect the requested `git diff --cached`, `git diff`, or both separately.
    - Fixed point: collect `git diff <target>...HEAD` and `git log <target>..HEAD --oneline`.
 
-4. **Gather context**
-   - Read relevant repo instructions, standards, ADRs, contribution docs, and configs from repo root and touched-path ancestors.
+4. **Gather coding standards**
+   - Read relevant repo instructions, standards, ADRs, contribution docs, and configs from repo root and touched-path ancestors - anything in the repo that documents how code should be written.
    - Prefer snippets over full files.
-   - Skip standards enforced mechanically by tooling unless the change bypasses or weakens that tooling.
-   - Common context files are listed in `references/context-files.md`.
+   - Common context files are listed in `references/standards-files.md`.
 
 5. **Find spec**
    - Use PR metadata, linked issues, commits, user-supplied paths, or obvious files under `docs/`, `specs/`, `.scratch/`, `.agents/scratchpad/**`.
@@ -52,7 +51,7 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - `addy-security-auditor`: vuln, unsafe data handling, auth/authz, injection, secrets, attack surface
    - `addy-test-engineer`: inadequate, misleading, or broken tests for changed behavior
    - maintainability reviewer using `references/maintainability-criteria.md`
-   - standards reviewer using explicit repo rules only
+   - standards reviewer: using explicit repo rules and coding standards in addition to `references/code-smells.md`
    - spec compliance reviewer, if a spec exists
    - PR-only checks from `references/pr-protocol.md`, if reviewing a PR
 

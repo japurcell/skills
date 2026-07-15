@@ -1,4 +1,4 @@
-# Context Files
+# Standards Files
 
 Look for relevant files at repo root and touched-path ancestors. Also check user-level instruction files if available.
 
