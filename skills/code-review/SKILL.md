@@ -10,7 +10,6 @@ Review only the requested change. Report only high-confidence, change-linked fin
 
 ## Core rules
 
-- Use distinct subagents for required roles; do not merge roles.
 - Do not run the review yourself in the main thread.
 - Do not expand scope beyond the requested PR, diff, commit range, branch, or local changes.
 - If the review target is unclear, ask one clarifying question and stop.
@@ -24,8 +23,9 @@ Review only the requested change. Report only high-confidence, change-linked fin
 ## Workflow
 
 1. **Setup**
-   - Invoke the `addy-code-review-and-quality` skill.
-   - Invoke the `subagent-model-router` skill and delegate tasks to the most suitable subagents.
+   Before continuing, ensure the following skills are activated or loaded:
+   - `addy-code-review-and-quality`
+   - `subagent-model-router`: delegate tasks to the most suitable subagents
 
 2. **Lock target**
    - PR: review that PR.
@@ -52,11 +52,13 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - `addy-code-reviewer`: correctness, regressions, edge cases, architecture boundaries
    - `addy-security-auditor`: vuln, unsafe data handling, auth/authz, injection, secrets, attack surface
    - `addy-test-engineer`: inadequate, misleading, or broken tests for changed behavior
-   - `general`: maintainability review using `references/maintainability-criteria.md`
-   - `general`: standards review using explicit repo rules
-   - `general`: code-smell review using `references/code-smells.md`
-   - `general`: spec compliance review, if a spec exists
-   - `general`: PR-only checks from `references/pr-protocol.md`, if reviewing a PR
+   - `generalist-maintainability`: maintainability review using `references/maintainability-criteria.md`
+   - `generalist-standards`: standards review using explicit repo rules
+   - `generalist-code-smells`: code-smell review using `references/code-smells.md`
+   - `generalist-specs`: spec compliance review, if a spec exists
+   - `generalist-pr-checks`: PR-only checks from `references/pr-protocol.md`, if reviewing a PR
+
+   Do not merge `generalist-*` roles; each applicable role gets its own subagent.
 
 7. **Each subagent result must include**
    - role
@@ -99,6 +101,7 @@ Be brief, direct, and serious. Do not soften important correctness, security, or
 - [ ] Required review passes stayed distinct.
 - [ ] Every kept finding is change-linked and has concrete evidence.
 - [ ] Standards findings cite explicit repo rules.
-- [ ] Parallel review subagents were spawned for each required role.
+- [ ] Required review passes stayed distinct (specifically: zero merging of `generalist-*` focuses into a single run).
+- [ ] One distinct subagent ran for each applicable required role.
 - [ ] False-positive score is 80+ for every kept finding.
 - [ ] Output matches the requested mode.
