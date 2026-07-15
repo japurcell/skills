@@ -38,29 +38,33 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - Local: collect the requested `git diff --cached`, `git diff`, or both separately.
    - Fixed point: collect `git diff <target>...HEAD` and `git log <target>..HEAD --oneline`.
 
-4. **Gather coding standards**
+4. **Triage large changes**
+   If the change exceeds 1000 changed lines or 15 files, follow `references/large-change-triage.md`.
+
+5. **Gather coding standards**
    - Read relevant repo instructions, standards, ADRs, contribution docs, and configs from repo root and touched-path ancestors - anything in the repo that documents how code should be written.
    - Prefer snippets over full files.
    - Common context files are listed in `references/standards-files.md`.
 
-5. **Find spec**
+6. **Find spec**
    - Use PR metadata, linked issues, commits, user-supplied paths, or obvious files under `docs/`, `specs/`, `.scratch/`, `.agents/scratchpad/**`.
    - If none exists, record `no spec available` and skip spec compliance review.
 
-6. **Review**
-   Spawn distinct, parallel subagents for each required role:
+7. **Review**
+   Spawn parallel subagents using available catalog names:
    - `addy-code-reviewer`: correctness, regressions, edge cases, architecture boundaries
    - `addy-security-auditor`: vuln, unsafe data handling, auth/authz, injection, secrets, attack surface
    - `addy-test-engineer`: inadequate, misleading, or broken tests for changed behavior
-   - `generalist-maintainability`: maintainability review using `references/maintainability-criteria.md`
-   - `generalist-standards`: standards review using explicit repo rules
-   - `generalist-code-smells`: code-smell review using `references/code-smells.md`
-   - `generalist-specs`: spec compliance review, if a spec exists
-   - `generalist-pr-checks`: PR-only checks from `references/pr-protocol.md`, if reviewing a PR
+   - `generalist`: quality review covering maintainability, standards, code smells, spec compliance if available, and PR-only checks if reviewing a PR
 
-   Do not merge `generalist-*` roles; each applicable role gets its own subagent.
+   Prompt the `generalist` with:
+   - `references/maintainability-criteria.md`
+   - `references/code-smells.md`
+   - explicit repo standards only
+   - spec, if available
+   - `references/pr-protocol.md`, if reviewing a PR
 
-7. **Each subagent result must include**
+8. **Each subagent result must include**
    - role
    - file and line
    - issue
@@ -71,12 +75,15 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - specific fix
    - preliminary confidence
 
-8. **Filter false positives with fast-tier subagents**
+9. **Filter false positives with fast-tier subagents**
    - Apply `references/false-positive-rubric.md`.
+   - Verify each finding against the exact diff hunk.
+   - Keep only findings on changed lines, or unchanged lines directly reached/exposed by changed hunks with explicit evidence.
+   - Drop findings that rely only on nearby unchanged context.
    - Keep only findings scoring 80+.
    - Assign final severity.
 
-9. **Output**
+10. **Output**
    - Use the user’s requested mode.
    - For PR comment or machine-readable output, use `references/output-formats.md`.
    - Normal format:
@@ -98,10 +105,10 @@ Be brief, direct, and serious. Do not soften important correctness, security, or
 - [ ] PR eligibility was checked, if applicable.
 - [ ] Relevant context and standards were reviewed.
 - [ ] Spec review ran or `no spec available` was recorded.
-- [ ] Required review passes stayed distinct.
 - [ ] Every kept finding is change-linked and has concrete evidence.
 - [ ] Standards findings cite explicit repo rules.
-- [ ] Required review passes stayed distinct (specifically: zero merging of `generalist-*` focuses into a single run).
-- [ ] One distinct subagent ran for each applicable required role.
+- [ ] Required catalog subagents ran for correctness, security, tests, and general quality.
+- [ ] Large-change triage ran if thresholds were exceeded.
+- [ ] Every kept finding was verified against an exact diff hunk.
 - [ ] False-positive score is 80+ for every kept finding.
 - [ ] Output matches the requested mode.
