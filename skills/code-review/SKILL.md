@@ -104,6 +104,7 @@ Be brief, direct, and serious. Do not soften important correctness, security, or
 
 ## Final checklist
 
+- [ ] Prerequisite skills (`addy-code-review-and-quality` and `subagent-model-router`) were successfully activated.
 - [ ] Target is fixed or clarified.
 - [ ] PR eligibility was checked, if applicable.
 - [ ] Relevant context and standards were reviewed.
