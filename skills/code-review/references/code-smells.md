@@ -1,21 +1,25 @@
 # Code Smells
 
-A fixed set of Fowler code smells (_Refactoring_, ch.3) that applies even when a repo documents nothing. Two rules bind it:
+Use these as maintainability/readability heuristics, not standards. Report only high-confidence smells introduced or worsened by the reviewed change.
 
-- **The repo overrides.** A documented repo standard always wins; where it endorses something the baseline would flag, suppress the smell.
-- **Always a judgement call.** Each smell is a labelled heuristic ("possible Feature Envy"), never a hard violation — and, like any standard here, skip anything tooling already enforces.
+Rules:
 
-Each smell reads _what it is_ → _how to fix_; match it against the diff:
+- Repo standards override this file.
+- Do not report smells enforced by tooling.
+- Label findings as possible smells, not hard rule violations.
+- Keep only smells that survive `references/false-positive-rubric.md`.
 
-- **Mysterious Name** — a function, variable, or type whose name doesn't reveal what it does or holds. → rename it; if no honest name comes, the design's murky.
-- **Duplicated Code** — the same logic shape appears in more than one hunk or file in the change. → extract the shared shape, call it from both.
-- **Feature Envy** — a method that reaches into another object's data more than its own. → move the method onto the data it envies.
-- **Data Clumps** — the same few fields or params keep travelling together (a type wanting to be born). → bundle them into one type, pass that.
-- **Primitive Obsession** — a primitive or string standing in for a domain concept that deserves its own type. → give the concept its own small type.
-- **Repeated Switches** — the same `switch`/`if`-cascade on the same type recurs across the change. → replace with polymorphism, or one map both sites share.
-- **Shotgun Surgery** — one logical change forces scattered edits across many files in the diff. → gather what changes together into one module.
-- **Divergent Change** — one file or module is edited for several unrelated reasons. → split so each module changes for one reason.
-- **Speculative Generality** — abstraction, parameters, or hooks added for needs the spec doesn't have. → delete it; inline back until a real need shows.
-- **Message Chains** — long `a.b().c().d()` navigation the caller shouldn't depend on. → hide the walk behind one method on the first object.
-- **Middle Man** — a class or function that mostly just delegates onward. → cut it, call the real target direct.
-- **Refused Bequest** — a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
+Smells:
+
+- **Mysterious Name**: a name hides purpose or meaning. Fix by renaming or simplifying.
+- **Duplicated Code**: the same logic appears in multiple changed places. Fix with shared code or structure.
+- **Feature Envy**: code depends more on another object’s data than its own. Move behavior closer to the data.
+- **Data Clumps**: the same fields or parameters travel together repeatedly. Introduce a shared type.
+- **Primitive Obsession**: a primitive/string represents a domain concept. Use an explicit type.
+- **Repeated Switches**: repeated `switch`/`if` cascades on the same value type. Use one shared map, dispatch table, or polymorphism.
+- **Shotgun Surgery**: one logical change requires scattered edits. Group related behavior.
+- **Divergent Change**: one module changes for unrelated reasons. Split responsibilities.
+- **Speculative Generality**: abstractions, hooks, or options serve no current need. Delete or inline them.
+- **Message Chains**: callers navigate long object chains. Expose one method at the right boundary.
+- **Middle Man**: code mostly delegates without adding value. Remove the wrapper.
+- **Refused Bequest**: a subtype ignores much of its parent contract. Use composition or a narrower interface.

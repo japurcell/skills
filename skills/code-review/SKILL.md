@@ -10,7 +10,7 @@ Review only the requested change. Report only high-confidence, change-linked fin
 
 ## Core rules
 
-- Do not run the review yourself in the main thread.
+- Do not run the review yourself in the main thread. Spawning subagents preserves your context window from large diff files and runs deep specialist logic.
 - Do not expand scope beyond the requested PR, diff, commit range, branch, or local changes.
 - If the review target is unclear, ask one clarifying question and stop.
 - Do not run builds, tests, linters, typechecks, benchmarks, or broad validation unless asked.
@@ -42,8 +42,9 @@ Review only the requested change. Report only high-confidence, change-linked fin
    If the change exceeds 1000 changed lines or 15 files, follow `references/large-change-triage.md`.
 
 5. **Gather coding standards**
-   - Read relevant repo instructions, standards, ADRs, contribution docs, and configs from repo root and touched-path ancestors - anything in the repo that documents how code should be written.
+   - Read relevant repo instructions, standards, ADRs, contribution docs, and configs from repo root and touched-path ancestors.
    - Prefer snippets over full files.
+   - Skip standards enforced mechanically by tooling unless the change bypasses or weakens that tooling.
    - Common context files are listed in `references/standards-files.md`.
 
 6. **Find spec**
@@ -63,6 +64,8 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - explicit repo standards only
    - spec, if available
    - `references/pr-protocol.md`, if reviewing a PR
+
+   For all reviews, run the four required subagents unless the user explicitly asks for a lightweight review. For large changes, chunk input per `references/large-change-triage.md`.
 
 8. **Each subagent result must include**
    - role
@@ -105,10 +108,10 @@ Be brief, direct, and serious. Do not soften important correctness, security, or
 - [ ] PR eligibility was checked, if applicable.
 - [ ] Relevant context and standards were reviewed.
 - [ ] Spec review ran or `no spec available` was recorded.
-- [ ] Every kept finding is change-linked and has concrete evidence.
-- [ ] Standards findings cite explicit repo rules.
 - [ ] Required catalog subagents ran for correctness, security, tests, and general quality.
 - [ ] Large-change triage ran if thresholds were exceeded.
-- [ ] Every kept finding was verified against an exact diff hunk.
+- [ ] Every kept finding is change-linked and verified against an exact diff hunk.
+- [ ] Standards findings cite explicit repo rules.
 - [ ] False-positive score is 80+ for every kept finding.
+- [ ] Findings cite code, standards, specs, or diff evidence as applicable.
 - [ ] Output matches the requested mode.
