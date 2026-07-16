@@ -1,41 +1,61 @@
 ---
 name: subagent-model-router
-description: Route subagent work to the narrowest capable agent type and cheapest capable model. Use before launching subagents, task tools, background agents, or parallel workers when agent_type or model must be selected.
+description: Route subagent work to the narrowest capable agent type and cheapest capable model. Use before launching subagents, task tools, background agents, code reviewers, security reviewers, or parallel workers when agent_type or model must be selected.
 ---
 
 # Subagent Model Router
 
-Pick the cheapest model likely to complete the task well.
+Choose the narrowest capable `agent_type`, then the cheapest capable model that satisfies the required tier.
 
-## Core rule
+## Core rules
 
-Default cheap and narrow. Escalate only for:
+- Default cheap and narrow.
+- Do not use Premium for bounded execution unless stakes/security require judgment.
+- Keep execution cheap; route judgment-heavy review separately.
+- Do not use Fast for normal code review.
+- Security review starts at Premium.
+- Escalate only for a concrete trigger.
 
-- harder reasoning
-- context too large for the current model
-- higher stakes
-- failed verification
-- user-requested tier
-- model unavailability
+## Agent-type floors
 
-Do not use premium models for bounded execution work.
+| Agent type        | Minimum tier | Use for                                                                       |
+| ----------------- | -----------: | ----------------------------------------------------------------------------- |
+| `task`            |         Fast | Tests, scripts, builds, lint, formatting, deterministic edits/checks.         |
+| `explore`         |         Fast | Search, inspect, enumerate, gather evidence.                                  |
+| `editor`          |         Fast | Mechanical edits. Use Standard for substantive rewrites or connected changes. |
+| `debugger`        |     Standard | Bugs needing reasoning, especially across files.                              |
+| `code-reviewer`   |     Standard | Diff/PR review. Fast only for tiny single-file style-only diffs.              |
+| `security-review` |      Premium | Auth, permissions, secrets, sensitive data, policy/security controls.         |
+| general agent     |     Standard | Only when no narrower type fits.                                              |
+
+## Tier guide
+
+- **Fast**: bounded, deterministic, repetitive, low-risk work; tiny single-file style-only review.
+- **Standard**: normal coding, editing, debugging, analysis, and meaningful code review.
+- **Premium**: security-sensitive, high-stakes, ambiguous, subtle correctness, cross-file contracts, false-pass tests, repeated failure, prior missed issue, or user-requested best quality.
 
 ## Workflow
 
-1. Reuse an earlier route if work class, stakes, ambiguity, and model constraints are unchanged.
-2. Otherwise classify the work:
-   - **Fast**: simple, bounded, repetitive, low-risk.
-   - **Standard**: normal coding, editing, review, debugging, analysis.
-   - **Premium**: hard reasoning, broad ambiguity, high stakes, repeated lower-tier failure.
-3. Pick the narrowest agent type:
-   - `task`: run tests, scripts, checks, deterministic work.
-   - `explore`: search, inspect, list candidate files.
-   - reviewer/debugger/editor agent: when the work needs that specialty.
-   - general agent: only when no narrower type fits.
-4. Use `reference/model-catalog.md` to find capable models in the selected tier.
-5. If cost matters or several models fit, use `reference/pricing.md` to pick the cheapest for the token shape.
-6. If the model is unavailable, stay in the same tier when possible.
-7. For large context, prefer a suitable same-tier long-context model before escalating tiers.
+1. Reuse a prior route only if work class, stakes, ambiguity, agent type, touched areas, review history, and model constraints are unchanged.
+2. Pick the narrowest `agent_type`.
+3. If this is code or security review, apply `reference/review-routing.md`.
+4. Pick the lowest tier that satisfies:
+   - the agent-type floor
+   - task complexity and stakes
+   - context size
+   - review history
+   - user/model constraints
+5. Use `reference/model-catalog.md` to choose a capable model in the tier.
+6. If several models fit, use `reference/pricing.md` to choose the cheapest for the token shape.
+7. If unavailable, prefer a same-tier fallback. Change tier only if needed.
+8. For large context, prefer a same-tier long-context model before escalating, unless reasoning difficulty also increases.
+
+## Common defaults
+
+- Simple bounded work: Fast, cheapest capable Fast model.
+- Normal code review: `code-reviewer` + Standard + `gpt-5.4-mini`.
+- Tiny single-file style-only review: `code-reviewer` + Fast + `gpt-5-mini`.
+- Subtle correctness/auth/security review: Premium, often `gpt-5.3-codex` or stronger suitable model.
 
 ## Output format
 
@@ -45,28 +65,15 @@ Return:
 - tier:
 - model:
 - reason:
+- escalation_trigger, if any:
 - fallback, if any:
 
-## Tier guide
+## References
 
-| Tier     | Use for                                                                                         |
-| -------- | ----------------------------------------------------------------------------------------------- |
-| Fast     | tests, builds, lint, search, extraction, formatting, logs, small isolated edits                 |
-| Standard | multi-file debugging, normal code edits, meaningful reviews, design tradeoffs                   |
-| Premium  | high-stakes work, broad architecture/security analysis, hard failures, best-available reasoning |
+Load only when needed:
 
-## Token-shape guide
-
-| Task shape                    | Prefer low                         |
-| ----------------------------- | ---------------------------------- |
-| Reads a lot, writes little    | input cost                         |
-| Writes a lot                  | output cost                        |
-| Reuses large context          | cached-input cost                  |
-| Anthropic with cached context | cache-write plus cached-input cost |
-
-## Load references only when needed
-
+- `reference/review-routing.md`: code-review/security-review routing.
+- `reference/model-catalog.md`: models by routing tier.
+- `reference/pricing.md`: token-cost optimization.
+- `reference/escalation-policy.md`: escalation and missed-issue rules.
 - `reference/patterns.md`: examples and edge cases.
-- `reference/model-catalog.md`: all models by routing tier.
-- `reference/pricing.md`: pricing and token-cost tradeoffs.
-- `reference/escalation-policy.md`: when and how to escalate.
