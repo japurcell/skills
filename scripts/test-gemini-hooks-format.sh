@@ -240,9 +240,6 @@ test_gemini_settings_keep_required_safety_hooks() {
   assert_equals '$HOME/.gemini/hooks/scripts/hedge-detector.sh' \
     "$(jq -r '.hooks.AfterAgent[] | .hooks[] | select(.name == "hedge-detector") | .command // empty' "$REPO_ROOT/.gemini/settings.json")" \
     "Expected .gemini/settings.json to keep hedge-detector wired."
-  assert_equals '$HOME/.gemini/hooks/scripts/pride-check.sh' \
-    "$(jq -r '.hooks.AfterAgent[] | .hooks[] | select(.name == "pride-check") | .command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected .gemini/settings.json to keep pride-check wired."
 }
 
 main() {

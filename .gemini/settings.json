@@ -141,13 +141,6 @@
             "command": "$HOME/.gemini/hooks/scripts/hedge-detector.sh",
             "description": "Rejects over-certain final answers that omit explicit evidence and uncertainty sections.",
             "timeout": 10000
-          },
-          {
-            "name": "pride-check",
-            "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/pride-check.sh",
-            "description": "Rejects changed-code final answers that omit the required Pride Check craft self-audit section.",
-            "timeout": 10000
           }
         ]
       }

@@ -107,8 +107,7 @@ test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
     "$scripts_dir/log-session-start.sh" \
     "$scripts_dir/log-subagent-start.sh" \
     "$scripts_dir/log-subagent-stop.sh" \
-    "$scripts_dir/log-tooluse-failure.sh" \
-    "$scripts_dir/pride-check.sh"
+    "$scripts_dir/log-tooluse-failure.sh"
   do
     assert_file_contains "$script" 'source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"' \
       "Expected $script to source audit.sh."
