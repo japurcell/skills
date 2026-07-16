@@ -20,17 +20,18 @@ Convert `prd_file` into agent-ready `prd.json`: small, verifiable implementation
 
 ## Workflow
 
-1. Resolve `prd_file`, output path, and create the output directory if needed.
-2. Read the PRD; identify project, feature, stories, requirements, edge cases, rollout order, and shared prerequisites.
-3. If repo context is needed and missing, invoke the `explore` skill; look for prefactors that make the change easier.
-4. Scan relevant workspace rules when available: `AGENTS.md`, scoped docs, repo docs, package scripts, tests, and existing patterns.
-5. Check and resolve PRD/workspace inconsistencies before task splitting. Prefer the most specific implementation-nearest source: rollout/migration order, acceptance criteria/Definition of Done, technical decisions, functional requirements, then narrative. Document resolutions in task descriptions or `designGuidance`; ask the user if unclear.
-6. Split broad requirements into atomic tasks; pull shared prerequisites first, then fan out dependent tasks.
-7. Assign direct `dependsOn`, earliest safe `parallelBatch`, and unique ascending `priority`.
-8. Verify every requirement and edge case maps to at least one task or acceptance criterion.
-9. Validate IDs, dependencies, batches, priorities, files, traceability, and JSON syntax.
-10. Save valid JSON only to `prd.json`.
-11. Final chat response: task count, output path, readiness for `/prd-build-loop`.
+1. Activate or load the `subagent-model-router` skill and delegate tasks to the most suitable subagents whenever possible.
+2. Resolve `prd_file`, output path, and create the output directory if needed.
+3. Read the PRD; identify project, feature, stories, requirements, edge cases, rollout order, and shared prerequisites.
+4. If repo context is needed and missing, activate or load the `explore` skill; look for prefactors that make the change easier.
+5. Scan relevant workspace rules when available: `AGENTS.md`, scoped docs, repo docs, package scripts, tests, and existing patterns.
+6. Check and resolve PRD/workspace inconsistencies before task splitting. Prefer the most specific implementation-nearest source: rollout/migration order, acceptance criteria/Definition of Done, technical decisions, functional requirements, then narrative. Document resolutions in task descriptions or `designGuidance`; ask the user if unclear.
+7. Split broad requirements into atomic tasks; pull shared prerequisites first, then fan out dependent tasks.
+8. Assign direct `dependsOn`, earliest safe `parallelBatch`, and unique ascending `priority`.
+9. Verify every requirement and edge case maps to at least one task or acceptance criterion.
+10. Validate IDs, dependencies, batches, priorities, files, traceability, and JSON syntax.
+11. Save valid JSON only to `prd.json`.
+12. Final chat response: task count, output path, readiness for `/prd-build-loop`.
 
 ## Required JSON shape
 

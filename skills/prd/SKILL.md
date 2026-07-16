@@ -13,7 +13,7 @@ Create an unambiguous, implementation-ready PRD from the conversation and codeba
 - Do not implement or write code.
 - Do not interview the user; make reasonable assumptions and document them. If unsafe/contradictory, stop and report the blocker.
 - Follow existing codebase patterns. Prefer YAGNI.
-- If codebase context is missing, invoke the `explore` skill.
+- If codebase context is missing, activate or load the `explore` skill.
 - Check available workspace conventions: `AGENTS.md`, scoped docs, repo docs, scripts, tests, existing modules/patterns.
 - Do not invent commands, files, paths, schemas, URLs, literals, DB objects, or conventions. Use exact names only when verified or clearly inferable.
 - Define each path, schema, key format, command, contract, and rollout order in one canonical place, then reference it consistently.
@@ -26,13 +26,14 @@ Save to `.agents/scratchpad/[feature-name]/prd.md`, where `[feature-name]` is sh
 
 ## Workflow
 
-1. If codebase context is missing, invoke the `explore` skill.
-2. Identify existing patterns, affected modules, contracts, test seams, risks, edge cases, rollout constraints, and conflicts with workspace conventions.
-3. Draft the PRD using the template below.
-4. Validate consistency across sections, especially requirements, acceptance criteria, technical decisions, Definition of Done, paths, schemas, commands, examples, and execution order.
-5. Resolve conflicts by preferring the most specific implementation-nearest source; document assumptions. If unclear, stop and report the blocker.
-6. Save to the verified unused path.
-7. Final response: feature short name, PRD path, validation status `pass`/`fail`, readiness for `/prd-to-tasks`.
+1. Activate or load the `subagent-model-router` skill and delegate tasks to the most suitable subagents whenever possible.
+2. If codebase context is missing, activate or load the `explore` skill.
+3. Identify existing patterns, affected modules, contracts, test seams, risks, edge cases, rollout constraints, and conflicts with workspace conventions.
+4. Draft the PRD using the template below.
+5. Validate consistency across sections, especially requirements, acceptance criteria, technical decisions, Definition of Done, paths, schemas, commands, examples, and execution order.
+6. Resolve conflicts by preferring the most specific implementation-nearest source; document assumptions. If unclear, stop and report the blocker.
+7. Save to the verified unused path.
+8. Final response: feature short name, PRD path, validation status `pass`/`fail`, readiness for `/prd-to-tasks`.
 
 <prd-template>
 

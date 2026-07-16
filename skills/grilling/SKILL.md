@@ -7,6 +7,6 @@ Interview me relentlessly about every aspect of this until we reach a shared und
 
 Ask the questions one at a time, waiting for feedback on each question before continuing. Asking multiple questions at once is bewildering.
 
-If a _fact_ can be found by exploring the environment (filesystem, tools, etc.), invoke the `explore` skill rather than asking me. The _decisions_, though, are mine — put each one to me and wait for my answer.
+If a _fact_ can be found by exploring the environment (filesystem, tools, etc.), activate or load the `explore` skill rather than asking me. The _decisions_, though, are mine — put each one to me and wait for my answer.
 
 Do not act on it until I confirm we have reached a shared understanding.

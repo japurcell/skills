@@ -43,7 +43,7 @@ description: Complete exactly one eligible unfinished task from prd.json, verify
    - If incomplete tasks exist but none are eligible, stop and list blockers.
 
 4. Implement with TDD:
-   - Invoke the `tdd` skill.
+   - Activate or load the `tdd` skill.
    - RED: add a failing test for the task behavior.
    - GREEN: make the minimum change to pass.
    - REFACTOR: only if needed while tests stay green.
@@ -72,7 +72,7 @@ description: Complete exactly one eligible unfinished task from prd.json, verify
    - Include every field.
    - Confirm the block was appended and well formed.
    - Add reusable repo notes to top `## Codebase Patterns` only when broadly useful.
-   - Invoke the `self-improve` skill to capture durable learnings, and to update and refactor all `AGENTS.md` files and linked documentation.
+   - Activate or load the `self-improve` skill to capture durable learnings, and to update and refactor all `AGENTS.md` files and linked documentation.
 
 7. If verification failed:
    - Do not update `passes`.

@@ -26,7 +26,7 @@ A task is complete only when `passes === true`.
 
    `<promise>COMPLETE</promise>`
 
-2. Invoke `subagent-model-router` once before starting, unless already configured.
+2. Activate or load the `subagent-model-router` skill once before starting, unless already configured.
 
 3. Select the next ready task:
    - `passes !== true`
@@ -37,7 +37,7 @@ A task is complete only when `passes === true`.
 5. Spawn exactly one subagent with this prompt:
 
    ```text
-   Invoke the `prd-ralph` skill on this PRD file: <prd_file>.
+   Activate or load the `prd-ralph` skill on this PRD file: <prd_file>.
    Implement the next ready task only. Verify it, update PRD/progress state, and commit.
    ```
 

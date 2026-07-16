@@ -10,7 +10,7 @@ Remove duplicated code while preserving behavior. Prefer small, safe, validated 
 
 ## 1. Route
 
-Invoke the `subagent-model-router` skill.
+Before starting, ensure the `subagent-model-router` skill is activated or loaded.
 
 ## 2. Scope
 
@@ -27,7 +27,7 @@ Build a shortlist of changed functions, classes, modules, tests, configs, script
 
 ## 3. Find duplication
 
-Invoke the `explore` skill to spawn 1-3 `code-explorer` subagents scaled to scope size.
+Activate or load the `explore` skill to spawn 1-3 `code-explorer` subagents scaled to scope size.
 
 Search shortlist items against relevant nearby/codebase patterns for:
 
@@ -71,7 +71,7 @@ For each selected candidate:
    - make the smallest behavior-preserving change
    - reuse existing structure and conventions
    - avoid new top-level patterns if equivalent ones exist
-   - use `tdd` only when tests must be added or changed
+   - activate or load the `tdd` skill only when tests must be added or changed
 3. Launch one validation subagent.
 4. Validation subagent runs relevant checks: tests, lint, type-check, build, or targeted commands.
 5. If validation fails, fix and revalidate; otherwise revert that candidate.

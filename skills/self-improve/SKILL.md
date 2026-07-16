@@ -27,7 +27,7 @@ Capture durable, reusable learnings in the right `AGENTS.md` or linked doc. Pref
    - Never turn excluded noise into an inverse standing rule.
 
 2. **Map the instruction surface**
-   - Invoke `subagent-model-router` and spawn a fast-tier finder subagent to find every `AGENTS.md`:
+   - Activate or load the `subagent-model-router` skill and spawn a fast-tier finder subagent to find every `AGENTS.md`:
 
    ```bash
    find . -name "AGENTS.md" 2>/dev/null | head -20

@@ -12,7 +12,7 @@ Goal: produce a concise code map: files, entry points, flow, dependencies, tests
 1. Define `<topic>` in one sentence and create filesystem-safe `<slug>`.
 2. Reuse session context and `.agents/scratchpad/explore-<slug>.md` if relevant; fill only gaps.
 3. If scope is narrow (e.g. 1–3 known files / one request path / one endpoint flow), skip subagents. Use direct search/read tools, then synthesize findings.
-4. Otherwise, pick 1–3 independent areas. Use `subagent-model-router`, then run one focused `code-explorer` subagent per area in parallel.
+4. Otherwise, pick 1–3 independent areas. Activate or load the `subagent-model-router` skill, then run one focused `code-explorer` subagent per area in parallel.
 5. Synthesize findings before editing.
 6. Save new/updated findings to `.agents/scratchpad/explore-<slug>.md`.
 
