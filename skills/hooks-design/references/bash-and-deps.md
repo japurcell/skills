@@ -121,3 +121,16 @@ Missing dependency handling must preserve JSON discipline:
 1. Write diagnostic to `stderr`.
 2. Emit schema-valid JSON to `stdout`.
 3. Exit `0` for expected control flow unless this is a true hard setup/runtime failure.
+
+### Cryptographic Hashing Rules
+
+Never use weak algorithms (MD5, SHA-1) for content or identifier hashing. This includes:
+
+- md5sum
+- sha1sum
+- shasum without algorithm options (defaults to SHA-1)
+
+Always specify SHA-256 explicitly:
+
+- Use sha256sum when available.
+- Use shasum -a 256 as fallback.
