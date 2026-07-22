@@ -1,0 +1,19 @@
+{
+  "evals": [
+    {
+      "name": "create-csharp-service",
+      "description": "Agent should create a new C# service using primary constructors, collection expressions, and proper formatting.",
+      "prompt": "Create a UserService in C# that takes an ILogger and an IUserRepository. It should have a method to get active user IDs as an array."
+    },
+    {
+      "name": "modify-csharp-legacy-code",
+      "description": "Agent should refactor legacy code to use modern C# 14 / .NET 10 features (field keyword, positional records, removing .Result).",
+      "prompt": "Refactor this legacy code to modern C# standards: `public class Order { private string _name; public string Name { get { return _name; } set { _name = value; } } public void Process() { var res = Task.Run(() => {}).Result; } }`"
+    },
+    {
+      "name": "dedupe-review-no-vb",
+      "description": "Agent should decline applying strict C# formatting rules to Visual Basic code.",
+      "prompt": "Review this Visual Basic code: `Public Class User \n Public Property Name As String \n End Class`"
+    }
+  ]
+}
