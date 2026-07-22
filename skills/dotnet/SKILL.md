@@ -1,6 +1,6 @@
 ---
 name: dotnet
-description: Use for writing, refactoring, or reviewing C#/.NET code, including ASP.NET Core, EF Core, DI, async, and performance-sensitive code.
+description: C# and .NET development, refactoring, or review. Use when creating, modifying, or reviewing C# (.cs), F# (.fs), or VB (.vb) source files, configuring project/solution files (.csproj, .sln), or executing dotnet CLI commands (dotnet build, dotnet test, dotnet run, dotnet format). Covers ASP.NET Core, EF Core, dependency injection (DI), and async performance.
 ---
 
 # .NET / C# Engineering
