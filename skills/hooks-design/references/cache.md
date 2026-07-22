@@ -1,17 +1,15 @@
 # Cache Rules
 
-Caching is only an optimization. It must never bypass formatting, verification, safety, or validation.
+Caching is only an optimization. It must never bypass required formatting, verification, safety, or validation.
 
 ## Universal Rules
 
-- Cache only successful formatter runs.
-- Cache only successful verifier runs.
-- Never cache formatter failures.
-- Never cache verification failures.
-- Cache read/write failures must degrade to normal uncached execution.
+- Cache only successful formatter/verifier runs.
+- Never cache formatter or verification failures.
+- Cache read/write failures degrade to uncached execution.
 - Hash failures disable cache read/write for that run.
 - Do not cache sentinel hashes such as `error`.
-- GitHub and Gemini cache behavior must remain aligned.
+- Keep GitHub and Gemini cache behavior aligned.
 
 ## Format Cache
 
@@ -22,13 +20,22 @@ Default repo-local paths:
 .hooks-cache/locks/
 ```
 
-Formatter cache entries must use post-format content hashes.
+Rules:
 
-Do not write stale pre-format hashes.
+- Use post-format content hashes.
+- Never write stale pre-format hashes.
+
+Example:
+
+```bash
+if [[ -f "$absolute_file" ]]; then
+  content_hash="$(file_content_hash "$absolute_file")"
+fi
+```
 
 ## Verify Cache
 
-Default verify cache should live outside the workspace, under a repo-specific state directory, for example:
+Default verify cache should live outside the workspace, under a repo-specific state directory:
 
 ```text
 ${XDG_STATE_HOME:-$HOME/.local/state}/<repo-id>-hooks-cache/verify/
@@ -37,13 +44,33 @@ ${XDG_STATE_HOME:-$HOME/.local/state}/<repo-id>-hooks-cache/locks/
 
 Reason: repo-writable processes should not be able to preseed trusted verification hits.
 
-Verify cache entries must include an integrity signature tied to a host-local secret.
+Rules:
 
-Unsigned or tampered verify cache entries are misses.
+- Verify cache entries must include an integrity signature tied to a host-local secret.
+- Unsigned or tampered entries are misses.
+- Treat `.hooks-cache/verify/` as legacy or test-only unless the repo explicitly uses it.
 
-Treat `.hooks-cache/verify/` as legacy or test-only unless the repository explicitly uses it.
+## Fingerprints
 
-## Test Overrides
+Use SHA-256 only.
+
+```bash
+file_content_hash() {
+  local file="$1"
+
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$file" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$file" | awk '{print $1}'
+  else
+    return 1
+  fi
+}
+```
+
+If fingerprinting fails, skip cache read/write for that run.
+
+## Test Isolation
 
 Tests should isolate caches:
 
@@ -53,4 +80,4 @@ HOOK_VERIFY_CACHE_ROOT="$(mktemp -d)"
 export HOOK_CACHE_ROOT HOOK_VERIFY_CACHE_ROOT
 ```
 
-Reuse one temp cache only in tests that intentionally verify cache-hit behavior.
+Reuse a temp cache only when intentionally testing cache hits.

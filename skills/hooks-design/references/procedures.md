@@ -1,6 +1,6 @@
 # Formatter and Verifier Procedures
 
-Use the script layout that exists in the repository.
+Use the script layout already present in the repo. Do not invent a new layout unless asked.
 
 Common split layout:
 
@@ -26,73 +26,76 @@ Common unified layout:
 
 ## Formatter Hooks
 
-Applies to formatter hooks such as `format-backend.sh`, `format-frontend.sh`, or `format.sh`.
+Applies to `format*.sh`.
 
 Procedure:
 
-1. Parse hook JSON from `stdin`.
-2. Extract changed files.
-3. Robustly handle `apply_patch` payloads as:
-   - object
-   - stringified object
-   - raw string
-4. Filter files to the formatter scope.
-5. Verify required tools.
-6. Check format cache.
-7. On valid cache hit, skip formatting and emit success JSON.
-8. Run formatter.
-9. Recalculate content hashes after formatting.
-10. Cache only successful post-format hashes.
+1. Read hook JSON from `stdin`.
+2. Extract file paths from `stdin` first.
+3. Support both common field styles:
+   - camelCase: `toolArgs`, `filePath`, `toolName`
+   - snake_case: `tool_input`, `file_path`, `tool_name`
+4. Support `apply_patch` as object, stringified object, or raw patch text.
+5. Use `git diff`, `git status`, or worktree scans only when payload paths are unavailable.
+6. Normalize, deduplicate, and scope-filter paths.
+7. Check required tools; missing developer tools usually fail open.
+8. Check format cache.
+9. On valid cache hit, skip formatting.
+10. Run formatter.
+11. Recalculate hashes after formatting.
+12. Cache only successful post-format hashes.
+13. Emit one success JSON response.
 
-Example post-format hash pattern:
-
-```bash
-if [[ -f "$absolute_file" ]]; then
-  content_hash="$(file_content_hash "$absolute_file")"
-fi
-```
+Acceptance gate: if the hook formats edited files, at least one smoke test must prove selected include paths came from `stdin`.
 
 ## Verifier Hooks
 
-Applies to verifier hooks such as `verify-backend.sh`, `verify-frontend.sh`, or `verify.sh`.
+Applies to `verify*.sh`.
 
 Procedure:
 
-1. Parse hook JSON from `stdin`.
-2. Extract changed files.
-3. Robustly handle `apply_patch` payloads as object, stringified object, or raw string.
-4. Filter files to verification scope.
-5. If no relevant files changed, log skip to `stderr` or audit log and emit allow/success JSON.
-6. Verify required tools.
-7. Build a workspace fingerprint from current relevant file contents.
-8. Check signed verify cache.
-9. On valid cache hit, skip verification and emit allow/success JSON.
-10. Run full verification.
-11. Cache only successful verification.
+1. Read hook JSON from `stdin`.
+2. Extract file paths from `stdin` first when the event provides paths.
+3. Support both common field styles and all common `apply_patch` forms.
+4. For intentional session/worktree verifiers, use a worktree changed-files filter.
+5. Normalize, deduplicate, and scope-filter paths.
+6. If no relevant files changed, log skip and emit allow/success JSON.
+7. Check required tools; missing developer tools usually fail open.
+8. Build a fingerprint from current relevant file contents.
+9. Check signed verify cache.
+10. On valid cache hit, skip verification.
+11. Run full verification.
+12. Cache only successful verification.
+13. Emit allow/success JSON for pass or deny/block JSON for validation failure.
 
-Preferred fingerprint pattern:
+## Changed-Files Fallback
+
+Use fallback detection only after payload-first extraction fails, or for intentional session/worktree events.
+
+Example backend filter:
 
 ```bash
-workspace_fingerprint=""
-while IFS= read -r file; do
-  [[ -n "$file" ]] || continue
-  hash="deleted"
+backend_changed=false
 
-  if [[ -f "$repo_root/$file" ]]; then
-    if ! hash="$(git hash-object "$repo_root/$file" 2>/dev/null)"; then
-      hash=""
-      fingerprint_failed=1
-      break
-    fi
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  if git status --porcelain --untracked-files=all \
+    | grep -E '\.(cs|csproj|sln|slnf)$|Directory\.Build\.props$' >/dev/null 2>&1; then
+    backend_changed=true
   fi
+else
+  backend_changed=true
+fi
 
-  workspace_fingerprint+="${file}:${hash}"$'\n'
-done <<< "$changed_files"
+if [[ "$backend_changed" = false ]]; then
+  log_stderr "Skipping verification: no backend files changed."
+  emit_allow "Skipped: no backend files changed."
+  exit 0
+fi
 ```
 
-If fingerprinting fails, do not read or write cache for that run.
+Keep extension lists and sentinel files aligned between GitHub and Gemini.
 
-## Common Verification Commands
+## Verification Command Notes
 
 Backend examples:
 
@@ -107,7 +110,7 @@ If using:
 dotnet test --no-build
 ```
 
-keep an explicit `dotnet build` first.
+run an explicit `dotnet build` first.
 
 Frontend examples:
 

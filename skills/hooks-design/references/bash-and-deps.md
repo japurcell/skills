@@ -1,6 +1,8 @@
 # Bash and Dependency Rules
 
-## No Top-Level `local`
+## Bash Safety
+
+No top-level `local`.
 
 Invalid:
 
@@ -8,25 +10,17 @@ Invalid:
 local value="bad"
 ```
 
-Valid at top level:
+Valid:
 
 ```bash
 value="ok"
-```
 
-Valid inside functions:
-
-```bash
 my_function() {
   local value="ok"
 }
 ```
 
-## `set -euo pipefail`
-
-Under `set -euo pipefail`, loops and filters may accidentally terminate scripts.
-
-Functions that process optional matches should end with success when appropriate:
+Under `set -euo pipefail`, loops and filters may terminate scripts unexpectedly. Functions that process optional matches should return success when empty matches are acceptable.
 
 ```bash
 filter_files() {
@@ -37,36 +31,24 @@ filter_files() {
 }
 ```
 
-or:
-
-```bash
-true
-```
-
 ## Relative Sourcing in Tests
 
-Tests may copy hook scripts into temporary directories.
-
-Avoid brittle paths such as:
+Tests may copy hooks into temp directories. Avoid brittle paths such as:
 
 ```bash
 ../../../common.sh
 ```
 
-Prefer walking up from the script directory until finding the repository root, such as a directory containing `.git` or `.github`.
+Prefer walking up from the script directory until finding the repo root, such as a directory containing `.git`, `.github`, or `.gemini`.
 
-## Audit Locking
+## Locking
 
-Do not hard-require `flock` only for audit logging.
-
-Audit helpers should degrade safely when locking is unavailable.
+Do not require `flock` only for audit logging. Audit logging should degrade safely without locks.
 
 For cache or critical concurrent writes:
 
 - prefer `flock` when available
-- use a safe `mkdir` lock fallback when needed
-
-Example fallback:
+- otherwise use a safe `mkdir` lock fallback
 
 ```bash
 with_dir_lock() {
@@ -77,11 +59,7 @@ with_dir_lock() {
 
   for attempt in $(seq 1 200); do
     if mkdir "$lock_dir" 2>/dev/null; then
-      if "$@"; then
-        status=0
-      else
-        status=$?
-      fi
+      "$@"; status=$?
       rmdir "$lock_dir" 2>/dev/null
       return "$status"
     fi
@@ -93,44 +71,65 @@ with_dir_lock() {
 }
 ```
 
-## Dependency Handling
+## Dependencies
 
-Common hook infrastructure tools:
+Common infrastructure tools:
 
-```bash
+```text
 jq
 git
 rtk
 ```
 
-Backend verifier tools may include:
+Common backend tools:
 
-```bash
+```text
 dotnet
 ```
 
-Frontend verifier tools may include both:
+Common frontend tools:
 
-```bash
+```text
 npx
 npm
 ```
 
-Missing dependency handling must preserve JSON discipline:
+Missing dependency handling:
 
-1. Write diagnostic to `stderr`.
-2. Emit schema-valid JSON to `stdout`.
-3. Exit `0` for expected control flow unless this is a true hard setup/runtime failure.
+1. Write diagnostics to `stderr`.
+2. Write to audit log if available.
+3. Emit schema-valid JSON to `stdout`.
+4. Exit `0` for expected fail-open control flow.
 
-### Cryptographic Hashing Rules
+Developer-tool dependencies usually fail open:
 
-Never use weak algorithms (MD5, SHA-1) for content or identifier hashing. This includes:
+- log warning
+- emit allow/success JSON
+- exit `0`
 
-- md5sum
-- sha1sum
-- shasum without algorithm options (defaults to SHA-1)
+Examples:
 
-Always specify SHA-256 explicitly:
+- GitHub `postToolUse`: `{}`
+- GitHub `agentStop`/`subagentStop`: `{"decision":"allow","reason":"Skipped: missing dependency ..."}`
+- Gemini: `{"decision":"allow","reason":"Skipped: missing dependency ..."}`
 
-- Use sha256sum when available.
-- Use shasum -a 256 as fallback.
+Block only when explicit repo policy says the dependency is mandatory for safety, security, compliance, or release gating. Document the exception.
+
+## Hashing
+
+Never use MD5 or SHA-1 for content or identifier hashes.
+
+Avoid:
+
+```text
+md5sum
+sha1sum
+shasum
+```
+
+Use SHA-256 explicitly:
+
+```text
+sha256sum
+shasum -a 256
+```
