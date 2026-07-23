@@ -3,7 +3,6 @@
     "fileName": ["AGENTS.md", "GEMINI.md"]
   },
   "experimental": {
-    "autoMemory": true,
     "modelSteering": true
   },
   "general": {
