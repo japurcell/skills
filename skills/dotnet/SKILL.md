@@ -1,6 +1,6 @@
 ---
 name: dotnet
-description: C# and .NET development, refactoring, or review. Use when creating, modifying, or reviewing C# (.cs), F# (.fs), or VB (.vb) source files, configuring project/solution files (.csproj, .sln), or executing dotnet CLI commands (dotnet build, dotnet test, dotnet run, dotnet format). Covers ASP.NET Core, EF Core, dependency injection (DI), and async performance.
+description: Mandatory domain skill for C#/.NET work. Invoke this skill first whenever a task touches, creates, modifies, reviews, or is likely to touch `.cs`, `.fs`, `.vb`, `.csproj`, `.fsproj`, `.vbproj`, `.sln`, `Directory.Build.props`, `Directory.Build.targets`, NuGet/package config, ASP.NET Core controllers/APIs, xUnit/NUnit/MSTest tests, EF Core, dependency injection, async/performance code, or any `dotnet` CLI command such as `dotnet build`, `dotnet test`, `dotnet run`, `dotnet restore`, or `dotnet format`. This skill takes precedence over workflow skills such as `prd-*`, `tdd`, and `code-review`; load `dotnet` first, then run the workflow skill inside the .NET context.
 ---
 
 # .NET / C# Engineering

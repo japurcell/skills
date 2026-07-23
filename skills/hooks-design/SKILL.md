@@ -61,3 +61,4 @@ Consult only when event behavior or schemas are unclear:
 - Gemini hooks: `https://geminicli.com/docs/hooks/`
 - Gemini writing hooks: `https://geminicli.com/docs/hooks/writing-hooks/`
 - Gemini exit codes: `https://geminicli.com/docs/hooks/best-practices/#check-exit-codes`
+- Gemini tools: `https://geminicli.com/docs/reference/tools/`
