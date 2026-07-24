@@ -1,0 +1,51 @@
+{
+  "skill_name": "adversarial-review",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "OAuth2 auth route implemented. Plan adversarial review. Write outputs/review_plan.json (keys: load_router (bool), agent_type (string), tier (string), model (string), adversarial_prompt_strength (string), reason (string)).",
+      "expected_output": "review_plan.json with Premium adversarial review plan loading the router.",
+      "files": [],
+      "expectations": [
+        "load_router is true",
+        "agent_type is review-focused",
+        "tier is Premium",
+        "adversarial_prompt_strength is high/brutal"
+      ],
+      "assertions": [
+        "load_router is true",
+        "agent_type is review-focused",
+        "tier is Premium",
+        "adversarial_prompt_strength is high/brutal"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Database migration got superficial 'Looks good' review. Detect red flag and plan proper review. Write outputs/review_plan.json (keys: red_flag_detected (bool), agent_type (string), tier (string), adversarial_prompt (string), reason (string)).",
+      "expected_output": "review_plan.json showing red_flag_detected=true and adversarial prompt.",
+      "files": [],
+      "expectations": [
+        "red_flag_detected is true",
+        "adversarial_prompt audits migration/failures"
+      ],
+      "assertions": [
+        "red_flag_detected is true",
+        "adversarial_prompt audits migration/failures"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Typo fix 'Recieve' -> 'Receive' in docs. Decide if review needed. Write outputs/decision.json (keys: should_review (bool), reason (string)).",
+      "expected_output": "decision.json showing should_review=false.",
+      "files": [],
+      "expectations": [
+        "should_review is false",
+        "reason notes trivial typo/docs change"
+      ],
+      "assertions": [
+        "should_review is false",
+        "reason notes trivial typo/docs change"
+      ]
+    }
+  ]
+}
