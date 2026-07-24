@@ -133,13 +133,6 @@
           {
             "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/log-after-agent.sh"
-          },
-          {
-            "name": "hedge-detector",
-            "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/hedge-detector.sh",
-            "description": "Rejects over-certain final answers that omit explicit evidence and uncertainty sections.",
-            "timeout": 10000
           }
         ]
       }

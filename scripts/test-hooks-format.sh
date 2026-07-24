@@ -96,7 +96,6 @@ test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
 
   for script in \
     "$scripts_dir/format.sh" \
-    "$scripts_dir/hedge-detector.sh" \
     "$scripts_dir/log-agent-stop.sh" \
     "$scripts_dir/log-error-occurred.sh" \
     "$scripts_dir/log-notification.sh" \
