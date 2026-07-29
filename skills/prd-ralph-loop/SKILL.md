@@ -26,4 +26,5 @@ Run one `prd-ralph` subagent at a time until the completion signal is received.
 6. After `code-simplifier` completes, recompute `full_review_scope`.
 7. Spawn a `code-reviewer` subagent on `full_review_scope`.
 8. If any issues are found, spawn a subagent to fix them and instruct it to activate the `tdd` skill. After the fix pass, recompute `full_review_scope` and repeat steps 7 and 8 for a maximum of 2 fix/review iterations.
-9. Activate or load the `self-improve` skill to capture any durable learnings from this session.
+9. Read `progress_file` from `<dirname(prd_file)>/progress.txt` if it exists.
+10. Activate or load the `self-improve` skill to capture any durable learnings from this session and `progress_file`: particularly any workarounds or fixes for command/tool failures.
