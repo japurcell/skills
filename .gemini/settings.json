@@ -6,6 +6,7 @@
     "modelSteering": true
   },
   "general": {
+    "enableAutoUpdate": false,
     "enableNotifications": true,
     "plan": {
       "directory": ".agents/scratchpad"
