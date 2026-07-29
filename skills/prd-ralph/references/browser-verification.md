@@ -1,40 +1,39 @@
 # Browser verification
 
-Browser verification is mandatory when the selected task mentions or implies browser-visible behavior.
+Use this file only when the selected task mentions or implies browser-visible behavior.
 
-## Triggers
+## Required when
 
-Require browser verification if the task title, description, acceptance criteria, design guidance, files likely touched, or related notes mention or imply:
+Browser verification is required if the task title, description, acceptance criteria, design guidance, likely files, or notes mention or imply:
 
-- `playwright` or `playwright-cli`
-- `browser`
-- `interactive`
-- `verify in browser`
+- Playwright or `playwright-cli`
+- browser behavior
 - UI-visible behavior
-- auth flow behavior
-- routing or navigation
-- page rendering
+- auth flows
+- routing/navigation
+- rendering
+- DOM-visible changes
 - client-side interaction
-- visual or DOM-visible state changes
+- interactive validation
 
-For UI, auth, or routing work, require browser verification by default unless the PRD explicitly says otherwise.
+For UI, auth, or routing work, require browser verification unless the PRD explicitly says otherwise.
 
-## Required tool
+## Tool
 
 Use one of:
 
-1. `playwright-cli` directly
-2. an explicit `verify-interactive` step that runs `playwright-cli`
+- `playwright-cli` directly
+- a repo command that explicitly runs `playwright-cli`
 
-Do not accept “browser check listed but not executed.”
+Do not accept unexecuted browser checks.
 
-## Required evidence
+## Evidence
 
-Capture:
+Record:
 
 - exact command
 - pass/fail result
-- concise relevant output excerpt
+- concise relevant output
 
 Example:
 
@@ -45,11 +44,11 @@ Browser verification:
   Result: PASS login redirects to dashboard
 ```
 
-## Completion gate
+## Gate
 
 If browser verification is required:
 
 - Do not set `passes: true` unless Playwright evidence passed.
-- If `playwright-cli` is unavailable, failing, not installed, cannot reach the app, or cannot complete the check, the task remains blocked/open.
+- If Playwright is unavailable, failing, not installed, cannot reach the app, or cannot complete the check, the task is blocked.
 - Do not commit blocked work.
 - Record the blocker in `progress_file`.

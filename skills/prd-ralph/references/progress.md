@@ -1,6 +1,6 @@
 # Progress file
 
-Append progress after every attempted selected task, including blocked or failed attempts.
+Append one progress block after every attempted selected task, including failed or blocked attempts.
 
 Use the real date/time and selected task ID.
 
@@ -15,6 +15,8 @@ Use the real date/time and selected task ID.
 - Browser verification:
   - Required: yes/no
   - Evidence: [exact playwright-cli command + pass/fail output, "not required", or "blocked: <reason>"]
+- Commit:
+  - [hash, "disabled by input", "not attempted: verification failed", or "blocked: <reason>"]
 - Assumptions:
   - ...
 - Learnings:
@@ -28,6 +30,6 @@ Use the real date/time and selected task ID.
 - Include exact verification commands.
 - Include pass/fail output or concise proof.
 - If browser verification was required, include Playwright evidence or blocker.
-- Never write “browser check listed but not executed” as acceptable verification.
+- Never treat an unexecuted browser check as passing.
 - Confirm the appended block is well formed.
 - Add reusable repo-wide notes to top `## Codebase Patterns` only when broadly useful.

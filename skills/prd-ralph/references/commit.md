@@ -1,23 +1,23 @@
 # Commit rules
 
-Commit only when:
+Use this file after verification passes and commit is enabled.
 
-- all required verification passed
-- selected task was marked `passes: true`
-- `commit` is not `false`
+Commit is enabled unless `commit` is boolean `false` or string `"false"`.
 
-## Never commit
+## Gate
 
-Do not commit:
+Before setting `passes: true`, create exactly one scoped commit for task changes.
+
+Never commit:
 
 - `prd_file`
 - `progress_file`
 - unrelated changes
 - blocked or failing work
 
-`prd_file` and `progress_file` may remain modified locally, but must not be staged or committed.
+If no committable task-scoped changes exist, committing is blocked.
 
-## Before committing
+## Steps
 
 Inspect changes:
 
@@ -27,13 +27,20 @@ git diff
 git diff --staged
 ```
 
-Stage only task-scoped code/test/doc changes.
+Stage only task-scoped implementation/test/doc/config changes.
 
-Preserve unrelated user changes.
+Confirm staged changes:
 
-## Commit message
+```bash
+git diff --staged
+git status --short
+```
 
-Use:
+If `prd_file`, `progress_file`, or unrelated changes are staged, unstage them before committing.
+
+## Message
+
+Use this format:
 
 ```text
 feat: [Task ID] - [Task Title]
@@ -44,16 +51,7 @@ feat: [Task ID] - [Task Title]
 
 If browser verification was required, include the Playwright command in the verification line.
 
-Example:
-
-```text
-feat: TASK-4 - Fix dashboard routing
-
-- Added redirect handling and regression test
-- Verified with npm test -- dashboard-routing and npx playwright-cli test tests/routing.spec.ts
-```
-
-Commit once using a file:
+Commit once using a message file:
 
 ```bash
 git commit -F <message-file>
@@ -61,8 +59,26 @@ git commit -F <message-file>
 
 Do not use multiple commits. Do not use escaped newlines with `-m`.
 
-If committing is blocked, do not ask follow-up questions. Report:
+## Confirm
+
+After committing, run:
+
+```bash
+git log -1 --oneline
+git show --name-only --format=oneline HEAD
+```
+
+Confirm committed files are scoped and exclude `prd_file` and `progress_file`.
+
+Record the commit hash.
+
+## If blocked
+
+Do not ask follow-up questions. Report:
 
 - blocker
 - intended commit message
-- current status
+- current `git status --short`
+- files that would have been committed
+
+Ensure the blocker is recorded in `progress_file`.
