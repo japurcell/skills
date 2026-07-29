@@ -1,6 +1,6 @@
 # Commit rules
 
-Use this file after verification passes and commit is enabled.
+Use after verification passes and commit is enabled.
 
 Commit is enabled unless `commit` is boolean `false` or string `"false"`.
 
@@ -16,6 +16,8 @@ Never commit:
 - blocked or failing work
 
 If no committable task-scoped changes exist, committing is blocked.
+
+After a successful commit, `prd_file` and `progress_file` may remain modified and uncommitted.
 
 ## Steps
 
@@ -37,6 +39,8 @@ git status --short
 ```
 
 If `prd_file`, `progress_file`, or unrelated changes are staged, unstage them before committing.
+
+If any git command fails or times out, read `references/failures.md` and record it in `progress_file`.
 
 ## Message
 
@@ -81,4 +85,4 @@ Do not ask follow-up questions. Report:
 - current `git status --short`
 - files that would have been committed
 
-Ensure the blocker is recorded in `progress_file`.
+Record the blocker and any command/tool failure or timeout in `progress_file`.
