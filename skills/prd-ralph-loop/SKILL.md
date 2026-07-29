@@ -1,10 +1,10 @@
 ---
 name: prd-ralph-loop
-description: Run prd-ralph sequentially over prd until the completion signal is received. Use for completing all PRD tasks/stories or “run Ralph until done”; do not use for a single task.
+description: Run prd-ralph sequentially over prd until the completion signal is received. Use for completing all PRD tasks/stories or "run Ralph until done"; do not use for a single task.
 disable-model-invocation: true
 ---
 
-# PRD Ralph Loop
+# /prd-ralph-loop
 
 Run one `prd-ralph` subagent at a time until the completion signal is received.
 
