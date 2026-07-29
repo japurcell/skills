@@ -60,8 +60,26 @@
           "maxTimeMinutes": 30
         }
       },
+      "analyzer": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
+      },
+      "architecture-critic": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
+      },
       "browser_agent": {
         "enabled": true
+      },
+      "business-rules-extractor": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
       },
       "code-architect": {
         "runConfig": {
@@ -93,13 +111,61 @@
           "maxTimeMinutes": 30
         }
       },
+      "comparator": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
+      },
       "generalist": {
         "runConfig": {
           "maxTurns": 50,
           "maxTimeMinutes": 30
         }
       },
+      "grader": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
+      },
+      "legacy-analyst": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
+      },
+      "scaffolder": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
+      },
+      "security-auditor": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
+      },
+      "test-engineer": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
+      },
       "ui-auditor": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
+      },
+      "uplift-migrator": {
+        "runConfig": {
+          "maxTurns": 100,
+          "maxTimeMinutes": 30
+        }
+      },
+      "version-delta-analyst": {
         "runConfig": {
           "maxTurns": 100,
           "maxTimeMinutes": 30

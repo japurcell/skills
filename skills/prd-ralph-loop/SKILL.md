@@ -15,8 +15,15 @@ Run one `prd-ralph` subagent at a time until the completion signal is received.
 ## Workflow
 
 1. Activate or load the `subagent-model-router` skill.
-2. Until a subagent returns the `<promise>COMPLETE</promise>` completion signal, spawn a subagent and instruct it to activate the `prd-ralph` skill on `prd_file`.
-3. After the completion signal is received, spawn a `code-simplifier` subagent and instruct it to simplify all of the code changed in this session.
-4. Spawn a `code-reviewer` subagent and instruct it to review all code changes in this session.
-5. If any issues are found, spawn a subagent to fix the issues and instruct it to activate the `tdd` skill. Repeat 4 and 5 for a maximum of 2 iterations.
-6. Activate or load the `self-improve` skill to capture any durable learnings from this session.
+2. Before starting the loop, record `review_base_sha = git rev-parse HEAD`.
+3. Until a subagent returns the `<promise>COMPLETE</promise>` completion signal, spawn a subagent and instruct it to activate the `prd-ralph` skill on `prd_file`.
+4. After `COMPLETE`, define `full_review_scope` as:
+   - committed diff for `review_base_sha..HEAD`
+   - staged diff
+   - unstaged diff
+   - relevant untracked files created during the loop
+5. Spawn a `code-simplifier` subagent on `full_review_scope`.
+6. After `code-simplifier` completes, recompute `full_review_scope`.
+7. Spawn a `code-reviewer` subagent on `full_review_scope`.
+8. If any issues are found, spawn a subagent to fix them and instruct it to activate the `tdd` skill. After the fix pass, recompute `full_review_scope` and repeat steps 7 and 8 for a maximum of 2 fix/review iterations.
+9. Activate or load the `self-improve` skill to capture any durable learnings from this session.
