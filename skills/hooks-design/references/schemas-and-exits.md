@@ -1,10 +1,10 @@
 # Schemas, Exits, and Timeouts
 
-All handled paths should emit exactly one JSON response on `stdout`.
+Every handled path should emit exactly one JSON response on `stdout`.
 
-Use non-zero exits only for true hard setup/runtime failures. If possible, emit valid JSON first.
+Use non-zero exits only for true hard setup/runtime failures. Emit valid JSON first when possible.
 
-If `jq` is unavailable, emit hand-written fallback JSON and send diagnostics to `stderr`.
+Diagnostics go to `stderr` or audit logs, never `stdout`.
 
 ## Gemini CLI
 
@@ -20,7 +20,7 @@ Validation failure:
 {"decision":"deny","reason":"..."}
 ```
 
-Allow:
+Allow/skip/pass:
 
 ```json
 {"decision":"allow","reason":"..."}
@@ -28,9 +28,10 @@ Allow:
 
 Rules:
 
-- Expected control flow exits `0`.
-- Let JSON decide normal allow/deny behavior.
+- Expected control flow exits successfully.
+- Use JSON for normal allow/deny decisions.
 - Reserve exit code `2` for true system-block cases where `stderr` contains the reason.
+- Do not use process failure for ordinary validation when a response schema applies.
 
 ## GitHub Copilot CLI
 
@@ -50,28 +51,47 @@ For `postToolUse` formatting hooks:
 {}
 ```
 
+or:
+
 ```json
 {"additionalContext":"..."}
 ```
 
 Rules:
 
-- Expected `agentStop`, `subagentStop`, and `postToolUse` paths exit `0`.
-- Do not rely on exit code `2` for normal GitHub hook decisions; for many events it is warning-only or does not apply decision schemas.
+- Expected `agentStop`, `subagentStop`, and `postToolUse` paths exit successfully.
+- Do not rely on exit code `2` for normal GitHub decisions.
+- Preserve the exact response shape expected for the configured event.
 
-## Timeout Guidance
+## Missing Dependency Responses
+
+Missing developer tools usually fail open.
+
+Examples:
+
+```json
+{}
+```
+
+```json
+{"decision":"allow","reason":"Skipped: missing dependency ..."}
+```
+
+Use the platform/event-appropriate schema.
+
+## Timeouts
 
 Suggested maximums:
 
-- Formatter/style hooks: under 30 seconds
-- Lightweight verifier hooks: under 60 seconds
-- Heavy build/test suites: 180–300 seconds
-- Over 300 seconds only with explicit repo justification
+```text
+format/style:       < 30s
+light verification: < 60s
+heavy build/test:   180-300s
+>300s:              requires repo justification
+```
 
 Timeout-safe design:
 
-- Write cache entries only after successful completion.
-- Prefer temp files plus atomic rename.
-- Treat incomplete cache writes as misses.
-- Log to `stderr` or audit logs, not `stdout`.
-- Do not rely on timeout as enforcement when the platform fails open on timeout.
+- Do not leave partial hook-owned temp files.
+- Do not rely on timeout as enforcement if the platform fails open.
+- Cleanup handlers must not emit a second JSON response.

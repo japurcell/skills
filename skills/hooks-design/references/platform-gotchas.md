@@ -2,20 +2,33 @@
 
 Use only when editing affected events, schemas, or parsers.
 
-## GitHub Copilot Payload Casing
+## Payload Casing
 
-Copilot payloads may appear as either:
+Some hook payloads may use either style:
 
-- camelCase event/field names: `sessionStart`, `postToolUse`, `sessionId`, `toolArgs`, `toolName`
-- PascalCase events with snake_case fields: `SessionStart`, `PostToolUse`, `session_id`, `tool_input`, `tool_name`
+```text
+camelCase:  sessionStart, postToolUse, sessionId, toolArgs, toolName, filePath
+Pascal/snake: SessionStart, PostToolUse, session_id, tool_input, tool_name, file_path
+```
 
 When a repo supports both, parse both consistently. See `parser-patterns.md`.
 
 ## Gemini `BeforeToolSelection`
 
-When configuring Gemini `BeforeToolSelection`, confirm current Gemini docs.
+Confirm current Gemini docs before changing this event.
 
-Important gotcha:
+Gotchas:
 
-- matched hook rules may aggregate
-- disabling all tools requires explicit `mode: "NONE"` where supported
+- Matched hook rules may aggregate.
+- Disabling all tools requires explicit `mode: "NONE"` where supported.
+
+## Shared Logic
+
+It is OK to share parser, classifier, formatter, and verifier logic.
+
+Still keep separate platform behavior for:
+
+- response JSON schema
+- event semantics
+- exit behavior
+- platform-specific tests

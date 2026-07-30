@@ -1,64 +1,67 @@
 ---
 name: hooks-design
-description: Use when modifying, debugging, reviewing, or extending repository-managed GitHub Copilot CLI hooks in .github/hooks/ or Gemini CLI hooks in .gemini/hooks/. Covers hook JSON responses, stdout/stderr discipline, payload path extraction, GitHub/Gemini parity, caches, formatter/verifier hooks, tests, and runtime failures.
+description: Use when modifying, debugging, reviewing, or extending repository-managed GitHub Copilot CLI hooks in .github/hooks/ or Gemini CLI hooks in .gemini/hooks/. Covers hook JSON responses, stdout/stderr discipline, payload path extraction, GitHub/Gemini parity, formatter/verifier hooks, tests, dependencies, and runtime failures. Language agnostic.
 ---
 
 # Hook Maintenance: GitHub Copilot and Gemini
 
-Maintain repository hook scripts so they are schema-valid, safe, cache-correct, and behaviorally aligned across:
+Use for repo hooks in:
 
-- GitHub Copilot hooks: `.github/hooks/`
-- Gemini CLI hooks: `.gemini/hooks/`
+- `.github/hooks/`
+- `.gemini/hooks/`
 
-Do not treat `~/.copilot/hooks/` as repository hook configuration.
+Do **not** treat `~/.copilot/hooks/` as repo hook config.
 
-## Start Here
+Hooks may be shell, Python, JavaScript/TypeScript, Go, Rust, .NET, binaries, or wrappers. Preserve the repo’s existing language, filenames, config, and invocation style unless asked to change them.
 
-When changing hooks:
+## Workflow
 
 1. Identify the existing layout:
-   - split: `format-backend.sh`, `format-frontend.sh`, `verify-backend.sh`, `verify-frontend.sh`
-   - unified: `format.sh`, `verify.sh`
+   - split: `format-backend`, `format-frontend`, `verify-backend`, `verify-frontend`
+   - unified: `format`, `verify`
 2. Inspect both GitHub and Gemini versions before changing behavior.
 3. Preserve each platform’s response schema.
-4. Emit exactly one JSON response on `stdout`; send logs to `stderr` or audit logs.
-5. For changed-file hooks, parse paths from hook `stdin` first. Use `git diff`, `git status`, or worktree scans only as fallback.
-6. Keep path extraction, file classification, cache keys, invalidation, and failure behavior aligned across platforms.
-7. If parser or classifier behavior changes, update both platforms in the same change unless documenting an explicit exception.
-8. Treat caches as optimization only.
-9. Add or update focused regression tests for changed parser, cache, schema, or failure behavior.
-10. Run existing hook tests, or tell the user exactly what to run.
-11. Before finishing, compare GitHub and Gemini path-extraction and file-classification logic side by side.
-12. Summarize changes, tests, risks, and any parity exceptions.
+4. Emit exactly one JSON response on `stdout`.
+5. Send logs, traces, diagnostics, progress, and audit lines to `stderr` or an audit log.
+6. For changed-file hooks, parse paths from hook `stdin` first.
+7. Use `git diff`, `git status`, or scans only as fallback, unless the hook is intentionally session/worktree scoped.
+8. Keep path extraction, file classification, skip logic, dependency handling, and failures aligned across platforms.
+9. Update both platforms for parser/classifier changes unless documenting an explicit exception.
+10. Add/update focused regression tests.
+11. Run existing hook tests, or tell the user exactly what to run.
+12. Before finishing, compare GitHub and Gemini path/classifier logic side by side.
+13. Summarize changes, tests, risks, and parity exceptions.
 
 ## Hard Rules
 
-- `stdout` must contain only one schema-valid JSON response.
-- Never write logs, traces, diagnostics, or audit lines to `stdout`.
-- If `jq` is missing or broken, still emit fallback JSON without `jq`.
-- Do not replace a parser with `cat >/dev/null` or any input-discarding stub unless the hook intentionally ignores input and documents that fact.
+- `stdout` contains only one schema-valid JSON response.
+- Never write diagnostics to `stdout`.
+- Preserve platform-specific response schemas, even with shared logic.
+- Do not replace a parser with an input-discarding stub unless intentional and documented.
 - Formatter/verifier hooks must not silently ignore payload paths.
-- Do not casually change `.github/hooks/hooks.json` or `.gemini/settings.json`; only change event registration when requested.
-- Missing local developer tools should usually fail open: log the problem, emit allow/success JSON, and exit `0`. Block only when explicit repo policy requires it.
-- Caches must never bypass required formatting, verification, safety, or validation.
+- Do not casually change `.github/hooks/hooks.json` or `.gemini/settings.json`.
+- Missing local developer tools usually fail open: log, emit allow/success JSON, exit successfully.
+- Block only when explicit repo policy requires it.
+- Do not depend exclusively on optional JSON tools such as `jq`; emit fallback valid JSON when possible.
+- Use SHA-256 or stronger for hashing/signing/integrity. Do not use MD5 or SHA-1.
 
-## Read References Only When Needed
+## References
 
-- Formatter/verifier workflow: `references/procedures.md`
-- Response schemas, exits, and timeouts: `references/schemas-and-exits.md`
-- Payload/path parser patterns: `references/parser-patterns.md`
-- Cache rules: `references/cache.md`
-- Bash/dependency rules: `references/bash-and-deps.md`
-- Platform-specific gotchas: `references/platform-gotchas.md`
-- Testing/review checklist: `references/testing-checklist.md`
+Read only what you need:
+
+- Formatter/verifier flow: `references/procedures.md`
+- Schemas, exits, timeouts: `references/schemas-and-exits.md`
+- Payload/path parsing: `references/parser-patterns.md`
+- Runtime/dependencies: `references/runtime-and-deps.md`
+- Platform gotchas: `references/platform-gotchas.md`
+- Testing/review: `references/testing-checklist.md`
 
 ## Official Docs
 
-Consult only when event behavior or schemas are unclear:
+Use when event behavior or schemas are unclear:
 
-- GitHub Copilot hooks: `https://docs.github.com/en/copilot/reference/hooks-reference`
-- GitHub article body API: `https://docs.github.com/api/article/body?pathname=/en/copilot/reference/hooks-reference`
-- Gemini hooks: `https://geminicli.com/docs/hooks/`
-- Gemini writing hooks: `https://geminicli.com/docs/hooks/writing-hooks/`
-- Gemini exit codes: `https://geminicli.com/docs/hooks/best-practices/#check-exit-codes`
-- Gemini tools: `https://geminicli.com/docs/reference/tools/`
+- GitHub Copilot hooks: <https://docs.github.com/en/copilot/reference/hooks-reference>
+- Gemini hooks: <https://geminicli.com/docs/hooks/>
+- Gemini writing hooks: <https://geminicli.com/docs/hooks/writing-hooks/>
+- Gemini exit codes: <https://geminicli.com/docs/hooks/best-practices/#check-exit-codes>
+- Gemini tools: <https://geminicli.com/docs/reference/tools/>
