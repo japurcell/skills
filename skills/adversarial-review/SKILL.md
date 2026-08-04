@@ -5,4 +5,4 @@ description: Critically review code/plans via adversarial expert subagent to fin
 
 # /adversarial-review
 
-Activate the `subagent-model-router` skill and spawn a subagent to adversarially review your work. The subagent should be brutal and skip praise.
+Activate the `subagent-model-router` skill, spawn a subagent, and instruct it to adversarially review your work. The subagent should be brutal and skip praise.
