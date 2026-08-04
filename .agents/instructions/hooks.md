@@ -43,8 +43,10 @@ Read official docs before non-trivial hook changes and keep implementation choic
 - Keep `.copilot/hooks/scripts/format.sh` in sync with `scripts/test-hooks-format.sh`; that test expects audit-backed logging, formatter command and failure logging, session-event file recovery, rollover, and lock waiting.
 - Keep Copilot startup hook logic in `.copilot/hooks/scripts/load-required-skills.py` with thin shell wrappers only; keep Copilot tool-guard logic in `.copilot/hooks/scripts/tool-guard.py`; shared JSON output helpers and crash-safe audit append helpers live under `.copilot/hooks/scripts/helpers/`.
 - Keep Gemini startup hook logic in `.gemini/hooks/scripts/skill-context-injector.py` and `.gemini/hooks/scripts/log-session-start.py` with thin shell wrappers only; shared JSON output helpers and crash-safe audit append helpers live under `.gemini/hooks/scripts/helpers/`.
+- Keep Gemini tool-guard logic in `.gemini/hooks/scripts/tool-guard.py` with a thin shell compatibility shim in `.gemini/hooks/scripts/tool-guard.sh`.
 - Keep required-skill injection startup tests focused on caveman-only payloads so context loading stays consistent across Copilot CLI, VS Code, and Gemini CLI.
 - Keep `scripts/test-hooks-tool-guard.sh` pointed at the Python Copilot tool-guard entrypoint while the shell wrapper remains the installed compatibility shim.
+- Keep `scripts/test-gemini-hooks-tool-guard.sh` aligned with the Gemini tool-guard shim so the installed shell wrapper can stay thin.
 - For passive shadow logging, create shadow-log parent directory before first write and keep primary plus shadow writes inside same lock section so event ordering survives.
 - When editing security-hook threat patterns or Tool Guard tests, avoid pasting raw dangerous strings directly into tool payloads; construct exact strings dynamically so active guards do not block self-edits.
 - Keep simple hook input parsing in individual scripts when readability matters; do not move routine `jq` field extraction into `common.sh` only to dedupe a few lines.
