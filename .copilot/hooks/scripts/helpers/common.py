@@ -19,6 +19,13 @@ def read_json_input() -> dict:
     if not isinstance(payload, dict):
         raise ValueError("Invalid hook input: expected a JSON object")
 
+    try:
+        from .observability import begin_hook_capture
+
+        begin_hook_capture(payload)
+    except Exception:
+        pass
+
     return payload
 
 
@@ -26,6 +33,13 @@ def emit_json(payload: dict) -> None:
     sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
     sys.stdout.write("\n")
     sys.stdout.flush()
+
+    try:
+        from .observability import complete_hook_capture
+
+        complete_hook_capture(payload)
+    except Exception:
+        pass
 
 
 def sanitize_log_field(value: object) -> str:

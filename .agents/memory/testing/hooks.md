@@ -11,6 +11,7 @@ coverage: Test guidance for `{.copilot,.gemini}/hooks`.
 - Copilot hook checks:
   - `bash scripts/test-hooks-format.sh`
   - `bash scripts/test-hooks-startup.sh`
+  - `bash scripts/test-hooks-observability.sh`
   - `bash scripts/test-hooks-secrets-scanner.sh`
   - `bash scripts/test-hooks-tool-guard.sh`
 - Gemini hook checks:
@@ -27,6 +28,7 @@ coverage: Test guidance for `{.copilot,.gemini}/hooks`.
 - VS Code Copilot: inspect `GitHub Copilot Chat Hooks.log` and `GitHub Copilot Chat.log` for returned hook JSON and applied context.
 - If VS Code omits `SubagentStart` for `runSubagent` child sessions, verify the direct `SubagentStart` hook is installed and use `SessionStart` as the fallback evidence.
 - `scripts/test-hooks-startup.sh` now exercises the Python startup entrypoint directly; keep the shell wrapper as the installed compatibility shim.
+- `scripts/test-hooks-observability.sh` exercises installed Copilot hook copies and validates `send-event.py`, `hook_execution`, `event_capture`, `rollup`, lock-wait fail-open behavior, redaction/capping, and the observability kill-switch against `$HOME/.copilot/hooks/logs/observability.ndjson`.
 - `scripts/test-hooks-tool-guard.sh` exercises `.copilot/hooks/scripts/tool-guard.py` directly; keep the shell wrapper as the installed compatibility shim.
 - `scripts/test-hooks-rtk.sh` exercises `.copilot/hooks/scripts/rtk-hook-copilot.py` directly; keep `.copilot/hooks/rtk-rewrite.json` pointed at the Python wrapper and cover payload forwarding plus no-op fallback for invalid input, non-zero exits, and timeouts.
 - `scripts/test-hooks-format.sh` exercises the Copilot lifecycle logging Python entrypoints directly (`log-agent-stop.py`, `log-error-occurred.py`, `log-notification.py`, `log-tooluse-failure.py`, and `log-subagent-stop.py`); keep the shell wrappers as installed compatibility shims.

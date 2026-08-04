@@ -9,6 +9,7 @@ from pathlib import Path
 
 from helpers.audit import audit_log_event
 from helpers.common import emit_json, sanitize_log_field
+from helpers.observability import begin_hook_capture
 
 
 SCRIPT_NAME = Path(__file__).name
@@ -66,15 +67,23 @@ def forward_to_rtk(raw_input: str) -> tuple[dict | None, str | None]:
 def main() -> int:
     raw_input = sys.stdin.read()
 
+    try:
+        payload = json.loads(raw_input)
+    except json.JSONDecodeError:
+        payload = {}
+
+    if isinstance(payload, dict):
+        begin_hook_capture(payload)
+    else:
+        begin_hook_capture({})
+
     rewritten, failure_reason = forward_to_rtk(raw_input)
     if failure_reason is not None:
         log_failure(failure_reason)
         emit_noop()
         return 0
 
-    sys.stdout.write(json.dumps(rewritten, ensure_ascii=False, separators=(",", ":")))
-    sys.stdout.write("\n")
-    sys.stdout.flush()
+    emit_json(rewritten)
     return 0
 
 

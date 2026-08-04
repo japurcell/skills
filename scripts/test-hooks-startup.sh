@@ -123,9 +123,14 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
 
   for hook_name in sessionStart subagentStart; do
     jq_query=".hooks.${hook_name}[0].bash // empty"
+    assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+      "$(jq -r "$jq_query" "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+      "Expected hooks.json to register send-event.py first for $hook_name."
+
+    jq_query=".hooks.${hook_name}[1].bash // empty"
     assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
       "$(jq -r "$jq_query" "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-      "Expected hooks.json to register load-required-skills.py for $hook_name."
+      "Expected hooks.json to register load-required-skills.py second for $hook_name."
   done
 }
 
