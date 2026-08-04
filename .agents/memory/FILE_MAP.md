@@ -42,4 +42,3 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.nvmrc` | Node version hint for local tooling. |
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |
-| `skills/agent-sop-author/validate-sop.sh` | Validates `.sop.md` files against expected Agent SOP structure. |

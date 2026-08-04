@@ -10,13 +10,13 @@ This is the loading map for the agent knowledge base under `.agents/memory/`. **
 
 | File                       | Purpose                                                                 | When to load                                  |
 | -------------------------- | ----------------------------------------------------------------------- | --------------------------------------------- |
-| **`INDEX.md`** (this file) | Discovery map for the knowledge base                                    | Always — read first                           |
-| **`ARCHITECTURE.md`**      | Top-level repo structure, install flows, and documentation boundaries   | Always for non-trivial tasks                  |
-| **`CONVENTIONS.md`**       | Repo-wide code style, naming, immutability, resource & public-API rules | When writing or reviewing code                |
-| **`FILE_MAP.md`**          | Top-level map (one line per area) + layer pointers                      | When deciding which area/layer to work in     |
-| **`LOG.md`**               | Append-only source-ingestion activity log                               | When reviewing ingested source history        |
-| **`KNOWN_ISSUES.md`**      | Repo-wide / cross-cutting quirks & workarounds                          | Code review or cross-cutting troubleshooting  |
-| **`TESTING_STRATEGY.md`**  | Test layout, shared authoring conventions & how to run tests            | When writing tests or debugging test failures |
+| **[INDEX.md](INDEX.md)** (this file) | Discovery map for the knowledge base                                    | Always — read first                           |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)**      | Top-level repo structure, install flows, and documentation boundaries   | Always for non-trivial tasks                  |
+| **[CONVENTIONS.md](CONVENTIONS.md)**       | Repo-wide code style, naming, immutability, resource & public-API rules | When writing or reviewing code                |
+| **[FILE_MAP.md](FILE_MAP.md)**          | Top-level map (one line per area) + layer pointers                      | When deciding which area/layer to work in     |
+| **[LOG.md](LOG.md)**               | Append-only source-ingestion activity log                               | When reviewing ingested source history        |
+| **[KNOWN_ISSUES.md](KNOWN_ISSUES.md)**      | Repo-wide / cross-cutting quirks & workarounds                          | Code review or cross-cutting troubleshooting  |
+| **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)**  | Test layout, shared authoring conventions & how to run tests            | When writing tests or debugging test failures |
 
 ## Layer-specific knowledge
 
@@ -28,11 +28,11 @@ working in:
 
 | Area | Instruction file (rules + dir detail) | Known issues | Testing | ADRs / Decisions |
 | --- | --- | --- | --- | --- |
-| `AGENTS.md`, `README.md` | `.agents/instructions/repo.md` | empty | empty | empty |
-| `.copilot/hooks`, `.gemini/hooks` | `.agents/instructions/hooks.md` | `known-issues/hooks.md` | `testing/hooks.md` | `adrs/hooks.md` |
-| `skills/` | `.agents/instructions/skills.md` | `known-issues/skills.md` | `testing/skills.md` | empty |
-| `agents/` | `.agents/instructions/agents.md` | empty | empty | empty |
-| `scripts/` | `.agents/instructions/scripts.md` | empty | `testing/scripts.md` | empty |
+| `AGENTS.md`, `README.md` | [\`.agents/instructions/repo.md\`](../instructions/repo.md) | empty | empty | empty |
+| `.copilot/hooks`, `.gemini/hooks` | [\`.agents/instructions/hooks.md\`](../instructions/hooks.md) | [\`known-issues/hooks.md\`](known-issues/hooks.md) | [\`testing/hooks.md\`](testing/hooks.md) | [\`adrs/hooks.md\`](adrs/hooks.md) |
+| `skills/` | [\`.agents/instructions/skills.md\`](../instructions/skills.md) | [\`known-issues/skills.md\`](known-issues/skills.md) | [\`testing/skills.md\`](testing/skills.md) | empty |
+| `agents/` | [\`.agents/instructions/agents.md\`](../instructions/agents.md) | empty | empty | empty |
+| `scripts/` | [\`.agents/instructions/scripts.md\`](../instructions/scripts.md) | empty | [\`testing/scripts.md\`](testing/scripts.md) | empty |
 
 The repo-wide memory files above hold only cross-cutting content and point into
 these layer files for specifics.
@@ -45,17 +45,17 @@ Load `.agents/memory/LOG.md` first, then the matching summary in `.agents/memory
 | Source summary path | Raw source path | When to load |
 | ----------------------------- | ------------------- | ---------------------------------------------------------- |
 | `.agents/memory/sources/*.md` | `.agents/sources/*` | When working on a specific ingested source or its summary. |
-| `.agents/memory/LOG.md` | N/A | When reviewing scaffold and integrate history. |
+| `[LOG.md](LOG.md)` | N/A | When reviewing scaffold and integrate history. |
 
 ## Related Existing Docs
 
 This repo predates this knowledge base and still keeps companion docs that the
 memory files cross-reference:
 
-- `AGENTS.md` — top-level quickstart and loading contract.
-- `README.md` — repo overview and installation entry point.
-- `.agents/instructions/<area>.md` — canonical area-scoped workflow rules and conventions.
-- `.agents/skills/*/SKILL.md` — task-specific skills (update-agent-docs, etc.).
+- [AGENTS.md](../../AGENTS.md) — top-level quickstart and loading contract.
+- [README.md](../../README.md) — repo overview and installation entry point.
+- [`.agents/instructions/<area>.md`](../instructions/) — canonical area-scoped workflow rules and conventions.
+- [`.agents/skills/*/SKILL.md`](../skills/) — task-specific skills (update-agent-docs, etc.).
 
 ## Conventions
 
