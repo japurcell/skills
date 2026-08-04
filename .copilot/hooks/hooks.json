@@ -4,25 +4,25 @@
     "agentStop": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-agent-stop.sh"
+        "bash": "$HOME/.copilot/hooks/scripts/log-agent-stop.py"
       }
     ],
     "errorOccurred": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-error-occurred.sh"
+        "bash": "$HOME/.copilot/hooks/scripts/log-error-occurred.py"
       }
     ],
     "notification": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-notification.sh"
+        "bash": "$HOME/.copilot/hooks/scripts/log-notification.py"
       }
     ],
     "preToolUse": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/tool-guard.sh",
+        "bash": "$HOME/.copilot/hooks/scripts/tool-guard.py",
         "env": {
           "GUARD_MODE": "block"
         },
@@ -32,13 +32,13 @@
     "postToolUseFailure": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-tooluse-failure.sh"
+        "bash": "$HOME/.copilot/hooks/scripts/log-tooluse-failure.py"
       }
     ],
     "subagentStart": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.sh",
+        "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.py",
         "env": {
           "AGENTS_REQUIRED_SKILL_FILES": "context-engineering/SKILL.md"
         }
@@ -47,7 +47,7 @@
     "subagentStop": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-subagent-stop.sh"
+        "bash": "$HOME/.copilot/hooks/scripts/log-subagent-stop.py"
       }
     ],
     "sessionEnd": [
@@ -72,7 +72,7 @@
     "sessionStart": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.sh",
+        "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.py",
         "env": {
           "AGENTS_REQUIRED_SKILL_FILES": "caveman/SKILL.md,context-engineering/SKILL.md"
         }
