@@ -180,12 +180,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/log-session-start.sh"
+            "command": "$HOME/.gemini/hooks/scripts/log-session-start.py"
           },
           {
             "name": "skill-context-injector",
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/skill-context-injector.sh",
+            "command": "$HOME/.gemini/hooks/scripts/skill-context-injector.py",
             "description": "Loads required skill files and injects them as context before each agent turn.",
             "env": {
               "AGENTS_REQUIRED_SKILL_FILES": "caveman/SKILL.md,context-engineering/SKILL.md"
@@ -199,7 +199,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/log-after-agent.sh"
+            "command": "$HOME/.gemini/hooks/scripts/log-after-agent.py"
           }
         ]
       }
@@ -211,7 +211,7 @@
           {
             "name": "tool-guard",
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/tool-guard.sh",
+            "command": "$HOME/.gemini/hooks/scripts/tool-guard.py",
             "description": "Blocks dangerous Gemini tool invocations using same policy patterns as Copilot tool-guard."
           }
         ]
@@ -231,7 +231,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/log-notification.sh"
+            "command": "$HOME/.gemini/hooks/scripts/log-notification.py"
           }
         ]
       }
@@ -241,12 +241,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/log-session-end.sh"
+            "command": "$HOME/.gemini/hooks/scripts/log-session-end.py"
           },
           {
             "name": "scan-secrets",
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/scan-secrets.sh",
+            "command": "$HOME/.gemini/hooks/scripts/scan-secrets.py",
             "description": "Scans modified files for potential secrets and logs env-file access during Gemini session shutdown."
           }
         ]

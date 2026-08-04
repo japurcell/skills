@@ -19,6 +19,7 @@ coverage: Test guidance for `{.copilot,.gemini}/hooks`.
   - `bash scripts/test-gemini-hooks-secrets-scanner.sh`
   - `bash scripts/test-gemini-hooks-tool-guard.sh`
   - `bash scripts/test-gemini-hooks-rtk.sh`
+- Gemini config should point at the Python operational entrypoints in `.gemini/settings.json`; keep shell scripts only as compatibility shims and validate those paths through the Gemini hook regressions.
 
 ## Live evidence
 

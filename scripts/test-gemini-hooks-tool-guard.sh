@@ -126,9 +126,9 @@ test_skip_mode_returns_explicit_allow_json() {
 }
 
 test_gemini_settings_register_tool_guard() {
-  assert_equals '$HOME/.gemini/hooks/scripts/tool-guard.sh' \
+  assert_equals '$HOME/.gemini/hooks/scripts/tool-guard.py' \
     "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected .gemini/settings.json to register tool-guard.sh for all Gemini BeforeTool events."
+    "Expected .gemini/settings.json to register tool-guard.py for all Gemini BeforeTool events."
 }
 
 main() {

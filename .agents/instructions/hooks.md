@@ -50,6 +50,7 @@ Read official docs before non-trivial hook changes and keep implementation choic
 - Keep Gemini RTK rewrite logic in `.gemini/hooks/scripts/rtk-hook-gemini.sh` with an inline Python implementation; the RTK rewrite config should point at that shell entrypoint and `scripts/test-gemini-hooks-rtk.sh` should cover invalid input and rewrite-failure no-op fallbacks.
 - Keep Gemini session-end hook logic in `.gemini/hooks/scripts/scan-secrets.py` and `.gemini/hooks/scripts/log-session-end.py` with thin shell compatibility shims; the secrets scanner should preserve diff-only scanning, allowlists, and JSON-only stdout.
 - Keep Gemini tool-guard logic in `.gemini/hooks/scripts/tool-guard.py` with a thin shell compatibility shim in `.gemini/hooks/scripts/tool-guard.sh`.
+- Keep `.gemini/settings.json` wired to the Python operational entrypoints for the retained Gemini hooks; the shell scripts stay compatibility shims only.
 - Keep required-skill injection startup tests focused on caveman-only payloads so context loading stays consistent across Copilot CLI, VS Code, and Gemini CLI.
 - Keep `scripts/test-hooks-tool-guard.sh` pointed at the Python Copilot tool-guard entrypoint while the shell wrapper remains the installed compatibility shim.
 - Keep `scripts/test-hooks-rtk.sh` pointed at the Python Copilot RTK rewrite wrapper and cover payload forwarding plus no-op fallback on invalid input, non-zero exits, and timeouts.
