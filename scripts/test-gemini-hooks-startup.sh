@@ -55,7 +55,7 @@ run_skill_context_injector() {
   local payload="$2"
 
   AGENTS_SKILLS_DIR="$skills_dir" \
-  bash "$REPO_ROOT/.gemini/hooks/scripts/skill-context-injector.sh" <<<"$payload"
+  python3 "$REPO_ROOT/.gemini/hooks/scripts/skill-context-injector.py" <<<"$payload"
 }
 
 strip_frontmatter() {

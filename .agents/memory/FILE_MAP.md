@@ -17,7 +17,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | Path | Layer | Purpose |
 | --- | --- | --- |
 | `.copilot/` | hooks | Copilot CLI instructions plus installed hook source under `.copilot/hooks/` and shared hook helpers under `.copilot/hooks/scripts/helpers/`. |
-| `.gemini/` | hooks | Gemini CLI instructions, settings, and installed hook source. |
+| `.gemini/` | hooks | Gemini CLI instructions, settings, installed hook source, and shared hook helpers under `.gemini/hooks/scripts/helpers/`. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, and evals. |
 | `agents/` | agents | Standalone custom agent prompt files. |
 | `scripts/` | scripts | Installers, importers, validation helpers, and shared shell utilities. |

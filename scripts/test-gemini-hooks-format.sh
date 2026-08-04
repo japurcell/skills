@@ -19,7 +19,11 @@ run_gemini_passive_hook() {
     env_cmd+=("GEMINI_PASSIVE_SHADOW_LOG=$shadow_log")
   fi
 
-  env "${env_cmd[@]}" bash "$REPO_ROOT/.gemini/hooks/scripts/$hook_name" <<<"$payload"
+  if [[ "$hook_name" == *.py ]]; then
+    env "${env_cmd[@]}" python3 "$REPO_ROOT/.gemini/hooks/scripts/$hook_name" <<<"$payload"
+  else
+    env "${env_cmd[@]}" bash "$REPO_ROOT/.gemini/hooks/scripts/$hook_name" <<<"$payload"
+  fi
 }
 
 assert_json_object_output() {
@@ -65,8 +69,7 @@ test_hook_scripts_use_passive_audit_helper() {
     "$scripts_dir/log-notification.sh" \
     "$scripts_dir/log-post-tooluse.sh" \
     "$scripts_dir/log-pre-tooluse.sh" \
-    "$scripts_dir/log-session-end.sh" \
-    "$scripts_dir/log-session-start.sh"
+    "$scripts_dir/log-session-end.sh"
   do
     assert_file_contains "$script" 'audit.sh' \
       "Expected $script to source audit.sh."
@@ -75,6 +78,20 @@ test_hook_scripts_use_passive_audit_helper() {
     assert_file_contains "$script" 'audit_log_passive_event' \
       "Expected $script to log through audit_log_passive_event."
   done
+
+  assert_file_contains "$scripts_dir/log-session-start.py" 'from helpers.audit import audit_init, audit_log_passive_event' \
+    "Expected the Python session-start hook to use the shared audit helper package."
+  assert_file_contains "$scripts_dir/log-session-start.py" 'emit_json({})' \
+    "Expected the Python session-start hook to keep a JSON-only no-op response."
+}
+
+test_startup_python_hooks_use_shared_helper_package() {
+  local scripts_dir="$REPO_ROOT/.gemini/hooks/scripts"
+
+  assert_file_contains "$scripts_dir/skill-context-injector.py" 'from helpers.audit import audit_init, audit_log_event' \
+    "Expected the Python startup injector to use shared audit helpers."
+  assert_file_contains "$scripts_dir/skill-context-injector.py" 'from helpers.common import (' \
+    "Expected the Python startup injector to use shared common helpers."
 }
 
 test_default_mode_keeps_primary_passive_log_path() {
@@ -193,6 +210,10 @@ test_invalid_json_degrades_to_noop_json() {
       "Expected $hook_name to degrade invalid input to a no-op JSON response."
   done
 
+  output="$(run_gemini_passive_hook "log-session-start.py" "$audit_log" 'not-json')"
+  assert_equals "{}" "$output" \
+    "Expected log-session-start.py to degrade invalid input to a no-op JSON response."
+
   for hook_name in log-pre-tooluse.sh log-post-tooluse.sh; do
     output="$(run_gemini_passive_hook "$hook_name" "$audit_log" 'not-json')"
     assert_json_object_output "$output" \
@@ -242,6 +263,7 @@ test_gemini_settings_keep_required_safety_hooks() {
 main() {
   test_gemini_audit_init_returns_nonzero_without_exiting_shell
   test_hook_scripts_use_passive_audit_helper
+  test_startup_python_hooks_use_shared_helper_package
   test_default_mode_keeps_primary_passive_log_path
   test_shadow_mode_is_additive
   test_shadow_mode_creates_nested_shadow_log_directory
