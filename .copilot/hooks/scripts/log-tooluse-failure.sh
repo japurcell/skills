@@ -1,20 +1,14 @@
 #!/usr/bin/env bash
-source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"
 
-require_cmd jq
+set -o pipefail
 
-INPUT="$(cat)"
-SESSION_ID=$(jq -r '.sessionId // .session_id // empty' <<< "$INPUT") || { SESSION_ID=""; }
-TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$INPUT") || { TIMESTAMP=""; }
-TOOL_NAME=$(jq -r '.toolName // .tool_name // empty' <<< "$INPUT")
-TOOL_ARGS=$(jq -r '.toolArgs // .tool_input // empty' <<< "$INPUT")
-ERROR_MESSAGE=$(jq -r '.error // empty' <<< "$INPUT")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || exit 0
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 
-audit_init
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  printf 'Copilot hook skipped: required command not found: python3\n' >&2
+  printf '%s\n' '{}'
+  exit 0
+fi
 
-audit_log_event \
-  "$(basename "$0")" \
-  "[$TIMESTAMP] Session: $SESSION_ID, Tool: $TOOL_NAME, Args: $TOOL_ARGS, Error: $ERROR_MESSAGE"
-
-# Can provide recovery guidance via additionalContext, exit code 2
+exec "$PYTHON_BIN" "$SCRIPT_DIR/log-tooluse-failure.py"

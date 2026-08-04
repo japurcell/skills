@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 
 
 def read_json_input() -> dict:
@@ -29,6 +30,34 @@ def emit_json(payload: dict) -> None:
 
 def sanitize_log_field(value: object) -> str:
     return str(value or "").translate({ord("\r"): " ", ord("\n"): " ", ord("\t"): " "})
+
+
+def first_present(payload: Mapping[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in payload and payload[key] is not None:
+            return payload[key]
+    return ""
+
+
+def nested_present(payload: Mapping[str, Any], *keys: str) -> Any:
+    current: Any = payload
+
+    for key in keys:
+        if not isinstance(current, Mapping) or key not in current:
+            return ""
+        current = current[key]
+
+    return current if current is not None else ""
+
+
+def stringify_value(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if value is None:
+        return ""
+    if isinstance(value, (dict, list, bool, int, float)):
+        return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    return str(value)
 
 
 def trim_ws(value: str) -> str:

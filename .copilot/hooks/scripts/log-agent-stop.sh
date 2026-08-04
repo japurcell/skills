@@ -1,21 +1,14 @@
 #!/usr/bin/env bash
-source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"
 
-require_cmd jq
+set -o pipefail
 
-INPUT="$(cat)"
-SESSION_ID=$(jq -r '.sessionId // .session_id // empty' <<< "$INPUT") || { SESSION_ID=""; }
-TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$INPUT") || { TIMESTAMP=""; }
-TRANSCRIPT_PATH=$(jq -r '.transcriptPath // .transcript_path // empty' <<< "$INPUT")
-STOP_REASON=$(jq -r '.stopReason // .stop_reason // empty' <<< "$INPUT")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || exit 0
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 
-audit_init
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  printf 'Copilot hook skipped: required command not found: python3\n' >&2
+  printf '%s\n' '{"decision":"allow"}'
+  exit 0
+fi
 
-audit_log_event \
-  "$(basename "$0")" \
-  "[$TIMESTAMP] Session: $SESSION_ID, \
-    Transcript: $TRANSCRIPT_PATH, \
-    Stop Reason: $STOP_REASON"
-
-# { decision: "block|allow", reason: "prompt for the next turn when decision is block" }
+exec "$PYTHON_BIN" "$SCRIPT_DIR/log-agent-stop.py"

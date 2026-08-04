@@ -1,25 +1,14 @@
 #!/usr/bin/env bash
-source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"
 
-require_cmd jq
+set -o pipefail
 
-INPUT="$(cat)"
-SESSION_ID=$(jq -r '.sessionId // .session_id // empty' <<< "$INPUT") || { SESSION_ID=""; }
-TIMESTAMP=$(jq -r '.timestamp // empty' <<< "$INPUT") || { TIMESTAMP=""; }
-ERROR_MESSAGE=$(jq -r '.error.message // empty' <<< "$INPUT")
-ERROR_NAME=$(jq -r '.error.name // empty' <<< "$INPUT")
-ERROR_STACK=$(jq -r '.error.stack // empty' <<< "$INPUT")
-ERROR_CONTEXT=$(jq -r '.errorContext // .error_context // empty' <<< "$INPUT")
-RECOVERABLE=$(jq -r '.recoverable // empty' <<< "$INPUT")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || exit 0
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 
-audit_init
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  printf 'Copilot hook skipped: required command not found: python3\n' >&2
+  printf '%s\n' '{}'
+  exit 0
+fi
 
-audit_log_event \
-  "$(basename "$0")" \
-  "[$TIMESTAMP] Session: $SESSION_ID, \
-    Error Message: $ERROR_MESSAGE, \
-    Error Name: $ERROR_NAME, \
-    Error Stack: $ERROR_STACK, \
-    Error Context: $ERROR_CONTEXT, \
-    Recoverable: $RECOVERABLE"
+exec "$PYTHON_BIN" "$SCRIPT_DIR/log-error-occurred.py"

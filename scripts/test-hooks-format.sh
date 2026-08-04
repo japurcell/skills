@@ -83,6 +83,15 @@ test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
   fi
 
   while IFS= read -r script; do
+    local base_script
+    base_script="$(basename "$script")"
+
+    case "$base_script" in
+      log-agent-stop.sh|log-error-occurred.sh|log-notification.sh|log-tooluse-failure.sh|log-subagent-stop.sh)
+        continue
+        ;;
+    esac
+
     if grep -Fq 'parse_input ' "$script"; then
       echo "Expected parse_input usage to be removed from $script." >&2
       exit 1
@@ -96,17 +105,12 @@ test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
 
   for script in \
     "$scripts_dir/format.sh" \
-    "$scripts_dir/log-agent-stop.sh" \
-    "$scripts_dir/log-error-occurred.sh" \
-    "$scripts_dir/log-notification.sh" \
     "$scripts_dir/log-permission-request.sh" \
     "$scripts_dir/log-post-tooluse.sh" \
     "$scripts_dir/log-pre-tooluse.sh" \
     "$scripts_dir/log-session-end.sh" \
     "$scripts_dir/log-session-start.sh" \
-    "$scripts_dir/log-subagent-start.sh" \
-    "$scripts_dir/log-subagent-stop.sh" \
-    "$scripts_dir/log-tooluse-failure.sh"
+    "$scripts_dir/log-subagent-start.sh"
   do
     assert_file_contains "$script" 'source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"' \
       "Expected $script to source audit.sh."
@@ -114,6 +118,19 @@ test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
       "Expected $script to initialize audit logging with audit_init."
     assert_file_contains "$script" 'audit_log_event' \
       "Expected $script to log through audit_log_event."
+  done
+
+  for script in \
+    "$scripts_dir/log-agent-stop.sh" \
+    "$scripts_dir/log-error-occurred.sh" \
+    "$scripts_dir/log-notification.sh" \
+    "$scripts_dir/log-subagent-stop.sh" \
+    "$scripts_dir/log-tooluse-failure.sh"
+  do
+    local script_name
+    script_name="$(basename "$script" .sh)"
+    assert_file_contains "$script" "exec \"\$PYTHON_BIN\" \"\$SCRIPT_DIR/$script_name.py\"" \
+      "Expected $script to exec its Python entrypoint."
   done
 
   assert_file_contains "$scripts_dir/scan-secrets.sh" 'source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"' \
@@ -128,6 +145,81 @@ test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
     "Expected tool-guard.py to log through the shared audit helper."
   assert_file_contains "$scripts_dir/tool-guard.py" 'emit_json(' \
     "Expected tool-guard.py to emit JSON responses directly."
+}
+
+test_ported_logging_hooks_emit_schema_safe_json_and_log_fields() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(
+    run_copilot_hook \
+      "log-agent-stop.py" \
+      "$audit_log" \
+      '{"sessionId":"agent-stop","timestamp":"2026-05-12T19:00:09Z","transcriptPath":"/tmp/agent-stop.jsonl","stopReason":"end_turn"}'
+  )"
+
+  assert_equals "allow" "$(jq -r '.decision' <<<"$output")" \
+    "Expected agent-stop logging hook to allow the turn."
+
+  assert_file_contains "$audit_log" "Session: agent-stop, Transcript: /tmp/agent-stop.jsonl, Stop Reason: end_turn" \
+    "Expected agent-stop logging hook to write the stop metadata."
+
+  output="$(
+    run_copilot_hook \
+      "log-error-occurred.py" \
+      "$audit_log" \
+      '{"sessionId":"error-event","timestamp":"2026-05-12T19:00:10Z","error":{"message":"boom","name":"RuntimeError","stack":"trace"},"errorContext":"tool_execution","recoverable":false}'
+  )"
+
+  assert_equals "0" "$(jq -r 'length' <<<"$output")" \
+    "Expected errorOccurred logging hook to emit an empty JSON object."
+
+  assert_file_contains "$audit_log" "Session: error-event, Error Message: boom, Error Name: RuntimeError, Error Stack: trace, Error Context: tool_execution, Recoverable: false" \
+    "Expected errorOccurred logging hook to write the error metadata."
+
+  output="$(
+    run_copilot_hook \
+      "log-notification.py" \
+      "$audit_log" \
+      '{"sessionId":"notification-event","timestamp":"2026-05-12T19:00:11Z","title":"Permission needed","message":"permission needed","notificationType":"permission_prompt"}'
+  )"
+
+  assert_equals "0" "$(jq -r 'length' <<<"$output")" \
+    "Expected notification logging hook to emit an empty JSON object."
+
+  assert_file_contains "$audit_log" "Session: notification-event, Title: Permission needed, Message: permission needed, Notification Type: permission_prompt" \
+    "Expected notification logging hook to write the notification metadata."
+
+  output="$(
+    run_copilot_hook \
+      "log-tooluse-failure.py" \
+      "$audit_log" \
+      '{"sessionId":"tool-failure","timestamp":"2026-05-12T19:00:12Z","toolName":"edit","toolArgs":{"path":"/tmp/app.ts","file_text":"const value = 1;"},"error":"formatter failed"}'
+  )"
+
+  assert_equals "0" "$(jq -r 'length' <<<"$output")" \
+    "Expected postToolUseFailure logging hook to emit an empty JSON object."
+
+  assert_file_contains "$audit_log" 'Session: tool-failure, Tool: edit, Args: {"path":"/tmp/app.ts","file_text":"const value = 1;"}, Error: formatter failed' \
+    "Expected postToolUseFailure logging hook to write the failure metadata."
+
+  output="$(
+    run_copilot_hook \
+      "log-subagent-stop.py" \
+      "$audit_log" \
+      '{"sessionId":"subagent-stop","timestamp":"2026-05-12T19:00:13Z","transcriptPath":"/tmp/subagent.jsonl","agentName":"code-review","agentDisplayName":"Code Review","stopReason":"end_turn"}'
+  )"
+
+  assert_equals "allow" "$(jq -r '.decision' <<<"$output")" \
+    "Expected subagent-stop logging hook to allow the subagent completion."
+
+  assert_file_contains "$audit_log" "Session: subagent-stop, Transcript: /tmp/subagent.jsonl, Agent: code-review, Display Name: Code Review, Stop Reason: end_turn" \
+    "Expected subagent-stop logging hook to write the subagent metadata."
 }
 
 test_logs_csharp_apply_patch_command_before_formatter_failure() {
@@ -430,6 +522,7 @@ main() {
   test_hook_scripts_use_audit_lib_without_deprecated_helpers
   test_logs_csharp_apply_patch_command_before_formatter_failure
   test_logs_js_formatter_failure
+  test_ported_logging_hooks_emit_schema_safe_json_and_log_fields
   test_logs_subagent_csharp_file_from_task_session_events
   test_logs_background_subagent_apply_patch_file_from_read_agent_events
   test_logs_background_subagent_apply_patch_file_from_read_agent_events_with_camel_case_agent_id
