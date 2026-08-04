@@ -8,6 +8,7 @@ coverage: Test guidance for `{.copilot,.gemini}/hooks`.
 
 - After changing hook source, run `./scripts/install.sh` before any live validation because installed hooks execute from `~/.copilot/hooks` or `~/.gemini/hooks`, not from repo source paths.
 - Read official hook docs before non-trivial changes and keep implementation aligned with them.
+- The retained supported hook surface is Python-first; shell wrappers are only compatibility shims, so validate the Python entrypoints and installed copies rather than the retired shell format surface.
 - Copilot hook checks:
   - `bash scripts/test-hooks-startup.sh`
   - `bash scripts/test-hooks-observability.sh`

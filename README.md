@@ -42,7 +42,7 @@ Workspace directories whose names end with `-workspace` are skipped during insta
 ## CLI dependencies
 
 - Core tooling: `bash`, `python3`, and `git`
-- Hook runtime: `jq` and `flock`
+- Hook runtime: `python3`, `jq`, and `flock` (the retained hook entrypoints are Python; shell files are compatibility shims)
 - Hook formatting: `npx` (with `oxfmt`) for JS/TS files, `dotnet` SDK for C# files
 - Agent shell workflows: `rtk` (recommended wrapper for compact terminal output)
 
@@ -105,6 +105,8 @@ Canonical agent-facing authoring rules live in `.agents/instructions/`.
 ## Validation
 
 Run the narrowest command that covers your change. Canonical agent-facing validation routing lives in `.agents/memory/TESTING_STRATEGY.md`.
+
+For hook changes, run `./scripts/install.sh` first and then the targeted regressions listed in `.agents/memory/testing/hooks.md`; the current hook validation set starts with startup, observability, secrets, tool-guard, and RTK checks.
 
 ## Additional docs
 

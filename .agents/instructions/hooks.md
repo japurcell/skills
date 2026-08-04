@@ -40,6 +40,7 @@ Read official docs before non-trivial hook changes and keep implementation choic
 
 ## Repo-specific hook gotchas
 
+- The supported hook surface is the Python operational entrypoints and Python observability emitters; shell scripts stay as compatibility shims only.
 - FR-14 cleanup retired the legacy shell-format asset set and the obsolete `scripts/test-hooks-format.sh` / `scripts/test-gemini-hooks-format.sh` regressions; keep the supported hook surfaces on the Python entrypoints only.
 - Keep Copilot startup hook logic in `.copilot/hooks/scripts/load-required-skills.py` with thin shell wrappers only; keep Copilot tool-guard logic in `.copilot/hooks/scripts/tool-guard.py`; shared JSON output helpers and crash-safe audit append helpers live under `.copilot/hooks/scripts/helpers/`.
 - Keep `.copilot/hooks/hooks.json` wired to the Python operational entrypoints for the retained Copilot hooks; the shell scripts stay as compatibility shims only.
