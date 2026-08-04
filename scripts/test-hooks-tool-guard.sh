@@ -11,7 +11,7 @@ run_tool_guard() {
 
   TOOL_GUARD_LOG_DIR="$log_dir/guard.log" \
   GUARD_MODE="$mode" \
-  bash "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.sh" <<<"$payload"
+  python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" <<<"$payload"
 }
 
 test_common_allowlist_helpers_trim_and_match() {
@@ -124,7 +124,7 @@ test_skip_mode_returns_explicit_allow_json() {
     TOOL_GUARD_LOG_DIR="$log_dir/guard.log" \
     GUARD_MODE="block" \
     SKIP_TOOL_GUARD="true" \
-    bash "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.sh" \
+    python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
       <<<'{"sessionId":"skip-session","toolName":"bash","toolArgs":"echo ok"}'
   )"
 

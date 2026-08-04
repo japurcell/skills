@@ -122,12 +122,12 @@ test_hook_scripts_use_audit_lib_without_deprecated_helpers() {
     "Expected scan-secrets.sh to initialize audit logging with audit_init."
   assert_file_contains "$scripts_dir/scan-secrets.sh" 'audit_log_event' \
     "Expected scan-secrets.sh to log through audit_log_event."
-  assert_file_contains "$scripts_dir/tool-guard.sh" 'source "$(dirname "${BASH_SOURCE[0]}")/audit.sh"' \
-    "Expected tool-guard.sh to source audit.sh."
-  assert_file_contains "$scripts_dir/tool-guard.sh" 'audit_init' \
-    "Expected tool-guard.sh to initialize audit logging with audit_init."
-  assert_file_contains "$scripts_dir/tool-guard.sh" 'audit_log_event' \
-    "Expected tool-guard.sh to log through audit_log_event."
+  assert_file_contains "$scripts_dir/tool-guard.sh" 'exec "$PYTHON_BIN" "$SCRIPT_DIR/tool-guard.py"' \
+    "Expected tool-guard.sh to exec the Python entrypoint."
+  assert_file_contains "$scripts_dir/tool-guard.py" 'from helpers.audit import audit_log_event' \
+    "Expected tool-guard.py to log through the shared audit helper."
+  assert_file_contains "$scripts_dir/tool-guard.py" 'emit_json(' \
+    "Expected tool-guard.py to emit JSON responses directly."
 }
 
 test_logs_csharp_apply_patch_command_before_formatter_failure() {

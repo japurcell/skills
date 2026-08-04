@@ -26,6 +26,7 @@ coverage: Test guidance for `{.copilot,.gemini}/hooks`.
 - VS Code Copilot: inspect `GitHub Copilot Chat Hooks.log` and `GitHub Copilot Chat.log` for returned hook JSON and applied context.
 - If VS Code omits `SubagentStart` for `runSubagent` child sessions, verify the direct `SubagentStart` hook is installed and use `SessionStart` as the fallback evidence.
 - `scripts/test-hooks-startup.sh` now exercises the Python startup entrypoint directly; keep the shell wrapper as the installed compatibility shim.
+- `scripts/test-hooks-tool-guard.sh` exercises `.copilot/hooks/scripts/tool-guard.py` directly; keep the shell wrapper as the installed compatibility shim.
 - `scripts/test-gemini-hooks-startup.sh` now exercises the Python startup entrypoint directly; keep the shell wrapper as the installed compatibility shim.
 - `scripts/test-gemini-hooks-format.sh` should validate the Python startup hooks as the implementation source and keep the thin shell wrappers as compatibility shims.
 - Gemini CLI: verify installed behavior from `~/.gemini/hooks` logs or configured audit targets.
