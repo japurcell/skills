@@ -40,11 +40,11 @@ Read official docs before non-trivial hook changes and keep implementation choic
 
 ## Repo-specific hook gotchas
 
-- Keep `.copilot/hooks/scripts/format.sh` in sync with `scripts/test-hooks-format.sh`; that test expects audit-backed logging, formatter command and failure logging, session-event file recovery, rollover, and lock waiting.
+- FR-14 cleanup retired the legacy shell-format asset set and the obsolete `scripts/test-hooks-format.sh` / `scripts/test-gemini-hooks-format.sh` regressions; keep the supported hook surfaces on the Python entrypoints only.
 - Keep Copilot startup hook logic in `.copilot/hooks/scripts/load-required-skills.py` with thin shell wrappers only; keep Copilot tool-guard logic in `.copilot/hooks/scripts/tool-guard.py`; shared JSON output helpers and crash-safe audit append helpers live under `.copilot/hooks/scripts/helpers/`.
 - Keep `.copilot/hooks/hooks.json` wired to the Python operational entrypoints for the retained Copilot hooks; the shell scripts stay as compatibility shims only.
 - Keep Copilot RTK rewrite logic in `.copilot/hooks/scripts/rtk-hook-copilot.py`; the RTK rewrite config should point at that Python wrapper directly and `scripts/test-hooks-rtk.sh` should cover pass-through, invalid input, non-zero exit, and timeout fallbacks.
-- Keep Copilot lifecycle logging hooks in `.copilot/hooks/scripts/log-agent-stop.py`, `.copilot/hooks/scripts/log-error-occurred.py`, `.copilot/hooks/scripts/log-notification.py`, `.copilot/hooks/scripts/log-tooluse-failure.py`, and `.copilot/hooks/scripts/log-subagent-stop.py` with thin shell compatibility shims; `scripts/test-hooks-format.sh` should exercise those Python entrypoints directly and keep stdout JSON-safe.
+- Keep Copilot lifecycle logging hooks in `.copilot/hooks/scripts/log-agent-stop.py`, `.copilot/hooks/scripts/log-error-occurred.py`, `.copilot/hooks/scripts/log-notification.py`, `.copilot/hooks/scripts/log-tooluse-failure.py`, and `.copilot/hooks/scripts/log-subagent-stop.py` with thin shell compatibility shims.
 - Keep Copilot session-end hook logic in `.copilot/hooks/scripts/bell.py`, `.copilot/hooks/scripts/scan-secrets.py`, and `.copilot/hooks/scripts/log-session-end.py`; the session-end config should point at those Python entrypoints directly.
 - Keep Gemini startup hook logic in `.gemini/hooks/scripts/skill-context-injector.py` and `.gemini/hooks/scripts/log-session-start.py` with thin shell wrappers only; keep Gemini passive logging hooks in `.gemini/hooks/scripts/log-after-agent.py` and `.gemini/hooks/scripts/log-notification.py` with thin shell wrappers only; shared JSON output helpers and crash-safe audit append helpers live under `.gemini/hooks/scripts/helpers/`.
 - Keep Gemini RTK rewrite logic in `.gemini/hooks/scripts/rtk-hook-gemini.sh` with an inline Python implementation; the RTK rewrite config should point at that shell entrypoint and `scripts/test-gemini-hooks-rtk.sh` should cover invalid input and rewrite-failure no-op fallbacks.
@@ -60,11 +60,10 @@ Read official docs before non-trivial hook changes and keep implementation choic
 - Keep `scripts/test-hooks-observability.sh` pointed at installed Copilot copies and cover `event_capture`, `hook_execution`, `rollup`, redaction/capping, lock-wait fail-open behavior, and kill-switch behavior.
 - Keep `scripts/test-gemini-hooks-observability.sh` pointed at installed Gemini copies and cover `event_capture`, `hook_execution`, `rollup`, redaction/capping, lock-wait fail-open behavior, and kill-switch behavior.
 - Keep `scripts/test-gemini-hooks-tool-guard.sh` aligned with the Gemini tool-guard shim so the installed shell wrapper can stay thin.
-- Keep `scripts/test-gemini-hooks-format.sh` pointed at the Gemini passive logging Python entrypoints and cover JSON-only stdout, runtime-specific payload logging, and shadow-log behavior.
 - Keep `scripts/test-gemini-hooks-secrets-scanner.sh` pointed at the Gemini secrets-scanner Python entrypoint and cover diff-only secret scanning, unchanged-secret suppression, and secret-like unified-diff header paths.
 - For passive shadow logging, create shadow-log parent directory before first write and keep primary plus shadow writes inside same lock section so event ordering survives.
 - When editing security-hook threat patterns or Tool Guard tests, avoid pasting raw dangerous strings directly into tool payloads; construct exact strings dynamically so active guards do not block self-edits.
-- Keep simple hook input parsing in individual scripts when readability matters; do not move routine `jq` field extraction into `common.sh` only to dedupe a few lines.
+- Keep simple hook input parsing in individual scripts when readability matters; do not move routine `jq` field extraction into a shared helper only to dedupe a few lines.
 
 ## Validation route
 
