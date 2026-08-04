@@ -245,7 +245,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/rtk-hook-gemini.sh"
+            "command": "$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py"
           }
         ]
       }

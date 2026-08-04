@@ -7,7 +7,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 run_rtk_hook() {
   local payload="$1"
 
-  bash "$REPO_ROOT/.gemini/hooks/scripts/rtk-hook-gemini.sh" <<<"$payload"
+  python3 "$REPO_ROOT/.gemini/hooks/scripts/rtk-hook-gemini.py" <<<"$payload"
 }
 
 test_invalid_json_degrades_to_noop_json() {
@@ -38,9 +38,9 @@ test_failed_rtk_rewrite_degrades_to_noop_json() {
 }
 
 test_gemini_settings_register_rtk_rewrite_hook() {
-  assert_equals '$HOME/.gemini/hooks/scripts/rtk-hook-gemini.sh' \
+  assert_equals '$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py' \
     "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "run_shell_command") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected .gemini/settings.json to register rtk-hook-gemini.sh for run_shell_command rewrites."
+    "Expected .gemini/settings.json to register rtk-hook-gemini.py for run_shell_command rewrites."
 }
 
 main() {

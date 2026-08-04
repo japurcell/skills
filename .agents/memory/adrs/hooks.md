@@ -9,7 +9,7 @@ This document records the architectural decision records (ADRs) for `{.copilot,.
 ## ADR-001: Python-first operational hook surface
 
 - **Decision:** Wired hook entrypoints live in runtime-local Python files under `.copilot/hooks/scripts/` and `.gemini/hooks/scripts/`.
-- **Rationale:** The PRD ports retained hook behavior to Python while keeping shell wrappers only as compatibility shims.
+- **Rationale:** The PRD ports retained hook behavior to Python so the installed surface can be validated directly.
 - **Consequences:** Tests and config assertions target Python entrypoints; shell files are not the supported implementation surface.
 
 ## ADR-002: Local structured observability via NDJSON emitter
@@ -22,7 +22,7 @@ This document records the architectural decision records (ADRs) for `{.copilot,.
 
 - **Decision:** Hot-path hooks use list-based subprocess calls only; `shell=True` is prohibited.
 - **Rationale:** The port must preserve runtime behavior while avoiding shell interpolation risk and keeping hook execution bounded.
-- **Consequences:** Wrapper scripts forward stdin payloads in memory and tests cover invalid-input and failure fallback paths.
+- **Consequences:** Python entrypoints forward stdin payloads in memory and tests cover invalid-input and failure fallback paths.
 
 ## ADR-004: Parser strategy for required skills and diff scanning
 
