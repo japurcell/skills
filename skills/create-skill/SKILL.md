@@ -30,7 +30,7 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 2. **Load the required references**
    - Invoke `skill-creator` immediately and use it for the authoring, eval, and benchmark loop instead of recreating that workflow from memory.
    - Read [./templates/skill-anatomy.md](./templates/skill-anatomy.md) before drafting or editing the body. Use its section pattern as the default template.
-   - Read `docs/agent-guides/authoring.md` and `docs/agent-guides/validation.md` so the result follows repository-specific rules.
+   - Read `.agents/instructions/skills.md`, `.agents/instructions/repo.md`, and `.agents/memory/testing/skills.md` so the result follows repository-specific rules.
 
 3. **Draft or revise the skill**
    - Use this section order unless the request has a strong reason to differ: `Overview`, `When to Use`, `Workflow`, `Specific Techniques`, `Common Rationalizations`, `Red Flags`, `Verification`.

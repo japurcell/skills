@@ -11,7 +11,7 @@ This is the loading map for the agent knowledge base under `.agents/memory/`. **
 | File                       | Purpose                                                                 | When to load                                  |
 | -------------------------- | ----------------------------------------------------------------------- | --------------------------------------------- |
 | **`INDEX.md`** (this file) | Discovery map for the knowledge base                                    | Always — read first                           |
-| **`ARCHITECTURE.md`**      | Layered system overview & data flow (one row per layer)                 | Always for non-trivial tasks                  |
+| **`ARCHITECTURE.md`**      | Top-level repo structure, install flows, and documentation boundaries   | Always for non-trivial tasks                  |
 | **`CONVENTIONS.md`**       | Repo-wide code style, naming, immutability, resource & public-API rules | When writing or reviewing code                |
 | **`FILE_MAP.md`**          | Top-level map (one line per area) + layer pointers                      | When deciding which area/layer to work in     |
 | **`LOG.md`**               | Append-only source-ingestion activity log                               | When reviewing ingested source history        |
@@ -20,15 +20,19 @@ This is the loading map for the agent knowledge base under `.agents/memory/`. **
 
 ## Layer-specific knowledge
 
-Per-layer directory detail, key files/APIs, and coding conventions live in the
-area-scoped **instruction files**. **Known issues**, **testing**, and **architectural decision records (ADRs)** are broken out into dedicated
-per-layer memory files so you load only what the task needs. Read the row for the
-area you're working in:
+Per-area directory detail, key files/APIs, and working rules live in the
+matching **instruction files**. **Known issues**, **testing**, and
+**architectural decision records (ADRs)** are broken out into dedicated memory
+files so you load only what the task needs. Read the row for the area you're
+working in:
 
-| Layer (src areas) | Instruction file (rules + dir detail) | Known issues | Testing | ADRs / Decisions |
-| -------------------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------- | ---------------------------- | ----------------- |
+| Area | Instruction file (rules + dir detail) | Known issues | Testing | ADRs / Decisions |
+| --- | --- | --- | --- | --- |
+| `AGENTS.md`, `README.md` | `.agents/instructions/repo.md` | empty | empty | empty |
 | `.copilot/hooks`, `.gemini/hooks` | `.agents/instructions/hooks.md` | `known-issues/hooks.md` | `testing/hooks.md` | `adrs/hooks.md` |
-| `skills/` | `.agents/instructions/skills.md` | `known-issues/skills.md` | empty | empty |
+| `skills/` | `.agents/instructions/skills.md` | `known-issues/skills.md` | `testing/skills.md` | empty |
+| `agents/` | `.agents/instructions/agents.md` | empty | empty | empty |
+| `scripts/` | `.agents/instructions/scripts.md` | empty | `testing/scripts.md` | empty |
 
 The repo-wide memory files above hold only cross-cutting content and point into
 these layer files for specifics.
@@ -45,11 +49,12 @@ Load `.agents/memory/LOG.md` first, then the matching summary in `.agents/memory
 
 ## Related Existing Docs
 
-This repo predates this knowledge base and has authoritative docs the memory files cross-reference:
+This repo predates this knowledge base and still keeps companion docs that the
+memory files cross-reference:
 
-- `AGENTS.md` — (the canonical repo-wide guidance).
-- `README.md` — repo overview.
-- `.agents/instructions/<area>.md` — area-scoped layer rules **and** knowledge, applied automatically by area.
+- `AGENTS.md` — top-level quickstart and loading contract.
+- `README.md` — repo overview and installation entry point.
+- `.agents/instructions/<area>.md` — canonical area-scoped workflow rules and conventions.
 - `.agents/skills/*/SKILL.md` — task-specific skills (update-agent-docs, etc.).
 
 ## Conventions

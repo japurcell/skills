@@ -4,20 +4,42 @@ coverage: Top-level overview; per-layer directory detail lives in the instructio
 
 # File Map
 
-This file is a **top-level map only**. For per-area directory detail, read the matching path-scoped instruction file:
+This file is a **top-level map only**. For area detail and working rules, read the matching instruction file:
 
+- repo docs and root workflow → `.agents/instructions/repo.md`
 - hooks areas → `.agents/instructions/hooks.md`
 - skills areas → `.agents/instructions/skills.md`
+- custom agents → `.agents/instructions/agents.md`
+- helper scripts → `.agents/instructions/scripts.md`
 
 ## Source Areas
 
 | Path | Layer | Purpose |
-| ----------- | ----- | --------------------------------------- |
-| `.copilot/` | hooks | Copilot CLI settings and command hooks. |
-| `.gemini/` | hooks | Gemini CLI settings and command hooks. |
-| `skills/` | skills | Skills directory for agent capabilities. |
+| --- | --- | --- |
+| `.copilot/` | hooks | Copilot CLI instructions plus installed hook source under `.copilot/hooks/`. |
+| `.gemini/` | hooks | Gemini CLI instructions, settings, and installed hook source. |
+| `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, and evals. |
+| `agents/` | agents | Standalone custom agent prompt files. |
+| `scripts/` | scripts | Installers, importers, validation helpers, and shared shell utilities. |
+| `references/` | references | Optional shared reference material shipped with installs. |
 
-## Non-source Roots
+## Knowledge and top-level docs
 
 | Path | Status | Purpose |
-|------|--------|---------|
+| --- | --- | --- |
+| `.agents/instructions/` | canonical | Agent-facing workflow rules and area conventions. |
+| `.agents/memory/` | canonical | Durable repo facts, file maps, testing routes, and known issues. |
+| `README.md` | companion | Repo overview and install entry point. |
+| `AGENTS.md` | companion | Quickstart, loading contract, and top-level links for agents. |
+
+## Key files
+
+| Path | Why it matters |
+| --- | --- |
+| `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, and `~/.gemini` targets. |
+| `scripts/addy-install.sh` | Imports selected upstream addy skills, agents, and references into this repo. |
+| `.copilot/hooks/rtk-rewrite.json` | RTK rewrite config used by hook-driven shell workflows. |
+| `.nvmrc` | Node version hint for local tooling. |
+| `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
+| `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |
+| `skills/agent-sop-author/validate-sop.sh` | Validates `.sop.md` files against expected Agent SOP structure. |

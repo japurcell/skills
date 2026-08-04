@@ -3,12 +3,12 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "Design it twice before we build anything. I want to add a new `/benchmark-triage` skill to this repo that reads a skill benchmark iteration directory and tells me what to change next. It needs to fit the patterns already used by `skill-creator`, `create-plan`, and `implement-plan`. Don't implement it yet — I want competing architectures first, and I care about reusability vs keeping the workflow lightweight.",
+      "prompt": "Design it twice before we build anything. I want to add a new `/benchmark-triage` skill to this repo that reads a skill benchmark iteration directory and tells me what to change next. It needs to fit the patterns already used by `skill-creator`, `prd`, and `prd-ralph`. Don't implement it yet — I want competing architectures first, and I care about reusability vs keeping the workflow lightweight.",
       "expected_output": "A design contest that frames the problem, explores the referenced skill patterns, produces multiple materially different architectures, compares the trade-offs in prose, and recommends one direction without implementing code.",
       "files": [
         "/home/adam/dev/personal/skills/skills/skill-creator/SKILL.md",
-        "/home/adam/dev/personal/skills/skills/create-plan/SKILL.md",
-        "/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md"
+        "/home/adam/dev/personal/skills/skills/prd/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/prd-ralph/SKILL.md"
       ],
       "assertions": [
         "Response starts with focused framing or a small set of high-leverage questions instead of a long interview",
@@ -23,9 +23,9 @@
       "prompt": "Before we touch code, I want a few serious architecture options for a feature that can execute a saved plan, keep progress state, and coordinate code-review agents at the right checkpoints. It needs to work in this skills repo and build on the existing plan/task workflow without becoming a monolith. Please compare alternatives and tell me which direction you'd bet on.",
       "expected_output": "A design review that triggers even without the phrase 'design it twice', explores the current plan/task workflow, presents structurally different orchestration designs, and gives an opinionated recommendation.",
       "files": [
-        "/home/adam/dev/personal/skills/skills/create-plan/SKILL.md",
-        "/home/adam/dev/personal/skills/skills/create-tasks/SKILL.md",
-        "/home/adam/dev/personal/skills/skills/implement-plan/SKILL.md"
+        "/home/adam/dev/personal/skills/skills/prd/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/prd-to-tasks/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/prd-ralph-loop/SKILL.md"
       ],
       "assertions": [
         "Response treats the request as an architecture comparison task even without an explicit skill name",
@@ -54,7 +54,7 @@
       "files": [
         "/home/adam/dev/personal/skills/scripts/install.sh",
         "/home/adam/dev/personal/skills/README.md",
-        "/home/adam/dev/personal/skills/docs/agent-guides/validation.md"
+        "/home/adam/dev/personal/skills/.agents/memory/TESTING_STRATEGY.md"
       ],
       "assertions": [
         "Response explores the existing installer entry points before finalizing the designs",

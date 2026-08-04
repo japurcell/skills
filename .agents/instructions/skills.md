@@ -9,6 +9,7 @@ coverage: Rules and conventions for skills under `skills/`.
 - Keep `name` lowercase kebab-case.
 - Keep `description` concrete and trigger-oriented.
 - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
+- Validate skill changes with `.agents/memory/testing/skills.md`.
 
 ## Benchmarking
 
@@ -37,3 +38,7 @@ If a skill ships `evals/grade_benchmark.py`, use it to grade iteration artifacts
 ```bash
 python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>
 ```
+
+## Refactor boundaries
+
+- For large skill refactors, preserve any explicit exclusions or approval requirements already documented for that skill.

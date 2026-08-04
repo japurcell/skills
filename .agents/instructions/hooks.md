@@ -9,12 +9,16 @@ Guidelines for modifying and maintaining repository hook scripts under `{.copilo
 ## Official References
 
 - **GitHub Copilot hooks reference:** `https://docs.github.com/en/copilot/reference/hooks-reference`
+- **VS Code GitHub Copilot hooks reference:** `https://code.visualstudio.com/docs/copilot/customization/hooks`
 - **Gemini CLI hooks reference:** `https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md`
 - **Gemini CLI exit-code best practices:** `https://geminicli.com/docs/hooks/best-practices/#check-exit-codes`
+
+Read official docs before non-trivial hook changes and keep implementation choices aligned with them.
 
 ## Shared Runtime Rules
 
 - **stdout discipline:** Hook scripts must keep `stdout` JSON-only. Send logs, audit lines, and debug text to `stderr` or the audit log.
+- **installed-copy rule:** Run `./scripts/install.sh` before live validation because Copilot and Gemini execute installed hooks from home-directory targets.
 
 ## Output Schemas & Exit Behavior
 
@@ -26,3 +30,29 @@ Guidelines for modifying and maintaining repository hook scripts under `{.copilo
   - `agentStop` / `subagentStop` outputs must use: `{ "decision": "allow|block", "reason": ... }`
   - `postToolUse` formatting hooks should emit valid JSON only: use `{}` for no-op success, or `{ "additionalContext": ... }` when the agent should see a formatter/setup failure.
   - Expected `agentStop` and `postToolUse` control flow must exit `0` so Copilot parses `stdout` JSON. Exit code `2` is warning-only for most GitHub hook events and does not apply these decision schemas.
+
+## Copilot and VS Code compatibility
+
+- In `.copilot/hooks/hooks.json`, keep both `subagentStart` (CLI) and `SubagentStart` (VS Code).
+- CLI responses return top-level `additionalContext`; VS Code responses return `hookSpecificOutput` plus `additionalContext`.
+- Prefer `agentStop` over `subagentStop` for final-response quality validators; `subagentStop` has no matcher support in Copilot hook docs and built-in `general-purpose` agents do not emit `subagentStart` or `subagentStop`.
+- Keep `SessionStart` injection path active even when `SubagentStart` exists because some VS Code `runSubagent` child sessions omit `SubagentStart`.
+
+## Repo-specific hook gotchas
+
+- Keep `.copilot/hooks/scripts/format.sh` in sync with `scripts/test-hooks-format.sh`; that test expects audit-backed logging, formatter command and failure logging, session-event file recovery, rollover, and lock waiting.
+- Keep required-skill injection startup tests focused on caveman-only payloads so context loading stays consistent across Copilot CLI, VS Code, and Gemini CLI.
+- For passive shadow logging, create shadow-log parent directory before first write and keep primary plus shadow writes inside same lock section so event ordering survives.
+- When editing security-hook threat patterns or Tool Guard tests, avoid pasting raw dangerous strings directly into tool payloads; construct exact strings dynamically so active guards do not block self-edits.
+- Keep simple hook input parsing in individual scripts when readability matters; do not move routine `jq` field extraction into `common.sh` only to dedupe a few lines.
+
+## Validation route
+
+- Run targeted checks from `.agents/memory/testing/hooks.md`.
+- Distinguish repo-source proof from installed/live proof.
+
+## Gemini-specific validator guidance
+
+- For final-response quality validators, prefer `AfterAgent` over `AfterModel`.
+- Use `prompt_response` as the text under review.
+- Honor `stop_hook_active` to avoid retry loops.

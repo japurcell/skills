@@ -7,7 +7,18 @@ This repository publishes custom GitHub Copilot assets:
 - **Copilot global configs** in `.copilot`
 - **Gemini global configs** in `.gemini`
 
-Detailed layout, validation, authoring, and hook guidance live in `docs/agent-guides/`.
+Canonical agent-facing guidance lives in `.agents/`.
+
+## Agent knowledge base
+
+- `.agents/memory/ARCHITECTURE.md`: repo structure, install flow, and doc boundaries
+- `.agents/memory/FILE_MAP.md`: top-level path map and key-file routing
+- `.agents/memory/TESTING_STRATEGY.md`: validation routing and shared evidence rules
+- `.agents/instructions/repo.md`: repo workflow and documentation-sync rules
+- `.agents/instructions/hooks.md`: hook implementation rules
+- `.agents/instructions/skills.md`: skill authoring and benchmark rules
+- `.agents/instructions/agents.md`: custom agent authoring rules
+- `.agents/instructions/scripts.md`: helper-script authoring rules
 
 ## Installation
 
@@ -52,14 +63,16 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 
 ## Repository layout
 
+Canonical agent-facing layout map lives in `.agents/memory/FILE_MAP.md`.
+
 - `skills/`: one directory per skill, centered on `SKILL.md`
 - `skills/archive/`: skills that are no longer maintained but kept for historical reference
 - `agents/`: standalone custom agent prompt files
 - `references/`: optional shared reference material installed to `~/.agents/references`
 - `scripts/`: repo helper and installation scripts
+- `.agents/`: canonical agent knowledge base for repo guidance and durable facts
 - `.copilot/`: local Copilot instructions copied by the installer
 - `.copilot/hooks/`: hook scripts and configs installed to `~/.copilot/hooks`
-- `docs/agent-guides/`: repo-specific guidance for layout, authoring, and validation
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts; ignore their `outputs/` subdirectories during normal work
 - `scripts/install.sh`: installs `skills/` → `~/.agents/skills`, optional top-level `references/` → `~/.agents/references`, `agents/` → both `~/.gemini/agents` and `~/.copilot/agents`, optional `.copilot/hooks/` → `~/.copilot/hooks`, `.gemini/` contents → `~/.gemini`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
 - `scripts/addy-install.sh`: syncs `../addy-agent-skills` from `https://github.com/addyosmani/agent-skills` by cloning or fast-forward pulling, then imports addy agents, skills, and top-level references into this repository, prefixing imported addy agent and skill names with `addy-`; pass `--skills foo,bar` or `--skills-file path` to copy specific source skill names and their referenced skills, and each successful run refreshes `.addy-skills` with the installed source skill names
@@ -68,11 +81,13 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 
 1. Edit source files in `skills/`, `agents/`, `.copilot/`, or `.gemini/`
 2. Rerun `./scripts/install.sh` to refresh the installed local copies.
-3. Use targeted checks for the area you changed; there is no single repo-wide test runner.
+3. Use targeted checks from `.agents/memory/TESTING_STRATEGY.md`; there is no single repo-wide test runner.
 
 Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews. Those files are benchmark fixtures, not maintained source.
 
 ## Authoring notes
+
+Canonical agent-facing authoring rules live in `.agents/instructions/`.
 
 ### Skill format
 
@@ -89,13 +104,15 @@ Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews. Those f
 
 ## Validation
 
-Run the narrowest command that covers your change. Use the canonical validation guide for targeted commands and live-validation workflow:
-
-- [`docs/agent-guides/validation.md`](docs/agent-guides/validation.md)
+Run the narrowest command that covers your change. Canonical agent-facing validation routing lives in `.agents/memory/TESTING_STRATEGY.md`.
 
 ## Additional docs
 
-- `docs/agent-guides/repo-layout.md`
-- `docs/agent-guides/hooks.md`
-- `docs/agent-guides/authoring.md`
-- `docs/agent-guides/validation.md`
+- `.agents/memory/ARCHITECTURE.md`
+- `.agents/memory/FILE_MAP.md`
+- `.agents/memory/TESTING_STRATEGY.md`
+- `.agents/instructions/repo.md`
+- `.agents/instructions/hooks.md`
+- `.agents/instructions/skills.md`
+- `.agents/instructions/agents.md`
+- `.agents/instructions/scripts.md`
