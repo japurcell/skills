@@ -26,7 +26,7 @@ run_scan_hook() {
   (
     cd "$repo_dir"
     env "${env_cmd[@]}" \
-      bash "$REPO_ROOT/.copilot/hooks/scripts/scan-secrets.sh" <<<"$payload"
+      python3 "$REPO_ROOT/.copilot/hooks/scripts/scan-secrets.py" <<<"$payload"
   )
 }
 
@@ -156,6 +156,43 @@ EOF
     "Expected diff mode to ignore unchanged secrets in touched files."
   if [[ "$output" != "Secrets scan clean." ]]; then
     echo "Expected diff mode to stay clean when only non-secret lines changed." >&2
+    echo "Actual output: $output" >&2
+    exit 1
+  fi
+}
+
+test_diff_mode_ignores_secret_like_diff_headers() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir/docs"
+
+  init_git_repo "$repo_dir"
+  printf 'safe content\n' > "$repo_dir/docs/sk_live_1234567890ABCDEF.txt"
+  git -C "$repo_dir" add docs/sk_live_1234567890ABCDEF.txt
+  git -C "$repo_dir" commit -qm "baseline"
+
+  printf 'safe content updated\n' > "$repo_dir/docs/sk_live_1234567890ABCDEF.txt"
+
+  output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      '{"sessionId":"header-ignore","timestamp":"2026-06-23T23:42:30Z","reason":"complete"}'
+  )"
+
+  assert_file_contains "$log_dir/scan.log" '"status":"clean"' \
+    "Expected diff mode to ignore secret-like unified-diff header paths."
+  if [[ "$output" != "Secrets scan clean." ]]; then
+    echo "Expected diff mode to stay clean when only the diff header path looks secret-like." >&2
     echo "Actual output: $output" >&2
     exit 1
   fi
@@ -309,15 +346,21 @@ test_allowlist_suppresses_credential_path_finding() {
 }
 
 test_hooks_json_registers_session_end_scanner() {
-  assert_equals '$HOME/.copilot/hooks/scripts/scan-secrets.sh' \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.sh") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+  assert_equals '$HOME/.copilot/hooks/scripts/bell.py' \
+    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/bell.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register the session-end bell Python hook."
+  assert_equals '$HOME/.copilot/hooks/scripts/scan-secrets.py' \
+    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register the secrets scanner on sessionEnd."
   assert_equals warn \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.sh") | .env.SCAN_MODE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .env.SCAN_MODE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to default secrets scanning to warn mode."
   assert_equals diff \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.sh") | .env.SCAN_SCOPE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .env.SCAN_SCOPE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to scan working tree diffs by default."
+  assert_equals '$HOME/.copilot/hooks/scripts/log-session-end.py' \
+    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/log-session-end.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register the session-end logging Python hook."
 }
 
 main() {
@@ -328,6 +371,7 @@ main() {
   test_env_variants_are_logged_but_not_flagged_by_path_alone
   test_generic_secrets_filename_stays_clean
   test_allowlist_suppresses_credential_path_finding
+  test_diff_mode_ignores_secret_like_diff_headers
   test_hooks_json_registers_session_end_scanner
 }
 

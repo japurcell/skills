@@ -27,6 +27,7 @@ coverage: Test guidance for `{.copilot,.gemini}/hooks`.
 - If VS Code omits `SubagentStart` for `runSubagent` child sessions, verify the direct `SubagentStart` hook is installed and use `SessionStart` as the fallback evidence.
 - `scripts/test-hooks-startup.sh` now exercises the Python startup entrypoint directly; keep the shell wrapper as the installed compatibility shim.
 - `scripts/test-hooks-tool-guard.sh` exercises `.copilot/hooks/scripts/tool-guard.py` directly; keep the shell wrapper as the installed compatibility shim.
+- `scripts/test-hooks-secrets-scanner.sh` exercises `.copilot/hooks/scripts/scan-secrets.py` directly; keep the session-end `bell.py` and `log-session-end.py` entries in `hooks.json` and cover diff-only secret scanning, unchanged-secret suppression, and secret-like diff header paths.
 - `scripts/test-gemini-hooks-startup.sh` now exercises the Python startup entrypoint directly; keep the shell wrapper as the installed compatibility shim.
 - `scripts/test-gemini-hooks-format.sh` should validate the Python startup hooks as the implementation source and keep the thin shell wrappers as compatibility shims.
 - `scripts/test-gemini-hooks-tool-guard.sh` exercises the Gemini tool-guard path through the installed shell shim; keep `.gemini/hooks/scripts/tool-guard.py` as the implementation source and `.gemini/hooks/scripts/tool-guard.sh` as the compatibility wrapper.

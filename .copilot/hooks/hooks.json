@@ -53,11 +53,11 @@
     "sessionEnd": [
       {
         "type": "command",
-        "bash": "echo -e '\\a'"
+        "bash": "$HOME/.copilot/hooks/scripts/bell.py"
       },
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/scan-secrets.sh",
+        "bash": "$HOME/.copilot/hooks/scripts/scan-secrets.py",
         "env": {
           "SCAN_MODE": "warn",
           "SCAN_SCOPE": "diff"
@@ -66,7 +66,7 @@
       },
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-session-end.sh"
+        "bash": "$HOME/.copilot/hooks/scripts/log-session-end.py"
       }
     ],
     "sessionStart": [
