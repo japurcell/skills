@@ -60,29 +60,41 @@ test_gemini_audit_init_returns_nonzero_without_exiting_shell() {
 }
 
 test_hook_scripts_use_passive_audit_helper() {
-  local scripts_dir="$REPO_ROOT/.gemini/hooks/scripts"
-  local script
+  local workdir
+  local audit_log
+  local output
 
-  for script in \
-    "$scripts_dir/log-after-agent.sh" \
-    "$scripts_dir/log-before-agent.sh" \
-    "$scripts_dir/log-notification.sh" \
-    "$scripts_dir/log-post-tooluse.sh" \
-    "$scripts_dir/log-pre-tooluse.sh" \
-    "$scripts_dir/log-session-end.sh"
-  do
-    assert_file_contains "$script" 'audit.sh' \
-      "Expected $script to source audit.sh."
-    assert_file_contains "$script" 'audit_init' \
-      "Expected $script to initialize audit logging with audit_init."
-    assert_file_contains "$script" 'audit_log_passive_event' \
-      "Expected $script to log through audit_log_passive_event."
-  done
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
 
-  assert_file_contains "$scripts_dir/log-session-start.py" 'from helpers.audit import audit_init, audit_log_passive_event' \
-    "Expected the Python session-start hook to use the shared audit helper package."
-  assert_file_contains "$scripts_dir/log-session-start.py" 'emit_json({})' \
-    "Expected the Python session-start hook to keep a JSON-only no-op response."
+  output="$(
+    run_gemini_passive_hook \
+      "log-after-agent.py" \
+      "$audit_log" \
+      '{"session_id":"format-after","timestamp":"2026-06-24T00:00:00Z","prompt":"hello","stop_hook_active":false}'
+  )"
+  assert_equals "{}" "$output" \
+    "Expected log-after-agent.py to keep machine-readable JSON output."
+  assert_file_contains "$audit_log" "Prompt: hello" \
+    "Expected log-after-agent.py to record the prompt payload."
+  assert_file_contains "$audit_log" "Stop Hook Active: false" \
+    "Expected log-after-agent.py to preserve runtime-specific stop-hook payload data."
+
+  output="$(
+    run_gemini_passive_hook \
+      "log-notification.py" \
+      "$audit_log" \
+      '{"session_id":"format-notification","timestamp":"2026-06-24T00:00:01Z","notification_type":"ToolPermission","message":"permission needed","details":{"tool_name":"run_shell_command"}}'
+  )"
+  assert_equals "{}" "$output" \
+    "Expected log-notification.py to keep machine-readable JSON output."
+  assert_file_contains "$audit_log" "notification_type: ToolPermission" \
+    "Expected log-notification.py to record the notification type payload."
+  assert_file_contains "$audit_log" "message: permission needed" \
+    "Expected log-notification.py to record the notification message payload."
+  assert_file_contains "$audit_log" 'details: {"tool_name":"run_shell_command"}' \
+    "Expected log-notification.py to serialize structured notification details."
 }
 
 test_startup_python_hooks_use_shared_helper_package() {
@@ -105,9 +117,9 @@ test_default_mode_keeps_primary_passive_log_path() {
 
   output="$(
     run_gemini_passive_hook \
-      "log-before-agent.sh" \
+      "log-after-agent.py" \
       "$audit_log" \
-      '{"session_id":"default-mode","timestamp":"2026-06-24T00:00:00Z","prompt":"hello"}'
+      '{"session_id":"default-mode","timestamp":"2026-06-24T00:00:00Z","prompt":"hello","stop_hook_active":false}'
   )"
 
   assert_equals "{}" "$output" \
@@ -127,9 +139,9 @@ test_shadow_mode_is_additive() {
   shadow_log="$workdir/passive-shadow.log"
 
   run_gemini_passive_hook \
-    "log-before-agent.sh" \
+    "log-after-agent.py" \
     "$audit_log" \
-    '{"session_id":"shadow-mode","timestamp":"2026-06-24T00:00:01Z","prompt":"hello"}' \
+    '{"session_id":"shadow-mode","timestamp":"2026-06-24T00:00:01Z","prompt":"hello","stop_hook_active":true}' \
     "shadow" \
     "$shadow_log" \
     >/dev/null
@@ -151,16 +163,16 @@ test_shadow_mode_creates_nested_shadow_log_directory() {
   shadow_log="$workdir/nested/shadow/passive-shadow.log"
 
   run_gemini_passive_hook \
-    "log-before-agent.sh" \
+    "log-notification.py" \
     "$audit_log" \
-    '{"session_id":"shadow-nested-mode","timestamp":"2026-06-24T00:00:02Z","prompt":"hello"}' \
+    '{"session_id":"shadow-nested-mode","timestamp":"2026-06-24T00:00:02Z","notification_type":"ToolPermission","message":"hello","details":{"tool_name":"run_shell_command"}}' \
     "shadow" \
     "$shadow_log" \
     >/dev/null
 
-  assert_file_contains "$audit_log" "Session: shadow-nested-mode" \
+  assert_file_contains "$audit_log" "session_id: shadow-nested-mode" \
     "Expected nested shadow mode to keep primary audit logging."
-  assert_file_contains "$shadow_log" "Session: shadow-nested-mode" \
+  assert_file_contains "$shadow_log" "session_id: shadow-nested-mode" \
     "Expected shadow mode to create nested shadow-log directory and write log."
 }
 
@@ -180,8 +192,8 @@ test_shadow_mode_uses_shared_lock_for_primary_and_shadow_logs() {
     GEMINI_PASSIVE_SHADOW_LOG="$shadow_log" \
     GEMINI_PASSIVE_SHADOW_LOCK="$shadow_lock" \
     AUDIT_LOG="$audit_log" \
-    bash "$REPO_ROOT/.gemini/hooks/scripts/log-before-agent.sh" \
-    <<<'{"session_id":"shared-lock","timestamp":"2026-06-24T00:00:03Z","prompt":"hello"}' \
+    python3 "$REPO_ROOT/.gemini/hooks/scripts/log-after-agent.py" \
+    <<<'{"session_id":"shared-lock","timestamp":"2026-06-24T00:00:03Z","prompt":"hello","stop_hook_active":true}' \
     >/dev/null
 
   [[ ! -e "$shadow_lock" ]] || fail \
@@ -199,10 +211,9 @@ test_invalid_json_degrades_to_noop_json() {
   audit_log="$workdir/audit.log"
 
   for hook_name in \
-    log-session-start.sh \
-    log-before-agent.sh \
-    log-after-agent.sh \
-    log-notification.sh \
+    log-session-start.py \
+    log-after-agent.py \
+    log-notification.py \
     log-session-end.sh
   do
     output="$(run_gemini_passive_hook "$hook_name" "$audit_log" 'not-json')"
