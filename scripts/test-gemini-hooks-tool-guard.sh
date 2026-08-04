@@ -11,7 +11,7 @@ run_gemini_tool_guard() {
 
   TOOL_GUARD_LOG_DIR="$log_dir" \
   GUARD_MODE="$mode" \
-  bash "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.sh" <<<"$payload"
+  python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" <<<"$payload"
 }
 
 test_warn_mode_returns_json_for_gemini_payload() {
@@ -117,7 +117,7 @@ test_skip_mode_returns_explicit_allow_json() {
     TOOL_GUARD_LOG_DIR="$log_dir" \
     GUARD_MODE="block" \
     SKIP_TOOL_GUARD="true" \
-    bash "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.sh" \
+    python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
       <<<'{"session_id":"skip-session","tool_name":"run_shell_command","tool_input":"echo ok"}'
   )"
 

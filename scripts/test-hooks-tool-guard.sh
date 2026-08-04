@@ -18,23 +18,32 @@ test_common_allowlist_helpers_trim_and_match() {
   local output
 
   output="$(
-    bash -c '
-      set -euo pipefail
-      repo_root="$1"
-      risky_delete="rm -rf ""."
-      risky_db="DROP"" TABLE"
+    python3 - "$REPO_ROOT" <<'PY'
+import sys
+import importlib.util
+from pathlib import Path
 
-      source "$repo_root/.copilot/hooks/scripts/common.sh"
-      parse_allowlist_csv " $risky_delete ,  $risky_db  ,   " ALLOWLIST
+repo_root = Path(sys.argv[1])
+tool_guard_path = repo_root / ".copilot/hooks/scripts/tool-guard.py"
+sys.path.insert(0, str(tool_guard_path.parent))
+spec = importlib.util.spec_from_file_location("copilot_tool_guard", tool_guard_path)
+module = importlib.util.module_from_spec(spec)
+assert spec and spec.loader
+spec.loader.exec_module(module)
 
-      allowlist_contains "bash $risky_delete" "${ALLOWLIST[@]}" || exit 10
-      allowlist_contains "bash ${risky_db} users;" "${ALLOWLIST[@]}" || exit 11
-      if allowlist_contains "bash echo safe" "${ALLOWLIST[@]}"; then
-        exit 12
-      fi
+risky_delete = "rm" + " -rf" + " ."
+risky_db = "DROP" + " TABLE"
+allowlist = module.parse_allowlist_csv(f" {risky_delete} ,  {risky_db}  ,   ")
 
-      printf "ok"
-    ' _ "$REPO_ROOT" 2>/dev/null || true
+if not module.allowlist_contains(f"bash {risky_delete}", allowlist):
+    raise SystemExit(10)
+if not module.allowlist_contains(f"bash {risky_db} users;", allowlist):
+    raise SystemExit(11)
+if module.allowlist_contains("bash echo safe", allowlist):
+    raise SystemExit(12)
+
+print("ok")
+PY
   )"
 
   assert_equals "ok" "$output" \
@@ -45,22 +54,31 @@ test_warn_mode_returns_json_for_cli_payload() {
   local workdir
   local log_dir
   local output
+  local risky_delete
+  local expected_warning
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$workdir"' RETURN
   log_dir="$workdir/logs"
+  risky_delete="rm"
+  risky_delete+=" -rf"
+  risky_delete+=" ."
+  expected_warning="⚠️ Tool Guardian warning: Tool Guardian blocked bash. destructive_file_ops/critical matched '${risky_delete}'. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
 
   output="$(
     run_tool_guard \
       "$log_dir" \
       warn \
-      '{"sessionId":"cli-session","toolName":"bash","toolArgs":"rm -rf ."}'
+      "{\"sessionId\":\"cli-session\",\"toolName\":\"bash\",\"toolArgs\":\"${risky_delete}\"}"
   )"
 
   assert_equals "allow" "$(jq -r '.permissionDecision' <<<"$output")" \
     "Expected warn mode to allow the tool after logging threats."
   assert_equals "allow" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
     "Expected warn mode to include a VS Code-compatible allow decision."
+  assert_equals "$expected_warning" \
+    "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected warn mode to include terminal warning text."
   assert_file_contains "$log_dir/guard.log" '"event":"threats_detected"' \
     "Expected warn mode to log detected threats."
 }

@@ -23,7 +23,6 @@ run_session_start_hook() {
   local audit_log="$1"
   local payload="$2"
 
-  run_copilot_hook "log-session-start.sh" "$audit_log" "$payload" >/dev/null
   run_copilot_hook "load-required-skills.py" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
 }
 
@@ -31,7 +30,6 @@ run_subagent_start_hook() {
   local audit_log="$1"
   local payload="$2"
 
-  run_copilot_hook "log-subagent-start.sh" "$audit_log" "$payload" >/dev/null
   run_copilot_hook "load-required-skills.py" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
 }
 
@@ -51,6 +49,8 @@ test_session_start_outputs_cli_schema_with_caveman_only_context() {
   assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
     "Did not expect hookSpecificOutput for Copilot CLI payloads."
   assert_caveman_context_shape "$(jq -r '.additionalContext' <<<"$output")"
+  assert_file_contains "$audit_log" "Message: Loaded skill" \
+    "Expected session-start hook to log loaded required skill context."
 }
 
 test_session_start_outputs_vscode_schema_with_caveman_only_context() {
@@ -88,10 +88,8 @@ test_subagent_start_outputs_cli_schema_with_caveman_only_context() {
     "Did not expect hookSpecificOutput for Copilot CLI subagent payloads."
   assert_caveman_context_shape "$(jq -r '.additionalContext' <<<"$output")"
 
-  assert_file_contains "$audit_log" "Agent: code-review" \
-    "Expected subagent-start hook to log the Copilot CLI agent name."
-  assert_file_contains "$audit_log" "Agent ID: agent-42" \
-    "Expected subagent-start hook to log the Copilot CLI agent ID."
+  assert_file_contains "$audit_log" "Message: Loaded skill" \
+    "Expected subagent-start hook to log loaded required skill context."
 }
 
 test_subagent_start_outputs_vscode_schema_with_caveman_only_context() {
@@ -111,10 +109,8 @@ test_subagent_start_outputs_vscode_schema_with_caveman_only_context() {
     "Expected VS Code SubagentStart hooks to include hookEventName."
   assert_caveman_context_shape "$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")"
 
-  assert_file_contains "$audit_log" "Agent: Plan" \
-    "Expected subagent-start hook to log the VS Code agent type."
-  assert_file_contains "$audit_log" "Agent ID: vscode-agent-42" \
-    "Expected subagent-start hook to log the VS Code agent ID."
+  assert_file_contains "$audit_log" "Message: Loaded skill" \
+    "Expected subagent-start hook to log loaded required skill context."
 }
 
 test_hooks_json_registers_cli_and_vscode_start_events() {

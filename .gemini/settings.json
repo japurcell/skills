@@ -220,6 +220,62 @@
         ]
       }
     ],
+    "BeforeAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeAgent"
+            }
+          }
+        ]
+      }
+    ],
+    "BeforeModel": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeModel"
+            }
+          }
+        ]
+      }
+    ],
+    "AfterModel": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterModel"
+            }
+          }
+        ]
+      }
+    ],
+    "BeforeToolSelection": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeToolSelection"
+            }
+          }
+        ]
+      }
+    ],
     "BeforeTool": [
       {
         "matcher": "*",
@@ -246,6 +302,34 @@
           {
             "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py"
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterTool"
+            }
+          }
+        ]
+      }
+    ],
+    "PreCompress": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "PreCompress"
+            }
           }
         ]
       }

@@ -43,6 +43,26 @@
         "bash": "$HOME/.copilot/hooks/scripts/log-notification.py"
       }
     ],
+    "permissionRequest": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "env": {
+          "OBSERVABILITY_CAPTURE_EVENT": "true",
+          "OBSERVABILITY_SOURCE_EVENT_NAME": "permissionRequest"
+        }
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "env": {
+          "OBSERVABILITY_CAPTURE_EVENT": "true",
+          "OBSERVABILITY_SOURCE_EVENT_NAME": "postToolUse"
+        }
+      }
+    ],
     "preToolUse": [
       {
         "type": "command",
@@ -59,6 +79,16 @@
           "GUARD_MODE": "block"
         },
         "timeoutSec": 10
+      }
+    ],
+    "preCompact": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "env": {
+          "OBSERVABILITY_CAPTURE_EVENT": "true",
+          "OBSERVABILITY_SOURCE_EVENT_NAME": "preCompact"
+        }
       }
     ],
     "postToolUseFailure": [
@@ -147,6 +177,26 @@
         "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.py",
         "env": {
           "AGENTS_REQUIRED_SKILL_FILES": "caveman/SKILL.md,context-engineering/SKILL.md"
+        }
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "env": {
+          "OBSERVABILITY_CAPTURE_EVENT": "true",
+          "OBSERVABILITY_SOURCE_EVENT_NAME": "userPromptSubmitted"
+        }
+      }
+    ],
+    "userPromptTransformed": [
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "env": {
+          "OBSERVABILITY_CAPTURE_EVENT": "true",
+          "OBSERVABILITY_SOURCE_EVENT_NAME": "userPromptTransformed"
         }
       }
     ]

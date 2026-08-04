@@ -206,7 +206,7 @@ def main() -> int:
 
     log_payload("threats_detected", mode, tool_name, len(threats), threats)
     if mode == "warn":
-        emit_allow_response()
+        emit_allow_response(f"⚠️ Tool Guardian warning: {build_block_reason(tool_name, threats)}")
 
     emit_deny_response(build_block_reason(tool_name, threats))
 
