@@ -32,6 +32,7 @@ coverage: Test guidance for `{.copilot,.gemini}/hooks`.
 - `scripts/test-gemini-hooks-startup.sh` now exercises the Python startup entrypoint directly; keep the shell wrapper as the installed compatibility shim.
 - `scripts/test-gemini-hooks-format.sh` should validate the Python startup hooks as the implementation source and keep the thin shell wrappers as compatibility shims.
 - `scripts/test-gemini-hooks-tool-guard.sh` exercises the Gemini tool-guard path through the installed shell shim; keep `.gemini/hooks/scripts/tool-guard.py` as the implementation source and `.gemini/hooks/scripts/tool-guard.sh` as the compatibility wrapper.
+- `scripts/test-gemini-hooks-rtk.sh` exercises the Gemini RTK rewrite shell entrypoint; keep `.gemini/hooks/scripts/rtk-hook-gemini.sh` pointed at the inline Python implementation and cover invalid input plus rewrite-failure no-op fallback.
 - `scripts/test-gemini-hooks-secrets-scanner.sh` exercises `.gemini/hooks/scripts/scan-secrets.py` directly; keep `.gemini/hooks/scripts/log-session-end.py` in sync with the shell compatibility shim and cover diff-only secret scanning, unchanged-secret suppression, and secret-like unified-diff header paths.
 - Gemini CLI: verify installed behavior from `~/.gemini/hooks` logs or configured audit targets.
 - Hook event compatibility contract lives in `.agents/instructions/hooks.md`.

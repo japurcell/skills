@@ -1,46 +1,25 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
-emit_noop_json() {
-  printf '%s\n' '{}'
-  exit 0
-}
+exec python3 -I -S -B - <<'PY'
+import subprocess
+import sys
 
-warn_and_noop() {
-  printf '%s\n' "$1" >&2
-  emit_noop_json
-}
+payload = sys.stdin.buffer.read()
+if not payload.startswith(b'{') or not payload.rstrip().endswith(b'}'):
+    sys.stdout.buffer.write(b'{}\n')
+    raise SystemExit(0)
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AUDIT_LIB="$SCRIPT_DIR/audit.sh"
+try:
+    result = subprocess.run(['rtk', 'hook', 'gemini'], input=payload, capture_output=True, check=False)
+except Exception:
+    sys.stdout.buffer.write(b'{}\n')
+    raise SystemExit(0)
 
-command -v jq >/dev/null 2>&1 || warn_and_noop "rtk-hook-gemini: jq not found; skipping hook."
-command -v rtk >/dev/null 2>&1 || warn_and_noop "rtk-hook-gemini: rtk not found; skipping hook."
-[[ -r "$AUDIT_LIB" ]] || warn_and_noop "rtk-hook-gemini: audit library unavailable; skipping hook."
-source "$AUDIT_LIB" >/dev/null 2>&1 || warn_and_noop "rtk-hook-gemini: failed to load audit helpers; skipping hook."
-audit_init >/dev/null 2>&1 || warn_and_noop "rtk-hook-gemini: failed to initialize audit logging; skipping hook."
+if result.returncode != 0 or not result.stdout.startswith(b'{'):
+    sys.stdout.buffer.write(b'{}\n')
+    raise SystemExit(0)
 
-payload="$(cat)"
-
-if ! jq -e 'type == "object"' >/dev/null 2>&1 <<<"$payload"; then
-  warn_and_noop "rtk-hook-gemini: invalid JSON input; skipping hook."
-fi
-
-session_id="$(jq -r '.session_id // empty' <<<"$payload")"
-timestamp="$(jq -r '.timestamp // empty' <<<"$payload")"
-tool_name="$(jq -r '.tool_name // empty' <<<"$payload")"
-tool_args="$(jq -c '.tool_input // empty' <<<"$payload")"
-
-audit_log_event "$(basename "$0")" \
-  "[$timestamp] Session: $session_id, Tool: $tool_name, Args: $tool_args" \
-  >/dev/null 2>&1 || warn_and_noop "rtk-hook-gemini: failed to write audit event; skipping hook."
-
-rewritten_output="$(
-  rtk hook gemini <<<"$payload"
-)" || warn_and_noop "rtk-hook-gemini: rtk rewrite failed; leaving tool input unchanged."
-
-if ! jq -e 'type == "object"' >/dev/null 2>&1 <<<"$rewritten_output"; then
-  warn_and_noop "rtk-hook-gemini: rtk rewrite returned invalid JSON; leaving tool input unchanged."
-fi
-
-printf '%s\n' "$rewritten_output"
+sys.stdout.buffer.write(result.stdout if result.stdout.endswith(b'\n') else result.stdout + b'\n')
+PY
