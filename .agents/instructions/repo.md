@@ -13,3 +13,4 @@ coverage: Repo-wide workflow for top-level docs, install refresh, and documentat
 - TDD applies to app code and shell scripts.
 - Keep `README.md` in sync when install, validation, or hook behavior changes.
 - When using simplification or refactor help, state intentional path boundaries explicitly, such as `.gemini/` versus `.copilot/`.
+- **Protected Sections:** Never modify the `## Agent Orientation` or `## Validation Checklist` sections in `AGENTS.md` (or any equivalent top-level docs) unless explicitly requested. These sections must remain intact as stable agent entry points.

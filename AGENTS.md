@@ -15,14 +15,6 @@ This repository publishes custom coding skills from `skills/`, custom agent defi
 - Skill changes: `.agents/instructions/skills.md` and `.agents/memory/testing/skills.md`
 - Hook changes: `.agents/instructions/hooks.md` and `.agents/memory/testing/hooks.md`
 
-## Documentation
-
-- `.agents/memory/ARCHITECTURE.md` — canonical repo structure, install flow, and doc boundaries
-- `.agents/memory/FILE_MAP.md` — top-level path map and key-file routing
-- `.agents/memory/TESTING_STRATEGY.md` — canonical validation routing
-- `.agents/instructions/repo.md` — canonical repo workflow and doc-sync rules
-- `README.md` — short repo overview that points into `.agents/`
-
 ## Refactor boundaries
 
 - Large-skill refactors follow `.agents/instructions/skills.md`; preserve any explicit exclusions or approval requirements documented there.
