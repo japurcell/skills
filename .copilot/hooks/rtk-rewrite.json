@@ -4,7 +4,7 @@
     "PreToolUse": [
       {
         "type": "command",
-        "command": "rtk hook copilot",
+        "command": "python3 $HOME/.copilot/hooks/scripts/rtk-hook-copilot.py",
         "cwd": ".",
         "timeout": 5
       }
@@ -12,8 +12,8 @@
     "preToolUse": [
       {
         "type": "command",
-        "bash": "rtk hook copilot",
-        "powershell": "rtk hook copilot",
+        "bash": "python3 $HOME/.copilot/hooks/scripts/rtk-hook-copilot.py",
+        "powershell": "python $HOME/.copilot/hooks/scripts/rtk-hook-copilot.py",
         "cwd": ".",
         "timeoutSec": 5
       }

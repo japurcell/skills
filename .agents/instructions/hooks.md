@@ -42,12 +42,14 @@ Read official docs before non-trivial hook changes and keep implementation choic
 
 - Keep `.copilot/hooks/scripts/format.sh` in sync with `scripts/test-hooks-format.sh`; that test expects audit-backed logging, formatter command and failure logging, session-event file recovery, rollover, and lock waiting.
 - Keep Copilot startup hook logic in `.copilot/hooks/scripts/load-required-skills.py` with thin shell wrappers only; keep Copilot tool-guard logic in `.copilot/hooks/scripts/tool-guard.py`; shared JSON output helpers and crash-safe audit append helpers live under `.copilot/hooks/scripts/helpers/`.
+- Keep Copilot RTK rewrite logic in `.copilot/hooks/scripts/rtk-hook-copilot.py`; the RTK rewrite config should point at that Python wrapper directly and `scripts/test-hooks-rtk.sh` should cover pass-through, invalid input, non-zero exit, and timeout fallbacks.
 - Keep Copilot session-end hook logic in `.copilot/hooks/scripts/bell.py`, `.copilot/hooks/scripts/scan-secrets.py`, and `.copilot/hooks/scripts/log-session-end.py`; the session-end config should point at those Python entrypoints directly.
 - Keep Gemini startup hook logic in `.gemini/hooks/scripts/skill-context-injector.py` and `.gemini/hooks/scripts/log-session-start.py` with thin shell wrappers only; shared JSON output helpers and crash-safe audit append helpers live under `.gemini/hooks/scripts/helpers/`.
 - Keep Gemini session-end hook logic in `.gemini/hooks/scripts/scan-secrets.py` and `.gemini/hooks/scripts/log-session-end.py` with thin shell compatibility shims; the secrets scanner should preserve diff-only scanning, allowlists, and JSON-only stdout.
 - Keep Gemini tool-guard logic in `.gemini/hooks/scripts/tool-guard.py` with a thin shell compatibility shim in `.gemini/hooks/scripts/tool-guard.sh`.
 - Keep required-skill injection startup tests focused on caveman-only payloads so context loading stays consistent across Copilot CLI, VS Code, and Gemini CLI.
 - Keep `scripts/test-hooks-tool-guard.sh` pointed at the Python Copilot tool-guard entrypoint while the shell wrapper remains the installed compatibility shim.
+- Keep `scripts/test-hooks-rtk.sh` pointed at the Python Copilot RTK rewrite wrapper and cover payload forwarding plus no-op fallback on invalid input, non-zero exits, and timeouts.
 - Keep `scripts/test-hooks-secrets-scanner.sh` pointed at the Python Copilot secrets scanner entrypoint and cover diff-header paths plus session-end hook registration.
 - Keep `scripts/test-gemini-hooks-tool-guard.sh` aligned with the Gemini tool-guard shim so the installed shell wrapper can stay thin.
 - Keep `scripts/test-gemini-hooks-secrets-scanner.sh` pointed at the Gemini secrets-scanner Python entrypoint and cover diff-only secret scanning, unchanged-secret suppression, and secret-like unified-diff header paths.

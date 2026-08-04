@@ -38,7 +38,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | --- | --- |
 | `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, and `~/.gemini` targets. |
 | `scripts/addy-install.sh` | Imports selected upstream addy skills, agents, and references into this repo. |
-| `.copilot/hooks/rtk-rewrite.json` | RTK rewrite config used by hook-driven shell workflows. |
+| `.copilot/hooks/rtk-rewrite.json` | RTK rewrite config used by hook-driven tool rewrite flows; points at `.copilot/hooks/scripts/rtk-hook-copilot.py`. |
 | `.nvmrc` | Node version hint for local tooling. |
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |
