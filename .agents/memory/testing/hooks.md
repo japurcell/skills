@@ -39,4 +39,5 @@ coverage: Test guidance for `{.copilot,.gemini}/hooks`.
 - `scripts/test-gemini-hooks-secrets-scanner.sh` exercises `.gemini/hooks/scripts/scan-secrets.py` directly; keep `.gemini/hooks/scripts/log-session-end.py` in sync with the shell compatibility shim and cover diff-only secret scanning, unchanged-secret suppression, and secret-like unified-diff header paths.
 - `scripts/test-gemini-hooks-observability.sh` exercises `.gemini/hooks/scripts/send-event.py` directly through installed copies; keep `.gemini/settings.json` wired to the Python observability emitter ahead of the retained Gemini hooks.
 - Gemini CLI: verify installed behavior from `~/.gemini/hooks` logs or configured audit targets.
+- When benchmarking the Gemini Tool Guardian port, measure the installed shell-command path after `./scripts/install.sh`; direct repo invocation is slower and can miss the `<40ms` target even when the installed surface passes.
 - Hook event compatibility contract lives in `.agents/instructions/hooks.md`.
