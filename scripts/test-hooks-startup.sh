@@ -24,7 +24,7 @@ run_session_start_hook() {
   local payload="$2"
 
   run_copilot_hook "log-session-start.sh" "$audit_log" "$payload" >/dev/null
-  run_copilot_hook "load-required-skills.sh" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
+  run_copilot_hook "load-required-skills.py" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
 }
 
 run_subagent_start_hook() {
@@ -32,7 +32,7 @@ run_subagent_start_hook() {
   local payload="$2"
 
   run_copilot_hook "log-subagent-start.sh" "$audit_log" "$payload" >/dev/null
-  run_copilot_hook "load-required-skills.sh" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
+  run_copilot_hook "load-required-skills.py" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
 }
 
 test_session_start_outputs_cli_schema_with_caveman_only_context() {
@@ -146,7 +146,7 @@ test_compact_mode_override_is_ignored() {
 
   output="$(
     run_copilot_hook \
-      "load-required-skills.sh" \
+      "load-required-skills.py" \
       "$audit_log" \
       '{"sessionId":"compact-mode-session","timestamp":"2026-05-21T09:00:04Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "" \
@@ -171,7 +171,7 @@ test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output() {
 
   output="$(
     run_copilot_hook \
-      "load-required-skills.sh" \
+      "load-required-skills.py" \
       "$audit_log" \
       '{"sessionId":"empty-skills-session","timestamp":"2026-05-21T09:00:06Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "" \
@@ -201,7 +201,7 @@ test_multiple_skills_loading_works_correctly() {
 
   output="$(
     run_copilot_hook \
-      "load-required-skills.sh" \
+      "load-required-skills.py" \
       "$audit_log" \
       '{"sessionId":"multiple-skills-session","timestamp":"2026-05-21T09:00:05Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "" \

@@ -94,5 +94,9 @@ run_copilot_hook() {
   done
 
   # Execute the hook
-  env "${env_cmd[@]}" bash "$REPO_ROOT/.copilot/hooks/scripts/$hook_name" <<<"$payload"
-}
+    if [[ "$hook_name" == *.py ]]; then
+      env "${env_cmd[@]}" python3 "$REPO_ROOT/.copilot/hooks/scripts/$hook_name" <<<"$payload"
+    else
+      env "${env_cmd[@]}" bash "$REPO_ROOT/.copilot/hooks/scripts/$hook_name" <<<"$payload"
+    fi
+  }

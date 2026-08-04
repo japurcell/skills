@@ -72,7 +72,7 @@ Canonical agent-facing layout map lives in `.agents/memory/FILE_MAP.md`.
 - `scripts/`: repo helper and installation scripts
 - `.agents/`: canonical agent knowledge base for repo guidance and durable facts
 - `.copilot/`: local Copilot instructions copied by the installer
-- `.copilot/hooks/`: hook scripts and configs installed to `~/.copilot/hooks`
+- `.copilot/hooks/`: hook scripts, configs, and shared helpers installed to `~/.copilot/hooks`
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts; ignore their `outputs/` subdirectories during normal work
 - `scripts/install.sh`: installs `skills/` → `~/.agents/skills`, optional top-level `references/` → `~/.agents/references`, `agents/` → both `~/.gemini/agents` and `~/.copilot/agents`, optional `.copilot/hooks/` → `~/.copilot/hooks`, `.gemini/` contents → `~/.gemini`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
 - `scripts/addy-install.sh`: syncs `../addy-agent-skills` from `https://github.com/addyosmani/agent-skills` by cloning or fast-forward pulling, then imports addy agents, skills, and top-level references into this repository, prefixing imported addy agent and skill names with `addy-`; pass `--skills foo,bar` or `--skills-file path` to copy specific source skill names and their referenced skills, and each successful run refreshes `.addy-skills` with the installed source skill names

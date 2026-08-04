@@ -41,6 +41,7 @@ Read official docs before non-trivial hook changes and keep implementation choic
 ## Repo-specific hook gotchas
 
 - Keep `.copilot/hooks/scripts/format.sh` in sync with `scripts/test-hooks-format.sh`; that test expects audit-backed logging, formatter command and failure logging, session-event file recovery, rollover, and lock waiting.
+- Keep Copilot startup hook logic in `.copilot/hooks/scripts/load-required-skills.py` with thin shell wrappers only; shared JSON output helpers and crash-safe audit append helpers live under `.copilot/hooks/scripts/helpers/`.
 - Keep required-skill injection startup tests focused on caveman-only payloads so context loading stays consistent across Copilot CLI, VS Code, and Gemini CLI.
 - For passive shadow logging, create shadow-log parent directory before first write and keep primary plus shadow writes inside same lock section so event ordering survives.
 - When editing security-hook threat patterns or Tool Guard tests, avoid pasting raw dangerous strings directly into tool payloads; construct exact strings dynamically so active guards do not block self-edits.
