@@ -180,6 +180,14 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "SessionStart"
+            }
+          },
+          {
+            "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/log-session-start.py"
           },
           {
@@ -199,6 +207,14 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterAgent"
+            }
+          },
+          {
+            "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/log-after-agent.py"
           }
         ]
@@ -208,6 +224,14 @@
       {
         "matcher": "*",
         "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeTool"
+            }
+          },
           {
             "name": "tool-guard",
             "type": "command",
@@ -231,6 +255,14 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "Notification"
+            }
+          },
+          {
+            "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/log-notification.py"
           }
         ]
@@ -239,6 +271,14 @@
     "SessionEnd": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "env": {
+              "OBSERVABILITY_CAPTURE_EVENT": "true",
+              "OBSERVABILITY_SOURCE_EVENT_NAME": "SessionEnd"
+            }
+          },
           {
             "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/log-session-end.py"

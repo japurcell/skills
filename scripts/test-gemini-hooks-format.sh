@@ -263,10 +263,19 @@ test_notification_hook_logs_valid_payload() {
 }
 
 test_gemini_settings_keep_required_safety_hooks() {
-  assert_equals '$HOME/.gemini/hooks/scripts/tool-guard.sh' \
-    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "*") | .hooks[] | select(.name == "tool-guard") | .command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected .gemini/settings.json to keep tool-guard wired."
-  assert_equals '$HOME/.gemini/hooks/scripts/scan-secrets.sh' \
+  assert_equals '$HOME/.gemini/hooks/scripts/send-event.py' \
+    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected .gemini/settings.json to keep observability wired first."
+  assert_equals '$HOME/.gemini/hooks/scripts/tool-guard.py' \
+    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "*") | .hooks[1].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected .gemini/settings.json to keep tool-guard wired after observability."
+  assert_equals '$HOME/.gemini/hooks/scripts/send-event.py' \
+    "$(jq -r '.hooks.SessionEnd[] | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected .gemini/settings.json to keep observability wired before session-end hooks."
+  assert_equals '$HOME/.gemini/hooks/scripts/log-session-end.py' \
+    "$(jq -r '.hooks.SessionEnd[] | .hooks[1].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected .gemini/settings.json to keep session-end logging after observability."
+  assert_equals '$HOME/.gemini/hooks/scripts/scan-secrets.py' \
     "$(jq -r '.hooks.SessionEnd[] | .hooks[] | select(.name == "scan-secrets") | .command // empty' "$REPO_ROOT/.gemini/settings.json")" \
     "Expected .gemini/settings.json to keep scan-secrets wired."
 }
