@@ -26,7 +26,7 @@ run_gemini_scan_hook() {
   (
     cd "$repo_dir"
     env "${env_cmd[@]}" \
-      bash "$REPO_ROOT/.gemini/hooks/scripts/scan-secrets.sh" <<<"$payload"
+      python3 -I -S -B "$REPO_ROOT/.gemini/hooks/scripts/scan-secrets.py" <<<"$payload"
   )
 }
 
@@ -187,6 +187,79 @@ test_generic_secrets_filename_stays_clean() {
   fi
 }
 
+test_diff_mode_ignores_unmodified_secret_lines() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  cat > "$repo_dir/notes.txt" <<'EOF'
+token=ghp_1234567890abcdef1234567890abcdef1234
+context=baseline
+EOF
+  git -C "$repo_dir" add notes.txt
+  git -C "$repo_dir" commit -qm "baseline"
+
+  printf '%s\n' 'context=updated' >> "$repo_dir/notes.txt"
+
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      "{\"session_id\":\"unchanged-secret\",\"timestamp\":\"2026-06-23T23:54:30Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}"
+  )"
+
+  assert_equals "{}" "$output" \
+    "Expected unchanged secret-bearing lines to stay out of Gemini diff findings."
+  assert_file_contains "$log_dir/scan.log" '"status":"clean"' \
+    "Expected unchanged secret-bearing lines to keep diff scans clean."
+}
+
+test_diff_mode_ignores_unified_diff_headers() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local secret_name
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  secret_name="ghp_$(printf 'a%.0s' {1..36}).txt"
+  printf '%s\n' 'safe content only' > "$repo_dir/$secret_name"
+  git -C "$repo_dir" add "$secret_name"
+  git -C "$repo_dir" commit -qm "baseline"
+
+  printf '%s\n' 'safe content updated' >> "$repo_dir/$secret_name"
+
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      "{\"session_id\":\"header-ignore\",\"timestamp\":\"2026-06-23T23:54:40Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}"
+  )"
+
+  assert_equals "{}" "$output" \
+    "Expected unified-diff header lines to stay out of Gemini diff findings."
+  assert_file_contains "$log_dir/scan.log" '"status":"clean"' \
+    "Expected diff header lines to remain ignored during Gemini secret scans."
+}
+
 test_allowlist_suppresses_credential_path_finding() {
   local workdir
   local repo_dir
@@ -259,6 +332,8 @@ main() {
   test_env_variants_are_logged_but_not_flagged_by_path_alone
   test_warn_mode_flags_sensitive_credential_paths_without_token_match
   test_generic_secrets_filename_stays_clean
+  test_diff_mode_ignores_unmodified_secret_lines
+  test_diff_mode_ignores_unified_diff_headers
   test_allowlist_suppresses_credential_path_finding
   test_invalid_json_degrades_to_noop_json
   test_gemini_settings_register_session_end_scanner
