@@ -76,6 +76,8 @@ Confirm committed files are scoped and exclude `prd_file` and `progress_file`.
 
 Record the commit hash.
 
+Remove the commit message file.
+
 ## If blocked
 
 Do not ask follow-up questions. Report:

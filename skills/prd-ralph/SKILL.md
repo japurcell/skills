@@ -1,11 +1,11 @@
 ---
 name: prd-ralph
-description: Complete one eligible unfinished PRD task, verify it, append progress, and commit scoped changes unless commit is false.
+description: Attempt at most one eligible unfinished PRD task, verify it, append progress, and commit scoped changes unless commit is false.
 ---
 
 # /prd-ralph
 
-Complete **exactly one** eligible unfinished PRD task.
+Attempt to complete **at most one** eligible unfinished PRD task.
 
 ## Inputs
 
@@ -20,19 +20,19 @@ Complete **exactly one** eligible unfinished PRD task.
 - Do not interview the user. Make reasonable assumptions and record them in `progress_file`.
 - Treat `prd_file` as the source of truth.
 - Do not start unsafe, contradictory, missing, or dependency-blocked work.
-- Do at most one task.
 - Keep changes minimal and task-scoped.
 - Preserve unrelated user changes.
 - Never invent commands, paths, requirements, or acceptance criteria.
+- Use existing repo scripts, documented commands, or commands required by acceptance criteria. If no suitable verification exists, block rather than inventing one.
 - Never commit `prd_file`, `progress_file`, unrelated changes, or blocked/failing work.
-- Record every command/tool failure or timeout in `progress_file`, even if fixed or worked around.
-- Set `passes: true` only after required verification passes and the commit gate is satisfied.
+- After any command/tool failure or timeout, read `references/failures.md`.
+- Set `passes: true` only after required verification passes, the commit gate is satisfied, and progress is appended successfully.
 
 ## References
 
 Read only when triggered:
 
-- `references/browser-verification.md` — browser/UI/auth/routing/DOM/interactive behavior.
+- `references/browser-verification.md` — when browser/UI/auth/routing/DOM/interactive behavior is mentioned or implied.
 - `references/failures.md` — after any command/tool failure or timeout.
 - `references/progress.md` — before appending progress.
 - `references/commit.md` — after verification passes when commit is enabled.
@@ -42,32 +42,19 @@ Read only when triggered:
 ### 1. Prepare
 
 1. Read `prd_file`.
-2. Resolve `progress_file`; if missing, create it with:
-   ```text
-   ## Codebase Patterns
-   ```
-3. Read `progress_file`, especially `## Codebase Patterns`.
-4. Read applicable repo guidance, including `AGENTS.md`.
-5. Check recent history:
-   ```bash
-   git log --oneline -20
-   ```
-6. If any command/tool fails or times out before task selection:
-   - read `references/failures.md`
+2. If `prd_file` cannot be read, report the blocker and stop.
+3. If all `tasks[].passes` are `true`, output exactly: `<promise>COMPLETE</promise>`. Then stop.
+4. Resolve `progress_file`:
+   - if missing, create it with `## Codebase Patterns` at the top
+   - else read it, especially `## Codebase Patterns`
+5. Read repo guidance files if present: `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`.
+6. Check recent history: `git log --oneline -20`.
+7. If any command/tool failed or timed out before task selection:
+   - read `references/failures.md` and `references/progress.md`
    - append a `PREPARE` progress block
    - stop only if the failure blocks safe task selection
 
-### 2. Stop if already complete
-
-If all `tasks[].passes` are `true`, output exactly:
-
-```xml
-<promise>COMPLETE</promise>
-```
-
-Then stop.
-
-### 3. Select one task
+### 2. Select one task
 
 A task is eligible only when:
 
@@ -83,14 +70,10 @@ Selection:
 - Break ties by PRD order.
 - If no task is eligible, stop and list blockers.
 
-### 4. Check browser trigger
-
-If the selected task mentions or implies browser-visible behavior, read `references/browser-verification.md`.
-
-### 5. Implement
+### 3. Implement
 
 1. Activate or load the `tdd` skill.
-2. Follow the selected task’s `description`, `acceptanceCriteria`, `filesLikelyTouched`, `designGuidance`, repo patterns, and `AGENTS.md`.
+2. Follow the selected task’s `description`, `acceptanceCriteria`, `filesLikelyTouched`, `designGuidance`, repo patterns, and repo guidance.
 3. For testable code changes:
    - RED: add a failing test for the required behavior.
    - GREEN: make the smallest change that passes.
@@ -100,19 +83,20 @@ If the selected task mentions or implies browser-visible behavior, read `referen
    - record the reason in `progress_file`
 5. If any command/tool fails or times out, read `references/failures.md`.
 
-### 6. Verify
+### 4. Verify
 
-Run only required verification:
+Run only required verification to avoid unnecessary churn. Prefer filtered runs over full runs.
 
-- exact commands listed in `acceptanceCriteria`
-- existing repo commands needed for relevant tests/typechecks/lints
-- browser verification when required
+Required verification means the smallest existing test/typecheck/lint/build/browser checks needed to prove the selected task’s acceptance criteria.
 
-Capture each exact command and pass/fail evidence.
+1. Determine verification from:
+   - existing repo commands needed for relevant tests/typechecks/lints/builds
+   - commands listed in `acceptanceCriteria`
+2. Run the commands, capturing exact command, output, and exit code.
+3. If the selected task mentions or implies browser-visible behavior, read and apply `references/browser-verification.md`.
+4. If any command/tool fails or times out, read `references/failures.md`.
 
-If any command/tool fails or times out, read `references/failures.md`.
-
-### 7. Finish or block
+### 5. Finish or block
 
 Rescan the selected task for:
 
@@ -131,13 +115,11 @@ If verification failed or is missing:
 
 If all required verification passed, continue.
 
-### 8. Commit gate
-
-Commit is enabled unless `commit` is boolean `false` or string `"false"`.
+### 6. Commit gate
 
 #### If commit is enabled
 
-1. Read `references/commit.md`.
+1. Read and follow `references/commit.md`.
 2. Create exactly one scoped commit for task changes before setting `passes: true`.
 3. Exclude `prd_file`, `progress_file`, and unrelated changes.
 4. If committing is blocked:
@@ -147,21 +129,21 @@ Commit is enabled unless `commit` is boolean `false` or string `"false"`.
    - report the blocker
    - stop
 5. Record the commit hash.
-6. Set the selected task `passes` to `true` in `prd_file`.
-7. Read `references/progress.md`.
-8. Append progress with verification evidence, command/tool failures, and commit hash.
-9. Confirm the progress block is well formed.
+6. Read `references/progress.md`.
+7. Append progress with verification evidence, command/tool failures, and commit hash.
+8. Confirm the progress block is well formed.
+9. Set the selected task `passes` to `true` in `prd_file`.
 10. `prd_file` and `progress_file` may remain modified and uncommitted.
 
 #### If commit is disabled
 
-1. Set the selected task `passes` to `true` in `prd_file`.
-2. Do not commit.
-3. Read `references/progress.md`.
-4. Append progress with verification evidence, command/tool failures, and `disabled by input`.
-5. Confirm the progress block is well formed.
+1. Read `references/progress.md`.
+2. Append progress with verification evidence, command/tool failures, and `disabled by input`.
+3. Confirm the progress block is well formed.
+4. Set the selected task `passes` to `true` in `prd_file`.
+5. Do not commit.
 
-### 9. Final response
+### 7. Final response
 
 Before responding, confirm:
 
