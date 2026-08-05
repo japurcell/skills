@@ -32,6 +32,52 @@ create_fixture_repo() {
   printf '%s\n' 'Copilot instructions.' > "$repo/.copilot/copilot-instructions.md"
   printf '%s\n' '{}' > "$repo/.copilot/lsp-config.json"
   printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.copilot/hooks/test-hook.sh"
+
+  mkdir -p "$repo/.gemini/hooks/scripts" "$repo/.copilot/hooks/scripts"
+  printf '%s\n' 'print("hook")' > "$repo/.gemini/hooks/scripts/test-hook.py"
+  printf '%s\n' 'print("hook")' > "$repo/.copilot/hooks/scripts/test-hook.py"
+  printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.gemini/hooks/scripts/test-hook.sh"
+  printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.copilot/hooks/scripts/test-hook.sh"
+}
+
+test_installed_hooks_are_executable() {
+  local workdir
+  local repo
+  local home
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+
+  create_fixture_repo "$repo"
+
+  chmod 644 "$repo/.gemini/hooks/scripts/test-hook.py"
+  chmod 644 "$repo/.copilot/hooks/scripts/test-hook.py"
+  chmod 644 "$repo/.gemini/hooks/scripts/test-hook.sh"
+  chmod 644 "$repo/.copilot/hooks/scripts/test-hook.sh"
+
+  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+
+  if [[ ! -x "$home/.gemini/hooks/scripts/test-hook.py" ]]; then
+    echo "Expected ~/.gemini/hooks/scripts/test-hook.py to be executable." >&2
+    exit 1
+  fi
+
+  if [[ ! -x "$home/.copilot/hooks/scripts/test-hook.py" ]]; then
+    echo "Expected ~/.copilot/hooks/scripts/test-hook.py to be executable." >&2
+    exit 1
+  fi
+
+  if [[ ! -x "$home/.gemini/hooks/scripts/test-hook.sh" ]]; then
+    echo "Expected ~/.gemini/hooks/scripts/test-hook.sh to be executable." >&2
+    exit 1
+  fi
+
+  if [[ ! -x "$home/.copilot/hooks/scripts/test-hook.sh" ]]; then
+    echo "Expected ~/.copilot/hooks/scripts/test-hook.sh to be executable." >&2
+    exit 1
+  fi
 }
 
 test_excludes_and_prunes_skill_evals() {
@@ -124,6 +170,7 @@ test_copies_full_gemini_tree() {
 main() {
   test_excludes_and_prunes_skill_evals
   test_copies_full_gemini_tree
+  test_installed_hooks_are_executable
 }
 
 main "$@"

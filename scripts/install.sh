@@ -48,10 +48,14 @@ copy_references() {
 
 copy_hooks() {
   cp -Rp "$HOOKS_SRC/." "$HOOKS_DEST/"
+  find "$HOOKS_DEST" -type f \( -name "*.py" -o -name "*.sh" \) -exec chmod 755 {} +
 }
 
 copy_gemini() {
   cp -Rp "$GEMINI_SRC/." "$GEMINI_DEST/"
+  if [[ -d "$GEMINI_DEST/hooks" ]]; then
+    find "$GEMINI_DEST/hooks" -type f \( -name "*.py" -o -name "*.sh" \) -exec chmod 755 {} +
+  fi
 }
 
 copy_copilot_instructions() {
