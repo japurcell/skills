@@ -124,9 +124,17 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
       "Expected hooks.json to register send-event.py first for $hook_name."
 
     jq_query=".hooks.${hook_name}[1].bash // empty"
+    if [[ "$hook_name" == "sessionStart" ]]; then
+      assert_equals '$HOME/.copilot/hooks/scripts/auto-ingest-source.py' \
+        "$(jq -r "$jq_query" "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+        "Expected hooks.json to register auto-ingest-source.py second for sessionStart."
+
+      jq_query=".hooks.${hook_name}[2].bash // empty"
+    fi
+
     assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
       "$(jq -r "$jq_query" "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-      "Expected hooks.json to register load-required-skills.py second for $hook_name."
+      "Expected hooks.json to register load-required-skills.py after startup hooks for $hook_name."
   done
 }
 

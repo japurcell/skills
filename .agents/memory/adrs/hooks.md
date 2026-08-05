@@ -35,3 +35,9 @@ This document records the architectural decision records (ADRs) for `{.copilot,.
 - **Decision:** Hot-path hooks such as Copilot `preToolUse` and Gemini `BeforeTool` must stay under a 40ms startup budget on a normal local machine.
 - **Rationale:** The PRD sets an explicit performance target for the safety hooks that run on every tool invocation.
 - **Consequences:** Benchmark the installed surface, keep imports lean, and prefer the fastest supported invocation path even if it differs from direct repo execution.
+
+## ADR-006: Runtime-local auto-ingest hooks with a shared repo manifest
+
+- **Decision:** Source auto-ingest runs through dedicated startup hook scripts in each runtime, while both runtimes read and write the same committed manifest at `.agents/memory/sources/source-ingest-manifest.json`.
+- **Rationale:** The user wanted no cross-runtime shared executable hook code, but still needed Copilot and Gemini to agree on stale-source state, placeholder summary naming, and orphan cleanup.
+- **Consequences:** Copilot and Gemini keep separate helper implementations, yet their manifest schema and summary naming contract must stay aligned.

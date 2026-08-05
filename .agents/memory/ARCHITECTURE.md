@@ -15,6 +15,7 @@ coverage: Repo structure, install flows, and how top-level areas relate
 | `.gemini/` | Gemini-specific instructions and hooks. | Installed to `~/.gemini/` |
 | `scripts/` | Installers, importers, and targeted validation helpers. | Run from repo checkout |
 | `.agents/` | Agent knowledge base with canonical agent-facing rules and durable repo facts. | Copilot/Gemini agents working in this repo |
+| `docs/` | Human-facing design notes and ADRs that complement `.agents/` canonical guidance. | Repo readers who need recorded decisions |
 | `README.md`, `AGENTS.md` | Top-level human entry points that summarize the repo and point into `.agents/`. | Repo readers and agents |
 
 ## Main flows

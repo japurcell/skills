@@ -41,10 +41,12 @@ these layer files for specifics.
 
 Use this area to register scaffolded source summaries and keep source-specific knowledge discoverable.
 Load `.agents/memory/LOG.md` first, then the matching summary in `.agents/memory/sources/`.
+The committed manifest `.agents/memory/sources/source-ingest-manifest.json` tracks source fingerprints plus stale or orphan summary state for the startup auto-ingest hooks.
 
 | Source summary path | Raw source path | When to load |
 | ----------------------------- | ------------------- | ---------------------------------------------------------- |
 | `.agents/memory/sources/*.md` | `.agents/sources/*` | When working on a specific ingested source or its summary. |
+| `.agents/memory/sources/source-ingest-manifest.json` | `.agents/sources/*` | When debugging startup auto-ingest hook state or stale-summary detection. |
 | `[LOG.md](LOG.md)` | N/A | When reviewing scaffold and integrate history. |
 
 ## Related Existing Docs

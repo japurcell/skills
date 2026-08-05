@@ -10,15 +10,18 @@ coverage: Test guidance for `{.copilot,.gemini}/hooks`.
 - Read official hook docs before non-trivial changes and keep implementation aligned with them.
 - The retained supported hook surface is Python-first; validate the Python entrypoints and installed copies rather than the retired shell format surface.
 - Copilot hook checks:
+  - `bash scripts/test-hooks-auto-ingest.sh`
   - `bash scripts/test-hooks-startup.sh`
   - `bash scripts/test-hooks-observability.sh`
   - `bash scripts/test-hooks-secrets-scanner.sh`
   - `bash scripts/test-hooks-tool-guard.sh`
 - Gemini hook checks:
+  - `bash scripts/test-gemini-hooks-auto-ingest.sh`
   - `bash scripts/test-gemini-hooks-startup.sh`
   - `bash scripts/test-gemini-hooks-secrets-scanner.sh`
   - `bash scripts/test-gemini-hooks-tool-guard.sh`
   - `bash scripts/test-gemini-hooks-rtk.sh`
+- `scripts/test-gemini-hooks-startup.sh` includes a negative missing-skill case that intentionally prints `Hook hard stop: Required skill file not found...`; trust the script exit status and assertions, not stderr alone.
 - Gemini config should point at the Python operational entrypoints in `.gemini/settings.json`, including `.gemini/hooks/scripts/rtk-hook-gemini.py`; validate those paths through the Gemini hook regressions.
 
 ## Live evidence
@@ -28,5 +31,6 @@ coverage: Test guidance for `{.copilot,.gemini}/hooks`.
 - If VS Code omits `SubagentStart` for `runSubagent` child sessions, verify the direct `SubagentStart` hook is installed and use `SessionStart` as the fallback evidence.
 - `scripts/test-hooks-observability.sh` exercises installed Copilot hook copies and validates `send-event.py`, `hook_execution`, `event_capture`, `rollup`, lock-wait fail-open behavior, redaction/capping, and the observability kill-switch against `$HOME/.copilot/hooks/logs/observability.ndjson`; use it after changing hook registrations because it runs against installed config, not repo source.
 - `scripts/test-gemini-hooks-observability.sh` exercises installed Gemini hook copies and validates `send-event.py`, `hook_execution`, `event_capture`, `rollup`, lock-wait fail-open behavior, redaction/capping, and the observability kill-switch against `$HOME/.gemini/hooks/logs/observability.ndjson`; use it after changing hook registrations because it runs against installed config, not repo source.
+- `scripts/test-hooks-auto-ingest.sh` and `scripts/test-gemini-hooks-auto-ingest.sh` cover new-source scaffolding, stale-summary detection, rename orphans, deleted-source cleanup prompts, committed manifest updates, manifest summary-path sanitization, and the startup fallback when the Gemini payload omits `cwd`.
 - When benchmarking the Gemini Tool Guardian port, measure the installed shell-command path after `./scripts/install.sh`; direct repo invocation is slower and can miss the `<40ms` target even when the installed surface passes.
 - Hook event compatibility contract lives in `.agents/instructions/hooks.md`.

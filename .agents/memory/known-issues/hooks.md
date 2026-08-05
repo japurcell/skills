@@ -6,6 +6,18 @@ coverage: Known issues, quirks, and workarounds for `{.copilot,.gemini}/hooks`.
 
 Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hooks`. Cross-cutting issues live in `.agents/memory/KNOWN_ISSUES.md`.
 
+## Directory Traversal risk via summary_path in auto-ingest manifest
+
+**Affected area:** Startup source auto-ingest feature (`auto_ingest.py` / `source_ingest.py`)
+**Description:** The shared JSON manifest (`source-ingest-manifest.json`) entries contain a `summary_path` attribute. Reading this path relative to the summaries directory without sanitization could lead to a directory traversal vulnerability if a malicious manifest is loaded.
+**Workaround:** Restrict previous summary paths to their flat filename component using `Path(summary_name).name`, which neutralizes any directory traversal attempts.
+
+## Infinite loop/DoS on workspace via loose substring check of status: scaffold
+
+**Affected area:** Startup source auto-ingest feature (`auto_ingest.py` / `source_ingest.py`)
+**Description:** Determining if a summary file is a scaffold by doing a global substring check for `status: scaffold` causes files with that phrase in the filename or path to be perpetually treated as scaffolds, creating an infinite auto-ingest loop.
+**Workaround:** Parse and restrict the `status: scaffold` check strictly to the YAML frontmatter block at the top of the summary file.
+
 ## Active Tool Guardian blocks hook self-edits and policy maintenance
 
 **Affected area:** hook self-edits and guard-policy maintenance

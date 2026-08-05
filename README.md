@@ -71,6 +71,7 @@ Canonical agent-facing layout map lives in `.agents/memory/FILE_MAP.md`.
 - `references/`: optional shared reference material installed to `~/.agents/references`
 - `scripts/`: repo helper and installation scripts
 - `.agents/`: canonical agent knowledge base for repo guidance and durable facts
+- `docs/`: human-facing ADRs and design notes that complement `.agents/`
 - `.copilot/`: local Copilot instructions copied by the installer
 - `.copilot/hooks/`: hook scripts, configs, and shared helpers installed to `~/.copilot/hooks`
 - `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts; ignore their `outputs/` subdirectories during normal work
@@ -106,7 +107,7 @@ Canonical agent-facing authoring rules live in `.agents/instructions/`.
 
 Run the narrowest command that covers your change. Canonical agent-facing validation routing lives in `.agents/memory/TESTING_STRATEGY.md`.
 
-For hook changes, run `./scripts/install.sh` first and then the targeted regressions listed in `.agents/memory/testing/hooks.md`; the current hook validation set starts with startup, observability, secrets, tool-guard, and RTK checks.
+For hook changes, run `./scripts/install.sh` first and then the targeted regressions listed in `.agents/memory/testing/hooks.md`; the current hook validation set starts with auto-ingest/startup, observability, secrets, tool-guard, and RTK checks.
 
 ## Additional docs
 

@@ -200,6 +200,17 @@
             }
           }
         ]
+      },
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "name": "auto-ingest-sources",
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/auto-ingest.py",
+            "description": "Scans .agents/sources at startup and injects stale source-summary context."
+          }
+        ]
       }
     ],
     "AfterAgent": [
