@@ -351,6 +351,82 @@ test_manifest_summary_path_is_sanitized_to_basename() {
     "Expected manifest summary path sanitization to hash the local basename only."
 }
 
+test_gemini_auto_ingest_robust_audit_logging() {
+  local workdir
+  local home
+  local repo_dir
+  local source_dir
+  local summary_dir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  repo_dir="$workdir/repo"
+  source_dir="$repo_dir/.agents/sources"
+  summary_dir="$repo_dir/.agents/memory/sources"
+  audit_log="$home/audit.log"
+
+  mkdir -p "$source_dir" "$summary_dir"
+  install_into_temp_home "$home"
+
+  # Case 1: no sources found
+  output="$(
+    run_installed_auto_ingest_hook \
+      "$home" \
+      '{"session_id":"ingest-logging-empty","timestamp":"2026-06-24T10:00:00Z","hook_event_name":"SessionStart","source":"startup","cwd":"'"$repo_dir"'"}' \
+      AGENTS_SOURCE_SCAN_DIR="$source_dir" \
+      AGENTS_SOURCE_SUMMARY_DIR="$summary_dir"
+  )"
+  assert_file_contains "$audit_log" "Message: auto-ingest scan complete: no context injected (no sources found)" \
+    "Expected Gemini audit log to record no context injected when no sources found."
+
+  # Case 2: context injected
+  printf '# hello\n' > "$source_dir/hello.md"
+  output="$(
+    run_installed_auto_ingest_hook \
+      "$home" \
+      '{"session_id":"ingest-logging-injected","timestamp":"2026-06-24T10:00:01Z","hook_event_name":"SessionStart","source":"startup","cwd":"'"$repo_dir"'"}' \
+      AGENTS_SOURCE_SCAN_DIR="$source_dir" \
+      AGENTS_SOURCE_SUMMARY_DIR="$summary_dir"
+  )"
+  assert_file_contains "$audit_log" "Message: auto-ingest scan complete: context injected. Findings: 1" \
+    "Expected Gemini audit log to record context injected."
+  assert_file_contains "$audit_log" "Finding: state=needs_summary, reason=new file, path=hello.md" \
+    "Expected Gemini audit log to log the individual finding details."
+
+  # Case 3: all summaries up to date
+  # Write summary for hello.md
+  printf '# Summary for hello\n\nVerified summary.\n' > "$summary_dir/hello-md.summary.md"
+  # Run once to sync manifest
+  output="$(
+    run_installed_auto_ingest_hook \
+      "$home" \
+      '{"session_id":"ingest-logging-sync","timestamp":"2026-06-24T10:00:02Z","hook_event_name":"SessionStart","source":"startup","cwd":"'"$repo_dir"'"}' \
+      AGENTS_SOURCE_SCAN_DIR="$source_dir" \
+      AGENTS_SOURCE_SUMMARY_DIR="$summary_dir"
+  )"
+  # Run again to get "all summaries up to date"
+  output="$(
+    run_installed_auto_ingest_hook \
+      "$home" \
+      '{"session_id":"ingest-logging-uptodate","timestamp":"2026-06-24T10:00:03Z","hook_event_name":"SessionStart","source":"startup","cwd":"'"$repo_dir"'"}' \
+      AGENTS_SOURCE_SCAN_DIR="$source_dir" \
+      AGENTS_SOURCE_SUMMARY_DIR="$summary_dir"
+  )"
+  assert_file_contains "$audit_log" "Message: auto-ingest scan complete: no context injected (all summaries up to date)" \
+    "Expected Gemini audit log to record no context injected when all summaries are up to date."
+
+  # Case 4: hard stop logging
+  # Run with invalid payload that is not a json object
+  output="$(
+    env HOME="$home" AUDIT_LOG="$audit_log" python3 "$home/.gemini/hooks/scripts/auto-ingest.py" <<<"invalid-payload" || true
+  )"
+  assert_file_contains "$audit_log" "Error: Hook hard stop: Invalid hook input: expected a JSON object" \
+    "Expected Gemini audit log to capture hard stop error when invalid JSON is supplied."
+}
+
 main() {
   test_session_start_startup_registers_auto_ingest_hook
   test_new_source_injects_scaffold_context_and_updates_manifest
@@ -359,6 +435,7 @@ main() {
   test_renamed_source_preserves_orphan_context_and_scaffolds_new_summary
   test_deleted_source_keeps_orphan_only_context
   test_manifest_summary_path_is_sanitized_to_basename
+  test_gemini_auto_ingest_robust_audit_logging
 }
 
 main "$@"

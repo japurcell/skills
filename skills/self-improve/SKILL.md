@@ -7,13 +7,6 @@ description: Use to update or refactor AGENTS.md and linked instruction docs by 
 
 Keep future-agent instructions useful, scoped, and lightweight. Preserve durable guidance only; do not record one-off noise.
 
-## Use When
-
-- User asks to update/refactor `AGENTS.md` or linked instruction docs.
-- User asks to remember lessons, commands, validation steps, corrections, workflows, gotchas, or repo quirks.
-- Session notes, handoffs, progress files, or logs may contain reusable guidance.
-- Instruction docs are duplicated, conflicting, stale, oversized, or poorly scoped.
-
 Do not use for temporary blockers, obvious facts, generic advice, speculation, or one-time failures.
 
 ## Workflow

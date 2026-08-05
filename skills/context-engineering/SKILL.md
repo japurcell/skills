@@ -7,14 +7,6 @@ description: Build the smallest reliable context before acting. Use at session s
 
 Goal: load only context that can change the answer. Follow higher-priority system/developer/user instructions first.
 
-## Use When
-
-Use this before acting when:
-
-- Starting a new session, repo, branch, task, feature, or file scope
-- Editing code or making architecture/API/test decisions
-- Output drifts, guesses, ignores conventions, or uses too much irrelevant context
-
 ## Workflow
 
 1. Check rules first.

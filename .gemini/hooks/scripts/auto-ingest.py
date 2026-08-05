@@ -28,6 +28,10 @@ SCRIPT_NAME = Path(__file__).name
 def hard_stop(reason: str) -> None:
     message = reason.strip() or "Hook failed"
     print(f"Hook hard stop: {message}", file=sys.stderr)
+    try:
+        audit_log_event(SCRIPT_NAME, f"Error: Hook hard stop: {sanitize_log_field(message)}")
+    except Exception:
+        pass
     emit_json({"continue": False, "stopReason": message, "suppressOutput": True})
     raise SystemExit(0)
 
@@ -98,8 +102,31 @@ def main() -> int:
 
         context = build_context(report_entries, manifest_path)
         if not context:
+            if not current_records:
+                audit_log_event(
+                    SCRIPT_NAME,
+                    f"[{safe_timestamp}] Message: auto-ingest scan complete: no context injected (no sources found), Session: {safe_session_id}"
+                )
+            else:
+                audit_log_event(
+                    SCRIPT_NAME,
+                    f"[{safe_timestamp}] Message: auto-ingest scan complete: no context injected (all summaries up to date), Session: {safe_session_id}"
+                )
             emit_json({})
             return 0
+
+        audit_log_event(
+            SCRIPT_NAME,
+            f"[{safe_timestamp}] Message: auto-ingest scan complete: context injected. Findings: {len(report_entries)}, Session: {safe_session_id}"
+        )
+        for entry in report_entries:
+            state = sanitize_log_field(str(entry.get("state") or ""))
+            reason = sanitize_log_field(str(entry.get("reason") or ""))
+            source_path = sanitize_log_field(str(entry.get("source_path") or ""))
+            audit_log_event(
+                SCRIPT_NAME,
+                f"[{safe_timestamp}] Finding: state={state}, reason={reason}, path={source_path}, Session: {safe_session_id}"
+            )
 
         emit_json(
             {
@@ -114,7 +141,12 @@ def main() -> int:
     except ValueError as exc:
         hard_stop(str(exc))
     except Exception as exc:  # noqa: BLE001 - top-level fallback
-        print(f"{SCRIPT_NAME}: Unexpected auto-ingest scan exception: {exc}", file=sys.stderr)
+        safe_exc = sanitize_log_field(str(exc))
+        print(f"{SCRIPT_NAME}: Unexpected auto-ingest scan exception: {safe_exc}", file=sys.stderr)
+        try:
+            audit_log_event(SCRIPT_NAME, f"Error: Unexpected exception: {safe_exc}")
+        except Exception:
+            pass
         emit_json({})
         return 0
     return 0

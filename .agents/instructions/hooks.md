@@ -46,6 +46,7 @@ Read official docs before non-trivial hook changes and keep implementation choic
 - Keep `send-event.py` registered in every supported Gemini hook event block, including the lifecycle hooks that do not currently have other operational behavior (`BeforeAgent`, `BeforeModel`, `AfterModel`, `BeforeToolSelection`, `AfterTool`, `PreCompress`) so the installed config stays fully observable.
 - Source auto-ingest uses dedicated startup-only Python hooks per runtime; do not fold that behavior into the required-skill loaders.
 - Source auto-ingest state lives in the committed repo manifest `.agents/memory/sources/source-ingest-manifest.json`, while executable helper code stays runtime-local under each hook tree.
+- Source auto-ingest hooks must log robust audit information: failures/exceptions, successful context injections with granular details on individual findings (path, state, and reason), and non-injections (distinguishing between all summaries being up to date vs no sources found) to the runtime-local audit log.
 - For passive shadow logging, create shadow-log parent directory before first write and keep primary plus shadow writes inside same lock section so event ordering survives.
 - When editing security-hook threat patterns or Tool Guard tests, avoid pasting raw dangerous strings directly into tool payloads; construct exact strings dynamically so active guards do not block self-edits.
 

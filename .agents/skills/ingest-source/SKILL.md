@@ -5,8 +5,6 @@ description: Integrates scaffolded source summaries into durable repository memo
 
 # /ingest-source
 
-Use this skill after a source summary has been scaffolded.
-
 ## Workflow
 
 1. Read the raw source and its matching summary in `.agents/memory/sources/`.

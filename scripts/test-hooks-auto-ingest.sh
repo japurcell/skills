@@ -235,11 +235,79 @@ test_hooks_json_registers_auto_ingest_between_send_event_and_required_skills() {
     "Expected load-required-skills.py to remain after auto-ingest-source.py."
 }
 
+test_auto_ingest_robust_audit_logging() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  # Case 1: no sources found (empty .agents/sources)
+  mkdir -p "$workdir/.agents/sources"
+  output="$(
+    run_auto_ingest_hook \
+      "$audit_log" \
+      '{"sessionId":"logging-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "$workdir"
+  )"
+  assert_file_contains "$audit_log" "Findings: 0, no context injected (no sources found)" \
+    "Expected audit log to record that no context was injected because no sources were found."
+
+  # Case 2: new sources added -> context injected -> logs findings
+  make_text_file "$workdir/.agents/sources/test1.md" $'test1\n'
+  output="$(
+    run_auto_ingest_hook \
+      "$audit_log" \
+      '{"sessionId":"logging-session","timestamp":"2026-05-21T09:00:01Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "$workdir"
+  )"
+  assert_file_contains "$audit_log" "Findings: 1, context injected" \
+    "Expected audit log to record context injected for new source."
+  assert_file_contains "$audit_log" "Finding: state=needs_summary, reason=new file, path=test1.md" \
+    "Expected audit log to log individual finding with state and reason."
+
+  # Case 3: all summaries up to date -> no context injected
+  # To make summaries up to date, let's create a non-scaffold summary for test1.md.
+  # Let's see, what is the summary filename? It should be test1-md.summary.md.
+  # Let's write some content without "status: scaffold".
+  mkdir -p "$workdir/.agents/memory/sources"
+  make_text_file "$workdir/.agents/memory/sources/test1-md.summary.md" $'# Summary for test1\n\nVerified summary content.\n'
+  # And let's run the hook again so the manifest updates with active state and the actual summary hash.
+  output="$(
+    run_auto_ingest_hook \
+      "$audit_log" \
+      '{"sessionId":"logging-session","timestamp":"2026-05-21T09:00:02Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "$workdir"
+  )"
+  # Now let's run it one more time to test the "all summaries up to date" case.
+  output="$(
+    run_auto_ingest_hook \
+      "$audit_log" \
+      '{"sessionId":"logging-session","timestamp":"2026-05-21T09:00:03Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "$workdir"
+  )"
+  assert_file_contains "$audit_log" "Findings: 0, no context injected (all summaries up to date)" \
+    "Expected audit log to record that all summaries were up to date."
+
+  # Case 4: failure logging (invalid payload)
+  output="$(
+    run_auto_ingest_hook \
+      "$audit_log" \
+      'not-a-json' \
+      "$workdir" || true
+  )"
+  assert_file_contains "$audit_log" "Error: Invalid hook input: expected a JSON object" \
+    "Expected audit log to capture invalid payload failure."
+}
+
 main() {
   test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reasons
   test_session_start_auto_ingest_outputs_vscode_schema_for_new_sources
   test_manifest_summary_path_is_sanitized_to_basename
   test_hooks_json_registers_auto_ingest_between_send_event_and_required_skills
+  test_auto_ingest_robust_audit_logging
 }
 
 main "$@"

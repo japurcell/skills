@@ -89,14 +89,30 @@ def main() -> int:
 
         message = build_context(report_entries, manifest_file)
         session_id = sanitize_log_field(stringify_value(first_present(payload, "sessionId", "session_id")))
-        log_event(
-            f"Message: auto-ingest scan complete, Event: {event_name or 'sessionStart'}, "
-            f"Session: {session_id}, Findings: {len(report_entries)}"
-        )
 
         if not message.strip():
+            if not current_sources:
+                log_event(
+                    f"Message: auto-ingest scan complete, Event: {event_name or 'sessionStart'}, "
+                    f"Session: {session_id}, Findings: 0, no context injected (no sources found)"
+                )
+            else:
+                log_event(
+                    f"Message: auto-ingest scan complete, Event: {event_name or 'sessionStart'}, "
+                    f"Session: {session_id}, Findings: 0, no context injected (all summaries up to date)"
+                )
             emit_json({})
             return 0
+
+        log_event(
+            f"Message: auto-ingest scan complete, Event: {event_name or 'sessionStart'}, "
+            f"Session: {session_id}, Findings: {len(report_entries)}, context injected"
+        )
+        for entry in report_entries:
+            state = sanitize_log_field(str(entry.get("state") or ""))
+            reason = sanitize_log_field(str(entry.get("reason") or ""))
+            source_path = sanitize_log_field(str(entry.get("source_path") or ""))
+            log_event(f"Finding: state={state}, reason={reason}, path={source_path}, Session: {session_id}")
 
         emit_json(build_output(message, event_name))
         return 0
