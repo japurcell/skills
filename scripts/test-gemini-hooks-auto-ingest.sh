@@ -19,6 +19,13 @@ run_installed_auto_ingest_hook() {
   env HOME="$home" AUDIT_LOG="$home/audit.log" "$@" python3 "$home/.gemini/hooks/scripts/auto-ingest.py" <<<"$payload"
 }
 
+run_repo_local_before_agent_auto_ingest_hook() {
+  local payload="$1"
+  shift
+
+  env "$@" python3 "$REPO_ROOT/.gemini/hooks/scripts/inject-auto-ingest-context.py" <<<"$payload"
+}
+
 write_manifest() {
   local path="$1"
   local content="$2"
@@ -73,6 +80,10 @@ test_session_start_startup_registers_auto_ingest_hook() {
   assert_equals '' \
     "$(jq -r '.hooks.SessionStart[] | select(.matcher == "startup") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
     "Expected Gemini global settings to stop registering auto-ingest."
+
+  assert_equals '$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py' \
+    "$(jq -r '.hooks.BeforeAgent[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected Gemini repo-local settings to register the BeforeAgent auto-ingest injector."
 }
 
 test_new_source_injects_scaffold_context_and_updates_manifest() {
@@ -180,6 +191,50 @@ test_missing_cwd_falls_back_to_process_working_directory() {
   assert_equals "needs_summary" \
     "$(jq -r '.entries[] | select(.source_path=="fallback.md") | .state' "$manifest_path")" \
     "Expected missing cwd payloads to still update the manifest."
+}
+
+test_before_agent_injects_auto_ingest_context_and_materializes_manifest() {
+  local workdir
+  local repo_dir
+  local source_dir
+  local summary_dir
+  local manifest_path
+  local output
+  local context
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  source_dir="$repo_dir/.agents/sources"
+  summary_dir="$repo_dir/.agents/memory/sources"
+  manifest_path="$summary_dir/source-ingest-manifest.json"
+
+  mkdir -p "$source_dir" "$summary_dir"
+  printf '# before-agent\n' > "$source_dir/before-agent.md"
+
+  output="$(
+    run_repo_local_before_agent_auto_ingest_hook \
+      '{"session_id":"before-agent-auto-ingest","timestamp":"2026-06-24T10:00:00Z","hook_event_name":"BeforeAgent","cwd":"'"$repo_dir"'","prompt":"hello"}' \
+      HOME="$workdir/home" \
+      AUDIT_LOG="$workdir/audit.log" \
+      AGENTS_SOURCE_SCAN_DIR="$source_dir" \
+      AGENTS_SOURCE_SUMMARY_DIR="$summary_dir"
+  )"
+
+  context="$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")"
+
+  assert_file_contains <(printf '%s' "$context") \
+    "Auto-ingest source updates detected." \
+    "Expected BeforeAgent auto-ingest to inject stale-source context."
+  assert_file_contains <(printf '%s' "$context") \
+    '# /ingest-source' \
+    "Expected BeforeAgent auto-ingest to include ingest workflow guidance."
+  assert_file_contains "$summary_dir/before-agent-md.summary.md" \
+    "## Executive Summary" \
+    "Expected BeforeAgent auto-ingest to scaffold the missing summary."
+  assert_equals "needs_summary" \
+    "$(jq -r '.entries[] | select(.source_path=="before-agent.md") | .state' "$manifest_path")" \
+    "Expected BeforeAgent auto-ingest to persist stale manifest entries."
 }
 
 test_modified_source_keeps_existing_summary_and_marks_stale() {
@@ -469,6 +524,7 @@ main() {
   test_session_start_startup_registers_auto_ingest_hook
   test_new_source_injects_scaffold_context_and_updates_manifest
   test_missing_cwd_falls_back_to_process_working_directory
+  test_before_agent_injects_auto_ingest_context_and_materializes_manifest
   test_modified_source_keeps_existing_summary_and_marks_stale
   test_renamed_source_preserves_orphan_context_and_scaffolds_new_summary
   test_deleted_source_keeps_orphan_only_context

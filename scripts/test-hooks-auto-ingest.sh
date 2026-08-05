@@ -70,6 +70,19 @@ run_repo_local_auto_ingest_hook() {
   env "${extra_env[@]}" python3 "$REPO_ROOT/.github/hooks/scripts/auto-ingest-source.py" <<<"$payload"
 }
 
+run_user_prompt_transformed_auto_ingest_hook() {
+  local audit_log="$1"
+  local payload="$2"
+  local root="$3"
+
+  env \
+    "AUDIT_LOG=$audit_log" \
+    "COPILOT_AUTO_INGEST_REPO_ROOT=$root" \
+    "COPILOT_AUTO_INGEST_SUMMARY_DIR=$root/.agents/memory/sources" \
+    "COPILOT_AUTO_INGEST_HELPER_PATH=$REPO_ROOT/.github/hooks/scripts/helpers/auto_ingest.py" \
+    python3 "$REPO_ROOT/.copilot/hooks/scripts/inject-auto-ingest-context.py" <<<"$payload"
+}
+
 test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reasons() {
   local workdir
   local audit_log
@@ -183,6 +196,44 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
     "Expected the manifest to add the renamed destination source."
   assert_file_contains "$manifest_path" '"new.md"' \
     "Expected the manifest to add the new source."
+}
+
+test_user_prompt_transformed_injects_auto_ingest_context_and_materializes_manifest() {
+  local workdir
+  local audit_log
+  local output
+  local transformed
+  local manifest_path
+  local summary_path
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  manifest_path="$workdir/.agents/memory/sources/source-ingest-manifest.json"
+  summary_path="$workdir/.agents/memory/sources/$(summary_name_for_source "prompt-source.md")"
+
+  mkdir -p "$workdir/.agents/sources"
+  make_text_file "$workdir/.agents/sources/prompt-source.md" $'prompt source v1\n'
+
+  output="$(
+    run_user_prompt_transformed_auto_ingest_hook \
+      "$audit_log" \
+      '{"sessionId":"prompt-auto-ingest","timestamp":"2026-05-21T09:00:00Z","cwd":"'"$workdir"'","prompt":"What is your training cut off date?","transformedPrompt":"What is your training cut off date?"}' \
+      "$workdir"
+  )"
+
+  transformed="$(jq -r '.modifiedTransformedPrompt' <<<"$output")"
+
+  assert_file_contains <(printf '%s' "$transformed") 'Auto-ingest source updates detected.' \
+    "Expected userPromptTransformed auto-ingest to prepend stale-source context."
+  assert_file_contains <(printf '%s' "$transformed") '# /ingest-source' \
+    "Expected userPromptTransformed auto-ingest to include ingest workflow guidance."
+  assert_file_contains <(printf '%s' "$transformed") 'What is your training cut off date?' \
+    "Expected userPromptTransformed auto-ingest to preserve the original model-facing prompt."
+  assert_file_contains "$summary_path" '## Executive Summary' \
+    "Expected userPromptTransformed auto-ingest to scaffold the missing summary."
+  assert_file_contains "$manifest_path" '"state": "needs_summary"' \
+    "Expected userPromptTransformed auto-ingest to persist stale manifest entries."
 }
 
 test_session_start_auto_ingest_outputs_vscode_schema_for_new_sources() {
@@ -353,6 +404,7 @@ test_auto_ingest_robust_audit_logging() {
 
 main() {
   test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reasons
+  test_user_prompt_transformed_injects_auto_ingest_context_and_materializes_manifest
   test_session_start_auto_ingest_outputs_vscode_schema_for_new_sources
   test_manifest_summary_path_is_sanitized_to_basename
   test_hooks_json_registers_auto_ingest_between_send_event_and_required_skills

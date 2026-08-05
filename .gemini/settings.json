@@ -12,6 +12,19 @@
           }
         ]
       }
+    ],
+    "BeforeAgent": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "name": "inject-auto-ingest-context",
+            "type": "command",
+            "command": "$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py",
+            "description": "Injects current source-summary ingest work into prompt-time context."
+          }
+        ]
+      }
     ]
   }
 }

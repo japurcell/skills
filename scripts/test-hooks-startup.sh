@@ -130,6 +130,14 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.subagentStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register load-required-skills.py after send-event.py for subagentStart."
 
+  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+    "$(jq -r '.hooks.userPromptTransformed[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py first for userPromptTransformed."
+
+  assert_equals '$HOME/.copilot/hooks/scripts/inject-auto-ingest-context.py' \
+    "$(jq -r '.hooks.userPromptTransformed[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register inject-auto-ingest-context.py after send-event.py for userPromptTransformed."
+
   assert_equals '' \
     "$(jq -r '.hooks.sessionStart[] | select(.bash | test("auto-ingest-source\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected global Copilot hooks.json to stop registering auto-ingest-source.py."

@@ -36,8 +36,61 @@ This document records the architectural decision records (ADRs) for `{.copilot,.
 - **Rationale:** The PRD sets an explicit performance target for the safety hooks that run on every tool invocation.
 - **Consequences:** Benchmark the installed surface, keep imports lean, and prefer the fastest supported invocation path even if it differs from direct repo execution.
 
-## ADR-006: Runtime-local auto-ingest hooks with a shared repo manifest
+## ADR-006: Runtime-local auto-ingest scanners with prompt-time injectors and one shared repo manifest
 
-- **Decision:** Source auto-ingest runs through dedicated startup hook scripts per runtime surface: Copilot repo-local startup auto-ingest under `.github/hooks/scripts/auto-ingest-source.py` and Gemini startup auto-ingest under `.gemini/hooks/scripts/auto-ingest.py`, while both runtimes read and write the same committed manifest at `.agents/memory/sources/source-ingest-manifest.json`.
-- **Rationale:** The user wanted no cross-runtime shared executable hook code and no globally installed Copilot auto-ingest hook.
-- **Consequences:** Copilot repo-local and Gemini runtime-local implementations stay separate, yet their manifest schema, summary naming contract, and embedded ingest prompt must stay aligned.
+- **Decision:** Source auto-ingest keeps dedicated startup scanners per runtime surface, but pairs them with prompt-time injectors that target the first planning turn. Copilot keeps repo-local startup scanning under `.github/hooks/scripts/auto-ingest-source.py` and uses the installed `userPromptTransformed` injector `.copilot/hooks/scripts/inject-auto-ingest-context.py`; Gemini keeps both repo-local under `.gemini/hooks/scripts/auto-ingest.py` and `.gemini/hooks/scripts/inject-auto-ingest-context.py`. Both runtimes still read and write the same committed manifest at `.agents/memory/sources/source-ingest-manifest.json`.
+- **Rationale:** Startup scanning alone materializes scaffolds and the manifest, but it does not reliably reach the first model-facing turn across both runtimes. The user still wanted no cross-runtime shared executable hook code and no globally installed Copilot startup scanner.
+- **Consequences:** Copilot repo-local, Copilot installed, and Gemini runtime-local implementations stay separate, yet their manifest schema, summary naming contract, and embedded `/ingest-source` workflow text must stay aligned.
+
+### Current auto-ingest flow
+
+```text
+Raw source changes under .agents/sources/*
+                |
+                v
+Startup scanner runs
+- Copilot: .github/hooks/scripts/auto-ingest-source.py
+- Gemini:  .gemini/hooks/scripts/auto-ingest.py
+                |
+                v
+Reconcile state
+- detect new / modified / renamed / deleted sources
+- scaffold missing summaries
+- preserve orphan summaries
+                |
+                v
+Persist shared repo state
+.agents/memory/sources/source-ingest-manifest.json
+                |
+                +-------------------------------+
+                |                               |
+                v                               v
+      scaffold summaries              audit / observability logs
+                |
+                v
+First real planning turn
+                |
+                +-------------------------------+
+                |                               |
+                v                               v
+Copilot prompt-time injector         Gemini prompt-time injector
+userPromptTransformed                BeforeAgent
+.copilot/hooks/scripts/              .gemini/hooks/scripts/
+inject-auto-ingest-context.py        inject-auto-ingest-context.py
+                |                               |
+                +---------------+---------------+
+                                |
+                                v
+Inject current /ingest-source workflow + stale-source list
+into model-facing context
+                                |
+                                v
+Agent performs ingest work and updates summaries/docs
+                                |
+                                v
+Manifest entries return to active / up-to-date state
+```
+
+- **Stage split:** startup scanners perform persistent state work; prompt-time injectors ensure the first planning turn actually sees that work.
+- **Copilot ordering constraint:** `userPromptTransformed` can run before `sessionStart`, so `sessionStart` output alone is not enough to guarantee first-turn ingest context.
+- **Gemini pairing rule:** keep `SessionStart` scanning and `BeforeAgent` injection aligned so Gemini sees the same current stale-source list that the scanner persisted.

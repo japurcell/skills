@@ -198,6 +198,10 @@
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "userPromptTransformed"
         }
+      },
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/inject-auto-ingest-context.py"
       }
     ]
   }
