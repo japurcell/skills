@@ -39,5 +39,5 @@ This document records the architectural decision records (ADRs) for `{.copilot,.
 ## ADR-006: Runtime-local auto-ingest hooks with a shared repo manifest
 
 - **Decision:** Source auto-ingest runs through dedicated startup hook scripts in each runtime, while both runtimes read and write the same committed manifest at `.agents/memory/sources/source-ingest-manifest.json`.
-- **Rationale:** The user wanted no cross-runtime shared executable hook code, but still needed Copilot and Gemini to agree on stale-source state, placeholder summary naming, and orphan cleanup.
-- **Consequences:** Copilot and Gemini keep separate helper implementations, yet their manifest schema and summary naming contract must stay aligned.
+- **Rationale:** The user wanted no cross-runtime shared executable hook code.
+- **Consequences:** Copilot and Gemini keep separate helper implementations, yet their manifest schema, summary naming contract, and embedded ingest prompt must stay aligned.

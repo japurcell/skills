@@ -33,20 +33,29 @@ run_auto_ingest_hook() {
   local audit_log="$1"
   local payload="$2"
   local root="$3"
+  local home="${4:-}"
+
+  local extra_env=(
+    "COPILOT_AUTO_INGEST_REPO_ROOT=$root"
+    "COPILOT_AUTO_INGEST_SUMMARY_DIR=$root/.agents/memory/sources"
+  )
+  if [[ -n "$home" ]]; then
+    extra_env+=("HOME=$home")
+  fi
 
   run_copilot_hook \
     "auto-ingest-source.py" \
     "$audit_log" \
     "$payload" \
     "" \
-    "COPILOT_AUTO_INGEST_REPO_ROOT=$root" \
-    "COPILOT_AUTO_INGEST_SUMMARY_DIR=$root/.agents/memory/sources"
+    "${extra_env[@]}"
 }
 
 test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reasons() {
   local workdir
   local audit_log
   local output
+  local home_dir
   local state_dir
   local manifest_path
   local modified_before_hash
@@ -61,6 +70,7 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
+  home_dir="$workdir/home"
   state_dir="$workdir/.agents/memory/sources"
   manifest_path="$state_dir/source-ingest-manifest.json"
 
@@ -69,18 +79,33 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
   make_text_file "$workdir/.agents/sources/modified.md" $'modified source v1\n'
   make_text_file "$workdir/.agents/sources/rename-old.md" $'rename source v1\n'
   make_text_file "$workdir/.agents/sources/deleted.md" $'deleted source v1\n'
+  make_text_file "$workdir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# repo-local-ingest-source-marker\n'
+  make_text_file "$home_dir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# global-ingest-source-marker\n'
 
   output="$(
     run_auto_ingest_hook \
       "$audit_log" \
       '{"sessionId":"auto-ingest-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}' \
-      "$workdir"
+      "$workdir" \
+      "$home_dir"
   )"
 
   assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$output")" \
     "Expected Copilot CLI auto-ingest payloads to return additionalContext."
   assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Sources requiring `ingest-source`' \
     "Expected initial auto-ingest run to request ingest-source for scaffolded summaries."
+  assert_file_contains <(jq -r '.additionalContext' <<<"$output") '# /ingest-source' \
+    "Expected initial auto-ingest run to inject the built-in ingest-source guidance."
+  assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Update the summary executive summary and key findings with only verified facts.' \
+    "Expected hard-coded ingest-source guidance to include the summary update workflow."
+  if jq -r '.additionalContext' <<<"$output" | grep -Fq '# repo-local-ingest-source-marker'; then
+    echo "Expected auto-ingest to ignore repo-local ingest-source skill files." >&2
+    exit 1
+  fi
+  if jq -r '.additionalContext' <<<"$output" | grep -Fq '# global-ingest-source-marker'; then
+    echo "Expected auto-ingest to ignore globally installed ingest-source skill copies." >&2
+    exit 1
+  fi
   assert_file_contains "$manifest_path" '"state": "needs_summary"' \
     "Expected auto-ingest run to write needs_summary manifest entries for new sources."
 
@@ -101,7 +126,8 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
     run_auto_ingest_hook \
       "$audit_log" \
       '{"sessionId":"auto-ingest-session","timestamp":"2026-05-21T09:00:01Z","source":"copilot-cli","initialPrompt":"hello"}' \
-      "$workdir"
+      "$workdir" \
+      "$home_dir"
   )"
 
   assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Sources requiring `ingest-source`' \

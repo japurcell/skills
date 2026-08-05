@@ -11,6 +11,33 @@ from typing import Any
 MANIFEST_FILE_NAME = "source-ingest-manifest.json"
 SUMMARY_SUFFIX = ".summary.md"
 SCAFFOLD_STATUS_MARKER = "status: scaffold"
+INGEST_SOURCE_CONTEXT = """# /ingest-source
+
+## Workflow
+
+1. Read the raw source and its matching summary in `.agents/memory/sources/`.
+2. Confirm the source content is readable enough to verify findings.
+3. Update the summary executive summary and key findings with only verified facts.
+4. Weave durable facts into the appropriate `.agents/memory/*` or scoped `.agents/instructions/*` file.
+5. Register the source in `.agents/memory/INDEX.md` under `Ingested Sources`.
+6. Append an `integrate` record to `.agents/memory/LOG.md`.
+7. Complete the summary checklist.
+8. Run `update-agent-docs`.
+
+## Blocked sources
+
+- If the source cannot be read reliably, stop and mark the task blocked.
+- Do not fabricate findings.
+- Do not change the executive summary or findings.
+- Do not check integration boxes.
+- Do not append an `integrate` record.
+
+## Guardrails
+
+- Preserve raw source files.
+- Do not silently replace an existing summary.
+- Keep the integration record and summary registration deterministic.
+"""
 
 
 @dataclass(frozen=True)
@@ -204,6 +231,28 @@ def _entry_for_record(
     return entry
 
 
+def _set_entry_state(
+    entry: dict[str, Any],
+    *,
+    state: str,
+    reason: str,
+    related_source: str = "",
+    orphan_summary_path: str = "",
+) -> dict[str, Any]:
+    updated = dict(entry)
+    updated["state"] = state
+    updated["reason"] = reason
+    if related_source:
+        updated["related_source"] = related_source
+    else:
+        updated.pop("related_source", None)
+    if orphan_summary_path:
+        updated["orphan_summary_path"] = orphan_summary_path
+    else:
+        updated.pop("orphan_summary_path", None)
+    return updated
+
+
 def _orphan_entry(previous: dict[str, Any], *, reason: str, related_source: str = "") -> dict[str, Any]:
     entry = dict(previous)
     entry["state"] = "orphan"
@@ -289,18 +338,16 @@ def reconcile_manifest(
             previous_state = _entry_state(previous)
             if previous_state in {"needs_summary", "stale"}:
                 if _summary_is_resolved(record, previous):
-                    next_entries[record.source_path] = _entry_for_record(
-                        record,
+                    next_entries[record.source_path] = _set_entry_state(
+                        previous,
                         state="active",
                         reason="",
                     )
                 else:
-                    next_entries[record.source_path] = _entry_for_record(
-                        record,
+                    next_entries[record.source_path] = _set_entry_state(
+                        previous,
                         state=previous_state,
                         reason=_entry_reason(previous, "new file"),
-                        related_source=str(previous.get("related_source") or ""),
-                        orphan_summary_path=str(previous.get("orphan_summary_path") or ""),
                     )
                 continue
 
@@ -444,12 +491,7 @@ def build_context(report_entries: list[dict[str, Any]], manifest_file: Path) -> 
     orphan_entries = [entry for entry in report_entries if _entry_state(entry) == "orphan"]
 
     if actionable_entries:
-        lines.extend(
-            [
-                "Activate `ingest-source` for new, modified, and renamed sources below.",
-                "",
-            ]
-        )
+        lines.extend([INGEST_SOURCE_CONTEXT.strip(), ""])
         lines.append("## Sources requiring `ingest-source`")
         for entry in actionable_entries:
             summary_name = _entry_summary_path(entry, "")

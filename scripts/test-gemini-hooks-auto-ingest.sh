@@ -34,6 +34,21 @@ path.write_text(content, encoding="utf-8")
 PY
 }
 
+write_text_file() {
+  local path="$1"
+  local content="$2"
+
+  mkdir -p "$(dirname "$path")"
+  python3 - "$path" "$content" <<'PY'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+content = sys.argv[2]
+path.write_text(content, encoding="utf-8")
+PY
+}
+
 sha256_file() {
   python3 -c 'import hashlib, pathlib, sys
 path = pathlib.Path(sys.argv[1])
@@ -74,8 +89,9 @@ test_new_source_injects_scaffold_context_and_updates_manifest() {
 
   mkdir -p "$source_dir" "$summary_dir"
   printf '# alpha\n' > "$source_dir/alpha-hooks.md"
-
+  write_text_file "$repo_dir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# repo-local-ingest-source-marker\n'
   install_into_temp_home "$home"
+  write_text_file "$home/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# global-ingest-source-marker\n'
 
   output="$(
     run_installed_auto_ingest_hook \
@@ -93,6 +109,20 @@ test_new_source_injects_scaffold_context_and_updates_manifest() {
   assert_file_contains <(printf '%s' "$context") \
     'Sources requiring `ingest-source`' \
     "Expected new sources to request ingest-source."
+  assert_file_contains <(printf '%s' "$context") \
+    '# /ingest-source' \
+    "Expected new-source context to inject the built-in ingest-source guidance."
+  assert_file_contains <(printf '%s' "$context") \
+    'Update the summary executive summary and key findings with only verified facts.' \
+    "Expected hard-coded ingest-source guidance to include the summary update workflow."
+  if grep -Fq '# repo-local-ingest-source-marker' <<<"$context"; then
+    echo "Expected auto-ingest to ignore repo-local ingest-source skill files." >&2
+    exit 1
+  fi
+  if grep -Fq '# global-ingest-source-marker' <<<"$context"; then
+    echo "Expected auto-ingest to ignore globally installed ingest-source skill copies." >&2
+    exit 1
+  fi
   assert_file_contains <(printf '%s' "$context") \
     "alpha-hooks-md.summary.md" \
     "Expected new sources to use filename-encoded summary names."
@@ -302,7 +332,7 @@ test_deleted_source_keeps_orphan_only_context() {
   assert_file_contains <(printf '%s' "$context") \
     "delta-hooks-md.summary.md" \
     "Expected deleted sources to preserve their orphan summary path."
-  if grep -Fq 'Activate `ingest-source`' <<<"$context"; then
+  if grep -Fq 'Activate or load the `ingest-source` skill' <<<"$context"; then
     echo "Did not expect deleted sources to tell the agent to invoke ingest-source." >&2
     exit 1
   fi
