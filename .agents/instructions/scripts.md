@@ -7,4 +7,7 @@ coverage: Rules and conventions for repository helper scripts under `scripts/`
 - Follow existing shebang style: `#!/usr/bin/env bash` or `#!/usr/bin/env python3`.
 - Keep scripts directly executable and simple.
 - Prefer standard-library solutions unless an existing script already implies dependency use.
+- Treat user-facing helper scripts as CLIs: reserve `-h`/`--help` for help, prefer descriptive long flags over multiple positional argument types, and keep interactive prompts optional rather than mandatory.
+- Use stdout for primary or machine-readable output and stderr for status, warnings, progress, and errors so piping and redirection stay predictable.
+- Gate decorative terminal behavior on TTY detection; if a script introduces color or spinners, it should also respect `TERM=dumb`, `NO_COLOR`, and a direct opt-out flag.
 - Run syntax check plus narrow script validation from `.agents/memory/testing/scripts.md`.

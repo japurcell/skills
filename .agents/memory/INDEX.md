@@ -42,10 +42,20 @@ these layer files for specifics.
 Use this area to register scaffolded source summaries and keep source-specific knowledge discoverable.
 Load `.agents/memory/LOG.md` first, then the matching summary in `.agents/memory/sources/`.
 The committed manifest `.agents/memory/sources/source-ingest-manifest.json` tracks source fingerprints plus stale or orphan summary state for the startup auto-ingest hooks.
+Raw files under `.agents/sources/` are immutable source inputs; summaries plus the wider `.agents/memory/` and `.agents/instructions/` corpus are the compiled knowledge layer.
+Keep chronological integration history grep-friendly by prefixing log entries as `## [YYYY-MM-DD] action | subject`.
 
 | Source summary path | Raw source path | When to load |
 | ----------------------------- | ------------------- | ---------------------------------------------------------- |
-| `.agents/memory/sources/*.md` | `.agents/sources/*` | When working on a specific ingested source or its summary. |
+| `.agents/memory/sources/12-factor-cli-apps-md.summary.md` | `.agents/sources/12-factor-cli-apps.md` | When working on CLI UX guidance, help text, stream discipline, prompts, tables, or XDG path conventions. |
+| `.agents/memory/sources/cli-design-guidelines-md.summary.md` | `.agents/sources/cli-design-guidelines.md` | When working on concise CLI UX defaults such as naming, prompts, errors, progress, or expressive flags. |
+| `.agents/memory/sources/clig-dev-md.summary.md` | `.agents/sources/clig-dev.md` | When working on broader CLI interaction design, configuration precedence, output conventions, or future-proofing decisions. |
+| `.agents/memory/sources/copilot-hooks-ref-md.summary.md` | `.agents/sources/copilot-hooks-ref.md` | When changing Copilot hook events, cross-surface behavior, matcher semantics, or exit-code handling. |
+| `.agents/memory/sources/gemini-hooks-best-practices-md.summary.md` | `.agents/sources/gemini-hooks-best-practices.md` | When changing Gemini hook performance, debugging, threat-model, privacy, or hardening guidance. |
+| `.agents/memory/sources/gemini-hooks-writing-md.summary.md` | `.agents/sources/gemini-hooks-writing.md` | When changing Gemini hook authoring patterns, tool filtering, or multi-event workflow composition. |
+| `.agents/memory/sources/gemini-hooks-md.summary.md` | `.agents/sources/gemini-hooks.md` | When changing Gemini hook event coverage, config precedence, trust behavior, or `/hooks` operations. |
+| `.agents/memory/sources/llm-wiki-md.summary.md` | `.agents/sources/llm-wiki.md` | When changing source-ingest workflow, wiki/log/index structure, or compiled-knowledge maintenance patterns. |
+| `.agents/memory/sources/vscode-agent-hooks-md.summary.md` | `.agents/sources/vscode-agent-hooks.md` | When changing VS Code hook compatibility, hook locations, or agent-scoped hook behavior. |
 | `.agents/memory/sources/source-ingest-manifest.json` | `.agents/sources/*` | When debugging startup auto-ingest hook state or stale-summary detection. |
 | `[LOG.md](LOG.md)` | N/A | When reviewing scaffold and integrate history. |
 
