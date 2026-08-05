@@ -14,6 +14,7 @@ from helpers.audit import audit_init, audit_log_event  # noqa: E402
 from helpers.common import emit_json, read_json_input, sanitize_log_field  # noqa: E402
 from helpers.source_ingest import (  # noqa: E402
     build_context,
+    ingest_skill_available,
     load_manifest,
     manifest_path_for_summary_root,
     reconcile_manifest,
@@ -58,6 +59,10 @@ def _manifest_path(summary_root: Path) -> Path:
         return Path(override)
     return manifest_path_for_summary_root(summary_root)
 
+def _repo_root(payload: dict[str, object]) -> Path:
+    cwd = str(payload.get("cwd") or "")
+    return Path(cwd) if cwd else Path.cwd()
+
 
 def _is_startup_only(payload: dict[str, object]) -> bool:
     return str(payload.get("hook_event_name") or "") == "SessionStart" and str(payload.get("source") or "") == "startup"
@@ -94,13 +99,14 @@ def main() -> int:
         source_root = _source_root(input_payload)
         summary_root = _summary_root(input_payload)
         manifest_path = _manifest_path(summary_root)
+        repo_root = _repo_root(input_payload)
 
         current_records = scan_sources(source_root, summary_root)
         manifest = load_manifest(manifest_path)
         report_entries, next_manifest = reconcile_manifest(manifest, current_records, summary_root)
         save_manifest(manifest_path, next_manifest)
 
-        context = build_context(report_entries, manifest_path)
+        context = build_context(report_entries, manifest_path, ingest_skill_available(repo_root))
         if not context:
             if not current_records:
                 audit_log_event(

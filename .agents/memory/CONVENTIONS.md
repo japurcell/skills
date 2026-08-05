@@ -16,7 +16,7 @@ Authoritative formatting lives in `.editorconfig`; path-scoped rules live in `.a
 
 ## Agent Workspace Boundaries
 
-- **Out of bounds files:** Files under `.agents/sources/` and `.agents/skills/` are strictly out of bounds for automated agent documentation routines or standard modifications. Do not modify or edit these files unless explicitly instructed by the user.
+- **Out of bounds files:** Files under `.agents/sources/` and most of `.agents/skills/` are strictly out of bounds for automated agent documentation routines or standard modifications. Exception: `.agents/skills/ingest-source/SKILL.md` is the canonical repo-local auto-ingest recovery skill and may be edited when the pending-ingest hook workflow changes. Do not modify other `.agents/skills/` files unless explicitly instructed by the user.
 
 ## Code Style
 

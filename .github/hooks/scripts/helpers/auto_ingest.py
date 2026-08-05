@@ -11,33 +11,9 @@ from typing import Any
 MANIFEST_FILE_NAME = "source-ingest-manifest.json"
 SUMMARY_SUFFIX = ".summary.md"
 SCAFFOLD_STATUS_MARKER = "status: scaffold"
-INGEST_SOURCE_CONTEXT = """# /ingest-source
-
-## Workflow
-
-1. Read the raw source and its matching summary in `.agents/memory/sources/`.
-2. Confirm the source content is readable enough to verify findings.
-3. Update the summary executive summary and key findings with only verified facts.
-4. Weave durable facts into the appropriate `.agents/memory/*` or scoped `.agents/instructions/*` file.
-5. Register the source in `.agents/memory/INDEX.md` under `Ingested Sources`.
-6. Append an `integrate` record to `.agents/memory/LOG.md`.
-7. Complete the summary checklist.
-8. Run `update-agent-docs`.
-
-## Blocked sources
-
-- If the source cannot be read reliably, stop and mark the task blocked.
-- Do not fabricate findings.
-- Do not change the executive summary or findings.
-- Do not check integration boxes.
-- Do not append an `integrate` record.
-
-## Guardrails
-
-- Preserve raw source files.
-- Do not silently replace an existing summary.
-- Keep the integration record and summary registration deterministic.
-"""
+PENDING_INGEST_DIRECTIVE = "Pending ingest blocks normal work."
+PENDING_INGEST_SKILL_PROMPT = "Activate or load the `ingest-source` skill, then run `/ingest-source`."
+PENDING_INGEST_SKILL_MISSING = "The `ingest-source` skill is unavailable."
 
 
 @dataclass(frozen=True)
@@ -70,6 +46,18 @@ def manifest_path(summary_dir: Path) -> Path:
     if override:
         return Path(override)
     return summary_dir / MANIFEST_FILE_NAME
+
+
+def ingest_skill_path(repo_root: Path) -> Path:
+    override = os.environ.get("AGENTS_SKILLS_DIR") or os.environ.get("COPILOT_SKILLS_DIR")
+    if override:
+        return Path(override) / "ingest-source" / "SKILL.md"
+    return repo_root / ".agents" / "skills" / "ingest-source" / "SKILL.md"
+
+
+def ingest_skill_available(repo_root: Path) -> bool:
+    skill_path = ingest_skill_path(repo_root)
+    return skill_path.is_file() and os.access(skill_path, os.R_OK)
 
 
 def summary_name_for_source(relpath: str) -> str:
@@ -117,6 +105,55 @@ def _summary_details(path: Path) -> tuple[bool, str, bool]:
 
 def _is_hidden_relative(relpath: Path) -> bool:
     return any(part.startswith(".") for part in relpath.parts)
+
+
+def blocking_entries(report_entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [entry for entry in report_entries if _entry_state(entry) in {"needs_summary", "stale"}]
+
+
+def _pending_entry_label(entry: dict[str, Any]) -> str:
+    summary_name = _entry_summary_path(entry, "")
+    return f"- `.agents/sources/{entry['source_path']}` → `.agents/memory/sources/{summary_name}` ({_entry_reason(entry)})"
+
+
+def _recovery_checklist() -> list[str]:
+    return [
+        "## Recovery checklist",
+        "- Restore `.agents/skills/ingest-source/SKILL.md`.",
+        "- Re-run the turn after the skill is available.",
+    ]
+
+
+def _build_orphan_context(orphan_entries: list[dict[str, Any]]) -> list[str]:
+    if not orphan_entries:
+        return []
+
+    lines = [
+        "Do not invoke `ingest-source` for deleted sources; clean up orphan summaries manually.",
+        "",
+        "## Orphan summaries requiring cleanup",
+    ]
+    for entry in orphan_entries:
+        summary_name = _entry_summary_path(entry, "")
+        lines.append(f"- `.agents/sources/{entry['source_path']}`")
+        lines.append(f"  - stale reason: {_entry_reason(entry)}")
+        lines.append(f"  - orphan summary: `.agents/memory/sources/{summary_name}`")
+        related_source = str(entry.get("related_source") or "")
+        if related_source:
+            lines.append(f"  - replacement source path: `.agents/sources/{related_source}`")
+    return lines
+
+
+def build_block_reason(report_entries: list[dict[str, Any]], skill_available: bool) -> str:
+    blocking = blocking_entries(report_entries)
+    if not blocking:
+        return ""
+
+    pending = "; ".join(f"`{entry['source_path']}` ({_entry_reason(entry)})" for entry in blocking)
+    if skill_available:
+        return f"{PENDING_INGEST_DIRECTIVE} Load `/ingest-source` for {pending}."
+
+    return f"{PENDING_INGEST_DIRECTIVE} {PENDING_INGEST_SKILL_MISSING} Pending: {pending}."
 
 
 def scan_sources(sources_dir: Path, summary_dir: Path) -> list[SourceRecord]:
@@ -477,51 +514,31 @@ def save_manifest(path: Path, manifest: dict[str, Any]) -> None:
     temp_path.replace(path)
 
 
-def build_context(report_entries: list[dict[str, Any]], manifest_file: Path) -> str:
+def build_context(report_entries: list[dict[str, Any]], manifest_file: Path, skill_available: bool = True) -> str:
     if not report_entries:
         return ""
 
-    lines = [
-        "Auto-ingest source updates detected.",
-        "",
-        f"Manifest: `{manifest_file.as_posix()}`",
-    ]
-
-    actionable_entries = [entry for entry in report_entries if _entry_state(entry) in {"needs_summary", "stale"}]
+    blocking = blocking_entries(report_entries)
     orphan_entries = [entry for entry in report_entries if _entry_state(entry) == "orphan"]
 
-    if actionable_entries:
-        lines.extend([INGEST_SOURCE_CONTEXT.strip(), ""])
-        lines.append("## Sources requiring `ingest-source`")
-        for entry in actionable_entries:
-            summary_name = _entry_summary_path(entry, "")
-            lines.append(f"- `.agents/sources/{entry['source_path']}`")
-            lines.append(f"  - stale reason: {_entry_reason(entry)}")
-            lines.append(f"  - summary: `.agents/memory/sources/{summary_name}`")
-            related_source = str(entry.get("related_source") or "")
-            orphan_summary_path = str(entry.get("orphan_summary_path") or "")
-            if related_source:
-                lines.append(f"  - previous source path: `.agents/sources/{related_source}`")
-            if orphan_summary_path:
-                lines.append(f"  - orphan summary to clean up later: `.agents/memory/sources/{orphan_summary_path}`")
+    if not blocking and not orphan_entries:
+        return ""
+
+    lines: list[str] = []
+
+    if blocking:
+        lines.append(PENDING_INGEST_DIRECTIVE)
+        if skill_available:
+            lines.append(PENDING_INGEST_SKILL_PROMPT)
+        else:
+            lines.append(PENDING_INGEST_SKILL_MISSING)
+            lines.append("")
+            lines.extend(_recovery_checklist())
+        lines.append("")
+        lines.append("## Pending entries")
+        for entry in blocking:
+            lines.append(_pending_entry_label(entry))
         lines.append("")
 
-    if orphan_entries:
-        lines.extend(
-            [
-                "Do not invoke `ingest-source` for deleted sources; clean up orphan summaries manually.",
-                "",
-            ]
-        )
-        lines.append("## Orphan summaries requiring cleanup")
-        for entry in orphan_entries:
-            summary_name = _entry_summary_path(entry, "")
-            lines.append(f"- `.agents/sources/{entry['source_path']}`")
-            lines.append(f"  - stale reason: {_entry_reason(entry)}")
-            lines.append(f"  - orphan summary: `.agents/memory/sources/{summary_name}`")
-            related_source = str(entry.get("related_source") or "")
-            if related_source:
-                lines.append(f"  - replacement source path: `.agents/sources/{related_source}`")
-        lines.append("")
-
+    lines.extend(_build_orphan_context(orphan_entries))
     return "\n".join(lines).rstrip() + "\n"

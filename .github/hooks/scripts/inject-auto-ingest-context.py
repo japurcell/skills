@@ -66,15 +66,27 @@ def main() -> int:
             emit_json({})
             return 0
 
+        event_name = stringify_value(first_present(payload, "hook_event_name", "hookEventName"))
         transformed_prompt = stringify_value(first_present(payload, "transformedPrompt"))
-        if not transformed_prompt:
+        if not event_name:
+            event_name = "agentStop" if stringify_value(first_present(payload, "transcriptPath", "transcript_path")) else "userPromptTransformed"
+
+        if event_name not in {"userPromptTransformed", "agentStop", "subagentStop"}:
             emit_json({})
             return 0
 
         repo_root = _repo_root(payload)
         helper = _load_helper(_helper_path(repo_root))
         if helper is None:
-            emit_json({})
+            if event_name in {"agentStop", "subagentStop"}:
+                emit_json(
+                    {
+                        "decision": "block",
+                        "reason": "Pending ingest blocks normal work. Restore `.agents/skills/ingest-source/SKILL.md` and rerun.",
+                    }
+                )
+            else:
+                emit_json({})
             return 0
 
         sources_dir = helper.source_root(repo_root)
@@ -85,15 +97,34 @@ def main() -> int:
         previous_manifest = helper.load_manifest(manifest_file)
         report_entries, next_manifest = helper.reconcile_manifest(previous_manifest, current_sources, summaries_dir)
         helper.save_manifest(manifest_file, next_manifest)
+        skill_available = helper.ingest_skill_available(repo_root)
 
-        message = helper.build_context(report_entries, manifest_file)
+        if event_name in {"agentStop", "subagentStop"}:
+            reason = helper.build_block_reason(report_entries, skill_available)
+            if not reason:
+                emit_json({"decision": "allow"})
+                return 0
+
+            session_id = sanitize_log_field(stringify_value(first_present(payload, "sessionId", "session_id")))
+            log_event(
+                f"Message: blocked agent stop while ingest is pending, "
+                f"Session: {session_id}, Findings: {len(helper.blocking_entries(report_entries))}"
+            )
+            emit_json({"decision": "block", "reason": reason})
+            return 0
+
+        if not transformed_prompt:
+            emit_json({})
+            return 0
+
+        message = helper.build_context(report_entries, manifest_file, skill_available)
         if not message.strip():
             emit_json({})
             return 0
 
         session_id = sanitize_log_field(stringify_value(first_present(payload, "sessionId", "session_id")))
         log_event(
-            f"Message: injected auto-ingest context into transformed prompt, "
+            f"Message: injected pending ingest context into transformed prompt, "
             f"Session: {session_id}, Findings: {len(report_entries)}"
         )
 

@@ -26,6 +26,13 @@ run_repo_local_before_agent_auto_ingest_hook() {
   env "$@" python3 "$REPO_ROOT/.gemini/hooks/scripts/inject-auto-ingest-context.py" <<<"$payload"
 }
 
+run_repo_local_after_model_auto_ingest_hook() {
+  local payload="$1"
+  shift
+
+  env "$@" python3 "$REPO_ROOT/.gemini/hooks/scripts/inject-auto-ingest-context.py" <<<"$payload"
+}
+
 write_manifest() {
   local path="$1"
   local content="$2"
@@ -84,6 +91,10 @@ test_session_start_startup_registers_auto_ingest_hook() {
   assert_equals '$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py' \
     "$(jq -r '.hooks.BeforeAgent[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
     "Expected Gemini repo-local settings to register the BeforeAgent auto-ingest injector."
+
+  assert_equals '$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py' \
+    "$(jq -r '.hooks.AfterModel[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected Gemini repo-local settings to register the AfterModel pending-ingest backstop."
 }
 
 test_new_source_injects_scaffold_context_and_updates_manifest() {
@@ -108,7 +119,8 @@ test_new_source_injects_scaffold_context_and_updates_manifest() {
 
   mkdir -p "$source_dir" "$summary_dir"
   printf '# alpha\n' > "$source_dir/alpha-hooks.md"
-  write_text_file "$repo_dir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# repo-local-ingest-source-marker\n'
+  write_text_file "$repo_dir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: repo local scope\n---\n\n# repo-skill-marker\n'
+  write_text_file "$repo_dir/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# legacy-skill-marker\n'
   install_into_temp_home "$home"
   write_text_file "$home/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# global-ingest-source-marker\n'
 
@@ -126,16 +138,13 @@ test_new_source_injects_scaffold_context_and_updates_manifest() {
     "new file" \
     "Expected new sources to be reported as stale."
   assert_file_contains <(printf '%s' "$context") \
-    'Sources requiring `ingest-source`' \
-    "Expected new sources to request ingest-source."
+    'Pending ingest blocks normal work.' \
+    "Expected new sources to block normal work."
   assert_file_contains <(printf '%s' "$context") \
-    '# /ingest-source' \
-    "Expected new-source context to inject the built-in ingest-source guidance."
-  assert_file_contains <(printf '%s' "$context") \
-    'Update the summary executive summary and key findings with only verified facts.' \
-    "Expected hard-coded ingest-source guidance to include the summary update workflow."
-  if grep -Fq '# repo-local-ingest-source-marker' <<<"$context"; then
-    echo "Expected auto-ingest to ignore repo-local ingest-source skill files." >&2
+    'Activate or load the `ingest-source` skill, then run `/ingest-source`.' \
+    "Expected new-source context to point at the ingest-source skill."
+  if grep -Fq '# legacy-skill-marker' <<<"$context"; then
+    echo "Expected auto-ingest to ignore legacy skills/ ingest-source copies." >&2
     exit 1
   fi
   if grep -Fq '# global-ingest-source-marker' <<<"$context"; then
@@ -224,17 +233,91 @@ test_before_agent_injects_auto_ingest_context_and_materializes_manifest() {
   context="$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")"
 
   assert_file_contains <(printf '%s' "$context") \
-    "Auto-ingest source updates detected." \
-    "Expected BeforeAgent auto-ingest to inject stale-source context."
+    "Pending ingest blocks normal work." \
+    "Expected BeforeAgent auto-ingest to inject pending-ingest context."
   assert_file_contains <(printf '%s' "$context") \
-    '# /ingest-source' \
-    "Expected BeforeAgent auto-ingest to include ingest workflow guidance."
+    'Pending ingest blocks normal work.' \
+    "Expected BeforeAgent auto-ingest to include the pending-ingest gate."
   assert_file_contains "$summary_dir/before-agent-md.summary.md" \
     "## Executive Summary" \
     "Expected BeforeAgent auto-ingest to scaffold the missing summary."
   assert_equals "needs_summary" \
     "$(jq -r '.entries[] | select(.source_path=="before-agent.md") | .state' "$manifest_path")" \
     "Expected BeforeAgent auto-ingest to persist stale manifest entries."
+}
+
+test_before_agent_uses_recovery_checklist_when_skill_missing() {
+  local workdir
+  local repo_dir
+  local source_dir
+  local summary_dir
+  local output
+  local context
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  source_dir="$repo_dir/.agents/sources"
+  summary_dir="$repo_dir/.agents/memory/sources"
+
+  mkdir -p "$source_dir" "$summary_dir"
+  printf '# missing skill\n' > "$source_dir/missing-skill.md"
+  write_text_file "$repo_dir/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# legacy-skill-marker\n'
+  write_text_file "$workdir/home/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# installed-ingest-source-marker\n'
+
+  output="$(
+    run_repo_local_before_agent_auto_ingest_hook \
+      '{"session_id":"before-agent-missing-skill","timestamp":"2026-06-24T10:00:00Z","hook_event_name":"BeforeAgent","cwd":"'"$repo_dir"'","prompt":"hello"}' \
+      HOME="$workdir/home" \
+      AUDIT_LOG="$workdir/audit.log" \
+      AGENTS_SOURCE_SCAN_DIR="$source_dir" \
+      AGENTS_SOURCE_SUMMARY_DIR="$summary_dir"
+  )"
+
+  context="$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")"
+
+  assert_file_contains <(printf '%s' "$context") \
+    "Recovery checklist" \
+    "Expected missing ingest-source skill to surface a recovery checklist."
+  assert_file_contains <(printf '%s' "$context") \
+    'Restore `.agents/skills/ingest-source/SKILL.md`' \
+    "Expected missing ingest-source skill to tell the user how to restore it."
+}
+
+test_after_model_blocks_pending_ingest() {
+  local workdir
+  local repo_dir
+  local source_dir
+  local summary_dir
+  local output
+  local home_dir
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  source_dir="$repo_dir/.agents/sources"
+  summary_dir="$repo_dir/.agents/memory/sources"
+  home_dir="$workdir/home"
+
+  mkdir -p "$source_dir" "$summary_dir"
+  printf '# after model\n' > "$source_dir/after-model.md"
+  write_text_file "$repo_dir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: repo local scope\n---\n\n# repo-skill-marker\n'
+
+  output="$(
+    run_repo_local_after_model_auto_ingest_hook \
+      '{"session_id":"after-model-auto-ingest","timestamp":"2026-06-24T10:00:00Z","hook_event_name":"AfterModel","cwd":"'"$repo_dir"'","prompt":"hello","prompt_response":"normal answer"}' \
+      HOME="$home_dir" \
+      AUDIT_LOG="$workdir/audit.log" \
+      AGENTS_SOURCE_SCAN_DIR="$source_dir" \
+      AGENTS_SOURCE_SUMMARY_DIR="$summary_dir"
+  )"
+
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected Gemini AfterModel pending ingest gate to block the response."
+  assert_file_contains <(jq -r '.reason' <<<"$output") 'Pending ingest blocks normal work.' \
+    "Expected Gemini AfterModel block reason to call out pending ingest."
+  assert_file_contains <(jq -r '.reason' <<<"$output") 'after-model.md' \
+    "Expected Gemini AfterModel block reason to list the pending source."
 }
 
 test_modified_source_keeps_existing_summary_and_marks_stale() {
@@ -525,6 +608,8 @@ main() {
   test_new_source_injects_scaffold_context_and_updates_manifest
   test_missing_cwd_falls_back_to_process_working_directory
   test_before_agent_injects_auto_ingest_context_and_materializes_manifest
+  test_before_agent_uses_recovery_checklist_when_skill_missing
+  test_after_model_blocks_pending_ingest
   test_modified_source_keeps_existing_summary_and_marks_stale
   test_renamed_source_preserves_orphan_context_and_scaffolds_new_summary
   test_deleted_source_keeps_orphan_only_context

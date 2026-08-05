@@ -22,7 +22,13 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 
 **Affected area:** Copilot source auto-ingest orchestration
 **Description:** In current Copilot CLI sessions, `userPromptTransformed` fires before `sessionStart`. A startup scanner that only returns `additionalContext` from `sessionStart` can scaffold summaries and update the manifest, yet still miss the first model-facing prompt.
-**Workaround:** Keep the repo-local startup scanner for manifest and scaffold materialization, and pair it with the installed Copilot `userPromptTransformed` injector so the first transformed prompt gets the current `/ingest-source` context. Gemini needs its own prompt-time companion hook (`BeforeAgent`) for the same reason.
+**Workaround:** Keep the repo-local startup scanner for manifest and scaffold materialization, and pair it with the repo-local Copilot `userPromptTransformed` injector so the first transformed prompt gets the current `/ingest-source` context. Gemini needs its own prompt-time companion hook (`BeforeAgent`) for the same reason.
+
+## Pending ingest gate needs a real `/ingest-source` skill and a final-response backstop
+
+**Affected area:** source auto-ingest gate
+**Description:** When the shared manifest still has `needs_summary` or `stale` entries, the runtime must keep blocking normal work until the real `.agents/skills/ingest-source/SKILL.md` path exists and the pending entries are cleared. The prompt-time context is only a steer; the final-response hook still has to deny normal completion when pending entries remain.
+**Workaround:** Keep the recovery checklist short and explicit, and leave the gate active if the skill is missing or broken.
 
 ## Active Tool Guardian blocks hook self-edits and policy maintenance
 

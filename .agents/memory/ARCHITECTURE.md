@@ -42,4 +42,4 @@ coverage: Repo structure, install flows, and how top-level areas relate
 - Treat `skills/*-workspace/**/outputs/` as generated benchmark artifacts, not maintained source.
 - Treat `skills/archive/` as historical reference, not primary authoring surface.
 - Treat `skills/**/evals/files/**/AGENTS.md` and `skills/*-workspace/**/sandbox/AGENTS.md` as fixtures unless task explicitly targets them.
-- `.agents/skills/` and `.agents/sources/` are not normal edit targets; repository-maintained documentation work stays in `.agents/instructions/` and `.agents/memory/`.
+- `.agents/sources/` and most of `.agents/skills/` are not normal edit targets; repository-maintained documentation work stays in `.agents/instructions/` and `.agents/memory/`. Exception: `.agents/skills/ingest-source/SKILL.md` is the canonical repo-local auto-ingest recovery skill and is maintained with the pending-ingest hook flow.

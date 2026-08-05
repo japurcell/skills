@@ -13,7 +13,10 @@ if str(SCRIPT_DIR) not in sys.path:
 from helpers.audit import audit_log_event  # noqa: E402
 from helpers.common import emit_json, read_json_input, sanitize_log_field  # noqa: E402
 from helpers.source_ingest import (  # noqa: E402
+    build_block_reason,
     build_context,
+    blocking_entries,
+    ingest_skill_available,
     load_manifest,
     manifest_path_for_summary_root,
     reconcile_manifest,
@@ -47,6 +50,10 @@ def _manifest_path(summary_root: Path) -> Path:
         return Path(override)
     return manifest_path_for_summary_root(summary_root)
 
+def _repo_root(payload: dict[str, object]) -> Path:
+    cwd = str(payload.get("cwd") or "")
+    return Path(cwd) if cwd else Path.cwd()
+
 
 def log_event(message: str) -> None:
     try:
@@ -63,27 +70,44 @@ def main() -> int:
             return 0
 
         event_name = str(payload.get("hook_event_name") or "")
-        if event_name and event_name != "BeforeAgent":
+        if event_name and event_name not in {"BeforeAgent", "AfterModel"}:
             emit_json({})
             return 0
+        if not event_name:
+            event_name = "BeforeAgent"
 
         session_id = sanitize_log_field(str(payload.get("session_id") or ""))
         source_root = _source_root(payload)
         summary_root = _summary_root(payload)
         manifest_path = _manifest_path(summary_root)
+        repo_root = _repo_root(payload)
 
         current_records = scan_sources(source_root, summary_root)
         manifest = load_manifest(manifest_path)
         report_entries, next_manifest = reconcile_manifest(manifest, current_records, summary_root)
         save_manifest(manifest_path, next_manifest)
+        skill_available = ingest_skill_available(repo_root)
 
-        context = build_context(report_entries, manifest_path)
+        if event_name == "AfterModel":
+            reason = build_block_reason(report_entries, skill_available)
+            if not reason:
+                emit_json({})
+                return 0
+
+            log_event(
+                f"Message: blocked model response while ingest is pending, "
+                f"Session: {session_id}, Findings: {len(blocking_entries(report_entries))}"
+            )
+            emit_json({"decision": "deny", "reason": reason})
+            return 0
+
+        context = build_context(report_entries, manifest_path, skill_available)
         if not context:
             emit_json({})
             return 0
 
         log_event(
-            f"Message: injected auto-ingest context before agent planning, "
+            f"Message: injected pending ingest context before agent planning, "
             f"Session: {session_id}, Findings: {len(report_entries)}"
         )
 

@@ -13,6 +13,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from helpers.audit import audit_log_event
 from helpers.auto_ingest import (
     build_context,
+    ingest_skill_available,
     load_manifest,
     manifest_path,
     reconcile_manifest,
@@ -65,8 +66,6 @@ def _repo_root(payload: dict[str, object]) -> Path:
         return Path(cwd)
 
     return Path.cwd()
-
-
 def main() -> int:
     try:
         payload = read_json_input()
@@ -91,7 +90,7 @@ def main() -> int:
         report_entries, next_manifest = reconcile_manifest(previous_manifest, current_sources, summaries_dir)
         save_manifest(manifest_file, next_manifest)
 
-        message = build_context(report_entries, manifest_file)
+        message = build_context(report_entries, manifest_file, ingest_skill_available(root))
         session_id = sanitize_log_field(stringify_value(first_present(payload, "sessionId", "session_id")))
 
         if not message.strip():

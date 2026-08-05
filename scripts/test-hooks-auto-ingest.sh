@@ -74,13 +74,38 @@ run_user_prompt_transformed_auto_ingest_hook() {
   local audit_log="$1"
   local payload="$2"
   local root="$3"
+  local home="${4:-}"
 
-  env \
+  local extra_env=(
     "AUDIT_LOG=$audit_log" \
     "COPILOT_AUTO_INGEST_REPO_ROOT=$root" \
     "COPILOT_AUTO_INGEST_SUMMARY_DIR=$root/.agents/memory/sources" \
-    "COPILOT_AUTO_INGEST_HELPER_PATH=$REPO_ROOT/.github/hooks/scripts/helpers/auto_ingest.py" \
-    python3 "$REPO_ROOT/.copilot/hooks/scripts/inject-auto-ingest-context.py" <<<"$payload"
+    "COPILOT_AUTO_INGEST_HELPER_PATH=$REPO_ROOT/.github/hooks/scripts/helpers/auto_ingest.py"
+  )
+  if [[ -n "$home" ]]; then
+    extra_env+=("HOME=$home")
+  fi
+
+  env "${extra_env[@]}" python3 "$REPO_ROOT/.github/hooks/scripts/inject-auto-ingest-context.py" <<<"$payload"
+}
+
+run_agent_stop_auto_ingest_hook() {
+  local audit_log="$1"
+  local payload="$2"
+  local root="$3"
+  local home="${4:-}"
+
+  local extra_env=(
+    "AUDIT_LOG=$audit_log" \
+    "COPILOT_AUTO_INGEST_REPO_ROOT=$root" \
+    "COPILOT_AUTO_INGEST_SUMMARY_DIR=$root/.agents/memory/sources" \
+    "COPILOT_AUTO_INGEST_HELPER_PATH=$REPO_ROOT/.github/hooks/scripts/helpers/auto_ingest.py"
+  )
+  if [[ -n "$home" ]]; then
+    extra_env+=("HOME=$home")
+  fi
+
+  env "${extra_env[@]}" python3 "$REPO_ROOT/.github/hooks/scripts/inject-auto-ingest-context.py" <<<"$payload"
 }
 
 test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reasons() {
@@ -111,7 +136,8 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
   make_text_file "$workdir/.agents/sources/modified.md" $'modified source v1\n'
   make_text_file "$workdir/.agents/sources/rename-old.md" $'rename source v1\n'
   make_text_file "$workdir/.agents/sources/deleted.md" $'deleted source v1\n'
-  make_text_file "$workdir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# repo-local-ingest-source-marker\n'
+  make_text_file "$workdir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: repo local scope\n---\n\n# repo-skill-marker\n'
+  make_text_file "$workdir/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# legacy-skill-marker\n'
   make_text_file "$home_dir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# global-ingest-source-marker\n'
 
   output="$(
@@ -124,14 +150,14 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
 
   assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$output")" \
     "Expected Copilot CLI auto-ingest payloads to return additionalContext."
-  assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Sources requiring `ingest-source`' \
-    "Expected initial auto-ingest run to request ingest-source for scaffolded summaries."
-  assert_file_contains <(jq -r '.additionalContext' <<<"$output") '# /ingest-source' \
-    "Expected initial auto-ingest run to inject the built-in ingest-source guidance."
-  assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Update the summary executive summary and key findings with only verified facts.' \
-    "Expected hard-coded ingest-source guidance to include the summary update workflow."
-  if jq -r '.additionalContext' <<<"$output" | grep -Fq '# repo-local-ingest-source-marker'; then
-    echo "Expected auto-ingest to ignore repo-local ingest-source skill files." >&2
+  assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Pending ingest blocks normal work.' \
+    "Expected initial auto-ingest run to block normal work while summaries are pending."
+  assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Activate or load the `ingest-source` skill, then run `/ingest-source`.' \
+    "Expected initial auto-ingest run to point at the real ingest-source skill."
+  assert_file_contains <(jq -r '.additionalContext' <<<"$output") '## Pending entries' \
+    "Expected initial auto-ingest run to list pending entries."
+  if jq -r '.additionalContext' <<<"$output" | grep -Fq '# legacy-skill-marker'; then
+    echo "Expected auto-ingest to ignore legacy skills/ ingest-source copies." >&2
     exit 1
   fi
   if jq -r '.additionalContext' <<<"$output" | grep -Fq '# global-ingest-source-marker'; then
@@ -162,16 +188,16 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
       "$home_dir"
   )"
 
-  assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Sources requiring `ingest-source`' \
-    "Expected auto-ingest output to mention new files."
+  assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Pending ingest blocks normal work.' \
+    "Expected auto-ingest output to mention pending ingest blocks."
   assert_file_contains <(jq -r '.additionalContext' <<<"$output") "content modified" \
     "Expected auto-ingest output to mention modified files."
   assert_file_contains <(jq -r '.additionalContext' <<<"$output") "renamed/moved" \
     "Expected auto-ingest output to mention renamed files."
   assert_file_contains <(jq -r '.additionalContext' <<<"$output") "Orphan summaries requiring cleanup" \
     "Expected auto-ingest output to mention deleted files."
-  assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Do not invoke `ingest-source` for deleted sources' \
-    "Expected deleted-source context to be cleanup-only."
+  assert_file_contains <(jq -r '.additionalContext' <<<"$output") 'Pending ingest blocks normal work.' \
+    "Expected auto-ingest output to block normal work for pending entries."
 
   assert_equals "$modified_before_hash" "$(sha256_file "$modified_summary")" \
     "Expected the modified summary to remain untouched."
@@ -205,35 +231,106 @@ test_user_prompt_transformed_injects_auto_ingest_context_and_materializes_manife
   local transformed
   local manifest_path
   local summary_path
+  local home_dir
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
+  home_dir="$workdir/home"
   manifest_path="$workdir/.agents/memory/sources/source-ingest-manifest.json"
   summary_path="$workdir/.agents/memory/sources/$(summary_name_for_source "prompt-source.md")"
 
   mkdir -p "$workdir/.agents/sources"
   make_text_file "$workdir/.agents/sources/prompt-source.md" $'prompt source v1\n'
+  make_text_file "$workdir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: repo local scope\n---\n\n# repo-skill-marker\n'
 
   output="$(
     run_user_prompt_transformed_auto_ingest_hook \
       "$audit_log" \
       '{"sessionId":"prompt-auto-ingest","timestamp":"2026-05-21T09:00:00Z","cwd":"'"$workdir"'","prompt":"What is your training cut off date?","transformedPrompt":"What is your training cut off date?"}' \
-      "$workdir"
+      "$workdir" \
+      "$home_dir"
   )"
 
   transformed="$(jq -r '.modifiedTransformedPrompt' <<<"$output")"
 
-  assert_file_contains <(printf '%s' "$transformed") 'Auto-ingest source updates detected.' \
-    "Expected userPromptTransformed auto-ingest to prepend stale-source context."
-  assert_file_contains <(printf '%s' "$transformed") '# /ingest-source' \
-    "Expected userPromptTransformed auto-ingest to include ingest workflow guidance."
+  assert_file_contains <(printf '%s' "$transformed") 'Pending ingest blocks normal work.' \
+    "Expected userPromptTransformed auto-ingest to prepend pending-ingest context."
+  assert_file_contains <(printf '%s' "$transformed") 'Pending ingest blocks normal work.' \
+    "Expected userPromptTransformed auto-ingest to block normal work."
   assert_file_contains <(printf '%s' "$transformed") 'What is your training cut off date?' \
     "Expected userPromptTransformed auto-ingest to preserve the original model-facing prompt."
   assert_file_contains "$summary_path" '## Executive Summary' \
     "Expected userPromptTransformed auto-ingest to scaffold the missing summary."
   assert_file_contains "$manifest_path" '"state": "needs_summary"' \
     "Expected userPromptTransformed auto-ingest to persist stale manifest entries."
+}
+
+test_user_prompt_transformed_uses_recovery_checklist_when_skill_missing() {
+  local workdir
+  local audit_log
+  local output
+  local transformed
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  mkdir -p "$workdir/.agents/sources"
+  make_text_file "$workdir/.agents/sources/missing-skill.md" $'missing skill source v1\n'
+  make_text_file "$workdir/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# legacy-skill-marker\n'
+  make_text_file "$workdir/home/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# installed-ingest-source-marker\n'
+
+  output="$(
+    env \
+      "AUDIT_LOG=$audit_log" \
+      "COPILOT_AUTO_INGEST_REPO_ROOT=$workdir" \
+      "COPILOT_AUTO_INGEST_SUMMARY_DIR=$workdir/.agents/memory/sources" \
+      "COPILOT_AUTO_INGEST_HELPER_PATH=$REPO_ROOT/.github/hooks/scripts/helpers/auto_ingest.py" \
+      HOME="$workdir/home" \
+      python3 "$REPO_ROOT/.github/hooks/scripts/inject-auto-ingest-context.py" \
+      <<< '{"sessionId":"prompt-auto-ingest-missing-skill","timestamp":"2026-05-21T09:00:00Z","cwd":"'"$workdir"'","prompt":"hello","transformedPrompt":"hello"}'
+  )"
+
+  transformed="$(jq -r '.modifiedTransformedPrompt' <<<"$output")"
+
+  assert_file_contains <(printf '%s' "$transformed") 'Recovery checklist' \
+    "Expected missing ingest-source skill to surface a recovery checklist."
+  assert_file_contains <(printf '%s' "$transformed") 'Restore `.agents/skills/ingest-source/SKILL.md`' \
+    "Expected missing ingest-source skill to tell the user how to restore it."
+  assert_file_contains <(printf '%s' "$transformed") 'Pending ingest blocks normal work.' \
+    "Expected missing ingest-source skill to keep the turn blocked."
+}
+
+test_agent_stop_blocks_pending_ingest() {
+  local workdir
+  local audit_log
+  local output
+  local home_dir
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  home_dir="$workdir/home"
+
+  mkdir -p "$workdir/.agents/sources"
+  make_text_file "$workdir/.agents/sources/pending.md" $'pending source v1\n'
+  make_text_file "$workdir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: repo local scope\n---\n\n# repo-skill-marker\n'
+
+  output="$(
+    run_agent_stop_auto_ingest_hook \
+      "$audit_log" \
+      '{"sessionId":"block-pending-ingest","timestamp":"2026-05-21T09:00:02Z","hookEventName":"agentStop","source":"copilot-cli","transcriptPath":"'"$workdir"'/transcript.jsonl","stopReason":"end_turn"}' \
+      "$workdir" \
+      "$home_dir"
+  )"
+
+  assert_equals "block" "$(jq -r '.decision' <<<"$output")" \
+    "Expected Copilot agentStop pending ingest gate to block normal work."
+  assert_file_contains <(jq -r '.reason' <<<"$output") 'Pending ingest blocks normal work.' \
+    "Expected Copilot agentStop block reason to call out pending ingest."
+  assert_file_contains <(jq -r '.reason' <<<"$output") 'pending.md' \
+    "Expected Copilot agentStop block reason to list the pending source."
 }
 
 test_session_start_auto_ingest_outputs_vscode_schema_for_new_sources() {
@@ -259,8 +356,8 @@ test_session_start_auto_ingest_outputs_vscode_schema_for_new_sources() {
     "Expected VS Code session-start payloads to return hookSpecificOutput."
   assert_equals "SessionStart" "$(jq -r '.hookSpecificOutput.hookEventName' <<<"$output")" \
     "Expected VS Code output to preserve the SessionStart event name."
-  assert_file_contains <(jq -r '.hookSpecificOutput.additionalContext' <<<"$output") 'Sources requiring `ingest-source`' \
-    "Expected VS Code auto-ingest context to mention the new source."
+  assert_file_contains <(jq -r '.hookSpecificOutput.additionalContext' <<<"$output") 'Pending ingest blocks normal work.' \
+    "Expected VS Code auto-ingest context to mention the pending ingest block."
 }
 
 test_manifest_summary_path_is_sanitized_to_basename() {
@@ -333,6 +430,23 @@ test_hooks_json_registers_auto_ingest_between_send_event_and_required_skills() {
   assert_equals 1 \
     "$(jq -r '.hooks.sessionStart | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local hooks.json to contain only the auto-ingest startup hook."
+
+  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
+    "$(jq -r '.hooks.agentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local agentStop to end with the pending-ingest backstop."
+
+  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
+    "$(jq -r '.hooks.subagentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local subagentStop to end with the pending-ingest backstop."
+}
+
+test_ingest_source_skill_is_checked_in() {
+  assert_file_contains "$REPO_ROOT/.agents/skills/ingest-source/SKILL.md" \
+    'Process every blocking source in the manifest in one run.' \
+    "Expected the ingest-source skill to describe batch ingestion."
+  assert_file_contains "$REPO_ROOT/.agents/skills/ingest-source/SKILL.md" \
+    'Do not silently replace an existing summary.' \
+    "Expected the ingest-source skill to preserve summary guardrails."
 }
 
 test_auto_ingest_robust_audit_logging() {
@@ -405,9 +519,12 @@ test_auto_ingest_robust_audit_logging() {
 main() {
   test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reasons
   test_user_prompt_transformed_injects_auto_ingest_context_and_materializes_manifest
+  test_user_prompt_transformed_uses_recovery_checklist_when_skill_missing
+  test_agent_stop_blocks_pending_ingest
   test_session_start_auto_ingest_outputs_vscode_schema_for_new_sources
   test_manifest_summary_path_is_sanitized_to_basename
   test_hooks_json_registers_auto_ingest_between_send_event_and_required_skills
+  test_ingest_source_skill_is_checked_in
   test_auto_ingest_robust_audit_logging
 }
 

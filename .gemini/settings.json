@@ -25,6 +25,19 @@
           }
         ]
       }
+    ],
+    "AfterModel": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "name": "block-pending-ingest",
+            "type": "command",
+            "command": "$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py",
+            "description": "Blocks model responses while source ingest remains pending."
+          }
+        ]
+      }
     ]
   }
 }

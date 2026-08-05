@@ -122,6 +122,10 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.sessionStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register load-required-skills.py after send-event.py for sessionStart."
 
+  assert_equals '' \
+    "$(jq -r '.hooks.agentStop[] | select(.bash | test("inject-auto-ingest-context\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to stop owning the pending-ingest agentStop backstop."
+
   assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
     "$(jq -r '.hooks.subagentStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for subagentStart."
@@ -134,9 +138,37 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.userPromptTransformed[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for userPromptTransformed."
 
-  assert_equals '$HOME/.copilot/hooks/scripts/inject-auto-ingest-context.py' \
-    "$(jq -r '.hooks.userPromptTransformed[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register inject-auto-ingest-context.py after send-event.py for userPromptTransformed."
+  assert_equals '' \
+    "$(jq -r '.hooks.userPromptTransformed[] | select(.bash | test("inject-auto-ingest-context\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to stop owning auto-ingest wiring for userPromptTransformed."
+
+  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
+    "$(jq -r '.hooks.userPromptTransformed[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for userPromptTransformed."
+
+  assert_equals 1 \
+    "$(jq -r '.hooks.userPromptTransformed | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to keep userPromptTransformed auto-ingest wiring isolated."
+
+  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
+    "$(jq -r '.hooks.agentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for agentStop."
+
+  assert_equals 1 \
+    "$(jq -r '.hooks.agentStop | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to keep agentStop auto-ingest wiring isolated."
+
+  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
+    "$(jq -r '.hooks.subagentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for subagentStop."
+
+  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
+    "$(jq -r '.hooks.subagentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for subagentStop."
+
+  assert_equals 1 \
+    "$(jq -r '.hooks.subagentStop | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to keep subagentStop auto-ingest wiring isolated."
 
   assert_equals '' \
     "$(jq -r '.hooks.sessionStart[] | select(.bash | test("auto-ingest-source\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
@@ -150,15 +182,9 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.sessionStart | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local Copilot hooks.json to contain only auto-ingest for sessionStart."
 
-  if [[ -e "$REPO_ROOT/.copilot/hooks/scripts/auto-ingest-source.py" ]]; then
-    echo "Expected legacy global Copilot auto-ingest script to be removed from .copilot/hooks/scripts." >&2
-    exit 1
-  fi
-
-  if [[ -e "$REPO_ROOT/.copilot/hooks/scripts/helpers/auto_ingest.py" ]]; then
-    echo "Expected dead Copilot auto-ingest helper to be removed from .copilot/hooks/scripts/helpers." >&2
-    exit 1
-  fi
+  assert_equals '' \
+    "$(jq -r '.hooks[][].bash | select(test("auto-ingest"))' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected .copilot/hooks/hooks.json to own no auto-ingest wiring."
 }
 
 test_validation_doc_records_vscode_subagent_start_strategy() {

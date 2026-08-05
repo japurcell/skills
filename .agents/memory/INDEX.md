@@ -41,7 +41,7 @@ these layer files for specifics.
 
 Use this area to register scaffolded source summaries and keep source-specific knowledge discoverable.
 Load `.agents/memory/LOG.md` first, then the matching summary in `.agents/memory/sources/`.
-The committed manifest `.agents/memory/sources/source-ingest-manifest.json` tracks source fingerprints plus stale or orphan summary state for the startup auto-ingest hooks.
+The committed manifest `.agents/memory/sources/source-ingest-manifest.json` tracks source fingerprints plus stale or orphan summary state for auto-ingest hooks and pending-ingest gating.
 Raw files under `.agents/sources/` are immutable source inputs; summaries plus the wider `.agents/memory/` and `.agents/instructions/` corpus are the compiled knowledge layer.
 Keep chronological integration history grep-friendly by prefixing log entries as `## [YYYY-MM-DD] action | subject`.
 
@@ -56,7 +56,7 @@ Keep chronological integration history grep-friendly by prefixing log entries as
 | `.agents/memory/sources/gemini-hooks-md.summary.md` | `.agents/sources/gemini-hooks.md` | When changing Gemini hook event coverage, config precedence, trust behavior, or `/hooks` operations. |
 | `.agents/memory/sources/llm-wiki-md.summary.md` | `.agents/sources/llm-wiki.md` | When changing source-ingest workflow, wiki/log/index structure, or compiled-knowledge maintenance patterns. |
 | `.agents/memory/sources/vscode-agent-hooks-md.summary.md` | `.agents/sources/vscode-agent-hooks.md` | When changing VS Code hook compatibility, hook locations, or agent-scoped hook behavior. |
-| `.agents/memory/sources/source-ingest-manifest.json` | `.agents/sources/*` | When debugging startup auto-ingest hook state or stale-summary detection. |
+| `.agents/memory/sources/source-ingest-manifest.json` | `.agents/sources/*` | When debugging auto-ingest hook state, stale-summary detection, or pending-ingest gating. |
 | `[LOG.md](LOG.md)` | N/A | When reviewing scaffold and integrate history. |
 
 ## Related Existing Docs
