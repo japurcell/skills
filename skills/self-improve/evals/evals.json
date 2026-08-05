@@ -110,6 +110,26 @@
         "outputs/repo/AGENTS.md still links auth detail to docs/auth.md and does not inline the detailed auth rules.",
         "outputs/report.md includes Learnings, Applied updates, and Assumptions."
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "Use the skill under test on the fixture repo in `evals/files/execution-friction-fixture/`. Session learnings are in `evals/files/execution-friction-fixture/session_notes.md`. Root `AGENTS.md` already points workflow detail at `docs/workflow.md`; keep that structure unless the notes justify something else. Treat this as a benchmark run with no live user and do not ask follow-up questions. Copy the fixture repo to `outputs/repo/`, mine both durable file changes and execution churn, update the right file, and write `outputs/report.md` with sections `Learnings`, `Applied updates`, and `Assumptions`.",
+      "expected_output": "Updates the linked workflow doc with durable rules about shared-file ownership and stale-path errors instead of dismissing them as one-off tool failures.",
+      "files": [
+        "evals/files/execution-friction-fixture/AGENTS.md",
+        "evals/files/execution-friction-fixture/docs/workflow.md",
+        "evals/files/execution-friction-fixture/session_notes.md"
+      ],
+      "expectations": [
+        "outputs/repo/docs/workflow.md captures a shared-surface ownership rule for subagent work and a stale-path or ENOENT refresh rule.",
+        "outputs/repo/AGENTS.md still links workflow detail to docs/workflow.md and does not inline the new workflow rules.",
+        "outputs/report.md includes Learnings, Applied updates, and Assumptions."
+      ],
+      "assertions": [
+        "outputs/repo/docs/workflow.md captures a shared-surface ownership rule for subagent work and a stale-path or ENOENT refresh rule.",
+        "outputs/repo/AGENTS.md still links workflow detail to docs/workflow.md and does not inline the new workflow rules.",
+        "outputs/report.md includes Learnings, Applied updates, and Assumptions."
+      ]
     }
   ]
 }

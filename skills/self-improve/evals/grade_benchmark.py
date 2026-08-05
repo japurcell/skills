@@ -259,6 +259,38 @@ def grade_progress_fixture(run_dir: Path) -> list[dict]:
     ]
 
 
+def grade_execution_friction(run_dir: Path) -> list[dict]:
+    repo_dir = run_dir / "outputs" / "repo"
+    root_text = read_text(repo_dir / "AGENTS.md")
+    workflow_text = read_text(repo_dir / "docs" / "workflow.md")
+    report_text = read_text(run_dir / "outputs" / "report.md")
+    normalized_workflow = normalize(workflow_text)
+    normalized_root = normalize(root_text)
+    return [
+        expectation(
+            "outputs/repo/docs/workflow.md captures a shared-surface ownership rule for subagent work and a stale-path or ENOENT refresh rule.",
+            (
+                ("shared" in normalized_workflow and "owner" in normalized_workflow and "subagent" in normalized_workflow)
+                and ("stale-path" in normalized_workflow or "enoent" in normalized_workflow or ("refresh" in normalized_workflow and "path exists" in normalized_workflow))
+            ),
+            workflow_text or "missing outputs/repo/docs/workflow.md",
+        ),
+        expectation(
+            "outputs/repo/AGENTS.md still links workflow detail to docs/workflow.md and does not inline the new workflow rules.",
+            "docs/workflow.md" in root_text
+            and "ENOENT" not in root_text
+            and "stale-path" not in normalized_root
+            and "subagent" not in normalized_root,
+            root_text or "missing outputs/repo/AGENTS.md",
+        ),
+        expectation(
+            "outputs/report.md includes Learnings, Applied updates, and Assumptions.",
+            report_has_sections(report_text, ["Learnings", "Applied updates", "Assumptions"]),
+            report_text or "missing outputs/report.md",
+        ),
+    ]
+
+
 def grade(eval_id: int, run_dir: Path) -> list[dict]:
     if eval_id == 0:
         return grade_create_root(run_dir)
@@ -270,6 +302,8 @@ def grade(eval_id: int, run_dir: Path) -> list[dict]:
         return grade_noop(run_dir)
     if eval_id == 4:
         return grade_progress_fixture(run_dir)
+    if eval_id == 5:
+        return grade_execution_friction(run_dir)
     return [expectation(f"Unknown eval id {eval_id}.", False, "Unsupported eval")]
 
 

@@ -1,70 +1,62 @@
 # Durable Learnings
 
-Use this when deciding whether a lesson is worth preserving.
+Use when deciding whether a lesson is worth preserving.
 
 ## Keep Only If All Are True
 
 - Likely to recur.
 - Actionable.
-- Specific to this repo, project, workflow, environment, or user preference.
+- Specific to this repo, workflow, environment, or user preference.
 - Not already documented.
 
-## High-Value Signals
+## Prefer
 
-- Non-default commands.
-- Build, test, typecheck, lint, deploy, or validation steps.
-- Required command flags or ordering.
+- Non-default commands, flags, ordering, or required validation steps.
+- Build, test, typecheck, lint, deploy, migration, or release rules.
 - Generated-code rules.
-- Repo-specific architecture or style constraints.
-- Environment quirks, permissions, caches, fixtures, ports, or secrets handling.
-- Repeated human corrections.
-- Review findings that reveal a reusable repo rule.
+- Repo architecture, style, fixture, cache, port, permission, or secrets-handling constraints.
+- User corrections.
+- Review findings that reveal reusable repo rules.
 - Known flaky-test causes and stable fixes.
-- Concrete ways to avoid wasted tool calls, timeouts, or false failures.
+- Ways to avoid wasted tool calls, false failures, or timeouts.
+- Coordination or stale-context signals that reveal a reusable workflow rule.
 
 ## Skip
 
 - Temporary blockers.
 - One-time failures.
 - Ticket/story IDs.
-- Files opened during the session.
-- Obvious README or tree facts.
-- Generic reminders like "be careful."
+- Files merely opened during the session.
+- Obvious README, package, or tree facts.
+- Generic reminders such as “be careful.”
 - Speculation.
-- Broad rules that are less useful than the source detail.
+- Broad summaries that lose the useful source detail.
 
-## Good Examples
+## Mining Artifacts
 
-- `pnpm test -- --runInBand` - required because parallel tests conflict with shared fixtures.
+For logs, handoffs, progress files, and notes:
+
+- Read beyond summaries when details may contain commands, gotchas, patterns, or validation rules.
+- Preserve reusable context that changes future coding, testing, validation, or environment behavior.
+- Treat churn as a signal, not proof: repeated retries, stale paths, or subagent rework count only if they imply a stable rule.
+- Keep exact technical terms when they carry the rule, such as `shareReplay(1)`, `aria-describedby`, `nested it`, or `single-rule`.
+- If an artifact has several durable lessons, keep representative coverage.
+- Make no change for low-value material.
+
+## Examples
+
+Good:
+
+- `pnpm test -- --runInBand` is required because parallel tests conflict with shared fixtures.
 - Use `src/generated/` types instead of hand-written API interfaces.
 - Run `make validate-config` after editing deployment YAML.
 - Jasmine forbids nested `it`; keep specs at the `describe` level.
 - Use `aria-describedby` for this form’s error text because tests assert that accessibility contract.
 
-## Poor Examples
+Poor:
 
 - The user asked about tests.
 - The agent opened `package.json`.
 - The repo has a README.
 - This test failed once.
 - Remember to be careful.
-
-## Mining Work Artifacts
-
-For session logs, handoffs, progress files, and notes:
-
-- Read more than the summary when detailed sections contain commands, gotchas, patterns, or validation rules.
-- Preserve reusable context that changes future coding, testing, validation, or environment behavior.
-- Keep exact technical terms when they carry the rule, such as `shareReplay(1)`, `aria-describedby`, nested `it`, or `single-rule`.
-- Drop temporary status, story IDs, stale blockers, and one-off paths.
-- If one artifact has several durable lessons, keep representative coverage instead of only the first item.
-
-## Common Rationalizations
-
-| Rationalization | Better rule |
-| --- | --- |
-| “The user did not ask me to remember this.” | Preserve durable guidance when warranted. |
-| “That command is obvious.” | Non-default commands are high value. |
-| “Only the summary matters.” | Durable rules often live in gotchas and details. |
-| “Broader wording is safer.” | Specific rules are more useful. |
-| “I should update something anyway.” | Make no change for low-value material. |
