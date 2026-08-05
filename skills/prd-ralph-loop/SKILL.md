@@ -1,25 +1,31 @@
 ---
 name: prd-ralph-loop
-description: Run prd-ralph sequentially over prd until the completion signal is received. Use for completing all PRD tasks/stories or "run Ralph until done"; do not use for a single task.
+description: Run prd-ralph repeatedly over a PRD until it returns <promise>COMPLETE</promise>. Use for completing all PRD tasks/stories, not a single task.
 disable-model-invocation: true
 ---
 
 # /prd-ralph-loop
 
-Run one `prd-ralph` subagent at a time until the completion signal is received.
-
 ## Input
 
-- `prd_file`: path to `prd.json`. If missing, stop and ask the user.
+- `prd_file`: path to `prd.json`; if missing, ask the user.
 
 ## Workflow
 
-1. Activate or load the `subagent-model-router` skill.
-2. Before starting the loop, record `review_base_sha = git rev-parse HEAD`.
-3. Until a subagent returns the `<promise>COMPLETE</promise>` completion signal, spawn a fresh subagent and instruct it to activate the `prd-ralph` skill on `prd_file`.
-4. After `COMPLETE`, define `full_review_scope` as:
-   - committed diff for `review_base_sha..HEAD`
+1. Record baseline:
+   - `review_base_sha = git rev-parse HEAD`
+   - initial `git status --porcelain`
+   If either fails, stop and report the issue.
+2. Activate or load the `subagent-model-router` skill.
+3. Repeat sequentially:
+   - Start one fresh subagent.
+   - Instruct it to activate `prd-ralph` on `prd_file`.
+   - If it returns `<promise>COMPLETE</promise>`, stop the loop.
+4. Define `full_review_scope` as changes since baseline:
+   - committed diff: `review_base_sha..HEAD`
    - staged diff
    - unstaged diff
-   - relevant untracked files created during the loop
-5. Report completion and the `full_review_scope` to the user.
+   - new relevant untracked files
+5. If `<dirname(prd_file)>/progress.txt` exists, read it.
+6. Activate or load the `self-improve` skill to capture learnings from this session and `progress.txt`, especially command/tool workarounds.
+7. Report completion and `full_review_scope`.
