@@ -16,7 +16,8 @@ This file is a **top-level map only**. For area detail and working rules, read t
 
 | Path | Layer | Purpose |
 | --- | --- | --- |
-| `.copilot/` | hooks | Copilot CLI instructions plus installed hook source under `.copilot/hooks/`, Python operational entrypoints under `.copilot/hooks/scripts/` (startup, structured observability emitter, auto-ingest startup scan, tool guard, RTK, secrets scanner, session-end, and retained lifecycle logging hooks), and shared hook helpers under `.copilot/hooks/scripts/helpers/`. Legacy shell-format helper scripts and format-focused test drivers were removed. |
+| `.github/hooks/` | hooks | Repo-local Copilot hook config and startup auto-ingest scripts loaded directly from the workspace. |
+| `.copilot/` | hooks | Copilot CLI instructions plus installed hook source under `.copilot/hooks/`, Python operational entrypoints under `.copilot/hooks/scripts/` (startup, structured observability emitter, tool guard, RTK, secrets scanner, session-end, and retained lifecycle logging hooks), and shared hook helpers under `.copilot/hooks/scripts/helpers/`. Repo-local startup auto-ingest now lives under `.github/hooks/`. Legacy shell-format helper scripts and format-focused test drivers were removed. |
 | `.gemini/` | hooks | Gemini CLI instructions, settings, installed hook source under `.gemini/hooks/`, Python operational entrypoints under `.gemini/hooks/scripts/` (startup, structured observability emitter, passive logging, auto-ingest startup scan, tool guard, RTK rewrite, secrets scanner, and session-end logger), and shared hook helpers under `.gemini/hooks/scripts/helpers/`. Legacy shell-format helper scripts and format-focused test drivers were removed. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, and evals. |
 | `agents/` | agents | Standalone custom agent prompt files. |

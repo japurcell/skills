@@ -8,6 +8,7 @@ readonly AGENTS_SRC="${REPO_ROOT}/agents"
 readonly REFERENCES_SRC="${REPO_ROOT}/references"
 readonly HOOKS_SRC="${REPO_ROOT}/.copilot/hooks"
 readonly GEMINI_SRC="${REPO_ROOT}/.gemini"
+readonly GEMINI_GLOBAL_SETTINGS_SRC="${REPO_ROOT}/.gemini/global-settings.json"
 readonly COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
 readonly COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
 
@@ -58,6 +59,10 @@ copy_gemini() {
   fi
 }
 
+copy_gemini_global_settings() {
+  cp -p "$GEMINI_GLOBAL_SETTINGS_SRC" "$GEMINI_DEST/settings.json"
+}
+
 copy_copilot_instructions() {
   cp -p "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_DEST/"
 }
@@ -70,7 +75,7 @@ for src in "$SKILLS_SRC" "$AGENTS_SRC" "$GEMINI_SRC"; do
   [[ -d "$src" ]] || { echo "Missing source directory: $src" >&2; exit 1; }
 done
 
-for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC"; do
+for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC" "$GEMINI_GLOBAL_SETTINGS_SRC"; do
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
@@ -87,6 +92,7 @@ if [[ -d "$HOOKS_SRC" ]]; then
   copy_hooks
 fi
 copy_gemini
+copy_gemini_global_settings
 copy_copilot_instructions
 copy_copilot_lsp
 
@@ -99,5 +105,6 @@ if [[ -d "$HOOKS_SRC" ]]; then
   echo "Installed hooks to $HOOKS_DEST"
 fi
 echo "Installed Gemini instructions to $GEMINI_DEST"
+echo "Installed Gemini settings to $GEMINI_DEST/settings.json"
 echo "Installed Copilot instructions to $COPILOT_DEST/copilot-instructions.md"
 echo "Installed Copilot LSP config to $COPILOT_DEST/lsp-config.json"

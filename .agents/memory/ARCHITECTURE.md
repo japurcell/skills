@@ -11,6 +11,7 @@ coverage: Repo structure, install flows, and how top-level areas relate
 | `skills/` | Source of reusable task skills built around `SKILL.md` entry points. | Installed to `~/.agents/skills` by `scripts/install.sh` |
 | `agents/` | Source of custom agent definitions. | Installed to both `~/.copilot/agents` and `~/.gemini/agents` |
 | `references/` | Optional shared reference material shipped with this repo. | Installed to `~/.agents/references` when that target exists |
+| `.github/` | Repository-level Copilot config, including repo-local hooks. | Loaded directly from the workspace by Copilot |
 | `.copilot/` | Copilot-specific instructions and hooks. | Installed to `~/.copilot/` |
 | `.gemini/` | Gemini-specific instructions and hooks. | Installed to `~/.gemini/` |
 | `scripts/` | Installers, importers, and targeted validation helpers. | Run from repo checkout |
@@ -22,7 +23,7 @@ coverage: Repo structure, install flows, and how top-level areas relate
 
 ### Source authoring flow
 
-1. Edit source under `skills/`, `agents/`, `.copilot/`, `.gemini/`, `references/`, or `scripts/`.
+1. Edit source under `skills/`, `agents/`, `.github/`, `.copilot/`, `.gemini/`, `references/`, or `scripts/`.
 2. Run narrow validation for changed area from `.agents/memory/TESTING_STRATEGY.md` and any matching `testing/<area>.md` file.
 3. If installed behavior matters, run `./scripts/install.sh` before live checks because Copilot and Gemini read installed copies from home-directory targets, not repository source files.
 

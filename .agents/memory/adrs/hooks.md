@@ -8,9 +8,9 @@ This document records the architectural decision records (ADRs) for `{.copilot,.
 
 ## ADR-001: Python-first operational hook surface
 
-- **Decision:** Wired hook entrypoints live in runtime-local Python files under `.copilot/hooks/scripts/` and `.gemini/hooks/scripts/`.
-- **Rationale:** The PRD ports retained hook behavior to Python so the installed surface can be validated directly.
-- **Consequences:** Tests and config assertions target Python entrypoints; shell files are not the supported implementation surface.
+- **Decision:** Wired operational hook entrypoints live in Python files owned by each runtime surface: installed Copilot hooks under `.copilot/hooks/scripts/`, repo-local Copilot startup auto-ingest under `.github/hooks/scripts/`, and Gemini hook entrypoints under `.gemini/hooks/scripts/`.
+- **Rationale:** The PRD ports retained hook behavior to Python while letting Copilot startup auto-ingest run from repo-local hook config instead of installed global hooks.
+- **Consequences:** Tests and config assertions target Python entrypoints at their active runtime locations; shell files are not the supported implementation surface.
 
 ## ADR-002: Local structured observability via NDJSON emitter
 
@@ -38,6 +38,6 @@ This document records the architectural decision records (ADRs) for `{.copilot,.
 
 ## ADR-006: Runtime-local auto-ingest hooks with a shared repo manifest
 
-- **Decision:** Source auto-ingest runs through dedicated startup hook scripts in each runtime, while both runtimes read and write the same committed manifest at `.agents/memory/sources/source-ingest-manifest.json`.
-- **Rationale:** The user wanted no cross-runtime shared executable hook code.
-- **Consequences:** Copilot and Gemini keep separate helper implementations, yet their manifest schema, summary naming contract, and embedded ingest prompt must stay aligned.
+- **Decision:** Source auto-ingest runs through dedicated startup hook scripts per runtime surface: Copilot repo-local startup auto-ingest under `.github/hooks/scripts/auto-ingest-source.py` and Gemini startup auto-ingest under `.gemini/hooks/scripts/auto-ingest.py`, while both runtimes read and write the same committed manifest at `.agents/memory/sources/source-ingest-manifest.json`.
+- **Rationale:** The user wanted no cross-runtime shared executable hook code and no globally installed Copilot auto-ingest hook.
+- **Consequences:** Copilot repo-local and Gemini runtime-local implementations stay separate, yet their manifest schema, summary naming contract, and embedded ingest prompt must stay aligned.

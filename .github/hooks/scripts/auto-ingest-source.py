@@ -6,6 +6,10 @@ import os
 import sys
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
 from helpers.audit import audit_log_event
 from helpers.auto_ingest import (
     build_context,
@@ -93,19 +97,19 @@ def main() -> int:
         if not message.strip():
             if not current_sources:
                 log_event(
-                    f"Message: auto-ingest scan complete, Event: {event_name or 'sessionStart'}, "
+                    f"Message: auto-ingest scan complete, Event: {event_name or 'SessionStart'}, "
                     f"Session: {session_id}, Findings: 0, no context injected (no sources found)"
                 )
             else:
                 log_event(
-                    f"Message: auto-ingest scan complete, Event: {event_name or 'sessionStart'}, "
+                    f"Message: auto-ingest scan complete, Event: {event_name or 'SessionStart'}, "
                     f"Session: {session_id}, Findings: 0, no context injected (all summaries up to date)"
                 )
             emit_json({})
             return 0
 
         log_event(
-            f"Message: auto-ingest scan complete, Event: {event_name or 'sessionStart'}, "
+            f"Message: auto-ingest scan complete, Event: {event_name or 'SessionStart'}, "
             f"Session: {session_id}, Findings: {len(report_entries)}, context injected"
         )
         for entry in report_entries:

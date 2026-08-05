@@ -114,28 +114,43 @@ test_subagent_start_outputs_vscode_schema_with_caveman_only_context() {
 }
 
 test_hooks_json_registers_cli_and_vscode_start_events() {
-  local hook_name
-  local jq_query
+  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+    "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py first for sessionStart."
 
-  for hook_name in sessionStart subagentStart; do
-    jq_query=".hooks.${hook_name}[0].bash // empty"
-    assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
-      "$(jq -r "$jq_query" "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-      "Expected hooks.json to register send-event.py first for $hook_name."
+  assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
+    "$(jq -r '.hooks.sessionStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register load-required-skills.py after send-event.py for sessionStart."
 
-    jq_query=".hooks.${hook_name}[1].bash // empty"
-    if [[ "$hook_name" == "sessionStart" ]]; then
-      assert_equals '$HOME/.copilot/hooks/scripts/auto-ingest-source.py' \
-        "$(jq -r "$jq_query" "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-        "Expected hooks.json to register auto-ingest-source.py second for sessionStart."
+  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+    "$(jq -r '.hooks.subagentStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py first for subagentStart."
 
-      jq_query=".hooks.${hook_name}[2].bash // empty"
-    fi
+  assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
+    "$(jq -r '.hooks.subagentStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register load-required-skills.py after send-event.py for subagentStart."
 
-    assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
-      "$(jq -r "$jq_query" "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-      "Expected hooks.json to register load-required-skills.py after startup hooks for $hook_name."
-  done
+  assert_equals '' \
+    "$(jq -r '.hooks.sessionStart[] | select(.bash | test("auto-ingest-source\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected global Copilot hooks.json to stop registering auto-ingest-source.py."
+
+  assert_equals '.github/hooks/scripts/auto-ingest-source.py' \
+    "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local Copilot hooks.json to register only auto-ingest-source.py."
+
+  assert_equals 1 \
+    "$(jq -r '.hooks.sessionStart | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local Copilot hooks.json to contain only auto-ingest for sessionStart."
+
+  if [[ -e "$REPO_ROOT/.copilot/hooks/scripts/auto-ingest-source.py" ]]; then
+    echo "Expected legacy global Copilot auto-ingest script to be removed from .copilot/hooks/scripts." >&2
+    exit 1
+  fi
+
+  if [[ -e "$REPO_ROOT/.copilot/hooks/scripts/helpers/auto_ingest.py" ]]; then
+    echo "Expected dead Copilot auto-ingest helper to be removed from .copilot/hooks/scripts/helpers." >&2
+    exit 1
+  fi
 }
 
 test_validation_doc_records_vscode_subagent_start_strategy() {

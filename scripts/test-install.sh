@@ -32,6 +32,8 @@ create_fixture_repo() {
   printf '%s\n' 'Copilot instructions.' > "$repo/.copilot/copilot-instructions.md"
   printf '%s\n' '{}' > "$repo/.copilot/lsp-config.json"
   printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.copilot/hooks/test-hook.sh"
+  printf '%s\n' '{"global":"settings"}' > "$repo/.gemini/global-settings.json"
+  printf '%s\n' '{"local":"settings"}' > "$repo/.gemini/settings.json"
 
   mkdir -p "$repo/.gemini/hooks/scripts" "$repo/.copilot/hooks/scripts"
   printf '%s\n' 'print("hook")' > "$repo/.gemini/hooks/scripts/test-hook.py"
@@ -150,6 +152,7 @@ test_copies_full_gemini_tree() {
   copied_policy="$(<"$home/.gemini/policies/plan-custom-directory.toml")"
   copied_hidden="$(<"$home/.gemini/.hidden-note")"
   copied_hook="$(<"$home/.copilot/hooks/test-hook.sh")"
+  copied_global_settings="$(<"$home/.gemini/settings.json")"
 
   assert_equals "Gemini root." "$copied_gemini" "Expected GEMINI.md to be copied into ~/.gemini."
   assert_equals $'---\nname: helper\n---\nUse alpha.' "$copied_agent" "Expected agents to be copied into ~/.gemini/agents."
@@ -159,6 +162,7 @@ test_copies_full_gemini_tree() {
   assert_equals "Nested policy." "$copied_policy" "Expected nested Gemini files to be copied recursively."
   assert_equals "Hidden note." "$copied_hidden" "Expected hidden Gemini files to be copied recursively."
   assert_equals $'#!/bin/bash\necho hook' "$copied_hook" "Expected hooks to be copied into ~/.copilot/hooks."
+  assert_equals '{"global":"settings"}' "$copied_global_settings" "Expected global Gemini settings to overwrite repo-local settings during install."
 
   if [[ -e "$home/.gemini/.gemini" ]]; then
     echo "Expected the installer to copy Gemini contents into ~/.gemini, not nest another .gemini directory." >&2

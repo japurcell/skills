@@ -36,6 +36,7 @@ run_auto_ingest_hook() {
   local home="${4:-}"
 
   local extra_env=(
+    "AUDIT_LOG=$audit_log"
     "COPILOT_AUTO_INGEST_REPO_ROOT=$root"
     "COPILOT_AUTO_INGEST_SUMMARY_DIR=$root/.agents/memory/sources"
   )
@@ -49,6 +50,24 @@ run_auto_ingest_hook() {
     "$payload" \
     "" \
     "${extra_env[@]}"
+}
+
+run_repo_local_auto_ingest_hook() {
+  local audit_log="$1"
+  local payload="$2"
+  local root="$3"
+  local home="${4:-}"
+
+  local extra_env=(
+    "AUDIT_LOG=$audit_log"
+    "COPILOT_AUTO_INGEST_REPO_ROOT=$root"
+    "COPILOT_AUTO_INGEST_SUMMARY_DIR=$root/.agents/memory/sources"
+  )
+  if [[ -n "$home" ]]; then
+    extra_env+=("HOME=$home")
+  fi
+
+  env "${extra_env[@]}" python3 "$REPO_ROOT/.github/hooks/scripts/auto-ingest-source.py" <<<"$payload"
 }
 
 test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reasons() {
@@ -83,7 +102,7 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
   make_text_file "$home_dir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# global-ingest-source-marker\n'
 
   output="$(
-    run_auto_ingest_hook \
+    run_repo_local_auto_ingest_hook \
       "$audit_log" \
       '{"sessionId":"auto-ingest-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "$workdir" \
@@ -123,7 +142,7 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
   make_text_file "$workdir/.agents/sources/new.md" $'new source v1\n'
 
   output="$(
-    run_auto_ingest_hook \
+    run_repo_local_auto_ingest_hook \
       "$audit_log" \
       '{"sessionId":"auto-ingest-session","timestamp":"2026-05-21T09:00:01Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "$workdir" \
@@ -179,7 +198,7 @@ test_session_start_auto_ingest_outputs_vscode_schema_for_new_sources() {
   make_text_file "$workdir/.agents/sources/sample.md" $'sample source v1\n'
 
   output="$(
-    run_auto_ingest_hook \
+    run_repo_local_auto_ingest_hook \
       "$audit_log" \
       '{"hookEventName":"SessionStart","session_id":"vscode-session","timestamp":"2026-05-21T09:00:02Z","source":"vscode","initial_prompt":"hello"}' \
       "$workdir"
@@ -237,7 +256,7 @@ payload = {
 path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 PY
 
-  run_auto_ingest_hook \
+  run_repo_local_auto_ingest_hook \
     "$audit_log" \
     '{"sessionId":"sanitize-summary-path","timestamp":"2026-05-21T09:00:03Z","source":"copilot-cli","initialPrompt":"hello"}' \
     "$workdir" >/dev/null
@@ -252,13 +271,17 @@ test_hooks_json_registers_auto_ingest_between_send_event_and_required_skills() {
     "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected send-event.py to remain first for sessionStart."
 
-  assert_equals '$HOME/.copilot/hooks/scripts/auto-ingest-source.py' \
-    "$(jq -r '.hooks.sessionStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected auto-ingest-source.py to run immediately after send-event.py."
-
   assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
-    "$(jq -r '.hooks.sessionStart[2].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected load-required-skills.py to remain after auto-ingest-source.py."
+    "$(jq -r '.hooks.sessionStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected load-required-skills.py to remain after send-event.py."
+
+  assert_equals '.github/hooks/scripts/auto-ingest-source.py' \
+    "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to register auto-ingest-source.py."
+
+  assert_equals 1 \
+    "$(jq -r '.hooks.sessionStart | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to contain only the auto-ingest startup hook."
 }
 
 test_auto_ingest_robust_audit_logging() {
@@ -273,7 +296,7 @@ test_auto_ingest_robust_audit_logging() {
   # Case 1: no sources found (empty .agents/sources)
   mkdir -p "$workdir/.agents/sources"
   output="$(
-    run_auto_ingest_hook \
+    run_repo_local_auto_ingest_hook \
       "$audit_log" \
       '{"sessionId":"logging-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "$workdir"
@@ -284,7 +307,7 @@ test_auto_ingest_robust_audit_logging() {
   # Case 2: new sources added -> context injected -> logs findings
   make_text_file "$workdir/.agents/sources/test1.md" $'test1\n'
   output="$(
-    run_auto_ingest_hook \
+    run_repo_local_auto_ingest_hook \
       "$audit_log" \
       '{"sessionId":"logging-session","timestamp":"2026-05-21T09:00:01Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "$workdir"
@@ -302,14 +325,14 @@ test_auto_ingest_robust_audit_logging() {
   make_text_file "$workdir/.agents/memory/sources/test1-md.summary.md" $'# Summary for test1\n\nVerified summary content.\n'
   # And let's run the hook again so the manifest updates with active state and the actual summary hash.
   output="$(
-    run_auto_ingest_hook \
+    run_repo_local_auto_ingest_hook \
       "$audit_log" \
       '{"sessionId":"logging-session","timestamp":"2026-05-21T09:00:02Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "$workdir"
   )"
   # Now let's run it one more time to test the "all summaries up to date" case.
   output="$(
-    run_auto_ingest_hook \
+    run_repo_local_auto_ingest_hook \
       "$audit_log" \
       '{"sessionId":"logging-session","timestamp":"2026-05-21T09:00:03Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "$workdir"
@@ -319,7 +342,7 @@ test_auto_ingest_robust_audit_logging() {
 
   # Case 4: failure logging (invalid payload)
   output="$(
-    run_auto_ingest_hook \
+    run_repo_local_auto_ingest_hook \
       "$audit_log" \
       'not-a-json' \
       "$workdir" || true

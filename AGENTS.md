@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository publishes custom coding skills from `skills/`, custom agent definitions from `agents/`, Copilot specific instructions from `.copilot/`, and Gemini specific hooks and configs from `.gemini/`.
+This repository publishes custom coding skills from `skills/`, custom agent definitions from `agents/`, repo-local Copilot hooks from `.github/hooks/`, Copilot-specific instructions from `.copilot/`, and Gemini-specific hooks and configs from `.gemini/`.
 
 ## Getting Started
 

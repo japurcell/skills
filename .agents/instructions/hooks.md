@@ -1,10 +1,10 @@
 ---
-coverage: Rules and conventions for git and Gemini hooks under `{.copilot,.gemini}/hooks`.
+coverage: Rules and conventions for repo-local Copilot plus installed Copilot and Gemini hooks under `.github/hooks/`, `.copilot/hooks/`, and `.gemini/hooks/`.
 ---
 
 # Git & Gemini Hooks Conventions
 
-Guidelines for modifying and maintaining repository hook scripts under `{.copilot,.gemini}/hooks`.
+Guidelines for modifying and maintaining repository hook scripts and configs under `.github/hooks/`, `.copilot/hooks/`, and `.gemini/hooks/`.
 
 ## Official References
 
@@ -44,7 +44,7 @@ Read official docs before non-trivial hook changes and keep implementation choic
 - The supported hook surface is the Python operational entrypoints and Python observability emitters.
 - Keep `send-event.py` registered in every supported Copilot hook event block so observability stays complete across surfaces.
 - Keep `send-event.py` registered in every supported Gemini hook event block, including the lifecycle hooks that do not currently have other operational behavior (`BeforeAgent`, `BeforeModel`, `AfterModel`, `BeforeToolSelection`, `AfterTool`, `PreCompress`) so the installed config stays fully observable.
-- Source auto-ingest uses dedicated startup-only Python hooks per runtime; do not fold that behavior into the required-skill loaders.
+- Source auto-ingest uses dedicated startup-only Python hooks per runtime; do not fold that behavior into the required-skill loaders. Copilot repo-local startup auto-ingest lives under `.github/hooks/hooks.json` plus `.github/hooks/scripts/` and executes the repo script directly, while Gemini repo-local startup auto-ingest lives in `.gemini/settings.json`, should reference `$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/auto-ingest.py`, and the installer copies `.gemini/global-settings.json` to `~/.gemini/settings.json`.
 - Source auto-ingest state lives in the committed repo manifest `.agents/memory/sources/source-ingest-manifest.json`, while executable helper code stays runtime-local under each hook tree.
 - Source auto-ingest hooks must log robust audit information: failures/exceptions, successful context injections with granular details on individual findings (path, state, and reason), and non-injections (distinguishing between all summaries being up to date vs no sources found) to the runtime-local audit log.
 - For passive shadow logging, create shadow-log parent directory before first write and keep primary plus shadow writes inside same lock section so event ordering survives.

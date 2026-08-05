@@ -62,9 +62,17 @@ print(int(path.stat().st_mtime))' "$1"
 }
 
 test_session_start_startup_registers_auto_ingest_hook() {
-  assert_equals '$HOME/.gemini/hooks/scripts/auto-ingest.py' \
+  assert_equals '$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/auto-ingest.py' \
     "$(jq -r '.hooks.SessionStart[] | select(.matcher == "startup") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected Gemini startup-only auto-ingest hook registration."
+    "Expected Gemini repo-local settings to register the startup-only auto-ingest hook."
+
+  assert_equals 1 \
+    "$(jq -r '.hooks.SessionStart | map(select(.matcher == "startup")) | length' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected Gemini repo-local settings to contain only the startup auto-ingest hook."
+
+  assert_equals '' \
+    "$(jq -r '.hooks.SessionStart[] | select(.matcher == "startup") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected Gemini global settings to stop registering auto-ingest."
 }
 
 test_new_source_injects_scaffold_context_and_updates_manifest() {
