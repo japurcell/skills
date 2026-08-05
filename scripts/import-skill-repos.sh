@@ -32,4 +32,5 @@ fi
   "skills/engineering/resolving-merge-conflicts" "skills" \
   "skills/productivity/grilling" "skills" \
   "skills/productivity/teach" "skills" \
-  "skills/productivity/writing-great-skills" "skills"
+  "skills/productivity/writing-great-skills" "skills" \
+  "skills/productivity/writing-for-agents" "skills"
