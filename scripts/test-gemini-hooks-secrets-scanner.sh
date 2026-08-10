@@ -323,8 +323,17 @@ test_invalid_json_degrades_to_noop_json() {
 
 test_gemini_settings_register_session_end_scanner() {
   assert_equals '$HOME/.gemini/hooks/scripts/scan-secrets.py' \
-    "$(jq -r '.hooks.SessionEnd[0].hooks[] | select(.name == "scan-secrets") | .command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected .gemini/settings.json to register scan-secrets.py for Gemini SessionEnd."
+    "$(jq -r '.hooks.SessionEnd[0].hooks[] | select(.name == "scan-secrets") | .command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected .gemini/global-settings.json to register scan-secrets.py for Gemini SessionEnd."
+}
+
+test_gemini_settings_register_before_tool_scanner() {
+  assert_equals '$HOME/.gemini/hooks/scripts/scan-secrets.py' \
+    "$(jq -r '.hooks.BeforeTool[0].hooks[] | select(.name == "scan-secrets") | .command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected .gemini/global-settings.json to register scan-secrets.py for Gemini BeforeTool."
+  assert_equals 'block' \
+    "$(jq -r '.hooks.BeforeTool[0].hooks[] | select(.name == "scan-secrets") | .env.SCAN_MODE // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected .gemini/global-settings.json scan-secrets before tools to default to block."
 }
 
 main() {
@@ -337,6 +346,7 @@ main() {
   test_allowlist_suppresses_credential_path_finding
   test_invalid_json_degrades_to_noop_json
   test_gemini_settings_register_session_end_scanner
+  test_gemini_settings_register_before_tool_scanner
 }
 
 main "$@"

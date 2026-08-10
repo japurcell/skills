@@ -18,6 +18,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from helpers.audit import audit_init  # noqa: E402
 from helpers.common import emit_json, read_json_input  # noqa: E402
 
+
 SCRIPT_NAME = Path(__file__).name
 TEXT_EXTENSIONS = {
     ".c",
@@ -74,14 +75,20 @@ def warn_and_noop(message: str) -> None:
     noop()
 
 
-def read_payload() -> dict:
+def read_payload(mode: str) -> dict:
     payload: dict | None = None
     try:
         payload = read_json_input()
-    except ValueError as exc:
+    except Exception as exc:
+        if mode == "block":
+            print(f"{SCRIPT_NAME}: {exc}", file=sys.stderr)
+            raise SystemExit(1)
         warn_and_noop(f"{SCRIPT_NAME}: {exc}")
 
     if not isinstance(payload, dict):
+        if mode == "block":
+            print(f"{SCRIPT_NAME}: invalid JSON input.", file=sys.stderr)
+            raise SystemExit(1)
         warn_and_noop(f"{SCRIPT_NAME}: invalid JSON input; skipping hook.")
 
     return payload
@@ -262,7 +269,7 @@ def rotate_scan_log(log_path: Path, max_bytes: int = 1048576, backups: int = 3) 
             continue
         try:
             if index == backups:
-                current.unlink()
+                os.remove(current)
             else:
                 current.replace(next_path)
         except OSError:
@@ -341,26 +348,42 @@ def emit_output(findings_count: int, log_path: Path) -> None:
 
 
 def main() -> int:
+    mode = os.environ.get("SCAN_MODE", "block")
+    if mode not in {"warn", "block"}:
+        mode = "block"
+
     if not git_available():
+        if mode == "block":
+            emit_json({"decision": "deny", "reason": f"{SCRIPT_NAME}: required command not found: git"})
+            return 0
         warn_and_noop(f"{SCRIPT_NAME}: required command not found: git")
 
     if not audit_init():
+        if mode == "block":
+            emit_json({"decision": "deny", "reason": f"{SCRIPT_NAME}: failed to initialize audit logging."})
+            return 0
         warn_and_noop(f"{SCRIPT_NAME}: failed to initialize audit logging; skipping hook.")
 
-    payload = read_payload()
+    payload = read_payload(mode)
     session_id = str(payload.get("session_id") or "")
     timestamp = str(payload.get("timestamp") or "")
     hook_cwd = str(payload.get("cwd") or "")
-
-    mode = os.environ.get("SCAN_MODE", "warn")
-    if mode not in {"warn", "block"}:
-        mode = "warn"
 
     scope = os.environ.get("SCAN_SCOPE", "diff")
     if scope not in {"diff", "staged"}:
         scope = "diff"
 
-    log_dir = Path(os.environ.get("SECRETS_LOG_DIR", str(Path.home() / ".gemini" / "hooks" / "secrets")))
+    log_dir_str = os.environ.get("SECRETS_LOG_DIR", str(Path.home() / ".gemini" / "hooks" / "secrets"))
+    log_path = Path(log_dir_str)
+    if log_path.is_dir() or not log_path.suffix:
+        scan_log = log_path / "scan.log"
+    elif log_path.suffix.lower() == ".log":
+        if log_path.parent.exists() and log_path.parent.is_file():
+            scan_log = log_path.parent.parent / "secrets" / log_path.name
+        else:
+            scan_log = log_path
+    else:
+        scan_log = log_path / "scan.log"
     work_dir = Path(hook_cwd or os.environ.get("GEMINI_PROJECT_DIR") or Path.cwd())
 
     if not timestamp:
@@ -368,7 +391,7 @@ def main() -> int:
 
     if os.environ.get("SKIP_SECRETS_SCAN") == "true":
         append_scan_log(
-            log_path=log_dir / "scan.log",
+            log_path=scan_log,
             status="skipped",
             session_id=session_id,
             timestamp=timestamp,
@@ -379,12 +402,12 @@ def main() -> int:
             findings=[],
             note="scan disabled by SKIP_SECRETS_SCAN",
         )
-        emit_output(0, log_dir / "scan.log")
+        emit_output(0, scan_log)
         return 0
 
     if not is_inside_git_repo(work_dir):
         append_scan_log(
-            log_path=log_dir / "scan.log",
+            log_path=scan_log,
             status="skipped",
             session_id=session_id,
             timestamp=timestamp,
@@ -395,13 +418,12 @@ def main() -> int:
             findings=[],
             note="not inside git repository",
         )
-        emit_output(0, log_dir / "scan.log")
+        emit_output(0, scan_log)
         return 0
 
     root = repo_root(work_dir)
     root_has_head = has_head(root)
     files = collect_files(root, scope, root_has_head)
-    scan_log = log_dir / "scan.log"
 
     if not files:
         append_scan_log(
@@ -484,7 +506,10 @@ def main() -> int:
         env_files=env_files,
         findings=findings_json,
     )
-    emit_output(len(findings), scan_log)
+    if mode == "block":
+        emit_json({"decision": "deny", "reason": f"Potential secrets detected in modified files. See {scan_log}."})
+    else:
+        emit_output(len(findings), scan_log)
     return 0
 
 

@@ -53,6 +53,17 @@ def first_present(payload: Mapping[str, Any], *keys: str) -> Any:
     return ""
 
 
+def nested_present(payload: Mapping[str, Any], *keys: str) -> Any:
+    current: Any = payload
+
+    for key in keys:
+        if not isinstance(current, Mapping) or key not in current:
+            return ""
+        current = current[key]
+
+    return current if current is not None else ""
+
+
 def stringify_value(value: Any) -> str:
     if isinstance(value, str):
         return value

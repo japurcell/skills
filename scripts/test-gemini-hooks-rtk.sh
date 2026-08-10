@@ -39,8 +39,8 @@ test_failed_rtk_rewrite_degrades_to_noop_json() {
 
 test_gemini_settings_register_rtk_rewrite_hook() {
   assert_equals '$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py' \
-    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "run_shell_command") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected .gemini/settings.json to register rtk-hook-gemini.py for run_shell_command rewrites."
+    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "run_shell_command") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected .gemini/global-settings.json to register rtk-hook-gemini.py for run_shell_command rewrites."
 }
 
 main() {

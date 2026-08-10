@@ -75,8 +75,8 @@ test_warn_mode_reports_findings_without_failing() {
     "Expected warn mode log to record detected pattern."
   assert_file_contains "$log_dir/scan.log" '"redactedMatch":"ghp_...3456"' \
     "Expected warn mode log to redact stored match values."
-  if [[ "$output" != *"Potential secrets detected in modified files:"* ]]; then
-    echo "Expected warn mode to print findings summary." >&2
+  if [[ "$output" != *"Potential secrets detected in modified files"* ]]; then
+    echo "Expected warn mode to print findings summary via systemMessage." >&2
     echo "Actual output: $output" >&2
     exit 1
   fi
@@ -114,8 +114,8 @@ test_block_mode_fails_when_findings_exist() {
 
   assert_file_contains "$log_dir/scan.log" '"status":"findings"' \
     "Expected block mode to log findings before failing."
-  assert_file_contains "$workdir/block.out" 'aws_access_key' \
-    "Expected block mode output to include detected pattern name."
+  assert_file_contains "$workdir/block.out" 'Potential secrets detected' \
+    "Expected block mode output to include systemMessage."
 }
 
 test_diff_mode_ignores_unchanged_secrets_in_touched_files() {
@@ -154,7 +154,7 @@ EOF
 
   assert_file_contains "$log_dir/scan.log" '"status":"clean"' \
     "Expected diff mode to ignore unchanged secrets in touched files."
-  if [[ "$output" != "Secrets scan clean." ]]; then
+  if [[ "$output" != "{}" ]]; then
     echo "Expected diff mode to stay clean when only non-secret lines changed." >&2
     echo "Actual output: $output" >&2
     exit 1
@@ -191,7 +191,7 @@ test_diff_mode_ignores_secret_like_diff_headers() {
 
   assert_file_contains "$log_dir/scan.log" '"status":"clean"' \
     "Expected diff mode to ignore secret-like unified-diff header paths."
-  if [[ "$output" != "Secrets scan clean." ]]; then
+  if [[ "$output" != "{}" ]]; then
     echo "Expected diff mode to stay clean when only the diff header path looks secret-like." >&2
     echo "Actual output: $output" >&2
     exit 1
@@ -226,7 +226,7 @@ test_warn_mode_flags_sensitive_credential_paths_without_token_match() {
     "Expected sensitive credential-like paths to produce a finding even without token-shaped content."
   assert_file_contains "$log_dir/scan.log" '"path":"credentials.md"' \
     "Expected credential-path finding to record the file path."
-  if [[ "$output" != *"credential_path"* ]]; then
+  if [[ "$output" != *"Potential secrets detected"* ]]; then
     echo "Expected credential-path warning in hook output." >&2
     echo "Actual output: $output" >&2
     exit 1
@@ -261,7 +261,7 @@ test_env_variants_are_logged_but_not_flagged_by_path_alone() {
     "Expected .env variants to be logged when scanned."
   assert_file_contains "$log_dir/scan.log" '"status":"clean"' \
     "Expected .env variants without secrets to remain clean."
-  if [[ "$output" != "Secrets scan clean." ]]; then
+  if [[ "$output" != "{}" ]]; then
     echo "Expected .env variant without secrets to stay clean." >&2
     echo "Actual output: $output" >&2
     exit 1
@@ -299,7 +299,7 @@ test_generic_secrets_filename_stays_clean() {
     cat "$log_dir/scan.log" >&2
     exit 1
   fi
-  if [[ "$output" != "Secrets scan clean." ]]; then
+  if [[ "$output" != "{}" ]]; then
     echo "Expected generic 'secrets' filename to stay clean." >&2
     echo "Actual output: $output" >&2
     exit 1
@@ -338,7 +338,7 @@ test_allowlist_suppresses_credential_path_finding() {
     cat "$log_dir/scan.log" >&2
     exit 1
   fi
-  if [[ "$output" != "Secrets scan clean." ]]; then
+  if [[ "$output" != "{}" ]]; then
     echo "Expected allowlisted credential_path finding to be suppressed." >&2
     echo "Actual output: $output" >&2
     exit 1
@@ -363,6 +363,15 @@ test_hooks_json_registers_session_end_scanner() {
     "Expected hooks.json to register the session-end logging Python hook."
 }
 
+test_hooks_json_registers_pre_tool_scanner() {
+  assert_equals '$HOME/.copilot/hooks/scripts/scan-secrets.py' \
+    "$(jq -r '.hooks.preToolUse[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register the secrets scanner on preToolUse."
+  assert_equals block \
+    "$(jq -r '.hooks.preToolUse[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .env.SCAN_MODE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to default secrets scanning to block mode under preToolUse."
+}
+
 main() {
   test_warn_mode_reports_findings_without_failing
   test_block_mode_fails_when_findings_exist
@@ -373,6 +382,7 @@ main() {
   test_allowlist_suppresses_credential_path_finding
   test_diff_mode_ignores_secret_like_diff_headers
   test_hooks_json_registers_session_end_scanner
+  test_hooks_json_registers_pre_tool_scanner
 }
 
 main "$@"

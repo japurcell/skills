@@ -3,6 +3,7 @@
     "fileName": ["AGENTS.md", "GEMINI.md"]
   },
   "experimental": {
+    "autoMemory": false,
     "modelSteering": true
   },
   "general": {
@@ -293,6 +294,16 @@
             "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/tool-guard.py",
             "description": "Blocks dangerous Gemini tool invocations using same policy patterns as Copilot tool-guard."
+          },
+          {
+            "name": "scan-secrets",
+            "type": "command",
+            "command": "$HOME/.gemini/hooks/scripts/scan-secrets.py",
+            "env": {
+              "SCAN_MODE": "block",
+              "SCAN_SCOPE": "diff"
+            },
+            "description": "Scans workspace diffs for secrets before running any tool."
           }
         ]
       },
@@ -371,6 +382,9 @@
             "name": "scan-secrets",
             "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/scan-secrets.py",
+            "env": {
+              "SCAN_MODE": "warn"
+            },
             "description": "Scans modified files for potential secrets and logs env-file access during Gemini session shutdown."
           }
         ]

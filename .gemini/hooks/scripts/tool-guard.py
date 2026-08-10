@@ -298,13 +298,13 @@ def main() -> int:
     try:
         payload = read_json_input()
     except ValueError:
-        emit_allow_response("Tool Guardian skipped: invalid hook input JSON.")
+        emit_deny_response("Tool Guardian skipped: invalid hook input JSON.")
     except Exception as exc:  # noqa: BLE001 - intentional fallback for hook stability
         print(f"Tool Guardian failed to read input: {exc}", file=sys.stderr)
-        emit_allow_response("Tool Guardian skipped: unexpected exception.")
+        emit_deny_response("Tool Guardian skipped: unexpected exception.")
 
     if not isinstance(payload, dict):
-        emit_allow_response("Tool Guardian skipped: invalid hook input JSON.")
+        emit_deny_response("Tool Guardian skipped: invalid hook input JSON.")
 
     tool_name = read_tool_name(payload)
     tool_text = f"{tool_name} {read_tool_input(payload)}"
@@ -334,4 +334,4 @@ if __name__ == "__main__":
         raise
     except Exception as exc:  # noqa: BLE001 - last-resort safety net
         print(f"Tool Guardian failed unexpectedly: {exc}", file=sys.stderr)
-        emit_allow_response("Tool Guardian skipped: unexpected exception.")
+        emit_deny_response("Tool Guardian blocked execution due to an internal error.")

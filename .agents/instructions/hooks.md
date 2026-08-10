@@ -24,6 +24,8 @@ Guidelines for modifying and maintaining repository hook scripts and configs und
 - **VS Code compatibility:** VS Code accepts Claude and Copilot hook formats, maps Copilot lowerCamelCase event names to PascalCase, ignores Claude matcher filters, and only enables custom-agent frontmatter hooks when `chat.useCustomAgentHooks` is on.
 - **Gemini precedence and trust:** Gemini merges hook config in project, user, system, then extension order; project hook trust is fingerprinted from `name` plus `command`, and changed project hooks are warned as new.
 - **Gemini selection and redaction:** Multiple Gemini `BeforeToolSelection` hooks union their allowed tool sets, and environment-variable redaction is off by default unless explicitly enabled and allowlisted.
+- **Separate but Unified:** Keep the `.copilot` and `.gemini` hook scripts completely separated (no cross-directory imports), but structurally unified and synchronized. Use identical helper logic where possible, parameterizing only runtime-specific variables (like default paths or environment lookups) and emitting only the specific JSON decision output expected by each hook platform.
+- **Fail-closed security handlers:** Security-critical hooks (like `tool-guard.py`) MUST fail-closed. Global exception handlers MUST catch unexpected errors and emit an explicit `deny` (or `{ "continue": false }`) response. Do not use fail-open exception handlers that emit `allow` on crash, as this silently bypasses protections.
 
 ## Output Schemas & Exit Behavior
 

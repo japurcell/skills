@@ -127,11 +127,11 @@ test_skip_mode_returns_explicit_allow_json() {
 
 test_gemini_settings_register_tool_guard() {
   assert_equals '$HOME/.gemini/hooks/scripts/send-event.py' \
-    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected .gemini/settings.json to register send-event.py before Gemini BeforeTool events."
+    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected .gemini/global-settings.json to register send-event.py before Gemini BeforeTool events."
   assert_equals '$HOME/.gemini/hooks/scripts/tool-guard.py' \
-    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "*") | .hooks[1].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected .gemini/settings.json to register tool-guard.py after observability for all Gemini BeforeTool events."
+    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "*") | .hooks[1].command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected .gemini/global-settings.json to register tool-guard.py after observability for all Gemini BeforeTool events."
 }
 
 main() {

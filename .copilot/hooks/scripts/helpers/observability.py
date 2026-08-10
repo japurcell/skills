@@ -6,9 +6,11 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
+
+from .common import first_present, stringify_value
 
 
 OBSERVABILITY_RUNTIME = "copilot"
@@ -19,16 +21,18 @@ OBSERVABILITY_DEFAULT_MAX_STRING_CHARS = 1024
 OBSERVABILITY_DEFAULT_MAX_ITEMS = 32
 
 SECRET_FIELD_NAMES = {
-    "access_key",
+    "accesskey",
+    "accesstoken",
     "apikey",
-    "api_key",
     "authorization",
-    "client_secret",
+    "clientsecret",
+    "idtoken",
     "password",
     "passphrase",
-    "private_key",
-    "refresh_token",
+    "privatekey",
+    "refreshtoken",
     "secret",
+    "secretkey",
     "token",
 }
 
@@ -56,6 +60,12 @@ SOURCE_EVENT_NAME_MAP = {
     "SessionEnd": "SessionEnd",
     "SessionStart": "SessionStart",
     "SubagentStart": "SubagentStart",
+    "send-event.py": "send-event",
+    "log-session-start.py": "SessionStart",
+    "skill-context-injector.py": "SessionStart",
+    "log-after-agent.py": "AfterAgent",
+    "log-notification.py": "Notification",
+    "log-session-end.py": "SessionEnd",
 }
 
 CANONICAL_EVENT_NAME_MAP = {
@@ -76,7 +86,7 @@ CANONICAL_EVENT_NAME_MAP = {
     "SubagentStart": "subagent_start",
 }
 
-TERMINAL_EVENT_NAMES = {"session_end", "subagent_stop"}
+TERMINAL_EVENT_NAMES = {"session_end", "subagent_stop", "agent_stop"}
 
 _STATE: dict[str, Any] = {}
 
@@ -85,20 +95,24 @@ def _truthy(value: str | None) -> bool:
     return (value or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _truthy_env(*names: str) -> bool:
+    return any(_truthy(os.environ.get(name)) for name in names)
+
+
 def _disabled() -> bool:
-    return _truthy(os.environ.get("COPILOT_OBSERVABILITY_DISABLE"))
+    return _truthy_env("COPILOT_OBSERVABILITY_DISABLE", "OBSERVABILITY_DISABLE")
 
 
 def _capture_event_enabled() -> bool:
-    return _truthy(os.environ.get("OBSERVABILITY_CAPTURE_EVENT"))
+    return _truthy_env("OBSERVABILITY_CAPTURE_EVENT", "COPILOT_OBSERVABILITY_CAPTURE_EVENT")
 
 
 def _include_transcript() -> bool:
-    return _truthy(os.environ.get("OBSERVABILITY_INCLUDE_TRANSCRIPT"))
+    return _truthy_env("OBSERVABILITY_INCLUDE_TRANSCRIPT", "COPILOT_OBSERVABILITY_INCLUDE_TRANSCRIPT")
 
 
 def _log_path() -> Path:
-    override = os.environ.get("COPILOT_OBSERVABILITY_LOG_PATH")
+    override = os.environ.get("COPILOT_OBSERVABILITY_LOG_PATH") or os.environ.get("OBSERVABILITY_LOG_PATH")
     if override:
         return Path(override)
     return Path.home() / ".copilot" / "hooks" / "logs" / OBSERVABILITY_LOG_NAME
@@ -114,6 +128,10 @@ def _lock_wait_seconds(value: str | None) -> float:
     except ValueError:
         milliseconds = OBSERVABILITY_DEFAULT_LOCK_WAIT_MS
     return milliseconds / 1000.0
+
+
+def _lock_wait_ms() -> str | None:
+    return os.environ.get("COPILOT_OBSERVABILITY_LOCK_WAIT_MS") or os.environ.get("OBSERVABILITY_LOCK_WAIT_MS")
 
 
 def _ensure_parent(path: Path) -> None:
@@ -149,10 +167,15 @@ def _append_record(path: Path, record: dict[str, Any]) -> None:
 
 
 def _sanitize_string(value: str, *, key: str | None = None) -> str:
-    lowered_key = (key or "").replace("-", "_").lower()
-    if lowered_key in SECRET_FIELD_NAMES:
+    lowered_key = (key or "").replace("-", "").replace("_", "").lower()
+    is_secret = (
+        lowered_key in SECRET_FIELD_NAMES or
+        any(secret in lowered_key for secret in SECRET_FIELD_NAMES) or
+        lowered_key.endswith(("password", "token", "secret", "key", "passphrase"))
+    )
+    if is_secret:
         return "[REDACTED]"
-    if lowered_key in {"transcript", "transcript_path"} and not _include_transcript():
+    if lowered_key in {"transcript", "transcriptpath"} and not _include_transcript():
         return "[TRANSCRIPT OMITTED]"
 
     sanitized = value.replace("\r", " ").replace("\n", " ").replace("\t", " ")
@@ -200,38 +223,31 @@ def _sanitize_value(value: Any, *, key: str | None = None, depth: int = 0) -> An
     return value
 
 
-def _first_present(payload: Mapping[str, Any], *keys: str) -> Any:
-    for key in keys:
-        if key in payload and payload[key] is not None:
-            return payload[key]
-    return ""
-
-
-def _get_text(payload: Mapping[str, Any], *keys: str) -> str:
-    return str(_first_present(payload, *keys) or "")
-
-
 def _current_hook_name() -> str:
     return Path(sys.argv[0]).name or "unknown"
 
 
 def _source_event_name(hook_name: str, payload: Mapping[str, Any]) -> str:
-    override = os.environ.get("OBSERVABILITY_SOURCE_EVENT_NAME")
+    override = os.environ.get("OBSERVABILITY_SOURCE_EVENT_NAME") or os.environ.get("COPILOT_OBSERVABILITY_SOURCE_EVENT_NAME")
     if override:
         return override
 
     if hook_name == "send-event.py":
-        candidate = _get_text(payload, "hookEventName", "hook_event_name", "sourceEventName", "source_event_name")
+        candidate = first_present(payload, "hook_event_name", "hookEventName", "source_event_name", "sourceEventName")
         if candidate:
-            return candidate
+            return stringify_value(candidate)
 
     if hook_name == "load-required-skills.py":
-        if _first_present(payload, "agentId", "agent_id", "agentName", "agent_name", "transcriptPath", "transcript_path"):
+        if first_present(payload, "agentId", "agent_id", "agentName", "agent_name", "transcriptPath", "transcript_path"):
             return "subagentStart"
         return "sessionStart"
 
     if hook_name == "bell.py":
         return "sessionEnd"
+
+    candidate = first_present(payload, "hook_event_name", "hookEventName", "source_event_name", "sourceEventName")
+    if candidate:
+        return stringify_value(candidate)
 
     return SOURCE_EVENT_NAME_MAP.get(hook_name, hook_name.removesuffix(".py"))
 
@@ -247,50 +263,50 @@ def _canonical_event_name(source_event_name: str) -> str:
 
 
 def _timestamp(payload: Mapping[str, Any]) -> str:
-    timestamp = _get_text(payload, "timestamp", "time")
+    timestamp = stringify_value(first_present(payload, "timestamp", "time"))
     if timestamp:
         return timestamp
-    return datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _session_id(payload: Mapping[str, Any]) -> str:
-    return _get_text(payload, "sessionId", "session_id")
+    return stringify_value(first_present(payload, "session_id", "sessionId"))
 
 
 def _cwd(payload: Mapping[str, Any]) -> str:
-    return _get_text(payload, "cwd", "workingDirectory", "working_directory")
+    return stringify_value(first_present(payload, "cwd", "workingDirectory", "working_directory"))
 
 
 def _agent_id(payload: Mapping[str, Any]) -> str:
-    return _get_text(payload, "agentId", "agent_id", "agentID")
+    return stringify_value(first_present(payload, "agent_id", "agentId", "agentID"))
 
 
 def _agent_type(payload: Mapping[str, Any]) -> str:
-    return _get_text(payload, "agentType", "agent_type", "agentName", "agent_name")
+    return stringify_value(first_present(payload, "agent_type", "agentType", "agent_name", "agentName"))
 
 
 def _tool_name(payload: Mapping[str, Any]) -> str:
-    return _get_text(payload, "toolName", "tool_name")
+    return stringify_value(first_present(payload, "tool_name", "toolName"))
 
 
 def _tool_use_id(payload: Mapping[str, Any]) -> str:
-    return _get_text(payload, "toolUseId", "tool_use_id")
+    return stringify_value(first_present(payload, "tool_use_id", "toolUseId"))
 
 
 def _notification_type(payload: Mapping[str, Any]) -> str:
-    return _get_text(payload, "notificationType", "notification_type")
+    return stringify_value(first_present(payload, "notification_type", "notificationType"))
 
 
 def _decision(payload: Mapping[str, Any]) -> str:
-    return _get_text(payload, "decision")
+    return stringify_value(first_present(payload, "decision"))
 
 
 def _reason(payload: Mapping[str, Any]) -> str:
-    return _get_text(payload, "reason")
+    return stringify_value(first_present(payload, "reason"))
 
 
 def _stop_hook_active(payload: Mapping[str, Any]) -> str:
-    return _get_text(payload, "stopHookActive", "stop_hook_active")
+    return stringify_value(first_present(payload, "stop_hook_active", "stopHookActive"))
 
 
 def _promoted_fields(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -305,9 +321,15 @@ def _promoted_fields(payload: Mapping[str, Any]) -> dict[str, Any]:
         ("decision", _decision(payload)),
         ("reason", _reason(payload)),
         ("stop_hook_active", _stop_hook_active(payload)),
+        ("cwd", _cwd(payload)),
     ):
         if value:
             promoted[key] = value
+
+    transcript_path = stringify_value(first_present(payload, "transcript_path", "transcriptPath"))
+    if transcript_path:
+        promoted["transcript_path"] = transcript_path
+
     return promoted
 
 
@@ -402,7 +424,7 @@ def _write_record(record: dict[str, Any]) -> bool:
     prepared = _prepare_record(record)
     log_path = _log_path()
     lock_path = _lock_path(log_path)
-    timeout_seconds = _lock_wait_seconds(os.environ.get("COPILOT_OBSERVABILITY_LOCK_WAIT_MS"))
+    timeout_seconds = _lock_wait_seconds(_lock_wait_ms())
 
     try:
         lock_fd = _acquire_lock(lock_path, timeout_seconds)

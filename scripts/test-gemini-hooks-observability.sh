@@ -25,13 +25,13 @@ assert_hook_registered_with_observability_emitter() {
   local source_event_name="$2"
 
   assert_equals '$HOME/.gemini/hooks/scripts/send-event.py' \
-    "$(jq -r ".hooks.${hook_name}[0].hooks[0].command // empty" "$REPO_ROOT/.gemini/settings.json")" \
+    "$(jq -r ".hooks.${hook_name}[0].hooks[0].command // empty" "$REPO_ROOT/.gemini/global-settings.json")" \
     "Expected $hook_name to start with send-event.py."
   assert_equals true \
-    "$(jq -r ".hooks.${hook_name}[0].hooks[0].env.OBSERVABILITY_CAPTURE_EVENT == \"true\"" "$REPO_ROOT/.gemini/settings.json")" \
+    "$(jq -r ".hooks.${hook_name}[0].hooks[0].env.OBSERVABILITY_CAPTURE_EVENT == \"true\"" "$REPO_ROOT/.gemini/global-settings.json")" \
     "Expected $hook_name to capture observability input."
   assert_equals "$source_event_name" \
-    "$(jq -r ".hooks.${hook_name}[0].hooks[0].env.OBSERVABILITY_SOURCE_EVENT_NAME" "$REPO_ROOT/.gemini/settings.json")" \
+    "$(jq -r ".hooks.${hook_name}[0].hooks[0].env.OBSERVABILITY_SOURCE_EVENT_NAME" "$REPO_ROOT/.gemini/global-settings.json")" \
     "Expected $hook_name to preserve its source event name."
 }
 

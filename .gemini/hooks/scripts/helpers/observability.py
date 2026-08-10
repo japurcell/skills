@@ -6,7 +6,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -21,16 +21,18 @@ OBSERVABILITY_DEFAULT_MAX_STRING_CHARS = 1024
 OBSERVABILITY_DEFAULT_MAX_ITEMS = 32
 
 SECRET_FIELD_NAMES = {
-    "access_key",
+    "accesskey",
+    "accesstoken",
     "apikey",
-    "api_key",
     "authorization",
-    "client_secret",
+    "clientsecret",
+    "idtoken",
     "password",
     "passphrase",
-    "private_key",
-    "refresh_token",
+    "privatekey",
+    "refreshtoken",
     "secret",
+    "secretkey",
     "token",
 }
 
@@ -43,6 +45,21 @@ TOKEN_PATTERNS = (
 )
 
 SOURCE_EVENT_NAME_MAP = {
+    "agentStop": "agentStop",
+    "errorOccurred": "errorOccurred",
+    "notification": "notification",
+    "postToolUse": "postToolUse",
+    "postToolUseFailure": "postToolUseFailure",
+    "preToolUse": "preToolUse",
+    "sessionEnd": "sessionEnd",
+    "sessionStart": "sessionStart",
+    "subagentStart": "subagentStart",
+    "subagentStop": "subagentStop",
+    "AfterAgent": "AfterAgent",
+    "BeforeTool": "BeforeTool",
+    "SessionEnd": "SessionEnd",
+    "SessionStart": "SessionStart",
+    "SubagentStart": "SubagentStart",
     "send-event.py": "send-event",
     "log-session-start.py": "SessionStart",
     "skill-context-injector.py": "SessionStart",
@@ -51,7 +68,25 @@ SOURCE_EVENT_NAME_MAP = {
     "log-session-end.py": "SessionEnd",
 }
 
-TERMINAL_EVENT_NAMES = {"session_end", "subagent_stop"}
+CANONICAL_EVENT_NAME_MAP = {
+    "agentStop": "agent_stop",
+    "errorOccurred": "error_occurred",
+    "notification": "notification",
+    "postToolUse": "after_tool",
+    "postToolUseFailure": "after_tool_failure",
+    "preToolUse": "before_tool",
+    "sessionEnd": "session_end",
+    "sessionStart": "session_start",
+    "subagentStart": "subagent_start",
+    "subagentStop": "subagent_stop",
+    "AfterAgent": "agent_stop",
+    "BeforeTool": "before_tool",
+    "SessionEnd": "session_end",
+    "SessionStart": "session_start",
+    "SubagentStart": "subagent_start",
+}
+
+TERMINAL_EVENT_NAMES = {"session_end", "subagent_stop", "agent_stop"}
 
 _STATE: dict[str, Any] = {}
 
@@ -132,10 +167,15 @@ def _append_record(path: Path, record: dict[str, Any]) -> None:
 
 
 def _sanitize_string(value: str, *, key: str | None = None) -> str:
-    lowered_key = (key or "").replace("-", "_").lower()
-    if lowered_key in SECRET_FIELD_NAMES:
+    lowered_key = (key or "").replace("-", "").replace("_", "").lower()
+    is_secret = (
+        lowered_key in SECRET_FIELD_NAMES or
+        any(secret in lowered_key for secret in SECRET_FIELD_NAMES) or
+        lowered_key.endswith(("password", "token", "secret", "key", "passphrase"))
+    )
+    if is_secret:
         return "[REDACTED]"
-    if lowered_key in {"transcript", "transcript_path"} and not _include_transcript():
+    if lowered_key in {"transcript", "transcriptpath"} and not _include_transcript():
         return "[TRANSCRIPT OMITTED]"
 
     sanitized = value.replace("\r", " ").replace("\n", " ").replace("\t", " ")
@@ -192,6 +232,19 @@ def _source_event_name(hook_name: str, payload: Mapping[str, Any]) -> str:
     if override:
         return override
 
+    if hook_name == "send-event.py":
+        candidate = first_present(payload, "hook_event_name", "hookEventName", "source_event_name", "sourceEventName")
+        if candidate:
+            return stringify_value(candidate)
+
+    if hook_name == "load-required-skills.py":
+        if first_present(payload, "agentId", "agent_id", "agentName", "agent_name", "transcriptPath", "transcript_path"):
+            return "subagentStart"
+        return "sessionStart"
+
+    if hook_name == "bell.py":
+        return "sessionEnd"
+
     candidate = first_present(payload, "hook_event_name", "hookEventName", "source_event_name", "sourceEventName")
     if candidate:
         return stringify_value(candidate)
@@ -200,6 +253,9 @@ def _source_event_name(hook_name: str, payload: Mapping[str, Any]) -> str:
 
 
 def _canonical_event_name(source_event_name: str) -> str:
+    if source_event_name in CANONICAL_EVENT_NAME_MAP:
+        return CANONICAL_EVENT_NAME_MAP[source_event_name]
+
     normalized = source_event_name.replace("-", "_")
     normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", normalized)
     normalized = re.sub(r"__+", "_", normalized)
@@ -210,7 +266,7 @@ def _timestamp(payload: Mapping[str, Any]) -> str:
     timestamp = stringify_value(first_present(payload, "timestamp", "time"))
     if timestamp:
         return timestamp
-    return datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _session_id(payload: Mapping[str, Any]) -> str:
@@ -231,6 +287,10 @@ def _agent_type(payload: Mapping[str, Any]) -> str:
 
 def _tool_name(payload: Mapping[str, Any]) -> str:
     return stringify_value(first_present(payload, "tool_name", "toolName"))
+
+
+def _tool_use_id(payload: Mapping[str, Any]) -> str:
+    return stringify_value(first_present(payload, "tool_use_id", "toolUseId"))
 
 
 def _notification_type(payload: Mapping[str, Any]) -> str:
@@ -256,6 +316,7 @@ def _promoted_fields(payload: Mapping[str, Any]) -> dict[str, Any]:
         ("agent_id", _agent_id(payload)),
         ("agent_type", _agent_type(payload)),
         ("tool_name", _tool_name(payload)),
+        ("tool_use_id", _tool_use_id(payload)),
         ("notification_type", _notification_type(payload)),
         ("decision", _decision(payload)),
         ("reason", _reason(payload)),

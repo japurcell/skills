@@ -2,15 +2,21 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import re
+import shutil
+import sys
 from datetime import datetime, timezone
-from contextlib import contextmanager
 from pathlib import Path
 
-from helpers.audit import audit_log_event
-from helpers.common import emit_json, read_json_input, run_command
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from helpers.audit import audit_init  # noqa: E402
+from helpers.common import emit_json, read_json_input  # noqa: E402
 
 
 SCRIPT_NAME = Path(__file__).name
@@ -51,98 +57,137 @@ TEXT_EXTENSIONS = {
     ".yml",
 }
 PATTERNS = [
-    ("github_classic_pat", "high", r"gh[pousr]_[A-Za-z0-9]{36}"),
-    ("github_fine_grained_pat", "high", r"github_pat_[A-Za-z0-9_]{20,}"),
-    ("aws_access_key", "high", r"AKIA[0-9A-Z]{16}"),
-    ("stripe_live_key", "high", r"sk_live_[0-9A-Za-z]{16,}"),
-    ("slack_token", "medium", r"xox[baprs]-[0-9A-Za-z-]{10,}"),
+    ("github_classic_pat", "high", re.compile(r"gh[pousr]_[A-Za-z0-9]{36}")),
+    ("github_fine_grained_pat", "high", re.compile(r"github_pat_[A-Za-z0-9_]{20,}")),
+    ("aws_access_key", "high", re.compile(r"AKIA[0-9A-Z]{16}")),
+    ("stripe_live_key", "high", re.compile(r"sk_live_[0-9A-Za-z]{16,}")),
+    ("slack_token", "medium", re.compile(r"xox[baprs]-[0-9A-Za-z-]{10,}")),
 ]
 
 
-@contextmanager
-def temporary_env(key: str, value: str):
-    previous = os.environ.get(key)
-    os.environ[key] = value
+def noop() -> None:
+    emit_json({})
+    raise SystemExit(0)
+
+
+def warn_and_noop(message: str) -> None:
+    print(message, file=sys.stderr)
+    noop()
+
+
+def read_payload(mode: str) -> dict:
+    payload: dict | None = None
     try:
-        yield
-    finally:
-        if previous is None:
-            os.environ.pop(key, None)
-        else:
-            os.environ[key] = previous
+        payload = read_json_input()
+    except Exception as exc:
+        if mode == "block":
+            print(f"{SCRIPT_NAME}: {exc}", file=sys.stderr)
+            raise SystemExit(1)
+        warn_and_noop(f"{SCRIPT_NAME}: {exc}")
+
+    if not isinstance(payload, dict):
+        if mode == "block":
+            print(f"{SCRIPT_NAME}: invalid JSON input.", file=sys.stderr)
+            raise SystemExit(1)
+        warn_and_noop(f"{SCRIPT_NAME}: invalid JSON input; skipping hook.")
+
+    return payload
 
 
-def repo_root() -> Path:
-    result = run_command(["git", "rev-parse", "--show-toplevel"], cwd=str(Path.cwd()), capture_output=True)
-    if result.returncode == 0:
-        top_level = str(result.stdout or "").strip()
-        if top_level:
-            return Path(top_level)
-    return Path.cwd()
+def git_available() -> bool:
+    return shutil.which("git") is not None
 
 
-def is_inside_git_repo(cwd: Path) -> bool:
-    result = run_command(["git", "rev-parse", "--is-inside-work-tree"], cwd=str(cwd), capture_output=True)
-    return result.returncode == 0
+def run_git(args: list[str], *, cwd: Path, text: bool = True) -> str | bytes | None:
+    import subprocess
 
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=str(cwd),
+            capture_output=True,
+            text=text,
+            check=False,
+        )
+    except OSError:
+        return None
 
-def git_lines(root: Path, args: list[str]) -> list[str]:
-    result = run_command(["git", *args], cwd=str(root), capture_output=True)
-    if result.returncode != 0:
-        return []
-    return [line for line in str(result.stdout or "").splitlines() if line]
-
-
-def git_bytes(root: Path, args: list[str]) -> bytes | None:
-    result = run_command(["git", *args], cwd=str(root), capture_output=True, text=False)
     if result.returncode != 0:
         return None
-    return bytes(result.stdout or b"")
+
+    return result.stdout
 
 
-def git_has_head(root: Path) -> bool:
-    return run_command(["git", "rev-parse", "--verify", "HEAD"], cwd=str(root), capture_output=True).returncode == 0
+def repo_root(work_dir: Path) -> Path:
+    output = run_git(["rev-parse", "--show-toplevel"], cwd=work_dir)
+    if isinstance(output, str):
+        root = output.strip()
+        if root:
+            return Path(root)
+    return work_dir
 
 
-def collect_files(root: Path, scope: str, has_head: bool) -> list[str]:
+def is_inside_git_repo(work_dir: Path) -> bool:
+    output = run_git(["rev-parse", "--is-inside-work-tree"], cwd=work_dir)
+    return isinstance(output, str)
+
+
+def has_head(root: Path) -> bool:
+    return run_git(["rev-parse", "--verify", "HEAD"], cwd=root) is not None
+
+
+def collect_files(root: Path, scope: str, root_has_head: bool) -> list[str]:
     files: list[str] = []
 
     if scope == "staged":
-        files.extend(git_lines(root, ["diff", "--cached", "--name-only", "--diff-filter=ACMRTUXB", "--"]))
-    elif has_head:
-        files.extend(git_lines(root, ["diff", "--name-only", "--diff-filter=ACMRTUXB", "HEAD", "--"]))
+        output = run_git(["diff", "--cached", "--name-only", "--diff-filter=ACMRTUXB", "--"], cwd=root)
+        if isinstance(output, str):
+            files.extend(line for line in output.splitlines() if line)
+    elif root_has_head:
+        output = run_git(["diff", "--name-only", "--diff-filter=ACMRTUXB", "HEAD", "--"], cwd=root)
+        if isinstance(output, str):
+            files.extend(line for line in output.splitlines() if line)
     else:
-        files.extend(git_lines(root, ["diff", "--name-only", "--diff-filter=ACMRTUXB", "--"]))
-        files.extend(git_lines(root, ["diff", "--cached", "--name-only", "--diff-filter=ACMRTUXB", "--"]))
+        output = run_git(["diff", "--name-only", "--diff-filter=ACMRTUXB", "--"], cwd=root)
+        if isinstance(output, str):
+            files.extend(line for line in output.splitlines() if line)
+        output = run_git(["diff", "--cached", "--name-only", "--diff-filter=ACMRTUXB", "--"], cwd=root)
+        if isinstance(output, str):
+            files.extend(line for line in output.splitlines() if line)
 
-    files.extend(git_lines(root, ["ls-files", "--others", "--exclude-standard"]))
+    output = run_git(["ls-files", "--others", "--exclude-standard"], cwd=root)
+    if isinstance(output, str):
+        files.extend(line for line in output.splitlines() if line)
+
     return sorted({path for path in files if path})
 
 
 def untracked_files(root: Path) -> set[str]:
-    return set(git_lines(root, ["ls-files", "--others", "--exclude-standard"]))
+    output = run_git(["ls-files", "--others", "--exclude-standard"], cwd=root)
+    if not isinstance(output, str):
+        return set()
+    return {line for line in output.splitlines() if line}
 
 
 def read_candidate_bytes(root: Path, path: str, scope: str) -> bytes | None:
     if scope == "staged":
-        return git_bytes(root, ["show", f":{path}"])
+        output = run_git(["show", f":{path}"], cwd=root, text=False)
+        return output if isinstance(output, bytes) else None
 
-    file_path = root / path
+    candidate = root / path
     try:
-        return file_path.read_bytes()
+        return candidate.read_bytes()
     except OSError:
         return None
 
 
 def is_env_path(path: str) -> bool:
-    lowered = path.lower()
-    return bool(re.search(r"(^|/)\.env($|[.])", lowered))
+    return bool(re.search(r"(^|/)\.env($|[.])", path.lower()))
 
 
 def is_credential_path(path: str) -> bool:
     lowered = path.lower()
     base_name = lowered.rsplit("/", 1)[-1]
-
     if base_name in {"credentials", ".git-credentials"}:
         return True
     if base_name.startswith("credentials."):
@@ -175,14 +220,13 @@ def enumerate_file_lines(text: str) -> list[tuple[int, str]]:
 
 
 def emit_diff_added_lines(root: Path, path: str) -> list[tuple[int, str]]:
-    result = run_command(
-        ["git", "diff", "--no-ext-diff", "--unified=0", "HEAD", "--", path],
-        cwd=str(root),
-        capture_output=True,
-    )
+    output = run_git(["diff", "--no-ext-diff", "--unified=0", "HEAD", "--", path], cwd=root)
+    if not isinstance(output, str):
+        return []
+
     lines: list[tuple[int, str]] = []
-    current_line = None
-    for raw_line in str(result.stdout or "").splitlines():
+    current_line: int | None = None
+    for raw_line in output.splitlines():
         if raw_line.startswith("+++"):
             continue
         if raw_line.startswith("@@"):
@@ -211,23 +255,50 @@ def allowlist_contains(text: str, entries: list[str]) -> bool:
     return any(entry in text for entry in entries)
 
 
-def audit_append(
+def rotate_scan_log(log_path: Path, max_bytes: int = 1048576, backups: int = 3) -> None:
+    try:
+        if not log_path.exists() or log_path.stat().st_size < max_bytes:
+            return
+    except OSError:
+        return
+
+    for index in range(backups, 0, -1):
+        current = log_path.with_name(f"{log_path.name}.{index}")
+        next_path = log_path.with_name(f"{log_path.name}.{index + 1}")
+        if not current.exists():
+            continue
+        try:
+            if index == backups:
+                os.remove(current)
+            else:
+                current.replace(next_path)
+        except OSError:
+            return
+
+    try:
+        log_path.replace(log_path.with_name(f"{log_path.name}.1"))
+    except OSError:
+        return
+
+
+def append_scan_log(
     *,
-    log_path: str,
+    log_path: Path,
     status: str,
     session_id: str,
     timestamp: str,
     mode: str,
     scope: str,
-    repo_root: Path,
+    repo_root_path: Path,
     env_files: list[str],
     findings: list[dict[str, object]],
     note: str = "",
 ) -> None:
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     payload: dict[str, object] = {
         "timestamp": timestamp,
         "sessionId": session_id,
-        "repoRoot": str(repo_root),
+        "repoRoot": str(repo_root_path),
         "mode": mode,
         "scope": scope,
         "status": status,
@@ -239,171 +310,212 @@ def audit_append(
     if findings:
         payload["findings"] = findings
 
-    with temporary_env("AUDIT_LOG", log_path):
-        audit_log_event(SCRIPT_NAME, json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-
-
-def print_findings(findings: list[dict[str, object]]) -> None:
-    print("Potential secrets detected in modified files:")
-    for finding in findings:
-        print(
-            f" - {finding['path']}:{finding['line']} "
-            f"[{finding['severity']}] {finding['pattern']} {finding['redactedMatch']}"
+    lock_path = log_path.with_name(f"{log_path.name}.lock")
+    lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(lock_fd, fcntl.LOCK_EX)
+        rotate_scan_log(
+            log_path,
+            int(os.environ.get("AUDIT_LOG_MAX_BYTES", "1048576")),
+            int(os.environ.get("AUDIT_LOG_MAX_BACKUPS", "3")),
         )
-    print("Set SECRETS_ALLOWLIST to suppress intentional matches.")
+        with log_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+            handle.write("\n")
+    finally:
+        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        os.close(lock_fd)
+
+
+def build_findings_json(findings: list[tuple[str, str, str, int, str]]) -> list[dict[str, object]]:
+    return [
+        {
+            "pattern": pattern_name,
+            "severity": severity,
+            "path": path,
+            "line": line_number,
+            "redactedMatch": redacted,
+        }
+        for pattern_name, severity, path, line_number, redacted in findings
+    ]
+
+
+def emit_output(findings_count: int, log_path: Path) -> None:
+    if findings_count > 0:
+        emit_json({"systemMessage": f"Potential secrets detected in modified files. See {log_path}."})
+        return
+    emit_json({})
 
 
 def main() -> int:
-    payload = read_json_input()
-    if not isinstance(payload, dict):
-        raise ValueError("Invalid hook input: expected a JSON object")
+    mode = os.environ.get("SCAN_MODE", "block")
+    if mode not in {"warn", "block"}:
+        mode = "block"
 
+    if not git_available():
+        if mode == "block":
+            emit_json({
+                "continue": True,
+                "permissionDecision": "deny",
+                "hookSpecificOutput": {"permissionDecision": "deny", "permissionDecisionReason": f"{SCRIPT_NAME}: required command not found: git"},
+                "permissionDecisionReason": f"{SCRIPT_NAME}: required command not found: git",
+            })
+            return 0
+        warn_and_noop(f"{SCRIPT_NAME}: required command not found: git")
+
+    if not audit_init():
+        if mode == "block":
+            emit_json({
+                "continue": True,
+                "permissionDecision": "deny",
+                "hookSpecificOutput": {"permissionDecision": "deny", "permissionDecisionReason": f"{SCRIPT_NAME}: failed to initialize audit logging."},
+                "permissionDecisionReason": f"{SCRIPT_NAME}: failed to initialize audit logging.",
+            })
+            return 0
+        warn_and_noop(f"{SCRIPT_NAME}: failed to initialize audit logging; skipping hook.")
+
+    payload = read_payload(mode)
     session_id = str(payload.get("sessionId") or payload.get("session_id") or "")
     timestamp = str(payload.get("timestamp") or "")
-    if not timestamp:
-        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    mode = os.environ.get("SCAN_MODE", "warn")
-    if mode not in {"warn", "block"}:
-        mode = "warn"
 
     scope = os.environ.get("SCAN_SCOPE", "diff")
     if scope not in {"diff", "staged"}:
         scope = "diff"
 
-    log_path = os.environ.get("SECRETS_LOG_DIR", str(Path.home() / ".copilot" / "hooks" / "secrets" / "scan.log"))
-    root = repo_root()
+    log_dir_str = os.environ.get("SECRETS_LOG_DIR", str(Path.home() / ".copilot" / "hooks" / "secrets"))
+    log_path = Path(log_dir_str)
+    if log_path.is_dir() or not log_path.suffix:
+        scan_log = log_path / "scan.log"
+    elif log_path.suffix.lower() == ".log":
+        if log_path.parent.exists() and log_path.parent.is_file():
+            scan_log = log_path.parent.parent / "secrets" / log_path.name
+        else:
+            scan_log = log_path
+    else:
+        scan_log = log_path / "scan.log"
+    work_dir = repo_root(Path.cwd())
+
+    if not timestamp:
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     if os.environ.get("SKIP_SECRETS_SCAN") == "true":
-        audit_append(
-            log_path=log_path,
+        append_scan_log(
+            log_path=scan_log,
             status="skipped",
             session_id=session_id,
             timestamp=timestamp,
             mode=mode,
             scope=scope,
-            repo_root=root,
+            repo_root_path=work_dir,
             env_files=[],
             findings=[],
             note="scan disabled by SKIP_SECRETS_SCAN",
         )
-        print("Secrets scan skipped.")
+        emit_output(0, scan_log)
         return 0
 
-    if not is_inside_git_repo(Path.cwd()):
-        audit_append(
-            log_path=log_path,
+    if not is_inside_git_repo(work_dir):
+        append_scan_log(
+            log_path=scan_log,
             status="skipped",
             session_id=session_id,
             timestamp=timestamp,
             mode=mode,
             scope=scope,
-            repo_root=root,
+            repo_root_path=work_dir,
             env_files=[],
             findings=[],
             note="not inside git repository",
         )
-        print("Not in git repository. Skipping secrets scan.")
+        emit_output(0, scan_log)
         return 0
 
-    has_head = git_has_head(root)
-    files = collect_files(root, scope, has_head)
+    root = repo_root(work_dir)
+    root_has_head = has_head(root)
+    files = collect_files(root, scope, root_has_head)
+
     if not files:
-        audit_append(
-            log_path=log_path,
+        append_scan_log(
+            log_path=scan_log,
             status="clean",
             session_id=session_id,
             timestamp=timestamp,
             mode=mode,
             scope=scope,
-            repo_root=root,
+            repo_root_path=root,
             env_files=[],
             findings=[],
             note="no modified files to scan",
         )
-        print("No modified files to scan.")
+        emit_output(0, scan_log)
         return 0
 
-    untracked = untracked_files(root) if scope == "diff" and has_head else set()
     allowlist = parse_allowlist_csv(os.environ.get("SECRETS_ALLOWLIST"))
     env_files: list[str] = []
-    findings: list[dict[str, object]] = []
+    findings: list[tuple[str, str, str, int, str]] = []
+
+    untracked = untracked_files(root) if scope == "diff" and root_has_head else set()
 
     for path in files:
-        candidate_bytes = read_candidate_bytes(root, path, scope)
-        if candidate_bytes is None:
+        raw_bytes = read_candidate_bytes(root, path, scope)
+        if raw_bytes is None:
             continue
 
         if is_env_path(path) and path not in env_files:
             env_files.append(path)
 
-        if not is_text_candidate(path, candidate_bytes):
+        if not is_text_candidate(path, raw_bytes):
             continue
 
-        candidate_text = candidate_bytes.decode("utf-8", errors="replace")
+        if scope == "staged" or not root_has_head or path in untracked:
+            candidate_lines = enumerate_file_lines(raw_bytes.decode("utf-8", errors="replace"))
+        else:
+            candidate_lines = emit_diff_added_lines(root, path)
 
         if is_credential_path(path):
             allowlist_text = f"{path}:1:credential_path:[SENSITIVE PATH]"
             if not allowlist_contains(allowlist_text, allowlist):
-                findings.append(
-                    {
-                        "pattern": "credential_path",
-                        "severity": "critical",
-                        "path": path,
-                        "line": 1,
-                        "redactedMatch": "[SENSITIVE PATH]",
-                    }
-                )
-
-        if scope == "staged" or not has_head or path in untracked:
-            candidate_lines = enumerate_file_lines(candidate_text)
-        else:
-            candidate_lines = emit_diff_added_lines(root, path)
+                findings.append(("credential_path", "critical", path, 1, "[SENSITIVE PATH]"))
 
         for line_number, line_text in candidate_lines:
             for pattern_name, severity, regex in PATTERNS:
-                for match in re.finditer(regex, line_text):
+                for match in regex.finditer(line_text):
                     match_value = match.group(0)
                     allowlist_text = f"{path}:{line_number}:{pattern_name}:{match_value}"
                     if allowlist_contains(allowlist_text, allowlist):
                         continue
                     findings.append(
-                        {
-                            "pattern": pattern_name,
-                            "severity": severity,
-                            "path": path,
-                            "line": line_number,
-                            "redactedMatch": redact_match(match_value),
-                        }
+                        (pattern_name, severity, path, line_number, redact_match(match_value))
                     )
 
     if not findings:
-        audit_append(
-            log_path=log_path,
+        append_scan_log(
+            log_path=scan_log,
             status="clean",
             session_id=session_id,
             timestamp=timestamp,
             mode=mode,
             scope=scope,
-            repo_root=root,
+            repo_root_path=root,
             env_files=env_files,
             findings=[],
         )
-        print("Secrets scan clean.")
+        emit_output(0, scan_log)
         return 0
 
-    audit_append(
-        log_path=log_path,
+    findings_json = build_findings_json(findings)
+    append_scan_log(
+        log_path=scan_log,
         status="findings",
         session_id=session_id,
         timestamp=timestamp,
         mode=mode,
         scope=scope,
-        repo_root=root,
+        repo_root_path=root,
         env_files=env_files,
-        findings=findings,
+        findings=findings_json,
     )
-    print_findings(findings)
+    emit_output(len(findings), scan_log)
     return 1 if mode == "block" else 0
 
 

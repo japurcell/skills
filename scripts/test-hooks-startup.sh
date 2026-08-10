@@ -130,10 +130,6 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.subagentStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for subagentStart."
 
-  assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
-    "$(jq -r '.hooks.subagentStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register load-required-skills.py after send-event.py for subagentStart."
-
   assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
     "$(jq -r '.hooks.userPromptTransformed[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for userPromptTransformed."

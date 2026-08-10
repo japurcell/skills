@@ -79,6 +79,15 @@
           "GUARD_MODE": "block"
         },
         "timeoutSec": 10
+      },
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/scan-secrets.py",
+        "env": {
+          "SCAN_MODE": "block",
+          "SCAN_SCOPE": "diff"
+        },
+        "timeoutSec": 30
       }
     ],
     "preCompact": [
