@@ -113,13 +113,6 @@
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "subagentStart"
         }
-      },
-      {
-        "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.py",
-        "env": {
-          "AGENTS_REQUIRED_SKILL_FILES": "context-engineering/SKILL.md"
-        }
       }
     ],
     "subagentStop": [
@@ -176,7 +169,7 @@
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.py",
         "env": {
-          "AGENTS_REQUIRED_SKILL_FILES": "caveman/SKILL.md,context-engineering/SKILL.md"
+          "AGENTS_REQUIRED_SKILL_FILES": "caveman/SKILL.md"
         }
       }
     ],
