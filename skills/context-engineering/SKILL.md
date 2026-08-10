@@ -1,6 +1,7 @@
 ---
 name: context-engineering
 description: Build the smallest reliable context before acting. Use at session start, repo/task/file switches, before edits, or when output drifts, hallucinates, ignores repo rules, or uses irrelevant context.
+disable-model-invocation: true
 ---
 
 # Context Engineering
@@ -18,7 +19,6 @@ Goal: load only context that can change the answer. Follow higher-priority syste
    - Windsurf: check `.windsurfrules`
    - If the current agent is unknown, check shared, Copilot, and Gemini rules.
    - Do not follow another agent's rule/config file unless the user's task is to inspect or edit that file.
-   - Expand globs to exact paths. List missing or unreadable paths once. Do not keep retrying unavailable paths.
 
 2. Build a small context packet.
    Include only:

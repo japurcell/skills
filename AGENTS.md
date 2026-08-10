@@ -2,23 +2,6 @@
 
 This repository publishes custom coding skills from `skills/`, custom agent definitions from `agents/`, repo-local Copilot hooks from `.github/hooks/`, Copilot-specific instructions from `.copilot/`, and Gemini-specific hooks and configs from `.gemini/`.
 
-## Getting Started
-
-- **Start with `.agents/memory/INDEX.md`** and load only matching area docs from `.agents/instructions/` and `.agents/memory/`.
-- **Use `.agents/memory/ARCHITECTURE.md` and `.agents/memory/FILE_MAP.md`** for repo structure, install flow, and path routing.
-- **Use `.agents/instructions/repo.md`** for repo workflow, fixture boundaries, and top-level doc-sync rules.
-- **Use `.agents/memory/TESTING_STRATEGY.md`** plus matching `testing/<area>.md` file for narrow validation routes.
-
-## Quick Validation
-
-- Installer and helper-script changes: `.agents/memory/testing/scripts.md`
-- Skill changes: `.agents/instructions/skills.md` and `.agents/memory/testing/skills.md`
-- Hook changes: `.agents/instructions/hooks.md` and `.agents/memory/testing/hooks.md`
-
-## Refactor boundaries
-
-- Large-skill refactors follow `.agents/instructions/skills.md`; preserve any explicit exclusions or approval requirements documented there.
-
 ## ExecPlans
 
 When writing complex features or significant refactors, use an ExecPlan from design to implementation by activating the `exec-plans` skill.

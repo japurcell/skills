@@ -10,7 +10,6 @@ coverage: Repo-wide workflow for top-level docs, install refresh, and documentat
 - After changing repo source that is installed into home-directory targets, run `./scripts/install.sh` before checking live Copilot or Gemini behavior.
 - Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews.
 - Ignore `skills/**/evals/files/**/AGENTS.md` and `skills/*-workspace/**/sandbox/AGENTS.md` unless task explicitly targets them.
-- TDD applies to app code and shell scripts.
 - Keep `README.md` in sync when install, validation, or hook behavior changes.
 - When using simplification or refactor help, state intentional path boundaries explicitly, such as `.gemini/` versus `.copilot/`.
 - **Protected Sections:** Never modify the `## Agent Orientation` or `## Validation Checklist` sections in `AGENTS.md` (or any equivalent top-level docs) unless explicitly requested. These sections must remain intact as stable agent entry points.

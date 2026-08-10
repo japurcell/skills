@@ -20,6 +20,7 @@ Use when deciding whether a lesson is worth preserving.
 - Known flaky-test causes and stable fixes.
 - Ways to avoid wasted tool calls, false failures, or timeouts.
 - Coordination or stale-context signals that reveal a reusable workflow rule.
+- Any mistakes you made.
 
 ## Skip
 
@@ -31,6 +32,7 @@ Use when deciding whether a lesson is worth preserving.
 - Generic reminders such as “be careful.”
 - Speculation.
 - Broad summaries that lose the useful source detail.
+- Knowledge discoverable by reading existing repo code.
 
 ## Mining Artifacts
 
@@ -55,7 +57,6 @@ Good:
 
 Poor:
 
-- The user asked about tests.
 - The agent opened `package.json`.
 - The repo has a README.
 - This test failed once.

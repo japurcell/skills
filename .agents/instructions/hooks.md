@@ -13,8 +13,6 @@ Guidelines for modifying and maintaining repository hook scripts and configs und
 - **Gemini CLI hooks reference:** `https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md`
 - **Gemini CLI exit-code best practices:** `https://geminicli.com/docs/hooks/best-practices/#check-exit-codes`
 
-Read official docs before non-trivial hook changes and keep implementation choices aligned with them.
-
 ## Shared Runtime Rules
 
 - **stdout discipline:** Hook scripts must keep `stdout` JSON-only. Send logs, audit lines, and debug text to `stderr` or the audit log.

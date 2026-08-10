@@ -1,6 +1,7 @@
 ---
 name: adversarial-review
 description: Critically review code/plans via adversarial expert subagent to find bugs, edge cases, security holes, and architectural flaws before merge.
+disable-model-invocation: true
 ---
 
 # /adversarial-review
