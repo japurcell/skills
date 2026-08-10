@@ -11,7 +11,7 @@ This is the loading map for the agent knowledge base under `.agents/memory/`. **
 | File                       | Purpose                                                                 | When to load                                  |
 | -------------------------- | ----------------------------------------------------------------------- | --------------------------------------------- |
 | **[INDEX.md](INDEX.md)** (this file) | Discovery map for the knowledge base                                    | Always — read first                           |
-| **[ARCHITECTURE.md](ARCHITECTURE.md)**      | Top-level repo structure, install flows, and documentation boundaries   | Always for non-trivial tasks                  |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)**      | Top-level repo structure, install flows, and documentation boundaries   | Load when task needs repo structure, install flows, or docs boundaries |
 | **[CONVENTIONS.md](CONVENTIONS.md)**       | Repo-wide code style, naming, immutability, resource & public-API rules | When writing or reviewing code                |
 | **[FILE_MAP.md](FILE_MAP.md)**          | Top-level map (one line per area) + layer pointers                      | When deciding which area/layer to work in     |
 | **[LOG.md](LOG.md)**               | Append-only source-ingestion activity log                               | When reviewing ingested source history        |

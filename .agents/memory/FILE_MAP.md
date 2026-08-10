@@ -21,7 +21,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.gemini/` | hooks | Gemini CLI instructions, settings, installed hook source under `.gemini/hooks/`, Python operational entrypoints under `.gemini/hooks/scripts/` (startup, structured observability emitter, passive logging, auto-ingest startup scan, tool guard, RTK rewrite, secrets scanner, and session-end logger), and shared hook helpers under `.gemini/hooks/scripts/helpers/`. Legacy shell-format helper scripts and format-focused test drivers were removed. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, and evals. |
 | `agents/` | agents | Standalone custom agent prompt files. |
-| `docs/` | repo docs | Human-facing architecture and decision records that complement `.agents/` canonical guidance. |
+| `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `scripts/` | scripts | Installers, importers, validation helpers, and shared shell utilities. |
 | `references/` | references | Optional shared reference material shipped with installs. |
 
@@ -43,6 +43,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.agents/memory/sources/source-ingest-manifest.json` | Shared source-summary state file for Copilot and Gemini auto-ingest hooks plus pending-ingest gating. |
 | `.copilot/hooks/rtk-rewrite.json` | RTK rewrite config used by hook-driven tool rewrite flows; points at `.copilot/hooks/scripts/rtk-hook-copilot.py`. |
 | `docs/adr/0001-auto-ingest-runtime-shape.md` | Records why source auto-ingest uses runtime-local hook code with one committed repo manifest. |
+| `docs/adr/0002-pending-ingest-gate.md` | Records why the pending-ingest gate blocks normal work until summaries resolve. |
 | `.nvmrc` | Node version hint for local tooling. |
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |
