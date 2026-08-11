@@ -1,13 +1,9 @@
 ---
 name: official-sources
-description: Use when code or guidance depends on a named framework, library, SDK, platform, or versioned API. Detect versions, verify non-trivial API choices with official sources, and cite them.
+description: Use when code or guidance depends on a named framework, library, SDK, platform, or versioned API. Use when the user wants official documentation or authoritative sources. Use when the user mentions 'official docs', 'official sources', 'official documentation', or similar.
 ---
 
 # Official Sources
-
-## Use when
-
-Answering or editing code/guidance involving a named framework, library, SDK, platform, or versioned API.
 
 ## Procedure
 
