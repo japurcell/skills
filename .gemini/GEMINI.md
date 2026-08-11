@@ -16,7 +16,7 @@
 - Never install or add new dependencies without approval.
 - Never modify database schemas without approval.
 - Never commit secrets.
-- Never remove failing tests.
+- Never delete, disable, skip, or weaken failing tests just to make the suite pass.
 
 ### Questions are read-only
 
@@ -26,7 +26,7 @@
 
 ### General
 
-- Take advantage of typesafety when a language supports it.
+- Take advantage of type safety when a language supports it.
 - Never write regression tests for feature deletions.
 - Use comments sparingly and only when necessary to explain complex logic.
 - Keep comments up to date with code changes.
@@ -34,14 +34,18 @@
 ### TypeScript
 
 - `any` is the enemy; inferred types are our friend.
-- Write TypeScript that Matt Pocock would be proud of.
-- I love Vite.
+- Write idiomatic, type-safe TypeScript that Matt Pocock would be proud of.
+- I love Vite; prefer it for applicable frontend projects.
 
 ## RTK (Rust Token Killer) - Token-Optimized Commands
 
-When running shell commands, **always prefix with `rtk`**. This reduces context
-usage by 60-90% with zero behavior change. If rtk has no filter for a command,
-it passes through unchanged — so it is always safe to use.
+### Default rule
+
+- Prefix shell commands with `rtk` by default.
+- This is mandatory unless one of the exceptions below applies.
+- `rtk` reduces context usage by keeping command output focused.
+- If `rtk` has no filter for a command, it usually passes the command through unchanged.
+- If `rtk` is unavailable, report the issue instead of silently falling back to raw commands.
 
 ### Installation Verification
 
@@ -80,7 +84,7 @@ rtk gh pr view <n>      rtk gh run list         rtk gh issue list
 rtk docker ps           rtk kubectl get         rtk docker logs <c>
 
 # Package managers (70-90% savings)
-rtk pip list            rtk pnpm install        rtk npm run <script>
+rtk pip list            rtk npm run <script>
 ```
 
 ### Meta commands (use directly)
@@ -92,11 +96,24 @@ rtk discover          # Find missed rtk opportunities
 rtk proxy <cmd>       # Run raw (no filtering) but track usage
 ```
 
-### Rules
+### Command chains
 
-- In command chains, prefix each segment: `rtk git add . && rtk git commit -m "msg"`
-- For debugging, use raw command without rtk prefix
-- `rtk proxy <cmd>` runs command without filtering but tracks usage
+- Prefix each segment that can be prefixed: `rtk dotnet build <args> && rtk dotnet test --no-build <args>`.
+
+### Exceptions
+
+Do not use `rtk` when it would prevent the command from doing its intended work:
+
+- Commands that must directly mutate the codebase where `rtk` would run in check-only, dry-run, filtered, or non-mutating mode.
+- Debugging `rtk` itself.
+- Cases where `rtk` breaks or changes the required behavior.
+
+Examples of commands that may need to run without `rtk`:
+
+```bash
+dotnet format
+oxfmt
+```
 
 ## Gotchas
 
