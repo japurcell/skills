@@ -149,7 +149,7 @@ Before responding, confirm:
 
 - `progress_file` was appended for any attempted selected task
 - every command/tool failure or timeout was recorded in `progress_file`
-- every workaround was recorded in `Learnings`
+- every mistake and/or workaround was recorded in `Learnings`
 - verification passed or the task was blocked
 - commit gate is satisfied
 - enabled commits exclude `prd_file` and `progress_file`

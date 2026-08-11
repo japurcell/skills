@@ -18,11 +18,9 @@ Do **not** use for multi-commit work, history rewriting, merge/rebase/cherry-pic
 
 ## Workflow
 
-1. Activate or load the `subagent-model-router` skill and delegate tasks to the most suitable subagents whenever possible.
+1. Read the conversation for intent, scope, rationale, tests, issues, branch, push, and PR requests.
 
-2. Read the conversation for intent, scope, rationale, tests, issues, branch, push, and PR requests.
-
-3. Inspect git state before changing anything:
+2. Inspect git state before changing anything:
 
    ```bash
    git status --short --branch
@@ -37,7 +35,7 @@ Do **not** use for multi-commit work, history rewriting, merge/rebase/cherry-pic
    git config user.email
    ```
 
-4. Stop and report the blocker if:
+3. Stop and report the blocker if:
    - Not in a git repo
    - Git author name or email is unset
    - No tracked, staged, or untracked non-ignored changes exist
@@ -47,12 +45,12 @@ Do **not** use for multi-commit work, history rewriting, merge/rebase/cherry-pic
    - Chosen scope is empty
    - A required command fails unexpectedly
 
-5. Choose branch:
+4. Choose branch:
    - If `feature_branch` is provided, reuse a local branch, track a remote branch, or create it.
    - Otherwise keep the current branch unless the branch name is blank, `main`, `master`, or `base_branch`.
    - If a new branch is needed, use `references/branch-names.md`.
 
-6. Choose commit scope:
+5. Choose commit scope:
    - If anything is staged, commit **only staged changes**.
    - Else auto-stage only when there is:
      1. one changed file, or
@@ -61,9 +59,9 @@ Do **not** use for multi-commit work, history rewriting, merge/rebase/cherry-pic
    - Never include ignored files, generated artifacts, local state, traces, videos, screenshots, storage-state files, or scratch outputs unless explicitly requested.
    - If such files are already staged, stop and ask.
 
-7. Build the commit message using `references/message.md`.
+6. Build the commit message using `references/message.md`.
 
-8. Commit once using a file:
+7. Commit once using a file:
 
    ```bash
    git commit -F <message-file>
@@ -71,12 +69,12 @@ Do **not** use for multi-commit work, history rewriting, merge/rebase/cherry-pic
 
    Do not use multiple commits. Do not use escaped newlines with `-m`.
 
-9. Push, create PR, or dry run:
+8. Push, create PR, or dry run:
    - Push only if the user explicitly asked, or PR creation requires it.
    - For PRs, follow `references/pr.md`.
    - For dry runs, follow `references/dry-run.md`.
 
-10. Final response must include:
+9. Final response must include:
    - Branch name
    - Commit SHA
    - Commit subject

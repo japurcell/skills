@@ -12,8 +12,7 @@ Write clear, safe, idiomatic C# that matches the project’s target framework an
 1. Check `.csproj`, `.editorconfig`, analyzers, nullable settings, and existing style.
 2. Follow project conventions unless they are unsafe or clearly wrong.
 3. Do not introduce preview/new language features unless the project already supports them.
-4. Prefer simple code over clever code.
-5. Read only the extra references relevant to the task.
+4. Read only the extra references relevant to the task.
 
 ## Extra References
 

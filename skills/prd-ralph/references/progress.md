@@ -26,7 +26,7 @@ Use the real date/time and task ID.
 - Assumptions:
   - ...
 - Learnings:
-  - [workaround used, reusable repo note, or "none"]
+  - [mistakes, workaround used, reusable repo note, or "none"]
 ---
 ```
 
@@ -36,7 +36,7 @@ Use the real date/time and task ID.
 - Include exact verification commands.
 - Include pass/fail output or concise proof.
 - Include every command/tool failure or timeout, even if retried or worked around.
-- If a workaround was used, include it in `Learnings`.
+- If you made a mistake and/or discovered a workaround, include it in `Learnings`.
 - If browser verification was required, include Playwright evidence or blocker.
 - Never treat an unexecuted browser check as passing.
 - Confirm the appended block is well formed.

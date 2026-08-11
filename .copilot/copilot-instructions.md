@@ -1,25 +1,5 @@
 # Copilot Instructions
 
-INSTRUCTIONS: Push back if assumptions are wrong. Identify missing context before proceeding. Question your own reasoning at each step.
-
-## Universal Guidelines
-
-### 1. Keep it simple
-
-- Follow YAGNI principles and one-liner solutions.
-
-### 2. Verify
-
-- No secrets in code or version control.
-- Ensure quality across five axes: correctness, readability, architecture, security, performance.
-- Every PR must pass: lint, type check, tests, build.
-
-### 3. Boundaries
-
-- Always: validate user input
-- Ask first: Database schema changes, new dependencies
-- Never: Commit secrets, remove failing tests, skip verification
-
 ## RTK (Rust Token Killer) - Token-Optimized Commands
 
 When running shell commands, **always prefix with `rtk`**. This reduces context
