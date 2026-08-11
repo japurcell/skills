@@ -56,6 +56,13 @@ Guidelines for modifying and maintaining repository hook scripts and configs und
 - The real `/ingest-source` entry point lives in `.agents/skills/ingest-source/SKILL.md`. It processes every blocking manifest entry in one run and is the only canonical recovery path.
 - Source auto-ingest hooks must log robust audit information: failures/exceptions, successful context injections with granular details on individual findings (path, state, and reason), and non-injections (distinguishing between all summaries being up to date vs no sources found) to the runtime-local audit log.
 - For passive shadow logging, create shadow-log parent directory before first write and keep primary plus shadow writes inside same lock section so event ordering survives.
+- Log file rotation is built into the observability write path. It supports configuration via platform-specific (`GEMINI_OBSERVABILITY_LOG_MAX_BYTES`/`COPILOT_OBSERVABILITY_LOG_MAX_BYTES`, `GEMINI_OBSERVABILITY_LOG_BACKUP_COUNT`/`COPILOT_OBSERVABILITY_LOG_BACKUP_COUNT`) and general (`OBSERVABILITY_LOG_MAX_BYTES`, `OBSERVABILITY_LOG_BACKUP_COUNT`) environment variables, falling back to 10MB/100 backups by default.
+  - **Fail-open resilience:** File rotation must strictly fail-open if `os.rename` or `os.remove` raises an exception, ensuring log limits or read-locks never block hook execution. **Never overwrite or clear active logs as a fallback**; doing so permanently destroys observability history on transient I/O or permission errors.
+  - **Unconditional pruning:** Pruning of stale backups must execute unconditionally and independently of the active log's size threshold to ensure lowered backup limits are enforced even when the active log is quiet.
+  - **Precedence testing:** Hook test suites must explicitly cover configuration precedence (runtime-specific vars overriding generic fallbacks) to prevent silent configuration regressions.
+  - **O(1) directory scanning:** Prefer pre-scanning directories for existing backups with `iterdir()` rather than sequentially iterating `.exists()` over hundreds of potential indices.
+  - **No strict clamps:** Rotation configuration bounds should rely on user values; do not artificially clamp maximums, but guard against `0`-byte size configurations that would trigger infinite rotation loops.
+  - **OS-agnostic locking:** Avoid importing `fcntl` at the top level or relying on POSIX-exclusive lock APIs unless cleanly guarded or stubbed out on Windows.
 - When editing security-hook threat patterns or Tool Guard tests, avoid pasting raw dangerous strings directly into tool payloads; construct exact strings dynamically so active guards do not block self-edits.
 
 ## Validation route

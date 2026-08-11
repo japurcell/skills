@@ -188,10 +188,313 @@ PY
     "Expected the observability kill-switch to suppress structured records."
 }
 
+
+test_observability_log_rotation() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  
+  if [[ "$0" == *"gemini"* ]]; then
+    obs_log="$home/.gemini/hooks/logs/observability.ndjson"
+    prefix="GEMINI"
+    event_name="SessionEnd"
+    runner_path="$home/.gemini/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "rot-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", reason: "test-rotate", payload_stuff: ("a" * 150) }')"
+  else
+    obs_log="$home/.copilot/hooks/logs/observability.ndjson"
+    prefix="COPILOT"
+    event_name="sessionEnd"
+    runner_path="$home/.copilot/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "rot-session", timestamp: "2026-06-23T23:50:00Z", reason: "test-rotate", payload_stuff: ("a" * 150) }')"
+  fi
+
+  for i in {1..5}; do
+    output="$(
+      env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+        OBSERVABILITY_LOG_MAX_BYTES=300 \
+        OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+        python3 "$runner_path" <<<"$payload"
+    )"
+    assert_equals '{}' "$(jq -c . <<<"$output")" \
+      "Expected send-event to stay output-neutral."
+  done
+
+  # Assertions
+  if [[ ! -f "$obs_log" ]]; then
+    echo "Expected active log file to exist: $obs_log" >&2
+    exit 1
+  fi
+  jq '.' "$obs_log" >/dev/null || { echo "Active log contains invalid JSON" >&2; exit 1; }
+
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to exist" >&2
+    exit 1
+  fi
+  jq '.' "$obs_log.1" >/dev/null || { echo "Log backup .1 contains invalid JSON" >&2; exit 1; }
+
+  if [[ ! -f "$obs_log.2" ]]; then
+    echo "Expected log backup .2 to exist" >&2
+    exit 1
+  fi
+  jq '.' "$obs_log.2" >/dev/null || { echo "Log backup .2 contains invalid JSON" >&2; exit 1; }
+
+  if [[ -f "$obs_log.3" ]]; then
+    echo "Expected log backup .3 to NOT exist" >&2
+    exit 1
+  fi
+}
+
+test_observability_log_rotation_pruning_and_precedence() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  
+  if [[ "$0" == *"gemini"* ]]; then
+    obs_log="$home/.gemini/hooks/logs/observability.ndjson"
+    prefix="GEMINI"
+    event_name="SessionEnd"
+    runner_path="$home/.gemini/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "prune-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", payload_stuff: ("a" * 600) }')"
+  else
+    obs_log="$home/.copilot/hooks/logs/observability.ndjson"
+    prefix="COPILOT"
+    event_name="sessionEnd"
+    runner_path="$home/.copilot/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "prune-session", timestamp: "2026-06-23T23:50:00Z", payload_stuff: ("a" * 600) }')"
+  fi
+
+  # First run: force 3 backups using precedence variable
+  for i in {1..5}; do
+    output="$(
+      env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+        OBSERVABILITY_LOG_MAX_BYTES=999999999 \
+        OBSERVABILITY_LOG_BACKUP_COUNT=999 \
+        ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=300 \
+        ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=3 \
+        python3 "$runner_path" <<<"$payload"
+    )"
+  done
+
+  if [[ ! -f "$obs_log.3" ]]; then
+    echo "Expected log backup .3 to exist, precedence failed" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.4" ]]; then
+    echo "Expected log backup .4 to NOT exist, precedence failed" >&2
+    exit 1
+  fi
+
+  # Second run: lower backup count to 1, causing pruning of .2 and .3
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=300 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=1 \
+      python3 "$runner_path" <<<"$payload"
+  )"
+  
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to exist after pruning" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.2" ]]; then
+    echo "Expected log backup .2 to NOT exist after pruning" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.3" ]]; then
+    echo "Expected log backup .3 to NOT exist after pruning" >&2
+    exit 1
+  fi
+
+  # Third run: lower backup count to 0, which should delete active log (which gets recreated immediately) and .1
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=300 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=0 \
+      python3 "$runner_path" <<<"$payload"
+  )"
+
+  if [[ ! -f "$obs_log" ]]; then
+    echo "Expected active log to be recreated on next write after 0 backup count pruning" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to be pruned on 0 backup count" >&2
+    exit 1
+  fi
+}
+test_observability_log_rotation_unconditional_prune() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  
+  if [[ "$0" == *"gemini"* ]]; then
+    obs_log="$home/.gemini/hooks/logs/observability.ndjson"
+    prefix="GEMINI"
+    event_name="SessionEnd"
+    runner_path="$home/.gemini/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "prune-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", payload_stuff: ("a" * 150) }')"
+  else
+    obs_log="$home/.copilot/hooks/logs/observability.ndjson"
+    prefix="COPILOT"
+    event_name="sessionEnd"
+    runner_path="$home/.copilot/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "prune-session", timestamp: "2026-06-23T23:50:00Z", payload_stuff: ("a" * 150) }')"
+  fi
+
+  # Create fake backups manually to simulate a historically busy log
+  mkdir -p "$(dirname "$obs_log")"
+  echo "{}" > "$obs_log.1"
+  echo "{}" > "$obs_log.2"
+  echo "{}" > "$obs_log.3"
+
+  # Run the hook with a HUGE max_bytes so active log does not trigger rotation,
+  # but with a backup limit of 1.
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=999999999 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=1 \
+      python3 "$runner_path" <<<"$payload"
+  )"
+
+  # Assert that .2 and .3 were pruned unconditionally, while .1 survived
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to survive unconditional prune" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.2" ]]; then
+    echo "Expected log backup .2 to NOT exist after unconditional prune" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.3" ]]; then
+    echo "Expected log backup .3 to NOT exist after unconditional prune" >&2
+    exit 1
+  fi
+}
+test_observability_log_rotation_sub_512() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  
+  if [[ "$0" == *"gemini"* ]]; then
+    obs_log="$home/.gemini/hooks/logs/observability.ndjson"
+    prefix="GEMINI"
+    event_name="SessionEnd"
+    runner_path="$home/.gemini/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "sub-512-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", reason: "test-rotate", payload_stuff: ("a" * 50) }')"
+  else
+    obs_log="$home/.copilot/hooks/logs/observability.ndjson"
+    prefix="COPILOT"
+    event_name="sessionEnd"
+    runner_path="$home/.copilot/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "sub-512-session", timestamp: "2026-06-23T23:50:00Z", reason: "test-rotate", payload_stuff: ("a" * 50) }')"
+  fi
+
+  # First payload creates active log. Size will be ~150 bytes.
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=10 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+      python3 "$runner_path" <<<"$payload"
+  )"
+
+  # Since max_bytes is 10, the next write will see st_size > 10 and rotate the first payload into .1
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=10 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+      python3 "$runner_path" <<<"$payload"
+  )"
+
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to exist, sub-512 max_bytes was silently clamped/ignored!" >&2
+    exit 1
+  fi
+}
+
+test_observability_log_rotation_generic_fallback() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  
+  if [[ "$0" == *"gemini"* ]]; then
+    obs_log="$home/.gemini/hooks/logs/observability.ndjson"
+    event_name="SessionEnd"
+    runner_path="$home/.gemini/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "generic-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", reason: "test-rotate", payload_stuff: ("a" * 50) }')"
+  else
+    obs_log="$home/.copilot/hooks/logs/observability.ndjson"
+    event_name="sessionEnd"
+    runner_path="$home/.copilot/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "generic-session", timestamp: "2026-06-23T23:50:00Z", reason: "test-rotate", payload_stuff: ("a" * 50) }')"
+  fi
+
+  # Write twice using ONLY generic observability variables to trigger rotation.
+  # First payload creates active log. Size will be ~150 bytes.
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      OBSERVABILITY_LOG_MAX_BYTES=10 \
+      OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+      python3 "$runner_path" <<<"$payload"
+  )"
+
+  # Second write rotates .ndjson to .ndjson.1
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      OBSERVABILITY_LOG_MAX_BYTES=10 \
+      OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+      python3 "$runner_path" <<<"$payload"
+  )"
+
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to exist, generic OBSERVABILITY_LOG_MAX_BYTES fallback was ignored!" >&2
+    exit 1
+  fi
+}
+
 main() {
   test_settings_json_registers_observability_emitters
   test_structured_observability_records_session_rollup_and_mutation
   test_observability_lock_wait_and_disable_are_fail_open
+  test_observability_log_rotation
+  test_observability_log_rotation_pruning_and_precedence
+  test_observability_log_rotation_unconditional_prune
+  test_observability_log_rotation_sub_512
+  test_observability_log_rotation_generic_fallback
 }
 
 main "$@"

@@ -10,6 +10,12 @@ Use for service registration, constructor design, object lifetime, and test seam
 - Do not make required dependencies optional with `= null`.
 - Keep object graph assembly in the composition root.
 
+### Dependency Inversion Principle (DIP)
+
+- High-level modules should not depend on low-level modules; both should depend on abstractions.
+- Abstractions should not depend on details; details should depend on abstractions.
+- **Project Boundaries:** Define options models and abstractions in the lower-level project that consumes them, not in the high-level composition root. The high-level module references the lower-level module to bind configurations, avoiding circular dependencies.
+
 ## Composition Root
 
 Concrete production construction is allowed in:

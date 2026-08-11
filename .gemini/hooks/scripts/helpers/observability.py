@@ -166,6 +166,108 @@ def _append_record(path: Path, record: dict[str, Any]) -> None:
         os.fsync(handle.fileno())
 
 
+def _max_bytes() -> int:
+    default = 10 * 1024 * 1024  # 10MB
+    val = (
+        os.environ.get("GEMINI_OBSERVABILITY_LOG_MAX_BYTES")
+        if OBSERVABILITY_RUNTIME == "gemini"
+        else os.environ.get("COPILOT_OBSERVABILITY_LOG_MAX_BYTES")
+    ) or os.environ.get("OBSERVABILITY_LOG_MAX_BYTES")
+    if val:
+        try:
+            # Allow exact threshold configuration but clamp at 0
+            return max(0, int(val))
+        except ValueError:
+            pass
+    return default
+
+
+def _backup_count() -> int:
+    default = 100
+    val = (
+        os.environ.get("GEMINI_OBSERVABILITY_LOG_BACKUP_COUNT")
+        if OBSERVABILITY_RUNTIME == "gemini"
+        else os.environ.get("COPILOT_OBSERVABILITY_LOG_BACKUP_COUNT")
+    ) or os.environ.get("OBSERVABILITY_LOG_BACKUP_COUNT")
+    if val:
+        try:
+            # Allow exact threshold configuration but clamp at 0
+            return max(0, int(val))
+        except ValueError:
+            pass
+    return default
+
+
+def _rotate_log_if_needed(log_path: Path) -> None:
+    try:
+        backup_count = _backup_count()
+
+        # Always pre-scan and prune stale backups regardless of active log size
+        existing_backups = set()
+        prefix = f"{log_path.name}."
+        try:
+            if log_path.parent.exists():
+                for entry in log_path.parent.iterdir():
+                    if entry.name.startswith(prefix):
+                        suffix = entry.name[len(prefix):]
+                        if suffix.isdigit():
+                            existing_backups.add(int(suffix))
+        except OSError:
+            pass
+
+        # Prune any backups that exceed the current backup_count
+        for i in existing_backups:
+            if i > backup_count:
+                try:
+                    os.remove(str(log_path.with_name(f"{log_path.name}.{i}")))
+                except OSError:
+                    pass
+
+        # If active log doesn't exist or hasn't reached the limit, we are done
+        if not log_path.exists():
+            return
+            
+        st_size = log_path.stat().st_size
+        if st_size == 0:
+            return
+            
+        max_bytes = _max_bytes()
+        if st_size < max_bytes:
+            return
+
+        # Active log exceeded max_bytes. Rotate it.
+        if backup_count <= 0:
+            try:
+                os.remove(str(log_path))
+            except OSError:
+                pass
+            return
+
+        # Shift existing backups from backup_count - 1 down to 1
+        for i in range(backup_count - 1, 0, -1):
+            if i in existing_backups:
+                sfn = log_path.with_name(f"{log_path.name}.{i}")
+                dfn = log_path.with_name(f"{log_path.name}.{i+1}")
+                try:
+                    if dfn.exists():
+                        os.remove(str(dfn))
+                    sfn.rename(dfn)
+                except OSError:
+                    pass
+
+        # Move active log to .1
+        dfn = log_path.with_name(f"{log_path.name}.1")
+        try:
+            if dfn.exists():
+                os.remove(str(dfn))
+            log_path.rename(dfn)
+        except OSError:
+            pass
+    except Exception:
+        # Fail-open: ensure any rotation failure does not prevent logging
+        pass
+
+
 def _sanitize_string(value: str, *, key: str | None = None) -> str:
     lowered_key = (key or "").replace("-", "").replace("_", "").lower()
     is_secret = (
@@ -434,6 +536,7 @@ def _write_record(record: dict[str, Any]) -> bool:
         return False
 
     try:
+        _rotate_log_if_needed(log_path)
         _append_record(log_path, prepared)
     except OSError:
         return False
