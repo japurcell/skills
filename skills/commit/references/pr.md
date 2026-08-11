@@ -26,24 +26,10 @@ Always pass both `--title` and `--body`.
 
 ## Title
 
-Use the commit subject.
+Use the first line of the commit message described in `references/message.md` as the PR title.
 
-## Body with issues
+## Body
 
-```text
-Summary:
-- <commit subject>
-
-Issues:
-Refs #123
-Fixes #456
-```
-
-## Body without issues
-
-```text
-Summary:
-- <commit subject>
-```
+Same as the commit message body described in `references/message.md` as the PR body.
 
 Omit `Issues:` when there are no issue trailers.
