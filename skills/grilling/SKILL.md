@@ -23,6 +23,8 @@ Finding _facts_ is your job, never the user's. When a frontier question needs a 
 
 The session is done when the frontier is empty: every branch of the design tree visited, nothing left silently assumed. Do not act on it until the user confirms you have reached a shared understanding.
 
+You are in planning mode. Do not begin implementation yet.
+
 ## Offer ADRs sparingly
 
 Only offer to create an ADR when all three are true:
