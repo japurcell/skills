@@ -730,6 +730,20 @@ def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection
         return conn
 
 
+def _handle_write_corruption(db_path: Path, exc: Exception) -> None:
+    err_msg = str(exc).lower()
+    if isinstance(exc, sqlite3.DatabaseError) and not ("locked" in err_msg or "busy" in err_msg):
+        try:
+            if db_path.exists():
+                db_path.unlink()
+            for suffix in ["-wal", "-shm"]:
+                p = Path(str(db_path) + suffix)
+                if p.exists():
+                    p.unlink()
+        except Exception:
+            pass
+
+
 def _timestamp_to_ms(ts_str: str) -> int:
     try:
         clean_ts = ts_str.strip()
@@ -835,6 +849,10 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                         if row:
                             _STATE["sequence_no"] = row[0]
                 conn.commit()
+            except sqlite3.DatabaseError as e:
+                conn.rollback()
+                _handle_write_corruption(db_path, e)
+                raise
             except Exception:
                 conn.rollback()
                 raise
@@ -917,6 +935,10 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
                 if cursor.rowcount > 0:
                     sqlite_success = True
                 conn.commit()
+            except sqlite3.DatabaseError as e:
+                conn.rollback()
+                _handle_write_corruption(db_path, e)
+                raise
             except Exception:
                 conn.rollback()
                 raise

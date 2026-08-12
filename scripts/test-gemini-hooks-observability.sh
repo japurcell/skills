@@ -552,6 +552,24 @@ test_sqlite_observability_persistence() {
 
   rm -f "$db_path"
 
+  # Test structural write corruption (database overwritten with garbage) triggers automatic recovery
+  mkdir -p "$(dirname "$db_path")"
+  echo "NOT A DATABASE AT ALL" > "$db_path"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+      python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local uv_corrupt
+  uv_corrupt="$(sqlite3 "$db_path" "PRAGMA user_version;")"
+  if [[ "$uv_corrupt" != "1" ]]; then
+    echo "Expected database to recover from structural corruption and have PRAGMA user_version = 1, got: $uv_corrupt" >&2
+    exit 1
+  fi
+
+  rm -f "$db_path"
+
   # Proceed with normal SQLite persistence checks
   payload="$(jq -nc '{
     sessionId: "sqlite-session-1",
