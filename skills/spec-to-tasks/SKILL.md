@@ -1,7 +1,6 @@
 ---
 name: spec-to-tasks
-description: Convert a SPEC, PRD, planning doc, or raw requirements into independent vertical-slice tasks in tasks.json. Use for tickets, backlog items, agent-ready work, or /prd-ralph input. Do not use to write the spec or implement tasks.
-disable-model-invocation: true
+description: Use when the user wants to break down a SPEC, PRD, plan, or raw requirements into independent, vertical-slice tasks. Do not use to write the spec or implement tasks.
 ---
 
 # /spec-to-tasks
