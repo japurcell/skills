@@ -671,11 +671,24 @@ def _finalization_busy_timeout_ms() -> int:
     return 5000
 
 
+def _supports_returning() -> bool:
+    try:
+        parts = [int(x) for x in sqlite3.sqlite_version.split(".")]
+        return tuple(parts) >= (3, 35, 0)
+    except Exception:
+        return False
+
+
 def _connect_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection:
     _ensure_parent(db_path)
     if not db_path.exists():
         fd = os.open(str(db_path), os.O_CREAT | os.O_RDWR, 0o600)
         os.close(fd)
+    else:
+        try:
+            os.chmod(str(db_path), 0o600)
+        except Exception:
+            pass
     conn = sqlite3.connect(str(db_path), timeout=busy_timeout / 1000.0)
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA auto_vacuum=INCREMENTAL;")
@@ -691,6 +704,30 @@ def _init_schema_if_needed(conn: sqlite3.Connection) -> None:
     if version == 0:
         cursor.executescript(SCHEMA_DDL)
         cursor.execute("PRAGMA user_version = 1;")
+    elif version != 1:
+        raise sqlite3.OperationalError("mismatched schema version")
+
+
+def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection:
+    try:
+        conn = _connect_db(db_path, busy_timeout)
+        _init_schema_if_needed(conn)
+        return conn
+    except (sqlite3.OperationalError, sqlite3.DatabaseError):
+        try:
+            if db_path.exists():
+                db_path.unlink()
+            for suffix in ["-wal", "-shm"]:
+                p = Path(str(db_path) + suffix)
+                if p.exists():
+                    p.unlink()
+        except Exception:
+            pass
+        conn = _connect_db(db_path, busy_timeout)
+        cursor = conn.cursor()
+        cursor.executescript(SCHEMA_DDL)
+        cursor.execute("PRAGMA user_version = 1;")
+        return conn
 
 
 def _timestamp_to_ms(ts_str: str) -> int:
@@ -746,10 +783,9 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
         busy_timeout = _busy_timeout_ms()
 
         try:
-            conn = _connect_db(db_path, busy_timeout)
+            conn = _connect_and_init_db(db_path, busy_timeout)
             conn.execute("BEGIN IMMEDIATE")
             try:
-                _init_schema_if_needed(conn)
                 _ensure_session(conn, session_id, workspace_root, timestamp_ms)
 
                 if event_name == "session_start":
@@ -759,7 +795,7 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                     )
 
                 cursor = conn.cursor()
-                try:
+                if _supports_returning():
                     cursor.execute(
                         """
                         INSERT INTO spans (span_id, session_id, sequence_no, event_name, source_event_name, hook_name, timestamp_ms, updated_at_ms, pid, status, late_arrival, metadata)
@@ -778,7 +814,7 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                     if row:
                         _STATE["sequence_no"] = row[0]
                         sqlite_success = True
-                except sqlite3.OperationalError:
+                else:
                     cursor.execute(
                         """
                         INSERT INTO spans (span_id, session_id, sequence_no, event_name, source_event_name, hook_name, timestamp_ms, updated_at_ms, pid, status, late_arrival, metadata)
@@ -862,10 +898,9 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
         busy_timeout = _busy_timeout_ms()
 
         try:
-            conn = _connect_db(db_path, busy_timeout)
+            conn = _connect_and_init_db(db_path, busy_timeout)
             conn.execute("BEGIN IMMEDIATE")
             try:
-                _init_schema_if_needed(conn)
                 cursor = conn.cursor()
                 cursor.execute(
                     """

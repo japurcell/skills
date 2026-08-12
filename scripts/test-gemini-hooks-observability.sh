@@ -504,6 +504,55 @@ test_sqlite_observability_persistence() {
     exit 1
   fi
 
+  # Test permissive permissions (644) gets corrected to 600
+  mkdir -p "$(dirname "$db_path")"
+  touch "$db_path"
+  chmod 644 "$db_path"
+
+  payload="$(jq -nc '{
+    sessionId: "sqlite-session-1",
+    timestamp: "2026-06-23T23:50:00Z",
+    reason: "test",
+    cwd: "/home/adam/dev/personal/skills"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+      python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local perms
+  if stat --help 2>&1 | grep -q -- "-c"; then
+    perms="$(stat -c "%a" "$db_path")"
+  else
+    perms="$(stat -f "%Lp" "$db_path")"
+  fi
+  if [[ "$perms" != "600" ]]; then
+    echo "Expected database file permissions to be corrected to 600, got: $perms" >&2
+    exit 1
+  fi
+
+  rm -f "$db_path"
+
+  # Test schema version mismatch (PRAGMA user_version = 42) triggers automatic recovery (rebuilt as v1)
+  mkdir -p "$(dirname "$db_path")"
+  sqlite3 "$db_path" "PRAGMA user_version = 42;"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+      python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local uv
+  uv="$(sqlite3 "$db_path" "PRAGMA user_version;")"
+  if [[ "$uv" != "1" ]]; then
+    echo "Expected database to recover and have PRAGMA user_version = 1, got: $uv" >&2
+    exit 1
+  fi
+
+  rm -f "$db_path"
+
+  # Proceed with normal SQLite persistence checks
   payload="$(jq -nc '{
     sessionId: "sqlite-session-1",
     timestamp: "2026-06-23T23:50:00Z",
