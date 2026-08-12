@@ -711,23 +711,35 @@ def _init_schema_if_needed(conn: sqlite3.Connection) -> None:
 def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection:
     try:
         conn = _connect_db(db_path, busy_timeout)
-        _init_schema_if_needed(conn)
-        return conn
-    except (sqlite3.OperationalError, sqlite3.DatabaseError):
         try:
-            if db_path.exists():
-                db_path.unlink()
-            for suffix in ["-wal", "-shm"]:
-                p = Path(str(db_path) + suffix)
-                if p.exists():
-                    p.unlink()
-        except Exception:
-            pass
-        conn = _connect_db(db_path, busy_timeout)
-        cursor = conn.cursor()
-        cursor.executescript(SCHEMA_DDL)
-        cursor.execute("PRAGMA user_version = 1;")
-        return conn
+            _init_schema_if_needed(conn)
+            return conn
+        except Exception as e:
+            conn.close()
+            raise e
+    except Exception as e:
+        err_msg = str(e).lower()
+        is_transient = "locked" in err_msg or "busy" in err_msg
+        is_mismatch = "mismatched schema version" in err_msg
+        is_structural = isinstance(e, sqlite3.DatabaseError) and not isinstance(e, sqlite3.OperationalError)
+
+        if (is_mismatch or is_structural) and not is_transient:
+            try:
+                if db_path.exists():
+                    db_path.unlink()
+                for suffix in ["-wal", "-shm"]:
+                    p = Path(str(db_path) + suffix)
+                    if p.exists():
+                        p.unlink()
+            except Exception:
+                pass
+            conn = _connect_db(db_path, busy_timeout)
+            cursor = conn.cursor()
+            cursor.executescript(SCHEMA_DDL)
+            cursor.execute("PRAGMA user_version = 1;")
+            return conn
+        else:
+            raise e
 
 
 def _handle_write_corruption(db_path: Path, exc: Exception) -> None:
