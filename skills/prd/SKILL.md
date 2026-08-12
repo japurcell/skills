@@ -1,6 +1,6 @@
 ---
 name: prd
-description: Create an implementation-ready PRD for a feature. Use for product requirements, feature specs, user stories, planning, or preparing for `/prd-to-tasks`. Do not implement or write code.
+description: Create an implementation-ready PRD for a feature. Use for product requirements, feature specs, user stories, planning, or preparing for `/spec-to-tasks`. Do not implement or write code.
 disable-model-invocation: true
 ---
 
@@ -33,7 +33,7 @@ Save to `.agents/scratchpad/[feature-name]/prd.md`, where `[feature-name]` is sh
 5. Validate consistency across sections, especially requirements, acceptance criteria, technical decisions, Definition of Done, paths, schemas, commands, examples, and execution order.
 6. Resolve conflicts by preferring the most specific implementation-nearest source; document assumptions. If unclear, stop and report the blocker.
 7. Save to the verified unused path.
-8. Final response: feature short name, PRD path, validation status `pass`/`fail`, readiness for `/prd-to-tasks`.
+8. Final response: feature short name, PRD path, validation status `pass`/`fail`, readiness for `/spec-to-tasks`.
 
 <prd-template>
 
@@ -160,4 +160,4 @@ List what this PRD explicitly does not include.
 - [ ] Exact verification commands are included when inferable; none are invented.
 - [ ] PRD saved at `.agents/scratchpad/[feature-name]/prd.md` with `[feature-name]` suffixed with `-2`, `-3`, etc. if needed.
 - [ ] No existing PRD was overwritten.
-- [ ] Final response includes feature short name, PRD path, validation status, and readiness for `/prd-to-tasks`.
+- [ ] Final response includes feature short name, PRD path, validation status, and readiness for `/spec-to-tasks`.

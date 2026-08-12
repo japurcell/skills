@@ -24,7 +24,7 @@
       "expected_output": "A design review that triggers even without the phrase 'design it twice', explores the current plan/task workflow, presents structurally different orchestration designs, and gives an opinionated recommendation.",
       "files": [
         "/home/adam/dev/personal/skills/skills/prd/SKILL.md",
-        "/home/adam/dev/personal/skills/skills/prd-to-tasks/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/spec-to-tasks/SKILL.md",
         "/home/adam/dev/personal/skills/skills/prd-ralph-loop/SKILL.md"
       ],
       "assertions": [

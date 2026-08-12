@@ -1,13 +1,11 @@
 {
-  "skill_name": "prd-to-tasks",
+  "skill_name": "spec-to-tasks",
   "evals": [
     {
       "id": 0,
       "prompt": "Use the skill under test to convert `evals/files/task-statuses-prd.md` into `outputs/prd.json`. Also write `outputs/summary.md` with the story count and output path.",
       "expected_output": "A parallel-ready prd.json that splits the task-statuses feature into atomic prerequisite and UI stories with explicit dependencies and safe batches.",
-      "files": [
-        "evals/files/task-statuses-prd.md"
-      ],
+      "files": ["evals/files/task-statuses-prd.md"],
       "assertions": [
         "The output is valid prd.json with at least 5 user stories.",
         "The stories separately cover status storage, backend status updates, badge display, status controls, and filtering.",
@@ -20,9 +18,7 @@
       "id": 1,
       "prompt": "Use the skill under test to convert `evals/files/workspace-member-management-prd.md` and save the result to `outputs/generated/prd.json`. Also write `outputs/summary.md` with the story count and output path.",
       "expected_output": "A dependency-ordered, parallel-ready prd.json saved to the requested output directory, with separate stories for inviting members, changing roles, revoking access, and viewing audit data.",
-      "files": [
-        "evals/files/workspace-member-management-prd.md"
-      ],
+      "files": ["evals/files/workspace-member-management-prd.md"],
       "assertions": [
         "The output is saved to outputs/generated/prd.json.",
         "branchName is derived from the feature title.",
