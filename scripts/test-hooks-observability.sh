@@ -484,15 +484,132 @@ test_observability_log_rotation_generic_fallback() {
   fi
 }
 
+test_sqlite_observability_persistence() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/.copilot/hooks/logs/observability_v1.db"
+
+  if [[ -f "$db_path" ]]; then
+    echo "Expected database file to not exist initially." >&2
+    exit 1
+  fi
+
+  payload="$(jq -nc '{
+    sessionId: "sqlite-session-1",
+    timestamp: "2026-06-23T23:50:00Z",
+    reason: "test",
+    cwd: "/home/adam/dev/personal/skills"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+      python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload"
+  )"
+
+  if [[ ! -f "$db_path" ]]; then
+    echo "Expected database file to be created: $db_path" >&2
+    exit 1
+  fi
+
+  local perms
+  if stat --help 2>&1 | grep -q -- "-c"; then
+    perms="$(stat -c "%a" "$db_path")"
+  else
+    perms="$(stat -f "%Lp" "$db_path")"
+  fi
+  if [[ "$perms" != "600" ]]; then
+    echo "Expected database file permissions to be 600, got: $perms" >&2
+    exit 1
+  fi
+
+  local uv
+  uv="$(sqlite3 "$db_path" "PRAGMA user_version;")"
+  if [[ "$uv" != "1" ]]; then
+    echo "Expected PRAGMA user_version to be 1, got: $uv" >&2
+    exit 1
+  fi
+
+  local sess_count
+  sess_count="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM sessions WHERE session_id = 'sqlite-session-1';")"
+  if [[ "$sess_count" != "1" ]]; then
+    echo "Expected 1 session row for 'sqlite-session-1', got: $sess_count" >&2
+    exit 1
+  fi
+
+  local ws_root
+  ws_root="$(sqlite3 "$db_path" "SELECT workspace_root FROM sessions WHERE session_id = 'sqlite-session-1';")"
+  if [[ -z "$ws_root" ]]; then
+    echo "Expected workspace_root to be recorded, got empty string." >&2
+    exit 1
+  fi
+
+  local span_count
+  span_count="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM spans WHERE session_id = 'sqlite-session-1';")"
+  if [[ "$span_count" != "1" ]]; then
+    echo "Expected 1 span row for 'sqlite-session-1', got: $span_count" >&2
+    exit 1
+  fi
+
+  local seq_no
+  seq_no="$(sqlite3 "$db_path" "SELECT sequence_no FROM spans WHERE session_id = 'sqlite-session-1';")"
+  if [[ "$seq_no" != "1" ]]; then
+    echo "Expected sequence_no = 1, got: $seq_no" >&2
+    exit 1
+  fi
+
+  local ev_name
+  ev_name="$(sqlite3 "$db_path" "SELECT event_name FROM spans WHERE session_id = 'sqlite-session-1';")"
+  if [[ "$ev_name" != "session_end" ]]; then
+    echo "Expected event_name = session_end, got: $ev_name" >&2
+    exit 1
+  fi
+
+  payload="$(jq -nc '{
+    sessionId: "sqlite-session-1",
+    timestamp: "2026-06-23T23:50:01Z",
+    toolName: "test-tool"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+      python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload"
+  )"
+
+  seq_no="$(sqlite3 "$db_path" "SELECT sequence_no FROM spans WHERE session_id = 'sqlite-session-1' AND event_name = 'before_tool';")"
+  if [[ "$seq_no" != "2" ]]; then
+    echo "Expected second span to have sequence_no = 2, got: $seq_no" >&2
+    exit 1
+  fi
+
+  local status
+  status="$(sqlite3 "$db_path" "SELECT status FROM sessions WHERE session_id = 'sqlite-session-1';")"
+  if [[ "$status" != "running" ]]; then
+    echo "Expected session status to be running, got: $status" >&2
+    exit 1
+  fi
+}
+
 main() {
-  test_hooks_json_registers_observability_emitters
-  test_structured_observability_records_session_rollup_and_mutation
-  test_observability_lock_wait_and_disable_are_fail_open
-  test_observability_log_rotation
-  test_observability_log_rotation_pruning_and_precedence
-  test_observability_log_rotation_unconditional_prune
-  test_observability_log_rotation_sub_512
-  test_observability_log_rotation_generic_fallback
+  (
+    export OBSERVABILITY_FORCE_NDJSON=1
+    test_hooks_json_registers_observability_emitters
+    test_structured_observability_records_session_rollup_and_mutation
+    test_observability_lock_wait_and_disable_are_fail_open
+    test_observability_log_rotation
+    test_observability_log_rotation_pruning_and_precedence
+    test_observability_log_rotation_unconditional_prune
+    test_observability_log_rotation_sub_512
+    test_observability_log_rotation_generic_fallback
+  )
+  test_sqlite_observability_persistence
 }
 
 main "$@"

@@ -4,8 +4,10 @@ import fcntl
 import json
 import os
 import re
+import sqlite3
 import sys
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
@@ -549,6 +551,166 @@ def _write_record(record: dict[str, Any]) -> bool:
     return True
 
 
+SCHEMA_DDL = """
+CREATE TABLE IF NOT EXISTS sessions (
+    session_id TEXT PRIMARY KEY,
+    parent_session_id TEXT,
+    workspace_root TEXT NOT NULL,
+    runtime TEXT,
+    status TEXT,
+    start_time_ms INTEGER,
+    end_time_ms INTEGER,
+    total_duration_ms INTEGER,
+    has_errors INTEGER DEFAULT 0,
+    transcript_path TEXT,
+    FOREIGN KEY(parent_session_id) REFERENCES sessions(session_id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS spans (
+    span_id TEXT PRIMARY KEY,
+    parent_span_id TEXT,
+    session_id TEXT NOT NULL,
+    sequence_no INTEGER NOT NULL,
+    event_name TEXT,
+    source_event_name TEXT,
+    hook_name TEXT,
+    timestamp_ms INTEGER,
+    updated_at_ms INTEGER,
+    pid INTEGER,
+    duration_ms INTEGER,
+    status TEXT,
+    outcome TEXT,
+    late_arrival INTEGER DEFAULT 0,
+    transcript_chunk_path TEXT,
+    metadata TEXT,
+    FOREIGN KEY(session_id) REFERENCES sessions(session_id) ON DELETE CASCADE,
+    FOREIGN KEY(parent_span_id) REFERENCES spans(span_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_parent ON sessions(parent_session_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_workspace_start ON sessions(workspace_root, start_time_ms);
+CREATE INDEX IF NOT EXISTS idx_spans_session ON spans(session_id);
+CREATE INDEX IF NOT EXISTS idx_spans_parent ON spans(parent_span_id);
+CREATE INDEX IF NOT EXISTS idx_spans_session_status ON spans(session_id, status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_spans_session_sequence ON spans(session_id, sequence_no);
+"""
+
+
+def _sqlite_disabled() -> bool:
+    return _truthy_env(
+        "COPILOT_OBSERVABILITY_DISABLE_SQLITE",
+        "GEMINI_OBSERVABILITY_DISABLE_SQLITE",
+        "OBSERVABILITY_DISABLE_SQLITE",
+        "OBSERVABILITY_FORCE_NDJSON"
+    )
+
+
+def _workspace_root(payload: Mapping[str, Any] | None = None) -> str:
+    for env_var in ["WORKSPACE_ROOT", "GEMINI_PROJECT_DIR", "COPILOT_PROJECT_DIR"]:
+        val = os.environ.get(env_var)
+        if val:
+            return str(Path(val).resolve())
+
+    start_path = None
+    if payload:
+        cwd_val = _cwd(payload)
+        if cwd_val:
+            start_path = Path(cwd_val)
+    if not start_path:
+        start_path = Path.cwd()
+
+    start_path = start_path.resolve()
+    curr = start_path
+    while True:
+        if (curr / ".git").exists() or (curr / ".gemini").exists() or (curr / ".copilot").exists():
+            return str(curr)
+        parent = curr.parent
+        if parent == curr:
+            break
+        curr = parent
+    return str(start_path)
+
+
+def _get_db_path() -> Path:
+    return _log_path().parent / "observability_v1.db"
+
+
+def _busy_timeout_ms() -> int:
+    val = None
+    if OBSERVABILITY_RUNTIME == "copilot":
+        val = os.environ.get("COPILOT_OBSERVABILITY_BUSY_TIMEOUT_MS")
+    elif OBSERVABILITY_RUNTIME == "gemini":
+        val = os.environ.get("GEMINI_OBSERVABILITY_BUSY_TIMEOUT_MS")
+
+    if not val:
+        val = os.environ.get("OBSERVABILITY_BUSY_TIMEOUT_MS")
+
+    if val:
+        try:
+            return max(0, int(val))
+        except ValueError:
+            pass
+    return 50
+
+
+def _finalization_busy_timeout_ms() -> int:
+    val = None
+    if OBSERVABILITY_RUNTIME == "copilot":
+        val = os.environ.get("COPILOT_OBSERVABILITY_FINALIZATION_BUSY_TIMEOUT_MS")
+    elif OBSERVABILITY_RUNTIME == "gemini":
+        val = os.environ.get("GEMINI_OBSERVABILITY_FINALIZATION_BUSY_TIMEOUT_MS")
+
+    if not val:
+        val = os.environ.get("OBSERVABILITY_FINALIZATION_BUSY_TIMEOUT_MS")
+
+    if val:
+        try:
+            return max(0, int(val))
+        except ValueError:
+            pass
+    return 5000
+
+
+def _connect_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection:
+    _ensure_parent(db_path)
+    if not db_path.exists():
+        fd = os.open(str(db_path), os.O_CREAT | os.O_RDWR, 0o600)
+        os.close(fd)
+    conn = sqlite3.connect(str(db_path), timeout=busy_timeout / 1000.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA auto_vacuum=INCREMENTAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA foreign_keys=ON;")
+    return conn
+
+
+def _init_schema_if_needed(conn: sqlite3.Connection) -> None:
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA user_version;")
+    version = cursor.fetchone()[0]
+    if version == 0:
+        cursor.executescript(SCHEMA_DDL)
+        cursor.execute("PRAGMA user_version = 1;")
+
+
+def _timestamp_to_ms(ts_str: str) -> int:
+    try:
+        clean_ts = ts_str.strip()
+        if clean_ts.endswith("Z"):
+            clean_ts = clean_ts[:-1] + "+00:00"
+        dt = datetime.fromisoformat(clean_ts)
+        return int(dt.timestamp() * 1000)
+    except Exception:
+        return int(time.time() * 1000)
+
+
+def _ensure_session(conn: sqlite3.Connection, session_id: str, workspace_root: str, timestamp_ms: int) -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors) VALUES (?, ?, ?, 'running', ?, 0)",
+        (session_id, workspace_root, OBSERVABILITY_RUNTIME, timestamp_ms)
+    )
+
+
 def begin_hook_capture(payload: Mapping[str, Any]) -> None:
     if _disabled():
         return
@@ -557,10 +719,13 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
     raw_payload = dict(payload)
     source_event_name = _source_event_name(hook_name, raw_payload)
     _STATE.clear()
+
+    span_id = f"span-{uuid.uuid4()}"
     _STATE.update(
         {
             "active": True,
             "completed": False,
+            "span_id": span_id,
             "hook_name": hook_name,
             "source_event_name": source_event_name,
             "event_name": _canonical_event_name(source_event_name),
@@ -569,8 +734,84 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
         }
     )
 
-    if _capture_event_enabled() or hook_name == "send-event.py":
-        _write_record(_build_record("event_capture", raw_payload, source_event_name=source_event_name))
+    session_id = _session_id(raw_payload)
+    sqlite_success = False
+
+    if not _sqlite_disabled() and session_id:
+        workspace_root = _workspace_root(raw_payload)
+        ts_str = _timestamp(raw_payload)
+        timestamp_ms = _timestamp_to_ms(ts_str)
+        event_name = _canonical_event_name(source_event_name)
+        db_path = _get_db_path()
+        busy_timeout = _busy_timeout_ms()
+
+        try:
+            conn = _connect_db(db_path, busy_timeout)
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                _init_schema_if_needed(conn)
+                _ensure_session(conn, session_id, workspace_root, timestamp_ms)
+
+                if event_name == "session_start":
+                    conn.execute(
+                        "UPDATE sessions SET status = 'running', start_time_ms = COALESCE(start_time_ms, ?) WHERE session_id = ?",
+                        (timestamp_ms, session_id)
+                    )
+
+                cursor = conn.cursor()
+                try:
+                    cursor.execute(
+                        """
+                        INSERT INTO spans (span_id, session_id, sequence_no, event_name, source_event_name, hook_name, timestamp_ms, updated_at_ms, pid, status, late_arrival, metadata)
+                        SELECT ?, s.session_id, COALESCE(MAX(sp.sequence_no), 0) + 1, ?, ?, ?, ?, ?, ?, 'running',
+                               CASE WHEN s.status = 'finalizing' THEN 1 ELSE 0 END, ?
+                        FROM sessions s
+                        LEFT JOIN spans sp ON sp.session_id = s.session_id
+                        WHERE s.session_id = ?
+                          AND s.status IN ('running', 'finalizing')
+                        GROUP BY s.session_id
+                        RETURNING sequence_no;
+                        """,
+                        (span_id, event_name, source_event_name, hook_name, timestamp_ms, timestamp_ms, os.getpid(), json.dumps({}), session_id)
+                    )
+                    row = cursor.fetchone()
+                    if row:
+                        _STATE["sequence_no"] = row[0]
+                        sqlite_success = True
+                except sqlite3.OperationalError:
+                    cursor.execute(
+                        """
+                        INSERT INTO spans (span_id, session_id, sequence_no, event_name, source_event_name, hook_name, timestamp_ms, updated_at_ms, pid, status, late_arrival, metadata)
+                        SELECT ?, s.session_id, COALESCE(MAX(sp.sequence_no), 0) + 1, ?, ?, ?, ?, ?, ?, 'running',
+                               CASE WHEN s.status = 'finalizing' THEN 1 ELSE 0 END, ?
+                        FROM sessions s
+                        LEFT JOIN spans sp ON sp.session_id = s.session_id
+                        WHERE s.session_id = ?
+                          AND s.status IN ('running', 'finalizing')
+                        GROUP BY s.session_id;
+                        """,
+                        (span_id, event_name, source_event_name, hook_name, timestamp_ms, timestamp_ms, os.getpid(), json.dumps({}), session_id)
+                    )
+                    if cursor.rowcount > 0:
+                        sqlite_success = True
+                        cursor.execute("SELECT sequence_no FROM spans WHERE span_id = ?", (span_id,))
+                        row = cursor.fetchone()
+                        if row:
+                            _STATE["sequence_no"] = row[0]
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            finally:
+                conn.close()
+        except Exception:
+            pass
+
+    _STATE["sqlite_success"] = sqlite_success
+
+    if not sqlite_success:
+        if _capture_event_enabled() or hook_name == "send-event.py":
+            _write_record(_build_record("event_capture", raw_payload, source_event_name=source_event_name))
 
 
 def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
@@ -602,24 +843,72 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
     hook_record["outcome"] = _derive_outcome(raw_payload, effective_payload)
     if effective_payload != raw_payload:
         hook_record["mutated"] = True
-    _write_record(hook_record)
 
-    if event_name in TERMINAL_EVENT_NAMES:
-        rollup_record = _build_record(
-            "rollup",
-            raw_payload,
-            source_event_name=source_event_name,
-            effective_payload=effective_payload,
-        )
-        rollup_record["event_name"] = event_name
-        rollup_record["source_event_name"] = source_event_name
-        rollup_record["duration_ms"] = duration_ms
-        rollup_record["outcome"] = hook_record["outcome"]
-        rollup_record["summary"] = {
-            "session_id": hook_record.get("session_id", ""),
-            "agent_id": hook_record.get("agent_id", ""),
-            "agent_type": hook_record.get("agent_type", ""),
+    sqlite_success = False
+    span_id = _STATE.get("span_id")
+    if not _sqlite_disabled() and _STATE.get("sqlite_success") and span_id:
+        sanitized_raw = _sanitize_value(raw_payload)
+        sanitized_eff = _sanitize_value(effective_payload)
+        meta = {
+            "duration_ms": duration_ms,
+            "outcome": hook_record["outcome"],
+            "raw_payload": sanitized_raw,
+            "effective_payload": sanitized_eff,
         }
-        _write_record(rollup_record)
+        if "mutated" in hook_record:
+            meta["mutated"] = True
+
+        db_path = _get_db_path()
+        busy_timeout = _busy_timeout_ms()
+
+        try:
+            conn = _connect_db(db_path, busy_timeout)
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                _init_schema_if_needed(conn)
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    UPDATE spans SET
+                        status = 'completed',
+                        duration_ms = ?,
+                        outcome = ?,
+                        updated_at_ms = ?,
+                        metadata = ?
+                    WHERE span_id = ?;
+                    """,
+                    (duration_ms, hook_record["outcome"], int(time.time() * 1000), json.dumps(meta, ensure_ascii=False), span_id)
+                )
+                if cursor.rowcount > 0:
+                    sqlite_success = True
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            finally:
+                conn.close()
+        except Exception:
+            pass
+
+    if not sqlite_success:
+        _write_record(hook_record)
+
+        if event_name in TERMINAL_EVENT_NAMES:
+            rollup_record = _build_record(
+                "rollup",
+                raw_payload,
+                source_event_name=source_event_name,
+                effective_payload=effective_payload,
+            )
+            rollup_record["event_name"] = event_name
+            rollup_record["source_event_name"] = source_event_name
+            rollup_record["duration_ms"] = duration_ms
+            rollup_record["outcome"] = hook_record["outcome"]
+            rollup_record["summary"] = {
+                "session_id": hook_record.get("session_id", ""),
+                "agent_id": hook_record.get("agent_id", ""),
+                "agent_type": hook_record.get("agent_type", ""),
+            }
+            _write_record(rollup_record)
 
     _STATE["completed"] = True
