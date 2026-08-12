@@ -721,9 +721,9 @@ def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection
         err_msg = str(e).lower()
         is_transient = "locked" in err_msg or "busy" in err_msg
         is_mismatch = "mismatched schema version" in err_msg
-        is_structural = isinstance(e, sqlite3.DatabaseError) and not isinstance(e, sqlite3.OperationalError)
+        is_corrupt = "malformed" in err_msg or "not a database" in err_msg or "corrupt" in err_msg
 
-        if (is_mismatch or is_structural) and not is_transient:
+        if (is_mismatch or is_corrupt) and not is_transient:
             try:
                 if db_path.exists():
                     db_path.unlink()
@@ -744,7 +744,8 @@ def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection
 
 def _handle_write_corruption(db_path: Path, exc: Exception) -> None:
     err_msg = str(exc).lower()
-    if isinstance(exc, sqlite3.DatabaseError) and not ("locked" in err_msg or "busy" in err_msg):
+    is_corrupt = "malformed" in err_msg or "not a database" in err_msg or "corrupt" in err_msg
+    if is_corrupt:
         try:
             if db_path.exists():
                 db_path.unlink()
