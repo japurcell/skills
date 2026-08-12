@@ -26,6 +26,7 @@ Guidelines for modifying and maintaining repository hook scripts and configs und
 - **Gemini selection and redaction:** Multiple Gemini `BeforeToolSelection` hooks union their allowed tool sets, and environment-variable redaction is off by default unless explicitly enabled and allowlisted.
 - **Separate but Unified:** Keep the `.copilot` and `.gemini` hook scripts completely separated (no cross-directory imports), but structurally unified and synchronized. Use identical helper logic where possible, parameterizing only runtime-specific variables (like default paths or environment lookups) and emitting only the specific JSON decision output expected by each hook platform.
 - **Fail-closed security handlers:** Security-critical hooks (like `tool-guard.py`) MUST fail-closed. Global exception handlers MUST catch unexpected errors and emit an explicit `deny` (or `{ "continue": false }`) response. Do not use fail-open exception handlers that emit `allow` on crash, as this silently bypasses protections.
+- **SQLite Trace Store:** Hook observability uses a WAL-journaled SQLite database (`observability_v1.db`) as the trace source of truth under 0600 permissions. Connections must be gated by `PRAGMA user_version` checking, support fail-open Fallback to NDJSON under lock/write contention or SQLite errors, support monotonic sequence-no generation inside transactions, and enforce workspace_root trace-scoping.
 
 ## Output Schemas & Exit Behavior
 

@@ -23,6 +23,7 @@ coverage: Test guidance for repo-local Copilot plus installed Copilot and Gemini
   - `bash scripts/test-gemini-hooks-rtk.sh`
 - `scripts/test-gemini-hooks-startup.sh` includes a negative missing-skill case that intentionally prints `Hook hard stop: Required skill file not found...`; trust the script exit status and assertions, not stderr alone.
 - Gemini config should point at the Python operational entrypoints in `.gemini/settings.json`; repo-local startup auto-ingest should use `$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/auto-ingest.py`, and the prompt-time injector should use `$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py`, while installed global settings continue to use `$HOME/.gemini/hooks/scripts/...` paths. Validate those paths through the Gemini hook regressions.
+- **Dynamic-Cleanup traps:** When writing bash function-level traps under `set -u` (nounset), register local cleanup variables using single-quotes inside double-quotes (e.g. `trap 'rm -rf "'"$workdir"'"' RETURN`). This interpolates the variable at trap registration time, preventing unbound variable errors when the function exits and pops local scope before execution.
 
 ## Live evidence
 
