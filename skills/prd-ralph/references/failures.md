@@ -28,6 +28,7 @@ If a workaround was used, also add it to `Learnings`.
 
 ## Before task selection
 
-If failure happens before task selection, append a progress block using task ID `PREPARE`.
+If failure happens before task selection:
 
-Use `Files changed: none` unless files were changed.
+- append a progress block using task ID `PREPARE`
+- use `Files changed: none` unless files were changed

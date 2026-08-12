@@ -2,7 +2,7 @@
 
 Use only when the selected task mentions or implies browser-visible behavior.
 
-## Required when
+## Required when mentioned or implied
 
 Browser verification is required if task title, description, acceptance criteria, design guidance, likely files, or notes mention or imply:
 
@@ -14,7 +14,7 @@ Browser verification is required if task title, description, acceptance criteria
 
 For UI, auth, or routing work, require browser verification unless the PRD explicitly says otherwise.
 
-## Tool
+## Accepted tools
 
 Use one of:
 
@@ -45,6 +45,6 @@ Browser verification:
 If browser verification is required:
 
 - Do not set `passes: true` unless Playwright evidence passed.
-- If Playwright is unavailable, failing, not installed, cannot reach the app, or cannot complete the check, the task is blocked.
+- If Playwright is unavailable, failing, not installed, cannot reach the app, or cannot complete the check, block.
 - Do not commit blocked work.
 - Record the blocker and any browser command/tool failure or timeout in `progress_file`.

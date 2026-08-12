@@ -15,76 +15,86 @@ Never commit:
 - unrelated changes
 - blocked or failing work
 
-If no committable task-scoped changes exist, committing is blocked.
+Do not amend, reset, rebase, squash, or otherwise rewrite commits during this skill run.
 
-After a successful commit, `prd_file` and `progress_file` may remain modified and uncommitted.
+If no committable task-scoped changes exist, block.
 
 ## Steps
 
-Inspect changes:
+1. Inspect changes:
 
-```bash
-git status --short
-git diff
-git diff --staged
-```
+   ```bash
+   git status --short
+   git diff
+   git diff --staged
+   ```
 
-Stage only task-scoped implementation/test/doc/config changes.
+2. Stage only task-scoped implementation/test/doc/config changes.
 
-Confirm staged changes:
+3. Confirm staged changes:
 
-```bash
-git diff --staged
-git status --short
-```
+   ```bash
+   git diff --staged
+   git status --short
+   ```
 
-If `prd_file`, `progress_file`, or unrelated changes are staged, unstage them before committing.
+4. If `prd_file`, `progress_file`, or unrelated changes are staged, unstage them without discarding work.
 
-If any git command fails or times out, read `references/failures.md` and record it in `progress_file`.
+5. Commit once using a message file:
+
+   ```bash
+   git commit -F <message-file>
+   ```
+
+   Do not use multiple commits. Do not use escaped newlines with `-m`.
+
+6. Remove the message file.
 
 ## Message
-
-Use this format:
 
 ```text
 feat: [Task ID] - [Task Title]
 
 - Added [specific changes]
-- Verified with [tests, commands, or manual checks]
+- Verified with [commands/checks]
 ```
 
-If browser verification was required, include the Playwright command in the verification line.
+If browser verification was required, include the Playwright command.
 
-Commit once using a message file:
-
-```bash
-git commit -F <message-file>
-```
-
-Do not use multiple commits. Do not use escaped newlines with `-m`.
-
-## Confirm
+## Audit
 
 After committing, run:
 
 ```bash
 git log -1 --oneline
 git show --name-only --format=oneline HEAD
+git log --oneline <session_start_head>..HEAD
 ```
 
-Confirm committed files are scoped and exclude `prd_file` and `progress_file`.
+For each session commit, run:
 
-Record the commit hash.
+```bash
+git show --name-only --format=oneline <hash>
+```
 
-Remove the commit message file.
+Rules:
+
+- Record every session commit in `progress_file`.
+- Expected session commits: exactly one.
+- Do not omit accidental, corrective, merge, hook-generated, or extra commits.
+- If more or fewer than one session commit exists, block.
+- If any session commit includes `prd_file`, `progress_file`, unrelated changes, or blocked/failing work, block.
 
 ## If blocked
 
-Do not ask follow-up questions. Report:
+Do not ask follow-up questions.
+
+Record:
 
 - blocker
 - intended commit message
 - current `git status --short`
 - files that would have been committed
+- session commits, if any
 
-Record the blocker and any command/tool failure or timeout in `progress_file`.
+If any git command fails or times out, read `references/failures.md` and record it in `progress_file`.
