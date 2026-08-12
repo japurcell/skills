@@ -88,7 +88,7 @@ Before implementation, inspect the selected task. If requirements or acceptance 
 
 ### 3. Implement
 
-1. Use TDD discipline. Load the `tdd` skill if available.
+1. Activate or load the `tdd` skill.
 2. Follow only the selected task’s:
    - `description`
    - `acceptanceCriteria`
