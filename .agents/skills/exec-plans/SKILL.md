@@ -1,6 +1,6 @@
 ---
 name: exec-plans
-description: Use when user asks to implement complex tasks touching multiple files or layers, creating multiple scripts, system-wide refactors, or multi-milestone features without a plan. Use when continuing work on an existing plan or when the user mentions 'continue exec-plan', 'continue progress on plan' or similar.
+description: Mandatory whenever starting, executing, orchestrating, or modifying any exec-plan/ExecPlan/execution plan. Use when the user mentions 'execute {plan,ExecPlan,exec-plan}', 'continue {plan,ExecPlan,exec-plan}', 'continue progress on {plan,ExecPlan,exec-plan}' or similar. Use when implementing complex tasks touching multiple files or layers, creating multiple scripts, system-wide refactors, or multi-milestone features without a plan.
 ---
 
 # Execution Plans (ExecPlans):
