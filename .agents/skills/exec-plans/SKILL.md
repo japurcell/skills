@@ -1,6 +1,6 @@
 ---
 name: exec-plans
-description: Use when user asks to implement complex tasks touching multiple files or layers, creating multiple scripts, system-wide refactors, or multi-milestone features without a plan.
+description: Use when user asks to implement complex tasks touching multiple files or layers, creating multiple scripts, system-wide refactors, or multi-milestone features without a plan. Use when continuing work on an existing plan or when the user mentions 'continue exec-plan', 'continue progress on plan' or similar.
 ---
 
 # Execution Plans (ExecPlans):
@@ -61,6 +61,8 @@ Milestones are narrative, not bureaucracy. If you break the work into milestones
 
 Each milestone must be independently verifiable and incrementally implement the overall goal of the execution plan.
 
+For weaker models, make milestone state explicit. At the start of each milestone section, add short lines for `Status: done|in progress|open` and `Acceptance: met|not met` so the next contributor does not need to infer whether that milestone is complete.
+
 ## Living plans and design decisions
 
 - ExecPlans are living documents. As you make key design decisions, update the plan to record both the decision and the thinking behind it. Record all decisions in the `Decision Log` section.
@@ -91,9 +93,11 @@ Prefer additive code changes followed by subtractions that keep tests passing. P
 
     Use a list with checkboxes to summarize granular steps. Every stopping point must be documented here, even if it requires splitting a partially completed task into two (“done” vs. “remaining”). This section must always reflect the actual current state of the work.
 
-    - [x] (2025-10-01 13:00Z) Example completed step.
-    - [ ] Example incomplete step.
-    - [ ] Example partially completed step (completed: X; remaining: Y).
+    Prefix each item with its milestone tag, for example `[milestone-1]`, so weak models can map task-level progress back to the narrative milestone without inference. Keep not-started work as unchecked items; omit timestamps until work has actually started.
+
+    - [x] (2025-10-01 13:00Z) [milestone-1] Example completed step.
+    - [ ] [milestone-2] Example incomplete step.
+    - [ ] [milestone-2] Example partially completed step (completed: X; remaining: Y).
 
     Use timestamps to measure rates of progress.
 
