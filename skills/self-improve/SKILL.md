@@ -1,6 +1,6 @@
 ---
 name: self-improve
-description: Use to update or refactor AGENTS.md and linked instruction docs by preserving durable repo-specific guidance, removing duplicate/conflicting/stale instructions, and mining reusable lessons from session notes, handoffs, corrections, commands, validation steps, and execution friction.
+description: Use to update or refactor AGENTS.md and linked instruction docs by preserving durable repo-specific guidance, removing duplicate/conflicting/stale instructions, and mining reusable lessons from session notes, handoffs, corrections, commands, failures, mistakes, validation steps, and execution friction so that future agents don't make the same mistakes.
 ---
 
 # Self Improve

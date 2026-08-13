@@ -25,7 +25,7 @@ Review only the requested change. Report only high-confidence, change-linked fin
 1. **Setup**
    Before continuing, ensure the following skills are activated or loaded:
    - `addy-code-review-and-quality`
-   - `subagent-model-router`: delegate tasks to the most suitable subagents
+   - `delegate-to-subagents`: delegate tasks to the most suitable subagents
 
 2. **Lock target**
    - PR: review that PR.
@@ -87,16 +87,17 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - Assign final severity.
 
 10. **Output**
-   - Use the user’s requested mode.
-   - For PR comment or machine-readable output, use `references/output-formats.md`.
-   - Normal format:
-     - severity
-     - file/line
-     - issue
-     - impact
-     - suggested fix
-   - If no findings survive, say:
-     `No change-linked issues were found.`
+
+- Use the user’s requested mode.
+- For PR comment or machine-readable output, use `references/output-formats.md`.
+- Normal format:
+  - severity
+  - file/line
+  - issue
+  - impact
+  - suggested fix
+- If no findings survive, say:
+  `No change-linked issues were found.`
 
 ## Tone
 

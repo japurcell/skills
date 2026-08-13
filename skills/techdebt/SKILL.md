@@ -10,7 +10,7 @@ Remove duplicated code while preserving behavior. Prefer small, safe, validated 
 
 ## 1. Route
 
-Before starting, ensure the `subagent-model-router` skill is activated or loaded.
+Before starting, activate or load the `delegate-to-subagents` skill so that you delegate tasks to the most suitable subagents for each task type when useful.
 
 ## 2. Scope
 

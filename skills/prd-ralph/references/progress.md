@@ -42,6 +42,8 @@ Use real date/time and task ID.
 - Include every field.
 - Include exact verification commands/checks and concise pass/fail evidence.
 - Include every command/tool failure or timeout, even if later fixed.
+- Include every mistake and human correction, even if later fixed.
+- Include every workaround discovered.
 - Include browser verification evidence when required.
 - Never treat an unexecuted browser check as passing.
 - Include every session commit in `session_start_head..HEAD`.

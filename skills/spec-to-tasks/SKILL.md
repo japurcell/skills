@@ -32,7 +32,7 @@ Create directories as needed.
 
 ## Workflow
 
-1. Activate or load the `subagent-model-router` skill and delegate tasks to the most suitable subagents whenever useful.
+1. Activate or load the `delegate-to-subagents` skill so that you delegate tasks to the most suitable subagents for each task type when useful.
 2. Resolve the spec source and output path. If no spec source is available, ask the user and stop.
 3. Read the spec if not already in context.
 4. If the input is a `/prd`-style PRD, follow `references/prd-handling.md`.

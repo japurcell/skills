@@ -42,6 +42,10 @@ If file access is available, reuse/save research in `.agents/scratchpad/official
 - `NOTES:` key documented choices
 - `UNVERIFIED:` none or list
 
+## Subagent delegation
+
+Activate or load the `delegate-to-subagents` skill so that you delegate tasks to the most suitable subagents for each task type when useful.
+
 ## Final check
 
 - Version detected or uncertainty stated

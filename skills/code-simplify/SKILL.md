@@ -7,7 +7,7 @@ Activate or load the `addy-code-simplification` skill.
 
 Simplify recently changed code (or the specified scope) while preserving exact behavior:
 
-1. Activate or load the `subagent-model-router` skill and delegate tasks to the most suitable subagents whenever possible.
+1. Activate or load the `delegate-to-subagents` skill and delegate tasks to the most suitable subagents whenever useful.
 2. Read AGENTS.md and study project conventions
 3. Identify the target code — recent changes unless a broader scope is specified
 4. Understand the code's purpose, callers, edge cases, and test coverage before touching it

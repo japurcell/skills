@@ -19,9 +19,7 @@ Complete **at most one** eligible unfinished task from `prd_file`.
 
 - Do not interview the user. Make reasonable assumptions and record them in `progress_file`.
 - Treat `prd_file` as the source of truth.
-- Do not start unsafe, contradictory, missing, or dependency-blocked work.
 - Never invent commands, paths, requirements, or acceptance criteria.
-- Keep changes minimal and task-scoped. Preserve unrelated user changes.
 - After any command/tool failure or timeout, read `references/failures.md`.
 - Never commit `prd_file`, `progress_file`, unrelated changes, or blocked/failing work.
 - Set `passes: true` only after:
@@ -88,7 +86,7 @@ Before implementation, inspect the selected task. If requirements or acceptance 
 
 ### 3. Implement
 
-1. Activate or load the `tdd` skill.
+1. Activate or load the `tdd` skill, even if you already know TDD principles. This skill contains expert-level, specific knowledge.
 2. Follow only the selected task’s:
    - `description`
    - `acceptanceCriteria`
@@ -165,7 +163,7 @@ Before responding, confirm:
 
 - progress was appended for any attempted selected task
 - every command/tool failure or timeout was recorded in `progress_file`
-- every mistake and/or workaround was recorded in `Learnings`
+- every mistake and/or workaround and human correction was recorded in `Learnings`
 - verification passed or the task was blocked
 - commit gate passed or the task was blocked
 - all session commits were recorded in `progress_file`
