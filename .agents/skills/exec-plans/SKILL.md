@@ -69,6 +69,7 @@ For weaker models, make milestone state explicit. At the start of each milestone
 - ExecPlans must contain and maintain a `Progress` section, a `Surprises & Discoveries` section, a `Decision Log`, and an `Outcomes & Retrospective` section. These are not optional.
 - When you discover optimizer behavior, performance tradeoffs, unexpected bugs, or inverse/unapply semantics that shaped your approach, capture those observations in the `Surprises & Discoveries` section with short evidence snippets (test output is ideal).
 - If you change course mid-implementation, document why in the `Decision Log` and reflect the implications in `Progress`. Plans are guides for the next contributor as much as checklists for you.
+- When marking a milestone as completed in the narrative sections, you MUST immediately check off its corresponding checkbox item in the Progress checklist section to maintain perfect synchronization.
 - At completion of a major task or the full plan, write an `Outcomes & Retrospective` entry summarizing what was achieved, what remains, and lessons learned.
 
 # Prototyping milestones and parallel implementations
