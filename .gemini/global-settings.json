@@ -121,7 +121,7 @@
       },
       "generalist": {
         "runConfig": {
-          "maxTurns": 50,
+          "maxTurns": 100,
           "maxTimeMinutes": 30
         }
       },
