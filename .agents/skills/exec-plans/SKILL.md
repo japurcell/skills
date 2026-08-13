@@ -1,6 +1,6 @@
 ---
 name: exec-plans
-description: Use ExecPlans when writing complex features or significant refactors from design to implementation.
+description: Use when user asks to implement complex tasks touching multiple files or layers, creating multiple scripts, system-wide refactors, or multi-milestone features without a plan.
 ---
 
 # Execution Plans (ExecPlans):

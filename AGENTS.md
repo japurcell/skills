@@ -4,7 +4,11 @@ This repository publishes custom coding skills from `skills/`, custom agent defi
 
 ## ExecPlans
 
-When writing complex features or significant refactors, use an ExecPlan from design to implementation by activating the `exec-plans` skill.
+You MUST activate the `exec-plans` skill and write an ExecPlan before making code changes if the task meets ANY of the following AND there is no existing plan:
+
+1. Touches or creates 3 or more files.
+2. Involves multiple distinct milestones or execution phases.
+3. Spans different packages or layers.
 
 ## Agent Orientation
 
