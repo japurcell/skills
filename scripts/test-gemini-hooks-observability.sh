@@ -579,7 +579,7 @@ test_sqlite_observability_persistence() {
   }')"
 
   output="$(
-    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
       python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload"
   )"
 
@@ -636,8 +636,8 @@ test_sqlite_observability_persistence() {
 
   local ev_name
   ev_name="$(sqlite3 "$db_path" "SELECT event_name FROM spans WHERE session_id = 'sqlite-session-1';")"
-  if [[ "$ev_name" != "session_end" ]]; then
-    echo "Expected event_name = session_end, got: $ev_name" >&2
+  if [[ "$ev_name" != "session_start" ]]; then
+    echo "Expected event_name = session_start, got: $ev_name" >&2
     exit 1
   fi
 
@@ -825,6 +825,118 @@ test_sqlite_span_sequencing_and_child_linkage() {
   fi
 }
 
+test_sqlite_finalization_and_transcripts() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/.gemini/hooks/logs/observability_v1.db"
+
+  # --- TEST 1: Saving, merging active chunks to .jsonl, sequence numbers and ISO 8601 timestamps ---
+  payload="$(jq -nc '{
+    sessionId: "final-session-1",
+    timestamp: "2026-06-23T23:45:00.123Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc '{
+    sessionId: "final-session-1",
+    timestamp: "2026-06-23T23:45:01.456Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc '{
+    sessionId: "final-session-1",
+    timestamp: "2026-06-23T23:45:02.789Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env OBSERVABILITY_SAMPLING_FORCE=1 \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local saved_jsonl="$home/.gemini/hooks/logs/transcripts/saved/final-session-1.jsonl"
+  if [[ ! -f "$saved_jsonl" ]]; then
+    echo "Expected saved transcript .jsonl to exist: $saved_jsonl" >&2
+    exit 1
+  fi
+
+  local merged_content
+  merged_content="$(cat "$saved_jsonl")"
+  if [[ ! "$merged_content" =~ "final-session-1" ]]; then
+    echo "Expected final-session-1 in merged lines, got: $merged_content" >&2
+    exit 1
+  fi
+  if [[ ! "$merged_content" =~ 2026-06-23T23:45:01\.456Z ]]; then
+    echo "Expected millisecond timestamp '2026-06-23T23:45:01.456Z' in merged transcript, got: $merged_content" >&2
+    exit 1
+  fi
+
+  # --- TEST 2: Payload content capping at 512KB with payload_capped = true recorded in SQLite ---
+  payload="$(jq -nc '{
+    sessionId: "final-session-2",
+    timestamp: "2026-06-23T23:46:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(python3 -c 'import json; print(json.dumps({"sessionId": "final-session-2", "timestamp": "2026-06-23T23:46:01.000Z", "content": "A" * 530000}))')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local capped_meta
+  capped_meta="$(sqlite3 "$db_path" "SELECT metadata FROM spans WHERE session_id = 'final-session-2' AND event_name = 'before_tool';")"
+  if [[ ! "$capped_meta" =~ "\"payload_capped\": true" ]]; then
+    echo "Expected metadata to record payload_capped = true, got: $capped_meta" >&2
+    exit 1
+  fi
+
+  # --- TEST 3: Stale and dead-PID span abandonment checking and setting has_errors = 1 ---
+  payload="$(jq -nc '{
+    sessionId: "final-session-3",
+    timestamp: "2026-06-23T23:47:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc '{
+    sessionId: "final-session-3",
+    timestamp: "2026-06-23T23:47:01.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  sqlite3 "$db_path" "UPDATE spans SET status = 'running', pid = 999999, updated_at_ms = 1000000000 WHERE session_id = 'final-session-3' AND event_name = 'before_tool';"
+
+  payload="$(jq -nc '{
+    sessionId: "final-session-3",
+    timestamp: "2026-06-23T23:47:02.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env OBSERVABILITY_SAMPLING_FORCE=1 \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local final_span_status
+  final_span_status="$(sqlite3 "$db_path" "SELECT status FROM spans WHERE session_id = 'final-session-3' AND event_name = 'before_tool';")"
+  if [[ "$final_span_status" != "abandoned" ]]; then
+    echo "Expected dead-PID span status to be abandoned, got: $final_span_status" >&2
+    exit 1
+  fi
+
+  local sess_errs
+  sess_errs="$(sqlite3 "$db_path" "SELECT has_errors FROM sessions WHERE session_id = 'final-session-3';")"
+  if [[ "$sess_errs" != "1" ]]; then
+    echo "Expected dead-PID session to record has_errors = 1, got: $sess_errs" >&2
+    exit 1
+  fi
+}
+
 main() {
   (
     export OBSERVABILITY_FORCE_NDJSON=1
@@ -839,6 +951,7 @@ main() {
   )
   test_sqlite_observability_persistence
   test_sqlite_span_sequencing_and_child_linkage
+  test_sqlite_finalization_and_transcripts
 }
 
 main "$@"

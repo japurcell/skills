@@ -88,7 +88,7 @@ CANONICAL_EVENT_NAME_MAP = {
     "SubagentStart": "subagent_start",
 }
 
-TERMINAL_EVENT_NAMES = {"session_end", "subagent_stop", "agent_stop"}
+TERMINAL_EVENT_NAMES = {"session_end", "subagent_stop"}
 
 _STATE: dict[str, Any] = {}
 
@@ -270,7 +270,7 @@ def _rotate_log_if_needed(log_path: Path) -> None:
         pass
 
 
-def _sanitize_string(value: str, *, key: str | None = None) -> str:
+def _sanitize_string(value: str, *, key: str | None = None, bypass_capping: bool = False) -> str:
     lowered_key = (key or "").replace("-", "").replace("_", "").lower()
     is_secret = (
         lowered_key in SECRET_FIELD_NAMES or
@@ -285,7 +285,7 @@ def _sanitize_string(value: str, *, key: str | None = None) -> str:
     sanitized = value.replace("\r", " ").replace("\n", " ").replace("\t", " ")
     for pattern in TOKEN_PATTERNS:
         sanitized = pattern.sub(lambda match: f"{match.group(0)[:4]}...{match.group(0)[-4:]}", sanitized)
-    if len(sanitized) > OBSERVABILITY_DEFAULT_MAX_STRING_CHARS:
+    if not bypass_capping and len(sanitized) > OBSERVABILITY_DEFAULT_MAX_STRING_CHARS:
         cap = OBSERVABILITY_DEFAULT_MAX_STRING_CHARS
         omitted = len(sanitized) - cap
         marker = f"...[capped {omitted} chars]..."
@@ -294,36 +294,39 @@ def _sanitize_string(value: str, *, key: str | None = None) -> str:
     return sanitized
 
 
-def _sanitize_value(value: Any, *, key: str | None = None, depth: int = 0) -> Any:
-    if depth > 4:
+def _sanitize_value(value: Any, *, key: str | None = None, depth: int = 0, bypass_capping: bool = False) -> Any:
+    if not bypass_capping and depth > 4:
         return "[CAPPED]"
 
     if isinstance(value, str):
-        return _sanitize_string(value, key=key)
+        return _sanitize_string(value, key=key, bypass_capping=bypass_capping)
     if isinstance(value, bytes):
-        return _sanitize_string(value.decode("utf-8", errors="replace"), key=key)
+        return _sanitize_string(value.decode("utf-8", errors="replace"), key=key, bypass_capping=bypass_capping)
     if isinstance(value, Mapping):
         items: dict[str, Any] = {}
         for index, (child_key, child_value) in enumerate(value.items()):
-            if index >= OBSERVABILITY_DEFAULT_MAX_ITEMS:
+            if not bypass_capping and index >= OBSERVABILITY_DEFAULT_MAX_ITEMS:
                 items["_capped"] = True
                 items["_capped_items"] = max(0, len(value) - OBSERVABILITY_DEFAULT_MAX_ITEMS)
                 break
             child_key_text = str(child_key)
-            items[child_key_text] = _sanitize_value(child_value, key=child_key_text, depth=depth + 1)
+            items[child_key_text] = _sanitize_value(child_value, key=child_key_text, depth=depth + 1, bypass_capping=bypass_capping)
         return items
     if isinstance(value, list):
-        sanitized = [_sanitize_value(item, key=key, depth=depth + 1) for item in value[:OBSERVABILITY_DEFAULT_MAX_ITEMS]]
-        if len(value) > OBSERVABILITY_DEFAULT_MAX_ITEMS:
-            sanitized.append(
-                {
-                    "_capped": True,
-                    "_capped_items": len(value) - OBSERVABILITY_DEFAULT_MAX_ITEMS,
-                }
-            )
+        if bypass_capping:
+            sanitized = [_sanitize_value(item, key=key, depth=depth + 1, bypass_capping=bypass_capping) for item in value]
+        else:
+            sanitized = [_sanitize_value(item, key=key, depth=depth + 1, bypass_capping=bypass_capping) for item in value[:OBSERVABILITY_DEFAULT_MAX_ITEMS]]
+            if len(value) > OBSERVABILITY_DEFAULT_MAX_ITEMS:
+                sanitized.append(
+                    {
+                        "_capped": True,
+                        "_capped_items": len(value) - OBSERVABILITY_DEFAULT_MAX_ITEMS,
+                    }
+                )
         return sanitized
     if isinstance(value, tuple):
-        return [_sanitize_value(item, key=key, depth=depth + 1) for item in value]
+        return [_sanitize_value(item, key=key, depth=depth + 1, bypass_capping=bypass_capping) for item in value]
     return value
 
 
@@ -811,6 +814,419 @@ def _backfill_parent_session_id(conn: sqlite3.Connection, session_id: str, works
         pass
 
 
+def _finalization_timeout_ms() -> int:
+    val = None
+    if OBSERVABILITY_RUNTIME == "copilot":
+        val = os.environ.get("COPILOT_OBSERVABILITY_FINALIZATION_TIMEOUT_MS")
+    elif OBSERVABILITY_RUNTIME == "gemini":
+        val = os.environ.get("GEMINI_OBSERVABILITY_FINALIZATION_TIMEOUT_MS")
+
+    if not val:
+        val = os.environ.get("OBSERVABILITY_FINALIZATION_TIMEOUT_MS")
+
+    if val:
+        try:
+            return max(0, int(val))
+        except ValueError:
+            pass
+    return 5000
+
+
+def _running_span_stale_ms() -> int:
+    val = None
+    if OBSERVABILITY_RUNTIME == "copilot":
+        val = os.environ.get("COPILOT_OBSERVABILITY_RUNNING_SPAN_STALE_MS")
+    elif OBSERVABILITY_RUNTIME == "gemini":
+        val = os.environ.get("GEMINI_OBSERVABILITY_RUNNING_SPAN_STALE_MS")
+
+    if not val:
+        val = os.environ.get("OBSERVABILITY_RUNNING_SPAN_STALE_MS")
+
+    if val:
+        try:
+            return max(0, int(val))
+        except ValueError:
+            pass
+    return 30000
+
+
+def _pid_exists(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+def _cap_payload_content(raw: dict[str, Any], effective: dict[str, Any] | None) -> tuple[dict[str, Any], dict[str, Any] | None, bool]:
+    payload_dict = {"raw": raw}
+    if effective is not None:
+        payload_dict["effective"] = effective
+    
+    payload_str = json.dumps(payload_dict, ensure_ascii=False)
+    if len(payload_str.encode("utf-8")) <= 512 * 1024:
+        return raw, effective, False
+
+    capped = False
+    
+    def shrink_obj(obj: Any) -> Any:
+        nonlocal capped
+        if isinstance(obj, dict):
+            new_dict = {}
+            for k, v in obj.items():
+                new_dict[k] = shrink_obj(v)
+            return new_dict
+        elif isinstance(obj, list):
+            return [shrink_obj(x) for x in obj]
+        elif isinstance(obj, str):
+            if len(obj.encode("utf-8")) > 10 * 1024:
+                capped = True
+                return obj[:1024] + "... [CAPPED]"
+            return obj
+        return obj
+
+    r_raw = shrink_obj(raw)
+    r_eff = shrink_obj(effective) if effective is not None else None
+
+    payload_dict = {"raw": r_raw}
+    if r_eff is not None:
+        payload_dict["effective"] = r_eff
+    
+    payload_str = json.dumps(payload_dict, ensure_ascii=False)
+    if len(payload_str.encode("utf-8")) > 512 * 1024:
+        capped = True
+        r_raw = {"payload_capped_error": "Payload exceeded 512KB limits and was cleared."}
+        r_eff = {"payload_capped_error": "Payload exceeded 512KB limits and was cleared."} if r_eff is not None else None
+
+    return r_raw, r_eff, True
+
+
+def _write_transcript_chunk(
+    session_id: str,
+    span_id: str,
+    parent_span_id: str | None,
+    event_name: str,
+    source_event_name: str,
+    hook_record: dict[str, Any],
+    db_path: Path,
+    busy_timeout: int,
+    timestamp_ms: int,
+    sanitized_raw: dict[str, Any],
+    sanitized_eff: dict[str, Any] | None,
+    meta: dict[str, Any],
+    sequence_no: int
+) -> None:
+    is_lifecycle = event_name in {"session_start", "session_end", "subagent_start", "subagent_stop", "agent_stop"}
+    is_mutated = "mutated" in hook_record
+    is_textual_or_mutated = (not is_lifecycle) or is_mutated
+
+    if is_textual_or_mutated:
+        try:
+            import datetime
+            dt = datetime.datetime.fromtimestamp(timestamp_ms / 1000.0, tz=datetime.timezone.utc)
+            iso_timestamp = dt.strftime("%Y-%m-%dT%H:%M:%S") + f".{int(timestamp_ms % 1000):03d}Z"
+
+            r_raw, r_eff, is_capped = _cap_payload_content(sanitized_raw, sanitized_eff if is_mutated else None)
+
+            if is_capped:
+                meta["payload_capped"] = True
+                meta["raw_payload"] = r_raw
+                if r_eff is not None:
+                    meta["effective_payload"] = r_eff
+                try:
+                    with _connect_and_init_db(db_path, busy_timeout) as update_conn:
+                        update_conn.execute("BEGIN IMMEDIATE")
+                        update_conn.execute("UPDATE spans SET metadata = ? WHERE span_id = ?", (json.dumps(meta, ensure_ascii=False), span_id))
+                        update_conn.commit()
+                except Exception:
+                    pass
+
+            chunk_data = {
+                "session_id": session_id,
+                "span_id": span_id,
+                "parent_span_id": parent_span_id or None,
+                "event_name": event_name,
+                "source_event_name": source_event_name,
+                "timestamp": iso_timestamp,
+                "outcome": hook_record["outcome"],
+                "payload": {
+                    "raw": r_raw
+                }
+            }
+            if is_mutated and r_eff is not None:
+                chunk_data["payload"]["effective"] = r_eff
+            if is_capped:
+                chunk_data["payload_capped"] = True
+
+            active_dir = db_path.parent / "transcripts" / "active" / session_id
+            active_dir.mkdir(parents=True, exist_ok=True)
+            chunk_file = active_dir / f"{sequence_no:06d}_{span_id}.json"
+            
+            temp_chunk = chunk_file.with_suffix(".tmp")
+            with open(temp_chunk, "w", encoding="utf-8") as f:
+                json.dump(chunk_data, f, ensure_ascii=False)
+            temp_chunk.replace(chunk_file)
+            
+            try:
+                with _connect_and_init_db(db_path, busy_timeout) as update_conn:
+                    update_conn.execute("BEGIN IMMEDIATE")
+                    update_conn.execute("UPDATE spans SET transcript_chunk_path = ? WHERE span_id = ?", (str(chunk_file), span_id))
+                    update_conn.commit()
+            except Exception:
+                pass
+
+        except Exception:
+            pass
+
+
+def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) -> None:
+    finalizer_busy = _finalization_busy_timeout_ms()
+    timeout_budget = _finalization_timeout_ms()
+    stale_threshold = _running_span_stale_ms()
+    
+    start_time = time.monotonic()
+    
+    try:
+        with _connect_and_init_db(db_path, finalizer_busy) as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                conn.execute(
+                    "UPDATE sessions SET status = 'finalizing' WHERE session_id = ? AND status = 'running'",
+                    (session_id,)
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+    except Exception:
+        pass
+
+    polling_cadence = 0.01
+    has_uncompleted = True
+    
+    while time.monotonic() - start_time < (timeout_budget / 1000.0):
+        running_spans = []
+        try:
+            with _connect_and_init_db(db_path, finalizer_busy) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT span_id, updated_at_ms, pid FROM spans WHERE session_id = ? AND status = 'running'",
+                    (session_id,)
+                )
+                running_spans = cursor.fetchall()
+        except Exception:
+            pass
+        
+        if not running_spans:
+            has_uncompleted = False
+            break
+            
+        now_ms = int(time.time() * 1000)
+        any_changed = False
+        
+        for span_id, updated_at_ms, pid in running_spans:
+            pid_dead = False
+            if pid:
+                pid_dead = not _pid_exists(pid)
+            
+            stale_age = False
+            if updated_at_ms and (now_ms - updated_at_ms > stale_threshold):
+                stale_age = True
+                
+            if pid_dead or stale_age:
+                try:
+                    with _connect_and_init_db(db_path, finalizer_busy) as conn:
+                        conn.execute("BEGIN IMMEDIATE")
+                        try:
+                            conn.execute(
+                                "UPDATE spans SET status = 'abandoned', updated_at_ms = ? WHERE span_id = ?",
+                                (now_ms, span_id)
+                            )
+                            conn.execute(
+                                "UPDATE sessions SET has_errors = 1 WHERE session_id = ?",
+                                (session_id,)
+                            )
+                            conn.commit()
+                            any_changed = True
+                        except Exception:
+                            conn.rollback()
+                except Exception:
+                    pass
+                    
+        if not any_changed:
+            time.sleep(polling_cadence)
+            
+    if has_uncompleted:
+        try:
+            with _connect_and_init_db(db_path, finalizer_busy) as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                try:
+                    conn.execute(
+                        "UPDATE sessions SET status = 'failed-finalization', has_errors = 1 WHERE session_id = ?",
+                        (session_id,)
+                    )
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+        except Exception:
+            pass
+        return
+        
+    now_epoch_ms = int(time.time() * 1000)
+    try:
+        with _connect_and_init_db(db_path, finalizer_busy) as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT start_time_ms FROM sessions WHERE session_id = ?", (session_id,))
+                row = cursor.fetchone()
+                start_ms = row[0] if (row and row[0]) else now_epoch_ms
+                duration_ms = max(0, now_epoch_ms - start_ms)
+                
+                conn.execute(
+                    """
+                    UPDATE sessions SET
+                        status = 'sealing',
+                        end_time_ms = ?,
+                        total_duration_ms = ?
+                    WHERE session_id = ?;
+                    """,
+                    (now_epoch_ms, duration_ms, session_id)
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+    except Exception:
+        pass
+
+    try:
+        with _connect_and_init_db(db_path, finalizer_busy) as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT start_time_ms FROM sessions WHERE session_id = ?", (session_id,))
+                row = cursor.fetchone()
+                start_ms = row[0] if (row and row[0]) else now_epoch_ms
+                _backfill_parent_session_id(conn, session_id, _workspace_root({}), start_ms)
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    except Exception:
+        pass
+
+    active_dir = db_path.parent / "transcripts" / "active" / session_id
+    saved_dir = db_path.parent / "transcripts" / "saved"
+    saved_file = saved_dir / f"{session_id}.jsonl"
+    
+    merged_lines = []
+    if active_dir.exists():
+        chunk_files = sorted(active_dir.glob("*.json"))
+        for chunk_file in chunk_files:
+            try:
+                with open(chunk_file, "r", encoding="utf-8") as f:
+                    chunk_data = json.load(f)
+                    
+                if not chunk_data.get("parent_session_id"):
+                    try:
+                        with _connect_and_init_db(db_path, finalizer_busy) as conn:
+                            cursor = conn.cursor()
+                            cursor.execute("SELECT parent_session_id FROM sessions WHERE session_id = ?", (session_id,))
+                            row = cursor.fetchone()
+                            if row and row[0]:
+                                chunk_data["parent_session_id"] = row[0]
+                    except Exception:
+                        pass
+                merged_lines.append(json.dumps(chunk_data, ensure_ascii=False) + "\n")
+            except Exception:
+                pass
+
+    has_errors = 0
+    try:
+        with _connect_and_init_db(db_path, finalizer_busy) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT has_errors FROM sessions WHERE session_id = ?", (session_id,))
+            row = cursor.fetchone()
+            if row and row[0]:
+                has_errors = row[0]
+    except Exception:
+        pass
+        
+    retained = False
+    if has_errors:
+        retained = True
+    else:
+        force_sampling = None
+        if OBSERVABILITY_RUNTIME == "copilot":
+            force_sampling = os.environ.get("COPILOT_OBSERVABILITY_SAMPLING_FORCE")
+        elif OBSERVABILITY_RUNTIME == "gemini":
+            force_sampling = os.environ.get("GEMINI_OBSERVABILITY_SAMPLING_FORCE")
+            
+        if not force_sampling:
+            force_sampling = os.environ.get("OBSERVABILITY_SAMPLING_FORCE")
+            
+        if force_sampling:
+            if force_sampling.strip().lower() in {"1", "true", "yes", "on"}:
+                retained = True
+            elif force_sampling.strip().lower() in {"0", "false", "no", "off"}:
+                retained = False
+        else:
+            import random
+            retained = random.random() < 0.05
+
+    if retained and merged_lines:
+        try:
+            saved_dir.mkdir(parents=True, exist_ok=True)
+            temp_saved = saved_file.with_suffix(".tmp")
+            with open(temp_saved, "w", encoding="utf-8") as f:
+                f.writelines(merged_lines)
+            temp_saved.replace(saved_file)
+            
+            with _connect_and_init_db(db_path, finalizer_busy) as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                try:
+                    conn.execute(
+                        "UPDATE sessions SET transcript_path = ? WHERE session_id = ?",
+                        (str(saved_file), session_id)
+                    )
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+        except Exception:
+            pass
+
+    if active_dir.exists():
+        try:
+            import shutil
+            shutil.rmtree(active_dir)
+        except Exception:
+            pass
+
+    try:
+        registry_file = db_path.parent / "registries" / "subagents" / f"{session_id}.json"
+        if registry_file.exists():
+            os.remove(registry_file)
+    except Exception:
+        pass
+
+    final_status = "failed" if has_errors else "success"
+    try:
+        with _connect_and_init_db(db_path, finalizer_busy) as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                conn.execute(
+                    "UPDATE sessions SET status = ? WHERE session_id = ?",
+                    (final_status, session_id)
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    except Exception:
+        pass
+
+
 def begin_hook_capture(payload: Mapping[str, Any]) -> None:
     if _disabled():
         return
@@ -870,22 +1286,28 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                         "UPDATE sessions SET status = 'running', start_time_ms = COALESCE(start_time_ms, ?) WHERE session_id = ?",
                         (timestamp_ms, session_id)
                     )
+                elif event_name in TERMINAL_EVENT_NAMES:
+                    conn.execute(
+                        "UPDATE sessions SET status = 'finalizing' WHERE session_id = ?",
+                        (session_id,)
+                    )
 
                 cursor = conn.cursor()
+                parent_span_id = raw_payload.get("parent_span_id") or raw_payload.get("parentSpanId")
                 if _supports_returning():
                     cursor.execute(
                         """
-                        INSERT INTO spans (span_id, session_id, sequence_no, event_name, source_event_name, hook_name, timestamp_ms, updated_at_ms, pid, status, late_arrival, metadata)
-                        SELECT ?, s.session_id, COALESCE(MAX(sp.sequence_no), 0) + 1, ?, ?, ?, ?, ?, ?, 'running',
+                        INSERT INTO spans (span_id, parent_span_id, session_id, sequence_no, event_name, source_event_name, hook_name, timestamp_ms, updated_at_ms, pid, status, late_arrival, metadata)
+                        SELECT ?, ?, s.session_id, COALESCE(MAX(sp.sequence_no), 0) + 1, ?, ?, ?, ?, ?, ?, 'running',
                                CASE WHEN s.status = 'finalizing' THEN 1 ELSE 0 END, ?
                         FROM sessions s
                         LEFT JOIN spans sp ON sp.session_id = s.session_id
                         WHERE s.session_id = ?
-                          AND s.status NOT IN ('success', 'failed', 'failed-finalization')
+                          AND s.status IN ('running', 'finalizing')
                         GROUP BY s.session_id
                         RETURNING sequence_no;
                         """,
-                        (span_id, event_name, source_event_name, hook_name, timestamp_ms, timestamp_ms, os.getpid(), json.dumps({}), session_id)
+                        (span_id, parent_span_id, event_name, source_event_name, hook_name, timestamp_ms, timestamp_ms, os.getpid(), json.dumps({}), session_id)
                     )
                     row = cursor.fetchone()
                     if row:
@@ -897,16 +1319,16 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                 else:
                     cursor.execute(
                         """
-                        INSERT INTO spans (span_id, session_id, sequence_no, event_name, source_event_name, hook_name, timestamp_ms, updated_at_ms, pid, status, late_arrival, metadata)
-                        SELECT ?, s.session_id, COALESCE(MAX(sp.sequence_no), 0) + 1, ?, ?, ?, ?, ?, ?, 'running',
+                        INSERT INTO spans (span_id, parent_span_id, session_id, sequence_no, event_name, source_event_name, hook_name, timestamp_ms, updated_at_ms, pid, status, late_arrival, metadata)
+                        SELECT ?, ?, s.session_id, COALESCE(MAX(sp.sequence_no), 0) + 1, ?, ?, ?, ?, ?, ?, 'running',
                                CASE WHEN s.status = 'finalizing' THEN 1 ELSE 0 END, ?
                         FROM sessions s
                         LEFT JOIN spans sp ON sp.session_id = s.session_id
                         WHERE s.session_id = ?
-                          AND s.status NOT IN ('success', 'failed', 'failed-finalization')
+                          AND s.status IN ('running', 'finalizing')
                         GROUP BY s.session_id;
                         """,
-                        (span_id, event_name, source_event_name, hook_name, timestamp_ms, timestamp_ms, os.getpid(), json.dumps({}), session_id)
+                        (span_id, parent_span_id, event_name, source_event_name, hook_name, timestamp_ms, timestamp_ms, os.getpid(), json.dumps({}), session_id)
                     )
                     if cursor.rowcount > 0:
                         sqlite_success = True
@@ -974,8 +1396,8 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
     span_id = _STATE.get("span_id")
     session_id = _session_id(raw_payload)
     if not _sqlite_disabled() and _STATE.get("sqlite_success") and span_id and session_id:
-        sanitized_raw = _sanitize_value(raw_payload)
-        sanitized_eff = _sanitize_value(effective_payload)
+        sanitized_raw = _sanitize_value(raw_payload, bypass_capping=True)
+        sanitized_eff = _sanitize_value(effective_payload, bypass_capping=True)
         meta = {
             "duration_ms": duration_ms,
             "outcome": hook_record["outcome"],
@@ -1024,6 +1446,29 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
                 conn.close()
         except Exception:
             pass
+
+        if sqlite_success:
+            sequence_no = _STATE.get("sequence_no")
+            if sequence_no is not None:
+                parent_span_id = raw_payload.get("parent_span_id") or raw_payload.get("parentSpanId")
+                _write_transcript_chunk(
+                    session_id=session_id,
+                    span_id=span_id,
+                    parent_span_id=parent_span_id,
+                    event_name=event_name,
+                    source_event_name=source_event_name,
+                    hook_record=hook_record,
+                    db_path=db_path,
+                    busy_timeout=busy_timeout,
+                    timestamp_ms=timestamp_ms,
+                    sanitized_raw=sanitized_raw,
+                    sanitized_eff=sanitized_eff,
+                    meta=meta,
+                    sequence_no=sequence_no
+                )
+                
+            if event_name in TERMINAL_EVENT_NAMES:
+                _finalize_session(session_id, db_path, busy_timeout)
 
     if not sqlite_success and not _STATE.get("rejected"):
         _write_record(hook_record)
