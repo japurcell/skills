@@ -42,7 +42,12 @@ TOKEN_PATTERNS = (
     re.compile(r"gh[pousr]_[A-Za-z0-9]{36}"),
     re.compile(r"github_pat_[A-Za-z0-9_]{20,}"),
     re.compile(r"AKIA[0-9A-Z]{16}"),
+    re.compile(r"sk-(?:proj-)?[A-Za-z0-9_-]{20,}"),
+    re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}"),
     re.compile(r"sk_live_[0-9A-Za-z]{16,}"),
+    re.compile(r"AIza[0-9A-Za-z-_]{35}"),
+    re.compile(r"eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*"),
+    re.compile(r"(?<=://)[^:]+:[^@]+(?=@)"),
     re.compile(r"xox[baprs]-[0-9A-Za-z-]{10,}"),
 )
 
@@ -711,6 +716,27 @@ def _init_schema_if_needed(conn: sqlite3.Connection) -> None:
         raise sqlite3.OperationalError("mismatched schema version")
 
 
+def _backup_corrupt_db(db_path: Path) -> None:
+    try:
+        import datetime
+        now = datetime.datetime.now(datetime.timezone.utc)
+        date_str = now.strftime("%Y-%m-%d")
+        backup_path = db_path.with_name(f"{db_path.name}.corrupt.{date_str}")
+        if backup_path.exists():
+            try:
+                backup_path.unlink()
+            except Exception:
+                pass
+        if db_path.exists():
+            db_path.rename(backup_path)
+        for suffix in ["-wal", "-shm"]:
+            p = Path(str(db_path) + suffix)
+            if p.exists():
+                p.unlink()
+    except Exception:
+        pass
+
+
 def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection:
     try:
         conn = _connect_db(db_path, busy_timeout)
@@ -728,12 +754,15 @@ def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection
 
         if (is_mismatch or is_corrupt) and not is_transient:
             try:
-                if db_path.exists():
-                    db_path.unlink()
-                for suffix in ["-wal", "-shm"]:
-                    p = Path(str(db_path) + suffix)
-                    if p.exists():
-                        p.unlink()
+                if is_corrupt:
+                    _backup_corrupt_db(db_path)
+                else:
+                    if db_path.exists():
+                        db_path.unlink()
+                    for suffix in ["-wal", "-shm"]:
+                        p = Path(str(db_path) + suffix)
+                        if p.exists():
+                            p.unlink()
             except Exception:
                 pass
             conn = _connect_db(db_path, busy_timeout)
@@ -749,15 +778,7 @@ def _handle_write_corruption(db_path: Path, exc: Exception) -> None:
     err_msg = str(exc).lower()
     is_corrupt = "malformed" in err_msg or "not a database" in err_msg or "corrupt" in err_msg
     if is_corrupt:
-        try:
-            if db_path.exists():
-                db_path.unlink()
-            for suffix in ["-wal", "-shm"]:
-                p = Path(str(db_path) + suffix)
-                if p.exists():
-                    p.unlink()
-        except Exception:
-            pass
+        _backup_corrupt_db(db_path)
 
 
 def _timestamp_to_ms(ts_str: str) -> int:
