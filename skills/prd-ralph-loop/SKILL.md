@@ -1,10 +1,12 @@
 ---
 name: prd-ralph-loop
-description: Run prd-ralph repeatedly over a PRD until it returns <promise>COMPLETE</promise>. Use for completing all PRD tasks/stories, not a single task.
+description: Orchestrate the implementation of a PRD with subagents. Use for completing all PRD tasks/stories, not a single task.
 disable-model-invocation: true
 ---
 
 # /prd-ralph-loop
+
+Orchestrate the implementation of a PRD with subagents.
 
 ## Input
 
@@ -15,7 +17,7 @@ disable-model-invocation: true
 1. Record baseline:
    - `review_base_sha = git rev-parse HEAD`
    - initial `git status --porcelain`
-   If either fails, stop and report the issue.
+     If either fails, stop and report the issue.
 2. Activate or load the `subagent-model-router` skill.
 3. Repeat sequentially:
    - Start one fresh subagent.
