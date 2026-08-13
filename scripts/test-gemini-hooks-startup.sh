@@ -6,12 +6,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
 write_required_skill_fixtures() {
   local skills_dir="$1"
+  mkdir -p "$skills_dir/caveman" "$skills_dir/universal-guidelines" "$skills_dir/cli-compression" "$skills_dir/writing-great-skills"
 
-  mkdir -p \
-    "$skills_dir/universal-guidelines" \
-    "$skills_dir/cli-compression" \
-    "$skills_dir/context-engineering" \
-    "$skills_dir/caveman"
+  
 
   cat >"$skills_dir/universal-guidelines/SKILL.md" <<'EOF'
 ---
@@ -31,12 +28,12 @@ description: RTK rules.
 Line B.
 EOF
 
-  cat >"$skills_dir/context-engineering/SKILL.md" <<'EOF'
+    cat >"$skills_dir/writing-great-skills/SKILL.md" <<'EOF'
 ---
-name: context-engineering
-description: Context rules.
+name: writing-great-skills
+description: Reference for writing and editing skills well
 ---
-# Context Engineering
+# Writing Great Skills
 Line C.
 EOF
 
@@ -103,8 +100,8 @@ assert_caveman_context_shape() {
     echo "Expected payload to exclude cli-compression content." >&2
     exit 1
   }
-  [[ "$context" != *"# Context Engineering"* ]] || {
-    echo "Expected payload to exclude context-engineering content." >&2
+  [[ "$context" != *"# Writing Great Skills"* ]] || {
+    echo "Expected payload to exclude writing-great-skills content." >&2
     exit 1
   }
 }
@@ -216,7 +213,7 @@ test_multiple_skills_loading_works_correctly() {
 
   output="$(
     AUDIT_LOG="$workdir/audit.log" \
-    AGENTS_REQUIRED_SKILL_FILES="caveman/SKILL.md,context-engineering/SKILL.md" \
+    AGENTS_REQUIRED_SKILL_FILES="caveman/SKILL.md,writing-great-skills/SKILL.md" \
     run_skill_context_injector \
       "$skills_dir" \
       '{"session_id":"gemini-multiple","timestamp":"2026-06-24T10:00:03Z","hook_event_name":"BeforeAgent","cwd":"/repo","prompt":"hello"}'
@@ -230,9 +227,9 @@ test_multiple_skills_loading_works_correctly() {
   expected_context="<!-- BEGIN REQUIRED SKILL: $skills_dir/caveman/SKILL.md -->"$'\n'
   expected_context+="$(expected_caveman_context "$skills_dir")"$'\n'
   expected_context+="<!-- END REQUIRED SKILL: $skills_dir/caveman/SKILL.md -->"$'\n\n'
-  expected_context+="<!-- BEGIN REQUIRED SKILL: $skills_dir/context-engineering/SKILL.md -->"$'\n'
-  expected_context+="$(strip_frontmatter "$skills_dir/context-engineering/SKILL.md")"$'\n'
-  expected_context+="<!-- END REQUIRED SKILL: $skills_dir/context-engineering/SKILL.md -->"
+  expected_context+="<!-- BEGIN REQUIRED SKILL: $skills_dir/writing-great-skills/SKILL.md -->"$'\n'
+  expected_context+="$(strip_frontmatter "$skills_dir/writing-great-skills/SKILL.md")"$'\n'
+  expected_context+="<!-- END REQUIRED SKILL: $skills_dir/writing-great-skills/SKILL.md -->"
 
   assert_equals "$expected_context" "$context" \
     "Expected multiple skills mode to emit correct delimited skill contents."

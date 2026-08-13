@@ -259,7 +259,7 @@ test_multiple_skills_loading_works_correctly() {
       "$audit_log" \
       '{"sessionId":"multiple-skills-session","timestamp":"2026-05-21T09:00:05Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "" \
-      "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md,context-engineering/SKILL.md"
+      "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md,writing-great-skills/SKILL.md"
   )"
 
   context="$(jq -r '.additionalContext' <<<"$output")"
@@ -273,8 +273,8 @@ test_multiple_skills_loading_works_correctly() {
   assert_file_contains <(printf '%s' "$context") "Respond terse like smart caveman." \
     "Expected required context to include caveman content."
 
-  assert_file_contains <(printf '%s' "$context") "Goal: load only context" \
-    "Expected required context to include context-engineering content."
+  assert_file_contains <(printf '%s' "$context") "A skill exists to wrangle determinism out of a stochastic system." \
+    "Expected required context to include writing-great-skills content."
 }
 
 main() {

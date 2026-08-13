@@ -39,6 +39,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | Path | Why it matters |
 | --- | --- |
 | `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, and `~/.gemini` targets. |
+| `scripts/common.sh` | Shared shell helper for resolving repo root in small shell tests and utilities. |
 | `scripts/addy-install.sh` | Imports selected upstream addy skills, agents, and references into this repo. |
 | `.agents/memory/sources/source-ingest-manifest.json` | Shared source-summary state file for Copilot and Gemini auto-ingest hooks plus pending-ingest gating. |
 | `.copilot/hooks/rtk-rewrite.json` | RTK rewrite config used by hook-driven tool rewrite flows; points at `.copilot/hooks/scripts/rtk-hook-copilot.py`. |

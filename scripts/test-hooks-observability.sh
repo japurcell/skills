@@ -664,6 +664,165 @@ test_sqlite_observability_persistence() {
   fi
 }
 
+test_sqlite_span_sequencing_and_child_linkage() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/.copilot/hooks/logs/observability_v1.db"
+
+  # 1. Verify Parent-side subagentStart writes registry file and backfills parent session
+  payload="$(jq -nc '{
+    sessionId: "child-session-123",
+    timestamp: "2026-06-23T23:50:00Z"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=subagentStart COPILOT_SESSION_ID="parent-session-abc" \
+      python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local reg_file="$home/.copilot/hooks/logs/registries/subagents/child-session-123.json"
+  if [[ ! -f "$reg_file" ]]; then
+    echo "Expected subagent registry file to be created: $reg_file" >&2
+    exit 1
+  fi
+
+  local reg_parent
+  reg_parent="$(jq -r '.parent_session_id' "$reg_file")"
+  if [[ "$reg_parent" != "parent-session-abc" ]]; then
+    echo "Expected parent_session_id parent-session-abc in registry file, got: $reg_parent" >&2
+    exit 1
+  fi
+
+  # 2. Verify child session has parent_session_id correctly linked in DB
+  local parent_id
+  parent_id="$(sqlite3 "$db_path" "SELECT parent_session_id FROM sessions WHERE session_id = 'child-session-123';")"
+  if [[ "$parent_id" != "parent-session-abc" ]]; then
+    echo "Expected parent_session_id link 'parent-session-abc' in database, got: '$parent_id'" >&2
+    exit 1
+  fi
+
+  # 3. Verify late-arrival spans allowed in finalizing sessions
+  # Move child session to 'finalizing'
+  sqlite3 "$db_path" "UPDATE sessions SET status = 'finalizing' WHERE session_id = 'child-session-123';"
+
+  # Send a late-arrival event
+  payload="$(jq -nc '{
+    sessionId: "child-session-123",
+    timestamp: "2026-06-23T23:51:00Z"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+      python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local late_arrival
+  late_arrival="$(sqlite3 "$db_path" "SELECT late_arrival FROM spans WHERE session_id = 'child-session-123' AND event_name = 'before_tool';")"
+  if [[ "$late_arrival" != "1" ]]; then
+    echo "Expected late_arrival = 1 for finalized session span, got: '$late_arrival'" >&2
+    exit 1
+  fi
+
+  # 4. Verify rejection of spans for terminal states ('success', 'failed', 'failed-finalization')
+  for t_status in success failed failed-finalization; do
+    sqlite3 "$db_path" "UPDATE sessions SET status = '$t_status' WHERE session_id = 'child-session-123';"
+    
+    # Try sending event
+    payload="$(jq -nc '{
+      sessionId: "child-session-123",
+      timestamp: "2026-06-23T23:52:00Z"
+    }')"
+
+    output="$(
+      env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+        python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload"
+    )"
+
+    local span_count
+    span_count="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM spans WHERE session_id = 'child-session-123' AND timestamp_ms = 1782258720000;")"
+    if [[ "$span_count" != "0" ]]; then
+      echo "Expected span to be rejected and NOT saved when session is '$t_status', but it was saved!" >&2
+      exit 1
+    fi
+  done
+
+  # 5. Verify retry-based backfill when registry is delayed
+  # Trigger child event first (creates session and span, parent-link is NULL because registry doesn't exist)
+  payload="$(jq -nc '{
+    sessionId: "child-delayed-999",
+    timestamp: "2026-06-23T23:55:00Z"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+      python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local linked_parent
+  linked_parent="$(sqlite3 "$db_path" "SELECT parent_session_id FROM sessions WHERE session_id = 'child-delayed-999';")"
+  if [[ -n "$linked_parent" ]]; then
+    echo "Expected parent_session_id to be NULL initially, got: '$linked_parent'" >&2
+    exit 1
+  fi
+
+  # Create registry file now
+  local delayed_reg_file="$home/.copilot/hooks/logs/registries/subagents/child-delayed-999.json"
+  mkdir -p "$(dirname "$delayed_reg_file")"
+  echo '{"parent_session_id":"parent-delayed-xyz"}' > "$delayed_reg_file"
+
+  # Trigger subsequent child event (should backfill parent_session_id)
+  payload="$(jq -nc '{
+    sessionId: "child-delayed-999",
+    timestamp: "2026-06-23T23:55:01Z"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+      python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload"
+  )"
+
+  linked_parent="$(sqlite3 "$db_path" "SELECT parent_session_id FROM sessions WHERE session_id = 'child-delayed-999';")"
+  if [[ "$linked_parent" != "parent-delayed-xyz" ]]; then
+    echo "Expected delayed parent_session_id backfill to 'parent-delayed-xyz', got: '$linked_parent'" >&2
+    exit 1
+  fi
+
+  # 6. Verify concurrent parallel registration does not create duplicate sequence_no
+  # Trigger 10 parallel background span registers for a new session and verify all 10 have unique sequence numbers 1 to 10
+  local parallel_sess="parallel-session-xyz"
+  
+  # Run 10 parallel processes
+  for i in {1..10}; do
+    (
+      payload="$(jq -nc --arg idx "$i" '{
+        sessionId: "parallel-session-xyz",
+        timestamp: "2026-06-23T23:58:00Z",
+        reason: ("proc-" + $idx)
+      }')"
+      env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+        python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+    ) &
+  done
+  wait
+
+  local unique_seq_count
+  unique_seq_count="$(sqlite3 "$db_path" "SELECT COUNT(DISTINCT sequence_no) FROM spans WHERE session_id = 'parallel-session-xyz';")"
+  if [[ "$unique_seq_count" != "10" ]]; then
+    echo "Concurrency failure: expected 10 unique sequence numbers, got: $unique_seq_count" >&2
+    # Show sequence numbers
+    sqlite3 "$db_path" "SELECT sequence_no, metadata FROM spans WHERE session_id = 'parallel-session-xyz' ORDER BY sequence_no;"
+    exit 1
+  fi
+}
+
 main() {
   (
     export OBSERVABILITY_FORCE_NDJSON=1
@@ -677,6 +836,7 @@ main() {
     test_observability_log_rotation_generic_fallback
   )
   test_sqlite_observability_persistence
+  test_sqlite_span_sequencing_and_child_linkage
 }
 
 main "$@"

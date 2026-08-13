@@ -775,6 +775,42 @@ def _ensure_session(conn: sqlite3.Connection, session_id: str, workspace_root: s
     )
 
 
+def _write_registry_file(child_session_id: str, parent_session_id: str) -> None:
+    try:
+        registry_dir = _get_db_path().parent / "registries" / "subagents"
+        registry_dir.mkdir(parents=True, exist_ok=True)
+        registry_file = registry_dir / f"{child_session_id}.json"
+        temp_file = registry_file.with_suffix(".tmp")
+        with open(temp_file, "w", encoding="utf-8") as f:
+            json.dump({"parent_session_id": parent_session_id}, f)
+        temp_file.replace(registry_file)
+    except Exception:
+        pass
+
+
+def _backfill_parent_session_id(conn: sqlite3.Connection, session_id: str, workspace_root: str, timestamp_ms: int) -> None:
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT parent_session_id FROM sessions WHERE session_id = ?", (session_id,))
+        row = cursor.fetchone()
+        if row and row[0] is not None:
+            return
+
+        registry_file = _get_db_path().parent / "registries" / "subagents" / f"{session_id}.json"
+        if registry_file.exists():
+            with open(registry_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            parent_session_id = data.get("parent_session_id")
+            if parent_session_id:
+                _ensure_session(conn, parent_session_id, workspace_root, timestamp_ms)
+                conn.execute(
+                    "UPDATE sessions SET parent_session_id = ? WHERE session_id = ?",
+                    (parent_session_id, session_id)
+                )
+    except Exception:
+        pass
+
+
 def begin_hook_capture(payload: Mapping[str, Any]) -> None:
     if _disabled():
         return
@@ -799,13 +835,26 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
     )
 
     session_id = _session_id(raw_payload)
+    event_name = _STATE.get("event_name") or _canonical_event_name(source_event_name)
+
+    if event_name == "subagent_start" and session_id:
+        parent_session_id = (
+            os.environ.get("GEMINI_SESSION_ID")
+            or os.environ.get("COPILOT_SESSION_ID")
+            or os.environ.get("OBSERVABILITY_SESSION_ID")
+            or os.environ.get("SESSION_ID")
+            or raw_payload.get("parent_session_id")
+            or raw_payload.get("parentSessionId")
+        )
+        if parent_session_id:
+            _write_registry_file(session_id, parent_session_id)
+
     sqlite_success = False
 
     if not _sqlite_disabled() and session_id:
         workspace_root = _workspace_root(raw_payload)
         ts_str = _timestamp(raw_payload)
         timestamp_ms = _timestamp_to_ms(ts_str)
-        event_name = _canonical_event_name(source_event_name)
         db_path = _get_db_path()
         busy_timeout = _busy_timeout_ms()
 
@@ -814,6 +863,7 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
             conn.execute("BEGIN IMMEDIATE")
             try:
                 _ensure_session(conn, session_id, workspace_root, timestamp_ms)
+                _backfill_parent_session_id(conn, session_id, workspace_root, timestamp_ms)
 
                 if event_name == "session_start":
                     conn.execute(
@@ -831,7 +881,7 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                         FROM sessions s
                         LEFT JOIN spans sp ON sp.session_id = s.session_id
                         WHERE s.session_id = ?
-                          AND s.status IN ('running', 'finalizing')
+                          AND s.status NOT IN ('success', 'failed', 'failed-finalization')
                         GROUP BY s.session_id
                         RETURNING sequence_no;
                         """,
@@ -840,6 +890,9 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                     row = cursor.fetchone()
                     if row:
                         _STATE["sequence_no"] = row[0]
+                        sqlite_success = True
+                    else:
+                        _STATE["rejected"] = True
                         sqlite_success = True
                 else:
                     cursor.execute(
@@ -850,7 +903,7 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                         FROM sessions s
                         LEFT JOIN spans sp ON sp.session_id = s.session_id
                         WHERE s.session_id = ?
-                          AND s.status IN ('running', 'finalizing')
+                          AND s.status NOT IN ('success', 'failed', 'failed-finalization')
                         GROUP BY s.session_id;
                         """,
                         (span_id, event_name, source_event_name, hook_name, timestamp_ms, timestamp_ms, os.getpid(), json.dumps({}), session_id)
@@ -861,6 +914,9 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                         row = cursor.fetchone()
                         if row:
                             _STATE["sequence_no"] = row[0]
+                    else:
+                        _STATE["rejected"] = True
+                        sqlite_success = True
                 conn.commit()
             except sqlite3.DatabaseError as e:
                 conn.rollback()
@@ -885,6 +941,9 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
     if _disabled():
         return
     if not _STATE.get("active") or _STATE.get("completed"):
+        return
+    if _STATE.get("rejected"):
+        _STATE["completed"] = True
         return
 
     raw_payload = _STATE.get("raw_payload") or {}
@@ -913,7 +972,8 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
 
     sqlite_success = False
     span_id = _STATE.get("span_id")
-    if not _sqlite_disabled() and _STATE.get("sqlite_success") and span_id:
+    session_id = _session_id(raw_payload)
+    if not _sqlite_disabled() and _STATE.get("sqlite_success") and span_id and session_id:
         sanitized_raw = _sanitize_value(raw_payload)
         sanitized_eff = _sanitize_value(effective_payload)
         meta = {
@@ -932,6 +992,11 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
             conn = _connect_and_init_db(db_path, busy_timeout)
             conn.execute("BEGIN IMMEDIATE")
             try:
+                workspace_root = _workspace_root(raw_payload)
+                ts_str = _timestamp(raw_payload)
+                timestamp_ms = _timestamp_to_ms(ts_str)
+                _backfill_parent_session_id(conn, session_id, workspace_root, timestamp_ms)
+
                 cursor = conn.cursor()
                 cursor.execute(
                     """
@@ -960,7 +1025,7 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
         except Exception:
             pass
 
-    if not sqlite_success:
+    if not sqlite_success and not _STATE.get("rejected"):
         _write_record(hook_record)
 
         if event_name in TERMINAL_EVENT_NAMES:
