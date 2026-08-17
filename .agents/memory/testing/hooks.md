@@ -7,6 +7,7 @@ coverage: Test guidance for repo-local Copilot plus installed Copilot and Gemini
 ## Repo checks
 
 - After changing hook source, run `./scripts/install.sh` before any live validation because installed hooks execute from `~/.copilot/hooks` or `~/.gemini/hooks`, not from repo source paths.
+- Centralize standard test environment helper utilities (such as `install_into_temp_home()`) in `scripts/test-common.sh` instead of duplicating them across individual test files.
 - Read official hook docs before non-trivial changes and keep implementation aligned with them.
 - The retained supported hook surface is Python-first; validate the Python entrypoints and installed copies rather than the retired shell format surface.
 - Copilot hook checks:

@@ -100,3 +100,10 @@ run_copilot_hook() {
       env "${env_cmd[@]}" bash "$REPO_ROOT/.copilot/hooks/scripts/$hook_name" <<<"$payload"
     fi
   }
+
+install_into_temp_home() {
+  local home="$1"
+
+  mkdir -p "$home"
+  TMPDIR="$REPO_ROOT/.tmp" HOME="$home" "$REPO_ROOT/scripts/install.sh" >/dev/null
+}

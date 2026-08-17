@@ -159,3 +159,32 @@ def run_command(
         timeout=timeout,
         shell=False,
     )
+
+
+def run_passive_log_hook(script_name: str, build_log_message_func) -> int:
+    from .audit import audit_log_event
+
+    def log_event(message: str) -> None:
+        try:
+            audit_log_event(script_name, message)
+        except Exception:
+            pass
+
+    def fail_safe(reason: str) -> None:
+        safe_reason = sanitize_log_field(reason).strip() or "Hook failed"
+        print(f"{script_name}: {safe_reason}", file=sys.stderr)
+        log_event(f"Error: {safe_reason}")
+        emit_json({})
+
+    try:
+        payload = read_json_input()
+        log_message = build_log_message_func(payload)
+        if log_message:
+            log_event(log_message)
+        emit_json({})
+        return 0
+    except ValueError as exc:
+        fail_safe(str(exc))
+    except Exception as exc:  # noqa: BLE001
+        fail_safe(f"Unexpected exception: {exc}")
+    return 0

@@ -6,6 +6,13 @@ import json
 import os
 import sys
 import time
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from helpers.common import emit_json, read_json_input  # noqa: E402
 
 
 def R(*codes: int) -> str:
@@ -264,24 +271,6 @@ def append_log(
     with open(log_file, "a", encoding="utf-8") as handle:
         handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
         handle.write("\n")
-
-
-def read_json_input() -> dict:
-    raw_input = sys.stdin.buffer.read()
-    try:
-        payload = json.loads(raw_input)
-    except json.JSONDecodeError as exc:
-        raise ValueError("Invalid hook input: expected a JSON object") from exc
-
-    if not isinstance(payload, dict):
-        raise ValueError("Invalid hook input: expected a JSON object")
-    return payload
-
-
-def emit_json(payload: dict) -> None:
-    sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-    sys.stdout.write("\n")
-    sys.stdout.flush()
 
 
 def main() -> int:

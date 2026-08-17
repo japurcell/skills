@@ -159,3 +159,34 @@ def run_command(
         timeout=timeout,
         shell=False,
     )
+
+
+def run_gemini_passive_log_hook(script_name: str, build_log_message_func) -> int:
+    from .audit import audit_init, audit_log_passive_event
+
+    def noop() -> None:
+        emit_json({})
+        raise SystemExit(0)
+
+    try:
+        input_payload = read_json_input()
+
+        if not isinstance(input_payload, dict):
+            noop()
+
+        if not audit_init():
+            noop()
+
+        log_string = build_log_message_func(input_payload)
+
+        if log_string and not audit_log_passive_event(script_name, log_string):
+            noop()
+
+        noop()
+    except ValueError as exc:
+        print(f"{script_name}: {exc}", file=sys.stderr)
+        noop()
+    except Exception as exc:  # noqa: BLE001
+        print(f"{script_name}: unexpected error: {exc}", file=sys.stderr)
+        noop()
+    return 0

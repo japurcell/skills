@@ -2,21 +2,8 @@
 
 set -euo pipefail
 
-readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 readonly SCRIPT_PATH="$REPO_ROOT/scripts/cleanup-skill-workspaces.sh"
-
-assert_equals() {
-  local expected="$1"
-  local actual="$2"
-  local message="$3"
-
-  if [[ "$actual" != "$expected" ]]; then
-    echo "$message" >&2
-    echo "Expected: $expected" >&2
-    echo "Actual:   $actual" >&2
-    exit 1
-  fi
-}
 
 assert_exists() {
   local path="$1"

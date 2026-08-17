@@ -4,13 +4,6 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
-install_into_temp_home() {
-  local home="$1"
-
-  mkdir -p "$home"
-  TMPDIR="$REPO_ROOT/.tmp" HOME="$home" "$REPO_ROOT/scripts/install.sh" >/dev/null
-}
-
 run_installed_gemini_hook() {
   local home="$1"
   local hook_name="$2"

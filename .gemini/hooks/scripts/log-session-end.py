@@ -9,44 +9,18 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from helpers.audit import audit_init, audit_log_passive_event  # noqa: E402
-from helpers.common import emit_json, read_json_input  # noqa: E402
-
+from helpers.common import run_gemini_passive_log_hook, stringify_value  # noqa: E402
 
 SCRIPT_NAME = Path(__file__).name
 
 
-def noop() -> None:
-    emit_json({})
-    raise SystemExit(0)
-
-
-def main() -> int:
-    try:
-        payload = read_json_input()
-    except ValueError as exc:
-        print(f"{SCRIPT_NAME}: {exc}", file=sys.stderr)
-        noop()
-
-    if not isinstance(payload, dict):
-        noop()
-
-    if not audit_init():
-        noop()
-
-    session_id = str(payload.get("session_id") or "")
-    timestamp = str(payload.get("timestamp") or "")
-    hook_event_name = str(payload.get("hook_event_name") or "")
-    reason = str(payload.get("reason") or "")
-
-    if not audit_log_passive_event(
-        SCRIPT_NAME,
-        f"[{timestamp}] Reason: {reason}, Hook: {hook_event_name}, Session: {session_id}",
-    ):
-        noop()
-
-    noop()
+def build_message(payload: dict) -> str:
+    session_id = stringify_value(payload.get("session_id"))
+    timestamp = stringify_value(payload.get("timestamp"))
+    hook_event_name = stringify_value(payload.get("hook_event_name"))
+    reason = stringify_value(payload.get("reason"))
+    return f"[{timestamp}] Reason: {reason}, Hook: {hook_event_name}, Session: {session_id}"
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(run_gemini_passive_log_hook(SCRIPT_NAME, build_message))

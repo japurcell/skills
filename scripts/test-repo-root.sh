@@ -3,7 +3,8 @@
 
 set -euo pipefail
 
-REPO_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+REPO_ROOT_DIR="$REPO_ROOT"
 
 assert_repo_root_with_common_sh() {
   local common_sh="$1"
