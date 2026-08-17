@@ -56,3 +56,23 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Affected area:** Test scripts and files
 **Description:** The secret scanning hook (which runs automatically) aggressively scans all file modifications for secret signatures. If a test file uses a realistic-looking fake API key (or any other matched pattern), the hook will block the `write_file` or `run_shell_command` operation and halt progress.
 **Workaround:** Never write secrets to files. For testing, always use obviously fake, safe dummy values (e.g., `sk-ant-test-1234` or `fake-api-key`) that do not trigger the secret scanner. If blocked, discard the offending git changes and use a different mock string.
+
+## Concurrency and Lock Failures with SQLite WAL/SHM side-files
+**Affected area:** Trace Store SQLite DB
+**Description:** In Write-Ahead Log (WAL) mode, SQLite automatically creates temporary side-files ending in `-wal` and `-shm` to manage transaction logs. If these files inherit permissive default user `umask` permissions (like `0o644` or `0o664`), security audits will flag permission leakage. However, locking down permissions via `chmod` must happen continuously after connections are established, as SQLite can recreate or touch these files dynamically.
+**Workaround:** Upon connection, immediately scan for `-wal` and `-shm` files and apply strict `0o600` permissions. Ensure permission modification exceptions are caught and suppressed to prevent transient errors from interrupting the active hook control flow.
+
+## Unbounded Stack Recursion and Crashes on Cyclical Payload Objects
+**Affected area:** Transcript Payload Capping
+**Description:** Hooks serialize complex event payloads. If a payload contains a circular or self-referential reference (e.g., a dictionary referencing itself), standard recursive serializers or depth-limit checkers will trigger a `RecursionError` or a crash, breaking the hook execution.
+**Workaround:** Implement visited-set object tracking during the recursive shrinking loop. Use Python's built-in `id(obj)` to track object identities in an active traversal set. If a cycle is detected, immediately return a sentinel string (e.g., `"<circular reference>"`) instead of recurring deeper.
+
+## SQLite Database Lock Starvation and Timeouts during Maintenance physical unlinks
+**Affected area:** Detached Hook Maintenance
+**Description:** Under high concurrency, performing block-level disk deletions (like unlinking large `.jsonl` trace files or removing directories) inside a SQLite database transaction locks the database. This causes lock starvation and transaction timeout failures in concurrent hooks trying to record active trace spans.
+**Workaround:** Decouple physical unlinks from active SQLite database transactions. First, query metadata paths in a fast read-only transaction/connection. Close the connection, physically remove the files from disk, and then open a separate fast write transaction (`BEGIN IMMEDIATE`) to clean up database records before running a compaction step (`PRAGMA incremental_vacuum;`).
+
+## Cross-Platform Import Errors and Missing fcntl on Non-POSIX Systems
+**Affected area:** File Locking helpers
+**Description:** Importing `fcntl` at the top level of shared scripts causes immediate crash failures on non-POSIX platforms (like Windows), where the `fcntl` module does not exist, blocking local developers or IDE tests in non-POSIX environments.
+**Workaround:** Guard file-locking imports dynamically inside locking functions (e.g., inside `_acquire_lock`). Catch `ImportError` gracefully, returning a fallback value (like `-1`) to bypass POSIX locking where unavailable, allowing the workspace to remain cross-platform compatible.
