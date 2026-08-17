@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import fcntl
 import json
 import os
 import re
@@ -147,6 +146,11 @@ def _ensure_parent(path: Path) -> None:
 
 def _acquire_lock(lock_path: Path, timeout_seconds: float) -> int | None:
     _ensure_parent(lock_path)
+    try:
+        import fcntl
+    except ImportError:
+        return -1
+
     lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
     deadline = time.monotonic() + timeout_seconds
 
@@ -551,10 +555,14 @@ def _write_record(record: dict[str, Any]) -> bool:
     except OSError:
         return False
     finally:
-        try:
-            fcntl.flock(lock_fd, fcntl.LOCK_UN)
-        finally:
-            os.close(lock_fd)
+        if lock_fd != -1:
+            try:
+                import fcntl
+                fcntl.flock(lock_fd, fcntl.LOCK_UN)
+            except (ImportError, OSError):
+                pass
+            finally:
+                os.close(lock_fd)
 
     return True
 
@@ -698,10 +706,15 @@ def _connect_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection:
         except Exception:
             pass
     conn = sqlite3.connect(str(db_path), timeout=busy_timeout / 1000.0)
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA auto_vacuum=INCREMENTAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.execute("PRAGMA foreign_keys=ON;")
+    for suffix in ["-wal", "-shm"]:
+        side_file = Path(str(db_path) + suffix)
+        if side_file.exists():
+            try:
+                os.chmod(str(side_file), 0o600)
+            except Exception:
+                pass
     return conn
 
 
@@ -710,6 +723,8 @@ def _init_schema_if_needed(conn: sqlite3.Connection) -> None:
     cursor.execute("PRAGMA user_version;")
     version = cursor.fetchone()[0]
     if version == 0:
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA auto_vacuum=INCREMENTAL;")
         cursor.executescript(SCHEMA_DDL)
         cursor.execute("PRAGMA user_version = 1;")
     elif version != 1:
@@ -767,6 +782,8 @@ def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection
                 pass
             conn = _connect_db(db_path, busy_timeout)
             cursor = conn.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA auto_vacuum=INCREMENTAL;")
             cursor.executescript(SCHEMA_DDL)
             cursor.execute("PRAGMA user_version = 1;")
             return conn
@@ -803,11 +820,20 @@ def _write_registry_file(child_session_id: str, parent_session_id: str) -> None:
     try:
         registry_dir = _get_db_path().parent / "registries" / "subagents"
         registry_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            os.chmod(str(registry_dir), 0o700)
+        except Exception:
+            pass
         registry_file = registry_dir / f"{child_session_id}.json"
         temp_file = registry_file.with_suffix(".tmp")
-        with open(temp_file, "w", encoding="utf-8") as f:
+        fd = os.open(str(temp_file), os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump({"parent_session_id": parent_session_id}, f)
         temp_file.replace(registry_file)
+        try:
+            os.chmod(str(registry_file), 0o600)
+        except Exception:
+            pass
     except Exception:
         pass
 
@@ -886,25 +912,41 @@ def _cap_payload_content(raw: dict[str, Any], effective: dict[str, Any] | None) 
     if effective is not None:
         payload_dict["effective"] = effective
     
-    payload_str = json.dumps(payload_dict, ensure_ascii=False)
-    if len(payload_str.encode("utf-8")) <= 512 * 1024:
-        return raw, effective, False
+    try:
+        payload_str = json.dumps(payload_dict, ensure_ascii=False)
+        if len(payload_str.encode("utf-8")) <= 512 * 1024:
+            return raw, effective, False
+    except (ValueError, TypeError):
+        pass
 
     capped = False
     
-    def shrink_obj(obj: Any) -> Any:
+    def shrink_obj(obj: Any, visited: set[int] | None = None) -> Any:
         nonlocal capped
+        if visited is None:
+            visited = set()
+        
+        obj_id = id(obj)
+        if obj_id in visited:
+            return "<circular reference>"
+            
         if isinstance(obj, dict):
+            visited.add(obj_id)
             new_dict = {}
             for k, v in obj.items():
-                new_dict[k] = shrink_obj(v)
+                new_dict[k] = shrink_obj(v, visited)
+            visited.remove(obj_id)
             return new_dict
         elif isinstance(obj, list):
-            return [shrink_obj(x) for x in obj]
+            visited.add(obj_id)
+            res = [shrink_obj(x, visited) for x in obj]
+            visited.remove(obj_id)
+            return res
         elif isinstance(obj, str):
-            if len(obj.encode("utf-8")) > 10 * 1024:
-                capped = True
-                return obj[:1024] + "... [CAPPED]"
+            if len(obj) > 1024:
+                if len(obj.encode("utf-8")) > 10 * 1024:
+                    capped = True
+                    return obj[:1024] + "... [CAPPED]"
             return obj
         return obj
 
@@ -982,21 +1024,39 @@ def _write_transcript_chunk(
                 chunk_data["payload_capped"] = True
 
             active_dir = db_path.parent / "transcripts" / "active" / session_id
-            active_dir.mkdir(parents=True, exist_ok=True)
-            chunk_file = active_dir / f"{sequence_no:06d}_{span_id}.json"
-            
-            temp_chunk = chunk_file.with_suffix(".tmp")
-            with open(temp_chunk, "w", encoding="utf-8") as f:
-                json.dump(chunk_data, f, ensure_ascii=False)
-            temp_chunk.replace(chunk_file)
-            
-            try:
-                with _connect_and_init_db(db_path, busy_timeout) as update_conn:
-                    update_conn.execute("BEGIN IMMEDIATE")
-                    update_conn.execute("UPDATE spans SET transcript_chunk_path = ? WHERE span_id = ?", (str(chunk_file), span_id))
-                    update_conn.commit()
-            except Exception:
-                pass
+            saved_dir = db_path.parent / "transcripts" / "saved"
+            saved_file = saved_dir / f"{session_id}.jsonl"
+
+            if saved_file.exists():
+                try:
+                    with open(saved_file, "a", encoding="utf-8") as f:
+                        f.write(json.dumps(chunk_data, ensure_ascii=False) + "\n")
+                    
+                    try:
+                        with _connect_and_init_db(db_path, busy_timeout) as update_conn:
+                            update_conn.execute("BEGIN IMMEDIATE")
+                            update_conn.execute("UPDATE spans SET transcript_chunk_path = ? WHERE span_id = ?", (str(saved_file), span_id))
+                            update_conn.commit()
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+            else:
+                active_dir.mkdir(parents=True, exist_ok=True)
+                chunk_file = active_dir / f"{sequence_no:06d}_{span_id}.json"
+                
+                temp_chunk = chunk_file.with_suffix(".tmp")
+                with open(temp_chunk, "w", encoding="utf-8") as f:
+                    json.dump(chunk_data, f, ensure_ascii=False)
+                temp_chunk.replace(chunk_file)
+                
+                try:
+                    with _connect_and_init_db(db_path, busy_timeout) as update_conn:
+                        update_conn.execute("BEGIN IMMEDIATE")
+                        update_conn.execute("UPDATE spans SET transcript_chunk_path = ? WHERE span_id = ?", (str(chunk_file), span_id))
+                        update_conn.commit()
+                except Exception:
+                    pass
 
         except Exception:
             pass
@@ -1024,60 +1084,73 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
     except Exception:
         pass
 
-    polling_cadence = 0.01
+    polling_cadence = 0.1
     has_uncompleted = True
     
-    while time.monotonic() - start_time < (timeout_budget / 1000.0):
-        running_spans = []
-        try:
-            with _connect_and_init_db(db_path, finalizer_busy) as conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT span_id, updated_at_ms, pid FROM spans WHERE session_id = ? AND status = 'running'",
-                    (session_id,)
-                )
-                running_spans = cursor.fetchall()
-        except Exception:
-            pass
-        
-        if not running_spans:
-            has_uncompleted = False
-            break
-            
-        now_ms = int(time.time() * 1000)
-        any_changed = False
-        
-        for span_id, updated_at_ms, pid in running_spans:
-            pid_dead = False
-            if pid:
-                pid_dead = not _pid_exists(pid)
-            
-            stale_age = False
-            if updated_at_ms and (now_ms - updated_at_ms > stale_threshold):
-                stale_age = True
-                
-            if pid_dead or stale_age:
+    poll_conn: sqlite3.Connection | None
+    try:
+        poll_conn = _connect_and_init_db(db_path, finalizer_busy)
+    except Exception:
+        poll_conn = None
+
+    try:
+        while time.monotonic() - start_time < (timeout_budget / 1000.0):
+            running_spans = []
+            if poll_conn:
                 try:
-                    with _connect_and_init_db(db_path, finalizer_busy) as conn:
-                        conn.execute("BEGIN IMMEDIATE")
-                        try:
-                            conn.execute(
-                                "UPDATE spans SET status = 'abandoned', updated_at_ms = ? WHERE span_id = ?",
-                                (now_ms, span_id)
-                            )
-                            conn.execute(
-                                "UPDATE sessions SET has_errors = 1 WHERE session_id = ?",
-                                (session_id,)
-                            )
-                            conn.commit()
-                            any_changed = True
-                        except Exception:
-                            conn.rollback()
+                    cursor = poll_conn.cursor()
+                    cursor.execute(
+                        "SELECT span_id, updated_at_ms, pid FROM spans WHERE session_id = ? AND status = 'running'",
+                        (session_id,)
+                    )
+                    running_spans = cursor.fetchall()
                 except Exception:
                     pass
+            
+            if not running_spans:
+                has_uncompleted = False
+                break
+                
+            now_ms = int(time.time() * 1000)
+            any_changed = False
+            
+            for span_id, updated_at_ms, pid in running_spans:
+                pid_dead = False
+                if pid:
+                    pid_dead = not _pid_exists(pid)
+                
+                stale_age = False
+                if updated_at_ms and (now_ms - updated_at_ms > stale_threshold):
+                    stale_age = True
                     
-        if not any_changed:
-            time.sleep(polling_cadence)
+                if pid_dead or stale_age:
+                    if poll_conn:
+                        try:
+                            poll_conn.execute("BEGIN IMMEDIATE")
+                            try:
+                                poll_conn.execute(
+                                    "UPDATE spans SET status = 'abandoned', updated_at_ms = ? WHERE span_id = ?",
+                                    (now_ms, span_id)
+                                )
+                                poll_conn.execute(
+                                    "UPDATE sessions SET has_errors = 1 WHERE session_id = ?",
+                                    (session_id,)
+                                )
+                                poll_conn.commit()
+                                any_changed = True
+                            except Exception:
+                                poll_conn.rollback()
+                        except Exception:
+                            pass
+                        
+            if not any_changed:
+                time.sleep(polling_cadence)
+    finally:
+        if poll_conn:
+            try:
+                poll_conn.close()
+            except Exception:
+                pass
             
     if has_uncompleted:
         try:
@@ -1263,7 +1336,6 @@ def _should_launch_maintenance(sentinel_path: Path) -> bool:
 def _launch_detached_maintenance(sentinel_path: Path) -> None:
     try:
         _ensure_parent(sentinel_path)
-        sentinel_path.touch(exist_ok=True)
         
         import subprocess
         scripts_dir = str(Path(__file__).resolve().parent.parent)
@@ -1294,11 +1366,31 @@ def _scavenge_stale_directories_and_registries(db_path: Path) -> None:
     
     active_base = db_path.parent / "transcripts" / "active"
     if active_base.exists():
+        active_sessions = set()
+        try:
+            conn = sqlite3.connect(str(db_path), timeout=0.1)
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT session_id FROM sessions WHERE status IN ('running', 'finalizing', 'sealing')")
+                active_sessions = {row[0] for row in cursor.fetchall()}
+            finally:
+                conn.close()
+        except Exception:
+            pass
+
         for item in active_base.iterdir():
             if item.is_dir():
                 try:
-                    mtime = item.stat().st_mtime
-                    if now - mtime > stale_threshold:
+                    session_id = item.name
+                    max_mtime = item.stat().st_mtime
+                    for child in item.iterdir():
+                        if child.is_file():
+                            max_mtime = max(max_mtime, child.stat().st_mtime)
+                    
+                    is_stale_mtime = (now - max_mtime > stale_threshold)
+                    is_active_db = (session_id in active_sessions)
+                    
+                    if is_stale_mtime and not is_active_db:
                         import shutil
                         shutil.rmtree(item)
                 except Exception:
@@ -1309,8 +1401,12 @@ def _scavenge_stale_directories_and_registries(db_path: Path) -> None:
         for item in registry_base.iterdir():
             if item.is_file() and item.suffix == ".json":
                 try:
+                    session_id = item.stem
                     mtime = item.stat().st_mtime
-                    if now - mtime > stale_threshold:
+                    is_stale_mtime = (now - mtime > stale_threshold)
+                    is_active_db = (session_id in active_sessions)
+                    
+                    if is_stale_mtime and not is_active_db:
                         item.unlink()
                 except Exception:
                     pass
@@ -1318,6 +1414,13 @@ def _scavenge_stale_directories_and_registries(db_path: Path) -> None:
 
 def _run_maintenance_work() -> None:
     try:
+        sentinel_path = _log_path().parent / ".maintenance_last_run"
+        try:
+            _ensure_parent(sentinel_path)
+            sentinel_path.touch(exist_ok=True)
+        except Exception:
+            pass
+
         db_path = _get_db_path()
         finalizer_busy = _finalization_busy_timeout_ms()
         
@@ -1325,44 +1428,57 @@ def _run_maintenance_work() -> None:
         error_threshold_ms = now_ms - 90 * 24 * 3600 * 1000
         success_threshold_ms = now_ms - 14 * 24 * 3600 * 1000
         
-        conn = _connect_and_init_db(db_path, finalizer_busy)
-        conn.execute("BEGIN IMMEDIATE")
+        expired_sessions = []
         try:
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                SELECT session_id, transcript_path
-                FROM sessions
-                WHERE (has_errors = 1 AND start_time_ms < ?)
-                   OR (has_errors = 0 AND start_time_ms < ?)
-                """,
-                (error_threshold_ms, success_threshold_ms)
-            )
-            expired_sessions = cursor.fetchall()
+            conn = _connect_and_init_db(db_path, finalizer_busy)
+            try:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT session_id, transcript_path
+                    FROM sessions
+                    WHERE (has_errors = 1 AND start_time_ms < ?)
+                       OR (has_errors = 0 AND start_time_ms < ?)
+                    """,
+                    (error_threshold_ms, success_threshold_ms)
+                )
+                expired_sessions = cursor.fetchall()
+            finally:
+                conn.close()
+        except Exception:
+            pass
             
-            saved_dir = db_path.parent / "transcripts" / "saved"
-            for session_id, transcript_path_str in expired_sessions:
-                if transcript_path_str:
-                    t_path = Path(transcript_path_str)
-                    if t_path.exists():
-                        try:
-                            t_path.unlink()
-                        except Exception:
-                            pass
-                std_saved_file = saved_dir / f"{session_id}.jsonl"
-                if std_saved_file.exists():
+        saved_dir = db_path.parent / "transcripts" / "saved"
+        for session_id, transcript_path_str in expired_sessions:
+            if transcript_path_str:
+                t_path = Path(transcript_path_str)
+                if t_path.exists():
                     try:
-                        std_saved_file.unlink()
+                        t_path.unlink()
                     except Exception:
                         pass
+            std_saved_file = saved_dir / f"{session_id}.jsonl"
+            if std_saved_file.exists():
+                try:
+                    std_saved_file.unlink()
+                except Exception:
+                    pass
+                    
+        if expired_sessions:
+            try:
+                conn = _connect_and_init_db(db_path, finalizer_busy)
+                conn.execute("BEGIN IMMEDIATE")
+                try:
+                    for session_id, _ in expired_sessions:
+                        conn.execute("DELETE FROM sessions WHERE session_id = ?", (session_id,))
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+                finally:
+                    conn.close()
+            except Exception:
+                pass
                 
-                conn.execute("DELETE FROM sessions WHERE session_id = ?", (session_id,))
-            conn.commit()
-        except Exception:
-            conn.rollback()
-        finally:
-            conn.close()
-            
         try:
             conn = _connect_and_init_db(db_path, finalizer_busy)
             conn.execute("PRAGMA incremental_vacuum;")
@@ -1431,7 +1547,7 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
 
                 if event_name == "session_start":
                     conn.execute(
-                        "UPDATE sessions SET status = 'running', start_time_ms = COALESCE(start_time_ms, ?) WHERE session_id = ?",
+                        "UPDATE sessions SET status = 'running', start_time_ms = ? WHERE session_id = ?",
                         (timestamp_ms, session_id)
                     )
                 elif event_name in TERMINAL_EVENT_NAMES:

@@ -1071,6 +1071,144 @@ test_sqlite_finalization_and_transcripts() {
   fi
 }
 
+test_sqlite_adversarial_hardening() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/.gemini/hooks/logs/observability_v1.db"
+
+  # 1. Trigger sessionStart to create database and WAL/SHM files
+  payload="$(jq -nc '{
+    session_id: "adversarial-session-1",
+    timestamp: "2026-06-23T23:50:00Z",
+    hook_event_name: "SessionStart"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=SessionStart \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Verify WAL/SHM permissions are restricted to 600 if they exist
+  local suffix
+  for suffix in -wal -shm; do
+    if [[ -f "$db_path$suffix" ]]; then
+      local perms
+      if stat --help 2>&1 | grep -q -- "-c"; then
+        perms="$(stat -c "%a" "$db_path$suffix")"
+      else
+        perms="$(stat -f "%Lp" "$db_path$suffix")"
+      fi
+      assert_equals "600" "$perms" "Expected WAL/SHM side file $suffix permissions to be 600, got: $perms"
+    fi
+  done
+
+  # 2. Trigger subagentStart to create registry file
+  payload="$(jq -nc '{
+    session_id: "child-session-perms-test",
+    timestamp: "2026-06-23T23:50:00Z",
+    hook_event_name: "SubagentStart"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=SubagentStart GEMINI_SESSION_ID="parent-session-abc" \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local perms_reg
+  local reg_file="$home/.gemini/hooks/logs/registries/subagents/child-session-perms-test.json"
+  if stat --help 2>&1 | grep -q -- "-c"; then
+    perms_reg="$(stat -c "%a" "$reg_file")"
+  else
+    perms_reg="$(stat -f "%Lp" "$reg_file")"
+  fi
+  assert_equals "600" "$perms_reg" "Expected registry file permissions to be 600, got: $perms_reg"
+
+  local perms_dir
+  local reg_dir="$home/.gemini/hooks/logs/registries/subagents"
+  if stat --help 2>&1 | grep -q -- "-c"; then
+    perms_dir="$(stat -c "%a" "$reg_dir")"
+  else
+    perms_dir="$(stat -f "%Lp" "$reg_dir")"
+  fi
+  assert_equals "700" "$perms_dir" "Expected registry dir permissions to be 700, got: $perms_dir"
+
+  # 3. Cyclical payload capability unit test
+  python3 - "$home" <<'PY'
+import sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1] + "/.gemini/hooks/scripts")
+from helpers.observability import _cap_payload_content
+
+raw = {}
+raw["self"] = raw
+
+effective = {}
+effective["self"] = effective
+
+r_raw, r_eff, capped = _cap_payload_content(raw, effective)
+print("CYCLIC_TEST_OK")
+PY
+
+  # 4. Late-arriving span chunk appends to saved transcript
+  payload_start="$(jq -nc '{session_id: "late-append-session", timestamp: "2026-06-23T23:50:00Z", hook_event_name: "SessionStart"}')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=SessionStart \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload_start" >/dev/null
+
+  payload_end="$(jq -nc '{session_id: "late-append-session", timestamp: "2026-06-23T23:50:01Z", hook_event_name: "SessionEnd"}')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=SessionEnd env OBSERVABILITY_SAMPLING_FORCE=1 \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload_end" >/dev/null
+
+  local saved_jsonl="$home/.gemini/hooks/logs/transcripts/saved/late-append-session.jsonl"
+  if [[ ! -f "$saved_jsonl" ]]; then
+    echo "Expected saved jsonl to exist" >&2
+    exit 1
+  fi
+  
+  local lines_before
+  lines_before="$(wc -l < "$saved_jsonl" | xargs)"
+
+  # Manually set session status back to 'finalizing' to simulate concurrent late span processing
+  sqlite3 "$db_path" "UPDATE sessions SET status = 'finalizing' WHERE session_id = 'late-append-session';"
+
+  payload_late="$(jq -nc '{session_id: "late-append-session", timestamp: "2026-06-23T23:50:02Z", hook_event_name: "preToolUse", toolName: "late-tool"}')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload_late" >/dev/null
+
+  local lines_after
+  lines_after="$(wc -l < "$saved_jsonl" | xargs)"
+  
+  if [[ "$lines_after" -le "$lines_before" ]]; then
+    echo "Expected late arriving span to be appended to saved transcript, lines: $lines_before -> $lines_after" >&2
+    exit 1
+  fi
+  
+  if ! grep -q "late-tool" "$saved_jsonl"; then
+    echo "Expected late tool info to be in the saved transcript" >&2
+    exit 1
+  fi
+
+  # 5. Fallback fcntl gracefully on Windows/non-POSIX using python mock
+  python3 - "$home" <<'PY'
+import sys
+sys.modules["fcntl"] = None
+
+from pathlib import Path
+sys.path.insert(0, sys.argv[1] + "/.gemini/hooks/scripts")
+from helpers import observability
+
+lock_path = Path(sys.argv[1]) / "test_fallback.lock"
+lock_fd = observability._acquire_lock(lock_path, 0.1)
+assert lock_fd == -1, f"Expected lock_fd to be -1, got {lock_fd}"
+
+record = observability._build_record("test_type", {"session_id": "fallback-test"})
+success = observability._write_record(record)
+assert success is True, "Expected _write_record to succeed in fallback mode"
+print("MOCK_FCNTL_OK")
+PY
+}
+
 main() {
   (
     export OBSERVABILITY_FORCE_NDJSON=1
@@ -1086,6 +1224,7 @@ main() {
   test_sqlite_observability_persistence
   test_sqlite_span_sequencing_and_child_linkage
   test_sqlite_finalization_and_transcripts
+  test_sqlite_adversarial_hardening
 }
 
 main "$@"
