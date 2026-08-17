@@ -933,6 +933,140 @@ test_sqlite_finalization_and_transcripts() {
     echo "Expected dead-PID session to record has_errors = 1, got: $sess_errs" >&2
     exit 1
   fi
+
+  # --- TEST 4: Detached maintenance, rate-limiting, retention, scavenging, vacuum ---
+  local sentinel="$home/.copilot/hooks/logs/.maintenance_last_run"
+  rm -f "$sentinel"
+
+  payload="$(jq -nc '{
+    sessionId: "maint-session-startup",
+    timestamp: "2026-06-23T23:50:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  sleep 0.5
+
+  if [[ ! -f "$sentinel" ]]; then
+    echo "Expected maintenance sentinel file to be created: $sentinel" >&2
+    exit 1
+  fi
+
+  local now_ms
+  now_ms="$(python3 -c "import time; print(int(time.time() * 1000))")"
+  local exp_err_ms=$((now_ms - 95 * 24 * 3600 * 1000))
+  local exp_succ_ms=$((now_ms - 15 * 24 * 3600 * 1000))
+  local keep_err_ms=$((now_ms - 85 * 24 * 3600 * 1000))
+  local keep_succ_ms=$((now_ms - 10 * 24 * 3600 * 1000))
+
+  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('exp-err-sess', '$home', 'copilot', 'success', $exp_err_ms, 1, '$home/.copilot/hooks/logs/transcripts/saved/exp-err-sess.jsonl');"
+  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('exp-succ-sess', '$home', 'copilot', 'success', $exp_succ_ms, 0, '$home/.copilot/hooks/logs/transcripts/saved/exp-succ-sess.jsonl');"
+  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('keep-err-sess', '$home', 'copilot', 'success', $keep_err_ms, 1, '$home/.copilot/hooks/logs/transcripts/saved/keep-err-sess.jsonl');"
+  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('keep-succ-sess', '$home', 'copilot', 'success', $keep_succ_ms, 0, '$home/.copilot/hooks/logs/transcripts/saved/keep-succ-sess.jsonl');"
+
+  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('exp-err-span', 'exp-err-sess', 1, 'preToolUse', 'completed');"
+  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('exp-succ-span', 'exp-succ-sess', 1, 'preToolUse', 'completed');"
+  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('keep-err-span', 'keep-err-sess', 1, 'preToolUse', 'completed');"
+  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('keep-succ-span', 'keep-succ-sess', 1, 'preToolUse', 'completed');"
+
+  mkdir -p "$home/.copilot/hooks/logs/transcripts/saved"
+  echo "exp-err" > "$home/.copilot/hooks/logs/transcripts/saved/exp-err-sess.jsonl"
+  echo "exp-succ" > "$home/.copilot/hooks/logs/transcripts/saved/exp-succ-sess.jsonl"
+  echo "keep-err" > "$home/.copilot/hooks/logs/transcripts/saved/keep-err-sess.jsonl"
+  echo "keep-succ" > "$home/.copilot/hooks/logs/transcripts/saved/keep-succ-sess.jsonl"
+
+  local active_dir_stale="$home/.copilot/hooks/logs/transcripts/active/stale-sess"
+  local active_dir_fresh="$home/.copilot/hooks/logs/transcripts/active/fresh-sess"
+  mkdir -p "$active_dir_stale" "$active_dir_fresh"
+
+  local reg_dir="$home/.copilot/hooks/logs/registries/subagents"
+  mkdir -p "$reg_dir"
+  local reg_file_stale="$reg_dir/stale-child.json"
+  local reg_file_fresh="$reg_dir/fresh-child.json"
+  echo '{"parent_session_id":"p"}' > "$reg_file_stale"
+  echo '{"parent_session_id":"p"}' > "$reg_file_fresh"
+
+  local stale_epoch
+  stale_epoch="$(python3 -c "import time; print(int(time.time() - 30 * 3600))")"
+  touch -d "@$stale_epoch" "$active_dir_stale"
+  touch -d "@$stale_epoch" "$reg_file_stale"
+
+  env HOME="$home" PYTHONPATH="$home/.copilot/hooks/scripts" python3 -m helpers.observability --maintenance
+
+  local exp_err_exists
+  exp_err_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM sessions WHERE session_id = 'exp-err-sess';")"
+  if [[ "$exp_err_exists" != "0" ]]; then
+    echo "Expected expired error session to be deleted, but it exists" >&2
+    exit 1
+  fi
+  local exp_succ_exists
+  exp_succ_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM sessions WHERE session_id = 'exp-succ-sess';")"
+  if [[ "$exp_succ_exists" != "0" ]]; then
+    echo "Expected expired success session to be deleted, but it exists" >&2
+    exit 1
+  fi
+
+  local exp_err_span_exists
+  exp_err_span_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM spans WHERE span_id = 'exp-err-span';")"
+  if [[ "$exp_err_span_exists" != "0" ]]; then
+    echo "Expected expired error span to be cascade deleted, but it exists" >&2
+    exit 1
+  fi
+  local exp_succ_span_exists
+  exp_succ_span_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM spans WHERE span_id = 'exp-succ-span';")"
+  if [[ "$exp_succ_span_exists" != "0" ]]; then
+    echo "Expected expired success span to be cascade deleted, but it exists" >&2
+    exit 1
+  fi
+
+  local keep_err_exists
+  keep_err_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM sessions WHERE session_id = 'keep-err-sess';")"
+  if [[ "$keep_err_exists" != "1" ]]; then
+    echo "Expected non-expired error session to be kept, but count is: $keep_err_exists" >&2
+    exit 1
+  fi
+  local keep_succ_exists
+  keep_succ_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM sessions WHERE session_id = 'keep-succ-sess';")"
+  if [[ "$keep_succ_exists" != "1" ]]; then
+    echo "Expected non-expired success session to be kept, but count is: $keep_succ_exists" >&2
+    exit 1
+  fi
+
+  if [[ -f "$home/.copilot/hooks/logs/transcripts/saved/exp-err-sess.jsonl" ]]; then
+    echo "Expected expired error transcript file to be deleted" >&2
+    exit 1
+  fi
+  if [[ -f "$home/.copilot/hooks/logs/transcripts/saved/exp-succ-sess.jsonl" ]]; then
+    echo "Expected expired success transcript file to be deleted" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$home/.copilot/hooks/logs/transcripts/saved/keep-err-sess.jsonl" ]]; then
+    echo "Expected non-expired error transcript file to be preserved" >&2
+    exit 1
+  fi
+  if [[ ! -f "$home/.copilot/hooks/logs/transcripts/saved/keep-succ-sess.jsonl" ]]; then
+    echo "Expected non-expired success transcript file to be preserved" >&2
+    exit 1
+  fi
+
+  if [[ -d "$active_dir_stale" ]]; then
+    echo "Expected stale active transcript directory to be scavenged" >&2
+    exit 1
+  fi
+  if [[ ! -d "$active_dir_fresh" ]]; then
+    echo "Expected fresh active transcript directory to be preserved" >&2
+    exit 1
+  fi
+
+  if [[ -f "$reg_file_stale" ]]; then
+    echo "Expected stale registry file to be scavenged" >&2
+    exit 1
+  fi
+  if [[ ! -f "$reg_file_fresh" ]]; then
+    echo "Expected fresh registry file to be preserved" >&2
+    exit 1
+  fi
 }
 
 main() {

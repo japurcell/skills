@@ -1248,6 +1248,133 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
         pass
 
 
+def _should_launch_maintenance(sentinel_path: Path) -> bool:
+    try:
+        if not sentinel_path.exists():
+            return True
+        mtime = sentinel_path.stat().st_mtime
+        if time.time() - mtime > 86400:
+            return True
+    except Exception:
+        return True
+    return False
+
+
+def _launch_detached_maintenance(sentinel_path: Path) -> None:
+    try:
+        _ensure_parent(sentinel_path)
+        sentinel_path.touch(exist_ok=True)
+        
+        import subprocess
+        scripts_dir = str(Path(__file__).resolve().parent.parent)
+        subprocess.Popen(
+            [sys.executable, "-m", "helpers.observability", "--maintenance"],
+            cwd=scripts_dir,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            close_fds=True,
+            start_new_session=True
+        )
+    except Exception:
+        pass
+
+
+def _trigger_detached_maintenance_if_needed(event_name: str) -> None:
+    if event_name != "session_start" and event_name not in TERMINAL_EVENT_NAMES:
+        return
+    sentinel_path = _log_path().parent / ".maintenance_last_run"
+    if _should_launch_maintenance(sentinel_path):
+        _launch_detached_maintenance(sentinel_path)
+
+
+def _scavenge_stale_directories_and_registries(db_path: Path) -> None:
+    now = time.time()
+    stale_threshold = 24 * 3600
+    
+    active_base = db_path.parent / "transcripts" / "active"
+    if active_base.exists():
+        for item in active_base.iterdir():
+            if item.is_dir():
+                try:
+                    mtime = item.stat().st_mtime
+                    if now - mtime > stale_threshold:
+                        import shutil
+                        shutil.rmtree(item)
+                except Exception:
+                    pass
+                    
+    registry_base = db_path.parent / "registries" / "subagents"
+    if registry_base.exists():
+        for item in registry_base.iterdir():
+            if item.is_file() and item.suffix == ".json":
+                try:
+                    mtime = item.stat().st_mtime
+                    if now - mtime > stale_threshold:
+                        item.unlink()
+                except Exception:
+                    pass
+
+
+def _run_maintenance_work() -> None:
+    try:
+        db_path = _get_db_path()
+        finalizer_busy = _finalization_busy_timeout_ms()
+        
+        now_ms = int(time.time() * 1000)
+        error_threshold_ms = now_ms - 90 * 24 * 3600 * 1000
+        success_threshold_ms = now_ms - 14 * 24 * 3600 * 1000
+        
+        conn = _connect_and_init_db(db_path, finalizer_busy)
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT session_id, transcript_path
+                FROM sessions
+                WHERE (has_errors = 1 AND start_time_ms < ?)
+                   OR (has_errors = 0 AND start_time_ms < ?)
+                """,
+                (error_threshold_ms, success_threshold_ms)
+            )
+            expired_sessions = cursor.fetchall()
+            
+            saved_dir = db_path.parent / "transcripts" / "saved"
+            for session_id, transcript_path_str in expired_sessions:
+                if transcript_path_str:
+                    t_path = Path(transcript_path_str)
+                    if t_path.exists():
+                        try:
+                            t_path.unlink()
+                        except Exception:
+                            pass
+                std_saved_file = saved_dir / f"{session_id}.jsonl"
+                if std_saved_file.exists():
+                    try:
+                        std_saved_file.unlink()
+                    except Exception:
+                        pass
+                
+                conn.execute("DELETE FROM sessions WHERE session_id = ?", (session_id,))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+        finally:
+            conn.close()
+            
+        try:
+            conn = _connect_and_init_db(db_path, finalizer_busy)
+            conn.execute("PRAGMA incremental_vacuum;")
+            conn.close()
+        except Exception:
+            pass
+            
+        _scavenge_stale_directories_and_registries(db_path)
+    except Exception:
+        pass
+
+
 def begin_hook_capture(payload: Mapping[str, Any]) -> None:
     if _disabled():
         return
@@ -1378,6 +1505,11 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
     if not sqlite_success:
         if _capture_event_enabled() or hook_name == "send-event.py":
             _write_record(_build_record("event_capture", raw_payload, source_event_name=source_event_name))
+
+    try:
+        _trigger_detached_maintenance_if_needed(event_name)
+    except Exception:
+        pass
 
 
 def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
@@ -1512,4 +1644,15 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
             }
             _write_record(rollup_record)
 
+    try:
+        _trigger_detached_maintenance_if_needed(event_name)
+    except Exception:
+        pass
+
     _STATE["completed"] = True
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--maintenance":
+        _run_maintenance_work()
+        sys.exit(0)

@@ -45,3 +45,14 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Affected area:** Bash test scripts
 **Description:** Under bash set -u (nounset), setting a trap to clean up local variables on RETURN requires quoting/interpolation at registration time because by the time RETURN is executed, local variables have already been popped and will raise unbound variable errors.
 **Workaround:** Quote and interpolate variables at trap registration (e.g., trap 'rm -rf "'"$workdir"'"' RETURN).
+
+## Relative import failures when executing helper scripts directly
+**Affected area:** Hook helper scripts execution (`observability.py`)
+**Description:** When executing a helper script directly (e.g. `python3 helper.py`), Python relative imports (such as `from .common import ...`) fail with `ImportError: attempted relative import with no known parent package` because direct execution defines `__name__` as `__main__` with no package structure.
+**Workaround:** Run the helper as a package module using `python3 -m helpers.observability --maintenance` and set the working directory (`cwd` in Popen or `PYTHONPATH`) to the scripts directory containing the `helpers` package.
+
+
+## Secret Scanning Hook Blocks Dummy Secrets in Test Files
+**Affected area:** Test scripts and files
+**Description:** The secret scanning hook (which runs automatically) aggressively scans all file modifications for secret signatures. If a test file uses a realistic-looking fake API key (or any other matched pattern), the hook will block the `write_file` or `run_shell_command` operation and halt progress.
+**Workaround:** Never write secrets to files. For testing, always use obviously fake, safe dummy values (e.g., `sk-ant-test-1234` or `fake-api-key`) that do not trigger the secret scanner. If blocked, discard the offending git changes and use a different mock string.
