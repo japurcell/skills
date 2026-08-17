@@ -12,6 +12,7 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from helpers.audit import audit_log_event
 from helpers.auto_ingest import (
+    ManifestLock,
     build_context,
     ingest_skill_available,
     load_manifest,
@@ -85,10 +86,11 @@ def main() -> int:
         summaries_dir = summary_root(root)
         manifest_file = manifest_path(summaries_dir)
 
-        current_sources = scan_sources(sources_dir, summaries_dir)
-        previous_manifest = load_manifest(manifest_file)
-        report_entries, next_manifest = reconcile_manifest(previous_manifest, current_sources, summaries_dir)
-        save_manifest(manifest_file, next_manifest)
+        with ManifestLock(manifest_file):
+            current_sources = scan_sources(sources_dir, summaries_dir)
+            previous_manifest = load_manifest(manifest_file)
+            report_entries, next_manifest = reconcile_manifest(previous_manifest, current_sources, summaries_dir)
+            save_manifest(manifest_file, next_manifest)
 
         message = build_context(report_entries, manifest_file, ingest_skill_available(root))
         session_id = sanitize_log_field(stringify_value(first_present(payload, "sessionId", "session_id")))

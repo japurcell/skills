@@ -603,4 +603,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Hook lock files
+*.lock
+
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,windows,python,vs

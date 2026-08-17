@@ -4,49 +4,6 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
-write_required_skill_fixtures() {
-  local skills_dir="$1"
-  mkdir -p "$skills_dir/caveman" "$skills_dir/universal-guidelines" "$skills_dir/cli-compression" "$skills_dir/writing-great-skills"
-
-  
-
-  cat >"$skills_dir/universal-guidelines/SKILL.md" <<'EOF'
----
-name: universal-guidelines
-description: Universal rules.
----
-# Universal Guidelines
-Line A.
-EOF
-
-  cat >"$skills_dir/cli-compression/SKILL.md" <<'EOF'
----
-name: cli-compression
-description: RTK rules.
----
-# CLI Compression
-Line B.
-EOF
-
-    cat >"$skills_dir/writing-great-skills/SKILL.md" <<'EOF'
----
-name: writing-great-skills
-description: Reference for writing and editing skills well
----
-# Writing Great Skills
-Line C.
-EOF
-
-  cat >"$skills_dir/caveman/SKILL.md" <<'EOF'
----
-name: caveman
-description: Terse style.
----
-# Caveman
-Line D.
-EOF
-}
-
 run_skill_context_injector() {
   local skills_dir="$1"
   local payload="$2"

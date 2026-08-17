@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-import fcntl
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
 import os
 import time
 from datetime import datetime
@@ -23,6 +26,8 @@ def _ensure_parent(path: str) -> None:
 def _acquire_lock(lock_path: str, timeout_seconds: float) -> int | None:
     _ensure_parent(lock_path)
     lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+    if fcntl is None:
+        return lock_fd
     deadline = time.monotonic() + timeout_seconds
 
     while True:
@@ -74,7 +79,8 @@ def audit_log_event(sender: str, message: str) -> bool:
         return False
     finally:
         try:
-            fcntl.flock(lock_fd, fcntl.LOCK_UN)
+            if fcntl is not None:
+                fcntl.flock(lock_fd, fcntl.LOCK_UN)
         finally:
             os.close(lock_fd)
 

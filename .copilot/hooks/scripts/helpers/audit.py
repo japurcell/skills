@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-import fcntl
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
 import os
 import time
 from datetime import datetime
@@ -30,6 +33,8 @@ def _ensure_parent(path: str) -> None:
 def _acquire_lock(lock_path: str, timeout_seconds: float) -> int | None:
     _ensure_parent(lock_path)
     lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+    if fcntl is None:
+        return lock_fd
     deadline = time.monotonic() + timeout_seconds
 
     while True:
@@ -67,7 +72,7 @@ def audit_init() -> bool:
         return False
 
 
-def audit_log_event(sender: str, message: str) -> bool:
+def _write_log(sender: str, message: str, passive_shadow_path: str | None = None) -> bool:
     log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".copilot" / "hooks" / "audit.log"))
     lock_path = os.environ.get("AUDIT_LOCK", f"{log_path}.lock")
     timeout_seconds = _lock_timeout_seconds(os.environ.get("AUDIT_LOCK_WAIT_MS"))
@@ -88,52 +93,32 @@ def audit_log_event(sender: str, message: str) -> bool:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         _rotate_audit_log(log_path, max_bytes, backups)
         _append_line(log_path, safe_sender, f"[{timestamp}] {safe_message}")
+        if passive_shadow_path:
+            _rotate_audit_log(passive_shadow_path, max_bytes, backups)
+            _append_line(passive_shadow_path, safe_sender, f"[{timestamp}] {safe_message}")
     except OSError:
         return False
     finally:
         try:
-            fcntl.flock(lock_fd, fcntl.LOCK_UN)
+            if fcntl is not None:
+                fcntl.flock(lock_fd, fcntl.LOCK_UN)
         finally:
             os.close(lock_fd)
 
     return True
+
+
+def audit_log_event(sender: str, message: str) -> bool:
+    return _write_log(sender, message)
 
 
 def audit_log_passive_event(sender: str, message: str) -> bool:
     log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".copilot" / "hooks" / "audit.log"))
     mode = os.environ.get("AUDIT_PASSIVE_LOG_MODE", "default")
-    shadow_path = os.environ.get("AUDIT_PASSIVE_LOG_SHADOW_LOG", f"{log_path}.shadow")
-    lock_path = os.environ.get("AUDIT_LOCK", f"{log_path}.lock")
-    timeout_seconds = _lock_timeout_seconds(os.environ.get("AUDIT_LOCK_WAIT_MS"))
-    max_bytes = _int_env(os.environ.get("AUDIT_LOG_MAX_BYTES"), 1048576)
-    backups = _int_env(os.environ.get("AUDIT_LOG_MAX_BACKUPS"), 3)
-
-    try:
-        lock_fd = _acquire_lock(lock_path, timeout_seconds)
-    except OSError:
-        return False
-    if lock_fd is None:
-        return False
-
-    safe_sender = sanitize_log_field(sender)
-    safe_message = sanitize_log_field(message)
-
-    try:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        _rotate_audit_log(log_path, max_bytes, backups)
-        _append_line(log_path, safe_sender, f"[{timestamp}] {safe_message}")
-        if mode != "default":
-            _rotate_audit_log(shadow_path, max_bytes, backups)
-            _append_line(shadow_path, safe_sender, f"[{timestamp}] {safe_message}")
-    except OSError:
-        return False
-    finally:
-        try:
-            fcntl.flock(lock_fd, fcntl.LOCK_UN)
-        finally:
-            os.close(lock_fd)
-
-    return True
+    shadow_path = None
+    if mode != "default":
+        shadow_path = os.environ.get("AUDIT_PASSIVE_LOG_SHADOW_LOG", f"{log_path}.shadow")
+    return _write_log(sender, message, shadow_path)
 
 
 def _rotate_audit_log(log_path: str, max_bytes: int, backups: int) -> None:
@@ -141,6 +126,13 @@ def _rotate_audit_log(log_path: str, max_bytes: int, backups: int) -> None:
         if not Path(log_path).exists() or Path(log_path).stat().st_size < max_bytes:
             return
     except OSError:
+        return
+
+    if backups <= 0:
+        try:
+            Path(log_path).unlink()
+        except OSError:
+            pass
         return
 
     for index in range(backups, 0, -1):
@@ -153,7 +145,7 @@ def _rotate_audit_log(log_path: str, max_bytes: int, backups: int) -> None:
                 else:
                     current.replace(next_path)
             except OSError:
-                return
+                pass
 
     try:
         Path(log_path).replace(Path(f"{log_path}.1"))

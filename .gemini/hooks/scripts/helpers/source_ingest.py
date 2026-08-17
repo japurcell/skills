@@ -40,6 +40,34 @@ def manifest_path_for_summary_root(summary_dir: Path) -> Path:
     return summary_dir / MANIFEST_FILE_NAME
 
 
+def source_root_for_payload(payload: dict[str, object]) -> Path:
+    override = os.environ.get("AGENTS_SOURCE_SCAN_DIR")
+    if override:
+        return Path(override)
+    cwd = str(payload.get("cwd") or "")
+    return Path(cwd) / ".agents/sources" if cwd else Path.cwd() / ".agents/sources"
+
+
+def summary_root_for_payload(payload: dict[str, object]) -> Path:
+    override = os.environ.get("AGENTS_SOURCE_SUMMARY_DIR")
+    if override:
+        return Path(override)
+    cwd = str(payload.get("cwd") or "")
+    return Path(cwd) / ".agents/memory/sources" if cwd else Path.cwd() / ".agents/memory/sources"
+
+
+def manifest_path_for_payload(payload: dict[str, object], summary_root: Path) -> Path:
+    override = os.environ.get("AGENTS_SOURCE_MANIFEST_PATH")
+    if override:
+        return Path(override)
+    return manifest_path_for_summary_root(summary_root)
+
+
+def repo_root_for_payload(payload: dict[str, object]) -> Path:
+    cwd = str(payload.get("cwd") or "")
+    return Path(cwd) if cwd else Path.cwd()
+
+
 def ingest_skill_path(repo_root: Path) -> Path:
     override = os.environ.get("AGENTS_SKILLS_DIR") or os.environ.get("GEMINI_SKILLS_DIR")
     if override:
@@ -61,7 +89,14 @@ def _sha256_bytes(content: bytes) -> str:
 
 
 def _read_file_hash(path: Path) -> str:
-    return _sha256_bytes(path.read_bytes())
+    hasher = hashlib.sha256()
+    try:
+        with open(path, "rb") as f:
+            while chunk := f.read(65536):
+                hasher.update(chunk)
+    except OSError:
+        return ""
+    return hasher.hexdigest()
 
 
 def _is_scaffold_summary(text: str) -> bool:
@@ -308,7 +343,10 @@ def _summary_is_resolved(record: SourceRecord, previous: dict[str, Any]) -> bool
 def _ensure_summary_scaffold(summary_dir: Path, record: SourceRecord, reason: str) -> SourceRecord:
     summary_path = summary_dir / record.summary_path
     if not summary_path.exists():
-        scaffold_summary(summary_dir, record.source_path, reason)
+        try:
+            scaffold_summary(summary_dir, record.source_path, reason)
+        except OSError:
+            pass
 
     summary_exists, summary_hash, summary_is_scaffold = _summary_details(summary_path)
     return SourceRecord(
@@ -450,51 +488,120 @@ def reconcile_manifest(
 
 def scaffold_summary(summary_dir: Path, source_relpath: str, reason: str) -> Path:
     summary_path = summary_path_for_source(summary_dir, source_relpath)
-    summary_path.parent.mkdir(parents=True, exist_ok=True)
-    if summary_path.exists():
-        return summary_path
+    try:
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        if summary_path.exists():
+            return summary_path
 
-    summary_relpath = summary_path.name
-    content = "\n".join(
-        [
-            "---",
-            "status: scaffold",
-            "---",
-            "",
-            f"# Summary scaffold for `{Path(source_relpath).name}`",
-            "",
-            "## Core Details",
-            f"- **Source File**: `.agents/sources/{source_relpath}`",
-            f"- **Summary File**: `.agents/memory/sources/{summary_relpath}`",
-            f"- **Stale Reason**: {reason}",
-            "",
-            "## Executive Summary",
-            "- Pending verification.",
-            "",
-            "## Key Findings",
-            "- Pending verification.",
-            "",
-            "## Integration Checklist",
-            "- [ ] Read the raw source.",
-            "- [ ] Update the executive summary with verified facts.",
-            "- [ ] Update the key findings with verified facts.",
-            "- [ ] Weave durable facts into `.agents/memory/*` or `.agents/instructions/*`.",
-            "- [ ] Append an integrate record to `.agents/memory/LOG.md` after successful ingestion.",
-            "",
-        ]
-    )
-    summary_path.write_text(content, encoding="utf-8")
+        summary_relpath = summary_path.name
+        content = "\n".join(
+            [
+                "---",
+                "status: scaffold",
+                "---",
+                "",
+                f"# Summary scaffold for `{Path(source_relpath).name}`",
+                "",
+                "## Core Details",
+                f"- **Source File**: `.agents/sources/{source_relpath}`",
+                f"- **Summary File**: `.agents/memory/sources/{summary_relpath}`",
+                f"- **Stale Reason**: {reason}",
+                "",
+                "## Executive Summary",
+                "- Pending verification.",
+                "",
+                "## Key Findings",
+                "- Pending verification.",
+                "",
+                "## Integration Checklist",
+                "- [ ] Read the raw source.",
+                "- [ ] Update the executive summary with verified facts.",
+                "- [ ] Update the key findings with verified facts.",
+                "- [ ] Weave durable facts into `.agents/memory/*` or `.agents/instructions/*`.",
+                "- [ ] Append an integrate record to `.agents/memory/LOG.md` after successful ingestion.",
+                "",
+            ]
+        )
+        summary_path.write_text(content, encoding="utf-8")
+    except OSError:
+        pass
     return summary_path
 
 
 def save_manifest(manifest_path: Path, manifest: dict[str, Any]) -> None:
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     temp_path = manifest_path.with_name(f"{manifest_path.name}.{os.getpid()}.tmp")
-    temp_path.write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    temp_path.replace(manifest_path)
+    try:
+        temp_path.write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        temp_path.replace(manifest_path)
+    finally:
+        try:
+            if temp_path.exists():
+                temp_path.unlink()
+        except OSError:
+            pass
+
+
+class ManifestLock:
+    def __init__(self, manifest_path: Path, timeout_seconds: float = 10.0):
+        self.lock_path = manifest_path.with_suffix(manifest_path.suffix + ".lock")
+        self.timeout_seconds = timeout_seconds
+        self.lock_fd = None
+
+    def __enter__(self) -> ManifestLock:
+        try:
+            import fcntl
+        except ImportError:
+            fcntl = None
+
+        try:
+            self.lock_path.parent.mkdir(parents=True, exist_ok=True)
+            self.lock_fd = os.open(str(self.lock_path), os.O_CREAT | os.O_RDWR, 0o600)
+        except OSError:
+            return self
+
+        if fcntl is None:
+            return self
+
+        import time
+        deadline = time.monotonic() + self.timeout_seconds
+        while True:
+            try:
+                fcntl.flock(self.lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return self
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    try:
+                        os.close(self.lock_fd)
+                    except OSError:
+                        pass
+                    self.lock_fd = None
+                    break
+                time.sleep(0.05)
+            except OSError:
+                try:
+                    os.close(self.lock_fd)
+                except OSError:
+                    pass
+                self.lock_fd = None
+                break
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        if self.lock_fd is not None:
+            try:
+                import fcntl
+                fcntl.flock(self.lock_fd, fcntl.LOCK_UN)
+            except (ImportError, OSError):
+                pass
+            try:
+                os.close(self.lock_fd)
+            except OSError:
+                pass
+            self.lock_fd = None
 
 
 def build_context(report_entries: list[dict[str, Any]], manifest_path: Path, skill_available: bool = True) -> str:

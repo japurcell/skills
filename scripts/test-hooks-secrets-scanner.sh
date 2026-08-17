@@ -358,9 +358,6 @@ test_hooks_json_registers_session_end_scanner() {
   assert_equals diff \
     "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .env.SCAN_SCOPE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to scan working tree diffs by default."
-  assert_equals '$HOME/.copilot/hooks/scripts/log-session-end.py' \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/log-session-end.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register the session-end logging Python hook."
 }
 
 test_hooks_json_registers_pre_tool_scanner() {

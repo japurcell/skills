@@ -9,10 +9,6 @@
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "agentStop"
         }
-      },
-      {
-        "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-agent-stop.py"
       }
     ],
     "errorOccurred": [
@@ -23,10 +19,6 @@
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "errorOccurred"
         }
-      },
-      {
-        "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-error-occurred.py"
       }
     ],
     "notification": [
@@ -37,10 +29,6 @@
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "notification"
         }
-      },
-      {
-        "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-notification.py"
       }
     ],
     "permissionRequest": [
@@ -108,10 +96,6 @@
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "postToolUseFailure"
         }
-      },
-      {
-        "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-tooluse-failure.py"
       }
     ],
     "subagentStart": [
@@ -132,10 +116,6 @@
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "subagentStop"
         }
-      },
-      {
-        "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-subagent-stop.py"
       }
     ],
     "sessionEnd": [
@@ -159,10 +139,6 @@
           "SCAN_SCOPE": "diff"
         },
         "timeoutSec": 30
-      },
-      {
-        "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/log-session-end.py"
       }
     ],
     "sessionStart": [

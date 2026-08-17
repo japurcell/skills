@@ -188,10 +188,6 @@
             }
           },
           {
-            "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/log-session-start.py"
-          },
-          {
             "name": "skill-context-injector",
             "type": "command",
             "command": "$HOME/.gemini/hooks/scripts/skill-context-injector.py",
@@ -213,10 +209,6 @@
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterAgent"
             }
-          },
-          {
-            "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/log-after-agent.py"
           }
         ]
       }
@@ -355,10 +347,6 @@
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "Notification"
             }
-          },
-          {
-            "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/log-notification.py"
           }
         ]
       }
@@ -373,10 +361,6 @@
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "SessionEnd"
             }
-          },
-          {
-            "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/log-session-end.py"
           },
           {
             "name": "scan-secrets",

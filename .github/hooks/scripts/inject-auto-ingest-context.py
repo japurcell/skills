@@ -93,10 +93,11 @@ def main() -> int:
         summaries_dir = helper.summary_root(repo_root)
         manifest_file = helper.manifest_path(summaries_dir)
 
-        current_sources = helper.scan_sources(sources_dir, summaries_dir)
-        previous_manifest = helper.load_manifest(manifest_file)
-        report_entries, next_manifest = helper.reconcile_manifest(previous_manifest, current_sources, summaries_dir)
-        helper.save_manifest(manifest_file, next_manifest)
+        with helper.ManifestLock(manifest_file):
+            current_sources = helper.scan_sources(sources_dir, summaries_dir)
+            previous_manifest = helper.load_manifest(manifest_file)
+            report_entries, next_manifest = helper.reconcile_manifest(previous_manifest, current_sources, summaries_dir)
+            helper.save_manifest(manifest_file, next_manifest)
         skill_available = helper.ingest_skill_available(repo_root)
 
         if event_name in {"agentStop", "subagentStop"}:
