@@ -10,5 +10,10 @@ Activate the `subagent-model-router` skill, spawn a subagent, and instruct it to
 
 - be brutal and skip praise
 - output a list of issues found, and suggest fixes
+- only suggest fixes; not implement them
 
 Using a subagent helps ensure objectivity because they get a fresh context window.
+
+## Red Flags
+
+- The subagent implements fixes or makes any other changes.
