@@ -46,9 +46,10 @@ TOKEN_PATTERNS = (
     re.compile(r"sk_live_[0-9A-Za-z]{16,}"),
     re.compile(r"AIza[0-9A-Za-z-_]{35}"),
     re.compile(r"eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*"),
-    re.compile(r"(?<=://)[^:]+:[^@]+(?=@)"),
     re.compile(r"xox[baprs]-[0-9A-Za-z-]{10,}"),
 )
+
+URI_CREDENTIAL_PATTERN = re.compile(r"(?<=://)[^:]+:[^@]+(?=@)")
 
 SOURCE_EVENT_NAME_MAP = {
     "agentStop": "agentStop",
@@ -67,11 +68,7 @@ SOURCE_EVENT_NAME_MAP = {
     "SessionStart": "SessionStart",
     "SubagentStart": "SubagentStart",
     "send-event.py": "send-event",
-    "log-session-start.py": "SessionStart",
     "skill-context-injector.py": "SessionStart",
-    "log-after-agent.py": "AfterAgent",
-    "log-notification.py": "Notification",
-    "log-session-end.py": "SessionEnd",
 }
 
 CANONICAL_EVENT_NAME_MAP = {
@@ -175,6 +172,10 @@ def _append_record(path: Path, record: dict[str, Any]) -> None:
         handle.write("\n")
         handle.flush()
         os.fsync(handle.fileno())
+    try:
+        os.chmod(str(path), 0o600)
+    except Exception:
+        pass
 
 
 def _max_bytes() -> int:
@@ -294,6 +295,10 @@ def _sanitize_string(value: str, *, key: str | None = None, bypass_capping: bool
     sanitized = value.replace("\r", " ").replace("\n", " ").replace("\t", " ")
     for pattern in TOKEN_PATTERNS:
         sanitized = pattern.sub(lambda match: f"{match.group(0)[:4]}...{match.group(0)[-4:]}", sanitized)
+    sanitized = URI_CREDENTIAL_PATTERN.sub(
+        lambda match: (f"{match.group(0).split(':', 1)[0]}:[REDACTED]" if ":" in match.group(0) else "[REDACTED]"),
+        sanitized
+    )
     if not bypass_capping and len(sanitized) > OBSERVABILITY_DEFAULT_MAX_STRING_CHARS:
         cap = OBSERVABILITY_DEFAULT_MAX_STRING_CHARS
         omitted = len(sanitized) - cap
@@ -386,7 +391,8 @@ def _timestamp(payload: Mapping[str, Any]) -> str:
 
 
 def _session_id(payload: Mapping[str, Any]) -> str:
-    return stringify_value(first_present(payload, "session_id", "sessionId"))
+    raw_id = stringify_value(first_present(payload, "session_id", "sessionId"))
+    return re.sub(r"[^A-Za-z0-9_-]", "", raw_id)
 
 
 def _cwd(payload: Mapping[str, Any]) -> str:
@@ -719,16 +725,36 @@ def _connect_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection:
 
 
 def _init_schema_if_needed(conn: sqlite3.Connection) -> None:
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA user_version;")
-    version = cursor.fetchone()[0]
-    if version == 0:
-        cursor.execute("PRAGMA journal_mode=WAL;")
-        cursor.execute("PRAGMA auto_vacuum=INCREMENTAL;")
-        cursor.executescript(SCHEMA_DDL)
-        cursor.execute("PRAGMA user_version = 1;")
-    elif version != 1:
-        raise sqlite3.OperationalError("mismatched schema version")
+    import time
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA user_version;")
+            version = cursor.fetchone()[0]
+            if version == 0:
+                cursor.execute("PRAGMA journal_mode=WAL;")
+                cursor.execute("PRAGMA auto_vacuum=INCREMENTAL;")
+                conn.execute("BEGIN IMMEDIATE")
+                try:
+                    cursor.execute("PRAGMA user_version;")
+                    inner_version = cursor.fetchone()[0]
+                    if inner_version == 0:
+                        cursor.executescript(SCHEMA_DDL)
+                        cursor.execute("PRAGMA user_version = 1;")
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+                    raise
+            elif version != 1:
+                raise sqlite3.OperationalError("mismatched schema version")
+            break
+        except sqlite3.OperationalError as e:
+            err_msg = str(e).lower()
+            if ("locked" in err_msg or "busy" in err_msg) and attempt < max_retries - 1:
+                time.sleep(0.05 * (attempt + 1))
+                continue
+            raise e
 
 
 def _backup_corrupt_db(db_path: Path) -> None:
@@ -781,11 +807,17 @@ def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection
             except Exception:
                 pass
             conn = _connect_db(db_path, busy_timeout)
-            cursor = conn.cursor()
-            cursor.execute("PRAGMA journal_mode=WAL;")
-            cursor.execute("PRAGMA auto_vacuum=INCREMENTAL;")
-            cursor.executescript(SCHEMA_DDL)
-            cursor.execute("PRAGMA user_version = 1;")
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                cursor = conn.cursor()
+                cursor.execute("PRAGMA journal_mode=WAL;")
+                cursor.execute("PRAGMA auto_vacuum=INCREMENTAL;")
+                cursor.executescript(SCHEMA_DDL)
+                cursor.execute("PRAGMA user_version = 1;")
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
             return conn
         else:
             raise e
@@ -903,8 +935,9 @@ def _pid_exists(pid: int) -> bool:
     try:
         os.kill(pid, 0)
         return True
-    except OSError:
-        return False
+    except OSError as e:
+        import errno
+        return e.errno == errno.EPERM
 
 
 def _cap_payload_content(raw: dict[str, Any], effective: dict[str, Any] | None) -> tuple[dict[str, Any], dict[str, Any] | None, bool]:
@@ -998,13 +1031,20 @@ def _write_transcript_chunk(
                 meta["raw_payload"] = r_raw
                 if r_eff is not None:
                     meta["effective_payload"] = r_eff
+                update_conn = None
                 try:
-                    with _connect_and_init_db(db_path, busy_timeout) as update_conn:
+                    update_conn = _connect_and_init_db(db_path, busy_timeout)
+                    with update_conn:
                         update_conn.execute("BEGIN IMMEDIATE")
                         update_conn.execute("UPDATE spans SET metadata = ? WHERE span_id = ?", (json.dumps(meta, ensure_ascii=False), span_id))
-                        update_conn.commit()
                 except Exception:
                     pass
+                finally:
+                    if update_conn:
+                        try:
+                            update_conn.close()
+                        except Exception:
+                            pass
 
             chunk_data = {
                 "session_id": session_id,
@@ -1031,32 +1071,62 @@ def _write_transcript_chunk(
                 try:
                     with open(saved_file, "a", encoding="utf-8") as f:
                         f.write(json.dumps(chunk_data, ensure_ascii=False) + "\n")
-                    
                     try:
-                        with _connect_and_init_db(db_path, busy_timeout) as update_conn:
-                            update_conn.execute("BEGIN IMMEDIATE")
-                            update_conn.execute("UPDATE spans SET transcript_chunk_path = ? WHERE span_id = ?", (str(saved_file), span_id))
-                            update_conn.commit()
+                        os.chmod(str(saved_file), 0o600)
                     except Exception:
                         pass
+                    
+                    update_conn = None
+                    try:
+                        update_conn = _connect_and_init_db(db_path, busy_timeout)
+                        with update_conn:
+                            update_conn.execute("BEGIN IMMEDIATE")
+                            update_conn.execute("UPDATE spans SET transcript_chunk_path = ? WHERE span_id = ?", (str(saved_file), span_id))
+                    except Exception:
+                        pass
+                    finally:
+                        if update_conn:
+                            try:
+                                update_conn.close()
+                            except Exception:
+                                pass
                 except Exception:
                     pass
             else:
                 active_dir.mkdir(parents=True, exist_ok=True)
+                try:
+                    os.chmod(str(active_dir), 0o700)
+                except Exception:
+                    pass
                 chunk_file = active_dir / f"{sequence_no:06d}_{span_id}.json"
                 
                 temp_chunk = chunk_file.with_suffix(".tmp")
-                with open(temp_chunk, "w", encoding="utf-8") as f:
-                    json.dump(chunk_data, f, ensure_ascii=False)
-                temp_chunk.replace(chunk_file)
-                
                 try:
-                    with _connect_and_init_db(db_path, busy_timeout) as update_conn:
+                    fd = os.open(str(temp_chunk), os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
+                    with os.fdopen(fd, "w", encoding="utf-8") as f:
+                        json.dump(chunk_data, f, ensure_ascii=False)
+                    temp_chunk.replace(chunk_file)
+                finally:
+                    try:
+                        if temp_chunk.exists():
+                            temp_chunk.unlink()
+                    except OSError:
+                        pass
+                
+                update_conn = None
+                try:
+                    update_conn = _connect_and_init_db(db_path, busy_timeout)
+                    with update_conn:
                         update_conn.execute("BEGIN IMMEDIATE")
                         update_conn.execute("UPDATE spans SET transcript_chunk_path = ? WHERE span_id = ?", (str(chunk_file), span_id))
-                        update_conn.commit()
                 except Exception:
                     pass
+                finally:
+                    if update_conn:
+                        try:
+                            update_conn.close()
+                        except Exception:
+                            pass
 
         except Exception:
             pass
@@ -1069,22 +1139,26 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
     
     start_time = time.monotonic()
     
+    conn = None
     try:
-        with _connect_and_init_db(db_path, finalizer_busy) as conn:
+        conn = _connect_and_init_db(db_path, finalizer_busy)
+        with conn:
             conn.execute("BEGIN IMMEDIATE")
-            try:
-                conn.execute(
-                    "UPDATE sessions SET status = 'finalizing' WHERE session_id = ? AND status = 'running'",
-                    (session_id,)
-                )
-                conn.commit()
-            except Exception:
-                conn.rollback()
-                raise
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE sessions SET status = 'finalizing' WHERE session_id = ? AND status = 'running'",
+                (session_id,)
+            )
     except Exception:
         pass
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
-    polling_cadence = 0.1
+    polling_cadence = 0.01
     has_uncompleted = True
     
     poll_conn: sqlite3.Connection | None
@@ -1153,63 +1227,82 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
                 pass
             
     if has_uncompleted:
+        conn = None
         try:
-            with _connect_and_init_db(db_path, finalizer_busy) as conn:
+            conn = _connect_and_init_db(db_path, finalizer_busy)
+            with conn:
                 conn.execute("BEGIN IMMEDIATE")
-                try:
-                    conn.execute(
-                        "UPDATE sessions SET status = 'failed-finalization', has_errors = 1 WHERE session_id = ?",
-                        (session_id,)
-                    )
-                    conn.commit()
-                except Exception:
-                    conn.rollback()
+                conn.execute(
+                    "UPDATE sessions SET status = 'failed-finalization', has_errors = 1 WHERE session_id = ?",
+                    (session_id,)
+                )
         except Exception:
             pass
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
         return
         
     now_epoch_ms = int(time.time() * 1000)
+    conn = None
     try:
-        with _connect_and_init_db(db_path, finalizer_busy) as conn:
+        conn = _connect_and_init_db(db_path, finalizer_busy)
+        with conn:
             conn.execute("BEGIN IMMEDIATE")
-            try:
-                cursor = conn.cursor()
-                cursor.execute("SELECT start_time_ms FROM sessions WHERE session_id = ?", (session_id,))
-                row = cursor.fetchone()
-                start_ms = row[0] if (row and row[0]) else now_epoch_ms
-                duration_ms = max(0, now_epoch_ms - start_ms)
-                
-                conn.execute(
-                    """
-                    UPDATE sessions SET
-                        status = 'sealing',
-                        end_time_ms = ?,
-                        total_duration_ms = ?
-                    WHERE session_id = ?;
-                    """,
-                    (now_epoch_ms, duration_ms, session_id)
-                )
-                conn.commit()
-            except Exception:
-                conn.rollback()
-                raise
+            cursor = conn.cursor()
+            cursor.execute("SELECT start_time_ms FROM sessions WHERE session_id = ?", (session_id,))
+            row = cursor.fetchone()
+            start_ms = row[0] if (row and row[0]) else now_epoch_ms
+            duration_ms = max(0, now_epoch_ms - start_ms)
+            
+            cursor.execute(
+                """
+                UPDATE sessions SET
+                    status = 'sealing',
+                    end_time_ms = ?,
+                    total_duration_ms = ?
+                WHERE session_id = ? AND status = 'finalizing';
+                """,
+                (now_epoch_ms, duration_ms, session_id)
+            )
+            rows_updated = cursor.rowcount
+            if rows_updated == 0:
+                return # Another thread already transitioned it to sealing or completed
+            
+            _backfill_parent_session_id(conn, session_id, _workspace_root({}), start_ms)
     except Exception:
         pass
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
+    parent_session_id = None
+    has_errors = 0
+    conn = None
     try:
-        with _connect_and_init_db(db_path, finalizer_busy) as conn:
-            conn.execute("BEGIN IMMEDIATE")
-            try:
-                cursor = conn.cursor()
-                cursor.execute("SELECT start_time_ms FROM sessions WHERE session_id = ?", (session_id,))
-                row = cursor.fetchone()
-                start_ms = row[0] if (row and row[0]) else now_epoch_ms
-                _backfill_parent_session_id(conn, session_id, _workspace_root({}), start_ms)
-                conn.commit()
-            except Exception:
-                conn.rollback()
+        conn = _connect_and_init_db(db_path, finalizer_busy)
+        cursor = conn.cursor()
+        cursor.execute("SELECT parent_session_id, has_errors FROM sessions WHERE session_id = ?", (session_id,))
+        row = cursor.fetchone()
+        if row:
+            if row[0]:
+                parent_session_id = row[0]
+            if row[1]:
+                has_errors = row[1]
     except Exception:
         pass
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     active_dir = db_path.parent / "transcripts" / "active" / session_id
     saved_dir = db_path.parent / "transcripts" / "saved"
@@ -1223,31 +1316,13 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
                 with open(chunk_file, "r", encoding="utf-8") as f:
                     chunk_data = json.load(f)
                     
-                if not chunk_data.get("parent_session_id"):
-                    try:
-                        with _connect_and_init_db(db_path, finalizer_busy) as conn:
-                            cursor = conn.cursor()
-                            cursor.execute("SELECT parent_session_id FROM sessions WHERE session_id = ?", (session_id,))
-                            row = cursor.fetchone()
-                            if row and row[0]:
-                                chunk_data["parent_session_id"] = row[0]
-                    except Exception:
-                        pass
+                if not chunk_data.get("parent_session_id") and parent_session_id:
+                    chunk_data["parent_session_id"] = parent_session_id
+                    
                 merged_lines.append(json.dumps(chunk_data, ensure_ascii=False) + "\n")
             except Exception:
                 pass
 
-    has_errors = 0
-    try:
-        with _connect_and_init_db(db_path, finalizer_busy) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT has_errors FROM sessions WHERE session_id = ?", (session_id,))
-            row = cursor.fetchone()
-            if row and row[0]:
-                has_errors = row[0]
-    except Exception:
-        pass
-        
     retained = False
     if has_errors:
         retained = True
@@ -1273,21 +1348,23 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
     if retained and merged_lines:
         try:
             saved_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                os.chmod(str(saved_dir), 0o700)
+            except Exception:
+                pass
+
             temp_saved = saved_file.with_suffix(".tmp")
-            with open(temp_saved, "w", encoding="utf-8") as f:
-                f.writelines(merged_lines)
-            temp_saved.replace(saved_file)
-            
-            with _connect_and_init_db(db_path, finalizer_busy) as conn:
-                conn.execute("BEGIN IMMEDIATE")
+            try:
+                fd = os.open(str(temp_saved), os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    f.writelines(merged_lines)
+                temp_saved.replace(saved_file)
+            finally:
                 try:
-                    conn.execute(
-                        "UPDATE sessions SET transcript_path = ? WHERE session_id = ?",
-                        (str(saved_file), session_id)
-                    )
-                    conn.commit()
-                except Exception:
-                    conn.rollback()
+                    if temp_saved.exists():
+                        temp_saved.unlink()
+                except OSError:
+                    pass
         except Exception:
             pass
 
@@ -1306,19 +1383,29 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
         pass
 
     final_status = "failed" if has_errors else "success"
+    conn = None
     try:
-        with _connect_and_init_db(db_path, finalizer_busy) as conn:
+        conn = _connect_and_init_db(db_path, finalizer_busy)
+        with conn:
             conn.execute("BEGIN IMMEDIATE")
-            try:
+            if retained and merged_lines:
+                conn.execute(
+                    "UPDATE sessions SET status = ?, transcript_path = ? WHERE session_id = ?",
+                    (final_status, str(saved_file), session_id)
+                )
+            else:
                 conn.execute(
                     "UPDATE sessions SET status = ? WHERE session_id = ?",
                     (final_status, session_id)
                 )
-                conn.commit()
-            except Exception:
-                conn.rollback()
     except Exception:
         pass
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 def _should_launch_maintenance(sentinel_path: Path) -> bool:
@@ -1479,12 +1566,18 @@ def _run_maintenance_work() -> None:
             except Exception:
                 pass
                 
+        conn = None
         try:
             conn = _connect_and_init_db(db_path, finalizer_busy)
             conn.execute("PRAGMA incremental_vacuum;")
-            conn.close()
         except Exception:
             pass
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
             
         _scavenge_stale_directories_and_registries(db_path)
     except Exception:
@@ -1527,6 +1620,8 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
             or raw_payload.get("parentSessionId")
         )
         if parent_session_id:
+            parent_session_id = re.sub(r"[^A-Za-z0-9_-]", "", stringify_value(parent_session_id))
+        if parent_session_id:
             _write_registry_file(session_id, parent_session_id)
 
     sqlite_success = False
@@ -1540,8 +1635,8 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
 
         try:
             conn = _connect_and_init_db(db_path, busy_timeout)
-            conn.execute("BEGIN IMMEDIATE")
             try:
+                conn.execute("BEGIN IMMEDIATE")
                 _ensure_session(conn, session_id, workspace_root, timestamp_ms)
                 _backfill_parent_session_id(conn, session_id, workspace_root, timestamp_ms)
 
@@ -1622,11 +1717,6 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
         if _capture_event_enabled() or hook_name == "send-event.py":
             _write_record(_build_record("event_capture", raw_payload, source_event_name=source_event_name))
 
-    try:
-        _trigger_detached_maintenance_if_needed(event_name)
-    except Exception:
-        pass
-
 
 def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
     if _disabled():
@@ -1681,8 +1771,8 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
 
         try:
             conn = _connect_and_init_db(db_path, busy_timeout)
-            conn.execute("BEGIN IMMEDIATE")
             try:
+                conn.execute("BEGIN IMMEDIATE")
                 workspace_root = _workspace_root(raw_payload)
                 ts_str = _timestamp(raw_payload)
                 timestamp_ms = _timestamp_to_ms(ts_str)
@@ -1703,6 +1793,9 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
                 )
                 if cursor.rowcount > 0:
                     sqlite_success = True
+                    is_error = hook_record.get("outcome") in {"block", "deny"} or event_name in {"error_occurred", "post_tool_use_failure"}
+                    if is_error:
+                        cursor.execute("UPDATE sessions SET has_errors = 1 WHERE session_id = ?", (session_id,))
                 conn.commit()
             except sqlite3.DatabaseError as e:
                 conn.rollback()

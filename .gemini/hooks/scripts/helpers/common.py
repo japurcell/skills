@@ -184,9 +184,7 @@ def run_gemini_passive_log_hook(script_name: str, build_log_message_func) -> int
 
         noop()
     except ValueError as exc:
-        print(f"{script_name}: {exc}", file=sys.stderr)
         noop()
     except Exception as exc:  # noqa: BLE001
-        print(f"{script_name}: unexpected error: {exc}", file=sys.stderr)
         noop()
     return 0

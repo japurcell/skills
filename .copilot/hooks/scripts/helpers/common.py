@@ -172,7 +172,6 @@ def run_passive_log_hook(script_name: str, build_log_message_func) -> int:
 
     def fail_safe(reason: str) -> None:
         safe_reason = sanitize_log_field(reason).strip() or "Hook failed"
-        print(f"{script_name}: {safe_reason}", file=sys.stderr)
         log_event(f"Error: {safe_reason}")
         emit_json({})
 

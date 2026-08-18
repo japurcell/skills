@@ -802,7 +802,7 @@ test_sqlite_span_sequencing_and_child_linkage() {
         timestamp: "2026-06-23T23:58:00Z",
         reason: ("proc-" + $idx)
       }')"
-      env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+      env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse OBSERVABILITY_BUSY_TIMEOUT_MS=5000 \
         python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
     ) &
   done
@@ -940,7 +940,13 @@ test_sqlite_finalization_and_transcripts() {
   env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
     python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
 
-  sleep 0.5
+  # Wait for the sentinel file using a polling loop (up to 5s)
+  local limit=50
+  local count=0
+  while [[ ! -f "$sentinel" && $count -lt $limit ]]; do
+    sleep 0.1
+    count=$((count + 1))
+  done
 
   if [[ ! -f "$sentinel" ]]; then
     echo "Expected maintenance sentinel file to be created: $sentinel" >&2
@@ -1141,6 +1147,9 @@ effective = {}
 effective["self"] = effective
 
 r_raw, r_eff, capped = _cap_payload_content(raw, effective)
+assert capped is True, "Expected capped to be True for cyclic payload"
+assert r_raw == {"self": "<circular reference>"}, f"Expected circular reference string, got {r_raw}"
+assert r_eff == {"self": "<circular reference>"}, f"Expected circular reference string, got {r_eff}"
 print("CYCLIC_TEST_OK")
 PY
 
@@ -1202,6 +1211,306 @@ print("MOCK_FCNTL_OK")
 PY
 }
 
+test_sqlite_additional_observability_scenarios() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap "python3 -c 'import shutil; shutil.rmtree(\"$workdir\", ignore_errors=True)'" RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/.gemini/hooks/logs/observability_v1.db"
+
+  # --- Gap 1 Test: Finalization Timeout and failed-finalization State Transition ---
+  local session_gap1="gap1-session"
+  payload="$(jq -nc --arg sess "$session_gap1" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Add a running span
+  payload="$(jq -nc --arg sess "$session_gap1" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:01.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Mark it running in sqlite3 with our own PID to keep it running
+  local my_pid=$$
+  sqlite3 "$db_path" "UPDATE spans SET status = 'running', pid = $my_pid, updated_at_ms = $(python3 -c "import time; print(int(time.time() * 1000))") WHERE session_id = '$session_gap1' AND event_name = 'before_tool';"
+
+  # Ensure active dir exists
+  local active_dir_gap1="$home/.gemini/hooks/logs/transcripts/active/$session_gap1"
+  if [[ ! -d "$active_dir_gap1" ]]; then
+    echo "Expected active transcript directory to exist: $active_dir_gap1" >&2
+    exit 1
+  fi
+
+  # Call finalization with tiny timeout budget
+  payload="$(jq -nc --arg sess "$session_gap1" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:02.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env GEMINI_OBSERVABILITY_FINALIZATION_TIMEOUT_MS=10 \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Query status
+  local sess_status
+  sess_status="$(sqlite3 "$db_path" "SELECT status FROM sessions WHERE session_id = '$session_gap1';")"
+  if [[ "$sess_status" != "failed-finalization" ]]; then
+    echo "Expected session status to transition to failed-finalization, got: $sess_status" >&2
+    exit 1
+  fi
+
+  # Assert active transcript directory STILL exists on disk
+  if [[ ! -d "$active_dir_gap1" ]]; then
+    echo "Expected active transcript directory to still exist for failed-finalization session: $active_dir_gap1" >&2
+    exit 1
+  fi
+
+
+  # --- Gap 2 Test: Envelope Structure and Delta-Payload JQ Verification ---
+  local session_gap2="gap2-session"
+  payload="$(jq -nc --arg sess "$session_gap2" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Span 1 (Identical raw and effective)
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 -c "
+import sys, os
+sys.path.append('$home/.gemini/hooks/scripts')
+from helpers.observability import begin_hook_capture, complete_hook_capture
+os.environ['OBSERVABILITY_SOURCE_EVENT_NAME'] = 'preToolUse'
+begin_hook_capture({'sessionId': '$session_gap2', 'timestamp': '2026-06-23T23:45:01.000Z', 'val': 'abc'})
+complete_hook_capture({'sessionId': '$session_gap2', 'timestamp': '2026-06-23T23:45:01.000Z', 'val': 'abc'})
+"
+
+  # Span 2 (Different raw and effective / mutated)
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 -c "
+import sys, os
+sys.path.append('$home/.gemini/hooks/scripts')
+from helpers.observability import begin_hook_capture, complete_hook_capture
+os.environ['OBSERVABILITY_SOURCE_EVENT_NAME'] = 'preToolUse'
+begin_hook_capture({'sessionId': '$session_gap2', 'timestamp': '2026-06-23T23:45:02.000Z', 'val': 'abc'})
+complete_hook_capture({'sessionId': '$session_gap2', 'timestamp': '2026-06-23T23:45:02.000Z', 'val': 'xyz'})
+"
+
+  # Finalize session
+  payload="$(jq -nc --arg sess "$session_gap2" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:03.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env OBSERVABILITY_SAMPLING_FORCE=1 \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local saved_jsonl_gap2="$home/.gemini/hooks/logs/transcripts/saved/$session_gap2.jsonl"
+  if [[ ! -f "$saved_jsonl_gap2" ]]; then
+    echo "Expected saved transcript .jsonl to exist: $saved_jsonl_gap2" >&2
+    exit 1
+  fi
+
+  local count_lines
+  count_lines="$(jq -s 'length' "$saved_jsonl_gap2")"
+  if [[ "$count_lines" -ne 4 ]]; then
+    echo "Expected exactly 4 lines in merged transcript, got: $count_lines" >&2
+    exit 1
+  fi
+
+  local bad_envelope
+  bad_envelope="$(jq -c 'select(.session_id == null or .span_id == null or .event_name == null or .source_event_name == null or .timestamp == null or .outcome == null or .payload == null)' "$saved_jsonl_gap2")"
+  if [[ -n "$bad_envelope" ]]; then
+    echo "Found line with invalid/missing envelope keys: $bad_envelope" >&2
+    exit 1
+  fi
+
+  local line1_effective
+  line1_effective="$(jq -r 'select(.timestamp | endswith("01.000Z")) | .payload.effective' "$saved_jsonl_gap2")"
+  if [[ "$line1_effective" != "null" ]]; then
+    echo "Expected payload.effective to be absent for identical raw/effective payload, got: $line1_effective" >&2
+    exit 1
+  fi
+
+  local line2_effective_val
+  line2_effective_val="$(jq -r 'select(.timestamp | endswith("02.000Z")) | .payload.effective.val' "$saved_jsonl_gap2")"
+  if [[ "$line2_effective_val" != "xyz" ]]; then
+    echo "Expected payload.effective.val to be 'xyz', got: $line2_effective_val" >&2
+    exit 1
+  fi
+
+
+  # --- Gap 3 Test: Detached Maintenance Gating (Rate Limiting) ---
+  local sentinel="$home/.gemini/hooks/logs/.maintenance_last_run"
+  # Create sentinel if not present
+  touch "$sentinel"
+
+  # Manually set its mtime to 1 hour ago
+  touch -m -d "1 hour ago" "$sentinel"
+  local mtime_before
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    mtime_before="$(stat -f "%m" "$sentinel")"
+  else
+    mtime_before="$(stat -c "%Y" "$sentinel")"
+  fi
+
+  # Trigger another event (e.g., preToolUse)
+  payload="$(jq -nc '{
+    sessionId: "maint-session-gating",
+    timestamp: "2026-06-23T23:55:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Retrieve the sentinel file's mtime and assert it was NOT updated
+  local mtime_after
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    mtime_after="$(stat -f "%m" "$sentinel")"
+  else
+    mtime_after="$(stat -c "%Y" "$sentinel")"
+  fi
+
+  if [[ "$mtime_before" != "$mtime_after" ]]; then
+    echo "Expected background maintenance execution to be bypassed (sentinel mtime not updated), but it changed: $mtime_before -> $mtime_after" >&2
+    exit 1
+  fi
+
+
+  # --- Gap 4 Test: Configuration Precedence Hierarchy Verification ---
+  env HOME="$home" GEMINI_OBSERVABILITY_BUSY_TIMEOUT_MS=250 OBSERVABILITY_BUSY_TIMEOUT_MS=500 \
+      GEMINI_OBSERVABILITY_FINALIZATION_TIMEOUT_MS=1000 OBSERVABILITY_FINALIZATION_TIMEOUT_MS=2000 \
+      python3 -c "
+import sys, os
+sys.path.append('$home/.gemini/hooks/scripts')
+from helpers.observability import _busy_timeout_ms, _finalization_timeout_ms
+assert _busy_timeout_ms() == 250, f'Expected 250, got {_busy_timeout_ms()}'
+assert _finalization_timeout_ms() == 1000, f'Expected 1000, got {_finalization_timeout_ms()}'
+"
+  if [[ $? -ne 0 ]]; then
+    echo "Configuration precedence verification failed" >&2
+    exit 1
+  fi
+
+  # Test GEMINI_OBSERVABILITY_SAMPLING_FORCE=1 and OBSERVABILITY_SAMPLING_FORCE=0 (should retain)
+  local session_gap4_retain="gap4-session-retain"
+  payload="$(jq -nc --arg sess "$session_gap4_retain" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc --arg sess "$session_gap4_retain" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:01.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Finalize with GEMINI_OBSERVABILITY_SAMPLING_FORCE=1 and OBSERVABILITY_SAMPLING_FORCE=0
+  payload="$(jq -nc --arg sess "$session_gap4_retain" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:02.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env GEMINI_OBSERVABILITY_SAMPLING_FORCE=1 env OBSERVABILITY_SAMPLING_FORCE=0 \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  if [[ ! -f "$home/.gemini/hooks/logs/transcripts/saved/$session_gap4_retain.jsonl" ]]; then
+    echo "Expected transcript to be retained when GEMINI_OBSERVABILITY_SAMPLING_FORCE=1 and OBSERVABILITY_SAMPLING_FORCE=0" >&2
+    exit 1
+  fi
+
+  # Test GEMINI_OBSERVABILITY_SAMPLING_FORCE=0 and OBSERVABILITY_SAMPLING_FORCE=1 (should NOT retain)
+  local session_gap4_discard="gap4-session-discard"
+  payload="$(jq -nc --arg sess "$session_gap4_discard" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc --arg sess "$session_gap4_discard" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:01.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Finalize with GEMINI_OBSERVABILITY_SAMPLING_FORCE=0 and OBSERVABILITY_SAMPLING_FORCE=1
+  payload="$(jq -nc --arg sess "$session_gap4_discard" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:02.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env GEMINI_OBSERVABILITY_SAMPLING_FORCE=0 env OBSERVABILITY_SAMPLING_FORCE=1 \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  if [[ -f "$home/.gemini/hooks/logs/transcripts/saved/$session_gap4_discard.jsonl" ]]; then
+    echo "Expected transcript to be discarded when GEMINI_OBSERVABILITY_SAMPLING_FORCE=0 and OBSERVABILITY_SAMPLING_FORCE=1" >&2
+    exit 1
+  fi
+
+
+  # --- Gap 5 Test: Age-Based Span Abandonment and Running Span Stale MS Overrides ---
+  local session_gap5="gap5-session"
+  payload="$(jq -nc --arg sess "$session_gap5" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc --arg sess "$session_gap5" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:01.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Update span to running, no pid, updated 5 seconds ago
+  local now_ms
+  now_ms="$(python3 -c "import time; print(int(time.time() * 1000))")"
+  local five_secs_ago=$((now_ms - 5000))
+  sqlite3 "$db_path" "UPDATE spans SET status = 'running', pid = NULL, updated_at_ms = $five_secs_ago WHERE session_id = '$session_gap5' AND event_name = 'before_tool';"
+
+  # Finalize with tiny stale MS override
+  payload="$(jq -nc --arg sess "$session_gap5" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:02.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env OBSERVABILITY_RUNNING_SPAN_STALE_MS=1000 \
+    python3 "$home/.gemini/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local gap5_span_status
+  gap5_span_status="$(sqlite3 "$db_path" "SELECT status FROM spans WHERE session_id = '$session_gap5' AND event_name = 'before_tool';")"
+  if [[ "$gap5_span_status" != "abandoned" ]]; then
+    echo "Expected stale running span to be abandoned, got: $gap5_span_status" >&2
+    exit 1
+  fi
+
+  local gap5_sess_status
+  gap5_sess_status="$(sqlite3 "$db_path" "SELECT status FROM sessions WHERE session_id = '$session_gap5';")"
+  if [[ "$gap5_sess_status" != "failed" ]]; then
+    echo "Expected stale session to end as failed, got: $gap5_sess_status" >&2
+    exit 1
+  fi
+
+  echo "ADDITIONAL_OBSERVABILITY_SCENARIOS_OK"
+}
+
 main() {
   (
     export OBSERVABILITY_FORCE_NDJSON=1
@@ -1218,6 +1527,7 @@ main() {
   test_sqlite_span_sequencing_and_child_linkage
   test_sqlite_finalization_and_transcripts
   test_sqlite_adversarial_hardening
+  test_sqlite_additional_observability_scenarios
 }
 
 main "$@"
