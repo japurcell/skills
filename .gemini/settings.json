@@ -26,7 +26,7 @@
         ]
       }
     ],
-    "AfterModel": [
+    "AfterAgent": [
       {
         "matcher": "*",
         "hooks": [

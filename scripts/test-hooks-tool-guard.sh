@@ -152,12 +152,40 @@ test_skip_mode_returns_explicit_allow_json() {
     "Expected skip mode to keep VS Code-compatible allow output."
 }
 
+test_tool_guard_denies_invalid_payload() {
+  local log_dir
+  local output
+
+  log_dir="$(setup_test_workdir)/logs"
+
+  output="$(
+    run_tool_guard \
+      "$log_dir" \
+      block \
+      "not-even-json"
+  )"
+
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected Tool Guardian to deny malformed inputs (fail-closed)."
+
+  output="$(
+    run_tool_guard \
+      "$log_dir" \
+      block \
+      "[]"
+  )"
+
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected Tool Guardian to deny non-object inputs."
+}
+
 main() {
   test_common_allowlist_helpers_trim_and_match
   test_warn_mode_returns_json_for_cli_payload
   test_block_mode_denies_vscode_payload
   test_block_mode_parses_cli_tool_args_objects
   test_skip_mode_returns_explicit_allow_json
+  test_tool_guard_denies_invalid_payload
 }
 
 main "$@"

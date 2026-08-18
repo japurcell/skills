@@ -36,9 +36,9 @@ def build_output(message: str, event_name: str, is_failure: bool) -> dict:
     return payload
 
 
-def fail_with_context(reason: str, event_name: str = "") -> None:
+def fail_with_context(reason: str, session_id: str = "", event_name: str = "") -> None:
     safe_reason = reason.strip() or "Hook failed"
-    safe_session_id = sanitize_log_field(SESSION_ID)
+    safe_session_id = sanitize_log_field(session_id)
 
     print(f"Copilot/VS Code hook failure: {safe_reason}", file=sys.stderr)
     audit_log_event(
@@ -63,19 +63,18 @@ def parse_skill_context(skill_file: Path) -> str:
 
 
 def main() -> int:
-    global SESSION_ID
-
+    session_id = ""
     try:
         input_payload = read_json_input()
         if not isinstance(input_payload, dict):
-            fail_with_context("Invalid hook input: expected a JSON object")
+            fail_with_context("Invalid hook input: expected a JSON object", session_id)
 
         event_name = str(
             input_payload.get("hook_event_name")
             or input_payload.get("hookEventName")
             or ""
         )
-        SESSION_ID = str(input_payload.get("sessionId") or input_payload.get("session_id") or "")
+        session_id = str(input_payload.get("sessionId") or input_payload.get("session_id") or "")
 
         skills_dir = (
             os.environ.get("COPILOT_SKILLS_DIR")
@@ -90,7 +89,7 @@ def main() -> int:
             home,
         )
 
-        safe_session_id = sanitize_log_field(SESSION_ID)
+        safe_session_id = sanitize_log_field(session_id)
 
         if not required_skill_files:
             audit_log_event(
@@ -105,16 +104,16 @@ def main() -> int:
         for raw_skill_file in required_skill_files:
             skill_path = Path(raw_skill_file)
             if not skill_path.exists():
-                fail_with_context(f"Required skill file not found: {raw_skill_file}", event_name)
+                fail_with_context(f"Required skill file not found: {raw_skill_file}", session_id, event_name)
             if not skill_path.is_file():
-                fail_with_context(f"Required skill file not found: {raw_skill_file}", event_name)
+                fail_with_context(f"Required skill file not found: {raw_skill_file}", session_id, event_name)
             if not os.access(skill_path, os.R_OK):
-                fail_with_context(f"Required skill file not readable: {raw_skill_file}", event_name)
+                fail_with_context(f"Required skill file not readable: {raw_skill_file}", session_id, event_name)
 
             try:
                 skill_context = parse_skill_context(skill_path)
             except OSError as exc:
-                fail_with_context(f"Failed to read skill file: {raw_skill_file} ({exc})", event_name)
+                fail_with_context(f"Failed to read skill file: {raw_skill_file} ({exc})", session_id, event_name)
 
             context_parts.append(f"<!-- BEGIN REQUIRED SKILL: {raw_skill_file} -->\n{skill_context}\n<!-- END REQUIRED SKILL: {raw_skill_file} -->")
 
@@ -127,13 +126,11 @@ def main() -> int:
         emit_json(build_output(required_skill_context, event_name, False))
         return 0
     except ValueError as exc:
-        fail_with_context(str(exc))
+        fail_with_context(str(exc), session_id)
     except Exception as exc:  # noqa: BLE001 - intentional top-level fallback
-        fail_with_context(f"Unexpected exception: {exc}", "")
+        fail_with_context(f"Unexpected exception: {exc}", session_id, "")
     return 0
 
 
 if __name__ == "__main__":
-    SESSION_ID = ""
     raise SystemExit(main())
-

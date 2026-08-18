@@ -6,7 +6,9 @@ import sys
 
 
 def main() -> int:
-    sys.stdout.write("\a\n")
+    sys.stderr.write("\a\n")
+    sys.stderr.flush()
+    sys.stdout.write("{}\n")
     sys.stdout.flush()
     return 0
 

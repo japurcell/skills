@@ -33,9 +33,13 @@ def forward_to_rtk(raw_input: str) -> tuple[dict | None, str | None]:
     if not isinstance(payload, dict):
         return None, "invalid hook input JSON"
 
+    import shutil
+
+    rtk_bin = shutil.which("rtk") or "rtk"
+
     try:
         result = subprocess.run(
-            ["rtk", "hook", "copilot"],
+            [rtk_bin, "hook", "copilot"],
             input=raw_input,
             capture_output=True,
             text=True,

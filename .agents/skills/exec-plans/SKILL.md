@@ -130,6 +130,14 @@ Prefer additive code changes followed by subtractions that keep tests passing. P
 
     Describe, in prose, the sequence of edits and additions. For each edit, name the file and location (function, module) and what to insert or change. Keep it concrete and minimal.
 
+    If breaking the work into milestones, format each milestone as a sub-section under this heading with explicit status and acceptance metadata headers:
+
+    ### Milestone 1: [Action-oriented Title]
+    Status: done|in progress|open
+    Acceptance: met|not met
+
+    [Describe scope, commands to run, and human-verifiable behavior that will exist at the end of the milestone.]
+
     ## Concrete Steps
 
     State the exact commands to run and where to run them (working directory). When a command generates output, show a short expected transcript so the reader can compare. This section must be updated as work proceeds.

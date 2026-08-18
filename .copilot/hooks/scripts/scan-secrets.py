@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import fcntl
 import json
 import os
 import re
@@ -310,10 +309,27 @@ def append_scan_log(
     if findings:
         payload["findings"] = findings
 
+    try:
+        import fcntl
+    except ImportError:
+        fcntl = None
+
+    try:
+        import msvcrt
+    except ImportError:
+        msvcrt = None
+
     lock_path = log_path.with_name(f"{log_path.name}.lock")
     lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
     try:
-        fcntl.flock(lock_fd, fcntl.LOCK_EX)
+        if fcntl is not None:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX)
+        elif msvcrt is not None:
+            try:
+                os.lseek(lock_fd, 0, os.SEEK_SET)
+                msvcrt.locking(lock_fd, msvcrt.LK_LOCK, 1)
+            except Exception:
+                pass
         rotate_scan_log(
             log_path,
             int(os.environ.get("AUDIT_LOG_MAX_BYTES", "1048576")),
@@ -323,7 +339,17 @@ def append_scan_log(
             handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
             handle.write("\n")
     finally:
-        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        if fcntl is not None:
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_UN)
+            except Exception:
+                pass
+        elif msvcrt is not None:
+            try:
+                os.lseek(lock_fd, 0, os.SEEK_SET)
+                msvcrt.locking(lock_fd, msvcrt.LK_UNLCK, 1)
+            except Exception:
+                pass
         os.close(lock_fd)
 
 

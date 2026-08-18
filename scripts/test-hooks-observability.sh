@@ -32,7 +32,7 @@ test_hooks_json_registers_observability_emitters() {
   local event_name
   local source_event_name
 
-  for event_name in sessionStart subagentStart preToolUse agentStop errorOccurred notification postToolUseFailure subagentStop sessionEnd; do
+  for event_name in sessionStart subagentStart preToolUse agentStop errorOccurred notification postToolUseFailure subagentStop sessionEnd permissionRequest postToolUse preCompact userPromptSubmitted userPromptTransformed; do
     source_event_name="$event_name"
     assert_hook_registered_with_observability_emitter "$event_name" "$source_event_name"
   done
@@ -50,7 +50,7 @@ test_structured_observability_records_session_rollup_and_mutation() {
   local records
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "$workdir"' RETURN
+  trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
   install_into_temp_home "$home"
   obs_log="$home/.copilot/hooks/logs/observability.ndjson"
@@ -1215,7 +1215,7 @@ test_sqlite_additional_observability_scenarios() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap "python3 -c 'import shutil; shutil.rmtree(\"$workdir\", ignore_errors=True)'" RETURN
+  trap 'python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "'"$workdir"'"' RETURN
   home="$workdir/home"
   install_into_temp_home "$home"
   db_path="$home/.copilot/hooks/logs/observability_v1.db"
@@ -1507,6 +1507,59 @@ assert _finalization_timeout_ms() == 1000, f'Expected 1000, got {_finalization_t
   echo "ADDITIONAL_OBSERVABILITY_SCENARIOS_OK"
 }
 
+test_observability_log_rotation_fail_open() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+
+  if [[ "$0" == *"gemini"* ]]; then
+    obs_log="$home/.gemini/hooks/logs/observability.ndjson"
+    prefix="GEMINI"
+    event_name="SessionEnd"
+    runner_path="$home/.gemini/hooks/scripts/send-event.py"
+  else
+    obs_log="$home/.copilot/hooks/logs/observability.ndjson"
+    prefix="COPILOT"
+    event_name="sessionEnd"
+    runner_path="$home/.copilot/hooks/scripts/send-event.py"
+  fi
+
+  # Create active log and fill it past max_bytes
+  mkdir -p "$(dirname "$obs_log")"
+  echo '{"test":"active"}' > "$obs_log"
+
+  # Create a directory where the rotated log wants to go to force an OSError on rename
+  mkdir -p "$obs_log.1"
+
+  # Run the hook which should trigger rotation but fail gracefully and append to active log
+  payload='{"sessionId":"fail-open-test","timestamp":"2026-08-18T12:00:00Z"}'
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=10 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+      python3 "$runner_path" <<<"$payload"
+  )"
+
+  assert_equals '{}' "$(jq -c . <<<"$output")" \
+    "Expected hook to execute successfully even when log rotation fails."
+
+  # Verify active log still exists and has the new entry appended
+  if [[ ! -f "$obs_log" ]]; then
+    echo "Expected active log to exist and retain logs on rotation failure." >&2
+    exit 1
+  fi
+
+  # Ensure directory is cleaned up so trap doesn't fail
+  rm -rf "$obs_log.1"
+}
+
 main() {
   (
     export OBSERVABILITY_FORCE_NDJSON=1
@@ -1518,6 +1571,7 @@ main() {
     test_observability_log_rotation_unconditional_prune
     test_observability_log_rotation_sub_512
     test_observability_log_rotation_generic_fallback
+    test_observability_log_rotation_fail_open
   )
   test_sqlite_observability_persistence
   test_sqlite_span_sequencing_and_child_linkage

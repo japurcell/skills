@@ -46,8 +46,12 @@ def main() -> int:
             emit_json({})
             return 0
 
+        if payload.get("stop_hook_active") or payload.get("stopHookActive"):
+            emit_json({})
+            return 0
+
         event_name = str(payload.get("hook_event_name") or "")
-        if event_name and event_name not in {"BeforeAgent", "AfterModel"}:
+        if event_name and event_name not in {"BeforeAgent", "AfterAgent"}:
             emit_json({})
             return 0
         if not event_name:
@@ -66,7 +70,7 @@ def main() -> int:
             save_manifest(manifest_path, next_manifest)
         skill_available = ingest_skill_available(repo_root)
 
-        if event_name == "AfterModel":
+        if event_name == "AfterAgent":
             reason = build_block_reason(report_entries, skill_available)
             if not reason:
                 emit_json({})

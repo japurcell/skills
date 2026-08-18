@@ -134,12 +134,40 @@ test_gemini_settings_register_tool_guard() {
     "Expected .gemini/global-settings.json to register tool-guard.py after observability for all Gemini BeforeTool events."
 }
 
+test_tool_guard_denies_invalid_payload() {
+  local log_dir
+  local output
+
+  log_dir="$(setup_test_workdir)/logs"
+
+  output="$(
+    run_gemini_tool_guard \
+      "$log_dir" \
+      block \
+      "not-even-json"
+  )"
+
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected Gemini Tool Guardian to deny malformed inputs (fail-closed)."
+
+  output="$(
+    run_gemini_tool_guard \
+      "$log_dir" \
+      block \
+      "[]"
+  )"
+
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected Gemini Tool Guardian to deny non-object inputs."
+}
+
 main() {
   test_warn_mode_returns_json_for_gemini_payload
   test_block_mode_denies_gemini_payload
   test_block_mode_parses_gemini_tool_input_objects
   test_skip_mode_returns_explicit_allow_json
   test_gemini_settings_register_tool_guard
+  test_tool_guard_denies_invalid_payload
 }
 
 main "$@"

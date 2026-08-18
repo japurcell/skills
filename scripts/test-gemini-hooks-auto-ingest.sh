@@ -86,8 +86,8 @@ test_session_start_startup_registers_auto_ingest_hook() {
     "Expected Gemini repo-local settings to register the BeforeAgent auto-ingest injector."
 
   assert_equals '$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py' \
-    "$(jq -r '.hooks.AfterModel[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected Gemini repo-local settings to register the AfterModel pending-ingest backstop."
+    "$(jq -r '.hooks.AfterAgent[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected Gemini repo-local settings to register the AfterAgent pending-ingest backstop."
 }
 
 test_new_source_injects_scaffold_context_and_updates_manifest() {
@@ -298,7 +298,7 @@ test_after_model_blocks_pending_ingest() {
 
   output="$(
     run_repo_local_after_model_auto_ingest_hook \
-      '{"session_id":"after-model-auto-ingest","timestamp":"2026-06-24T10:00:00Z","hook_event_name":"AfterModel","cwd":"'"$repo_dir"'","prompt":"hello","prompt_response":"normal answer"}' \
+      '{"session_id":"after-model-auto-ingest","timestamp":"2026-06-24T10:00:00Z","hook_event_name":"AfterAgent","cwd":"'"$repo_dir"'","prompt":"hello","prompt_response":"normal answer"}' \
       HOME="$home_dir" \
       AUDIT_LOG="$workdir/audit.log" \
       AGENTS_SOURCE_SCAN_DIR="$source_dir" \
@@ -306,11 +306,11 @@ test_after_model_blocks_pending_ingest() {
   )"
 
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected Gemini AfterModel pending ingest gate to block the response."
+    "Expected Gemini AfterAgent pending ingest gate to block the response."
   assert_file_contains <(jq -r '.reason' <<<"$output") 'Pending ingest blocks normal work.' \
-    "Expected Gemini AfterModel block reason to call out pending ingest."
+    "Expected Gemini AfterAgent block reason to call out pending ingest."
   assert_file_contains <(jq -r '.reason' <<<"$output") 'after-model.md' \
-    "Expected Gemini AfterModel block reason to list the pending source."
+    "Expected Gemini AfterAgent block reason to list the pending source."
 }
 
 test_modified_source_keeps_existing_summary_and_marks_stale() {

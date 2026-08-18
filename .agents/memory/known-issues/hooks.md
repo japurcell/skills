@@ -91,3 +91,13 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Affected area:** Trace Store chunking and finalization writes (`_write_transcript_chunk`, `_finalize_session`)
 **Description:** Errors raised during disk I/O, serialization, or flushing while writing atomic temporary `.tmp` files can orphan these files on disk, causing gradual filesystem leakage.
 **Workaround:** Wrap atomic file writes in `try...finally` blocks, and unconditionally attempt to unlink the `.tmp` path inside the `finally` block if it exists.
+
+## Extensionless Command Execution Failures on Windows when shell=False
+**Affected area:** RTK hook forwarding (`rtk-hook-gemini.py`)
+**Description:** On Windows systems, executables such as `rtk` are registered as cmd/batch files (e.g., `rtk.cmd` or `rtk.bat`). Invoking them with `subprocess.run(shell=False)` with the extensionless name `rtk` raises a `FileNotFoundError`.
+**Workaround:** Resolve the executable name using `shutil.which("rtk")` before invoking `subprocess.run`, which correctly resolves the full executable name (with extensions) on all platforms.
+
+## Hook Name Migration from AfterModel to AfterAgent in Gemini settings
+**Affected area:** Local settings (`settings.json`) and test assertions
+**Description:** The Gemini hook engine migrated its prompt-time completion event name from `AfterModel` to `AfterAgent`. Modifying local configuration to use `AfterAgent` while leaving test suites with `AfterModel` asserts leads to hard test failures and fail-open security/ingest backstop states.
+**Workaround:** Ensure all test suites, local `settings.json`, global configurations, and hook scripts (such as `inject-auto-ingest-context.py`) are fully synchronized to use `AfterAgent`.

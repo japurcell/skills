@@ -69,6 +69,14 @@ SOURCE_EVENT_NAME_MAP = {
     "SubagentStart": "SubagentStart",
     "send-event.py": "send-event",
     "skill-context-injector.py": "SessionStart",
+    "AfterTool": "AfterTool",
+    "BeforeAgent": "BeforeAgent",
+    "BeforeModel": "BeforeModel",
+    "AfterModel": "AfterModel",
+    "BeforeToolSelection": "BeforeToolSelection",
+    "PreCompress": "PreCompress",
+    "preCompact": "preCompact",
+    "SubagentStop": "SubagentStop",
 }
 
 CANONICAL_EVENT_NAME_MAP = {
@@ -87,6 +95,14 @@ CANONICAL_EVENT_NAME_MAP = {
     "SessionEnd": "session_end",
     "SessionStart": "session_start",
     "SubagentStart": "subagent_start",
+    "AfterTool": "after_tool",
+    "BeforeAgent": "before_agent",
+    "BeforeModel": "before_model",
+    "AfterModel": "after_model",
+    "BeforeToolSelection": "before_tool_selection",
+    "PreCompress": "pre_compress",
+    "preCompact": "pre_compact",
+    "SubagentStop": "subagent_stop",
 }
 
 TERMINAL_EVENT_NAMES = {"session_end", "subagent_stop"}
@@ -672,7 +688,7 @@ def _busy_timeout_ms() -> int:
             return max(0, int(val))
         except ValueError:
             pass
-    return 50
+    return 5000
 
 
 def _finalization_busy_timeout_ms() -> int:
@@ -712,6 +728,7 @@ def _connect_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection:
         except Exception:
             pass
     conn = sqlite3.connect(str(db_path), timeout=busy_timeout / 1000.0)
+    conn.execute(f"PRAGMA busy_timeout = {busy_timeout};")
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.execute("PRAGMA foreign_keys=ON;")
     for suffix in ["-wal", "-shm"]:
@@ -849,6 +866,7 @@ def _ensure_session(conn: sqlite3.Connection, session_id: str, workspace_root: s
 
 
 def _write_registry_file(child_session_id: str, parent_session_id: str) -> None:
+    temp_file = None
     try:
         registry_dir = _get_db_path().parent / "registries" / "subagents"
         registry_dir.mkdir(parents=True, exist_ok=True)
@@ -858,14 +876,21 @@ def _write_registry_file(child_session_id: str, parent_session_id: str) -> None:
             pass
         registry_file = registry_dir / f"{child_session_id}.json"
         temp_file = registry_file.with_suffix(".tmp")
-        fd = os.open(str(temp_file), os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump({"parent_session_id": parent_session_id}, f)
-        temp_file.replace(registry_file)
         try:
-            os.chmod(str(registry_file), 0o600)
-        except Exception:
-            pass
+            fd = os.open(str(temp_file), os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump({"parent_session_id": parent_session_id}, f)
+            temp_file.replace(registry_file)
+            try:
+                os.chmod(str(registry_file), 0o600)
+            except Exception:
+                pass
+        finally:
+            if temp_file and temp_file.exists():
+                try:
+                    temp_file.unlink()
+                except Exception:
+                    pass
     except Exception:
         pass
 
@@ -1158,7 +1183,7 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
             except Exception:
                 pass
 
-    polling_cadence = 0.01
+    polling_cadence = 0.1
     has_uncompleted = True
     
     poll_conn: sqlite3.Connection | None
@@ -1476,8 +1501,9 @@ def _scavenge_stale_directories_and_registries(db_path: Path) -> None:
                     
                     is_stale_mtime = (now - max_mtime > stale_threshold)
                     is_active_db = (session_id in active_sessions)
+                    is_very_stale = (now - max_mtime > 7 * 24 * 3600)
                     
-                    if is_stale_mtime and not is_active_db:
+                    if is_very_stale or (is_stale_mtime and not is_active_db):
                         import shutil
                         shutil.rmtree(item)
                 except Exception:
@@ -1492,9 +1518,25 @@ def _scavenge_stale_directories_and_registries(db_path: Path) -> None:
                     mtime = item.stat().st_mtime
                     is_stale_mtime = (now - mtime > stale_threshold)
                     is_active_db = (session_id in active_sessions)
+                    is_very_stale = (now - mtime > 7 * 24 * 3600)
                     
-                    if is_stale_mtime and not is_active_db:
+                    if is_very_stale or (is_stale_mtime and not is_active_db):
                         item.unlink()
+                except Exception:
+                    pass
+
+    transcripts_base = db_path.parent / "transcripts"
+    if transcripts_base.exists():
+        for item in transcripts_base.iterdir():
+            if item.is_dir() and item.name not in {"active", "saved"}:
+                try:
+                    max_mtime = item.stat().st_mtime
+                    for child in item.iterdir():
+                        if child.is_file():
+                            max_mtime = max(max_mtime, child.stat().st_mtime)
+                    if now - max_mtime > 7 * 24 * 3600:
+                        import shutil
+                        shutil.rmtree(item)
                 except Exception:
                     pass
 
@@ -1647,7 +1689,7 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                     )
                 elif event_name in TERMINAL_EVENT_NAMES:
                     conn.execute(
-                        "UPDATE sessions SET status = 'finalizing' WHERE session_id = ?",
+                        "UPDATE sessions SET status = 'finalizing' WHERE session_id = ? AND status = 'running'",
                         (session_id,)
                     )
 
@@ -1708,8 +1750,9 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
                 raise
             finally:
                 conn.close()
-        except Exception:
-            pass
+        except Exception as e:
+            sys.stderr.write(f"Observability database error in begin_hook_capture: {e}\n")
+            sys.stderr.flush()
 
     _STATE["sqlite_success"] = sqlite_success
 
@@ -1793,7 +1836,7 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
                 )
                 if cursor.rowcount > 0:
                     sqlite_success = True
-                    is_error = hook_record.get("outcome") in {"block", "deny"} or event_name in {"error_occurred", "post_tool_use_failure"}
+                    is_error = hook_record.get("outcome") in {"block", "deny"} or event_name in {"error_occurred", "after_tool_failure"}
                     if is_error:
                         cursor.execute("UPDATE sessions SET has_errors = 1 WHERE session_id = ?", (session_id,))
                 conn.commit()
@@ -1806,8 +1849,9 @@ def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
                 raise
             finally:
                 conn.close()
-        except Exception:
-            pass
+        except Exception as e:
+            sys.stderr.write(f"Observability database error in complete_hook_capture: {e}\n")
+            sys.stderr.flush()
 
         if sqlite_success:
             sequence_no = _STATE.get("sequence_no")
