@@ -1,6 +1,6 @@
 ---
 name: improve-skill
-description: Mandatory at the end of a turn only when both 1 and 2 are true. 1.) a skill is activated or loaded 2.) a mistake is made, a failure occurs, a human provides steering or correction, a workaround is discovered, a code review reveals a gap in understanding, or a gap exists in a skill's instructions.
+description: Mandatory when a skill is activated and a mistake is made, a failure occurs, a human provides steering or correction, a workaround is discovered, a code review reveals a gap in understanding, or a gap exists in a skill's instructions.
 ---
 
 Identify and suggest **scoped**, minimal improvements to **targetable skills** using **durable learnings** discovered during the current session so that future agents are more accurate, efficient, and reliable.
