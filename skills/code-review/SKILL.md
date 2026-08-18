@@ -52,7 +52,7 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - If none exists, record `no spec available` and skip spec compliance review.
 
 7. **Review**
-   Spawn parallel subagents using available catalog names:
+   Spawn parallel subagents concurrently in a single turn (do NOT run them sequentially across multiple turns) using available catalog names:
    - `addy-code-reviewer`: correctness, regressions, edge cases, architecture boundaries
    - `addy-security-auditor`: vuln, unsafe data handling, auth/authz, injection, secrets, attack surface
    - `addy-test-engineer`: inadequate, misleading, or broken tests for changed behavior
@@ -65,7 +65,7 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - spec, if available
    - `references/pr-protocol.md`, if reviewing a PR
 
-   For all reviews, run the four required subagents unless the user explicitly asks for a lightweight review. For large changes, chunk input per `references/large-change-triage.md`.
+   For all reviews, you MUST run all four required subagents in parallel (concurrently) within the same response turn to prevent context bloat and speed up execution, unless the user explicitly asks for a lightweight review. For large changes, chunk input per `references/large-change-triage.md`.
 
 8. **Each subagent result must include**
    - role
