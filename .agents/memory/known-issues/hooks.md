@@ -101,3 +101,8 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Affected area:** Local settings (`settings.json`) and test assertions
 **Description:** The Gemini hook engine migrated its prompt-time completion event name from `AfterModel` to `AfterAgent`. Modifying local configuration to use `AfterAgent` while leaving test suites with `AfterModel` asserts leads to hard test failures and fail-open security/ingest backstop states.
 **Workaround:** Ensure all test suites, local `settings.json`, global configurations, and hook scripts (such as `inject-auto-ingest-context.py`) are fully synchronized to use `AfterAgent`.
+
+## RTK empty stdout on non-optimized command treated as invalid JSON
+**Affected area:** RTK hook wrappers (`rtk-hook-copilot.py` and `rtk-hook-gemini.py`)
+**Description:** When the `rtk` binary does not optimize or rewrite a tool command, it exits 0 with an empty stdout. Treating this empty stdout as invalid JSON triggers fallback warnings in the audit log and creates false errors.
+**Workaround:** If `returncode == 0` and `stdout` is empty or whitespace-only, return a no-op representation `({}, None)` directly instead of attempting to parse it as JSON.

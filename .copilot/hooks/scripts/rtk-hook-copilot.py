@@ -7,6 +7,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
 from helpers.audit import audit_log_event
 from helpers.common import emit_json, sanitize_log_field
 from helpers.observability import begin_hook_capture
@@ -57,8 +61,12 @@ def forward_to_rtk(raw_input: str) -> tuple[dict | None, str | None]:
         stderr = sanitize_log_field(result.stderr)
         return None, f"rtk exited {result.returncode}: {stderr}"
 
+    stdout_stripped = (result.stdout or "").strip()
+    if not stdout_stripped:
+        return {}, None
+
     try:
-        rewritten = json.loads(result.stdout or "")
+        rewritten = json.loads(stdout_stripped)
     except json.JSONDecodeError:
         return None, "rtk returned invalid JSON"
 

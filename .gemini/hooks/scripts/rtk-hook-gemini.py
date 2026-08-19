@@ -61,8 +61,12 @@ def forward_to_rtk(raw_input: str) -> tuple[dict | None, str | None]:
         stderr = sanitize_log_field(result.stderr)
         return None, f"rtk exited {result.returncode}: {stderr}"
 
+    stdout_stripped = (result.stdout or "").strip()
+    if not stdout_stripped:
+        return {}, None
+
     try:
-        rewritten = json.loads(result.stdout or "")
+        rewritten = json.loads(stdout_stripped)
     except json.JSONDecodeError:
         return None, "rtk returned invalid JSON"
 

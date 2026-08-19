@@ -125,6 +125,35 @@ printf "%s\n" '"'"'{"hookSpecificOutput":{"tool_input":{"command":"echo late"}}}
     "Expected RTK timeouts to be logged as a fallback."
 }
 
+test_empty_rtk_rewrite_is_treated_as_noop_without_audit_errors() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  mock_bin "$workdir" "rtk" '#!/usr/bin/env bash
+exit 0'
+
+  output="$(
+    run_rtk_hook \
+      "$audit_log" \
+      '{"session_id":"rtk-empty","hook_event_name":"BeforeTool","tool_name":"run_shell_command","tool_input":{"command":"echo empty"}}' \
+      "PATH=$workdir/bin:$PATH"
+  )"
+
+  assert_equals "{}" "$output" \
+    "Expected empty rtk stdout to return a standard no-op response."
+  if [[ -f "$audit_log" ]] && grep -Fq "RTK rewrite fallback" "$audit_log"; then
+    echo "Expected no RTK rewrite fallback errors in the audit log for clean empty output." >&2
+    echo "--- Audit Log ---" >&2
+    cat "$audit_log" >&2
+    exit 1
+  fi
+}
+
 test_gemini_settings_register_rtk_rewrite_hook() {
   assert_equals '$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py' \
     "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "run_shell_command") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
@@ -136,6 +165,7 @@ main() {
   test_invalid_json_degrades_to_noop_json
   test_failed_rtk_rewrite_degrades_to_noop_json
   test_timeout_rtk_rewrite_degrades_to_noop_json
+  test_empty_rtk_rewrite_is_treated_as_noop_without_audit_errors
   test_gemini_settings_register_rtk_rewrite_hook
 }
 
