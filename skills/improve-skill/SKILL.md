@@ -1,6 +1,6 @@
 ---
 name: improve-skill
-description: Mandatory when a skill is activated and a mistake is made, a failure occurs, a human provides steering or correction, a workaround is discovered, a code review reveals a gap in understanding, or a gap exists in a skill's instructions.
+description: MANDATORY self-improvement skill. ALWAYS activate this skill when a mistake is made, a failure occurs, a user corrects you, a user points out a mistake, a user provides steering, negative code review results are provided, a workaround is discovered, a code review reveals a gap in understanding, or a gap exists in a skill's instructions.
 ---
 
 Identify and suggest **scoped**, minimal improvements to **targetable skills** using **durable learnings** discovered during the current session so that future agents are more accurate, efficient, and reliable.
