@@ -38,6 +38,7 @@
         "quota"
       ]
     },
+    "inlineThinkingMode": "full",
     "showMemoryUsage": true,
     "showModelInfoInChat": true,
     "showStatusInTitle": true
