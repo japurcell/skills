@@ -25,12 +25,12 @@ fi
   "https://github.com/mattpocock/skills.git" \
   "skills/engineering/improve-codebase-architecture" "skills" \
   "skills/engineering/tdd" "skills" \
-  "skills/engineering/to-issues" "skills" \
-  "skills/engineering/setup-matt-pocock-skills" "skills" \
   "skills/engineering/codebase-design" "skills" \
   "skills/engineering/prototype" "skills" \
   "skills/engineering/resolving-merge-conflicts" "skills" \
   "skills/productivity/grilling" "skills" \
+  "skills/engineering/research" "skills" \
   "skills/productivity/teach" "skills" \
+  "skills/engineering/wayfinder" "skills" \
   "skills/productivity/writing-great-skills" "skills" \
   "skills/productivity/writing-for-agents" "skills"

@@ -8,6 +8,7 @@ coverage: Rules and conventions for skills under `skills/`.
 - Start `SKILL.md` with YAML frontmatter.
 - Keep `name` lowercase kebab-case.
 - Keep `description` concrete and trigger-oriented.
+- Do not remove an existing `disable-model-invocation: true` frontmatter key from a skill without explicit human approval.
 - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 - Validate skill changes with `.agents/memory/testing/skills.md`.
 
