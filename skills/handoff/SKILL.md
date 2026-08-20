@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Writes a resume-ready handoff so another agent can continue with a new context window. Use whenever work may pause, compact, reset, switch models, move to another agent, or when the user asks to save progress, preserve context, resume later, continue in a new session, or leave notes for whoever picks this up next.
+description: Preserve and resume cross-session work. Mandatory when prompt includes a tagged file named `handoff.md` or asks to continue from a handoff. Use whenever user references a handoff, `handoff.md`, resume notes, saved progress, "pick this up", "continue from previous session/agent", "next steps", or tagged handoff file. Load this skill before acting so you ingest goal, status, constraints, decisions, next step, and risks from handoff artifact. If another workflow skill also applies, load `handoff` first, then that skill. Update handoff whenever work changes state, scope, blockers, or recommended next step, and always before stopping or switching agents/contexts.
 ---
 
 # Handoff
