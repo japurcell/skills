@@ -10,6 +10,8 @@ You MUST activate the `exec-plans` skill and write an ExecPlan before making cod
 2. Involves multiple distinct milestones or execution phases.
 3. Spans different packages or layers.
 
+If the plan is large, you MUST orchestrate the updates with subagents and make file and task ownership explicit for each subagent to avoid conflicts. Choose the smallest subagent model type that can effectively handle the task to avoid unnecessary cost and latency.
+
 ## Agent Orientation
 
 Before executing tasks or answering questions, you **must**:

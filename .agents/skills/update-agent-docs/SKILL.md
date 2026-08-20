@@ -1,7 +1,7 @@
 ---
 name: update-agent-docs
 description: >
-  Update the agent knowledge base after making code changes in the repo. Run at the end of
+  Mandatory agent knowledge base update after making code changes in the repo. Always run at the end of
   every task that modifies code, adds files, changes public APIs or diagnostics, or establishes new
   patterns. Keeps .agents/instructions/ and .agents/memory/ fresh and reliable.
 ---
@@ -17,7 +17,7 @@ Run at the end of every task that changes code. This is not optional.
 ## Workflow
 
 1. Identify durable changes.
-2. Review the session history specifically for **mistakes, user corrections, steering updates, and resolved compiler/linter warnings**.
+2. Review the session history specifically for **mistakes, failures, repeated retries, user corrections, steering updates, negative code review results, workarounds discovered, coordination failures, validation reruns, and resolved compiler/linter warnings**.
 3. Extract any durable language, framework, or tooling rules learned from these mistakes.
 4. Route each change to the right doc. See `refs/routing.md`.
 5. Search related docs for existing guidance before adding text.
@@ -30,13 +30,17 @@ Run at the end of every task that changes code. This is not optional.
 ## Rules
 
 - Edit only `.agents/instructions/` and `.agents/memory/`.
-- Do not edit `.agents/skills/` or `.agents/sources/`.
+- Do not edit `.agents/skills/`.
 - Document current repo state, not this task's story.
 - Keep one canonical copy of each fact or rule.
 - Prefer short, focused docs over grab bags.
 - Use simple bullets and direct language.
 - Do not store one-off notes, raw logs, speculation, or obvious facts from nearby code.
-- If a cleanup is too large, make one useful improvement and add a short TODO in the most relevant doc.
+- If a cleanup is too large:
+  - activate the `exec-plans` skill
+  - orchestrate the updates with subagents
+  - make file ownership explicit for each subagent to avoid conflicts
+  - choose the smallest subagent model type that can effectively handle the task to avoid unnecessary cost and latency
 - If no durable knowledge changed, make no doc edits and report that no update was needed.
 
 More quality rules: `refs/doc-quality.md`.
