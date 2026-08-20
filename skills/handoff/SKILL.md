@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Preserve and resume cross-session work. Mandatory when prompt includes a tagged file named `handoff.md` or asks to continue from a handoff. Use whenever user references a handoff, `handoff.md`, resume notes, saved progress, "pick this up", "continue from previous session/agent", "next steps", or tagged handoff file. Load this skill before acting so you ingest goal, status, constraints, decisions, next step, and risks from handoff artifact. If another workflow skill also applies, load `handoff` first, then that skill. Update handoff whenever work changes state, scope, blockers, or recommended next step, and always before stopping or switching agents/contexts.
+description:  Preserve and resume cross-session execution state via .agents/scratchpad/*/handoff.md. Mandatory trigger on handoff.md, handoff, resume, continue from previous session/agent, pick up where left off, next step, checkpoint, transfer context. Must load before acting, and must update handoff when work state/scope/blockers/next-step changes or before stopping/switching agent. If another workflow skill also applies, load `handoff` first, then that skill.
 ---
 
 # Handoff
