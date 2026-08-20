@@ -69,6 +69,7 @@ Each ticket is a **separate file in the `tickets/` directory**; the filename MUS
 <the decision or investigation this ticket resolves>
 
 ---
+
 <!-- Resolution will be appended here -->
 ```
 
@@ -84,7 +85,7 @@ The answer isn't part of the question body; it's recorded on resolution (see [Wo
 
 Every ticket is either **HITL** (human in the loop, worked _with_ a human who speaks for themselves) or **AFK**, driven by the agent alone. A HITL ticket only resolves through that live exchange; the agent never stands in for the human's side of it (a grilling agent that answers its own questions has broken this).
 
-- **Research** (AFK): Reading documentation, third-party APIs, or local resources like knowledge bases to surface a fact a decision waits on. Resolved by a subagent that activates the `research` skill. Use when knowledge outside the current working directory is required. **Do not use this type for local codebase design or implementation strategy (use `grilling` instead). If you assign this type, you MUST populate the `Research Dir:` field and you MUST delegate it to a subagent.**
+- **Research** (AFK): Reading documentation, third-party APIs, or local resources like knowledge bases to surface a fact a decision waits on. Resolved by a subagent that activates the `research` skill. Use when knowledge outside the current working directory is required. **Do not use this type for local codebase design or implementation strategy (use `grilling` instead). If you assign this type, you MUST populate the `Research Dir:` field and you MUST delegate it to a subagent.** Planning mode does not block research resolution: research subagents should still gather facts, write findings into the assigned research directory, append a `## Resolution` block to the ticket, and close it.
 - **Prototype** (HITL): Raise the fidelity of the discussion by making a cheap, rough, concrete artifact to react to (an outline, a rough take, a stub, or UI/logic code) by activating the `prototype` skill. Links the prototype as an asset. Use when "how should it look" or "how should it behave" is the key question.
 - **Grilling** (HITL): Conversation. The default case. Always activate the `grilling` and `domain-modeling` skills.
 - **Task** (HITL or AFK): Manual work that must happen before a _decision_ can be made: nothing to decide, prototype, or research, but the discussion is blocked until it's done. Signing up for a service so its API can be judged, provisioning access, moving data so its shape can be seen. This is the one type that _does_ rather than decides, and it earns its place by unblocking a decision, not by delivering the destination. The agent drives it alone where it can (AFK); otherwise it hands the human a precise checklist (HITL). Resolved when the work is done; the answer records what was done and any resulting facts (credentials location, new URLs, row counts) later tickets depend on.
@@ -122,7 +123,7 @@ User invokes with a loose idea.
 2. **Map the frontier.** Grill again, **breadth-first** this time: fan out across the whole space rather than deep on any one thread, surfacing the open decisions and the first steps takeable now. **If this surfaces no fog** (the way to the destination is already clear, the whole journey small enough for one session), you don't need a map. Stop and ask the user how they'd like to proceed.
 3. **Create the map** in `.agents/scratchpad/[feature-name]/map.md`: Destination and Notes filled in, Decisions-so-far empty, the fog sketched into **Not yet specified**.
 4. **Create the tickets you can specify now** as separate files in `.agents/scratchpad/[feature-name]/tickets/`, then wire blocking edges by updating the `Blocked By` lines in those files with exact filenames. Wiring sorts them into the frontier and the blocked; everything you can't yet specify stays in the fog: the **Not yet specified** section.
-5. **Fire the research subagents.** For each `research` ticket you just created, write the target research directory path (e.g., `research/[ticket-name]`) into the ticket file's `Research Dir:` field. Then, spin up a subagent that activates the `research` skill to resolve it in parallel, capturing its findings in that pre-defined throwaway directory alongside `map.md`.
+5. **Fire the research subagents.** For each `research` ticket you just created, write the target research directory path (e.g., `research/[ticket-name]`) into the ticket file's `Research Dir:` field. Then, spin up a subagent that activates the `research` skill to resolve it in parallel, capturing its findings in that pre-defined throwaway directory alongside `map.md` (see Research ticket resolution rules under [Ticket Types](#ticket-types)).
 6. Stop: charting is one session's work; it hand-resolves nothing.
 
 ### Work through the map
@@ -131,7 +132,7 @@ User invokes with a map (directory path). A ticket is **optional**: without one,
 
 1. Load the **map**: the low-res view (`map.md`), not every ticket body.
 2. Choose the ticket. If the user named one, use it. Otherwise take the first frontier ticket in order by checking the `tickets/` directory (e.g. using `grep_search "Status: open"`). **Claim it**: update its status in its file to `claimed by subagent-[ID]` before any work.
-3. Resolve it. **Zoom as needed**: fetch the full body of any related or closed ticket on demand; activate the skills named in the `## Notes` block. If in doubt, activate the `grilling` and `domain-modeling` skills. For **Research** tickets, if the subagent worked in a `research/` subdirectory, it must summarize its findings back directly into the ticket file before marking it closed.
+3. Resolve it. **Zoom as needed**: fetch the full body of any related or closed ticket on demand; activate the skills named in the `## Notes` block. If in doubt, activate the `grilling` and `domain-modeling` skills. For **Research** tickets, if the subagent worked in a `research/` subdirectory, it must summarize its findings back directly into the ticket file before marking it closed (see Research ticket resolution rules under [Ticket Types](#ticket-types)).
 4. Check scope: If the answer reveals that a ticket (this one or another) sits beyond the destination, **rule it out of scope** and DO NOT append it to Decisions-so-far.
 5. Record the resolution: post the answer as a **Resolution** block at the bottom of the ticket file, change the status to **closed**, and **append a link** to the map's Decisions-so-far.
 6. Add newly-surfaced tickets (create-then-wire); graduate any fog the answer has made specifiable, explicitly rewriting the `Not yet specified` section in `map.md` using the `<!-- FOG START -->` / `<!-- FOG END -->` delimiters. If the decision invalidates other parts of the map, DO NOT delete their ticket files; instead, change their status to `cancelled` or `obsolete` and remove them from all `Blocked By:` lists to prevent breaking the dependency graph.
