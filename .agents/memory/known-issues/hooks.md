@@ -97,10 +97,11 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Description:** On Windows systems, executables such as `rtk` are registered as cmd/batch files (e.g., `rtk.cmd` or `rtk.bat`). Invoking them with `subprocess.run(shell=False)` with the extensionless name `rtk` raises a `FileNotFoundError`.
 **Workaround:** Resolve the executable name using `shutil.which("rtk")` before invoking `subprocess.run`, which correctly resolves the full executable name (with extensions) on all platforms.
 
-## Hook Name Migration from AfterModel to AfterAgent in Gemini settings
+## Final-response hook uses AfterAgent, not AfterModel
+
 **Affected area:** Local settings (`settings.json`) and test assertions
-**Description:** The Gemini hook engine migrated its prompt-time completion event name from `AfterModel` to `AfterAgent`. Modifying local configuration to use `AfterAgent` while leaving test suites with `AfterModel` asserts leads to hard test failures and fail-open security/ingest backstop states.
-**Workaround:** Ensure all test suites, local `settings.json`, global configurations, and hook scripts (such as `inject-auto-ingest-context.py`) are fully synchronized to use `AfterAgent`.
+**Description:** Gemini's final-response completion event is `AfterAgent`; using `AfterModel` for the pending-ingest backstop causes test failures and leaves the final-response gate unenforced. `AfterModel` remains valid for per-model-output observability.
+**Workaround:** Keep final-response settings, tests, and injectors synchronized on `AfterAgent`; retain `AfterModel` only where streaming or per-model-output handling is intentional.
 
 ## RTK empty stdout on non-optimized command treated as invalid JSON
 **Affected area:** RTK hook wrappers (`rtk-hook-copilot.py` and `rtk-hook-gemini.py`)

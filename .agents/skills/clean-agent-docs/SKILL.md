@@ -19,6 +19,7 @@ Improve quality of repo agent docs/instructions/memory for lower token cost and 
    - broken or missing references/links
    - indexing gaps in `.agents/memory/INDEX.md`
    - over-broad always-load guidance that increases context pollution
+   - split docs by runtime or provider variant when most tasks touch only one variant (for example, shell scripts vs PowerShell scripts)
 3. Keep edits minimal, precise, and future-facing; avoid session-history chatter.
 4. Activate the `update-agent-docs` skill and complete its checklist.
 5. Validate doc changes with smallest appropriate checks (at least formatting check on changed docs).

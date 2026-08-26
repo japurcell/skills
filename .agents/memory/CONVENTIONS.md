@@ -12,7 +12,8 @@ Authoritative formatting lives in `.editorconfig`; path-scoped rules live in `.a
 - hooks (`{.copilot,.gemini}/hooks`) → `.agents/instructions/hooks.md`
 - skills (`skills/`) → `.agents/instructions/skills.md`
 - custom agents (`agents/`) → `.agents/instructions/agents.md`
-- helper scripts (`scripts/`) → `.agents/instructions/scripts.md`
+- shell helper scripts (`scripts/*.sh`, `scripts/*.py`) → `.agents/instructions/scripts.md`
+- PowerShell installer/test scripts (`scripts/*.ps1`) → `.agents/instructions/powershell.md`
 
 ## Agent Workspace Boundaries
 

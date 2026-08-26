@@ -10,15 +10,16 @@ This file is a **top-level map only**. For area detail and working rules, read t
 - hooks areas → `.agents/instructions/hooks.md`
 - skills areas → `.agents/instructions/skills.md`
 - custom agents → `.agents/instructions/agents.md`
-- helper scripts → `.agents/instructions/scripts.md`
+- shell helper scripts → `.agents/instructions/scripts.md`
+- PowerShell installer/test scripts → `.agents/instructions/powershell.md`
 
 ## Source Areas
 
 | Path | Layer | Purpose |
 | --- | --- | --- |
-| `.github/hooks/` | hooks | Repo-local Copilot hook config plus all Copilot auto-ingest scripts loaded directly from the workspace. |
-| `.copilot/` | hooks | Copilot CLI instructions plus installed hook source under `.copilot/hooks/`, Python operational entrypoints under `.copilot/hooks/scripts/` (structured observability emitter, tool guard, RTK, secrets scanner, session-end, and retained lifecycle logging hooks), and shared hook helpers under `.copilot/hooks/scripts/helpers/`. Legacy shell-format helper scripts and format-focused test drivers were removed. |
-| `.gemini/` | hooks | Gemini CLI instructions, settings, installed hook source under `.gemini/hooks/`, Python operational entrypoints under `.gemini/hooks/scripts/` (startup, structured observability emitter, passive logging, auto-ingest startup scan, tool guard, RTK rewrite, secrets scanner, and session-end logger), and shared hook helpers under `.gemini/hooks/scripts/helpers/`. Legacy shell-format helper scripts and format-focused test drivers were removed. |
+| `.github/hooks/` | hooks | Repo-local Copilot hook config and auto-ingest wiring. |
+| `.copilot/` | hooks | Copilot instructions and local hook runtime sources. |
+| `.gemini/` | hooks | Gemini instructions and local hook runtime sources. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, and evals. |
 | `agents/` | agents | Standalone custom agent prompt files. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
@@ -39,6 +40,8 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | Path | Why it matters |
 | --- | --- |
 | `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, and `~/.gemini` targets. |
+| `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout (run with `pwsh scripts/install.ps1`). |
+| `scripts/test-install.ps1` | Fixture-repo test for `scripts/install.ps1` (run with `pwsh -NoProfile -File scripts/test-install.ps1`). |
 | `scripts/common.sh` | Shared shell helper for resolving repo root in small shell tests and utilities. |
 | `scripts/addy-install.sh` | Imports selected upstream addy skills, agents, and references into this repo. |
 | `.agents/memory/sources/source-ingest-manifest.json` | Shared source-summary state file for Copilot and Gemini auto-ingest hooks plus pending-ingest gating. |

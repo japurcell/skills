@@ -32,7 +32,8 @@ working in:
 | `.copilot/hooks`, `.gemini/hooks` | [\`.agents/instructions/hooks.md\`](../instructions/hooks.md) | [\`known-issues/hooks.md\`](known-issues/hooks.md) | [\`testing/hooks.md\`](testing/hooks.md) | [\`adrs/hooks.md\`](adrs/hooks.md) |
 | `skills/` | [\`.agents/instructions/skills.md\`](../instructions/skills.md) | [\`known-issues/skills.md\`](known-issues/skills.md) | [\`testing/skills.md\`](testing/skills.md) | empty |
 | `agents/` | [\`.agents/instructions/agents.md\`](../instructions/agents.md) | empty | empty | empty |
-| `scripts/` | [\`.agents/instructions/scripts.md\`](../instructions/scripts.md) | empty | [\`testing/scripts.md\`](testing/scripts.md) | empty |
+| `scripts/` (shell) | [\`.agents/instructions/scripts.md\`](../instructions/scripts.md) | [\`known-issues/scripts.md\`](known-issues/scripts.md) | [\`testing/scripts.md\`](testing/scripts.md) | empty |
+| `scripts/*.ps1` (PowerShell) | [\`.agents/instructions/powershell.md\`](../instructions/powershell.md) | [\`known-issues/powershell.md\`](known-issues/powershell.md) | [\`testing/powershell.md\`](testing/powershell.md) | empty |
 
 The repo-wide memory files above hold only cross-cutting content and point into
 these layer files for specifics.

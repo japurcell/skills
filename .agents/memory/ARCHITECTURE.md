@@ -8,7 +8,7 @@ coverage: Repo structure, install flows, and how top-level areas relate
 
 | Path | Role | Main consumer |
 | --- | --- | --- |
-| `skills/` | Source of reusable task skills built around `SKILL.md` entry points. | Installed to `~/.agents/skills` by `scripts/install.sh` |
+| `skills/` | Source of reusable task skills built around `SKILL.md` entry points. | Installed to `~/.agents/skills` by `scripts/install.sh` (PowerShell: `scripts/install.ps1`) |
 | `agents/` | Source of custom agent definitions. | Installed to both `~/.copilot/agents` and `~/.gemini/agents` |
 | `references/` | Optional shared reference material shipped with this repo. | Installed to `~/.agents/references` when that target exists |
 | `.github/` | Repository-level Copilot config, including repo-local hooks. | Loaded directly from the workspace by Copilot |
@@ -25,7 +25,7 @@ coverage: Repo structure, install flows, and how top-level areas relate
 
 1. Edit source under `skills/`, `agents/`, `.github/`, `.copilot/`, `.gemini/`, `references/`, or `scripts/`.
 2. Run narrow validation for changed area from `.agents/memory/TESTING_STRATEGY.md` and any matching `testing/<area>.md` file.
-3. If installed behavior matters, run `./scripts/install.sh` before live checks because Copilot and Gemini read installed copies from home-directory targets, not repository source files.
+3. If installed behavior matters, run `./scripts/install.sh` (or `pwsh scripts/install.ps1`) before live checks because Copilot and Gemini read installed copies from home-directory targets, not repository source files.
 
 ### Addy import flow
 

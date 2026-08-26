@@ -38,12 +38,16 @@ Split a doc if it:
 - Became a grab bag
 - Covers variants agents usually need separately
 
+Prefer separate docs for runtime- or provider-specific variants that are not usually edited together, even when the underlying topic matches. Example: shell helpers and PowerShell scripts each keep their own instruction, known-issues, and testing docs instead of mixing in one generic script file.
+
 Example split:
 
 - `.agents/memory/hooks/INDEX.md`
 - `.agents/memory/hooks/shared-hook-architecture.md`
 - `.agents/memory/hooks/gemini-hooks.md`
 - `.agents/memory/hooks/copilot-hooks.md`
+- `.agents/instructions/scripts.md`
+- `.agents/instructions/powershell.md`
 
 If variants are tightly coupled, one focused combined doc is fine:
 

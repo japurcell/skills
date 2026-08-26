@@ -9,17 +9,6 @@ This repository publishes custom GitHub Copilot assets:
 
 Canonical agent-facing guidance lives in `.agents/`.
 
-## Agent knowledge base
-
-- `.agents/memory/ARCHITECTURE.md`: repo structure, install flow, and doc boundaries
-- `.agents/memory/FILE_MAP.md`: top-level path map and key-file routing
-- `.agents/memory/TESTING_STRATEGY.md`: validation routing and shared evidence rules
-- `.agents/instructions/repo.md`: repo workflow and documentation-sync rules
-- `.agents/instructions/hooks.md`: hook implementation rules
-- `.agents/instructions/skills.md`: skill authoring and benchmark rules
-- `.agents/instructions/agents.md`: custom agent authoring rules
-- `.agents/instructions/scripts.md`: helper-script authoring rules
-
 ## Installation
 
 Install or refresh the locally loaded copies with:
@@ -27,6 +16,14 @@ Install or refresh the locally loaded copies with:
 ```bash
 ./scripts/install.sh
 ```
+
+On Windows (or anywhere with PowerShell 7+), use the equivalent PowerShell installer:
+
+```powershell
+pwsh scripts/install.ps1
+```
+
+It produces the same installed layout as `install.sh`.
 
 The installer copies:
 
@@ -42,7 +39,7 @@ Workspace directories whose names end with `-workspace` are skipped during insta
 ## CLI dependencies
 
 - Core tooling: `bash`, `python3`, and `git`
-- Hook runtime: `python3`, `jq`, and `flock` (the retained hook entrypoints are Python; shell files are compatibility shims)
+- Hook runtime: `python3`, `jq`, and `flock`
 - Hook formatting: `npx` (with `oxfmt`) for JS/TS files, `dotnet` SDK for C# files
 - Agent shell workflows: `rtk` (recommended wrapper for compact terminal output)
 
@@ -60,24 +57,6 @@ For the session-end hook to work, add these lines to your vscode settings.json f
   }
 }
 ```
-
-## Repository layout
-
-Canonical agent-facing layout map lives in `.agents/memory/FILE_MAP.md`.
-
-- `skills/`: one directory per skill, centered on `SKILL.md`
-- `skills/archive/`: skills that are no longer maintained but kept for historical reference
-- `agents/`: standalone custom agent prompt files
-- `references/`: optional shared reference material installed to `~/.agents/references`
-- `scripts/`: repo helper and installation scripts
-- `.agents/`: canonical agent knowledge base for repo guidance and durable facts
-- `docs/`: human-facing ADRs and design notes that complement `.agents/`
-- `.copilot/`: local Copilot instructions copied by the installer
-- `.copilot/hooks/`: hook scripts, configs, and shared helpers installed to `~/.copilot/hooks`
-- `.github/hooks/`: repo-local Copilot hooks, including auto-ingest startup, prompt-time, and final-response wiring
-- `skills/*-workspace/`: generated eval runs, snapshots, and review artifacts; ignore their `outputs/` subdirectories during normal work
-- `scripts/install.sh`: installs `skills/` → `~/.agents/skills`, optional top-level `references/` → `~/.agents/references`, `agents/` → both `~/.gemini/agents` and `~/.copilot/agents`, optional `.copilot/hooks/` → `~/.copilot/hooks`, `.gemini/` contents → `~/.gemini`, and `.copilot/copilot-instructions.md` → `~/.copilot/copilot-instructions.md`
-- `scripts/addy-install.sh`: syncs `../addy-agent-skills` from `https://github.com/addyosmani/agent-skills` by cloning or fast-forward pulling, then imports addy agents, skills, and top-level references into this repository, prefixing imported addy agent and skill names with `addy-`; pass `--skills foo,bar` or `--skills-file path` to copy specific source skill names and their referenced skills, and each successful run refreshes `.addy-skills` with the installed source skill names
 
 ## Working in this repo
 
@@ -120,3 +99,4 @@ For hook changes, run `./scripts/install.sh` first and then the targeted regress
 - `.agents/instructions/skills.md`
 - `.agents/instructions/agents.md`
 - `.agents/instructions/scripts.md`
+- `.agents/instructions/powershell.md`

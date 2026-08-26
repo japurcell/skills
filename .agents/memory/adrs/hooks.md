@@ -74,7 +74,7 @@ First real planning turn
                 |                               |
                 v                               v
 Copilot prompt-time/backstop hook    Gemini prompt-time injector
-userPromptTransformed/agentStop/subagentStop  BeforeAgent/AfterModel
+userPromptTransformed/agentStop/subagentStop  BeforeAgent/AfterAgent
 .github/hooks/scripts/               .gemini/hooks/scripts/
 inject-auto-ingest-context.py        inject-auto-ingest-context.py
                 |                               |
@@ -93,7 +93,7 @@ Manifest entries return to active / up-to-date state
 
 - **Stage split:** startup scanners perform persistent state work; prompt-time injectors ensure the first planning turn actually sees that work; final-response backstops block unresolved work if steering is bypassed.
 - **Copilot ordering constraint:** `userPromptTransformed` can run before `sessionStart`, so `sessionStart` output alone is not enough to guarantee first-turn ingest context.
-- **Gemini pairing rule:** keep `SessionStart` scanning and `BeforeAgent` injection aligned so Gemini sees the same current stale-source list that the scanner persisted, and `AfterModel` keeps the gate closed when pending entries remain.
+- **Gemini pairing rule:** keep `SessionStart` scanning and `BeforeAgent` injection aligned so Gemini sees the same current stale-source list that the scanner persisted, and `AfterAgent` keeps the gate closed when pending entries remain.
 
 ## ADR-007: Pending-ingest gate blocks normal work until summaries are truly resolved
 
