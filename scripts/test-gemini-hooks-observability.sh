@@ -17,7 +17,7 @@ assert_hook_registered_with_observability_emitter() {
   local hook_name="$1"
   local source_event_name="$2"
 
-  assert_equals '$HOME/.gemini/hooks/scripts/send-event.py' \
+  assert_equals 'python "$HOME/.gemini/hooks/scripts/send-event.py"' \
     "$(jq -r ".hooks.${hook_name}[0].hooks[0].command // empty" "$REPO_ROOT/.gemini/global-settings.json")" \
     "Expected $hook_name to start with send-event.py."
   assert_equals true \

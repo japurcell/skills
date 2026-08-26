@@ -182,7 +182,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "SessionStart"
@@ -191,7 +191,7 @@
           {
             "name": "skill-context-injector",
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/skill-context-injector.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/skill-context-injector.py\"",
             "description": "Loads required skill files and injects them as context before each agent turn.",
             "env": {
               "AGENTS_REQUIRED_SKILL_FILES": "caveman/SKILL.md"
@@ -205,7 +205,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterAgent"
@@ -219,7 +219,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeAgent"
@@ -233,7 +233,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeModel"
@@ -247,7 +247,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterModel"
@@ -261,7 +261,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeToolSelection"
@@ -276,7 +276,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeTool"
@@ -285,13 +285,13 @@
           {
             "name": "tool-guard",
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/tool-guard.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/tool-guard.py\"",
             "description": "Blocks dangerous Gemini tool invocations using same policy patterns as Copilot tool-guard."
           },
           {
             "name": "scan-secrets",
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/scan-secrets.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/scan-secrets.py\"",
             "env": {
               "SCAN_MODE": "block",
               "SCAN_SCOPE": "diff"
@@ -305,7 +305,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py"
+            "command": "python \"$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py\""
           }
         ]
       }
@@ -315,7 +315,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterTool"
@@ -329,7 +329,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "PreCompress"
@@ -343,7 +343,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "Notification"
@@ -357,7 +357,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/send-event.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "SessionEnd"
@@ -366,7 +366,7 @@
           {
             "name": "scan-secrets",
             "type": "command",
-            "command": "$HOME/.gemini/hooks/scripts/scan-secrets.py",
+            "command": "python \"$HOME/.gemini/hooks/scripts/scan-secrets.py\"",
             "env": {
               "SCAN_MODE": "warn"
             },

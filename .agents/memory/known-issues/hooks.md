@@ -107,3 +107,9 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Affected area:** RTK hook wrappers (`rtk-hook-copilot.py` and `rtk-hook-gemini.py`)
 **Description:** When the `rtk` binary does not optimize or rewrite a tool command, it exits 0 with an empty stdout. Treating this empty stdout as invalid JSON triggers fallback warnings in the audit log and creates false errors.
 **Workaround:** If `returncode == 0` and `stdout` is empty or whitespace-only, return a no-op representation `({}, None)` directly instead of attempting to parse it as JSON.
+
+## PowerShell Parser Error on $HOME in Command Hooks (Windows)
+**Affected area:** Gemini CLI command hooks in `global-settings.json` on Windows.
+**Description:** Configuring a command path starting with `$HOME/` (e.g. `$HOME/.gemini/hooks/scripts/send-event.py`) causes a `ParserError` in PowerShell because it parses `/` as the division operator. Furthermore, direct execution of `.py` files on Windows is non-portable and depends on Windows registry file associations.
+**Workaround:** Prefix the command with explicit python invocation and wrap the path in escaped double quotes: `"command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\""`. This ensures the path is treated as an argument (which resolves variables safely without division parsing) and bypasses Windows file association problems.
+
