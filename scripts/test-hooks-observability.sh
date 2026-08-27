@@ -1507,6 +1507,77 @@ assert _finalization_timeout_ms() == 1000, f'Expected 1000, got {_finalization_t
   echo "ADDITIONAL_OBSERVABILITY_SCENARIOS_OK"
 }
 
+test_sqlite_finalization_maintenance_resume() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+  local stale_start_ms
+  local status
+  local now_ms
+  local stale_span_ms
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/.copilot/hooks/logs/observability_v1.db"
+
+  payload="$(jq -nc '{
+    sessionId: "resume-finalize-session",
+    timestamp: "2026-06-23T23:50:00Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc '{
+    sessionId: "resume-finalize-session",
+    timestamp: "2026-06-23T23:50:01Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  now_ms="$(python3 -c "import time; print(int(time.time() * 1000))")"
+  stale_span_ms=$((now_ms - 60000))
+  sqlite3 "$db_path" "UPDATE sessions SET status = 'finalizing', start_time_ms = $now_ms WHERE session_id = 'resume-finalize-session';"
+  sqlite3 "$db_path" "UPDATE spans SET status = 'completed', updated_at_ms = $stale_span_ms WHERE session_id = 'resume-finalize-session';"
+
+  env HOME="$home" PYTHONPATH="$home/.copilot/hooks/scripts" python3 -m helpers.observability --maintenance >/dev/null
+
+  status="$(sqlite3 "$db_path" "SELECT status FROM sessions WHERE session_id = 'resume-finalize-session';")"
+  if [[ "$status" != "success" ]]; then
+    echo "Expected stale finalizing session to be resumed and finalized successfully, got: $status" >&2
+    exit 1
+  fi
+
+  payload="$(jq -nc '{
+    sessionId: "resume-sealing-session",
+    timestamp: "2026-06-23T23:51:00Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc '{
+    sessionId: "resume-sealing-session",
+    timestamp: "2026-06-23T23:51:01Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  stale_start_ms="$(python3 -c "import time; print(int(time.time() * 1000) - 60000)")"
+  sqlite3 "$db_path" "UPDATE sessions SET status = 'sealing', start_time_ms = $stale_start_ms WHERE session_id = 'resume-sealing-session';"
+  sqlite3 "$db_path" "UPDATE spans SET status = 'completed', updated_at_ms = $stale_start_ms WHERE session_id = 'resume-sealing-session';"
+
+  env HOME="$home" PYTHONPATH="$home/.copilot/hooks/scripts" python3 -m helpers.observability --maintenance >/dev/null
+
+  status="$(sqlite3 "$db_path" "SELECT status FROM sessions WHERE session_id = 'resume-sealing-session';")"
+  if [[ "$status" != "success" ]]; then
+    echo "Expected stale sealing session to be resumed and finalized successfully, got: $status" >&2
+    exit 1
+  fi
+}
+
 test_observability_log_rotation_fail_open() {
   local workdir
   local home
@@ -1576,6 +1647,7 @@ main() {
   test_sqlite_observability_persistence
   test_sqlite_span_sequencing_and_child_linkage
   test_sqlite_finalization_and_transcripts
+  test_sqlite_finalization_maintenance_resume
   test_sqlite_adversarial_hardening
   test_sqlite_additional_observability_scenarios
 }

@@ -153,6 +153,10 @@ def _lock_wait_ms() -> str | None:
     return os.environ.get("GEMINI_OBSERVABILITY_LOCK_WAIT_MS") or os.environ.get("OBSERVABILITY_LOCK_WAIT_MS")
 
 
+def _session_finalization_lock_path(db_path: Path, session_id: str) -> Path:
+    return db_path.parent / "locks" / f"{session_id}.finalize.lock"
+
+
 def _ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -1158,107 +1162,26 @@ def _write_transcript_chunk(
 
 
 def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) -> None:
-    finalizer_busy = _finalization_busy_timeout_ms()
-    timeout_budget = _finalization_timeout_ms()
-    stale_threshold = _running_span_stale_ms()
-    
-    start_time = time.monotonic()
-    
-    conn = None
-    try:
-        conn = _connect_and_init_db(db_path, finalizer_busy)
-        with conn:
-            conn.execute("BEGIN IMMEDIATE")
-            cursor = conn.cursor()
-            cursor.execute(
-                "UPDATE sessions SET status = 'finalizing' WHERE session_id = ? AND status = 'running'",
-                (session_id,)
-            )
-    except Exception:
-        pass
-    finally:
-        if conn:
-            try:
-                conn.close()
-            except Exception:
-                pass
-
-    polling_cadence = 0.1
-    has_uncompleted = True
-    
-    poll_conn: sqlite3.Connection | None
-    try:
-        poll_conn = _connect_and_init_db(db_path, finalizer_busy)
-    except Exception:
-        poll_conn = None
+    lock_path = _session_finalization_lock_path(db_path, session_id)
+    lock_fd = _acquire_lock(lock_path, max(0.1, normal_busy_timeout / 1000.0))
+    if lock_fd in (None, -1):
+        return
 
     try:
-        while time.monotonic() - start_time < (timeout_budget / 1000.0):
-            running_spans = []
-            if poll_conn:
-                try:
-                    cursor = poll_conn.cursor()
-                    cursor.execute(
-                        "SELECT span_id, updated_at_ms, pid FROM spans WHERE session_id = ? AND status = 'running'",
-                        (session_id,)
-                    )
-                    running_spans = cursor.fetchall()
-                except Exception:
-                    pass
-            
-            if not running_spans:
-                has_uncompleted = False
-                break
-                
-            now_ms = int(time.time() * 1000)
-            any_changed = False
-            
-            for span_id, updated_at_ms, pid in running_spans:
-                pid_dead = False
-                if pid:
-                    pid_dead = not _pid_exists(pid)
-                
-                stale_age = False
-                if updated_at_ms and (now_ms - updated_at_ms > stale_threshold):
-                    stale_age = True
-                    
-                if pid_dead or stale_age:
-                    if poll_conn:
-                        try:
-                            poll_conn.execute("BEGIN IMMEDIATE")
-                            try:
-                                poll_conn.execute(
-                                    "UPDATE spans SET status = 'abandoned', updated_at_ms = ? WHERE span_id = ?",
-                                    (now_ms, span_id)
-                                )
-                                poll_conn.execute(
-                                    "UPDATE sessions SET has_errors = 1 WHERE session_id = ?",
-                                    (session_id,)
-                                )
-                                poll_conn.commit()
-                                any_changed = True
-                            except Exception:
-                                poll_conn.rollback()
-                        except Exception:
-                            pass
-                        
-            if not any_changed:
-                time.sleep(polling_cadence)
-    finally:
-        if poll_conn:
-            try:
-                poll_conn.close()
-            except Exception:
-                pass
-            
-    if has_uncompleted:
+        finalizer_busy = _finalization_busy_timeout_ms()
+        timeout_budget = _finalization_timeout_ms()
+        stale_threshold = _running_span_stale_ms()
+
+        start_time = time.monotonic()
+
         conn = None
         try:
             conn = _connect_and_init_db(db_path, finalizer_busy)
             with conn:
                 conn.execute("BEGIN IMMEDIATE")
-                conn.execute(
-                    "UPDATE sessions SET status = 'failed-finalization', has_errors = 1 WHERE session_id = ?",
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE sessions SET status = 'finalizing' WHERE session_id = ? AND status = 'running'",
                     (session_id,)
                 )
         except Exception:
@@ -1269,168 +1192,265 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
                     conn.close()
                 except Exception:
                     pass
-        return
-        
-    now_epoch_ms = int(time.time() * 1000)
-    conn = None
-    try:
-        conn = _connect_and_init_db(db_path, finalizer_busy)
-        with conn:
-            conn.execute("BEGIN IMMEDIATE")
-            cursor = conn.cursor()
-            cursor.execute("SELECT start_time_ms FROM sessions WHERE session_id = ?", (session_id,))
-            row = cursor.fetchone()
-            start_ms = row[0] if (row and row[0]) else now_epoch_ms
-            duration_ms = max(0, now_epoch_ms - start_ms)
-            
-            cursor.execute(
-                """
-                UPDATE sessions SET
-                    status = 'sealing',
-                    end_time_ms = ?,
-                    total_duration_ms = ?
-                WHERE session_id = ? AND status = 'finalizing';
-                """,
-                (now_epoch_ms, duration_ms, session_id)
-            )
-            rows_updated = cursor.rowcount
-            if rows_updated == 0:
-                return # Another thread already transitioned it to sealing or completed
-            
-            _backfill_parent_session_id(conn, session_id, _workspace_root({}), start_ms)
-    except Exception:
-        pass
-    finally:
-        if conn:
-            try:
-                conn.close()
-            except Exception:
-                pass
 
-    parent_session_id = None
-    has_errors = 0
-    conn = None
-    try:
-        conn = _connect_and_init_db(db_path, finalizer_busy)
-        cursor = conn.cursor()
-        cursor.execute("SELECT parent_session_id, has_errors FROM sessions WHERE session_id = ?", (session_id,))
-        row = cursor.fetchone()
-        if row:
-            if row[0]:
-                parent_session_id = row[0]
-            if row[1]:
-                has_errors = row[1]
-    except Exception:
-        pass
-    finally:
-        if conn:
-            try:
-                conn.close()
-            except Exception:
-                pass
+        polling_cadence = 0.1
+        has_uncompleted = True
 
-    active_dir = db_path.parent / "transcripts" / "active" / session_id
-    saved_dir = db_path.parent / "transcripts" / "saved"
-    saved_file = saved_dir / f"{session_id}.jsonl"
-    
-    merged_lines = []
-    if active_dir.exists():
-        chunk_files = sorted(active_dir.glob("*.json"))
-        for chunk_file in chunk_files:
-            try:
-                with open(chunk_file, "r", encoding="utf-8") as f:
-                    chunk_data = json.load(f)
-                    
-                if not chunk_data.get("parent_session_id") and parent_session_id:
-                    chunk_data["parent_session_id"] = parent_session_id
-                    
-                merged_lines.append(json.dumps(chunk_data, ensure_ascii=False) + "\n")
-            except Exception:
-                pass
-
-    retained = False
-    if has_errors:
-        retained = True
-    else:
-        force_sampling = None
-        if OBSERVABILITY_RUNTIME == "copilot":
-            force_sampling = os.environ.get("COPILOT_OBSERVABILITY_SAMPLING_FORCE")
-        elif OBSERVABILITY_RUNTIME == "gemini":
-            force_sampling = os.environ.get("GEMINI_OBSERVABILITY_SAMPLING_FORCE")
-            
-        if not force_sampling:
-            force_sampling = os.environ.get("OBSERVABILITY_SAMPLING_FORCE")
-            
-        if force_sampling:
-            if force_sampling.strip().lower() in {"1", "true", "yes", "on"}:
-                retained = True
-            elif force_sampling.strip().lower() in {"0", "false", "no", "off"}:
-                retained = False
-        else:
-            import random
-            retained = random.random() < 0.05
-
-    if retained and merged_lines:
+        poll_conn: sqlite3.Connection | None
         try:
-            saved_dir.mkdir(parents=True, exist_ok=True)
-            try:
-                os.chmod(str(saved_dir), 0o700)
-            except Exception:
-                pass
+            poll_conn = _connect_and_init_db(db_path, finalizer_busy)
+        except Exception:
+            poll_conn = None
 
-            temp_saved = saved_file.with_suffix(".tmp")
-            try:
-                fd = os.open(str(temp_saved), os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
-                with os.fdopen(fd, "w", encoding="utf-8") as f:
-                    f.writelines(merged_lines)
-                temp_saved.replace(saved_file)
-            finally:
+        try:
+            while time.monotonic() - start_time < (timeout_budget / 1000.0):
+                running_spans = []
+                if poll_conn:
+                    try:
+                        cursor = poll_conn.cursor()
+                        cursor.execute(
+                            "SELECT span_id, updated_at_ms, pid FROM spans WHERE session_id = ? AND status = 'running'",
+                            (session_id,)
+                        )
+                        running_spans = cursor.fetchall()
+                    except Exception:
+                        pass
+
+                if not running_spans:
+                    has_uncompleted = False
+                    break
+
+                now_ms = int(time.time() * 1000)
+                any_changed = False
+
+                for span_id, updated_at_ms, pid in running_spans:
+                    pid_dead = False
+                    if pid:
+                        pid_dead = not _pid_exists(pid)
+
+                    stale_age = False
+                    if updated_at_ms and (now_ms - updated_at_ms > stale_threshold):
+                        stale_age = True
+
+                    if pid_dead or stale_age:
+                        if poll_conn:
+                            try:
+                                poll_conn.execute("BEGIN IMMEDIATE")
+                                try:
+                                    poll_conn.execute(
+                                        "UPDATE spans SET status = 'abandoned', updated_at_ms = ? WHERE span_id = ?",
+                                        (now_ms, span_id)
+                                    )
+                                    poll_conn.execute(
+                                        "UPDATE sessions SET has_errors = 1 WHERE session_id = ?",
+                                        (session_id,)
+                                    )
+                                    poll_conn.commit()
+                                    any_changed = True
+                                except Exception:
+                                    poll_conn.rollback()
+                            except Exception:
+                                pass
+
+                if not any_changed:
+                    time.sleep(polling_cadence)
+        finally:
+            if poll_conn:
                 try:
-                    if temp_saved.exists():
-                        temp_saved.unlink()
-                except OSError:
+                    poll_conn.close()
+                except Exception:
                     pass
-        except Exception:
-            pass
 
-    if active_dir.exists():
-        try:
-            import shutil
-            shutil.rmtree(active_dir)
-        except Exception:
-            pass
-
-    try:
-        registry_file = db_path.parent / "registries" / "subagents" / f"{session_id}.json"
-        if registry_file.exists():
-            registry_file.unlink()
-    except Exception:
-        pass
-
-    final_status = "failed" if has_errors else "success"
-    conn = None
-    try:
-        conn = _connect_and_init_db(db_path, finalizer_busy)
-        with conn:
-            conn.execute("BEGIN IMMEDIATE")
-            if retained and merged_lines:
-                conn.execute(
-                    "UPDATE sessions SET status = ?, transcript_path = ? WHERE session_id = ?",
-                    (final_status, str(saved_file), session_id)
-                )
-            else:
-                conn.execute(
-                    "UPDATE sessions SET status = ? WHERE session_id = ?",
-                    (final_status, session_id)
-                )
-    except Exception:
-        pass
-    finally:
-        if conn:
+        if has_uncompleted:
+            conn = None
             try:
-                conn.close()
+                conn = _connect_and_init_db(db_path, finalizer_busy)
+                with conn:
+                    conn.execute("BEGIN IMMEDIATE")
+                    conn.execute(
+                        "UPDATE sessions SET status = 'failed-finalization', has_errors = 1 WHERE session_id = ?",
+                        (session_id,)
+                    )
             except Exception:
                 pass
+            finally:
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+            return
+
+        now_epoch_ms = int(time.time() * 1000)
+        conn = None
+        try:
+            conn = _connect_and_init_db(db_path, finalizer_busy)
+            with conn:
+                conn.execute("BEGIN IMMEDIATE")
+                cursor = conn.cursor()
+                cursor.execute("SELECT start_time_ms FROM sessions WHERE session_id = ?", (session_id,))
+                row = cursor.fetchone()
+                start_ms = row[0] if (row and row[0]) else now_epoch_ms
+                duration_ms = max(0, now_epoch_ms - start_ms)
+
+                cursor.execute(
+                    """
+                    UPDATE sessions SET
+                        status = 'sealing',
+                        end_time_ms = ?,
+                        total_duration_ms = ?
+                    WHERE session_id = ? AND status IN ('finalizing', 'sealing');
+                    """,
+                    (now_epoch_ms, duration_ms, session_id)
+                )
+                rows_updated = cursor.rowcount
+                if rows_updated == 0:
+                    return # Another thread already completed it (or it was never finalizing/sealing)
+
+                _backfill_parent_session_id(conn, session_id, _workspace_root({}), start_ms)
+        except Exception:
+            pass
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+        parent_session_id = None
+        has_errors = 0
+        conn = None
+        try:
+            conn = _connect_and_init_db(db_path, finalizer_busy)
+            cursor = conn.cursor()
+            cursor.execute("SELECT parent_session_id, has_errors FROM sessions WHERE session_id = ?", (session_id,))
+            row = cursor.fetchone()
+            if row:
+                if row[0]:
+                    parent_session_id = row[0]
+                if row[1]:
+                    has_errors = row[1]
+        except Exception:
+            pass
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+        active_dir = db_path.parent / "transcripts" / "active" / session_id
+        saved_dir = db_path.parent / "transcripts" / "saved"
+        saved_file = saved_dir / f"{session_id}.jsonl"
+
+        merged_lines = []
+        if active_dir.exists():
+            chunk_files = sorted(active_dir.glob("*.json"))
+            for chunk_file in chunk_files:
+                try:
+                    with open(chunk_file, "r", encoding="utf-8") as f:
+                        chunk_data = json.load(f)
+
+                    if not chunk_data.get("parent_session_id") and parent_session_id:
+                        chunk_data["parent_session_id"] = parent_session_id
+
+                    merged_lines.append(json.dumps(chunk_data, ensure_ascii=False) + "\n")
+                except Exception:
+                    pass
+
+        retained = False
+        if has_errors:
+            retained = True
+        else:
+            force_sampling = None
+            if OBSERVABILITY_RUNTIME == "copilot":
+                force_sampling = os.environ.get("COPILOT_OBSERVABILITY_SAMPLING_FORCE")
+            elif OBSERVABILITY_RUNTIME == "gemini":
+                force_sampling = os.environ.get("GEMINI_OBSERVABILITY_SAMPLING_FORCE")
+
+            if not force_sampling:
+                force_sampling = os.environ.get("OBSERVABILITY_SAMPLING_FORCE")
+
+            if force_sampling:
+                if force_sampling.strip().lower() in {"1", "true", "yes", "on"}:
+                    retained = True
+                elif force_sampling.strip().lower() in {"0", "false", "no", "off"}:
+                    retained = False
+            else:
+                import random
+                retained = random.random() < 0.05
+
+        if retained and merged_lines:
+            try:
+                saved_dir.mkdir(parents=True, exist_ok=True)
+                try:
+                    os.chmod(str(saved_dir), 0o700)
+                except Exception:
+                    pass
+
+                temp_saved = saved_file.with_suffix(".tmp")
+                try:
+                    fd = os.open(str(temp_saved), os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
+                    with os.fdopen(fd, "w", encoding="utf-8") as f:
+                        f.writelines(merged_lines)
+                    temp_saved.replace(saved_file)
+                finally:
+                    try:
+                        if temp_saved.exists():
+                            temp_saved.unlink()
+                    except OSError:
+                        pass
+            except Exception:
+                pass
+
+        if active_dir.exists():
+            try:
+                import shutil
+                shutil.rmtree(active_dir)
+            except Exception:
+                pass
+
+        try:
+            registry_file = db_path.parent / "registries" / "subagents" / f"{session_id}.json"
+            if registry_file.exists():
+                registry_file.unlink()
+        except Exception:
+            pass
+
+        final_status = "failed" if has_errors else "success"
+        conn = None
+        try:
+            conn = _connect_and_init_db(db_path, finalizer_busy)
+            with conn:
+                conn.execute("BEGIN IMMEDIATE")
+                if retained and merged_lines:
+                    conn.execute(
+                        "UPDATE sessions SET status = ?, transcript_path = ? WHERE session_id = ?",
+                        (final_status, str(saved_file), session_id)
+                    )
+                else:
+                    conn.execute(
+                        "UPDATE sessions SET status = ? WHERE session_id = ?",
+                        (final_status, session_id)
+                    )
+        except Exception:
+            pass
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+    finally:
+        try:
+            import fcntl
+            fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        except Exception:
+            pass
+        try:
+            os.close(lock_fd)
+        except Exception:
+            pass
 
 
 def _should_launch_maintenance(sentinel_path: Path) -> bool:
@@ -1552,11 +1572,42 @@ def _run_maintenance_work() -> None:
 
         db_path = _get_db_path()
         finalizer_busy = _finalization_busy_timeout_ms()
-        
+
         now_ms = int(time.time() * 1000)
+        stale_finalization_threshold_ms = max(_running_span_stale_ms(), _finalization_timeout_ms())
+        stale_finalization_cutoff_ms = now_ms - stale_finalization_threshold_ms
         error_threshold_ms = now_ms - 90 * 24 * 3600 * 1000
         success_threshold_ms = now_ms - 14 * 24 * 3600 * 1000
-        
+
+        stale_finalization_jobs = []
+        try:
+            conn = _connect_and_init_db(db_path, finalizer_busy)
+            try:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT s.session_id
+                    FROM sessions s
+                    WHERE s.status IN ('finalizing', 'sealing')
+                      AND COALESCE(
+                          (SELECT MAX(sp.updated_at_ms) FROM spans sp WHERE sp.session_id = s.session_id),
+                          s.start_time_ms
+                      ) < ?
+                    """,
+                    (stale_finalization_cutoff_ms,)
+                )
+                stale_finalization_jobs = [row[0] for row in cursor.fetchall()]
+            finally:
+                conn.close()
+        except Exception:
+            pass
+
+        for session_id in stale_finalization_jobs:
+            try:
+                _finalize_session(session_id, db_path, finalizer_busy)
+            except Exception:
+                pass
+
         expired_sessions = []
         try:
             conn = _connect_and_init_db(db_path, finalizer_busy)
@@ -1576,7 +1627,7 @@ def _run_maintenance_work() -> None:
                 conn.close()
         except Exception:
             pass
-            
+
         saved_dir = db_path.parent / "transcripts" / "saved"
         for session_id, transcript_path_str in expired_sessions:
             if transcript_path_str:
@@ -1592,7 +1643,7 @@ def _run_maintenance_work() -> None:
                     std_saved_file.unlink()
                 except Exception:
                     pass
-                    
+
         if expired_sessions:
             try:
                 conn = _connect_and_init_db(db_path, finalizer_busy)
@@ -1607,7 +1658,7 @@ def _run_maintenance_work() -> None:
                     conn.close()
             except Exception:
                 pass
-                
+
         conn = None
         try:
             conn = _connect_and_init_db(db_path, finalizer_busy)
@@ -1620,7 +1671,7 @@ def _run_maintenance_work() -> None:
                     conn.close()
                 except Exception:
                     pass
-            
+
         _scavenge_stale_directories_and_registries(db_path)
     except Exception:
         pass

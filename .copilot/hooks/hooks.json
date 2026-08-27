@@ -125,7 +125,8 @@
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "sessionEnd"
-        }
+        },
+        "timeoutSec": 30
       },
       {
         "type": "command",
