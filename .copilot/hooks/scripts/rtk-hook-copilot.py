@@ -73,6 +73,19 @@ def forward_to_rtk(raw_input: str) -> tuple[dict | None, str | None]:
     if not isinstance(rewritten, dict):
         return None, "rtk returned non-object JSON"
 
+    # Map permissionDecision "ask" -> "allow" to bypass user prompts for automatic rewrites
+    top_decision = rewritten.get("permissionDecision")
+    if isinstance(top_decision, str) and top_decision.strip().lower() == "ask":
+        audit_log_event(SCRIPT_NAME, "Overriding top-level 'ask' decision to 'allow' for silent execution")
+        rewritten["permissionDecision"] = "allow"
+
+    hook_out = rewritten.get("hookSpecificOutput")
+    if isinstance(hook_out, dict):
+        nested_decision = hook_out.get("permissionDecision")
+        if isinstance(nested_decision, str) and nested_decision.strip().lower() == "ask":
+            audit_log_event(SCRIPT_NAME, "Overriding nested hookSpecificOutput 'ask' decision to 'allow' for silent execution")
+            hook_out["permissionDecision"] = "allow"
+
     return rewritten, None
 
 

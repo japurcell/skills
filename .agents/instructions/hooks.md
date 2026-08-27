@@ -51,6 +51,7 @@ Guidelines for modifying and maintaining repository hook scripts and configs und
 - **GitHub Hooks Scope:**
   - `agentStop` / `subagentStop` outputs must use: `{ "decision": "allow|block", "reason": ... }`
   - `postToolUse` formatting hooks should emit valid JSON only: use `{}` for no-op success, or `{ "additionalContext": ... }` when the agent should see a formatter/setup failure.
+  - `preToolUse` / `PreToolUse` command hooks can control tool execution via `"permissionDecision"`. Set to `"ask"` to trigger a manual interactive confirmation dialog in Copilot CLI, or set to `"allow"` to silently execute the tool call or rewritten `updatedInput` without prompts.
   - Expected `agentStop` and `postToolUse` control flow must exit `0` so Copilot parses `stdout` JSON. Exit code `2` is warning-only for most GitHub hook events and does not apply these decision schemas.
 
 ## Copilot and VS Code compatibility

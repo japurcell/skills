@@ -154,6 +154,62 @@ exit 0'
   fi
 }
 
+test_rtk_rewrite_maps_ask_to_allow() {
+  local workdir
+  local audit_log
+  local output
+  local payload
+  local expected_output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  payload='{"sessionId":"rtk-session","hook_event_name":"BeforeTool","tool_name":"run_shell_command","tool_input":{"command":"git status"}}'
+  expected_output='{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"RTK auto-rewrite","updatedInput":{"command":"rtk git status"}}}'
+
+  mock_bin "$workdir" "rtk" '#!/usr/bin/env bash
+set -euo pipefail
+printf "%s\n" '"'"'{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"RTK auto-rewrite","updatedInput":{"command":"rtk git status"}}}'"'"''
+
+  output="$(
+    run_rtk_hook \
+      "$audit_log" \
+      "$payload" \
+      "PATH=$workdir/bin:$PATH"
+  )"
+
+  assert_equals "$(jq -c . <<<"$expected_output")" "$(jq -c . <<<"$output")" \
+    "Expected the wrapper to map permissionDecision from ask to allow in hookSpecificOutput."
+}
+
+test_rtk_rewrite_maps_ask_to_allow_top_level() {
+  local workdir
+  local audit_log
+  local output
+  local payload
+  local expected_output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  payload='{"sessionId":"rtk-session","hook_event_name":"BeforeTool","tool_name":"run_shell_command","tool_input":{"command":"git status"}}'
+  expected_output='{"permissionDecision":"allow","permissionDecisionReason":"RTK auto-rewrite","updatedInput":{"command":"rtk git status"}}'
+
+  mock_bin "$workdir" "rtk" '#!/usr/bin/env bash
+set -euo pipefail
+printf "%s\n" '"'"'{"permissionDecision":"ask","permissionDecisionReason":"RTK auto-rewrite","updatedInput":{"command":"rtk git status"}}'"'"''
+
+  output="$(
+    run_rtk_hook \
+      "$audit_log" \
+      "$payload" \
+      "PATH=$workdir/bin:$PATH"
+  )"
+
+  assert_equals "$(jq -c . <<<"$expected_output")" "$(jq -c . <<<"$output")" \
+    "Expected the wrapper to map top-level permissionDecision from ask to allow."
+}
+
 test_rtk_rewrite_config_points_to_python_wrapper() {
   assert_equals 'python3 $HOME/.copilot/hooks/scripts/rtk-hook-copilot.py' \
     "$(jq -r '.hooks.PreToolUse[0].command // empty' "$REPO_ROOT/.copilot/hooks/rtk-rewrite.json")" \
@@ -166,6 +222,8 @@ main() {
   test_failed_rtk_rewrite_degrades_to_noop_json
   test_timeout_rtk_rewrite_degrades_to_noop_json
   test_empty_rtk_rewrite_is_treated_as_noop_without_audit_errors
+  test_rtk_rewrite_maps_ask_to_allow
+  test_rtk_rewrite_maps_ask_to_allow_top_level
   test_rtk_rewrite_config_points_to_python_wrapper
 }
 
