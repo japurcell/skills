@@ -128,11 +128,18 @@ def merge_env_skill_files(raw: str | None, skills_dir: str, home: str | None) ->
     if not raw:
         return []
 
-    normalized = raw.replace("\r", "\n").replace(":", "\n").replace(",", "\n")
+    import os
+    import re
+
+    if os.name == "nt":
+        parts = re.split(r"[\r\n,;]", raw)
+    else:
+        parts = re.split(r"[\r\n,;]|(?<!\b[a-zA-Z]):", raw)
+
     resolved: list[str] = []
 
-    for line in normalized.splitlines():
-        item = trim_ws(line)
+    for part in parts:
+        item = trim_ws(part)
         if not item:
             continue
 

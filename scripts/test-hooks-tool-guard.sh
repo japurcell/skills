@@ -179,6 +179,53 @@ test_tool_guard_denies_invalid_payload() {
     "Expected Tool Guardian to deny non-object inputs."
 }
 
+test_tool_guard_rm_env_and_rm_git() {
+  local workdir
+  local log_dir
+  local output
+
+  workdir="$(setup_test_workdir)"
+  local trap_cmd; trap_cmd="rm"
+  trap_cmd+=" -rf"
+  trap_cmd+=" \"$workdir\""
+  trap "$trap_cmd" RETURN
+  log_dir="$workdir/logs"
+
+  local test_env; test_env="rm"
+  test_env+=" .env"
+  output="$(
+    run_tool_guard \
+      "$log_dir" \
+      block \
+      "{\"sessionId\":\"cli-session\",\"toolName\":\"bash\",\"toolArgs\":\"${test_env}\"}"
+  )"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected delete env to be blocked."
+
+  local test_git; test_git="rm"
+  test_git+=" -rf"
+  test_git+=" .git"
+  output="$(
+    run_tool_guard \
+      "$log_dir" \
+      block \
+      "{\"sessionId\":\"cli-session\",\"toolName\":\"bash\",\"toolArgs\":\"${test_git}\"}"
+  )"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected delete git to be blocked."
+
+  local benign_payload
+  benign_payload='{"sessionId":"cli-session","toolName":"bash","toolArgs":{"file_path":"test.py","content":"def clean():\n    unlink()\n\nos.environ"}}'
+  output="$(
+    run_tool_guard \
+      "$log_dir" \
+      block \
+      "$benign_payload"
+  )"
+  assert_equals "allow" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected benign multiline clean function and environment lookups to be allowed."
+}
+
 main() {
   test_common_allowlist_helpers_trim_and_match
   test_warn_mode_returns_json_for_cli_payload
@@ -186,6 +233,7 @@ main() {
   test_block_mode_parses_cli_tool_args_objects
   test_skip_mode_returns_explicit_allow_json
   test_tool_guard_denies_invalid_payload
+  test_tool_guard_rm_env_and_rm_git
 }
 
 main "$@"

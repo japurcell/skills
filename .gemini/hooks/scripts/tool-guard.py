@@ -51,12 +51,24 @@ def _match_rm_env(text: str, lower_text: str) -> str | None:
     commands = (R(114, 109), R(100, 101, 108), R(117, 110, 108, 105, 110, 107))
     suffix = R(46, 101, 110, 118)
     for command in commands:
-        index = _find_word(lower_text, command)
-        if index == -1:
-            continue
-        end = lower_text.find(suffix, index + len(command))
-        if end != -1:
-            return text[index : end + len(suffix)]
+        start = 0
+        while True:
+            index = _find_word(lower_text, command, start)
+            if index == -1:
+                break
+            max_search_index = index + len(command) + 100 + len(suffix)
+            suffix_start = index + len(command)
+            while True:
+                end = lower_text.find(suffix, suffix_start, max_search_index)
+                if end == -1:
+                    break
+                after = end + len(suffix)
+                if after == len(lower_text) or not _is_word_char(lower_text[after]):
+                    in_between = lower_text[index + len(command) : end]
+                    if not any(nl in in_between for nl in ("\n", "\\n", "\r", "\\r")):
+                        return text[index : end + len(suffix)]
+                suffix_start = end + 1
+            start = index + 1
     return None
 
 
@@ -64,15 +76,24 @@ def _match_rm_git(text: str, lower_text: str) -> str | None:
     commands = (R(114, 109), R(100, 101, 108), R(117, 110, 108, 105, 110, 107))
     suffix = R(46, 103, 105, 116)
     for command in commands:
-        index = _find_word(lower_text, command)
-        if index == -1:
-            continue
-        end = lower_text.find(suffix, index + len(command))
-        if end == -1:
-            continue
-        after = end + len(suffix)
-        if after == len(lower_text) or not _is_word_char(lower_text[after]):
-            return text[index:after]
+        start = 0
+        while True:
+            index = _find_word(lower_text, command, start)
+            if index == -1:
+                break
+            max_search_index = index + len(command) + 100 + len(suffix)
+            suffix_start = index + len(command)
+            while True:
+                end = lower_text.find(suffix, suffix_start, max_search_index)
+                if end == -1:
+                    break
+                after = end + len(suffix)
+                if after == len(lower_text) or not _is_word_char(lower_text[after]):
+                    in_between = lower_text[index + len(command) : end]
+                    if not any(nl in in_between for nl in ("\n", "\\n", "\r", "\\r")):
+                        return text[index:after]
+                suffix_start = end + 1
+            start = index + 1
     return None
 
 

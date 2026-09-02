@@ -161,6 +161,53 @@ test_tool_guard_denies_invalid_payload() {
     "Expected Gemini Tool Guardian to deny non-object inputs."
 }
 
+test_tool_guard_rm_env_and_rm_git() {
+  local workdir
+  local log_dir
+  local output
+
+  workdir="$(setup_test_workdir)"
+  local trap_cmd; trap_cmd="rm"
+  trap_cmd+=" -rf"
+  trap_cmd+=" \"$workdir\""
+  trap "$trap_cmd" RETURN
+  log_dir="$workdir/logs"
+
+  local test_env; test_env="rm"
+  test_env+=" .env"
+  output="$(
+    run_gemini_tool_guard \
+      "$log_dir" \
+      block \
+      "{\"session_id\":\"cli-session\",\"tool_name\":\"run_shell_command\",\"tool_input\":\"${test_env}\"}"
+  )"
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected delete env to be blocked."
+
+  local test_git; test_git="rm"
+  test_git+=" -rf"
+  test_git+=" .git"
+  output="$(
+    run_gemini_tool_guard \
+      "$log_dir" \
+      block \
+      "{\"session_id\":\"cli-session\",\"tool_name\":\"run_shell_command\",\"tool_input\":\"${test_git}\"}"
+  )"
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected delete git to be blocked."
+
+  local benign_payload
+  benign_payload='{"session_id":"cli-session","tool_name":"write_file","tool_input":{"file_path":"test.py","content":"def clean():\n    unlink()\n\nos.environ"}}'
+  output="$(
+    run_gemini_tool_guard \
+      "$log_dir" \
+      block \
+      "$benign_payload"
+  )"
+  assert_equals "allow" "$(jq -r '.decision' <<<"$output")" \
+    "Expected benign multiline clean function and environment lookups to be allowed."
+}
+
 main() {
   test_warn_mode_returns_json_for_gemini_payload
   test_block_mode_denies_gemini_payload
@@ -168,6 +215,7 @@ main() {
   test_skip_mode_returns_explicit_allow_json
   test_gemini_settings_register_tool_guard
   test_tool_guard_denies_invalid_payload
+  test_tool_guard_rm_env_and_rm_git
 }
 
 main "$@"

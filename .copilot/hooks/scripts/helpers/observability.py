@@ -157,16 +157,34 @@ def _session_finalization_lock_path(db_path: Path, session_id: str) -> Path:
     return db_path.parent / "locks" / f"{session_id}.finalize.lock"
 
 
+_CREATED_DIRS = set()
+
+
 def _ensure_parent(path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
+    parent = path.parent
+    parent_str = str(parent)
+    if parent_str in _CREATED_DIRS:
+        return
+    if not parent.exists():
+        try:
+            parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+    _CREATED_DIRS.add(parent_str)
+
+
+_HAS_FCNTL = True
+try:
+    import fcntl
+except ImportError:
+    _HAS_FCNTL = False
 
 
 def _acquire_lock(lock_path: Path, timeout_seconds: float) -> int | None:
-    _ensure_parent(lock_path)
-    try:
-        import fcntl
-    except ImportError:
+    if not _HAS_FCNTL:
         return -1
+    _ensure_parent(lock_path)
+    import fcntl
 
     lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
     deadline = time.monotonic() + timeout_seconds
@@ -1574,6 +1592,64 @@ def _run_maintenance_work() -> None:
         finalizer_busy = _finalization_busy_timeout_ms()
 
         now_ms = int(time.time() * 1000)
+
+        # Retrieve all 'running' sessions and check their PIDs/activity ages
+        running_sessions = []
+        try:
+            conn = _connect_and_init_db(db_path, finalizer_busy)
+            try:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT s.session_id,
+                           COALESCE((SELECT MAX(sp.pid) FROM spans sp WHERE sp.session_id = s.session_id), 0) as last_pid,
+                           COALESCE((SELECT MAX(sp.updated_at_ms) FROM spans sp WHERE sp.session_id = s.session_id), s.start_time_ms) as last_active
+                    FROM sessions s
+                    WHERE s.status = 'running'
+                    """
+                )
+                running_sessions = cursor.fetchall()
+            finally:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                conn.close()
+        except Exception:
+            pass
+
+        abandoned_sessions = []
+        two_hours_ago = now_ms - 2 * 3600 * 1000
+        for session_id, pid, last_active in running_sessions:
+            if (pid > 0 and not _pid_exists(pid)) or (last_active < two_hours_ago):
+                abandoned_sessions.append(session_id)
+
+        if abandoned_sessions:
+            try:
+                conn = _connect_and_init_db(db_path, finalizer_busy)
+                try:
+                    conn.execute("BEGIN IMMEDIATE")
+                    cursor = conn.cursor()
+                    cursor.executemany(
+                        "UPDATE sessions SET status = 'finalizing' WHERE session_id = ?",
+                        [(sid,) for sid in abandoned_sessions]
+                    )
+                    conn.commit()
+                except Exception:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    raise
+            except Exception:
+                pass
+            finally:
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+
         stale_finalization_threshold_ms = max(_running_span_stale_ms(), _finalization_timeout_ms())
         stale_finalization_cutoff_ms = now_ms - stale_finalization_threshold_ms
         error_threshold_ms = now_ms - 90 * 24 * 3600 * 1000

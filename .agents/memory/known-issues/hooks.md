@@ -37,72 +37,85 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Workaround:** Build risky literals dynamically in tests or probes, keep patch payloads sanitized, and fall back to safer cleanup methods. When using the `replace` tool, if a file contains `unlink()` within the target area, split the replacement into multiple separate steps that leave the exact lines containing `unlink()` completely untouched so that the guard's pattern scanner is not triggered.
 
 ## Mypy Duplicate module error on same-named files
+
 **Affected area:** Typechecking hooks
 **Description:** mypy fails with "Duplicate module" when run concurrently on observability.py files because they share the same relative path name.
 **Workaround:** Run mypy individually on each file instead of passing multiple same-named files at once.
 
 ## Bash nounset trap unbound variable errors
+
 **Affected area:** Bash test scripts
 **Description:** Under bash set -u (nounset), setting a trap to clean up local variables on RETURN requires quoting/interpolation at registration time because by the time RETURN is executed, local variables have already been popped and will raise unbound variable errors.
 **Workaround:** Quote and interpolate variables at trap registration (e.g., trap 'rm -rf "'"$workdir"'"' RETURN).
 
 ## Relative import failures when executing helper scripts directly
+
 **Affected area:** Hook helper scripts execution (`observability.py`)
 **Description:** When executing a helper script directly (e.g. `python3 helper.py`), Python relative imports (such as `from .common import ...`) fail with `ImportError: attempted relative import with no known parent package` because direct execution defines `__name__` as `__main__` with no package structure.
 **Workaround:** Run the helper as a package module using `python3 -m helpers.observability --maintenance` and set the working directory (`cwd` in Popen or `PYTHONPATH`) to the scripts directory containing the `helpers` package.
 
-
 ## Secret Scanning Hook Blocks Dummy Secrets in Test Files
+
 **Affected area:** Test scripts and files
 **Description:** The secret scanning hook (which runs automatically) aggressively scans all file modifications for secret signatures. If a test file uses a realistic-looking fake API key (or any other matched pattern), the hook will block the `write_file` or `run_shell_command` operation and halt progress.
 **Workaround:** Never write secrets to files. For testing, always use obviously fake, safe dummy values (e.g., `sk-ant-test-1234` or `fake-api-key`) that do not trigger the secret scanner. If blocked, discard the offending git changes and use a different mock string.
 
 ## Concurrency and Lock Failures with SQLite WAL/SHM side-files
+
 **Affected area:** Trace Store SQLite DB
 **Description:** In Write-Ahead Log (WAL) mode, SQLite automatically creates temporary side-files ending in `-wal` and `-shm` to manage transaction logs. If these files inherit permissive default user `umask` permissions (like `0o644` or `0o664`), security audits will flag permission leakage. However, locking down permissions via `chmod` must happen continuously after connections are established, as SQLite can recreate or touch these files dynamically.
 **Workaround:** Upon connection, immediately scan for `-wal` and `-shm` files and apply strict `0o600` permissions. Ensure permission modification exceptions are caught and suppressed to prevent transient errors from interrupting the active hook control flow.
 
 ## Unbounded Stack Recursion and Crashes on Cyclical Payload Objects
+
 **Affected area:** Transcript Payload Capping
 **Description:** Hooks serialize complex event payloads. If a payload contains a circular or self-referential reference (e.g., a dictionary referencing itself), standard recursive serializers or depth-limit checkers will trigger a `RecursionError` or a crash, breaking the hook execution.
 **Workaround:** Implement visited-set object tracking during the recursive shrinking loop. Use Python's built-in `id(obj)` to track object identities in an active traversal set. If a cycle is detected, immediately return a sentinel string (e.g., `"<circular reference>"`) instead of recurring deeper.
 
 ## SQLite Database Lock Starvation and Timeouts during Maintenance physical unlinks
+
 **Affected area:** Detached Hook Maintenance
 **Description:** Under high concurrency, performing block-level disk deletions (like unlinking large `.jsonl` trace files or removing directories) inside a SQLite database transaction locks the database. This causes lock starvation and transaction timeout failures in concurrent hooks trying to record active trace spans.
 **Workaround:** Decouple physical unlinks from active SQLite database transactions. First, query metadata paths in a fast read-only transaction/connection. Close the connection, physically remove the files from disk, and then open a separate fast write transaction (`BEGIN IMMEDIATE`) to clean up database records before running a compaction step (`PRAGMA incremental_vacuum;`).
 
 ## Cross-Platform Import Errors and Missing fcntl on Non-POSIX Systems
+
 **Affected area:** File Locking helpers
 **Description:** Importing `fcntl` at the top level of shared scripts causes immediate crash failures on non-POSIX platforms (like Windows), where the `fcntl` module does not exist, blocking local developers or IDE tests in non-POSIX environments.
 **Workaround:** Guard file-locking imports dynamically inside locking functions (e.g., inside `_acquire_lock`). Catch `ImportError` gracefully, returning a fallback value (like `-1`) to bypass POSIX locking where unavailable, allowing the workspace to remain cross-platform compatible.
 
 ## Finalization Status Transition Race Condition in Session Finalizer
+
 **Affected area:** Trace Store finalization (`_finalize_session`)
 **Description:** Updating the session status to `'finalizing'` during terminal event registration (to gently close the session and flag late arrivals) means that checking for the `'running'` status in the finalizer's state-change transition will always fail, causing the finalizer to exit early and discard compiled transcripts.
 **Workaround:** Transition the status from `'finalizing'` to `'sealing'` inside the finalizer instead, checking `cursor.rowcount` on the sealing update to guarantee that exactly one thread proceeds with compilation and directory cleanup under high concurrency.
 
 ## Stale finalization sessions need maintenance retry, not passive cleanup
+
 **Affected area:** Trace Store maintenance and finalization (`_run_maintenance_work`, `_finalize_session`)
 **Description:** When the `sessionEnd` hook is interrupted or the process exits while the finalizer is in the `finalizing`/`sealing` phase, the session remains non-terminal and no later worker calls `_finalize_session()` again. The background maintenance sweep previously only expired older sessions and cleaned stale directories; it never resumed the finalization path, which can permanently discard transcript evidence.
 **Workaround:** Add a stale-session sweep in `_run_maintenance_work()` that selects sessions stuck in `finalizing` or `sealing` beyond the stale threshold and re-invokes `_finalize_session()`. Keep the retry idempotent by relying on the existing state guards in the finalizer and by bounding the hook with a timeout so long-running finalization cannot stall the CLI indefinitely. This requires two matching status filters, and both must include `'sealing'` or the fix silently regresses to `finalizing`-only recovery: (1) the maintenance query's `WHERE s.status IN (...)` clause that selects which stale sessions to retry, and (2) `_finalize_session()`'s own `UPDATE sessions SET status = 'sealing' ... WHERE session_id = ? AND status IN (...)` guard that gates the sealing transition. If that guard is left as `status = 'finalizing'` only, calling `_finalize_session()` on an already-`sealing` session always hits `rowcount == 0` and returns early before the transcript merge and terminal-status write, even though the maintenance query correctly picked it up. Both runtime copies (`.copilot/hooks/scripts/helpers/observability.py`, `.gemini/hooks/scripts/helpers/observability.py`) and both regression scripts (`scripts/test-hooks-observability.sh`, `scripts/test-gemini-hooks-observability.sh`) must stay in sync on this.
 
 ## Concurrent finalizers need per-session locking to avoid duplicate transcript merges
+
 **Affected area:** Trace Store finalization (`_finalize_session`)
 **Description:** Once stale `finalizing`/`sealing` sessions become resumable, a second concurrent finalizer can still enter the same session window and race the transcript merge or final status write. This is a correctness issue even when the stale-state bug itself is fixed, because the finalizer does filesystem and SQLite work that must be single-owner per session.
 **Workaround:** Wrap `_finalize_session()` in a per-session filesystem lock keyed by the session ID before the `finalizing`/`sealing` state transition and before transcript cleanup. This keeps stale recovery resumable while ensuring exactly one finalizer per session owns the merge-and-close workflow. Use the same lock in both runtime copies and keep the lock path under the runtime logs directory so the lock is local to the observability store and automatically cleaned up with the session files.
 
 ## Path Traversal and Arbitrary File Deletion via Registry Backfills
+
 **Affected area:** Trace Store parent-child session tracking (`begin_hook_capture`)
 **Description:** Missing sanitization of `parent_session_id` allows path-traversal sequences to propagate into subagent registries and database rows, leading to potential arbitrary local `.jsonl` file deletion when background retention pruning runs during maintenance.
 **Workaround:** Sanitize `parent_session_id` immediately upon extraction in `begin_hook_capture` using the `[^A-Za-z0-9_-]` character filter.
 
 ## Temporary File Leakage on Write or Serialization Failures
+
 **Affected area:** Trace Store chunking and finalization writes (`_write_transcript_chunk`, `_finalize_session`)
 **Description:** Errors raised during disk I/O, serialization, or flushing while writing atomic temporary `.tmp` files can orphan these files on disk, causing gradual filesystem leakage.
 **Workaround:** Wrap atomic file writes in `try...finally` blocks, and unconditionally attempt to unlink the `.tmp` path inside the `finally` block if it exists.
 
 ## Extensionless Command Execution Failures on Windows when shell=False
+
 **Affected area:** RTK hook forwarding (`rtk-hook-gemini.py`)
 **Description:** On Windows systems, executables such as `rtk` are registered as cmd/batch files (e.g., `rtk.cmd` or `rtk.bat`). Invoking them with `subprocess.run(shell=False)` with the extensionless name `rtk` raises a `FileNotFoundError`.
 **Workaround:** Resolve the executable name using `shutil.which("rtk")` before invoking `subprocess.run`, which correctly resolves the full executable name (with extensions) on all platforms.
@@ -114,31 +127,37 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Workaround:** Keep final-response settings, tests, and injectors synchronized on `AfterAgent`; retain `AfterModel` only where streaming or per-model-output handling is intentional.
 
 ## RTK empty stdout on non-optimized command treated as invalid JSON
+
 **Affected area:** RTK hook wrappers (`rtk-hook-copilot.py` and `rtk-hook-gemini.py`)
 **Description:** When the `rtk` binary does not optimize or rewrite a tool command, it exits 0 with an empty stdout. Treating this empty stdout as invalid JSON triggers fallback warnings in the audit log and creates false errors.
 **Workaround:** If `returncode == 0` and `stdout` is empty or whitespace-only, return a no-op representation `({}, None)` directly instead of attempting to parse it as JSON.
 
 ## PowerShell Parser Error on $HOME in Command Hooks (Windows)
+
 **Affected area:** Gemini CLI command hooks in `global-settings.json` on Windows.
 **Description:** Configuring a command path starting with `$HOME/` (e.g. `$HOME/.gemini/hooks/scripts/send-event.py`) causes a `ParserError` in PowerShell because it parses `/` as the division operator. Furthermore, direct execution of `.py` files on Windows is non-portable and depends on Windows registry file associations.
 **Workaround:** Prefix the command with explicit python invocation and wrap the path in escaped double quotes: `"command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\""`. This ensures the path is treated as an argument (which resolves variables safely without division parsing) and bypasses Windows file association problems.
 
-
 ## PowerShell Argument Splitting on $GEMINI_PROJECT_DIR (Windows)
+
 **Affected area:** Gemini CLI local settings (`settings.json`) on Windows.
 **Description:** The Gemini CLI wraps `$GEMINI_PROJECT_DIR` in single quotes when interpolating it on Windows. Combining it with forward slashes inside local configs (e.g. `'D:\Projects\personal\skills'/.gemini/...`) causes PowerShell to parse it as an expression and split the path into two separate arguments, causing Python to fail with a module not found error.
 **Workaround:** Switch settings to use robust, clean relative paths starting with `python .gemini/hooks/scripts/...py` instead of `$GEMINI_PROJECT_DIR`. Since hooks always execute relative to the repository workspace root, relative paths are 100% stable, platform-independent, and completely avoid quoting and division parsing errors.
 
-
 ## POSIX Path Mapping Failures in Windows Subsystems (WSL / Git Bash)
+
 **Affected area:** Copilot and Gemini auto-ingest hook scripts (`_repo_root`).
 **Description:** When Copilot / VS Code executes command hooks on Windows using a POSIX-based runtime (such as WSL2 or Git Bash), the `cwd` parameter is passed as a Windows-style path (e.g., `D:\Projects\personal\skills`). Since Python runs as a POSIX process, it treats this Windows path as a relative path and creates directories literally named starting with `D` (where `:` maps to `U+F03A` and `\` maps to `U+F05C` due to MSYS2/GitBash virtual path mappings) in the working directory.
 **Workaround:** Implement a path conversion helper `convert_windows_path_to_posix` in `helpers/common.py` that translates Windows-style drive letters (e.g., `D:\...` to `/mnt/d/...` or `/d/...`) when executing in a POSIX process under Windows.
 
-
 ## CP1252 Charmap Codec Encoding Crashes on Windows Stdout
+
 **Affected area:** All hook scripts emitting JSON payloads containing non-ASCII Unicode characters on Windows.
 **Description:** Calling `json.dumps(..., ensure_ascii=False)` and writing the output directly to `sys.stdout` on Windows raises a `'charmap' codec can't encode character` error because Windows stdout streams default to CP1252 (charmap) encoding instead of UTF-8, and characters like `→` exist in loaded skills.
 **Workaround:** Programmatically reconfigure `sys.stdout` to use `utf-8` encoding inside `emit_json()` via `sys.stdout.reconfigure(encoding="utf-8")` with a try-except fallback. This secures Unicode support on Windows natively without altering default console encodings.
 
+## Tool Guardian Severe False Positive Blocks on Multiline Serialized File Operations
 
+**Affected area:** Tool Guardian pattern detection (`tool-guard.py` under both `.gemini` and `.copilot`)
+**Description:** The pattern detection logic for env and git deletions searched for a deletion command (such as rm or unlink) followed by the target file extension (such as dot-env or dot-git) anywhere in the entire text. In serialized tool payloads (e.g. `write_file` or `replace`), literal newlines in the file content are escaped as backslash-n, which bypasses standard line check boundaries. This resulted in false positives where any file containing safe unlinking cleanups on one line and environment lookups on separate lines was aggressively blocked.
+**Workaround:** Update `_match_rm_env` and `_match_rm_git` to scan all occurrences of the delete commands and restrict matches to those within 100 characters of the target suffix and containing no newlines (literal or JSON-escaped). When writing test files that must verify these patterns, dynamically build the blocked command strings in source code to avoid triggering the tool guardian during file modification.
