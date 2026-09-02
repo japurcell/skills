@@ -42,6 +42,7 @@ these layer files for specifics.
 
 Use this area to register scaffolded source summaries and keep source-specific knowledge discoverable.
 Load `.agents/memory/LOG.md` first, then the matching summary in `.agents/memory/sources/`.
+When a user asks for exact behavior, an authoritative answer, or work on a topic with a matching raw source, read the raw source after the summary. Summaries route investigation and preserve durable findings, but raw sources are the authority for precise behavior, schemas, command output, and edge cases.
 The committed manifest `.agents/memory/sources/source-ingest-manifest.json` tracks source fingerprints plus stale or orphan summary state for auto-ingest hooks and pending-ingest gating.
 Raw files under `.agents/sources/` are immutable source inputs; summaries plus the wider `.agents/memory/` and `.agents/instructions/` corpus are the compiled knowledge layer.
 Keep chronological integration history grep-friendly by prefixing log entries as `## [YYYY-MM-DD] action | subject`.
@@ -69,7 +70,6 @@ memory files cross-reference:
 - [README.md](../../README.md) — repo overview and installation entry point.
 - [`.agents/instructions/<area>.md`](../instructions/) — canonical area-scoped workflow rules and conventions.
 - [`.agents/skills/*/SKILL.md`](../skills/) — task-specific skills (update-agent-docs, etc.).
-- [Windows Hook Fixes ExecPlan](exec-plan-windows-hooks-fix.md) — execution plan for correcting win32 hook issues.
 
 ## Conventions
 

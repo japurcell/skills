@@ -19,6 +19,53 @@ assert_caveman_context_shape() {
   fi
 }
 
+hook_final_json() {
+  python3 -c 'import json, sys
+preserved = []
+for line in sys.stdin.read().splitlines():
+    stripped = line.strip()
+    if stripped:
+        try:
+            payload = json.loads(stripped)
+            if isinstance(payload, dict) and payload.get("type") == "progress":
+                continue
+        except json.JSONDecodeError:
+            pass
+    preserved.append(line)
+print("\n".join(preserved).strip(), end="")' <<<"$1"
+}
+
+assert_progress_message() {
+  local output="$1"
+  local expected="$2"
+
+  HOOK_OUTPUT="$output" python3 -c 'import json, os, sys
+expected = sys.argv[1]
+for line in os.environ["HOOK_OUTPUT"].splitlines():
+    try:
+        payload = json.loads(line.strip())
+    except json.JSONDecodeError:
+        continue
+    if isinstance(payload, dict) and payload.get("type") == "progress" and payload.get("message") == expected:
+        raise SystemExit(0)
+print(f"Expected progress message: {expected}", file=sys.stderr)
+raise SystemExit(1)' "$expected"
+}
+
+assert_no_progress_messages() {
+  local output="$1"
+
+  HOOK_OUTPUT="$output" python3 -c 'import json, os, sys
+for line in os.environ["HOOK_OUTPUT"].splitlines():
+    try:
+        payload = json.loads(line.strip())
+    except json.JSONDecodeError:
+        continue
+    if isinstance(payload, dict) and payload.get("type") == "progress":
+        print("Unexpected progress message: " + str(payload.get("message")), file=sys.stderr)
+        raise SystemExit(1)'
+}
+
 run_session_start_hook() {
   local audit_log="$1"
   local payload="$2"
@@ -43,6 +90,7 @@ test_session_start_outputs_cli_schema_with_caveman_only_context() {
   audit_log="$workdir/audit.log"
 
   output="$(run_session_start_hook "$audit_log" '{"sessionId":"cli-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}')"
+  output="$(hook_final_json "$output")"
 
   assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$output")" \
     "Expected Copilot CLI payloads to return top-level additionalContext."
@@ -51,6 +99,43 @@ test_session_start_outputs_cli_schema_with_caveman_only_context() {
   assert_caveman_context_shape "$(jq -r '.additionalContext' <<<"$output")"
   assert_file_contains "$audit_log" "Message: Loaded skill" \
     "Expected session-start hook to log loaded required skill context."
+}
+
+test_session_start_emits_copilot_progress_announcement() {
+  local workdir
+  local audit_log
+  local output
+  local final_json
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_session_start_hook "$audit_log" '{"sessionId":"progress-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}')"
+  final_json="$(hook_final_json "$output")"
+
+  assert_progress_message "$output" "Required skill context loaded from 1 file(s)."
+  assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$final_json")" \
+    "Expected final hook JSON to survive progress-line stripping."
+  assert_caveman_context_shape "$(jq -r '.additionalContext' <<<"$final_json")"
+}
+
+test_session_start_emits_progress_for_camel_case_event_name() {
+  local workdir
+  local audit_log
+  local output
+  local final_json
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_session_start_hook "$audit_log" '{"hookEventName":"sessionStart","sessionId":"progress-session","timestamp":"2026-05-21T09:00:00Z","source":"startup","initialPrompt":"hello"}')"
+  final_json="$(hook_final_json "$output")"
+
+  assert_progress_message "$output" "Required skill context loaded from 1 file(s)."
+  assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$final_json")" \
+    "Expected final hook JSON to survive progress-line stripping for camelCase events."
 }
 
 test_session_start_outputs_vscode_schema_with_caveman_only_context() {
@@ -63,6 +148,8 @@ test_session_start_outputs_vscode_schema_with_caveman_only_context() {
   audit_log="$workdir/audit.log"
 
   output="$(run_session_start_hook "$audit_log" '{"hook_event_name":"SessionStart","session_id":"vscode-session","timestamp":"2026-05-21T09:00:01Z","source":"vscode","initial_prompt":"hello"}')"
+  assert_no_progress_messages "$output"
+  output="$(hook_final_json "$output")"
 
   assert_equals "true" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
     "Expected VS Code payloads to return hookSpecificOutput."
@@ -81,6 +168,7 @@ test_subagent_start_outputs_cli_schema_with_caveman_only_context() {
   audit_log="$workdir/audit.log"
 
   output="$(run_subagent_start_hook "$audit_log" '{"sessionId":"cli-subagent-session","timestamp":"2026-05-21T09:00:02Z","transcriptPath":"workspace/transcript.jsonl","agentName":"code-review","agentId":"agent-42"}')"
+  output="$(hook_final_json "$output")"
 
   assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$output")" \
     "Expected Copilot CLI subagent payloads to return top-level additionalContext."
@@ -102,6 +190,8 @@ test_subagent_start_outputs_vscode_schema_with_caveman_only_context() {
   audit_log="$workdir/audit.log"
 
   output="$(run_subagent_start_hook "$audit_log" '{"hookEventName":"SubagentStart","sessionId":"vscode-subagent-session","timestamp":"2026-05-21T09:00:03Z","agent_id":"vscode-agent-42","agent_type":"Plan"}')"
+  assert_no_progress_messages "$output"
+  output="$(hook_final_json "$output")"
 
   assert_equals "true" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
     "Expected VS Code SubagentStart payloads to return hookSpecificOutput."
@@ -207,6 +297,7 @@ test_compact_mode_override_is_ignored() {
       "COPILOT_REQUIRED_SKILL_CONTEXT_MODE=compact" \
       "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
   )"
+  output="$(hook_final_json "$output")"
 
   local context
   context="$(jq -r '.additionalContext' <<<"$output")"
@@ -261,6 +352,7 @@ test_multiple_skills_loading_works_correctly() {
       "" \
       "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md,writing-great-skills/SKILL.md"
   )"
+  output="$(hook_final_json "$output")"
 
   context="$(jq -r '.additionalContext' <<<"$output")"
 
@@ -279,6 +371,8 @@ test_multiple_skills_loading_works_correctly() {
 
 main() {
   test_session_start_outputs_cli_schema_with_caveman_only_context
+  test_session_start_emits_copilot_progress_announcement
+  test_session_start_emits_progress_for_camel_case_event_name
   test_session_start_outputs_vscode_schema_with_caveman_only_context
   test_subagent_start_outputs_cli_schema_with_caveman_only_context
   test_subagent_start_outputs_vscode_schema_with_caveman_only_context

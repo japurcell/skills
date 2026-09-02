@@ -36,6 +36,14 @@ def build_output(message: str, event_name: str, is_failure: bool) -> dict:
     return payload
 
 
+def emit_progress_message(message: str) -> None:
+    emit_json({"type": "progress", "message": message})
+
+
+def supports_progress_messages(event_name: str) -> bool:
+    return event_name in {"", "sessionStart", "subagentStart"}
+
+
 def fail_with_context(reason: str, session_id: str = "", event_name: str = "") -> None:
     safe_reason = reason.strip() or "Hook failed"
     safe_session_id = sanitize_log_field(session_id)
@@ -122,6 +130,9 @@ def main() -> int:
                 f"Message: Loaded skill {sanitize_log_field(raw_skill_file)}, Event: {event_name}, Session: {safe_session_id}",
             )
 
+        count = len(required_skill_files)
+        if supports_progress_messages(event_name):
+            emit_progress_message(f"Required skill context loaded from {count} file(s).")
         required_skill_context = "Required skill context loaded.\n\n" + "\n\n".join(context_parts)
         emit_json(build_output(required_skill_context, event_name, False))
         return 0
