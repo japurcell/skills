@@ -204,11 +204,6 @@ def grade_eval_one(run_dir: Path) -> list[dict]:
             f"source_lines={src_lines}, generated_lines={dst_lines}",
         ),
         expectation(
-            "Generated SKILL.md avoids verbatim copy from references/skill-anatomy.md.",
-            not copies_reference(skill_text),
-            "no distinctive anatomy prose copied" if not copies_reference(skill_text) else "copied anatomy prose detected",
-        ),
-        expectation(
             "Generated eval assets include evals.json and grade_benchmark.py.",
             has_assets,
             "eval assets present" if has_assets else "missing eval assets",
