@@ -69,7 +69,7 @@ print(int(path.stat().st_mtime))' "$1"
 }
 
 test_session_start_startup_registers_auto_ingest_hook() {
-  assert_equals '$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/auto-ingest.py' \
+  assert_equals 'python .gemini/hooks/scripts/auto-ingest.py' \
     "$(jq -r '.hooks.SessionStart[] | select(.matcher == "startup") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
     "Expected Gemini repo-local settings to register the startup-only auto-ingest hook."
 
@@ -81,11 +81,11 @@ test_session_start_startup_registers_auto_ingest_hook() {
     "$(jq -r '.hooks.SessionStart[] | select(.matcher == "startup") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
     "Expected Gemini global settings to stop registering auto-ingest."
 
-  assert_equals '$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py' \
+  assert_equals 'python .gemini/hooks/scripts/inject-auto-ingest-context.py' \
     "$(jq -r '.hooks.BeforeAgent[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
     "Expected Gemini repo-local settings to register the BeforeAgent auto-ingest injector."
 
-  assert_equals '$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py' \
+  assert_equals 'python .gemini/hooks/scripts/inject-auto-ingest-context.py' \
     "$(jq -r '.hooks.AfterAgent[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
     "Expected Gemini repo-local settings to register the AfterAgent pending-ingest backstop."
 }

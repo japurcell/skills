@@ -123,3 +123,22 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Description:** Configuring a command path starting with `$HOME/` (e.g. `$HOME/.gemini/hooks/scripts/send-event.py`) causes a `ParserError` in PowerShell because it parses `/` as the division operator. Furthermore, direct execution of `.py` files on Windows is non-portable and depends on Windows registry file associations.
 **Workaround:** Prefix the command with explicit python invocation and wrap the path in escaped double quotes: `"command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\""`. This ensures the path is treated as an argument (which resolves variables safely without division parsing) and bypasses Windows file association problems.
 
+
+## PowerShell Argument Splitting on $GEMINI_PROJECT_DIR (Windows)
+**Affected area:** Gemini CLI local settings (`settings.json`) on Windows.
+**Description:** The Gemini CLI wraps `$GEMINI_PROJECT_DIR` in single quotes when interpolating it on Windows. Combining it with forward slashes inside local configs (e.g. `'D:\Projects\personal\skills'/.gemini/...`) causes PowerShell to parse it as an expression and split the path into two separate arguments, causing Python to fail with a module not found error.
+**Workaround:** Switch settings to use robust, clean relative paths starting with `python .gemini/hooks/scripts/...py` instead of `$GEMINI_PROJECT_DIR`. Since hooks always execute relative to the repository workspace root, relative paths are 100% stable, platform-independent, and completely avoid quoting and division parsing errors.
+
+
+## POSIX Path Mapping Failures in Windows Subsystems (WSL / Git Bash)
+**Affected area:** Copilot and Gemini auto-ingest hook scripts (`_repo_root`).
+**Description:** When Copilot / VS Code executes command hooks on Windows using a POSIX-based runtime (such as WSL2 or Git Bash), the `cwd` parameter is passed as a Windows-style path (e.g., `D:\Projects\personal\skills`). Since Python runs as a POSIX process, it treats this Windows path as a relative path and creates directories literally named starting with `D` (where `:` maps to `U+F03A` and `\` maps to `U+F05C` due to MSYS2/GitBash virtual path mappings) in the working directory.
+**Workaround:** Implement a path conversion helper `convert_windows_path_to_posix` in `helpers/common.py` that translates Windows-style drive letters (e.g., `D:\...` to `/mnt/d/...` or `/d/...`) when executing in a POSIX process under Windows.
+
+
+## CP1252 Charmap Codec Encoding Crashes on Windows Stdout
+**Affected area:** All hook scripts emitting JSON payloads containing non-ASCII Unicode characters on Windows.
+**Description:** Calling `json.dumps(..., ensure_ascii=False)` and writing the output directly to `sys.stdout` on Windows raises a `'charmap' codec can't encode character` error because Windows stdout streams default to CP1252 (charmap) encoding instead of UTF-8, and characters like `→` exist in loaded skills.
+**Workaround:** Programmatically reconfigure `sys.stdout` to use `utf-8` encoding inside `emit_json()` via `sys.stdout.reconfigure(encoding="utf-8")` with a try-except fallback. This secures Unicode support on Windows natively without altering default console encodings.
+
+

@@ -29,6 +29,7 @@ Guidelines for modifying and maintaining repository hook scripts and configs und
 - **SQLite Trace Store:** Hook observability uses a WAL-journaled SQLite database (`observability_v1.db`) as the trace source of truth under strict `0o600` permissions.
   - **Connection and Schema Init:** Connection establishment must be fast and non-blocking, omitting write-heavy `PRAGMA journal_mode=WAL;` and `PRAGMA auto_vacuum=INCREMENTAL;` connection-scoped setups (which cause concurrency conflicts). Move these PRAGMAs to one-time database schema initialization or recovery, keeping only lightweight settings like `PRAGMA foreign_keys=ON;` and `PRAGMA synchronous=NORMAL;` during connections. Secure temporary WAL/SHM side files with strict `0o600` permissions immediately after connection.
   - **Graceful OS Fallbacks:** Avoid top-level `import fcntl` to ensure cross-platform Windows compatibility. Dynamically import `fcntl` inside lock helpers, and return `-1` to fallback gracefully if unavailable.
+  - **PowerShell Quote Wrapping:** Always wrap hook command paths starting with `$HOME/` or `$GEMINI_PROJECT_DIR/` in escaped double quotes `\"...\"` and prefix them with explicit `python` on Windows. This avoids PowerShell division parsing errors (`ParserError` on `/` operator) and Windows file association issues.
   - **Registry and Directory Permissions:** Write all registry JSON files with explicit `0o600` permissions, and ensure subagent registry directory (`registries/subagents`) is secured with `0o700` permissions.
   - **Telemetry and Performance:** Fast-path the payload shrinking loop by checking string length before calling high-CPU `.encode("utf-8")`. Support visited-set container tracking to handle cyclical payloads and prevent unbounded recursion crashes. Unconditionally update session `start_time_ms` with the actual event timestamp of `session_start`. Append late-arriving trace chunks directly to saved `.jsonl` transcript files if the active transcript directory was already finalized and deleted.
   - **Parent Session Sanitization:** Sanitize `parent_session_id` immediately upon extraction using `[^A-Za-z0-9_-]` to neutralize path-traversal vulnerabilities and prevent arbitrary file deletion during background retention maintenance.
@@ -56,6 +57,7 @@ Guidelines for modifying and maintaining repository hook scripts and configs und
 
 ## Copilot and VS Code compatibility
 
+- On Windows systems, Copilot hooks config (e.g. `hooks.json` and `rtk-rewrite.json`) must explicitly define both `"bash"` (Unix) and `"powershell"` (Windows) keys for command hooks to execute natively and in VS Code on Windows.
 - In `.copilot/hooks/hooks.json`, keep both `subagentStart` (CLI) and `SubagentStart` (VS Code).
 - CLI responses return top-level `additionalContext`; VS Code responses return `hookSpecificOutput` plus `additionalContext`.
 - Prefer `agentStop` over `subagentStop` for final-response quality validators; `subagentStop` has no matcher support in Copilot hook docs and built-in `general-purpose` agents do not emit `subagentStart` or `subagentStop`.

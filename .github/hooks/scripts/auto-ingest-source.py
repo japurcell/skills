@@ -64,7 +64,8 @@ def _repo_root(payload: dict[str, object]) -> Path:
 
     cwd = stringify_value(first_present(payload, "cwd", "workingDirectory", "working_directory"))
     if cwd:
-        return Path(cwd)
+        from helpers.common import convert_windows_path_to_posix
+        return Path(convert_windows_path_to_posix(cwd))
 
     return Path.cwd()
 def main() -> int:

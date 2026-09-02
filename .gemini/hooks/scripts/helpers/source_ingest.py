@@ -45,6 +45,9 @@ def source_root_for_payload(payload: dict[str, object]) -> Path:
     if override:
         return Path(override)
     cwd = str(payload.get("cwd") or "")
+    if cwd:
+        from helpers.common import convert_windows_path_to_posix
+        cwd = convert_windows_path_to_posix(cwd)
     return Path(cwd) / ".agents/sources" if cwd else Path.cwd() / ".agents/sources"
 
 
@@ -53,6 +56,9 @@ def summary_root_for_payload(payload: dict[str, object]) -> Path:
     if override:
         return Path(override)
     cwd = str(payload.get("cwd") or "")
+    if cwd:
+        from helpers.common import convert_windows_path_to_posix
+        cwd = convert_windows_path_to_posix(cwd)
     return Path(cwd) / ".agents/memory/sources" if cwd else Path.cwd() / ".agents/memory/sources"
 
 
@@ -65,6 +71,9 @@ def manifest_path_for_payload(payload: dict[str, object], summary_root: Path) ->
 
 def repo_root_for_payload(payload: dict[str, object]) -> Path:
     cwd = str(payload.get("cwd") or "")
+    if cwd:
+        from helpers.common import convert_windows_path_to_posix
+        cwd = convert_windows_path_to_posix(cwd)
     return Path(cwd) if cwd else Path.cwd()
 
 

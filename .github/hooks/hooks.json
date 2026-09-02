@@ -4,25 +4,29 @@
     "agentStop": [
       {
         "type": "command",
-        "bash": ".github/hooks/scripts/inject-auto-ingest-context.py"
+        "bash": ".github/hooks/scripts/inject-auto-ingest-context.py",
+        "powershell": "python \".github/hooks/scripts/inject-auto-ingest-context.py\""
       }
     ],
     "subagentStop": [
       {
         "type": "command",
-        "bash": ".github/hooks/scripts/inject-auto-ingest-context.py"
+        "bash": ".github/hooks/scripts/inject-auto-ingest-context.py",
+        "powershell": "python \".github/hooks/scripts/inject-auto-ingest-context.py\""
       }
     ],
     "sessionStart": [
       {
         "type": "command",
-        "bash": ".github/hooks/scripts/auto-ingest-source.py"
+        "bash": ".github/hooks/scripts/auto-ingest-source.py",
+        "powershell": "python \".github/hooks/scripts/auto-ingest-source.py\""
       }
     ],
     "userPromptTransformed": [
       {
         "type": "command",
-        "bash": ".github/hooks/scripts/inject-auto-ingest-context.py"
+        "bash": ".github/hooks/scripts/inject-auto-ingest-context.py",
+        "powershell": "python \".github/hooks/scripts/inject-auto-ingest-context.py\""
       }
     ]
   }

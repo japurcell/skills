@@ -8,6 +8,8 @@ coverage: Test and validation guidance for shell helper scripts under `scripts/`
 - Shell installer changes:
   - `bash -n scripts/install.sh && bash scripts/test-install.sh`
   - `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`
+- Python helper module unit tests:
+  - `python scripts/test_helpers.py`
 - Hook-tree shell helper changes:
   - `bash scripts/test-repo-root.sh`
 - For any `scripts/*.ps1` or PowerShell-specific install logic, use `.agents/memory/testing/powershell.md` instead of treating the check as generic shell validation.

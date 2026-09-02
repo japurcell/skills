@@ -7,7 +7,7 @@
           {
             "name": "auto-ingest-sources",
             "type": "command",
-            "command": "$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/auto-ingest.py",
+            "command": "python .gemini/hooks/scripts/auto-ingest.py",
             "description": "Scans .agents/sources at startup and injects stale source-summary context."
           }
         ]
@@ -20,7 +20,7 @@
           {
             "name": "inject-auto-ingest-context",
             "type": "command",
-            "command": "$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py",
+            "command": "python .gemini/hooks/scripts/inject-auto-ingest-context.py",
             "description": "Injects current source-summary ingest work into prompt-time context."
           }
         ]
@@ -33,7 +33,7 @@
           {
             "name": "block-pending-ingest",
             "type": "command",
-            "command": "$GEMINI_PROJECT_DIR/.gemini/hooks/scripts/inject-auto-ingest-context.py",
+            "command": "python .gemini/hooks/scripts/inject-auto-ingest-context.py",
             "description": "Blocks model responses while source ingest remains pending."
           }
         ]

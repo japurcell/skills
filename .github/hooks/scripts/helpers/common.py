@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from collections.abc import Mapping
@@ -23,6 +24,10 @@ def read_json_input() -> dict:
 
 
 def emit_json(payload: dict) -> None:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
     sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
     sys.stdout.write("\n")
     sys.stdout.flush()
@@ -48,6 +53,31 @@ def nested_present(payload: Mapping[str, Any], *keys: str) -> Any:
         current = current[key]
 
     return current if current is not None else ""
+
+
+def convert_windows_path_to_posix(path_str: str) -> str:
+    if not path_str:
+        return ""
+    if os.name == "nt":
+        return path_str.replace("/", "\\")
+
+    if len(path_str) >= 2 and path_str[1] == ":" and path_str[0].isalpha():
+        drive = path_str[0].lower()
+        rest = path_str[2:].replace("\\", "/")
+        if not rest.startswith("/"):
+            rest = "/" + rest
+
+        if os.path.exists(f"/mnt/{drive}"):
+            return f"/mnt/{drive}{rest}"
+        elif os.path.exists(f"/{drive}"):
+            return f"/{drive}{rest}"
+        else:
+            return f"/mnt/{drive}{rest}"
+
+    if "\\" in path_str:
+        return path_str.replace("\\", "/")
+
+    return path_str
 
 
 def stringify_value(value: Any) -> str:

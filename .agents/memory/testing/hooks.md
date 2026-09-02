@@ -41,3 +41,11 @@ coverage: Test guidance for repo-local Copilot plus installed Copilot and Gemini
 - `scripts/test-install.sh` verifies `.gemini/global-settings.json` is copied into `~/.gemini/settings.json` during install.
 - When benchmarking the Gemini Tool Guardian port, measure the installed shell-command path after `./scripts/install.sh`; direct repo invocation is slower and can miss the `<40ms` target even when the installed surface passes.
 - Hook event compatibility contract lives in `.agents/instructions/hooks.md`.
+
+## Python unit tests
+
+- Run Python unit tests with:
+  `python scripts/test_helpers.py`
+- These tests verify helper functions (`convert_windows_path_to_posix`, `emit_json` Unicode encoding, path-merging, frontmatter stripping, and logs sanitization) across `.github`, `.gemini`, and `.copilot` script hook structures.
+- **Module Caching / Isolation Trap:** Because python caches modules by name in `sys.modules`, tests targeting different implementations of modules with the same name (such as `helpers.common` in `.github` vs `.gemini` vs `.copilot`) must explicitly clear `sys.modules` cache and force a reload via `importlib.reload` after updating `sys.path`. Otherwise, the second test suite will falsely pass while testing the first imported module. Use the `_get_common_module()` helper pattern to guarantee clean isolation.
+

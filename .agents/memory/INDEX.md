@@ -69,6 +69,7 @@ memory files cross-reference:
 - [README.md](../../README.md) — repo overview and installation entry point.
 - [`.agents/instructions/<area>.md`](../instructions/) — canonical area-scoped workflow rules and conventions.
 - [`.agents/skills/*/SKILL.md`](../skills/) — task-specific skills (update-agent-docs, etc.).
+- [Windows Hook Fixes ExecPlan](exec-plan-windows-hooks-fix.md) — execution plan for correcting win32 hook issues.
 
 ## Conventions
 

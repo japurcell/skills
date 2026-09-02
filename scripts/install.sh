@@ -54,6 +54,8 @@ copy_hooks() {
 
 copy_gemini() {
   cp -Rp "$GEMINI_SRC/." "$GEMINI_DEST/"
+  rm -f "$GEMINI_DEST/global-settings.json"
+  rm -f "$GEMINI_DEST/settings.json"
   if [[ -d "$GEMINI_DEST/hooks" ]]; then
     find "$GEMINI_DEST/hooks" -type f \( -name "*.py" -o -name "*.sh" \) -exec chmod 755 {} +
   fi

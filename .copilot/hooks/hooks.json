@@ -5,6 +5,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "agentStop"
@@ -15,6 +16,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "errorOccurred"
@@ -25,6 +27,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "notification"
@@ -35,6 +38,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "permissionRequest"
@@ -45,6 +49,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "postToolUse"
@@ -55,6 +60,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "preToolUse"
@@ -63,6 +69,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/tool-guard.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/tool-guard.py\"",
         "env": {
           "GUARD_MODE": "block"
         },
@@ -71,6 +78,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/scan-secrets.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/scan-secrets.py\"",
         "env": {
           "SCAN_MODE": "block",
           "SCAN_SCOPE": "diff"
@@ -82,6 +90,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "preCompact"
@@ -92,6 +101,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "postToolUseFailure"
@@ -102,6 +112,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "subagentStart"
@@ -112,6 +123,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "subagentStop"
@@ -122,6 +134,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "sessionEnd"
@@ -130,11 +143,13 @@
       },
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/bell.py"
+        "bash": "$HOME/.copilot/hooks/scripts/bell.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/bell.py\""
       },
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/scan-secrets.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/scan-secrets.py\"",
         "env": {
           "SCAN_MODE": "warn",
           "SCAN_SCOPE": "diff"
@@ -146,6 +161,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "sessionStart"
@@ -154,6 +170,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/load-required-skills.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/load-required-skills.py\"",
         "env": {
           "AGENTS_REQUIRED_SKILL_FILES": "caveman/SKILL.md"
         }
@@ -163,6 +180,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "userPromptSubmitted"
@@ -173,6 +191,7 @@
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "userPromptTransformed"

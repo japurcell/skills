@@ -257,6 +257,8 @@ function Copy-Hooks {
 
 function Copy-Gemini {
     Copy-DirectoryContents -Source $GeminiSrc -Destination $GeminiDest
+    Remove-IfExists (Join-Path $GeminiDest 'global-settings.json')
+    Remove-IfExists (Join-Path $GeminiDest 'settings.json')
     Set-CopiedFileModes -Source $GeminiSrc -Destination $GeminiDest
     Set-HookScriptsExecutable -Root (Join-Path $GeminiDest 'hooks')
 }
