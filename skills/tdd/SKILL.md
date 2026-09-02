@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: MANDATORY whenever you design or write ANY code. Use when the user mentions implement, "red-green-refactor", test-first development, tdd, test driven development, or integration tests.
+description: MANDATORY whenever you design or write ANY code. Use when the user mentions implement, "red-green-refactor", test-first development, tdd, test driven development, or integration tests. DO NOT use when delegating design or implementation work to a subagent, but you MUST explicitly instruct the subagent to activate the tdd skill in your prompt.
 ---
 
 # Test-Driven Development
