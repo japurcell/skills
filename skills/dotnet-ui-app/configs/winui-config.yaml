@@ -5,7 +5,7 @@
 #                                                                                                                                #
 # This will:                                                                                                                     #
 #   * Enable Developer Mode                                                                                                      #
-#   * Install Visual Studio Community 2026                                                                                       #
+#   * Install Visual Studio Community 2022                                                                                       #
 #   * Install the WinUI / Windows App SDK workloads                                                                              #
 ##################################################################################################################################
 properties:
@@ -21,28 +21,30 @@ properties:
       directives:
         description: Enable Developer Mode
         securityContext: elevated
-        allowPrerelease: true
+        allowPrerelease: false
       settings:
         DeveloperMode: true
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: Visual Studio
       directives:
-        description: Install Visual Studio Community 2026
+        description: Install Visual Studio Community 2022
         securityContext: elevated
       settings:
         id: Microsoft.VisualStudio.Community
         source: winget
+        version: '17.x'
+        scope: machine
     - resource: Microsoft.VisualStudio.DSC/VSComponents
       id: Workloads ManagedDesktop
       dependsOn:
         - Visual Studio
       directives:
         description: Install required VS workloads (ManagedDesktop, Windows App SDK)
-        allowPrerelease: true
+        allowPrerelease: false
         securityContext: elevated
       settings:
         productId: Microsoft.VisualStudio.Product.Community
-        channelId: VisualStudio.18.Release
+        channelId: VisualStudio.17.Release
         components:
           - Microsoft.VisualStudio.Workload.ManagedDesktop
           - Microsoft.VisualStudio.Workload.Universal

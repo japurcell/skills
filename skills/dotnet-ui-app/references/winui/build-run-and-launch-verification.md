@@ -48,6 +48,38 @@ Use this file when the task involves building, running, launch failures, startup
 - If `dotnet run` throws bootstrapper, deployment, or COM activation errors, treat that as a signal that the chosen launch path or packaging setup is wrong for the current app.
 - Stop old app instances before rebuilding if they can lock output files.
 
+### CLI Build and Run Commands
+
+Always build and launch WinUI 3 applications targeting a specific architecture (e.g., `win-x64`) rather than relying on `AnyCPU`.
+
+#### Unpackaged Development Mode (Recommended for fast CLI loop)
+
+- **Build**:
+
+  ```bash
+  dotnet build -r win-x64 --self-contained false
+  ```
+
+- **Run**:
+
+  ```bash
+  dotnet run -f net8.0-windows10.0.19041.0 -r win-x64
+  ```
+
+#### Packaged Development Mode (MSIX deployment)
+
+- **Build and package app bundle**:
+
+  ```bash
+  dotnet build /p:GenerateAppxPackageOnBuild=true
+  ```
+
+- **Publish/Build standard installer artifact**:
+
+  ```bash
+  dotnet publish -c Release -r win-x64 /p:GenerateAppxPackageOnBuild=true /p:PublishProfile=Properties\PublishProfiles\win10-x64.pubxml
+  ```
+
 ## Debugging Startup Failures
 
 - Separate environment problems from app-code startup crashes.

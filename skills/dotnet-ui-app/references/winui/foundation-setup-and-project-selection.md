@@ -59,21 +59,31 @@ Verify template availability:
 dotnet new list winui
 ```
 
-Scaffold:
+Scaffold a basic packaged app:
 
 ```powershell
 dotnet new winui -o <AppName>
 ```
 
-Common supported options include:
+Scaffold an MVVM-structured app:
+
+```powershell
+dotnet new winui-mvvm -o <AppName>
+```
+
+Scaffold a NavigationView starter app:
+
+```powershell
+dotnet new winui-navview -o <AppName>
+```
+
+Common supported options for the standard templates include:
 
 - `-f|--framework net10.0|net9.0|net8.0`
-- `-slnx|--use-slnx`
-- `-cpm|--central-pkg-mgmt`
-- `-mvvm|--use-mvvm`
-- `-imt|--include-mvvm-toolkit`
-- `-un|--unpackaged`
-- `-nsf|--no-solution-file`
+- `--use-slnx`
+- `--central-pkg-mgmt`
+- `--unpackaged`
+- `--no-solution-file`
 - `--force`
 
 Do not invent unsupported flags. If the user asks for packaged behavior, pass `--unpackaged false`. Otherwise keep the template default.
