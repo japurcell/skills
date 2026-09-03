@@ -109,12 +109,17 @@ def run_git(args: list[str], *, cwd: Path, text: bool = True) -> str | bytes | N
     import subprocess
 
     try:
+        env = os.environ.copy()
+        env["GIT_TERMINAL_PROMPT"] = "0"
+        env["GIT_ASKPASS"] = ""
         result = subprocess.run(
             ["git", *args],
             cwd=str(cwd),
             capture_output=True,
+            env=env,
             text=text,
             check=False,
+            timeout=5,
         )
     except OSError:
         return None

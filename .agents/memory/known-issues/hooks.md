@@ -60,6 +60,12 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Description:** The secret scanning hook (which runs automatically) aggressively scans all file modifications for secret signatures. If a test file uses a realistic-looking fake API key (or any other matched pattern), the hook will block the `write_file` or `run_shell_command` operation and halt progress.
 **Workaround:** Never write secrets to files. For testing, always use obviously fake, safe dummy values (e.g., `sk-ant-test-1234` or `fake-api-key`) that do not trigger the secret scanner. If blocked, discard the offending git changes and use a different mock string.
 
+## Secret scanner Git probes can hang on Windows
+
+**Affected area:** Secret scanner repository discovery in `.copilot/hooks/scripts/scan-secrets.py` and `.gemini/hooks/scripts/scan-secrets.py`
+**Description:** An unbounded Git subprocess can wait for Windows credential or askpass integration during terminal events such as Gemini `SessionEnd`, leaving `/clear` stuck until interrupted.
+**Workaround:** Keep Git probes non-interactive with `GIT_TERMINAL_PROMPT=0` and an empty `GIT_ASKPASS`, and apply a short subprocess timeout. Let timeouts reach the scanner's top-level error handler so block mode denies instead of silently skipping the security scan; warn mode may return no-op JSON with a sanitized error. Keep both runtime copies synchronized.
+
 ## Concurrency and Lock Failures with SQLite WAL/SHM side-files
 
 **Affected area:** Trace Store SQLite DB
