@@ -21,9 +21,9 @@ Before executing tasks or answering questions, you **must**:
 1. **Read `.agents/memory/INDEX.md` first** (knowledge base loading map) for authoritative answers before searching the file system.
 2. **For non-trivial tasks**, also read `.agents/memory/ARCHITECTURE.md` and `.agents/memory/CONVENTIONS.md`.
 3. **Read the area-scoped instruction file** for edited code (`.agents/instructions/<area>.md`, and matching `.agents/memory/known-issues/<area>.md` and `.agents/memory/testing/<area>.md`).
-4. **Always run the `update-agent-docs` skill at the end of every work session to keep docs fresh.**
+4. **Always run the `update-agent-docs` skill at the [end of every _work session_](#end-of-work-session-defined) to keep docs fresh.**
    - This is a mandatory step to capture findings, conventions, and architectural changes.
-   - **Important exception:** If you are working on multiple tasks in a single session or delegating work to subagents, run after all tasks and/or subagents have completed. Running this multiple times in a single session is expensive and wasteful.
+   - **Only run at the end of a _work session_:** Running this multiple times in a single session is expensive and wasteful.
 
 ### Memory
 
@@ -37,7 +37,7 @@ Before executing tasks or answering questions, you **must**:
 
 ### Absolute Doc Update Obligation
 
-Every task modifying code, directories, configurations, or schemas **must** end with a formal doc pass via the `update-agent-docs` skill. Update:
+Every [_work session_](#end-of-work-session-defined) modifying code, directories, configurations, or schemas **must** end with a formal doc pass via the `update-agent-docs` skill. Update:
 
 - **Files added/moved/removed?** → `.agents/memory/FILE_MAP.md` and `.agents/instructions/<area>.md`.
 - **Public interface, API, or diagnostic ID changed?** → `.agents/instructions/<area>.md` and `.agents/memory/API_MAP.md`.
@@ -46,9 +46,17 @@ Every task modifying code, directories, configurations, or schemas **must** end 
 - **Test class/location/command changed?** → `.agents/memory/TESTING_STRATEGY.md` (repo-wide) or `.agents/memory/testing/<area>.md` (layer-specific).
 - **Memory file added/removed/renamed?** → `.agents/memory/INDEX.md`.
 
+## End of Work Session Defined
+
+You are at the end of a _work session_ when:
+
+- The task within a single task session is complete.
+- All tasks within a multi-task session are completed.
+- All tasks delegated to subagents have been completed.
+
 ## Protected Sections
 
-- Never modify the `## ExecPlans`, `## Agent Orientation` or `## Validation Checklist` sections in `AGENTS.md` unless explicitly requested. These sections must remain intact as stable agent entry points.
+- Never modify the `## ExecPlans`, `## Agent Orientation`, `## End of Work Session Defined`, or `## Validation Checklist` sections in `AGENTS.md` unless explicitly requested. These sections must remain intact as stable agent entry points.
 
 ## Validation Checklist
 
