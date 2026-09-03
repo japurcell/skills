@@ -16,6 +16,7 @@ coverage: Test guidance for repo-local Copilot plus installed Copilot and Gemini
   - `bash scripts/test-hooks-observability.sh`
   - `bash scripts/test-hooks-secrets-scanner.sh`
   - `bash scripts/test-hooks-tool-guard.sh`
+  - `bash scripts/test-hooks-rtk.sh`
 - Gemini hook checks:
   - `bash scripts/test-gemini-hooks-auto-ingest.sh`
   - `bash scripts/test-gemini-hooks-startup.sh`
