@@ -575,8 +575,12 @@ def main() -> int:
         env_files=env_files,
         findings=findings_json,
     )
+    if mode == "block":
+        emit_block_denial(f"{SCRIPT_NAME}: potential secrets detected. See {scan_log}.")
+        return 0
+
     emit_output(len(findings), scan_log)
-    return 1 if mode == "block" else 0
+    return 0
 
 
 if __name__ == "__main__":

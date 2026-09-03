@@ -2,9 +2,12 @@
 
 import importlib.util
 import os
+import shutil
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+from uuid import uuid4
 
 # Add script directories to sys.path so we can import helpers
 repo_root = Path(__file__).resolve().parent.parent
@@ -49,6 +52,35 @@ class TestHookHelpers(unittest.TestCase):
         sys.modules[f"helpers_{runtime_name}.common"] = common_mod
         spec.loader.exec_module(module)
         return module
+
+    def _get_audit_module(self, path: Path):
+        """
+        Helper method to cleanly load/reload the helpers.audit module
+        from a specific hook scripts path without caching issues.
+        """
+        runtime_name = path.parts[-3].replace(".", "")
+        common_file = path / "helpers" / "common.py"
+        common_spec = importlib.util.spec_from_file_location(f"helpers.common_{runtime_name}", common_file)
+        if common_spec is None or common_spec.loader is None:
+            raise ImportError(f"Cannot load module from {common_file}")
+        common_mod = importlib.util.module_from_spec(common_spec)
+        common_spec.loader.exec_module(common_mod)
+
+        file_path = path / "helpers" / "audit.py"
+        spec = importlib.util.spec_from_file_location(f"helpers.audit_{runtime_name}", file_path)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Cannot load module from {file_path}")
+        module = importlib.util.module_from_spec(spec)
+        module.__package__ = f"helpers_{runtime_name}"
+        sys.modules[f"helpers_{runtime_name}"] = common_mod
+        sys.modules[f"helpers_{runtime_name}.common"] = common_mod
+        spec.loader.exec_module(module)
+        return module
+
+    def _create_repo_test_dir(self, name: str) -> Path:
+        test_dir = repo_root / ".agents" / "scratchpad" / "test-artifacts" / f"{name}-{uuid4().hex}"
+        test_dir.mkdir(parents=True, exist_ok=True)
+        return test_dir
 
     def test_github_convert_windows_path_to_posix(self):
         common = self._get_common_module(github_helpers_path)
@@ -240,6 +272,104 @@ class TestHookHelpers(unittest.TestCase):
                     self.assertEqual(resolved, raw)
                 else:
                     self.assertEqual(resolved, common.convert_windows_path_to_posix(raw))
+
+    def test_github_audit_lock_timeout_default_is_one_second(self):
+        audit = self._get_audit_module(github_helpers_path)
+
+        self.assertEqual(audit._lock_timeout_seconds(None), 1.0)
+        self.assertEqual(audit._lock_timeout_seconds("1000"), 1.0)
+
+    def test_github_audit_rotates_primary_and_shadow_logs(self):
+        audit = self._get_audit_module(github_helpers_path)
+        workdir = self._create_repo_test_dir("github-audit-rotation")
+        log_path = workdir / "audit.log"
+        shadow_path = workdir / "audit-shadow.log"
+
+        env_keys = [
+            "AUDIT_LOG",
+            "AUDIT_LOCK",
+            "AUDIT_LOG_MAX_BYTES",
+            "AUDIT_LOG_MAX_BACKUPS",
+            "AUDIT_PASSIVE_LOG_MODE",
+            "AUDIT_PASSIVE_LOG_SHADOW_LOG",
+            "AUDIT_LOCK_WAIT_MS",
+        ]
+        old_env = {key: os.environ.get(key) for key in env_keys}
+
+        os.environ["AUDIT_LOG"] = str(log_path)
+        os.environ["AUDIT_LOCK"] = str(workdir / "audit.log.lock")
+        os.environ["AUDIT_LOG_MAX_BYTES"] = "300"
+        os.environ["AUDIT_LOG_MAX_BACKUPS"] = "2"
+        os.environ["AUDIT_PASSIVE_LOG_MODE"] = "shadow"
+        os.environ["AUDIT_PASSIVE_LOG_SHADOW_LOG"] = str(shadow_path)
+        os.environ.pop("AUDIT_LOCK_WAIT_MS", None)
+
+        try:
+            for idx in range(8):
+                message = f"rotation-test-{idx}-" + ("x" * 160)
+                self.assertTrue(audit.audit_log_event("test", message))
+
+            self.assertTrue(log_path.exists(), "Expected primary audit log to exist.")
+            self.assertTrue((workdir / "audit.log.1").exists(), "Expected rotated primary backup audit.log.1.")
+            self.assertTrue(shadow_path.exists(), "Expected shadow audit log to exist.")
+            self.assertTrue((workdir / "audit-shadow.log.1").exists(), "Expected rotated shadow backup audit-shadow.log.1.")
+            self.assertIn(
+                "[mode=shadow]",
+                shadow_path.read_text(encoding="utf-8"),
+                "Expected passive shadow audit entries to keep legacy mode prefix.",
+            )
+        finally:
+            for key, value in old_env.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+            shutil.rmtree(workdir, ignore_errors=True)
+
+    def test_observability_payload_size_fast_path_skips_utf8_encode(self):
+        class ExplodingEncodeStr(str):
+            def encode(self, encoding="utf-8", errors="strict"):
+                raise AssertionError("encode should not be called for safe short payloads")
+
+        for helpers_path in (copilot_helpers_path, gemini_helpers_path):
+            with self.subTest(runtime=helpers_path.parts[-3]):
+                obs = self._get_observability_module(helpers_path)
+                raw = {"message": "safe"}
+                effective = {"message": "safe"}
+
+                with patch.object(obs.json, "dumps", return_value=ExplodingEncodeStr('{"raw":{"message":"safe"}}')):
+                    returned_raw, returned_effective, was_capped = obs._cap_payload_content(raw, effective)
+
+                self.assertEqual(returned_raw, raw)
+                self.assertEqual(returned_effective, effective)
+                self.assertFalse(was_capped)
+
+    def test_observability_per_string_limit_caps_multibyte_strings(self):
+        raw = {
+            "content": "A" * 530000,
+            "emoji_payload": "🧪" * 3000,
+        }
+
+        copilot_obs = self._get_observability_module(copilot_helpers_path)
+        gemini_obs = self._get_observability_module(gemini_helpers_path)
+
+        copilot_raw, copilot_effective, copilot_capped = copilot_obs._cap_payload_content(raw, None)
+        gemini_raw, gemini_effective, gemini_capped = gemini_obs._cap_payload_content(raw, None)
+
+        self.assertTrue(copilot_capped)
+        self.assertTrue(gemini_capped)
+        self.assertIsNone(copilot_effective)
+        self.assertIsNone(gemini_effective)
+        self.assertTrue(copilot_raw["emoji_payload"].endswith("... [CAPPED]"))
+        self.assertTrue(gemini_raw["emoji_payload"].endswith("... [CAPPED]"))
+        self.assertEqual(copilot_raw, gemini_raw)
+
+    def test_observability_utf8_limit_uses_limit_specific_fast_path(self):
+        for helpers_path in (copilot_helpers_path, gemini_helpers_path):
+            with self.subTest(runtime=helpers_path.parts[-3]):
+                obs = self._get_observability_module(helpers_path)
+                self.assertTrue(obs._fits_utf8_limit("a" * 1200, 10 * 1024))
+                self.assertFalse(obs._fits_utf8_limit("🧪" * 3000, 10 * 1024))
 
     def test_maintenance_reaping_gemini(self):
         self._check_maintenance_reaping(gemini_helpers_path)

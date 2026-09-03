@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository publishes custom coding skills from `skills/`, custom agent definitions from `agents/`, repo-local Copilot hooks from `.github/hooks/`, Copilot-specific instructions from `.copilot/`, and Gemini-specific hooks and configs from `.gemini/`.
+This repository publishes skills from `skills/`, custom agents from `agents/`, repo-local Copilot hooks from `.github/hooks/`, installed Copilot hook sources from `.copilot/hooks/`, and Gemini hooks plus config from `.gemini/`.
 
 ## ExecPlans
 
@@ -21,7 +21,9 @@ Before executing tasks or answering questions, you **must**:
 1. **Read `.agents/memory/INDEX.md` first** (knowledge base loading map) for authoritative answers before searching the file system.
 2. **For non-trivial tasks**, also read `.agents/memory/ARCHITECTURE.md` and `.agents/memory/CONVENTIONS.md`.
 3. **Read the area-scoped instruction file** for edited code (`.agents/instructions/<area>.md`, and matching `.agents/memory/known-issues/<area>.md` and `.agents/memory/testing/<area>.md`).
-4. **Always run the `update-agent-docs` skill at the end of every task or work session to keep docs fresh.** This is a mandatory step to capture findings, conventions, and architectural changes.
+4. **Always run the `update-agent-docs` skill at the end of every work session to keep docs fresh.**
+   - This is a mandatory step to capture findings, conventions, and architectural changes.
+   - **Important:** If you are working on multiple tasks in a single session or delegating work to subagents, run after all tasks and/or subagents have completed. Running this multiple times in a single session is expensive and wasteful.
 
 ### Memory
 
@@ -43,6 +45,10 @@ Every task modifying code, directories, configurations, or schemas **must** end 
 - **New pattern/formatting/architecture?** → `.agents/memory/CONVENTIONS.md` (repo-wide) or `.agents/instructions/<area>.md` (layer-specific).
 - **Test class/location/command changed?** → `.agents/memory/TESTING_STRATEGY.md` (repo-wide) or `.agents/memory/testing/<area>.md` (layer-specific).
 - **Memory file added/removed/renamed?** → `.agents/memory/INDEX.md`.
+
+## Protected Sections
+
+- Never modify the `## ExecPlans`, `## Agent Orientation` or `## Validation Checklist` sections in `AGENTS.md` unless explicitly requested. These sections must remain intact as stable agent entry points.
 
 ## Validation Checklist
 

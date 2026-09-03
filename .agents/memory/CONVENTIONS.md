@@ -24,5 +24,6 @@ Authoritative formatting lives in `.editorconfig`; path-scoped rules live in `.a
 From `.editorconfig`:
 
 - Indentation: 2 spaces for XML/JSON/SH files. Never tabs.
+- Line endings: LF for text files on every platform; `.bat` and `.cmd` remain CRLF.
 - **Blank lines must contain no whitespace** (no spaces/tabs) — this is a hard lint failure.
 - **No trailing whitespace.**

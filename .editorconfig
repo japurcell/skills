@@ -5,6 +5,7 @@ root = true
 
 # Don't use tabs for indentation.
 [*]
+end_of_line = lf
 indent_style = space
 # (Please don't specify an indent_size here; that has too many unintended consequences.)
 spelling_exclusion_path = SpellingExclusions.dic
@@ -15,5 +16,4 @@ indent_size = 2
 
 # Shell script files
 [*.sh]
-end_of_line = lf
 indent_size = 2

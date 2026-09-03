@@ -214,6 +214,9 @@ test_rtk_rewrite_config_points_to_python_wrapper() {
   assert_equals '$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py' \
     "$(jq -r '.hooks.PreToolUse[0].bash // empty' "$REPO_ROOT/.copilot/hooks/rtk-rewrite.json")" \
     "Expected Copilot RTK rewrite config to point at the Python wrapper."
+  assert_equals 'python "$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py"' \
+    "$(jq -r '.hooks.PreToolUse[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/rtk-rewrite.json")" \
+    "Expected Copilot RTK rewrite config to point at the Python wrapper for PowerShell."
 }
 
 main() {

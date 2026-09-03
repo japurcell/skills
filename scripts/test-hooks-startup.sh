@@ -207,10 +207,16 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
   assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
     "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for sessionStart."
+  assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
+    "$(jq -r '.hooks.sessionStart[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py PowerShell command for sessionStart."
 
   assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
     "$(jq -r '.hooks.sessionStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register load-required-skills.py after send-event.py for sessionStart."
+  assert_equals 'python "$HOME/.copilot/hooks/scripts/load-required-skills.py"' \
+    "$(jq -r '.hooks.sessionStart[1].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register load-required-skills.py PowerShell command for sessionStart."
 
   assert_equals '' \
     "$(jq -r '.hooks.agentStop[] | select(.bash | test("inject-auto-ingest-context\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
@@ -219,10 +225,16 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
   assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
     "$(jq -r '.hooks.subagentStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for subagentStart."
+  assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
+    "$(jq -r '.hooks.subagentStart[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py PowerShell command for subagentStart."
 
   assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
     "$(jq -r '.hooks.userPromptTransformed[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for userPromptTransformed."
+  assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
+    "$(jq -r '.hooks.userPromptTransformed[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py PowerShell command for userPromptTransformed."
 
   assert_equals '' \
     "$(jq -r '.hooks.userPromptTransformed[] | select(.bash | test("inject-auto-ingest-context\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
@@ -231,6 +243,9 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
   assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
     "$(jq -r '.hooks.userPromptTransformed[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for userPromptTransformed."
+  assert_equals 'python ".github/hooks/scripts/inject-auto-ingest-context.py"' \
+    "$(jq -r '.hooks.userPromptTransformed[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py PowerShell command for userPromptTransformed."
 
   assert_equals 1 \
     "$(jq -r '.hooks.userPromptTransformed | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
@@ -239,6 +254,9 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
   assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
     "$(jq -r '.hooks.agentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for agentStop."
+  assert_equals 'python ".github/hooks/scripts/inject-auto-ingest-context.py"' \
+    "$(jq -r '.hooks.agentStop[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py PowerShell command for agentStop."
 
   assert_equals 1 \
     "$(jq -r '.hooks.agentStop | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
@@ -247,6 +265,9 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
   assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
     "$(jq -r '.hooks.subagentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for subagentStop."
+  assert_equals 'python ".github/hooks/scripts/inject-auto-ingest-context.py"' \
+    "$(jq -r '.hooks.subagentStop[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py PowerShell command for subagentStop."
 
   assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
     "$(jq -r '.hooks.subagentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
@@ -263,6 +284,9 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
   assert_equals '.github/hooks/scripts/auto-ingest-source.py' \
     "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local Copilot hooks.json to register only auto-ingest-source.py."
+  assert_equals 'python ".github/hooks/scripts/auto-ingest-source.py"' \
+    "$(jq -r '.hooks.sessionStart[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local Copilot hooks.json to register auto-ingest-source.py PowerShell command."
 
   assert_equals 1 \
     "$(jq -r '.hooks.sessionStart | length' "$REPO_ROOT/.github/hooks/hooks.json")" \

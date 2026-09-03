@@ -991,6 +991,12 @@ def _pid_exists(pid: int) -> bool:
         return e.errno == errno.EPERM
 
 
+def _fits_utf8_limit(value: str, max_bytes: int) -> bool:
+    if len(value) <= max_bytes // 4:
+        return True
+    return len(value.encode("utf-8")) <= max_bytes
+
+
 def _cap_payload_content(raw: dict[str, Any], effective: dict[str, Any] | None) -> tuple[dict[str, Any], dict[str, Any] | None, bool]:
     payload_dict = {"raw": raw}
     if effective is not None:
@@ -998,7 +1004,7 @@ def _cap_payload_content(raw: dict[str, Any], effective: dict[str, Any] | None) 
     
     try:
         payload_str = json.dumps(payload_dict, ensure_ascii=False)
-        if len(payload_str.encode("utf-8")) <= 512 * 1024:
+        if _fits_utf8_limit(payload_str, 512 * 1024):
             return raw, effective, False
     except (ValueError, TypeError):
         pass
@@ -1028,7 +1034,7 @@ def _cap_payload_content(raw: dict[str, Any], effective: dict[str, Any] | None) 
             return res
         elif isinstance(obj, str):
             if len(obj) > 1024:
-                if len(obj.encode("utf-8")) > 10 * 1024:
+                if not _fits_utf8_limit(obj, 10 * 1024):
                     capped = True
                     return obj[:1024] + "... [CAPPED]"
             return obj
@@ -1042,7 +1048,7 @@ def _cap_payload_content(raw: dict[str, Any], effective: dict[str, Any] | None) 
         payload_dict["effective"] = r_eff
     
     payload_str = json.dumps(payload_dict, ensure_ascii=False)
-    if len(payload_str.encode("utf-8")) > 512 * 1024:
+    if not _fits_utf8_limit(payload_str, 512 * 1024):
         capped = True
         r_raw = {"payload_capped_error": "Payload exceeded 512KB limits and was cleared."}
         r_eff = {"payload_capped_error": "Payload exceeded 512KB limits and was cleared."} if r_eff is not None else None

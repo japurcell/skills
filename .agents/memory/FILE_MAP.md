@@ -50,6 +50,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.copilot/hooks/rtk-rewrite.json` | RTK rewrite config used by hook-driven tool rewrite flows; points at `.copilot/hooks/scripts/rtk-hook-copilot.py`. |
 | `docs/adr/0001-auto-ingest-runtime-shape.md` | Records why source auto-ingest uses runtime-local hook code with one committed repo manifest. |
 | `docs/adr/0002-pending-ingest-gate.md` | Records why the pending-ingest gate blocks normal work until summaries resolve. |
+| `docs/adr/0003-sqlite-backed-hook-observability.md` | Records why hook observability uses SQLite as source of truth with NDJSON fallback. |
 | `docs/okf-kb-migration/map.md` | Active Wayfinder map for the implementation-ready OKF agent-knowledge-base migration design. |
 | `.nvmrc` | Node version hint for local tooling. |
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |

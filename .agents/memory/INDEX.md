@@ -29,7 +29,7 @@ working in:
 | Area | Instruction file (rules + dir detail) | Known issues | Testing | ADRs / Decisions |
 | --- | --- | --- | --- | --- |
 | `AGENTS.md`, `README.md` | [\`.agents/instructions/repo.md\`](../instructions/repo.md) | empty | empty | empty |
-| `.copilot/hooks`, `.gemini/hooks` | [\`.agents/instructions/hooks.md\`](../instructions/hooks.md) | [\`known-issues/hooks.md\`](known-issues/hooks.md) | [\`testing/hooks.md\`](testing/hooks.md) | [\`adrs/hooks.md\`](adrs/hooks.md) |
+| `.github/hooks`, `.copilot/hooks`, `.gemini/hooks` | [\`.agents/instructions/hooks.md\`](../instructions/hooks.md) | [\`known-issues/hooks.md\`](known-issues/hooks.md) | [\`testing/hooks.md\`](testing/hooks.md) | [\`adrs/hooks.md\`](adrs/hooks.md) |
 | `skills/` | [\`.agents/instructions/skills.md\`](../instructions/skills.md) | [\`known-issues/skills.md\`](known-issues/skills.md) | [\`testing/skills.md\`](testing/skills.md) | empty |
 | `agents/` | [\`.agents/instructions/agents.md\`](../instructions/agents.md) | empty | empty | empty |
 | `scripts/` (shell) | [\`.agents/instructions/scripts.md\`](../instructions/scripts.md) | [\`known-issues/scripts.md\`](known-issues/scripts.md) | [\`testing/scripts.md\`](testing/scripts.md) | empty |

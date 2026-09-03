@@ -221,10 +221,12 @@ test_warn_mode_reports_findings_without_failing() {
   fi
 }
 
-test_block_mode_fails_when_findings_exist() {
+test_block_mode_denies_when_findings_exist() {
   local workdir
   local repo_dir
   local log_dir
+  local output
+  local status
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -239,22 +241,33 @@ test_block_mode_fails_when_findings_exist() {
 
   printf 'aws=AKIA1234567890ABCDEF\n' > "$repo_dir/.env"
 
-  if run_scan_hook \
-    "$repo_dir" \
-    "$log_dir" \
-    block \
-    diff \
-    '{"sessionId":"block-session","timestamp":"2026-06-23T23:41:00Z","reason":"complete"}' \
-    >"$workdir/block.out"
-  then
-    echo "Expected block mode to fail when secrets are detected." >&2
-    exit 1
+  if output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      diff \
+      '{"sessionId":"block-session","timestamp":"2026-06-23T23:41:00Z","reason":"complete"}'
+  )"; then
+    status=0
+  else
+    status=$?
   fi
 
+  assert_equals "0" "$status" \
+    "Expected block mode findings to return exit code 0 so Copilot can read deny JSON."
+  assert_json_output "$output" "Expected block mode findings to emit structured deny JSON."
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected block mode findings to emit top-level permissionDecision deny."
+  assert_equals "deny" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
+    "Expected block mode findings to emit hookSpecificOutput permissionDecision deny."
+  if [[ "$(jq -r '.permissionDecisionReason' <<<"$output")" != *"scan.log"* ]]; then
+    echo "Expected block mode denial reason to reference scan log path." >&2
+    echo "Actual output: $output" >&2
+    exit 1
+  fi
   assert_file_contains "$log_dir/scan.log" '"status":"findings"' \
-    "Expected block mode to log findings before failing."
-  assert_file_contains "$workdir/block.out" 'Potential secrets detected' \
-    "Expected block mode output to include systemMessage."
+    "Expected block mode to log findings before denying."
 }
 
 test_diff_mode_ignores_unchanged_secrets_in_touched_files() {
@@ -513,7 +526,7 @@ main() {
   test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero
   test_invalid_json_block_mode_denies_with_json_and_exit_zero
   test_warn_mode_reports_findings_without_failing
-  test_block_mode_fails_when_findings_exist
+  test_block_mode_denies_when_findings_exist
   test_diff_mode_ignores_unchanged_secrets_in_touched_files
   test_warn_mode_flags_sensitive_credential_paths_without_token_match
   test_env_variants_are_logged_but_not_flagged_by_path_alone

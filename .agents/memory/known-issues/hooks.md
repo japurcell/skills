@@ -6,12 +6,6 @@ coverage: Known issues, quirks, and workarounds for `{.copilot,.gemini}/hooks`.
 
 Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hooks`. Cross-cutting issues live in `.agents/memory/KNOWN_ISSUES.md`.
 
-## Verified source summaries can lose their opening frontmatter delimiter
-
-**Affected area:** Source-summary integration under `.agents/memory/sources/`
-**Description:** The committed verified summaries begin with `status: verified` followed by a closing `---`, rather than a complete YAML frontmatter block beginning with `---`. The ingest helpers still treat these files as resolved because scaffold detection only recognizes `status: scaffold` inside a correctly delimited opening block, but generic frontmatter parsers and OKF consumers see no frontmatter.
-**Workaround:** When integrating a scaffold, preserve both `---` delimiters and change only the `status` value. Validate the entire summary corpus before depending on frontmatter for routing, lifecycle, or OKF conformance.
-
 ## Directory Traversal risk via summary_path in auto-ingest manifest
 
 **Affected area:** Startup source auto-ingest feature (`auto_ingest.py` / `source_ingest.py`)
