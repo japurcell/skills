@@ -53,7 +53,26 @@ copy_hooks() {
 }
 
 copy_gemini() {
-  cp -Rp "$GEMINI_SRC/." "$GEMINI_DEST/"
+  local entry
+  local name
+
+  while IFS= read -r -d '' entry; do
+    name="$(basename "$entry")"
+    if [[ "$name" == "hooks" ]]; then
+      continue
+    fi
+    cp -Rp "$entry" "$GEMINI_DEST/"
+  done < <(find "$GEMINI_SRC" -mindepth 1 -maxdepth 1 -print0)
+
+  mkdir -p "$GEMINI_DEST/hooks"
+  while IFS= read -r -d '' entry; do
+    name="$(basename "$entry")"
+    if [[ "$name" == "logs" ]]; then
+      continue
+    fi
+    cp -Rp "$entry" "$GEMINI_DEST/hooks/"
+  done < <(find "$GEMINI_SRC/hooks" -mindepth 1 -maxdepth 1 -print0)
+
   rm -f "$GEMINI_DEST/global-settings.json"
   rm -f "$GEMINI_DEST/settings.json"
   if [[ -d "$GEMINI_DEST/hooks" ]]; then

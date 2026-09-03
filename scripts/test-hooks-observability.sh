@@ -13,6 +13,130 @@ run_installed_copilot_hook() {
   env HOME="$home" AUDIT_LOG="$home/audit.log" "$@" python3 "$home/.copilot/hooks/scripts/$hook_name" <<<"$payload"
 }
 
+test_send_event_does_not_wait_for_stdin_close() {
+  local workdir
+  local home
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+
+  python3 - "$home" <<'PY'
+import os
+import ctypes
+import importlib.util
+import json
+import subprocess
+import sys
+import time
+from types import SimpleNamespace
+from unittest.mock import patch
+
+home = sys.argv[1]
+env = os.environ.copy()
+env.update(
+    {
+        "HOME": home,
+        "OBSERVABILITY_CAPTURE_EVENT": "true",
+        "OBSERVABILITY_SOURCE_EVENT_NAME": "postToolUse",
+    }
+)
+process = subprocess.Popen(
+    [sys.executable, f"{home}/.copilot/hooks/scripts/send-event.py"],
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    text=True,
+    env=env,
+)
+assert process.stdin is not None
+process.stdin.write(
+    json.dumps(
+        {
+            "sessionId": "open-stdin",
+            "timestamp": "2026-09-03T17:00:00Z",
+        },
+        indent=2,
+    )
+    + "\n"
+)
+process.stdin.flush()
+
+deadline = time.monotonic() + 1.0
+while process.poll() is None and time.monotonic() < deadline:
+    time.sleep(0.01)
+
+if process.poll() is None:
+    process.stdin.close()
+    process.terminate()
+    process.wait(timeout=1)
+    raise SystemExit("Expected send-event.py to exit without waiting for stdin to close.")
+
+stdout, stderr = process.communicate()
+if process.returncode != 0:
+    raise SystemExit(f"send-event.py failed: {stderr.strip()}")
+if stdout.strip() != "{}":
+    raise SystemExit(f"Expected neutral JSON output, got: {stdout!r}")
+
+process = subprocess.Popen(
+    [sys.executable, f"{home}/.copilot/hooks/scripts/send-event.py"],
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    text=True,
+    env=env,
+)
+assert process.stdin is not None
+process.stdin.write('{"sessionId":"trailing-junk"}\nJUNK')
+process.stdin.flush()
+
+deadline = time.monotonic() + 1.0
+while process.poll() is None and time.monotonic() < deadline:
+    time.sleep(0.01)
+
+if process.poll() is None:
+    process.stdin.close()
+    process.terminate()
+    process.wait(timeout=1)
+    raise SystemExit("Expected trailing hook input to fail without waiting for stdin to close.")
+
+stdout, stderr = process.communicate()
+if process.returncode == 0:
+    raise SystemExit(f"Expected trailing hook input to fail, got: {stdout!r}")
+if "Invalid hook input: expected a JSON object" not in stderr:
+    raise SystemExit(f"Expected malformed-input error, got: {stderr!r}")
+
+common_path = f"{home}/.copilot/hooks/scripts/helpers/common.py"
+spec = importlib.util.spec_from_file_location("copilot_common", common_path)
+assert spec is not None and spec.loader is not None
+common = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(common)
+
+
+class FakeKernel32:
+    def __init__(self):
+        self.calls = 0
+
+    def PeekNamedPipe(self, _handle, _buffer, _size, _read, available, _remaining):
+        available._obj.value = 4 if self.calls == 0 else 0
+        self.calls += 1
+        return 1
+
+
+kernel32 = FakeKernel32()
+msvcrt = SimpleNamespace(get_osfhandle=lambda _fd: 123)
+with (
+    patch.object(common.os, "name", "nt"),
+    patch.object(common.os, "read", return_value=b"JUNK"),
+    patch.dict(sys.modules, {"msvcrt": msvcrt}),
+    patch.object(ctypes, "WinDLL", return_value=kernel32, create=True),
+):
+    if common._read_available_stdin_bytes(0) != b"JUNK":
+        raise SystemExit("Expected Windows PeekNamedPipe drain to return available bytes.")
+PY
+}
+
 assert_hook_registered_with_observability_emitter() {
   local event_name="$1"
   local source_event_name="$2"
@@ -1732,6 +1856,7 @@ main() {
   (
     export OBSERVABILITY_FORCE_NDJSON=1
     test_hooks_json_registers_observability_emitters
+    test_send_event_does_not_wait_for_stdin_close
     test_structured_observability_records_session_rollup_and_mutation
     test_observability_lock_wait_and_disable_are_fail_open
     test_audit_log_secure_file_permissions

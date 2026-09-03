@@ -173,3 +173,9 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Affected area:** Hook observability capture (`complete_hook_capture`)
 **Description:** Hook scripts may emit auxiliary JSON progress messages (e.g. `{"type": "progress", "message": "..."}`) prior to their actual final output payload. Since `emit_json` triggers `complete_hook_capture` for every JSON output, the first progress message prematurely flags the capture state as completed. As a result, the actual final hook output payload containing the critical injected context is completely ignored and fails to be logged in the `effective_payload` of the `hook_execution` record.
 **Workaround:** Update `complete_hook_capture` in `helpers/observability.py` to immediately ignore payloads where `type` is `"progress"`. This allows the hook to continue capturing until the actual final output payload is emitted.
+
+## Windows Gemini Hooks Time Out While Waiting for Stdin EOF
+
+**Affected area:** Shared hook input parsing in `.gemini/hooks/scripts/helpers/common.py` and `.copilot/hooks/scripts/helpers/common.py`.
+**Description:** Gemini CLI on Windows can write a complete hook JSON payload but leave the stdin pipe open. A reader based on `sys.stdin.read()` then waits until Gemini's 60-second default timeout, after which host cleanup may print `ERROR: The process "<pid>" not found.` Replacing it with a single `readline()` is not sufficient because hook JSON may be multiline and buffered trailing junk must still be rejected.
+**Workaround:** Read raw pipe bytes incrementally until `JSONDecoder.raw_decode` identifies one complete value, drain bytes already available, then validate the full text with `json.loads`. Use `PeekNamedPipe` on Windows because `os.set_blocking` does not support Windows pipes before Python 3.12. Keep Gemini and Copilot helpers plus their open-stdin regressions synchronized.
