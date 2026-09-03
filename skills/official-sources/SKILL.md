@@ -16,7 +16,7 @@ description: Use when code or guidance depends on a named framework, library, SD
    2. Official migration guides, changelogs, release notes, or blogs
    3. Standards docs, e.g. MDN/specs
    4. Compatibility refs, e.g. caniuse
-   5. For GitHub-hosted projects, verify release URLs before recording them. Prefer `https://api.github.com/repos/<owner>/<repo>/releases/latest` for current-version evidence instead of guessing release URL forms.
+   5. For GitHub-hosted projects, use the GitHub Contents API (`GET https://api.github.com/repos/<owner>/<repo>/contents/{path}`) to resolve repository files and directories before guessing raw source paths. Verify release URLs before recording them; prefer `https://api.github.com/repos/<owner>/<repo>/releases/latest` for current-version evidence instead of guessing release URL forms.
 
 4. **Avoid weak sources.** Do not rely on tutorials, Stack Overflow, forums, or AI summaries as primary authority.
 
