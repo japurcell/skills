@@ -23,6 +23,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, and evals. |
 | `agents/` | agents | Standalone custom agent prompt files. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
+| `docs/research/` | repo docs | Human-facing research notes on tooling and conversions. |
 | `scripts/` | scripts | Installers, importers, validation helpers, and shared shell utilities. |
 | `references/` | references | Optional shared reference material shipped with installs. |
 
