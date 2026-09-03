@@ -50,6 +50,117 @@ assert_json_output() {
   fi
 }
 
+create_stalling_git() {
+  local fake_bin="$1"
+
+  mkdir -p "$fake_bin"
+  cat > "$fake_bin/git" <<'EOF'
+#!/usr/bin/env bash
+
+case "$1 ${2-}" in
+  "rev-parse --show-toplevel")
+    exit 1
+    ;;
+  "rev-parse --is-inside-work-tree")
+    sleep 10
+    exit 0
+    ;;
+esac
+
+exit 1
+EOF
+  cat > "$fake_bin/git.cmd" <<'EOF'
+@echo off
+if "%1 %2"=="rev-parse --is-inside-work-tree" (
+  timeout /t 10 /nobreak >nul
+  exit /b 0
+)
+exit /b 1
+EOF
+  chmod 755 "$fake_bin/git"
+}
+
+test_stalled_git_is_bounded_by_timeout() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local fake_bin
+  local output
+  local elapsed_ms
+  local start_ns
+  local end_ns
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  fake_bin="$workdir/bin"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  create_stalling_git "$fake_bin"
+
+  start_ns="$(date +%s%N)"
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      "{\"session_id\":\"stalled-git\",\"timestamp\":\"2026-06-23T23:49:59Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}" \
+      "PATH=$fake_bin:$PATH"
+  )"
+  end_ns="$(date +%s%N)"
+  elapsed_ms=$(((end_ns - start_ns) / 1000000))
+
+  assert_json_output "$output" "Expected Gemini scanner to emit JSON after stalled git returns."
+  assert_equals "{}" "$output" \
+    "Expected Gemini scanner to noop after stalled git times out."
+  if (( elapsed_ms >= 8000 )); then
+    echo "Expected Gemini scanner to stop stalled git within 8000ms. Elapsed: ${elapsed_ms}ms" >&2
+    exit 1
+  fi
+}
+
+test_stalled_git_denies_in_block_mode() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local fake_bin
+  local output
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  fake_bin="$workdir/bin"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  create_stalling_git "$fake_bin"
+
+  if output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      diff \
+      "{\"session_id\":\"stalled-git-block\",\"timestamp\":\"2026-06-23T23:49:59Z\",\"hook_event_name\":\"BeforeTool\",\"cwd\":\"$repo_dir\",\"reason\":\"tool\"}" \
+      "PATH=$fake_bin:$PATH"
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  assert_equals "0" "$status" \
+    "Expected Gemini stalled-git block mode to return exit code 0."
+  assert_json_output "$output" "Expected Gemini stalled-git block mode to emit JSON."
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected Gemini stalled-git block mode to deny."
+}
+
 test_warn_mode_reports_findings_with_json_output() {
   local workdir
   local repo_dir
@@ -463,6 +574,8 @@ test_gemini_settings_register_before_tool_scanner() {
 }
 
 main() {
+  test_stalled_git_is_bounded_by_timeout
+  test_stalled_git_denies_in_block_mode
   test_unexpected_exception_block_mode_denies_with_json_and_exit_zero
   test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero
   test_warn_mode_reports_findings_with_json_output
