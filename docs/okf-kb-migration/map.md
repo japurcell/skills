@@ -21,6 +21,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 - [Source Summary Transition Policy](tickets/source-summary-transition-policy.md): Repair misleading summary metadata before routing, retain manifest v1 as freshness and provenance binding, admit only current active summaries, and stage selection behind strict cross-provider validation.
 - [Selector Contract and Ranking](tickets/selector-contract-and-ranking.md): Use a versioned deterministic offline selector with manifest discovery, explicit task metadata, lexicographic ranking, bounded one-hop dependencies, whole-concept budgets, and reason-coded results.
 - [Projection Producer and Linter](tickets/projection-producer-and-linter.md): Use one deterministic standard-library producer/checker with closed canonical inputs, strict profile and integrity linting, manifest-last publication, stable diagnostics, and no runtime writes.
+- [Mandatory Context and Fallback](tickets/mandatory-context-and-fallback.md): Use explicit scope-and-area policy with transitive mandatory closure, shared budgets, atomic legacy fallback, hard-stop safety gates, and privacy-safe diagnostics.
 
 ## Not yet specified
 
