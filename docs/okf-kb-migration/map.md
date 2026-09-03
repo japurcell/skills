@@ -18,6 +18,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 - [Bundle Publication and Lifecycle](tickets/bundle-publication-and-lifecycle.md): Commit one deterministic repo-local `.agents/okf/` projection with manifest-backed freshness, generated indexes, collision-safe paths, legacy fallback, and Git-based rollback.
 - [Concept Profile and Taxonomy](tickets/concept-profile-and-taxonomy.md): Adopt `agent-kb@1.0.0` with seven concept types, explicit deterministic mappings, 42 semantically bounded concepts, conservative provenance, strict writer validation, tolerant readers, and reserved-file-safe indexes.
 - [Concept Identity and Links](tickets/concept-identity-and-links.md): Use an explicit stable 42-concept logical path map, deliberate tombstones for semantic replacement, and validated `agent-kb@1.1.0` typed relationships with distinct routing semantics.
+- [Source Summary Transition Policy](tickets/source-summary-transition-policy.md): Repair misleading summary metadata before routing, retain manifest v1 as freshness and provenance binding, admit only current active summaries, and stage selection behind strict cross-provider validation.
 
 ## Not yet specified
 
