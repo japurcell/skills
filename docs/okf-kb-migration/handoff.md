@@ -8,18 +8,18 @@ Finish the planning-only Wayfinder map in `docs/okf-kb-migration/` and produce a
 
 - Primary-source OKF v0.2 research and current-system exploration are complete.
 - Eight decisions are closed: **Migration Charter**, **Bundle Publication and Lifecycle**, **Concept Profile and Taxonomy**, **Concept Identity and Links**, **Source Summary Transition Policy**, **Selector Contract and Ranking**, **Projection Producer and Linter**, and **Mandatory Context and Fallback**.
-- Four tickets remain open. **Evaluation Corpus and Promotion Gates** and **Provider Integration and State** are the two frontier tickets.
+- Nine decisions are closed, including **Evaluation Corpus and Promotion Gates**. Three tickets remain open, and **Provider Integration and State** is the sole frontier ticket.
 - The latest verified inventory is 29 eligible canonical inputs: 26 remain whole and three hook documents split into 16 concepts, producing 42 concepts total.
 - No migration implementation or implementation ExecPlan exists. `relocation-execplan.md` records only the completed move of planning artifacts into `docs/`.
 - Worktree was clean at `10263738` before this handoff consolidation.
 
 ## Next Focus
 
-Resolve one Wayfinder decision ticket next. Prefer **Evaluation Corpus and Promotion Gates**, the first frontier ticket by filename, unless the user names **Provider Integration and State**.
+Resolve **Provider Integration and State**, the sole frontier Wayfinder ticket.
 
 ## Exact Next Step
 
-Read `map.md`, verify both blockers for `tickets/evaluation-corpus-and-promotion-gates.md` are closed, claim it, and run its live Grilling rounds. Do not implement the migration.
+Read `map.md`, verify both blockers for `tickets/provider-integration-and-state.md` are closed, claim it, and run its live Grilling rounds. Do not implement the migration.
 
 ## Settled Decisions and Constraints
 
@@ -54,6 +54,13 @@ Read `map.md`, verify both blockers for `tickets/evaluation-corpus-and-promotion
 - `.agents/memory/sources/source-ingest-manifest.json` — current operational ingest state.
 
 ## Verification State
+
+- **Evaluation Corpus and Promotion Gates** round 1 is accepted: use a committed provider-neutral task corpus with explicit coverage obligations; semantic `required`/`allowed`/`forbidden` oracles plus exact contract assertions; a deterministic same-revision legacy baseline; and zero-tolerance safety/compatibility gates before aggregate efficiency gates.
+- **Evaluation Corpus and Promotion Gates** round 2 is accepted: freeze development/promotion partitions under an evaluation-contract version; require 100% required recall and no per-case recall regression; require no per-case irrelevant-byte increase plus 30% aggregate and 20% median reduction; require perturbation-stable byte equality; and gate cold selector latency at p95 <=100 ms and max <=250 ms on declared reference CI.
+- **Evaluation Corpus and Promotion Gates** round 3 is accepted: require deterministic single-fault negative mutations, exact Copilot/Gemini adapter replay parity, complete same-commit machine-readable CI evidence, and human-reviewed versioned corpus governance.
+- **Evaluation Corpus and Promotion Gates** is closed and indexed in the map. The initial `agent-kb-evaluation@1.0.0` contract defines exact metric formulas, fresh-process timing methodology, and a conjunctive fail-closed promotion verdict.
+- Current planning validation passed: `git diff --check`; nine closed tickets and three open tickets; nine map links exactly matching the closed set; and **Provider Integration and State** as the sole open ticket whose blockers are all closed.
+- The mandatory end-of-session `update-agent-docs` pass found no durable `.agents/instructions/` or `.agents/memory/` update needed; existing guidance already covers long-lived effort plans under `docs/<effort>/`.
 
 - **Concept Identity and Links** is closed and listed in the map.
 - **Source Summary Transition Policy** is closed and listed in the map.

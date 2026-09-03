@@ -22,11 +22,11 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 - [Selector Contract and Ranking](tickets/selector-contract-and-ranking.md): Use a versioned deterministic offline selector with manifest discovery, explicit task metadata, lexicographic ranking, bounded one-hop dependencies, whole-concept budgets, and reason-coded results.
 - [Projection Producer and Linter](tickets/projection-producer-and-linter.md): Use one deterministic standard-library producer/checker with closed canonical inputs, strict profile and integrity linting, manifest-last publication, stable diagnostics, and no runtime writes.
 - [Mandatory Context and Fallback](tickets/mandatory-context-and-fallback.md): Use explicit scope-and-area policy with transitive mandatory closure, shared budgets, atomic legacy fallback, hard-stop safety gates, and privacy-safe diagnostics.
+- [Evaluation Corpus and Promotion Gates](tickets/evaluation-corpus-and-promotion-gates.md): Use a versioned provider-neutral corpus with semantic and exact oracles, zero-tolerance safety and parity gates, non-regressing recall, measurable irrelevant-byte reduction, deterministic replay, and bounded cold latency.
 
 ## Not yet specified
 
 <!-- FOG START -->
-- The profile, selector, and evaluation decisions may expose additional relationship semantics, diagnostics, or safety gates that cannot yet be phrased precisely.
 - Provider integration may expose distribution or installation constraints beyond the currently known hook and helper boundaries.
 <!-- FOG END -->
 
