@@ -7,19 +7,18 @@ Finish the planning-only Wayfinder map in `docs/okf-kb-migration/` and produce a
 ## Status
 
 - Primary-source OKF v0.2 research and current-system exploration are complete.
-- Eight decisions are closed: **Migration Charter**, **Bundle Publication and Lifecycle**, **Concept Profile and Taxonomy**, **Concept Identity and Links**, **Source Summary Transition Policy**, **Selector Contract and Ranking**, **Projection Producer and Linter**, and **Mandatory Context and Fallback**.
-- Nine decisions are closed, including **Evaluation Corpus and Promotion Gates**. Three tickets remain open, and **Provider Integration and State** is the sole frontier ticket.
+- Ten decisions are closed, including **Evaluation Corpus and Promotion Gates** and **Provider Integration and State**. Two tickets remain open, and **Rollout and Rollback** is the sole frontier ticket.
 - The latest verified inventory is 29 eligible canonical inputs: 26 remain whole and three hook documents split into 16 concepts, producing 42 concepts total.
 - No migration implementation or implementation ExecPlan exists. `relocation-execplan.md` records only the completed move of planning artifacts into `docs/`.
 - Worktree was clean at `10263738` before this handoff consolidation.
 
 ## Next Focus
 
-Resolve **Provider Integration and State**, the sole frontier Wayfinder ticket.
+Resolve **Rollout and Rollback**, the sole frontier Wayfinder ticket.
 
 ## Exact Next Step
 
-Read `map.md`, verify both blockers for `tickets/provider-integration-and-state.md` are closed, claim it, and run its live Grilling rounds. Do not implement the migration.
+Verify both blockers for `tickets/rollout-and-rollback.md` are closed, claim it, and run its live Grilling rounds. Do not implement the migration.
 
 ## Settled Decisions and Constraints
 
@@ -31,6 +30,7 @@ Read `map.md`, verify both blockers for `tickets/provider-integration-and-state.
 - Typed relationships are explicit `{kind, target}` registry entries only. Never infer them from Markdown links, hierarchy, tags, names, or prose. `requires` drives mandatory transitive loading; other accepted semantics are recorded in `tickets/concept-identity-and-links.md:92`.
 - **Mandatory Context and Fallback:** require caller-supplied trivial/nontrivial scope; derive mandatory roots only from explicit scope-and-area policy and `requires`; charge mandatory closure before relevance context; use atomic legacy fallback for `no_match`, projection failures, and mandatory budget exhaustion; hard-stop on unsafe input, pending ingest, access violations, or invalid mandatory lifecycle; and log no task or concept content.
 - Preserve immutable `.agents/sources/`, pending-ingest gating, orphan cleanup, provider-specific hook envelopes, offline operation, and parity between intentionally duplicated Copilot and Gemini helpers.
+- **Provider Integration and State:** use a shared read-only runtime core, repository-owned thin adapters, committed versioned runtime configuration, atomic legacy fallback, JSON-only envelopes, and privacy-safe diagnostics. Gemini can enforce the planned hard stop; keep Copilot on legacy loading until tested host capabilities provide true pre-turn denial and unambiguous current-prompt identification.
 - Safety and relevant-context recall outrank token reduction. OKF is a representation format, not a router, ranker, access-control system, or trust authority.
 - `domain-modeling`, requested by Wayfinder for Grilling tickets, remains unavailable; use the existing research and repository evidence as the disclosed fallback.
 
@@ -55,11 +55,19 @@ Read `map.md`, verify both blockers for `tickets/provider-integration-and-state.
 
 ## Verification State
 
+- **Provider Integration and State** is closed and indexed in the map; both exact blockers were verified `closed`. Read-only Copilot/Gemini exploration confirmed repo-local prompt/final hook timing, JSON-only provider envelopes, active-workspace versus installed-hook separation, and three distinct state concerns (source-ingest manifest, projection manifest, provider-local observability). No tests ran for that evidence pass.
+- **Provider Integration and State** round 1 accepted a provider-neutral core with thin prompt-time adapters, conservative `nontrivial` scope and omitted task kind absent structured metadata, active-workspace-only KB discovery, and independent source-ingest/projection/observability state contracts with no prompt-time schema migration.
+- **Provider Integration and State** round 2 corrected event ownership: every prompt path establishes current pending-ingest state before selection, while startup and final reconciliation remain; source manifest v1 may be updated, but selector/projection stay read-only. It also accepted a shared deterministic legacy loader, one delimited context block before untouched task content, and one normalized UTC event timestamp per invocation with an injectable test clock.
+- Official hook contracts expose a promotion constraint for round 3: Gemini `BeforeAgent` can deny a turn, while Copilot `userPromptTransformed` is mutation-only and cannot block it; Copilot `agentStop`/`subagentStop` can only force continuation and are subject to a runaway guard.
+- **Provider Integration and State** round 3 accepted withholding Copilot OKF promotion until true pre-turn hard-stop enforcement exists, repository-owned project adapters with no global project-KB selection, and strict JSON-only stdout plus privacy-safe diagnostics. Gemini may advance independently; provider staging remains for **Rollout and Rollback**.
+- **Provider Integration and State** round 4 accepted the complete disposition/error matrix, final-response source-ingest-only recheck, short-lived reconciliation lock plus projection snapshot validation, byte-identical provider-neutral parity with provider-specific envelope snapshots, and behavioral capability gates for any future Copilot promotion.
+- **Provider Integration and State** final round accepted committed `agent-kb-runtime@1.0.0` configuration, corpus-calibrated budgets, empty paths absent structured metadata, no prompt-time configuration migration, and runtime-contract evolution rules.
+
 - **Evaluation Corpus and Promotion Gates** round 1 is accepted: use a committed provider-neutral task corpus with explicit coverage obligations; semantic `required`/`allowed`/`forbidden` oracles plus exact contract assertions; a deterministic same-revision legacy baseline; and zero-tolerance safety/compatibility gates before aggregate efficiency gates.
 - **Evaluation Corpus and Promotion Gates** round 2 is accepted: freeze development/promotion partitions under an evaluation-contract version; require 100% required recall and no per-case recall regression; require no per-case irrelevant-byte increase plus 30% aggregate and 20% median reduction; require perturbation-stable byte equality; and gate cold selector latency at p95 <=100 ms and max <=250 ms on declared reference CI.
 - **Evaluation Corpus and Promotion Gates** round 3 is accepted: require deterministic single-fault negative mutations, exact Copilot/Gemini adapter replay parity, complete same-commit machine-readable CI evidence, and human-reviewed versioned corpus governance.
 - **Evaluation Corpus and Promotion Gates** is closed and indexed in the map. The initial `agent-kb-evaluation@1.0.0` contract defines exact metric formulas, fresh-process timing methodology, and a conjunctive fail-closed promotion verdict.
-- Current planning validation passed: `git diff --check`; nine closed tickets and three open tickets; nine map links exactly matching the closed set; and **Provider Integration and State** as the sole open ticket whose blockers are all closed.
+- Current planning validation passed: `git diff --check`; ten closed tickets and two open tickets; ten map links exactly matching the closed set; and **Rollout and Rollback** as the sole open ticket whose blockers are all closed.
 - The mandatory end-of-session `update-agent-docs` pass found no durable `.agents/instructions/` or `.agents/memory/` update needed; existing guidance already covers long-lived effort plans under `docs/<effort>/`.
 
 - **Concept Identity and Links** is closed and listed in the map.
@@ -97,6 +105,7 @@ Read `map.md`, verify both blockers for `tickets/provider-integration-and-state.
 - Scope duplicate-handoff checks to this effort; `.agents/scratchpad/codex-cli-support/handoff.md` belongs to an unrelated feature.
 - Do not treat a changed non-scaffold summary hash as semantic verification; that transition is only the manifest's operational freshness rule.
 - Large multi-file resolution patches are fragile: one malformed patch and one stale-context patch were rejected atomically without changing their targets; re-read current text and apply narrow per-file hunks.
+- Do not draft `apply_patch` hunks with placeholder or nonstandard headers; one malformed combined resolution patch was rejected before changing files. Use only standard `@@` hunks and split large documentation updates by file.
 
 ## Suggested Skills
 
