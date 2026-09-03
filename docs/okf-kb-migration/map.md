@@ -19,6 +19,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 - [Concept Profile and Taxonomy](tickets/concept-profile-and-taxonomy.md): Adopt `agent-kb@1.0.0` with seven concept types, explicit deterministic mappings, 42 semantically bounded concepts, conservative provenance, strict writer validation, tolerant readers, and reserved-file-safe indexes.
 - [Concept Identity and Links](tickets/concept-identity-and-links.md): Use an explicit stable 42-concept logical path map, deliberate tombstones for semantic replacement, and validated `agent-kb@1.1.0` typed relationships with distinct routing semantics.
 - [Source Summary Transition Policy](tickets/source-summary-transition-policy.md): Repair misleading summary metadata before routing, retain manifest v1 as freshness and provenance binding, admit only current active summaries, and stage selection behind strict cross-provider validation.
+- [Selector Contract and Ranking](tickets/selector-contract-and-ranking.md): Use a versioned deterministic offline selector with manifest discovery, explicit task metadata, lexicographic ranking, bounded one-hop dependencies, whole-concept budgets, and reason-coded results.
 
 ## Not yet specified
 
