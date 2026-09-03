@@ -256,7 +256,17 @@ function Copy-Hooks {
 }
 
 function Copy-Gemini {
-    Copy-DirectoryContents -Source $GeminiSrc -Destination $GeminiDest
+    Get-ChildItem -Force -Path $GeminiSrc |
+        Where-Object { $_.Name -cne 'hooks' } |
+        ForEach-Object { Copy-Entry -Entry $_ -DestinationDir $GeminiDest }
+
+    $geminiHooksSrc = Join-Path $GeminiSrc 'hooks'
+    $geminiHooksDest = Join-Path $GeminiDest 'hooks'
+    New-Item -ItemType Directory -Path $geminiHooksDest -Force | Out-Null
+    Get-ChildItem -Force -Path $geminiHooksSrc |
+        Where-Object { $_.Name -cne 'logs' } |
+        ForEach-Object { Copy-Entry -Entry $_ -DestinationDir $geminiHooksDest }
+
     Remove-IfExists (Join-Path $GeminiDest 'global-settings.json')
     Remove-IfExists (Join-Path $GeminiDest 'settings.json')
     Set-CopiedFileModes -Source $GeminiSrc -Destination $GeminiDest

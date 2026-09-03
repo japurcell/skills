@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import codecs
 import json
 import os
 import subprocess
@@ -9,12 +10,80 @@ from pathlib import Path
 from typing import Any, Sequence
 
 
-def read_json_input() -> dict:
-    raw_input = sys.stdin.read()
+def _read_available_stdin_bytes(stdin_fd: int) -> bytes:
+    if os.name == "nt":
+        import ctypes
+        import msvcrt
+
+        chunks: list[bytes] = []
+        pipe_handle = ctypes.c_void_p(msvcrt.get_osfhandle(stdin_fd))
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+        while True:
+            available = ctypes.c_ulong()
+            if not kernel32.PeekNamedPipe(
+                pipe_handle,
+                None,
+                0,
+                None,
+                ctypes.byref(available),
+                None,
+            ):
+                return b""
+            if available.value == 0:
+                return b"".join(chunks)
+            chunks.append(os.read(stdin_fd, min(available.value, 65536)))
 
     try:
-        payload = json.loads(raw_input)
-    except json.JSONDecodeError as exc:
+        was_blocking = os.get_blocking(stdin_fd)
+        os.set_blocking(stdin_fd, False)
+    except OSError:
+        return b""
+
+    chunks = []
+    try:
+        while True:
+            chunk = os.read(stdin_fd, 65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+    except BlockingIOError:
+        pass
+    finally:
+        os.set_blocking(stdin_fd, was_blocking)
+    return b"".join(chunks)
+
+
+def _read_json_input_text() -> str:
+    try:
+        stdin_fd = sys.stdin.fileno()
+    except (AttributeError, OSError):
+        return sys.stdin.read()
+
+    decoder = codecs.getincrementaldecoder("utf-8")()
+    json_decoder = json.JSONDecoder()
+    raw_input = ""
+
+    while True:
+        chunk = os.read(stdin_fd, 65536)
+        if not chunk:
+            return raw_input + decoder.decode(b"", final=True)
+
+        raw_input += decoder.decode(chunk)
+        try:
+            start_index = len(raw_input) - len(raw_input.lstrip())
+            json_decoder.raw_decode(raw_input, start_index)
+        except json.JSONDecodeError:
+            continue
+
+        raw_input += decoder.decode(_read_available_stdin_bytes(stdin_fd))
+        return raw_input + decoder.decode(b"", final=True)
+
+
+def read_json_input() -> dict:
+    try:
+        payload = json.loads(_read_json_input_text())
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise ValueError("Invalid hook input: expected a JSON object") from exc
 
     if not isinstance(payload, dict):
