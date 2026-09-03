@@ -7,26 +7,26 @@ Finish the planning-only Wayfinder map in `docs/okf-kb-migration/` and produce a
 ## Status
 
 - Primary-source OKF v0.2 research and current-system exploration are complete.
-- Six decisions are closed: **Migration Charter**, **Bundle Publication and Lifecycle**, **Concept Profile and Taxonomy**, **Concept Identity and Links**, **Source Summary Transition Policy**, and **Selector Contract and Ranking**.
-- Six tickets remain open; the current frontier is **Projection Producer and Linter** and **Mandatory Context and Fallback**.
+- Seven decisions are closed: **Migration Charter**, **Bundle Publication and Lifecycle**, **Concept Profile and Taxonomy**, **Concept Identity and Links**, **Source Summary Transition Policy**, **Selector Contract and Ranking**, and **Projection Producer and Linter**.
+- Five tickets remain open; the sole frontier ticket is **Mandatory Context and Fallback**.
 - The latest verified inventory is 29 eligible canonical inputs: 26 remain whole and three hook documents split into 16 concepts, producing 42 concepts total.
 - No migration implementation or implementation ExecPlan exists. `relocation-execplan.md` records only the completed move of planning artifacts into `docs/`.
 - Worktree was clean at `10263738` before this handoff consolidation.
 
 ## Next Focus
 
-Resolve one Wayfinder decision ticket per session. Prefer **Projection Producer and Linter** next because its four blockers are closed and it specifies the generated artifact consumed by the selector.
+Resolve one Wayfinder decision ticket per session. Prefer **Mandatory Context and Fallback** next because its selector blocker is closed and it determines the safety envelope around selection.
 
 ## Exact Next Step
 
-Read `map.md`, verify the four blockers for `tickets/projection-producer-and-linter.md` are closed, claim it, and run its live Grilling rounds. Do not implement the migration.
+Read `map.md`, verify the blocker for `tickets/mandatory-context-and-fallback.md` is closed, claim it, and run its live Grilling rounds. Do not implement the migration.
 
 ## Settled Decisions and Constraints
 
 - **Source Summary Transition Policy:** replace unsupported completed-summary `status: verified` and stale-reason text with canonical selection-oriented `coverage`, keep manifest v1 as the raw-to-summary freshness binding, project only exactly bound current `active` summaries, stage repair/production/selection, and require strict cross-provider and negative-path validation. Emit no OKF `verified` field until a separately specified actor/timestamp evidence contract exists.
 - Authored `.agents/instructions/` and `.agents/memory/` documents remain canonical. A generator exclusively owns a committed, deterministic `.agents/okf/` sidecar and `.projection-manifest.json`; invalid freshness evidence causes an explainable legacy-loader fallback.
 - The sidecar is repo-local, uses generated lowercase `index.md` files, emits no `log.md`, excludes canonical `INDEX.md` and `LOG.md`, rejects case-fold collisions, and relies on Git for rollback.
-- The profile starts at `agent-kb@1.0.0` with seven concept types. **Concept Identity and Links** adds optional typed relationships, advancing the planned contract to `agent-kb@1.1.0`.
+- The profile starts at `agent-kb@1.0.0` with seven concept types; typed relationships and selector task kinds advance the planned contract to `agent-kb@1.2.0`.
 - A committed `.agents/okf-profile.json` explicitly maps every source path/heading to a stable logical concept path. Source moves preserve identity; semantic replacement creates new identities plus deprecated tombstones.
 - Typed relationships are explicit `{kind, target}` registry entries only. Never infer them from Markdown links, hierarchy, tags, names, or prose. `requires` drives mandatory transitive loading; other accepted semantics are recorded in `tickets/concept-identity-and-links.md:92`.
 - Preserve immutable `.agents/sources/`, pending-ingest gating, orphan cleanup, provider-specific hook envelopes, offline operation, and parity between intentionally duplicated Copilot and Gemini helpers.
@@ -46,7 +46,8 @@ Read `map.md`, verify the four blockers for `tickets/projection-producer-and-lin
 - `docs/okf-kb-migration/tickets/concept-identity-and-links.md:16` — complete identity, path, tombstone, and relationship contract.
 - `docs/okf-kb-migration/tickets/source-summary-transition-policy.md:16` — complete repair, provenance, eligibility, staging, and acceptance contract.
 - `docs/okf-kb-migration/tickets/selector-contract-and-ranking.md:16` — closed deterministic selector, ranking, budgeting, result, and offline-failure contract.
-- `docs/okf-kb-migration/tickets/projection-producer-and-linter.md:1` — preferred next ticket.
+- `docs/okf-kb-migration/tickets/projection-producer-and-linter.md:16` — closed producer, linter, manifest, publication, and invocation contract.
+- `docs/okf-kb-migration/tickets/mandatory-context-and-fallback.md:1` — preferred next ticket.
 - `docs/okf-kb-migration/research/okf-primary-sources.md` — cited OKF v0.2 findings.
 - `docs/okf-kb-migration/research/explore-okf-kb-migration.md` — loader, hook, and manifest architecture map; verify mutable facts against the current tree.
 - `.agents/memory/sources/source-ingest-manifest.json` — current operational ingest state.
@@ -62,14 +63,19 @@ Read `map.md`, verify the four blockers for `tickets/projection-producer-and-lin
 - Live reconciliation found nine sources, nine summaries, nine `active` manifest entries, and no pending or orphan entries.
 - `bash scripts/test-hooks-auto-ingest.sh` passed during the live exploration; the Gemini parity suite was not rerun.
 - Handoff consolidation passed `git diff --check`; `.agents/scratchpad/handoff.md` is absent and this file is the only OKF migration handoff.
-- Ticket closure validation now has six closed tickets and six open tickets; all four **Projection Producer and Linter** blockers are closed, and the map has exactly one **Selector Contract and Ranking** entry.
-- Final planning validation passed `git diff --check`, found no malformed-patch residue, and confirmed this effort still has only the feature-scoped handoff at `docs/okf-kb-migration/handoff.md`.
+- Current closure validation has seven closed tickets and five open tickets. **Projection Producer and Linter** is closed after verification of its four exact blockers; **Mandatory Context and Fallback** is open with its sole selector blocker closed; and the map contains exactly one entry for each closed decision.
+- Read-only invocation exploration found no existing CI workflow or projection command. The future explicit contributor/CI tool should align with deterministic helpers under `scripts/`; installers and provider hooks remain outside the producer boundary, and prompt-time OKF consumption stays read-only.
+- **Projection Producer and Linter** round 1 is accepted: use a closed authoritative input set; one standard-library Python tool with `generate` and read-only `check` modes; strict deterministic whole/split Markdown extraction and rendering; and an independently versioned projection manifest containing the selector's complete normalized inventory plus input/output integrity evidence.
+- **Projection Producer and Linter** round 2 is accepted: generate through a fully validated staging tree and publish the manifest last; lint every profile, source, freshness, OKF, graph, index, and integrity layer; use `agent-kb-producer@1.0.0` plus integer projection-manifest version 1; return stable sorted diagnostics and four exit classes; and permit generation only through explicit contributor/CI workflows, never installers or prompt-time consumers.
+- **Projection Producer and Linter** round 3 is accepted: use explicit selector evaluation time for `stale_after`; hash and rehash the complete input snapshot; drive every generated index from explicit profile metadata; require manifest/concept metadata agreement; and allow only unrelated unmapped source-summary orphans as advisory warnings.
+- **Projection Producer and Linter** is closed and indexed in the map. The selector contract now requires an explicit normalized RFC 3339 UTC evaluation time and never reads the system clock, resolving the stale-selection determinism conflict.
+- Current planning validation passed `git diff --check`: seven tickets are closed, five are open, none are claimed, all seven map decision links resolve, and **Mandatory Context and Fallback** has its sole selector blocker closed.
 - The exact blockers for **Selector Contract and Ranking** were closed, and the ticket is now closed and indexed in the map.
 - **Selector Contract and Ranking** round 1 is accepted: inputs are task text plus optional normalized repository paths and task kind; the projection manifest is the candidate inventory; the profile adds optional task kinds but no priority/mandatory flags; ranking is lexicographic; deprecated/stale concepts are filtered; and selection uses caller-supplied byte and concept-count budgets with whole documents only.
 - **Selector Contract and Ranking** round 2 is accepted: use seven caller-supplied task kinds; strict repository-relative path normalization with exact/glob specificity and committed area mapping; deterministic metadata-only lexical matching; eligibility requires a non-task-kind relevance signal; ranking uses an integer tuple with stable path tie-break; `depends-on` expands one budgeted hop; and greedy whole-concept packing returns an explicit empty `no_match` result rather than guessing.
 - **Selector Contract and Ranking** round 3 is accepted: adopt independently versioned `agent-kb-selector@1.0.0` and profile `agent-kb@1.2.0`; use the agreed exact integer tuple; return provider-neutral rendered context plus a complete candidate audit and closed reason codes; use no cache in v1; and require standard-library-only, read-only, offline, atomic failure with no partial context from an invalid projection.
 - No product build ran because this session changed planning documentation only; the targeted Copilot auto-ingest test above remains the applicable current-system evidence.
-- The final mandatory agent-doc pass found no durable `.agents/instructions/` or `.agents/memory/` update needed; ordinary project-doc changes do not require an agent-doc update, and the existing file map already routes this effort.
+- The current mandatory agent-doc pass found no durable `.agents/instructions/` or `.agents/memory/` update needed; ordinary project-doc changes do not require an agent-doc update, and existing guidance already routes long-lived planning artifacts under `docs/<effort>/`.
 
 ## Durable Learnings
 
@@ -79,7 +85,7 @@ Read `map.md`, verify the four blockers for `tickets/projection-producer-and-lin
 - Derive counts programmatically. Manual aggregation previously caused the corrected off-by-one baseline.
 - Keep a single handoff and update it in place whenever status, blockers, or the next step changes.
 - `apply_patch` cannot delete and re-add the same path in one patch; a rejected consolidation attempt changed nothing, and the successful retry used separate delete and add operations.
-- A handoff patch using stale surrounding context failed without changing files; re-reading the exact block and applying narrower hunks succeeded.
+- Handoff patches using assumed or stale surrounding context have failed atomically without changing files; re-read the exact block and apply narrow hunks anchored to current text.
 - Scope duplicate-handoff checks to this effort; `.agents/scratchpad/codex-cli-support/handoff.md` belongs to an unrelated feature.
 - Do not treat a changed non-scaffold summary hash as semantic verification; that transition is only the manifest's operational freshness rule.
 - Large multi-file resolution patches are fragile: one malformed patch and one stale-context patch were rejected atomically without changing their targets; re-read current text and apply narrow per-file hunks.

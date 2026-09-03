@@ -22,10 +22,11 @@ Adopt independent selector contract `agent-kb-selector@1.0.0`. The selector is a
 The normalized input contains:
 
 - required non-empty current task text;
+- required evaluation time as an RFC 3339 timestamp with an explicit UTC offset, normalized to UTC;
 - optional normalized repository-relative paths; and
 - at most one optional task kind from `answer`, `plan`, `review`, `diagnose`, `change`, `validate`, or `operate`.
 
-Build and refactor work map to `change`, tests and checks map to `validate`, and installation, execution, and monitoring map to `operate`. Callers supply the task kind; the selector never infers it. Conversation history, tool output, environment state, timestamps, and model-generated classifications are not selector inputs.
+Build and refactor work map to `change`, tests and checks map to `validate`, and installation, execution, and monitoring map to `operate`. Callers supply the task kind; the selector never infers it. Conversation history, tool output, implicit wall-clock or other environment state, and model-generated classifications are not selector inputs. Provider adapters obtain and pass the evaluation time; the selector never reads the system clock. Include the normalized evaluation time in the structured result so identical complete inputs remain reproducible.
 
 Paths use strict POSIX repository-relative form. Reject absolute paths, traversal, empty or malformed paths, then deduplicate and sort accepted paths. A committed selector table maps path prefixes to the profile's area vocabulary; do not infer areas from directory names at runtime.
 
@@ -41,7 +42,7 @@ Selector patch releases must preserve observable results for the same valid bund
 
 Match task text only against concept metadata: `title`, `tags`, `description`, and `type`. Never search concept bodies. Normalize text using Unicode NFKC followed by case folding; split punctuation and kebab-case into tokens. Use no stemming, fuzzy matching, embeddings, or mutable stop-word list.
 
-A direct candidate is eligible only when it has at least one path, area, exact-phrase, or token match. Task kind alone may refine an eligible candidate but cannot make one eligible. Exclude stale concepts. A deprecated concept is not eligible itself: follow its validated `superseded-by` edge or edges to current replacements and record the lifecycle decision.
+A direct candidate is eligible only when it has at least one path, area, exact-phrase, or token match. Task kind alone may refine an eligible candidate but cannot make one eligible. Exclude concepts whose `stale_after` is at or before the normalized evaluation time. A deprecated concept is not eligible itself: follow its validated `superseded-by` edge or edges to current replacements and record the lifecycle decision.
 
 Sort eligible direct candidates by this descending integer tuple, with normalized logical concept path ascending as the final tie-breaker:
 
