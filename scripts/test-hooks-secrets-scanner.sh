@@ -39,6 +39,145 @@ init_git_repo() {
   git -C "$repo_dir" config commit.gpgsign false
 }
 
+assert_json_output() {
+  local output="$1"
+  local message="$2"
+
+  if ! jq -e 'type == "object"' >/dev/null 2>&1 <<<"$output"; then
+    echo "$message" >&2
+    echo "Actual output: $output" >&2
+    exit 1
+  fi
+}
+
+test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local errfile
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  errfile="$workdir/block.err"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  printf 'safe=true\n' > "$repo_dir/app.env"
+
+  if output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      diff \
+      '{"sessionId":"unexpected-block","timestamp":"2026-06-23T23:39:00Z","reason":"complete"}' \
+      'AUDIT_LOG_MAX_BYTES=not-a-number' \
+      2>"$errfile"
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  assert_equals "0" "$status" \
+    "Expected block-mode exception handling to return exit code 0."
+  assert_json_output "$output" "Expected block-mode exception handling to emit JSON."
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected block-mode exception handling to deny."
+  assert_equals "deny" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
+    "Expected block-mode exception handling to keep hookSpecificOutput deny payload."
+  assert_file_contains "$errfile" 'scan-secrets.py: unexpected scanner error.' \
+    "Expected sanitized scanner error on stderr."
+  if grep -Fq 'Traceback' "$errfile"; then
+    echo "Did not expect traceback in sanitized scanner error output." >&2
+    cat "$errfile" >&2
+    exit 1
+  fi
+}
+
+test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local errfile
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  errfile="$workdir/warn.err"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  printf 'safe=true\n' > "$repo_dir/app.env"
+
+  if output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      '{"sessionId":"unexpected-warn","timestamp":"2026-06-23T23:39:30Z","reason":"complete"}' \
+      'AUDIT_LOG_MAX_BYTES=not-a-number' \
+      2>"$errfile"
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  assert_equals "0" "$status" \
+    "Expected warn-mode exception handling to return exit code 0."
+  assert_equals "{}" "$output" \
+    "Expected warn-mode exception handling to degrade to noop JSON output."
+  assert_file_contains "$errfile" 'scan-secrets.py: unexpected scanner error.' \
+    "Expected sanitized warn-mode scanner error on stderr."
+  if grep -Fq 'Traceback' "$errfile"; then
+    echo "Did not expect traceback in warn-mode sanitized scanner output." >&2
+    cat "$errfile" >&2
+    exit 1
+  fi
+}
+
+test_invalid_json_block_mode_denies_with_json_and_exit_zero() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  if output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      diff \
+      'not-json'
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  assert_equals "0" "$status" \
+    "Expected invalid block-mode input to return exit code 0."
+  assert_json_output "$output" "Expected invalid block-mode input to emit JSON."
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected invalid block-mode input to deny."
+}
+
 test_warn_mode_reports_findings_without_failing() {
   local workdir
   local repo_dir
@@ -370,6 +509,9 @@ test_hooks_json_registers_pre_tool_scanner() {
 }
 
 main() {
+  test_unexpected_exception_block_mode_denies_with_json_and_exit_zero
+  test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero
+  test_invalid_json_block_mode_denies_with_json_and_exit_zero
   test_warn_mode_reports_findings_without_failing
   test_block_mode_fails_when_findings_exist
   test_diff_mode_ignores_unchanged_secrets_in_touched_files

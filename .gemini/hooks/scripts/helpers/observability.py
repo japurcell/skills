@@ -282,6 +282,8 @@ def _rotate_log_if_needed(log_path: Path) -> None:
             return
             
         max_bytes = _max_bytes()
+        if max_bytes <= 0:
+            return
         if st_size < max_bytes:
             return
 

@@ -67,7 +67,7 @@ class TestHookHelpers(unittest.TestCase):
             self.assertTrue(convert("C:/Users/jeff").startswith(("/mnt/c/Users/jeff", "/c/Users/jeff")))
 
             # Non-alphabetic character before colon should not be parsed as a drive letter
-            self.assertEqual(convert("..:\\foo\\bar"), "../foo/bar")
+            self.assertEqual(convert("..:\\foo\\bar"), "..:/foo/bar")
             self.assertEqual(convert("1:\\foo\\bar"), "1:/foo/bar")
 
             # General backslash normalization
@@ -218,14 +218,28 @@ class TestHookHelpers(unittest.TestCase):
             raw_env_abs = "C:\\path\\to\\a.md:D:\\another\\path\\b.md"
             resolved_abs = common.merge_env_skill_files(raw_env_abs, skills_dir, home)
             self.assertEqual(len(resolved_abs), 2)
-            self.assertEqual(resolved_abs[0], str(Path(skills_dir, "C:\\path\\to\\a.md")))
-            self.assertEqual(resolved_abs[1], str(Path(skills_dir, "D:\\another\\path\\b.md")))
+            self.assertEqual(resolved_abs[0], common.convert_windows_path_to_posix("C:\\path\\to\\a.md"))
+            self.assertEqual(resolved_abs[1], common.convert_windows_path_to_posix("D:\\another\\path\\b.md"))
 
         # 8. strip_yaml_frontmatter
         yaml_text = "---\nname: test\n---\nbody content"
         self.assertEqual(common.strip_yaml_frontmatter(yaml_text), "body content")
         no_yaml_text = "body content only"
         self.assertEqual(common.strip_yaml_frontmatter(no_yaml_text), "body content only")
+
+    def test_windows_drive_paths_resolve_as_absolute_on_posix(self):
+        for helpers_path in (copilot_helpers_path, github_helpers_path, gemini_helpers_path):
+            with self.subTest(runtime=helpers_path.parts[-3]):
+                common = self._get_common_module(helpers_path)
+                skills_dir = "/skills"
+                home = "/home/user"
+                raw = "C:\\path\\to\\a.md"
+
+                resolved = common.resolve_skill_file_path(raw, skills_dir, home)
+                if os.name == "nt":
+                    self.assertEqual(resolved, raw)
+                else:
+                    self.assertEqual(resolved, common.convert_windows_path_to_posix(raw))
 
     def test_maintenance_reaping_gemini(self):
         self._check_maintenance_reaping(gemini_helpers_path)
@@ -257,7 +271,7 @@ class TestHookHelpers(unittest.TestCase):
         os.environ["OBSERVABILITY_FINALIZATION_TIMEOUT_MS"] = "10"
         old_stale = os.environ.get("OBSERVABILITY_RUNNING_SPAN_STALE_MS")
         os.environ["OBSERVABILITY_RUNNING_SPAN_STALE_MS"] = "10"
-        
+
         old_testing = os.environ.get("OBSERVABILITY_TESTING")
         os.environ["OBSERVABILITY_TESTING"] = "1"
 

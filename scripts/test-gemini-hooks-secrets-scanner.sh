@@ -89,6 +89,99 @@ test_warn_mode_reports_findings_with_json_output() {
     "Expected findings to surface via Gemini systemMessage."
 }
 
+test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local errfile
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  errfile="$workdir/block.err"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  printf 'safe=true\n' > "$repo_dir/app.env"
+
+  if output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      diff \
+      "{\"session_id\":\"unexpected-block\",\"timestamp\":\"2026-06-23T23:49:00Z\",\"hook_event_name\":\"BeforeTool\",\"cwd\":\"$repo_dir\",\"reason\":\"tool\"}" \
+      'AUDIT_LOG_MAX_BYTES=not-a-number' \
+      2>"$errfile"
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  assert_equals "0" "$status" \
+    "Expected Gemini block-mode exception handling to return exit code 0."
+  assert_json_output "$output" "Expected Gemini block-mode exception handling to emit JSON."
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected Gemini block-mode exception handling to deny."
+  assert_file_contains "$errfile" 'scan-secrets.py: unexpected scanner error.' \
+    "Expected sanitized Gemini block-mode scanner error on stderr."
+  if grep -Fq 'Traceback' "$errfile"; then
+    echo "Did not expect traceback in Gemini block-mode sanitized scanner output." >&2
+    cat "$errfile" >&2
+    exit 1
+  fi
+}
+
+test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local errfile
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  errfile="$workdir/warn.err"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  printf 'safe=true\n' > "$repo_dir/app.env"
+
+  if output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      "{\"session_id\":\"unexpected-warn\",\"timestamp\":\"2026-06-23T23:49:30Z\",\"hook_event_name\":\"BeforeTool\",\"cwd\":\"$repo_dir\",\"reason\":\"tool\"}" \
+      'AUDIT_LOG_MAX_BYTES=not-a-number' \
+      2>"$errfile"
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  assert_equals "0" "$status" \
+    "Expected Gemini warn-mode exception handling to return exit code 0."
+  assert_equals "{}" "$output" \
+    "Expected Gemini warn-mode exception handling to degrade to noop JSON output."
+  assert_file_contains "$errfile" 'scan-secrets.py: unexpected scanner error.' \
+    "Expected sanitized Gemini warn-mode scanner error on stderr."
+  if grep -Fq 'Traceback' "$errfile"; then
+    echo "Did not expect traceback in Gemini warn-mode sanitized scanner output." >&2
+    cat "$errfile" >&2
+    exit 1
+  fi
+}
+
 test_env_variants_are_logged_but_not_flagged_by_path_alone() {
   local workdir
   local repo_dir
@@ -321,6 +414,39 @@ test_invalid_json_degrades_to_noop_json() {
     "Expected invalid-input Gemini secrets scan to degrade to a no-op JSON response."
 }
 
+test_invalid_json_block_mode_denies_with_json_and_exit_zero() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  if output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      diff \
+      'not-json'
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  assert_equals "0" "$status" \
+    "Expected invalid Gemini block-mode input to return exit code 0."
+  assert_json_output "$output" "Expected invalid Gemini block-mode input to emit JSON."
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected invalid Gemini block-mode input to deny."
+}
+
 test_gemini_settings_register_session_end_scanner() {
   assert_equals 'python "$HOME/.gemini/hooks/scripts/scan-secrets.py"' \
     "$(jq -r '.hooks.SessionEnd[0].hooks[] | select(.name == "scan-secrets") | .command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
@@ -337,6 +463,8 @@ test_gemini_settings_register_before_tool_scanner() {
 }
 
 main() {
+  test_unexpected_exception_block_mode_denies_with_json_and_exit_zero
+  test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero
   test_warn_mode_reports_findings_with_json_output
   test_env_variants_are_logged_but_not_flagged_by_path_alone
   test_warn_mode_flags_sensitive_credential_paths_without_token_match
@@ -345,6 +473,7 @@ main() {
   test_diff_mode_ignores_unified_diff_headers
   test_allowlist_suppresses_credential_path_finding
   test_invalid_json_degrades_to_noop_json
+  test_invalid_json_block_mode_denies_with_json_and_exit_zero
   test_gemini_settings_register_session_end_scanner
   test_gemini_settings_register_before_tool_scanner
 }

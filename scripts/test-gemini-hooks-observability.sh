@@ -181,6 +181,44 @@ PY
     "Expected the observability kill-switch to suppress structured records."
 }
 
+test_audit_log_secure_file_permissions() {
+  local workdir
+  local home
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+
+  python3 - "$home" <<'PY'
+import os
+import stat
+import sys
+
+home = sys.argv[1]
+sys.path.insert(0, home + "/.gemini/hooks/scripts")
+from helpers.audit import audit_log_event, audit_log_passive_event
+
+audit_dir = os.path.join(home, "secure-audit")
+primary_log = os.path.join(audit_dir, "primary.log")
+shadow_log = os.path.join(audit_dir, "shadow.log")
+lock_path = os.path.join(audit_dir, "audit.lock")
+
+os.environ["AUDIT_LOG"] = primary_log
+os.environ["AUDIT_LOCK"] = lock_path
+os.environ["GEMINI_PASSIVE_LOG_MODE"] = "shadow"
+os.environ["GEMINI_PASSIVE_SHADOW_LOG"] = shadow_log
+
+assert audit_log_event("perm-test", "primary line") is True, "Expected primary audit write to succeed"
+assert audit_log_passive_event("perm-test", "shadow line") is True, "Expected passive audit write to succeed"
+
+primary_mode = stat.S_IMODE(os.stat(primary_log).st_mode)
+shadow_mode = stat.S_IMODE(os.stat(shadow_log).st_mode)
+assert primary_mode == 0o600, f"Expected primary audit log mode 0o600, got {oct(primary_mode)}"
+assert shadow_mode == 0o600, f"Expected shadow audit log mode 0o600, got {oct(shadow_mode)}"
+PY
+}
+
 
 test_observability_log_rotation() {
   local workdir
@@ -381,6 +419,65 @@ test_observability_log_rotation_unconditional_prune() {
   fi
   if [[ -f "$obs_log.3" ]]; then
     echo "Expected log backup .3 to NOT exist after unconditional prune" >&2
+    exit 1
+  fi
+}
+
+test_observability_log_rotation_max_bytes_zero_disables_active_rotation() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+  local line_count
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+
+  if [[ "$0" == *"gemini"* ]]; then
+    obs_log="$home/.gemini/hooks/logs/observability.ndjson"
+    prefix="GEMINI"
+    event_name="SessionEnd"
+    runner_path="$home/.gemini/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "zero-max-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", reason: "disable-rotation", payload_stuff: ("a" * 50) }')"
+  else
+    obs_log="$home/.copilot/hooks/logs/observability.ndjson"
+    prefix="COPILOT"
+    event_name="sessionEnd"
+    runner_path="$home/.copilot/hooks/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "zero-max-session", timestamp: "2026-06-23T23:50:00Z", reason: "disable-rotation", payload_stuff: ("a" * 50) }')"
+  fi
+
+  mkdir -p "$(dirname "$obs_log")"
+  printf '{"existing":"line"}\n' > "$obs_log"
+  printf '{}\n' > "$obs_log.1"
+  printf '{}\n' > "$obs_log.2"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=0 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=1 \
+      python3 "$runner_path" <<<"$payload"
+  )"
+
+  assert_equals '{}' "$(jq -c . <<<"$output")" \
+    "Expected send-event to stay output-neutral."
+
+  if [[ -f "$obs_log.2" ]]; then
+    echo "Expected backup .2 to be pruned when backup count lowered to 1." >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected backup .1 to survive pruning." >&2
+    exit 1
+  fi
+
+  line_count="$(wc -l < "$obs_log" | xargs)"
+  if [[ "$line_count" -lt 2 ]]; then
+    echo "Expected active log rotation to be disabled when max bytes is 0." >&2
     exit 1
   fi
 }
@@ -1645,9 +1742,11 @@ main() {
     test_settings_json_registers_observability_emitters
     test_structured_observability_records_session_rollup_and_mutation
     test_observability_lock_wait_and_disable_are_fail_open
+    test_audit_log_secure_file_permissions
     test_observability_log_rotation
     test_observability_log_rotation_pruning_and_precedence
     test_observability_log_rotation_unconditional_prune
+    test_observability_log_rotation_max_bytes_zero_disables_active_rotation
     test_observability_log_rotation_sub_512
     test_observability_log_rotation_generic_fallback
     test_observability_log_rotation_fail_open

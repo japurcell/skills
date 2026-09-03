@@ -74,20 +74,36 @@ def warn_and_noop(message: str) -> None:
     noop()
 
 
-def read_payload(mode: str) -> dict:
+def emit_block_denial(reason: str) -> None:
+    emit_json({
+        "continue": True,
+        "permissionDecision": "deny",
+        "hookSpecificOutput": {
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+        "permissionDecisionReason": reason,
+    })
+
+
+def read_payload(mode: str) -> dict | None:
     payload: dict | None = None
     try:
         payload = read_json_input()
     except Exception as exc:
         if mode == "block":
-            print(f"{SCRIPT_NAME}: {exc}", file=sys.stderr)
-            raise SystemExit(1)
+            reason = f"{SCRIPT_NAME}: {exc}"
+            print(reason, file=sys.stderr)
+            emit_block_denial(reason)
+            return None
         warn_and_noop(f"{SCRIPT_NAME}: {exc}")
 
     if not isinstance(payload, dict):
         if mode == "block":
-            print(f"{SCRIPT_NAME}: invalid JSON input.", file=sys.stderr)
-            raise SystemExit(1)
+            reason = f"{SCRIPT_NAME}: invalid JSON input."
+            print(reason, file=sys.stderr)
+            emit_block_denial(reason)
+            return None
         warn_and_noop(f"{SCRIPT_NAME}: invalid JSON input; skipping hook.")
 
     return payload
@@ -373,10 +389,26 @@ def emit_output(findings_count: int, log_path: Path) -> None:
     emit_json({})
 
 
-def main() -> int:
+def normalized_mode_from_env() -> str:
     mode = os.environ.get("SCAN_MODE", "block")
     if mode not in {"warn", "block"}:
-        mode = "block"
+        return "block"
+    return mode
+
+
+def handle_unexpected_exception(_exc: Exception) -> int:
+    mode = normalized_mode_from_env()
+    reason = f"{SCRIPT_NAME}: unexpected scanner error."
+    print(reason, file=sys.stderr)
+    if mode == "block":
+        emit_block_denial(reason)
+        return 0
+    emit_json({})
+    return 0
+
+
+def main() -> int:
+    mode = normalized_mode_from_env()
 
     if not git_available():
         if mode == "block":
@@ -401,6 +433,8 @@ def main() -> int:
         warn_and_noop(f"{SCRIPT_NAME}: failed to initialize audit logging; skipping hook.")
 
     payload = read_payload(mode)
+    if payload is None:
+        return 0
     session_id = str(payload.get("sessionId") or payload.get("session_id") or "")
     timestamp = str(payload.get("timestamp") or "")
 
@@ -546,4 +580,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except Exception as exc:  # noqa: BLE001
+        raise SystemExit(handle_unexpected_exception(exc))

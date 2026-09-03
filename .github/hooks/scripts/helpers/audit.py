@@ -46,7 +46,20 @@ def _acquire_lock(lock_path: str, timeout_seconds: float) -> int | None:
 
 def _append_line(path: str, sender: str, message: str) -> None:
     _ensure_parent(path)
-    with open(path, "a", encoding="utf-8") as handle:
+    flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY
+    fd = os.open(path, flags, 0o600)
+    try:
+        os.fchmod(fd, 0o600)
+    except (AttributeError, OSError):
+        pass
+
+    try:
+        handle = os.fdopen(fd, "a", encoding="utf-8")
+    except Exception:
+        os.close(fd)
+        raise
+
+    with handle:
         handle.write(f"[{sender}] {message}\n")
         handle.flush()
         os.fsync(handle.fileno())

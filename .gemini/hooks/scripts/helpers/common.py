@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from collections.abc import Mapping
@@ -117,12 +118,16 @@ def resolve_skill_file_path(skill_file: str, skills_dir: str, home: str | None) 
     if not skill_file:
         raise ValueError("Skill file path is empty")
 
-    if skill_file.startswith("~/"):
+    normalized = skill_file
+    if os.name != "nt" and len(skill_file) >= 2 and skill_file[1] == ":" and skill_file[0].isalpha():
+        normalized = convert_windows_path_to_posix(skill_file)
+
+    if normalized.startswith("~/"):
         if not home:
             raise ValueError("Cannot expand ~/: HOME is not set")
-        return str(Path(home, skill_file[2:]))
+        return str(Path(home, normalized[2:]))
 
-    path = Path(skill_file)
+    path = Path(normalized)
     if not path.is_absolute():
         return str(Path(skills_dir, path))
 

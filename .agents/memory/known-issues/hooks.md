@@ -146,9 +146,9 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 
 ## POSIX Path Mapping Failures in Windows Subsystems (WSL / Git Bash)
 
-**Affected area:** Copilot and Gemini auto-ingest hook scripts (`_repo_root`).
-**Description:** When Copilot / VS Code executes command hooks on Windows using a POSIX-based runtime (such as WSL2 or Git Bash), the `cwd` parameter is passed as a Windows-style path (e.g., `D:\Projects\personal\skills`). Since Python runs as a POSIX process, it treats this Windows path as a relative path and creates directories literally named starting with `D` (where `:` maps to `U+F03A` and `\` maps to `U+F05C` due to MSYS2/GitBash virtual path mappings) in the working directory.
-**Workaround:** Implement a path conversion helper `convert_windows_path_to_posix` in `helpers/common.py` that translates Windows-style drive letters (e.g., `D:\...` to `/mnt/d/...` or `/d/...`) when executing in a POSIX process under Windows.
+**Affected area:** Copilot and Gemini hook path handling, including auto-ingest roots and required-skill files.
+**Description:** When Copilot / VS Code executes command hooks on Windows using a POSIX-based runtime (such as WSL2 or Git Bash), payload and environment paths can use Windows drive syntax (e.g., `D:\Projects\personal\skills`). Since Python runs as a POSIX process, it otherwise treats these paths as relative and can prefix them with the current skills directory or create directories with mangled drive characters.
+**Workaround:** Keep `convert_windows_path_to_posix` synchronized across `.copilot`, `.github`, and `.gemini` common helpers. Normalize Windows drive paths before checking whether required-skill paths are absolute.
 
 ## CP1252 Charmap Codec Encoding Crashes on Windows Stdout
 
@@ -167,4 +167,3 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Affected area:** Hook observability capture (`complete_hook_capture`)
 **Description:** Hook scripts may emit auxiliary JSON progress messages (e.g. `{"type": "progress", "message": "..."}`) prior to their actual final output payload. Since `emit_json` triggers `complete_hook_capture` for every JSON output, the first progress message prematurely flags the capture state as completed. As a result, the actual final hook output payload containing the critical injected context is completely ignored and fails to be logged in the `effective_payload` of the `hook_execution` record.
 **Workaround:** Update `complete_hook_capture` in `helpers/observability.py` to immediately ignore payloads where `type` is `"progress"`. This allows the hook to continue capturing until the actual final output payload is emitted.
-
