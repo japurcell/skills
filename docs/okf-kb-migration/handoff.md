@@ -7,20 +7,25 @@ Finish the planning-only Wayfinder map in `docs/okf-kb-migration/` and produce a
 ## Status
 
 - Primary-source OKF v0.2 research and current-system exploration are complete.
-- Eleven decisions are closed. **Implementation Sequencing and Handoff** is the only remaining open ticket and the sole frontier ticket; its exact blocker, **Rollout and Rollback**, is closed.
+- All twelve decisions are closed. **Implementation Sequencing and Handoff** completed after three accepted Grilling rounds and explicit shared-understanding confirmation; the planning-only Wayfinder destination is reached.
 - The latest verified inventory is 29 eligible canonical inputs: 26 remain whole and three hook documents split into 16 concepts, producing 42 concepts total.
 - No migration implementation or implementation ExecPlan exists. `relocation-execplan.md` records only the completed move of planning artifacts into `docs/`.
 - Worktree was clean at `10263738` before this handoff consolidation.
 
 ## Next Focus
 
-Resolve **Implementation Sequencing and Handoff**, the final Wayfinder ticket, in a fresh session.
+Create the implementation ExecPlan from the completed Wayfinder design in a fresh session.
 
 ## Exact Next Step
 
-Re-verify `rollout-and-rollback.md` is closed, claim `tickets/implementation-sequencing-and-handoff.md`, and run its live Grilling rounds. Do not implement the migration or write the implementation ExecPlan yet.
+Activate `exec-plans`, mandatory `tdd`, and `official-sources`; re-check the OKF v0.2 baseline; create `docs/okf-kb-migration/implementation-execplan.md`; and scope its first execution session to gate 1. Do not begin migration implementation before the ExecPlan is written.
 
 ## Settled Decisions and Constraints
+
+- **Implementation Sequencing and Handoff round 1:** the user accepted an implementation ExecPlan spanning the complete Gemini rollout through `default`, dependency-ordered vertical acceptance gates, one owner per non-overlapping milestone/path group with independent gate review, and one atomic rollback-capable commit per accepted gate. Canonical inputs and synchronized generated evidence land together; each provider-mode promotion is a separate configuration-only commit. Copilot remains on legacy pending its separate capability gate.
+- **Implementation Sequencing and Handoff round 2:** the user accepted nine gates: canonical summary readiness; profile/producer/projection; frozen evaluation contract and legacy baseline; selector/fallback core; Gemini adapter plus Copilot capability tests in legacy mode; promotion harness/CI/budget/runtime configuration; then separate Gemini shadow, canary, and default promotions. New shared code lives under `scripts/agent_kb/`, tests under `scripts/tests/agent_kb/`, the required producer CLI remains `scripts/okf-projection.py`, human-reviewed evaluation definitions live under `docs/okf-kb-migration/evaluation/`, and adapters stay in their provider-local hook trees. Documentation travels with every gate, targeted checks accumulate, and the complete exact-commit promotion suite runs before every forward mode transition.
+- **Implementation Sequencing and Handoff round 3:** the user accepted explicit ownership transfers across the nine gates with no concurrent path writers; stable public commands for projection generation/checking, standard-library unit discovery, and a new `scripts/agent-kb-evaluate.py` promotion runner; gate-specific acceptance evidence and atomic rollback rules; and `docs/okf-kb-migration/implementation-execplan.md` as the future plan path. The completed ticket and this existing feature handoff will be the only sequencing handoff artifacts; the implementation ExecPlan is created only in the next session using `exec-plans`, `tdd`, and `official-sources`.
+- **Implementation Sequencing and Handoff final confirmation:** the user confirmed the shared summary without changes. The ticket is closed and indexed; no implementation or implementation ExecPlan was created in this planning session.
 
 - **Rollout and Rollback round 1:** the user accepted independent Gemini staging through shadow/canary/default; ordinary Copilot CLI remains on legacy until every documented and behavioral capability gate passes, after which it starts its own ladder at shadow. Shadow always serves legacy while comparing OKF read-only. Rollout state is committed per-provider configuration, canaries use explicit branches/worktrees, and promotion requires the complete CI gates plus one normal work cycle and at least 50 eligible prompts, restarted by candidate/configuration changes. A standalone Copilot SDK wrapper remains a separate possible effort.
 - **Rollout and Rollback round 2:** the user accepted immediate rollback for any safety, integrity, parity, determinism, privacy, or disposition invariant violation; operational degradation first freezes promotion and rolls back only after exceeding a shadow-derived envelope for a full rolling 50-prompt window. Rollback is a minimal reviewed provider-mode configuration change, widened to every enrolled provider only for shared defects. Runtime never changes rollout state. Every corrected release requires root-cause documentation, regression coverage, exact-commit CI evidence, and the full rollout ladder again.
@@ -59,6 +64,9 @@ Re-verify `rollout-and-rollback.md` is closed, claim `tickets/implementation-seq
 - `.agents/memory/sources/source-ingest-manifest.json` — current operational ingest state.
 
 ## Verification State
+
+- **Completed Wayfinder validation:** `git diff --check` passed; all 12 tickets are `closed`; the map contains exactly 12 decision links; every blocker filename and map ticket link resolves; and no open or claimed ticket remains. The final `update-agent-docs` pass found no `.agents/instructions/` or `.agents/memory/` edit necessary because this session changed only the existing long-lived planning artifacts and introduced no implementation interface yet.
+- Read-only sequencing inventory confirmed there is no existing OKF profile/runtime configuration, generated bundle, producer, selector/runtime core, evaluation harness, CI workflow, or repo-wide test runner. Existing integration points are `.github/hooks/hooks.json` plus its auto-ingest scripts, `.gemini/settings.json` plus its auto-ingest scripts, targeted `scripts/test-*.sh` checks, and the installers. The implementation must introduce explicit paths without crossing the installed/global hook boundary.
 
 - **Rollout and Rollback** closure validation passed: `git diff --check`; 11 closed tickets and one open ticket; 11 map decision links exactly matching the closed set; and **Implementation Sequencing and Handoff** as the sole open ticket whose only blocker is closed.
 - The Copilot research report is present in `HEAD` at externally created commit `243a8db1`; this session did not create that commit. The ticket closure, map index entry, and latest handoff updates remain uncommitted on top of it.

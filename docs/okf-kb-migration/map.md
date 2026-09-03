@@ -25,6 +25,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 - [Evaluation Corpus and Promotion Gates](tickets/evaluation-corpus-and-promotion-gates.md): Use a versioned provider-neutral corpus with semantic and exact oracles, zero-tolerance safety and parity gates, non-regressing recall, measurable irrelevant-byte reduction, deterministic replay, and bounded cold latency.
 - [Provider Integration and State](tickets/provider-integration-and-state.md): Use a shared read-only runtime core, repository-owned thin adapters, explicit versioned runtime inputs, atomic legacy fallback, strict provider envelopes, and capability-gated promotion where hard stops cannot be enforced.
 - [Rollout and Rollback](tickets/rollout-and-rollback.md): Stage each capable provider through shadow, explicit canary, and default modes with evidence-gated promotion, invariant-triggered rollback, Copilot capability gates, and no legacy-loader retirement in this migration.
+- [Implementation Sequencing and Handoff](tickets/implementation-sequencing-and-handoff.md): Deliver through nine dependency-ordered, single-owner acceptance gates with stable validation commands, atomic rollback boundaries, embedded documentation, and an ExecPlan-ready transition through Gemini default.
 
 ## Not yet specified
 
