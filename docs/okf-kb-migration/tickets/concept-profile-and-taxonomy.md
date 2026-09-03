@@ -13,15 +13,15 @@ What versioned repository profile maps the current agent knowledge base into OKF
 
 ## Resolution
 
-Adopt repository profile `agent-kb@1.0.0`, independently versioned from `okf_version: "0.2"`. The profile uses one namespaced extension mapping, `x-agent-kb`, and initially projects 30 canonical Markdown inputs from `.agents/instructions/` and `.agents/memory/`. Exclude the navigational `.agents/memory/INDEX.md` and operational `.agents/memory/LOG.md`; retain `.agents/memory/FILE_MAP.md` as repository knowledge.
+Adopt repository profile `agent-kb@1.0.0`, independently versioned from `okf_version: "0.2"`. The profile uses one namespaced extension mapping, `x-agent-kb`, and initially projects 29 canonical Markdown inputs from `.agents/instructions/` and `.agents/memory/`. Exclude the navigational `.agents/memory/INDEX.md` and operational `.agents/memory/LOG.md`; retain `.agents/memory/FILE_MAP.md` as repository knowledge.
 
-Projection cardinality is semantic rather than one-to-one. Split a source only when the resulting concepts can be selected, maintained, or deprecated independently because they differ in trigger, scope, audience, provenance, or lifecycle. Length and heading count alone do not justify a split. Under that rule, keep 27 inputs whole and split three hook documents:
+Projection cardinality is semantic rather than one-to-one. Split a source only when the resulting concepts can be selected, maintained, or deprecated independently because they differ in trigger, scope, audience, provenance, or lifecycle. Length and heading count alone do not justify a split. Under that rule, keep 26 inputs whole and split three hook documents:
 
 - `.agents/instructions/hooks.md` into runtime and maintenance guidance, output and compatibility contract, repository hook issues, and validation guidance.
 - `.agents/memory/adrs/hooks.md` into eight concepts, one per ADR.
 - `.agents/memory/known-issues/hooks.md` into source ingestion, hook development, observability, and platform portability.
 
-This produces 43 projected concepts. An official-reference section contributes `sources` metadata rather than a standalone concept, and source summaries remain whole.
+This produces 42 projected concepts. An official-reference section contributes `sources` metadata rather than a standalone concept, and source summaries remain whole.
 
 The closed `1.0.0` type registry is `Agent Instruction`, `Repository Knowledge`, `Testing Guidance`, `Known Issue`, `Architecture Decision`, `Source Summary`, and `Hook Contract`. Adding a type is additive and requires a profile minor-version bump.
 
