@@ -1,6 +1,6 @@
 ---
 name: handoff
-description:  Preserve and resume cross-session state via .agents/scratchpad/*/handoff.md. MANDATORY first action whenever user message contains 'handoff', 'handoff.md', or any path ending in '/handoff.md', including requests to read/summarize/check/update it. Also trigger on resume/continue/pick up/next step/checkpoint/transfer context. Load before any tool call; update handoff whenever scope, status, blockers, or next step changes, and before stopping.
+description:  Preserve and resume cross-session state via handoff.md. MANDATORY first action whenever user message contains 'handoff', 'handoff.md', or any path ending in '/handoff.md', including requests to read/summarize/check/update it. Also trigger on resume/continue/pick up/next step/checkpoint/transfer context. Load before any tool call; update handoff whenever scope, status, blockers, or next step changes, and before stopping.
 ---
 
 # Handoff
@@ -20,7 +20,7 @@ Capture one concise handoff another agent can resume from immediately. Preserve 
 
 2. **Choose an allowed path**
    - Use user-provided focus as next-agent focus.
-   - If the user names a path, honor it only when it stays under `.agents/scratchpad/`.
+   - If the user names a path, honor it.
    - Otherwise, if one feature folder under `.agents/scratchpad/` clearly matches, write `<that-folder>/handoff.md`.
    - Otherwise write `.agents/scratchpad/handoff.md`.
    - If the requested path is invalid or multiple folders are plausible, fall back to the root handoff and note why.
@@ -61,19 +61,18 @@ Capture one concise handoff another agent can resume from immediately. Preserve 
 
 ## Common Rationalizations
 
-| Rationalization                                             | Reality                                                                                                                                                               |
-| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "Copying chat is safest."                                   | Fresh agent needs state, not transcript noise. Summarize and point at artifacts.                                                                                      |
-| "User asked for `docs/handoff.md`, so path rules can bend." | Never write outside `.agents/scratchpad/`; use an allowed path and say so.                                                                                            |
-| "Existing handoff is close enough."                         | Update it in place; stale next steps waste the next session.                                                                                                          |
-| "Concise means skip blockers or constraints."               | Remove noise, not decision-critical context.                                                                                                                          |
-| "File names are enough."                                    | When a specific code block matters, `path:line` saves rediscovery and avoids edits in the wrong place.                                                                |
-| "Review findings already live in PR comments."              | If review or QA changed the diagnosis, copy the actionable finding into the handoff so the next agent inherits the corrected plan.                                    |
-| "I worked around my mistakes, so no need to mention them."  | Durable learnings from failures, mistakes, or human corrections are mandatory. They inform future agents, prevent repeated errors, and ultimately reduce token costs. |
+| Rationalization                                            | Reality                                                                                                                                                               |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Copying chat is safest."                                  | Fresh agent needs state, not transcript noise. Summarize and point at artifacts.                                                                                      |
+| "Existing handoff is close enough."                        | Update it in place; stale next steps waste the next session.                                                                                                          |
+| "Concise means skip blockers or constraints."              | Remove noise, not decision-critical context.                                                                                                                          |
+| "File names are enough."                                   | When a specific code block matters, `path:line` saves rediscovery and avoids edits in the wrong place.                                                                |
+| "Review findings already live in PR comments."             | If review or QA changed the diagnosis, copy the actionable finding into the handoff so the next agent inherits the corrected plan.                                    |
+| "I worked around my mistakes, so no need to mention them." | Durable learnings from failures, mistakes, or human corrections are mandatory. They inform future agents, prevent repeated errors, and ultimately reduce token costs. |
 
 ## Red Flags
 
-- Writes outside `.agents/scratchpad/`.
+- Creates a new handoff.md instead of updating the existing one.
 - Pastes logs, diffs, or chat instead of referencing them.
 - Leaves stale next steps, duplicate bullets, or unverifiable completion claims.
 - Omits the review finding, rejected option, or failed assumption that changed the plan.
@@ -82,7 +81,6 @@ Capture one concise handoff another agent can resume from immediately. Preserve 
 
 ## Verification
 
-- [ ] Output path is under `.agents/scratchpad/`
 - [ ] Handoff is concise and free of stale or duplicate context
 - [ ] Done, in-progress, and remaining work are distinguishable
 - [ ] Exact next step is explicit
