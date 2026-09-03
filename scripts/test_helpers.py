@@ -257,6 +257,9 @@ class TestHookHelpers(unittest.TestCase):
         os.environ["OBSERVABILITY_FINALIZATION_TIMEOUT_MS"] = "10"
         old_stale = os.environ.get("OBSERVABILITY_RUNNING_SPAN_STALE_MS")
         os.environ["OBSERVABILITY_RUNNING_SPAN_STALE_MS"] = "10"
+        
+        old_testing = os.environ.get("OBSERVABILITY_TESTING")
+        os.environ["OBSERVABILITY_TESTING"] = "1"
 
         # Also clear any runtime-specific vars that might override this
         old_copilot_timeout = os.environ.get("COPILOT_OBSERVABILITY_FINALIZATION_TIMEOUT_MS")
@@ -267,12 +270,8 @@ class TestHookHelpers(unittest.TestCase):
         try:
             t1 = time.time()
             db_path = obs._get_db_path()
-            # Initialize db directly with SCHEMA_DDL and set user_version=1 to bypass WAL mode setup (which hangs on Windows)
-            conn = sqlite3.connect(str(db_path))
-            cursor = conn.cursor()
-            cursor.executescript(obs.SCHEMA_DDL)
-            cursor.execute("PRAGMA user_version = 1;")
-            conn.commit()
+            # Initialize db directly using the module's initializer (enabling WAL mode)
+            conn = obs._connect_and_init_db(db_path, 1000)
             print(f"[{helpers_path.name}] DB initialized in {time.time()-t1:.3f}s")
 
             # Now let's insert some mock sessions
@@ -285,8 +284,8 @@ class TestHookHelpers(unittest.TestCase):
             )
             # Add a span with the dead pid
             conn.execute(
-                "INSERT INTO spans (span_id, session_id, sequence_no, pid, updated_at_ms) VALUES (?, ?, ?, ?, ?)",
-                ("span-dead-pid", "sess-dead-pid", 1, 999999, now_ms)
+                "INSERT INTO spans (span_id, session_id, sequence_no, pid, updated_at_ms, status) VALUES (?, ?, ?, ?, ?, ?)",
+                ("span-dead-pid", "sess-dead-pid", 1, 999999, now_ms, "running")
             )
 
             # Session 2: 'running' and stale (started/last active 3 hours ago)
@@ -308,8 +307,8 @@ class TestHookHelpers(unittest.TestCase):
                 ("sess-active", "running", now_ms, "mock-root")
             )
             conn.execute(
-                "INSERT INTO spans (span_id, session_id, sequence_no, pid, updated_at_ms) VALUES (?, ?, ?, ?, ?)",
-                ("span-active", "sess-active", 1, our_pid, now_ms)
+                "INSERT INTO spans (span_id, session_id, sequence_no, pid, updated_at_ms, status) VALUES (?, ?, ?, ?, ?, ?)",
+                ("span-active", "sess-active", 1, our_pid, now_ms, "running")
             )
 
             conn.commit()
@@ -364,6 +363,11 @@ class TestHookHelpers(unittest.TestCase):
                 os.environ["OBSERVABILITY_RUNNING_SPAN_STALE_MS"] = old_stale
             else:
                 os.environ.pop("OBSERVABILITY_RUNNING_SPAN_STALE_MS", None)
+
+            if old_testing is not None:
+                os.environ["OBSERVABILITY_TESTING"] = old_testing
+            else:
+                os.environ.pop("OBSERVABILITY_TESTING", None)
 
             if old_copilot_timeout is not None:
                 os.environ["COPILOT_OBSERVABILITY_FINALIZATION_TIMEOUT_MS"] = old_copilot_timeout

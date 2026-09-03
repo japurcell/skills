@@ -161,3 +161,10 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Affected area:** Tool Guardian pattern detection (`tool-guard.py` under both `.gemini` and `.copilot`)
 **Description:** The pattern detection logic for env and git deletions searched for a deletion command (such as rm or unlink) followed by the target file extension (such as dot-env or dot-git) anywhere in the entire text. In serialized tool payloads (e.g. `write_file` or `replace`), literal newlines in the file content are escaped as backslash-n, which bypasses standard line check boundaries. This resulted in false positives where any file containing safe unlinking cleanups on one line and environment lookups on separate lines was aggressively blocked.
 **Workaround:** Update `_match_rm_env` and `_match_rm_git` to scan all occurrences of the delete commands and restrict matches to those within 100 characters of the target suffix and containing no newlines (literal or JSON-escaped). When writing test files that must verify these patterns, dynamically build the blocked command strings in source code to avoid triggering the tool guardian during file modification.
+
+## Premature Hook Capture Completion on Progress/Auxiliary Messages
+
+**Affected area:** Hook observability capture (`complete_hook_capture`)
+**Description:** Hook scripts may emit auxiliary JSON progress messages (e.g. `{"type": "progress", "message": "..."}`) prior to their actual final output payload. Since `emit_json` triggers `complete_hook_capture` for every JSON output, the first progress message prematurely flags the capture state as completed. As a result, the actual final hook output payload containing the critical injected context is completely ignored and fails to be logged in the `effective_payload` of the `hook_execution` record.
+**Workaround:** Update `complete_hook_capture` in `helpers/observability.py` to immediately ignore payloads where `type` is `"progress"`. This allows the hook to continue capturing until the actual final output payload is emitted.
+

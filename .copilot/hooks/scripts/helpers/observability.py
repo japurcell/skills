@@ -979,6 +979,8 @@ def _running_span_stale_ms() -> int:
 def _pid_exists(pid: int) -> bool:
     if pid <= 0:
         return False
+    if pid == os.getpid():
+        return True
     try:
         os.kill(pid, 0)
         return True
@@ -1179,10 +1181,10 @@ def _write_transcript_chunk(
             pass
 
 
-def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) -> None:
+def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int, is_maintenance: bool = False) -> None:
     lock_path = _session_finalization_lock_path(db_path, session_id)
     lock_fd = _acquire_lock(lock_path, max(0.1, normal_busy_timeout / 1000.0))
-    if lock_fd in (None, -1):
+    if lock_fd is None:
         return
 
     try:
@@ -1211,73 +1213,103 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
                 except Exception:
                     pass
 
-        polling_cadence = 0.1
-        has_uncompleted = True
+        has_uncompleted = False
 
-        poll_conn: sqlite3.Connection | None
-        try:
-            poll_conn = _connect_and_init_db(db_path, finalizer_busy)
-        except Exception:
-            poll_conn = None
-
-        try:
-            while time.monotonic() - start_time < (timeout_budget / 1000.0):
-                running_spans = []
-                if poll_conn:
-                    try:
-                        cursor = poll_conn.cursor()
+        if is_maintenance:
+            # Under background maintenance, we immediately abandon all outstanding 'running' spans in a single write operation
+            conn = None
+            try:
+                conn = _connect_and_init_db(db_path, finalizer_busy)
+                with conn:
+                    conn.execute("BEGIN IMMEDIATE")
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "UPDATE spans SET status = 'abandoned', updated_at_ms = ? WHERE session_id = ? AND status = 'running'",
+                        (int(time.time() * 1000), session_id)
+                    )
+                    if cursor.rowcount > 0:
                         cursor.execute(
-                            "SELECT span_id, updated_at_ms, pid FROM spans WHERE session_id = ? AND status = 'running'",
+                            "UPDATE sessions SET has_errors = 1 WHERE session_id = ?",
                             (session_id,)
                         )
-                        running_spans = cursor.fetchall()
+            except Exception:
+                pass
+            finally:
+                if conn:
+                    try:
+                        conn.close()
                     except Exception:
                         pass
+        else:
+            # Under normal hook execution finalization, we poll for a brief window to let parallel hooks finish cleanly
+            polling_cadence = 0.1
+            has_uncompleted = True
 
-                if not running_spans:
-                    has_uncompleted = False
-                    break
+            poll_conn = None
+            try:
+                poll_conn = _connect_and_init_db(db_path, finalizer_busy)
+            except Exception:
+                poll_conn = None
 
-                now_ms = int(time.time() * 1000)
-                any_changed = False
+            try:
+                while time.monotonic() - start_time < (timeout_budget / 1000.0):
+                    running_spans = []
+                    if poll_conn:
+                        try:
+                            cursor = poll_conn.cursor()
+                            cursor.execute(
+                                "SELECT span_id, updated_at_ms, pid FROM spans WHERE session_id = ? AND status = 'running'",
+                                (session_id,)
+                            )
+                            running_spans = cursor.fetchall()
+                        except Exception:
+                            pass
 
-                for span_id, updated_at_ms, pid in running_spans:
-                    pid_dead = False
-                    if pid:
-                        pid_dead = not _pid_exists(pid)
+                    if not running_spans:
+                        has_uncompleted = False
+                        break
 
-                    stale_age = False
-                    if updated_at_ms and (now_ms - updated_at_ms > stale_threshold):
-                        stale_age = True
+                    now_ms = int(time.time() * 1000)
+                    any_changed = False
 
-                    if pid_dead or stale_age:
-                        if poll_conn:
-                            try:
-                                poll_conn.execute("BEGIN IMMEDIATE")
+                    for span_id, updated_at_ms, pid in running_spans:
+                        pid_dead = False
+                        if pid:
+                            pid_dead = not _pid_exists(pid)
+
+                        stale_age = False
+                        if updated_at_ms and (now_ms - updated_at_ms > stale_threshold):
+                            stale_age = True
+
+                        if pid_dead or stale_age:
+                            if poll_conn:
                                 try:
-                                    poll_conn.execute(
-                                        "UPDATE spans SET status = 'abandoned', updated_at_ms = ? WHERE span_id = ?",
-                                        (now_ms, span_id)
-                                    )
-                                    poll_conn.execute(
-                                        "UPDATE sessions SET has_errors = 1 WHERE session_id = ?",
-                                        (session_id,)
-                                    )
-                                    poll_conn.commit()
-                                    any_changed = True
-                                except Exception:
                                     poll_conn.rollback()
-                            except Exception:
-                                pass
+                                    poll_conn.execute("BEGIN IMMEDIATE")
+                                    try:
+                                        poll_conn.execute(
+                                            "UPDATE spans SET status = 'abandoned', updated_at_ms = ? WHERE span_id = ?",
+                                            (now_ms, span_id)
+                                        )
+                                        poll_conn.execute(
+                                            "UPDATE sessions SET has_errors = 1 WHERE session_id = ?",
+                                            (session_id,)
+                                        )
+                                        poll_conn.commit()
+                                        any_changed = True
+                                    except Exception:
+                                        poll_conn.rollback()
+                                except Exception:
+                                    pass
 
-                if not any_changed:
-                    time.sleep(polling_cadence)
-        finally:
-            if poll_conn:
-                try:
-                    poll_conn.close()
-                except Exception:
-                    pass
+                    if not any_changed:
+                        time.sleep(polling_cadence)
+            finally:
+                if poll_conn:
+                    try:
+                        poll_conn.close()
+                    except Exception:
+                        pass
 
         if has_uncompleted:
             conn = None
@@ -1460,18 +1492,21 @@ def _finalize_session(session_id: str, db_path: Path, normal_busy_timeout: int) 
                 except Exception:
                     pass
     finally:
-        try:
-            import fcntl
-            fcntl.flock(lock_fd, fcntl.LOCK_UN)
-        except Exception:
-            pass
-        try:
-            os.close(lock_fd)
-        except Exception:
-            pass
+        if lock_fd != -1:
+            try:
+                import fcntl
+                fcntl.flock(lock_fd, fcntl.LOCK_UN)
+            except Exception:
+                pass
+            try:
+                os.close(lock_fd)
+            except Exception:
+                pass
 
 
 def _should_launch_maintenance(sentinel_path: Path) -> bool:
+    if os.environ.get("OBSERVABILITY_TESTING") == "1":
+        return False
     try:
         if not sentinel_path.exists():
             return True
@@ -1513,21 +1548,26 @@ def _trigger_detached_maintenance_if_needed(event_name: str) -> None:
 def _scavenge_stale_directories_and_registries(db_path: Path) -> None:
     now = time.time()
     stale_threshold = 24 * 3600
-    
+
+    active_sessions = set()
+    query_success = False
+    try:
+        conn = sqlite3.connect(str(db_path), timeout=1.0)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT session_id FROM sessions WHERE status IN ('running', 'finalizing', 'sealing')")
+            active_sessions = {row[0] for row in cursor.fetchall()}
+            query_success = True
+        finally:
+            conn.close()
+    except Exception:
+        pass
+
+    if not query_success:
+        return
+
     active_base = db_path.parent / "transcripts" / "active"
     if active_base.exists():
-        active_sessions = set()
-        try:
-            conn = sqlite3.connect(str(db_path), timeout=0.1)
-            try:
-                cursor = conn.cursor()
-                cursor.execute("SELECT session_id FROM sessions WHERE status IN ('running', 'finalizing', 'sealing')")
-                active_sessions = {row[0] for row in cursor.fetchall()}
-            finally:
-                conn.close()
-        except Exception:
-            pass
-
         for item in active_base.iterdir():
             if item.is_dir():
                 try:
@@ -1593,116 +1633,130 @@ def _run_maintenance_work() -> None:
 
         now_ms = int(time.time() * 1000)
 
-        # Retrieve all 'running' sessions and check their PIDs/activity ages
+        stale_finalization_threshold_ms = max(_running_span_stale_ms(), _finalization_timeout_ms())
+        stale_finalization_cutoff_ms = now_ms - stale_finalization_threshold_ms
+        error_threshold_ms = now_ms - 90 * 24 * 3600 * 1000
+        success_threshold_ms = now_ms - 14 * 24 * 3600 * 1000
+
         running_sessions = []
+        abandoned_sessions = []
+        stale_finalization_jobs = []
+        expired_sessions = []
+
+        conn = None
         try:
             conn = _connect_and_init_db(db_path, finalizer_busy)
-            try:
-                cursor = conn.cursor()
+            cursor = conn.cursor()
+
+            # 1. Retrieve all 'running' sessions and check their PIDs/activity ages
+            cursor.execute(
+                """
+                SELECT s.session_id,
+                       COALESCE((SELECT MAX(sp.updated_at_ms) FROM spans sp WHERE sp.session_id = s.session_id), s.start_time_ms) as last_active
+                FROM sessions s
+                WHERE s.status = 'running'
+                """
+            )
+            running_sessions = cursor.fetchall()
+
+            two_hours_ago = now_ms - 2 * 3600 * 1000
+            for session_id, last_active in running_sessions:
                 cursor.execute(
-                    """
-                    SELECT s.session_id,
-                           COALESCE((SELECT MAX(sp.pid) FROM spans sp WHERE sp.session_id = s.session_id), 0) as last_pid,
-                           COALESCE((SELECT MAX(sp.updated_at_ms) FROM spans sp WHERE sp.session_id = s.session_id), s.start_time_ms) as last_active
-                    FROM sessions s
-                    WHERE s.status = 'running'
-                    """
+                    "SELECT pid FROM spans WHERE session_id = ? AND status = 'running' AND pid > 0",
+                    (session_id,)
                 )
-                running_sessions = cursor.fetchall()
-            finally:
-                try:
-                    conn.rollback()
-                except Exception:
-                    pass
-                conn.close()
-        except Exception:
-            pass
+                running_spans = cursor.fetchall()
 
-        abandoned_sessions = []
-        two_hours_ago = now_ms - 2 * 3600 * 1000
-        for session_id, pid, last_active in running_sessions:
-            if (pid > 0 and not _pid_exists(pid)) or (last_active < two_hours_ago):
-                abandoned_sessions.append(session_id)
+                if running_spans:
+                    # If there are running spans, check if ALL their PIDs are dead
+                    all_dead = True
+                    for (pid,) in running_spans:
+                        if _pid_exists(pid):
+                            all_dead = False
+                            break
+                    if all_dead:
+                        abandoned_sessions.append(session_id)
+                else:
+                    # If no running spans, it is only abandoned if inactive for > 2 hours
+                    if last_active < two_hours_ago:
+                        abandoned_sessions.append(session_id)
 
-        if abandoned_sessions:
-            try:
-                conn = _connect_and_init_db(db_path, finalizer_busy)
+            # 2. Transition abandoned sessions to finalizing
+            if abandoned_sessions:
+                conn.execute("BEGIN IMMEDIATE")
                 try:
-                    conn.execute("BEGIN IMMEDIATE")
-                    cursor = conn.cursor()
                     cursor.executemany(
                         "UPDATE sessions SET status = 'finalizing' WHERE session_id = ?",
                         [(sid,) for sid in abandoned_sessions]
                     )
                     conn.commit()
                 except Exception:
-                    try:
-                        conn.rollback()
-                    except Exception:
-                        pass
+                    conn.rollback()
                     raise
-            except Exception:
-                pass
-            finally:
-                if conn:
-                    try:
-                        conn.close()
-                    except Exception:
-                        pass
 
-        stale_finalization_threshold_ms = max(_running_span_stale_ms(), _finalization_timeout_ms())
-        stale_finalization_cutoff_ms = now_ms - stale_finalization_threshold_ms
-        error_threshold_ms = now_ms - 90 * 24 * 3600 * 1000
-        success_threshold_ms = now_ms - 14 * 24 * 3600 * 1000
+            # 3. Retrieve stale finalization jobs
+            cursor.execute(
+                """
+                SELECT s.session_id
+                FROM sessions s
+                WHERE s.status IN ('finalizing', 'sealing')
+                  AND COALESCE(
+                      (SELECT MAX(sp.updated_at_ms) FROM spans sp WHERE sp.session_id = s.session_id),
+                      s.start_time_ms
+                  ) < ?
+                """,
+                (stale_finalization_cutoff_ms,)
+            )
+            stale_finalization_jobs = [row[0] for row in cursor.fetchall()]
 
-        stale_finalization_jobs = []
-        try:
-            conn = _connect_and_init_db(db_path, finalizer_busy)
-            try:
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    SELECT s.session_id
-                    FROM sessions s
-                    WHERE s.status IN ('finalizing', 'sealing')
-                      AND COALESCE(
-                          (SELECT MAX(sp.updated_at_ms) FROM spans sp WHERE sp.session_id = s.session_id),
-                          s.start_time_ms
-                      ) < ?
-                    """,
-                    (stale_finalization_cutoff_ms,)
-                )
-                stale_finalization_jobs = [row[0] for row in cursor.fetchall()]
-            finally:
-                conn.close()
+            # 4. Retrieve expired sessions
+            cursor.execute(
+                """
+                SELECT session_id, transcript_path
+                FROM sessions
+                WHERE (has_errors = 1 AND start_time_ms < ?)
+                   OR (has_errors = 0 AND start_time_ms < ?)
+                """,
+                (error_threshold_ms, success_threshold_ms)
+            )
+            expired_sessions = cursor.fetchall()
+
+            # 5. Delete expired sessions from DB
+            if expired_sessions:
+                conn.execute("BEGIN IMMEDIATE")
+                try:
+                    cursor.executemany(
+                        "DELETE FROM sessions WHERE session_id = ?",
+                        [(sid,) for sid, _ in expired_sessions]
+                    )
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+                    raise
+
+            # 6. Run compaction step
+            conn.execute("PRAGMA incremental_vacuum;")
+
         except Exception:
             pass
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
+        # Force garbage collection and tiny sleep to release OS-level SQLite file locks on Windows
+        import gc
+        gc.collect()
+        time.sleep(0.01)
+
+        # Now run non-DB finalizations and file unlinks outside of DB connections
         for session_id in stale_finalization_jobs:
             try:
-                _finalize_session(session_id, db_path, finalizer_busy)
+                _finalize_session(session_id, db_path, finalizer_busy, is_maintenance=True)
             except Exception:
                 pass
-
-        expired_sessions = []
-        try:
-            conn = _connect_and_init_db(db_path, finalizer_busy)
-            try:
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    SELECT session_id, transcript_path
-                    FROM sessions
-                    WHERE (has_errors = 1 AND start_time_ms < ?)
-                       OR (has_errors = 0 AND start_time_ms < ?)
-                    """,
-                    (error_threshold_ms, success_threshold_ms)
-                )
-                expired_sessions = cursor.fetchall()
-            finally:
-                conn.close()
-        except Exception:
-            pass
 
         saved_dir = db_path.parent / "transcripts" / "saved"
         for session_id, transcript_path_str in expired_sessions:
@@ -1717,34 +1771,6 @@ def _run_maintenance_work() -> None:
             if std_saved_file.exists():
                 try:
                     std_saved_file.unlink()
-                except Exception:
-                    pass
-
-        if expired_sessions:
-            try:
-                conn = _connect_and_init_db(db_path, finalizer_busy)
-                conn.execute("BEGIN IMMEDIATE")
-                try:
-                    for session_id, _ in expired_sessions:
-                        conn.execute("DELETE FROM sessions WHERE session_id = ?", (session_id,))
-                    conn.commit()
-                except Exception:
-                    conn.rollback()
-                finally:
-                    conn.close()
-            except Exception:
-                pass
-
-        conn = None
-        try:
-            conn = _connect_and_init_db(db_path, finalizer_busy)
-            conn.execute("PRAGMA incremental_vacuum;")
-        except Exception:
-            pass
-        finally:
-            if conn:
-                try:
-                    conn.close()
                 except Exception:
                     pass
 
@@ -1890,6 +1916,11 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
 
 def complete_hook_capture(output_payload: Mapping[str, Any]) -> None:
     if _disabled():
+        return
+    if not isinstance(output_payload, Mapping):
+        return
+    payload_type = output_payload.get("type")
+    if isinstance(payload_type, str) and payload_type.lower() == "progress":
         return
     if not _STATE.get("active") or _STATE.get("completed"):
         return
