@@ -7,18 +7,18 @@ Finish the planning-only Wayfinder map in `docs/okf-kb-migration/` and produce a
 ## Status
 
 - Primary-source OKF v0.2 research and current-system exploration are complete.
-- Ten decisions are closed. Two tickets remain open, and **Rollout and Rollback** is the sole frontier ticket; both exact blockers are verified closed and the ticket is claimed by `subagent-k7m2q9` for live Grilling.
+- Eleven decisions are closed. **Implementation Sequencing and Handoff** is the only remaining open ticket and the sole frontier ticket; its exact blocker, **Rollout and Rollback**, is closed.
 - The latest verified inventory is 29 eligible canonical inputs: 26 remain whole and three hook documents split into 16 concepts, producing 42 concepts total.
 - No migration implementation or implementation ExecPlan exists. `relocation-execplan.md` records only the completed move of planning artifacts into `docs/`.
 - Worktree was clean at `10263738` before this handoff consolidation.
 
 ## Next Focus
 
-Complete the live Grilling rounds for **Rollout and Rollback**, then record and close the decision.
+Resolve **Implementation Sequencing and Handoff**, the final Wayfinder ticket, in a fresh session.
 
 ## Exact Next Step
 
-Collect the user's final shared-understanding confirmation for **Rollout and Rollback**. If confirmed, close the ticket, index it in the map, recompute the Wayfinder frontier, and continue only with the newly unblocked planning ticket. Do not implement the migration.
+Re-verify `rollout-and-rollback.md` is closed, claim `tickets/implementation-sequencing-and-handoff.md`, and run its live Grilling rounds. Do not implement the migration or write the implementation ExecPlan yet.
 
 ## Settled Decisions and Constraints
 
@@ -60,7 +60,10 @@ Collect the user's final shared-understanding confirmation for **Rollout and Rol
 
 ## Verification State
 
-- **Rollout and Rollback** is claimed by `subagent-k7m2q9`; its exact blockers, `provider-integration-and-state.md` and `evaluation-corpus-and-promotion-gates.md`, were both re-verified `closed` before the claim. All three Grilling rounds are accepted and recorded; final shared-understanding confirmation is pending before closure.
+- **Rollout and Rollback** closure validation passed: `git diff --check`; 11 closed tickets and one open ticket; 11 map decision links exactly matching the closed set; and **Implementation Sequencing and Handoff** as the sole open ticket whose only blocker is closed.
+- The Copilot research report is present in `HEAD` at externally created commit `243a8db1`; this session did not create that commit. The ticket closure, map index entry, and latest handoff updates remain uncommitted on top of it.
+- The mandatory end-of-session `update-agent-docs` pass found no durable `.agents/instructions/` or `.agents/memory/` edit needed. Existing hook guidance already records Copilot's mutation-only prompt transformation and relevant failure semantics; the narrower rollout evidence remains in the linked effort research.
+- **Rollout and Rollback** is closed and indexed in the map after three accepted Grilling rounds and final shared-understanding confirmation. **Implementation Sequencing and Handoff** is now the sole open, unblocked ticket; it was not claimed because Wayfinder permits resolving only one non-research ticket per session.
 - `research/copilot-cli-hooks-rollout.md` records the 2026-09-03 official GitHub hooks/release assessment. No local `copilot` executable or version was available. The researcher had one initial web-result shape error, retried successfully, and lost no evidence. `git diff --check` passed after the report was written.
 
 - **Provider Integration and State** is closed and indexed in the map; both exact blockers were verified `closed`. Read-only Copilot/Gemini exploration confirmed repo-local prompt/final hook timing, JSON-only provider envelopes, active-workspace versus installed-hook separation, and three distinct state concerns (source-ingest manifest, projection manifest, provider-local observability). No tests ran for that evidence pass.

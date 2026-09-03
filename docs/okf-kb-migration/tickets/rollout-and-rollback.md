@@ -1,7 +1,7 @@
 # Rollout and Rollback
 
 **Type:** grilling
-**Status:** claimed by subagent-k7m2q9
+**Status:** closed
 **Blocked By:** provider-integration-and-state.md, evaluation-corpus-and-promotion-gates.md
 **Research Dir:** N/A
 

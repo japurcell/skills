@@ -24,6 +24,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 - [Mandatory Context and Fallback](tickets/mandatory-context-and-fallback.md): Use explicit scope-and-area policy with transitive mandatory closure, shared budgets, atomic legacy fallback, hard-stop safety gates, and privacy-safe diagnostics.
 - [Evaluation Corpus and Promotion Gates](tickets/evaluation-corpus-and-promotion-gates.md): Use a versioned provider-neutral corpus with semantic and exact oracles, zero-tolerance safety and parity gates, non-regressing recall, measurable irrelevant-byte reduction, deterministic replay, and bounded cold latency.
 - [Provider Integration and State](tickets/provider-integration-and-state.md): Use a shared read-only runtime core, repository-owned thin adapters, explicit versioned runtime inputs, atomic legacy fallback, strict provider envelopes, and capability-gated promotion where hard stops cannot be enforced.
+- [Rollout and Rollback](tickets/rollout-and-rollback.md): Stage each capable provider through shadow, explicit canary, and default modes with evidence-gated promotion, invariant-triggered rollback, Copilot capability gates, and no legacy-loader retirement in this migration.
 
 ## Not yet specified
 
