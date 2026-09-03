@@ -65,4 +65,4 @@ You are at the end of a _work session_ when:
 3. **Build modified project(s)** (e.g., `yarn build`).
 4. **Run targeted tests** for affected project(s).
 5. **Follow existing patterns** in similar files.
-6. **Mandatory Doc Pass (No Exceptions):** Run `update-agent-docs`, perform all Absolute Doc Update Obligation tasks, and commit synchronized `.agents/` docs with your changes.
+6. **Mandatory Doc Pass (No Exceptions):** Run `update-agent-docs` [at the end of the _work session_](#end-of-work-session-defined), perform all Absolute Doc Update Obligation tasks, and commit synchronized `.agents/` docs with your changes.
