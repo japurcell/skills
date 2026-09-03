@@ -12,11 +12,22 @@ Research Open Knowledge Format (OKF), understand this repository's `.agents/{ins
 - The user selected destination **A**: an implementation-ready migration design and ExecPlan-ready handoff. Design-plus-implementation and a narrow proof of concept are outside this Wayfinder effort.
 - The user accepted all six breadth-first charter recommendations: migration boundary, source of truth, consumer behavior, OKF conformance, compatibility posture, and success hierarchy.
 - The complete effort has moved from ignored scratchpad storage into the version-controlled `docs/okf-kb-migration/` tree.
-- The Wayfinder map is charted at `docs/okf-kb-migration/map.md` with two closed decisions and ten dependency-wired open design tickets.
+- The Wayfinder map is charted at `docs/okf-kb-migration/map.md` with three closed decisions and nine dependency-wired open design tickets.
 - **Bundle Publication and Lifecycle** is closed after three live Grilling rounds. The accepted contract uses a committed deterministic `.agents/okf/` bundle, repo-local distribution, manifest-backed freshness with legacy fallback, generator-only full rebuilds, generated indexes without an initial `log.md`, case-fold collision rejection, explicit regeneration, one stable current bundle, and Git rollback.
-- **Concept Profile and Taxonomy** is now the sole open, unblocked frontier ticket.
+- **Concept Profile and Taxonomy** is closed after its live Grilling exchange.
+- The user accepted profile identity `agent-kb@1.0.0`, a single `x-agent-kb` extension mapping, and 30 in-scope canonical inputs that exclude `INDEX.md` and `LOG.md` while retaining `FILE_MAP.md`. The output cardinality is not fixed: one input may emit multiple independently retrievable concepts.
+- The user rejected prematurely freezing the six seed types and accepted a semantic decomposition audit before the profile `1.0.0` registry is closed. Split only when concepts can be selected, maintained, or deprecated independently; length or multiple headings alone is insufficient.
+- The delegated audit recommends keeping 27 inputs whole and decomposing only `.agents/instructions/hooks.md`, `.agents/memory/adrs/hooks.md`, and `.agents/memory/known-issues/hooks.md`. The splits expose a new `Hook Contract` role while reusing the seed roles for instructions, testing, known issues, and ADRs.
+- The user accepted that decomposition boundary: four concepts from `instructions/hooks.md`, eight concepts from `adrs/hooks.md`, four concepts from `known-issues/hooks.md`, and one concept from each other input, for 43 projected concepts total.
+- The user accepted the profile `1.0.0` type registry: `Agent Instruction`, `Repository Knowledge`, `Testing Guidance`, `Known Issue`, `Architecture Decision`, `Source Summary`, and `Hook Contract`. Later type additions require a profile minor-version bump.
+- Every concept must have non-empty `type`, `title`, and selection-oriented `description`, plus normalized `x-agent-kb.source.path`; split concepts also require a stable `x-agent-kb.source.anchor`. Standard `tags`, `resource`, and `sources` remain conditional recommendations.
+- The user accepted deterministic routing metadata: whole-file `coverage` seeds `description`, split descriptions come from explicit profile mappings, and `x-agent-kb.areas` plus optional `paths` come from a versioned mapping rather than heuristic prose parsing. Task kinds, priority, and mandatory-load policy remain for later tickets.
+- The user accepted conservative provenance/lifecycle rules: source summaries require raw-source references; projection time does not become `generated`; `verified`, `deprecated`, and `stale_after` require explicit canonical evidence; malformed summary status and operational ingest states never become OKF trust claims.
+- The user accepted the strict writer allowlist: required `type`, `title`, `description`, and `x-agent-kb`; conditional `tags`, `resource`, `sources`, `status`, `stale_after`, `generated`, and `verified`; and only `source`, `areas`, and `paths` inside the extension. Writers reject unknown fields while readers tolerate them.
+- The user accepted deterministic reserved-file behavior: generate sorted lowercase `index.md` files, put only `okf_version: "0.2"` frontmatter on the root index, emit no `log.md`, never project canonical `INDEX.md` or `LOG.md`, and reject case-folded collisions.
+- The user accepted contract-based profile SemVer: patch for compatible corrections, minor for additive optional fields/types/area values, and major for removals, renames, new requirements, meaning changes, or other incompatibilities. OKF versioning remains independent.
 - No migration implementation code or implementation ExecPlan was created; `relocation-execplan.md` records only this documentation move.
-- The relocation created expected uncommitted changes: `docs/okf-kb-migration/` is visible to Git, and `.agents/{instructions/repo.md,memory/ARCHITECTURE.md,memory/FILE_MAP.md}` record the durable documentation layout. HEAD remains `a9328fd2`.
+- The prior relocation and lifecycle work is committed. This session began from a clean worktree at `e1477924`; the profile ticket claim and this handoff update are the current expected changes.
 
 ## Next Focus
 
@@ -24,7 +35,7 @@ Work through the charted Wayfinder map one decision ticket per session.
 
 ## Exact Next Step
 
-Invoke Wayfinder with `docs/okf-kb-migration/map.md`, claim `concept-profile-and-taxonomy.md`, then resolve only **Concept Profile and Taxonomy** through the required live Grilling exchange.
+In a new session, claim and resolve exactly one newly unblocked frontier ticket. Prefer **Concept Identity and Links** in map order unless the user explicitly selects **Source-Summary Transition Policy**.
 
 ## Established Facts and Constraints
 
@@ -34,10 +45,11 @@ Invoke Wayfinder with `docs/okf-kb-migration/map.md`, claim `concept-profile-and
 - Normative minimum: every non-reserved Markdown concept needs parseable YAML frontmatter and non-empty `type`; `index.md` and `log.md` are lowercase reserved files; paths are concept IDs; unknown types/keys, broken links, and missing optional metadata must be tolerated. See `research/okf-primary-sources.md:79-110` and `:153-165`.
 - Provenance/trust/lifecycle fields are optional: `sources`, `generated`, `verified`, `status`, and `stale_after`. Do not manufacture verification or treat trust tiers as security. See `research/okf-primary-sources.md:112-121` and `:280-287`.
 - The reference tooling and samples are illustrative, not normative. GA4 shows dense enrichment, Stack Overflow cross-cutting references, Bitcoin explicit join concepts, and Acme Retail trust/lifecycle/attestation. See `research/okf-primary-sources.md:168-203`.
-- The current compiled KB has 31 Markdown documents totaling 106,004 bytes. Hooks enforce pending source ingestion but do not select task-relevant KB concepts; agents currently route manually from `.agents/memory/INDEX.md`. See `research/explore-okf-kb-migration.md:16-40`.
+- Prior research measured 31 Markdown documents totaling 106,004 bytes; the current read-only inventory finds 32 after subsequent repository changes. Hooks enforce pending source ingestion but do not select task-relevant KB concepts; agents currently route manually from `.agents/memory/INDEX.md`. See `research/explore-okf-kb-migration.md:16-40`.
 - In-place conversion risks case collisions between current `INDEX.md`/`LOG.md` and OKF's reserved `index.md`/`log.md`, especially on case-insensitive filesystems. See `research/explore-okf-kb-migration.md:50-58`.
 - The user approved an additive generated sidecar, a portable OKF core with documented namespaced extensions and strict writer validation, both progressive navigation and deterministic selection, a compatibility-preserving rollout, and safety-first evaluation. The sidecar publication lifecycle is settled; exact profile, selector, and rollout details remain open tickets. See `tickets/migration-charter.md` and `tickets/bundle-publication-and-lifecycle.md`.
 - Neither installer copies repository `.agents/` content. Source-ingest hooks resolve the active workspace, while required-skill loaders use global `~/.agents/skills`; the accepted sidecar therefore remains repo-local and is not copied into global storage.
+- The current canonical KB contains 32 Markdown files: six area instructions, seven root memory docs, one ADR, five known-issue docs, four testing docs, and nine source summaries. The 23 non-summary files use only valid free-form `coverage`; the nine summaries still have malformed `status: verified` pseudo-frontmatter. See `.agents/memory/known-issues/hooks.md:9-13`.
 - Preserve immutable `.agents/sources/`, pending-ingest gating, orphan cleanup, and provider-specific hook envelopes. Copilot and Gemini helper implementations are intentionally duplicated and must remain behaviorally synchronized.
 - Follow `AGENTS.md`: load `.agents/memory/INDEX.md` first, use an ExecPlan before multi-file/layer code changes, and run `update-agent-docs` at the end.
 - Wayfinder asks for `domain-modeling`, but that skill was not available. Prior session used Grilling plus codebase exploration as a disclosed fallback; reassess availability on resume.
@@ -65,12 +77,16 @@ Invoke Wayfinder with `docs/okf-kb-migration/map.md`, claim `concept-profile-and
 - Canonical repo inspected at commit `ad30107c31c06aec8a7d5636e0d1058118604e6f`; requested frozen snapshot inspected at `fbbc7975388288244dfc62aea0066600b25b7c47`.
 - Research covers the complete spec, reference implementation shape, tests, and all four meaningful first-party bundles.
 - Relocated Markdown was checked for trailing whitespace; `git diff --check` passed.
-- The map contains exactly one open unblocked ticket, **Concept Profile and Taxonomy**, and every `Blocked By` filename resolves to an existing ticket.
+- The map contains exactly two open unblocked tickets, **Concept Identity and Links** and **Source-Summary Transition Policy**, and every `Blocked By` filename resolves to an existing ticket.
+- A read-only inventory confirmed the six plausible subject concept classes are agent instructions, repository knowledge, testing guidance, known issues, architectural decisions, and source summaries. `INDEX.md`/`FILE_MAP.md` are navigation candidates; `LOG.md` and the JSON ingest manifest are operational artifacts.
+- The semantic audit found no split justification for source summaries or general instruction/testing files. It found independently selectable concerns in `instructions/hooks.md`, independently supersedable ADRs in `adrs/hooks.md`, and independently triggered issue domains in `known-issues/hooks.md`.
 - `git diff --check` and targeted trailing-whitespace checks passed after closing **Bundle Publication and Lifecycle** and updating the map.
+- `git diff --check`, targeted trailing-whitespace checks, blocker-link validation, ticket counts, and frontier derivation passed after closing **Concept Profile and Taxonomy**.
 - The effort now contains seventeen Markdown documents under `docs/okf-kb-migration/` including the relocation ExecPlan; Git visibility and link checks are recorded in that plan.
 - Nine committed verified summary files were measured as missing their opening `---`; the defect is documented but not repaired.
 - No product tests/builds were run because no code or configuration was changed.
-- Current `git status --short --branch`: modified `.agents/instructions/repo.md`, `.agents/memory/{ARCHITECTURE.md,FILE_MAP.md}`, and untracked `docs/okf-kb-migration/` on `main...origin/main`.
+- The mandatory agent-doc pass found no durable `.agents/instructions/` or `.agents/memory/` update: only version-controlled migration-planning documents changed.
+- Current tracked changes close the profile ticket and synchronize the map and handoff on `main...origin/main`.
 
 ## Errors, Corrections, and Durable Learnings
 
@@ -84,6 +100,8 @@ Invoke Wayfinder with `docs/okf-kb-migration/map.md`, claim `concept-profile-and
 - Scratchpad artifacts are ignored by Git and will not appear in normal `git status`; inspect them directly.
 - The user explicitly chose this version-controlled, feature-scoped handoff over an ignored `.agents/scratchpad/handoff.md`; keep a single handoff here for this long-lived effort.
 - A consolidation patch initially failed because it matched an outdated sentence variant. No files changed in that attempt; subsequent edits were narrowed against exact current text.
+- A later multi-hunk handoff patch also failed on one inexact context sentence; no files changed, and the retry used freshly matched exact lines.
+- One decomposition worker's bulk read was truncated; it corrected this by rereading long files individually with numbered lines before reporting.
 
 ## Suggested Skills for Resume
 
@@ -93,4 +111,4 @@ Invoke Wayfinder with `docs/okf-kb-migration/map.md`, claim `concept-profile-and
 
 ## Briefing
 
-The migration charter and sidecar publication lifecycle are settled. OKF alone will not improve retrieval, so the remaining route separately decides the profile, concept identity, producer, selector, mandatory fallback, provider integration, evaluation, rollout, and implementation sequencing. Start with **Concept Profile and Taxonomy**; do not implement while working the map.
+The migration charter, sidecar publication lifecycle, and `agent-kb@1.0.0` concept profile are settled. The current frontier contains **Concept Identity and Links** and **Source-Summary Transition Policy**. In a new session, claim exactly one—prefer **Concept Identity and Links** in map order—and do not implement while working the map.

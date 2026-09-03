@@ -16,6 +16,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 
 - [Migration Charter](tickets/migration-charter.md): Produce an implementation-ready, additive OKF migration design for the core agent KB, with deterministic selection, strict compatibility, and safety-first success criteria.
 - [Bundle Publication and Lifecycle](tickets/bundle-publication-and-lifecycle.md): Commit one deterministic repo-local `.agents/okf/` projection with manifest-backed freshness, generated indexes, collision-safe paths, legacy fallback, and Git-based rollback.
+- [Concept Profile and Taxonomy](tickets/concept-profile-and-taxonomy.md): Adopt `agent-kb@1.0.0` with seven concept types, explicit deterministic mappings, 43 semantically bounded concepts, conservative provenance, strict writer validation, tolerant readers, and reserved-file-safe indexes.
 
 ## Not yet specified
 
