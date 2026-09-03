@@ -7,6 +7,7 @@ coverage: Repo-wide workflow for top-level docs, install refresh, and documentat
 - Treat `.agents/instructions/` and `.agents/memory/` as canonical home for agent-facing repo guidance.
 - Keep `README.md` and `AGENTS.md` aligned with `.agents/` summaries; do not let duplicate long-form guidance drift.
 - Keep top-level docs short. Put durable rules in `.agents/instructions/` and durable repo facts in `.agents/memory/`.
+- Put long-lived research and planning artifacts that require version control under a focused `docs/<effort>/` subtree; keep transient, disposable working state under `.agents/scratchpad/` unless the user explicitly promotes it.
 - After changing repo source that is installed into home-directory targets, run `./scripts/install.sh` before checking live Copilot or Gemini behavior.
 - Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews.
 - Ignore `skills/**/evals/files/**/AGENTS.md` and `skills/*-workspace/**/sandbox/AGENTS.md` unless task explicitly targets them.

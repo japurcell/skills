@@ -16,7 +16,7 @@ coverage: Repo structure, install flows, and how top-level areas relate
 | `.gemini/` | Gemini-specific instructions and hooks. | Installed to `~/.gemini/` |
 | `scripts/` | Installers, importers, and targeted validation helpers. | Run from repo checkout |
 | `.agents/` | Agent knowledge base with canonical agent-facing rules and durable repo facts. | Copilot/Gemini agents working in this repo |
-| `docs/adr/` | Human-facing ADRs that complement `.agents/` canonical guidance. | Repo readers who need recorded decisions |
+| `docs/` | Version-controlled ADRs, research notes, and long-lived effort plans that complement `.agents/` canonical guidance. | Repo readers and agents who need durable project context |
 | `README.md`, `AGENTS.md` | Top-level human entry points that summarize the repo and point into `.agents/`. | Repo readers and agents |
 
 ## Main flows
@@ -35,6 +35,7 @@ coverage: Repo structure, install flows, and how top-level areas relate
 
 - `README.md` and `AGENTS.md` stay as short top-level entry points.
 - Durable agent-facing rules and repo facts belong in `.agents/instructions/` and `.agents/memory/`.
+- Long-lived research and planning artifacts that need version history belong under a focused `docs/<effort>/` subtree; transient working state remains in `.agents/scratchpad/`.
 - Keep top-level summaries aligned with `.agents/` instead of maintaining parallel long-form copies.
 
 ## Boundaries

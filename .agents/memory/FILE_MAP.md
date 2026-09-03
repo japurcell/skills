@@ -24,6 +24,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `agents/` | agents | Standalone custom agent prompt files. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `docs/research/` | repo docs | Human-facing research notes on tooling and conversions. |
+| `docs/okf-kb-migration/` | repo docs | Version-controlled OKF migration research, Wayfinder map, handoff, decision tickets, and relocation record. |
 | `scripts/` | scripts | Installers, importers, validation helpers, and shared shell utilities. |
 | `references/` | references | Optional shared reference material shipped with installs. |
 
@@ -49,6 +50,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.copilot/hooks/rtk-rewrite.json` | RTK rewrite config used by hook-driven tool rewrite flows; points at `.copilot/hooks/scripts/rtk-hook-copilot.py`. |
 | `docs/adr/0001-auto-ingest-runtime-shape.md` | Records why source auto-ingest uses runtime-local hook code with one committed repo manifest. |
 | `docs/adr/0002-pending-ingest-gate.md` | Records why the pending-ingest gate blocks normal work until summaries resolve. |
+| `docs/okf-kb-migration/map.md` | Active Wayfinder map for the implementation-ready OKF agent-knowledge-base migration design. |
 | `.nvmrc` | Node version hint for local tooling. |
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |
