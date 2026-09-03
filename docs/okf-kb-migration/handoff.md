@@ -7,20 +7,25 @@ Finish the planning-only Wayfinder map in `docs/okf-kb-migration/` and produce a
 ## Status
 
 - Primary-source OKF v0.2 research and current-system exploration are complete.
-- Ten decisions are closed, including **Evaluation Corpus and Promotion Gates** and **Provider Integration and State**. Two tickets remain open, and **Rollout and Rollback** is the sole frontier ticket.
+- Ten decisions are closed. Two tickets remain open, and **Rollout and Rollback** is the sole frontier ticket; both exact blockers are verified closed and the ticket is claimed by `subagent-k7m2q9` for live Grilling.
 - The latest verified inventory is 29 eligible canonical inputs: 26 remain whole and three hook documents split into 16 concepts, producing 42 concepts total.
 - No migration implementation or implementation ExecPlan exists. `relocation-execplan.md` records only the completed move of planning artifacts into `docs/`.
 - Worktree was clean at `10263738` before this handoff consolidation.
 
 ## Next Focus
 
-Resolve **Rollout and Rollback**, the sole frontier Wayfinder ticket.
+Complete the live Grilling rounds for **Rollout and Rollback**, then record and close the decision.
 
 ## Exact Next Step
 
-Verify both blockers for `tickets/rollout-and-rollback.md` are closed, claim it, and run its live Grilling rounds. Do not implement the migration.
+Collect the user's final shared-understanding confirmation for **Rollout and Rollback**. If confirmed, close the ticket, index it in the map, recompute the Wayfinder frontier, and continue only with the newly unblocked planning ticket. Do not implement the migration.
 
 ## Settled Decisions and Constraints
+
+- **Rollout and Rollback round 1:** the user accepted independent Gemini staging through shadow/canary/default; ordinary Copilot CLI remains on legacy until every documented and behavioral capability gate passes, after which it starts its own ladder at shadow. Shadow always serves legacy while comparing OKF read-only. Rollout state is committed per-provider configuration, canaries use explicit branches/worktrees, and promotion requires the complete CI gates plus one normal work cycle and at least 50 eligible prompts, restarted by candidate/configuration changes. A standalone Copilot SDK wrapper remains a separate possible effort.
+- **Rollout and Rollback round 2:** the user accepted immediate rollback for any safety, integrity, parity, determinism, privacy, or disposition invariant violation; operational degradation first freezes promotion and rolls back only after exceeding a shadow-derived envelope for a full rolling 50-prompt window. Rollback is a minimal reviewed provider-mode configuration change, widened to every enrolled provider only for shared defects. Runtime never changes rollout state. Every corrected release requires root-cause documentation, regression coverage, exact-commit CI evidence, and the full rollout ladder again.
+- **Rollout and Rollback round 3:** the user accepted provider-specific canary envelopes frozen from shadow evidence; privacy-safe event storage plus promotion-PR evidence; mechanically gated forward mode transitions with immediate rollback to legacy; no legacy-loader retirement in this migration; and a separate future major-contract gate before retirement can be reconsidered.
+- **Copilot CLI hook research:** current documented config-file hooks cannot meet the complete safety contract. `userPromptSubmitted` uniquely sees the submitted prompt but discards command/HTTP output; `userPromptTransformed` can inject context but is mutation-only and has no current-message discriminator for batched submissions; tool and stop hooks act too late. A Copilot CLI extension improves prompt identity/injection but still cannot deny the model turn. A standalone Copilot SDK wrapper could validate before calling `session.send()`, but changes the integration boundary and requires separate dependency approval and design.
 
 - **Source Summary Transition Policy:** replace unsupported completed-summary `status: verified` and stale-reason text with canonical selection-oriented `coverage`, keep manifest v1 as the raw-to-summary freshness binding, project only exactly bound current `active` summaries, stage repair/production/selection, and require strict cross-provider and negative-path validation. Emit no OKF `verified` field until a separately specified actor/timestamp evidence contract exists.
 - Authored `.agents/instructions/` and `.agents/memory/` documents remain canonical. A generator exclusively owns a committed, deterministic `.agents/okf/` sidecar and `.projection-manifest.json`; invalid freshness evidence causes an explainable legacy-loader fallback.
@@ -54,6 +59,9 @@ Verify both blockers for `tickets/rollout-and-rollback.md` are closed, claim it,
 - `.agents/memory/sources/source-ingest-manifest.json` — current operational ingest state.
 
 ## Verification State
+
+- **Rollout and Rollback** is claimed by `subagent-k7m2q9`; its exact blockers, `provider-integration-and-state.md` and `evaluation-corpus-and-promotion-gates.md`, were both re-verified `closed` before the claim. All three Grilling rounds are accepted and recorded; final shared-understanding confirmation is pending before closure.
+- `research/copilot-cli-hooks-rollout.md` records the 2026-09-03 official GitHub hooks/release assessment. No local `copilot` executable or version was available. The researcher had one initial web-result shape error, retried successfully, and lost no evidence. `git diff --check` passed after the report was written.
 
 - **Provider Integration and State** is closed and indexed in the map; both exact blockers were verified `closed`. Read-only Copilot/Gemini exploration confirmed repo-local prompt/final hook timing, JSON-only provider envelopes, active-workspace versus installed-hook separation, and three distinct state concerns (source-ingest manifest, projection manifest, provider-local observability). No tests ran for that evidence pass.
 - **Provider Integration and State** round 1 accepted a provider-neutral core with thin prompt-time adapters, conservative `nontrivial` scope and omitted task kind absent structured metadata, active-workspace-only KB discovery, and independent source-ingest/projection/observability state contracts with no prompt-time schema migration.
@@ -106,6 +114,7 @@ Verify both blockers for `tickets/rollout-and-rollback.md` are closed, claim it,
 - Do not treat a changed non-scaffold summary hash as semantic verification; that transition is only the manifest's operational freshness rule.
 - Large multi-file resolution patches are fragile: one malformed patch and one stale-context patch were rejected atomically without changing their targets; re-read current text and apply narrow per-file hunks.
 - Do not draft `apply_patch` hunks with placeholder or nonstandard headers; one malformed combined resolution patch was rejected before changing files. Use only standard `@@` hunks and split large documentation updates by file.
+- Re-check the live GitHub Copilot hooks reference before provider promotion: the contract is evolving, and current config-file `userPromptSubmitted` output is explicitly discarded even though SDK programmatic hooks honor it.
 
 ## Suggested Skills
 
