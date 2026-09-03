@@ -23,7 +23,7 @@ Before executing tasks or answering questions, you **must**:
 3. **Read the area-scoped instruction file** for edited code (`.agents/instructions/<area>.md`, and matching `.agents/memory/known-issues/<area>.md` and `.agents/memory/testing/<area>.md`).
 4. **Always run the `update-agent-docs` skill at the end of every work session to keep docs fresh.**
    - This is a mandatory step to capture findings, conventions, and architectural changes.
-   - **Important:** If you are working on multiple tasks in a single session or delegating work to subagents, run after all tasks and/or subagents have completed. Running this multiple times in a single session is expensive and wasteful.
+   - **Important exception:** If you are working on multiple tasks in a single session or delegating work to subagents, run after all tasks and/or subagents have completed. Running this multiple times in a single session is expensive and wasteful.
 
 ### Memory
 

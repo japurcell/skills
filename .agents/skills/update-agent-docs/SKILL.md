@@ -1,18 +1,12 @@
 ---
 name: update-agent-docs
 description: >
-  Mandatory agent knowledge base update after making code changes in the repo. Always run at the end of
-  every task that modifies code, adds files, changes public APIs or diagnostics, or establishes new
-  patterns. Keeps .agents/instructions/ and .agents/memory/ fresh and reliable.
+  Mandatory agent knowledge base update after making code changes in the repo to keep .agents/instructions/ and .agents/memory/ fresh and reliable. Always run at the end of every work session that modifies code, adds files, changes public APIs or diagnostics, or establishes new patterns. DO NOT run after every task if you are working on multiple tasks or delegating work to subagents in a single session. Instead, run after all tasks and/or subagents have completed.
 ---
 
 # Update Agent Docs
 
 Keep `.agents/` small, current, and easy to navigate.
-
-## Run When
-
-Run at the end of every task that changes code. This is not optional.
 
 ## Workflow
 
