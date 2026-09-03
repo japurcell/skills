@@ -31,12 +31,17 @@ def read_json_input() -> dict:
 
 def emit_json(payload: dict) -> None:
     try:
-        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stdout.buffer.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+        sys.stdout.buffer.write(b"\n")
+        sys.stdout.buffer.flush()
     except Exception:
-        pass
-    sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-    sys.stdout.write("\n")
-    sys.stdout.flush()
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+        sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+        sys.stdout.write("\n")
+        sys.stdout.flush()
 
     try:
         from .observability import complete_hook_capture

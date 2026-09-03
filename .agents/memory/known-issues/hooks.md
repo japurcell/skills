@@ -153,8 +153,8 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 ## CP1252 Charmap Codec Encoding Crashes on Windows Stdout
 
 **Affected area:** All hook scripts emitting JSON payloads containing non-ASCII Unicode characters on Windows.
-**Description:** Calling `json.dumps(..., ensure_ascii=False)` and writing the output directly to `sys.stdout` on Windows raises a `'charmap' codec can't encode character` error because Windows stdout streams default to CP1252 (charmap) encoding instead of UTF-8, and characters like `→` exist in loaded skills.
-**Workaround:** Programmatically reconfigure `sys.stdout` to use `utf-8` encoding inside `emit_json()` via `sys.stdout.reconfigure(encoding="utf-8")` with a try-except fallback. This secures Unicode support on Windows natively without altering default console encodings.
+**Description:** Calling `json.dumps(..., ensure_ascii=False)` and writing the output directly to `sys.stdout` on Windows raises a `'charmap' codec can't encode character` error because Windows stdout streams default to CP1252 (charmap) encoding instead of UTF-8, especially when executed in redirected subprocesses (where TTY is not attached) and characters like `→` exist in loaded skills.
+**Workaround:** Write directly to `sys.stdout.buffer` with UTF-8 encoded bytes (e.g. `sys.stdout.buffer.write(json.dumps(...).encode("utf-8"))`) in `emit_json()`, falling back to `sys.stdout.reconfigure(encoding="utf-8")` if the binary buffer is unavailable. This completely bypasses Python's text-encoding wrapper in non-TTY redirected environments on Windows.
 
 ## Tool Guardian Severe False Positive Blocks on Multiline Serialized File Operations
 
