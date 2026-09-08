@@ -2,20 +2,35 @@
 
 ## Universal Rules
 
-### Keep it simple
+### Simplicity and scope
 
-- Follow you-aint-gonna-need-it (YAGNI) principles to keep things as simple as possible.
-- My teammates and I will be reviewing the code you write, so please make it easy to read and understand.
+- Make the smallest clear, maintainable change that meets the request, including necessary tests and documentation. Avoid speculative abstractions and unrequested capabilities.
+- Keep unrelated code unchanged; report unrelated problems separately.
+- Match existing codebase patterns and style unless there is a concrete reason not to.
+- Remove imports, variables, and helpers made unused by your changes.
+
+### Assumptions and ambiguity
+
+- Resolve ambiguity from repository context where possible. State consequential assumptions, and ask when unresolved alternatives would materially change scope, behavior, or risk.
+- Do not block progress on minor details with an obvious, low-risk choice.
 
 ### Verify
 
-- There should NEVER be secrets in code or version control.
+- Decide how success will be verified before implementing non-trivial work.
+- For bugs, reproduce the failure before fixing it when practical.
+- After making changes, run checks appropriate to the change's scope and risk.
+- Support completion claims with evidence from this task; state any unverified work and why.
+
+### Respond to evidence
+
+- Revise assumptions and plans when repository evidence contradicts them.
+- If complexity grows substantially or repeated fixes only address symptoms, reassess the approach before continuing.
 
 ### Boundaries
 
 - Never install or add new dependencies without approval.
 - Never modify database schemas without approval.
-- Never commit secrets.
+- Never put secrets in code or version control.
 - Never delete, disable, skip, or weaken failing tests just to make the suite pass.
 
 ### Questions are read-only
@@ -28,13 +43,11 @@
 
 - Take advantage of type safety when a language supports it.
 - Never write regression tests for feature deletions.
-- Use comments sparingly and only when necessary to explain complex logic.
-- Keep comments up to date with code changes.
+- Comment only where needed to explain complex logic, and keep comments current.
 
 ### TypeScript
 
-- `any` is the enemy; inferred types are our friend.
-- Write idiomatic, type-safe TypeScript that Matt Pocock would be proud of.
+- For TypeScript, prefer inference and avoid `any`.
 - I love Vite; prefer it for applicable frontend projects.
 
 ## RTK (Rust Token Killer) - Token-Optimized Commands
