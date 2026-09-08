@@ -1,8 +1,8 @@
 # Provider Integration and State
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** projection-producer-and-linter.md, mandatory-context-and-fallback.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question

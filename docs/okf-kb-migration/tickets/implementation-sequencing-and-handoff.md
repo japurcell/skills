@@ -1,8 +1,8 @@
 # Implementation Sequencing and Handoff
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** rollout-and-rollback.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question

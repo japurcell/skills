@@ -1,8 +1,8 @@
 # Rollout and Rollback
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** provider-integration-and-state.md, evaluation-corpus-and-promotion-gates.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question

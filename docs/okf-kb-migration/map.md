@@ -1,6 +1,6 @@
 ## Destination
 
-An implementation-ready migration design and ExecPlan-ready handoff for adopting OKF v0.2 across `.agents/instructions`, `.agents/memory`, and their ingestion/routing machinery, improving task-specific context selection without breaking current loaders, hooks, installers, or offline operation.
+An implementation-ready migration design and ExecPlan-ready handoff for adopting OKF v0.2 across `.agents/instructions`, `.agents/memory`, and their ingestion/routing machinery, with GitHub Copilot CLI as the primary supported agent and without breaking current loaders, hooks, installers, or offline operation.
 
 ## Notes
 
@@ -9,6 +9,8 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 - Use `official-sources` and `research` for any new external investigation, and `explore` for local codebase facts. The canonical external baseline is OKF v0.2 from `GoogleCloudPlatform/open-knowledge-format`.
 - The accepted charter keeps current authored documents canonical, produces an additive sidecar projection, supports both progressive navigation and deterministic automatic selection, uses a portable OKF core plus documented namespaced extensions, and preserves compatibility.
 - Safety and correctness outrank token reduction: mandatory instructions and freshness gates cannot be omitted; relevant-context recall must not regress.
+- GitHub Copilot CLI is the primary deployment target. Gemini remains a fully supported OKF provider with its own adapter, qualification evidence, and rollout while it is supported, but the migration cannot depend on Gemini as its only promotable provider.
+- **Provider Integration and State**, **Rollout and Rollback**, and **Implementation Sequencing and Handoff** describe the superseded Gemini-first route. Their provider-neutral findings remain evidence; their Copilot gating, rollout target, and sequencing must be replaced.
 - Preserve immutable `.agents/sources/`, pending-ingest gating, orphan cleanup, provider-specific hook envelopes, and behavioral parity between intentionally duplicated Copilot and Gemini helpers.
 - Existing evidence: [OKF primary-source research](research/okf-primary-sources.md), [current-system exploration](research/explore-okf-kb-migration.md), and [research handoff](handoff.md).
 
@@ -23,9 +25,8 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 - [Projection Producer and Linter](tickets/projection-producer-and-linter.md): Use one deterministic standard-library producer/checker with closed canonical inputs, strict profile and integrity linting, manifest-last publication, stable diagnostics, and no runtime writes.
 - [Mandatory Context and Fallback](tickets/mandatory-context-and-fallback.md): Use explicit scope-and-area policy with transitive mandatory closure, shared budgets, atomic legacy fallback, hard-stop safety gates, and privacy-safe diagnostics.
 - [Evaluation Corpus and Promotion Gates](tickets/evaluation-corpus-and-promotion-gates.md): Use a versioned provider-neutral corpus with semantic and exact oracles, zero-tolerance safety and parity gates, non-regressing recall, measurable irrelevant-byte reduction, deterministic replay, and bounded cold latency.
-- [Provider Integration and State](tickets/provider-integration-and-state.md): Use a shared read-only runtime core, repository-owned thin adapters, explicit versioned runtime inputs, atomic legacy fallback, strict provider envelopes, and capability-gated promotion where hard stops cannot be enforced.
-- [Rollout and Rollback](tickets/rollout-and-rollback.md): Stage each capable provider through shadow, explicit canary, and default modes with evidence-gated promotion, invariant-triggered rollback, Copilot capability gates, and no legacy-loader retirement in this migration.
-- [Implementation Sequencing and Handoff](tickets/implementation-sequencing-and-handoff.md): Deliver through nine dependency-ordered, single-owner acceptance gates with stable validation commands, atomic rollback boundaries, embedded documentation, and an ExecPlan-ready transition through Gemini default.
+- [Copilot CLI Integration Surfaces](tickets/copilot-cli-integration-surfaces.md): Use a repository-scoped Copilot CLI extension as the strongest normal-CLI context injection boundary; it supports per-submission hidden context but cannot enforce pre-model denial.
+- [Copilot-First Runtime Contract](tickets/copilot-first-runtime-contract.md): Make the standard Copilot CLI extension primary with atomic legacy fallback and honest advisory-stop semantics, retain full independently promotable Gemini support, and complete the migration when Copilot reaches default.
 
 ## Not yet specified
 
