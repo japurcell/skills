@@ -6,26 +6,18 @@ import sys
 from pathlib import Path
 
 
-FAST_MODELS = {
-    "gpt-5-mini",
-    "gpt-5.4-mini",
-    "gpt-5.4-nano",
-    "gemini-3-flash",
-    "haiku",
-}
+def catalog_models(tier: str) -> set[str]:
+    catalog = (Path(__file__).resolve().parents[1] / "reference/model-catalog.md").read_text()
+    section = catalog.split(f"## {tier}\n", 1)[1].split("\n## ", 1)[0]
+    models = set(re.findall(r"^\| [^|]+ \| `([^`]+)` \|", section, re.MULTILINE))
+    if not models:
+        raise ValueError(f"No models found for tier {tier}")
+    return models
 
-STANDARD_MODELS = {
-    "gpt-5.3-codex",
-    "gpt-4.1",
-    "gemini-3.1-pro",
-    "gpt-5.4",
-    "sonnet",
-}
 
-PREMIUM_MODELS = {
-    "gpt-5.5",
-    "opus",
-}
+FAST_MODELS = catalog_models("Fast")
+STANDARD_MODELS = catalog_models("Standard")
+PREMIUM_MODELS = catalog_models("Premium")
 
 REVIEW_AGENTS = {
     "code-review",
@@ -193,15 +185,11 @@ def grade(eval_id: int, decision: dict, raw_text: str) -> list[dict]:
     if eval_id == 1:
         return [
             expectation("The decision marks the skill as applicable.", applicable, evidence),
-            expectation("The agent type is `general-purpose`.", agent_type == "general-purpose", evidence),
+            expectation("The agent type is `editor`.", agent_type == "editor", evidence),
             expectation("The model tier is `standard`.", model_tier == "standard", evidence),
             expectation(
-                "The chosen model is not `gpt-5-mini`.",
-                model != "gpt-5-mini"
-                and (
-                    model_is_standard(model)
-                    or justification_mentions(justification, "code", "cross-file", "debug", "refactor")
-                ),
+                "The chosen model belongs to Standard.",
+                model_is_standard(model),
                 evidence,
             ),
         ]
@@ -212,8 +200,8 @@ def grade(eval_id: int, decision: dict, raw_text: str) -> list[dict]:
             expectation("The agent type is a review specialist.", agent_type in REVIEW_AGENTS, evidence),
             expectation("The model tier stays `standard`.", model_tier == "standard", evidence),
             expectation(
-                "The chosen model is not `gpt-5.4` and the fallback mentions availability or same-tier fallback.",
-                model != "gpt-5.4"
+                "The chosen model is not `gpt-5.6-terra` and the fallback mentions availability or same-tier fallback.",
+                model != "gpt-5.6-terra"
                 and model_is_standard(model)
                 and justification_mentions(fallback + " " + justification, "availability", "same tier", "same-tier", "unavailable"),
                 evidence,
@@ -267,8 +255,8 @@ def grade(eval_id: int, decision: dict, raw_text: str) -> list[dict]:
         return [
             expectation("The decision marks the skill as applicable.", applicable, evidence),
             expectation(
-                "The route does not keep the old bounded-run lane (`task` + `fast`) for this materially changed launch.",
-                not (agent_type == "task" and model_tier == "fast" and model_is_fast(model)),
+                "Security architecture uses a review specialist and a known Premium model.",
+                agent_type in REVIEW_AGENTS and model_tier == "premium" and model in PREMIUM_MODELS,
                 evidence,
             ),
             expectation(
@@ -300,6 +288,47 @@ def grade(eval_id: int, decision: dict, raw_text: str) -> list[dict]:
                 model != "gpt-4.1"
                 and model_is_standard(model)
                 and justification_mentions(retry_text, *retry_terms),
+                evidence,
+            ),
+        ]
+
+    if eval_id == 7:
+        return [
+            expectation("The decision marks the skill as applicable.", applicable, evidence),
+            expectation(
+                "Missing dependencies keep execution in task + Fast.",
+                agent_type == "task" and model_tier == "fast" and model_is_fast(model),
+                evidence,
+            ),
+            expectation(
+                "Diagnose the environment before escalating.",
+                justification_mentions(justification + " " + fallback, "dependency", "dependencies", "environment", "diagnos"),
+                evidence,
+            ),
+        ]
+
+    if eval_id == 8:
+        return [
+            expectation("The decision marks the skill as applicable.", applicable, evidence),
+            expectation(
+                "Bounded logic review uses a review specialist and Standard model.",
+                agent_type in REVIEW_AGENTS and model_tier == "standard" and model_is_standard(model),
+                evidence,
+            ),
+        ]
+
+    if eval_id == 9:
+        return [
+            expectation("The decision marks the skill as applicable.", applicable, evidence),
+            expectation(
+                "Security review chooses the evaluated lowest-cost Premium candidate.",
+                agent_type in REVIEW_AGENTS and model_tier == "premium" and model == "gpt-5.6-sol",
+                evidence,
+            ),
+            expectation(
+                "The reason accounts for demonstrated capability and cost.",
+                justification_mentions(justification, "evaluat", "demonstrat", "proven")
+                and justification_mentions(justification, "cost", "cheap"),
                 evidence,
             ),
         ]

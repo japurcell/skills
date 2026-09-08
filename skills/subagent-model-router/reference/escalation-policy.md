@@ -2,10 +2,11 @@
 
 Escalate only when the current route is not capable enough.
 
+Use named defaults from [the catalog](model-catalog.md#task-defaults).
+
 ## Escalate when
 
-- verification fails
-- tests fail for unclear reasons
+- verification reveals a reasoning or correctness gap after instructions, inputs, and environment are checked
 - constraints are missed
 - reasoning is shallow for task complexity
 - needed context does not fit
@@ -16,6 +17,10 @@ Escalate only when the current route is not capable enough.
 - stakes, ambiguity, or security sensitivity increase
 
 For code/security review, also load `reference/review-routing.md`.
+
+## Diagnose before escalating
+
+Missing dependencies, permissions, unavailable models, and ordinary failing tests first require environment or failure diagnosis. An unsupported model calls for a same-tier available fallback. A test failure is evidence about the code, not automatically evidence that the worker needs more reasoning capability. Escalate when diagnosis exposes a reasoning gap or greater task risk.
 
 ## Do not escalate when
 
@@ -64,8 +69,8 @@ Escalation:
 
 | Prior route | Next same-class route |
 |---|---|
-| Fast review | Standard review, usually `gpt-5.4-mini` |
-| Standard review | Premium review, usually `gpt-5.3-codex` |
+| Fast review | Standard review, usually the budget-review default |
+| Standard review | Premium review, usually the demanding-review default |
 | Premium review | Premium again, with task split or stronger suited model |
 
 Do not downshift until clean review history makes the prior miss no longer relevant.

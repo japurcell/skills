@@ -20,7 +20,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.github/hooks/` | hooks | Repo-local Copilot hook config and auto-ingest wiring. |
 | `.copilot/` | hooks | Copilot instructions and local hook runtime sources. |
 | `.gemini/` | hooks | Gemini instructions and local hook runtime sources. |
-| `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, and evals. |
+| `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
 | `agents/` | agents | Standalone custom agent prompt files. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `docs/research/` | repo docs | Human-facing research notes on tooling and conversions. |

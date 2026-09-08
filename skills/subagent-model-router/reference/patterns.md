@@ -2,6 +2,8 @@
 
 Use when examples help.
 
+Use named defaults from [the catalog](model-catalog.md#task-defaults).
+
 ## Reuse vs fresh routing
 
 Reuse a route only when work class, stakes, ambiguity, agent type, touched areas, review history, and model constraints are unchanged.
@@ -23,10 +25,10 @@ Reuse a route only when work class, stakes, ambiguity, agent type, touched areas
 | Format files or apply mechanical edits | `task` or `editor` + Fast |
 | Edit connected files | `editor` + Standard |
 | Debug multi-file behavior | `debugger` + Standard |
-| Debug auth/cache/concurrency interaction | Standard or Premium, depending on stakes |
-| Review whitespace/comment-only single-file diff | `code-reviewer` + Fast + `gpt-5-mini` |
-| Review ordinary feature PR | `code-reviewer` + Standard + `gpt-5.4-mini` |
-| Review backend + frontend PR | `code-reviewer` + Standard + `gpt-5.4-mini` |
+| Debug auth/cache/concurrency interaction | Premium when security or subtle correctness is involved |
+| Review whitespace/comment-only single-file diff | `code-reviewer` + Fast + the bounded-work default |
+| Review bounded ordinary feature PR | `code-reviewer` + Standard + budget-review default |
+| Review backend + frontend PR | `code-reviewer` + Standard + general-work default; Premium for subtle contracts |
 | Review tests/guard logic | Standard; Premium if false-pass risk is subtle |
 | Review auth callback or redirect validation | `code-reviewer` or `security-review` + Premium |
 | Run security audit | `security-review` + Premium |
@@ -43,8 +45,8 @@ When a model is unavailable:
 For review:
 
 - Preserve the review floor.
-- Do not fall back to `gpt-5-mini` unless the review is truly tiny, single-file, and style-only.
-- If `gpt-5.3-codex` is unavailable, choose another Premium code/security reasoning model.
+- Do not fall back to the bounded-work default unless the review is truly tiny, single-file, and style-only.
+- If the demanding-review default is unavailable, choose another Premium code/security reasoning model.
 
 ## Token-shape examples
 
@@ -52,5 +54,5 @@ For review:
 |---|---|
 | Huge logs, short diagnosis | input cost |
 | Long proposal from short prompt | output cost |
-| Same repo context across subagents | cached-input cost |
-| Anthropic reusable context | cache write + cached input |
+| Same repo context across subagents | actual cache reuse; budget uncached input if unconfirmed |
+| Reusable context on models charging cache writes | cache write + cached input |

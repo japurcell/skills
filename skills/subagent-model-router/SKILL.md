@@ -45,17 +45,16 @@ Choose the narrowest capable `agent_type`, then the cheapest capable model that 
    - context size
    - review history
    - user/model constraints
-5. Use `reference/model-catalog.md` to choose a capable model in the tier.
-6. If several models fit, use `reference/pricing.md` to choose the cheapest for the token shape.
+5. Use `reference/model-catalog.md` to choose a capable model in the tier, restricted to models exposed by the current runtime. Confirm its exact model ID before launching.
+6. If several models fit, use `reference/pricing.md` to compare Copilot costs for the token shape, including cache writes, long-context rates, retries, and verification. Optimize expected cost to complete the task successfully, not just token rates. For other platforms, use their pricing.
 7. If unavailable, prefer a same-tier fallback. Change tier only if needed.
 8. For large context, prefer a same-tier long-context model before escalating, unless reasoning difficulty also increases.
 
 ## Common defaults
 
-- Simple bounded work: Fast, cheapest capable Fast model.
-- Normal code review: `code-reviewer` + Standard + `gpt-5.4-mini`.
-- Tiny single-file style-only review: `code-reviewer` + Fast + `gpt-5-mini`.
-- Subtle correctness/auth/security review: Premium, often `gpt-5.3-codex` or stronger suitable model.
+Use the single [task defaults table](reference/model-catalog.md#task-defaults): bounded work, budget review, general work, demanding review, or demanding autonomous work. Examples describe task classes; that table owns model preferences.
+
+Tiers describe capability requirements, not expense or latency. Choose the cheapest model demonstrated to meet the requirement; a higher price is not evidence of better review quality. Starting candidates are provisional until task-specific evaluations support them.
 
 ## Output format
 
@@ -64,11 +63,13 @@ Return:
 - agent_type:
 - tier:
 - model:
-- reason:
+- reason (task fit, cost assumptions, and evidence or uncertainty):
 - escalation_trigger, if any:
 - fallback, if any:
 
 ## References
+
+Catalog and pricing references were verified against [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) on **2026-09-08**. Recheck that source when current pricing is required; plan and runtime availability can differ.
 
 Load only when needed:
 

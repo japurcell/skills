@@ -2,6 +2,8 @@
 
 Use for `code-reviewer`, `security-review`, PR review, diff review, audit, test review, or security-sensitive changes.
 
+Use named defaults from [the catalog](model-catalog.md#task-defaults).
+
 ## Order
 
 1. If security-sensitive, use `security-review` + Premium, or `code-reviewer` + Premium for code-correctness review of security-sensitive code.
@@ -17,7 +19,7 @@ Use for `code-reviewer`, `security-review`, PR review, diff review, audit, test 
 - Low stakes.
 - No logic, tests, auth, data, API contract, migration, permission, redirect, secret, payment, deletion, or policy change.
 
-Route: `code-reviewer` + Fast + `gpt-5-mini`.
+Route: `code-reviewer` + Fast + the bounded-work default.
 
 ## Standard review: default
 
@@ -30,7 +32,7 @@ Use for meaningful code review, including:
 - more than 3 touched files
 - maintainability or design tradeoffs
 
-Route: `code-reviewer` + Standard + `gpt-5.4-mini` or same-tier capable fallback.
+Route: `code-reviewer` + Standard. Use the budget-review default for bounded ordinary diffs and the general-work default for broader reviews, or a same-tier capable fallback.
 
 ## Premium review
 
@@ -52,20 +54,21 @@ Routes:
 
 - Security audit/sensitive flow: `security-review` + Premium.
 - Subtle code correctness: `code-reviewer` + Premium.
-- Preferred code model: `gpt-5.3-codex`.
+- Preferred code model: the demanding-review default.
 - If unavailable, choose another Premium model suited to code/security reasoning.
 
 ## Review defaults
 
 | Situation | Route |
 |---|---|
-| Tiny single-file style-only diff | `code-reviewer` + Fast + `gpt-5-mini` |
-| Normal review | `code-reviewer` + Standard + `gpt-5.4-mini` |
-| Backend + frontend | `code-reviewer` + Standard + `gpt-5.4-mini` |
+| Tiny single-file style-only diff | `code-reviewer` + Fast + the bounded-work default |
+| Bounded ordinary review | `code-reviewer` + Standard + budget-review default |
+| Broader review | `code-reviewer` + Standard + general-work default |
+| Backend + frontend | `code-reviewer` + Standard + general-work default; Premium for subtle contracts |
 | Tests/guards | Standard; Premium if false-pass risk is subtle |
 | Auth/permissions/security-sensitive | Premium |
-| Subtle correctness/cross-file contracts | Premium + `gpt-5.3-codex` |
-| Security review | `security-review` + Premium; never cheapest |
+| Subtle correctness/cross-file contracts | Premium + the demanding-review default |
+| Security review | `security-review` + Premium; cheapest demonstrated capable model |
 
 ## Missed-issue rule
 
