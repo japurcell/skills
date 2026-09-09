@@ -278,7 +278,7 @@ def grade_case(eval_id: int, run_dir: Path) -> list[dict]:
     sandbox = run_dir / "validation-sandbox"
     targets = TARGET_LISTS[eval_id]
     results = [expectation("Produces exactly the allowed model output files.", output_files(run_dir) == expected_output_files(eval_id), ", ".join(sorted(output_files(run_dir))) or "no model output")]
-    for path in expected_output_files(eval_id):
+    for path in sorted(expected_output_files(eval_id)):
         metadata, body, error = frontmatter(read_text(sandbox / path))
         results.extend([
             expectation(f"Uses the exact path-derived type and non-empty description for {path}.", metadata.get("type") == expected_type(path) and bool(str(metadata.get("description", "")).strip()), error or json.dumps(metadata, sort_keys=True)),

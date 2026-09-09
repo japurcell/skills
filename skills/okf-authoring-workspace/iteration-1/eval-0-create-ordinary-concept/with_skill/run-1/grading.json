@@ -6,6 +6,16 @@
       "text": "Produces exactly the allowed model output files."
     },
     {
+      "evidence": "{\"description\": \"Routing for canonical knowledge.\", \"type\": \"Knowledge Index\"}",
+      "passed": true,
+      "text": "Uses the exact path-derived type and non-empty description for .agents/memory/INDEX.md."
+    },
+    {
+      "evidence": "# Index\n\nRoute canonical knowledge.\n",
+      "passed": true,
+      "text": "Preserves the exact required Markdown body for .agents/memory/INDEX.md."
+    },
+    {
       "evidence": "{\"description\": \"Record source ingestion history.\", \"type\": \"Source Ingestion Log\"}",
       "passed": true,
       "text": "Uses the exact path-derived type and non-empty description for .agents/memory/LOG.md."
@@ -24,16 +34,6 @@
       "evidence": "# Retention\n\nKeep stable paths.\n",
       "passed": true,
       "text": "Preserves the exact required Markdown body for .agents/memory/adrs/retention.md."
-    },
-    {
-      "evidence": "{\"description\": \"Routing for canonical knowledge.\", \"type\": \"Knowledge Index\"}",
-      "passed": true,
-      "text": "Uses the exact path-derived type and non-empty description for .agents/memory/INDEX.md."
-    },
-    {
-      "evidence": "# Index\n\nRoute canonical knowledge.\n",
-      "passed": true,
-      "text": "Preserves the exact required Markdown body for .agents/memory/INDEX.md."
     },
     {
       "evidence": "{\"description\": \"Durable telemetry guidance.\", \"type\": \"Agent Memory\"}",

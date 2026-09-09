@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds. Maintain this document in accordance with the repository's `exec-plans` skill.
 
-Implementation is active. Gates 1 and 2 are committed, Gate 3 is ready for user review and a manual checkpoint, and Gates 4–6 remain open. Do not begin a later gate before recording the preceding checkpoint.
+Implementation is active. Gates 1 and 2 are committed. Gate 3 implementation is committed at `6f7d2be1e040415d91026d828d4e70f59c110269`; its resumed acceptance review found and corrected nondeterministic grader output, and the correction is ready for the user's manual checkpoint. Gates 4–6 remain open. Do not begin a later gate before recording the preceding checkpoint.
 
 ## Purpose / Big Picture
 
@@ -17,7 +17,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-09 06:47Z) [milestone-1] Added the single valid two-bundle fixture and public-CLI contract suite; confirmed its intentional red is only the absent production linter.
 - [x] (2026-09-09 07:04Z) [milestone-1] Recorded the user-created Gate 1 reviewable checkpoint `e0d425972641f1f1a372d7dacd068f73fa7fefee`.
 - [x] (2026-09-09 07:29Z) [milestone-2] Vendored and verified PyYAML 6.0.3, implemented the dormant provider-neutral linter, made the expanded public-CLI suite green, and completed independent review without enabling hooks.
-- [ ] [milestone-3] Ready for user review: implemented and validated `okf-authoring`, its one-way `update-agent-docs` composition, and the corrected 16-run paired benchmark with grader-owned fixture lint/diff evidence. Remaining work is user review and the user-created checkpoint.
+- [ ] [milestone-3] Ready for the user-created correction checkpoint: Gate 3 implementation is committed at `6f7d2be1e040415d91026d828d4e70f59c110269`; resumed acceptance review found nondeterministic expectation ordering, and the sorted grader, hash-seed regression, synchronized aggregate, and regenerated reviewer now pass. Record the correction commit before opening Gate 4.
 - [ ] [milestone-4] Atomically migrate all 31 canonical Markdown documents and both source-summary scaffold producers, then make human and JSON full-corpus lint succeed.
 - [ ] [milestone-5] Add thin Copilot and Gemini adapters, register them after source-ingest validation, and make parity and provider regression suites green.
 - [ ] [milestone-6] Run disposable-worktree live provider probes, record versions/events/diagnostics/duration, complete documentation synchronization, and establish merge readiness.
@@ -58,6 +58,8 @@ The implementation is one migration unit. It may be built as reviewable commits,
   Evidence: Eval 3 named `gpt-5.6-sol`, eval 6 named `gpt-6`, and `review.html` lacked prompts and eval IDs. Both runs were replaced through explicit `gpt-5.6-luna` routing; every run now records that routing in `timing.json` and `execution-manifest.json`, and run-local eval metadata supplies all prompts and IDs to the regenerated viewer.
 - Observation: Gate 3 timing and token telemetry is incomplete and cannot support comparisons.
   Evidence: Duration is observed for 5 of 16 runs and tokens for 3 of 16. `benchmark.json` and `benchmark.md` omit timing/token statistics and deltas and report coverage instead of treating normalized aggregation placeholders as observations.
+- Observation: Gate 3's grader emitted expectation arrays in Python set iteration order, so identical reruns could rewrite accepted artifacts without changing scores.
+  Evidence: A resumed acceptance run changed both eval-0 `grading.json` files. A public-CLI regression failed under `PYTHONHASHSEED=1` versus `2`; sorting expected output paths made the grader deterministic across seeds `1`, `2`, `42`, and `random`, with scores unchanged at 72/72 with-skill and 52/72 without-skill. The shared aggregator exits 1 at `aggregate_benchmark.py:51` because it cannot add explicit `null` timing values. The tested score-preserving synchronizer now refreshes grading payloads while refusing score changes, after which the standard viewer generator refreshes `review.html` without fabricating telemetry.
 
 ## Decision Log
 
@@ -179,12 +181,13 @@ Update `.agents/skills/update-agent-docs/SKILL.md` so its semantic pass invokes 
 
 Create eight realistic evaluations: ordinary concept creation; metadata-only migration with byte-preserved body and stable path; draft summary; completed summary; `update-agent-docs` composition; read-only conformance review; an outside-root negative case; and unavailable-linter refusal. Each eval must have deterministic expectations in `evals.json`; the grader checks produced files, path/body preservation, frontmatter, reference loading, report contents, absence of out-of-scope edits, and refusal of false completion. Compare the new skill with a no-skill baseline in `skills/okf-authoring-workspace/iteration-1/`.
 
-Before the first live eval, record the available evaluation runner and model in this ExecPlan. Run every eval with and without the exact local skill path in the same batch, save `response.md`, `transcript.md`, and `timing.json` under the canonical per-eval directory, then grade and aggregate:
+Before the first live eval, record the available evaluation runner and model in this ExecPlan. Run every eval with and without the exact local skill path in the same batch, save `response.md`, `transcript.md`, and `timing.json` under the canonical per-eval directory, then grade and generate the reviewer:
 
     python3 .agents/skills/okf-authoring/evals/grade_benchmark.py skills/okf-authoring-workspace/iteration-1
-    PYTHONPATH=skills/skill-creator python3 -m scripts.aggregate_benchmark skills/okf-authoring-workspace/iteration-1 --skill-name okf-authoring
+    python3 .agents/skills/okf-authoring/evals/sync_benchmark.py skills/okf-authoring-workspace/iteration-1
     python3 skills/skill-creator/eval-viewer/generate_review.py skills/okf-authoring-workspace/iteration-1 --skill-name okf-authoring --benchmark skills/okf-authoring-workspace/iteration-1/benchmark.json --static skills/okf-authoring-workspace/iteration-1/review.html
 
+The checked-in `.agents/skills/okf-authoring/evals/sync_benchmark.py` is the accepted Gate 3 aggregation path for this benchmark. It refreshes every run's expectations from the grader, verifies that all score summaries remain unchanged, and preserves the accepted incomplete-telemetry aggregate instead of passing explicit `null` durations to the generic aggregator. If any score changes, it exits nonzero and requires a separately supported full aggregation rather than silently leaving stale summary metrics.
 If `copilot` is the runner, use its documented non-interactive form for each recorded prompt and grant only the write/shell tools required inside the eval sandbox:
 
     copilot -p '<exact eval prompt>' -s --allow-tool='write, shell(python3:*), shell(git:*), shell(bash:*)' --output-format json --share '<run-dir>/transcript.md'
@@ -294,7 +297,7 @@ Gate 3:
     PYTHONPATH=scripts/vendor python3 skills/skill-creator/scripts/quick_validate.py .agents/skills/okf-authoring
     python3 -m py_compile .agents/skills/okf-authoring/evals/grade_benchmark.py
     python3 .agents/skills/okf-authoring/evals/grade_benchmark.py skills/okf-authoring-workspace/iteration-1
-    PYTHONPATH=skills/skill-creator python3 -m scripts.aggregate_benchmark skills/okf-authoring-workspace/iteration-1 --skill-name okf-authoring
+    python3 .agents/skills/okf-authoring/evals/sync_benchmark.py skills/okf-authoring-workspace/iteration-1
     python3 skills/skill-creator/eval-viewer/generate_review.py skills/okf-authoring-workspace/iteration-1 --skill-name okf-authoring --benchmark skills/okf-authoring-workspace/iteration-1/benchmark.json --static skills/okf-authoring-workspace/iteration-1/review.html
 
 Gate 4:
@@ -419,9 +422,9 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 2 commit: `817f2881393235f8b6abb4d7a08df28570262715`. Linter fixture result: `python3 -m py_compile scripts/lint-okf.py scripts/vendor/yaml/*.py`, `bash -n scripts/test-okf-lint.sh`, and `PYTHONDONTWRITEBYTECODE=1 bash scripts/test-okf-lint.sh` all exited 0; the suite printed `PASSED: OKF linter CLI contract`.
 - Gate 2 review result: six first-pass contract gaps and two follow-up gaps received public-CLI regressions and fixes; final targeted re-review found all required findings resolved and no new high-confidence regression. The live pre-migration corpus is deterministic at 104 conformance diagnostics, exit 1, with no `OKF900`.
 - Gate 3 runner/model: collaboration task agents using exact model `gpt-5.6-luna` for paired `with_skill` and `without_skill` runs; no external `copilot`, `gemini`, or `claude` executable is available, and collaboration notifications do not expose token totals.
-- Gate 3 grader and skill validation: `PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/okf-authoring/evals/test_grade_benchmark.py` passes 15 tests; grader/test compilation, vendored-PyYAML quick validation, `PYTHONDONTWRITEBYTECODE=1 bash scripts/test-okf-lint.sh`, and `git diff --check` pass.
+- Gate 3 grader and skill validation: `PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/okf-authoring/evals/test_grade_benchmark.py` passes 17 tests, including hash-seed determinism and score-preserving benchmark synchronization; grader/test/synchronizer compilation, vendored-PyYAML quick validation, `PYTHONDONTWRITEBYTECODE=1 bash scripts/test-okf-lint.sh`, and `git diff --check` pass.
 - Gate 3 paired benchmark: the corrected 16-run result uses exact `gpt-5.6-luna` routing for both configurations and harness-owned real-linter/scoped-diff evidence. With-skill passes 72/72 expectations (100%); without-skill passes 52/72 (72.2%), with a 71.5% mean per-eval pass rate. Duration coverage is 5/16 and token coverage is 3/16, so those comparisons are omitted. Human review is generated at `skills/okf-authoring-workspace/iteration-1/review.html` with all prompts and eval IDs.
-- Gate 3 fresh rereview: approved after verifying the 16-entry model-evidence manifest, absence of old model markers and root stray workspaces, omission of incomplete telemetry comparisons, 16 usable reviewer prompts/IDs, 15 passing grader tests, and a clean `git diff --check`.
+- Gate 3 resumed acceptance review: found nondeterministic eval-0 expectation ordering after the initial implementation commit. The correction sorts the grader's expected paths, adds a cross-hash-seed regression, uses a tested score-preserving synchronizer for the incomplete-telemetry aggregate, and regenerates `review.html`. Independent review confirmed all 16 grading files, the aggregate, and the reviewer are synchronized; all prompts and eval IDs are present; scores remain 72/72 versus 52/72; and no skill, harness, model-evidence, or stray-workspace blocker remains.
 - Gate 4 commit, corpus inventory/body comparison, and full-lint duration: not started.
 - Gate 5 commit, provider versions/source recheck, and simulated parity results: not started.
 - Gate 6 Copilot worktree/commands/events/diagnostics: not started.
@@ -466,3 +469,5 @@ Revision note (2026-09-09): Hardened Gate 3's public benchmark seam after indepe
 Revision note (2026-09-09): Corrected Gate 3's skill location to the repository-local `.agents/skills/okf-authoring/` path after user review; discarded contaminated live runs and restarted the benchmark from the corrected source.
 
 Revision note (2026-09-09): Replaced the false-pass grader seam with fixture-backed real lint/diff evidence, completed the corrected paired benchmark, repaired executor-model and reviewer metadata found by fresh rereview, omitted incomplete telemetry comparisons, and moved Gate 3 to user review.
+
+Revision note (2026-09-09): Recorded Gate 3 implementation commit `6f7d2be1e040415d91026d828d4e70f59c110269`, corrected nondeterministic grader expectation ordering found during resumed acceptance, synchronized generated review artifacts, and kept Gate 4 closed pending the user's manual correction checkpoint.

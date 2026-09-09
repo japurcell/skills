@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -7,6 +8,7 @@ from pathlib import Path
 
 
 GRADER = Path(__file__).with_name("grade_benchmark.py")
+BENCHMARK_SYNC = Path(__file__).with_name("sync_benchmark.py")
 HARNESS_EVIDENCE = "harness/lint-evidence.json"
 
 EVAL_PATHS = {
@@ -127,6 +129,68 @@ class BenchmarkContractTests(unittest.TestCase):
                 self.assertTrue(evidence["sandbox_cwd"].endswith("validation-sandbox"))
                 expected = sorted(path for path, _, _ in EVAL_PATHS[evidence["eval_id"]]) if evidence["eval_id"] in {0, 1, 2, 3, 4, 7} else []
                 self.assertEqual(evidence["changed_paths"], expected)
+
+    def test_grading_output_is_deterministic_across_hash_seeds(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir)
+            self.make_complete_layout(iteration)
+            grading_path = iteration / "eval-0" / "with_skill" / "run-1" / "grading.json"
+            outputs = []
+            for hash_seed in ("1", "2"):
+                env = os.environ.copy()
+                env["PYTHONHASHSEED"] = hash_seed
+                result = subprocess.run(
+                    [sys.executable, str(GRADER), str(iteration)],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    env=env,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                outputs.append(grading_path.read_bytes())
+        self.assertEqual(outputs[0], outputs[1])
+
+    def test_benchmark_sync_refreshes_expectations_and_rejects_score_changes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir)
+            self.make_complete_layout(iteration)
+            grader_result = self.run_grader(iteration)
+            self.assertEqual(grader_result.returncode, 0, grader_result.stdout + grader_result.stderr)
+            run_dir = iteration / "eval-0" / "with_skill" / "run-1"
+            grading_path = run_dir / "grading.json"
+            grading = json.loads(grading_path.read_text(encoding="utf-8"))
+            benchmark_path = iteration / "benchmark.json"
+            benchmark = {
+                "runs": [{
+                    "eval_id": 0,
+                    "configuration": "with_skill",
+                    "run_number": 1,
+                    "result": {**grading["summary"], "tool_calls": 0, "errors": 0},
+                    "expectations": [],
+                }],
+            }
+            benchmark_path.write_text(json.dumps(benchmark) + "\n", encoding="utf-8")
+
+            sync_result = subprocess.run(
+                [sys.executable, str(BENCHMARK_SYNC), str(iteration)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(sync_result.returncode, 0, sync_result.stdout + sync_result.stderr)
+            synchronized = json.loads(benchmark_path.read_text(encoding="utf-8"))
+            self.assertEqual(synchronized["runs"][0]["expectations"], grading["expectations"])
+
+            synchronized["runs"][0]["result"]["passed"] -= 1
+            benchmark_path.write_text(json.dumps(synchronized) + "\n", encoding="utf-8")
+            mismatch_result = subprocess.run(
+                [sys.executable, str(BENCHMARK_SYNC), str(iteration)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        self.assertNotEqual(mismatch_result.returncode, 0)
+        self.assertIn("score changed", mismatch_result.stderr)
 
     def test_claimed_clean_outcome_with_actual_lint_failure_is_graded_failing(self):
         with tempfile.TemporaryDirectory() as temp_dir:
