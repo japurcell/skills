@@ -11,6 +11,7 @@ Finish an implementation-ready design for migrating the canonical documents unde
 - All 18 tickets derived from the old sidecar/selector/provider-runtime design are `obsolete`. Their research may be reused as evidence, but their decisions are not authoritative.
 - **In-Place OKF Document Contract** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its resolution defines the two-bundle, standard-metadata, stable-path, link, source-summary, lifecycle, and no-extension contract.
 - Three replacement tickets remain open. **OKF Authoring Skill Contract** and **OKF Linter and Provider Hooks Contract** are both frontier tickets; **In-Place Migration Sequencing and Verification** remains blocked by both.
+- The 18 obsolete tickets are archived under `tickets/obsolete/`; the direct `tickets/` directory contains exactly five non-obsolete tickets (two closed and three open).
 - `map.md` and `implementation-overview.md` now describe the corrected architecture. No implementation or implementation ExecPlan exists.
 
 ## Next Focus
@@ -52,7 +53,7 @@ Activate `handoff`, `wayfinder`, `grilling`, and `writing-for-agents`; claim `ti
 
 ## Verification State
 
-- Ticket validation now shows two closed authoritative tickets, 18 obsolete tickets, three open replacements, no active claims, and two frontier tickets: **OKF Authoring Skill Contract** and **OKF Linter and Provider Hooks Contract**. **In-Place Migration Sequencing and Verification** remains blocked by both.
+- Ticket validation now shows two closed authoritative tickets, 18 obsolete tickets in `tickets/obsolete/`, five non-obsolete tickets directly under `tickets/` (two closed and three open replacements), no active claims, and two frontier tickets: **OKF Authoring Skill Contract** and **OKF Linter and Provider Hooks Contract**. **In-Place Migration Sequencing and Verification** remains blocked by both.
 - All relative Markdown links in `map.md`, `implementation-overview.md`, and `handoff.md` resolve. Active-document searches found old runtime terms only where the rejected design is explicitly identified as obsolete.
 - A delegated repository-wide stale-document audit found no other active references presenting the rejected design as current and no migration-relevant broken links. It identified `relocation-execplan.md` as the sole stale artifact; that completed plan now labels its counts as a 2026-09-03 relocation snapshot and routes current status to `map.md` and this handoff.
 - `git diff --check` passed.
@@ -61,7 +62,7 @@ Activate `handoff`, `wayfinder`, `grilling`, and `writing-for-agents`; claim `ti
 - Corpus inventory: 31 canonical Markdown documents (6 instructions, 16 non-summary memory documents, 9 source summaries). Exact lowercase `index.md`/`log.md` do not exist; uppercase `INDEX.md` and `LOG.md` are current ordinary concept candidates and exact loading/history paths.
 - Corrected `research/okf-primary-sources.md` so it no longer overstates `generated.at` as explicitly required by OKF minimum conformance. The spec explicitly requires `generated.by` and specifies `generated.at`; requiring both is a repository-profile decision.
 - The confirmed document contract is recorded in `tickets/in-place-okf-document-contract.md`; its new map link resolves, and the ticket has no remaining claim.
-- The current end-of-session `update-agent-docs` pass required no `.agents/instructions/` or `.agents/memory/` edits: only long-lived planning documents changed, and canonical guidance must continue describing the current pre-implementation repository state.
+- The current end-of-session `update-agent-docs` pass synchronized the durable archive convention in `.agents/memory/FILE_MAP.md` and `.agents/instructions/repo.md`.
 
 ## Errors and Durable Learnings
 

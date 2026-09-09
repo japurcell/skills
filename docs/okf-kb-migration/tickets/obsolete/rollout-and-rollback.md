@@ -23,7 +23,7 @@ What phased rollout, shadow-mode comparison, opt-in/default promotion sequence, 
 - Use designated canary branches or worktrees with committed candidate configuration rather than silent user bucketing. Participants knowingly exercise normal tasks while rollback remains one configuration revert away.
 - In addition to the complete same-commit CI promotion gates, require one full normal work cycle and at least 50 eligible prompt invocations, whichever takes longer, with no safety, parity, or fallback-class regression. Any candidate or runtime-configuration change restarts the evidence window.
 
-The supporting 2026-09-03 official-source assessment is in [`../research/copilot-cli-hooks-rollout.md`](../research/copilot-cli-hooks-rollout.md).
+The supporting 2026-09-03 official-source assessment is in [`../../research/copilot-cli-hooks-rollout.md`](../../research/copilot-cli-hooks-rollout.md).
 
 ### Accepted round 2
 

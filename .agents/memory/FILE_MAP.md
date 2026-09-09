@@ -24,7 +24,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `agents/` | agents | Standalone custom agent prompt files. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `docs/research/` | repo docs | Human-facing research notes on tooling and conversions. |
-| `docs/okf-kb-migration/` | repo docs | Version-controlled OKF migration research, Wayfinder map, handoff, decision tickets, and relocation record. |
+| `docs/okf-kb-migration/` | repo docs | Version-controlled OKF migration research, Wayfinder map, handoff, and relocation record; current tickets live in `tickets/`, with obsolete tickets archived under `tickets/obsolete/`. |
 | `scripts/` | scripts | Installers, importers, validation helpers, and shared shell utilities. |
 | `references/` | references | Optional shared reference material shipped with installs. |
 
