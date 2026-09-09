@@ -10,6 +10,9 @@ coverage: Test and validation guidance for shell helper scripts under `scripts/`
   - `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`
 - Python helper module unit tests:
   - `python scripts/test_helpers.py`
+- OKF linter changes:
+  - `bash -n scripts/test-okf-lint.sh && bash scripts/test-okf-lint.sh`
+  - The suite copies `scripts/fixtures/okf-valid-repo/` into a fresh `mktemp` directory for each public-CLI case. Do not derive uniqueness from a shell counter mutated inside command substitution; that mutation runs in a subshell and does not persist.
 - Hook-tree shell helper changes:
   - `bash scripts/test-repo-root.sh`
 - For any `scripts/*.ps1` or PowerShell-specific install logic, use `.agents/memory/testing/powershell.md` instead of treating the check as generic shell validation.

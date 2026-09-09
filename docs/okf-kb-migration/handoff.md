@@ -2,11 +2,13 @@
 
 ## Goal
 
-Finish an implementation-ready design for migrating the canonical documents under `.agents/instructions/` and `.agents/memory/` in place to OKF v0.2. Preserve the existing `AGENTS.md` → `.agents/memory/INDEX.md` loading path, teach OKF authoring through a repository skill, and enforce conformance through blocking GitHub Copilot CLI and Gemini CLI lint hooks.
+Execute the six-gate in-place OKF v0.2 migration for the canonical documents under `.agents/instructions/` and `.agents/memory/`. Preserve the existing `AGENTS.md` → `.agents/memory/INDEX.md` loading path, teach OKF authoring through a repository skill, and enforce conformance through blocking GitHub Copilot CLI and Gemini CLI lint hooks.
 
 ## Status
 
-- **OKF Authoring Skill Contract** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. No implementation work has started.
+- On 2026-09-09, the user explicitly authorized implementation. Gate 1 implementation work is complete from baseline `b9a1d8a8a0542bec9eb6764cf4b4af3071eefad9`; the user will manually commit the reviewed worktree.
+
+- **OKF Authoring Skill Contract** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its Gate 3 implementation has not started.
 - The user found a charter-level flaw in the closed map: its `.agents/okf/` sidecar and prompt-time selector would inject knowledge already discoverable through the mandatory `AGENTS.md` → `.agents/memory/INDEX.md` path.
 - **In-Place OKF Migration Charter** records the corrected source-of-truth and enforcement model and is closed.
 - All 18 tickets derived from the old sidecar/selector/provider-runtime design are `obsolete`. Their research may be reused as evidence, but their decisions are not authoritative.
@@ -15,16 +17,16 @@ Finish an implementation-ready design for migrating the canonical documents unde
 - **In-Place Migration Sequencing and Verification** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its resolution fixes six implementation gates, validation scope, ownership, live capability proof, and rollback.
 - The 18 obsolete tickets are archived under `tickets/obsolete/`; the direct `tickets/` directory contains exactly five closed authoritative tickets.
 - `map.md` and `implementation-overview.md` describe the completed corrected design.
-- `implementation-execplan.md` now translates the five closed contracts into six open implementation gates with public test seams, non-overlapping path ownership, exact stable validation commands, live provider evidence requirements, and whole-migration rollback.
-- No implementation work has started. The user explicitly said not to begin implementation in the plan-authoring session.
+- `implementation-execplan.md` translates the five closed contracts into six implementation gates with public test seams, non-overlapping path ownership, exact stable validation commands, live provider evidence requirements, and whole-migration rollback. Gate 1 is active only for its checkpoint; Gates 2–6 are open.
+- Gate 1 added `scripts/fixtures/okf-valid-repo/` and `scripts/test-okf-lint.sh`. No production linter, vendor files, skill, canonical-corpus migration, adapter, or hook registration exists yet.
 
 ## Next Focus
 
-Hold at the planning boundary until the user explicitly authorizes implementation. The next implementation session starts with Gate 1 of `implementation-execplan.md`.
+Wait for the user's manual Gate 1 checkpoint, then record its SHA. Do not begin Gate 2 before that checkpoint exists.
 
 ## Exact Next Step
 
-After explicit implementation authorization, activate `handoff`, `exec-plans`, mandatory `tdd`, `official-sources`, and the applicable skill-authoring workflow; read `implementation-execplan.md`, record the Gate 1 baseline commit and inventory, then add only the valid two-bundle fixture and failing public-seam linter tests. Do not create production linter code in Gate 1.
+After the user manually commits the current Gate 1 scope, record its SHA in `implementation-execplan.md`. Then Gate 2 may begin with pinned-vendor verification and the first `OKF900` public-CLI red-to-green slice.
 
 ## Decisions and Constraints
 
@@ -63,7 +65,9 @@ After explicit implementation authorization, activate `handoff`, `exec-plans`, m
 - `docs/okf-kb-migration/tickets/okf-linter-and-provider-hooks-contract.md` — closed linter, diagnostics, provider-hook, and capability-gate design.
 - `docs/okf-kb-migration/tickets/in-place-migration-sequencing-and-verification.md` — closed six-gate sequencing and verification contract.
 - `docs/okf-kb-migration/implementation-overview.md` — concise corrected architecture for novice readers.
-- `docs/okf-kb-migration/implementation-execplan.md` — implementation authority; all six gates are open and no implementation has begun.
+- `docs/okf-kb-migration/implementation-execplan.md` — implementation authority; Gate 1 code/tests are complete but its checkpoint remains open, and Gates 2–6 have not started.
+- `scripts/test-okf-lint.sh` — Gate 1 public-CLI contract suite; intentionally red until Gate 2 creates `scripts/lint-okf.py` and the pinned vendor record.
+- `scripts/fixtures/okf-valid-repo/` — pristine two-bundle fixture copied into a fresh temporary repository for every mutation case.
 - `.agents/scratchpad/explore-okf-in-place-correction.md` — local evidence tracing the duplicate-context flaw.
 - `.agents/scratchpad/explore-okf-authoring-skill-contract.md` — local code map for current skill conventions and the `update-agent-docs` responsibility seam.
 - `docs/okf-kb-migration/research/okf-primary-sources.md` — prior OKF v0.2 research; its sidecar recommendation is obsolete, but specification facts remain reusable after verification.
@@ -93,9 +97,12 @@ After explicit implementation authorization, activate `handoff`, `exec-plans`, m
 - Rechecked canonical OKF v0.2 on 2026-09-09: `main` remains commit `ad30107c31c06aec8a7d5636e0d1058118604e6f`, and `SPEC.md` retains SHA-256 `26aa5da029278939f914e578107242d9607d4f2dc5fe153272b82f9ed1030101`.
 - Rechecked current provider documentation: Copilot still documents ordered same-event hooks, full-match mutation-tool matchers, stop blocking, fail-open timeouts, and the eight-block override; Gemini still documents `AfterTool`/`AfterAgent`, while official issue `google-gemini/gemini-cli#27712` remains open.
 - The current environment has Python 3.12.3 but no `copilot` or `gemini` executable, so live provider proof remains an explicit Gate 6 release requirement rather than planning-session evidence.
-- The implementation ExecPlan contains all six required gates, path ownership, TDD seams, stable command matrix, version/source pins, provider probe templates, evidence slots, and rollback checkpoints. Every implementation progress item remains unchecked.
-- Current validation covers all 16 active migration Markdown documents outside `tickets/obsolete/`; every relative link resolves, all required ExecPlan sections and six open milestone status blocks are present, and `git diff --check` passes.
-- The current end-of-session `update-agent-docs` pass updated `.agents/memory/FILE_MAP.md` so the effort map includes the new implementation ExecPlan. No other canonical documentation needed to change, and no OKF migration implementation began.
+- The implementation ExecPlan contains all six required gates, path ownership, TDD seams, stable command matrix, version/source pins, provider probe templates, evidence slots, and rollback checkpoints. Gate 1 baseline, prerequisite, fixture, and test items are checked; only its commit item remains open.
+- Current validation covers all active migration Markdown documents outside `tickets/obsolete/`; every relative link resolves, required ExecPlan sections remain present, and `git diff --check` passes.
+- The current end-of-session `update-agent-docs` pass updated `.agents/instructions/scripts.md`, `.agents/memory/testing/scripts.md`, and `.agents/memory/FILE_MAP.md` for safe temporary cleanup and the new OKF fixture/test entry point.
+- Gate 1 baseline inventory matched 31 canonical Markdown files, 22 `coverage` headers, 9 verified summaries, and no lowercase reserved paths. Both source-ingest suites and both startup suites exited 0.
+- `bash -n scripts/test-okf-lint.sh` exits 0. `bash scripts/test-okf-lint.sh` intentionally exits 1 with exactly `intentional red: missing executable scripts/lint-okf.py`; fixture preflight runs before that guard. `git diff --check` is clean.
+- Commit preflight found the repository on `main` with empty repository Git author name/email. Per the user's direction, no commit, branch, push, or PR was created; the reviewed worktree is ready for manual commit.
 
 ## Errors and Durable Learnings
 
@@ -109,8 +116,10 @@ After explicit implementation authorization, activate `handoff`, `exec-plans`, m
 - Two `functions.exec` wrappers failed before shell execution because malformed JavaScript included an invalid variable and stray text. No files changed. Keep orchestration wrappers minimal (`const r = await ...; text(r.output);`) and avoid decorative or non-ASCII variable names.
 - A repository search named nonexistent `skills/update-agent-docs`; `rg` reported the missing path and made no changes. The canonical repository-local skill is `.agents/skills/update-agent-docs/`; verify paths with `rg --files` before combining search roots.
 - A temporary PyYAML archive inspection was rejected before execution because its cleanup trap contained a blocked recursive removal command. No files were created. Streaming the archive directly through `tar -tzf -` produced the needed package/license inventory without cleanup state.
+- Gate 1 review found that incrementing a shell counter inside command substitution runs in a subshell and can reuse case directories. The harness now creates every case with its own `mktemp -d` template.
+- Gate 1 review also found that interpolating a `TMPDIR`-influenced path into an EXIT trap can reparse metacharacters as shell code. Use a named cleanup function with a quoted exact path and `rm -rf -- "$path"`.
 
 ## Suggested Skills
 
-- Resume with `handoff`, then use `exec-plans`, `tdd`, `official-sources`, and the applicable skill-authoring workflow to execute the existing implementation ExecPlan only after explicit authorization.
+- Resume with `handoff`, then use `exec-plans` and the commit workflow to finish the Gate 1 checkpoint; use `tdd` and `official-sources` when Gate 2 implementation begins.
 - End every repository-changing session with `update-agent-docs`.
