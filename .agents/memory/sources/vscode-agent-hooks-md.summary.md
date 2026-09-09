@@ -1,5 +1,8 @@
 ---
-status: verified
+type: Source Summary
+description: VS Code hook compatibility, hook locations, or agent-scoped hook behavior.
+sources:
+  - resource: ../../sources/vscode-agent-hooks.md
 ---
 
 # Summary for `vscode-agent-hooks.md`

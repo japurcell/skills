@@ -1,5 +1,6 @@
 ---
-coverage: Repo-wide / cross-cutting quirks and workarounds; layer-specific issues live in known-issues/<area>.md
+type: Known Issue
+description: Repo-wide / cross-cutting quirks and workarounds; layer-specific issues live in known-issues/<area>.md
 ---
 
 # Known Issues

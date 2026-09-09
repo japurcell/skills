@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds. Maintain this document in accordance with the repository's `exec-plans` skill.
 
-Implementation is active. Gates 1 and 2 are committed. Gate 3 implementation is committed at `6f7d2be1e040415d91026d828d4e70f59c110269`; its resumed acceptance review found and corrected nondeterministic grader output, and the correction is ready for the user's manual checkpoint. Gates 4–6 remain open. Do not begin a later gate before recording the preceding checkpoint.
+Implementation is active. Gates 1–3 are committed; the final Gate 3 rollback checkpoint is `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`. Gate 4 is implemented, validated, and ready for the user's manual checkpoint. Gates 5–6 remain open. Do not begin a later gate before recording the preceding checkpoint.
 
 ## Purpose / Big Picture
 
@@ -17,8 +17,8 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-09 06:47Z) [milestone-1] Added the single valid two-bundle fixture and public-CLI contract suite; confirmed its intentional red is only the absent production linter.
 - [x] (2026-09-09 07:04Z) [milestone-1] Recorded the user-created Gate 1 reviewable checkpoint `e0d425972641f1f1a372d7dacd068f73fa7fefee`.
 - [x] (2026-09-09 07:29Z) [milestone-2] Vendored and verified PyYAML 6.0.3, implemented the dormant provider-neutral linter, made the expanded public-CLI suite green, and completed independent review without enabling hooks.
-- [ ] [milestone-3] Ready for the user-created correction checkpoint: Gate 3 implementation is committed at `6f7d2be1e040415d91026d828d4e70f59c110269`; resumed acceptance review found nondeterministic expectation ordering, and the sorted grader, hash-seed regression, synchronized aggregate, and regenerated reviewer now pass. Record the correction commit before opening Gate 4.
-- [ ] [milestone-4] Atomically migrate all 31 canonical Markdown documents and both source-summary scaffold producers, then make human and JSON full-corpus lint succeed.
+- [x] (2026-09-09 13:25Z) [milestone-3] Recorded the user-created final Gate 3 rollback checkpoint `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735` after the deterministic grader correction and independent approval.
+- [ ] (2026-09-09 13:25Z) [milestone-4] Ready for the user-created checkpoint: migrated all 31 canonical Markdown documents and both source-summary scaffold producers, repaired stale canonical teaching text and invalid index links, preserved manifest/raw-source invariants, and made human and JSON full-corpus lint succeed. Remaining work is the manual Gate 4 commit.
 - [ ] [milestone-5] Add thin Copilot and Gemini adapters, register them after source-ingest validation, and make parity and provider regression suites green.
 - [ ] [milestone-6] Run disposable-worktree live provider probes, record versions/events/diagnostics/duration, complete documentation synchronization, and establish merge readiness.
 
@@ -60,6 +60,10 @@ The implementation is one migration unit. It may be built as reviewable commits,
   Evidence: Duration is observed for 5 of 16 runs and tokens for 3 of 16. `benchmark.json` and `benchmark.md` omit timing/token statistics and deltas and report coverage instead of treating normalized aggregation placeholders as observations.
 - Observation: Gate 3's grader emitted expectation arrays in Python set iteration order, so identical reruns could rewrite accepted artifacts without changing scores.
   Evidence: A resumed acceptance run changed both eval-0 `grading.json` files. A public-CLI regression failed under `PYTHONHASHSEED=1` versus `2`; sorting expected output paths made the grader deterministic across seeds `1`, `2`, `42`, and `random`, with scores unchanged at 72/72 with-skill and 52/72 without-skill. The shared aggregator exits 1 at `aggregate_benchmark.py:51` because it cannot add explicit `null` timing values. The tested score-preserving synchronizer now refreshes grading payloads while refusing score changes, after which the standard viewer generator refreshes `review.html` without fabricating telemetry.
+- Observation: Raw source paths cannot be interpolated into plain YAML or unescaped URI references in generated summary metadata.
+  Evidence: A source named `nested/source #1?.md` truncated at `#` under YAML/URI parsing. Both producers now JSON-quote dynamic YAML scalars and percent-encode the resource path while preserving `/`; both provider suites cover the special path.
+- Observation: Metadata-only corpus migration exposed stale body instructions and two directory-valued index links that the OKF profile rejects.
+  Evidence: Initial full-corpus lint reported `OKF103` for the two `INDEX.md` directory links, and review found body text still teaching `coverage:` and `status: scaffold`. The approved semantic corrections now point to regular files and teach path-derived type/description plus exact draft-summary frontmatter semantics.
 
 ## Decision Log
 
@@ -170,8 +174,8 @@ Milestone acceptance is a green `bash scripts/test-okf-lint.sh`, syntax-valid li
 
 ### Milestone 3: Add and evaluate the authoring skill
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Before creating the skill, search both `.agents/skills/` and `skills/` descriptions and names for an existing equivalent; record that no existing skill owns the OKF representation contract or refine the existing owner instead of creating a duplicate. For the expected new repository-local skill, create `.agents/skills/okf-authoring/SKILL.md`, `.agents/skills/okf-authoring/references/profile.md`, `.agents/skills/okf-authoring/references/source-summaries.md`, `.agents/skills/okf-authoring/evals/evals.json`, and a deterministic `.agents/skills/okf-authoring/evals/grade_benchmark.py`. Keep invocation, the six-step workflow, one-way orchestration, read-only review behavior, and completion reporting in `SKILL.md`. Put shared type/metadata/link/lifecycle rules in `profile.md`; put only draft/completed summary provenance and scaffold examples in `source-summaries.md`. Do not add a general examples file unless evaluation evidence justifies it.
 
@@ -198,7 +202,7 @@ Milestone acceptance requires a green quick validation, valid grader syntax, a c
 
 ### Milestone 4: Perform the atomic corpus and scaffold cutover
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Record the Gate 3 commit hash as the rollback checkpoint. Migrate all canonical documents and both scaffold producers in one gate; do not commit or hand off a partially converted corpus. For each of the 22 coverage-based files, preserve path and body and replace the frontmatter with the exact path-derived `type` followed by `description` containing the prior `coverage` value. Do not synthesize `generated`, `verified`, `stale_after`, tags, titles, or lifecycle status.
@@ -425,7 +429,8 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 3 grader and skill validation: `PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/okf-authoring/evals/test_grade_benchmark.py` passes 17 tests, including hash-seed determinism and score-preserving benchmark synchronization; grader/test/synchronizer compilation, vendored-PyYAML quick validation, `PYTHONDONTWRITEBYTECODE=1 bash scripts/test-okf-lint.sh`, and `git diff --check` pass.
 - Gate 3 paired benchmark: the corrected 16-run result uses exact `gpt-5.6-luna` routing for both configurations and harness-owned real-linter/scoped-diff evidence. With-skill passes 72/72 expectations (100%); without-skill passes 52/72 (72.2%), with a 71.5% mean per-eval pass rate. Duration coverage is 5/16 and token coverage is 3/16, so those comparisons are omitted. Human review is generated at `skills/okf-authoring-workspace/iteration-1/review.html` with all prompts and eval IDs.
 - Gate 3 resumed acceptance review: found nondeterministic eval-0 expectation ordering after the initial implementation commit. The correction sorts the grader's expected paths, adds a cross-hash-seed regression, uses a tested score-preserving synchronizer for the incomplete-telemetry aggregate, and regenerates `review.html`. Independent review confirmed all 16 grading files, the aggregate, and the reviewer are synchronized; all prompts and eval IDs are present; scores remain 72/72 versus 52/72; and no skill, harness, model-evidence, or stray-workspace blocker remains.
-- Gate 4 commit, corpus inventory/body comparison, and full-lint duration: not started.
+- Gate 3 final rollback checkpoint: `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`.
+- Gate 4 implementation: 31 canonical paths preserved; approved body changes are limited to `INDEX.md`, `instructions/hooks.md`, `known-issues/hooks.md`, and `testing/hooks.md` for repaired links, current OKF teaching, and synchronized hook/test guidance; exactly nine `summary_hash` values changed with all other manifest fields stable; raw sources unchanged; no legacy metadata or lowercase reserved path remains. Both auto-ingest suites, Python/shell syntax, the OKF linter suite, human full-corpus lint, JSON full-corpus lint, and `git diff --check` pass. Independent review approved the special-path quoting/encoding fix and required only the now-completed canonical/plan documentation synchronization. Manual commit pending.
 - Gate 5 commit, provider versions/source recheck, and simulated parity results: not started.
 - Gate 6 Copilot worktree/commands/events/diagnostics: not started.
 - Gate 6 Gemini worktree/commands/events/diagnostics: not started.
@@ -471,3 +476,7 @@ Revision note (2026-09-09): Corrected Gate 3's skill location to the repository-
 Revision note (2026-09-09): Replaced the false-pass grader seam with fixture-backed real lint/diff evidence, completed the corrected paired benchmark, repaired executor-model and reviewer metadata found by fresh rereview, omitted incomplete telemetry comparisons, and moved Gate 3 to user review.
 
 Revision note (2026-09-09): Recorded Gate 3 implementation commit `6f7d2be1e040415d91026d828d4e70f59c110269`, corrected nondeterministic grader expectation ordering found during resumed acceptance, synchronized generated review artifacts, and kept Gate 4 closed pending the user's manual correction checkpoint.
+
+Revision note (2026-09-09): Recorded the user-created final Gate 3 checkpoint `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`, marked Milestone 3 accepted, and opened Gate 4's atomic corpus and scaffold cutover.
+
+Revision note (2026-09-09): Completed and validated Gate 4's atomic corpus/scaffold migration, added special source-path regressions, repaired stale canonical teaching text and index links found by review, and stopped before Gate 5 for the user's manual checkpoint.

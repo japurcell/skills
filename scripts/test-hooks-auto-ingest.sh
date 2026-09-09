@@ -29,6 +29,24 @@ path = pathlib.Path(sys.argv[1])
 print(hashlib.sha256(path.read_bytes()).hexdigest(), end="")' "$1"
 }
 
+frontmatter_for_file() {
+  awk '
+    NR == 1 {
+      if ($0 != "---") {
+        exit 1
+      }
+      print
+      next
+    }
+    {
+      print
+      if ($0 == "---") {
+        exit
+      }
+    }
+  ' "$1"
+}
+
 run_auto_ingest_hook() {
   local audit_log="$1"
   local payload="$2"
@@ -123,6 +141,7 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
   local deleted_summary
   local new_summary
   local renamed_new_summary
+  local special_summary
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -136,6 +155,7 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
   make_text_file "$workdir/.agents/sources/modified.md" $'modified source v1\n'
   make_text_file "$workdir/.agents/sources/rename-old.md" $'rename source v1\n'
   make_text_file "$workdir/.agents/sources/deleted.md" $'deleted source v1\n'
+  make_text_file "$workdir/.agents/sources/nested/source #1?.md" $'special source v1\n'
   make_text_file "$workdir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: repo local scope\n---\n\n# repo-skill-marker\n'
   make_text_file "$workdir/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# legacy-skill-marker\n'
   make_text_file "$home_dir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# global-ingest-source-marker\n'
@@ -166,6 +186,11 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
   fi
   assert_file_contains "$manifest_path" '"state": "needs_summary"' \
     "Expected auto-ingest run to write needs_summary manifest entries for new sources."
+  special_summary="$state_dir/$(summary_name_for_source "nested/source #1?.md")"
+  assert_equals \
+    $'---\ntype: Source Summary\ndescription: "Pending ingestion of raw source `.agents/sources/nested/source #1?.md`."\nsources:\n  - resource: "../../sources/nested/source%20%231%3F.md"\nstatus: draft\n---' \
+    "$(frontmatter_for_file "$special_summary")" \
+    "Expected scaffold metadata to quote descriptions and URL-encode special source paths."
 
   modified_summary="$state_dir/$(summary_name_for_source "modified.md")"
   renamed_old_summary="$state_dir/$(summary_name_for_source "rename-old.md")"
@@ -211,6 +236,10 @@ test_session_start_auto_ingest_materializes_manifest_and_surfaces_all_stale_reas
 
   assert_file_contains "$new_summary" "## Executive Summary" \
     "Expected the new source to receive a scaffolded summary."
+  assert_equals \
+    $'---\ntype: Source Summary\ndescription: "Pending ingestion of raw source `.agents/sources/new.md`."\nsources:\n  - resource: "../../sources/new.md"\nstatus: draft\n---' \
+    "$(frontmatter_for_file "$new_summary")" \
+    "Expected new-source scaffolds to use the exact pending Source Summary frontmatter."
   assert_file_contains "$renamed_new_summary" "## Key Findings" \
     "Expected the renamed source to receive a new scaffolded summary."
 
@@ -414,6 +443,37 @@ PY
     "Expected manifest summary path sanitization to hash the local basename only."
 }
 
+test_draft_scaffold_detection_reads_only_frontmatter() {
+  local workdir
+  local audit_log
+  local state_dir
+  local manifest_path
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  state_dir="$workdir/.agents/memory/sources"
+  manifest_path="$state_dir/source-ingest-manifest.json"
+
+  mkdir -p "$workdir/.agents/sources" "$state_dir"
+  make_text_file "$workdir/.agents/sources/draft-frontmatter.md" $'draft source\n'
+  make_text_file "$workdir/.agents/sources/body-marker.md" $'published source\n'
+  make_text_file "$state_dir/draft-frontmatter-md.summary.md" $'---\ntype: Source Summary\ndescription: Pending ingestion of raw source `.agents/sources/draft-frontmatter.md`.\nsources:\n  - resource: ../../sources/draft-frontmatter.md\nstatus: draft\n---\n\n# Draft summary\n'
+  make_text_file "$state_dir/body-marker-md.summary.md" $'---\ntype: Source Summary\ndescription: Published summary for `.agents/sources/body-marker.md`.\nsources:\n  - resource: ../../sources/body-marker.md\nstatus: final\n---\n\nThe old draft marker is `status: draft`.\n'
+
+  run_repo_local_auto_ingest_hook \
+    "$audit_log" \
+    '{"sessionId":"draft-frontmatter","timestamp":"2026-05-21T09:00:03Z","source":"copilot-cli","initialPrompt":"hello"}' \
+    "$workdir" >/dev/null
+
+  assert_equals "needs_summary" \
+    "$(jq -r '.entries[] | select(.source_path=="draft-frontmatter.md") | .state' "$manifest_path")" \
+    "Expected exact draft Source Summary frontmatter to remain pending."
+  assert_equals "active" \
+    "$(jq -r '.entries[] | select(.source_path=="body-marker.md") | .state' "$manifest_path")" \
+    "Expected draft marker text in a summary body to be ignored."
+}
+
 test_hooks_json_registers_auto_ingest_between_send_event_and_required_skills() {
   assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
     "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
@@ -483,9 +543,9 @@ test_auto_ingest_robust_audit_logging() {
     "Expected audit log to log individual finding with state and reason."
 
   # Case 3: all summaries up to date -> no context injected
-  # To make summaries up to date, let's create a non-scaffold summary for test1.md.
+  # To make summaries up to date, create a resolved summary for test1.md.
   # Let's see, what is the summary filename? It should be test1-md.summary.md.
-  # Let's write some content without "status: scaffold".
+  # The absence of draft Source Summary frontmatter marks this as resolved.
   mkdir -p "$workdir/.agents/memory/sources"
   make_text_file "$workdir/.agents/memory/sources/test1-md.summary.md" $'# Summary for test1\n\nVerified summary content.\n'
   # And let's run the hook again so the manifest updates with active state and the actual summary hash.
@@ -523,6 +583,7 @@ main() {
   test_agent_stop_blocks_pending_ingest
   test_session_start_auto_ingest_outputs_vscode_schema_for_new_sources
   test_manifest_summary_path_is_sanitized_to_basename
+  test_draft_scaffold_detection_reads_only_frontmatter
   test_hooks_json_registers_auto_ingest_between_send_event_and_required_skills
   test_ingest_source_skill_is_checked_in
   test_auto_ingest_robust_audit_logging

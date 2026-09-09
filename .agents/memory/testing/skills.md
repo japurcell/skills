@@ -1,5 +1,6 @@
 ---
-coverage: Test and validation guidance for skills under `skills/`
+type: Testing Guidance
+description: Test and validation guidance for skills under `skills/`
 ---
 
 # Skills - Testing

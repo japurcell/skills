@@ -1,5 +1,6 @@
 ---
-coverage: Rules and conventions for custom agent definitions under `agents/`
+type: Agent Instruction
+description: Rules and conventions for custom agent definitions under `agents/`
 ---
 
 # Agents Conventions

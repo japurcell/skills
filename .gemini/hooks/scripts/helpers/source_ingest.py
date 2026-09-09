@@ -6,11 +6,13 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 
 MANIFEST_FILE_NAME = "source-ingest-manifest.json"
 SUMMARY_SUFFIX = ".summary.md"
-SCAFFOLD_STATUS_MARKER = "status: scaffold"
+DRAFT_SUMMARY_TYPE = "type: Source Summary"
+DRAFT_SUMMARY_STATUS = "status: draft"
 PENDING_INGEST_DIRECTIVE = "Pending ingest blocks normal work."
 PENDING_INGEST_SKILL_PROMPT = "Activate or load the `ingest-source` skill, then run `/ingest-source`."
 PENDING_INGEST_SKILL_MISSING = "The `ingest-source` skill is unavailable."
@@ -112,13 +114,16 @@ def _is_scaffold_summary(text: str) -> bool:
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         return False
-    frontmatter_lines = []
+
+    frontmatter_lines: list[str] = []
     for line in lines[1:]:
         if line.strip() == "---":
-            break
+            return (
+                DRAFT_SUMMARY_TYPE in frontmatter_lines
+                and DRAFT_SUMMARY_STATUS in frontmatter_lines
+            )
         frontmatter_lines.append(line)
-    frontmatter_text = "\n".join(frontmatter_lines)
-    return SCAFFOLD_STATUS_MARKER in frontmatter_text
+    return False
 
 
 def _summary_details(path: Path) -> tuple[bool, str, bool]:
@@ -506,7 +511,17 @@ def scaffold_summary(summary_dir: Path, source_relpath: str, reason: str) -> Pat
         content = "\n".join(
             [
                 "---",
-                "status: scaffold",
+                DRAFT_SUMMARY_TYPE,
+                "description: " + json.dumps(
+                    f"Pending ingestion of raw source `.agents/sources/{source_relpath}`.",
+                    ensure_ascii=False,
+                ),
+                "sources:",
+                "  - resource: " + json.dumps(
+                    "../../sources/" + quote(source_relpath, safe="/"),
+                    ensure_ascii=False,
+                ),
+                DRAFT_SUMMARY_STATUS,
                 "---",
                 "",
                 f"# Summary scaffold for `{Path(source_relpath).name}`",

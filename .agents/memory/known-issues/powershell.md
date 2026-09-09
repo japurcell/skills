@@ -1,5 +1,6 @@
 ---
-coverage: PowerShell (`pwsh`) gotchas hit while writing `scripts/install.ps1` and `scripts/test-install.ps1`
+type: Known Issue
+description: PowerShell (`pwsh`) gotchas hit while writing `scripts/install.ps1` and `scripts/test-install.ps1`
 ---
 
 # PowerShell - Known Issues

@@ -1,5 +1,8 @@
 ---
-status: verified
+type: Source Summary
+description: Copilot hook events, cross-surface behavior, matcher semantics, or exit-code handling.
+sources:
+  - resource: ../../sources/copilot-hooks-ref.md
 ---
 
 # Summary for `copilot-hooks-ref.md`

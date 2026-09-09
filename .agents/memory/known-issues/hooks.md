@@ -1,5 +1,6 @@
 ---
-coverage: Known issues, quirks, and workarounds for `{.copilot,.gemini}/hooks`.
+type: Known Issue
+description: Known issues, quirks, and workarounds for `{.copilot,.gemini}/hooks`.
 ---
 
 # Hooks - Known Issues
@@ -12,11 +13,11 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Description:** The shared JSON manifest (`source-ingest-manifest.json`) entries contain a `summary_path` attribute. Reading this path relative to the summaries directory without sanitization could lead to a directory traversal vulnerability if a malicious manifest is loaded.
 **Workaround:** Restrict previous summary paths to their flat filename component using `Path(summary_name).name`, which neutralizes any directory traversal attempts.
 
-## Infinite loop/DoS on workspace via loose substring check of status: scaffold
+## Infinite loop/DoS on workspace via loose draft-status detection
 
 **Affected area:** Startup source auto-ingest feature (`auto_ingest.py` / `source_ingest.py`)
-**Description:** Determining if a summary file is a scaffold by doing a global substring check for `status: scaffold` causes files with that phrase in the filename or path to be perpetually treated as scaffolds, creating an infinite auto-ingest loop.
-**Workaround:** Parse and restrict the `status: scaffold` check strictly to the YAML frontmatter block at the top of the summary file.
+**Description:** Determining if a summary is an unresolved draft by searching the whole file for `status: draft` causes completed summaries containing that phrase in their body to remain perpetually pending.
+**Workaround:** Inspect only the YAML frontmatter and require the exact `type: Source Summary` plus `status: draft` semantics. Ignore matching text in the Markdown body.
 
 ## Copilot CLI prompt rewrite runs before sessionStart auto-ingest
 

@@ -1,5 +1,6 @@
 ---
-coverage: Repo structure, install flows, and how top-level areas relate
+type: Agent Memory
+description: Repo structure, install flows, and how top-level areas relate
 ---
 
 # Architecture

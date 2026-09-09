@@ -1,5 +1,8 @@
 ---
-status: verified
+type: Source Summary
+description: Source-ingest workflow, wiki/log/index structure, or compiled-knowledge maintenance patterns.
+sources:
+  - resource: ../../sources/llm-wiki.md
 ---
 
 # Summary for `llm-wiki.md`

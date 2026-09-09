@@ -1,5 +1,8 @@
 ---
-status: verified
+type: Source Summary
+description: Concise CLI UX defaults such as naming, prompts, errors, progress, or expressive flags.
+sources:
+  - resource: ../../sources/cli-design-guidelines.md
 ---
 
 # Summary for `cli-design-guidelines.md`

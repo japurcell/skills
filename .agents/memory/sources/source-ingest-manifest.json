@@ -6,7 +6,7 @@
       "size": 17058,
       "source_path": "12-factor-cli-apps.md",
       "state": "active",
-      "summary_hash": "67872ed7ef140203beeec0c2477e289e33e525ff1a0b075e64adbd909b15197b",
+      "summary_hash": "8f5bdbda05eba78603f676e12d1c3eb1ad46fdc461405457f8b9f866fb026ed0",
       "summary_path": "12-factor-cli-apps-md.summary.md"
     },
     {
@@ -15,7 +15,7 @@
       "size": 5832,
       "source_path": "cli-design-guidelines.md",
       "state": "active",
-      "summary_hash": "3e522b29de4464b145e324229fa0cd847a78f19cbadce031c1419cccd8d11676",
+      "summary_hash": "967838a24c562ceea8585ba6697070f2537f9dbcdf7e26e4a2714d7769da3753",
       "summary_path": "cli-design-guidelines-md.summary.md"
     },
     {
@@ -24,7 +24,7 @@
       "size": 72283,
       "source_path": "clig-dev.md",
       "state": "active",
-      "summary_hash": "74af77c1a792cef45d724fb69e1f6c4e783a729d4202805746a78b7b126bd928",
+      "summary_hash": "fba41dcca3ae89bc0d71442a09b35006baf7ac94f67581312883a4338b399b42",
       "summary_path": "clig-dev-md.summary.md"
     },
     {
@@ -33,7 +33,7 @@
       "size": 56453,
       "source_path": "copilot-hooks-ref.md",
       "state": "active",
-      "summary_hash": "650cf5636b967ab08d6d3d3caaf3e88718cfbcb45a6facbe757cb7a8ed709ca5",
+      "summary_hash": "9cd904ba9eee68dd2ca1168d674a286e0f82205ba19669c5be6d427f48f93f24",
       "summary_path": "copilot-hooks-ref-md.summary.md"
     },
     {
@@ -42,7 +42,7 @@
       "size": 20421,
       "source_path": "gemini-hooks-best-practices.md",
       "state": "active",
-      "summary_hash": "58f435b39cd9642b3e2d6c0013bde2015bf270d224bcaca60f75f1ac1c07dc80",
+      "summary_hash": "4e1e0d563bf0b1def2b024c2a6a3fa8386df862573d95eae6b69f41498f6cffb",
       "summary_path": "gemini-hooks-best-practices-md.summary.md"
     },
     {
@@ -51,7 +51,7 @@
       "size": 13351,
       "source_path": "gemini-hooks-writing.md",
       "state": "active",
-      "summary_hash": "2bd529878d0ebb758978f7bd0a434250db3baf64b482a03778ec10b66503c4a8",
+      "summary_hash": "57a6d87f61005d00991cd8f54f03fd524abfcec59080d64c0306736569be8796",
       "summary_path": "gemini-hooks-writing-md.summary.md"
     },
     {
@@ -60,7 +60,7 @@
       "size": 9287,
       "source_path": "gemini-hooks.md",
       "state": "active",
-      "summary_hash": "0f1ccf64cc7f23a7d2e1e3e78d8b5642a79f4b030545ef8dff427b82b5af1286",
+      "summary_hash": "5e96b95111dfad6673d8d057a6ba29e86941c85ab8265c9e508c9f03dce28160",
       "summary_path": "gemini-hooks-md.summary.md"
     },
     {
@@ -69,7 +69,7 @@
       "size": 11984,
       "source_path": "llm-wiki.md",
       "state": "active",
-      "summary_hash": "74c462debb93466f46bb0acf770babc3ba0f15d950fe42aa18373ad464da3cb3",
+      "summary_hash": "c2151bfc4814e148ce39e9223b1d179a911d89c1650915d39b21ea6860a01162",
       "summary_path": "llm-wiki-md.summary.md"
     },
     {
@@ -78,7 +78,7 @@
       "size": 27353,
       "source_path": "vscode-agent-hooks.md",
       "state": "active",
-      "summary_hash": "e79d227a7218ae21d79143676343655b361f19d9373a9d7f6b801d37eb04c438",
+      "summary_hash": "e207b1714d99c0daa624b3e37997d7018e40f2dd5995091785e65d8a62b42cef",
       "summary_path": "vscode-agent-hooks-md.summary.md"
     }
   ],

@@ -1,5 +1,6 @@
 ---
-coverage: Repo-wide test layout, run commands, and shared authoring conventions; per-layer test guidance lives in testing/<area>.md
+type: Testing Guidance
+description: Repo-wide test layout, run commands, and shared authoring conventions; per-layer test guidance lives in testing/<area>.md
 ---
 
 # Testing Strategy

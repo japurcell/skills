@@ -1,5 +1,6 @@
 ---
-coverage: Test and validation guidance for shell helper scripts under `scripts/`
+type: Testing Guidance
+description: Test and validation guidance for shell helper scripts under `scripts/`
 ---
 
 # Shell Scripts - Testing

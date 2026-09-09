@@ -1,5 +1,6 @@
 ---
-coverage: Append-only source-ingestion activity log and semantic integration history
+type: Source Ingestion Log
+description: Append-only source-ingestion activity log and semantic integration history
 ---
 
 # LLM Wiki Ingestion Log

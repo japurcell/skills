@@ -1,5 +1,6 @@
 ---
-coverage: Rules and conventions for repository helper scripts under `scripts/` that run in the shell
+type: Agent Instruction
+description: Rules and conventions for repository helper scripts under `scripts/` that run in the shell
 ---
 
 # Shell Scripts Conventions

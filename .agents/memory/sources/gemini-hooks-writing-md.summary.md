@@ -1,5 +1,8 @@
 ---
-status: verified
+type: Source Summary
+description: Gemini hook authoring patterns, tool filtering, or multi-event workflow composition.
+sources:
+  - resource: ../../sources/gemini-hooks-writing.md
 ---
 
 # Summary for `gemini-hooks-writing.md`

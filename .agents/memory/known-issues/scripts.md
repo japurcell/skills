@@ -1,5 +1,6 @@
 ---
-coverage: Real shell-specific runtime gotchas; PowerShell-specific issues live in the separate pwsh doc
+type: Known Issue
+description: Real shell-specific runtime gotchas; PowerShell-specific issues live in the separate pwsh doc
 ---
 
 # Shell Scripts - Known Issues

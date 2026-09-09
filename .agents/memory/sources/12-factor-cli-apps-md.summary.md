@@ -1,5 +1,8 @@
 ---
-status: verified
+type: Source Summary
+description: CLI UX guidance for help text, stream discipline, prompts, tables, or XDG path conventions.
+sources:
+  - resource: ../../sources/12-factor-cli-apps.md
 ---
 
 # Summary for `12-factor-cli-apps.md`

@@ -1,5 +1,8 @@
 ---
-status: verified
+type: Source Summary
+description: Gemini hook performance, debugging, threat-model, privacy, or hardening guidance.
+sources:
+  - resource: ../../sources/gemini-hooks-best-practices.md
 ---
 
 # Summary for `gemini-hooks-best-practices.md`

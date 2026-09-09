@@ -1,5 +1,8 @@
 ---
-status: verified
+type: Source Summary
+description: Broader CLI interaction design, configuration precedence, output conventions, or future-proofing decisions.
+sources:
+  - resource: ../../sources/clig-dev.md
 ---
 
 # Summary for `clig-dev.md`

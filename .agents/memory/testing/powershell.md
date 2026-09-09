@@ -1,5 +1,6 @@
 ---
-coverage: Test and validation guidance for PowerShell scripts under `scripts/`
+type: Testing Guidance
+description: Test and validation guidance for PowerShell scripts under `scripts/`
 ---
 
 # PowerShell - Testing

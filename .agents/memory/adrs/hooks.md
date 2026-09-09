@@ -1,5 +1,6 @@
 ---
-coverage: Architectural Decision Records (ADRs) for `{.copilot,.gemini}/hooks`.
+type: Architecture Decision
+description: Architectural Decision Records (ADRs) for `{.copilot,.gemini}/hooks`.
 ---
 
 # Hooks - Architectural Decisions

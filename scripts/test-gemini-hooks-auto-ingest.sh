@@ -62,6 +62,24 @@ path = pathlib.Path(sys.argv[1])
 print(hashlib.sha256(path.read_bytes()).hexdigest(), end="")' "$1"
 }
 
+frontmatter_for_file() {
+  awk '
+    NR == 1 {
+      if ($0 != "---") {
+        exit 1
+      }
+      print
+      next
+    }
+    {
+      print
+      if ($0 == "---") {
+        exit
+      }
+    }
+  ' "$1"
+}
+
 mtime_file() {
   python3 -c 'import pathlib, sys
 path = pathlib.Path(sys.argv[1])
@@ -98,6 +116,7 @@ test_new_source_injects_scaffold_context_and_updates_manifest() {
   local summary_dir
   local manifest_path
   local summary_file
+  local special_summary_file
   local output
   local context
 
@@ -109,9 +128,12 @@ test_new_source_injects_scaffold_context_and_updates_manifest() {
   summary_dir="$repo_dir/.agents/memory/sources"
   manifest_path="$summary_dir/source-ingest-manifest.json"
   summary_file="$summary_dir/alpha-hooks-md.summary.md"
+  special_summary_file="$summary_dir/nested__source #1?-md.summary.md"
 
   mkdir -p "$source_dir" "$summary_dir"
   printf '# alpha\n' > "$source_dir/alpha-hooks.md"
+  mkdir -p "$source_dir/nested"
+  printf '# special\n' > "$source_dir/nested/source #1?.md"
   write_text_file "$repo_dir/.agents/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: repo local scope\n---\n\n# repo-skill-marker\n'
   write_text_file "$repo_dir/skills/ingest-source/SKILL.md" $'---\nname: ingest-source\ndescription: wrong scope\n---\n\n# legacy-skill-marker\n'
   install_into_temp_home "$home"
@@ -150,9 +172,17 @@ test_new_source_injects_scaffold_context_and_updates_manifest() {
   assert_file_contains "$summary_file" \
     "## Executive Summary" \
     "Expected new sources to scaffold a summary template."
+  assert_equals \
+    $'---\ntype: Source Summary\ndescription: "Pending ingestion of raw source `.agents/sources/alpha-hooks.md`."\nsources:\n  - resource: "../../sources/alpha-hooks.md"\nstatus: draft\n---' \
+    "$(frontmatter_for_file "$summary_file")" \
+    "Expected new-source scaffolds to use the exact pending Source Summary frontmatter."
   assert_equals "needs_summary" \
     "$(jq -r '.entries[] | select(.source_path=="alpha-hooks.md") | .state' "$manifest_path")" \
     "Expected new sources to persist in the manifest as needing a summary."
+  assert_equals \
+    $'---\ntype: Source Summary\ndescription: "Pending ingestion of raw source `.agents/sources/nested/source #1?.md`."\nsources:\n  - resource: "../../sources/nested/source%20%231%3F.md"\nstatus: draft\n---' \
+    "$(frontmatter_for_file "$special_summary_file")" \
+    "Expected scaffold metadata to quote descriptions and URL-encode special source paths."
 }
 
 test_missing_cwd_falls_back_to_process_working_directory() {
@@ -520,6 +550,43 @@ test_manifest_summary_path_is_sanitized_to_basename() {
     "Expected manifest summary path sanitization to hash the local basename only."
 }
 
+test_draft_scaffold_detection_reads_only_frontmatter() {
+  local workdir
+  local home
+  local repo_dir
+  local source_dir
+  local summary_dir
+  local manifest_path
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  home="$workdir/home"
+  repo_dir="$workdir/repo"
+  source_dir="$repo_dir/.agents/sources"
+  summary_dir="$repo_dir/.agents/memory/sources"
+  manifest_path="$summary_dir/source-ingest-manifest.json"
+
+  mkdir -p "$source_dir" "$summary_dir"
+  printf 'draft source\n' > "$source_dir/draft-frontmatter.md"
+  printf 'published source\n' > "$source_dir/body-marker.md"
+  write_text_file "$summary_dir/draft-frontmatter-md.summary.md" $'---\ntype: Source Summary\ndescription: Pending ingestion of raw source `.agents/sources/draft-frontmatter.md`.\nsources:\n  - resource: ../../sources/draft-frontmatter.md\nstatus: draft\n---\n\n# Draft summary\n'
+  write_text_file "$summary_dir/body-marker-md.summary.md" $'---\ntype: Source Summary\ndescription: Published summary for `.agents/sources/body-marker.md`.\nsources:\n  - resource: ../../sources/body-marker.md\nstatus: final\n---\n\nThe old draft marker is `status: draft`.\n'
+  install_into_temp_home "$home"
+
+  run_installed_auto_ingest_hook \
+    "$home" \
+    '{"session_id":"draft-frontmatter","timestamp":"2026-06-24T10:00:05Z","hook_event_name":"SessionStart","source":"startup","cwd":"'"$repo_dir"'"}' \
+    AGENTS_SOURCE_SCAN_DIR="$source_dir" \
+    AGENTS_SOURCE_SUMMARY_DIR="$summary_dir" >/dev/null
+
+  assert_equals "needs_summary" \
+    "$(jq -r '.entries[] | select(.source_path=="draft-frontmatter.md") | .state' "$manifest_path")" \
+    "Expected exact draft Source Summary frontmatter to remain pending."
+  assert_equals "active" \
+    "$(jq -r '.entries[] | select(.source_path=="body-marker.md") | .state' "$manifest_path")" \
+    "Expected draft marker text in a summary body to be ignored."
+}
+
 test_gemini_auto_ingest_robust_audit_logging() {
   local workdir
   local home
@@ -607,6 +674,7 @@ main() {
   test_renamed_source_preserves_orphan_context_and_scaffolds_new_summary
   test_deleted_source_keeps_orphan_only_context
   test_manifest_summary_path_is_sanitized_to_basename
+  test_draft_scaffold_detection_reads_only_frontmatter
   test_gemini_auto_ingest_robust_audit_logging
 }
 

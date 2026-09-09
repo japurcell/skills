@@ -1,5 +1,6 @@
 ---
-coverage: PowerShell (`pwsh`) rules for installer and validation scripts under `scripts/`
+type: Agent Instruction
+description: PowerShell (`pwsh`) rules for installer and validation scripts under `scripts/`
 ---
 
 # PowerShell Conventions

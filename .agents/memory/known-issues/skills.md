@@ -1,5 +1,6 @@
 ---
-coverage: Known issues, quirks, and workarounds for `skills`.
+type: Known Issue
+description: Known issues, quirks, and workarounds for `skills`.
 ---
 
 # Skills - Known Issues

@@ -1,5 +1,6 @@
 ---
-coverage: Top-level overview; per-layer directory detail lives in the instruction files
+type: Agent Memory
+description: Top-level overview; per-layer directory detail lives in the instruction files
 ---
 
 # File Map

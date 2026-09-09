@@ -1,5 +1,6 @@
 ---
-coverage: Repo-wide code style rules (layer-specific conventions live in the instruction files)
+type: Agent Memory
+description: Repo-wide code style rules (layer-specific conventions live in the instruction files)
 ---
 
 # Conventions

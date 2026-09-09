@@ -1,5 +1,8 @@
 ---
-status: verified
+type: Source Summary
+description: Gemini hook event coverage, config precedence, trust behavior, or `/hooks` operations.
+sources:
+  - resource: ../../sources/gemini-hooks.md
 ---
 
 # Summary for `gemini-hooks.md`

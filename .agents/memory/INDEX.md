@@ -1,5 +1,6 @@
 ---
-coverage: Index and loading map for all .agents/memory/ knowledge-base files
+type: Knowledge Index
+description: Index and loading map for all .agents/memory/ knowledge-base files
 ---
 
 # Memory Index
@@ -68,14 +69,14 @@ memory files cross-reference:
 
 - [AGENTS.md](../../AGENTS.md) — top-level quickstart and loading contract.
 - [README.md](../../README.md) — repo overview and installation entry point.
-- [`.agents/instructions/<area>.md`](../instructions/) — canonical area-scoped workflow rules and conventions.
-- [`.agents/skills/*/SKILL.md`](../skills/) — task-specific skills (update-agent-docs, etc.).
+- [`.agents/instructions/repo.md`](../instructions/repo.md) and its siblings — canonical area-scoped workflow rules and conventions.
+- [`.agents/skills/okf-authoring/SKILL.md`](../skills/okf-authoring/SKILL.md) and its siblings — task-specific repository workflows.
 
 ## Conventions
 
 - **Treat memory files as authoritative for repo conventions, but cross-check against actual code** — they can drift.
 - **Prefer small focused files over large monolithic ones.** Keep layer-specific detail in the matching `.agents/instructions/<area>.md`, not in the repo-wide memory files.
-- **New files should have minimal frontmatter** with a `coverage:` field describing what the file covers.
+- **New files should have minimal OKF frontmatter** with the path-derived `type` and a routing-oriented `description`; source summaries also follow their manifest-backed provenance and lifecycle rules.
 
 ## Maintenance
 

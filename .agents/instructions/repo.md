@@ -1,5 +1,6 @@
 ---
-coverage: Repo-wide workflow for top-level docs, install refresh, and documentation sync
+type: Agent Instruction
+description: Repo-wide workflow for top-level docs, install refresh, and documentation sync
 ---
 
 # Repo Workflow

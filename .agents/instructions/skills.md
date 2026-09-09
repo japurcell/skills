@@ -1,5 +1,6 @@
 ---
-coverage: Rules and conventions for skills under `skills/`.
+type: Agent Instruction
+description: Rules and conventions for skills under `skills/`.
 ---
 
 # Skills Conventions
