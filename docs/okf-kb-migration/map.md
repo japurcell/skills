@@ -29,6 +29,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 - [Copilot CLI Integration Surfaces](tickets/copilot-cli-integration-surfaces.md): Use a repository-scoped Copilot CLI extension as the strongest normal-CLI context injection boundary; it supports per-submission hidden context but cannot enforce pre-model denial.
 - [Copilot-First Runtime Contract](tickets/copilot-first-runtime-contract.md): Make the standard Copilot CLI extension primary with atomic legacy fallback and honest advisory-stop semantics, retain full independently promotable Gemini support, and complete the migration when Copilot reaches default.
 - [Copilot-First Provider Integration and State](tickets/copilot-first-provider-integration-and-state.md): Use one stateless shared runtime with adapter-anchored workspace validation, capability-bound enrollment, replacement-adapter freshness reconciliation, exact provider-neutral parity, and provider-specific Copilot advisory or Gemini hard-stop enforcement.
+- [Dual-Provider Evaluation Amendment](tickets/dual-provider-evaluation-amendment.md): Qualify one shared semantic core plus exact-build Copilot and Gemini suites with independent verdicts, live lifecycle evidence, strict privacy and parity oracles, and bounded prompt-path latency.
 
 ## Not yet specified
 
