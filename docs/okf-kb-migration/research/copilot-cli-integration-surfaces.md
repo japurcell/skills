@@ -53,3 +53,11 @@ Before Copilot becomes the default OKF consumer, test the actual target build an
 - `/clear`, resume, worktrees, nested directories, and extension reloads preserve or reestablish the correct workspace-scoped state.
 
 Because extensions are experimental, their behavioral capability suite must run against every candidate Copilot CLI upgrade before promotion. A version string alone is insufficient.
+
+## Extension lifecycle verification
+
+**Rechecked:** 2026-09-09 UTC.
+
+The official SDK type definitions and dispatcher currently expose `onSessionStart`, `onUserPromptSubmitted`, `onPreToolUse`, `onAgentStop`, and `onSessionEnd` through `joinSession({ hooks })`. This is sufficient to host prompt selection, an in-memory deny-all-tools latch, a post-turn source-state recheck, and cleanup in one repository extension process. Extension stdout is reserved for JSON-RPC. [Official SDK hook types](https://github.com/github/copilot-sdk/blob/main/nodejs/src/types.ts#L1417-L1740) · [official session dispatcher](https://github.com/github/copilot-sdk/blob/main/nodejs/src/session.ts#L1888-L2020) · [official extension lifecycle](https://github.com/github/copilot-sdk/blob/main/nodejs/docs/extensions.md)
+
+The CLI reloads extensions on `/clear` and foreground-session replacement, losing in-memory state; exit terminates the extension process. There are no separate `onClear`, `onResume`, or `onReload` callbacks. Therefore every launch or `onSessionStart` must begin unverified, every callback must validate its session and workspace identity, and capability tests—not assumptions—must establish callback ordering for startup, resume, queued or steered prompts, reload, and stop events on the target build.

@@ -28,6 +28,7 @@ Capture one concise handoff another agent can resume from immediately. Preserve 
 3. **Write or update `handoff.md`**
    - Create `.agents/scratchpad/` if needed.
    - Update an existing handoff in place and remove stale or duplicate content.
+   - Before editing an existing handoff, reread the exact section being replaced; prefer small independent patches when changing multiple files or sections so stale context cannot reject unrelated updates.
    - Prefer compact bullets or short sections. Default shape when it fits: Goal, Status, Next focus, Next step, Decisions/constraints, Review findings/corrections, Relevant files/artifacts, Commands/results, Verification state, Errors/blockers, Durable learnings, Suggested skills, Briefing.
    - Include exact paths, commands, errors, verification state, and measured results when relevant.
    - Include code review or QA findings when they changed the diagnosis, scope, or next step.

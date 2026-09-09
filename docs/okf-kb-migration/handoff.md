@@ -11,7 +11,7 @@ Finish a planning-only, implementation-ready OKF v0.2 migration design with GitH
 - **Provider Integration and State**, **Rollout and Rollback**, and **Implementation Sequencing and Handoff** are `obsolete`; their provider-neutral evidence remains reusable, while their Copilot gating and Gemini-first rollout path must be replaced.
 - **Copilot CLI Integration Surfaces** is closed from current primary-source research.
 - **Copilot-First Runtime Contract** is closed and indexed after four accepted Grilling rounds and explicit shared-understanding confirmation.
-- Four replacement decisions are now specified. **Copilot-First Provider Integration and State** is the sole unblocked frontier ticket; **Dual-Provider Evaluation Amendment**, **Copilot-First Rollout and Rollback**, and **Copilot-First Implementation Sequencing and Handoff** are blocked in dependency order.
+- **Copilot-First Provider Integration and State** is closed and indexed after four accepted rounds and explicit confirmation. **Dual-Provider Evaluation Amendment** is now the sole unblocked frontier; **Copilot-First Rollout and Rollback** and **Copilot-First Implementation Sequencing and Handoff** remain blocked in dependency order.
 - **Copilot-First Runtime Contract** round 1 is accepted: use the standard Copilot CLI project extension with atomic legacy fallback, deny-all-tools unsafe state, and explicitly labeled `advisory_stop` semantics instead of claiming pre-model enforcement.
 - **Copilot-First Runtime Contract** round 2 accepted the fallback/advisory-stop matrix, capability-tested experimental enrollment, and exclusion of strict pre-inference tasks and a separate SDK host. The user corrected Q5: Gemini must remain a fully supported OKF provider for now, including its adapter, evidence, and rollout.
 - **Copilot-First Runtime Contract** round 3 accepted Copilot `default` as the migration completion criterion. Gemini remains fully implemented and independently promotable, Gemini-only failures do not block Copilot, and shared-core failures block every provider.
@@ -20,11 +20,11 @@ Finish a planning-only, implementation-ready OKF v0.2 migration design with GitH
 
 ## Next Focus
 
-Resolve **Copilot-First Provider Integration and State** with the user.
+Resolve **Dual-Provider Evaluation Amendment** with the user.
 
 ## Exact Next Step
 
-Activate `handoff`, `wayfinder`, and `grilling`; verify that `copilot-first-runtime-contract.md` is `closed`; claim `tickets/copilot-first-provider-integration-and-state.md`; and resolve only that ticket. Use the existing Copilot research and obsolete provider ticket as evidence without reviving their superseded rollout premise.
+Activate `handoff`, `wayfinder`, and `grilling`; verify that `copilot-first-provider-integration-and-state.md` is `closed`; claim `tickets/dual-provider-evaluation-amendment.md`; and resolve only that ticket.
 
 ## Current Evidence and Recommendation
 
@@ -48,23 +48,31 @@ Activate `handoff`, `wayfinder`, and `grilling`; verify that `copilot-first-runt
 - `docs/okf-kb-migration/map.md` — active destination, closed decisions, fog, and scope.
 - `docs/okf-kb-migration/tickets/copilot-cli-integration-surfaces.md` — closed capability research ticket.
 - `docs/okf-kb-migration/research/copilot-cli-integration-surfaces.md` — current source-backed surface comparison and recommended contract split.
-- `docs/okf-kb-migration/tickets/copilot-first-runtime-contract.md` — sole open decision.
+- `docs/okf-kb-migration/tickets/copilot-first-provider-integration-and-state.md` — closed replacement integration and state contract.
+- `docs/okf-kb-migration/tickets/dual-provider-evaluation-amendment.md` — next unblocked frontier ticket.
 - `docs/okf-kb-migration/research/copilot-cli-hooks-rollout.md` — earlier config-hook assessment; still accurate for config hooks but incomplete for the newly preferred project-extension boundary.
 - `docs/okf-kb-migration/tickets/provider-integration-and-state.md` — obsolete Gemini-first integration decision with reusable provider-neutral details.
+- `skills/handoff/SKILL.md` — minimally hardened to reread edit anchors and prefer independent patches when stale context could reject unrelated updates.
 
 ## Verification State
 
 - No local `copilot` executable or version was available; actual extension behavior remains untested.
 - Official documentation was checked on 2026-09-08 for CLI config hooks, project extensions, SDK prompt hooks, and SDK/CLI compatibility.
+- Official SDK types, dispatch code, and extension lifecycle documentation were rechecked on 2026-09-09. They confirm the callback set required by the proposed in-memory lifecycle, while actual target-build ordering remains untested because no local Copilot CLI is available.
 - Research subagent delegation was required by Wayfinder but unavailable because the session exposed no `spawn_agent` capability and no idle agents; the main agent performed and recorded the bounded primary-source research.
 - `git diff --check` and ticket/link/frontier validation passed after the runtime contract closed: 11 closed tickets, four open replacement tickets, three obsolete tickets, and **Copilot-First Provider Integration and State** as the sole frontier.
 - The mandatory end-of-session `update-agent-docs` pass found no `.agents/instructions/` or `.agents/memory/` change necessary. This session changed only ordinary planning documents under the existing `docs/okf-kb-migration/` effort, and the current architecture guidance already routes long-lived effort plans there.
+- On resume, the runtime-contract prerequisite was verified `closed` and **Copilot-First Provider Integration and State** was claimed by `subagent-a7k2m9`. Two read-only exploration agents confirmed that no Copilot project extension exists yet, current Copilot and Gemini workspace discovery rules differ, and the existing source-ingest compatibility hooks can reconcile under their manifest lock. No implementation files were changed.
+- After closure, ticket/link/frontier validation passed with 12 closed tickets, three open tickets, three obsolete tickets, and **Dual-Provider Evaluation Amendment** as the sole frontier. `git diff --check` and the unchanged handoff grader's Python compilation passed.
+- The handoff skill's canonical validator could not run because its undeclared `PyYAML` dependency is absent; the documented body-only fallback confirmed unchanged frontmatter and a clean exact diff. `./scripts/install.sh` could not refresh installed copies because `/root/.agents/skills` is read-only and the installer has no destination override. No dependency was installed and `HOME` was not repurposed.
 
 ## Durable Learnings
 
 - Provider priority is a destination-level constraint. Confirm the user's durable primary host before closing provider rollout and implementation-sequencing decisions.
 - Distinguish config-file Copilot hooks from in-process project-extension SDK hooks; they have different prompt identity and output capabilities.
 - Do not make a provider-neutral context migration depend on a stronger prompt-admission property than the user's primary host can provide without presenting that tradeoff explicitly.
+- Removing duplicated compatibility hooks is a valid simplification only when the replacement owns their enrolled-provider behavior and unsupported-host limitations are stated explicitly.
+- Three rejected patch attempts occurred while recording round 4: two malformed payloads and one stale context match. None changed files. For multi-file documentation patches, verify literal delimiters and current anchor text first, then prefer smaller independent patches.
 
 ## Suggested Skills
 
