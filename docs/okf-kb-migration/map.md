@@ -4,6 +4,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 
 ## Notes
 
+- **Start here:** [Novice implementation overview and diagrams](implementation-overview.md) explains what will be built and how the ten acceptance gates fit together. This map remains the authoritative decision index.
 - This map is planning-only. Implementation and proof-of-concept delivery are outside the destination.
 - Every session should activate `wayfinder`; grilling tickets also activate `grilling`. `domain-modeling`, requested by Wayfinder, is unavailable, so use the existing repository research and local architecture evidence as the disclosed fallback.
 - Use `official-sources` and `research` for any new external investigation, and `explore` for local codebase facts. The canonical external baseline is OKF v0.2 from `GoogleCloudPlatform/open-knowledge-format`.
