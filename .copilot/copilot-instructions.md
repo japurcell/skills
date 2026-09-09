@@ -18,7 +18,6 @@
 
 - Decide how success will be verified before implementing non-trivial work.
 - For bugs, reproduce the failure before fixing it when practical.
-- After making changes, run checks appropriate to the change's scope and risk.
 - Support completion claims with evidence from this task; state any unverified work and why.
 
 ### Respond to evidence
