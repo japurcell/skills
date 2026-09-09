@@ -1,0 +1,5 @@
+interface:
+  display_name: "Code Review"
+  short_description: "Review code for quality, correctness, and best practices"
+policy:
+  allow_implicit_invocation: false
