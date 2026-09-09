@@ -31,6 +31,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for adopting
 - [Copilot-First Provider Integration and State](tickets/copilot-first-provider-integration-and-state.md): Use one stateless shared runtime with adapter-anchored workspace validation, capability-bound enrollment, replacement-adapter freshness reconciliation, exact provider-neutral parity, and provider-specific Copilot advisory or Gemini hard-stop enforcement.
 - [Dual-Provider Evaluation Amendment](tickets/dual-provider-evaluation-amendment.md): Qualify one shared semantic core plus exact-build Copilot and Gemini suites with independent verdicts, live lifecycle evidence, strict privacy and parity oracles, and bounded prompt-path latency.
 - [Copilot-First Rollout and Rollback](tickets/copilot-first-rollout-and-rollback.md): Advance Copilot first and Gemini independently through qualified rollout ladders with fixed observation windows, scoped rollback, experimental-build requalification, and retained atomic legacy fallback.
+- [Copilot-First Implementation Sequencing and Handoff](tickets/copilot-first-implementation-sequencing-and-handoff.md): Deliver ten atomic acceptance gates through Copilot `default`, with both adapters qualified before cutover, explicit ownership and stable validation interfaces, and an independent non-blocking Gemini promotion lane.
 
 ## Not yet specified
 
