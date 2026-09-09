@@ -15,8 +15,8 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-09 06:31Z) [milestone-1] Recorded clean baseline commit `b9a1d8a8a0542bec9eb6764cf4b4af3071eefad9`; confirmed 31 concepts, 22 `coverage` headers, 9 verified summaries, and no lowercase reserved paths.
 - [x] (2026-09-09 06:31Z) [milestone-1] Confirmed both source-ingest suites and both startup suites exit 0 before fixture changes.
 - [x] (2026-09-09 06:47Z) [milestone-1] Added the single valid two-bundle fixture and public-CLI contract suite; confirmed its intentional red is only the absent production linter.
-- [ ] [milestone-1] Record the Gate 1 reviewable checkpoint after the user manually commits the reviewed worktree.
-- [ ] [milestone-2] Vendor and verify PyYAML 6.0.3, implement the dormant provider-neutral linter, and make its complete fixture suite green without enabling hooks.
+- [x] (2026-09-09 07:04Z) [milestone-1] Recorded the user-created Gate 1 reviewable checkpoint `e0d425972641f1f1a372d7dacd068f73fa7fefee`.
+- [x] (2026-09-09 07:29Z) [milestone-2] Vendored and verified PyYAML 6.0.3, implemented the dormant provider-neutral linter, made the expanded public-CLI suite green, and completed independent review without enabling hooks.
 - [ ] [milestone-3] Create and evaluate `okf-authoring`, then compose it one-way from `update-agent-docs`, while the canonical corpus and hooks remain unchanged.
 - [ ] [milestone-4] Atomically migrate all 31 canonical Markdown documents and both source-summary scaffold producers, then make human and JSON full-corpus lint succeed.
 - [ ] [milestone-5] Add thin Copilot and Gemini adapters, register them after source-ingest validation, and make parity and provider regression suites green.
@@ -40,6 +40,8 @@ The implementation is one migration unit. It may be built as reviewable commits,
   Evidence: Gate 1 review found every `case_repo="$(new_case_repo ...)"` call ran the helper in a subshell and found the original interpolated EXIT trap vulnerable to metacharacters in `TMPDIR`. The accepted harness now uses a fresh `mktemp -d` directory per case and `trap cleanup EXIT` with a quoted exact path.
 - Observation: The user will create the Gate 1 checkpoint manually.
   Evidence: Commit preflight found branch `main` and empty repository Git author name/email; the user explicitly asked Codex to leave the reviewed worktree uncommitted.
+- Observation: The first green Gate 2 fixture run did not cover six important failure boundaries.
+  Evidence: Independent review found that a matching site-package PyYAML could mask a missing vendor, non-string `status` could raise `TypeError`, per-file read errors lost their path, code masking shifted link locations, regex-only Markdown parsing missed balanced forms, and nested YAML diagnostics used parent-key locations. Targeted public-CLI regressions and fixes are in progress before Gate 2 acceptance.
 
 ## Decision Log
 
@@ -73,7 +75,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 
 ## Outcomes & Retrospective
 
-Gate 1 implementation outcome as of 2026-09-09: the baseline and prerequisite suites are recorded, and one valid two-bundle fixture plus a comprehensive public-CLI contract suite now define the linter behavior before production code exists. The suite intentionally exits 1 only because `scripts/lint-okf.py` is absent. Gate 1 acceptance remains pending only until the user manually creates and reports the reviewable checkpoint; Gate 2 has not started.
+Gate 1 is committed at `e0d425972641f1f1a372d7dacd068f73fa7fefee`. Gate 2 now provides the offline, provider-neutral linter and pinned PyYAML 6.0.3 runtime. The expanded public-CLI suite passes, repeated JSON output is deterministic, the current legacy corpus produces only expected conformance findings, and no provider hooks are enabled. The user still needs to create the Gate 2 reviewable checkpoint before Gate 3 begins.
 
 ## Context and Orientation
 
@@ -81,7 +83,7 @@ Gate 1 implementation outcome as of 2026-09-09: the baseline and prerequisite su
 
 The current 31 concepts have useful bodies that must remain intact. The 22 ordinary canonical documents begin with a `coverage` field. The 9 completed source summaries begin with `status: verified` and are bound to immutable raw inputs by `.agents/memory/sources/source-ingest-manifest.json`. Gate 4 changes only the representation needed by the contract: ordinary files replace `coverage` with `type` and `description`; completed summaries replace the legacy status with `type`, `description`, and one `sources` entry. Body rewriting is out of scope except where a body currently teaches the obsolete frontmatter format, notably `.agents/memory/INDEX.md` and `.agents/skills/update-agent-docs/refs/indexes-frontmatter.md`.
 
-`scripts/lint-okf.py` will be the complete validation authority. The repo-local adapters `.github/hooks/scripts/lint-okf.py` and `.gemini/hooks/scripts/lint-okf.py` will read their provider payload, locate the repository from `cwd`, execute the central linter in JSON mode, cap the shared diagnostic text, and emit only the provider-specific JSON envelope. They must not contain document-profile rules.
+`scripts/lint-okf.py` is the complete validation authority. The future repo-local adapters `.github/hooks/scripts/lint-okf.py` and `.gemini/hooks/scripts/lint-okf.py` will read their provider payload, locate the repository from `cwd`, execute the central linter in JSON mode, cap the shared diagnostic text, and emit only the provider-specific JSON envelope. They must not contain document-profile rules.
 
 Source ingestion remains independent. `.github/hooks/scripts/helpers/auto_ingest.py` and `.gemini/hooks/scripts/helpers/source_ingest.py` are intentionally duplicated scaffold producers. Their current scaffold marker is `status: scaffold`; Gate 4 changes both to emit a conforming `Source Summary` with `status: draft` and a file-relative raw-source resource. The manifest continues to own freshness, hashes, rename/orphan state, and source-to-summary binding. The OKF linter reads that manifest but never updates it.
 
@@ -107,8 +109,8 @@ Gates run sequentially. Within a gate, agents may work in parallel only when the
 
 ### Milestone 1: Establish the baseline and red tests
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Record the starting commit and inventory in `Artifacts and Notes`. Confirm that the corpus still has 31 Markdown concepts, 22 `coverage` frontmatter blocks, 9 `status: verified` summaries, and no exact lowercase reserved paths. Confirm the existing source-ingest and startup suites are green before changing their fixtures.
 
@@ -122,8 +124,8 @@ Milestone acceptance is the checked-in fixture and test suite with a documented,
 
 ### Milestone 2: Implement the dormant linter in vertical slices
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Vendor PyYAML 6.0.3 from the official source archive. Verify the archive SHA-256 before copying `pyyaml-6.0.3/lib/yaml/` to `scripts/vendor/yaml/`. Copy the upstream license to `scripts/vendor/PyYAML-6.0.3.LICENSE` and add `scripts/vendor/PyYAML-6.0.3.SOURCE` containing the version, source URL, and SHA-256. `scripts/lint-okf.py` must prepend only `scripts/vendor/` to its import path, require `yaml.__version__ == "6.0.3"`, and emit `OKF900` with exit 2 if the pinned package cannot be loaded. It must never install or fetch at runtime.
 
@@ -393,9 +395,10 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Planning baseline commit: `b9a1d8a8a0542bec9eb6764cf4b4af3071eefad9` (recorded at Gate 1 start; worktree clean).
 - Gate 1 baseline inventory: 31 canonical Markdown concepts, 22 `coverage` headers, 9 `status: verified` summaries, and no exact lowercase `index.md` or `log.md` paths.
 - Gate 1 prerequisite suites: `test-hooks-auto-ingest.sh`, `test-gemini-hooks-auto-ingest.sh`, `test-hooks-startup.sh`, and `test-gemini-hooks-startup.sh` all exited 0.
-- Gate 1 implementation commit: to record immediately after creating the reviewable checkpoint.
+- Gate 1 implementation commit: `e0d425972641f1f1a372d7dacd068f73fa7fefee`.
 - Gate 1 intentional red transcript: `bash -n scripts/test-okf-lint.sh` exited 0; `bash scripts/test-okf-lint.sh` exited 1 with exactly `intentional red: missing executable scripts/lint-okf.py` on stderr.
-- Gate 2 commit and linter fixture result: not started.
+- Gate 2 commit: pending the user's manual reviewable checkpoint. Linter fixture result: `python3 -m py_compile scripts/lint-okf.py scripts/vendor/yaml/*.py`, `bash -n scripts/test-okf-lint.sh`, and `PYTHONDONTWRITEBYTECODE=1 bash scripts/test-okf-lint.sh` all exited 0; the suite printed `PASSED: OKF linter CLI contract`.
+- Gate 2 review result: six first-pass contract gaps and two follow-up gaps received public-CLI regressions and fixes; final targeted re-review found all required findings resolved and no new high-confidence regression. The live pre-migration corpus is deterministic at 104 conformance diagnostics, exit 1, with no `OKF900`.
 - Gate 3 commit, runner/model, exact eval commands, benchmark, and human review: not started.
 - Gate 4 commit, corpus inventory/body comparison, and full-lint duration: not started.
 - Gate 5 commit, provider versions/source recheck, and simulated parity results: not started.
@@ -431,3 +434,5 @@ Its completion report names affected canonical paths and derived types, loaded b
 The linter diagnostic namespace is fixed by the closed contract: `OKF001` unreadable/non-UTF-8 concept, `OKF002` missing/malformed delimiters, `OKF003` invalid YAML/non-mapping frontmatter, `OKF004` missing/empty/wrong required field, `OKF005` invalid standard metadata shape/value, `OKF006` invalid timestamp or missing offset, `OKF007` lowercase reserved path, `OKF101` path/type mismatch, `OKF102` repository escape, `OKF103` unresolved/non-file local target, `OKF104` manifest/source-summary mismatch, `OKF105` legacy field/lifecycle representation, and `OKF900` parser/dependency/configuration/internal failure.
 
 Revision note (2026-09-09): Completed Gate 1 implementation work from baseline `b9a1d8a8a0542bec9eb6764cf4b4af3071eefad9`; added the valid two-bundle fixture and intentional-red public-CLI suite, recorded delegated review corrections and validation evidence, and left the reviewed worktree uncommitted for the user's manual checkpoint.
+
+Revision note (2026-09-09): Recorded the user's Gate 1 commit, completed Gate 2's pinned vendor and provider-neutral linter, expanded regressions from independent review, synchronized script-area agent documentation, and stopped before Gate 3 for the user's manual Gate 2 checkpoint.

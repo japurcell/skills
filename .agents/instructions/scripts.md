@@ -9,6 +9,7 @@ coverage: Rules and conventions for repository helper scripts under `scripts/` t
 - Shell-focused helper scripts should stay in the repo-root `scripts/` tree and use `scripts/common.sh` for shared repo-root helpers that require `REPO_ROOT`.
 - Use stdout for primary or machine-readable output and stderr for status, warnings, progress, and errors so piping and redirection stay predictable.
 - Prefer standard-library solutions unless an existing script already implies dependency use.
+- `scripts/lint-okf.py` must load PyYAML 6.0.3 from `scripts/vendor/yaml/`, verify both the version and resolved import path, and fail with `OKF900` instead of falling back to a site package. Keep the linter read-only and offline at runtime.
 - Register cleanup functions by name (for example, `trap cleanup EXIT`) instead of interpolating temporary paths into trap command strings. Quote the exact `mktemp`-created path and pass `--` to recursive cleanup commands.
 - Treat user-facing helper scripts as CLIs: reserve `-h`/`--help` for help, prefer descriptive long flags over multiple positional argument types, and keep interactive prompts optional rather than mandatory.
 - Gate decorative terminal behavior on TTY detection; if a script introduces color or spinners, it should also respect `TERM=dumb`, `NO_COLOR`, and a direct opt-out flag.

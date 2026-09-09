@@ -6,7 +6,7 @@ Execute the six-gate in-place OKF v0.2 migration for the canonical documents und
 
 ## Status
 
-- On 2026-09-09, the user explicitly authorized implementation. Gate 1 implementation work is complete from baseline `b9a1d8a8a0542bec9eb6764cf4b4af3071eefad9`; the user will manually commit the reviewed worktree.
+- On 2026-09-09, the user explicitly authorized implementation. Gate 1 is complete and was manually committed by the user as `e0d425972641f1f1a372d7dacd068f73fa7fefee` from baseline `b9a1d8a8a0542bec9eb6764cf4b4af3071eefad9`.
 
 - **OKF Authoring Skill Contract** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its Gate 3 implementation has not started.
 - The user found a charter-level flaw in the closed map: its `.agents/okf/` sidecar and prompt-time selector would inject knowledge already discoverable through the mandatory `AGENTS.md` → `.agents/memory/INDEX.md` path.
@@ -17,16 +17,17 @@ Execute the six-gate in-place OKF v0.2 migration for the canonical documents und
 - **In-Place Migration Sequencing and Verification** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its resolution fixes six implementation gates, validation scope, ownership, live capability proof, and rollback.
 - The 18 obsolete tickets are archived under `tickets/obsolete/`; the direct `tickets/` directory contains exactly five closed authoritative tickets.
 - `map.md` and `implementation-overview.md` describe the completed corrected design.
-- `implementation-execplan.md` translates the five closed contracts into six implementation gates with public test seams, non-overlapping path ownership, exact stable validation commands, live provider evidence requirements, and whole-migration rollback. Gate 1 is active only for its checkpoint; Gates 2–6 are open.
-- Gate 1 added `scripts/fixtures/okf-valid-repo/` and `scripts/test-okf-lint.sh`. No production linter, vendor files, skill, canonical-corpus migration, adapter, or hook registration exists yet.
+- `implementation-execplan.md` translates the five closed contracts into six implementation gates with public test seams, non-overlapping path ownership, exact stable validation commands, live provider evidence requirements, and whole-migration rollback. Gates 1 and 2 are complete; Gate 2 awaits only its user-created checkpoint, and Gates 3–6 remain open.
+- Gate 1 added `scripts/fixtures/okf-valid-repo/` and `scripts/test-okf-lint.sh`.
+- Gate 2 added the offline provider-neutral `scripts/lint-okf.py`, pinned PyYAML 6.0.3 under `scripts/vendor/`, and review-driven public-CLI regressions. No skill, canonical-corpus migration, adapter, or hook registration exists yet.
 
 ## Next Focus
 
-Wait for the user's manual Gate 1 checkpoint, then record its SHA. Do not begin Gate 2 before that checkpoint exists.
+Wait for the user's manual Gate 2 checkpoint, then record its SHA. Do not begin Gate 3 before that checkpoint exists.
 
 ## Exact Next Step
 
-After the user manually commits the current Gate 1 scope, record its SHA in `implementation-execplan.md`. Then Gate 2 may begin with pinned-vendor verification and the first `OKF900` public-CLI red-to-green slice.
+After the user manually commits the current Gate 2 scope, record its SHA in `implementation-execplan.md`. Then Gate 3 may begin with the existing-skill search and `okf-authoring` evaluation baseline.
 
 ## Decisions and Constraints
 
@@ -103,6 +104,9 @@ After the user manually commits the current Gate 1 scope, record its SHA in `imp
 - Gate 1 baseline inventory matched 31 canonical Markdown files, 22 `coverage` headers, 9 verified summaries, and no lowercase reserved paths. Both source-ingest suites and both startup suites exited 0.
 - `bash -n scripts/test-okf-lint.sh` exits 0. `bash scripts/test-okf-lint.sh` intentionally exits 1 with exactly `intentional red: missing executable scripts/lint-okf.py`; fixture preflight runs before that guard. `git diff --check` is clean.
 - Commit preflight found the repository on `main` with empty repository Git author name/email. Per the user's direction, no commit, branch, push, or PR was created; the reviewed worktree is ready for manual commit.
+- Gate 2 final verification passed Python compilation, shell syntax, `PYTHONDONTWRITEBYTECODE=1 bash scripts/test-okf-lint.sh`, executable-mode validation, repeated deterministic JSON, and `git diff --check`. The live pre-migration corpus exited 1 with 104 expected conformance diagnostics and no `OKF900`.
+- Independent Gate 2 review verified all 17 vendored Python sources and the license byte-for-byte against the accepted PyYAML 6.0.3 archive, but required fixes for vendor-origin enforcement, non-string lifecycle values, per-file read errors, offset-preserving code masking, balanced Markdown destinations, and nested YAML key locations.
+- Targeted follow-up review confirmed those six findings plus unclosed/invalid fence handling and isolated vendor-failure testing are resolved; it found no new high-confidence regression.
 
 ## Errors and Durable Learnings
 
@@ -115,11 +119,15 @@ After the user manually commits the current Gate 1 scope, record its SHA in `imp
 - The delegated Gemini researcher could not satisfy the `research` skill's nested-background-agent instruction because no spawn tool was exposed in that subagent. It completed the primary-source research directly; a future `research` skill revision should explicitly permit that fallback.
 - Two `functions.exec` wrappers failed before shell execution because malformed JavaScript included an invalid variable and stray text. No files changed. Keep orchestration wrappers minimal (`const r = await ...; text(r.output);`) and avoid decorative or non-ASCII variable names.
 - A repository search named nonexistent `skills/update-agent-docs`; `rg` reported the missing path and made no changes. The canonical repository-local skill is `.agents/skills/update-agent-docs/`; verify paths with `rg --files` before combining search roots.
+- This resumed session first tried the global path `/root/.agents/skills/exec-plans/SKILL.md`; the read failed without changing files because `exec-plans` is repository-local at `.agents/skills/exec-plans/SKILL.md`. Expand each skill's declared root alias instead of assuming all skills share the global root.
 - A temporary PyYAML archive inspection was rejected before execution because its cleanup trap contained a blocked recursive removal command. No files were created. Streaming the archive directly through `tar -tzf -` produced the needed package/license inventory without cleanup state.
 - Gate 1 review found that incrementing a shell counter inside command substitution runs in a subshell and can reuse case directories. The harness now creates every case with its own `mktemp -d` template.
 - Gate 1 review also found that interpolating a `TMPDIR`-influenced path into an EXIT trap can reparse metacharacters as shell code. Use a named cleanup function with a quoted exact path and `rm -rf -- "$path"`.
+- A combined verification wrapper was rejected before execution because it included a temporary-file cleanup command. No tests or files were affected. Validate JSON through an in-memory Python subprocess when no persistent artifact is needed.
+- A combined Gate 2 completion patch was rejected because one handoff anchor was stale; no file changed. Split status synchronization into fresh file-scoped patches after rereading short targets.
+- Six unrelated untracked `skills/*/agents/openai.yaml` files appeared briefly while delegated review was running and disappeared again before final status without agent action. They were never part of Gate 2; recheck status rather than assuming transient concurrent files belong to the task.
 
 ## Suggested Skills
 
-- Resume with `handoff`, then use `exec-plans` and the commit workflow to finish the Gate 1 checkpoint; use `tdd` and `official-sources` when Gate 2 implementation begins.
+- Resume with `handoff`, then use `exec-plans` to record the user's Gate 2 checkpoint; use `skill-creator`, `tdd`, and the closed authoring-skill contract when Gate 3 begins.
 - End every repository-changing session with `update-agent-docs`.
