@@ -33,4 +33,4 @@ flowchart TB
     L --> M
 ```
 
-Implementation has not started. The three open decision tickets in the [migration map](map.md) must close before an implementation ExecPlan is written; **OKF Authoring Skill Contract** and **OKF Linter and Provider Hooks Contract** are the current frontier tickets.
+Implementation has not started. The document, authoring-skill, and linter/provider-hook contracts in the [migration map](map.md) are closed. **In-Place Migration Sequencing and Verification** is the sole remaining decision ticket and must close before an implementation ExecPlan is written.

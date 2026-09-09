@@ -18,6 +18,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for converti
 - [In-Place OKF Migration Charter](tickets/in-place-okf-migration-charter.md): Convert the canonical knowledge documents themselves to OKF, retain the existing indexed loading path, teach authors with a skill, and enforce conformance through blocking Copilot and Gemini lint hooks without context injection.
 - [In-Place OKF Document Contract](tickets/in-place-okf-document-contract.md): Use separate in-place memory and instruction bundles with standard metadata, stable uppercase routing paths, a small path-derived type vocabulary, resolvable file-relative links, conforming source summaries, and no required extension fields.
 - [OKF Authoring Skill Contract](tickets/okf-authoring-skill-contract.md): Use a model-invoked representation skill that composes one-way with `update-agent-docs`, progressively discloses the profile and source-summary branch, preserves read-only review semantics, and requires repository-wide lint evidence for completion.
+- [OKF Linter and Provider Hooks Contract](tickets/okf-linter-and-provider-hooks-contract.md): Enforce both in-place bundles with one deterministic full-corpus linter, stable diagnostics, manifest-aware source bindings, and provider-specific post-tool feedback plus capability-gated final stop hooks that remain separate from source ingestion.
 
 ## Not yet specified
 
