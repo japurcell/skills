@@ -23,7 +23,7 @@ The migration converts those canonical documents themselves to OKF v0.2. It does
 - **Blocking provider hooks:** run lint validation for both GitHub Copilot CLI and Gemini CLI and block invalid document edits using each host's supported validation lifecycle.
 - **Existing ingestion safety:** preserve immutable raw sources and current source-summary freshness behavior; linting validates authored OKF documents rather than replacing or duplicating ingestion.
 
-## Remaining design sequence
+## Closed design sequence
 
 ```mermaid
 flowchart TB
@@ -33,4 +33,4 @@ flowchart TB
     L --> M
 ```
 
-Implementation has not started. The document, authoring-skill, and linter/provider-hook contracts in the [migration map](map.md) are closed. **In-Place Migration Sequencing and Verification** is the sole remaining decision ticket and must close before an implementation ExecPlan is written.
+Implementation has not started. The document, authoring-skill, linter/provider-hook, and migration-sequencing contracts in the [migration map](map.md) are closed. The next session should translate them into an implementation ExecPlan; it must not reopen the settled architecture unless repository or provider evidence contradicts a contract assumption.

@@ -12,17 +12,17 @@ Finish an implementation-ready design for migrating the canonical documents unde
 - All 18 tickets derived from the old sidecar/selector/provider-runtime design are `obsolete`. Their research may be reused as evidence, but their decisions are not authoritative.
 - **In-Place OKF Document Contract** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its resolution defines the two-bundle, standard-metadata, stable-path, link, source-summary, lifecycle, and no-extension contract.
 - **OKF Linter and Provider Hooks Contract** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its resolution fixes the complete lint surface, diagnostics, commands, dependency packaging, provider envelopes, failure behavior, and acceptance gates.
-- **In-Place Migration Sequencing and Verification** is now unblocked and is the sole frontier ticket.
-- The 18 obsolete tickets are archived under `tickets/obsolete/`; the direct `tickets/` directory contains exactly five non-obsolete tickets (four closed and one open).
-- `map.md` and `implementation-overview.md` now describe the corrected architecture. No implementation or implementation ExecPlan exists.
+- **In-Place Migration Sequencing and Verification** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its resolution fixes six implementation gates, validation scope, ownership, live capability proof, and rollback.
+- The 18 obsolete tickets are archived under `tickets/obsolete/`; the direct `tickets/` directory contains exactly five closed authoritative tickets.
+- `map.md` and `implementation-overview.md` now describe the completed corrected design. No implementation or implementation ExecPlan exists.
 
 ## Next Focus
 
-Resolve **In-Place Migration Sequencing and Verification**, now the sole frontier ticket. It must turn the four closed contracts into an ordered, rollback-safe, ExecPlan-ready implementation and verification sequence.
+Create the implementation ExecPlan from the five closed contracts without reopening settled decisions unless current repository or provider evidence contradicts an assumption.
 
 ## Exact Next Step
 
-In a new session, activate `handoff`, `wayfinder`, and `grilling`; claim `tickets/in-place-migration-sequencing-and-verification.md`; load the four closed replacement contracts; then grill dependency order, temporary invalid states, hook enablement, fixtures, live capability gates, rollback boundaries, and the final ExecPlan handoff. Do not implement the migration in that session.
+In a new session, activate `handoff`, `exec-plans`, mandatory `tdd`, `official-sources`, and the skill-authoring workflow required for `okf-authoring`; recheck the pinned OKF v0.2 source and current provider capabilities, then write `docs/okf-kb-migration/implementation-execplan.md` with the six gates, path ownership, commands, evidence, and rollback checkpoints. Do not begin implementation until the ExecPlan exists.
 
 ## Decisions and Constraints
 
@@ -47,6 +47,10 @@ In a new session, activate `handoff`, `wayfinder`, and `grilling`; claim `ticket
 - Use one full-corpus `scripts/lint-okf.py` authority with human and JSON output, stable `OKF001`–`OKF105` plus `OKF900` diagnostics, and `0`/`1`/`2` exit semantics. Vendor pinned pure-Python PyYAML 6.0.3 under `scripts/vendor/yaml/`; hooks perform no runtime installation.
 - Validate both bundles, exact path-derived types, standard metadata, known legacy fields, file-relative Markdown/resource targets, and manifest-backed source-summary provenance. The linter reads but never reconciles or writes source-ingest state.
 - Use thin repository-local Copilot and Gemini adapters for immediate mutation feedback and unconditional final full-corpus gates. Keep source-ingest hooks first and separate, capability-test mutation matchers and final events, cap hook diagnostics, and block enablement if required live behavior is absent.
+- Implement through six gates: baseline/failing fixtures; dormant linter and vendored parser; authoring skill and one-way composition; atomic canonical-corpus plus scaffold-producer migration; provider adapters/configuration/regressions; then disposable-worktree live probes and final evidence.
+- Use one checked-in valid two-bundle fixture copied and mutated in temporary repositories. Merge only after both providers pass all required live probes; treat the merged migration as one rollback unit.
+- Keep source-ingest and OKF lint as independent ordered hooks unless simultaneous-failure evidence requires a thin coordinator. Record commands, CLI versions, event observations, normalized diagnostics, lint duration, and rollback checkpoints in the version-controlled ExecPlan.
+- Assign non-overlapping ownership for linter/fixtures, authoring skill/evaluations, canonical migration/scaffold producers, and dual-provider adapters/tests; one coordinator owns shared configuration and final integration.
 
 ## Relevant Files
 
@@ -66,7 +70,7 @@ In a new session, activate `handoff`, `wayfinder`, and `grilling`; claim `ticket
 
 ## Verification State
 
-- Ticket validation now shows four closed authoritative tickets, 18 obsolete tickets in `tickets/obsolete/`, five non-obsolete tickets directly under `tickets/` (four closed and one open), no active claims, and one frontier ticket: **In-Place Migration Sequencing and Verification**.
+- Ticket validation now shows five closed authoritative tickets directly under `tickets/`, 18 obsolete tickets under `tickets/obsolete/`, no open tickets, and no active claims.
 - All relative Markdown links in `map.md`, `implementation-overview.md`, `handoff.md`, and the closed authoring-skill ticket resolve. Active-document searches found old runtime terms only where the rejected design is explicitly identified as obsolete.
 - A delegated repository-wide stale-document audit found no other active references presenting the rejected design as current and no migration-relevant broken links. It identified `relocation-execplan.md` as the sole stale artifact; that completed plan now labels its counts as a 2026-09-03 relocation snapshot and routes current status to `map.md` and this handoff.
 - `git diff --check` passed after closing and indexing the authoring-skill ticket.
@@ -81,7 +85,8 @@ In a new session, activate `handoff`, `wayfinder`, and `grilling`; claim `ticket
 - Official-source research confirms neither provider exposes an authoritative changed-file list after tools. Copilot `postToolUse` cannot block/undo writes; `agentStop`/`subagentStop` force bounded continuation but timeouts fail open and the host overrides after eight blocks. Gemini `AfterTool` does not roll back writes; `AfterAgent` can retry, but an official open issue reports it not firing in at least one build, so live capability proof is required.
 - Local exploration confirms repository-specific Copilot lint belongs under `.github/hooks/`, Gemini lint under `.gemini/settings.json`, and source-ingest scripts/state must remain separate. The canonical corpus remains small enough for a full two-bundle scan.
 - The accepted parser pin is PyYAML 6.0.3. PyPI reports the source archive SHA-256 `d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f`; the contract vendors its pure-Python package and license rather than installing at hook runtime.
-- Final validation checked all 15 active migration Markdown documents outside `tickets/obsolete/`; every relative link resolves. A dependency/status check found exactly four closed and one open direct ticket, no active claims, and confirmed every blocker of **In-Place Migration Sequencing and Verification** is closed. The stale-status search returned no matches, and `git diff --check` passed.
+- Final validation checked all 15 active migration Markdown documents outside `tickets/obsolete/`; every relative link resolves. All five direct tickets are closed, no stale frontier or claim language remains in active documents, and `git diff --check` passes.
+- The end-of-session `update-agent-docs` pass found no canonical KB edit was needed: this session changed only ordinary migration planning documents, and the existing repo workflow already describes their location and authority.
 
 ## Errors and Durable Learnings
 
@@ -89,12 +94,12 @@ In a new session, activate `handoff`, `wayfinder`, and `grilling`; claim `ticket
 - Loading `improve-skill` first used an incorrect repo-local path and failed without changing files; use the configured skill-root map (`r0` → `/root/.agents/skills`) instead of assuming `.agents/skills/` is repo-local.
 - One combined patch tried to delete and add the same path in a single `apply_patch` input and was rejected before changing files. Replace content with an update patch or use separate delete/add operations.
 - A shell search placed Markdown backticks inside a double-quoted command string, causing harmless command-substitution attempts and two `command not found` messages. No files changed. Use a single-quoted search pattern or otherwise keep backticks out of shell-interpreted strings.
-- One combined status patch used stale exact handoff wording and failed atomically without changing files. Reread short target sections and use smaller, freshly anchored patches when conversational state has advanced.
+- Status-recording patches failed when handoff wording or an anchor was stale; one malformed no-op also omitted wrapper result reporting. Reread short targets, use small fresh anchors, always print patch results, and verify the target after an unexpected empty result.
 - One delegated Copilot research check first tried unavailable `python`, then succeeded with `python3`; do not assume a single interpreter command is portable across the repository's POSIX and Windows surfaces.
 - The delegated Gemini researcher could not satisfy the `research` skill's nested-background-agent instruction because no spawn tool was exposed in that subagent. It completed the primary-source research directly; a future `research` skill revision should explicitly permit that fallback.
 - Two `functions.exec` wrappers failed before shell execution because malformed JavaScript included an invalid variable and stray text. No files changed. Keep orchestration wrappers minimal (`const r = await ...; text(r.output);`) and avoid decorative or non-ASCII variable names.
 
 ## Suggested Skills
 
-- Resume with `handoff`, then use `wayfinder` and `grilling` for **In-Place Migration Sequencing and Verification**.
+- Resume with `handoff`, then use `exec-plans`, `tdd`, `official-sources`, and the applicable skill-authoring workflow to create the implementation ExecPlan before coding.
 - End every repository-changing session with `update-agent-docs`.
