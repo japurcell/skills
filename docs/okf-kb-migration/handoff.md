@@ -14,15 +14,17 @@ Finish an implementation-ready design for migrating the canonical documents unde
 - **OKF Linter and Provider Hooks Contract** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its resolution fixes the complete lint surface, diagnostics, commands, dependency packaging, provider envelopes, failure behavior, and acceptance gates.
 - **In-Place Migration Sequencing and Verification** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its resolution fixes six implementation gates, validation scope, ownership, live capability proof, and rollback.
 - The 18 obsolete tickets are archived under `tickets/obsolete/`; the direct `tickets/` directory contains exactly five closed authoritative tickets.
-- `map.md` and `implementation-overview.md` now describe the completed corrected design. No implementation or implementation ExecPlan exists.
+- `map.md` and `implementation-overview.md` describe the completed corrected design.
+- `implementation-execplan.md` now translates the five closed contracts into six open implementation gates with public test seams, non-overlapping path ownership, exact stable validation commands, live provider evidence requirements, and whole-migration rollback.
+- No implementation work has started. The user explicitly said not to begin implementation in the plan-authoring session.
 
 ## Next Focus
 
-Create the implementation ExecPlan from the five closed contracts without reopening settled decisions unless current repository or provider evidence contradicts an assumption.
+Hold at the planning boundary until the user explicitly authorizes implementation. The next implementation session starts with Gate 1 of `implementation-execplan.md`.
 
 ## Exact Next Step
 
-In a new session, activate `handoff`, `exec-plans`, mandatory `tdd`, `official-sources`, and the skill-authoring workflow required for `okf-authoring`; recheck the pinned OKF v0.2 source and current provider capabilities, then write `docs/okf-kb-migration/implementation-execplan.md` with the six gates, path ownership, commands, evidence, and rollback checkpoints. Do not begin implementation until the ExecPlan exists.
+After explicit implementation authorization, activate `handoff`, `exec-plans`, mandatory `tdd`, `official-sources`, and the applicable skill-authoring workflow; read `implementation-execplan.md`, record the Gate 1 baseline commit and inventory, then add only the valid two-bundle fixture and failing public-seam linter tests. Do not create production linter code in Gate 1.
 
 ## Decisions and Constraints
 
@@ -59,8 +61,9 @@ In a new session, activate `handoff`, `exec-plans`, mandatory `tdd`, `official-s
 - `docs/okf-kb-migration/tickets/in-place-okf-document-contract.md` — closed in-place bundle and concept contract.
 - `docs/okf-kb-migration/tickets/okf-authoring-skill-contract.md` — closed authoring-skill design.
 - `docs/okf-kb-migration/tickets/okf-linter-and-provider-hooks-contract.md` — closed linter, diagnostics, provider-hook, and capability-gate design.
-- `docs/okf-kb-migration/tickets/in-place-migration-sequencing-and-verification.md` — sole open sequencing decision.
+- `docs/okf-kb-migration/tickets/in-place-migration-sequencing-and-verification.md` — closed six-gate sequencing and verification contract.
 - `docs/okf-kb-migration/implementation-overview.md` — concise corrected architecture for novice readers.
+- `docs/okf-kb-migration/implementation-execplan.md` — implementation authority; all six gates are open and no implementation has begun.
 - `.agents/scratchpad/explore-okf-in-place-correction.md` — local evidence tracing the duplicate-context flaw.
 - `.agents/scratchpad/explore-okf-authoring-skill-contract.md` — local code map for current skill conventions and the `update-agent-docs` responsibility seam.
 - `docs/okf-kb-migration/research/okf-primary-sources.md` — prior OKF v0.2 research; its sidecar recommendation is obsolete, but specification facts remain reusable after verification.
@@ -87,6 +90,12 @@ In a new session, activate `handoff`, `exec-plans`, mandatory `tdd`, `official-s
 - The accepted parser pin is PyYAML 6.0.3. PyPI reports the source archive SHA-256 `d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f`; the contract vendors its pure-Python package and license rather than installing at hook runtime.
 - Final validation checked all 15 active migration Markdown documents outside `tickets/obsolete/`; every relative link resolves. All five direct tickets are closed, no stale frontier or claim language remains in active documents, and `git diff --check` passes.
 - The end-of-session `update-agent-docs` pass found no canonical KB edit was needed: this session changed only ordinary migration planning documents, and the existing repo workflow already describes their location and authority.
+- Rechecked canonical OKF v0.2 on 2026-09-09: `main` remains commit `ad30107c31c06aec8a7d5636e0d1058118604e6f`, and `SPEC.md` retains SHA-256 `26aa5da029278939f914e578107242d9607d4f2dc5fe153272b82f9ed1030101`.
+- Rechecked current provider documentation: Copilot still documents ordered same-event hooks, full-match mutation-tool matchers, stop blocking, fail-open timeouts, and the eight-block override; Gemini still documents `AfterTool`/`AfterAgent`, while official issue `google-gemini/gemini-cli#27712` remains open.
+- The current environment has Python 3.12.3 but no `copilot` or `gemini` executable, so live provider proof remains an explicit Gate 6 release requirement rather than planning-session evidence.
+- The implementation ExecPlan contains all six required gates, path ownership, TDD seams, stable command matrix, version/source pins, provider probe templates, evidence slots, and rollback checkpoints. Every implementation progress item remains unchecked.
+- Current validation covers all 16 active migration Markdown documents outside `tickets/obsolete/`; every relative link resolves, all required ExecPlan sections and six open milestone status blocks are present, and `git diff --check` passes.
+- The current end-of-session `update-agent-docs` pass updated `.agents/memory/FILE_MAP.md` so the effort map includes the new implementation ExecPlan. No other canonical documentation needed to change, and no OKF migration implementation began.
 
 ## Errors and Durable Learnings
 
@@ -98,8 +107,10 @@ In a new session, activate `handoff`, `exec-plans`, mandatory `tdd`, `official-s
 - One delegated Copilot research check first tried unavailable `python`, then succeeded with `python3`; do not assume a single interpreter command is portable across the repository's POSIX and Windows surfaces.
 - The delegated Gemini researcher could not satisfy the `research` skill's nested-background-agent instruction because no spawn tool was exposed in that subagent. It completed the primary-source research directly; a future `research` skill revision should explicitly permit that fallback.
 - Two `functions.exec` wrappers failed before shell execution because malformed JavaScript included an invalid variable and stray text. No files changed. Keep orchestration wrappers minimal (`const r = await ...; text(r.output);`) and avoid decorative or non-ASCII variable names.
+- A repository search named nonexistent `skills/update-agent-docs`; `rg` reported the missing path and made no changes. The canonical repository-local skill is `.agents/skills/update-agent-docs/`; verify paths with `rg --files` before combining search roots.
+- A temporary PyYAML archive inspection was rejected before execution because its cleanup trap contained a blocked recursive removal command. No files were created. Streaming the archive directly through `tar -tzf -` produced the needed package/license inventory without cleanup state.
 
 ## Suggested Skills
 
-- Resume with `handoff`, then use `exec-plans`, `tdd`, `official-sources`, and the applicable skill-authoring workflow to create the implementation ExecPlan before coding.
+- Resume with `handoff`, then use `exec-plans`, `tdd`, `official-sources`, and the applicable skill-authoring workflow to execute the existing implementation ExecPlan only after explicit authorization.
 - End every repository-changing session with `update-agent-docs`.

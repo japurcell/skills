@@ -33,4 +33,4 @@ flowchart TB
     L --> M
 ```
 
-Implementation has not started. The document, authoring-skill, linter/provider-hook, and migration-sequencing contracts in the [migration map](map.md) are closed. The next session should translate them into an implementation ExecPlan; it must not reopen the settled architecture unless repository or provider evidence contradicts a contract assumption.
+Implementation has not started. The document, authoring-skill, linter/provider-hook, and migration-sequencing contracts in the [migration map](map.md) are closed. The [implementation ExecPlan](implementation-execplan.md) translates them into six open gates with test-first seams, path ownership, live capability proof, and whole-migration rollback. A later session may execute Gate 1 only after explicit implementation authorization; it must not reopen the settled architecture unless repository or provider evidence contradicts a contract assumption.

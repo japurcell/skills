@@ -1,11 +1,12 @@
 ## Destination
 
-An implementation-ready migration design and ExecPlan-ready handoff for converting the canonical documents under `.agents/instructions/` and `.agents/memory/` in place to OKF v0.2, while preserving the established `AGENTS.md` → `.agents/memory/INDEX.md` progressive-loading path. The design includes an OKF authoring skill and blocking OKF lint validation hooks for both GitHub Copilot CLI and Gemini CLI, with no second context-loading path.
+An implementation-ready migration design and [ExecPlan](implementation-execplan.md) for converting the canonical documents under `.agents/instructions/` and `.agents/memory/` in place to OKF v0.2, while preserving the established `AGENTS.md` → `.agents/memory/INDEX.md` progressive-loading path. The design includes an OKF authoring skill and blocking OKF lint validation hooks for both GitHub Copilot CLI and Gemini CLI, with no second context-loading path.
 
 ## Notes
 
 - [Corrected implementation overview](implementation-overview.md) explains the one-path architecture and remaining decision sequence. This map remains the authoritative decision index.
-- This map is planning-only. Implementation and proof-of-concept delivery are outside the destination.
+- The [implementation ExecPlan](implementation-execplan.md) translates all five closed contracts into six dependency-ordered gates. All gates are open; implementation has not begun.
+- This map and its tickets are planning artifacts. Implementation begins only when a later session explicitly executes the ExecPlan.
 - Every session should activate `wayfinder`; grilling tickets also activate `grilling`. `domain-modeling`, requested by Wayfinder, is unavailable, so use repository evidence and the user's explicit source-of-truth decisions as the disclosed fallback.
 - Use `official-sources` and `research` for new external investigation, and `explore` for local codebase facts. The external baseline is OKF v0.2 from `GoogleCloudPlatform/open-knowledge-format`.
 - The canonical documents are the OKF documents. Preserve their existing progressive discovery through `AGENTS.md` and `.agents/memory/INDEX.md`; do not create a generated knowledge sidecar or inject selected context at prompt time.
