@@ -1,0 +1,5 @@
+{
+  "eval_id": 5,
+  "eval_name": "read-only-conformance-review",
+  "prompt": "The coordinator seeds `.agents/memory/KNOWN_ISSUES.md` as a nonconforming body-only document before its baseline snapshot. Read it without authorization to change it. Do not write repository output. Save only `outputs/outcome.json` using the declared outcome schema. The coordinator independently runs the full linter, which must exit 1 with nonconforming findings and observe no sandbox diff."
+}

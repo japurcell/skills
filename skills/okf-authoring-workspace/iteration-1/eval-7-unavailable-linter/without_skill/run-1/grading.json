@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "evidence": ".agents/memory/ARCHITECTURE.md",
+      "passed": true,
+      "text": "Produces exactly the allowed model output files."
+    },
+    {
+      "evidence": "{\"description\": \"Top-level repo structure, install flows, and how top-level areas relate\", \"type\": \"Agent Memory\"}",
+      "passed": true,
+      "text": "Uses the exact path-derived type and non-empty description for .agents/memory/ARCHITECTURE.md."
+    },
+    {
+      "evidence": "\n# Architecture\n\nPreserve this canonical body.\n",
+      "passed": false,
+      "text": "Preserves the exact required Markdown body for .agents/memory/ARCHITECTURE.md."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/memory/ARCHITECTURE.md\"], \"command\": [\"skills/okf-authoring-workspace/iteration-1/eval-7-unavailable-linter/without_skill/run-1/validation-sandbox/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 7, \"execution_error\": \"FileNotFoundError: [Errno 2] No such file or directory: 'skills/okf-authoring-workspace/iteration-1/eval-7-unavailable-linter/without_skill/run-1/validation-sandbox/scripts/lint-okf.py'\", \"exit_code\": null, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-7-unavailable-linter/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"\"}",
+      "passed": true,
+      "text": "Actual linter result matches this scenario."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/memory/ARCHITECTURE.md\"], \"command\": [\"skills/okf-authoring-workspace/iteration-1/eval-7-unavailable-linter/without_skill/run-1/validation-sandbox/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 7, \"execution_error\": \"FileNotFoundError: [Errno 2] No such file or directory: 'skills/okf-authoring-workspace/iteration-1/eval-7-unavailable-linter/without_skill/run-1/validation-sandbox/scripts/lint-okf.py'\", \"exit_code\": null, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-7-unavailable-linter/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"\"}",
+      "passed": true,
+      "text": "Actual validation-sandbox diff has exactly the authorized paths."
+    },
+    {
+      "evidence": "{\"affected\": [{\"path\": \".agents/memory/ARCHITECTURE.md\", \"type\": \"Agent Memory\"}], \"completion\": \"unverified\", \"lint\": {\"command\": \"okf-lint .agents/instructions .agents/memory\", \"exit_code\": 127, \"outcome\": \"unavailable\"}, \"mode\": \"change\", \"references_loaded\": \"[profile] for general canonical work\", \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/ARCHITECTURE.md\"]}}",
+      "passed": false,
+      "text": "Reports the expected unavailable-linter outcome."
+    },
+    {
+      "evidence": "none",
+      "passed": true,
+      "text": "Makes no completion or success claim."
+    },
+    {
+      "evidence": "{\"references_loaded\": \"[profile] for general canonical work\", \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/ARCHITECTURE.md\"]}}",
+      "passed": false,
+      "text": "Records the expected references loaded."
+    },
+    {
+      "evidence": "{\"references_loaded\": \"[profile] for general canonical work\", \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/ARCHITECTURE.md\"]}}",
+      "passed": true,
+      "text": "Reports the expected scoped diff."
+    }
+  ],
+  "summary": {
+    "failed": 3,
+    "pass_rate": 0.67,
+    "passed": 6,
+    "total": 9
+  }
+}

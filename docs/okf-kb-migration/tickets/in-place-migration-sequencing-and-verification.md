@@ -38,7 +38,7 @@ bash scripts/test-gemini-hooks-auto-ingest.sh
 bash scripts/test-hooks-startup.sh
 bash scripts/test-gemini-hooks-startup.sh
 bash scripts/test-install.sh
-python3 skills/skill-creator/scripts/quick_validate.py skills/okf-authoring
+PYTHONPATH=scripts/vendor python3 skills/skill-creator/scripts/quick_validate.py .agents/skills/okf-authoring
 git diff --check
 ```
 

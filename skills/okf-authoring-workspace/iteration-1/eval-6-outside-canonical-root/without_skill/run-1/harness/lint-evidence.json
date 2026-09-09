@@ -1,0 +1,16 @@
+{
+  "attempted": false,
+  "changed_paths": [],
+  "command": [
+    "/Users/adam/dev/skills/scripts/lint-okf.py",
+    "--format",
+    "json"
+  ],
+  "eval_id": 6,
+  "execution_error": "",
+  "exit_code": null,
+  "owner": "grade_benchmark.py",
+  "sandbox_cwd": "skills/okf-authoring-workspace/iteration-1/eval-6-outside-canonical-root/without_skill/run-1/validation-sandbox",
+  "stderr": "",
+  "stdout": ""
+}

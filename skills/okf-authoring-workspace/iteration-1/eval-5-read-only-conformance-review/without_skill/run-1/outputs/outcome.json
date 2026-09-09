@@ -1,0 +1,22 @@
+{
+  "mode": "review",
+  "completion": "incomplete",
+  "affected": [
+    {
+      "path": ".agents/memory/KNOWN_ISSUES.md",
+      "type": "Known Issue"
+    }
+  ],
+  "references_loaded": [
+    "profile"
+  ],
+  "lint": {
+    "command": "coordinator independent full linter",
+    "exit_code": 1,
+    "outcome": "nonconforming findings"
+  },
+  "scoped_diff": {
+    "outcome": "no_changes",
+    "paths": []
+  }
+}

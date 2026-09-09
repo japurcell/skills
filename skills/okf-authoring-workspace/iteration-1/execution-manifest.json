@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "executor_model": "gpt-5.6-luna",
+  "runner": "collaboration task agents",
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-0-create-ordinary-concept/with_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-0-create-ordinary-concept/without_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-1-metadata-only-migration/with_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-1-metadata-only-migration/without_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-2-draft-source-summary/with_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-2-draft-source-summary/without_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-3-completed-source-summary/with_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-3-completed-source-summary/without_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-4-update-agent-docs-composition/with_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 4,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-4-update-agent-docs-composition/without_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-5-read-only-conformance-review/with_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 5,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-5-read-only-conformance-review/without_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-6-outside-canonical-root/with_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 6,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-6-outside-canonical-root/without_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 7,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-7-unavailable-linter/with_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    },
+    {
+      "eval_id": 7,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "executor_model": "gpt-5.6-luna",
+      "model_evidence": "eval-7-unavailable-linter/without_skill/run-1/timing.json",
+      "routing_evidence": "explicit collaboration.spawn_agent model override"
+    }
+  ]
+}

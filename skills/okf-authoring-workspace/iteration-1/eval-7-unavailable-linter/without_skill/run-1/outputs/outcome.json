@@ -1,0 +1,22 @@
+{
+  "mode": "change",
+  "completion": "unverified",
+  "affected": [
+    {
+      "path": ".agents/memory/ARCHITECTURE.md",
+      "type": "Agent Memory"
+    }
+  ],
+  "references_loaded": "[profile] for general canonical work",
+  "lint": {
+    "command": "okf-lint .agents/instructions .agents/memory",
+    "exit_code": 127,
+    "outcome": "unavailable"
+  },
+  "scoped_diff": {
+    "outcome": "clean",
+    "paths": [
+      ".agents/memory/ARCHITECTURE.md"
+    ]
+  }
+}

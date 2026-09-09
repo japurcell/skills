@@ -1,0 +1,25 @@
+{
+  "mode": "change",
+  "completion": "complete",
+  "affected": [
+    {"path": ".agents/memory/telemetry.md", "type": "Agent Memory"},
+    {"path": ".agents/memory/INDEX.md", "type": "Knowledge Index"},
+    {"path": ".agents/memory/LOG.md", "type": "Source Ingestion Log"},
+    {"path": ".agents/memory/adrs/retention.md", "type": "Architecture Decision"}
+  ],
+  "references_loaded": ["profile"],
+  "lint": {
+    "command": "./scripts/lint-okf.py",
+    "exit_code": 0,
+    "outcome": "clean"
+  },
+  "scoped_diff": {
+    "outcome": "clean",
+    "paths": [
+      ".agents/memory/telemetry.md",
+      ".agents/memory/INDEX.md",
+      ".agents/memory/LOG.md",
+      ".agents/memory/adrs/retention.md"
+    ]
+  }
+}

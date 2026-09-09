@@ -1,0 +1,18 @@
+{
+  "attempted": true,
+  "changed_paths": [
+    ".agents/memory/sources/example-md.summary.md"
+  ],
+  "command": [
+    "/Users/adam/dev/skills/scripts/lint-okf.py",
+    "--format",
+    "json"
+  ],
+  "eval_id": 3,
+  "execution_error": "",
+  "exit_code": 1,
+  "owner": "grade_benchmark.py",
+  "sandbox_cwd": "skills/okf-authoring-workspace/iteration-1/eval-3-completed-source-summary/without_skill/run-1/validation-sandbox",
+  "stderr": "",
+  "stdout": "{\"schema_version\":1,\"diagnostics\":[{\"id\":\"OKF004\",\"path\":\".agents/memory/sources/example-md.summary.md\",\"line\":1,\"column\":1,\"message\":\"type must be a non-empty string\"},{\"id\":\"OKF004\",\"path\":\".agents/memory/sources/example-md.summary.md\",\"line\":1,\"column\":1,\"message\":\"description must be a non-empty string\"},{\"id\":\"OKF104\",\"path\":\".agents/memory/sources/example-md.summary.md\",\"line\":1,\"column\":1,\"message\":\"source summary must bind exactly to its manifest source\"},{\"id\":\"OKF105\",\"path\":\".agents/memory/sources/example-md.summary.md\",\"line\":2,\"column\":1,\"message\":\"legacy coverage field is not allowed\"}]}\n"
+}

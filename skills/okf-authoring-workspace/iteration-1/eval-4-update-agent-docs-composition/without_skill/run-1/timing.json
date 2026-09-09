@@ -1,0 +1,9 @@
+{
+  "end_epoch_seconds": 1788946778,
+  "executor_model": "gpt-5.6-luna",
+  "executor_model_source": "explicit collaboration.spawn_agent model override",
+  "exit_code": 0,
+  "start_epoch_seconds": 1788946637,
+  "total_duration_seconds": 141,
+  "total_tokens": null
+}

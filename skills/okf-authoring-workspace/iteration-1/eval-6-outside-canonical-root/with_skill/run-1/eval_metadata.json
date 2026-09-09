@@ -1,0 +1,5 @@
+{
+  "eval_id": 6,
+  "eval_name": "outside-canonical-root",
+  "prompt": "Assess exactly `docs/outside.md`, whose body is `# Outside\\n\\nNot canonical.\\n`. It is outside both canonical roots. Do not write repository output. Save only `outputs/outcome.json` using the declared outcome schema. The coordinator must observe neither a linter execution nor a sandbox diff."
+}

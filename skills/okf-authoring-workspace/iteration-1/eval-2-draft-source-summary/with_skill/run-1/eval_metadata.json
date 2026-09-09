@@ -1,0 +1,5 @@
+{
+  "eval_id": 2,
+  "eval_name": "draft-source-summary",
+  "prompt": "The coordinator seeds the manifest-bound fixture pair `.agents/memory/sources/pending-md.summary.md` and immutable `.agents/sources/pending.md`, then makes only the summary body-only before its baseline snapshot. Conform exactly `.agents/memory/sources/pending-md.summary.md` with body `# Pending example summary\\n\\nThis source summary is intentionally unresolved but structurally conforming.\\n`. Save exactly that summary beneath `outputs/repo`; do not output or alter the raw source. Save `outputs/outcome.json` using the declared outcome schema. The coordinator independently runs the full linter, which must exit 0."
+}

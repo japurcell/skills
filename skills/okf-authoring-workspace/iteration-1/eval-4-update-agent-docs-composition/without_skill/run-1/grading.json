@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "evidence": ".agents/memory/testing/skills.md",
+      "passed": true,
+      "text": "Produces exactly the allowed model output files."
+    },
+    {
+      "evidence": "{\"coverage\": \"Testing guidance for skills\"}",
+      "passed": false,
+      "text": "Uses the exact path-derived type and non-empty description for .agents/memory/testing/skills.md."
+    },
+    {
+      "evidence": "\n# Skills Testing\n\nRun targeted skill validation.\n",
+      "passed": false,
+      "text": "Preserves the exact required Markdown body for .agents/memory/testing/skills.md."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/memory/testing/skills.md\"], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 4, \"execution_error\": \"\", \"exit_code\": 1, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-4-update-agent-docs-composition/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[{\\\"id\\\":\\\"OKF004\\\",\\\"path\\\":\\\".agents/memory/testing/skills.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"type must be a non-empty string\\\"},{\\\"id\\\":\\\"OKF004\\\",\\\"path\\\":\\\".agents/memory/testing/skills.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"description must be a non-empty string\\\"},{\\\"id\\\":\\\"OKF105\\\",\\\"path\\\":\\\".agents/memory/testing/skills.md\\\",\\\"line\\\":2,\\\"column\\\":1,\\\"message\\\":\\\"legacy coverage field is not allowed\\\"}]}\\n\"}",
+      "passed": false,
+      "text": "Actual linter result matches this scenario."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/memory/testing/skills.md\"], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 4, \"execution_error\": \"\", \"exit_code\": 1, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-4-update-agent-docs-composition/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[{\\\"id\\\":\\\"OKF004\\\",\\\"path\\\":\\\".agents/memory/testing/skills.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"type must be a non-empty string\\\"},{\\\"id\\\":\\\"OKF004\\\",\\\"path\\\":\\\".agents/memory/testing/skills.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"description must be a non-empty string\\\"},{\\\"id\\\":\\\"OKF105\\\",\\\"path\\\":\\\".agents/memory/testing/skills.md\\\",\\\"line\\\":2,\\\"column\\\":1,\\\"message\\\":\\\"legacy coverage field is not allowed\\\"}]}\\n\"}",
+      "passed": true,
+      "text": "Actual validation-sandbox diff has exactly the authorized paths."
+    },
+    {
+      "evidence": "{\"affected\": [{\"path\": \".agents/memory/testing/skills.md\", \"type\": \"Testing Guidance\"}], \"completion\": \"complete\", \"lint\": {\"command\": \"python3 .agents/skills/okf-authoring/scripts/lint.py outputs/repo\", \"exit_code\": 0, \"outcome\": \"clean\"}, \"mode\": \"change\", \"orchestration\": {\"representation_owner\": \"okf-authoring\", \"reverse_invocation\": false, \"semantic_owner\": \"update-agent-docs\"}, \"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/testing/skills.md\"]}}",
+      "passed": false,
+      "text": "Reports the expected complete outcome."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/testing/skills.md\"]}}",
+      "passed": true,
+      "text": "Records the expected references loaded."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/testing/skills.md\"]}}",
+      "passed": true,
+      "text": "Reports the expected scoped diff."
+    },
+    {
+      "evidence": "{\"representation_owner\": \"okf-authoring\", \"reverse_invocation\": false, \"semantic_owner\": \"update-agent-docs\"}",
+      "passed": true,
+      "text": "Records one-way update-agent-docs composition."
+    }
+  ],
+  "summary": {
+    "failed": 4,
+    "pass_rate": 0.56,
+    "passed": 5,
+    "total": 9
+  }
+}

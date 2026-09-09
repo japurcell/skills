@@ -1,0 +1,29 @@
+{
+  "mode": "change",
+  "completion": "complete",
+  "affected": [
+    {
+      "path": ".agents/memory/testing/skills.md",
+      "type": "Testing Guidance"
+    }
+  ],
+  "references_loaded": [
+    "profile"
+  ],
+  "lint": {
+    "command": "python3 .agents/skills/okf-authoring/scripts/lint.py outputs/repo",
+    "exit_code": 0,
+    "outcome": "clean"
+  },
+  "scoped_diff": {
+    "outcome": "clean",
+    "paths": [
+      ".agents/memory/testing/skills.md"
+    ]
+  },
+  "orchestration": {
+    "semantic_owner": "update-agent-docs",
+    "representation_owner": "okf-authoring",
+    "reverse_invocation": false
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "evidence": "no model output",
+      "passed": true,
+      "text": "Produces exactly the allowed model output files."
+    },
+    {
+      "evidence": "{\"attempted\": false, \"changed_paths\": [], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 6, \"execution_error\": \"\", \"exit_code\": null, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-6-outside-canonical-root/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"\"}",
+      "passed": true,
+      "text": "Actual linter result matches this scenario."
+    },
+    {
+      "evidence": "{\"attempted\": false, \"changed_paths\": [], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 6, \"execution_error\": \"\", \"exit_code\": null, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-6-outside-canonical-root/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"\"}",
+      "passed": true,
+      "text": "Actual validation-sandbox diff has exactly the authorized paths."
+    },
+    {
+      "evidence": "{\"affected\": [], \"completion\": \"not_applicable\", \"lint\": {\"command\": null, \"exit_code\": null, \"outcome\": \"not_run\"}, \"mode\": \"out_of_scope\", \"references_loaded\": [], \"scoped_diff\": {\"outcome\": \"no_changes\", \"paths\": []}}",
+      "passed": false,
+      "text": "Reports the expected outside-root outcome."
+    },
+    {
+      "evidence": "none",
+      "passed": true,
+      "text": "Makes no completion or success claim."
+    },
+    {
+      "evidence": "{\"references_loaded\": [], \"scoped_diff\": {\"outcome\": \"no_changes\", \"paths\": []}}",
+      "passed": true,
+      "text": "Records the expected references loaded."
+    },
+    {
+      "evidence": "{\"references_loaded\": [], \"scoped_diff\": {\"outcome\": \"no_changes\", \"paths\": []}}",
+      "passed": true,
+      "text": "Reports the expected scoped diff."
+    }
+  ],
+  "summary": {
+    "failed": 1,
+    "pass_rate": 0.86,
+    "passed": 6,
+    "total": 7
+  }
+}

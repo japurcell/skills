@@ -1,0 +1,5 @@
+{
+  "eval_id": 7,
+  "eval_name": "unavailable-linter",
+  "prompt": "The coordinator seeds `.agents/memory/ARCHITECTURE.md` as a nonconforming body-only document before its baseline snapshot. Conform exactly that file with body `# Architecture\\n\\nPreserve this canonical body.\\n`. Save exactly that file beneath `outputs/repo` and save `outputs/outcome.json` using the declared outcome schema. The linter path is unavailable; the coordinator will capture the failed execution, so report an unverified result without a completion or success claim."
+}

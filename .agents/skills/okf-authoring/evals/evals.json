@@ -1,0 +1,70 @@
+{
+  "skill_name": "okf-authoring",
+  "outcome_schema": {
+    "mode": "change|review|out_of_scope",
+    "completion": "complete|incomplete|unverified|not_applicable",
+    "affected": "[{path, type}]",
+    "references_loaded": "[profile] for general canonical work, [profile, source-summaries] for summaries, [] outside scope",
+    "lint": "{command, exit_code, outcome}; this is the model report, while the grader verifies execution independently",
+    "scoped_diff": "{outcome: clean|no_changes, paths: [exact authorized changed paths]}; this is the model report, while the grader verifies the sandbox diff independently",
+    "orchestration": "{semantic_owner, representation_owner, reverse_invocation} when composed"
+  },
+  "evals": [
+    {
+      "id": 0,
+      "name": "create-ordinary-concept",
+      "prompt": "The coordinator seeds a complete valid fixture and removes the four expected target documents before its baseline snapshot. Create exactly these four files beneath `outputs/repo`: `.agents/memory/telemetry.md` with body `# Telemetry\\n\\nRecord durable telemetry guidance.\\n`; `.agents/memory/INDEX.md` with body `# Index\\n\\nRoute canonical knowledge.\\n`; `.agents/memory/LOG.md` with body `# Log\\n\\nRecord source ingestion.\\n`; and `.agents/memory/adrs/retention.md` with body `# Retention\\n\\nKeep stable paths.\\n`. Save `outputs/outcome.json` using the declared outcome schema. The coordinator applies output to its fixture and independently runs the full linter, which must exit 0.",
+      "expected_output": "Agent Memory, Knowledge Index, Source Ingestion Log, and Architecture Decision concepts with a verified complete structured outcome.",
+      "assertions": ["Exact output file set.", "All path-derived metadata precedence branches.", "Exact body preservation.", "Complete clean-lint outcome.", "Profile reference evidence.", "Exact clean scoped diff."]
+    },
+    {
+      "id": 1,
+      "name": "metadata-only-migration",
+      "prompt": "The coordinator seeds `.agents/instructions/hooks.md` as a nonconforming body-only document before its baseline snapshot. Migrate exactly that file; its body is `# Hook Guidance\\n\\nRetain this sentence exactly.\\n` and must remain byte-identical. Save exactly that file beneath `outputs/repo` and save `outputs/outcome.json` using the declared outcome schema. The coordinator independently runs the full linter, which must exit 0.",
+      "expected_output": "One Agent Instruction migration with byte-preserved body and a verified complete structured outcome.",
+      "assertions": ["Exact output file set.", "Path-derived metadata.", "Body preservation.", "Complete clean-lint outcome.", "Profile reference evidence.", "Exact clean scoped diff."]
+    },
+    {
+      "id": 2,
+      "name": "draft-source-summary",
+      "prompt": "The coordinator seeds the manifest-bound fixture pair `.agents/memory/sources/pending-md.summary.md` and immutable `.agents/sources/pending.md`, then makes only the summary body-only before its baseline snapshot. Conform exactly `.agents/memory/sources/pending-md.summary.md` with body `# Pending example summary\\n\\nThis source summary is intentionally unresolved but structurally conforming.\\n`. Save exactly that summary beneath `outputs/repo`; do not output or alter the raw source. Save `outputs/outcome.json` using the declared outcome schema. The coordinator independently runs the full linter, which must exit 0.",
+      "expected_output": "Draft Source Summary preserving the fixture's manifest-bound raw-source pair and a verified complete outcome.",
+      "assertions": ["Exact output file set.", "Exact summary body.", "Fixture raw source remains unchanged.", "YAML provenance mapping.", "Draft lifecycle.", "Both references evidenced.", "Actual clean lint and exact sandbox diff."]
+    },
+    {
+      "id": 3,
+      "name": "completed-source-summary",
+      "prompt": "The coordinator seeds the manifest-bound fixture pair `.agents/memory/sources/example-md.summary.md` and immutable `.agents/sources/example.md`, then makes only the summary body-only before its baseline snapshot. Conform exactly `.agents/memory/sources/example-md.summary.md` with body `# Example source summary\\n\\nThe source demonstrates a completed manifest-backed summary.\\n`. Save exactly that summary beneath `outputs/repo`; do not output or alter the raw source. Save `outputs/outcome.json` using the declared outcome schema. The coordinator independently runs the full linter, which must exit 0.",
+      "expected_output": "Stable Source Summary preserving the fixture's manifest-bound raw-source pair and a verified complete outcome.",
+      "assertions": ["Exact output file set.", "Exact summary body.", "Fixture raw source remains unchanged.", "YAML provenance mapping.", "No status field.", "Both references evidenced.", "Actual clean lint and exact sandbox diff."]
+    },
+    {
+      "id": 4,
+      "name": "update-agent-docs-composition",
+      "prompt": "The coordinator seeds `.agents/memory/testing/skills.md` as a nonconforming body-only document before its baseline snapshot. After update-agent-docs selects the durable change, conform exactly that file with body `# Skills Testing\\n\\nRun targeted skill validation.\\n`. Save exactly that file beneath `outputs/repo` and save `outputs/outcome.json` using the declared outcome schema, including composition ownership. The coordinator independently runs the full linter, which must exit 0.",
+      "expected_output": "Testing Guidance with one-way update-agent-docs to okf-authoring composition and a verified complete outcome.",
+      "assertions": ["Exact output file set.", "Testing Guidance metadata.", "Explicit one-way ownership.", "Complete clean-lint outcome.", "Profile reference evidence.", "Exact clean scoped diff."]
+    },
+    {
+      "id": 5,
+      "name": "read-only-conformance-review",
+      "prompt": "The coordinator seeds `.agents/memory/KNOWN_ISSUES.md` as a nonconforming body-only document before its baseline snapshot. Read it without authorization to change it. Do not write repository output. Save only `outputs/outcome.json` using the declared outcome schema. The coordinator independently runs the full linter, which must exit 1 with nonconforming findings and observe no sandbox diff.",
+      "expected_output": "A non-mutating, nonconforming review outcome with no completion claim.",
+      "assertions": ["No repository output.", "Root Known Issue type.", "Incomplete nonconforming lint outcome.", "Profile reference evidence.", "No changed paths.", "No success claim in saved response or outputs."]
+    },
+    {
+      "id": 6,
+      "name": "outside-canonical-root",
+      "prompt": "Assess exactly `docs/outside.md`, whose body is `# Outside\\n\\nNot canonical.\\n`. It is outside both canonical roots. Do not write repository output. Save only `outputs/outcome.json` using the declared outcome schema. The coordinator must observe neither a linter execution nor a sandbox diff.",
+      "expected_output": "An out-of-scope, non-mutating outcome with no completion claim.",
+      "assertions": ["No repository output.", "Exact outside-root target.", "Not-applicable completion.", "No loaded references.", "No changed paths.", "No success claim in saved response or outputs."]
+    },
+    {
+      "id": 7,
+      "name": "unavailable-linter",
+      "prompt": "The coordinator seeds `.agents/memory/ARCHITECTURE.md` as a nonconforming body-only document before its baseline snapshot. Conform exactly that file with body `# Architecture\\n\\nPreserve this canonical body.\\n`. Save exactly that file beneath `outputs/repo` and save `outputs/outcome.json` using the declared outcome schema. The linter path is unavailable; the coordinator will capture the failed execution, so report an unverified result without a completion or success claim.",
+      "expected_output": "An Agent Memory change staged with an unverified outcome and no completion or success claim.",
+      "assertions": ["Exact output file set.", "Agent Memory metadata.", "Unavailable-linter unverified outcome.", "Profile reference evidence.", "Exact clean scoped diff.", "No success claim in saved response or outputs."]
+    }
+  ]
+}

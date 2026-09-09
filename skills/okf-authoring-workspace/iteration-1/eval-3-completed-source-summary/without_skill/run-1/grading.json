@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "evidence": ".agents/memory/sources/example-md.summary.md",
+      "passed": true,
+      "text": "Produces exactly the allowed model output files."
+    },
+    {
+      "evidence": "{\"coverage\": \"Completed manifest-backed summary of example.md\", \"provenance\": {\"source\": \".agents/sources/example.md\"}}",
+      "passed": false,
+      "text": "Uses the exact path-derived type and non-empty description for .agents/memory/sources/example-md.summary.md."
+    },
+    {
+      "evidence": "\n# Example source summary\n\nThe source demonstrates a completed manifest-backed summary.\n",
+      "passed": false,
+      "text": "Preserves the exact required Markdown body for .agents/memory/sources/example-md.summary.md."
+    },
+    {
+      "evidence": "{\"coverage\": \"Completed manifest-backed summary of example.md\", \"provenance\": {\"source\": \".agents/sources/example.md\"}}",
+      "passed": false,
+      "text": "Preserves the fixture stable source-summary/raw pair."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/memory/sources/example-md.summary.md\"], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 3, \"execution_error\": \"\", \"exit_code\": 1, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-3-completed-source-summary/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[{\\\"id\\\":\\\"OKF004\\\",\\\"path\\\":\\\".agents/memory/sources/example-md.summary.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"type must be a non-empty string\\\"},{\\\"id\\\":\\\"OKF004\\\",\\\"path\\\":\\\".agents/memory/sources/example-md.summary.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"description must be a non-empty string\\\"},{\\\"id\\\":\\\"OKF104\\\",\\\"path\\\":\\\".agents/memory/sources/example-md.summary.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"source summary must bind exactly to its manifest source\\\"},{\\\"id\\\":\\\"OKF105\\\",\\\"path\\\":\\\".agents/memory/sources/example-md.summary.md\\\",\\\"line\\\":2,\\\"column\\\":1,\\\"message\\\":\\\"legacy coverage field is not allowed\\\"}]}\\n\"}",
+      "passed": false,
+      "text": "Actual linter result matches this scenario."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/memory/sources/example-md.summary.md\"], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 3, \"execution_error\": \"\", \"exit_code\": 1, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-3-completed-source-summary/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[{\\\"id\\\":\\\"OKF004\\\",\\\"path\\\":\\\".agents/memory/sources/example-md.summary.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"type must be a non-empty string\\\"},{\\\"id\\\":\\\"OKF004\\\",\\\"path\\\":\\\".agents/memory/sources/example-md.summary.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"description must be a non-empty string\\\"},{\\\"id\\\":\\\"OKF104\\\",\\\"path\\\":\\\".agents/memory/sources/example-md.summary.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"source summary must bind exactly to its manifest source\\\"},{\\\"id\\\":\\\"OKF105\\\",\\\"path\\\":\\\".agents/memory/sources/example-md.summary.md\\\",\\\"line\\\":2,\\\"column\\\":1,\\\"message\\\":\\\"legacy coverage field is not allowed\\\"}]}\\n\"}",
+      "passed": true,
+      "text": "Actual validation-sandbox diff has exactly the authorized paths."
+    },
+    {
+      "evidence": "{\"affected\": [{\"path\": \".agents/memory/sources/example-md.summary.md\", \"type\": \"Source Summary\"}], \"completion\": \"complete\", \"lint\": {\"command\": \"full linter (coordinator)\", \"exit_code\": 0, \"outcome\": \"clean\"}, \"mode\": \"change\", \"references_loaded\": [\"profile\", \"source-summaries\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/sources/example-md.summary.md\"]}}",
+      "passed": false,
+      "text": "Reports the expected complete outcome."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\", \"source-summaries\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/sources/example-md.summary.md\"]}}",
+      "passed": true,
+      "text": "Records the expected references loaded."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\", \"source-summaries\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/sources/example-md.summary.md\"]}}",
+      "passed": true,
+      "text": "Reports the expected scoped diff."
+    }
+  ],
+  "summary": {
+    "failed": 5,
+    "pass_rate": 0.44,
+    "passed": 4,
+    "total": 9
+  }
+}

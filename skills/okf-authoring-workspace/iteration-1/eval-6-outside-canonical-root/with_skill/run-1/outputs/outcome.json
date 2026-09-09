@@ -1,0 +1,20 @@
+{
+  "mode": "out_of_scope",
+  "completion": "not_applicable",
+  "affected": [
+    {
+      "path": "docs/outside.md",
+      "type": "out_of_scope"
+    }
+  ],
+  "references_loaded": [],
+  "lint": {
+    "command": null,
+    "exit_code": null,
+    "outcome": "not_run"
+  },
+  "scoped_diff": {
+    "outcome": "no_changes",
+    "paths": []
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "evidence": "no model output",
+      "passed": true,
+      "text": "Produces exactly the allowed model output files."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 5, \"execution_error\": \"\", \"exit_code\": 1, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-5-read-only-conformance-review/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[{\\\"id\\\":\\\"OKF002\\\",\\\"path\\\":\\\".agents/memory/KNOWN_ISSUES.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"frontmatter must begin with an exact --- delimiter\\\"}]}\\n\"}",
+      "passed": true,
+      "text": "Actual linter result matches this scenario."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 5, \"execution_error\": \"\", \"exit_code\": 1, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-5-read-only-conformance-review/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[{\\\"id\\\":\\\"OKF002\\\",\\\"path\\\":\\\".agents/memory/KNOWN_ISSUES.md\\\",\\\"line\\\":1,\\\"column\\\":1,\\\"message\\\":\\\"frontmatter must begin with an exact --- delimiter\\\"}]}\\n\"}",
+      "passed": true,
+      "text": "Actual validation-sandbox diff has exactly the authorized paths."
+    },
+    {
+      "evidence": "{\"affected\": [{\"path\": \".agents/memory/KNOWN_ISSUES.md\", \"type\": \"Known Issue\"}], \"completion\": \"incomplete\", \"lint\": {\"command\": \"coordinator independent full linter\", \"exit_code\": 1, \"outcome\": \"nonconforming findings\"}, \"mode\": \"review\", \"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"no_changes\", \"paths\": []}}",
+      "passed": false,
+      "text": "Reports the expected incomplete review outcome."
+    },
+    {
+      "evidence": "none",
+      "passed": true,
+      "text": "Makes no completion or success claim."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"no_changes\", \"paths\": []}}",
+      "passed": true,
+      "text": "Records the expected references loaded."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"no_changes\", \"paths\": []}}",
+      "passed": true,
+      "text": "Reports the expected scoped diff."
+    }
+  ],
+  "summary": {
+    "failed": 1,
+    "pass_rate": 0.86,
+    "passed": 6,
+    "total": 7
+  }
+}

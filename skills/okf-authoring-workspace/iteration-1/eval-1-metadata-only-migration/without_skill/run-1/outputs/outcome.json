@@ -1,0 +1,20 @@
+{
+  "mode": "change",
+  "completion": "complete",
+  "affected": [
+    {
+      "path": ".agents/instructions/hooks.md",
+      "type": "Agent Instruction"
+    }
+  ],
+  "references_loaded": ["profile"],
+  "lint": {
+    "command": "full linter",
+    "exit_code": 0,
+    "outcome": "clean"
+  },
+  "scoped_diff": {
+    "outcome": "clean",
+    "paths": [".agents/instructions/hooks.md"]
+  }
+}

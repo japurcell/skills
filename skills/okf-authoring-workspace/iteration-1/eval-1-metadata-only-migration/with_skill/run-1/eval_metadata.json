@@ -1,0 +1,5 @@
+{
+  "eval_id": 1,
+  "eval_name": "metadata-only-migration",
+  "prompt": "The coordinator seeds `.agents/instructions/hooks.md` as a nonconforming body-only document before its baseline snapshot. Migrate exactly that file; its body is `# Hook Guidance\\n\\nRetain this sentence exactly.\\n` and must remain byte-identical. Save exactly that file beneath `outputs/repo` and save `outputs/outcome.json` using the declared outcome schema. The coordinator independently runs the full linter, which must exit 0."
+}

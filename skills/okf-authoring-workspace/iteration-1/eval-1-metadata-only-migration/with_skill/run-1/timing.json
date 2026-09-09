@@ -1,0 +1,8 @@
+{
+  "duration_ms": 101089,
+  "executor_model": "gpt-5.6-luna",
+  "executor_model_source": "explicit collaboration.spawn_agent model override",
+  "token_source": "turn.completed.usage.output_tokens",
+  "total_duration_seconds": 101.089,
+  "total_tokens": 2570
+}

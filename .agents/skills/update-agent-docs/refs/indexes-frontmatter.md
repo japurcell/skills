@@ -2,22 +2,16 @@
 
 ## Frontmatter
 
-For new or existing `.agents/instructions/` or `.agents/memory/` docs, use only `coverage` frontmatter:
+For new or existing `.agents/instructions/` or `.agents/memory/` docs, use parseable OKF frontmatter with non-empty path-derived `type` and routing-oriented `description`:
 
 ```yaml
 ---
-coverage: Brief description of what this doc covers
+type: Agent Memory
+description: Brief description of what this doc covers
 ---
 ```
 
-Do not add:
-
-- `last_updated`
-- `updated_by`
-- `confidence`
-- Date fields
-
-Git history tracks those details.
+Use `Agent Instruction` below `.agents/instructions/`; `Knowledge Index` for uppercase `INDEX.md`; `Source Ingestion Log` for uppercase `LOG.md`; `Known Issue` for root `KNOWN_ISSUES.md` and `known-issues/**`; `Testing Guidance` for root `TESTING_STRATEGY.md` and `testing/**`; `Architecture Decision` for `adrs/**`; `Source Summary` for recursive `sources/**/*.summary.md`; and `Agent Memory` otherwise. Stable documents omit lifecycle `status`; use `status: draft` only for an actual draft. Keep repository-local links file-relative and preserve paths and unrelated bodies during metadata-only work. `okf-authoring` owns the full profile and lint verification.
 
 ## New Docs
 
@@ -26,7 +20,7 @@ Create a new focused doc when durable information does not fit an existing focus
 Rules:
 
 - Use a descriptive name, not `misc.md`.
-- Add only `coverage` frontmatter.
+- Add non-empty path-derived `type` and routing-oriented `description` frontmatter.
 - Add or update index entries when an index exists.
 - No permission is needed to create focused docs in `.agents/instructions/` or `.agents/memory/`.
 

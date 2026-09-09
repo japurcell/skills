@@ -1,0 +1,1 @@
+Action: Loaded the OKF profile and source-summary branch, then added the exact supplied summary body with Source Summary metadata, draft lifecycle, and manifest-bound source provenance. Saved the structured outcome with both references, a clean coordinator lint result, and the exact scoped path.

@@ -1,0 +1,80 @@
+{
+  "expectations": [
+    {
+      "evidence": ".agents/memory/INDEX.md, .agents/memory/LOG.md, .agents/memory/adrs/retention.md, .agents/memory/telemetry.md",
+      "passed": true,
+      "text": "Produces exactly the allowed model output files."
+    },
+    {
+      "evidence": "{\"description\": \"Record source ingestion.\", \"type\": \"Source Ingestion Log\"}",
+      "passed": true,
+      "text": "Uses the exact path-derived type and non-empty description for .agents/memory/LOG.md."
+    },
+    {
+      "evidence": "# Log\n\nRecord source ingestion.\n",
+      "passed": true,
+      "text": "Preserves the exact required Markdown body for .agents/memory/LOG.md."
+    },
+    {
+      "evidence": "{\"description\": \"Keep stable paths.\", \"type\": \"Architecture Decision\"}",
+      "passed": true,
+      "text": "Uses the exact path-derived type and non-empty description for .agents/memory/adrs/retention.md."
+    },
+    {
+      "evidence": "# Retention\n\nKeep stable paths.\n",
+      "passed": true,
+      "text": "Preserves the exact required Markdown body for .agents/memory/adrs/retention.md."
+    },
+    {
+      "evidence": "{\"description\": \"Route canonical knowledge.\", \"type\": \"Knowledge Index\"}",
+      "passed": true,
+      "text": "Uses the exact path-derived type and non-empty description for .agents/memory/INDEX.md."
+    },
+    {
+      "evidence": "# Index\n\nRoute canonical knowledge.\n",
+      "passed": true,
+      "text": "Preserves the exact required Markdown body for .agents/memory/INDEX.md."
+    },
+    {
+      "evidence": "{\"description\": \"Durable telemetry guidance.\", \"type\": \"Agent Memory\"}",
+      "passed": true,
+      "text": "Uses the exact path-derived type and non-empty description for .agents/memory/telemetry.md."
+    },
+    {
+      "evidence": "# Telemetry\n\nRecord durable telemetry guidance.\n",
+      "passed": true,
+      "text": "Preserves the exact required Markdown body for .agents/memory/telemetry.md."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/memory/INDEX.md\", \".agents/memory/LOG.md\", \".agents/memory/adrs/retention.md\", \".agents/memory/telemetry.md\"], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 0, \"execution_error\": \"\", \"exit_code\": 0, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-0-create-ordinary-concept/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[]}\\n\"}",
+      "passed": true,
+      "text": "Actual linter result matches this scenario."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/memory/INDEX.md\", \".agents/memory/LOG.md\", \".agents/memory/adrs/retention.md\", \".agents/memory/telemetry.md\"], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 0, \"execution_error\": \"\", \"exit_code\": 0, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-0-create-ordinary-concept/without_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[]}\\n\"}",
+      "passed": true,
+      "text": "Actual validation-sandbox diff has exactly the authorized paths."
+    },
+    {
+      "evidence": "{\"affected\": [{\"path\": \".agents/memory/telemetry.md\", \"type\": \"Agent Memory\"}, {\"path\": \".agents/memory/INDEX.md\", \"type\": \"Knowledge Index\"}, {\"path\": \".agents/memory/LOG.md\", \"type\": \"Source Ingestion Log\"}, {\"path\": \".agents/memory/adrs/retention.md\", \"type\": \"Architecture Decision\"}], \"completion\": \"complete\", \"lint\": {\"command\": \"python3 scripts/lint-okf.py <coordinator-fixture>\", \"exit_code\": 0, \"outcome\": \"clean\"}, \"mode\": \"change\", \"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/INDEX.md\", \".agents/memory/LOG.md\", \".agents/memory/adrs/retention.md\", \".agents/memory/telemetry.md\"]}}",
+      "passed": false,
+      "text": "Reports the expected complete outcome."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/INDEX.md\", \".agents/memory/LOG.md\", \".agents/memory/adrs/retention.md\", \".agents/memory/telemetry.md\"]}}",
+      "passed": true,
+      "text": "Records the expected references loaded."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/INDEX.md\", \".agents/memory/LOG.md\", \".agents/memory/adrs/retention.md\", \".agents/memory/telemetry.md\"]}}",
+      "passed": true,
+      "text": "Reports the expected scoped diff."
+    }
+  ],
+  "summary": {
+    "failed": 1,
+    "pass_rate": 0.93,
+    "passed": 13,
+    "total": 14
+  }
+}

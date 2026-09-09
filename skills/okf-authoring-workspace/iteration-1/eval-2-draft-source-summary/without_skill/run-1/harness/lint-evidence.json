@@ -1,0 +1,18 @@
+{
+  "attempted": true,
+  "changed_paths": [
+    ".agents/memory/sources/pending-md.summary.md"
+  ],
+  "command": [
+    "/Users/adam/dev/skills/scripts/lint-okf.py",
+    "--format",
+    "json"
+  ],
+  "eval_id": 2,
+  "execution_error": "",
+  "exit_code": 1,
+  "owner": "grade_benchmark.py",
+  "sandbox_cwd": "skills/okf-authoring-workspace/iteration-1/eval-2-draft-source-summary/without_skill/run-1/validation-sandbox",
+  "stderr": "",
+  "stdout": "{\"schema_version\":1,\"diagnostics\":[{\"id\":\"OKF104\",\"path\":\".agents/memory/sources/pending-md.summary.md\",\"line\":1,\"column\":1,\"message\":\"source summary must bind exactly to its manifest source\"}]}\n"
+}

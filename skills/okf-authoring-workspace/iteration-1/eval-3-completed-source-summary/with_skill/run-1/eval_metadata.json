@@ -1,0 +1,5 @@
+{
+  "eval_id": 3,
+  "eval_name": "completed-source-summary",
+  "prompt": "The coordinator seeds the manifest-bound fixture pair `.agents/memory/sources/example-md.summary.md` and immutable `.agents/sources/example.md`, then makes only the summary body-only before its baseline snapshot. Conform exactly `.agents/memory/sources/example-md.summary.md` with body `# Example source summary\\n\\nThe source demonstrates a completed manifest-backed summary.\\n`. Save exactly that summary beneath `outputs/repo`; do not output or alter the raw source. Save `outputs/outcome.json` using the declared outcome schema. The coordinator independently runs the full linter, which must exit 0."
+}

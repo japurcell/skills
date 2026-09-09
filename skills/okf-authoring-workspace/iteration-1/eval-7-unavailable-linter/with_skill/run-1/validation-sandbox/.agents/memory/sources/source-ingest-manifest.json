@@ -1,0 +1,23 @@
+{
+  "entries": [
+    {
+      "content_hash": "c937897b1a54562287d418e1e8ed9e28e4c7823fffeea65c462e43f141ecc9b0",
+      "reason": "",
+      "size": 79,
+      "source_path": "example.md",
+      "state": "active",
+      "summary_hash": "a19b6a2907f0970d2dab7dff076e7177cda8eacc06643313edc9ffe3cd91adb3",
+      "summary_path": "example-md.summary.md"
+    },
+    {
+      "content_hash": "46661c83e8540ac51564aa45c140557e942354916353be51c3741f3eedf49b27",
+      "reason": "Pending integration fixture",
+      "size": 74,
+      "source_path": "pending.md",
+      "state": "pending",
+      "summary_hash": "9da390f192191e8e4bb2b29f7f40cccb06c74a597680de9d6ca126dce8b179d1",
+      "summary_path": "pending-md.summary.md"
+    }
+  ],
+  "version": 1
+}

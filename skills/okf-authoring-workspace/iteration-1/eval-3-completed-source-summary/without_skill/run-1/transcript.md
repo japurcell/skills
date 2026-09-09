@@ -1,0 +1,1 @@
+Read only the permitted repository instructions, memory index, and eval declaration. Staged the completed source summary with manifest-backed provenance and no status field, then recorded the declared outcome without copying or altering the raw source.

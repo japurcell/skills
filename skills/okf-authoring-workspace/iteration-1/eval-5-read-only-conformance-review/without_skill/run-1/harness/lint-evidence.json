@@ -1,0 +1,16 @@
+{
+  "attempted": true,
+  "changed_paths": [],
+  "command": [
+    "/Users/adam/dev/skills/scripts/lint-okf.py",
+    "--format",
+    "json"
+  ],
+  "eval_id": 5,
+  "execution_error": "",
+  "exit_code": 1,
+  "owner": "grade_benchmark.py",
+  "sandbox_cwd": "skills/okf-authoring-workspace/iteration-1/eval-5-read-only-conformance-review/without_skill/run-1/validation-sandbox",
+  "stderr": "",
+  "stdout": "{\"schema_version\":1,\"diagnostics\":[{\"id\":\"OKF002\",\"path\":\".agents/memory/KNOWN_ISSUES.md\",\"line\":1,\"column\":1,\"message\":\"frontmatter must begin with an exact --- delimiter\"}]}\n"
+}

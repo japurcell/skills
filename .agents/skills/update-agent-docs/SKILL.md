@@ -19,7 +19,8 @@ Keep `.agents/` small, current, and easy to navigate.
 7. Remove stale, duplicated, or contradicted nearby content.
 8. Update indexes/frontmatter when needed. See `refs/indexes-frontmatter.md`.
 9. Check links.
-10. Report updates using the format below.
+10. After a semantic change to canonical documents, invoke `okf-authoring` to apply and verify the OKF representation contract. Keep routing, placement, deduplication, and index decisions here; `okf-authoring` does not invoke back.
+11. Report updates using the format below.
 
 ## Rules
 

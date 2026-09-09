@@ -1,0 +1,55 @@
+{
+  "expectations": [
+    {
+      "evidence": ".agents/memory/sources/example-md.summary.md",
+      "passed": true,
+      "text": "Produces exactly the allowed model output files."
+    },
+    {
+      "evidence": "{\"description\": \"Routing guidance for the completed manifest-backed example source\", \"sources\": [{\"resource\": \"../../sources/example.md\"}], \"type\": \"Source Summary\"}",
+      "passed": true,
+      "text": "Uses the exact path-derived type and non-empty description for .agents/memory/sources/example-md.summary.md."
+    },
+    {
+      "evidence": "# Example source summary\n\nThe source demonstrates a completed manifest-backed summary.\n",
+      "passed": true,
+      "text": "Preserves the exact required Markdown body for .agents/memory/sources/example-md.summary.md."
+    },
+    {
+      "evidence": "{\"description\": \"Routing guidance for the completed manifest-backed example source\", \"sources\": [{\"resource\": \"../../sources/example.md\"}], \"type\": \"Source Summary\"}",
+      "passed": true,
+      "text": "Preserves the fixture stable source-summary/raw pair."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/memory/sources/example-md.summary.md\"], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 3, \"execution_error\": \"\", \"exit_code\": 0, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-3-completed-source-summary/with_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[]}\\n\"}",
+      "passed": true,
+      "text": "Actual linter result matches this scenario."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/memory/sources/example-md.summary.md\"], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 3, \"execution_error\": \"\", \"exit_code\": 0, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-3-completed-source-summary/with_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[]}\\n\"}",
+      "passed": true,
+      "text": "Actual validation-sandbox diff has exactly the authorized paths."
+    },
+    {
+      "evidence": "{\"affected\": [{\"path\": \".agents/memory/sources/example-md.summary.md\", \"type\": \"Source Summary\"}], \"completion\": \"complete\", \"lint\": {\"command\": \"./scripts/lint-okf.py\", \"exit_code\": 0, \"outcome\": \"clean\"}, \"mode\": \"change\", \"references_loaded\": [\"profile\", \"source-summaries\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/sources/example-md.summary.md\"]}}",
+      "passed": true,
+      "text": "Reports the expected complete outcome."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\", \"source-summaries\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/sources/example-md.summary.md\"]}}",
+      "passed": true,
+      "text": "Records the expected references loaded."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\", \"source-summaries\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/memory/sources/example-md.summary.md\"]}}",
+      "passed": true,
+      "text": "Reports the expected scoped diff."
+    }
+  ],
+  "summary": {
+    "failed": 0,
+    "pass_rate": 1.0,
+    "passed": 9,
+    "total": 9
+  }
+}

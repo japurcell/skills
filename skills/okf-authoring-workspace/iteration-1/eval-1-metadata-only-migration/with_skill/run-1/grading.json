@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "evidence": ".agents/instructions/hooks.md",
+      "passed": true,
+      "text": "Produces exactly the allowed model output files."
+    },
+    {
+      "evidence": "{\"description\": \"Guidance for repository hooks.\", \"type\": \"Agent Instruction\"}",
+      "passed": true,
+      "text": "Uses the exact path-derived type and non-empty description for .agents/instructions/hooks.md."
+    },
+    {
+      "evidence": "# Hook Guidance\n\nRetain this sentence exactly.\n",
+      "passed": true,
+      "text": "Preserves the exact required Markdown body for .agents/instructions/hooks.md."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/instructions/hooks.md\"], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 1, \"execution_error\": \"\", \"exit_code\": 0, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-1-metadata-only-migration/with_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[]}\\n\"}",
+      "passed": true,
+      "text": "Actual linter result matches this scenario."
+    },
+    {
+      "evidence": "{\"attempted\": true, \"changed_paths\": [\".agents/instructions/hooks.md\"], \"command\": [\"/Users/adam/dev/skills/scripts/lint-okf.py\", \"--format\", \"json\"], \"eval_id\": 1, \"execution_error\": \"\", \"exit_code\": 0, \"owner\": \"grade_benchmark.py\", \"sandbox_cwd\": \"skills/okf-authoring-workspace/iteration-1/eval-1-metadata-only-migration/with_skill/run-1/validation-sandbox\", \"stderr\": \"\", \"stdout\": \"{\\\"schema_version\\\":1,\\\"diagnostics\\\":[]}\\n\"}",
+      "passed": true,
+      "text": "Actual validation-sandbox diff has exactly the authorized paths."
+    },
+    {
+      "evidence": "{\"affected\": [{\"path\": \".agents/instructions/hooks.md\", \"type\": \"Agent Instruction\"}], \"completion\": \"complete\", \"lint\": {\"command\": \"./scripts/lint-okf.py\", \"exit_code\": 0, \"outcome\": \"clean\"}, \"mode\": \"change\", \"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/instructions/hooks.md\"]}}",
+      "passed": true,
+      "text": "Reports the expected complete outcome."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/instructions/hooks.md\"]}}",
+      "passed": true,
+      "text": "Records the expected references loaded."
+    },
+    {
+      "evidence": "{\"references_loaded\": [\"profile\"], \"scoped_diff\": {\"outcome\": \"clean\", \"paths\": [\".agents/instructions/hooks.md\"]}}",
+      "passed": true,
+      "text": "Reports the expected scoped diff."
+    }
+  ],
+  "summary": {
+    "failed": 0,
+    "pass_rate": 1.0,
+    "passed": 8,
+    "total": 8
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "mode": "change",
+  "completion": "unverified",
+  "affected": [
+    {
+      "path": ".agents/memory/ARCHITECTURE.md",
+      "type": "Agent Memory"
+    }
+  ],
+  "references_loaded": [
+    "profile"
+  ],
+  "lint": {
+    "command": "./scripts/lint-okf.py",
+    "exit_code": null,
+    "outcome": "unavailable"
+  },
+  "scoped_diff": {
+    "outcome": "clean",
+    "paths": [
+      ".agents/memory/ARCHITECTURE.md"
+    ]
+  }
+}

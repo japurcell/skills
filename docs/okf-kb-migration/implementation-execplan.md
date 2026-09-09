@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds. Maintain this document in accordance with the repository's `exec-plans` skill.
 
-This document is implementation-ready, but implementation has not begun. Do not change the linter, hooks, skills, canonical knowledge documents, vendored dependency, source-ingest producers, or provider configuration until a later session explicitly begins execution of this plan.
+Implementation is active. Gates 1 and 2 are committed, Gate 3 is ready for user review and a manual checkpoint, and Gates 4–6 remain open. Do not begin a later gate before recording the preceding checkpoint.
 
 ## Purpose / Big Picture
 
@@ -17,7 +17,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-09 06:47Z) [milestone-1] Added the single valid two-bundle fixture and public-CLI contract suite; confirmed its intentional red is only the absent production linter.
 - [x] (2026-09-09 07:04Z) [milestone-1] Recorded the user-created Gate 1 reviewable checkpoint `e0d425972641f1f1a372d7dacd068f73fa7fefee`.
 - [x] (2026-09-09 07:29Z) [milestone-2] Vendored and verified PyYAML 6.0.3, implemented the dormant provider-neutral linter, made the expanded public-CLI suite green, and completed independent review without enabling hooks.
-- [ ] [milestone-3] Create and evaluate `okf-authoring`, then compose it one-way from `update-agent-docs`, while the canonical corpus and hooks remain unchanged.
+- [ ] [milestone-3] Ready for user review: implemented and validated `okf-authoring`, its one-way `update-agent-docs` composition, and the corrected 16-run paired benchmark with grader-owned fixture lint/diff evidence. Remaining work is user review and the user-created checkpoint.
 - [ ] [milestone-4] Atomically migrate all 31 canonical Markdown documents and both source-summary scaffold producers, then make human and JSON full-corpus lint succeed.
 - [ ] [milestone-5] Add thin Copilot and Gemini adapters, register them after source-ingest validation, and make parity and provider regression suites green.
 - [ ] [milestone-6] Run disposable-worktree live provider probes, record versions/events/diagnostics/duration, complete documentation synchronization, and establish merge readiness.
@@ -42,6 +42,22 @@ The implementation is one migration unit. It may be built as reviewable commits,
   Evidence: Commit preflight found branch `main` and empty repository Git author name/email; the user explicitly asked Codex to leave the reviewed worktree uncommitted.
 - Observation: The first green Gate 2 fixture run did not cover six important failure boundaries.
   Evidence: Independent review found that a matching site-package PyYAML could mask a missing vendor, non-string `status` could raise `TypeError`, per-file read errors lost their path, code masking shifted link locations, regex-only Markdown parsing missed balanced forms, and nested YAML diagnostics used parent-key locations. Targeted public-CLI regressions and fixes are in progress before Gate 2 acceptance.
+- Observation: Gate 3 has no external model CLI in this environment, but independent task agents are available.
+  Evidence: `copilot`, `gemini`, and `claude` are absent from `PATH`; the collaboration runtime exposes exact model `gpt-5.6-luna`, so Gate 3 will use paired task-agent runs and record the missing token telemetry instead of inventing it.
+- Observation: Gate 3's first synthetic grader could pass unsafe model behavior.
+  Evidence: Independent review found incomplete path-type precedence, ambiguous lint-failure reporting, four prompts without deterministic inputs, permissive output-file/provenance checks, keyword-only completion checks, and no assertion against reverse orchestration. Nine public-CLI synthetic regressions now pass after requiring the complete eight-eval/two-configuration workspace, saved artifacts, timing schema, exact output files, reference and scoped-diff evidence, response claim safety, and every path-derived type branch.
+- Observation: A live benchmark agent briefly wrote shared eval metadata outside its assigned run directory before removing it.
+  Evidence: The agent reported the mistake; the coordinator rechecked that all eight coordinator-owned `eval_metadata.json` files remained present. Subsequent prompts repeat the exact run-root boundary and forbid shared metadata writes.
+- Observation: Collaboration-agent benchmark timing uses multiple schemas and can explicitly report unavailable telemetry.
+  Evidence: Runs emitted `total_duration_seconds`, `duration_ms`, or `duration_seconds`, while token counts were unavailable. The public grader now accepts a nonnegative value from any supported duration field or an explicit `null`, but still rejects missing, empty, negative, boolean, or malformed timing data. Aggregation normalized the generated artifacts to numeric `total_duration_seconds` without inventing token counts.
+- Observation: The repository benchmark aggregator hard-codes placeholder model/path metadata and three runs per configuration.
+  Evidence: The first aggregate produced `<model-name>`, `<path/to/skill>`, and `runs_per_configuration: 3` for a one-run collaboration batch. Generated metadata was corrected to `gpt-5.6-luna`, `.agents/skills/okf-authoring`, and one run before regenerating `review.html`; the shared aggregator source was left unchanged.
+- Observation: The first completed Gate 3 benchmark was a false pass because the grader trusted model-authored lint claims.
+  Evidence: The run `outputs/repo` trees intentionally contained only scenario output files and no executable linter or complete two-bundle fixture, yet with-skill responses and outcomes claimed clean full-corpus lint. Independent review traced `scripts/lint-okf.py` repository discovery at lines 80-85 and 567-571 and rejected the 58/58 result. The generated workspace was discarded. The replacement grader copies the checked-in valid fixture, applies scenario output, executes the real linter, records harness-owned evidence, and compares the actual scoped diff.
+- Observation: A fresh Gate 3 rereview found two executor-model contradictions and unusable reviewer metadata in the first replacement aggregate.
+  Evidence: Eval 3 named `gpt-5.6-sol`, eval 6 named `gpt-6`, and `review.html` lacked prompts and eval IDs. Both runs were replaced through explicit `gpt-5.6-luna` routing; every run now records that routing in `timing.json` and `execution-manifest.json`, and run-local eval metadata supplies all prompts and IDs to the regenerated viewer.
+- Observation: Gate 3 timing and token telemetry is incomplete and cannot support comparisons.
+  Evidence: Duration is observed for 5 of 16 runs and tokens for 3 of 16. `benchmark.json` and `benchmark.md` omit timing/token statistics and deltas and report coverage instead of treating normalized aggregation placeholders as observations.
 
 ## Decision Log
 
@@ -72,10 +88,13 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - Decision: Treat fixture-case isolation and stdout/stderr behavior as part of the public CLI test contract.
   Rationale: Per-case `mktemp` repositories prevent mutation leakage, while separate stream capture enforces the repository rule that primary human and JSON output uses stdout and unexpected errors use stderr.
   Date/Author: 2026-09-09 / Codex
+- Decision: Use runtime task agents with `gpt-5.6-luna` for both `with_skill` and `without_skill` Gate 3 runs.
+  Rationale: No external evaluation CLI is installed; the ExecPlan permits independent task agents, and using the same Fast model on both sides gives a fair weaker-model comparison. The runtime does not expose token totals, so timing artifacts must mark token telemetry unavailable rather than fabricate values.
+  Date/Author: 2026-09-09 / Codex
 
 ## Outcomes & Retrospective
 
-Gate 1 is committed at `e0d425972641f1f1a372d7dacd068f73fa7fefee`. Gate 2 now provides the offline, provider-neutral linter and pinned PyYAML 6.0.3 runtime. The expanded public-CLI suite passes, repeated JSON output is deterministic, the current legacy corpus produces only expected conformance findings, and no provider hooks are enabled. The user still needs to create the Gate 2 reviewable checkpoint before Gate 3 begins.
+Gate 1 is committed at `e0d425972641f1f1a372d7dacd068f73fa7fefee`. Gate 2 is committed at `817f2881393235f8b6abb4d7a08df28570262715` and provides the offline, provider-neutral linter and pinned PyYAML 6.0.3 runtime. The expanded public-CLI suite passes, repeated JSON output is deterministic, the current legacy corpus produces only expected conformance findings, and no provider hooks are enabled.
 
 ## Context and Orientation
 
@@ -87,7 +106,7 @@ The current 31 concepts have useful bodies that must remain intact. The 22 ordin
 
 Source ingestion remains independent. `.github/hooks/scripts/helpers/auto_ingest.py` and `.gemini/hooks/scripts/helpers/source_ingest.py` are intentionally duplicated scaffold producers. Their current scaffold marker is `status: scaffold`; Gate 4 changes both to emit a conforming `Source Summary` with `status: draft` and a file-relative raw-source resource. The manifest continues to own freshness, hashes, rename/orphan state, and source-to-summary binding. The OKF linter reads that manifest but never updates it.
 
-The authoring workflow has two different homes. `skills/okf-authoring/` is the publishable model-invoked skill installed by `scripts/install.sh`. `.agents/skills/update-agent-docs/` is the repository-local semantic documentation workflow. Gate 3 adds a one-way instruction from `update-agent-docs` to invoke `okf-authoring` after semantic edits; `okf-authoring` must never call back into `update-agent-docs`.
+The authoring workflow has two repository-local homes. `.agents/skills/okf-authoring/` owns the model-invoked representation workflow. `.agents/skills/update-agent-docs/` owns the semantic documentation workflow. Gate 3 adds a one-way instruction from `update-agent-docs` to invoke `okf-authoring` after semantic edits; `okf-authoring` must never call back into `update-agent-docs`.
 
 The normative external sources for implementation are the pinned [OKF v0.2 specification](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/ad30107c31c06aec8a7d5636e0d1058118604e6f/SPEC.md), the current [GitHub Copilot hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference), the current [Gemini hooks reference](https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md), Gemini's [hook writing guide](https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/writing-hooks.md), and the open [Gemini AfterAgent issue](https://github.com/google-gemini/gemini-cli/issues/27712). Recheck them at Gate 5 and record any contract-changing difference in this plan before editing provider code.
 
@@ -98,7 +117,7 @@ Use parallel agents only inside one gate and only with the following non-overlap
 | Workstream | Exclusive paths while active | Transfer point |
 | --- | --- | --- |
 | Linter and fixture owner | `scripts/lint-okf.py`, `scripts/test-okf-lint.sh`, `scripts/fixtures/okf-valid-repo/**`, `scripts/vendor/**` | Returns ownership after Gate 2 |
-| Authoring skill owner | `skills/okf-authoring/**`, `skills/okf-authoring-workspace/**`, `.agents/skills/update-agent-docs/**` | Returns ownership after Gate 3 |
+| Authoring skill owner | `.agents/skills/okf-authoring/**`, `skills/okf-authoring-workspace/**`, `.agents/skills/update-agent-docs/**` | Returns ownership after Gate 3 |
 | Corpus and scaffold owner | `.agents/instructions/**`, `.agents/memory/**`, `.github/hooks/scripts/helpers/auto_ingest.py`, `.gemini/hooks/scripts/helpers/source_ingest.py`, `scripts/test-hooks-auto-ingest.sh`, `scripts/test-gemini-hooks-auto-ingest.sh` | Returns canonical documentation ownership to the coordinator after Gate 4 |
 | Provider adapter owner | `.github/hooks/scripts/lint-okf.py`, `.gemini/hooks/scripts/lint-okf.py`, `scripts/test-hooks-okf-lint.sh`, `scripts/test-gemini-hooks-okf-lint.sh` | Returns ownership after Gate 5 |
 | Coordinating owner | `docs/okf-kb-migration/implementation-execplan.md`, `.github/hooks/hooks.json`, `.gemini/settings.json`, `scripts/install.sh`, `scripts/test-install.sh`, repo-wide documentation integration and commits | Never delegated |
@@ -149,10 +168,10 @@ Milestone acceptance is a green `bash scripts/test-okf-lint.sh`, syntax-valid li
 
 ### Milestone 3: Add and evaluate the authoring skill
 
-Status: open
+Status: in progress
 Acceptance: not met
 
-Before creating the skill, search `skills/` descriptions and names for an existing equivalent; record that no existing skill owns the OKF representation contract or refine the existing owner instead of creating a duplicate. For the expected new skill, create `skills/okf-authoring/SKILL.md`, `skills/okf-authoring/references/profile.md`, `skills/okf-authoring/references/source-summaries.md`, `skills/okf-authoring/evals/evals.json`, and a deterministic `skills/okf-authoring/evals/grade_benchmark.py`. Keep invocation, the six-step workflow, one-way orchestration, read-only review behavior, and completion reporting in `SKILL.md`. Put shared type/metadata/link/lifecycle rules in `profile.md`; put only draft/completed summary provenance and scaffold examples in `source-summaries.md`. Do not add a general examples file unless evaluation evidence justifies it.
+Before creating the skill, search both `.agents/skills/` and `skills/` descriptions and names for an existing equivalent; record that no existing skill owns the OKF representation contract or refine the existing owner instead of creating a duplicate. For the expected new repository-local skill, create `.agents/skills/okf-authoring/SKILL.md`, `.agents/skills/okf-authoring/references/profile.md`, `.agents/skills/okf-authoring/references/source-summaries.md`, `.agents/skills/okf-authoring/evals/evals.json`, and a deterministic `.agents/skills/okf-authoring/evals/grade_benchmark.py`. Keep invocation, the six-step workflow, one-way orchestration, read-only review behavior, and completion reporting in `SKILL.md`. Put shared type/metadata/link/lifecycle rules in `profile.md`; put only draft/completed summary provenance and scaffold examples in `source-summaries.md`. Do not add a general examples file unless evaluation evidence justifies it.
 
 The description must trigger on creating, modifying, migrating, or reviewing Markdown under `.agents/instructions/` or `.agents/memory/`, including work initiated by `update-agent-docs` or `ingest-source`. It must not trigger for ordinary reads, files outside those roots, or immutable `.agents/sources/`. The workflow identifies affected bundles and path-derived types, loads the profile and only the needed branch reference, preserves paths and unrelated body text, checks routing/index implications, runs the full linter, inspects the scoped diff, and refuses a completion claim when lint is unavailable.
 
@@ -162,7 +181,7 @@ Create eight realistic evaluations: ordinary concept creation; metadata-only mig
 
 Before the first live eval, record the available evaluation runner and model in this ExecPlan. Run every eval with and without the exact local skill path in the same batch, save `response.md`, `transcript.md`, and `timing.json` under the canonical per-eval directory, then grade and aggregate:
 
-    python3 skills/okf-authoring/evals/grade_benchmark.py skills/okf-authoring-workspace/iteration-1
+    python3 .agents/skills/okf-authoring/evals/grade_benchmark.py skills/okf-authoring-workspace/iteration-1
     PYTHONPATH=skills/skill-creator python3 -m scripts.aggregate_benchmark skills/okf-authoring-workspace/iteration-1 --skill-name okf-authoring
     python3 skills/skill-creator/eval-viewer/generate_review.py skills/okf-authoring-workspace/iteration-1 --skill-name okf-authoring --benchmark skills/okf-authoring-workspace/iteration-1/benchmark.json --static skills/okf-authoring-workspace/iteration-1/review.html
 
@@ -272,9 +291,9 @@ Vendoring and Gate 2:
 Gate 3:
 
     rg -n 'OKF|open knowledge|canonical document|frontmatter' skills/*/SKILL.md
-    python3 skills/skill-creator/scripts/quick_validate.py skills/okf-authoring
-    python3 -m py_compile skills/okf-authoring/evals/grade_benchmark.py
-    python3 skills/okf-authoring/evals/grade_benchmark.py skills/okf-authoring-workspace/iteration-1
+    PYTHONPATH=scripts/vendor python3 skills/skill-creator/scripts/quick_validate.py .agents/skills/okf-authoring
+    python3 -m py_compile .agents/skills/okf-authoring/evals/grade_benchmark.py
+    python3 .agents/skills/okf-authoring/evals/grade_benchmark.py skills/okf-authoring-workspace/iteration-1
     PYTHONPATH=skills/skill-creator python3 -m scripts.aggregate_benchmark skills/okf-authoring-workspace/iteration-1 --skill-name okf-authoring
     python3 skills/skill-creator/eval-viewer/generate_review.py skills/okf-authoring-workspace/iteration-1 --skill-name okf-authoring --benchmark skills/okf-authoring-workspace/iteration-1/benchmark.json --static skills/okf-authoring-workspace/iteration-1/review.html
 
@@ -327,9 +346,9 @@ Gate 6 final matrix:
     bash scripts/test-gemini-hooks-startup.sh
     bash scripts/test-install.sh
     python3 scripts/test_helpers.py
-    python3 skills/skill-creator/scripts/quick_validate.py skills/okf-authoring
-    python3 -m py_compile skills/okf-authoring/evals/grade_benchmark.py
-    python3 skills/okf-authoring/evals/grade_benchmark.py skills/okf-authoring-workspace/iteration-1
+    PYTHONPATH=scripts/vendor python3 skills/skill-creator/scripts/quick_validate.py .agents/skills/okf-authoring
+    python3 -m py_compile .agents/skills/okf-authoring/evals/grade_benchmark.py
+    python3 .agents/skills/okf-authoring/evals/grade_benchmark.py skills/okf-authoring-workspace/iteration-1
     git diff --check
 
 Before Gate 6 begins, replace these live-command templates in this document with exact commands verified by each installed CLI's `--help`, including exact prompt files, output paths, model/agent choice, permissions, and worktree path:
@@ -397,9 +416,12 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 1 prerequisite suites: `test-hooks-auto-ingest.sh`, `test-gemini-hooks-auto-ingest.sh`, `test-hooks-startup.sh`, and `test-gemini-hooks-startup.sh` all exited 0.
 - Gate 1 implementation commit: `e0d425972641f1f1a372d7dacd068f73fa7fefee`.
 - Gate 1 intentional red transcript: `bash -n scripts/test-okf-lint.sh` exited 0; `bash scripts/test-okf-lint.sh` exited 1 with exactly `intentional red: missing executable scripts/lint-okf.py` on stderr.
-- Gate 2 commit: pending the user's manual reviewable checkpoint. Linter fixture result: `python3 -m py_compile scripts/lint-okf.py scripts/vendor/yaml/*.py`, `bash -n scripts/test-okf-lint.sh`, and `PYTHONDONTWRITEBYTECODE=1 bash scripts/test-okf-lint.sh` all exited 0; the suite printed `PASSED: OKF linter CLI contract`.
+- Gate 2 commit: `817f2881393235f8b6abb4d7a08df28570262715`. Linter fixture result: `python3 -m py_compile scripts/lint-okf.py scripts/vendor/yaml/*.py`, `bash -n scripts/test-okf-lint.sh`, and `PYTHONDONTWRITEBYTECODE=1 bash scripts/test-okf-lint.sh` all exited 0; the suite printed `PASSED: OKF linter CLI contract`.
 - Gate 2 review result: six first-pass contract gaps and two follow-up gaps received public-CLI regressions and fixes; final targeted re-review found all required findings resolved and no new high-confidence regression. The live pre-migration corpus is deterministic at 104 conformance diagnostics, exit 1, with no `OKF900`.
-- Gate 3 commit, runner/model, exact eval commands, benchmark, and human review: not started.
+- Gate 3 runner/model: collaboration task agents using exact model `gpt-5.6-luna` for paired `with_skill` and `without_skill` runs; no external `copilot`, `gemini`, or `claude` executable is available, and collaboration notifications do not expose token totals.
+- Gate 3 grader and skill validation: `PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/okf-authoring/evals/test_grade_benchmark.py` passes 15 tests; grader/test compilation, vendored-PyYAML quick validation, `PYTHONDONTWRITEBYTECODE=1 bash scripts/test-okf-lint.sh`, and `git diff --check` pass.
+- Gate 3 paired benchmark: the corrected 16-run result uses exact `gpt-5.6-luna` routing for both configurations and harness-owned real-linter/scoped-diff evidence. With-skill passes 72/72 expectations (100%); without-skill passes 52/72 (72.2%), with a 71.5% mean per-eval pass rate. Duration coverage is 5/16 and token coverage is 3/16, so those comparisons are omitted. Human review is generated at `skills/okf-authoring-workspace/iteration-1/review.html` with all prompts and eval IDs.
+- Gate 3 fresh rereview: approved after verifying the 16-entry model-evidence manifest, absence of old model markers and root stray workspaces, omission of incomplete telemetry comparisons, 16 usable reviewer prompts/IDs, 15 passing grader tests, and a clean `git diff --check`.
 - Gate 4 commit, corpus inventory/body comparison, and full-lint duration: not started.
 - Gate 5 commit, provider versions/source recheck, and simulated parity results: not started.
 - Gate 6 Copilot worktree/commands/events/diagnostics: not started.
@@ -424,10 +446,10 @@ The two adapter entry points are executable Python scripts that accept one provi
 
 They invoke the central CLI with the payload repository as the working directory and do not expose a single-file or changed-file validation mode. Their only policy is envelope translation, diagnostic truncation, and failure-to-`OKF900` conversion.
 
-`skills/okf-authoring/SKILL.md` is model-invoked and progressively loads:
+`.agents/skills/okf-authoring/SKILL.md` is model-invoked and progressively loads:
 
-    skills/okf-authoring/references/profile.md
-    skills/okf-authoring/references/source-summaries.md
+    .agents/skills/okf-authoring/references/profile.md
+    .agents/skills/okf-authoring/references/source-summaries.md
 
 Its completion report names affected canonical paths and derived types, loaded branch references, routing/index implications, the exact full-corpus lint command/result, and the scoped-diff result. It cannot report completion when lint is unavailable.
 
@@ -436,3 +458,11 @@ The linter diagnostic namespace is fixed by the closed contract: `OKF001` unread
 Revision note (2026-09-09): Completed Gate 1 implementation work from baseline `b9a1d8a8a0542bec9eb6764cf4b4af3071eefad9`; added the valid two-bundle fixture and intentional-red public-CLI suite, recorded delegated review corrections and validation evidence, and left the reviewed worktree uncommitted for the user's manual checkpoint.
 
 Revision note (2026-09-09): Recorded the user's Gate 1 commit, completed Gate 2's pinned vendor and provider-neutral linter, expanded regressions from independent review, synchronized script-area agent documentation, and stopped before Gate 3 for the user's manual Gate 2 checkpoint.
+
+Revision note (2026-09-09): Recorded the user's Gate 2 checkpoint `817f2881393235f8b6abb4d7a08df28570262715` and opened Gate 3 implementation.
+
+Revision note (2026-09-09): Hardened Gate 3's public benchmark seam after independent review and moved the active step to paired `gpt-5.6-luna` live runs.
+
+Revision note (2026-09-09): Corrected Gate 3's skill location to the repository-local `.agents/skills/okf-authoring/` path after user review; discarded contaminated live runs and restarted the benchmark from the corrected source.
+
+Revision note (2026-09-09): Replaced the false-pass grader seam with fixture-backed real lint/diff evidence, completed the corrected paired benchmark, repaired executor-model and reviewer metadata found by fresh rereview, omitted incomplete telemetry comparisons, and moved Gate 3 to user review.

@@ -1,0 +1,21 @@
+{
+  "attempted": true,
+  "changed_paths": [
+    ".agents/memory/INDEX.md",
+    ".agents/memory/LOG.md",
+    ".agents/memory/adrs/retention.md",
+    ".agents/memory/telemetry.md"
+  ],
+  "command": [
+    "/Users/adam/dev/skills/scripts/lint-okf.py",
+    "--format",
+    "json"
+  ],
+  "eval_id": 0,
+  "execution_error": "",
+  "exit_code": 0,
+  "owner": "grade_benchmark.py",
+  "sandbox_cwd": "skills/okf-authoring-workspace/iteration-1/eval-0-create-ordinary-concept/without_skill/run-1/validation-sandbox",
+  "stderr": "",
+  "stdout": "{\"schema_version\":1,\"diagnostics\":[]}\n"
+}

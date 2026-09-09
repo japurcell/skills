@@ -1,0 +1,5 @@
+{
+  "eval_id": 4,
+  "eval_name": "update-agent-docs-composition",
+  "prompt": "The coordinator seeds `.agents/memory/testing/skills.md` as a nonconforming body-only document before its baseline snapshot. After update-agent-docs selects the durable change, conform exactly that file with body `# Skills Testing\\n\\nRun targeted skill validation.\\n`. Save exactly that file beneath `outputs/repo` and save `outputs/outcome.json` using the declared outcome schema, including composition ownership. The coordinator independently runs the full linter, which must exit 0."
+}

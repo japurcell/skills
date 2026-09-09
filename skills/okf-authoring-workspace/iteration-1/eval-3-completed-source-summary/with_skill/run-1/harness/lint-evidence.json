@@ -1,0 +1,18 @@
+{
+  "attempted": true,
+  "changed_paths": [
+    ".agents/memory/sources/example-md.summary.md"
+  ],
+  "command": [
+    "/Users/adam/dev/skills/scripts/lint-okf.py",
+    "--format",
+    "json"
+  ],
+  "eval_id": 3,
+  "execution_error": "",
+  "exit_code": 0,
+  "owner": "grade_benchmark.py",
+  "sandbox_cwd": "skills/okf-authoring-workspace/iteration-1/eval-3-completed-source-summary/with_skill/run-1/validation-sandbox",
+  "stderr": "",
+  "stdout": "{\"schema_version\":1,\"diagnostics\":[]}\n"
+}
