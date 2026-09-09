@@ -16,6 +16,7 @@ An implementation-ready migration design and ExecPlan-ready handoff for converti
 ## Decisions so far
 
 - [In-Place OKF Migration Charter](tickets/in-place-okf-migration-charter.md): Convert the canonical knowledge documents themselves to OKF, retain the existing indexed loading path, teach authors with a skill, and enforce conformance through blocking Copilot and Gemini lint hooks without context injection.
+- [In-Place OKF Document Contract](tickets/in-place-okf-document-contract.md): Use separate in-place memory and instruction bundles with standard metadata, stable uppercase routing paths, a small path-derived type vocabulary, resolvable file-relative links, conforming source summaries, and no required extension fields.
 
 ## Not yet specified
 
