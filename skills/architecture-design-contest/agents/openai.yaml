@@ -1,0 +1,5 @@
+interface:
+  display_name: "Architecture Design Contest"
+  short_description: "Participate in architecture design contests and evaluate design proposals"
+policy:
+  allow_implicit_invocation: false

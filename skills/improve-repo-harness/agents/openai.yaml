@@ -1,0 +1,5 @@
+interface:
+  display_name: "Improve Repo Harness"
+  short_description: "Review and improve the test harness of a repository for effectiveness and reliability"
+policy:
+  allow_implicit_invocation: false

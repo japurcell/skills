@@ -1,0 +1,5 @@
+interface:
+  display_name: "Technical Debt"
+  short_description: "Identify and manage technical debt in the codebase to improve maintainability and long-term quality"
+policy:
+  allow_implicit_invocation: false

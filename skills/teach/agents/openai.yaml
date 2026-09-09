@@ -1,0 +1,5 @@
+interface:
+  display_name: "Teach"
+  short_description: "Teach and guide best practices in code quality, correctness, and maintainability"
+policy:
+  allow_implicit_invocation: false

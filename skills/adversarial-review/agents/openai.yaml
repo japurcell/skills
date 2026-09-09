@@ -1,0 +1,5 @@
+interface:
+  display_name: "Adversarial Review"
+  short_description: "Review code with an adversarial approach to identify potential issues and weaknesses"
+policy:
+  allow_implicit_invocation: false

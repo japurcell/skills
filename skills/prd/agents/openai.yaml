@@ -1,0 +1,5 @@
+interface:
+  display_name: "PRD"
+  short_description: "Create and manage product requirement documents"
+policy:
+  allow_implicit_invocation: false

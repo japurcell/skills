@@ -1,0 +1,5 @@
+interface:
+  display_name: "Create Agents"
+  short_description: "Create and manage intelligent agents for various tasks"
+policy:
+  allow_implicit_invocation: false

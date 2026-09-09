@@ -1,0 +1,5 @@
+interface:
+  display_name: "Improve Codebase Architecture"
+  short_description: "Review and improve the architecture of a codebase for maintainability, scalability, and best practices"
+policy:
+  allow_implicit_invocation: false
