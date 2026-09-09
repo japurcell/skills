@@ -1,6 +1,6 @@
 # Accessibility Checklist
 
-Quick reference for WCAG 2.1 AA compliance.
+Quick reference for WCAG 2.1 AA compliance. Use alongside the `frontend-ui-engineering` skill.
 
 ## Table of Contents
 
@@ -13,7 +13,6 @@ Quick reference for WCAG 2.1 AA compliance.
 ## Essential Checks
 
 ### Keyboard Navigation
-
 - [ ] All interactive elements focusable via Tab key
 - [ ] Focus order follows visual/logical order
 - [ ] Focus is visible (outline/ring on focused elements)
@@ -23,7 +22,6 @@ Quick reference for WCAG 2.1 AA compliance.
 - [ ] Modals trap focus while open, return focus on close
 
 ### Screen Readers
-
 - [ ] All images have `alt` text (or `alt=""` for decorative images)
 - [ ] All form inputs have associated labels (`<label>` or `aria-label`)
 - [ ] Buttons and links have descriptive text (not "Click here")
@@ -33,7 +31,6 @@ Quick reference for WCAG 2.1 AA compliance.
 - [ ] Tables have `<th>` headers with scope
 
 ### Visual
-
 - [ ] Text contrast ≥ 4.5:1 (normal text) or ≥ 3:1 (large text, 18px+)
 - [ ] UI components contrast ≥ 3:1 against background
 - [ ] Color is not the only way to convey information
@@ -41,7 +38,6 @@ Quick reference for WCAG 2.1 AA compliance.
 - [ ] No content that flashes more than 3 times per second
 
 ### Forms
-
 - [ ] Every input has a visible label
 - [ ] Required fields indicated (not by color alone)
 - [ ] Error messages specific and associated with the field
@@ -50,7 +46,6 @@ Quick reference for WCAG 2.1 AA compliance.
 - [ ] Known fields use autocomplete (for example `type="email" autocomplete="email"`)
 
 ### Content
-
 - [ ] Language declared (`<html lang="en">`)
 - [ ] Page has a descriptive `<title>`
 - [ ] Links distinguish from surrounding text (not by color alone)
