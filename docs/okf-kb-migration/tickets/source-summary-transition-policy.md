@@ -1,8 +1,8 @@
 # Source Summary Transition Policy
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** concept-profile-and-taxonomy.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question

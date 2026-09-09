@@ -1,8 +1,8 @@
 # Copilot-First Provider Integration and State
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** copilot-first-runtime-contract.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question

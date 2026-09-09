@@ -1,8 +1,8 @@
 # Copilot-First Implementation Sequencing and Handoff
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** copilot-first-rollout-and-rollback.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question

@@ -1,7 +1,7 @@
 # Concept Profile and Taxonomy
 
 **Type:** grilling
-**Status:** closed
+**Status:** obsolete
 **Blocked By:** none
 **Research Dir:** N/A
 

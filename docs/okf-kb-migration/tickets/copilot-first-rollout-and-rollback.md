@@ -1,8 +1,8 @@
 # Copilot-First Rollout and Rollback
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** copilot-first-provider-integration-and-state.md, dual-provider-evaluation-amendment.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question

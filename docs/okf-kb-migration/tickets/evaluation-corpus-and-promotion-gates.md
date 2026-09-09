@@ -1,8 +1,8 @@
 # Evaluation Corpus and Promotion Gates
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** selector-contract-and-ranking.md, mandatory-context-and-fallback.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question

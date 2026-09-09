@@ -1,7 +1,7 @@
 # Copilot CLI Integration Surfaces
 
 **Type:** research
-**Status:** closed
+**Status:** obsolete
 **Blocked By:** none
 **Research Dir:** ../research/copilot-cli-integration-surfaces
 

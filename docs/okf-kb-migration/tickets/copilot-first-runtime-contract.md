@@ -1,8 +1,8 @@
 # Copilot-First Runtime Contract
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** copilot-cli-integration-surfaces.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question

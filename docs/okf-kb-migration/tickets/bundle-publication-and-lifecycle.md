@@ -1,7 +1,7 @@
 # Bundle Publication and Lifecycle
 
 **Type:** grilling
-**Status:** closed
+**Status:** obsolete
 **Blocked By:** none
 **Research Dir:** N/A
 

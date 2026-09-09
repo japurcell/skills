@@ -1,6 +1,6 @@
 # Relocate the OKF migration documents into version control
 
-This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept current as the relocation proceeds. This document follows the repository's `exec-plans` skill.
+This ExecPlan is the completed historical record of the relocation performed on 2026-09-03. Its inventory and ticket counts are point-in-time acceptance evidence, not the current OKF migration state. The current design and status live in `docs/okf-kb-migration/map.md` and `docs/okf-kb-migration/handoff.md`. This document follows the repository's `exec-plans` skill.
 
 ## Purpose / Big Picture
 
@@ -34,10 +34,13 @@ The OKF knowledge-base migration research, Wayfinder map, tickets, and handoff c
 - Decision: Move this ExecPlan into the final documentation subtree as `docs/okf-kb-migration/relocation-execplan.md` during milestone 1.
   Rationale: Leaving the relocation plan in ignored scratchpad storage would contradict the user's request that all documents for the effort be version controlled.
   Date/Author: 2026-09-03 / Codex
+- Decision: Preserve relocation counts as a dated completion snapshot and route current migration status through `map.md` and `handoff.md`.
+  Rationale: Updating a completed relocation plan with later design-ticket counts would erase its acceptance evidence and make it compete with the authoritative live status documents.
+  Date/Author: 2026-09-09 / Codex
 
 ## Outcomes & Retrospective
 
-The complete OKF migration effort now lives under `docs/okf-kb-migration/` as seventeen Markdown files: the sixteen original research, handoff, map, and ticket documents plus this ExecPlan. Git reports the destination subtree as untracked and therefore version-controllable, while the three old effort locations and the temporary ExecPlan path are absent. All four local Markdown links resolve, every `Blocked By` filename names an existing ticket, and ticket state remains eleven open, one closed, and two unblocked frontier tickets. Whitespace and `git diff --check` validation pass. No application build or product tests were run because no runtime source or behavior changed.
+At relocation completion on 2026-09-03, the OKF migration effort lived under `docs/okf-kb-migration/` as seventeen Markdown files: the sixteen original research, handoff, map, and ticket documents plus this ExecPlan. Git reported the destination subtree as untracked and therefore version-controllable, while the three old effort locations and the temporary ExecPlan path were absent. All four then-current local Markdown links resolved, every `Blocked By` filename named an existing ticket, and the relocation snapshot contained eleven open tickets, one closed ticket, and two unblocked frontier tickets. Whitespace and `git diff --check` validation passed. No application build or product tests were run because no runtime source or behavior changed.
 
 The main lesson was to derive inventory totals from the filesystem instead of manually aggregating counts across directories. The initially misstated total was corrected before relocation and the measured count was used for final acceptance.
 
@@ -74,7 +77,7 @@ Verify the final inventory and source absence, resolve every Markdown link in th
 
 From `/Users/adam/dev/skills`, create the target research directory, move each explicitly inventoried source, and remove only empty source directories. Then patch links in the moved map and handoff. Validate with `rg --files docs/okf-kb-migration`, targeted `rg` scans, existence checks for blockers and Markdown link targets, `git diff --check`, and `git status --short --branch`.
 
-Expected final inventory summary:
+Expected relocation-completion inventory summary:
 
     markdown_files=17
     open_tickets=11
@@ -101,3 +104,5 @@ No public API, runtime dependency, hook contract, or ticket dependency is change
 Revision note (2026-09-03 03:15Z): Marked relocation and path-repair milestones complete after moving all inventoried documents and updating the active map and handoff references. Validation and documentation synchronization remain open.
 
 Revision note (2026-09-03 03:17Z): Closed the validation milestone after measured inventory, link, blocker, status, whitespace, Git visibility, and old-path checks passed; recorded the completed documentation synchronization and final outcome.
+
+Revision note (2026-09-09): Clarified that this completed plan's counts are a dated relocation snapshot and pointed readers to `map.md` and `handoff.md` for current migration state after a later architecture correction changed the ticket graph.

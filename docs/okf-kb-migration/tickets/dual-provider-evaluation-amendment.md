@@ -1,8 +1,8 @@
 # Dual-Provider Evaluation Amendment
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** copilot-first-provider-integration-and-state.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question

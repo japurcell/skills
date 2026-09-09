@@ -1,8 +1,8 @@
 # Concept Identity and Links
 
 **Type:** grilling
-**Status:** closed
-**Blocked By:** bundle-publication-and-lifecycle.md, concept-profile-and-taxonomy.md
+**Status:** obsolete
+**Blocked By:** none
 **Research Dir:** N/A
 
 ## Question
