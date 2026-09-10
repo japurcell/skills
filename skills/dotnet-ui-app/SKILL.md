@@ -1,6 +1,6 @@
 ---
 name: dotnet-ui-app
-description: Bootstrap, develop, and design modern .NET desktop and cross-platform UI applications with C# using WinUI 3, the Windows App SDK, and Avalonia UI, grounded in official Microsoft and Avalonia guidance, WinUI Gallery patterns, Windows App SDK samples, Avalonia templates and documentation, and appropriate CommunityToolkit or Avalonia ecosystem components. Use when creating a brand new app, preparing a machine for WinUI or Avalonia development, choosing between Windows-first and cross-platform UI frameworks, reviewing, refactoring, planning, troubleshooting, environment-checking, or setting up WinUI 3 or Avalonia XAML, controls, navigation, shell composition, windowing, theming, styling, accessibility, input, localization, responsiveness, performance, deployment, packaging, or related .NET app design and development work.
+description: Bootstrap, develop, and design modern .NET desktop and cross-platform UI applications with C# using WinUI 3, the Windows App SDK, and Avalonia UI. Mandatory whenever creating a brand new app, preparing a machine for WinUI or Avalonia development, choosing between Windows-first and cross-platform UI frameworks, reviewing, refactoring, planning, troubleshooting, environment-checking, or setting up WinUI 3 or Avalonia XAML, controls, navigation, shell composition, windowing, theming, styling, accessibility, input, localization, responsiveness, performance, deployment, packaging, or related .NET app design and development work.
 ---
 
 # .NET UI App
