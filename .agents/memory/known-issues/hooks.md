@@ -17,7 +17,7 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 
 **Affected area:** Startup source auto-ingest feature (`auto_ingest.py` / `source_ingest.py`)
 **Description:** Determining if a summary is an unresolved draft by searching the whole file for `status: draft` causes completed summaries containing that phrase in their body to remain perpetually pending.
-**Workaround:** Inspect only the YAML frontmatter and require the exact `type: Source Summary` plus `status: draft` semantics. Ignore matching text in the Markdown body.
+**Workaround:** Inspect only the YAML frontmatter and require `type: Source Summary` plus `status: draft` semantics. Normalize top-level scalar values before comparison so equivalent quoted or commented YAML remains pending, and ignore matching text in the Markdown body.
 
 ## Copilot CLI prompt rewrite runs before sessionStart auto-ingest
 

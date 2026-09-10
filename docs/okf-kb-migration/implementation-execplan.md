@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds. Maintain this document in accordance with the repository's `exec-plans` skill.
 
-Implementation is active. Gates 1–3 are committed; the final Gate 3 rollback checkpoint is `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`. Gate 4 is implemented, validated, and ready for the user's manual checkpoint. Gates 5–6 remain open. Do not begin a later gate before recording the preceding checkpoint.
+Implementation is active. Gates 1–3 are committed; the final Gate 3 rollback checkpoint is `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`. Gate 4 was committed at `d21c4351`, but resumed review found a quoted-YAML draft-detection bypass; its red-green correction is approved, fully validated, and awaiting the user's manual checkpoint. Gates 5–6 remain open. Do not begin a later gate before recording the preceding checkpoint.
 
 ## Purpose / Big Picture
 
@@ -18,7 +18,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-09 07:04Z) [milestone-1] Recorded the user-created Gate 1 reviewable checkpoint `e0d425972641f1f1a372d7dacd068f73fa7fefee`.
 - [x] (2026-09-09 07:29Z) [milestone-2] Vendored and verified PyYAML 6.0.3, implemented the dormant provider-neutral linter, made the expanded public-CLI suite green, and completed independent review without enabling hooks.
 - [x] (2026-09-09 13:25Z) [milestone-3] Recorded the user-created final Gate 3 rollback checkpoint `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735` after the deterministic grader correction and independent approval.
-- [ ] (2026-09-09 13:25Z) [milestone-4] Ready for the user-created checkpoint: migrated all 31 canonical Markdown documents and both source-summary scaffold producers, repaired stale canonical teaching text and invalid index links, preserved manifest/raw-source invariants, and made human and JSON full-corpus lint succeed. Remaining work is the manual Gate 4 commit.
+- [ ] (2026-09-10 00:00Z) [milestone-4] Gate 4 implementation is committed at `d21c4351`; resumed review found that literal-line draft detection misclassified valid quoted/commented YAML as resolved. Symmetric public-hook regressions failed before and pass after the parser-independent scalar normalization, Premium follow-up review approved the correction, and the complete Gate 4 matrix is green. Remaining work is the user-created correction checkpoint.
 - [ ] [milestone-5] Add thin Copilot and Gemini adapters, register them after source-ingest validation, and make parity and provider regression suites green.
 - [ ] [milestone-6] Run disposable-worktree live provider probes, record versions/events/diagnostics/duration, complete documentation synchronization, and establish merge readiness.
 
@@ -64,6 +64,8 @@ The implementation is one migration unit. It may be built as reviewable commits,
   Evidence: A source named `nested/source #1?.md` truncated at `#` under YAML/URI parsing. Both producers now JSON-quote dynamic YAML scalars and percent-encode the resource path while preserving `/`; both provider suites cover the special path.
 - Observation: Metadata-only corpus migration exposed stale body instructions and two directory-valued index links that the OKF profile rejects.
   Evidence: Initial full-corpus lint reported `OKF103` for the two `INDEX.md` directory links, and review found body text still teaching `coverage:` and `status: scaffold`. The approved semantic corrections now point to regular files and teach path-derived type/description plus exact draft-summary frontmatter semantics.
+- Observation: Literal frontmatter-line matching is not equivalent to YAML scalar comparison.
+  Evidence: Both provider hooks classified `type: "Source Summary" # quoted scalar` plus `status: "draft" # unresolved lifecycle` as active. Symmetric public-hook tests reproduced the bypass before the correction and pass after top-level scalar normalization.
 
 ## Decision Log
 
@@ -97,10 +99,13 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - Decision: Use runtime task agents with `gpt-5.6-luna` for both `with_skill` and `without_skill` Gate 3 runs.
   Rationale: No external evaluation CLI is installed; the ExecPlan permits independent task agents, and using the same Fast model on both sides gives a fair weaker-model comparison. The runtime does not expose token totals, so timing artifacts must mark token telemetry unavailable rather than fabricate values.
   Date/Author: 2026-09-09 / Codex
+- Decision: Detect unresolved source summaries by normalized top-level `type` and `status` scalar values instead of exact frontmatter lines.
+  Rationale: YAML permits quoted scalars and comments without changing their values. The source-ingest hooks remain standard-library-only, so the narrow parser normalizes the two contract fields while malformed values fail safely as non-matches.
+  Date/Author: 2026-09-10 / Codex
 
 ## Outcomes & Retrospective
 
-Gate 1 is committed at `e0d425972641f1f1a372d7dacd068f73fa7fefee`. Gate 2 is committed at `817f2881393235f8b6abb4d7a08df28570262715` and provides the offline, provider-neutral linter and pinned PyYAML 6.0.3 runtime. The expanded public-CLI suite passes, repeated JSON output is deterministic, the current legacy corpus produces only expected conformance findings, and no provider hooks are enabled.
+Gates 1–3 are committed, with Gate 3's final rollback checkpoint at `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`. Gate 4's corpus and scaffold cutover is committed at `d21c4351`; all 31 canonical paths are preserved, full-corpus lint is clean, and raw sources are unchanged. A resumed review found and reproduced one semantic YAML draft-detection bypass; its symmetric correction is green but remains outside that checkpoint pending follow-up review and the user's manual commit. No provider lint hooks are enabled.
 
 ## Context and Orientation
 
@@ -110,7 +115,7 @@ The current 31 concepts have useful bodies that must remain intact. The 22 ordin
 
 `scripts/lint-okf.py` is the complete validation authority. The future repo-local adapters `.github/hooks/scripts/lint-okf.py` and `.gemini/hooks/scripts/lint-okf.py` will read their provider payload, locate the repository from `cwd`, execute the central linter in JSON mode, cap the shared diagnostic text, and emit only the provider-specific JSON envelope. They must not contain document-profile rules.
 
-Source ingestion remains independent. `.github/hooks/scripts/helpers/auto_ingest.py` and `.gemini/hooks/scripts/helpers/source_ingest.py` are intentionally duplicated scaffold producers. Their current scaffold marker is `status: scaffold`; Gate 4 changes both to emit a conforming `Source Summary` with `status: draft` and a file-relative raw-source resource. The manifest continues to own freshness, hashes, rename/orphan state, and source-to-summary binding. The OKF linter reads that manifest but never updates it.
+Source ingestion remains independent. `.github/hooks/scripts/helpers/auto_ingest.py` and `.gemini/hooks/scripts/helpers/source_ingest.py` are intentionally duplicated scaffold producers. Both emit a conforming `Source Summary` with `status: draft` and a file-relative raw-source resource, and both detect unresolved summaries from normalized top-level `type` and `status` scalar values rather than literal YAML lines. The manifest continues to own freshness, hashes, rename/orphan state, and source-to-summary binding. The OKF linter reads that manifest but never updates it.
 
 The authoring workflow has two repository-local homes. `.agents/skills/okf-authoring/` owns the model-invoked representation workflow. `.agents/skills/update-agent-docs/` owns the semantic documentation workflow. Gate 3 adds a one-way instruction from `update-agent-docs` to invoke `okf-authoring` after semantic edits; `okf-authoring` must never call back into `update-agent-docs`.
 
@@ -430,7 +435,7 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 3 paired benchmark: the corrected 16-run result uses exact `gpt-5.6-luna` routing for both configurations and harness-owned real-linter/scoped-diff evidence. With-skill passes 72/72 expectations (100%); without-skill passes 52/72 (72.2%), with a 71.5% mean per-eval pass rate. Duration coverage is 5/16 and token coverage is 3/16, so those comparisons are omitted. Human review is generated at `skills/okf-authoring-workspace/iteration-1/review.html` with all prompts and eval IDs.
 - Gate 3 resumed acceptance review: found nondeterministic eval-0 expectation ordering after the initial implementation commit. The correction sorts the grader's expected paths, adds a cross-hash-seed regression, uses a tested score-preserving synchronizer for the incomplete-telemetry aggregate, and regenerates `review.html`. Independent review confirmed all 16 grading files, the aggregate, and the reviewer are synchronized; all prompts and eval IDs are present; scores remain 72/72 versus 52/72; and no skill, harness, model-evidence, or stray-workspace blocker remains.
 - Gate 3 final rollback checkpoint: `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`.
-- Gate 4 implementation: 31 canonical paths preserved; approved body changes are limited to `INDEX.md`, `instructions/hooks.md`, `known-issues/hooks.md`, and `testing/hooks.md` for repaired links, current OKF teaching, and synchronized hook/test guidance; exactly nine `summary_hash` values changed with all other manifest fields stable; raw sources unchanged; no legacy metadata or lowercase reserved path remains. Both auto-ingest suites, Python/shell syntax, the OKF linter suite, human full-corpus lint, JSON full-corpus lint, and `git diff --check` pass. Independent review approved the special-path quoting/encoding fix and required only the now-completed canonical/plan documentation synchronization. Manual commit pending.
+- Gate 4 implementation checkpoint: `d21c4351`. It preserves all 31 canonical paths, changes only the nine expected manifest `summary_hash` fields, and leaves raw sources unchanged. Resumed review found one quoted/commented YAML draft-detection bypass; symmetric public-hook regressions failed before and pass after the current uncommitted scalar-normalization correction, and Premium follow-up review approved the fix. Final validation passes shell/Python syntax, both auto-ingest suites, the linter contract suite, human/JSON full-corpus lint, active migration links, legacy/lowercase searches, and `git diff --check`. The user's correction checkpoint remains pending.
 - Gate 5 commit, provider versions/source recheck, and simulated parity results: not started.
 - Gate 6 Copilot worktree/commands/events/diagnostics: not started.
 - Gate 6 Gemini worktree/commands/events/diagnostics: not started.
@@ -480,3 +485,5 @@ Revision note (2026-09-09): Recorded Gate 3 implementation commit `6f7d2be1e0404
 Revision note (2026-09-09): Recorded the user-created final Gate 3 checkpoint `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`, marked Milestone 3 accepted, and opened Gate 4's atomic corpus and scaffold cutover.
 
 Revision note (2026-09-09): Completed and validated Gate 4's atomic corpus/scaffold migration, added special source-path regressions, repaired stale canonical teaching text and index links found by review, and stopped before Gate 5 for the user's manual checkpoint.
+
+Revision note (2026-09-10): Recorded Gate 4 implementation checkpoint `d21c4351`, reproduced a resumed-review finding where quoted/commented YAML draft metadata bypassed pending ingest, added symmetric public-hook regressions, and implemented the standard-library scalar-normalization correction without opening Gate 5.

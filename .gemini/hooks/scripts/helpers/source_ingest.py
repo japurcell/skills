@@ -11,8 +11,8 @@ from urllib.parse import quote
 
 MANIFEST_FILE_NAME = "source-ingest-manifest.json"
 SUMMARY_SUFFIX = ".summary.md"
-DRAFT_SUMMARY_TYPE = "type: Source Summary"
-DRAFT_SUMMARY_STATUS = "status: draft"
+DRAFT_SUMMARY_TYPE = "Source Summary"
+DRAFT_SUMMARY_STATUS = "draft"
 PENDING_INGEST_DIRECTIVE = "Pending ingest blocks normal work."
 PENDING_INGEST_SKILL_PROMPT = "Activate or load the `ingest-source` skill, then run `/ingest-source`."
 PENDING_INGEST_SKILL_MISSING = "The `ingest-source` skill is unavailable."
@@ -110,19 +110,59 @@ def _read_file_hash(path: Path) -> str:
     return hasher.hexdigest()
 
 
+def _parse_frontmatter_scalar(raw_value: str) -> str | None:
+    value = raw_value.strip()
+    in_single_quote = False
+    in_double_quote = False
+    escaped = False
+    for index, character in enumerate(value):
+        if escaped:
+            escaped = False
+        elif character == "\\" and in_double_quote:
+            escaped = True
+        elif character == '"' and not in_single_quote:
+            in_double_quote = not in_double_quote
+        elif character == "'" and not in_double_quote:
+            in_single_quote = not in_single_quote
+        elif character == "#" and not in_single_quote and not in_double_quote:
+            if index == 0 or value[index - 1].isspace():
+                value = value[:index].rstrip()
+                break
+
+    if not value:
+        return None
+    if value.startswith('"'):
+        try:
+            parsed = json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            return None
+        return parsed if isinstance(parsed, str) else None
+    if value.startswith("'"):
+        if len(value) < 2 or not value.endswith("'"):
+            return None
+        return value[1:-1].replace("''", "'")
+    return value
+
+
 def _is_scaffold_summary(text: str) -> bool:
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         return False
 
-    frontmatter_lines: list[str] = []
+    frontmatter: dict[str, str] = {}
     for line in lines[1:]:
         if line.strip() == "---":
             return (
-                DRAFT_SUMMARY_TYPE in frontmatter_lines
-                and DRAFT_SUMMARY_STATUS in frontmatter_lines
+                frontmatter.get("type") == DRAFT_SUMMARY_TYPE
+                and frontmatter.get("status") == DRAFT_SUMMARY_STATUS
             )
-        frontmatter_lines.append(line)
+        if line[:1].isspace() or ":" not in line:
+            continue
+        key, raw_value = line.split(":", 1)
+        if (key := key.rstrip()) in {"type", "status"}:
+            value = _parse_frontmatter_scalar(raw_value)
+            if value is not None:
+                frontmatter[key] = value
     return False
 
 
@@ -511,7 +551,7 @@ def scaffold_summary(summary_dir: Path, source_relpath: str, reason: str) -> Pat
         content = "\n".join(
             [
                 "---",
-                DRAFT_SUMMARY_TYPE,
+                f"type: {DRAFT_SUMMARY_TYPE}",
                 "description: " + json.dumps(
                     f"Pending ingestion of raw source `.agents/sources/{source_relpath}`.",
                     ensure_ascii=False,
@@ -521,7 +561,7 @@ def scaffold_summary(summary_dir: Path, source_relpath: str, reason: str) -> Pat
                     "../../sources/" + quote(source_relpath, safe="/"),
                     ensure_ascii=False,
                 ),
-                DRAFT_SUMMARY_STATUS,
+                f"status: {DRAFT_SUMMARY_STATUS}",
                 "---",
                 "",
                 f"# Summary scaffold for `{Path(source_relpath).name}`",

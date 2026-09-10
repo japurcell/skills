@@ -458,7 +458,7 @@ test_draft_scaffold_detection_reads_only_frontmatter() {
   mkdir -p "$workdir/.agents/sources" "$state_dir"
   make_text_file "$workdir/.agents/sources/draft-frontmatter.md" $'draft source\n'
   make_text_file "$workdir/.agents/sources/body-marker.md" $'published source\n'
-  make_text_file "$state_dir/draft-frontmatter-md.summary.md" $'---\ntype: Source Summary\ndescription: Pending ingestion of raw source `.agents/sources/draft-frontmatter.md`.\nsources:\n  - resource: ../../sources/draft-frontmatter.md\nstatus: draft\n---\n\n# Draft summary\n'
+  make_text_file "$state_dir/draft-frontmatter-md.summary.md" $'---\ntype: "Source Summary" # quoted scalar\ndescription: Pending ingestion of raw source `.agents/sources/draft-frontmatter.md`.\nsources:\n  - resource: ../../sources/draft-frontmatter.md\nstatus: "draft" # unresolved lifecycle\n---\n\n# Draft summary\n'
   make_text_file "$state_dir/body-marker-md.summary.md" $'---\ntype: Source Summary\ndescription: Published summary for `.agents/sources/body-marker.md`.\nsources:\n  - resource: ../../sources/body-marker.md\nstatus: final\n---\n\nThe old draft marker is `status: draft`.\n'
 
   run_repo_local_auto_ingest_hook \
@@ -468,7 +468,7 @@ test_draft_scaffold_detection_reads_only_frontmatter() {
 
   assert_equals "needs_summary" \
     "$(jq -r '.entries[] | select(.source_path=="draft-frontmatter.md") | .state' "$manifest_path")" \
-    "Expected exact draft Source Summary frontmatter to remain pending."
+    "Expected semantically equivalent quoted draft frontmatter to remain pending."
   assert_equals "active" \
     "$(jq -r '.entries[] | select(.source_path=="body-marker.md") | .state' "$manifest_path")" \
     "Expected draft marker text in a summary body to be ignored."

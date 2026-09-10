@@ -569,7 +569,7 @@ test_draft_scaffold_detection_reads_only_frontmatter() {
   mkdir -p "$source_dir" "$summary_dir"
   printf 'draft source\n' > "$source_dir/draft-frontmatter.md"
   printf 'published source\n' > "$source_dir/body-marker.md"
-  write_text_file "$summary_dir/draft-frontmatter-md.summary.md" $'---\ntype: Source Summary\ndescription: Pending ingestion of raw source `.agents/sources/draft-frontmatter.md`.\nsources:\n  - resource: ../../sources/draft-frontmatter.md\nstatus: draft\n---\n\n# Draft summary\n'
+  write_text_file "$summary_dir/draft-frontmatter-md.summary.md" $'---\ntype: "Source Summary" # quoted scalar\ndescription: Pending ingestion of raw source `.agents/sources/draft-frontmatter.md`.\nsources:\n  - resource: ../../sources/draft-frontmatter.md\nstatus: "draft" # unresolved lifecycle\n---\n\n# Draft summary\n'
   write_text_file "$summary_dir/body-marker-md.summary.md" $'---\ntype: Source Summary\ndescription: Published summary for `.agents/sources/body-marker.md`.\nsources:\n  - resource: ../../sources/body-marker.md\nstatus: final\n---\n\nThe old draft marker is `status: draft`.\n'
   install_into_temp_home "$home"
 
@@ -581,7 +581,7 @@ test_draft_scaffold_detection_reads_only_frontmatter() {
 
   assert_equals "needs_summary" \
     "$(jq -r '.entries[] | select(.source_path=="draft-frontmatter.md") | .state' "$manifest_path")" \
-    "Expected exact draft Source Summary frontmatter to remain pending."
+    "Expected semantically equivalent quoted draft frontmatter to remain pending."
   assert_equals "active" \
     "$(jq -r '.entries[] | select(.source_path=="body-marker.md") | .state' "$manifest_path")" \
     "Expected draft marker text in a summary body to be ignored."
