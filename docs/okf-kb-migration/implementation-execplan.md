@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds. Maintain this document in accordance with the repository's `exec-plans` skill.
 
-Implementation is active. Gates 1–3 are committed; the final Gate 3 rollback checkpoint is `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`. Gate 4 was committed at `d21c4351`, but resumed review found a quoted-YAML draft-detection bypass; its red-green correction is approved, fully validated, and awaiting the user's manual checkpoint. Gates 5–6 remain open. Do not begin a later gate before recording the preceding checkpoint.
+Implementation is active. Gates 1–4 are committed; the final Gate 4 rollback checkpoint is `917313a04bb513039ea0a2e596a8c381370766e7`. Gate 5 is ready to begin with the required official-provider-source and installed-CLI-version recheck. Gate 6 remains open. Do not begin a later gate before recording the preceding checkpoint.
 
 ## Purpose / Big Picture
 
@@ -18,7 +18,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-09 07:04Z) [milestone-1] Recorded the user-created Gate 1 reviewable checkpoint `e0d425972641f1f1a372d7dacd068f73fa7fefee`.
 - [x] (2026-09-09 07:29Z) [milestone-2] Vendored and verified PyYAML 6.0.3, implemented the dormant provider-neutral linter, made the expanded public-CLI suite green, and completed independent review without enabling hooks.
 - [x] (2026-09-09 13:25Z) [milestone-3] Recorded the user-created final Gate 3 rollback checkpoint `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735` after the deterministic grader correction and independent approval.
-- [ ] (2026-09-10 00:00Z) [milestone-4] Gate 4 implementation is committed at `d21c4351`; resumed review found that literal-line draft detection misclassified valid quoted/commented YAML as resolved. Symmetric public-hook regressions failed before and pass after the parser-independent scalar normalization, Premium follow-up review approved the correction, and the complete Gate 4 matrix is green. Remaining work is the user-created correction checkpoint.
+- [x] (2026-09-10 00:00Z) [milestone-4] Recorded final Gate 4 rollback checkpoint `917313a04bb513039ea0a2e596a8c381370766e7` after the quoted/commented YAML scalar correction, Premium follow-up approval, and complete green Gate 4 matrix.
 - [ ] [milestone-5] Add thin Copilot and Gemini adapters, register them after source-ingest validation, and make parity and provider regression suites green.
 - [ ] [milestone-6] Run disposable-worktree live provider probes, record versions/events/diagnostics/duration, complete documentation synchronization, and establish merge readiness.
 
@@ -105,7 +105,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 
 ## Outcomes & Retrospective
 
-Gates 1–3 are committed, with Gate 3's final rollback checkpoint at `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`. Gate 4's corpus and scaffold cutover is committed at `d21c4351`; all 31 canonical paths are preserved, full-corpus lint is clean, and raw sources are unchanged. A resumed review found and reproduced one semantic YAML draft-detection bypass; its symmetric correction is green but remains outside that checkpoint pending follow-up review and the user's manual commit. No provider lint hooks are enabled.
+Gates 1–4 are committed, with Gate 4's final rollback checkpoint at `917313a04bb513039ea0a2e596a8c381370766e7`. All 31 canonical paths are preserved, full-corpus lint is clean, raw sources are unchanged, and both scaffold producers handle semantically equivalent quoted/commented draft scalars. Premium follow-up review approved the correction and the complete Gate 4 matrix passed. No provider lint hooks are enabled; Gate 5 remains the next milestone.
 
 ## Context and Orientation
 
@@ -207,8 +207,8 @@ Milestone acceptance requires a green quick validation, valid grader syntax, a c
 
 ### Milestone 4: Perform the atomic corpus and scaffold cutover
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Record the Gate 3 commit hash as the rollback checkpoint. Migrate all canonical documents and both scaffold producers in one gate; do not commit or hand off a partially converted corpus. For each of the 22 coverage-based files, preserve path and body and replace the frontmatter with the exact path-derived `type` followed by `description` containing the prior `coverage` value. Do not synthesize `generated`, `verified`, `stale_after`, tags, titles, or lifecycle status.
 
@@ -435,7 +435,7 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 3 paired benchmark: the corrected 16-run result uses exact `gpt-5.6-luna` routing for both configurations and harness-owned real-linter/scoped-diff evidence. With-skill passes 72/72 expectations (100%); without-skill passes 52/72 (72.2%), with a 71.5% mean per-eval pass rate. Duration coverage is 5/16 and token coverage is 3/16, so those comparisons are omitted. Human review is generated at `skills/okf-authoring-workspace/iteration-1/review.html` with all prompts and eval IDs.
 - Gate 3 resumed acceptance review: found nondeterministic eval-0 expectation ordering after the initial implementation commit. The correction sorts the grader's expected paths, adds a cross-hash-seed regression, uses a tested score-preserving synchronizer for the incomplete-telemetry aggregate, and regenerates `review.html`. Independent review confirmed all 16 grading files, the aggregate, and the reviewer are synchronized; all prompts and eval IDs are present; scores remain 72/72 versus 52/72; and no skill, harness, model-evidence, or stray-workspace blocker remains.
 - Gate 3 final rollback checkpoint: `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`.
-- Gate 4 implementation checkpoint: `d21c4351`. It preserves all 31 canonical paths, changes only the nine expected manifest `summary_hash` fields, and leaves raw sources unchanged. Resumed review found one quoted/commented YAML draft-detection bypass; symmetric public-hook regressions failed before and pass after the current uncommitted scalar-normalization correction, and Premium follow-up review approved the fix. Final validation passes shell/Python syntax, both auto-ingest suites, the linter contract suite, human/JSON full-corpus lint, active migration links, legacy/lowercase searches, and `git diff --check`. The user's correction checkpoint remains pending.
+- Gate 4 final rollback checkpoint: `917313a04bb513039ea0a2e596a8c381370766e7` (implementation checkpoint `d21c4351` plus the approved semantic YAML draft-detection correction). It preserves all 31 canonical paths, changes only the nine expected manifest `summary_hash` fields, and leaves raw sources unchanged. Final validation passes shell/Python syntax, both auto-ingest suites, the linter contract suite, human/JSON full-corpus lint, active migration links, legacy/lowercase searches, and `git diff --check`.
 - Gate 5 commit, provider versions/source recheck, and simulated parity results: not started.
 - Gate 6 Copilot worktree/commands/events/diagnostics: not started.
 - Gate 6 Gemini worktree/commands/events/diagnostics: not started.
@@ -487,3 +487,5 @@ Revision note (2026-09-09): Recorded the user-created final Gate 3 checkpoint `4
 Revision note (2026-09-09): Completed and validated Gate 4's atomic corpus/scaffold migration, added special source-path regressions, repaired stale canonical teaching text and index links found by review, and stopped before Gate 5 for the user's manual checkpoint.
 
 Revision note (2026-09-10): Recorded Gate 4 implementation checkpoint `d21c4351`, reproduced a resumed-review finding where quoted/commented YAML draft metadata bypassed pending ingest, added symmetric public-hook regressions, and implemented the standard-library scalar-normalization correction without opening Gate 5.
+
+Revision note (2026-09-10): Recorded the user-created final Gate 4 rollback checkpoint `917313a04bb513039ea0a2e596a8c381370766e7`, marked Milestone 4 accepted, and moved the active frontier to Gate 5's provider-source and installed-CLI-version recheck.

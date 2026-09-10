@@ -6,7 +6,7 @@ Execute the six-gate in-place OKF v0.2 migration for the canonical documents und
 
 ## Status
 
-- On 2026-09-09, the user explicitly authorized implementation. Gate 1 is committed as `e0d425972641f1f1a372d7dacd068f73fa7fefee`; Gate 2 is committed as `817f2881393235f8b6abb4d7a08df28570262715`; the final Gate 3 rollback checkpoint is `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`.
+- On 2026-09-09, the user explicitly authorized implementation. Gate 1 is committed as `e0d425972641f1f1a372d7dacd068f73fa7fefee`; Gate 2 is committed as `817f2881393235f8b6abb4d7a08df28570262715`; the final Gate 3 rollback checkpoint is `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`; the final Gate 4 rollback checkpoint is `917313a04bb513039ea0a2e596a8c381370766e7`.
 
 - **OKF Authoring Skill Contract** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Gate 3 is accepted and checkpointed at `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735` after correcting nondeterministic grader expectation ordering.
 - The user found a charter-level flaw in the closed map: its `.agents/okf/` sidecar and prompt-time selector would inject knowledge already discoverable through the mandatory `AGENTS.md` → `.agents/memory/INDEX.md` path.
@@ -17,7 +17,7 @@ Execute the six-gate in-place OKF v0.2 migration for the canonical documents und
 - **In-Place Migration Sequencing and Verification** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its resolution fixes six implementation gates, validation scope, ownership, live capability proof, and rollback.
 - The 18 obsolete tickets are archived under `tickets/obsolete/`; the direct `tickets/` directory contains exactly five closed authoritative tickets.
 - `map.md` and `implementation-overview.md` describe the completed corrected design.
-- `implementation-execplan.md` translates the five closed contracts into six implementation gates with public test seams, non-overlapping path ownership, exact stable validation commands, live provider evidence requirements, and whole-migration rollback. Gates 1–3 are committed. Gate 4 is committed at `d21c4351`; its resumed-review correction for semantic YAML draft detection is approved, fully validated, and awaiting the user's manual checkpoint. Gates 5–6 remain open.
+- `implementation-execplan.md` translates the five closed contracts into six implementation gates with public test seams, non-overlapping path ownership, exact stable validation commands, live provider evidence requirements, and whole-migration rollback. Gates 1–4 are committed; Gate 4 is accepted at final checkpoint `917313a04bb513039ea0a2e596a8c381370766e7`. Gates 5–6 remain open.
 - Gate 1 added `scripts/fixtures/okf-valid-repo/` and `scripts/test-okf-lint.sh`.
 - Gate 2 added the offline provider-neutral `scripts/lint-okf.py`, pinned PyYAML 6.0.3 under `scripts/vendor/`, and review-driven public-CLI regressions. No canonical-corpus migration, adapter, or hook registration exists yet.
 - Gate 3 duplicate/runner inventory found no existing OKF representation skill. No external model CLI is installed; paired collaboration task agents using `gpt-5.6-luna` will provide the with-skill/no-skill benchmark.
@@ -25,11 +25,11 @@ Execute the six-gate in-place OKF v0.2 migration for the canonical documents und
 
 ## Next Focus
 
-Checkpoint the approved Gate 4 semantic YAML draft-detection correction; stop before Gate 5.
+Begin Gate 5 provider adapters, candidate registrations, and simulated parity coverage.
 
 ## Exact Next Step
 
-Manually commit the current approved correction and report the hash. Record that final Gate 4 checkpoint before starting Gate 5 in a later session.
+Activate `exec-plans`, `tdd`, and the hook-area guidance; recheck the official Copilot and Gemini hook sources and record installed CLI versions before writing the Gate 5 adapter tests. If the provider contract is unchanged, add the two failing public adapter suites before implementation.
 
 ## Decisions and Constraints
 
@@ -107,7 +107,7 @@ Manually commit the current approved correction and report the hash. Record that
 - Gate 4's two auto-ingest suites pass after red-before-green scaffold coverage, including body-marker detection and a `nested/source #1?.md` regression. Both producers JSON-quote dynamic YAML and URI-encode resource paths. Human lint exits 0; JSON lint is `{"schema_version":1,"diagnostics":[]}`; linter tests, Python/shell syntax, structural audit, and `git diff --check` pass.
 - Gate 4 implementation checkpoint `d21c4351` was created while resumed validation ran. Independent verification reconfirmed both auto-ingest suites, linter tests, human/JSON lint, legacy/lowercase searches, 31 stable canonical paths, 9 byte-identical raw sources, and `git diff --check`.
 - Resumed Premium review found that exact-line draft detection treated valid quoted/commented `type` and `status` YAML scalars as resolved. Symmetric public-hook regressions reproduced `needs_summary` becoming `active`; both pass after the current uncommitted standard-library scalar normalization. Premium follow-up review approved quoted, commented, single-quoted, malformed, body-only, and unchanged-rendering behavior.
-- Correction validation passes shell/Python syntax, both auto-ingest suites, the OKF linter contract suite, human and exact empty JSON corpus lint, active migration links, legacy/lowercase searches, and `git diff --check`. The user's corrective checkpoint is the only remaining Gate 4 step.
+- Correction validation passes shell/Python syntax, both auto-ingest suites, the OKF linter contract suite, human and exact empty JSON corpus lint, active migration links, legacy/lowercase searches, and `git diff --check`. The correction is committed in final Gate 4 checkpoint `917313a04bb513039ea0a2e596a8c381370766e7`.
 - Gate 3's first corrected-path 16-run benchmark was invalidated after independent review. Its apparent with-skill 58/58 and without-skill 40/58 scores are not evidence because the grader trusted supplied `outcome.json` lint claims; the run repositories could not execute the full linter. The generated workspace was removed.
 - Gate 3's accepted replacement candidate contains 16 complete runs. Every `timing.json` and `execution-manifest.json` entry records exact `gpt-5.6-luna` routing. With-skill passes 72/72 expectations; no-skill passes 52/72. Duration exists for 5/16 runs and tokens for 3/16, so the benchmark omits those comparisons.
 - Fresh rereview found and prompted replacement of two model-inconsistent runs, removal of a recreated root `okf-authoring-workspace/`, omission of incomplete telemetry comparisons, and addition of prompts/eval IDs to `review.html`.
@@ -150,5 +150,5 @@ Manually commit the current approved correction and report the hash. Record that
 
 ## Suggested Skills
 
-- Resume with `handoff`; finish the current Gate 4 correction and record its manual checkpoint before using `exec-plans`, `tdd`, and the hook-area guidance for Gate 5's provider adapters and registrations.
+- Resume with `handoff`, then use `exec-plans`, `tdd`, `official-sources`, and the hook-area guidance for Gate 5's provider adapters and registrations.
 - End every repository-changing session with `update-agent-docs`.
