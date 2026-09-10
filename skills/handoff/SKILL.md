@@ -28,6 +28,7 @@ Capture one concise handoff another agent can resume from immediately. Preserve 
 3. **Write or update `handoff.md`**
    - Create `.agents/scratchpad/` if needed.
    - Update an existing handoff in place and remove stale or duplicate content.
+   - When resuming from an existing handoff, treat its stated `Next step` as work to close: after completing it, update `handoff.md` before stopping so the status and next step reflect the new state.
    - Before editing an existing handoff, reread the exact section being replaced; prefer small independent patches when changing multiple files or sections so stale context cannot reject unrelated updates.
    - Prefer compact bullets or short sections. Default shape when it fits: Goal, Status, Next focus, Next step, Decisions/constraints, Review findings/corrections, Relevant files/artifacts, Commands/results, Verification state, Errors/blockers, Durable learnings, Suggested skills, Briefing.
    - Include exact paths, commands, errors, verification state, and measured results when relevant.
@@ -74,6 +75,7 @@ Capture one concise handoff another agent can resume from immediately. Preserve 
 ## Red Flags
 
 - Creates a new handoff.md instead of updating the existing one.
+- Completes the inherited `Next step` but stops without updating the existing handoff.
 - Pastes logs, diffs, or chat instead of referencing them.
 - Leaves stale next steps, duplicate bullets, or unverifiable completion claims.
 - Omits the review finding, rejected option, or failed assumption that changed the plan.
@@ -85,6 +87,7 @@ Capture one concise handoff another agent can resume from immediately. Preserve 
 - [ ] Handoff is concise and free of stale or duplicate context
 - [ ] Done, in-progress, and remaining work are distinguishable
 - [ ] Exact next step is explicit
+- [ ] If resuming from an existing handoff, the inherited `Next step` is completed and the handoff is updated before stopping
 - [ ] Review findings, rejected options, or corrected assumptions are captured when they affect next work
 - [ ] Specific code references use `path:line` when a location matters
 - [ ] Relevant files or artifacts include why they matter
