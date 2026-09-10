@@ -4,6 +4,7 @@
   },
   "experimental": {
     "autoMemory": false,
+    "dynamicModelConfiguration": true,
     "modelSteering": true
   },
   "general": {
@@ -17,12 +18,48 @@
     "hasSeenNudge": true,
     "enabled": true
   },
+  "mcp": {
+    "allowed": ["google-developer-knowledge"]
+  },
+  "mcpServers": {
+    "google-developer-knowledge": {
+      "url": "https://developerknowledge.googleapis.com/mcp",
+      "type": "http",
+      "authProviderType": "google_credentials",
+      "oauth": {
+        "scopes": ["https://www.googleapis.com/auth/userinfo.email"]
+      },
+      "headers": {
+        "x-goog-user-project": "usfs-code-assist"
+      }
+    }
+  },
   "model": {
     "name": "auto"
   },
+  "modelConfigs": {
+    "modelDefinitions": {
+      "gemini-3.8-flash": {
+        "tier": "flash",
+        "family": "gemini-3",
+        "isPreview": false,
+        "isVisible": true,
+        "features": {
+          "thinking": true,
+          "multimodalToolUse": true
+        }
+      }
+    },
+    "modelIdResolutions": {
+      "gemini-3.8-flash": {
+        "default": "gemini-3.8-flash"
+      }
+    }
+  },
   "security": {
     "auth": {
-      "selectedType": "oauth-personal"
+      "selectedType": "oauth-personal",
+      "enforcedType": "oauth-personal"
     }
   },
   "ui": {
