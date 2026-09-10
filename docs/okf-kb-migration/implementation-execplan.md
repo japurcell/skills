@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds. Maintain this document in accordance with the repository's `exec-plans` skill.
 
-Implementation is active. Gates 1–4 are committed; the final Gate 4 rollback checkpoint is `917313a04bb513039ea0a2e596a8c381370766e7`. Gate 5 is implemented, independently approved, and awaiting the user's manual checkpoint commit. Gate 6 remains open and must not begin before that checkpoint is recorded.
+Implementation is active. Gates 1–5 are committed; the Gate 5 rollback checkpoint is `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 6 preflight is blocked because neither target provider CLI is installed in this environment. Do not claim migration acceptance until the required live probes run in an authenticated environment with both CLIs.
 
 ## Purpose / Big Picture
 
@@ -21,6 +21,8 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-10 00:00Z) [milestone-4] Recorded final Gate 4 rollback checkpoint `917313a04bb513039ea0a2e596a8c381370766e7` after the quoted/commented YAML scalar correction, Premium follow-up approval, and complete green Gate 4 matrix.
 - [x] (2026-09-10 14:03Z) [milestone-5] Rechecked the official Copilot and Gemini hook contracts and the open Gemini `AfterAgent` issue; found no Gate 5 contract change and confirmed neither target CLI is installed.
 - [x] (2026-09-10 14:41Z) [milestone-5] Added the two checkout-anchored provider adapters and candidate repo-local registrations, made the complete simulated parity/regression matrix green, and received Premium follow-up approval with no remaining required findings.
+- [x] (2026-09-10 15:43Z) [milestone-5] Recorded the user-created Gate 5 rollback checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`; verified it is current `HEAD` and the worktree is clean.
+- [x] (2026-09-10 15:43Z) [milestone-6] Ran the Gate 6 environment preflight and confirmed neither `copilot` nor `gemini` is installed.
 - [ ] [milestone-6] Run disposable-worktree live provider probes, record versions/events/diagnostics/duration, complete documentation synchronization, and establish merge readiness.
 
 ## Surprises & Discoveries
@@ -110,7 +112,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 
 ## Outcomes & Retrospective
 
-Gates 1–4 are committed, with Gate 4's final rollback checkpoint at `917313a04bb513039ea0a2e596a8c381370766e7`. Gate 5 now adds reviewed repo-local Copilot and Gemini OKF adapters, source-ingest-first stop registrations, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. The full static matrix passes and Premium follow-up review found no remaining required issue. Gate 5 remains uncommitted for the user's manual checkpoint; live provider behavior belongs to Gate 6.
+Gates 1–5 are committed, with Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 5 adds reviewed repo-local Copilot and Gemini OKF adapters, source-ingest-first stop registrations, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. The full static matrix passes and Premium follow-up review found no remaining required issue. Gate 6 live behavior remains unverified because this environment has neither provider CLI.
 
 ## Context and Orientation
 
@@ -258,7 +260,7 @@ Milestone acceptance is green static/simulated behavior with candidate repo-loca
 
 ### Milestone 6: Prove live behavior and finish the migration
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Commit the Gate 5 candidate so disposable worktrees contain the exact configuration under test. Run `./scripts/install.sh` from the main candidate worktree before installed-skill checks; do not repurpose `HOME`. If the current agent environment cannot write the user's install targets, record the limitation and run installation from a writable user shell before continuing. Create a fresh detached worktree for each provider and remove it with `git worktree remove <exact-path>` only after recording evidence.
@@ -442,10 +444,12 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 3 final rollback checkpoint: `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`.
 - Gate 4 final rollback checkpoint: `917313a04bb513039ea0a2e596a8c381370766e7` (implementation checkpoint `d21c4351` plus the approved semantic YAML draft-detection correction). It preserves all 31 canonical paths, changes only the nine expected manifest `summary_hash` fields, and leaves raw sources unchanged. Final validation passes shell/Python syntax, both auto-ingest suites, the linter contract suite, human/JSON full-corpus lint, active migration links, legacy/lowercase searches, and `git diff --check`.
 - Gate 5 source recheck: GitHub and Gemini contracts remain compatible with the accepted design; Gemini main was `ed2ac40df67a319bf348bd7e3d10494696b31b38`, issue `google-gemini/gemini-cli#27712` remained open, and neither `copilot` nor `gemini` was installed.
-- Gate 5 simulated result: both adapter suites, both source-ingest suites, both startup suites, `scripts/test_helpers.py`, `scripts/test-install.sh`, adapter Python/shell syntax, provider JSON parsing, executable modes, human/JSON corpus lint, and `git diff --check` pass. Premium first review found three required boundary gaps; public regressions and fixes now cover native Copilot eventless payloads, checkout-anchored linter execution with nested/external paths, strict linter schemas, and exact post-escaping Gemini output bounds. Fresh Premium follow-up approved the fixes with no remaining required findings. No Gate 5 commit exists yet.
+- Gate 5 simulated result: both adapter suites, both source-ingest suites, both startup suites, `scripts/test_helpers.py`, `scripts/test-install.sh`, adapter Python/shell syntax, provider JSON parsing, executable modes, human/JSON corpus lint, and `git diff --check` pass. Premium first review found three required boundary gaps; public regressions and fixes now cover native Copilot eventless payloads, checkout-anchored linter execution with nested/external paths, strict linter schemas, and exact post-escaping Gemini output bounds. Fresh Premium follow-up approved the fixes with no remaining required findings.
+- Gate 5 rollback checkpoint: `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`; verified as current `HEAD` with parent `7767eea03aaeef00f222c28efe9412c1cc294ad3` and a clean worktree.
+- Gate 6 checkpoint-recording doc pass: no canonical agent-document update was needed because this session changed migration status only; the Gate 5 public interfaces and durable hook guidance were already synchronized in the checkpoint.
 - Gate 5 agent-doc synchronization: `.agents/instructions/hooks.md`, `.agents/memory/testing/hooks.md`, `.agents/memory/FILE_MAP.md`, `.agents/memory/INDEX.md`, and new `.agents/memory/API_MAP.md` describe the shipped entry points, trust boundary, and validation route. The `okf-authoring` profile pass reports clean human and exact empty JSON lint, valid local links, and exactly those five canonical documentation paths in scope.
-- Gate 6 Copilot worktree/commands/events/diagnostics: not started.
-- Gate 6 Gemini worktree/commands/events/diagnostics: not started.
+- Gate 6 Copilot worktree/commands/events/diagnostics: preflight found no installed `copilot` executable; live worktree probes are blocked pending an authenticated target CLI environment.
+- Gate 6 Gemini worktree/commands/events/diagnostics: preflight found no installed `gemini` executable; live worktree probes are blocked pending an authenticated target CLI environment.
 - Simultaneous-failure result and coordinator decision: not started; default is no coordinator.
 - Merge or squash commit forming the rollback unit: not started.
 
@@ -502,3 +506,5 @@ Revision note (2026-09-10): Rechecked current official Copilot and Gemini hook b
 Revision note (2026-09-10): Completed Gate 5 adapters, repo-local candidate registrations, parity/security regressions, the full static matrix, and Premium follow-up review; left the approved worktree uncommitted for the user's manual checkpoint before Gate 6.
 
 Revision note (2026-09-10): Completed the mandatory agent-doc and OKF representation pass, recorded its scoped clean-lint evidence, and synchronized the final Gate 5 stopping point with the manual-checkpoint requirement.
+
+Revision note (2026-09-10): Recorded Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`, verified clean `HEAD`, opened Gate 6 preflight, and recorded that both required provider CLIs remain unavailable locally.

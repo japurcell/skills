@@ -22,15 +22,15 @@ Execute the six-gate in-place OKF v0.2 migration for the canonical documents und
 - Gate 2 added the offline provider-neutral `scripts/lint-okf.py`, pinned PyYAML 6.0.3 under `scripts/vendor/`, and review-driven public-CLI regressions. No canonical-corpus migration, adapter, or hook registration exists yet.
 - Gate 3 duplicate/runner inventory found no existing OKF representation skill. No external model CLI is installed; paired collaboration task agents using `gpt-5.6-luna` will provide the with-skill/no-skill benchmark.
 - Gate 3 now has a fixture-backed grader that executes the checked-in linter, captures harness-owned command/exit/diff evidence, and rejects unsupported model claims. The corrected 16-run `gpt-5.6-luna` benchmark passes 72/72 with-skill expectations and 52/72 no-skill expectations; its reviewer includes all prompts and eval IDs.
-- Gate 5 is implemented, independently approved, and uncommitted for the user's manual checkpoint. The 2026-09-10 official-source recheck found no event, matcher, envelope, exit, timeout, or retry contradiction; Gemini main was `ed2ac40df67a319bf348bd7e3d10494696b31b38`, issue `google-gemini/gemini-cli#27712` remained open, and neither `copilot` nor `gemini` was installed.
+- Gate 5 is committed at rollback checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`; it is current `HEAD` and the worktree was clean before this status update. The 2026-09-10 official-source recheck found no event, matcher, envelope, exit, timeout, or retry contradiction; Gemini main was `ed2ac40df67a319bf348bd7e3d10494696b31b38`, issue `google-gemini/gemini-cli#27712` remained open, and neither `copilot` nor `gemini` was installed.
 
 ## Next Focus
 
-Create the manual Gate 5 checkpoint, then begin Gate 6 live provider capability proof from that exact commit.
+Run Gate 6 live provider capability proof from checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd` in an authenticated environment with both target CLIs installed.
 
 ## Exact Next Step
 
-Commit the reviewed Gate 5 worktree and record its hash here and in `implementation-execplan.md`. Do not begin Gate 6 disposable-worktree probes until that checkpoint exists.
+Make `copilot` and `gemini` available on `PATH` with working authentication, then verify each CLI's exact version and `--help` syntax before creating the provider-specific disposable worktrees. Do not install dependencies or weaken Gate 6 when the CLIs are absent.
 
 ## Decisions and Constraints
 
@@ -112,6 +112,8 @@ Commit the reviewed Gate 5 worktree and record its hash here and in `implementat
 - Gate 5 adds executable repo-local Copilot and Gemini adapters plus public suites and candidate registrations. Both adapter suites, both source-ingest suites, both startup suites, `scripts/test_helpers.py`, `scripts/test-install.sh`, adapter syntax, config JSON, executable modes, human/JSON corpus lint, and `git diff --check` pass.
 - Premium Gate 5 review found three required gaps: native Copilot camelCase payloads have no event-name field, payload `cwd` could select external linter code, and Gemini bounded raw reason bytes before JSON escaping. Red-before-green regressions now prove real Copilot envelopes, checkout-anchored execution, nested-path acceptance, external decoy rejection, strict linter schema validation, and exact serialized output below 8 KiB. Fresh Premium follow-up approved the fixes with no remaining required findings.
 - The mandatory Gate 5 agent-doc pass updated hook instructions, hook testing guidance, the file map, the memory index, and new `API_MAP.md`. The `okf-authoring` profile pass loaded the shared profile, required no source-summary branch, and passed human/JSON full-corpus lint plus canonical link and scoped-path checks.
+- Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd` resolves to a commit, is current `HEAD`, has parent `7767eea03aaeef00f222c28efe9412c1cc294ad3`, and began Gate 6 from a clean worktree. Gate 6 preflight again found no `copilot` or `gemini` executable, so versions, help syntax, events, diagnostics, and live durations remain unverified.
+- The mandatory end-of-session agent-doc pass found no canonical update to make: this session changed only migration checkpoint status, while Gate 5's interfaces and hook guidance are already recorded under `.agents/`.
 - Gate 3's first corrected-path 16-run benchmark was invalidated after independent review. Its apparent with-skill 58/58 and without-skill 40/58 scores are not evidence because the grader trusted supplied `outcome.json` lint claims; the run repositories could not execute the full linter. The generated workspace was removed.
 - Gate 3's accepted replacement candidate contains 16 complete runs. Every `timing.json` and `execution-manifest.json` entry records exact `gpt-5.6-luna` routing. With-skill passes 72/72 expectations; no-skill passes 52/72. Duration exists for 5/16 runs and tokens for 3/16, so the benchmark omits those comparisons.
 - Fresh rereview found and prompted replacement of two model-inconsistent runs, removal of a recreated root `okf-authoring-workspace/`, omission of incomplete telemetry comparisons, and addition of prompts/eval IDs to `review.html`.
