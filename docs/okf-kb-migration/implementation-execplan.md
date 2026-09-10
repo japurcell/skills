@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds. Maintain this document in accordance with the repository's `exec-plans` skill.
 
-Implementation is active. Gates 1–5 are committed; the Gate 5 rollback checkpoint is `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 6 preflight is blocked because neither target provider CLI is installed in this environment. Do not claim migration acceptance until the required live probes run in an authenticated environment with both CLIs.
+Implementation is active. Gates 1–5 are committed; the Gate 5 rollback checkpoint is `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 6 must be completed through two sequential, human-started agent sessions: one inside an authenticated GitHub Copilot CLI environment and one inside an authenticated Gemini CLI environment. The current coordinator environment has neither CLI. Do not claim migration acceptance until both provider records are complete and a final coordinator verifies the combined evidence.
 
 ## Purpose / Big Picture
 
@@ -23,7 +23,11 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-10 14:41Z) [milestone-5] Added the two checkout-anchored provider adapters and candidate repo-local registrations, made the complete simulated parity/regression matrix green, and received Premium follow-up approval with no remaining required findings.
 - [x] (2026-09-10 15:43Z) [milestone-5] Recorded the user-created Gate 5 rollback checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`; verified it is current `HEAD` and the worktree is clean.
 - [x] (2026-09-10 15:43Z) [milestone-6] Ran the Gate 6 environment preflight and confirmed neither `copilot` nor `gemini` is installed.
-- [ ] [milestone-6] Run disposable-worktree live provider probes, record versions/events/diagnostics/duration, complete documentation synchronization, and establish merge readiness.
+- [x] (2026-09-10 16:21Z) [milestone-6] Rewrote Gate 6 for sequential human-started Copilot, Gemini, and coordinator sessions; delegated review approved the final runbook with no required findings.
+- [ ] [milestone-6] Have the human review and commit this separate-session runbook, then record that coordination commit before starting Copilot. Current state: awaiting human commit; commit not recorded.
+- [ ] [milestone-6] Complete the human-started Copilot session and record a passing Copilot evidence file and its human-created commit hash. Current state: not started; evidence commit not recorded.
+- [ ] [milestone-6] Complete the human-started Gemini session and record a passing Gemini evidence file and its human-created commit hash. Current state: not started; evidence commit not recorded.
+- [ ] [milestone-6] Have a coordinator verify both provider records, run the complete final matrix, synchronize documentation, and establish merge readiness.
 
 ## Surprises & Discoveries
 
@@ -38,7 +42,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - Observation: Gemini documents `AfterTool` and `AfterAgent`, but the final event remains a live release risk.
   Evidence: Gemini's current hook reference documents structured deny/retry behavior and `stop_hook_active`; official issue `google-gemini/gemini-cli#27712` is still open and reports `AfterAgent` not firing in version 0.45.0 and related versions.
 - Observation: This planning environment cannot run provider capability probes.
-  Evidence: Python is 3.12.3, while both `copilot --version` and `gemini --version` return command-not-found. Gate 6 must run in an authenticated environment with both target CLIs installed.
+  Evidence: Python is 3.12.3, while both `copilot --version` and `gemini --version` return command-not-found. Gate 6 must run through separate authenticated sessions in the respective provider environments.
 - Observation: The Gate 5 provider-source recheck found no change to the accepted adapter contract.
   Evidence: On 2026-09-10, GitHub still documented full-match `postToolUse` matchers, `additionalContext`, stop `allow`/`block` responses, and fail-open timeouts; Gemini main commit `ed2ac40df67a319bf348bd7e3d10494696b31b38` still documented regex tool matchers, exact lifecycle matchers, millisecond timeouts, `AfterTool` deny responses, and bounded `AfterAgent` retry/stop responses. Gemini issue `google-gemini/gemini-cli#27712` remained open, so its live proof stays in Gate 6.
 - Observation: Payload working directories and raw diagnostic text are security boundaries, not only routing data.
@@ -109,10 +113,13 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - Decision: Detect unresolved source summaries by normalized top-level `type` and `status` scalar values instead of exact frontmatter lines.
   Rationale: YAML permits quoted scalars and comments without changing their values. The source-ingest hooks remain standard-library-only, so the narrow parser normalizes the two contract fields while malformed values fail safely as non-matches.
   Date/Author: 2026-09-10 / Codex
+- Decision: Execute Gate 6 in two sequential, human-started provider sessions with one durable evidence file per provider, followed by a coordinator session.
+  Rationale: Copilot and Gemini capabilities are available only inside their respective authenticated environments. Provider-owned evidence files prevent one session from claiming the other provider's result, and sequential human commits give every later session a stable base without shared-file edit collisions.
+  Date/Author: 2026-09-10 / Codex
 
 ## Outcomes & Retrospective
 
-Gates 1–5 are committed, with Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 5 adds reviewed repo-local Copilot and Gemini OKF adapters, source-ingest-first stop registrations, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. The full static matrix passes and Premium follow-up review found no remaining required issue. Gate 6 live behavior remains unverified because this environment has neither provider CLI.
+Gates 1–5 are committed, with Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 5 adds reviewed repo-local Copilot and Gemini OKF adapters, source-ingest-first stop registrations, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. The full static matrix passes and Premium follow-up review found no remaining required issue. Gate 6 live behavior remains unverified. Its remaining work is assigned to separate human-started Copilot and Gemini sessions, followed by final coordinator acceptance.
 
 ## Context and Orientation
 
@@ -130,7 +137,7 @@ The normative external sources for implementation are the pinned [OKF v0.2 speci
 
 ## Ownership and Coordination
 
-Use parallel agents only inside one gate and only with the following non-overlapping ownership. The coordinating owner retains this ExecPlan, shared configuration, integration, final validation, and all commits. An agent must not edit outside its assigned paths.
+Use parallel agents only inside one gate and only with the following non-overlapping ownership. Gates 1–5 used the original coordinator ownership below. Gate 6 instead uses sequential provider sessions, so each provider may update its named evidence file, its own `Progress` and `Artifacts and Notes` lines in this ExecPlan, the Gate 6 status and next step in the handoff, and any canonical documentation required by the mandatory end-of-session doc pass. If a live failure requires provider code or tests, that provider owner may make the smallest test-first correction in its own provider paths and must record the expanded scope. The user owns every commit. An agent must not edit the other provider's evidence or status.
 
 | Workstream | Exclusive paths while active | Transfer point |
 | --- | --- | --- |
@@ -138,9 +145,11 @@ Use parallel agents only inside one gate and only with the following non-overlap
 | Authoring skill owner | `.agents/skills/okf-authoring/**`, `skills/okf-authoring-workspace/**`, `.agents/skills/update-agent-docs/**` | Returns ownership after Gate 3 |
 | Corpus and scaffold owner | `.agents/instructions/**`, `.agents/memory/**`, `.github/hooks/scripts/helpers/auto_ingest.py`, `.gemini/hooks/scripts/helpers/source_ingest.py`, `scripts/test-hooks-auto-ingest.sh`, `scripts/test-gemini-hooks-auto-ingest.sh` | Returns canonical documentation ownership to the coordinator after Gate 4 |
 | Provider adapter owner | `.github/hooks/scripts/lint-okf.py`, `.gemini/hooks/scripts/lint-okf.py`, `scripts/test-hooks-okf-lint.sh`, `scripts/test-gemini-hooks-okf-lint.sh` | Returns ownership after Gate 5 |
-| Coordinating owner | `docs/okf-kb-migration/implementation-execplan.md`, `.github/hooks/hooks.json`, `.gemini/settings.json`, `scripts/install.sh`, `scripts/test-install.sh`, repo-wide documentation integration and commits | Never delegated |
+| Gate 6 Copilot owner | `docs/okf-kb-migration/gate6-copilot-evidence.md`, Copilot Gate 6 lines in this ExecPlan and handoff; when live evidence requires a correction, `.github/hooks/**`, its targeted tests, and required agent docs | Returns ownership after the human commits the session result |
+| Gate 6 Gemini owner | `docs/okf-kb-migration/gate6-gemini-evidence.md`, Gemini Gate 6 lines in this ExecPlan and handoff; when live evidence requires a correction, `.gemini/**`, its targeted tests, and required agent docs | Returns ownership after the human commits the session result |
+| Coordinating owner | Shared configuration, final integration, final validation, and shared plan/handoff acceptance state | Retains coordination; the user creates every commit |
 
-Gates run sequentially. Within a gate, agents may work in parallel only when their paths do not overlap. Shared-path ownership transfers only after the prior owner has stopped and the coordinator has reviewed its diff. The coordinator integrates, runs gate checks, records evidence here, and then commits the gate. No agent enables a hook or migrates part of the canonical corpus early.
+Gates run sequentially. Within Gates 1–5, agents may work in parallel only when their paths do not overlap. Gate 6 provider sessions are sequential, and shared-path ownership transfers only after the human has reviewed and committed the preceding session. The coordinator integrates and runs final gate checks; the user creates the commits. No agent enables a hook or migrates part of the canonical corpus early.
 
 ## Plan of Work
 
@@ -263,21 +272,241 @@ Milestone acceptance is green static/simulated behavior with candidate repo-loca
 Status: in progress
 Acceptance: not met
 
-Commit the Gate 5 candidate so disposable worktrees contain the exact configuration under test. Run `./scripts/install.sh` from the main candidate worktree before installed-skill checks; do not repurpose `HOME`. If the current agent environment cannot write the user's install targets, record the limitation and run installation from a writable user shell before continuing. Create a fresh detached worktree for each provider and remove it with `git worktree remove <exact-path>` only after recording evidence.
+Before any provider session starts, the human reviews and commits this runbook update, then gives the full commit hash to the Copilot session. That session verifies the commit and records it under `Artifacts and Notes`. Gate 6 then uses three sessions in order: Copilot owner, Gemini owner, then coordinator. A human starts each session inside the named provider environment and supplies the current checkout. Run the provider sessions one at a time. After each provider agent finishes, the human reviews and commits that session's evidence before starting the next session. Agents must leave changes uncommitted because the user creates commits manually. Each later session starts from the latest human-created commit and verifies that `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd` is an ancestor. This preserves the exact Gate 5 implementation while allowing evidence-only commits on top.
 
-Record `copilot --version`, `copilot --help`, `gemini --version`, and `gemini --help`. For Copilot, run non-interactive `copilot -p` probes with minimally scoped tool permissions and `--share` transcripts. Prove each configured mutation matcher on a deliberately invalid canonical document, then prove `agentStop` correction and a YAML/custom task subagent that emits `subagentStop`; the built-in `general-purpose` agent is not acceptable because GitHub documents that it omits subagent lifecycle events. Inspect the transcript for the expected `OKF` diagnostic, verify the agent received immediate feedback, and verify the final full-corpus lint is green before treating the probe as passed. Run the PowerShell matcher probe on a supported Windows target; if that surface is in the configuration but cannot be observed, the gate remains incomplete.
+Every provider session begins by reading `AGENTS.md`, `.agents/memory/INDEX.md`, this ExecPlan, and `docs/okf-kb-migration/handoff.md`. It verifies a clean main worktree, records `git rev-parse HEAD`, and runs `git merge-base --is-ancestor d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd HEAD`; exit 0 is required. It then records the provider's version and full help relevant to non-interactive prompts, tool permissions, output/debug capture, and custom agents. Help output is runtime authority for command spelling. If a command template below disagrees with the installed CLI, the session records the difference and uses the syntax shown by that CLI. Missing authentication or a missing required platform is a blocker, not permission to narrow acceptance.
 
-For Gemini, run non-interactive probes with `gemini -p '<prompt>' --approval-mode=yolo --output-format json --debug`. Prove `write_file`, `replace`, and `run_shell_command` each fire `AfterTool` and surface the expected diagnostic. Seed an invalid canonical concept before a no-tool response probe to prove `AfterAgent` fires, denies the first completion, and honors `stop_hook_active` without an unbounded loop. Because issue 27712 remains open, documentation alone is not evidence. Inspect debug output or the provider's hook listing/logs and retain a concise event transcript in this plan.
+On POSIX, run `./scripts/install.sh` from the main checkout before provider installation checks; do not repurpose `HOME`. If the provider environment cannot write the user's install targets, the human must run the installer from a writable user shell and record that fact. Create a provider-specific detached worktree from the Gate 5 checkpoint, so deliberate invalid files cannot contaminate the main checkout. Use the following pattern, substituting only the provider name:
 
-In both providers, create simultaneous pending-ingest and invalid-OKF state in the disposable worktree. Prove source-ingest runs first and the agent receives both actionable reasons. If either host drops one reason, record the failure, add a new failing regression, and only then introduce a thin provider-local final-validation coordinator that runs the unchanged source-ingest and OKF validators and combines their reasons. Repeat every static and live probe after that change. Do not merge validator state or profile logic.
+    gate6_provider=copilot
+    gate6_main_root="$(git rev-parse --show-toplevel)"
+    cd "$gate6_main_root"
+    git status --short
+    ./scripts/install.sh
+    gate6_probe_parent="$(mktemp -d "${TMPDIR:-/tmp}/okf-gate6-${gate6_provider}.XXXXXX")"
+    gate6_probe_worktree="$gate6_probe_parent/worktree"
+    git worktree add --detach "$gate6_probe_worktree" d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd
+    cd "$gate6_probe_worktree"
 
-Measure the real full-corpus linter with a monotonic wall-clock command available on the target system and record elapsed time here. It must finish safely within the 10-second host timeout; there is no sub-second release requirement. Run the complete final matrix in `Concrete Steps`, the active migration-document relative-link check, canonical body/path checks, and `git diff --check`. Run the mandatory `update-agent-docs` pass after all implementation and provider work is complete, then update this plan's living sections and the migration handoff.
+After the POSIX installer, a Copilot session runs `cmp "$gate6_main_root/.copilot/hooks/hooks.json" "$HOME/.copilot/hooks/hooks.json"` and `test -f "$gate6_main_root/.github/hooks/hooks.json"`; both must exit 0. A Gemini session runs `cmp "$gate6_main_root/.gemini/global-settings.json" "$HOME/.gemini/settings.json"` and `cmp "$gate6_main_root/.gemini/hooks/scripts/lint-okf.py" "$HOME/.gemini/hooks/scripts/lint-okf.py"`; both must exit 0. These checks prove the provider's installed global configuration matches the checkout and, for Copilot, that the required OKF registration remains repository-local.
 
-Milestone acceptance requires all static tests, skill evaluations, corpus lint modes, install/startup regressions, provider event/matcher probes, simultaneous-failure probes, link checks, and diff checks to pass. Record the exact merge commit or squash commit as the one rollback unit. If any required live capability is unavailable or fails, do not merge and do not claim the migration complete.
+On Windows, open PowerShell in the current repository checkout and use these commands. `scripts/install.ps1` is the Windows installer; do not substitute the POSIX installer.
+
+    $gate6MainRoot = (git rev-parse --show-toplevel).Trim()
+    Set-Location $gate6MainRoot
+    git status --short
+    pwsh -NoProfile -File scripts/install.ps1
+    $gate6ProbeParent = Join-Path ([System.IO.Path]::GetTempPath()) ("okf-gate6-copilot-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $gate6ProbeParent | Out-Null
+    $gate6ProbeWorktree = Join-Path $gate6ProbeParent "worktree"
+    git worktree add --detach $gate6ProbeWorktree d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd
+    Set-Location $gate6ProbeWorktree
+    git rev-parse HEAD
+
+After the Windows installer, a Copilot session runs the following checks before entering the disposable worktree. They must print `copilot global hooks: matched` and `copilot repository hooks: present`:
+
+    Set-Location $gate6MainRoot
+    if ((Get-FileHash ".copilot/hooks/hooks.json").Hash -ne (Get-FileHash (Join-Path $HOME ".copilot/hooks/hooks.json")).Hash) { throw "installed Copilot hooks differ" }
+    "copilot global hooks: matched"
+    if (-not (Test-Path ".github/hooks/hooks.json" -PathType Leaf)) { throw "missing repository Copilot hooks" }
+    "copilot repository hooks: present"
+    Set-Location $gate6ProbeWorktree
+
+For a Windows Gemini session, run these exact commands from `$gate6MainRoot`; they must print both `matched` lines:
+
+    Set-Location $gate6MainRoot
+    if ((Get-FileHash ".gemini/global-settings.json").Hash -ne (Get-FileHash (Join-Path $HOME ".gemini/settings.json")).Hash) { throw "installed Gemini settings differ" }
+    "gemini settings: matched"
+    if ((Get-FileHash ".gemini/hooks/scripts/lint-okf.py").Hash -ne (Get-FileHash (Join-Path $HOME ".gemini/hooks/scripts/lint-okf.py")).Hash) { throw "installed Gemini OKF hook differs" }
+    "gemini OKF hook: matched"
+    Set-Location $gate6ProbeWorktree
+
+The earlier `git rev-parse HEAD` must print the Gate 5 checkpoint. Record both resolved paths. Never point a probe at the main checkout.
+
+The Copilot owner creates `docs/okf-kb-migration/gate6-copilot-evidence.md` in the main checkout. The file must identify the provider, contain `Status: not started|passed|failed|blocked`, and record the UTC date, executor environment and operating system, session base commit, exact probe checkpoint, CLI version, authentication result without secrets, relevant help excerpts, provider installation/configuration checks, disposable worktree path, and every exact command and prompt used. It records one result for each `postToolUse` matcher `bash`, `powershell`, `create`, and `edit`; one result each for `agentStop` and `subagentStop`; the simultaneous pending-ingest plus invalid-OKF case; measured full-corpus lint duration; final lint output; and cleanup result. Each result names the observed event, expected and observed diagnostic IDs, whether the agent received actionable feedback, the command exit status, and a short redacted transcript excerpt or durable transcript reference. Use a repository-local custom agent that actually emits `subagentStop`; the built-in `general-purpose` agent is invalid evidence. Run the `powershell` matcher on a supported Windows target. A missing Windows observation leaves Copilot status `blocked`.
+
+Use the exact invalid content `# Gate 6 invalid probe` followed by one newline. At a new `.agents/memory/*.md` path this must produce `OKF002` for missing frontmatter delimiters. The repaired content is the following, with only the title's tool name changed:
+
+    ---
+    type: Agent Memory
+    description: Temporary Gate 6 provider hook probe
+    ---
+
+    # Gate 6 <tool> probe
+
+On POSIX, pre-seed the Copilot `edit` and `agentStop` inputs with this exact command from the disposable worktree:
+
+    python3 - <<'PY'
+    from pathlib import Path
+
+    valid = "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 edit probe\n"
+    Path(".agents/memory/gate6-copilot-edit.md").write_text(valid, encoding="utf-8")
+    Path(".agents/memory/gate6-copilot-agent-stop.md").write_text("# Gate 6 invalid probe\n", encoding="utf-8")
+    PY
+
+On Windows, pre-seed the same two files with:
+
+    $gate6Utf8 = [System.Text.UTF8Encoding]::new($false)
+    $gate6Valid = "---`ntype: Agent Memory`ndescription: Temporary Gate 6 provider hook probe`n---`n`n# Gate 6 edit probe`n"
+    [System.IO.File]::WriteAllText((Join-Path (Get-Location) ".agents/memory/gate6-copilot-edit.md"), $gate6Valid, $gate6Utf8)
+    [System.IO.File]::WriteAllText((Join-Path (Get-Location) ".agents/memory/gate6-copilot-agent-stop.md"), "# Gate 6 invalid probe`n", $gate6Utf8)
+
+Use these literal Copilot prompts, changing no filenames or requested tool names:
+
+    bash: Use only the bash tool to create .agents/memory/gate6-copilot-bash.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, use only bash to replace it with exactly "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 bash probe\n" and report the hook event and diagnostic exactly.
+
+    powershell: Use only the powershell tool to create .agents/memory/gate6-copilot-powershell.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, use only powershell to replace it with exactly "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 powershell probe\n" and report the hook event and diagnostic exactly.
+
+    create: Use only the create tool to create .agents/memory/gate6-copilot-create.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, stop using tools and report the hook event and diagnostic exactly.
+
+Before the `edit` run, seed `.agents/memory/gate6-copilot-edit.md` with the conforming content. Then use this prompt:
+
+    edit: Use only the edit tool to replace all content in .agents/memory/gate6-copilot-edit.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, use only edit to restore exactly "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 edit probe\n" and report the hook event and diagnostic exactly.
+
+After the `create` command completes, the outer human-started session replaces its invalid file with the exact conforming create-probe content shown in the preceding prompt, using the same UTF-8 Python or PowerShell write pattern as the seed commands. After every Copilot mutation command, the outer session runs `./scripts/lint-okf.py` on POSIX or `python scripts/lint-okf.py` on Windows and records exit 0. The provider prompt does not ask a non-shell mutation tool to execute that command.
+
+Before `agentStop`, seed `.agents/memory/gate6-copilot-agent-stop.md` with the invalid content and invoke Copilot with edit permission using the literal prompt `Do not call a tool. Reply exactly: probe complete.` Evidence must show `agentStop` returned `decision: block` with `OKF002`, forced a continuation, and gave the agent enough information to repair that exact path.
+
+For `subagentStop`, create `.github/agents/gate6-okf-probe.agent.md` in the disposable worktree with this exact definition. If installed help requires another repository-local custom-agent directory or extension, preserve the frontmatter and body byte-for-byte at that supported path and record the difference.
+
+    ---
+    name: gate6-okf-probe
+    description: Creates one invalid OKF concept to exercise subagentStop
+    ---
+
+    Use the create tool to write .agents/memory/gate6-copilot-subagent-stop.md with the exact UTF-8 content "# Gate 6 invalid probe\n", then try to finish. If the stop hook reports OKF002, use the edit tool to replace it with exactly "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 subagentStop probe\n" before finishing again. Report the hook event and diagnostic exactly.
+
+Use the parent prompt `Delegate the Gate 6 probe to the gate6-okf-probe custom agent and wait for its result.` Evidence must show the custom agent, rather than `general-purpose`, emitted `subagentStop`, received `decision: block` with `OKF002`, repaired the file, and then completed. Use minimally scoped permissions. The starting command shape is:
+
+    copilot --version
+    copilot --help
+    copilot -p '<literal probe prompt>' -s --allow-tool='<minimal tools from installed help>' --output-format json --share '<durable transcript path>'
+
+The Gemini owner creates `docs/okf-kb-migration/gate6-gemini-evidence.md` in the main checkout with the same header and environment fields. It records one result for each `AfterTool` matcher `write_file`, `replace`, and `run_shell_command`; the two-step `AfterAgent` result; the simultaneous pending-ingest plus invalid-OKF case; measured full-corpus lint duration; final lint output; and cleanup result. Each result names the observed event, expected and observed diagnostic IDs, whether the agent received actionable feedback, the command exit status, and a short redacted debug excerpt or durable output reference.
+
+Use the same exact invalid and repaired content for Gemini. Before running Gemini, pre-seed the `replace` and `AfterAgent` inputs. On POSIX use:
+
+    python3 - <<'PY'
+    from pathlib import Path
+
+    valid = "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 replace probe\n"
+    Path(".agents/memory/gate6-gemini-replace.md").write_text(valid, encoding="utf-8")
+    Path(".agents/memory/gate6-gemini-after-agent.md").write_text("# Gate 6 invalid probe\n", encoding="utf-8")
+    PY
+
+On Windows use:
+
+    $gate6Utf8 = [System.Text.UTF8Encoding]::new($false)
+    $gate6Valid = "---`ntype: Agent Memory`ndescription: Temporary Gate 6 provider hook probe`n---`n`n# Gate 6 replace probe`n"
+    [System.IO.File]::WriteAllText((Join-Path (Get-Location) ".agents/memory/gate6-gemini-replace.md"), $gate6Valid, $gate6Utf8)
+    [System.IO.File]::WriteAllText((Join-Path (Get-Location) ".agents/memory/gate6-gemini-after-agent.md"), "# Gate 6 invalid probe`n", $gate6Utf8)
+
+Use these literal prompts, changing no filenames or requested tool names:
+
+    write_file: Use only write_file to create .agents/memory/gate6-gemini-write-file.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, use only write_file to replace it with exactly "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 write_file probe\n" and report the hook event and diagnostic exactly.
+
+Before the `replace` run, seed `.agents/memory/gate6-gemini-replace.md` with the conforming content. Then use this prompt:
+
+    replace: Use only replace to replace all content in .agents/memory/gate6-gemini-replace.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, use only replace to restore exactly "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 replace probe\n" and report the hook event and diagnostic exactly.
+
+    run_shell_command: Use only run_shell_command to create .agents/memory/gate6-gemini-shell.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, use only run_shell_command to replace it with exactly "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 run_shell_command probe\n" and report the hook event and diagnostic exactly.
+
+After each Gemini mutation command completes, the outer human-started session runs `./scripts/lint-okf.py` on POSIX or `python scripts/lint-okf.py` on Windows and records exit 0. The provider prompt does not ask a non-shell mutation tool to execute that command.
+
+Before `AfterAgent`, seed `.agents/memory/gate6-gemini-after-agent.md` with the invalid content and invoke Gemini with the literal prompt `Do not call a tool. Reply exactly: probe complete. If a hook forces a correction turn, do not call a tool and reply exactly: probe complete.` Evidence must show the first `AfterAgent` denies completion with `OKF002` and causes one correction turn, then show the repeated event has `stop_hook_active: true` and returns `continue: false` with the same diagnostic instead of looping. Because issue 27712 remains open, configured settings or documentation are not evidence that the event fired. The starting command shape is:
+
+    gemini --version
+    gemini --help
+    gemini -p '<literal probe prompt>' --approval-mode=yolo --output-format json --debug > '<durable output path>'
+
+Use this section order for both provider evidence files so the coordinator can review them without inference. Replace every bracketed value; do not leave template text in a `passed` record:
+
+    # Gate 6 <Provider> Evidence
+
+    Status: not started
+    Date (UTC): [YYYY-MM-DD]
+    Owner environment: [provider, operating system, shell]
+    Session base commit: [full hash]
+    Gate 5 probe checkpoint: d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd
+    CLI version: [exact output]
+    Authentication: [passed|blocked; no secrets]
+    Installed help and command syntax: [relevant excerpts and resulting exact commands]
+    Provider installation/configuration check: [required comparison commands, exit, observation]
+    Disposable worktree: [resolved path and git worktree list evidence]
+
+    ## Probe Results
+
+    For each required matcher or lifecycle event: [name, literal prompt, exact command, expected observation, actual event and diagnostic, exit status, concise transcript evidence, passed|failed|blocked]
+
+    ## Simultaneous Failure
+
+    [setup commands, source-ingest-first observation, both reasons, exit status, concise transcript evidence, passed|failed|blocked]
+
+    ## Duration and Final State
+
+    [monotonic timing command and elapsed seconds below 10; final ./scripts/lint-okf.py command/output/exit; final disposable status; exact worktree removal commands and verification]
+
+    ## Completion
+
+    [why every provider requirement passed, or the exact retry condition]
+    Files left for human commit: [repository-relative paths]
+
+If a Copilot run occurs on a non-Windows host, keep the same Copilot evidence file at `Status: blocked` until a human starts a Copilot-on-Windows session and fills the `powershell` result. That follow-up session reuses the committed partial record, creates a new detached worktree from the same Gate 5 checkpoint, and changes status to `passed` only after the missing observation and all final checks succeed.
+
+For the simultaneous-failure probe, use the active provider name, `copilot` or `gemini`. On POSIX, the earlier `gate6_provider` variable must contain that exact name; run:
+
+    printf '%s\n' '# Gate 6 pending source' > ".agents/sources/gate6-${gate6_provider}-pending.md"
+    printf '%s\n' '# Gate 6 invalid probe' > ".agents/memory/gate6-${gate6_provider}-simultaneous.md"
+
+On Windows, set `$gate6Provider` to the exact active provider name and run:
+
+    $gate6Provider = "copilot"
+    $gate6Utf8 = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText((Join-Path (Get-Location) ".agents/sources/gate6-$gate6Provider-pending.md"), "# Gate 6 pending source`n", $gate6Utf8)
+    [System.IO.File]::WriteAllText((Join-Path (Get-Location) ".agents/memory/gate6-$gate6Provider-simultaneous.md"), "# Gate 6 invalid probe`n", $gate6Utf8)
+
+Do not create the source summary manually. Trigger the provider's final event with the literal prompt `Do not call a tool. Reply exactly: simultaneous probe complete.` The source-ingest reason must appear first and identify the pending raw source or its generated draft summary; the independent OKF reason must also appear and contain `OKF002` plus the invalid canonical path. Record the ordered excerpts. If the host drops one reason, mark the provider record `failed`, preserve the exact evidence, and stop provider acceptance. The later corrective work must first add a failing regression and may then introduce a thin provider-local coordinator that runs the unchanged source-ingest and OKF validators and combines their reasons. Repeat all affected static and live probes after such a change. Do not merge validator state or profile logic.
+
+Copy all needed transcript evidence to the main checkout, then restore only the disposable worktree before final timing. On POSIX run:
+
+    git restore --source=HEAD --staged --worktree -- .agents/memory .agents/sources
+    git clean -fd -- .agents/memory .agents/sources .github/agents
+    git status --short
+
+On Windows run the same three Git commands from `$gate6ProbeWorktree`. If installed help required a custom-agent path outside `.github/agents`, add that exact disposable path to the `git clean` command and record it. `git status --short` must be empty. These destructive commands are authorized only inside the freshly created Gate 6 worktree after transcript evidence is durable; verify `git rev-parse --show-toplevel` equals the recorded probe path immediately before running them.
+
+On POSIX, measure lint duration with this exact monotonic command and record both printed fields:
+
+    python3 - <<'PY'
+    import subprocess
+    import time
+
+    started = time.monotonic()
+    result = subprocess.run(["./scripts/lint-okf.py"], check=False)
+    print(f"elapsed_seconds={time.monotonic() - started:.6f}")
+    print(f"exit_status={result.returncode}")
+    PY
+
+On Windows use `$gate6Timer = [System.Diagnostics.Stopwatch]::StartNew(); python scripts/lint-okf.py; $gate6LintExit = $LASTEXITCODE; $gate6Timer.Stop()` and record `$gate6Timer.Elapsed.TotalSeconds` and `$gate6LintExit`. Before a provider owner writes `Status: passed`, every required event and matcher for that provider must have direct evidence, the simultaneous-failure probe must preserve both reasons in order, the real full-corpus linter must finish below the 10-second hook timeout, and the final lint must be green.
+
+On POSIX, return to the recorded main checkout, run `git worktree list`, remove only the recorded probe with `git worktree remove --force "$gate6_probe_worktree"`, and run `git worktree list` again. On Windows use:
+
+    Set-Location $gate6MainRoot
+    git worktree list
+    git worktree remove --force $gate6ProbeWorktree
+    git worktree list
+
+Record `git status --short` in the disposable worktree immediately before disposal; it must be empty after the authorized restore and scoped clean. If any path remains, mark the provider record `failed` or `blocked` and record the exact path instead of claiming cleanup passed. The force flag is authorized only for the recorded Gate 6 worktree after evidence has been copied to the main checkout; it must never target the main checkout, `$HOME`, or an unresolved variable.
+
+At the end of a provider session, update that provider's evidence file, its own `Progress` and `Artifacts and Notes` lines in this ExecPlan, and the Gate 6 status and next step in `docs/okf-kb-migration/handoff.md`. Record `passed`, `failed`, or `blocked` and write `evidence commit: pending human commit`; do this even when no later session can start. Do not change the other provider's evidence or status and do not mark Milestone 6 accepted. Run `git diff --check`, run the mandatory `update-agent-docs` pass, and include every resulting changed path in the evidence file's `Files left for human commit` field. After the human provides the commit hash, the next session replaces the pending marker with that hash and checks the matching `Progress` item only if the evidence status is `passed`. A `failed` or `blocked` record stays unchecked and names the exact retry condition.
+
+After both provider evidence files are committed with `Status: passed`, a coordinator reads both complete records and verifies their commits descend from the Gate 5 checkpoint. The coordinator runs the complete final matrix in `Concrete Steps`, the active migration-document relative-link check, canonical body/path checks, and `git diff --check`; reviews both simultaneous-failure records and lint durations; runs the mandatory `update-agent-docs` pass; and updates this plan and the handoff. Only the coordinator may change Milestone 6 to `Status: done`, `Acceptance: met`, check the coordinator progress item, and declare merge readiness. The coordinator leaves its changes uncommitted for human review. After the human creates the coordinator evidence commit, a short recording session verifies that commit, adds its hash to `Artifacts and Notes`, and leaves the merge or squash rollback hash pending until the migration is actually merged. After merge, the human supplies the merge or squash hash for one final record-only update; never invent either hash in advance.
+
+Milestone acceptance requires all static tests, skill evaluations, corpus lint modes, install/startup regressions, both provider evidence files, every provider event/matcher probe, both simultaneous-failure probes, link checks, and diff checks to pass. Record the exact merge commit or squash commit as the one rollback unit. If any required live capability is unavailable or fails, do not merge and do not claim the migration complete.
 
 ## Concrete Steps
 
-Run all commands from `/Users/adam/dev/skills` unless a disposable worktree path is explicitly recorded.
+Run all commands from the checkout root returned by `git rev-parse --show-toplevel` unless a disposable worktree path is explicitly recorded. The original coordinator checkout is `/Users/adam/dev/skills`, but provider sessions must use their own resolved root and must not assume that macOS path exists.
 
 Baseline and Gate 1:
 
@@ -370,12 +599,14 @@ Gate 6 final matrix:
     python3 .agents/skills/okf-authoring/evals/grade_benchmark.py skills/okf-authoring-workspace/iteration-1
     git diff --check
 
-Before Gate 6 begins, replace these live-command templates in this document with exact commands verified by each installed CLI's `--help`, including exact prompt files, output paths, model/agent choice, permissions, and worktree path:
+Each provider evidence file must replace these starting command shapes with the exact commands verified by that installed CLI's `--help`, including literal prompts, output paths, model or agent choice, permissions, and resolved worktree path:
 
     copilot --version
-    copilot -p '<mutation or stop-event probe prompt>' -s --allow-tool='<minimal tools>' --output-format json --share '<worktree>/copilot-probe-transcript.md'
+    copilot -p '<mutation or stop-event probe prompt>' -s --allow-tool='<minimal tools>' --output-format json --share "$gate6_probe_parent/copilot-probe-transcript.md"
     gemini --version
-    gemini -p '<mutation or AfterAgent probe prompt>' --approval-mode=yolo --output-format json --debug > '<worktree>/gemini-probe.json'
+    gemini -p '<mutation or AfterAgent probe prompt>' --approval-mode=yolo --output-format json --debug > "$gate6_probe_parent/gemini-probe.json"
+
+`gate6_probe_parent` is the recorded temporary parent of the disposable worktree, so these raw outputs do not make the worktree dirty. Copy only concise redacted proof into the provider evidence file. On PowerShell use the corresponding `$gate6ProbeParent` path with `Join-Path`.
 
 Use this exact repository-local link checker for active migration documents outside `tickets/obsolete/`; canonical documents are checked separately by the OKF linter:
 
@@ -448,9 +679,13 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 5 rollback checkpoint: `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`; verified as current `HEAD` with parent `7767eea03aaeef00f222c28efe9412c1cc294ad3` and a clean worktree.
 - Gate 6 checkpoint-recording doc pass: no canonical agent-document update was needed because this session changed migration status only; the Gate 5 public interfaces and durable hook guidance were already synchronized in the checkpoint.
 - Gate 5 agent-doc synchronization: `.agents/instructions/hooks.md`, `.agents/memory/testing/hooks.md`, `.agents/memory/FILE_MAP.md`, `.agents/memory/INDEX.md`, and new `.agents/memory/API_MAP.md` describe the shipped entry points, trust boundary, and validation route. The `okf-authoring` profile pass reports clean human and exact empty JSON lint, valid local links, and exactly those five canonical documentation paths in scope.
-- Gate 6 Copilot worktree/commands/events/diagnostics: preflight found no installed `copilot` executable; live worktree probes are blocked pending an authenticated target CLI environment.
-- Gate 6 Gemini worktree/commands/events/diagnostics: preflight found no installed `gemini` executable; live worktree probes are blocked pending an authenticated target CLI environment.
+- Gate 6 execution ownership: provider work is assigned to sequential, human-started sessions in the respective authenticated environments. Each session starts from a clean commit descending from Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`, probes that exact checkpoint in a detached worktree, leaves evidence uncommitted for human review, and never claims overall Gate 6 acceptance.
+- Gate 6 separate-session runbook commit: pending human review and commit. No provider session may start until the human supplies this hash.
+- Gate 6 runbook validation: delegated Standard review approved after all required corrections; active migration links, runbook-clause checks, human/JSON canonical lint, and `git diff --check` pass. The mandatory `update-agent-docs` pass found no canonical `.agents/` update because this change only refines the migration-specific execution handoff.
+- Gate 6 Copilot evidence: `docs/okf-kb-migration/gate6-copilot-evidence.md`; status not started, evidence commit not recorded. The Copilot owner must record all four mutation matchers, both stop events, Windows PowerShell coverage, simultaneous failure ordering, duration, final lint, and exact worktree disposal.
+- Gate 6 Gemini evidence: `docs/okf-kb-migration/gate6-gemini-evidence.md`; status not started, evidence commit not recorded. The Gemini owner must record all three mutation matchers, both `AfterAgent` retry states, simultaneous failure ordering, duration, final lint, and exact worktree disposal.
 - Simultaneous-failure result and coordinator decision: not started; default is no coordinator.
+- Gate 6 coordinator evidence commit: not started. After coordinator acceptance, the human creates this commit and a short record-only session verifies and records its hash here.
 - Merge or squash commit forming the rollback unit: not started.
 
 The accepted PyYAML source archive is `https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz` with SHA-256 `d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f`. The archive contains `pyyaml-6.0.3/LICENSE` and the pure-Python package under `pyyaml-6.0.3/lib/yaml/`.
@@ -508,3 +743,7 @@ Revision note (2026-09-10): Completed Gate 5 adapters, repo-local candidate regi
 Revision note (2026-09-10): Completed the mandatory agent-doc and OKF representation pass, recorded its scoped clean-lint evidence, and synchronized the final Gate 5 stopping point with the manual-checkpoint requirement.
 
 Revision note (2026-09-10): Recorded Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`, verified clean `HEAD`, opened Gate 6 preflight, and recorded that both required provider CLIs remain unavailable locally.
+
+Revision note (2026-09-10): Recast Gate 6 as two sequential, human-started provider sessions plus final coordinator acceptance; added provider-specific ownership, durable evidence paths and required fields, safe worktree lifecycle, human-commit recording, and pass/fail/block completion rules.
+
+Revision note (2026-09-10): Resolved delegated runbook-review findings by requiring a human runbook checkpoint before provider work, provider-owned stopping-point updates, exact Windows setup and cleanup commands, fixed probe contents/prompts/expected `OKF002` observations, explicit installation checks, and post-coordinator commit recording.
