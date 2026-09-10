@@ -65,6 +65,15 @@ Guidelines for modifying and maintaining repository hook scripts and configs und
   - `preToolUse` / `PreToolUse` command hooks can control tool execution via `"permissionDecision"`. Set to `"ask"` to trigger a manual interactive confirmation dialog in Copilot CLI, or set to `"allow"` to silently execute the tool call or rewritten `updatedInput` without prompts.
   - Expected `agentStop` and `postToolUse` control flow must exit `0` so Copilot parses `stdout` JSON. Exit code `2` is warning-only for most GitHub hook events and does not apply these decision schemas.
 
+## Repository OKF validation hooks
+
+- Keep `scripts/lint-okf.py` as the only OKF profile authority. The repo-local adapters under `.github/hooks/scripts/lint-okf.py` and `.gemini/hooks/scripts/lint-okf.py` translate its JSON diagnostics into provider envelopes and must not duplicate document rules.
+- Anchor adapter execution to the checkout containing the adapter. Normalize the payload `cwd`, require it to remain inside that checkout, allow nested checkout paths, and never execute a linter selected from an external payload path.
+- Run the central linter with `sys.executable`, argument-list subprocess execution, and an 8-second timeout inside the providers' 10-second hook timeout. Translate malformed input, missing runtime files, invalid linter JSON, exit `2`, timeouts, and unexpected exceptions to provider-valid `OKF900` output with exit `0`.
+- Preserve central diagnostic order by `path`, `line`, `column`, then ID. Show no more than 20 findings, include the omitted count and platform-specific rerun command, and measure the final JSON-encoded provider response when enforcing the 8 KiB output limit.
+- Native camelCase Copilot payloads do not carry an event-name field. Detect `postToolUse` from its documented `toolName` shape; eventless stop payloads use the common stop decision envelope. Continue to honor explicit VS Code-compatible `PostToolUse`, `Stop`, and `SubagentStop` event names.
+- Keep source ingest first on Copilot `agentStop` and `subagentStop` and in Gemini's sequential `AfterAgent` group. Register OKF immediate feedback only for the accepted Copilot `bash|powershell|create|edit` and Gemini `write_file|replace|run_shell_command` matchers.
+
 ## Copilot and VS Code compatibility
 
 - On Windows systems, Copilot hooks config (e.g. `hooks.json` and `rtk-rewrite.json`) must explicitly define both `"bash"` (Unix) and `"powershell"` (Windows) keys for command hooks to execute natively and in VS Code on Windows.

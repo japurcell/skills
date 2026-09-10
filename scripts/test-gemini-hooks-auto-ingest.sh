@@ -106,6 +106,25 @@ test_session_start_startup_registers_auto_ingest_hook() {
   assert_equals 'python .gemini/hooks/scripts/inject-auto-ingest-context.py' \
     "$(jq -r '.hooks.AfterAgent[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
     "Expected Gemini repo-local settings to register the AfterAgent pending-ingest backstop."
+
+  assert_equals 'true' \
+    "$(jq -r '.hooks.AfterAgent[] | select(.matcher == "*") | .sequential // false' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected Gemini final validators to run sequentially."
+  assert_equals 'lint-okf' \
+    "$(jq -r '.hooks.AfterAgent[] | select(.matcher == "*") | .hooks[1].name // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected OKF lint to run after the pending-ingest backstop."
+  assert_equals 'python .gemini/hooks/scripts/lint-okf.py' \
+    "$(jq -r '.hooks.AfterAgent[] | select(.matcher == "*") | .hooks[1].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected Gemini repo-local settings to register the AfterAgent OKF linter."
+  assert_equals '10000' \
+    "$(jq -r '.hooks.AfterAgent[] | select(.matcher == "*") | .hooks[1].timeout // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected only the OKF validator to use the 10-second timeout."
+  assert_equals 'python .gemini/hooks/scripts/lint-okf.py' \
+    "$(jq -r '.hooks.AfterTool[] | select(.matcher == "write_file|replace|run_shell_command") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected Gemini mutation tools to run the repo-local OKF linter."
+  assert_equals '10000' \
+    "$(jq -r '.hooks.AfterTool[] | select(.matcher == "write_file|replace|run_shell_command") | .hooks[0].timeout // empty' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected the Gemini AfterTool OKF validator to use the 10-second timeout."
 }
 
 test_new_source_injects_scaffold_context_and_updates_manifest() {

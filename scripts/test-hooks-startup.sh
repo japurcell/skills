@@ -258,9 +258,18 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.agentStop[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py PowerShell command for agentStop."
 
-  assert_equals 1 \
+  assert_equals '.github/hooks/scripts/lint-okf.py' \
+    "$(jq -r '.hooks.agentStop[1].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local agentStop to run OKF lint after source ingest."
+  assert_equals 'python ".github/hooks/scripts/lint-okf.py"' \
+    "$(jq -r '.hooks.agentStop[1].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local agentStop to register the OKF PowerShell command."
+  assert_equals 10 \
+    "$(jq -r '.hooks.agentStop[1].timeoutSec // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local agentStop OKF lint to use a 10-second timeout."
+  assert_equals 2 \
     "$(jq -r '.hooks.agentStop | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local hooks.json to keep agentStop auto-ingest wiring isolated."
+    "Expected repo-local agentStop to contain source ingest followed by OKF lint."
 
   assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
     "$(jq -r '.hooks.subagentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
@@ -269,13 +278,31 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.subagentStop[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py PowerShell command for subagentStop."
 
-  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
-    "$(jq -r '.hooks.subagentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for subagentStop."
-
-  assert_equals 1 \
+  assert_equals '.github/hooks/scripts/lint-okf.py' \
+    "$(jq -r '.hooks.subagentStop[1].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local subagentStop to run OKF lint after source ingest."
+  assert_equals 'python ".github/hooks/scripts/lint-okf.py"' \
+    "$(jq -r '.hooks.subagentStop[1].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local subagentStop to register the OKF PowerShell command."
+  assert_equals 10 \
+    "$(jq -r '.hooks.subagentStop[1].timeoutSec // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local subagentStop OKF lint to use a 10-second timeout."
+  assert_equals 2 \
     "$(jq -r '.hooks.subagentStop | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local hooks.json to keep subagentStop auto-ingest wiring isolated."
+    "Expected repo-local subagentStop to contain source ingest followed by OKF lint."
+
+  assert_equals 'bash|powershell|create|edit' \
+    "$(jq -r '.hooks.postToolUse[0].matcher // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local postToolUse OKF lint to match the accepted mutation tools."
+  assert_equals '.github/hooks/scripts/lint-okf.py' \
+    "$(jq -r '.hooks.postToolUse[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local postToolUse to register the OKF linter."
+  assert_equals 'python ".github/hooks/scripts/lint-okf.py"' \
+    "$(jq -r '.hooks.postToolUse[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local postToolUse to register the OKF PowerShell command."
+  assert_equals 10 \
+    "$(jq -r '.hooks.postToolUse[0].timeoutSec // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local postToolUse OKF lint to use a 10-second timeout."
 
   assert_equals '' \
     "$(jq -r '.hooks.sessionStart[] | select(.bash | test("auto-ingest-source\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
@@ -295,6 +322,9 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
   assert_equals '' \
     "$(jq -r '.hooks[][].bash | select(test("auto-ingest"))' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected .copilot/hooks/hooks.json to own no auto-ingest wiring."
+  assert_equals '' \
+    "$(jq -r '.hooks[][].bash | select(test("lint-okf"))' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected .copilot/hooks/hooks.json to own no repository-specific OKF wiring."
 }
 
 test_validation_doc_records_vscode_subagent_start_strategy() {

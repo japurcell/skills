@@ -22,14 +22,15 @@ Execute the six-gate in-place OKF v0.2 migration for the canonical documents und
 - Gate 2 added the offline provider-neutral `scripts/lint-okf.py`, pinned PyYAML 6.0.3 under `scripts/vendor/`, and review-driven public-CLI regressions. No canonical-corpus migration, adapter, or hook registration exists yet.
 - Gate 3 duplicate/runner inventory found no existing OKF representation skill. No external model CLI is installed; paired collaboration task agents using `gpt-5.6-luna` will provide the with-skill/no-skill benchmark.
 - Gate 3 now has a fixture-backed grader that executes the checked-in linter, captures harness-owned command/exit/diff evidence, and rejects unsupported model claims. The corrected 16-run `gpt-5.6-luna` benchmark passes 72/72 with-skill expectations and 52/72 no-skill expectations; its reviewer includes all prompts and eval IDs.
+- Gate 5 is implemented, independently approved, and uncommitted for the user's manual checkpoint. The 2026-09-10 official-source recheck found no event, matcher, envelope, exit, timeout, or retry contradiction; Gemini main was `ed2ac40df67a319bf348bd7e3d10494696b31b38`, issue `google-gemini/gemini-cli#27712` remained open, and neither `copilot` nor `gemini` was installed.
 
 ## Next Focus
 
-Begin Gate 5 provider adapters, candidate registrations, and simulated parity coverage.
+Create the manual Gate 5 checkpoint, then begin Gate 6 live provider capability proof from that exact commit.
 
 ## Exact Next Step
 
-Activate `exec-plans`, `tdd`, and the hook-area guidance; recheck the official Copilot and Gemini hook sources and record installed CLI versions before writing the Gate 5 adapter tests. If the provider contract is unchanged, add the two failing public adapter suites before implementation.
+Commit the reviewed Gate 5 worktree and record its hash here and in `implementation-execplan.md`. Do not begin Gate 6 disposable-worktree probes until that checkpoint exists.
 
 ## Decisions and Constraints
 
@@ -108,6 +109,9 @@ Activate `exec-plans`, `tdd`, and the hook-area guidance; recheck the official C
 - Gate 4 implementation checkpoint `d21c4351` was created while resumed validation ran. Independent verification reconfirmed both auto-ingest suites, linter tests, human/JSON lint, legacy/lowercase searches, 31 stable canonical paths, 9 byte-identical raw sources, and `git diff --check`.
 - Resumed Premium review found that exact-line draft detection treated valid quoted/commented `type` and `status` YAML scalars as resolved. Symmetric public-hook regressions reproduced `needs_summary` becoming `active`; both pass after the current uncommitted standard-library scalar normalization. Premium follow-up review approved quoted, commented, single-quoted, malformed, body-only, and unchanged-rendering behavior.
 - Correction validation passes shell/Python syntax, both auto-ingest suites, the OKF linter contract suite, human and exact empty JSON corpus lint, active migration links, legacy/lowercase searches, and `git diff --check`. The correction is committed in final Gate 4 checkpoint `917313a04bb513039ea0a2e596a8c381370766e7`.
+- Gate 5 adds executable repo-local Copilot and Gemini adapters plus public suites and candidate registrations. Both adapter suites, both source-ingest suites, both startup suites, `scripts/test_helpers.py`, `scripts/test-install.sh`, adapter syntax, config JSON, executable modes, human/JSON corpus lint, and `git diff --check` pass.
+- Premium Gate 5 review found three required gaps: native Copilot camelCase payloads have no event-name field, payload `cwd` could select external linter code, and Gemini bounded raw reason bytes before JSON escaping. Red-before-green regressions now prove real Copilot envelopes, checkout-anchored execution, nested-path acceptance, external decoy rejection, strict linter schema validation, and exact serialized output below 8 KiB. Fresh Premium follow-up approved the fixes with no remaining required findings.
+- The mandatory Gate 5 agent-doc pass updated hook instructions, hook testing guidance, the file map, the memory index, and new `API_MAP.md`. The `okf-authoring` profile pass loaded the shared profile, required no source-summary branch, and passed human/JSON full-corpus lint plus canonical link and scoped-path checks.
 - Gate 3's first corrected-path 16-run benchmark was invalidated after independent review. Its apparent with-skill 58/58 and without-skill 40/58 scores are not evidence because the grader trusted supplied `outcome.json` lint claims; the run repositories could not execute the full linter. The generated workspace was removed.
 - Gate 3's accepted replacement candidate contains 16 complete runs. Every `timing.json` and `execution-manifest.json` entry records exact `gpt-5.6-luna` routing. With-skill passes 72/72 expectations; no-skill passes 52/72. Duration exists for 5/16 runs and tokens for 3/16, so the benchmark omits those comparisons.
 - Fresh rereview found and prompted replacement of two model-inconsistent runs, removal of a recreated root `okf-authoring-workspace/`, omission of incomplete telemetry comparisons, and addition of prompts/eval IDs to `review.html`.
@@ -147,8 +151,10 @@ Activate `exec-plans`, `tdd`, and the hook-area guidance; recheck the official C
 - The first draft-detection green attempt reused semantic constant values at the scaffold-output call sites and temporarily emitted values without their YAML keys. Both public provider suites caught the regression; keep semantic values separate from their rendered `type:` and `status:` lines.
 - A delegated verification timestamp probe used BSD `stat -f` flags on GNU `stat` and printed errors before succeeding with `stat -c`; no files changed. Match `stat` flags to the host implementation or avoid nonessential timestamp probes.
 - A combined verification wrapper used a JavaScript template literal containing shell `PIPESTATUS` syntax, so JavaScript interpolation failed before shell execution. No checks ran and no files changed; keep wrapper strings free of `${...}` shell expansions or split checks into simple commands.
+- An `rtk proxy command -v ...` probe failed because `command` is a shell builtin, not an executable. Use `rtk proxy bash -lc 'command -v <name>'` when a probe requires shell builtins.
+- Provider hook payload paths are untrusted routing data. Anchor executable discovery to the adapter's own checkout, then validate normalized payload `cwd` containment; never search payload-controlled parents for executable validators. Measure provider output limits after JSON serialization because escaping can expand the byte count.
 
 ## Suggested Skills
 
-- Resume with `handoff`, then use `exec-plans`, `tdd`, `official-sources`, and the hook-area guidance for Gate 5's provider adapters and registrations.
+- Resume with `handoff`, then use `exec-plans`, `official-sources`, and the hook-area guidance for Gate 6 live provider probes and final acceptance.
 - End every repository-changing session with `update-agent-docs`.

@@ -48,6 +48,10 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/common.sh` | Shared shell helper for resolving repo root in small shell tests and utilities. |
 | `scripts/lint-okf.py` | Provider-neutral full-corpus OKF profile linter with human/JSON output and `0`/`1`/`2` exit semantics. |
 | `scripts/test-okf-lint.sh` | Public-CLI contract suite for the OKF linter; copies the valid two-bundle fixture under `scripts/fixtures/okf-valid-repo/` for isolated mutation cases. |
+| `.github/hooks/scripts/lint-okf.py` | Repo-local Copilot adapter for central OKF diagnostics on mutation and stop hooks. |
+| `.gemini/hooks/scripts/lint-okf.py` | Repo-local Gemini adapter for central OKF diagnostics on mutation and final-response hooks. |
+| `scripts/test-hooks-okf-lint.sh` | Copilot adapter contract, parity, failure, output-bound, and checkout-containment suite. |
+| `scripts/test-gemini-hooks-okf-lint.sh` | Gemini adapter contract, parity, retry, failure, output-bound, and checkout-containment suite. |
 | `scripts/vendor/` | Checked-in PyYAML 6.0.3 pure-Python runtime, source record, and license used only by the offline OKF linter. |
 | `scripts/addy-install.sh` | Imports selected upstream addy skills, agents, and references into this repo. |
 | `.agents/memory/sources/source-ingest-manifest.json` | Shared source-summary state file for Copilot and Gemini auto-ingest hooks plus pending-ingest gating. |

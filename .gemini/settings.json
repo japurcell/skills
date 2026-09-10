@@ -29,12 +29,34 @@
     "AfterAgent": [
       {
         "matcher": "*",
+        "sequential": true,
         "hooks": [
           {
             "name": "block-pending-ingest",
             "type": "command",
             "command": "python .gemini/hooks/scripts/inject-auto-ingest-context.py",
             "description": "Blocks model responses while source ingest remains pending."
+          },
+          {
+            "name": "lint-okf",
+            "type": "command",
+            "command": "python .gemini/hooks/scripts/lint-okf.py",
+            "timeout": 10000,
+            "description": "Blocks model responses while canonical agent documents violate the OKF profile."
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "matcher": "write_file|replace|run_shell_command",
+        "hooks": [
+          {
+            "name": "lint-okf",
+            "type": "command",
+            "command": "python .gemini/hooks/scripts/lint-okf.py",
+            "timeout": 10000,
+            "description": "Reports OKF profile violations after repository mutation tools."
           }
         ]
       }

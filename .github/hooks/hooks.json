@@ -6,6 +6,12 @@
         "type": "command",
         "bash": ".github/hooks/scripts/inject-auto-ingest-context.py",
         "powershell": "python \".github/hooks/scripts/inject-auto-ingest-context.py\""
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/scripts/lint-okf.py",
+        "powershell": "python \".github/hooks/scripts/lint-okf.py\"",
+        "timeoutSec": 10
       }
     ],
     "subagentStop": [
@@ -13,6 +19,21 @@
         "type": "command",
         "bash": ".github/hooks/scripts/inject-auto-ingest-context.py",
         "powershell": "python \".github/hooks/scripts/inject-auto-ingest-context.py\""
+      },
+      {
+        "type": "command",
+        "bash": ".github/hooks/scripts/lint-okf.py",
+        "powershell": "python \".github/hooks/scripts/lint-okf.py\"",
+        "timeoutSec": 10
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "matcher": "bash|powershell|create|edit",
+        "bash": ".github/hooks/scripts/lint-okf.py",
+        "powershell": "python \".github/hooks/scripts/lint-okf.py\"",
+        "timeoutSec": 10
       }
     ],
     "sessionStart": [

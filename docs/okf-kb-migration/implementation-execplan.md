@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds. Maintain this document in accordance with the repository's `exec-plans` skill.
 
-Implementation is active. Gates 1–4 are committed; the final Gate 4 rollback checkpoint is `917313a04bb513039ea0a2e596a8c381370766e7`. Gate 5 is ready to begin with the required official-provider-source and installed-CLI-version recheck. Gate 6 remains open. Do not begin a later gate before recording the preceding checkpoint.
+Implementation is active. Gates 1–4 are committed; the final Gate 4 rollback checkpoint is `917313a04bb513039ea0a2e596a8c381370766e7`. Gate 5 is implemented, independently approved, and awaiting the user's manual checkpoint commit. Gate 6 remains open and must not begin before that checkpoint is recorded.
 
 ## Purpose / Big Picture
 
@@ -19,7 +19,8 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-09 07:29Z) [milestone-2] Vendored and verified PyYAML 6.0.3, implemented the dormant provider-neutral linter, made the expanded public-CLI suite green, and completed independent review without enabling hooks.
 - [x] (2026-09-09 13:25Z) [milestone-3] Recorded the user-created final Gate 3 rollback checkpoint `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735` after the deterministic grader correction and independent approval.
 - [x] (2026-09-10 00:00Z) [milestone-4] Recorded final Gate 4 rollback checkpoint `917313a04bb513039ea0a2e596a8c381370766e7` after the quoted/commented YAML scalar correction, Premium follow-up approval, and complete green Gate 4 matrix.
-- [ ] [milestone-5] Add thin Copilot and Gemini adapters, register them after source-ingest validation, and make parity and provider regression suites green.
+- [x] (2026-09-10 14:03Z) [milestone-5] Rechecked the official Copilot and Gemini hook contracts and the open Gemini `AfterAgent` issue; found no Gate 5 contract change and confirmed neither target CLI is installed.
+- [x] (2026-09-10 14:41Z) [milestone-5] Added the two checkout-anchored provider adapters and candidate repo-local registrations, made the complete simulated parity/regression matrix green, and received Premium follow-up approval with no remaining required findings.
 - [ ] [milestone-6] Run disposable-worktree live provider probes, record versions/events/diagnostics/duration, complete documentation synchronization, and establish merge readiness.
 
 ## Surprises & Discoveries
@@ -36,6 +37,10 @@ The implementation is one migration unit. It may be built as reviewable commits,
   Evidence: Gemini's current hook reference documents structured deny/retry behavior and `stop_hook_active`; official issue `google-gemini/gemini-cli#27712` is still open and reports `AfterAgent` not firing in version 0.45.0 and related versions.
 - Observation: This planning environment cannot run provider capability probes.
   Evidence: Python is 3.12.3, while both `copilot --version` and `gemini --version` return command-not-found. Gate 6 must run in an authenticated environment with both target CLIs installed.
+- Observation: The Gate 5 provider-source recheck found no change to the accepted adapter contract.
+  Evidence: On 2026-09-10, GitHub still documented full-match `postToolUse` matchers, `additionalContext`, stop `allow`/`block` responses, and fail-open timeouts; Gemini main commit `ed2ac40df67a319bf348bd7e3d10494696b31b38` still documented regex tool matchers, exact lifecycle matchers, millisecond timeouts, `AfterTool` deny responses, and bounded `AfterAgent` retry/stop responses. Gemini issue `google-gemini/gemini-cli#27712` remained open, so its live proof stays in Gate 6.
+- Observation: Payload working directories and raw diagnostic text are security boundaries, not only routing data.
+  Evidence: Premium Gate 5 review found that payload `cwd` could select an external `scripts/lint-okf.py`, that native Copilot camelCase payloads omit an event-name discriminator, and that Gemini's raw-text byte count could exceed 8 KiB after JSON escaping. Public regressions now prove checkout-anchored execution, nested-path acceptance, external decoy rejection, realistic Copilot envelopes, and exact serialized Gemini bounds.
 - Observation: A shell counter incremented inside command substitution does not provide persistent case-directory uniqueness, and interpolating a `TMPDIR`-influenced path into a trap string reparses that path as shell code.
   Evidence: Gate 1 review found every `case_repo="$(new_case_repo ...)"` call ran the helper in a subshell and found the original interpolated EXIT trap vulnerable to metacharacters in `TMPDIR`. The accepted harness now uses a fresh `mktemp -d` directory per case and `trap cleanup EXIT` with a quoted exact path.
 - Observation: The user will create the Gate 1 checkpoint manually.
@@ -105,7 +110,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 
 ## Outcomes & Retrospective
 
-Gates 1–4 are committed, with Gate 4's final rollback checkpoint at `917313a04bb513039ea0a2e596a8c381370766e7`. All 31 canonical paths are preserved, full-corpus lint is clean, raw sources are unchanged, and both scaffold producers handle semantically equivalent quoted/commented draft scalars. Premium follow-up review approved the correction and the complete Gate 4 matrix passed. No provider lint hooks are enabled; Gate 5 remains the next milestone.
+Gates 1–4 are committed, with Gate 4's final rollback checkpoint at `917313a04bb513039ea0a2e596a8c381370766e7`. Gate 5 now adds reviewed repo-local Copilot and Gemini OKF adapters, source-ingest-first stop registrations, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. The full static matrix passes and Premium follow-up review found no remaining required issue. Gate 5 remains uncommitted for the user's manual checkpoint; live provider behavior belongs to Gate 6.
 
 ## Context and Orientation
 
@@ -234,8 +239,8 @@ Milestone acceptance is the indivisible green two-bundle corpus, both green sour
 
 ### Milestone 5: Add provider adapters and candidate registrations
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Recheck the official provider sources named in `Context and Orientation` and record the installed target CLI versions. If an event, matcher, envelope, exit, timeout, or retry contract changed, stop, document the contradiction in `Surprises & Discoveries` and `Decision Log`, and revise this ExecPlan before editing adapters.
 
@@ -436,7 +441,9 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 3 resumed acceptance review: found nondeterministic eval-0 expectation ordering after the initial implementation commit. The correction sorts the grader's expected paths, adds a cross-hash-seed regression, uses a tested score-preserving synchronizer for the incomplete-telemetry aggregate, and regenerates `review.html`. Independent review confirmed all 16 grading files, the aggregate, and the reviewer are synchronized; all prompts and eval IDs are present; scores remain 72/72 versus 52/72; and no skill, harness, model-evidence, or stray-workspace blocker remains.
 - Gate 3 final rollback checkpoint: `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`.
 - Gate 4 final rollback checkpoint: `917313a04bb513039ea0a2e596a8c381370766e7` (implementation checkpoint `d21c4351` plus the approved semantic YAML draft-detection correction). It preserves all 31 canonical paths, changes only the nine expected manifest `summary_hash` fields, and leaves raw sources unchanged. Final validation passes shell/Python syntax, both auto-ingest suites, the linter contract suite, human/JSON full-corpus lint, active migration links, legacy/lowercase searches, and `git diff --check`.
-- Gate 5 commit, provider versions/source recheck, and simulated parity results: not started.
+- Gate 5 source recheck: GitHub and Gemini contracts remain compatible with the accepted design; Gemini main was `ed2ac40df67a319bf348bd7e3d10494696b31b38`, issue `google-gemini/gemini-cli#27712` remained open, and neither `copilot` nor `gemini` was installed.
+- Gate 5 simulated result: both adapter suites, both source-ingest suites, both startup suites, `scripts/test_helpers.py`, `scripts/test-install.sh`, adapter Python/shell syntax, provider JSON parsing, executable modes, human/JSON corpus lint, and `git diff --check` pass. Premium first review found three required boundary gaps; public regressions and fixes now cover native Copilot eventless payloads, checkout-anchored linter execution with nested/external paths, strict linter schemas, and exact post-escaping Gemini output bounds. Fresh Premium follow-up approved the fixes with no remaining required findings. No Gate 5 commit exists yet.
+- Gate 5 agent-doc synchronization: `.agents/instructions/hooks.md`, `.agents/memory/testing/hooks.md`, `.agents/memory/FILE_MAP.md`, `.agents/memory/INDEX.md`, and new `.agents/memory/API_MAP.md` describe the shipped entry points, trust boundary, and validation route. The `okf-authoring` profile pass reports clean human and exact empty JSON lint, valid local links, and exactly those five canonical documentation paths in scope.
 - Gate 6 Copilot worktree/commands/events/diagnostics: not started.
 - Gate 6 Gemini worktree/commands/events/diagnostics: not started.
 - Simultaneous-failure result and coordinator decision: not started; default is no coordinator.
@@ -489,3 +496,9 @@ Revision note (2026-09-09): Completed and validated Gate 4's atomic corpus/scaff
 Revision note (2026-09-10): Recorded Gate 4 implementation checkpoint `d21c4351`, reproduced a resumed-review finding where quoted/commented YAML draft metadata bypassed pending ingest, added symmetric public-hook regressions, and implemented the standard-library scalar-normalization correction without opening Gate 5.
 
 Revision note (2026-09-10): Recorded the user-created final Gate 4 rollback checkpoint `917313a04bb513039ea0a2e596a8c381370766e7`, marked Milestone 4 accepted, and moved the active frontier to Gate 5's provider-source and installed-CLI-version recheck.
+
+Revision note (2026-09-10): Rechecked current official Copilot and Gemini hook behavior, confirmed the accepted Gate 5 contract is unchanged and both CLIs remain unavailable locally, and opened the adapter test-first implementation work.
+
+Revision note (2026-09-10): Completed Gate 5 adapters, repo-local candidate registrations, parity/security regressions, the full static matrix, and Premium follow-up review; left the approved worktree uncommitted for the user's manual checkpoint before Gate 6.
+
+Revision note (2026-09-10): Completed the mandatory agent-doc and OKF representation pass, recorded its scoped clean-lint evidence, and synchronized the final Gate 5 stopping point with the manual-checkpoint requirement.

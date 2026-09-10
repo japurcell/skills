@@ -12,6 +12,7 @@ description: Test guidance for repo-local Copilot plus installed Copilot and Gem
 - Read official hook docs before non-trivial changes and keep implementation aligned with them.
 - The retained supported hook surface is Python-first; validate the Python entrypoints and installed copies rather than the retired shell format surface.
 - Copilot hook checks:
+  - `bash scripts/test-hooks-okf-lint.sh`
   - `bash scripts/test-hooks-auto-ingest.sh`
   - `bash scripts/test-hooks-startup.sh`
   - `bash scripts/test-hooks-observability.sh`
@@ -19,6 +20,7 @@ description: Test guidance for repo-local Copilot plus installed Copilot and Gem
   - `bash scripts/test-hooks-tool-guard.sh`
   - `bash scripts/test-hooks-rtk.sh`
 - Gemini hook checks:
+  - `bash scripts/test-gemini-hooks-okf-lint.sh`
   - `bash scripts/test-gemini-hooks-auto-ingest.sh`
   - `bash scripts/test-gemini-hooks-startup.sh`
   - `bash scripts/test-gemini-hooks-secrets-scanner.sh`
@@ -44,6 +46,8 @@ description: Test guidance for repo-local Copilot plus installed Copilot and Gem
 - Both auto-ingest suites verify exact generated OKF draft-summary frontmatter, treat semantically equivalent quoted/commented draft scalars as pending, ignore draft-marker text outside frontmatter, and cover quoted/URI-encoded resources for nested source paths containing spaces, `#`, and `?`.
 - `scripts/test-gemini-hooks-auto-ingest.sh` covers Gemini startup scanning plus `BeforeAgent` prompt-time context injection, including new-source scaffolding, stale-summary detection, rename orphans, deleted-source cleanup prompts, committed manifest updates, manifest summary-path sanitization, the startup fallback when the Gemini payload omits `cwd`, and the `AfterAgent` pending-ingest deny path.
 - `scripts/test-hooks-startup.sh` now also verifies the repo-local `.github/hooks/hooks.json` startup, prompt-time, and final-response auto-ingest registrations while confirming `.copilot/hooks/hooks.json` no longer owns any auto-ingest wiring.
+- The two OKF adapter suites copy the adapter and valid two-bundle fixture into one checkout, exercise the public stdin/stdout seam, and cover central-diagnostic parity, real provider envelopes, missing or invalid dependencies, timeout/`OKF900` behavior, Windows rerun text, 20-item and serialized 8 KiB bounds, nested checkout paths, out-of-checkout decoy rejection, and simultaneous pending-ingest plus OKF failures.
+- Registration assertions keep repository-specific OKF hooks out of `.copilot/hooks/hooks.json` and `.gemini/global-settings.json`, preserve source-ingest-first stop ordering, and verify both provider timeout units and mutation matchers.
 - After changing the Copilot prompt-time injector or its hook ordering, run a direct smoke test against `.github/hooks/scripts/inject-auto-ingest-context.py`; repo-source tests alone do not prove the repo-local CLI surface.
 - `scripts/test-install.sh` verifies `.gemini/global-settings.json` is copied into `~/.gemini/settings.json` during install.
 - When benchmarking the Gemini Tool Guardian port, measure the installed shell-command path after `./scripts/install.sh`; direct repo invocation is slower and can miss the `<40ms` target even when the installed surface passes.
