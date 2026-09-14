@@ -1,11 +1,11 @@
 # Gate 6 Copilot Evidence
 
-Status: blocked
+Status: failed
 Date (UTC): 2026-09-14
 Owner environment: GitHub Copilot CLI 1.0.83 on Linux, `/bin/bash`, PowerShell Core 7.6.5 installed as `/usr/bin/pwsh`
-Session base commit: `2ee36118` (the human-committed blocked-state record)
+Session base commit: `2ee361180c599f7420873d446f7d4e4f05fdf8a0` (the human-committed blocked-state record)
 Gate 5 probe checkpoint: `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`
-Evidence commit: pending human commit
+Evidence commit: `bb4743f71a7409842347870aa883df4c9ef2ea8a`
 CLI version: `GitHub Copilot CLI 1.0.83. Run 'copilot update' to check for updates.`
 Authentication: passed; non-interactive Copilot sessions completed without recording secrets
 PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'` returned `7.6.5`
@@ -15,7 +15,7 @@ PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVer
 - Verified the human-created runbook/checkpoint commit before probing:
   - `git cat-file -e d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd^{commit}` exited 0.
   - `git merge-base --is-ancestor d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd HEAD` exited 0.
-- Provider command syntax was taken from `copilot --help`, including `-p|--prompt`, `--allow-tool`, `--allow-all-tools`, `--output-format json`, `--share[=path]`, `--agent`, `-C`, and `--add-dir`.
+- Provider command syntax was taken from `copilot --help`, including `-p|--prompt`, `--allow-tool`, `--allow-all-tools`, `--output-format json`, `--share[=path]`, `--agent`, `-C`, and `--add-dir`. The full help excerpt was not retained in durable evidence, so this failed record cannot prove the exact installed help text.
 - `bash scripts/install.sh` was attempted from the main checkout and exited 1 while copying unrelated skills:
   - `cp: preserving times for '/root/.agents/skills/research/agents': Read-only file system`
   - `cp: cannot create regular file '/root/.agents/skills/research/SKILL.md': Read-only file system`
@@ -31,13 +31,19 @@ PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVer
 - `git rev-parse --show-toplevel` returned `/tmp/okf-gate6-copilot.YVPdw2/worktree`.
 - The first setup attempt was discarded because an `agentStop` invalid fixture had been seeded before the mutation probes and contaminated later `postToolUse` diagnostics. A fresh worktree was used for the recorded results.
 
+## Evidence limitations
+
+- The temporary transcript parent `/tmp/okf-gate6-copilot.YVPdw2` was removed after the run, so the referenced transcript files are no longer durable artifacts.
+- Several recorded command lines retain shell variables or prompt placeholders rather than their fully expanded invocation, and the exact timing heredoc was not preserved.
+- The concise observations below remain useful failure evidence, but the missing raw artifacts and exact expansions mean this record cannot be upgraded to passing or used as a complete reproducibility record. The next live run must copy redacted excerpts into this file before removing temporary artifacts and must record fully expanded commands.
+
 ## Probe Results
 
 ### `postToolUse` matcher: `bash`
 
 - Literal prompt:
   `Use only the bash tool to create .agents/memory/gate6-copilot-bash.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, use only bash to replace it with exactly "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 bash probe\n" and report the hook event and diagnostic exactly.`
-- Exact command:
+- Recorded command shape; the fully expanded command was not retained:
   `copilot -C "$gate6ProbeWorktree" --no-auto-update --no-ask-user -p '<literal bash prompt>' -s --allow-tool='bash' --output-format json --share "$gate6ProbeParent/copilot-bash-transcript.md"`
 - Exit status: 0.
 - Expected and observed diagnostic: `OKF002`; observed `.agents/memory/gate6-copilot-bash.md:1:1: OKF002 frontmatter must begin with an exact --- delimiter`.
@@ -50,7 +56,7 @@ PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVer
 
 - Literal prompt:
   `Use only the powershell tool to create .agents/memory/gate6-copilot-powershell.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, use only powershell to replace it with exactly "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 powershell probe\n" and report the hook event and diagnostic exactly.`
-- Exact command:
+- Recorded command shape; the fully expanded command was not retained:
   `copilot -C "$gate6ProbeWorktree" --no-auto-update --no-ask-user -p '<literal PowerShell prompt>' -s --allow-tool='powershell' --output-format json --share "$gate6ProbeParent/copilot-powershell-transcript.md"`
 - Exit status: 0, but no mutation occurred.
 - Expected observation: `postToolUse` with `OKF002` for `.agents/memory/gate6-copilot-powershell.md`.
@@ -62,18 +68,18 @@ PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVer
 
 - Literal prompt:
   `Use only the create tool to create .agents/memory/gate6-copilot-create.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, stop using tools and report the hook event and diagnostic exactly.`
-- Exact scoped command:
+- Recorded scoped command shape; the fully expanded command was not retained:
   `TOOL_GUARD_ALLOWLIST='gate6-copilot-create.md' copilot --no-auto-update --no-ask-user -p '<literal create prompt>' -s --allow-tool='create' --allow-tool='view' --allow-tool='bash' --output-format json --share "$gate6ProbeParent/copilot-create-scoped-transcript.md"`
 - Exit status: 0.
 - Expected observation: `postToolUse` with `OKF002`.
 - Actual observation: the `create` call was denied before the repository hook ran; no file, hook event, or `OKF002` was produced. A broader `--allow-all-tools` retry also did not produce a repository hook event.
-- Result: blocked/failed; the create matcher has no direct live evidence in this environment.
+- Result: failed; the create matcher has no direct live evidence from this run.
 
 ### `postToolUse` matcher: `edit`
 
 - Literal prompt:
   `Use only the edit tool to replace all content in .agents/memory/gate6-copilot-edit.md with the exact UTF-8 content "# Gate 6 invalid probe\n". After the hook reports OKF002 for that path, use only edit to restore exactly "---\ntype: Agent Memory\ndescription: Temporary Gate 6 provider hook probe\n---\n\n# Gate 6 edit probe\n" and report the hook event and diagnostic exactly.`
-- Exact successful command:
+- Recorded successful command shape; the fully expanded command was not retained:
   `TOOL_GUARD_ALLOWLIST='gate6-copilot-edit.md' copilot -C "$gate6ProbeWorktree" --no-auto-update --no-ask-user -p '<literal edit prompt>' -s --allow-all-tools --output-format json --share "$gate6ProbeParent/copilot-edit-all-tools-transcript.md"`
 - Exit status: 0.
 - Expected and observed diagnostic: `OKF002`; observed `.agents/memory/gate6-copilot-edit.md:1:1: OKF002 frontmatter must begin with an exact --- delimiter`.
@@ -84,7 +90,7 @@ PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVer
 ### Lifecycle event: `agentStop`
 
 - Setup command: PowerShell wrote `# Gate 6 invalid probe\n` to `.agents/memory/gate6-copilot-agent-stop.md`.
-- Exact command:
+- Recorded command shape; the fully expanded command was not retained:
   `copilot --no-auto-update --no-ask-user -p 'Do not call a tool. Reply exactly: probe complete.' -s --allow-all-tools --output-format json --share "$gate6ProbeParent/copilot-agent-stop-transcript.md"`
 - Exit status: 0.
 - Expected observation: `agentStop` returns a blocking decision containing `OKF002`, causes a continuation, and gives actionable repair feedback.
@@ -96,7 +102,7 @@ PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVer
 
 - Custom agent definition: `.github/agents/gate6-okf-probe.agent.md` with the exact runbook frontmatter/body.
 - Parent literal prompt: `Delegate the Gate 6 probe to the gate6-okf-probe custom agent and wait for its result.`
-- Exact command:
+- Recorded command shape; the fully expanded command was not retained:
   `TOOL_GUARD_ALLOWLIST='gate6-copilot-subagent-stop.md' copilot -C "$gate6ProbeWorktree" --add-dir "$gate6ProbeWorktree" --agent gate6-okf-probe --no-auto-update --no-ask-user -p 'Delegate the Gate 6 probe to the gate6-okf-probe custom agent and wait for its result.' -s --allow-all-tools --output-format json --share "$gate6ProbeParent/copilot-subagent-stop-transcript.md"`
 - Exit status: 0.
 - Expected observation: custom-agent `subagentStop` blocks with `OKF002`, the custom agent repairs the file, and the repeated stop completes.
@@ -108,7 +114,7 @@ PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVer
 
 - PowerShell setup command, executed in the probe:
   `$gate6Provider = "copilot"; $gate6Utf8 = [System.Text.UTF8Encoding]::new($false); [System.IO.File]::WriteAllText((Join-Path (Get-Location) ".agents/sources/gate6-$gate6Provider-pending.md"), "# Gate 6 pending source`n", $gate6Utf8); [System.IO.File]::WriteAllText((Join-Path (Get-Location) ".agents/memory/gate6-$gate6Provider-simultaneous.md"), "# Gate 6 invalid probe`n", $gate6Utf8)`
-- Exact final-event command:
+- Recorded final-event command shape; the fully expanded command was not retained:
   `copilot --no-auto-update --no-ask-user -p 'Do not call a tool. Reply exactly: simultaneous probe complete.' -s --allow-all-tools --output-format json --share "$gate6ProbeParent/copilot-simultaneous-transcript.md"`
 - Exit status: 0.
 - Expected order: source-ingest reason first, then independent OKF reason containing `OKF002` and `.agents/memory/gate6-copilot-simultaneous.md`.
@@ -119,7 +125,7 @@ PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVer
 
 ## Duration and Final State
 
-- Final timing command:
+- Recorded timing command shape; the exact heredoc body was not retained:
   `python3 - <<'PY' ... subprocess.run(["./scripts/lint-okf.py"], check=False) ... PY`
 - Recorded result: `elapsed_seconds=0.039904`, `exit_status=0`.
 - Final lint output: empty stdout; full-corpus `./scripts/lint-okf.py` passed.
@@ -134,9 +140,9 @@ PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVer
 
 ## Completion
 
-The bash and edit mutation matchers produced direct `postToolUse` `OKF002` evidence, and final full-corpus lint completed below the 10-second threshold. The provider record remains `blocked` because this Copilot CLI session has no `powershell` tool despite `pwsh` being installed, create did not reach `postToolUse`, direct `agentStop`/custom-agent `subagentStop` envelopes were not observed, and the simultaneous-failure probe lost the source-ingest reason/order. Do not start Gemini or mark Milestone 6 accepted.
+The bash and edit mutation matchers produced direct `postToolUse` `OKF002` evidence, and final full-corpus lint completed below the 10-second threshold. The provider record is `failed` because the executed simultaneous-failure probe lost the source-ingest reason and required ordering. This environment also blocked complete provider proof because Copilot exposed no `powershell` tool, create did not reach `postToolUse`, and direct `agentStop`/custom-agent `subagentStop` envelopes were not observed. Do not start Gemini or mark Milestone 6 accepted.
 
-Retry condition: rerun the Copilot owner session in a provider environment whose Copilot tool registry exposes `powershell`, permits the required `create` matcher, emits direct `agentStop` and custom-agent `subagentStop` evidence, and preserves source-ingest-first plus OKF reasons during the simultaneous-failure probe. Run the installer from a writable user target before probing.
+Next correction and retry condition: first add a failing Copilot regression that reproduces loss of the source-ingest reason when source-ingest and OKF stop checks fail together. If the regression confirms that separate same-event hooks cannot preserve both reasons, add the thin provider-local coordinator permitted by the ExecPlan while keeping both validators independent, then rerun the affected static tests. After that correction is green, rerun the complete Copilot owner session in an authenticated provider environment whose tool registry exposes `powershell`, permits `create`, emits direct `agentStop` and custom-agent `subagentStop` evidence, and has a writable install target. Preserve fully expanded commands and durable redacted evidence before cleanup.
 
 Files left for human commit:
 - `docs/okf-kb-migration/gate6-copilot-evidence.md`
