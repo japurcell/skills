@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository publishes skills from `skills/`, custom agents from `agents/`, repo-local Copilot hooks from `.github/hooks/`, installed Copilot hook sources from `.copilot/hooks/`, and Gemini hooks plus config from `.gemini/`.
+This repository publishes skills from `skills/`, custom agents from `agents/`, repo-local Copilot hooks from `.github/hooks/`, installed Copilot hook sources from `.copilot/hooks/`, Gemini hooks plus config from `.gemini/`, and user-global Codex hook sources from `.codex/`.
 
 ## ExecPlans
 
@@ -10,7 +10,7 @@ You MUST activate the `exec-plans` skill and write an ExecPlan before making cod
 2. Involves multiple distinct milestones or execution phases.
 3. Spans different packages or layers.
 
-The default location for ExecPlans is `.agents/scratchpad/`.
+The default location for ExecPlans is `docs/<feature-slug>/`.
 
 If the plan is large, you MUST orchestrate the updates with subagents and make file and task ownership explicit for each subagent to avoid conflicts. Choose the smallest subagent model type that can effectively handle the task to avoid unnecessary cost and latency.
 

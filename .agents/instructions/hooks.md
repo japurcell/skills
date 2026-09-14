@@ -1,11 +1,11 @@
 ---
 type: Agent Instruction
-description: Rules and conventions for repo-local Copilot plus installed Copilot and Gemini hooks under `.github/hooks/`, `.copilot/hooks/`, and `.gemini/hooks/`.
+description: Rules for Codex, Copilot, and Gemini hook sources and installed behavior
 ---
 
-# Git & Gemini Hooks Conventions
+# Agent Hook Conventions
 
-Guidelines for modifying and maintaining repository hook scripts and configs under `.github/hooks/`, `.copilot/hooks/`, and `.gemini/hooks/`.
+Guidelines for modifying and maintaining repository hook scripts and configs under `.github/hooks/`, `.copilot/hooks/`, `.gemini/hooks/`, and `.codex/hooks/`.
 
 ## Official References
 
@@ -13,14 +13,15 @@ Guidelines for modifying and maintaining repository hook scripts and configs und
 - **VS Code GitHub Copilot hooks reference:** `https://code.visualstudio.com/docs/copilot/customization/hooks`
 - **Gemini CLI hooks reference:** `https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md`
 - **Gemini CLI exit-code best practices:** `https://geminicli.com/docs/hooks/best-practices/#check-exit-codes`
+- **Codex hooks:** `https://learn.chatgpt.com/docs/hooks`
 
 ## Shared Runtime Rules
 
 - **raw-source authority:** For exact hook behavior questions or changes (visible CLI output, stdout parsing, progress messages, event timing, matcher behavior, or output schemas), read the matching raw source under `.agents/sources/` after the summary. Summary files route the investigation but are not final authority for precise hook behavior.
 - **stdout discipline:** Hook scripts must keep `stdout` JSON-only. Send logs, audit lines, and debug text to `stderr` or the audit log.
-- **installed-copy rule:** Run `./scripts/install.sh` before live validation because Copilot and Gemini execute installed hooks from home-directory targets.
+- **installed-copy rule:** Run `./scripts/install.sh` before live validation because Codex, Copilot, and Gemini execute installed hooks from home-directory targets.
 - **runtime-log isolation:** Installers must not copy ignored runtime state from source hook trees, especially `.gemini/hooks/logs/`. Preserve existing destination logs while copying maintained hook scripts and config.
-- **stdin completion:** Hook JSON readers must return after one complete JSON value is available instead of waiting for stdin EOF. Read pipe bytes incrementally, drain bytes already buffered after the value, and reject any non-whitespace trailing data. Keep the Windows path compatible with Python versions before 3.12 by using `PeekNamedPipe` instead of relying on nonblocking pipe support in `os.set_blocking`.
+- **stdin completion:** Hook JSON readers must return after one complete JSON value is available instead of waiting for stdin EOF. Read pipe bytes incrementally, drain bytes already buffered after the value, and reject any non-whitespace trailing data. Incomplete JSON on an open pipe needs a bounded completion window because malformed and valid prefixes cannot always be distinguished syntactically. Keep the Windows path compatible with Python versions before 3.12 by using `PeekNamedPipe` instead of relying on nonblocking pipe support in `os.set_blocking`.
 - **executable permissions:** All shell (`.sh`) and Python (`.py`) hook scripts must have standard executable permissions (`755`) set in the source tree and verified by the test-install suite. The installer (`scripts/install.sh`) must explicitly apply `chmod 755` to all copied hooks to ensure they remain executable across runtime IDE sessions regardless of the source umask.
 - **Copilot surface split:** Copilot CLI can load policy, repository, user, inline-settings, and plugin hooks, but Copilot cloud agent only reads `.github/hooks/*.json` in the cloned repo and runs them inside a Linux, non-interactive, ephemeral sandbox where only `bash` or fallback `command` entries are honored.
 - **Copilot progress output:** Command hooks may emit one-line progress JSON objects on stdout during execution, but they still need exactly one final non-progress JSON document for the actual hook result.
@@ -30,6 +31,10 @@ Guidelines for modifying and maintaining repository hook scripts and configs und
 - **Gemini precedence and trust:** Gemini merges hook config in project, user, system, then extension order; project hook trust is fingerprinted from `name` plus `command`, and changed project hooks are warned as new.
 - **Gemini selection and redaction:** Multiple Gemini `BeforeToolSelection` hooks union their allowed tool sets, and environment-variable redaction is off by default unless explicitly enabled and allowlisted.
 - **Separate but Unified:** Keep the `.copilot` and `.gemini` hook scripts completely separated (no cross-directory imports), but structurally unified and synchronized. Use identical helper logic where possible, parameterizing only runtime-specific variables (like default paths or environment lookups) and emitting only the specific JSON decision output expected by each hook platform.
+- **Codex required skills:** Keep `.codex/global-hooks.json` inactive in the repository and install its single synchronous `SessionStart` group into user-global `~/.codex/hooks.json`. The hook must emit one JSON document, use `hookSpecificOutput.additionalContext`, announce the loaded-file count through `systemMessage`, fail closed with `continue: false`, and never import another runtime's hook code.
+- **Codex size and audit boundaries:** Bound raw required-skill files independently from the final stripped-and-wrapped context so large removable YAML frontmatter does not consume the injection budget. Audit paths must reject symbolic links, Windows junctions, and other reparse points before opening or changing permissions.
+- **Codex trust:** Non-managed Codex hooks must be reviewed after installation or definition changes through `/hooks`; never advise bypassing hook trust.
+- **Codex install safety:** The shared merger must preserve unrelated hook data, replace only exact maintained POSIX or Windows commands, reject symlinked config destinations, back up only real semantic changes, and atomically write owner-only JSON. Bash and PowerShell installers must refuse a linked installed-hook destination instead of following it.
 - **Fail-closed security handlers:** Security-critical hooks (like `tool-guard.py` and `scan-secrets.py`) MUST fail-closed. Global exception handlers and malformed-input paths must exit `0` after emitting the runtime-specific denial JSON; Gemini must not use warning exit `1` for block-mode failures. Do not use fail-open exception handlers that emit `allow` on crash, as this silently bypasses protections.
 - **Sensitive audit files:** Create primary and shadow audit logs with owner-only `0o600` permissions at descriptor creation time. Do not rely on a later `chmod`, which leaves a disclosure window under permissive umasks.
 - **SQLite Trace Store:** Hook observability uses a WAL-journaled SQLite database (`observability_v1.db`) as the trace source of truth under strict `0o600` permissions.

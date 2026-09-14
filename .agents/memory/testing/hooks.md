@@ -1,13 +1,13 @@
 ---
 type: Testing Guidance
-description: Test guidance for repo-local Copilot plus installed Copilot and Gemini hooks under `.github/hooks/`, `.copilot/hooks/`, and `.gemini/hooks/`.
+description: Test routes for Codex, Copilot, and Gemini hook sources and installed copies
 ---
 
 # Hooks - Testing
 
 ## Repo checks
 
-- After changing hook source, run `./scripts/install.sh` before any live validation because installed hooks execute from `~/.copilot/hooks` or `~/.gemini/hooks`, not from repo source paths.
+- After changing hook source, run `./scripts/install.sh` before any live validation because installed hooks execute from `~/.codex/hooks`, `~/.copilot/hooks`, or `~/.gemini/hooks`, not from repo source paths.
 - Centralize standard test environment helper utilities (such as `install_into_temp_home()`) in `scripts/test-common.sh` instead of duplicating them across individual test files.
 - Read official hook docs before non-trivial changes and keep implementation aligned with them.
 - The retained supported hook surface is Python-first; validate the Python entrypoints and installed copies rather than the retired shell format surface.
@@ -26,6 +26,12 @@ description: Test guidance for repo-local Copilot plus installed Copilot and Gem
   - `bash scripts/test-gemini-hooks-secrets-scanner.sh`
   - `bash scripts/test-gemini-hooks-tool-guard.sh`
   - `bash scripts/test-gemini-hooks-rtk.sh`
+- Codex hook checks:
+  - `bash scripts/test-codex-hooks-startup.sh`
+  - `bash scripts/test-install.sh`
+  - `pwsh -NoProfile -File scripts/test-install.ps1` when PowerShell 7 is available
+- Codex source remains inactive at `.codex/global-hooks.json`; fixture tests validate the user-global merge without writing to the real home directory. After a real install, review and trust the changed non-managed definition through `/hooks` before live validation.
+- The Codex startup suite covers open-stdin completion and malformed-prefix time bounds, raw skill-file and final-context limits, large removable frontmatter, path containment, UTF-8 output, and POSIX audit-link defenses. Exercise PowerShell installer behavior and Windows audit reparse-point handling on a Windows host when available.
 - `scripts/test-gemini-hooks-startup.sh` includes a negative missing-skill case that intentionally prints `Hook hard stop: Required skill file not found...`; trust the script exit status and assertions, not stderr alone.
 - Gemini repo config should use workspace-relative Python commands in `.gemini/settings.json`, including `python .gemini/hooks/scripts/auto-ingest.py` and `python .gemini/hooks/scripts/inject-auto-ingest-context.py`; installed global settings continue to use quoted `$HOME/.gemini/hooks/scripts/...` paths. Validate both forms through the Gemini hook regressions.
 - **Dynamic-Cleanup traps:** When writing bash function-level traps under `set -u` (nounset), register local cleanup variables using single-quotes inside double-quotes (e.g. `trap 'rm -rf "'"$workdir"'"' RETURN`). This interpolates the variable at trap registration time, preventing unbound variable errors when the function exits and pops local scope before execution.
