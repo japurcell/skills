@@ -151,6 +151,7 @@ function New-FixtureRepo {
         (Join-Path $Repo 'agents/nested'),
         (Join-Path $Repo 'references'),
         (Join-Path $Repo '.copilot/hooks/scripts'),
+        (Join-Path $Repo '.codex/hooks'),
         (Join-Path $Repo '.gemini/policies'),
         (Join-Path $Repo '.gemini/hooks/scripts')
     )
@@ -159,6 +160,9 @@ function New-FixtureRepo {
     }
 
     Copy-Item -LiteralPath $InstallScriptSrc -Destination (Join-Path $Repo 'scripts/install.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-hooks.py') -Destination (Join-Path $Repo 'scripts/install-codex-hooks.py') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/global-hooks.json') -Destination (Join-Path $Repo '.codex/global-hooks.json') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/hooks/load-required-skills.py') -Destination (Join-Path $Repo '.codex/hooks/load-required-skills.py') -Force
 
     Write-FixtureFile (Join-Path $Repo 'skills/alpha/SKILL.md') @('---', 'name: alpha', '---', 'Standalone.')
     Write-FixtureFile (Join-Path $Repo 'skills/alpha/evals/evals.json') @('fixture eval content')
@@ -567,6 +571,135 @@ function Test-InstalledHooksAreExecutable {
     }
 }
 
+function Test-InstallsCodexHookAndGlobalConfiguration {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+
+        New-FixtureRepo $repo
+        $unrelatedHook = Join-Path $homeDir '.codex/hooks/unrelated.py'
+        Write-FixtureFile $unrelatedHook @('print("preserve mode")')
+        if (-not $IsWindows) {
+            $ownerOnly = [System.IO.UnixFileMode]::UserRead -bor [System.IO.UnixFileMode]::UserWrite
+            [System.IO.File]::SetUnixFileMode($unrelatedHook, $ownerOnly)
+        }
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+
+        $installedHook = Join-Path $homeDir '.codex/hooks/load-required-skills.py'
+        Assert-True -Condition (Test-Path -LiteralPath $installedHook -PathType Leaf) -Message "Expected the Codex required-skills hook to be installed."
+        Assert-Equals -Expected (Read-FileContent (Join-Path $repo '.codex/hooks/load-required-skills.py')) -Actual (Read-FileContent $installedHook) -Message "Expected the installed Codex hook to match the maintained source."
+
+        $configPath = Join-Path $homeDir '.codex/hooks.json'
+        Assert-True -Condition (Test-Path -LiteralPath $configPath -PathType Leaf) -Message "Expected Codex global hooks.json to be installed."
+        $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json -AsHashtable
+        $handler = $config['hooks']['SessionStart'][0]['hooks'][0]
+        Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $handler['command'] -Message "Expected the Codex handler's POSIX command to target the installed hook."
+        Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\load-required-skills.py"' -Actual $handler['commandWindows'] -Message "Expected the exact Windows Codex command."
+        Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/hooks.json.bak'))) -Message "Expected a fresh Codex install not to create a backup."
+
+        if (-not $IsWindows) {
+            $expectedMode = [System.IO.UnixFileMode]::UserRead -bor
+                [System.IO.UnixFileMode]::UserWrite -bor
+                [System.IO.UnixFileMode]::UserExecute -bor
+                [System.IO.UnixFileMode]::GroupRead -bor
+                [System.IO.UnixFileMode]::GroupExecute -bor
+                [System.IO.UnixFileMode]::OtherRead -bor
+                [System.IO.UnixFileMode]::OtherExecute
+            Assert-Equals -Expected $expectedMode -Actual ([System.IO.File]::GetUnixFileMode($installedHook)) -Message "Expected the installed Codex hook to be executable with mode 755."
+            Assert-Equals -Expected $ownerOnly -Actual ([System.IO.File]::GetUnixFileMode($unrelatedHook)) -Message "Expected installation not to change unrelated Codex hook modes."
+        }
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-PreservesCodexConfigurationAndIsIdempotent {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+
+        New-FixtureRepo $repo
+        $configPath = Join-Path $homeDir '.codex/hooks.json'
+        Write-FixtureFile $configPath @(
+            '{',
+            '  "setting": {"keep": true},',
+            '  "hooks": {',
+            '    "BeforeTool": [{"hooks": [{"type": "command", "command": "echo preserve"}]}],',
+            '    "SessionStart": [{"matcher": "startup", "hooks": [',
+            '      {"type": "command", "command": "echo preserve"},',
+            '      {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py"}',
+            '    ]}]',
+            '  }',
+            '}'
+        )
+        $originalConfig = Get-Content -LiteralPath $configPath -Raw
+
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+
+        $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json -AsHashtable
+        Assert-True -Condition ($config['setting']['keep']) -Message "Expected unrelated top-level Codex configuration to be preserved."
+        Assert-Equals -Expected 'echo preserve' -Actual $config['hooks']['BeforeTool'][0]['hooks'][0]['command'] -Message "Expected unrelated Codex hook events to be preserved."
+        Assert-Equals -Expected 'echo preserve' -Actual $config['hooks']['SessionStart'][0]['hooks'][0]['command'] -Message "Expected unrelated SessionStart handlers to be preserved."
+        Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $config['hooks']['SessionStart'][-1]['hooks'][0]['command'] -Message "Expected the owned SessionStart handler to be replaced by the maintained handler."
+
+        $backupPath = Join-Path $homeDir '.codex/hooks.json.bak'
+        Assert-True -Condition (Test-Path -LiteralPath $backupPath -PathType Leaf) -Message "Expected a backup when a valid Codex configuration changes."
+        Assert-Equals -Expected $originalConfig -Actual (Get-Content -LiteralPath $backupPath -Raw) -Message "Expected the backup to contain the immediately previous Codex configuration."
+        $installedConfig = Get-Content -LiteralPath $configPath -Raw
+        $backupBeforeSecondInstall = Get-Content -LiteralPath $backupPath -Raw
+
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+
+        Assert-Equals -Expected $installedConfig -Actual (Get-Content -LiteralPath $configPath -Raw) -Message "Expected a second Codex install to leave the merged configuration unchanged."
+        Assert-Equals -Expected $backupBeforeSecondInstall -Actual (Get-Content -LiteralPath $backupPath -Raw) -Message "Expected an idempotent Codex install not to churn the backup."
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-RefusesSymlinkedCodexHookDestination {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        $outsideHook = Join-Path $workdir 'outside-hook.py'
+        $installedHook = Join-Path $homeDir '.codex/hooks/load-required-skills.py'
+
+        New-FixtureRepo $repo
+        Write-FixtureFile $outsideHook @('external hook')
+        try {
+            New-Item -ItemType Directory -Path (Split-Path -Parent $installedHook) -Force | Out-Null
+            New-Item -ItemType SymbolicLink -Path $installedHook -Target $outsideHook -Force | Out-Null
+        }
+        catch {
+            Write-Host "Skipping: Codex destination symlink creation is not supported on this host ($($_.Exception.Message))."
+            return
+        }
+
+        $beforeMode = $null
+        if (-not $IsWindows) {
+            $ownerOnly = [System.IO.UnixFileMode]::UserRead -bor [System.IO.UnixFileMode]::UserWrite
+            [System.IO.File]::SetUnixFileMode($outsideHook, $ownerOnly)
+            $beforeMode = [System.IO.File]::GetUnixFileMode($outsideHook)
+        }
+
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals -Expected 1 -Actual $result.ExitCode -Message "Expected installation to refuse a symlinked Codex hook destination."
+        Assert-Equals -Expected 'external hook' -Actual (Read-FileContent $outsideHook) -Message "Expected the external hook target to remain unchanged."
+        Assert-Equals -Expected 'SymbolicLink' -Actual (Get-Item -Force -LiteralPath $installedHook).LinkType -Message "Expected the destination symlink to remain intact after refusal."
+        if (-not $IsWindows) {
+            Assert-Equals -Expected $beforeMode -Actual ([System.IO.File]::GetUnixFileMode($outsideHook)) -Message "Expected the external hook target mode to remain unchanged."
+        }
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
 function Test-CopiesCopilotConfigAndReferences {
     $workdir = New-TestWorkdir
     try {
@@ -612,6 +745,9 @@ Test-FixedNameHardLinkHandling
 Test-JunctionHandling
 Test-CopiesFullGeminiTree
 Test-InstalledHooksAreExecutable
+Test-InstallsCodexHookAndGlobalConfiguration
+Test-PreservesCodexConfigurationAndIsIdempotent
+Test-RefusesSymlinkedCodexHookDestination
 Test-PreservesFileModes
 Test-CopiesCopilotConfigAndReferences
 Test-MissingSourceFails

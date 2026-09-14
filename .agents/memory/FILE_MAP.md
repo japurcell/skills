@@ -1,5 +1,6 @@
 ---
-coverage: Top-level overview; per-layer directory detail lives in the instruction files
+type: Agent Memory
+description: Top-level file map with pointers to area-specific guidance
 ---
 
 # File Map
@@ -20,6 +21,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.github/hooks/` | hooks | Repo-local Copilot hook config and auto-ingest wiring. |
 | `.copilot/` | hooks | Copilot instructions and local hook runtime sources. |
 | `.gemini/` | hooks | Gemini instructions and local hook runtime sources. |
+| `.codex/` | hooks | Inactive source for the user-global Codex required-skills hook and install-time configuration template. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
 | `agents/` | agents | Standalone custom agent prompt files. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
@@ -41,8 +43,10 @@ This file is a **top-level map only**. For area detail and working rules, read t
 
 | Path | Why it matters |
 | --- | --- |
-| `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, and `~/.gemini` targets. |
+| `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, `~/.gemini`, and `~/.codex` targets. |
 | `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout (run with `pwsh scripts/install.ps1`). |
+| `scripts/install-codex-hooks.py` | Atomically and idempotently merges the maintained Codex `SessionStart` group into user-global `hooks.json`. |
+| `scripts/test-codex-hooks-startup.sh` | Public-process contract and security regressions for the Codex required-skills hook. |
 | `scripts/test-install.ps1` | Fixture-repo test for `scripts/install.ps1` (run with `pwsh -NoProfile -File scripts/test-install.ps1`). |
 | `scripts/common.sh` | Shared shell helper for resolving repo root in small shell tests and utilities. |
 | `scripts/lint-okf.py` | Provider-neutral full-corpus OKF profile linter with human/JSON output and `0`/`1`/`2` exit semantics. |

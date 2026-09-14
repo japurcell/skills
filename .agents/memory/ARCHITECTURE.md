@@ -1,5 +1,6 @@
 ---
-coverage: Repo structure, install flows, and how top-level areas relate
+type: Agent Memory
+description: Repo structure, install flows, and top-level area relationships
 ---
 
 # Architecture
@@ -14,6 +15,7 @@ coverage: Repo structure, install flows, and how top-level areas relate
 | `.github/` | Repository-level Copilot config, including repo-local hooks. | Loaded directly from the workspace by Copilot |
 | `.copilot/` | Copilot-specific instructions and hooks. | Installed to `~/.copilot/` |
 | `.gemini/` | Gemini-specific instructions and hooks. | Installed to `~/.gemini/` |
+| `.codex/` | Inactive source template and script for the user-global Codex required-skills hook. | Installed to `~/.codex/hooks/` and merged into `~/.codex/hooks.json` |
 | `scripts/` | Installers, importers, and targeted validation helpers. | Run from repo checkout |
 | `.agents/` | Agent knowledge base with canonical agent-facing rules and durable repo facts. | Copilot/Gemini agents working in this repo |
 | `docs/` | Version-controlled ADRs, research notes, and long-lived effort plans that complement `.agents/` canonical guidance. | Repo readers and agents who need durable project context |
@@ -23,9 +25,9 @@ coverage: Repo structure, install flows, and how top-level areas relate
 
 ### Source authoring flow
 
-1. Edit source under `skills/`, `agents/`, `.github/`, `.copilot/`, `.gemini/`, `references/`, or `scripts/`.
+1. Edit source under `skills/`, `agents/`, `.github/`, `.copilot/`, `.gemini/`, `.codex/`, `references/`, or `scripts/`.
 2. Run narrow validation for changed area from `.agents/memory/TESTING_STRATEGY.md` and any matching `testing/<area>.md` file.
-3. If installed behavior matters, run `./scripts/install.sh` (or `pwsh scripts/install.ps1`) before live checks because Copilot and Gemini read installed copies from home-directory targets, not repository source files.
+3. If installed behavior matters, run `./scripts/install.sh` (or `pwsh scripts/install.ps1`) before live checks because Codex, Copilot, and Gemini read installed copies from home-directory targets, not repository source files.
 
 ### Addy import flow
 

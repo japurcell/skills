@@ -40,6 +40,9 @@ $GeminiSrc = Join-Path $RepoRoot '.gemini'
 $GeminiGlobalSettingsSrc = Join-Path $RepoRoot '.gemini/global-settings.json'
 $CopilotInstructionsSrc = Join-Path $RepoRoot '.copilot/copilot-instructions.md'
 $CopilotLspSrc = Join-Path $RepoRoot '.copilot/lsp-config.json'
+$CodexHookSrc = Join-Path $RepoRoot '.codex/hooks/load-required-skills.py'
+$CodexHookTemplateSrc = Join-Path $RepoRoot '.codex/global-hooks.json'
+$CodexHookMergerSrc = Join-Path $RepoRoot 'scripts/install-codex-hooks.py'
 
 $SkillsDest = Join-Path $HOME '.agents/skills'
 $ReferencesDest = Join-Path $HOME '.agents/references'
@@ -48,6 +51,9 @@ $CopilotDest = Join-Path $HOME '.copilot'
 $AgentsDest = Join-Path $GeminiDest 'agents'
 $CopilotAgentsDest = Join-Path $CopilotDest 'agents'
 $HooksDest = Join-Path $CopilotDest 'hooks'
+$CodexDest = Join-Path $HOME '.codex'
+$CodexHooksDest = Join-Path $CodexDest 'hooks'
+$CodexHookConfigDest = Join-Path $CodexDest 'hooks.json'
 
 function Fail {
     param([string]$Message)
@@ -312,6 +318,41 @@ function Copy-CopilotLsp {
     Copy-FileTo -Source $CopilotLspSrc -Destination (Join-Path $CopilotDest 'lsp-config.json')
 }
 
+function Install-CodexHook {
+    New-Item -ItemType Directory -Path $CodexHooksDest -Force | Out-Null
+    $installedHook = Join-Path $CodexHooksDest 'load-required-skills.py'
+    $existingHook = Get-Item -Force -LiteralPath $installedHook -ErrorAction SilentlyContinue
+    if ($null -ne $existingHook -and [string]$existingHook.LinkType) {
+        Fail "Refusing to overwrite linked Codex hook destination: $installedHook"
+    }
+    Copy-FileTo -Source $CodexHookSrc -Destination $installedHook
+    if (-not $IsWindows) {
+        $executable = [System.IO.UnixFileMode]::UserRead -bor
+            [System.IO.UnixFileMode]::UserWrite -bor
+            [System.IO.UnixFileMode]::UserExecute -bor
+            [System.IO.UnixFileMode]::GroupRead -bor
+            [System.IO.UnixFileMode]::GroupExecute -bor
+            [System.IO.UnixFileMode]::OtherRead -bor
+            [System.IO.UnixFileMode]::OtherExecute
+        [System.IO.File]::SetUnixFileMode($installedHook, $executable)
+    }
+
+    $python = Get-Command python3 -CommandType Application -ErrorAction SilentlyContinue
+    $pythonArguments = @()
+    if ($null -eq $python) {
+        $python = Get-Command py -CommandType Application -ErrorAction SilentlyContinue
+        $pythonArguments = @('-3')
+    }
+    if ($null -eq $python) {
+        Fail 'Missing Python executable: expected python3 or py.'
+    }
+
+    & $python.Source @pythonArguments $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest
+    if ($LASTEXITCODE -ne 0) {
+        Fail "Codex hook configuration merger exited with code $LASTEXITCODE."
+    }
+}
+
 foreach ($src in @($SkillsSrc, $AgentsSrc, $GeminiSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Container)) {
         Fail "Missing source directory: $src"
@@ -319,6 +360,12 @@ foreach ($src in @($SkillsSrc, $AgentsSrc, $GeminiSrc)) {
 }
 
 foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSettingsSrc)) {
+    if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
+        Fail "Missing source file: $src"
+    }
+}
+
+foreach ($src in @($CodexHookSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
     }
@@ -342,6 +389,7 @@ Copy-Gemini
 Copy-GeminiGlobalSettings
 Copy-CopilotInstructions
 Copy-CopilotLsp
+Install-CodexHook
 
 Write-Output "Installed skills to $SkillsDest"
 Write-Output "Installed agents to $AgentsDest and $CopilotAgentsDest"
@@ -355,3 +403,5 @@ Write-Output "Installed Gemini instructions to $GeminiDest"
 Write-Output "Installed Gemini settings to $(Join-Path $GeminiDest 'settings.json')"
 Write-Output "Installed Copilot instructions to $(Join-Path $CopilotDest 'copilot-instructions.md')"
 Write-Output "Installed Copilot LSP config to $(Join-Path $CopilotDest 'lsp-config.json')"
+Write-Output "Installed Codex hook to $(Join-Path $CodexHooksDest 'load-required-skills.py')"
+Write-Output "Installed Codex hook configuration to $CodexHookConfigDest"

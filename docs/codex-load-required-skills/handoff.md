@@ -7,19 +7,19 @@ Implement the approved ExecPlan for a user-global Codex CLI `SessionStart` hook 
 ## Status
 
 - Design tree is closed and every recommendation was accepted.
-- ExecPlan is complete at `docs/codex-load-required-skills/execplan.md`; purpose is at line 7, progress at line 11, decisions at line 36, plan of work at line 98, and interfaces/ownership at line 219.
-- The user explicitly requested plan creation without implementation. No hook, installer, test, or agent-documentation implementation has started.
+- The approved feature is implemented across the hook, inactive global template, shared merger, Bash/PowerShell installers, public tests, README, and canonical agent docs. All focused security-review findings have corresponding fixes and available-platform regressions.
+- The ExecPlan at `docs/codex-load-required-skills/execplan.md` is synchronized through Milestone 5. Milestones 1-2 meet acceptance; Milestones 3-5 are done with recorded verification gaps.
 - The ExecPlan was moved from `.agents/scratchpad/` to the version-controlled feature directory at the user's request; its self-reference was updated.
 - This handoff is feature-scoped at `docs/codex-load-required-skills/handoff.md` beside the ExecPlan.
-- The ExecPlan is tracked; this relocated handoff is currently the only untracked working-tree file.
+- No commit was created, per user instruction.
 
 ## Next focus
 
-Execute Milestone 1 only when the user asks to execute or continue the plan. Follow the later ownership split in `docs/codex-load-required-skills/execplan.md:259` for the full multi-file effort.
+User review and commit. If a PowerShell 7 host is available first, run the one outstanding runtime suite.
 
 ## Exact next step
 
-After execution authorization, read `.agents/memory/INDEX.md` and the ExecPlan, activate `exec-plans` and `tdd`, then create the first failing public-process test in `scripts/test-codex-hooks-startup.sh` for successful `SessionStart(startup)` injection and the exact count-bearing announcement. Run it red before adding `.codex/hooks/load-required-skills.py` or `.codex/global-hooks.json`.
+Run `pwsh -NoProfile -File scripts/test-install.ps1` on a PowerShell 7 host if available; otherwise inspect the final diff and commit the current work without rerunning a real-home installer.
 
 ## Decisions and constraints
 
@@ -40,6 +40,12 @@ After execution authorization, read `.agents/memory/INDEX.md` and the ExecPlan, 
 - Ordinary Codex command handlers have no documented `name` identity; installer ownership must use the stable installed command path.
 - Matching Codex hooks run concurrently, so no behavior may depend on registration order.
 - Keep the Codex implementation runtime-local; repository conventions prohibit cross-directory imports from Copilot or Gemini hook trees.
+- Root review follow-up: add public red tests before fixing the hook's final-read input-cap bypass and symlink-following audit directory; replace macOS-only `stat -f` mode assertions with Python standard-library checks.
+- Premium review found seven actionable issues. Fixed: lone-surrogate crashes, linked hook/config destinations, broad handler ownership, malformed open-pipe input, unbounded skill reads, audit-file symlinks, and recursive PowerShell chmod of unrelated Codex hooks.
+- Focused Premium re-review found three remaining edges. Fixed: ambiguous malformed JSON now stops after a bounded 0.5-second completion window, raw skill files have a separate one-megabyte bound so removable frontmatter does not consume the 20,000-byte context budget, and Windows audit directories/files reject junctions and other reparse points as well as symlinks.
+- Three test-edit mistakes placed or indented shell content inside Python heredocs. All were caught by `bash -n` or the public suite before product changes and repaired; future edits to mixed shell/Python test files should run `bash -n` immediately after each patch.
+- The initial Premium reviewer dispatch accidentally inherited the parent model. It was interrupted before use and redispatched as recorded with `gpt-5.6-sol`.
+- `scripts/test_helpers.py` initially failed only because sandbox policy denied its prescribed `.agents/scratchpad/test-artifacts` directory; the approved rerun passed 14/14.
 
 ## Relevant files and sources
 
@@ -49,19 +55,23 @@ After execution authorization, read `.agents/memory/INDEX.md` and the ExecPlan, 
 - `.copilot/hooks/hooks.json:160` and `.gemini/global-settings.json:179` — current session-start registrations loading Caveman.
 - `scripts/install.sh:1`, `scripts/install.ps1:1`, `scripts/test-install.sh:1`, `scripts/test-install.ps1:1` — later installer integration seams.
 - `.agents/instructions/hooks.md:1` and `.agents/memory/testing/hooks.md:1` — runtime rules and validation routes.
-- Official contract: `https://learn.chatgpt.com/docs/hooks`, fetched 2026-09-09.
+- Official contract: `https://learn.chatgpt.com/docs/hooks`, fetched 2026-09-10.
 
 ## Verification state
 
-- Confirmed the ExecPlan contains every required living-plan section, accepted announcement, ownership split, and a revision note saying implementation remains unstarted.
-- Confirmed the old scratchpad ExecPlan path is absent and `docs/codex-load-required-skills/execplan.md` is tracked.
-- No implementation tests, syntax checks, live hook run, installer run, PowerShell run, security review, documentation pass, or OKF lint have run because implementation was explicitly deferred.
-- `pwsh` availability is not yet verified.
+- Passed `bash scripts/test-codex-hooks-startup.sh` and `bash scripts/test-install.sh` after all hardening changes.
+- Passed Bash syntax, non-writing Python AST syntax, maintained hook JSON parsing, executable source-mode assertions, and `git diff --check`.
+- Passed `python scripts/test_helpers.py` (14 tests) after allowing its existing scratchpad fixture writes.
+- Premium security review and both focused verification passes completed. The final reviewer confirmed bounded zero-byte/partial-UTF-8 stdin behavior and missing-safe audit-link detection, with no remaining finding in scope.
+- OKF: all six touched canonical files have zero diagnostics. Full `./scripts/lint-okf.py` exits 1 with 84 pre-existing diagnostics outside this feature.
+- Not run: `scripts/test-install.ps1` or PowerShell parser (`pwsh` absent), real-home installation, live Codex `/hooks` trust/load smoke test.
 
 ## Errors and blockers
 
-- `rtk` is unavailable (`command not found`) despite repository preference. Report this once in a resumed execution and use direct targeted commands; do not claim `rtk` ran.
-- No design blocker remains. Implementation should wait for explicit execution/continue authorization.
+- `rtk` 0.48.0 is now installed and eligible proxy commands work. Its tracking database cannot initialize in this sandbox (`Operation not permitted`), and it warns that its shell hook is not initialized; use it where eligible but do not claim tracking evidence.
+- `pwsh` is not installed (`command not found`), so `scripts/install.ps1` parsing and `scripts/test-install.ps1` remain unverified on this host; do not install dependencies.
+- Full OKF lint remains red on 84 out-of-scope legacy migration diagnostics; touched canonical docs are clean.
+- No implementation blocker remains. Native Windows execution is the only platform-specific validation gap. Do not commit in this task; the user will commit.
 
 ## Suggested skills
 
@@ -73,4 +83,4 @@ After execution authorization, read `.agents/memory/INDEX.md` and the ExecPlan, 
 
 ## Briefing
 
-Do not redesign settled behavior or start with implementation code. On authorization, use the ExecPlan as the single source of truth, begin with Milestone 1's public failing test, preserve unrelated work, and keep the plan's progress/decision/outcome sections synchronized throughout execution.
+Implementation is ready for user review without a commit. Trust the Bash/Python fixture and independent security-review evidence, keep the native Windows and global-OKF gaps explicit, and do not run the real installer unless the user asks because it mutates `~/.codex/hooks.json` and triggers a new `/hooks` trust review.

@@ -1,5 +1,6 @@
 ---
-coverage: Repo-wide test layout, run commands, and shared authoring conventions; per-layer test guidance lives in testing/<area>.md
+type: Testing Guidance
+description: Repo-wide test layout, commands, and routing to area-specific guidance
 ---
 
 # Testing Strategy
@@ -16,7 +17,7 @@ test runner.
 
 ## Route by area
 
-- hooks (`.copilot/hooks`, `.gemini/hooks`) → `.agents/memory/testing/hooks.md`
+- hooks (`.codex/hooks`, `.copilot/hooks`, `.gemini/hooks`) → `.agents/memory/testing/hooks.md`
 - skills (`skills/`) → `.agents/memory/testing/skills.md`
 - scripts (`scripts/`) → `.agents/memory/testing/scripts.md`
 - PowerShell scripts (`scripts/*.ps1`) → `.agents/memory/testing/powershell.md`

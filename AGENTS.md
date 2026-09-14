@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository publishes skills from `skills/`, custom agents from `agents/`, repo-local Copilot hooks from `.github/hooks/`, installed Copilot hook sources from `.copilot/hooks/`, and Gemini hooks plus config from `.gemini/`.
+This repository publishes skills from `skills/`, custom agents from `agents/`, repo-local Copilot hooks from `.github/hooks/`, installed Copilot hook sources from `.copilot/hooks/`, Gemini hooks plus config from `.gemini/`, and user-global Codex hook sources from `.codex/`.
 
 ## ExecPlans
 

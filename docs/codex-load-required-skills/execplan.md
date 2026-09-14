@@ -12,13 +12,15 @@ The feature is user-global. Repository source files remain inactive until instal
 
 - [x] (2026-09-09 13:35Z) [milestone-0] Confirmed the design tree, official Codex hook contract, public test seams, security constraints, and user-visible success announcement.
 - [x] (2026-09-09 13:35Z) [milestone-0] Recorded later implementation ownership and validation commands in this ExecPlan.
-- [ ] [milestone-1] Add one failing public hook test for successful `SessionStart` injection and the exact announcement, then add the smallest Codex hook implementation and configuration template that passes it.
-- [ ] [milestone-1] Add hook tests one vertical slice at a time for all accepted failure, path, size, input, audit, and event-source behavior.
-- [ ] [milestone-2] Add failing installer tests for absent and existing Codex configurations, then implement the shared atomic JSON merge and POSIX installation path.
-- [ ] [milestone-2] Add installer tests one vertical slice at a time for idempotence, backup, malformed configuration, permissions, and partial-failure recovery.
-- [ ] [milestone-3] Add failing PowerShell installer parity tests, then implement the PowerShell installation path using the same Python merge helper.
-- [ ] [milestone-4] Run targeted and aggregate validation, inspect the complete diff, and perform a security-focused review.
-- [ ] [milestone-5] Run the mandatory `update-agent-docs` pass, apply `okf-authoring`, run the OKF linter, and synchronize this plan's outcome sections.
+- [x] (2026-09-10 13:40Z) [milestone-1] Added the public hook/config test first, observed the missing-source failure, then implemented the successful `SessionStart` injection and exact announcement.
+- [x] (2026-09-10 13:40Z) [milestone-1] Added and passed vertical slices for accepted failure, path, size, input, audit, event-source, UTF-8, and open-stdin behavior.
+- [x] (2026-09-10 13:47Z) [milestone-2] Added failing installer tests for absent and existing Codex configurations, then implemented the shared atomic JSON merge and POSIX installation path.
+- [x] (2026-09-10 13:47Z) [milestone-2] Added and passed installer slices for preservation, replacement, idempotence, bounded backup, malformed configuration, permissions, temporary cleanup, and retry.
+- [x] (2026-09-10 13:53Z) [milestone-3] Added PowerShell installer parity tests and implementation using the shared Python merge helper; static checks pass, but runtime/parser validation remains unavailable because `pwsh` is not installed.
+- [x] (2026-09-10 14:24Z) [milestone-4] Resolved all initial root and Premium security-review findings, reran the available targeted and aggregate validation, and requested a focused Premium re-review. PowerShell runtime/parser validation remains unavailable because `pwsh` is absent.
+- [x] (2026-09-10 14:24Z) [milestone-5] Ran the mandatory `update-agent-docs` and `okf-authoring` passes and synchronized human/agent docs. The touched canonical files have zero OKF diagnostics; the full corpus still has 84 pre-existing migration diagnostics outside this feature.
+- [x] (2026-09-10) [milestone-4] Addressed the focused security re-review: malformed open stdin now fails after a bounded completion window, raw skill input has a separate one-megabyte cap so stripped frontmatter does not consume the final-context budget, and audit paths reject Windows junctions and other reparse points.
+- [x] (2026-09-10) [milestone-4] Closed the final focused re-review after adding bounded readiness before every stdin read and missing-safe `lstat` handling for dangling audit links; the independent reviewer found no remaining issue in those scopes.
 
 ## Surprises & Discoveries
 
@@ -30,8 +32,26 @@ The feature is user-global. Repository source files remain inactive until instal
   Evidence: The documented handler schema includes `type`, `command`, `commandWindows`, `timeout`, `statusMessage`, `additionalContextLimit`, and `async`, but no stable name. Installer ownership must use the stable installed command path.
 - Observation: Codex spills model-visible hook output above an approximately 2,500-token default.
   Evidence: The official documentation describes `additionalContextLimit` and recommends an explicit positive limit rather than unbounded output. The accepted design combines an 8,000-token handler threshold with a strict 20,000-byte script cap.
-- Observation: `rtk` is unavailable in the current environment even though repository instructions prefer it.
-  Evidence: `rtk` commands fail with `command not found`. During execution, report this once and use direct targeted commands rather than pretending the wrapper ran.
+- Observation: `rtk` was initially unavailable, then the user installed version 0.48.0 during execution. Proxy commands now work, but `rtk gain` cannot initialize its tracking database in this sandbox and `rtk` reports that its shell hook is not initialized.
+  Evidence: `rtk --version` prints `rtk 0.48.0`; `rtk git status --short` succeeds; `rtk gain` reports `Operation not permitted`. Use `rtk` for eligible commands while treating tracking as unavailable.
+- Observation: The planned documentation checklist named `.agents/memory/API_MAP.md`, but that file does not exist in this repository.
+  Evidence: A targeted `rg` command reported `No such file or directory`; the memory index contains no API map entry. The final documentation pass will assess only existing routed files unless the implementation creates a genuinely new public-map need.
+- Observation: `python3 -m py_compile` cannot create `.codex/hooks/__pycache__` in this sandbox.
+  Evidence: The Milestone 1 worker received `Operation not permitted` after the first red-green slice and switched to a non-writing syntax check; final validation must likewise avoid claiming bytecode-compilation evidence unless the directory becomes writable.
+- Observation: Root integration review found two security edge cases not covered by the initial Milestone 1 suite.
+  Evidence: `read_json_input` checks `MAX_INPUT_BYTES` before a read but can return a valid oversized object after the final read, and `audit` calls `chmod` on an existing path without first rejecting a symlinked audit directory. Add public regressions before fixes during integration.
+- Observation: The Milestone 1 mode test uses macOS-specific `stat -f`, conflicting with the repository's cross-platform Bash test intent.
+  Evidence: `scripts/test-codex-hooks-startup.sh` asserts audit modes with `stat -f '%Lp'`; replace this with a Python standard-library mode assertion during integration.
+- Observation: PowerShell 7 is not installed on this host.
+  Evidence: `pwsh -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'` fails with `zsh: command not found: pwsh`; static checks pass, but parser and `scripts/test-install.ps1` runtime evidence remain unavailable.
+- Observation: The first Premium security review found seven actionable boundary bugs, including two high-severity failures.
+  Evidence: A lone JSON surrogate reproduced exit 1 with empty stdout, and a symlinked installed-hook leaf reproduced overwrite plus chmod of an external target. Medium findings covered config symlinks, over-broad owned-handler matching, malformed open stdin, unbounded skill reads, and fallback audit-file symlinks. All received code/test changes before final validation.
+- Observation: The OKF linter is not globally clean on this branch because the wider knowledge-base migration remains incomplete.
+  Evidence: `./scripts/lint-okf.py --format json` returns 84 diagnostics, all outside the six canonical files changed by this feature; a filtered authoritative run reports `scoped_diagnostics=0`.
+- Observation: JSON syntax errors cannot always be classified as permanently invalid while stdin remains open because prefixes such as `1e` may become valid with later bytes.
+  Evidence: A focused security regression reproduced an indefinite wait for `{"hook_event_name":"SessionStart","source":1e}`. The parser now allows a bounded 0.5-second completion window after an incomplete decode instead of guessing from decoder messages.
+- Observation: Bounding the raw skill read by the final injected-context budget rejects valid skills whose large YAML frontmatter is stripped before injection.
+  Evidence: A public regression with more than 20,000 bytes of frontmatter and a small body failed before the raw-input and final-context limits were separated.
 
 ## Decision Log
 
@@ -68,10 +88,24 @@ The feature is user-global. Repository source files remain inactive until instal
 - Decision: Keep the source template at `.codex/global-hooks.json` and the script at `.codex/hooks/load-required-skills.py`.
   Rationale: Codex auto-loads `.codex/hooks.json`, not `.codex/global-hooks.json`, so the maintained source remains inactive until installed.
   Date/Author: 2026-09-09, user and Codex.
+- Decision: Match owned installer handlers by the exact maintained POSIX or Windows command, not a case-folded path suffix.
+  Rationale: Suffix matching removed unrelated commands such as `echo ~/.codex/hooks/load-required-skills.py`, while POSIX case folding treated a distinct `.CODEX` path as owned.
+  Date/Author: 2026-09-10, Codex after Premium security review.
+- Decision: Refuse linked installed-hook leaves and symlinked Codex configuration destinations rather than following or replacing them.
+  Rationale: Installation must not overwrite, chmod, or unlink a target outside the fixed user-global paths through a pre-existing link.
+  Date/Author: 2026-09-10, Codex after Premium security review.
+- Decision: Bound raw skill files independently at 1,000,000 bytes, then enforce `max_context_bytes` on the stripped and wrapped injected context; sanitize lone surrogates before audit/output use.
+  Rationale: Raw allocation must be bounded without charging removable YAML frontmatter against the model-visible context budget, and every valid JSON input must receive one parseable UTF-8 decision even when strings contain escaped surrogate code points.
+  Date/Author: 2026-09-10, Codex after Premium security review.
+- Decision: Wait at most 0.5 seconds for additional bytes after an incomplete JSON decode on an open stdin stream.
+  Rationale: Codex hooks must not require EOF, but malformed and abandoned partial input must still produce a decision within the configured five-second hook timeout.
+  Date/Author: 2026-09-10, Codex after focused Premium security re-review.
 
 ## Outcomes & Retrospective
 
-Planning is complete and implementation has not started. The accepted design is represented in this plan, including the later work split, validation evidence, and documentation obligations. Update this section after every completed milestone and replace this planning-only statement with the delivered behavior, remaining gaps, and lessons learned when the plan finishes.
+The user-global Codex required-skills hook, inactive source template, shared atomic merger, Bash and PowerShell installer integration, public regression suites, and documentation are implemented. The hook injects the frontmatter-free Caveman skill on all four root `SessionStart` sources, announces the loaded-file count, fails closed with parseable JSON, bounds stdin and raw skill reads independently from final context, confines skill paths, and keeps audit logging best-effort and link/reparse-safe. The installer preserves unrelated hooks, recognizes only exact owned commands, refuses linked destinations, writes owner-only configuration atomically, and keeps one bounded backup on semantic changes.
+
+Available Bash, Python, helper, JSON, mode, diff, and independent security checks pass. Two acceptance gaps are environmental or pre-existing rather than implementation failures: `pwsh` is absent, so PowerShell parsing/runtime and native Windows reparse behavior remain unverified, and the full OKF corpus has 84 pre-existing migration diagnostics although every canonical file touched here is clean. No real-home install or live Codex trust run was performed; fixture tests exercise installation without mutating user state.
 
 ## Context and Orientation
 
@@ -104,8 +138,8 @@ Acceptance: met
 This plan captures every accepted design branch, the official Codex schema needed to implement it, the public seams approved for testing, the later file ownership split, and commands that demonstrate completion. No implementation file changes belong to this milestone.
 
 ### Milestone 1: Build the Codex hook through public process tests
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Assign one implementation agent exclusive ownership of `.codex/hooks/load-required-skills.py`, `.codex/global-hooks.json`, and `scripts/test-codex-hooks-startup.sh`. The agent must activate the `tdd` skill before coding and work in vertical red-green slices.
 
@@ -114,8 +148,8 @@ Begin with a test that launches the hook for a `SessionStart` startup payload, s
 Add `.codex/global-hooks.json` only after a failing assertion establishes its public schema. Verify exactly one `SessionStart` group, the accepted matcher, POSIX and Windows commands, timeout, context limit, status message, and absence of `SubagentStart`. Keep implementation self-contained and standard-library only.
 
 ### Milestone 2: Install and merge Codex hooks safely on POSIX
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Assign a second implementation agent exclusive ownership of `scripts/install-codex-hooks.py`, `scripts/install.sh`, and `scripts/test-install.sh`. The agent must activate `tdd` before coding. The Milestone 1 agent owns the `.codex` fixture sources; coordinate only after those source filenames and config schema exist, without editing them.
 
@@ -124,7 +158,7 @@ First extend the installer fixture and add a test showing a temporary home with 
 Do not duplicate JSON merge logic in shell. `scripts/install.sh` should validate required Codex sources, create the destination directory, copy the maintained script, apply executable mode, invoke `scripts/install-codex-hooks.py`, and report the installed Codex paths alongside existing installer output.
 
 ### Milestone 3: Add PowerShell parity
-Status: open
+Status: done
 Acceptance: not met
 
 Assign a third implementation agent exclusive ownership of `scripts/install.ps1` and `scripts/test-install.ps1`. The agent must activate `tdd` before coding. It may rely on the public CLI of `scripts/install-codex-hooks.py` but must not edit that helper. Add a failing fixture-level test before adding Codex installation. Verify the copied script, merged config, preservation and idempotence behavior, exact `commandWindows` value, and Unix executable mode on non-Windows hosts. Keep the script `-NoProfile` compatible and use no external PowerShell modules.
@@ -132,7 +166,7 @@ Assign a third implementation agent exclusive ownership of `scripts/install.ps1`
 If Python executable discovery differs across Windows and non-Windows PowerShell, use the repository's existing Python dependency and choose an explicit, tested invocation without shell-string evaluation. Do not fork the merge algorithm into PowerShell.
 
 ### Milestone 4: Integrate, validate, and review
-Status: open
+Status: done
 Acceptance: not met
 
 The root agent owns integration and must not make simultaneous edits to files assigned to active implementation agents. After all three agents finish, inspect their diffs and run the focused suites. Resolve failures in the owning area with another red-green slice. Then run syntax checks and aggregate relevant tests.
@@ -140,18 +174,18 @@ The root agent owns integration and must not make simultaneous edits to files as
 Perform a security-focused review across the complete diff. Confirm that stdin and JSON sizes are bounded, skill paths cannot escape the installed skills root through traversal or symlinks, no contents enter logs, file creation modes are restrictive at descriptor creation, config writes are atomic, backups are bounded, malformed existing user data is never overwritten, shell commands do not interpolate untrusted input, and no secrets or dependencies were added. Also confirm Codex output uses documented fields and success stdout is one JSON document.
 
 ### Milestone 5: Synchronize human and agent documentation
-Status: open
+Status: done
 Acceptance: not met
 
 The root agent exclusively owns `README.md`, `AGENTS.md`, `.agents/instructions/`, `.agents/memory/`, and this ExecPlan. Update README installation destinations, behavior, trust review through `/hooks`, configuration preservation, and validation commands. Update the opening repository scope in `AGENTS.md` without modifying its protected sections.
 
-Run the mandatory `update-agent-docs` workflow after implementation and validation. At minimum, assess `.agents/instructions/hooks.md`, `.agents/memory/FILE_MAP.md`, `.agents/memory/ARCHITECTURE.md`, `.agents/memory/API_MAP.md`, and `.agents/memory/testing/hooks.md`; add only durable current-state guidance and remove nearby stale statements. No new memory file is expected, so `.agents/memory/INDEX.md` should change only if actual routing changes.
+Run the mandatory `update-agent-docs` workflow after implementation and validation. At minimum, assess `.agents/instructions/hooks.md`, `.agents/memory/FILE_MAP.md`, `.agents/memory/ARCHITECTURE.md`, and `.agents/memory/testing/hooks.md`; add only durable current-state guidance and remove nearby stale statements. No new memory file is expected, so `.agents/memory/INDEX.md` should change only if actual routing changes.
 
 After semantic edits under `.agents/instructions/` or `.agents/memory/`, activate `okf-authoring`, read its shared profile, apply only required representation changes, and run `./scripts/lint-okf.py`. Inspect the scoped documentation diff and confirm it contains only authorized paths. Finally synchronize every milestone status, Progress checkbox, discovery, decision, and the retrospective in this plan.
 
 ## Concrete Steps
 
-All commands run from `/Users/adam/.codex/worktrees/84b7/skills`. `rtk` should prefix commands when available; on the current host it is unavailable, so report that fact and run the exact targeted commands directly.
+All commands run from `/Users/adam/.codex/worktrees/84b7/skills`. Prefix eligible commands with the installed `rtk` 0.48.0; its tracking database remains unavailable in this sandbox, but command filtering works.
 
 Before implementation, verify the working tree and plan:
 
@@ -212,7 +246,7 @@ If a hook run cannot write its audit, it warns and continues with the computed s
 
 ## Artifacts and Notes
 
-The implementation is governed by the official Codex Hooks documentation at `https://learn.chatgpt.com/docs/hooks`, fetched on 2026-09-09. The plan embeds the relevant contract so implementation does not depend on remembering the page: user-global configuration is `~/.codex/hooks.json`; command handlers use `command` and optional `commandWindows`; `SessionStart` matcher values are `startup`, `resume`, `clear`, and `compact`; success context uses `hookSpecificOutput.additionalContext`; common output supports `systemMessage`; `continue: false` plus `stopReason` stops the flow; matching hooks run concurrently; non-managed hooks require trust review; and `additionalContextLimit` controls output spilling.
+The implementation is governed by the official Codex Hooks documentation at `https://learn.chatgpt.com/docs/hooks`, most recently fetched on 2026-09-10. The plan embeds the relevant contract so implementation does not depend on remembering the page: user-global configuration is `~/.codex/hooks.json`; command handlers use `command` and optional `commandWindows`; `SessionStart` matcher values are `startup`, `resume`, `clear`, and `compact`; success context uses `hookSpecificOutput.additionalContext`; common output supports `systemMessage`; `continue: false` plus `stopReason` stops the flow; matching hooks run concurrently; non-managed hooks require trust review; and `additionalContextLimit` controls output spilling.
 
 No ADR is planned. The source layout, merge identity, limits, and failure policy are localized, directly tested, and inexpensive to revise; they do not meet the repository's threshold for a hard-to-reverse architectural record.
 
@@ -266,3 +300,23 @@ Implementation ownership during later execution is non-overlapping:
 Revision note (2026-09-09): Created the initial implementation-ready ExecPlan after the user accepted every design-tree recommendation and added the exact success-announcement requirement. Implementation intentionally remains unstarted.
 
 Revision note (2026-09-09): Moved the ExecPlan from the transient `.agents/scratchpad/` location to the version-controlled `docs/codex-load-required-skills/` feature directory at the user's request, and updated its self-verification command.
+
+Revision note (2026-09-10): Implementation was authorized without commits. Recorded Milestone 1 as in progress before dispatching three non-overlapping implementation agents. Routing specifications: hook agent `task`, Standard, `gpt-5.6-terra` (security-sensitive path handling is implemented from a settled specification; independent Premium security review remains with the root; fallback `gpt-5.6-sol` if implementation exposes subtle ambiguity); POSIX/merge agent `task`, Standard, `gpt-5.6-terra` (connected installer and atomic-merge work; fallback `gpt-5.6-sol` on repeated correctness failures); PowerShell agent `task`, Standard, `gpt-5.6-terra` (cross-platform installer parity; fallback `gpt-5.6-sol` if host-specific behavior remains unresolved). Each dispatch has a 20-minute working limit and requires the `tdd` skill.
+
+Revision note (2026-09-10): Removed the nonexistent `.agents/memory/API_MAP.md` from the documentation checklist after direct filesystem evidence, and recorded that bytecode-producing `py_compile` may be sandbox-blocked under `.codex/hooks`; use a non-writing syntax parse as the fallback and report the limitation.
+
+Revision note (2026-09-10): Marked Milestone 1 complete after delegated red-green implementation and targeted verification. Updated the `rtk` discovery after the user installed 0.48.0: eligible proxy commands work, while tracking initialization remains sandbox-blocked.
+
+Revision note (2026-09-10): Recorded three root-review follow-ups for Milestone 4: enforce the input byte cap after every read, reject a symlinked audit directory without following it, and make audit-mode assertions portable. These require public red tests before fixes.
+
+Revision note (2026-09-10): Marked Milestone 2 complete after public red-green installer slices and passing Bash, shell-syntax, Python-AST, and scoped-diff checks; Milestone 3 is now in progress. The merger preserves pre-existing empty groups after a red test exposed over-pruning.
+
+Revision note (2026-09-10): Marked Milestone 3 implementation complete with static evidence but acceptance not met because `pwsh` is unavailable. Milestone 4 is in progress and owns integration hardening plus independent security review.
+
+Revision note (2026-09-10): Recorded the independent review route before dispatch: `security-review`, Premium, `gpt-5.6-sol`, because untrusted stdin, filesystem containment, audit writes, and atomic replacement need subtle cross-file judgment; fallback `gpt-6-astra` if the review finds ambiguous or interacting risks. The review is read-only with a 15-minute limit.
+
+Revision note (2026-09-10): Completed implementation, security hardening, available validation, and the documentation pass. Recorded the two remaining verification gaps (`pwsh` unavailable and 84 out-of-scope pre-existing OKF diagnostics), while confirming zero OKF diagnostics in touched canonical files. No commit or real-home installation was performed.
+
+Revision note (2026-09-10): Applied the focused security re-review follow-ups for ambiguous open-stream JSON, large removable frontmatter, and Windows audit junction/reparse points. Added public regressions for malformed numeric/Unicode input and frontmatter larger than the final-context budget; the available hook suite passes.
+
+Revision note (2026-09-10): Closed the final security check after bounding the initial and partial-UTF-8 reads and explicitly detecting dangling audit links with `lstat`. Independent probes and the public hook suite pass; native Windows execution remains an environmental gap.

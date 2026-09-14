@@ -1,11 +1,12 @@
 # Skills
 
-This repository publishes custom GitHub Copilot assets:
+This repository publishes reusable agent assets for Codex, GitHub Copilot, and Gemini:
 
 - **Skills** in `skills/` for reusable task workflows such as `tdd`, `frontend-design`, `create-skill`, `prd`, `code-review`, and `commit`
 - **Custom agents** in `agents/` such as `code-architect`, `code-explorer`, `code-reviewer`, and `grader`
 - **Copilot global configs** in `.copilot`
 - **Gemini global configs** in `.gemini`
+- **Codex global hook sources** in `.codex`
 
 Canonical agent-facing guidance lives in `.agents/`.
 
@@ -33,6 +34,9 @@ The installer copies:
 - `.copilot/hooks/` entries are copied to `~/.copilot/hooks` when that directory exists
 - `.gemini/` contents into `~/.gemini`, then `.gemini/global-settings.json` into `~/.gemini/settings.json`
 - `.copilot/copilot-instructions.md` into `~/.copilot/copilot-instructions.md`
+- `.codex/hooks/load-required-skills.py` into `~/.codex/hooks`, then safely merges `.codex/global-hooks.json` into `~/.codex/hooks.json`
+
+The Codex merge preserves unrelated hooks. A real configuration change keeps the previous valid file as owner-only `~/.codex/hooks.json.bak`; malformed existing JSON is left unchanged and stops installation. After installing or changing the non-managed hook, open `/hooks` in Codex CLI to review and trust its exact definition.
 
 Workspace directories whose names end with `-workspace` are skipped during installation.
 
@@ -60,7 +64,7 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 
 ## Working in this repo
 
-1. Edit source files in `skills/`, `agents/`, `.copilot/`, or `.gemini/`
+1. Edit source files in `skills/`, `agents/`, `.codex/`, `.copilot/`, or `.gemini/`
 2. Rerun `./scripts/install.sh` to refresh the installed local copies.
 3. Use targeted checks from `.agents/memory/TESTING_STRATEGY.md`; there is no single repo-wide test runner.
 
@@ -88,6 +92,15 @@ Canonical agent-facing authoring rules live in `.agents/instructions/`.
 Run the narrowest command that covers your change. Canonical agent-facing validation routing lives in `.agents/memory/TESTING_STRATEGY.md`.
 
 For hook changes, run `./scripts/install.sh` first and then the targeted regressions listed in `.agents/memory/testing/hooks.md`; the current hook validation set starts with auto-ingest/startup, observability, secrets, tool-guard, and RTK checks.
+
+For the Codex required-skills hook and installer, run:
+
+```bash
+bash scripts/test-codex-hooks-startup.sh
+bash scripts/test-install.sh
+```
+
+When PowerShell 7 is available, also run `pwsh -NoProfile -File scripts/test-install.ps1`.
 
 ## Additional docs
 

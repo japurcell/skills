@@ -1,5 +1,6 @@
 ---
-coverage: Index and loading map for all .agents/memory/ knowledge-base files
+type: Knowledge Index
+description: Loading map for all canonical agent memory files
 ---
 
 # Memory Index
@@ -29,7 +30,7 @@ working in:
 | Area | Instruction file (rules + dir detail) | Known issues | Testing | ADRs / Decisions |
 | --- | --- | --- | --- | --- |
 | `AGENTS.md`, `README.md` | [\`.agents/instructions/repo.md\`](../instructions/repo.md) | empty | empty | empty |
-| `.github/hooks`, `.copilot/hooks`, `.gemini/hooks` | [\`.agents/instructions/hooks.md\`](../instructions/hooks.md) | [\`known-issues/hooks.md\`](known-issues/hooks.md) | [\`testing/hooks.md\`](testing/hooks.md) | [\`adrs/hooks.md\`](adrs/hooks.md) |
+| `.github/hooks`, `.copilot/hooks`, `.gemini/hooks`, `.codex/hooks` | [\`.agents/instructions/hooks.md\`](../instructions/hooks.md) | [\`known-issues/hooks.md\`](known-issues/hooks.md) | [\`testing/hooks.md\`](testing/hooks.md) | [\`adrs/hooks.md\`](adrs/hooks.md) |
 | `skills/` | [\`.agents/instructions/skills.md\`](../instructions/skills.md) | [\`known-issues/skills.md\`](known-issues/skills.md) | [\`testing/skills.md\`](testing/skills.md) | empty |
 | `agents/` | [\`.agents/instructions/agents.md\`](../instructions/agents.md) | empty | empty | empty |
 | `scripts/` (shell) | [\`.agents/instructions/scripts.md\`](../instructions/scripts.md) | [\`known-issues/scripts.md\`](known-issues/scripts.md) | [\`testing/scripts.md\`](testing/scripts.md) | empty |
@@ -68,8 +69,8 @@ memory files cross-reference:
 
 - [AGENTS.md](../../AGENTS.md) — top-level quickstart and loading contract.
 - [README.md](../../README.md) — repo overview and installation entry point.
-- [`.agents/instructions/<area>.md`](../instructions/) — canonical area-scoped workflow rules and conventions.
-- [`.agents/skills/*/SKILL.md`](../skills/) — task-specific skills (update-agent-docs, etc.).
+- [`.agents/instructions/<area>.md`](../instructions/hooks.md) — canonical area-scoped workflow rules and conventions; this link opens the hooks example.
+- [`.agents/skills/*/SKILL.md`](../skills/update-agent-docs/SKILL.md) — task-specific skills; this link opens the documentation-maintenance example.
 
 ## Conventions
 
