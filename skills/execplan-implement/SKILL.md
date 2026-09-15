@@ -16,7 +16,7 @@ Communication to and from subagents should be sparse. Communicate primarily thro
 
 ## Steps
 
-1. Activate the `delegate-to-subagents` skill.
+1. Activate the `exec-plans` and `delegate-to-subagents` skills.
 
 2. Read the ExecPlan and progress checklist items. Read enough to understand the task graph.
 
@@ -24,10 +24,38 @@ Communication to and from subagents should be sparse. Communicate primarily thro
 
 4. If current branch is `main` or `master`, create a new **base topic branch**.
 
-5. Use **implementer subagents** to implement each progress checklist item. Each implementer subagent should work in its own worktree, on its own branch.
+5. Use **implementer subagents** to implement each progress checklist item. Instruct each implementer subagent to:
+   1. Activate the `tdd` skill.
+   2. Work in its own worktree, on its own branch (see [Working with Worktrees](#working-with-worktrees)).
 
 6. Once an **implementer subagent** completes, merge its work to the **base topic branch** with a **merger subagent**.
 
 7. If this changes the **frontier** of available progress checklist items, kick off more **implementer subagents** to work on the new progress checklist items. This allows for maximum concurrency.
 
 8. Once all progress checklist items are complete, clean up all **implementer subagent** worktrees and report that **base topic branch** is ready for human review.
+
+## Working with Worktrees
+
+For parallel AI agent work, use git worktrees to run multiple branches simultaneously:
+
+```bash
+# Create a worktree for a feature branch
+git worktree add ../project-feature-a feature/task-creation
+git worktree add ../project-feature-b feature/user-settings
+
+# Each worktree is a separate directory with its own branch
+# Agents can work in parallel without interfering
+ls ../
+  project/              ← main branch
+  project-feature-a/    ← task-creation branch
+  project-feature-b/    ← user-settings branch
+
+# When done, merge and clean up
+git worktree remove ../project-feature-a
+```
+
+Benefits:
+- Multiple agents can work on different features simultaneously
+- No branch switching needed (each directory has its own branch)
+- If one experiment fails, delete the worktree — nothing is lost
+- Changes are isolated until explicitly merged
