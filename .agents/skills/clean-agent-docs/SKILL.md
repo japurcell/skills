@@ -1,37 +1,50 @@
 ---
 name: clean-agent-docs
-description: Cleans up and formats agent documentation to keep context loading efficient and cost-effective.
+description: Audit and simplify repository agent instructions, memory, and routing docs. Use when agent context is duplicated, stale, contradictory, overly broad, poorly indexed, or expensive to load.
 ---
 
-# /clean-agent-docs
+# Clean Agent Docs
 
-Improve quality of repo agent docs/instructions/memory for lower token cost and cleaner context loading.
+Reduce agent-doc context cost while preserving durable guidance.
 
 ## Workflow
 
-1. Read and audit all relevant docs surfaces:
+1. Inventory relevant files:
    - `**/AGENTS.md`
    - `.agents/instructions/**/*.md`
    - `.agents/memory/**/*.md`
-2. Find and fix:
-   - duplicate guidance
-   - stale or contradictory rules
-   - broken or missing references/links
-   - indexing gaps in `.agents/memory/INDEX.md`
-   - over-broad always-load guidance that increases context pollution
-   - split docs by runtime or provider variant when most tasks touch only one variant (for example, shell scripts vs PowerShell scripts)
-3. Keep edits minimal, precise, and future-facing; avoid session-history chatter.
-4. Activate the `update-agent-docs` skill and complete its checklist.
-5. Validate doc changes with smallest appropriate checks (at least formatting check on changed docs).
+2. Map the load path:
+   - Identify default-loaded docs, indexes, pointers, and task-specific docs.
+   - Note where broad docs force unrelated context to load.
+3. Audit each relevant file using [references/audit-checklist.md](references/audit-checklist.md).
+4. Make the smallest coherent edits:
+   - Keep one canonical location for each rule.
+   - Replace duplicates with links.
+   - Resolve contradictions in favor of the narrowest authoritative source.
+   - Make indexes and pointers state what to read and when.
+   - Keep default-loaded docs short and broadly applicable.
+5. If a default or mixed-topic doc needs restructuring, use [references/splitting-guide.md](references/splitting-guide.md).
+6. Activate the `update-agent-docs` skill and complete its checklist.
+7. Validate:
+   - Run the repository's doc-formatting or lint command on changed files.
+   - Check changed links and index entries.
+   - Review the diff for lost guidance and unrelated changes.
 
 ## Constraints
 
-- Do not change product/source code unrelated to docs quality work.
-- Preserve repo conventions and frontmatter requirements.
-- Prioritize making it easier for future agents to load only exact needed context.
+- Do not change unrelated product or source code.
+- Preserve repository conventions and required frontmatter.
+- Prefer links to repeated text.
+- Do not invent policy or silently discard unique durable guidance.
+- Keep session history, one-off task state, secrets, and raw work logs out of durable docs.
+- Do not broaden default-load scope unless necessary.
 
 ## Return
 
-- summary of key improvements
-- files changed
-- validation commands/results
+Report:
+
+- Key improvements
+- Files changed
+- Content moved or dropped
+- Validation commands and results
+- Unresolved conflicts or broken references

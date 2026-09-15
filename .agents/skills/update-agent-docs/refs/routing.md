@@ -1,12 +1,8 @@
 # Routing
 
-Update only `.agents/instructions/` and `.agents/memory/`.
-
-Do not edit `.agents/skills/` or `.agents/sources/`.
-
 ## Choose the Doc Type
 
-Use `.agents/instructions/` for what agents must do:
+Use `.agents/instructions/` for required actions:
 
 - Required workflow
 - Coding rule
@@ -23,7 +19,7 @@ Use `.agents/memory/` for durable repo knowledge:
 - Cross-file relationship
 - Non-obvious behavior
 
-If a topic needs both rules and background, split it.
+If a topic needs both rules and background, use separate instruction and memory docs.
 
 Example:
 
@@ -32,17 +28,17 @@ Example:
 
 ## Common Routes
 
-| Change                                                      | Update                                                       |
-| ----------------------------------------------------------- | ------------------------------------------------------------ |
-| File added, moved, renamed, or layout changed               | `.agents/memory/FILE_MAP.md` if agents need the map          |
-| Compiler error, IDE diagnostic, or code action changed      | Matching instruction or memory doc for that area             |
-| Required repo-wide convention changed                       | Matching `.agents/instructions/` doc                         |
-| Descriptive repo-wide pattern changed                       | `.agents/memory/CONVENTIONS.md` or focused memory doc        |
-| Area-specific pattern changed                               | Matching focused instruction or memory doc                   |
-| Repo-wide gotcha changed                                    | `.agents/memory/KNOWN_ISSUES.md`                             |
-| Area-specific gotcha changed                                | `.agents/memory/known-issues/<area>.md`                      |
-| Repo-wide test command/layout changed                       | `.agents/memory/TESTING_STRATEGY.md` or test instruction doc |
-| Area test fixture/base/convention changed                   | `.agents/memory/testing/<area>.md` or test instruction doc   |
-| Memory doc added, removed, renamed, or purpose changed      | `.agents/memory/INDEX.md` and affected links                 |
-| Instruction doc added, removed, renamed, or purpose changed | Matching instruction index, if one exists                    |
-| Ordinary project docs changed only                          | No agent-doc update unless links/indexes/frontmatter changed |
+| Change | Destination |
+| --- | --- |
+| Required repo-wide rule | Focused `.agents/instructions/` doc |
+| Area-specific rule | Instruction doc for that area |
+| Architecture, layout, or entry point | Focused memory doc; update `FILE_MAP.md` if useful |
+| Repo-wide descriptive convention | `CONVENTIONS.md` or a focused memory doc |
+| Repo-wide known issue | `KNOWN_ISSUES.md` |
+| Area-specific known issue | `known-issues/<area>.md` |
+| Required test command or process | Test instruction doc |
+| Test layout, fixture, or behavior | `TESTING_STRATEGY.md` or `testing/<area>.md` |
+| Compiler, analyzer, or IDE behavior | Instruction for required handling; memory for explanation |
+| Memory doc added, moved, removed, or repurposed | Memory `INDEX.md` and affected links |
+| Instruction doc added, moved, removed, or repurposed | Matching instruction index, if present |
+| Ordinary project documentation only | No update unless agent-doc routing, links, or metadata changed |

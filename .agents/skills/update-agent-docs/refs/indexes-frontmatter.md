@@ -2,49 +2,63 @@
 
 ## Frontmatter
 
-For new or existing `.agents/instructions/` or `.agents/memory/` docs, use parseable OKF frontmatter with non-empty path-derived `type` and routing-oriented `description`:
+Created or touched agent docs must have parseable OKF frontmatter:
 
 ```yaml
 ---
 type: Agent Memory
-description: Brief description of what this doc covers
+description: What this document covers and when to read it
 ---
 ```
 
-Use `Agent Instruction` below `.agents/instructions/`; `Knowledge Index` for uppercase `INDEX.md`; `Source Ingestion Log` for uppercase `LOG.md`; `Known Issue` for root `KNOWN_ISSUES.md` and `known-issues/**`; `Testing Guidance` for root `TESTING_STRATEGY.md` and `testing/**`; `Architecture Decision` for `adrs/**`; `Source Summary` for recursive `sources/**/*.summary.md`; and `Agent Memory` otherwise. Stable documents omit lifecycle `status`; use `status: draft` only for an actual draft. Keep repository-local links file-relative and preserve paths and unrelated bodies during metadata-only work. `okf-authoring` owns the full profile and lint verification.
+Use the first matching type:
 
-## New Docs
-
-Create a new focused doc when durable information does not fit an existing focused doc.
+| Path | `type` |
+| --- | --- |
+| `.agents/instructions/**` | `Agent Instruction` |
+| `.agents/memory/**/INDEX.md` | `Knowledge Index` |
+| `.agents/memory/**/LOG.md` | `Source Ingestion Log` |
+| `.agents/memory/KNOWN_ISSUES.md` or `.agents/memory/known-issues/**` | `Known Issue` |
+| `.agents/memory/TESTING_STRATEGY.md` or `.agents/memory/testing/**` | `Testing Guidance` |
+| `.agents/memory/adrs/**` | `Architecture Decision` |
+| `.agents/memory/sources/**/*.summary.md` | `Source Summary` |
+| Other `.agents/memory/**` | `Agent Memory` |
 
 Rules:
 
-- Use a descriptive name, not `misc.md`.
-- Add non-empty path-derived `type` and routing-oriented `description` frontmatter.
-- Add or update index entries when an index exists.
-- No permission is needed to create focused docs in `.agents/instructions/` or `.agents/memory/`.
+- Make `description` useful for routing.
+- Omit `status` for stable docs.
+- Use `status: draft` only for an actual draft.
+- Keep repository-local links file-relative.
+- Preserve paths and unrelated content during metadata-only edits.
+- Use `okf-authoring` for the complete profile and lint checks.
 
-## Memory Index Entries
+## New Docs
 
-Indexes should route agents, not explain the whole topic.
+Create a doc only when durable content does not fit an existing focused doc.
 
-Each `.agents/memory/INDEX.md` entry should say:
+- Use a descriptive filename, not `misc.md`.
+- Add frontmatter.
+- Update the relevant index, if present.
+- No permission is needed within `.agents/instructions/` or `.agents/memory/`.
 
-- What the doc covers
-- When to read it
-- When not to read it, if confusion is likely
+## Index Entries
 
-Good:
+Indexes route agents; they do not repeat document content.
 
-- `hooks/gemini-copilot-hooks.md`
-  - Covers shared Gemini/Copilot hook orchestration and provider-specific hook behavior.
-  - Read when modifying Gemini or Copilot git hooks or hook tests.
-  - Do not read for unrelated tooling, package manager, linting, or CI changes.
+Each entry should state:
 
-Bad:
+1. What the doc covers
+2. When to read it
+3. When not to read it, if confusion is likely
 
-- `tooling.md` - tooling notes.
+Example:
 
-## Instruction Indexes
+```markdown
+- `hooks/gemini-hooks.md`
+  - Gemini hook behavior and known constraints.
+  - Read when changing Gemini hooks or their tests.
+  - Do not read for unrelated CI or package-management work.
+```
 
-If instruction docs are added, moved, renamed, split, or removed, update the matching instruction index if one exists.
+Update the relevant index when a doc is added, moved, renamed, removed, split, or repurposed.

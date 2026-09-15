@@ -1,91 +1,55 @@
-# Doc Quality
+# Document Quality
 
-Agent docs should give future agents the smallest useful context.
+Give future agents the least context needed to act correctly.
 
-## Core Rules
+## Write
 
-- Update existing focused docs before creating new ones.
-- Put guidance where future agents will look for it.
-- Keep indexes short; link instead of repeating content.
-- Keep one canonical copy of each fact or rule.
-- Use short headings, short bullets, and simple words.
-- Do not mix instructions and memory.
+- Use short headings, bullets, and direct language.
+- Update an existing focused doc before creating one.
+- Put each fact or rule in one canonical location.
+- Link to details instead of repeating them.
+- Keep instructions and memory separate.
+- Describe current behavior, not how the task unfolded.
 
-## Progressive Disclosure
+## Split
 
-Agents should be able to start at an index and open only relevant docs.
+Split a document when it:
 
-Prefer:
+- Mixes unrelated topics
+- Combines instructions with memory
+- Contains narrow details most agents do not need
+- Forces agents to scan a large file for one fact
+- Combines variants that are usually used separately
 
-- Small overview docs
-- Focused docs for areas, tools, providers, or variants
-- Links from indexes to focused docs
-
-Avoid:
-
-- Large mixed-topic files
-- Rare details in shared docs
-- Provider/platform/tool details in shared docs unless usually needed together
-
-## Split When
-
-Split a doc if it:
-
-- Covers unrelated topics
-- Has rare or narrow sections
-- Forces agents to scan a large file for one detail
-- Mixes instructions and memory
-- Became a grab bag
-- Covers variants agents usually need separately
-
-Prefer separate docs for runtime- or provider-specific variants that are not usually edited together, even when the underlying topic matches. Example: shell helpers and PowerShell scripts each keep their own instruction, known-issues, and testing docs instead of mixing in one generic script file.
-
-Example split:
-
-- `.agents/memory/hooks/INDEX.md`
-- `.agents/memory/hooks/shared-hook-architecture.md`
-- `.agents/memory/hooks/gemini-hooks.md`
-- `.agents/memory/hooks/copilot-hooks.md`
-- `.agents/instructions/scripts.md`
-- `.agents/instructions/powershell.md`
-
-If variants are tightly coupled, one focused combined doc is fine:
-
-- `.agents/memory/hooks/gemini-copilot-hooks.md`
+Keep tightly coupled variants together. Otherwise, give each provider, runtime, platform, or tool its own focused doc and link to it from an index.
 
 ## Deduplicate
 
-When duplicate guidance exists:
+When guidance is duplicated:
 
-1. Pick the canonical location.
-2. Merge useful content there.
-3. Delete duplicate text elsewhere.
-4. Add a short link only if useful.
+1. Choose the canonical doc.
+2. Merge unique, durable content into it.
+3. Delete duplicate text.
+4. Add a link only if it improves routing.
 5. Update indexes and links.
-
-## Required Cleanup Check
-
-Before finishing, check touched and closely related docs for:
-
-- Duplicate content
-- Stale or contradicted claims
-- Broad sections that should be split
-- Missing or vague index entries
-- Broken links
-- Instructions stored as memory
-- Memory stored as instructions
-- Long task narratives
-- Raw logs or debug transcripts
-
-Fix small issues immediately.
 
 ## Do Not Store
 
-Do not add:
-
 - One-off task notes
-- Raw command output
-- Temporary debugging details
-- Obvious facts from nearby code
+- Raw logs or command output
+- Debug transcripts
+- Temporary workarounds
 - Speculation
-- Long summaries of what the last agent did
+- Obvious facts visible in nearby code
+- Summaries of previous work
+
+## Final Check
+
+Check touched and related docs for:
+
+- Stale, duplicate, or contradictory guidance
+- Content that belongs in a focused doc
+- Instructions stored as memory, or memory stored as instructions
+- Missing or vague index entries
+- Broken links
+- Task narratives, logs, or temporary details

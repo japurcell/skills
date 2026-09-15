@@ -6,43 +6,39 @@ description: >
 
 # Update Agent Docs
 
-Keep `.agents/` small, current, and easy to navigate.
+Keep agent documentation small, current, and easy to route.
 
 ## Workflow
 
-1. Identify durable changes.
-2. Review the session history specifically for **mistakes, failures, repeated retries, user corrections, steering updates, negative code review results, workarounds discovered, coordination failures, validation reruns, and resolved compiler/linter warnings**.
-3. Extract any durable language, framework, or tooling rules learned from these mistakes.
-4. Route each change to the right doc. See `refs/routing.md`.
-5. Search related docs for existing guidance before adding text.
-6. Update the most focused doc, or create one if needed.
-7. Remove stale, duplicated, or contradicted nearby content.
-8. Update indexes/frontmatter when needed. See `refs/indexes-frontmatter.md`.
-9. Check links.
-10. After a semantic change to canonical documents, invoke `okf-authoring` to apply and verify the OKF representation contract. Keep routing, placement, deduplication, and index decisions here; `okf-authoring` does not invoke back.
-11. Report updates using the format below.
+1. Review the final diff and session history.
+2. Derive durable, non-obvious rules from **mistakes, failures, repeated retries, user corrections, steering updates, negative code review results, workarounds discovered, coordination failures, validation reruns, and resolved compiler/linter warnings**.
+3. Route each rule using [routing](refs/routing.md).
+4. Search related docs before adding content.
+5. Update the smallest relevant doc. Create a focused doc only when needed.
+6. Remove nearby stale, duplicate, or contradictory guidance.
+7. When shortening or splitting a doc, preserve every durable rule in the appropriate focused doc.
+8. Apply [document quality](refs/doc-quality.md).
+9. Update frontmatter, indexes, and links using [indexes and frontmatter](refs/indexes-frontmatter.md).
+10. Report the result.
 
 ## Rules
 
 - Edit only `.agents/instructions/` and `.agents/memory/`.
-- Do not edit `.agents/skills/`.
-- Document current repo state, not this task's story.
+- Do not edit `.agents/skills/` or `.agents/sources/`.
+- Describe verified current behavior, not task history.
 - Keep one canonical copy of each fact or rule.
-- Prefer short, focused docs over grab bags.
-- Use simple bullets and direct language.
-- Do not store one-off notes, raw logs, speculation, or obvious facts from nearby code.
+- Record diagnostics, linter rules, and framework quirks only when they reveal durable, non-obvious guidance.
+- If no durable knowledge changed, make no edits.
+- Do not leave broken links.
 - If a cleanup is too large:
   - activate the `exec-plans` skill
   - orchestrate the updates with subagents
   - make file ownership explicit for each subagent to avoid conflicts
   - choose the smallest subagent model type that can effectively handle the task to avoid unnecessary cost and latency
-- If no durable knowledge changed, make no doc edits and report that no update was needed.
 
-More quality rules: `refs/doc-quality.md`.
+## Final Response
 
-## Final Response Format
-
-Use this short summary:
+Use `None` for empty sections.
 
 ```text
 Added:
