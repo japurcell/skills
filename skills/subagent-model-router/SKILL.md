@@ -69,7 +69,7 @@ Return:
 
 ## References
 
-Catalog and pricing references were verified against [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) on **2026-09-08**. Recheck that source when current pricing is required; plan and runtime availability can differ.
+Catalog and pricing references were verified against [Supported AI models in GitHub Copilot](https://docs.github.com/en/copilot/reference/ai-models/supported-models), [AI model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison), and [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) on **2026-09-15**. Recheck those sources when current pricing is required; plan and runtime availability can differ.
 
 Load only when needed:
 

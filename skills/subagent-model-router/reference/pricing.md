@@ -1,6 +1,6 @@
 # Pricing Reference
 
-Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Verified **2026-09-08**. All prices are USD per 1 million tokens for GitHub Copilot. Check the source when exact cost matters; these are not direct-provider API or other-platform prices.
+Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Verified **2026-09-15**. All prices are USD per 1 million tokens for GitHub Copilot. Check the source when exact cost matters; these are not direct-provider API or other-platform prices.
 
 If prices are shown in GitHub AI Credits: 1 credit = $0.01 USD.
 
@@ -48,7 +48,7 @@ Shared repo context across workers does not guarantee cache hits. Verify cache b
 | Anthropic | `claude-sonnet-5` | default | $2.00 | $0.20 | $2.50 | $10.00 |
 | Anthropic | `claude-opus-4.7` | default | $5.00 | $0.50 | $6.25 | $25.00 |
 | Anthropic | `claude-opus-4.8` | default | $5.00 | $0.50 | $6.25 | $25.00 |
-| Anthropic | `claude-opus-4.8-fast-mode-preview` | default | $10.00 | $1.00 | $12.50 | $50.00 |
+| Anthropic | `claude-opus-4.8-fast` | default | $10.00 | $1.00 | $12.50 | $50.00 |
 | Anthropic | `claude-fable-5` | default | $10.00 | $1.00 | $12.50 | $50.00 |
 | Anthropic | `claude-opus-5` | default | $5.00 | $0.50 | $6.25 | $25.00 |
 | Anthropic | `claude-fable-5.1` | default | $10.00 | $0.25 | $12.50 | $50.00 |
@@ -56,7 +56,6 @@ Shared repo context across workers does not guarantee cache hits. Verify cache b
 | Google | `gemini-3.6-flash` | promotional | $0.75 | $0.075 | — | $3.75 |
 | Google | `gemini-3.7-flash` | promotional | $0.75 | $0.075 | — | $3.75 |
 | Google | `gemini-3.8-flash` | promotional | $0.75 | $0.075 | — | $3.75 |
-| Microsoft | `mai-code-1-flash` | default | $0.75 | $0.075 | — | $4.50 |
 | Microsoft | `mai-code-1.1-flash` | default | $0.20 | $0.02 | — | $1.20 |
 | xAI | `grok-4.5` | ≤200K | $2.00 | $0.50 | — | $6.00 |
 | xAI | `grok-4.5` | >200K | $4.00 | $1.00 | — | $12.00 |

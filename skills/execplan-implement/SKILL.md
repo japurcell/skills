@@ -28,7 +28,7 @@ Communication to and from subagents should be sparse. Communicate primarily thro
    1. Activate the `tdd` skill.
    2. Work in its own worktree, on its own branch (see [Working with Worktrees](#working-with-worktrees)).
 
-6. Once an **implementer subagent** completes, merge its work to the **base topic branch** with a **merger subagent**.
+6. Once an **implementer subagent** completes, merge its work to the **base topic branch**. Delegate conflict-prone merges to a **merger subagent** when isolation or parallelism likely prevents retries; otherwise merge directly.
 
 7. If this changes the **frontier** of available progress checklist items, kick off more **implementer subagents** to work on the new progress checklist items. This allows for maximum concurrency.
 

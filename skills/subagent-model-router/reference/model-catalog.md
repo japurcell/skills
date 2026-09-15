@@ -2,7 +2,7 @@
 
 Use when `SKILL.md` is not enough to choose a model.
 
-Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Verified **2026-09-08**. This catalog covers models listed on that pricing page; absence does not establish retirement. IDs below are routing shorthand: use the exact identifier exposed by the runtime.
+Sources: [Supported AI models in GitHub Copilot](https://docs.github.com/en/copilot/reference/ai-models/supported-models), [AI model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison), and [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Verified **2026-09-15**. This catalog covers models listed on those pages; absence does not establish retirement. IDs below are routing shorthand: use the exact identifier exposed by the runtime.
 
 Routing tiers are local to this skill and may differ from provider labels. Use `reference/pricing.md` when exact cost matters.
 
@@ -17,7 +17,6 @@ Use for simple, bounded, repetitive, or low-risk work. Not for normal code revie
 | OpenAI | `gpt-5.6-luna` | GA | lightweight long-context work |
 | Anthropic | `claude-haiku-4.5` | GA | simple/repetitive tasks |
 | Google | `gemini-3.5-flash` | GA | fast simple work |
-| Microsoft | `mai-code-1-flash` | GA | lightweight code work |
 | Microsoft | `mai-code-1.1-flash` | GA | lower-cost lightweight code work |
 
 ## Standard
@@ -50,7 +49,7 @@ Use for complex, ambiguous, high-stakes, security-sensitive, or failure-sensitiv
 | OpenAI | `gpt-5.6-sol` | GA | powerful reasoning; long-context pricing |
 | Anthropic | `claude-opus-4.7` | GA | deep reasoning/debugging |
 | Anthropic | `claude-opus-4.8` | GA | deep reasoning/debugging |
-| Anthropic | `claude-opus-4.8-fast-mode-preview` | GA | premium reasoning when speed justifies cost |
+| Anthropic | `claude-opus-4.8-fast` | GA | premium reasoning when speed justifies cost |
 | Anthropic | `claude-fable-5` | GA | long-horizon autonomous coding/knowledge work |
 | OpenAI | `gpt-6-astra` | GA | powerful reasoning; long-context pricing |
 | Anthropic | `claude-opus-5` | GA | powerful reasoning |
