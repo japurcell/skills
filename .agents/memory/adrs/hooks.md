@@ -15,6 +15,8 @@ This document records the architectural decision records (ADRs) for `{.copilot,.
 
 ## ADR-002: Local structured observability via NDJSON emitter
 
+Status: superseded in part by ADR-008; NDJSON remains the fallback audit stream.
+
 - **Decision:** Each runtime owns a local `send-event.py` emitter plus append-only NDJSON logs under `$HOME/.copilot/hooks/logs/observability.ndjson` and `$HOME/.gemini/hooks/logs/observability.ndjson`.
 - **Rationale:** The PRD requires local-only observability that does not alter control flow and stays best-effort.
 - **Consequences:** Observability uses bounded-lock, fail-open writes, redaction, size caps, and a runtime kill-switch without affecting operational hooks.

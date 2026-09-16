@@ -13,7 +13,7 @@ This is the loading map for the agent knowledge base under `.agents/memory/`. **
 | -------------------------- | ----------------------------------------------------------------------- | --------------------------------------------- |
 | **[INDEX.md](INDEX.md)** (this file) | Discovery map for the knowledge base                                    | Always — read first                           |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)**      | Top-level repo structure, install flows, and documentation boundaries   | Load when task needs repo structure, install flows, or docs boundaries |
-| **[CONVENTIONS.md](CONVENTIONS.md)**       | Repo-wide code style, naming, immutability, resource & public-API rules | When writing or reviewing code                |
+| **[CONVENTIONS.md](CONVENTIONS.md)**       | Repo-wide formatting and agent-workspace boundaries                     | When writing or reviewing code                |
 | **[FILE_MAP.md](FILE_MAP.md)**          | Top-level map (one line per area) + layer pointers                      | When deciding which area/layer to work in     |
 | **[API_MAP.md](API_MAP.md)**           | Public repository validation and provider-adapter entry points          | When changing OKF lint CLI or hook envelopes  |
 | **[LOG.md](LOG.md)**               | Append-only source-ingestion activity log                               | When reviewing ingested source history        |
@@ -30,12 +30,14 @@ working in:
 
 | Area | Instruction file (rules + dir detail) | Known issues | Testing | ADRs / Decisions |
 | --- | --- | --- | --- | --- |
-| `AGENTS.md`, `README.md` | [\`.agents/instructions/repo.md\`](../instructions/repo.md) | empty | empty | empty |
-| `.github/hooks`, `.copilot/hooks`, `.gemini/hooks`, `.codex/hooks` | [\`.agents/instructions/hooks.md\`](../instructions/hooks.md) | [\`known-issues/hooks.md\`](known-issues/hooks.md) | [\`testing/hooks.md\`](testing/hooks.md) | [\`adrs/hooks.md\`](adrs/hooks.md) |
-| `skills/` | [\`.agents/instructions/skills.md\`](../instructions/skills.md) | [\`known-issues/skills.md\`](known-issues/skills.md) | [\`testing/skills.md\`](testing/skills.md) | empty |
-| `agents/` | [\`.agents/instructions/agents.md\`](../instructions/agents.md) | empty | empty | empty |
-| `scripts/` (shell) | [\`.agents/instructions/scripts.md\`](../instructions/scripts.md) | [\`known-issues/scripts.md\`](known-issues/scripts.md) | [\`testing/scripts.md\`](testing/scripts.md) | empty |
-| `scripts/*.ps1` (PowerShell) | [\`.agents/instructions/powershell.md\`](../instructions/powershell.md) | [\`known-issues/powershell.md\`](known-issues/powershell.md) | [\`testing/powershell.md\`](testing/powershell.md) | empty |
+| `AGENTS.md`, `README.md` | [repo](../instructions/repo.md) | empty | empty | empty |
+| General provider hooks | [hooks](../instructions/hooks.md) | [hooks](known-issues/hooks.md) | [hooks](testing/hooks.md) | [hooks](adrs/hooks.md) |
+| Hook source auto-ingest | [auto-ingest](../instructions/hooks-auto-ingest.md) | [auto-ingest](known-issues/hooks-auto-ingest.md) | [auto-ingest](testing/hooks-auto-ingest.md) | [hooks](adrs/hooks.md) |
+| Hook observability and trace storage | [observability](../instructions/hooks-observability.md) | [observability](known-issues/hooks-observability.md) | [observability](testing/hooks-observability.md) | [hooks](adrs/hooks.md) |
+| `skills/` | [skills](../instructions/skills.md) | [skills](known-issues/skills.md) | [skills](testing/skills.md) | empty |
+| `agents/` | [agents](../instructions/agents.md) | empty | empty | empty |
+| `scripts/` (shell) | [scripts](../instructions/scripts.md) | [scripts](known-issues/scripts.md) | [scripts](testing/scripts.md) | empty |
+| `scripts/*.ps1` (PowerShell) | [PowerShell](../instructions/powershell.md) | [PowerShell](known-issues/powershell.md) | [PowerShell](testing/powershell.md) | empty |
 
 The repo-wide memory files above hold only cross-cutting content and point into
 these layer files for specifics.
@@ -61,7 +63,7 @@ Keep chronological integration history grep-friendly by prefixing log entries as
 | `.agents/memory/sources/llm-wiki-md.summary.md` | `.agents/sources/llm-wiki.md` | When changing source-ingest workflow, wiki/log/index structure, or compiled-knowledge maintenance patterns. |
 | `.agents/memory/sources/vscode-agent-hooks-md.summary.md` | `.agents/sources/vscode-agent-hooks.md` | When changing VS Code hook compatibility, hook locations, or agent-scoped hook behavior. |
 | `.agents/memory/sources/source-ingest-manifest.json` | `.agents/sources/*` | When debugging auto-ingest hook state, stale-summary detection, or pending-ingest gating. |
-| `[LOG.md](LOG.md)` | N/A | When reviewing scaffold and integrate history. |
+| [LOG.md](LOG.md) | N/A | When reviewing scaffold and integrate history. |
 
 ## Related Existing Docs
 

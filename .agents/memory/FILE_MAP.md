@@ -8,7 +8,9 @@ description: Top-level overview; per-layer directory detail lives in the instruc
 This file is a **top-level map only**. For area detail and working rules, read the matching instruction file:
 
 - repo docs and root workflow → `.agents/instructions/repo.md`
-- hooks areas → `.agents/instructions/hooks.md`
+- general provider hooks → `.agents/instructions/hooks.md`
+- source auto-ingest hooks → `.agents/instructions/hooks-auto-ingest.md`
+- hook observability and trace storage → `.agents/instructions/hooks-observability.md`
 - skills areas → `.agents/instructions/skills.md`
 - custom agents → `.agents/instructions/agents.md`
 - shell helper scripts → `.agents/instructions/scripts.md`
@@ -26,7 +28,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `agents/` | agents | Standalone custom agent prompt files. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `docs/research/` | repo docs | Human-facing research notes on tooling and conversions. |
-| `docs/okf-kb-migration/` | repo docs | Version-controlled OKF migration research, closed design tickets, Wayfinder map, handoff, and implementation/relocation ExecPlans; obsolete tickets are archived under `tickets/obsolete/`. |
+| `docs/okf-kb-migration/` | repo docs | Completed OKF migration research, closed design tickets, handoff, and implementation/repair ExecPlans; obsolete tickets are archived under `tickets/obsolete/`. |
 | `scripts/` | scripts | Installers, importers, validation helpers, and shared shell utilities. |
 | `references/` | references | Optional shared reference material shipped with installs. |
 
@@ -64,8 +66,8 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `docs/adr/0001-auto-ingest-runtime-shape.md` | Records why source auto-ingest uses runtime-local hook code with one committed repo manifest. |
 | `docs/adr/0002-pending-ingest-gate.md` | Records why the pending-ingest gate blocks normal work until summaries resolve. |
 | `docs/adr/0003-sqlite-backed-hook-observability.md` | Records why hook observability uses SQLite as source of truth with NDJSON fallback. |
-| `docs/okf-kb-migration/map.md` | Active Wayfinder map for the implementation-ready OKF agent-knowledge-base migration design. |
-| `docs/okf-kb-migration/implementation-execplan.md` | Six-gate implementation authority for the in-place OKF migration; implementation remains separate from the closed design map. |
+| `docs/okf-kb-migration/map.md` | Closed Wayfinder map and decision index for the completed OKF knowledge-base migration. |
+| `docs/okf-kb-migration/implementation-execplan.md` | Completed six-gate implementation record for the in-place OKF migration. |
 | `.nvmrc` | Node version hint for local tooling. |
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |

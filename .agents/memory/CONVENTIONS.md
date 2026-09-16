@@ -10,7 +10,9 @@ Authoritative formatting lives in `.editorconfig`; path-scoped rules live in `.a
 **Layer-specific conventions live in the path-scoped instruction files — read the one for your area:**
 
 - repo docs and root workflow (`AGENTS.md`, `README.md`) → `.agents/instructions/repo.md`
-- hooks (`{.copilot,.gemini}/hooks`) → `.agents/instructions/hooks.md`
+- general provider hooks → `.agents/instructions/hooks.md`
+- source auto-ingest hooks → `.agents/instructions/hooks-auto-ingest.md`
+- hook observability and trace storage → `.agents/instructions/hooks-observability.md`
 - skills (`skills/`) → `.agents/instructions/skills.md`
 - custom agents (`agents/`) → `.agents/instructions/agents.md`
 - shell helper scripts (`scripts/*.sh`, `scripts/*.py`) → `.agents/instructions/scripts.md`

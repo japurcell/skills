@@ -17,7 +17,9 @@ test runner.
 
 ## Route by area
 
-- hooks (`.codex/hooks`, `.copilot/hooks`, `.gemini/hooks`) → `.agents/memory/testing/hooks.md`
+- general provider hooks → `.agents/memory/testing/hooks.md`
+- source auto-ingest hooks → `.agents/memory/testing/hooks-auto-ingest.md`
+- hook observability and trace storage → `.agents/memory/testing/hooks-observability.md`
 - skills (`skills/`) → `.agents/memory/testing/skills.md`
 - scripts (`scripts/`) → `.agents/memory/testing/scripts.md`
 - PowerShell scripts (`scripts/*.ps1`) → `.agents/memory/testing/powershell.md`
