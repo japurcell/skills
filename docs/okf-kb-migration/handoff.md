@@ -2,10 +2,13 @@
 
 ## Goal
 
-Execute the six-gate in-place OKF v0.2 migration for the canonical documents under `.agents/instructions/` and `.agents/memory/`. Preserve the existing `AGENTS.md` → `.agents/memory/INDEX.md` loading path, teach OKF authoring through a repository skill, and enforce conformance through blocking GitHub Copilot CLI and Gemini CLI lint hooks.
+Maintain the completed in-place OKF v0.2 migration and its provider validation boundaries. The migration and the review-defect repair in `review-fixes-execplan.md` are complete.
 
 ## Status
 
+- The review-defect repair is complete on topic branch `fix/okf-review-defects`. Copilot open-pipe handling, UTF-8 output, combined-response bounds, omitted counts, Windows absolute paths, footnotes, Markdown masking precedence, and Gemini cleanup safety all pass public regressions.
+- Independent Premium review found five required edge cases across two rounds. All were fixed and the final rereview approved the result with no remaining findings.
+- The complete static matrix passes. Canonical human lint is silent; canonical JSON lint is exactly `{"schema_version":1,"diagnostics":[]}`. The mandatory `update-agent-docs` and `okf-authoring` passes are complete.
 - On 2026-09-09, the user explicitly authorized implementation. Gate 1 is committed as `e0d425972641f1f1a372d7dacd068f73fa7fefee`; Gate 2 is committed as `817f2881393235f8b6abb4d7a08df28570262715`; the final Gate 3 rollback checkpoint is `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735`; the final Gate 4 rollback checkpoint is `917313a04bb513039ea0a2e596a8c381370766e7`.
 
 - **OKF Authoring Skill Contract** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Gate 3 is accepted and checkpointed at `4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735` after correcting nondeterministic grader expectation ordering.
@@ -29,11 +32,11 @@ Execute the six-gate in-place OKF v0.2 migration for the canonical documents und
 
 ## Next Focus
 
-Migration closed. No active implementation, verification, or recording work remains.
+Migration and review-defect repair closed. Base topic branch is ready for human review.
 
 ## Exact Next Step
 
-No action. If a future regression requires rollback, create a dedicated branch and follow the reviewed procedure in `implementation-execplan.md`; do not rewrite published history or run archived provider proof sessions by default.
+Review and merge `fix/okf-review-defects`. No implementation or verification remains. If a future regression requires rollback, create a dedicated branch and follow `implementation-execplan.md`; do not rewrite published history or run archived provider proof sessions by default.
 
 ## Archived Provider Proof Procedure
 
@@ -93,6 +96,7 @@ That archived procedure expected a later merge or squash hash. Published history
 
 ## Relevant Files
 
+- `docs/okf-kb-migration/review-fixes-execplan.md` — completed repair plan, red/green evidence, review findings, commit checkpoints, and final validation.
 - `docs/okf-kb-migration/map.md` — corrected destination, authoritative decision index, and dependency graph.
 - `docs/okf-kb-migration/tickets/in-place-okf-migration-charter.md` — closed source-of-truth and enforcement charter.
 - `docs/okf-kb-migration/tickets/in-place-okf-document-contract.md` — closed in-place bundle and concept contract.
@@ -161,6 +165,9 @@ That archived procedure expected a later merge or squash hash. Published history
 
 ## Errors and Durable Learnings
 
+- A complete-value stdin reader still hangs on malformed prefixes when the writer stays open unless incomplete input has a bounded idle/readiness path. Test complete, multiline, malformed, incomplete, invalid UTF-8, and buffered-trailing payloads at the public seam with kill-and-wait cleanup.
+- Phase-ordered Markdown masking merely chooses which syntax wins globally. Scan comments, fences, and inline code left-to-right so the first active construct owns contained delimiters; test both nesting directions.
+- Once central diagnostics are normalized, every inconsistent or failing exit path must carry that list into adapter error formatting. Otherwise omitted-count summaries silently fall back to zero.
 - The old map optimized a second retrieval system without first reconciling it with the repository's mandatory loading contract. Before designing context injection, trace all always-loaded and progressively loaded entry points; migrate the canonical source in place when the goal is a format migration.
 - Loading `improve-skill` first used an incorrect repo-local path and failed without changing files; use the configured skill-root map (`r0` → `/root/.agents/skills`) instead of assuming `.agents/skills/` is repo-local.
 - One combined patch tried to delete and add the same path in a single `apply_patch` input and was rejected before changing files. Replace content with an update patch or use separate delete/add operations.
