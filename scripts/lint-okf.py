@@ -284,9 +284,6 @@ def ignored_ranges(body: str) -> list[bool]:
         for index in range(start, end):
             ignored[index] = True
 
-    for match in COMMENT_RE.finditer(body):
-        closing = body.find("-->", match.end())
-        mask(match.start(), len(body) if closing == -1 else closing + 3)
     for match in FENCE_OPEN_RE.finditer(body):
         if ignored[match.start()]:
             continue
@@ -327,6 +324,12 @@ def ignored_ranges(body: str) -> list[bool]:
             continue
         mask(index, closing + len(marker))
         index = closing + len(marker)
+
+    for match in COMMENT_RE.finditer(body):
+        if ignored[match.start()]:
+            continue
+        closing = body.find("-->", match.end())
+        mask(match.start(), len(body) if closing == -1 else closing + 3)
     return ignored
 
 
