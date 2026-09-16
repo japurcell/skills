@@ -8,6 +8,8 @@ You have been provided an ExecPlan. This ExecPlan should have a milestone progre
 
 The goal is a set of commits which implement the entire ExecPlan on a single branch.
 
+Before creating any commit, read and follow [commit message guidelines](references/message.md). Apply them to every commit created by the primary agent or a subagent.
+
 The progress checklist items are not a list of steps. They are a **task graph** with blocking relationships between them. This means there is always a **frontier** of progress checklist items which are ready to be grabbed.
 
 Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the ExecPlan, progress checklist items, research notes, and previous commits. Don't duplicate information already available via pointers.
