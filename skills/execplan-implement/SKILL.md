@@ -27,8 +27,16 @@ Communication to and from subagents should be sparse. Communicate primarily thro
 5. Use **implementer subagents** to implement each progress checklist item. Instruct each implementer subagent to:
    1. Activate the `tdd` skill.
    2. Work in its own worktree, on its own branch (see [Working with Worktrees](#working-with-worktrees)).
+   3. Keep its branch private and unpushed because integration rebases it.
 
-6. Once an **implementer subagent** completes, merge its work to the **base topic branch**. Delegate conflict-prone merges to a **merger subagent** when isolation or parallelism likely prevents retries; otherwise merge directly.
+6. Integrate completed **implementer subagent** branches into the **base topic branch** one at a time:
+   1. Confirm the implementer's worktree is clean, then rebase its branch onto the latest **base topic branch**.
+   2. Resolve conflicts there and rerun the affected tests. For a conflict-prone rebase, stop the implementer and give a **merger subagent** exclusive ownership of the existing implementer's worktree before the rebase starts. The merger rebases the implementer branch and does not mutate the base branch.
+   3. Update and commit any ExecPlan references to SHAs changed by the rebase, then confirm the implementer's worktree is clean.
+   4. Confirm the base worktree is clean, then fast-forward the base branch with `git merge --ff-only <implementer-branch>`.
+   5. Confirm the base branch tip matches the tested implementer branch tip.
+
+   Serialize this integration sequence so concurrent completions cannot race to update the base branch.
 
 7. If this changes the **frontier** of available progress checklist items, kick off more **implementer subagents** to work on the new progress checklist items. This allows for maximum concurrency.
 
@@ -50,7 +58,7 @@ ls ../
   project-feature-a/    ← task-creation branch
   project-feature-b/    ← user-settings branch
 
-# When done, merge and clean up
+# After integration, clean up the worktree
 git worktree remove ../project-feature-a
 ```
 
@@ -58,4 +66,4 @@ Benefits:
 - Multiple agents can work on different features simultaneously
 - No branch switching needed (each directory has its own branch)
 - If one experiment fails, delete the worktree — nothing is lost
-- Changes are isolated until explicitly merged
+- Changes are isolated until explicitly fast-forwarded into the base branch
