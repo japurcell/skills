@@ -88,7 +88,7 @@ def run_registered_stop_hook(root: Path, payload: dict[str, object]) -> dict:
     return responses[-1]
 
 
-def run_with_open_stdin(program: Path, payload: dict[str, object]) -> dict:
+def run_with_open_stdin(program: Path, payload: dict[str, object] | None = None, raw: bytes | None = None) -> dict:
     process = subprocess.Popen(
         [sys.executable, str(program)],
         stdin=subprocess.PIPE,
@@ -97,7 +97,7 @@ def run_with_open_stdin(program: Path, payload: dict[str, object]) -> dict:
     )
     try:
         assert process.stdin is not None
-        process.stdin.write(json.dumps(payload).encode("utf-8"))
+        process.stdin.write(raw if raw is not None else json.dumps(payload).encode("utf-8"))
         process.stdin.flush()
         try:
             process.wait(timeout=2)
@@ -283,6 +283,27 @@ with repo() as root:
     payload = copilot_agent_stop(root)
     assert run_with_open_stdin(root / ".github/hooks/scripts/lint-okf.py", payload)["decision"] == "allow"
     assert run_with_open_stdin(root / ".github/hooks/scripts/validate-stop.py", payload) == {"decision": "allow"}
+
+
+with repo() as root:
+    for raw in (b"{", b"{not json"):
+        adapter_response = run_with_open_stdin(root / ".github/hooks/scripts/lint-okf.py", raw=raw)
+        assert adapter_response["decision"] == "block" and "OKF900" in adapter_response["reason"], adapter_response
+        coordinator_response = run_with_open_stdin(root / ".github/hooks/scripts/validate-stop.py", raw=raw)
+        assert coordinator_response["decision"] == "block", coordinator_response
+
+
+with repo() as root:
+    raw = json.dumps(copilot_agent_stop(root), indent=2).encode("utf-8")
+    assert run_with_open_stdin(root / ".github/hooks/scripts/lint-okf.py", raw=raw)["decision"] == "allow"
+    assert run_with_open_stdin(root / ".github/hooks/scripts/validate-stop.py", raw=raw) == {"decision": "allow"}
+
+
+with repo() as root:
+    raw = json.dumps(copilot_agent_stop(root)).encode("utf-8") + b" trailing"
+    adapter_response = run_with_open_stdin(root / ".github/hooks/scripts/lint-okf.py", raw=raw)
+    assert adapter_response["decision"] == "block" and "OKF900" in adapter_response["reason"], adapter_response
+    assert run_with_open_stdin(root / ".github/hooks/scripts/validate-stop.py", raw=raw)["decision"] == "block"
 
 with repo() as root:
     diagnostics = invalidate(root)

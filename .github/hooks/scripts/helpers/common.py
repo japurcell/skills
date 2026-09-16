@@ -3,11 +3,42 @@ from __future__ import annotations
 import codecs
 import json
 import os
+import select
 import subprocess
 import sys
+import time
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Sequence
+
+
+INPUT_COMPLETION_IDLE_SECONDS = 0.5
+
+
+def _stdin_is_ready(stdin_fd: int, timeout: float = 0) -> bool:
+    if os.name != "nt":
+        return bool(select.select([stdin_fd], [], [], timeout)[0])
+
+    import ctypes
+    import msvcrt
+
+    deadline = time.monotonic() + timeout
+    pipe_handle = ctypes.c_void_p(msvcrt.get_osfhandle(stdin_fd))
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    while True:
+        available = ctypes.c_ulong()
+        if kernel32.PeekNamedPipe(
+            pipe_handle,
+            None,
+            0,
+            None,
+            ctypes.byref(available),
+            None,
+        ) and available.value:
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.01)
 
 
 def _read_available_stdin_bytes(stdin_fd: int) -> bytes:
@@ -65,6 +96,8 @@ def _read_json_input_text() -> str:
     raw_input = ""
 
     while True:
+        if not _stdin_is_ready(stdin_fd, INPUT_COMPLETION_IDLE_SECONDS):
+            raise ValueError("Invalid hook input: malformed or incomplete JSON")
         chunk = os.read(stdin_fd, 65536)
         if not chunk:
             return raw_input + decoder.decode(b"", final=True)
