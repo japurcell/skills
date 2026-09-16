@@ -291,6 +291,7 @@ with repo() as root:
     post = run(root, copilot_post_tool_use(root))
     assert set(post) == {"additionalContext"}, post
     assert rendered in post["additionalContext"], post
+    assert "0 additional diagnostics omitted." in post["additionalContext"], post
     assert "./scripts/lint-okf.py" in post["additionalContext"], post
     windows_post = run(
         root,
@@ -307,6 +308,7 @@ with repo() as root:
     ):
         response = run(root, payload)
         assert response["decision"] == "block" and rendered in response["reason"], response
+        assert "0 additional diagnostics omitted." in response["reason"], response
 
 with repo() as root:
     diagnostics = [
@@ -323,7 +325,7 @@ with repo() as root:
     assert reason.count("OKF101") == 20, reason
     assert ".agents/memory/01.md" in reason and ".agents/memory/20.md" in reason, reason
     assert ".agents/memory/21.md" not in reason, reason
-    assert "5 additional diagnostics omitted" in reason, reason
+    assert "5 additional diagnostics omitted." in reason, reason
     assert len(reason.encode("utf-8")) < 8192, len(reason.encode("utf-8"))
     assert len(json.dumps(response, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) < 8192
 
@@ -367,6 +369,7 @@ for program in (
         response = run(root, copilot_post_tool_use(root))
         assert set(response) == {"additionalContext"}, response
         assert "OKF900" in response["additionalContext"], response
+        assert "0 additional diagnostics omitted." in response["additionalContext"], response
 
 with repo() as root:
     missing = root / "scripts/lint-okf.py"

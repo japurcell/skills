@@ -109,6 +109,10 @@ def _response_size(event_name: str, reason: str) -> int:
     return len(json.dumps(_response(event_name, reason), ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
 
 
+def _omitted_diagnostics_line(omitted: int) -> str:
+    return f"{omitted} additional diagnostics omitted."
+
+
 def _format_diagnostics(event_name: str, diagnostics: list[dict[str, Any]]) -> str:
     rendered = [
         f"{item['path']}:{item['line']}:{item['column']}: {item['id']} {item['message']}"
@@ -117,8 +121,7 @@ def _format_diagnostics(event_name: str, diagnostics: list[dict[str, Any]]) -> s
     for displayed in range(len(rendered), -1, -1):
         omitted = len(diagnostics) - displayed
         lines = ["OKF validation failed:", *rendered[:displayed]]
-        if omitted:
-            lines.append(f"{omitted} additional diagnostics omitted.")
+        lines.append(_omitted_diagnostics_line(omitted))
         lines.extend((f"Rerun: {_rerun_command()}", ""))
         reason = "\n".join(lines)
         if _response_size(event_name, reason) < MAX_HOOK_OUTPUT_BYTES:
@@ -150,15 +153,25 @@ def _run_linter(repo_root: Path) -> list[dict[str, Any]]:
     raise ValueError(f"unexpected linter exit {result.returncode}")
 
 
-def _emit_response(event_name: str, response: dict[str, str]) -> None:
+def _emit_response(event_name: str, response: dict[str, str], omitted_diagnostics: int = 0) -> None:
     encoded = json.dumps(response, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     if len(encoded) >= MAX_HOOK_OUTPUT_BYTES:
-        response = _response(event_name, f"OKF validation failed. Diagnostics were truncated. Rerun: {_rerun_command()}")
+        response = _response(
+            event_name,
+            "\n".join(
+                (
+                    "OKF validation failed. Diagnostics were truncated.",
+                    _omitted_diagnostics_line(omitted_diagnostics),
+                    f"Rerun: {_rerun_command()}",
+                )
+            ),
+        )
     emit_json(response)
 
 
 def main() -> int:
     event_name = ""
+    diagnostics: list[dict[str, Any]] | None = None
     try:
         payload = read_json_input()
         event_name = _event_name(payload)
@@ -167,9 +180,23 @@ def main() -> int:
         if not diagnostics:
             _emit_response(event_name, _clean_response(event_name))
             return 0
-        _emit_response(event_name, _response(event_name, _format_diagnostics(event_name, diagnostics)))
+        _emit_response(event_name, _response(event_name, _format_diagnostics(event_name, diagnostics)), len(diagnostics))
     except (Exception, subprocess.TimeoutExpired):
-        _emit_response(event_name, _response(event_name, f"OKF900: unable to run OKF validation. Rerun: {_rerun_command()}"))
+        omitted_diagnostics = len(diagnostics) if diagnostics is not None else 0
+        _emit_response(
+            event_name,
+            _response(
+                event_name,
+                "\n".join(
+                    (
+                        "OKF900: unable to run OKF validation.",
+                        _omitted_diagnostics_line(omitted_diagnostics),
+                        f"Rerun: {_rerun_command()}",
+                    )
+                ),
+            ),
+            omitted_diagnostics,
+        )
     return 0
 
 
