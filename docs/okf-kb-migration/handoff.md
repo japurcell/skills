@@ -17,21 +17,22 @@ Execute the six-gate in-place OKF v0.2 migration for the canonical documents und
 - **In-Place Migration Sequencing and Verification** is closed after three accepted grilling rounds and explicit shared-understanding confirmation. Its resolution fixes six implementation gates, validation scope, ownership, live capability proof, and rollback.
 - The 18 obsolete tickets are archived under `tickets/obsolete/`; the direct `tickets/` directory contains exactly five closed authoritative tickets.
 - `map.md` and `implementation-overview.md` describe the completed corrected design.
-- `implementation-execplan.md` translates the five closed contracts into six implementation gates with public test seams, non-overlapping path ownership, exact stable validation commands, and whole-migration rollback. Gates 1–5 are committed; Gate 5 is accepted at rollback checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. On 2026-09-16, the user removed human-started Copilot and Gemini proof sessions from acceptance. The complete static and simulated final matrix passes, and Gate 6 is accepted pending human review and commit of the final records.
+- `implementation-execplan.md` translates the five closed contracts into six implementation gates with public test seams, non-overlapping path ownership, exact stable validation commands, and whole-migration rollback. Gates 1–5 are committed; Gate 5 is accepted at rollback checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. On 2026-09-16, the user removed human-started Copilot and Gemini proof sessions from acceptance. The complete static and simulated final matrix passes. Gate 6 is accepted, and the human-reviewed final records plus restored `update-agent-docs` composition step are committed at `97a593784bf67e87f8202fb3ee593a095471b169`.
 - Gate 1 added `scripts/fixtures/okf-valid-repo/` and `scripts/test-okf-lint.sh`.
 - Gate 2 added the offline provider-neutral `scripts/lint-okf.py`, pinned PyYAML 6.0.3 under `scripts/vendor/`, and review-driven public-CLI regressions. No canonical-corpus migration, adapter, or hook registration exists yet.
 - Gate 3 duplicate/runner inventory found no existing OKF representation skill. No external model CLI is installed; paired collaboration task agents using `gpt-5.6-luna` will provide the with-skill/no-skill benchmark.
 - Gate 3 now has a fixture-backed grader that executes the checked-in linter, captures harness-owned command/exit/diff evidence, and rejects unsupported model claims. The corrected 16-run `gpt-5.6-luna` benchmark passes 72/72 with-skill expectations and 52/72 no-skill expectations; its reviewer includes all prompts and eval IDs.
 - Gate 5 is committed at rollback checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`; it remains the rollback baseline. The reviewed Copilot stop-coordinator correction is committed at `98637ac8c25abbdd83efa5336b0d6429162434ed`, which descends from Gate 5 and contains `.github/hooks/scripts/validate-stop.py`.
+- The user chose to preserve published history and represent the migration rollback unit as the explicit 15-commit set recorded in `implementation-execplan.md`. A detached-worktree simulation confirmed that reverting the set newest-first reaches Gate 4 commit `d21c4351` before conflicts in `.agents/instructions/hooks.md` and `.agents/memory/testing/hooks.md`; any real rollback must resolve those overlaps while preserving unrelated later work.
 - The earlier sequential Copilot, Gemini, and coordinator procedure is obsolete as an acceptance path. Keep it only as historical diagnostic guidance; do not schedule provider-native sessions unless the user explicitly requests them.
 
 ## Next Focus
 
-Human review and commit of the final Gate 6 acceptance records plus the restored `update-agent-docs` composition step, then merge or squash the migration.
+Human review and commit of the explicit rollback-set record. Published `main` history remains unchanged.
 
 ## Exact Next Step
 
-Review and commit `.agents/skills/update-agent-docs/SKILL.md`, `docs/okf-kb-migration/implementation-execplan.md`, and `docs/okf-kb-migration/handoff.md`. Then merge or squash the migration and record the resulting rollback-unit hash. Do not start Copilot or Gemini proof sessions.
+Review and commit `docs/okf-kb-migration/implementation-execplan.md` and `docs/okf-kb-migration/handoff.md`. Do not rewrite published history, run the rollback, or start Copilot or Gemini proof sessions.
 
 ## Archived Provider Proof Procedure
 
@@ -59,7 +60,7 @@ After a provider session, the human commits only after reviewing its record, the
 
     Read AGENTS.md, .agents/memory/INDEX.md, docs/okf-kb-migration/handoff.md, and docs/okf-kb-migration/implementation-execplan.md. The human-created Gate 6 coordinator evidence commit is <full hash>. Verify that it exists and descends from d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd, record it in Artifacts and Notes, update the handoff next step to the actual merge, run git diff --check and the mandatory end-of-session documentation pass, and leave the record-only change uncommitted for my manual commit. Do not invent or record a merge hash yet.
 
-The merge or squash rollback hash is recorded only after the migration is actually merged. The human then supplies that hash in one final record-only session, which verifies the commit, updates `Artifacts and Notes` and the handoff, and leaves the documentation change uncommitted for manual commit.
+That archived procedure expected a later merge or squash hash. Published history now remains intact, and the active rollback record is the explicit commit set in `implementation-execplan.md`.
 
 ## Decisions and Constraints
 
@@ -85,7 +86,7 @@ The merge or squash rollback hash is recorded only after the migration is actual
 - Validate both bundles, exact path-derived types, standard metadata, known legacy fields, file-relative Markdown/resource targets, and manifest-backed source-summary provenance. The linter reads but never reconciles or writes source-ingest state.
 - Use thin repository-local Copilot and Gemini adapters for immediate mutation feedback and unconditional final full-corpus gates. Keep source-ingest and OKF validators independent. Copilot final-response events use one source-ingest-first coordinator because live evidence showed separate stop registrations lose one reason; Gemini retains its ordered sequential group. Static provider contract suites cover mutation matchers, final events, diagnostic caps, retry behavior, and simultaneous failures.
 - Implement through six gates: baseline/failing fixtures; dormant linter and vendored parser; authoring skill and one-way composition; atomic canonical-corpus plus scaffold-producer migration; provider adapters/configuration/regressions; then complete static and simulated final verification.
-- Use one checked-in valid two-bundle fixture copied and mutated in temporary repositories. Merge only after the complete final matrix passes; treat the merged migration as one rollback unit.
+- Use one checked-in valid two-bundle fixture copied and mutated in temporary repositories. Publication followed the complete green final matrix; treat the explicit commit set in `implementation-execplan.md` as the rollback unit.
 - The Copilot simultaneous-failure correction is implemented at `.github/hooks/scripts/validate-stop.py`. The public registered-hook regression requires both independent reasons in source-ingest-first order. Human-started provider reruns are not required.
 - Assign non-overlapping ownership for linter/fixtures, authoring skill/evaluations, canonical migration/scaffold producers, and dual-provider adapters/tests; one coordinator owns shared configuration and final integration.
 

@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds. Maintain this document in accordance with the repository's `exec-plans` skill.
 
-Implementation is complete through Gate 6. Gates 1–5 are committed; the Gate 5 rollback checkpoint is `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. On 2026-09-16, the user removed the human-started Copilot and Gemini proof sessions from acceptance. Gate 6 now relies on the complete static and simulated final matrix, including both provider envelopes and the corrected Copilot simultaneous-failure seam.
+Implementation is complete through Gate 6. Gates 1–5 are committed; the Gate 5 rollback checkpoint is `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. On 2026-09-16, the user removed the human-started Copilot and Gemini proof sessions from acceptance. Gate 6 now relies on the complete static and simulated final matrix, including both provider envelopes and the corrected Copilot simultaneous-failure seam. The human-reviewed final Gate 6 records are committed at `97a593784bf67e87f8202fb3ee593a095471b169`.
 
 ## Purpose / Big Picture
 
@@ -30,6 +30,8 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-16 04:30Z) [milestone-6] Recorded the user's decision to skip and no longer require human Copilot and Gemini proof sessions. Historical Copilot evidence remains a failed live record and is not represented as passing evidence; no Gemini evidence file is required.
 - [x] (2026-09-16 04:30Z) [milestone-6] Ran the complete static and simulated final matrix. Its first benchmark grading pass exposed that a later `update-agent-docs` refactor had dropped the mandatory one-way `okf-authoring` invocation and reduced both eval-4 scores. Restored that existing contract, reran skill validation and all 16 benchmark grades without artifact drift, and confirmed every final-matrix command exits 0.
 - [x] (2026-09-16 04:30Z) [milestone-6] Synchronized the ExecPlan and handoff for final human review and merge readiness.
+- [x] (2026-09-16 04:38Z) [milestone-6] Verified the human-reviewed Gate 6 records commit `97a593784bf67e87f8202fb3ee593a095471b169`, its Gate 5 ancestry, and a clean worktree before this record-only update.
+- [x] (2026-09-16 04:43Z) [milestone-6] Preserved published history and recorded the migration as an explicit 15-commit rollback set after the user accepted that approach. A detached-worktree simulation found two expected documentation conflicts at the Gate 4 implementation commit, so the rollback procedure requires reviewed conflict resolution rather than an unattended revert.
 
 ## Surprises & Discoveries
 
@@ -139,10 +141,13 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - Decision: Restore the one-way `update-agent-docs` to `okf-authoring` workflow step removed by a later refactor.
   Rationale: The closed Gate 3 contract and accepted eval require semantic documentation work to invoke the separate representation pass. Final grading reproduced the regression in both configurations; the focused instruction restored accepted scores without changing the benchmark.
   Date/Author: 2026-09-16 / Codex
+- Decision: Preserve published `main` history and represent the migration rollback unit as an explicit ordered commit set.
+  Rationale: The migration was already published as multiple commits interleaved with unrelated work. Rewriting `main` would risk collaborators and unrelated history; an explicit newest-first set preserves provenance and permits a reviewed rollback commit.
+  Date/Author: 2026-09-16 / user
 
 ## Outcomes & Retrospective
 
-Gates 1–5 are committed, with Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 5 added reviewed repo-local Copilot and Gemini OKF adapters, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. Gate 6's static Copilot correction replaces the failed two-registration stop path with one tested coordinator that preserves both independent reasons. The user removed provider-native proof from acceptance, and the complete static and simulated final matrix passes. Gate 6 is accepted and ready for human review and merge.
+Gates 1–5 are committed, with Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 5 added reviewed repo-local Copilot and Gemini OKF adapters, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. Gate 6's static Copilot correction replaces the failed two-registration stop path with one tested coordinator that preserves both independent reasons. The user removed provider-native proof from acceptance, and the complete static and simulated final matrix passes. Gate 6 is accepted, and its human-reviewed final records are committed at `97a593784bf67e87f8202fb3ee593a095471b169`. Published history remains intact; the explicit rollback set below replaces the unrealized single merge-or-squash hash.
 
 ## Context and Orientation
 
@@ -534,9 +539,9 @@ Record `git status --short` in the disposable worktree immediately before dispos
 
 At the end of a provider session, update that provider's evidence file, its own `Progress` and `Artifacts and Notes` lines in this ExecPlan, and the Gate 6 status and next step in `docs/okf-kb-migration/handoff.md`. Record `passed`, `failed`, or `blocked` and write `evidence commit: pending human commit`; do this even when no later session can start. Do not change the other provider's evidence or status and do not mark Milestone 6 accepted. Run `git diff --check`, run the mandatory `update-agent-docs` pass, and include every resulting changed path in the evidence file's `Files left for human commit` field. After the human provides the commit hash, the next session replaces the pending marker with that hash and checks the matching `Progress` item only if the evidence status is `passed`. A `failed` or `blocked` record stays unchecked and names the exact retry condition.
 
-If the user explicitly requests the archived provider workflow, after both provider evidence files are committed with `Status: passed`, a coordinator reads both complete records and verifies their commits descend from the Gate 5 checkpoint. That optional coordinator reruns the complete final matrix and updates the evidence records without changing the already accepted Gate 6 status. After merge, the human supplies the merge or squash hash for one final record-only update; never invent either hash in advance.
+If the user explicitly requests the archived provider workflow, after both provider evidence files are committed with `Status: passed`, a coordinator reads both complete records and verifies their commits descend from the Gate 5 checkpoint. That optional coordinator reruns the complete final matrix and updates the evidence records without changing the already accepted Gate 6 status or the explicit rollback-set representation.
 
-Milestone acceptance requires all static tests, skill evaluations, corpus lint modes, install/startup regressions, simulated provider envelope and simultaneous-failure cases, link checks, and diff checks to pass. Human-started provider evidence files and live event/matcher probes are not required. Record the exact merge commit or squash commit as the one rollback unit after merge.
+Milestone acceptance requires all static tests, skill evaluations, corpus lint modes, install/startup regressions, simulated provider envelope and simultaneous-failure cases, link checks, and diff checks to pass. Human-started provider evidence files and live event/matcher probes are not required. Preserve published history and use the explicit ordered commit set in `Idempotence and Recovery` as the rollback unit.
 
 ## Concrete Steps
 
@@ -687,7 +692,25 @@ The linter and adapters are read-only and safe to rerun. Fixture tests copy from
 
 Each gate ends in a reviewable commit, and its commit hash is recorded below. If a pre-merge gate must be undone, use a normal `git revert <gate-commit>` so the rollback is explicit and does not erase unrelated work. Do not use hard reset or broad checkout. If Gate 4 fails mid-edit, do not enable hooks or claim conformance; finish the atomic conversion in the same worktree or revert the exact Gate 4 commit after it exists.
 
-The merged migration is one rollback unit. If it lands as one squash commit, run `git revert <migration-commit>`. If it lands as one merge commit, run `git revert -m 1 <migration-merge-commit>`. A post-merge enforcement or conformance regression reverts the entire unit: canonical metadata, authoring guidance, linter/vendor, scaffold producers, adapters, and registrations. Re-enablement requires a root cause, a regression test, and the complete green matrix.
+Published `main` contains the migration as 15 commits interleaved with unrelated work, so preserve history and treat this newest-first set as the rollback unit:
+
+    97a593784bf67e87f8202fb3ee593a095471b169
+    98637ac8c25abbdd83efa5336b0d6429162434ed
+    0c0861fd70d34ebcf4fefc24e2f049881c561fc5
+    bb4743f71a7409842347870aa883df4c9ef2ea8a
+    2ee361180c599f7420873d446f7d4e4f05fdf8a0
+    cf16a4cb1147986ff1b539ce26dafe01d15d5325
+    40e50aa45d0a576bf08ae28c71877a3dadac2774
+    d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd
+    7767eea03aaeef00f222c28efe9412c1cc294ad3
+    917313a04bb513039ea0a2e596a8c381370766e7
+    d21c43515db46b4b508af42e12c81ad6552009f9
+    4f64fb8d9156d58d8ecc323ecdf0af16b6aa4735
+    6f7d2be1e040415d91026d828d4e70f59c110269
+    817f2881393235f8b6abb4d7a08df28570262715
+    e0d425972641f1f1a372d7dacd068f73fa7fefee
+
+Create a dedicated rollback branch from current `main` and run `git revert --no-commit` with that exact order. The 2026-09-16 detached-worktree simulation reached `d21c43515db46b4b508af42e12c81ad6552009f9` before conflicts in `.agents/instructions/hooks.md` and `.agents/memory/testing/hooks.md`. Resolve those files by removing migration-specific OKF changes while retaining unrelated later changes, then continue the remaining reverts, run the complete final matrix, review the cumulative diff, and create one rollback commit. Do not automate conflict selection with broad `ours` or `theirs` checkout. Re-enablement requires a root cause, a regression test, and the complete green matrix.
 
 Disposable worktrees must be created from the committed candidate and named explicitly in `Artifacts and Notes`. Before removal, verify the path with `git worktree list`; remove only that exact path with `git worktree remove <exact-path>`. Never point cleanup at the repository root, `$HOME`, or an unresolved variable.
 
@@ -724,8 +747,8 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 6 final acceptance benchmark correction: the first grading run changed both eval-4 scores because commit `2be5d5ba` had removed the mandatory one-way composition step from `.agents/skills/update-agent-docs/SKILL.md`. Restoring that step passed quick validation and regenerated all 16 grading files with no diff.
 - Gate 6 final acceptance documentation pass: no canonical `.agents/instructions/` or `.agents/memory/` update is needed. Migration records capture the benchmark regression, while existing canonical hook and skill-testing guidance remains current.
 - Gate 6 correction documentation pass: `.agents/instructions/hooks.md`, `.agents/memory/API_MAP.md`, `.agents/memory/FILE_MAP.md`, `.agents/memory/adrs/hooks.md`, `.agents/memory/known-issues/hooks.md`, and `.agents/memory/testing/hooks.md` now describe the coordinator, public seam, and live-provider gotcha.
-- Gate 6 coordinator evidence commit: not required under the user-approved static acceptance path. Final acceptance records remain uncommitted pending human review.
-- Merge or squash commit forming the rollback unit: not started.
+- Gate 6 coordinator evidence commit: not required under the user-approved static acceptance path. Human-reviewed final acceptance records commit: `97a593784bf67e87f8202fb3ee593a095471b169`.
+- Rollback unit: the explicit 15-commit newest-first set in `Idempotence and Recovery`. The user chose to preserve published history instead of rewriting `main`. A detached-worktree `git revert --no-commit` simulation verified ordering and found conflicts only when processing Gate 4 implementation commit `d21c43515db46b4b508af42e12c81ad6552009f9`, in `.agents/instructions/hooks.md` and `.agents/memory/testing/hooks.md`; no rollback was applied to `main`.
 
 The accepted PyYAML source archive is `https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz` with SHA-256 `d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f`. The archive contains `pyyaml-6.0.3/LICENSE` and the pure-Python package under `pyyaml-6.0.3/lib/yaml/`.
 
@@ -794,3 +817,7 @@ Revision note (2026-09-15): Recorded the user's decision to defer human-started 
 Revision note (2026-09-16): Reopened only the Copilot correction, reproduced the live lost-reason behavior at the registered-hook public seam, added the permitted thin stop coordinator, synchronized agent documentation, and left live Copilot, Gemini, and final coordinator acceptance open.
 
 Revision note (2026-09-16): Recorded the user's decision to skip and no longer require human Copilot and Gemini proof sessions, ran the complete static and simulated final matrix successfully, and marked Gate 6 accepted for human review and merge.
+
+Revision note (2026-09-16): Verified human-reviewed final records commit `97a593784bf67e87f8202fb3ee593a095471b169` and its Gate 5 ancestry. Recorded that published `main` already contains the migration as interleaved commits, so rollback-unit representation needs explicit user direction before any history rewrite or final hash claim.
+
+Revision note (2026-09-16): Recorded the user's choice to preserve published history, replaced the unrealized merge-or-squash hash with an explicit 15-commit newest-first rollback set, and captured detached-worktree simulation evidence plus the two conflicts a real rollback must resolve without discarding unrelated later changes.
