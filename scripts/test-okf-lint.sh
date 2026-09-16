@@ -662,6 +662,27 @@ EOF
   expect_diagnostic "$case_repo" OKF103 .agents/memory/DRAFT.md 11 20
   assert_json_only_id OKF103
 
+  case_repo="$(new_case_repo markdown-fence-inside-html-comment)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+<!--
+```markdown
+-->
+[real destination](missing-after-comment-fence.md)
+```
+EOF
+  expect_diagnostic "$case_repo" OKF103 .agents/memory/DRAFT.md 11 20
+  assert_json_only_id OKF103
+
+  case_repo="$(new_case_repo markdown-inline-code-inside-html-comment)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+<!-- `
+-->
+[real destination](missing-after-comment-inline.md)
+`
+EOF
+  expect_diagnostic "$case_repo" OKF103 .agents/memory/DRAFT.md 10 20
+  assert_json_only_id OKF103
+
   case_repo="$(new_case_repo markdown-unclosed-comment-inside-inline-code)"
   cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
 `<!--`
