@@ -16,6 +16,7 @@ description: Test and validation guidance for shell helper scripts under `script
   - The suite copies `scripts/fixtures/okf-valid-repo/` into a fresh `mktemp` directory for each public-CLI case. Do not derive uniqueness from a shell counter mutated inside command substitution; that mutation runs in a subshell and does not persist.
   - Exercise dependency-failure cases from an isolated copied linter/vendor layout. Never move or hide the live `scripts/vendor/yaml/` tree during a test.
   - Keep assertions at the public `./scripts/lint-okf.py [--format human|json]` seam, including exact one-based diagnostic locations and exit codes.
+  - Keep cross-platform destination cases for Windows drive-rooted and UNC paths, source-summary footnotes, and both nesting directions among HTML comments, fenced code, and exact-run inline code.
 - Hook-tree shell helper changes:
   - `bash scripts/test-repo-root.sh`
 - For any `scripts/*.ps1` or PowerShell-specific install logic, use `.agents/memory/testing/powershell.md` instead of treating the check as generic shell validation.

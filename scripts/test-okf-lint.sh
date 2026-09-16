@@ -530,8 +530,43 @@ EOF
   expect_diagnostic "$case_repo" OKF102 .agents/memory/DRAFT.md
 }
 
+test_okf102_windows_absolute_paths() {
+  local case_repo
+
+  case_repo="$(new_case_repo okf102-windows-drive-forward)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+
+[drive forward](C:/secrets.txt)
+EOF
+  expect_diagnostic "$case_repo" OKF102 .agents/memory/DRAFT.md 9 17
+
+  case_repo="$(new_case_repo okf102-windows-drive-backslash)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+
+[drive backslash](C:\secrets.txt)
+EOF
+  expect_diagnostic "$case_repo" OKF102 .agents/memory/DRAFT.md 9 19
+
+  case_repo="$(new_case_repo okf102-windows-unc)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+
+[unc](\\server\share\file.txt)
+EOF
+  expect_diagnostic "$case_repo" OKF102 .agents/memory/DRAFT.md 9 7
+}
+
 test_okf103_missing_local_targets() {
   local case_repo
+
+  case_repo="$(new_case_repo okf103-footnote-definition)"
+  cat >>"$case_repo/.agents/memory/sources/example-md.summary.md" <<'EOF'
+
+[^claim]: Upstream documentation supports this claim.
+EOF
+  run_linter "$case_repo" --format json
+  assert_status 0
+  assert_json_clean
+
   case_repo="$(new_case_repo okf103-link)"
   cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
 
@@ -616,6 +651,61 @@ EOF
   run_linter "$case_repo" --format json
   assert_status 0
   assert_json_clean
+
+  case_repo="$(new_case_repo markdown-unclosed-comment-inside-fence)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+```markdown
+<!--
+```
+[real destination](missing-after-fenced-comment.md)
+EOF
+  expect_diagnostic "$case_repo" OKF103 .agents/memory/DRAFT.md 11 20
+  assert_json_only_id OKF103
+
+  case_repo="$(new_case_repo markdown-fence-inside-html-comment)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+<!--
+```markdown
+-->
+[real destination](missing-after-comment-fence.md)
+```
+EOF
+  expect_diagnostic "$case_repo" OKF103 .agents/memory/DRAFT.md 11 20
+  assert_json_only_id OKF103
+
+  case_repo="$(new_case_repo markdown-inline-code-inside-html-comment)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+<!-- `
+-->
+[real destination](missing-after-comment-inline.md)
+`
+EOF
+  expect_diagnostic "$case_repo" OKF103 .agents/memory/DRAFT.md 10 20
+  assert_json_only_id OKF103
+
+  case_repo="$(new_case_repo markdown-unclosed-comment-inside-inline-code)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+`<!--`
+[real destination](missing-after-inline-comment.md)
+EOF
+  expect_diagnostic "$case_repo" OKF103 .agents/memory/DRAFT.md 9 20
+  assert_json_only_id OKF103
+
+  case_repo="$(new_case_repo markdown-unclosed-html-comment)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+<!--
+[masked through eof](missing-unclosed-comment.md)
+EOF
+  run_linter "$case_repo" --format json
+  assert_status 0
+  assert_json_clean
+
+  case_repo="$(new_case_repo markdown-mismatched-inline-code-run)"
+  cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
+`[visible destination](missing-mismatched-inline.md)``
+EOF
+  expect_diagnostic "$case_repo" OKF103 .agents/memory/DRAFT.md 8 24
+  assert_json_only_id OKF103
 
   case_repo="$(new_case_repo markdown-invalid-fence-opener)"
   cat >>"$case_repo/.agents/memory/DRAFT.md" <<'EOF'
@@ -836,6 +926,7 @@ main() {
   test_okf007_lowercase_reserved_paths
   test_okf101_every_path_derived_type
   test_okf102_repository_escape
+  test_okf102_windows_absolute_paths
   test_okf103_missing_local_targets
   test_markdown_destinations_and_masking
   test_nested_metadata_locations

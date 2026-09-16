@@ -11,7 +11,7 @@ import re
 import sys
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Iterable
 from urllib.parse import unquote, urlsplit
 
@@ -63,7 +63,6 @@ if YAML_ERROR is None:
         ]
 
 
-COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 FENCE_OPEN_RE = re.compile(r"(?m)^[ \t]{0,3}(?:(`{3,})[^`\n]*|(~{3,})[^\n]*)$")
 
 LocationPath = tuple[str | int, ...]
@@ -284,32 +283,48 @@ def ignored_ranges(body: str) -> list[bool]:
         for index in range(start, end):
             ignored[index] = True
 
-    for match in COMMENT_RE.finditer(body):
-        mask(match.start(), match.end())
-    for match in FENCE_OPEN_RE.finditer(body):
-        if ignored[match.start()]:
-            continue
-        marker = match.group(1) or match.group(2)
-        close_re = re.compile(rf"(?m)^[ \t]{{0,3}}{re.escape(marker[0])}{{{len(marker)},}}[ \t]*$")
-        closing = close_re.search(body, match.end())
-        if closing is not None:
-            mask(match.start(), closing.end())
-        else:
-            mask(match.start(), len(body))
-
     index = 0
     while index < len(body):
-        if body[index] != "`" or ignored[index]:
+        if body.startswith("<!--", index):
+            closing = body.find("-->", index + 4)
+            end = len(body) if closing == -1 else closing + 3
+            mask(index, end)
+            index = end
+            continue
+
+        fence = FENCE_OPEN_RE.match(body, index)
+        if fence is not None:
+            marker = fence.group(1) or fence.group(2)
+            close_re = re.compile(rf"(?m)^[ \t]{{0,3}}{re.escape(marker[0])}{{{len(marker)},}}[ \t]*$")
+            closing = close_re.search(body, fence.end())
+            end = len(body) if closing is None else closing.end()
+            mask(index, end)
+            index = end
+            continue
+
+        if body[index] != "`":
             index += 1
             continue
         end = index
         while end < len(body) and body[end] == "`":
             end += 1
         marker = body[index:end]
-        closing = body.find(marker, end)
-        while closing != -1 and any(ignored[closing:closing + len(marker)]):
-            closing = body.find(marker, closing + 1)
-        if closing == -1:
+        search = end
+        closing = None
+        while search < len(body):
+            candidate = body.find(marker, search)
+            if candidate == -1:
+                break
+            candidate_end = candidate + len(marker)
+            is_exact_run = (
+                (candidate == 0 or body[candidate - 1] != "`")
+                and (candidate_end == len(body) or body[candidate_end] != "`")
+            )
+            if is_exact_run and FENCE_OPEN_RE.match(body, candidate) is None:
+                closing = candidate
+                break
+            search = candidate + 1
+        if closing is None:
             index = end
             continue
         mask(index, closing + len(marker))
@@ -324,6 +339,10 @@ def masked_body(body: str) -> str:
 
 def unescape_markdown_destination(value: str) -> str:
     return re.sub(r"\\([\\()<>])", r"\1", value)
+
+
+def is_windows_absolute(value: str) -> bool:
+    return PureWindowsPath(value).is_absolute()
 
 
 def balanced_close(text: str, start: int, opening: str, closing: str) -> int | None:
@@ -409,7 +428,13 @@ def reference_destinations(text: str) -> Iterable[tuple[str, int]]:
             index += 1
         if index < line_end and text[index] == "[":
             label_end = balanced_close(text, index, "[", "]")
-            if label_end is not None and label_end < line_end and label_end + 1 < line_end and text[label_end + 1] == ":":
+            if (
+                label_end is not None
+                and text[index + 1] != "^"
+                and label_end < line_end
+                and label_end + 1 < line_end
+                and text[label_end + 1] == ":"
+            ):
                 destination_start = label_end + 2
                 while destination_start < line_end and text[destination_start] in " \t":
                     destination_start += 1
@@ -429,12 +454,13 @@ def reference_destinations(text: str) -> Iterable[tuple[str, int]]:
 
 
 def destination_diagnostics(root: Path, document: Path, source: str, start: int, path: str) -> list[Diagnostic]:
+    raw_source = source
     source = unescape_markdown_destination(source)
-    parsed = urlsplit(source)
-    if source.startswith("/") or parsed.scheme:
-        if parsed.scheme:
-            return []
+    if source.startswith("/") or is_windows_absolute(raw_source) or is_windows_absolute(source):
         return [diagnostic("OKF102", path, 1, 1, "local target must not be absolute")]
+    parsed = urlsplit(source)
+    if parsed.scheme:
+        return []
     if not parsed.path:
         return []
     candidate = (document.parent / unquote(parsed.path)).resolve()

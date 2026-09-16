@@ -7,7 +7,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 create_fixture_repo() {
   local repo="$1"
 
-  rm -rf "$repo"
+  rm -rf -- "$repo"
   mkdir -p "$repo"
   cp -R "$REPO_ROOT/scripts/fixtures/okf-valid-repo/." "$repo"
   mkdir -p "$repo/scripts"
@@ -45,7 +45,7 @@ test_clean_events_return_empty_json() {
   local workdir repo output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
 
@@ -61,7 +61,7 @@ test_payload_cwd_stays_within_adapter_checkout() {
   local workdir repo nested decoy output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   nested="$repo/nested/work"
   decoy="$workdir/decoy"
@@ -86,7 +86,7 @@ test_invalid_after_tool_matches_central_diagnostics() {
   local workdir repo central adapter_output central_output adapter_diagnostics
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
   printf '# invalid\n' > "$repo/.agents/instructions/invalid.md"
@@ -107,7 +107,7 @@ test_after_agent_retry_is_bounded() {
   local workdir repo first retry
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
   printf '# invalid\n' > "$repo/.agents/memory/invalid.md"
@@ -127,7 +127,7 @@ test_malformed_payload_and_linter_failures_are_okf900_blocks() {
   local workdir repo output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
 
@@ -149,7 +149,7 @@ test_invalid_linter_json_exit_two_and_timeout_are_okf900() {
   local workdir repo output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
 
@@ -175,7 +175,7 @@ test_truncates_sorted_diagnostics_and_keeps_rerun_command() {
   local workdir repo output reason lines
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
   for number in $(seq -w 1 25); do
@@ -200,7 +200,7 @@ test_windows_rerun_command_uses_python() {
   local workdir repo output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
   printf '# invalid\n' > "$repo/.agents/instructions/invalid.md"
@@ -214,10 +214,10 @@ test_vendor_and_invalid_linter_shapes_become_okf900() {
   local workdir repo output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
-  rm -rf "$repo/scripts/vendor/yaml"
+  rm -rf -- "$repo/scripts/vendor/yaml"
   output="$(run_adapter "$repo" '{"hook_event_name":"AfterTool","cwd":"'"$repo"'"}')"
   assert_file_contains <(jq -r '.reason' <<<"$output") 'OKF900' \
     "Expected a missing vendored YAML dependency to become OKF900."
@@ -246,7 +246,7 @@ test_same_key_diagnostics_preserve_central_order() {
   local workdir repo output reason second first
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
   write_fake_linter "$repo" 'import json, sys; print(json.dumps({"schema_version": 1, "diagnostics": [{"id": "OKF002", "path": "same.md", "line": 1, "column": 1, "message": "second from central"}, {"id": "OKF002", "path": "same.md", "line": 1, "column": 1, "message": "first alphabetically"}]})); sys.exit(1)'
@@ -265,7 +265,7 @@ test_large_diagnostics_keep_json_below_8kib() {
   local workdir repo output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
   write_fake_linter "$repo" 'import json, sys; print(json.dumps({"schema_version": 1, "diagnostics": [{"id": "OKF002", "path": "large.md", "line": 1, "column": 1, "message": "x" * 10000}]})); sys.exit(1)'
@@ -283,7 +283,7 @@ test_escape_heavy_diagnostics_keep_serialized_json_below_8kib() {
   local workdir repo output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
   write_fake_linter "$repo" 'import json, sys; message = "\"\\\t" * 4000; print(json.dumps({"schema_version": 1, "diagnostics": [{"id": "OKF002", "path": "escaped.md", "line": 1, "column": 1, "message": message}]})); sys.exit(1)'
@@ -300,7 +300,7 @@ test_simultaneous_pending_ingest_and_okf_keep_both_reasons() {
   local workdir repo source_output okf_output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
   mkdir -p "$repo/.agents/sources"

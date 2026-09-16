@@ -13,13 +13,18 @@ A human can see the repair working by running the public linter and provider con
 ## Progress
 
 - [x] (2026-09-16) [milestone-0] Reconciled eight review findings, identified their public test seams, and authored this repair plan.
-- [ ] [milestone-1] Add red Copilot regressions for open stdin, UTF-8 output, and oversized combined stop reasons.
-- [ ] [milestone-1] Make the repository-local Copilot reader and stop coordinator pass those regressions without changing provider envelope shapes or reason ordering.
-- [ ] [milestone-2] Add red Copilot adapter regressions for zero omitted diagnostics and `OKF900` omitted-count reporting.
-- [ ] [milestone-2] Make every Copilot failure response include the omitted count while preserving the 20-diagnostic and 8 KiB limits.
-- [ ] [milestone-3] Add and satisfy one public-CLI regression at a time for Windows absolute paths, footnotes, unclosed HTML comments, and exact backtick-run matching.
-- [ ] [milestone-4] Add `--` to recursive cleanup commands in the Gemini OKF hook suite while retaining its area-specific dynamic `RETURN` traps.
-- [ ] [milestone-4] Run the complete static matrix, perform independent code review, run the mandatory `update-agent-docs` and OKF representation passes, and record final outcomes here.
+- [x] (2026-09-16) [milestone-1] Added red Copilot regressions for open stdin, UTF-8 output, and oversized combined stop reasons.
+- [x] (2026-09-16) [milestone-1] Made the repository-local Copilot reader and stop coordinator pass those regressions without changing provider envelope shapes or reason ordering.
+- [x] (2026-09-16) [milestone-1] Added and satisfied review follow-up coverage for malformed or incomplete JSON on an open stdin pipe.
+- [x] (2026-09-16) [milestone-2] Added red Copilot adapter regressions for zero omitted diagnostics and `OKF900` omitted-count reporting.
+- [x] (2026-09-16) [milestone-2] Made every Copilot failure response include the omitted count while preserving the 20-diagnostic and 8 KiB limits.
+- [x] (2026-09-16) [milestone-2] Preserved the real normalized diagnostic count when central lint exits `2` with `OKF900`.
+- [x] (2026-09-16) [milestone-2] Preserved the real normalized diagnostic count when central lint returns diagnostics with an inconsistent exit `0`.
+- [x] (2026-09-16) [milestone-3] Added and satisfied one public-CLI regression at a time for Windows absolute paths, footnotes, unclosed HTML comments, and exact backtick-run matching.
+- [x] (2026-09-16) [milestone-3] Made HTML comment and code masking precedence-aware so comment markers inside code cannot hide later links.
+- [x] (2026-09-16) [milestone-3] Made masking precedence fully left-to-right so code delimiters inside comments cannot hide later links.
+- [x] (2026-09-16) [milestone-4] Added `--` to all 15 recursive cleanup commands in the Gemini OKF hook suite while retaining its area-specific dynamic `RETURN` traps.
+- [x] (2026-09-16) [milestone-4] Ran the complete static matrix, resolved all independent code-review findings, completed the mandatory `update-agent-docs` and OKF representation passes, and recorded final outcomes.
 
 ## Surprises & Discoveries
 
@@ -31,6 +36,16 @@ A human can see the repair working by running the public linter and provider con
   Evidence: `[^claim]: Upstream documentation supports this claim.` produces `OKF103` for a nonexistent path named `Upstream`.
 - Observation: Two documented cleanup rules conflict if read without path scope.
   Evidence: `.agents/instructions/scripts.md` prefers named cleanup functions, while the more specific `.agents/memory/testing/hooks.md` requires dynamically captured `RETURN` traps under `set -u`. The valid defect is missing `--` on recursive removal, not the area-approved trap shape.
+- Observation: A complete-value reader also needs a bounded incomplete-value path when the writer keeps stdin open.
+  Evidence: Independent review left stdin open after `{` and `{not json`; both public Copilot entry points remained alive instead of returning a provider-valid block response.
+- Observation: Raising after normalizing an exit-`2` linter response discards the diagnostic count needed by the adapter summary.
+  Evidence: A malformed-manifest probe returned one central `OKF900`, while the adapter reported `0 additional diagnostics omitted.`.
+- Observation: Masking unclosed HTML comments before code regions gives comment markers inside code precedence over later Markdown.
+  Evidence: An unclosed `<!--` inside a closed fence or matching code span hid a real missing link after that code region.
+- Observation: Applying all code masking before all comment masking only reverses the precedence defect.
+  Evidence: A fence or backtick inside an HTML comment paired with a delimiter after the comment and hid a later real missing link.
+- Observation: Every failure after diagnostic normalization must carry those diagnostics, regardless of central exit status.
+  Evidence: One valid diagnostic paired with exit `0` raised a plain `ValueError`, so the adapter incorrectly reported zero omitted.
 
 ## Decision Log
 
@@ -58,10 +73,15 @@ A human can see the repair working by running the public linter and provider con
 - Decision: Retain dynamic function-level cleanup traps in `scripts/test-gemini-hooks-okf-lint.sh`, but add `--` to every recursive removal command.
   Rationale: Area-specific hook testing guidance overrides the generic named-trap preference for `RETURN` traps under `set -u`. Exact-path quoting plus `--` resolves the valid safety gap.
   Date/Author: 2026-09-16 / Codex
+- Decision: Treat all three independent-review findings as required acceptance defects and reopen their owning milestones.
+  Rationale: Each finding violates an explicit public-boundary guarantee in this plan despite the initial green matrix.
+  Date/Author: 2026-09-16 / Codex
 
 ## Outcomes & Retrospective
 
-Implementation has not started. At completion, record the observable behavior delivered, exact validation results, any remaining provider-runtime limitation, and whether the repair required changes beyond the files and interfaces named below.
+All planned public-boundary repairs are complete. Copilot adapters now finish on complete, malformed, or incomplete open-pipe input within a bounded interval, emit UTF-8 JSON, keep the final combined stop response below 8 KiB with both ordered blocker prefixes, and report accurate omitted-diagnostic counts across normal and inconsistent central-linter outcomes. The central linter now rejects Windows absolute destinations, permits source-summary footnotes, and masks comments, fences, and exact-run inline code with left-to-right precedence. Gemini test cleanup now uses `rm -rf --` without changing its approved dynamic traps.
+
+The complete static matrix passes, canonical human lint is silent, canonical JSON lint is exactly `{"schema_version":1,"diagnostics":[]}`, and independent Premium rereview approved the final diff with no remaining findings. No provider-native session was required by this repair plan. Implementation stayed within the named public interfaces and test seams; four focused `.agents/memory/` files were synchronized with the repaired contracts and regressions.
 
 ## Context and Orientation
 
@@ -83,8 +103,8 @@ The review produced eight actionable behaviors. Seven require production changes
 
 ### Milestone 1: Harden the Copilot input and final-response boundary
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Start in `scripts/test-hooks-okf-lint.sh`. Extend the Python contract harness so it can launch a hook with `subprocess.Popen`, write one complete JSON object, flush without closing stdin, and require the process to exit within a short bound below the configured 10-second provider timeout. Exercise both `.github/hooks/scripts/lint-okf.py` and the registered `.github/hooks/scripts/validate-stop.py`. The tests must fail on the current blocking readers. Close or kill the child during test cleanup so a red run never leaves a process behind.
 
@@ -100,8 +120,8 @@ Finish the milestone by rerunning `scripts/test-hooks-okf-lint.sh`, `scripts/tes
 
 ### Milestone 2: Make Copilot diagnostic summaries contract-complete
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 In `scripts/test-hooks-okf-lint.sh`, add one red assertion for a normal failure with no omitted diagnostics and one for a synthetic `OKF900` failure. Both must require the literal line `0 additional diagnostics omitted.`. Keep the existing 25-diagnostic case and require `5 additional diagnostics omitted.` so the change cannot hard-code zero.
 
@@ -111,8 +131,8 @@ Acceptance is met when direct post-tool and stop envelopes still match their exi
 
 ### Milestone 3: Correct path and Markdown interpretation in the central linter
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Work in four vertical red-green slices inside `scripts/test-okf-lint.sh` and `scripts/lint-okf.py`. Run the public CLI case after each test addition and record the short expected red result in `Artifacts and Notes` before implementing that slice.
 
@@ -128,8 +148,8 @@ Do not replace the deterministic Markdown scanner with a general parser or new d
 
 ### Milestone 4: Normalize test cleanup, synchronize knowledge, and close the repair
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 In `scripts/test-gemini-hooks-okf-lint.sh`, add `--` to every `rm -rf` invocation, including copied-repository replacement, function-level `RETURN` cleanup, and vendor-removal cases. Retain exact quoting and the area-approved dynamic trap form so `set -u` does not evaluate an out-of-scope local variable. Run `bash -n` and the complete Gemini OKF hook suite after the mechanical edit.
 
@@ -248,6 +268,32 @@ Current decisive evidence:
 
 Add each red transcript, green transcript, milestone commit or pending-human-commit marker, review result, and final matrix result here as implementation proceeds. Keep evidence short; reference files instead of pasting full logs.
 
+Milestone 1 is committed at `d2087c8f`. The public suite first failed with `lint-okf.py waited for stdin EOF`, then with `validate-stop.py waited for stdin EOF` after the shared-reader repair exposed the coordinator. Bash syntax, Copilot OKF, Copilot auto-ingest, Copilot startup, helper tests, and `git diff --check` all pass. Oversized combined reasons retain at least 512 UTF-8 bytes from each blocker in source-ingest-first order while the serialized envelope remains below 8 KiB.
+
+Milestone 1 review follow-up is committed at `6f0a8f06`. Open `{` first reproduced `lint-okf.py waited for stdin EOF`; the reader now applies a 0.5-second idle/readiness bound through POSIX `select` or Windows `PeekNamedPipe` polling. Public adapter and coordinator cases cover incomplete, malformed, multiline, and buffered-trailing input, with child cleanup on failure.
+
+Milestone 2 is committed at `fdb63ec73d47c4b3192ed73fba836b690b79e55a`. The public Copilot suite first failed because a normal failure omitted `0 additional diagnostics omitted.`. Copilot and Gemini OKF suites, Bash syntax, Python compilation, and `git diff --check` pass after normal, `OKF900`, and emergency fallback reasons gained accurate omitted counts; the 25-finding case reports exactly 5 omitted.
+
+Milestone 2 review follow-up is committed at `c9f8af6dfcc506dc4329c1922d9ee7af2d5975f7`. A public central exit-`2` case first reported zero omitted despite one normalized `OKF900`; a typed failure now carries normalized diagnostics so the adapter reports the accurate suppressed count.
+
+Milestone 2 second follow-up is committed at `05785c382e9b55bb7790dc7ea66333d70df96fcf`. A central exit `0` paired with one valid diagnostic first reported zero omitted; every post-normalization status mismatch now uses the count-preserving typed failure and the public adapter reports one omitted.
+
+Milestone 3 is committed at `f3234d2643b34aa68bc1021cf1f2f59456c5e6b4`. The four public red slices respectively produced empty diagnostics for Windows absolute paths, `OKF103` for a footnote body, `OKF103` inside an unclosed HTML comment, and empty diagnostics for a mismatched backtick run. The linter suite, canonical human and exact-empty JSON lint, Bash syntax, and `git diff --check` pass after the fixes.
+
+Milestone 3 review follow-up is committed at `e513eeb92585ce9c27f4d86cf19912c4e783b553`. A closed fence containing an unclosed comment marker first hid a later missing link; fence and inline-code regions now take precedence, and both public cases report the later link at its exact `OKF103` location.
+
+Milestone 3 second follow-up is committed at `8c9f458ceceb80942aba932deb7469fccb9c4683`. A fence opener inside an HTML comment first paired with a later delimiter and hid a real link; one left-to-right scanner now gives the first active construct precedence for comments, fences, and exact-run inline code. Both inverse-nesting cases report the later `OKF103` at exact locations.
+
+Milestone 4 cleanup is committed at `3bbd9436`. Bash syntax, the complete Gemini OKF hook suite, and `git diff --check` passed after adding `--` to 15 recursive removals (13 dynamic traps and 2 direct removals).
+
+Independent review requested changes for three acceptance defects: incomplete open-pipe input can hang, exit-`2` normalized diagnostics lose their omitted count, and comment masking currently overrides closed code regions. The initial complete static matrix was green, confirming these were coverage gaps rather than existing-suite failures.
+
+Two follow-up review rounds exposed the inverse masking precedence and an exit-`0` diagnostic-count mismatch. Commits `6f0a8f06`, `c9f8af6d`, `e513eeb9`, `05785c38`, and `8c9f458c` close all five findings. Final independent rereview approved the result with no remaining findings.
+
+The final static matrix passed all nine listed test suites. Canonical human lint was silent, JSON lint printed exactly `{"schema_version":1,"diagnostics":[]}`, and `git diff --check` was silent. The `update-agent-docs` pass changed only `.agents/memory/API_MAP.md`, `.agents/memory/known-issues/scripts.md`, `.agents/memory/testing/hooks.md`, and `.agents/memory/testing/scripts.md`; the `okf-authoring` pass loaded `references/profile.md`, required no source-summary branch, passed full OKF lint, and confirmed exactly those four authorized canonical paths.
+
+Closure records and synchronized agent knowledge are committed at `706b760`.
+
 ## Interfaces and Dependencies
 
 Do not add dependencies. Continue using Python's standard library, the existing vendored PyYAML 6.0.3 for the central linter, Bash, and existing test helpers.
@@ -261,3 +307,25 @@ In `.github/hooks/scripts/lint-okf.py`, retain `MAX_DISPLAY_DIAGNOSTICS = 20`, `
 In `scripts/lint-okf.py`, retain `destination_diagnostics`, `reference_destinations`, `ignored_ranges`, `link_diagnostics`, and all existing diagnostic IDs. Add a small host-independent absolute-path predicate if that keeps drive/UNC logic readable. Do not change `Diagnostic`, JSON schema version `1`, sort order, or exit codes.
 
 Revision note (2026-09-16): Initial plan created from the two-axis review. It resolves all confirmed findings, narrows the cleanup finding to its valid missing-`--` component under area-specific guidance, fixes tests at existing public seams, and keeps original migration acceptance history unchanged.
+
+Revision note (2026-09-16): Milestone 4 cleanup is complete and verified at `3bbd9436`; final matrix, review, knowledge synchronization, and closure remain open.
+
+Revision note (2026-09-16): Milestone 1 is complete and verified at `d2087c8f`; open-pipe, UTF-8, and final-envelope byte-boundary repairs now pass their public regressions.
+
+Revision note (2026-09-16): Milestone 3 is complete and verified at `f3234d2643b34aa68bc1021cf1f2f59456c5e6b4`; cross-platform destinations and Markdown masking now follow the stated contract.
+
+Revision note (2026-09-16): Milestone 2 is complete and verified at `fdb63ec73d47c4b3192ed73fba836b690b79e55a`; every Copilot OKF failure now reports an omitted count.
+
+Revision note (2026-09-16): Independent review reopened Milestones 1–3 for three required boundary and masking fixes; closure remains blocked until focused regressions, rereview, and the final matrix pass.
+
+Revision note (2026-09-16): Milestone 3 review follow-up is complete at `e513eeb92585ce9c27f4d86cf19912c4e783b553`; code regions now protect contained comment markers without hiding later Markdown.
+
+Revision note (2026-09-16): Milestone 1 review follow-up is complete at `6f0a8f06`; incomplete or malformed open-pipe input now fails within a bounded interval.
+
+Revision note (2026-09-16): Milestone 2 review follow-up is complete at `c9f8af6dfcc506dc4329c1922d9ee7af2d5975f7`; exit-`2` failures retain their normalized diagnostic count.
+
+Revision note (2026-09-16): Follow-up review reopened Milestones 2 and 3 for an exit-`0` status mismatch and inverse comment/code nesting; both require public regressions before closure.
+
+Revision note (2026-09-16): Second follow-up fixes are complete at `05785c38` and `8c9f458c`; all normalized failure paths retain counts and Markdown masking now uses left-to-right construct precedence.
+
+Revision note (2026-09-16): Implementation is complete. Final rereview, complete static validation, agent-document synchronization, and OKF representation verification all pass with no remaining work.

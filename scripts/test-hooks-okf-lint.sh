@@ -88,6 +88,61 @@ def run_registered_stop_hook(root: Path, payload: dict[str, object]) -> dict:
     return responses[-1]
 
 
+def run_with_open_stdin(program: Path, payload: dict[str, object] | None = None, raw: bytes | None = None) -> dict:
+    process = subprocess.Popen(
+        [sys.executable, str(program)],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    try:
+        assert process.stdin is not None
+        process.stdin.write(raw if raw is not None else json.dumps(payload).encode("utf-8"))
+        process.stdin.flush()
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired as exc:
+            raise AssertionError(f"{program.name} waited for stdin EOF") from exc
+        assert process.returncode == 0, process.returncode
+        assert process.stdout is not None
+        assert process.stderr is not None
+        assert process.stderr.read() == b""
+        return json.loads(process.stdout.read().decode("utf-8"))
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait()
+        if process.stdin is not None:
+            process.stdin.close()
+
+
+def run_stop_hook_bytes(root: Path, payload: dict[str, object], extra_env: dict[str, str] | None = None) -> bytes:
+    environment = os.environ.copy()
+    if extra_env:
+        environment.update(extra_env)
+    completed = subprocess.run(
+        [sys.executable, str(root / ".github/hooks/scripts/validate-stop.py")],
+        input=json.dumps(payload).encode("utf-8"),
+        capture_output=True,
+        check=False,
+        env=environment,
+    )
+    assert completed.returncode == 0, completed
+    assert completed.stderr == b"", completed.stderr
+    return completed.stdout
+
+
+def write_stop_validator(root: Path, name: str, reason: str) -> None:
+    (root / ".github/hooks/scripts" / name).write_text(
+        "#!/usr/bin/env python3\n"
+        "import json\n"
+        "import sys\n"
+        f"response = {{'decision': 'block', 'reason': {reason!r}}}\n"
+        "sys.stdout.buffer.write(json.dumps(response, ensure_ascii=False, separators=(',', ':')).encode('utf-8') + b'\\n')\n",
+        encoding="utf-8",
+    )
+
+
 def invalidate(root: Path) -> list[dict]:
     path = root / ".agents/instructions/repo.md"
     path.write_text(path.read_text(encoding="utf-8").replace("type: Agent Instruction", "type: Agent Memory"), encoding="utf-8")
@@ -223,6 +278,33 @@ with repo() as root:
     assert run(root, vscode_agent_stop(root)) == {"decision": "allow"}
     assert run(root, vscode_subagent_stop(root)) == {"decision": "allow"}
 
+
+with repo() as root:
+    payload = copilot_agent_stop(root)
+    assert run_with_open_stdin(root / ".github/hooks/scripts/lint-okf.py", payload)["decision"] == "allow"
+    assert run_with_open_stdin(root / ".github/hooks/scripts/validate-stop.py", payload) == {"decision": "allow"}
+
+
+with repo() as root:
+    for raw in (b"{", b"{not json"):
+        adapter_response = run_with_open_stdin(root / ".github/hooks/scripts/lint-okf.py", raw=raw)
+        assert adapter_response["decision"] == "block" and "OKF900" in adapter_response["reason"], adapter_response
+        coordinator_response = run_with_open_stdin(root / ".github/hooks/scripts/validate-stop.py", raw=raw)
+        assert coordinator_response["decision"] == "block", coordinator_response
+
+
+with repo() as root:
+    raw = json.dumps(copilot_agent_stop(root), indent=2).encode("utf-8")
+    assert run_with_open_stdin(root / ".github/hooks/scripts/lint-okf.py", raw=raw)["decision"] == "allow"
+    assert run_with_open_stdin(root / ".github/hooks/scripts/validate-stop.py", raw=raw) == {"decision": "allow"}
+
+
+with repo() as root:
+    raw = json.dumps(copilot_agent_stop(root)).encode("utf-8") + b" trailing"
+    adapter_response = run_with_open_stdin(root / ".github/hooks/scripts/lint-okf.py", raw=raw)
+    assert adapter_response["decision"] == "block" and "OKF900" in adapter_response["reason"], adapter_response
+    assert run_with_open_stdin(root / ".github/hooks/scripts/validate-stop.py", raw=raw)["decision"] == "block"
+
 with repo() as root:
     diagnostics = invalidate(root)
     expected = diagnostics[0]
@@ -230,6 +312,7 @@ with repo() as root:
     post = run(root, copilot_post_tool_use(root))
     assert set(post) == {"additionalContext"}, post
     assert rendered in post["additionalContext"], post
+    assert "0 additional diagnostics omitted." in post["additionalContext"], post
     assert "./scripts/lint-okf.py" in post["additionalContext"], post
     windows_post = run(
         root,
@@ -246,6 +329,7 @@ with repo() as root:
     ):
         response = run(root, payload)
         assert response["decision"] == "block" and rendered in response["reason"], response
+        assert "0 additional diagnostics omitted." in response["reason"], response
 
 with repo() as root:
     diagnostics = [
@@ -262,7 +346,7 @@ with repo() as root:
     assert reason.count("OKF101") == 20, reason
     assert ".agents/memory/01.md" in reason and ".agents/memory/20.md" in reason, reason
     assert ".agents/memory/21.md" not in reason, reason
-    assert "5 additional diagnostics omitted" in reason, reason
+    assert "5 additional diagnostics omitted." in reason, reason
     assert len(reason.encode("utf-8")) < 8192, len(reason.encode("utf-8"))
     assert len(json.dumps(response, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) < 8192
 
@@ -306,6 +390,29 @@ for program in (
         response = run(root, copilot_post_tool_use(root))
         assert set(response) == {"additionalContext"}, response
         assert "OKF900" in response["additionalContext"], response
+        assert "0 additional diagnostics omitted." in response["additionalContext"], response
+
+with repo() as root:
+    diagnostics = [{"id": "OKF900", "path": ".agents/memory/a.md", "line": 1, "column": 1, "message": "central validation failed"}]
+    write_linter(
+        root,
+        "#!/usr/bin/env python3\nimport json\nprint(json.dumps({\"schema_version\": 1, \"diagnostics\": " + repr(diagnostics) + "}))\nraise SystemExit(2)\n",
+    )
+    response = run(root, copilot_post_tool_use(root))
+    assert set(response) == {"additionalContext"}, response
+    assert "OKF900" in response["additionalContext"], response
+    assert "1 additional diagnostics omitted." in response["additionalContext"], response
+
+with repo() as root:
+    diagnostics = [{"id": "OKF900", "path": ".agents/memory/a.md", "line": 1, "column": 1, "message": "central validation failed"}]
+    write_linter(
+        root,
+        "#!/usr/bin/env python3\nimport json\nprint(json.dumps({\"schema_version\": 1, \"diagnostics\": " + repr(diagnostics) + "}))\n",
+    )
+    response = run(root, copilot_post_tool_use(root))
+    assert set(response) == {"additionalContext"}, response
+    assert "OKF900" in response["additionalContext"], response
+    assert "1 additional diagnostics omitted." in response["additionalContext"], response
 
 with repo() as root:
     missing = root / "scripts/lint-okf.py"
@@ -332,6 +439,29 @@ with repo() as root:
     assert "Pending ingest blocks normal work." in reason, response
     assert "OKF validation failed:" in reason and "OKF101" in reason, response
     assert reason.index("Pending ingest blocks normal work.") < reason.index("OKF validation failed:"), reason
+
+
+with repo() as root:
+    write_stop_validator(root, "inject-auto-ingest-context.py", "Pending ingest blocks normal work. 雪")
+    write_stop_validator(root, "lint-okf.py", "OKF validation failed: 雪")
+    response = json.loads(run_stop_hook_bytes(root, copilot_agent_stop(root), {"PYTHONIOENCODING": "cp1252"}).decode("utf-8"))
+    assert response["decision"] == "block", response
+    assert "雪" in response["reason"], response
+
+
+with repo() as root:
+    ingest_reason = "Pending ingest blocks normal work. " + "i" * 5000
+    okf_reason = "OKF validation failed: " + "o" * 5000
+    write_stop_validator(root, "inject-auto-ingest-context.py", ingest_reason)
+    write_stop_validator(root, "lint-okf.py", okf_reason)
+    response = json.loads(run_stop_hook_bytes(root, copilot_agent_stop(root)).decode("utf-8"))
+    serialized = json.dumps(response, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    assert len(serialized) < 8192, len(serialized)
+    reason = response["reason"]
+    assert "Pending ingest blocks normal work." in reason, reason
+    assert "OKF validation failed:" in reason, reason
+    assert reason.index("Pending ingest blocks normal work.") < reason.index("OKF validation failed:"), reason
+    assert "truncated" in reason.lower(), reason
 PY
 }
 
