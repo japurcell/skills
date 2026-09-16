@@ -36,6 +36,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | --- | --- | --- |
 | `.agents/instructions/` | canonical | Agent-facing workflow rules and area conventions. |
 | `.agents/memory/` | canonical | Durable repo facts, file maps, testing routes, and known issues. |
+| `docs/ideas.md` | companion | Lightweight inbox for one-line ideas that are not ready for research or planning. |
 | `README.md` | companion | Repo overview and install entry point. |
 | `AGENTS.md` | companion | Quickstart, loading contract, and top-level links for agents. |
 

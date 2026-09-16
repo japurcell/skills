@@ -72,6 +72,7 @@ memory files cross-reference:
 
 - [AGENTS.md](../../AGENTS.md) — top-level quickstart and loading contract.
 - [README.md](../../README.md) — repo overview and installation entry point.
+- [`docs/ideas.md`](../../docs/ideas.md) — lightweight inbox for ideas that are not ready for research or planning.
 - [`.agents/instructions/repo.md`](../instructions/repo.md) and its siblings — canonical area-scoped workflow rules and conventions.
 - [`.agents/skills/okf-authoring/SKILL.md`](../skills/okf-authoring/SKILL.md) and its siblings — task-specific repository workflows.
 
