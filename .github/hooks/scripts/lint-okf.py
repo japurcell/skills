@@ -24,6 +24,12 @@ MAX_HOOK_OUTPUT_BYTES = 8192
 DIAGNOSTIC_ID_RE = re.compile(r"OKF\d{3}\Z")
 
 
+class LinterExecutionFailure(ValueError):
+    def __init__(self, message: str, diagnostics: list[dict[str, Any]]) -> None:
+        super().__init__(message)
+        self.diagnostics = diagnostics
+
+
 def _event_name(payload: dict[str, object]) -> str:
     raw_event = stringify_value(first_present(payload, "hook_event_name", "hookEventName"))
     event_name = {
@@ -129,6 +135,19 @@ def _format_diagnostics(event_name: str, diagnostics: list[dict[str, Any]]) -> s
     raise ValueError("unable to format bounded diagnostics")
 
 
+def _okf900_response(event_name: str, omitted_diagnostics: int) -> dict[str, str]:
+    return _response(
+        event_name,
+        "\n".join(
+            (
+                "OKF900: unable to run OKF validation.",
+                _omitted_diagnostics_line(omitted_diagnostics),
+                f"Rerun: {_rerun_command()}",
+            )
+        ),
+    )
+
+
 def _run_linter(repo_root: Path) -> list[dict[str, Any]]:
     linter = repo_root / "scripts" / "lint-okf.py"
     if not linter.is_file():
@@ -146,11 +165,11 @@ def _run_linter(repo_root: Path) -> list[dict[str, Any]]:
         return []
     if result.returncode == 1:
         if not diagnostics:
-            raise ValueError("finding linter exit omitted diagnostics")
+            raise LinterExecutionFailure("finding linter exit omitted diagnostics", diagnostics)
         return diagnostics
     if result.returncode == 2:
-        raise ValueError("linter exited 2")
-    raise ValueError(f"unexpected linter exit {result.returncode}")
+        raise LinterExecutionFailure("linter exited 2", diagnostics)
+    raise LinterExecutionFailure(f"unexpected linter exit {result.returncode}", diagnostics)
 
 
 def _emit_response(event_name: str, response: dict[str, str], omitted_diagnostics: int = 0) -> None:
@@ -181,20 +200,13 @@ def main() -> int:
             _emit_response(event_name, _clean_response(event_name))
             return 0
         _emit_response(event_name, _response(event_name, _format_diagnostics(event_name, diagnostics)), len(diagnostics))
+    except LinterExecutionFailure as error:
+        _emit_response(event_name, _okf900_response(event_name, len(error.diagnostics)), len(error.diagnostics))
     except (Exception, subprocess.TimeoutExpired):
         omitted_diagnostics = len(diagnostics) if diagnostics is not None else 0
         _emit_response(
             event_name,
-            _response(
-                event_name,
-                "\n".join(
-                    (
-                        "OKF900: unable to run OKF validation.",
-                        _omitted_diagnostics_line(omitted_diagnostics),
-                        f"Rerun: {_rerun_command()}",
-                    )
-                ),
-            ),
+            _okf900_response(event_name, omitted_diagnostics),
             omitted_diagnostics,
         )
     return 0
