@@ -5,3 +5,5 @@ Add each idea as one short bullet. When work starts, move the idea into the appr
 research, planning, or implementation artifact.
 
 ## Inbox
+
+- Add repo-level hooks for codex to achieve parity with Copilot and Gemini repo-level hooks (see `.github/hooks/hooks.json`).
