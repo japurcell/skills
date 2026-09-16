@@ -13,4 +13,4 @@ Layer-specific quirks for skills. Cross-cutting issues live in `.agents/memory/K
 
 **Affected area:** `skills/skill-creator/scripts/quick_validate.py`
 **Description:** The validator requires the undeclared `PyYAML` package and fails with `ModuleNotFoundError: No module named 'yaml'` when it is unavailable.
-**Workaround:** Do not install dependencies implicitly. For body-only edits, verify the frontmatter is unchanged from `HEAD`, inspect the exact diff, and run `git diff --check`.
+**Workaround:** Do not install dependencies implicitly. Run it with the checked-in runtime: `PYTHONPATH=scripts/vendor python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>`.

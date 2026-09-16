@@ -1,6 +1,6 @@
 ---
 name: dotnet-ui-app
-description: Bootstrap, develop, and design modern .NET desktop and cross-platform UI applications with C# using WinUI 3, the Windows App SDK, and Avalonia UI. Mandatory whenever creating a brand new app, preparing a machine for WinUI or Avalonia development, choosing between Windows-first and cross-platform UI frameworks, reviewing, refactoring, planning, troubleshooting, environment-checking, or setting up WinUI 3 or Avalonia XAML, controls, navigation, shell composition, windowing, theming, styling, accessibility, input, localization, responsiveness, performance, deployment, packaging, or related .NET app design and development work.
+description: Mandatory domain skill for WinUI 3, Windows App SDK, and Avalonia UI work. Invoke whenever a task creates, modifies, reviews, plans, designs, or troubleshoots a WinUI or Avalonia app; touches XAML UI, `.xaml`, `.axaml`, UI code-behind, controls, layout, navigation, windowing, styling, theming, accessibility, input, localization, responsiveness, or UI performance in those frameworks; sets up or checks a development environment; or asks to choose, build, run, package, or deploy a Windows desktop or cross-platform .NET UI app. Load `dotnet` first for C#/.NET project or CLI work, then use this skill for UI-specific guidance. Do not invoke for WPF, .NET MAUI, Uno Platform, or generic C# work unless the task also involves WinUI 3, Windows App SDK, Avalonia UI, or choosing among supported frameworks.
 ---
 
 # .NET UI App
