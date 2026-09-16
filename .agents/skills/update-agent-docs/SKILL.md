@@ -19,7 +19,8 @@ Keep agent documentation small, current, and easy to route.
 7. When shortening or splitting a doc, preserve every durable rule in the appropriate focused doc.
 8. Apply [document quality](refs/doc-quality.md).
 9. Update frontmatter, indexes, and links using [indexes and frontmatter](refs/indexes-frontmatter.md).
-10. Report the result.
+10. After semantic changes to canonical documents, invoke `okf-authoring` to apply and verify the OKF representation contract. `okf-authoring` does not invoke `update-agent-docs`.
+11. Report the result.
 
 ## Rules
 
