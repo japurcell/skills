@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds. Maintain this document in accordance with the repository's `exec-plans` skill.
 
-Implementation is complete through Gate 6. Gates 1–5 are committed; the Gate 5 rollback checkpoint is `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. On 2026-09-16, the user removed the human-started Copilot and Gemini proof sessions from acceptance. Gate 6 now relies on the complete static and simulated final matrix, including both provider envelopes and the corrected Copilot simultaneous-failure seam. The human-reviewed final Gate 6 records are committed at `97a593784bf67e87f8202fb3ee593a095471b169`.
+Implementation is complete through Gate 6. Gates 1–5 are committed; the Gate 5 rollback checkpoint is `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. On 2026-09-16, the user removed the human-started Copilot and Gemini proof sessions from acceptance. Gate 6 relies on the complete static and simulated final matrix, including both provider envelopes and the corrected Copilot simultaneous-failure seam. The human-reviewed final Gate 6 records are committed at `97a593784bf67e87f8202fb3ee593a095471b169`, and the explicit rollback-set record is committed at `532dd832f6c90bce8760b4e2ca99a3cc1e962cde`.
 
 ## Purpose / Big Picture
 
@@ -32,6 +32,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-16 04:30Z) [milestone-6] Synchronized the ExecPlan and handoff for final human review and merge readiness.
 - [x] (2026-09-16 04:38Z) [milestone-6] Verified the human-reviewed Gate 6 records commit `97a593784bf67e87f8202fb3ee593a095471b169`, its Gate 5 ancestry, and a clean worktree before this record-only update.
 - [x] (2026-09-16 04:43Z) [milestone-6] Preserved published history and recorded the migration as an explicit 15-commit rollback set after the user accepted that approach. A detached-worktree simulation found two expected documentation conflicts at the Gate 4 implementation commit, so the rollback procedure requires reviewed conflict resolution rather than an unattended revert.
+- [x] (2026-09-16 04:46Z) [milestone-6] Verified human-reviewed rollback-set record commit `532dd832f6c90bce8760b4e2ca99a3cc1e962cde`, its Gate 6 ancestry, publication on `main` and `origin/main`, and a clean worktree.
 
 ## Surprises & Discoveries
 
@@ -147,7 +148,7 @@ The implementation is one migration unit. It may be built as reviewable commits,
 
 ## Outcomes & Retrospective
 
-Gates 1–5 are committed, with Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 5 added reviewed repo-local Copilot and Gemini OKF adapters, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. Gate 6's static Copilot correction replaces the failed two-registration stop path with one tested coordinator that preserves both independent reasons. The user removed provider-native proof from acceptance, and the complete static and simulated final matrix passes. Gate 6 is accepted, and its human-reviewed final records are committed at `97a593784bf67e87f8202fb3ee593a095471b169`. Published history remains intact; the explicit rollback set below replaces the unrealized single merge-or-squash hash.
+Gates 1–5 are committed, with Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 5 added reviewed repo-local Copilot and Gemini OKF adapters, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. Gate 6's static Copilot correction replaces the failed two-registration stop path with one tested coordinator that preserves both independent reasons. The user removed provider-native proof from acceptance, and the complete static and simulated final matrix passes. Gate 6 is accepted, its human-reviewed final records are committed at `97a593784bf67e87f8202fb3ee593a095471b169`, and its rollback-set closure record is committed at `532dd832f6c90bce8760b4e2ca99a3cc1e962cde`. Published history remains intact; no migration work remains.
 
 ## Context and Orientation
 
@@ -749,6 +750,7 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 6 correction documentation pass: `.agents/instructions/hooks.md`, `.agents/memory/API_MAP.md`, `.agents/memory/FILE_MAP.md`, `.agents/memory/adrs/hooks.md`, `.agents/memory/known-issues/hooks.md`, and `.agents/memory/testing/hooks.md` now describe the coordinator, public seam, and live-provider gotcha.
 - Gate 6 coordinator evidence commit: not required under the user-approved static acceptance path. Human-reviewed final acceptance records commit: `97a593784bf67e87f8202fb3ee593a095471b169`.
 - Rollback unit: the explicit 15-commit newest-first set in `Idempotence and Recovery`. The user chose to preserve published history instead of rewriting `main`. A detached-worktree `git revert --no-commit` simulation verified ordering and found conflicts only when processing Gate 4 implementation commit `d21c43515db46b4b508af42e12c81ad6552009f9`, in `.agents/instructions/hooks.md` and `.agents/memory/testing/hooks.md`; no rollback was applied to `main`.
+- Rollback-set record commit: `532dd832f6c90bce8760b4e2ca99a3cc1e962cde`; verified as a descendant of `97a593784bf67e87f8202fb3ee593a095471b169`, published on `main` and `origin/main`, with a clean worktree before this final status update.
 
 The accepted PyYAML source archive is `https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz` with SHA-256 `d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f`. The archive contains `pyyaml-6.0.3/LICENSE` and the pure-Python package under `pyyaml-6.0.3/lib/yaml/`.
 
@@ -821,3 +823,5 @@ Revision note (2026-09-16): Recorded the user's decision to skip and no longer r
 Revision note (2026-09-16): Verified human-reviewed final records commit `97a593784bf67e87f8202fb3ee593a095471b169` and its Gate 5 ancestry. Recorded that published `main` already contains the migration as interleaved commits, so rollback-unit representation needs explicit user direction before any history rewrite or final hash claim.
 
 Revision note (2026-09-16): Recorded the user's choice to preserve published history, replaced the unrealized merge-or-squash hash with an explicit 15-commit newest-first rollback set, and captured detached-worktree simulation evidence plus the two conflicts a real rollback must resolve without discarding unrelated later changes.
+
+Revision note (2026-09-16): Verified human-reviewed rollback-set record commit `532dd832f6c90bce8760b4e2ca99a3cc1e962cde`, its Gate 6 ancestry, publication on `main` and `origin/main`, and a clean worktree. Closed the migration with no active work remaining.

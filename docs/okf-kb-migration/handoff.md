@@ -24,15 +24,16 @@ Execute the six-gate in-place OKF v0.2 migration for the canonical documents und
 - Gate 3 now has a fixture-backed grader that executes the checked-in linter, captures harness-owned command/exit/diff evidence, and rejects unsupported model claims. The corrected 16-run `gpt-5.6-luna` benchmark passes 72/72 with-skill expectations and 52/72 no-skill expectations; its reviewer includes all prompts and eval IDs.
 - Gate 5 is committed at rollback checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`; it remains the rollback baseline. The reviewed Copilot stop-coordinator correction is committed at `98637ac8c25abbdd83efa5336b0d6429162434ed`, which descends from Gate 5 and contains `.github/hooks/scripts/validate-stop.py`.
 - The user chose to preserve published history and represent the migration rollback unit as the explicit 15-commit set recorded in `implementation-execplan.md`. A detached-worktree simulation confirmed that reverting the set newest-first reaches Gate 4 commit `d21c4351` before conflicts in `.agents/instructions/hooks.md` and `.agents/memory/testing/hooks.md`; any real rollback must resolve those overlaps while preserving unrelated later work.
+- The human-reviewed rollback-set record is committed at `532dd832f6c90bce8760b4e2ca99a3cc1e962cde`. It descends from the Gate 6 records commit, is published on `main` and `origin/main`, and leaves the worktree clean.
 - The earlier sequential Copilot, Gemini, and coordinator procedure is obsolete as an acceptance path. Keep it only as historical diagnostic guidance; do not schedule provider-native sessions unless the user explicitly requests them.
 
 ## Next Focus
 
-Human review and commit of the explicit rollback-set record. Published `main` history remains unchanged.
+Migration closed. No active implementation, verification, or recording work remains.
 
 ## Exact Next Step
 
-Review and commit `docs/okf-kb-migration/implementation-execplan.md` and `docs/okf-kb-migration/handoff.md`. Do not rewrite published history, run the rollback, or start Copilot or Gemini proof sessions.
+No action. If a future regression requires rollback, create a dedicated branch and follow the reviewed procedure in `implementation-execplan.md`; do not rewrite published history or run archived provider proof sessions by default.
 
 ## Archived Provider Proof Procedure
 
