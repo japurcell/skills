@@ -161,7 +161,7 @@ def _run_linter(repo_root: Path) -> list[dict[str, Any]]:
     diagnostics = _diagnostics_from_report(json.loads(result.stdout))
     if result.returncode == 0:
         if diagnostics:
-            raise ValueError("clean linter exit included diagnostics")
+            raise LinterExecutionFailure("clean linter exit included diagnostics", diagnostics)
         return []
     if result.returncode == 1:
         if not diagnostics:

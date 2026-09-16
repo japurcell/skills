@@ -404,6 +404,17 @@ with repo() as root:
     assert "1 additional diagnostics omitted." in response["additionalContext"], response
 
 with repo() as root:
+    diagnostics = [{"id": "OKF900", "path": ".agents/memory/a.md", "line": 1, "column": 1, "message": "central validation failed"}]
+    write_linter(
+        root,
+        "#!/usr/bin/env python3\nimport json\nprint(json.dumps({\"schema_version\": 1, \"diagnostics\": " + repr(diagnostics) + "}))\n",
+    )
+    response = run(root, copilot_post_tool_use(root))
+    assert set(response) == {"additionalContext"}, response
+    assert "OKF900" in response["additionalContext"], response
+    assert "1 additional diagnostics omitted." in response["additionalContext"], response
+
+with repo() as root:
     missing = root / "scripts/lint-okf.py"
     missing.unlink()
     response = run(root, copilot_agent_stop(root))
