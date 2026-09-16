@@ -48,3 +48,11 @@ CP1252 streams can raise a charmap error for non-ASCII payloads. `emit_json()` m
 ## Open stdin can stall complete JSON payloads
 
 Do not use `sys.stdin.read()` or one `readline()`. Incrementally decode until `JSONDecoder.raw_decode` finds one value, drain buffered bytes, reject non-whitespace trailing data, and bound incomplete input. Use `PeekNamedPipe` on Windows before Python 3.12. Keep provider helpers and open-stdin regressions synchronized.
+
+## Copilot overrides repeated stop blocks
+
+Copilot ends a turn after eight consecutive `agentStop` or `subagentStop` block continuations. `stop_hook_active` identifies an `agentStop` turn already forced by a prior block. Stop validators cannot guarantee an unlimited hard gate: keep them bounded and idempotent, self-limit before the platform cap, and test repeated-block behavior when changing final-response enforcement.
+
+## Gemini `AfterAgent` needs deployed-version proof
+
+Upstream Gemini CLI issue `google-gemini/gemini-cli#27712` reports that configured `AfterAgent` hooks did not execute in version `0.45.0` and related builds. The issue remained open on 2026-09-16. Treat final-response enforcement through `AfterAgent` as version-sensitive and require a live capability probe on the deployed CLI instead of relying only on configuration or simulated tests.

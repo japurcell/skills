@@ -27,8 +27,6 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
 | `agents/` | agents | Standalone custom agent prompt files. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
-| `docs/research/` | repo docs | Human-facing research notes on tooling and conversions. |
-| `docs/okf-kb-migration/` | repo docs | Completed OKF migration research, closed design tickets, handoff, and implementation/repair ExecPlans; obsolete tickets are archived under `tickets/obsolete/`. |
 | `scripts/` | scripts | Installers, importers, validation helpers, and shared shell utilities. |
 | `references/` | references | Optional shared reference material shipped with installs. |
 
@@ -66,8 +64,6 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `docs/adr/0001-auto-ingest-runtime-shape.md` | Records why source auto-ingest uses runtime-local hook code with one committed repo manifest. |
 | `docs/adr/0002-pending-ingest-gate.md` | Records why the pending-ingest gate blocks normal work until summaries resolve. |
 | `docs/adr/0003-sqlite-backed-hook-observability.md` | Records why hook observability uses SQLite as source of truth with NDJSON fallback. |
-| `docs/okf-kb-migration/map.md` | Closed Wayfinder map and decision index for the completed OKF knowledge-base migration. |
-| `docs/okf-kb-migration/implementation-execplan.md` | Completed six-gate implementation record for the in-place OKF migration. |
 | `.nvmrc` | Node version hint for local tooling. |
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |

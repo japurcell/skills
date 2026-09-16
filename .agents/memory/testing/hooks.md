@@ -26,6 +26,7 @@ description: Test routes for Codex, Copilot, and Gemini hook sources and install
   - `bash scripts/test-gemini-hooks-secrets-scanner.sh`
   - `bash scripts/test-gemini-hooks-tool-guard.sh`
   - `bash scripts/test-gemini-hooks-rtk.sh`
+- Before treating Gemini `AfterAgent` as an enforced final-response boundary, run a live probe against the deployed CLI version and confirm the configured hook executes. Upstream issue `google-gemini/gemini-cli#27712` remains open for affected builds; simulated provider-envelope tests do not prove event delivery.
 - Codex hook checks:
   - `bash scripts/test-codex-hooks-startup.sh`
   - `bash scripts/test-install.sh`
