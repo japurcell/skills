@@ -63,7 +63,6 @@ if YAML_ERROR is None:
         ]
 
 
-COMMENT_RE = re.compile(r"<!--")
 FENCE_OPEN_RE = re.compile(r"(?m)^[ \t]{0,3}(?:(`{3,})[^`\n]*|(~{3,})[^\n]*)$")
 
 LocationPath = tuple[str | int, ...]
@@ -284,20 +283,26 @@ def ignored_ranges(body: str) -> list[bool]:
         for index in range(start, end):
             ignored[index] = True
 
-    for match in FENCE_OPEN_RE.finditer(body):
-        if ignored[match.start()]:
-            continue
-        marker = match.group(1) or match.group(2)
-        close_re = re.compile(rf"(?m)^[ \t]{{0,3}}{re.escape(marker[0])}{{{len(marker)},}}[ \t]*$")
-        closing = close_re.search(body, match.end())
-        if closing is not None:
-            mask(match.start(), closing.end())
-        else:
-            mask(match.start(), len(body))
-
     index = 0
     while index < len(body):
-        if body[index] != "`" or ignored[index]:
+        if body.startswith("<!--", index):
+            closing = body.find("-->", index + 4)
+            end = len(body) if closing == -1 else closing + 3
+            mask(index, end)
+            index = end
+            continue
+
+        fence = FENCE_OPEN_RE.match(body, index)
+        if fence is not None:
+            marker = fence.group(1) or fence.group(2)
+            close_re = re.compile(rf"(?m)^[ \t]{{0,3}}{re.escape(marker[0])}{{{len(marker)},}}[ \t]*$")
+            closing = close_re.search(body, fence.end())
+            end = len(body) if closing is None else closing.end()
+            mask(index, end)
+            index = end
+            continue
+
+        if body[index] != "`":
             index += 1
             continue
         end = index
@@ -315,7 +320,7 @@ def ignored_ranges(body: str) -> list[bool]:
                 (candidate == 0 or body[candidate - 1] != "`")
                 and (candidate_end == len(body) or body[candidate_end] != "`")
             )
-            if is_exact_run and not any(ignored[candidate:candidate_end]):
+            if is_exact_run and FENCE_OPEN_RE.match(body, candidate) is None:
                 closing = candidate
                 break
             search = candidate + 1
@@ -324,12 +329,6 @@ def ignored_ranges(body: str) -> list[bool]:
             continue
         mask(index, closing + len(marker))
         index = closing + len(marker)
-
-    for match in COMMENT_RE.finditer(body):
-        if ignored[match.start()]:
-            continue
-        closing = body.find("-->", match.end())
-        mask(match.start(), len(body) if closing == -1 else closing + 3)
     return ignored
 
 
