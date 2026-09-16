@@ -292,6 +292,8 @@ Two follow-up review rounds exposed the inverse masking precedence and an exit-`
 
 The final static matrix passed all nine listed test suites. Canonical human lint was silent, JSON lint printed exactly `{"schema_version":1,"diagnostics":[]}`, and `git diff --check` was silent. The `update-agent-docs` pass changed only `.agents/memory/API_MAP.md`, `.agents/memory/known-issues/scripts.md`, `.agents/memory/testing/hooks.md`, and `.agents/memory/testing/scripts.md`; the `okf-authoring` pass loaded `references/profile.md`, required no source-summary branch, passed full OKF lint, and confirmed exactly those four authorized canonical paths.
 
+Closure records and synchronized agent knowledge are committed at `706b760`.
+
 ## Interfaces and Dependencies
 
 Do not add dependencies. Continue using Python's standard library, the existing vendored PyYAML 6.0.3 for the central linter, Bash, and existing test helpers.
