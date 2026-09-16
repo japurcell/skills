@@ -39,7 +39,7 @@ This document records the architectural decision records (ADRs) for `{.copilot,.
 
 ## ADR-006: Runtime-local auto-ingest scanners with prompt-time injectors and one shared repo manifest
 
-- **Decision:** Source auto-ingest keeps dedicated startup scanners per runtime surface, but pairs them with prompt-time injectors that target the first planning turn and final-response backstops that block unresolved pending entries. Copilot keeps all three pieces repo-local under `.github/hooks/hooks.json` plus `.github/hooks/scripts/auto-ingest-source.py` and `.github/hooks/scripts/inject-auto-ingest-context.py`; Gemini keeps both repo-local under `.gemini/hooks/scripts/auto-ingest.py` and `.gemini/hooks/scripts/inject-auto-ingest-context.py`. Both runtimes still read and write the same committed manifest at `.agents/memory/sources/source-ingest-manifest.json`.
+- **Decision:** Source auto-ingest keeps dedicated startup scanners per runtime surface, but pairs them with prompt-time injectors that target the first planning turn and final-response backstops that block unresolved pending entries. Copilot keeps all three pieces repo-local under `.github/hooks/hooks.json` plus `.github/hooks/scripts/auto-ingest-source.py`, `.github/hooks/scripts/inject-auto-ingest-context.py`, and `.github/hooks/scripts/validate-stop.py`; Gemini keeps both repo-local under `.gemini/hooks/scripts/auto-ingest.py` and `.gemini/hooks/scripts/inject-auto-ingest-context.py`. Both runtimes still read and write the same committed manifest at `.agents/memory/sources/source-ingest-manifest.json`.
 - **Rationale:** Startup scanning alone materializes scaffolds and the manifest, but it does not reliably reach the first model-facing turn or block the final answer across both runtimes. The user wanted no cross-runtime shared executable hook code and no globally installed Copilot auto-ingest wiring.
 - **Consequences:** Copilot repo-local and Gemini runtime-local implementations stay separate, yet their manifest schema, summary naming contract, and embedded `/ingest-source` workflow text must stay aligned.
 
@@ -74,10 +74,11 @@ First real planning turn
                 +-------------------------------+
                 |                               |
                 v                               v
-Copilot prompt-time/backstop hook    Gemini prompt-time injector
-userPromptTransformed/agentStop/subagentStop  BeforeAgent/AfterAgent
+Copilot prompt-time/stop hooks       Gemini prompt-time injector
+userPromptTransformed: inject-auto-ingest-context.py
+agentStop/subagentStop: validate-stop.py      BeforeAgent/AfterAgent
 .github/hooks/scripts/               .gemini/hooks/scripts/
-inject-auto-ingest-context.py        inject-auto-ingest-context.py
+                                      inject-auto-ingest-context.py
                 |                               |
                 +---------------+---------------+
                                 |
@@ -107,3 +108,9 @@ Manifest entries return to active / up-to-date state
 - **Decision:** Hook observability will use a SQLite-backed trace store as the source of truth, with explicit session and span state, parent-linked child subagent sessions, selective transcript chunking for textual or mutated spans, normalized saved transcript JSONL, and NDJSON retained only as a best-effort fallback audit stream.
 - **Rationale:** The upgraded observability design needs concurrency-safe finalization, parent-child tracing, deterministic transcript sampling and retention, and corruption or lock recovery that append-only NDJSON alone cannot provide cleanly.
 - **Consequences:** Top-level sessions finalize on `sessionEnd` / `SessionEnd`, distinct child sessions finalize on `subagentStop`, `agentStop` / `AfterAgent` remain non-terminal spans, error retention is driven by `has_errors` rather than final session status, and observability must stay fail-open when SQLite is unavailable.
+
+## ADR-009: One Copilot stop coordinator preserves independent blocking reasons
+
+- **Decision:** Register one repo-local Copilot command for each `agentStop` and `subagentStop` event. `.github/hooks/scripts/validate-stop.py` executes the existing source-ingest validator first and the existing OKF adapter second, then emits one combined response.
+- **Rationale:** Copilot documents ordered execution for multiple hooks of one event type, but a live simultaneous-failure probe delivered only the later OKF reason to the agent. Combining responses at one provider-local boundary preserves both independent checks without merging their implementations.
+- **Consequences:** Stop registration points to the coordinator, while `postToolUse` still points directly to the OKF adapter. Public tests must exercise the registered stop entry and require source-ingest-first reason ordering.

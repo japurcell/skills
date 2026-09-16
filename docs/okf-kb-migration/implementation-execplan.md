@@ -26,9 +26,10 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - [x] (2026-09-10 16:21Z) [milestone-6] Rewrote Gate 6 for sequential human-started Copilot, Gemini, and coordinator sessions; delegated review approved the final runbook with no required findings.
 - [x] (2026-09-14 13:26Z) [milestone-6] Verified the Gate 6 runbook commit `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd` and attempted the live Copilot probe in the detached worktree. The attempt was blocked by missing PowerShell-capable Copilot tooling, repo install target permissions, and Tool Guardian denial of destructive cleanup; its human-created evidence commit is `2ee361180c599f7420873d446f7d4e4f05fdf8a0`.
 - [x] (2026-09-14) [milestone-6] Re-ran the Copilot Gate 6 session from detached worktree `/tmp/okf-gate6-copilot.YVPdw2/worktree` after confirming `pwsh` 7.6.5 is installed. Bash and edit produced direct `postToolUse` `OKF002` evidence; final full-corpus lint passed in `0.039904s` and the worktree was restored and safely removed. Status: failed because the simultaneous-failure probe lost the source-ingest reason and required ordering; additional blockers were missing provider `powershell`, unobserved `create`, and absent direct `agentStop` and custom-agent `subagentStop` envelopes. Human-created evidence commit: `bb4743f71a7409842347870aa883df4c9ef2ea8a`.
-- [ ] [milestone-6] Complete the human-started Copilot session and record a passing Copilot evidence file and its human-created commit hash. Current state: failed; first add a failing regression for the lost simultaneous-failure reason and, if confirmed, the permitted thin Copilot-local coordinator, then rerun affected static tests and the complete live session in an environment with `powershell`, observable `create`, direct stop lifecycle decisions, and a writable install target.
-- [ ] [milestone-6] Complete the human-started Gemini session and record a passing Gemini evidence file and its human-created commit hash. Current state: not started; evidence commit not recorded.
-- [ ] [milestone-6] Have a coordinator verify both provider records, run the complete final matrix, synchronize documentation, and establish merge readiness.
+- [x] (2026-09-15) [milestone-6] Recorded the user's decision to defer human-started Copilot and Gemini verification for now. This changes scheduling only: Gate 6 acceptance remains unmet, and no live evidence requirement is waived or treated as passed.
+- [ ] (2026-09-16) [milestone-6] Complete the human-started Copilot session and record a passing Copilot evidence file and its human-created commit hash. The public registered-hook regression reproduced the lost source-ingest reason, the thin Copilot-local coordinator now preserves both reasons in source-ingest-first order, and all affected static tests pass. Remaining: human review and commit, then complete the live session in an environment with `powershell`, observable `create`, direct stop lifecycle decisions, and a writable install target.
+- [ ] [milestone-6] Complete the human-started Gemini session and record a passing Gemini evidence file and its human-created commit hash. Deferred by the user; not started and evidence commit not recorded.
+- [ ] [milestone-6] Have a coordinator verify both provider records, run the complete final matrix, synchronize documentation, and establish merge readiness. Deferred until both provider verifications are explicitly resumed and pass.
 
 ## Surprises & Discoveries
 
@@ -42,6 +43,8 @@ The implementation is one migration unit. It may be built as reviewable commits,
   Evidence: GitHub documents ordered execution for same-type hooks, full-match tool-name regexes, `postToolUse` additional context, stop-hook blocking, fail-open timeouts, and a host override after eight consecutive stop blocks.
 - Observation: The first complete Copilot simultaneous-failure probe did not preserve both independently blocking reasons.
   Evidence: Evidence commit `bb4743f71a7409842347870aa883df4c9ef2ea8a` records only the OKF `OKF002` continuation message; the source-ingest reason did not appear first or remain visible. Under this plan's acceptance rule, that executed result is `failed`, not an environment-only blocker.
+- Observation: The registered-hook public seam reproduces the live lost-reason behavior when it observes the final response from the two ordered Copilot stop registrations.
+  Evidence: Before the correction, `rtk test bash scripts/test-hooks-okf-lint.sh` failed because the observed response contained only `OKF validation failed` and `OKF101`. After registering one coordinator, the same test passes and requires both reasons in source-ingest-first order.
 - Observation: Gemini documents `AfterTool` and `AfterAgent`, but the final event remains a live release risk.
   Evidence: Gemini's current hook reference documents structured deny/retry behavior and `stop_hook_active`; official issue `google-gemini/gemini-cli#27712` is still open and reports `AfterAgent` not firing in version 0.45.0 and related versions.
 - Observation: This planning environment cannot run provider capability probes.
@@ -122,10 +125,16 @@ The implementation is one migration unit. It may be built as reviewable commits,
 - Decision: Classify the committed Copilot simultaneous-failure result as failed and require the plan's test-first corrective path before another full provider run.
   Rationale: The probe executed and lost the source-ingest reason. Milestone 6 explicitly requires a failed status plus a regression before considering a thin provider-local coordinator; asking only for a different environment would skip the accepted correction sequence.
   Date/Author: 2026-09-14 / Codex
+- Decision: Defer all remaining human-started Copilot and Gemini verification until the user explicitly reopens Gate 6.
+  Rationale: The user chose to skip provider-native verification for now. Deferral preserves completed implementation and partial evidence without weakening the established acceptance contract or misrepresenting unverified behavior as passed.
+  Date/Author: 2026-09-15 / user
+- Decision: Replace Copilot's two stop-event registrations with one provider-local coordinator while keeping the source-ingest and OKF validators as separate executables.
+  Rationale: The live probe and public regression both show that the later host response can hide the earlier source-ingest reason. One response composed in source-ingest-first order preserves both failures without merging validator logic.
+  Date/Author: 2026-09-16 / Codex
 
 ## Outcomes & Retrospective
 
-Gates 1–5 are committed, with Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 5 adds reviewed repo-local Copilot and Gemini OKF adapters, source-ingest-first stop registrations, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. The full static matrix passes and Premium follow-up review found no remaining required issue. Gate 6 Copilot evidence is not accepted: bash/edit and final lint passed, several provider capabilities remain blocked, and the simultaneous-failure probe failed by losing the source-ingest reason. The next work is the required test-first Copilot correction and complete live rerun; Gemini and coordinator acceptance remain unopened.
+Gates 1–5 are committed, with Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`. Gate 5 added reviewed repo-local Copilot and Gemini OKF adapters, mutation-tool feedback, provider parity/error/truncation coverage, and checkout containment. Gate 6's static Copilot correction now replaces the failed two-registration stop path with one tested coordinator that preserves both independent reasons. Gate 6 acceptance is still not met: Copilot needs complete provider-native proof, Gemini remains unstarted, and final coordinator acceptance has not occurred.
 
 ## Context and Orientation
 
@@ -277,21 +286,26 @@ Milestone acceptance is green static/simulated behavior with candidate repo-loca
 
 Status: in progress
 Acceptance: not met
+Scheduling: Copilot correction reopened by user; Gemini and coordinator remain deferred
 
-Before any provider session starts, the human reviews and commits this runbook update, then gives the full commit hash to the Copilot session. That session verifies the commit and records it under `Artifacts and Notes`. Gate 6 then uses three sessions in order: Copilot owner, Gemini owner, then coordinator. A human starts each session inside the named provider environment and supplies the current checkout. Run the provider sessions one at a time. After each provider agent finishes, the human reviews and commits that session's evidence before starting the next session. Agents must leave changes uncommitted because the user creates commits manually. Each later session starts from the latest human-created commit and verifies that `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd` is an ancestor. This preserves the exact Gate 5 implementation while allowing evidence-only commits on top.
+On 2026-09-16, the user explicitly reopened Gate 6 by asking to continue with the handoff's next step. Perform only the test-first Copilot simultaneous-failure correction in this session. Do not start Gemini or coordinator acceptance. Deferral did not waive any acceptance requirement and did not convert the partial Copilot evidence into a pass.
 
-Every provider session begins by reading `AGENTS.md`, `.agents/memory/INDEX.md`, this ExecPlan, and `docs/okf-kb-migration/handoff.md`. It verifies a clean main worktree, records `git rev-parse HEAD`, and runs `git merge-base --is-ancestor d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd HEAD`; exit 0 is required. It then records the provider's version and full help relevant to non-interactive prompts, tool permissions, output/debug capture, and custom agents. Help output is runtime authority for command spelling. If a command template below disagrees with the installed CLI, the session records the difference and uses the syntax shown by that CLI. Missing authentication or a missing required platform is a blocker, not permission to narrow acceptance.
+Before any provider session starts, the human reviews and commits this runbook update, then gives the full commit hash to the Copilot session. That session verifies the commit and records it under `Artifacts and Notes`. Gate 6 then uses three sessions in order: Copilot owner, Gemini owner, then coordinator. A human starts each session inside the named provider environment and supplies the current checkout. Run the provider sessions one at a time. After each provider agent finishes, the human reviews and commits that session's evidence before starting the next session. Agents must leave changes uncommitted because the user creates commits manually. Each later session starts from the latest human-created commit and verifies that `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd` is an ancestor. This preserves the Gate 5 rollback baseline while including reviewed Gate 6 corrections and evidence commits.
 
-On POSIX, run `./scripts/install.sh` from the main checkout before provider installation checks; do not repurpose `HOME`. If the provider environment cannot write the user's install targets, the human must run the installer from a writable user shell and record that fact. Create a provider-specific detached worktree from the Gate 5 checkpoint, so deliberate invalid files cannot contaminate the main checkout. Use the following pattern, substituting only the provider name:
+Every provider session begins by reading `AGENTS.md`, `.agents/memory/INDEX.md`, this ExecPlan, and `docs/okf-kb-migration/handoff.md`. It verifies a clean main worktree, records the latest human-created implementation commit with `git rev-parse HEAD`, and runs `git merge-base --is-ancestor d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd HEAD`; exit 0 is required. After the Copilot simultaneous-failure correction, the recorded implementation commit must contain `.github/hooks/scripts/validate-stop.py`; probing the original Gate 5 checkpoint would omit the correction and is invalid. The session then records the provider's version and full help relevant to non-interactive prompts, tool permissions, output/debug capture, and custom agents. Help output is runtime authority for command spelling. If a command template below disagrees with the installed CLI, the session records the difference and uses the syntax shown by that CLI. Missing authentication or a missing required platform is a blocker, not permission to narrow acceptance.
+
+On POSIX, run `./scripts/install.sh` from the main checkout before provider installation checks; do not repurpose `HOME`. If the provider environment cannot write the user's install targets, the human must run the installer from a writable user shell and record that fact. Create a provider-specific detached worktree from the latest human-created implementation commit after verifying Gate 5 as its ancestor, so deliberate invalid files cannot contaminate the main checkout and every reviewed correction is present. Use the following pattern, substituting only the provider name:
 
     gate6_provider=copilot
     gate6_main_root="$(git rev-parse --show-toplevel)"
     cd "$gate6_main_root"
     git status --short
+    gate6_probe_commit="$(git rev-parse HEAD)"
+    git merge-base --is-ancestor d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd "$gate6_probe_commit"
     ./scripts/install.sh
     gate6_probe_parent="$(mktemp -d "${TMPDIR:-/tmp}/okf-gate6-${gate6_provider}.XXXXXX")"
     gate6_probe_worktree="$gate6_probe_parent/worktree"
-    git worktree add --detach "$gate6_probe_worktree" d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd
+    git worktree add --detach "$gate6_probe_worktree" "$gate6_probe_commit"
     cd "$gate6_probe_worktree"
 
 After the POSIX installer, a Copilot session runs `cmp "$gate6_main_root/.copilot/hooks/hooks.json" "$HOME/.copilot/hooks/hooks.json"` and `test -f "$gate6_main_root/.github/hooks/hooks.json"`; both must exit 0. A Gemini session runs `cmp "$gate6_main_root/.gemini/global-settings.json" "$HOME/.gemini/settings.json"` and `cmp "$gate6_main_root/.gemini/hooks/scripts/lint-okf.py" "$HOME/.gemini/hooks/scripts/lint-okf.py"`; both must exit 0. These checks prove the provider's installed global configuration matches the checkout and, for Copilot, that the required OKF registration remains repository-local.
@@ -301,11 +315,14 @@ On Windows, open PowerShell in the current repository checkout and use these com
     $gate6MainRoot = (git rev-parse --show-toplevel).Trim()
     Set-Location $gate6MainRoot
     git status --short
+    $gate6ProbeCommit = (git rev-parse HEAD).Trim()
+    git merge-base --is-ancestor d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd $gate6ProbeCommit
+    if ($LASTEXITCODE -ne 0) { throw "probe commit does not descend from Gate 5" }
     pwsh -NoProfile -File scripts/install.ps1
     $gate6ProbeParent = Join-Path ([System.IO.Path]::GetTempPath()) ("okf-gate6-copilot-" + [guid]::NewGuid().ToString("N"))
     New-Item -ItemType Directory -Path $gate6ProbeParent | Out-Null
     $gate6ProbeWorktree = Join-Path $gate6ProbeParent "worktree"
-    git worktree add --detach $gate6ProbeWorktree d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd
+    git worktree add --detach $gate6ProbeWorktree $gate6ProbeCommit
     Set-Location $gate6ProbeWorktree
     git rev-parse HEAD
 
@@ -327,7 +344,7 @@ For a Windows Gemini session, run these exact commands from `$gate6MainRoot`; th
     "gemini OKF hook: matched"
     Set-Location $gate6ProbeWorktree
 
-The earlier `git rev-parse HEAD` must print the Gate 5 checkpoint. Record both resolved paths. Never point a probe at the main checkout.
+The earlier `git rev-parse HEAD` must print the human-created correction commit, and the ancestry check must prove that Gate 5 is its ancestor. Record the correction commit and both resolved paths. Never point a probe at the main checkout.
 
 The Copilot owner creates `docs/okf-kb-migration/gate6-copilot-evidence.md` in the main checkout. The file must identify the provider, contain `Status: not started|passed|failed|blocked`, and record the UTC date, executor environment and operating system, session base commit, exact probe checkpoint, CLI version, authentication result without secrets, relevant help excerpts, provider installation/configuration checks, disposable worktree path, and every exact command and prompt used. It records one result for each `postToolUse` matcher `bash`, `powershell`, `create`, and `edit`; one result each for `agentStop` and `subagentStop`; the simultaneous pending-ingest plus invalid-OKF case; measured full-corpus lint duration; final lint output; and cleanup result. Each result names the observed event, expected and observed diagnostic IDs, whether the agent received actionable feedback, the command exit status, and a short redacted transcript excerpt or durable transcript reference. Use a repository-local custom agent that actually emits `subagentStop`; the built-in `general-purpose` agent is invalid evidence. Run the `powershell` matcher on a supported Windows target. A missing Windows observation leaves Copilot status `blocked`.
 
@@ -433,7 +450,8 @@ Use this section order for both provider evidence files so the coordinator can r
     Date (UTC): [YYYY-MM-DD]
     Owner environment: [provider, operating system, shell]
     Session base commit: [full hash]
-    Gate 5 probe checkpoint: d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd
+    Gate 5 ancestor checkpoint: d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd
+    Probe implementation commit: [full human-created commit containing the current provider correction]
     CLI version: [exact output]
     Authentication: [passed|blocked; no secrets]
     Installed help and command syntax: [relevant excerpts and resulting exact commands]
@@ -685,14 +703,16 @@ Record evidence here as implementation proceeds. Keep transcripts concise and li
 - Gate 5 rollback checkpoint: `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`; verified as current `HEAD` with parent `7767eea03aaeef00f222c28efe9412c1cc294ad3` and a clean worktree.
 - Gate 6 checkpoint-recording doc pass: no canonical agent-document update was needed because this session changed migration status only; the Gate 5 public interfaces and durable hook guidance were already synchronized in the checkpoint.
 - Gate 5 agent-doc synchronization: `.agents/instructions/hooks.md`, `.agents/memory/testing/hooks.md`, `.agents/memory/FILE_MAP.md`, `.agents/memory/INDEX.md`, and new `.agents/memory/API_MAP.md` describe the shipped entry points, trust boundary, and validation route. The `okf-authoring` profile pass reports clean human and exact empty JSON lint, valid local links, and exactly those five canonical documentation paths in scope.
-- Gate 6 execution ownership: provider work is assigned to sequential, human-started sessions in the respective authenticated environments. Each session starts from a clean commit descending from Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`, probes that exact checkpoint in a detached worktree, leaves evidence uncommitted for human review, and never claims overall Gate 6 acceptance.
-- Gate 6 separate-session runbook commit: verified as `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd`; it is the approved checkpoint for the detached worktree used in this Copilot session and must remain the minimum base for all provider evidence.
+- Gate 6 execution ownership: provider work is assigned to sequential, human-started sessions in the respective authenticated environments. Each session starts from the latest clean human-created implementation commit, verifies that Gate 5 checkpoint `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd` is its ancestor, probes that latest commit in a detached worktree, leaves evidence uncommitted for human review, and never claims overall Gate 6 acceptance.
+- Gate 6 baseline: `d40c2d5df5b9432f5d0e4d8e48eb32ad22e478cd` remains the rollback ancestor and the checkpoint used by the failed initial Copilot run. The next Copilot worktree must use the human-created correction commit so `.github/hooks/scripts/validate-stop.py` is present.
 - Gate 6 runbook validation: delegated Standard review approved after all required corrections; active migration links, runbook-clause checks, human/JSON canonical lint, and `git diff --check` pass. The mandatory `update-agent-docs` pass found no canonical `.agents/` update because this change only refines the migration-specific execution handoff.
 - Gate 6 failed-evidence correction doc pass: no canonical `.agents/` update is needed because the corrections change only migration-specific status, evidence integrity, and next-step records; existing hook guidance already requires live capability proof and independent source-ingest/OKF behavior.
 - Gate 6 Copilot evidence: `docs/okf-kb-migration/gate6-copilot-evidence.md`; status `failed`, human-created evidence commit `bb4743f71a7409842347870aa883df4c9ef2ea8a`. The rerun records direct bash/edit `postToolUse` `OKF002` evidence, missing `powershell`, unobserved `create`, indirect-only `agentStop`, missing custom-agent `subagentStop`, failed simultaneous-failure ordering, final lint `0.039904s`/exit 0, and safe disposable-worktree removal. Its temporary transcripts and some exact command expansions were not retained, so the next run must preserve fully expanded commands and durable redacted excerpts before cleanup.
 - Gate 6 Gemini evidence: `docs/okf-kb-migration/gate6-gemini-evidence.md`; status not started, evidence commit not recorded.
-- Simultaneous-failure result and coordinator decision: Copilot failed because only the OKF `OKF002` reason was preserved; source-ingest-first ordering and the source-ingest reason were lost. Per Milestone 6, first add a failing regression and then add the permitted thin provider-local coordinator if the regression confirms separate same-event results cannot be preserved. The overall Gate 6 coordinator remains not started.
-- Gate 6 coordinator evidence commit: not started. After a human reruns the Copilot session in the required Windows environment and commits the passing record, the coordinator may begin.
+- Simultaneous-failure result and coordinator decision: the public registered-hook regression reproduced the live lost source-ingest reason. `.github/hooks/scripts/validate-stop.py` now runs the unchanged source-ingest validator before the unchanged OKF adapter and combines both block reasons. The affected Copilot OKF, auto-ingest, startup, helper, syntax, and corpus-lint checks pass; live Copilot proof remains pending.
+- Gate 6 verification scheduling: the user reopened only the Copilot correction on 2026-09-16. Gemini verification and overall coordinator acceptance remain deferred; acceptance remains not met.
+- Gate 6 correction documentation pass: `.agents/instructions/hooks.md`, `.agents/memory/API_MAP.md`, `.agents/memory/FILE_MAP.md`, `.agents/memory/adrs/hooks.md`, `.agents/memory/known-issues/hooks.md`, and `.agents/memory/testing/hooks.md` now describe the coordinator, public seam, and live-provider gotcha.
+- Gate 6 coordinator evidence commit: not started and deferred. After the user reopens Gate 6 and both provider records pass, the coordinator may begin.
 - Merge or squash commit forming the rollback unit: not started.
 
 The accepted PyYAML source archive is `https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz` with SHA-256 `d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f`. The archive contains `pyyaml-6.0.3/LICENSE` and the pure-Python package under `pyyaml-6.0.3/lib/yaml/`.
@@ -756,3 +776,7 @@ Revision note (2026-09-10): Recast Gate 6 as two sequential, human-started provi
 Revision note (2026-09-10): Resolved delegated runbook-review findings by requiring a human runbook checkpoint before provider work, provider-owned stopping-point updates, exact Windows setup and cleanup commands, fixed probe contents/prompts/expected `OKF002` observations, explicit installation checks, and post-coordinator commit recording.
 
 Revision note (2026-09-14): Reviewed human-created Copilot evidence commit `bb4743f71a7409842347870aa883df4c9ef2ea8a`, corrected the executed simultaneous-failure result from blocked/not-started to failed, recorded incomplete reproducibility artifacts, and moved the active step to the required test-first Copilot correction before any provider rerun.
+
+Revision note (2026-09-15): Recorded the user's decision to defer human-started Copilot and Gemini verification for now, moved Milestone 6 from active work to open/deferred without weakening acceptance, and preserved the existing provider runbook as the dormant resume path.
+
+Revision note (2026-09-16): Reopened only the Copilot correction, reproduced the live lost-reason behavior at the registered-hook public seam, added the permitted thin stop coordinator, synchronized agent documentation, and left live Copilot, Gemini, and final coordinator acceptance open.

@@ -138,6 +138,17 @@ PowerShell executable: present; `pwsh -NoProfile -Command '$PSVersionTable.PSVer
   - `git worktree remove --force /tmp/okf-gate6-copilot.YVPdw2/worktree`
   - A second `git worktree list` omitted the path, and `test ! -e /tmp/okf-gate6-copilot.YVPdw2/worktree` passed.
 
+## Static Correction (2026-09-16)
+
+Status: passed statically; provider evidence remains failed pending a complete live rerun.
+
+- Red proof: `rtk test bash scripts/test-hooks-okf-lint.sh` failed at the registered stop-hook seam. The observed response contained only `OKF validation failed` with `OKF101`; it omitted `Pending ingest blocks normal work.`
+- Correction: `.github/hooks/scripts/validate-stop.py` is now the single repo-local `agentStop` and `subagentStop` entry point. It passes the same payload to the unchanged source-ingest validator and unchanged OKF adapter, then combines blocking reasons in source-ingest-first order.
+- Registration: `.github/hooks/hooks.json` now registers the coordinator once for each stop event. `postToolUse` still invokes the OKF adapter directly.
+- Green proof: `scripts/test-hooks-okf-lint.sh`, `scripts/test-hooks-auto-ingest.sh`, `scripts/test-hooks-startup.sh`, `scripts/test_helpers.py`, Python and shell syntax, hook-config JSON parsing, executable-mode validation, human and exact-empty-JSON canonical lint, the active migration link checker, and `git diff --check` all pass.
+- Current GitHub documentation still states that same-type hooks execute in order and that `decision: block` forces continuation. It does not guarantee aggregation of multiple block reasons. The committed live failure remains the authority for requiring one response.
+- Retry condition: a human reviews and commits this correction, then reruns the complete Copilot owner session. Passing evidence still requires every matcher and lifecycle observation, durable exact commands and excerpts, both simultaneous reasons in order, final green lint, and safe cleanup.
+
 ## Completion
 
 The bash and edit mutation matchers produced direct `postToolUse` `OKF002` evidence, and final full-corpus lint completed below the 10-second threshold. The provider record is `failed` because the executed simultaneous-failure probe lost the source-ingest reason and required ordering. This environment also blocked complete provider proof because Copilot exposed no `powershell` tool, create did not reach `postToolUse`, and direct `agentStop`/custom-agent `subagentStop` envelopes were not observed. Do not start Gemini or mark Milestone 6 accepted.
@@ -145,6 +156,17 @@ The bash and edit mutation matchers produced direct `postToolUse` `OKF002` evide
 Next correction and retry condition: first add a failing Copilot regression that reproduces loss of the source-ingest reason when source-ingest and OKF stop checks fail together. If the regression confirms that separate same-event hooks cannot preserve both reasons, add the thin provider-local coordinator permitted by the ExecPlan while keeping both validators independent, then rerun the affected static tests. After that correction is green, rerun the complete Copilot owner session in an authenticated provider environment whose tool registry exposes `powershell`, permits `create`, emits direct `agentStop` and custom-agent `subagentStop` evidence, and has a writable install target. Preserve fully expanded commands and durable redacted evidence before cleanup.
 
 Files left for human commit:
+- `.agents/instructions/hooks.md`
+- `.agents/memory/API_MAP.md`
+- `.agents/memory/FILE_MAP.md`
+- `.agents/memory/adrs/hooks.md`
+- `.agents/memory/known-issues/hooks.md`
+- `.agents/memory/testing/hooks.md`
+- `.github/hooks/hooks.json`
+- `.github/hooks/scripts/validate-stop.py`
 - `docs/okf-kb-migration/gate6-copilot-evidence.md`
-- `docs/okf-kb-migration/implementation-execplan.md`
 - `docs/okf-kb-migration/handoff.md`
+- `docs/okf-kb-migration/implementation-execplan.md`
+- `scripts/test-hooks-auto-ingest.sh`
+- `scripts/test-hooks-okf-lint.sh`
+- `scripts/test-hooks-startup.sh`

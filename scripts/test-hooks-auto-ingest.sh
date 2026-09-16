@@ -491,13 +491,13 @@ test_hooks_json_registers_auto_ingest_between_send_event_and_required_skills() {
     "$(jq -r '.hooks.sessionStart | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local hooks.json to contain only the auto-ingest startup hook."
 
-  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
+  assert_equals '.github/hooks/scripts/validate-stop.py' \
     "$(jq -r '.hooks.agentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local agentStop to end with the pending-ingest backstop."
+    "Expected repo-local agentStop coordinator to preserve the pending-ingest backstop."
 
-  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
+  assert_equals '.github/hooks/scripts/validate-stop.py' \
     "$(jq -r '.hooks.subagentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local subagentStop to end with the pending-ingest backstop."
+    "Expected repo-local subagentStop coordinator to preserve the pending-ingest backstop."
 }
 
 test_ingest_source_skill_is_checked_in() {

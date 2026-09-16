@@ -4,26 +4,16 @@
     "agentStop": [
       {
         "type": "command",
-        "bash": ".github/hooks/scripts/inject-auto-ingest-context.py",
-        "powershell": "python \".github/hooks/scripts/inject-auto-ingest-context.py\""
-      },
-      {
-        "type": "command",
-        "bash": ".github/hooks/scripts/lint-okf.py",
-        "powershell": "python \".github/hooks/scripts/lint-okf.py\"",
+        "bash": ".github/hooks/scripts/validate-stop.py",
+        "powershell": "python \".github/hooks/scripts/validate-stop.py\"",
         "timeoutSec": 10
       }
     ],
     "subagentStop": [
       {
         "type": "command",
-        "bash": ".github/hooks/scripts/inject-auto-ingest-context.py",
-        "powershell": "python \".github/hooks/scripts/inject-auto-ingest-context.py\""
-      },
-      {
-        "type": "command",
-        "bash": ".github/hooks/scripts/lint-okf.py",
-        "powershell": "python \".github/hooks/scripts/lint-okf.py\"",
+        "bash": ".github/hooks/scripts/validate-stop.py",
+        "powershell": "python \".github/hooks/scripts/validate-stop.py\"",
         "timeoutSec": 10
       }
     ],

@@ -25,6 +25,12 @@ Layer-specific quirks for hooks. Load when working under `{.copilot,.gemini}/hoo
 **Description:** In current Copilot CLI sessions, `userPromptTransformed` fires before `sessionStart`. A startup scanner that only returns `additionalContext` from `sessionStart` can scaffold summaries and update the manifest, yet still miss the first model-facing prompt.
 **Workaround:** Keep the repo-local startup scanner for manifest and scaffold materialization, and pair it with the repo-local Copilot `userPromptTransformed` injector so the first transformed prompt gets the current `/ingest-source` context. Gemini needs its own prompt-time companion hook (`BeforeAgent`) for the same reason.
 
+## Copilot stop hooks can lose one of multiple blocking reasons
+
+**Affected area:** Repo-local Copilot `agentStop` and `subagentStop` validation
+**Description:** Copilot executes multiple hooks of one event type in order, but a live simultaneous-failure probe preserved only the later OKF block reason. Separate source-ingest and OKF stop registrations therefore cannot guarantee that the agent receives both independent failures.
+**Workaround:** Register `.github/hooks/scripts/validate-stop.py` as the single stop entry point. Keep the validators independent, execute source ingest first, and combine both block reasons into one response in that order.
+
 ## Pending ingest gate needs a real `/ingest-source` skill and a final-response backstop
 
 **Affected area:** source auto-ingest gate

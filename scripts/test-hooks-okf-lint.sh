@@ -70,6 +70,24 @@ def run(root: Path, payload: object | None = None, raw: str | None = None, extra
     return json.loads(completed.stdout)
 
 
+def run_registered_stop_hook(root: Path, payload: dict[str, object]) -> dict:
+    registrations = json.loads((root / ".github/hooks/hooks.json").read_text(encoding="utf-8"))["hooks"]["agentStop"]
+    responses = []
+    for registration in registrations:
+        command = registration["bash"]
+        completed = subprocess.run(
+            [sys.executable, str(root / command)],
+            input=json.dumps(payload),
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        assert completed.returncode == 0, completed
+        assert completed.stderr == "", completed.stderr
+        responses.append(json.loads(completed.stdout))
+    return responses[-1]
+
+
 def invalidate(root: Path) -> list[dict]:
     path = root / ".agents/instructions/repo.md"
     path.write_text(path.read_text(encoding="utf-8").replace("type: Agent Instruction", "type: Agent Memory"), encoding="utf-8")
@@ -308,19 +326,12 @@ with repo() as root:
     (root / ".agents/sources/new.md").write_text("new source\n", encoding="utf-8")
     invalidate(root)
     payload = copilot_agent_stop(root)
-    ingest = subprocess.run(
-        [sys.executable, str(root / ".github/hooks/scripts/inject-auto-ingest-context.py")],
-        input=json.dumps(payload),
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    assert ingest.returncode == 0 and ingest.stderr == "", ingest
-    ingest_response = json.loads(ingest.stdout)
-    lint_response = run(root, payload)
-    assert ingest_response["decision"] == "block" and "Pending ingest blocks normal work." in ingest_response["reason"], ingest_response
-    assert lint_response["decision"] == "block" and "OKF101" in lint_response["reason"], lint_response
-    assert "Pending ingest blocks normal work." in ingest_response["reason"] + "\n" + lint_response["reason"]
+    response = run_registered_stop_hook(root, payload)
+    assert response["decision"] == "block", response
+    reason = response["reason"]
+    assert "Pending ingest blocks normal work." in reason, response
+    assert "OKF validation failed:" in reason and "OKF101" in reason, response
+    assert reason.index("Pending ingest blocks normal work.") < reason.index("OKF validation failed:"), reason
 PY
 }
 

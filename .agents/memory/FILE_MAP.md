@@ -18,7 +18,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 
 | Path | Layer | Purpose |
 | --- | --- | --- |
-| `.github/hooks/` | hooks | Repo-local Copilot hook config and auto-ingest wiring. |
+| `.github/hooks/` | hooks | Repo-local Copilot hook config, auto-ingest wiring, and final-response validation coordination. |
 | `.copilot/` | hooks | Copilot instructions and local hook runtime sources. |
 | `.gemini/` | hooks | Gemini instructions and local hook runtime sources. |
 | `.codex/` | hooks | Inactive source for the user-global Codex required-skills hook and install-time configuration template. |
@@ -52,6 +52,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/lint-okf.py` | Provider-neutral full-corpus OKF profile linter with human/JSON output and `0`/`1`/`2` exit semantics. |
 | `scripts/test-okf-lint.sh` | Public-CLI contract suite for the OKF linter; copies the valid two-bundle fixture under `scripts/fixtures/okf-valid-repo/` for isolated mutation cases. |
 | `.github/hooks/scripts/lint-okf.py` | Repo-local Copilot adapter for central OKF diagnostics on mutation and stop hooks. |
+| `.github/hooks/scripts/validate-stop.py` | Repo-local Copilot stop coordinator that preserves source-ingest-first blocking reasons while running the independent OKF adapter. |
 | `.gemini/hooks/scripts/lint-okf.py` | Repo-local Gemini adapter for central OKF diagnostics on mutation and final-response hooks. |
 | `scripts/test-hooks-okf-lint.sh` | Copilot adapter contract, parity, failure, output-bound, and checkout-containment suite. |
 | `scripts/test-gemini-hooks-okf-lint.sh` | Gemini adapter contract, parity, retry, failure, output-bound, and checkout-containment suite. |

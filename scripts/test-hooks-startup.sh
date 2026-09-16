@@ -251,45 +251,31 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.userPromptTransformed | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local hooks.json to keep userPromptTransformed auto-ingest wiring isolated."
 
-  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
+  assert_equals '.github/hooks/scripts/validate-stop.py' \
     "$(jq -r '.hooks.agentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for agentStop."
-  assert_equals 'python ".github/hooks/scripts/inject-auto-ingest-context.py"' \
+    "Expected repo-local agentStop to register the combined stop validator."
+  assert_equals 'python ".github/hooks/scripts/validate-stop.py"' \
     "$(jq -r '.hooks.agentStop[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py PowerShell command for agentStop."
-
-  assert_equals '.github/hooks/scripts/lint-okf.py' \
-    "$(jq -r '.hooks.agentStop[1].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local agentStop to run OKF lint after source ingest."
-  assert_equals 'python ".github/hooks/scripts/lint-okf.py"' \
-    "$(jq -r '.hooks.agentStop[1].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local agentStop to register the OKF PowerShell command."
+    "Expected repo-local agentStop to register the combined PowerShell stop validator."
   assert_equals 10 \
-    "$(jq -r '.hooks.agentStop[1].timeoutSec // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local agentStop OKF lint to use a 10-second timeout."
-  assert_equals 2 \
+    "$(jq -r '.hooks.agentStop[0].timeoutSec // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local agentStop validator to use a 10-second timeout."
+  assert_equals 1 \
     "$(jq -r '.hooks.agentStop | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local agentStop to contain source ingest followed by OKF lint."
+    "Expected repo-local agentStop to expose one combined stop validator."
 
-  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
+  assert_equals '.github/hooks/scripts/validate-stop.py' \
     "$(jq -r '.hooks.subagentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for subagentStop."
-  assert_equals 'python ".github/hooks/scripts/inject-auto-ingest-context.py"' \
+    "Expected repo-local subagentStop to register the combined stop validator."
+  assert_equals 'python ".github/hooks/scripts/validate-stop.py"' \
     "$(jq -r '.hooks.subagentStop[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py PowerShell command for subagentStop."
-
-  assert_equals '.github/hooks/scripts/lint-okf.py' \
-    "$(jq -r '.hooks.subagentStop[1].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local subagentStop to run OKF lint after source ingest."
-  assert_equals 'python ".github/hooks/scripts/lint-okf.py"' \
-    "$(jq -r '.hooks.subagentStop[1].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local subagentStop to register the OKF PowerShell command."
+    "Expected repo-local subagentStop to register the combined PowerShell stop validator."
   assert_equals 10 \
-    "$(jq -r '.hooks.subagentStop[1].timeoutSec // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local subagentStop OKF lint to use a 10-second timeout."
-  assert_equals 2 \
+    "$(jq -r '.hooks.subagentStop[0].timeoutSec // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local subagentStop validator to use a 10-second timeout."
+  assert_equals 1 \
     "$(jq -r '.hooks.subagentStop | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local subagentStop to contain source ingest followed by OKF lint."
+    "Expected repo-local subagentStop to expose one combined stop validator."
 
   assert_equals 'bash|powershell|create|edit' \
     "$(jq -r '.hooks.postToolUse[0].matcher // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
