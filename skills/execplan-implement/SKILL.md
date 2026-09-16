@@ -26,21 +26,25 @@ Communication to and from subagents should be sparse. Communicate primarily thro
 
 4. If current branch is `main` or `master`, create a new **base topic branch**.
 
-5. Use **implementer subagents** to implement each progress checklist item. Instruct each implementer subagent to:
+5. Repeat steps 5–7 until all progress checklist items are implemented, validated, and integrated. The primary agent coordinates this loop; subagents perform implementation. When integration or validation reveals additional implementation work, record it in the ExecPlan by reopening an existing checklist item or adding a new one, then delegate it through this step.
+
+   Use **implementer subagents** to implement each ready progress checklist item. Instruct each implementer subagent to:
    1. Activate the `tdd` skill.
    2. Work in its own worktree, on its own branch (see [Working with Worktrees](#working-with-worktrees)).
-   3. Keep its branch private and unpushed because integration rebases it.
+   3. Follow [commit message guidelines](references/message.md).
+   4. Keep its branch private and unpushed because integration rebases it.
 
 6. Integrate completed **implementer subagent** branches into the **base topic branch** one at a time:
    1. Confirm the implementer's worktree is clean, then rebase its branch onto the latest **base topic branch**.
    2. Resolve conflicts there and rerun the affected tests. For a conflict-prone rebase, stop the implementer and give a **merger subagent** exclusive ownership of the existing implementer's worktree before the rebase starts. The merger rebases the implementer branch and does not mutate the base branch.
+      If affected tests fail, pause integration of that branch. Record the required repair as unfinished work in the ExecPlan and delegate it to an **implementer subagent** through step 5. Resume integration after the repair passes the affected tests.
    3. Update and commit any ExecPlan references to SHAs changed by the rebase, then confirm the implementer's worktree is clean.
    4. Confirm the base worktree is clean, then fast-forward the base branch with `git merge --ff-only <implementer-branch>`.
    5. Confirm the base branch tip matches the tested implementer branch tip.
 
    Serialize this integration sequence so concurrent completions cannot race to update the base branch.
 
-7. If this changes the **frontier** of available progress checklist items, kick off more **implementer subagents** to work on the new progress checklist items. This allows for maximum concurrency.
+7. Reassess the **frontier**, including repair work discovered during integration or validation, and return to step 5 for ready items. Independent work may continue while repairs are pending.
 
 8. Once all progress checklist items are complete, clean up all **implementer subagent** worktrees and report that **base topic branch** is ready for human review.
 
@@ -65,6 +69,7 @@ git worktree remove ../project-feature-a
 ```
 
 Benefits:
+
 - Multiple agents can work on different features simultaneously
 - No branch switching needed (each directory has its own branch)
 - If one experiment fails, delete the worktree — nothing is lost
