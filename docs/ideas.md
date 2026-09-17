@@ -8,3 +8,4 @@ research, planning, or implementation artifact.
 
 - Add repo-level hooks for codex to achieve parity with Copilot and Gemini repo-level hooks (see `.github/hooks/hooks.json`).
 - clean-agent-docs: shows potentially lossy compression
+- complete novice to implement the feature end-to-end without prior knowledge of this repo
