@@ -17,7 +17,7 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 ## Progress
 
 - [x] (2026-09-17 20:40Z) [milestone-1] Strengthen RTK characterization without changing runtime behavior and record the required-skill-loader no-migration decision.
-- [ ] [milestone-2] Fix RTK open-pipe completion, preserve accepted input bytes, and add the five-second Gemini outer timeout (completed: complete and incomplete JSON paths; remaining: bound an initially empty pipe on POSIX, fix the Windows initial wait, and bound nonzero RTK diagnostics).
+- [x] (2026-09-17 21:22Z) [milestone-2] Fix RTK open-pipe completion, preserve accepted input bytes, add the five-second Gemini outer timeout, and repair the reviewed first-byte and diagnostic boundaries.
 - [ ] [milestone-3] Generate the two provider-local RTK forwarders from one canonical family while preserving every approved adapter difference (completed: canonical family, manifest ownership, and generated parity; remaining: reject swapped and undeclared output paths in `render()`).
 - [x] (2026-09-17) [milestone-4] Add read-only generated-hook freshness preflight to both installers before any destination mutation.
 - [ ] [milestone-5] Run full validation, obtain focused review, synchronize documentation, and record final outcomes.
@@ -66,6 +66,9 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 - Observation: Focused review found three boundary gaps after the aggregate suite passed.
   Evidence: The initial Windows wait adds `None` to `time.monotonic()`, an initially empty POSIX pipe has no 0.5-second deadline, nonzero RTK stderr reaches the audit reason without a bound, and `render()` accepts undeclared output paths. These repairs reopened Milestones 2 and 3 before documentation completion.
 
+- Observation: The RTK subprocess exit code is sufficient for a bounded failure audit.
+  Evidence: Public tests first failed because a sentinel plus more than 2 KiB of RTK stderr appeared in each provider's audit log. Omitting stderr retained `rtk exited 23`, kept the audit below 1 KiB, and prevented the sentinel from appearing.
+
 ## Decision Log
 
 - Decision: Do not migrate the required-skill loaders into the generated-hook system.
@@ -91,6 +94,10 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 - Decision: Keep the one-second RTK subprocess timeout and add `"timeout": 5000` to Gemini's RTK hook registration.
   Rationale: The subprocess timeout already defines current behavior. The outer timeout bounds wrapper-level stalls without changing successful calls. Gemini timeout values are milliseconds.
   Date/Author: 2026-09-17, user and Codex.
+
+- Decision: Audit only the exit code when RTK exits nonzero.
+  Rationale: RTK stderr is untrusted and unbounded and can contain hook payload or environment details. The exit code identifies the failure class without copying sensitive diagnostics or adding input/output payload ceilings.
+  Date/Author: 2026-09-17, Codex.
 
 - Decision: Both installers run `scripts/generate-hooks.py --check` before any destination mutation and never run `--write`.
   Rationale: Installations should never copy stale generated hooks, but must not modify repository sources. Stale output is an authoring error with an explicit recovery command.
@@ -128,7 +135,7 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 
 Planning and candidate characterization are complete. Milestone 1 added public JSON-seam characterization without changing either handwritten RTK runtime. The required-skill loaders are rejected as a generated family. The RTK forwarders are approved subject to the test-first open-pipe repair and exact adapter preservation described below. Installer freshness preflight is approved with distinct stale and generator-failure diagnostics.
 
-Milestone 2 is complete. Both handwritten forwarders now read raw pipe bytes until one JSON object is complete, drain immediately available trailing bytes, and pass accepted input unchanged to RTK. They wait at most 0.5 seconds after any incomplete chunk, use POSIX `select` with a Windows `PeekNamedPipe` path, preserve fail-open failures and provider adapters, and apply Gemini's 5000 ms outer timeout. The public-process tests were red against `sys.stdin.read()` and are green after the repair. `bash scripts/test-hooks-rtk.sh`, `bash scripts/test-gemini-hooks-rtk.sh`, `bash scripts/test-hooks-startup.sh`, `bash scripts/test-hooks-observability.sh`, and `bash scripts/test-gemini-hooks-observability.sh` passed.
+Milestone 2 is complete after focused-review repair. Both forwarders now read raw pipe bytes until one JSON object is complete, drain immediately available trailing bytes, and pass accepted input unchanged to RTK. The 0.5-second idle window starts before the first byte and renews after every incomplete chunk; the same deadline reaches the Windows `PeekNamedPipe` path as a real float. Nonzero RTK failures audit only the exit code, so arbitrary stderr cannot expand or disclose data through the audit log. The new initially-empty POSIX cases failed by waiting for pipe EOF, and the stderr cases failed by exposing the sentinel before the repairs; both provider suites are green afterward. `bash scripts/test-hooks-rtk.sh`, `bash scripts/test-gemini-hooks-rtk.sh`, both startup suites, both observability suites, and `python3 scripts/test-generate-hooks.py` passed. Generator freshness remained at 22 files.
 
 Milestone 3 is complete. `hooks/families/rtk.py` now renders the two provider-local forwarders declared by `hooks/manifest.py`, bringing the owned output count to 22. The generator test first failed because the RTK targets were not declared, then passed after the canonical family, manifest entries, and generated outputs were added. `python3 scripts/generate-hooks.py --write` refreshed both files; `python3 scripts/generate-hooks.py --check`, `python3 scripts/test-generate-hooks.py`, `bash scripts/test-hooks-rtk.sh`, and `bash scripts/test-gemini-hooks-rtk.sh` passed.
 
@@ -174,8 +181,8 @@ Keep all new characterization tests green against the handwritten wrappers. Do n
 Acceptance is met when both focused suites pass before runtime edits, the approved Copilot conversion and Gemini passthrough are explicit, and the previous Phase 2 deferral is replaced by a concrete decision.
 
 ### Milestone 2: Repair open-pipe completion before extraction
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Use test-driven development. First add public-process regressions to both RTK suites that launch each wrapper with a real pipe, write one complete UTF-8 JSON object, keep the pipe open, and require the wrapper to respond promptly. Add an incomplete-prefix case that completes within 0.5 seconds and succeeds, and a case that remains incomplete and returns the existing no-op within a bounded interval. Add exact-byte cases for compact JSON, multiline JSON, Unicode, and buffered trailing whitespace. Compare the mock RTK stdin bytes directly rather than normalizing them through `jq`. Buffered trailing non-whitespace must remain invalid and must not invoke RTK.
 
@@ -376,3 +383,5 @@ Revision note, 2026-09-17: Completed Milestone 1. The focused Copilot and Gemini
 Revision note, 2026-09-17: Completed Milestone 3. Added the canonical RTK renderer and its two manifest-owned outputs, refreshed them only through generator write mode, and added generator assertions for generated ownership, executable modes, provider-local imports, explicit provider adapters, Copilot-only normalization, and 22-file freshness.
 
 Revision note, 2026-09-17: Reopened Milestones 2 and 3 after focused review found an unbounded initially empty POSIX pipe, a Windows initial-wait type error, unbounded nonzero RTK diagnostics, and missing exact target-path validation.
+
+Revision note, 2026-09-17: Recompleted Milestone 2 with public regressions for an initially empty POSIX pipe, a controlled Windows initial wait, and bounded redacted nonzero RTK audits. The runtime now starts its 0.5-second deadline before the first byte and audits only nonzero exit codes.

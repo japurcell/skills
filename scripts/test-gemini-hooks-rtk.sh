@@ -58,6 +58,7 @@ test_open_pipe_completion_and_exact_input_bytes() {
   trap 'rm -rf "'"$workdir"'"' RETURN
 
   python3 - "$REPO_ROOT/.gemini/hooks/scripts/rtk-hook-gemini.py" "$workdir" <<'PY'
+import importlib.util
 import os
 import subprocess
 import sys
@@ -143,6 +144,14 @@ for case_name, payload in (
     run_open_pipe_case(case_name, bytes_writer(payload), payload, b'{"updated":true}\n')
 
 run_open_pipe_case(
+    "initially-empty",
+    lambda fd: None,
+    None,
+    b'{}\n',
+    timeout=1.5,
+    minimum_elapsed=0.4,
+)
+run_open_pipe_case(
     "incomplete-then-complete",
     lambda fd: (write_all(fd, b'{"command":"delayed'), time.sleep(0.1), write_all(fd, b'"}')),
     b'{"command":"delayed"}',
@@ -183,6 +192,43 @@ run_open_pipe_case(
     b'{"updated":true}\n',
     timeout=3.0,
 )
+
+
+class FakeClock:
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def monotonic(self) -> float:
+        return self.now
+
+    def sleep(self, duration: float) -> None:
+        self.now += duration
+
+
+spec = importlib.util.spec_from_file_location("rtk_hook_gemini", wrapper)
+if spec is None or spec.loader is None:
+    raise AssertionError("could not load Gemini RTK wrapper")
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+clock = FakeClock()
+original_os_name = module.os.name
+original_monotonic = module.time.monotonic
+original_sleep = module.time.sleep
+try:
+    module.os.name = "nt"
+    module.windows_pipe_bytes_available = lambda file_descriptor: 0
+    module.time.monotonic = clock.monotonic
+    module.time.sleep = clock.sleep
+    raw_input, payload, failure = module.read_hook_input()
+finally:
+    module.os.name = original_os_name
+    module.time.monotonic = original_monotonic
+    module.time.sleep = original_sleep
+
+if (raw_input, payload, failure) != (None, None, "invalid hook input JSON"):
+    raise AssertionError("mocked Windows initial wait did not fail open after its input deadline")
+if clock.now < module.INPUT_COMPLETION_IDLE_SECONDS:
+    raise AssertionError("mocked Windows initial wait returned before the input deadline")
 PY
 }
 
@@ -224,6 +270,8 @@ test_failed_rtk_rewrite_degrades_to_noop_json() {
   audit_log="$workdir/audit.log"
 
   mock_bin "$workdir" "rtk" '#!/usr/bin/env bash
+printf "%s\r\n" "sensitive-rtk-diagnostic" >&2
+for _ in {1..2048}; do printf x >&2; done
 exit 23'
 
   output="$(
@@ -237,6 +285,14 @@ exit 23'
     "Expected RTK rewrite failures to leave the original Gemini tool input unchanged."
   assert_file_contains "$audit_log" "rtk exited 23" \
     "Expected non-zero RTK exits to be logged as a fallback."
+  if grep -Fq "sensitive-rtk-diagnostic" "$audit_log"; then
+    echo "Expected non-zero RTK stderr to be redacted from the audit log." >&2
+    exit 1
+  fi
+  if (( $(wc -c < "$audit_log") >= 1024 )); then
+    echo "Expected non-zero RTK diagnostics to remain bounded in the audit log." >&2
+    exit 1
+  fi
 }
 
 test_timeout_rtk_rewrite_degrades_to_noop_json() {

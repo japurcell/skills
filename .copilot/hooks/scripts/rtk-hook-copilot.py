@@ -107,10 +107,10 @@ def read_hook_input() -> tuple[bytes | None, dict | None, str | None]:
     decoded_input = ""
     utf8_decoder = codecs.getincrementaldecoder("utf-8")()
     json_decoder = json.JSONDecoder()
-    idle_deadline: float | None = None
+    idle_deadline = time.monotonic() + INPUT_COMPLETION_IDLE_SECONDS
 
     while True:
-        timeout = None if idle_deadline is None else max(0.0, idle_deadline - time.monotonic())
+        timeout = max(0.0, idle_deadline - time.monotonic())
         if not wait_for_stdin(file_descriptor, timeout):
             return None, None, "invalid hook input JSON"
 
@@ -176,8 +176,7 @@ def forward_to_rtk(raw_input: bytes) -> tuple[dict | None, str | None]:
         return None, f"rtk hook invocation failed: {exc}"
 
     if result.returncode != 0:
-        stderr = sanitize_log_field(result.stderr.decode("utf-8", errors="replace"))
-        return None, f"rtk exited {result.returncode}: {stderr}"
+        return None, f"rtk exited {result.returncode}"
 
     stdout_stripped = (result.stdout or b"").strip()
     if not stdout_stripped:
