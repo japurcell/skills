@@ -19,7 +19,7 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - [x] (2026-09-17 05:25Z) [milestone-1] Add generator architecture, CLI, tests, documentation, and the `send-event.py` pilot.
 - [x] (2026-09-17 05:37Z) [milestone-2] Generate Copilot, Gemini, and GitHub common and audit helpers without changing runtime behavior.
-- [ ] [milestone-3] Generate Copilot and Gemini observability helpers without changing runtime behavior or latency expectations.
+- [x] (2026-09-17 05:47Z) [milestone-3] Generate Copilot and Gemini observability helpers without changing runtime behavior or latency expectations.
 - [ ] [milestone-4] Generate Copilot and Gemini Tool Guardian scripts, remove owned local duplicates, and complete independent security review.
 - [ ] [milestone-5] Generate Copilot and Gemini secret scanners, remove owned local duplicates, and complete independent security review.
 - [ ] [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
@@ -41,6 +41,9 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - Observation: Common and audit helpers did not previously have shebangs, although the generator contract requires every generated output to be executable.
   Evidence: Their characterization hashes match the pre-generation runtime body after removing only the generated header and added shebang; `scripts/test-generate-hooks.py` proves this for all six helpers.
+
+- Observation: The observability helpers have eight intentional provider adapter sites and are otherwise identical.
+  Evidence: The pre-migration unified diff contains only runtime identity, runtime-prefixed environment variables, and the default runtime-home path. The generator regression normalizes only those eight exact expressions and rejects every other difference.
 
 ## Decision Log
 
@@ -84,11 +87,17 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: GitHub retains its bounded incomplete-input wait and does not use observability capture or a passive-log helper. Copilot and Gemini retain observability capture but differ in passive-log entrypoint, shadow mode, environment names, and default audit path. GitHub's audit writer retains its mode-prefixed shadow records and has no `audit_init` or `audit_log_passive_event` API.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Represent observability provider variation with exact adapter expressions, not broad name replacement.
+  Rationale: Exact replacements make the runtime name, environment precedence, and default path differences reviewable and cause the regression test to fail when a new provider divergence appears.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
 
 Milestone 2 now owns six generated common and audit helpers. The renderer contract preserves each pre-generation helper body byte-for-byte after excluding the generated ownership header and executable shebang. Provider behavior remains explicit: GitHub has bounded incomplete-input handling and an audit mode prefix, Copilot has standard passive logging, and Gemini has its separate passive shadow configuration. The generator tests and all listed Copilot, GitHub, Gemini, and installer fixture suites passed. No behavior defect or unclassified drift was observed.
+
+Milestone 3 now owns the two observability helpers. The generated runtime bodies preserve SQLite/WAL tracing, transcript finalization, NDJSON fallback, retention, locking, maintenance, and fail-open behavior; only the generated header was added. The eight named adapter expressions cover runtime identity, environment precedence, and the default home-directory log path. Generator, both observability, both startup, and both installer fixture suites passed. PowerShell installer tests passed with the expected junction skip. The direct real-home installer remains unavailable because `/root/.agents/skills` is read-only, so temporary-home installed-copy coverage is the available installed-behavior evidence.
 
 ## Context and Orientation
 
@@ -187,8 +196,8 @@ After behavior-preserving migration, record every provider difference discovered
 Acceptance requires byte-equivalent behavior at public stdin/stdout seams, current executable and audit modes, all targeted suites passing, and no direct edits needed in generated outputs.
 
 ### Milestone 3: Generate observability helpers
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met (repository and temporary-home installed-copy proof; real-home install unavailable in this environment)
 
 Add `hooks/families/observability.py` and render Copilot and Gemini helpers. Preserve runtime name, environment-variable precedence, default paths, event normalization, transcript behavior, SQLite schema and WAL use, session and span finalization, maintenance, NDJSON fallback, retention, locking, corruption recovery, and fail-open control-flow behavior. The current files align almost completely; represent the small runtime differences as named provider data rather than hidden conditionals.
 
@@ -387,3 +396,5 @@ Revision note, 2026-09-17: Initial ExecPlan created from the confirmed grilling 
 Revision note, 2026-09-17: Completed Milestone 1. The pilot now renders the two provider-local `send-event.py` scripts; the generator test suite covers CLI, freshness, headers, output modes, path defenses, lock timeout, rollback, interruption cleanup, and external working directories. Targeted provider and installer fixture suites passed; the real-home install attempt is recorded above because its destination is read-only.
 
 Revision note, 2026-09-17: Completed Milestone 2. Canonical common and audit renderers now own all six Copilot, Gemini, and GitHub helper outputs. Their runtime bodies are characterized against the pre-generation sources, with only the generator-required executable shebang and ownership header added. Targeted generator, provider hook, and installer fixture suites passed.
+
+Revision note, 2026-09-17: Completed Milestone 3. Canonical observability rendering now owns the Copilot and Gemini helpers through eight exact, tested provider adapter expressions. Targeted generator, observability, startup, shell installer, and PowerShell installer fixture suites passed; direct real-home installation remained blocked by the existing read-only `/root/.agents/skills` destination.

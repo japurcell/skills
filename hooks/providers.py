@@ -13,10 +13,11 @@ class Provider:
     name: str
     hook_root: PurePosixPath
     runtime_home_name: str
+    observability_environment_prefix: str
 
 
 PROVIDERS = {
-    "copilot": Provider("copilot", PurePosixPath(".copilot/hooks"), ".copilot"),
-    "gemini": Provider("gemini", PurePosixPath(".gemini/hooks"), ".gemini"),
-    "github": Provider("github", PurePosixPath(".github/hooks"), ".copilot"),
+    "copilot": Provider("copilot", PurePosixPath(".copilot/hooks"), ".copilot", "COPILOT"),
+    "gemini": Provider("gemini", PurePosixPath(".gemini/hooks"), ".gemini", "GEMINI"),
+    "github": Provider("github", PurePosixPath(".github/hooks"), ".copilot", "COPILOT"),
 }
