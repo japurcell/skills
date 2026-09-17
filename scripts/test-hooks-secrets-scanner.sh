@@ -80,6 +80,21 @@ EOF
   chmod 755 "$fake_bin/git"
 }
 
+create_selectively_failing_git() {
+  local fake_bin="$1"
+
+  mkdir -p "$fake_bin"
+  cat > "$fake_bin/git" <<'EOF'
+#!/usr/bin/env bash
+
+if [[ "${1-}" == "${FAIL_GIT_COMMAND-}" ]]; then
+  exit 9
+fi
+exec "$REAL_GIT" "$@"
+EOF
+  chmod 755 "$fake_bin/git"
+}
+
 test_stalled_git_is_bounded_by_timeout() {
   local workdir
   local repo_dir
@@ -239,6 +254,193 @@ test_audit_init_failure_block_mode_uses_copilot_denial_envelope() {
   assert_equals "scan-secrets.py: failed to initialize audit logging." \
     "$(jq -r '.permissionDecisionReason' <<<"$output")" \
     "Expected audit-init denial reason to remain stable."
+}
+
+test_git_failures_after_repo_detection_respect_fail_closed_mode() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local fake_bin
+  local real_git
+  local output
+  local status
+  local command_name
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  fake_bin="$workdir/bin"
+  real_git="$(command -v git)"
+  mkdir -p "$repo_dir"
+  init_git_repo "$repo_dir"
+  printf 'baseline\n' > "$repo_dir/notes.txt"
+  git -C "$repo_dir" add notes.txt
+  git -C "$repo_dir" commit -qm "baseline"
+  printf 'changed\n' >> "$repo_dir/notes.txt"
+  git -C "$repo_dir" add notes.txt
+  create_selectively_failing_git "$fake_bin"
+
+  for command_name in diff ls-files show; do
+    if output="$(
+      run_scan_hook \
+        "$repo_dir" \
+        "$log_dir/$command_name-block" \
+        block \
+        staged \
+        '{"sessionId":"git-failure","timestamp":"2026-06-23T23:38:45Z","reason":"tool"}' \
+        "PATH=$fake_bin:$PATH" \
+        "REAL_GIT=$real_git" \
+        "FAIL_GIT_COMMAND=$command_name"
+    )"; then
+      status=0
+    else
+      status=$?
+    fi
+    assert_equals "0" "$status" \
+      "Expected $command_name failure in block mode to return exit code 0."
+    assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+      "Expected $command_name failure after repository detection to deny."
+
+    output="$(
+      run_scan_hook \
+        "$repo_dir" \
+        "$log_dir/$command_name-warn" \
+        warn \
+        staged \
+        '{"sessionId":"git-failure","timestamp":"2026-06-23T23:38:46Z","reason":"complete"}' \
+        "PATH=$fake_bin:$PATH" \
+        "REAL_GIT=$real_git" \
+        "FAIL_GIT_COMMAND=$command_name"
+    )"
+    assert_equals "{}" "$output" \
+      "Expected $command_name failure in warn mode to degrade to JSON no-op."
+  done
+}
+
+test_unsafe_and_oversized_candidates_respect_fail_closed_mode() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local outside
+  local output
+  local status
+  local candidate_case
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  outside="$workdir/outside.txt"
+  mkdir -p "$repo_dir"
+  init_git_repo "$repo_dir"
+  printf 'outside\n' > "$outside"
+
+  for candidate_case in symlink oversized; do
+    if [[ "$candidate_case" == "symlink" ]]; then
+      ln -s "$outside" "$repo_dir/candidate.txt"
+    else
+      head -c 1048577 /dev/zero > "$repo_dir/candidate.txt"
+    fi
+
+    if output="$(
+      run_scan_hook \
+        "$repo_dir" \
+        "$log_dir/$candidate_case-block" \
+        block \
+        diff \
+        '{"sessionId":"candidate-limit","timestamp":"2026-06-23T23:38:50Z","reason":"tool"}'
+    )"; then
+      status=0
+    else
+      status=$?
+    fi
+    assert_equals "0" "$status" \
+      "Expected $candidate_case candidate rejection to return exit code 0."
+    assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+      "Expected $candidate_case candidate rejection to fail closed."
+
+    output="$(
+      run_scan_hook \
+        "$repo_dir" \
+        "$log_dir/$candidate_case-warn" \
+        warn \
+        diff \
+        '{"sessionId":"candidate-limit","timestamp":"2026-06-23T23:38:51Z","reason":"complete"}'
+    )"
+    assert_equals "{}" "$output" \
+      "Expected $candidate_case candidate rejection in warn mode to no-op."
+    unlink "$repo_dir/candidate.txt"
+  done
+}
+
+test_scan_log_lock_timeout_respects_fail_closed_mode() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local lock_path
+  local ready_path
+  local locker_pid
+  local output
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  lock_path="$log_dir/scan.log.lock"
+  ready_path="$workdir/lock-ready"
+  mkdir -p "$repo_dir" "$log_dir"
+  init_git_repo "$repo_dir"
+
+  python3 - "$lock_path" "$ready_path" <<'PY' &
+import fcntl
+import os
+from pathlib import Path
+import sys
+import time
+
+descriptor = os.open(sys.argv[1], os.O_CREAT | os.O_RDWR, 0o600)
+fcntl.flock(descriptor, fcntl.LOCK_EX)
+Path(sys.argv[2]).write_text("ready", encoding="utf-8")
+time.sleep(5)
+PY
+  locker_pid=$!
+  trap 'kill "'"$locker_pid"'" 2>/dev/null || true; wait "'"$locker_pid"'" 2>/dev/null || true; rm -rf "'"$workdir"'"' RETURN
+  while [[ ! -f "$ready_path" ]]; do
+    sleep 0.01
+  done
+
+  if output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      diff \
+      '{"sessionId":"locked-log","timestamp":"2026-06-23T23:38:55Z","reason":"tool"}'
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+  assert_equals "0" "$status" \
+    "Expected a blocked scan-log lock to return exit code 0."
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected a scan-log lock timeout to fail closed in block mode."
+
+  output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      '{"sessionId":"locked-log","timestamp":"2026-06-23T23:38:56Z","reason":"complete"}'
+  )"
+  assert_equals "{}" "$output" \
+    "Expected a scan-log lock timeout to no-op in warn mode."
+
+  kill "$locker_pid" 2>/dev/null || true
+  wait "$locker_pid" 2>/dev/null || true
 }
 
 test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
@@ -576,6 +778,83 @@ test_warn_mode_flags_sensitive_credential_paths_without_token_match() {
   fi
 }
 
+test_binary_credential_path_still_scans_ascii_tokens() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir/.ssh"
+
+  init_git_repo "$repo_dir"
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  printf 'binary\0token=%s\n' "$fake_token" > "$repo_dir/.ssh/id_test"
+
+  output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      '{"sessionId":"binary-credential","timestamp":"2026-06-23T23:43:30Z","reason":"complete"}'
+  )"
+
+  assert_json_output "$output" "Expected binary credential scan to emit JSON."
+  assert_file_contains "$log_dir/scan.log" '"pattern":"credential_path"' \
+    "Expected binary credential paths to be flagged before text classification."
+  assert_file_contains "$log_dir/scan.log" '"pattern":"github_classic_pat"' \
+    "Expected bounded ASCII token scanning to inspect NUL-bearing files."
+  if grep -Fq "$fake_token" "$log_dir/scan.log"; then
+    echo "Did not expect the fake token to appear unredacted in the scan log." >&2
+    exit 1
+  fi
+}
+
+test_unusual_filename_and_double_plus_added_line_are_scanned() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+  local unusual_name
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  printf 'baseline\n' > "$repo_dir/notes.txt"
+  git -C "$repo_dir" add notes.txt
+  git -C "$repo_dir" commit -qm "baseline"
+
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  unusual_name=$'odd\nname.env'
+  printf 'token=%s\n' "$fake_token" > "$repo_dir/$unusual_name"
+  printf '++token=%s\n' "$fake_token" >> "$repo_dir/notes.txt"
+
+  output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      '{"sessionId":"unusual-path","timestamp":"2026-06-23T23:43:45Z","reason":"complete"}'
+  )"
+
+  assert_json_output "$output" "Expected unusual-path scan to emit JSON."
+  assert_file_contains "$log_dir/scan.log" '"path":"odd\nname.env"' \
+    "Expected NUL-delimited Git paths to preserve embedded newlines."
+  assert_file_contains "$log_dir/scan.log" '"path":"notes.txt","line":2' \
+    "Expected added content beginning with two plus signs to be scanned inside a hunk."
+}
+
 test_env_variants_are_logged_but_not_flagged_by_path_alone() {
   local workdir
   local repo_dir
@@ -717,6 +996,9 @@ main() {
   test_stalled_git_denies_in_block_mode
   test_missing_git_block_mode_uses_copilot_denial_envelope
   test_audit_init_failure_block_mode_uses_copilot_denial_envelope
+  test_git_failures_after_repo_detection_respect_fail_closed_mode
+  test_unsafe_and_oversized_candidates_respect_fail_closed_mode
+  test_scan_log_lock_timeout_respects_fail_closed_mode
   test_unexpected_exception_block_mode_denies_with_json_and_exit_zero
   test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero
   test_invalid_json_block_mode_denies_with_json_and_exit_zero
@@ -724,6 +1006,8 @@ main() {
   test_block_mode_denies_when_findings_exist
   test_diff_mode_ignores_unchanged_secrets_in_touched_files
   test_warn_mode_flags_sensitive_credential_paths_without_token_match
+  test_binary_credential_path_still_scans_ascii_tokens
+  test_unusual_filename_and_double_plus_added_line_are_scanned
   test_env_variants_are_logged_but_not_flagged_by_path_alone
   test_generic_secrets_filename_stays_clean
   test_allowlist_suppresses_credential_path_finding

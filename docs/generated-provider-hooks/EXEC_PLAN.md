@@ -27,6 +27,7 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 - [x] (2026-09-17 07:03Z) [milestone-4] Resolve object-valued tool-input scanning with bounded recursive string extraction, serialized fallback, and safe structured negatives.
 - [x] (2026-09-17 07:08Z) [milestone-4] Obtain independent security approval with no unresolved high-confidence blocker and accept the milestone.
 - [x] (2026-09-17 07:22Z) [milestone-5] Generate and validate Copilot and Gemini secret scanners, remove owned response duplication, and share provider-neutral detection and exact-allowlist vectors.
+- [x] (2026-09-17 07:54Z) [milestone-5] Resolve the first independent security review's SEC-001 through SEC-006 findings with an isolated TDD repair, regenerated outputs, and public fail-closed/warn regressions.
 - [ ] [milestone-5] Obtain independent security approval for canonical secret patterns, Git subprocess boundaries, output envelopes, logging, timeouts, and rendered files.
 - [ ] [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
 - [ ] [milestone-7] Finish repository-wide validation, classify drift, update durable documentation, and publish the Phase 2 recommendation.
@@ -71,6 +72,9 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - Observation: Milestone 4's exact allowlist implementation was still embedded inside the Tool Guardian family renderer rather than exposed as a build-time canonical source.
   Evidence: Moving the unchanged implementation to `hooks/families/allowlist.py` and embedding it into both security families made `python3 scripts/generate-hooks.py --write` report all 14 outputs already current after the Tool Guardian renderer change.
+
+- Observation: The first independent secret-scanner review found six fail-open, parsing, file-safety, resource-bound, log-permission, and lock-contention defects that extraction characterization did not expose.
+  Evidence: SEC-001 through SEC-006 reproduced Git command failures being treated as empty results, ambiguous line-delimited paths and diff markers, binary credential files escaping token scans, link-following and unbounded candidate reads, permissive or redirected logs, and an unbounded blocking log lock. Shared generated-code tests and provider public-envelope suites now exercise each affected boundary with fake credentials only.
 
 ## Decision Log
 
@@ -174,6 +178,18 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: Canonical extraction, shared vectors, public provider tests, startup suites, and installer suites pass, but the required independent security review intentionally remains a separate acceptance gate.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: After successful repository detection, treat every Git diff, file-list, staged-content, or related candidate-read failure as a scanner error and route it through the provider's block-denial or warn-no-op envelope.
+  Rationale: An operational failure cannot be represented as an empty clean result. NUL-delimited path output, pinned diff formatting, byte-safe decoding, and stateful hunk parsing make unusual filenames and added lines beginning with `++` unambiguous.
+  Date/Author: 2026-09-17, Codex.
+
+- Decision: Read worktree candidates descriptor-first without following links, validate staged object sizes before content reads, and enforce per-file, total-byte, file-count, Git-output, and elapsed-time bounds.
+  Rationale: Repository-relative path validation alone does not prevent link races or resource exhaustion. Any rejected or exceeded boundary is a scanner error, so block mode fails closed while warning mode retains its compatibility no-op.
+  Date/Author: 2026-09-17, Codex.
+
+- Decision: Secure secret-scan logs and locks as owner-only regular files behind a bounded nonblocking cross-platform lock.
+  Rationale: Log directories use mode `0700`, active and rotated files use `0600`, links and reparse points are rejected, and lock timeout follows the same provider failure policy instead of stalling the hook indefinitely.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
@@ -195,6 +211,8 @@ Milestone 4 fourth-repair validation at 2026-09-17 07:05Z passed Python compilat
 Milestone 5 extraction now owns the two secret scanners through one canonical policy plus explicit Copilot and Gemini response/runtime adapters. The generated scripts retain provider-specific denial envelopes, reason text, session keys, default log paths, working-directory selection, audit behavior, fail-closed block mode, and warn-mode no-op compatibility. Copilot's missing-Git and audit-initialization branches now use its single response renderer. The scanner uses the same build-time canonical structured exact allowlist implementation as Tool Guardian, with self-contained generated runtime files. Shared fake-credential vectors cover all five patterns, negative boundaries, credential and environment paths, binary/text classification, line numbering, redaction, exact allowlists, and prompt-disabled five-second Git subprocess calls; public provider suites cover expected block decisions and stable missing-Git/audit failure reasons.
 
 Milestone 5 extraction validation at 2026-09-17 07:22Z passed Python compilation, 13 generator tests, both secret-scanner suites, both Tool Guardian suites, both startup suites, the shell installer fixture, and the PowerShell installer fixture with its expected unsupported-junction skip. Generator write/check owns 14 outputs, rejects mismatched secret-scanner provider targets, and left the Tool Guardian files byte-current when the shared allowlist source was extracted. Independent security review remains the sole acceptance gate.
+
+Milestone 5 security repair at 2026-09-17 07:54Z closes SEC-001 through SEC-006 in the canonical renderer and regenerated provider scripts. Git failures no longer become clean scans; Git filenames and unified diffs use unambiguous byte-oriented formats; credential paths and bounded ASCII tokens are inspected even for binary data; candidate reads are contained, descriptor-first, no-follow, regular-file-only, and resource-bounded; and logs use owner-only directories/files, link rejection, mode-preserving rotation, and a bounded POSIX/Windows lock. Public provider regressions prove block denial and warn no-op for Git errors, unsafe or oversized candidates, and lock timeout, while both providers cover unusual filenames, `++` added lines, and NUL-containing credential files. Final validation passed Python compilation, shell syntax checks, all 19 generator tests, both secret-scanner suites, both Tool Guardian suites, both startup suites, shell and PowerShell installer fixtures, generator freshness for all 14 outputs, and diff hygiene. The PowerShell fixture reported only its expected unsupported-junction skip. Milestone status and acceptance remain unchanged pending independent security rereview.
 
 ## Context and Orientation
 
@@ -509,3 +527,5 @@ Revision note, 2026-09-17: A fourth focused TDD repair recursively extracts boun
 Revision note, 2026-09-17: Independent security rereview approved Milestone 4 at `dd6d3f670b9181ab3ee73eaa48fb6785282a3db0` with no high-confidence blocker. Progress, outcome, status, and acceptance are now synchronized as done and met.
 
 Revision note, 2026-09-17: Completed the Milestone 5 extraction and targeted validation portion. One canonical secret-scanner policy now renders both provider-local scripts, the exact allowlist source is shared at generation time across both security families, shared fake-credential vectors and provider public-envelope regressions pass, and acceptance remains pending independent security review.
+
+Revision note, 2026-09-17: Resolved the first Milestone 5 independent review's SEC-001 through SEC-006 findings in a separate TDD repair. Strict Git error propagation, unambiguous byte-oriented Git parsing, binary credential scanning, descriptor-first bounded candidate reads, owner-only no-follow logs, and bounded cross-platform log locking now have shared and public-provider regressions. Milestone 5 remains in progress pending independent security rereview.

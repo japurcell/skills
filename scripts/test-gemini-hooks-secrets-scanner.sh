@@ -435,6 +435,83 @@ test_warn_mode_flags_sensitive_credential_paths_without_token_match() {
     "Expected credential-path finding to record the file path."
 }
 
+test_binary_credential_path_still_scans_ascii_tokens() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir/.ssh"
+
+  init_git_repo "$repo_dir"
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  printf 'binary\0token=%s\n' "$fake_token" > "$repo_dir/.ssh/id_test"
+
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      "{\"session_id\":\"binary-credential\",\"timestamp\":\"2026-06-23T23:52:30Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}"
+  )"
+
+  assert_json_output "$output" "Expected Gemini binary credential scan to emit JSON."
+  assert_file_contains "$log_dir/scan.log" '"pattern":"credential_path"' \
+    "Expected Gemini binary credential paths to be flagged before text classification."
+  assert_file_contains "$log_dir/scan.log" '"pattern":"github_classic_pat"' \
+    "Expected Gemini bounded ASCII token scanning to inspect NUL-bearing files."
+  if grep -Fq "$fake_token" "$log_dir/scan.log"; then
+    echo "Did not expect the fake token to appear unredacted in the Gemini scan log." >&2
+    exit 1
+  fi
+}
+
+test_unusual_filename_and_double_plus_added_line_are_scanned() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+  local unusual_name
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  printf 'baseline\n' > "$repo_dir/notes.txt"
+  git -C "$repo_dir" add notes.txt
+  git -C "$repo_dir" commit -qm "baseline"
+
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  unusual_name=$'odd\nname.env'
+  printf 'token=%s\n' "$fake_token" > "$repo_dir/$unusual_name"
+  printf '++token=%s\n' "$fake_token" >> "$repo_dir/notes.txt"
+
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      "{\"session_id\":\"unusual-path\",\"timestamp\":\"2026-06-23T23:52:45Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}"
+  )"
+
+  assert_json_output "$output" "Expected Gemini unusual-path scan to emit JSON."
+  assert_file_contains "$log_dir/scan.log" '"path":"odd\nname.env"' \
+    "Expected Gemini NUL-delimited Git paths to preserve embedded newlines."
+  assert_file_contains "$log_dir/scan.log" '"path":"notes.txt","line":2' \
+    "Expected Gemini added content beginning with two plus signs to be scanned inside a hunk."
+}
+
 test_generic_secrets_filename_stays_clean() {
   local workdir
   local repo_dir
@@ -661,6 +738,8 @@ main() {
   test_warn_mode_reports_findings_with_json_output
   test_env_variants_are_logged_but_not_flagged_by_path_alone
   test_warn_mode_flags_sensitive_credential_paths_without_token_match
+  test_binary_credential_path_still_scans_ascii_tokens
+  test_unusual_filename_and_double_plus_added_line_are_scanned
   test_generic_secrets_filename_stays_clean
   test_diff_mode_ignores_unmodified_secret_lines
   test_diff_mode_ignores_unified_diff_headers

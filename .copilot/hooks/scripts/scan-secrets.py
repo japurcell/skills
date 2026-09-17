@@ -6,10 +6,12 @@ import json
 import os
 import re
 import shutil
+import stat
 import sys
+import time
 import unicodedata
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -63,6 +65,25 @@ PATTERNS = [
     ("stripe_live_key", "high", re.compile(r"sk_live_[0-9A-Za-z]{16,}")),
     ("slack_token", "medium", re.compile(r"xox[baprs]-[0-9A-Za-z-]{10,}")),
 ]
+MAX_FILES = 256
+MAX_FILE_BYTES = 1048576
+MAX_TOTAL_BYTES = 8388608
+MAX_GIT_OUTPUT_BYTES = 8388608
+MAX_SCAN_SECONDS = 8.0
+LOG_LOCK_TIMEOUT_SECONDS = 1.0
+LOG_LOCK_POLL_SECONDS = 0.05
+
+
+class GitCommandError(RuntimeError):
+    pass
+
+
+class ScanSecurityError(RuntimeError):
+    pass
+
+
+class ScanLimitExceeded(ScanSecurityError):
+    pass
 
 
 def noop() -> None:
@@ -114,7 +135,13 @@ def git_available() -> bool:
     return shutil.which("git") is not None
 
 
-def run_git(args: list[str], *, cwd: Path, text: bool = True) -> str | bytes | None:
+def run_git(
+    args: list[str],
+    *,
+    cwd: Path,
+    text: bool = True,
+    allow_nonzero: bool = False,
+) -> str | bytes | None:
     import subprocess
 
     try:
@@ -130,11 +157,20 @@ def run_git(args: list[str], *, cwd: Path, text: bool = True) -> str | bytes | N
             check=False,
             timeout=5,
         )
-    except OSError:
-        return None
+    except OSError as exc:
+        raise GitCommandError("unable to execute Git") from exc
 
     if result.returncode != 0:
-        return None
+        if allow_nonzero:
+            return None
+        raise GitCommandError(f"Git command failed with exit {result.returncode}")
+    output_size = (
+        len(result.stdout.encode("utf-8", errors="surrogatepass"))
+        if isinstance(result.stdout, str)
+        else len(result.stdout)
+    )
+    if output_size > MAX_GIT_OUTPUT_BYTES:
+        raise ScanLimitExceeded("Git output exceeds the scanner limit")
 
     return result.stdout
 
@@ -149,57 +185,182 @@ def repo_root(work_dir: Path) -> Path:
 
 
 def is_inside_git_repo(work_dir: Path) -> bool:
-    output = run_git(["rev-parse", "--is-inside-work-tree"], cwd=work_dir)
-    return isinstance(output, str)
+    try:
+        output = run_git(["rev-parse", "--is-inside-work-tree"], cwd=work_dir)
+    except GitCommandError:
+        return False
+    return isinstance(output, str) and output.strip() == "true"
 
 
 def has_head(root: Path) -> bool:
-    return run_git(["rev-parse", "--verify", "HEAD"], cwd=root) is not None
+    return run_git(
+        ["rev-parse", "--verify", "HEAD"],
+        cwd=root,
+        allow_nonzero=True,
+    ) is not None
+
+
+def decode_nul_paths(output: bytes) -> list[str]:
+    if not output:
+        return []
+    if not output.endswith(b"\0"):
+        raise GitCommandError("Git returned malformed NUL-delimited paths")
+    return [os.fsdecode(path) for path in output[:-1].split(b"\0") if path]
 
 
 def collect_files(root: Path, scope: str, root_has_head: bool) -> list[str]:
     files: list[str] = []
+    diff_options = [
+        "--name-only",
+        "-z",
+        "--no-ext-diff",
+        "--no-color",
+        "--no-textconv",
+        "--diff-filter=ACMRTUXB",
+    ]
 
     if scope == "staged":
-        output = run_git(["diff", "--cached", "--name-only", "--diff-filter=ACMRTUXB", "--"], cwd=root)
-        if isinstance(output, str):
-            files.extend(line for line in output.splitlines() if line)
+        output = run_git(["diff", "--cached", *diff_options, "--"], cwd=root, text=False)
+        if isinstance(output, bytes):
+            files.extend(decode_nul_paths(output))
     elif root_has_head:
-        output = run_git(["diff", "--name-only", "--diff-filter=ACMRTUXB", "HEAD", "--"], cwd=root)
-        if isinstance(output, str):
-            files.extend(line for line in output.splitlines() if line)
+        output = run_git(["diff", *diff_options, "HEAD", "--"], cwd=root, text=False)
+        if isinstance(output, bytes):
+            files.extend(decode_nul_paths(output))
     else:
-        output = run_git(["diff", "--name-only", "--diff-filter=ACMRTUXB", "--"], cwd=root)
-        if isinstance(output, str):
-            files.extend(line for line in output.splitlines() if line)
-        output = run_git(["diff", "--cached", "--name-only", "--diff-filter=ACMRTUXB", "--"], cwd=root)
-        if isinstance(output, str):
-            files.extend(line for line in output.splitlines() if line)
+        output = run_git(["diff", *diff_options, "--"], cwd=root, text=False)
+        if isinstance(output, bytes):
+            files.extend(decode_nul_paths(output))
+        output = run_git(["diff", "--cached", *diff_options, "--"], cwd=root, text=False)
+        if isinstance(output, bytes):
+            files.extend(decode_nul_paths(output))
 
-    output = run_git(["ls-files", "--others", "--exclude-standard"], cwd=root)
-    if isinstance(output, str):
-        files.extend(line for line in output.splitlines() if line)
+    output = run_git(["ls-files", "-z", "--others", "--exclude-standard"], cwd=root, text=False)
+    if isinstance(output, bytes):
+        files.extend(decode_nul_paths(output))
 
-    return sorted({path for path in files if path})
+    unique_files = sorted({path for path in files if path})
+    if len(unique_files) > MAX_FILES:
+        raise ScanLimitExceeded("modified file count exceeds the scanner limit")
+    return unique_files
 
 
 def untracked_files(root: Path) -> set[str]:
-    output = run_git(["ls-files", "--others", "--exclude-standard"], cwd=root)
-    if not isinstance(output, str):
+    output = run_git(["ls-files", "-z", "--others", "--exclude-standard"], cwd=root, text=False)
+    if not isinstance(output, bytes):
         return set()
-    return {line for line in output.splitlines() if line}
+    return set(decode_nul_paths(output))
 
 
-def read_candidate_bytes(root: Path, path: str, scope: str) -> bytes | None:
-    if scope == "staged":
-        output = run_git(["show", f":{path}"], cwd=root, text=False)
-        return output if isinstance(output, bytes) else None
+def _is_reparse_point(details: os.stat_result) -> bool:
+    attributes = getattr(details, "st_file_attributes", 0)
+    flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return bool(attributes & flag)
 
-    candidate = root / path
+
+def _validate_candidate_parts(path: str) -> tuple[str, ...]:
+    parsed = PurePosixPath(path)
+    if parsed.is_absolute() or not parsed.parts or any(part in {"", ".", ".."} for part in parsed.parts):
+        raise ScanSecurityError("candidate path escapes the repository")
+    return parsed.parts
+
+
+def _read_bounded_descriptor(descriptor: int) -> bytes:
+    details = os.fstat(descriptor)
+    if not stat.S_ISREG(details.st_mode) or _is_reparse_point(details):
+        raise ScanSecurityError("candidate must be a regular file")
+    if details.st_size > MAX_FILE_BYTES:
+        raise ScanLimitExceeded("candidate file exceeds the scanner limit")
+
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = os.read(descriptor, min(65536, MAX_FILE_BYTES + 1 - total))
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
+        total += len(chunk)
+        if total > MAX_FILE_BYTES:
+            raise ScanLimitExceeded("candidate file exceeds the scanner limit")
+
+
+def _read_worktree_candidate(root: Path, path: str) -> bytes:
+    parts = _validate_candidate_parts(path)
+    root_path = root.resolve(strict=True)
+    no_follow = getattr(os, "O_NOFOLLOW", 0)
+    directory_flag = getattr(os, "O_DIRECTORY", 0)
+
+    if os.open in os.supports_dir_fd and directory_flag:
+        descriptors: list[int] = []
+        try:
+            current = os.open(root_path, os.O_RDONLY | directory_flag)
+            descriptors.append(current)
+            for component in parts[:-1]:
+                details = os.stat(component, dir_fd=current, follow_symlinks=False)
+                if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
+                    raise ScanSecurityError("candidate path contains a link")
+                current = os.open(
+                    component,
+                    os.O_RDONLY | directory_flag | no_follow,
+                    dir_fd=current,
+                )
+                descriptors.append(current)
+            details = os.stat(parts[-1], dir_fd=current, follow_symlinks=False)
+            if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
+                raise ScanSecurityError("candidate path contains a link")
+            descriptor = os.open(parts[-1], os.O_RDONLY | no_follow, dir_fd=current)
+            descriptors.append(descriptor)
+            return _read_bounded_descriptor(descriptor)
+        except (OSError, ValueError) as exc:
+            if isinstance(exc, ScanSecurityError):
+                raise
+            raise ScanSecurityError("unable to open candidate safely") from exc
+        finally:
+            for descriptor in reversed(descriptors):
+                try:
+                    os.close(descriptor)
+                except OSError:
+                    pass
+
+    candidate = root_path.joinpath(*parts)
+    current = root_path
     try:
-        return candidate.read_bytes()
-    except OSError:
-        return None
+        for component in parts:
+            current = current / component
+            details = current.lstat()
+            if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
+                raise ScanSecurityError("candidate path contains a link")
+        resolved = candidate.resolve(strict=True)
+        resolved.relative_to(root_path)
+        descriptor = os.open(candidate, os.O_RDONLY | no_follow)
+    except (OSError, ValueError) as exc:
+        if isinstance(exc, ScanSecurityError):
+            raise
+        raise ScanSecurityError("unable to open candidate safely") from exc
+    try:
+        return _read_bounded_descriptor(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def read_candidate_bytes(root: Path, path: str, scope: str) -> bytes:
+    if scope == "staged":
+        _validate_candidate_parts(path)
+        size_output = run_git(["cat-file", "-s", f":{path}"], cwd=root, text=False)
+        if not isinstance(size_output, bytes):
+            raise GitCommandError("Git returned an invalid staged size")
+        try:
+            size = int(size_output.strip())
+        except ValueError as exc:
+            raise GitCommandError("Git returned an invalid staged size") from exc
+        if size < 0 or size > MAX_FILE_BYTES:
+            raise ScanLimitExceeded("candidate file exceeds the scanner limit")
+        output = run_git(["show", "--no-textconv", f":{path}"], cwd=root, text=False)
+        if not isinstance(output, bytes) or len(output) != size:
+            raise GitCommandError("Git returned invalid staged content")
+        return output
+
+    return _read_worktree_candidate(root, path)
 
 
 def is_env_path(path: str) -> bool:
@@ -240,23 +401,60 @@ def enumerate_file_lines(text: str) -> list[tuple[int, str]]:
     return [(index + 1, line) for index, line in enumerate(text.splitlines())]
 
 
+def decode_ascii_scan_text(raw_bytes: bytes) -> str:
+    return "".join(
+        chr(value) if value in {9, 10, 13} or 32 <= value <= 126 else " "
+        for value in raw_bytes
+    )
+
+
 def emit_diff_added_lines(root: Path, path: str) -> list[tuple[int, str]]:
-    output = run_git(["diff", "--no-ext-diff", "--unified=0", "HEAD", "--", path], cwd=root)
-    if not isinstance(output, str):
+    output = run_git(
+        [
+            "diff",
+            "--no-ext-diff",
+            "--no-color",
+            "--no-textconv",
+            "--unified=0",
+            "--src-prefix=a/",
+            "--dst-prefix=b/",
+            "--output-indicator-new=+",
+            "--output-indicator-old=-",
+            "--output-indicator-context= ",
+            "HEAD",
+            "--",
+            path,
+        ],
+        cwd=root,
+        text=False,
+    )
+    if not isinstance(output, bytes):
         return []
 
     lines: list[tuple[int, str]] = []
     current_line: int | None = None
+    in_hunk = False
     for raw_line in output.splitlines():
-        if raw_line.startswith("+++"):
+        if raw_line.startswith(b"diff --git "):
+            in_hunk = False
+            current_line = None
             continue
-        if raw_line.startswith("@@"):
-            match = re.search(r"\+(\d+)", raw_line)
+        if raw_line.startswith(b"@@"):
+            match = re.search(rb"\+(\d+)", raw_line)
             current_line = int(match.group(1)) if match else None
+            in_hunk = current_line is not None
             continue
-        if raw_line.startswith("+") and current_line is not None:
-            lines.append((current_line, raw_line[1:]))
+        if not in_hunk or current_line is None:
+            continue
+        if raw_line.startswith(b"+"):
+            lines.append((current_line, os.fsdecode(raw_line[1:])))
             current_line += 1
+        elif raw_line.startswith(b"-") or raw_line.startswith(b"\\"):
+            continue
+        elif raw_line.startswith(b" "):
+            current_line += 1
+        else:
+            raise GitCommandError("Git returned malformed unified diff output")
     return lines
 
 
@@ -315,30 +513,127 @@ def allowlist_contains(tool_name: str, tool_input: str, entries: list[dict[str, 
     )
 
 
-def rotate_scan_log(log_path: Path, max_bytes: int = 1048576, backups: int = 3) -> None:
+def _assert_safe_log_path(path: Path, *, allow_missing: bool = True) -> os.stat_result | None:
     try:
-        if not log_path.exists() or log_path.stat().st_size < max_bytes:
-            return
-    except OSError:
+        details = path.lstat()
+    except FileNotFoundError:
+        if allow_missing:
+            return None
+        raise ScanSecurityError("required log path is missing") from None
+    except OSError as exc:
+        raise ScanSecurityError("unable to inspect log path") from exc
+    if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
+        raise ScanSecurityError("log paths must not be links or reparse points")
+    return details
+
+
+def _ensure_secure_log_directory(directory: Path) -> None:
+    try:
+        directory.mkdir(parents=True, mode=0o700, exist_ok=True)
+        details = _assert_safe_log_path(directory, allow_missing=False)
+        if details is None or not stat.S_ISDIR(details.st_mode):
+            raise ScanSecurityError("log parent must be a directory")
+        os.chmod(directory, 0o700)
+    except ScanSecurityError:
+        raise
+    except OSError as exc:
+        raise ScanSecurityError("unable to secure log directory") from exc
+
+
+def _open_secure_regular(path: Path, flags: int) -> int:
+    _assert_safe_log_path(path)
+    no_follow = getattr(os, "O_NOFOLLOW", 0)
+    binary = getattr(os, "O_BINARY", 0)
+    try:
+        descriptor = os.open(path, flags | no_follow | binary, 0o600)
+    except OSError as exc:
+        raise ScanSecurityError("unable to open log path safely") from exc
+    try:
+        details = os.fstat(descriptor)
+        if not stat.S_ISREG(details.st_mode) or _is_reparse_point(details):
+            raise ScanSecurityError("log path must be a regular file")
+        try:
+            os.fchmod(descriptor, 0o600)
+        except (AttributeError, OSError):
+            os.chmod(path, 0o600)
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def rotate_scan_log(log_path: Path, max_bytes: int = 1048576, backups: int = 3) -> None:
+    if max_bytes < 1 or backups < 1 or backups > 100:
+        raise ScanSecurityError("invalid log rotation limits")
+    details = _assert_safe_log_path(log_path)
+    if details is None:
+        return
+    if not stat.S_ISREG(details.st_mode):
+        raise ScanSecurityError("scan log must be a regular file")
+    if details.st_size < max_bytes:
         return
 
-    for index in range(backups, 0, -1):
-        current = log_path.with_name(f"{log_path.name}.{index}")
-        next_path = log_path.with_name(f"{log_path.name}.{index + 1}")
-        if not current.exists():
-            continue
-        try:
+    paths = [log_path.with_name(f"{log_path.name}.{index}") for index in range(1, backups + 2)]
+    for path in paths:
+        details = _assert_safe_log_path(path)
+        if details is not None and not stat.S_ISREG(details.st_mode):
+            raise ScanSecurityError("rotated scan log must be a regular file")
+
+    try:
+        for index in range(backups, 0, -1):
+            current = log_path.with_name(f"{log_path.name}.{index}")
+            next_path = log_path.with_name(f"{log_path.name}.{index + 1}")
+            if not current.exists():
+                continue
             if index == backups:
                 os.remove(current)
             else:
-                current.replace(next_path)
-        except OSError:
-            return
+                os.replace(current, next_path)
+                os.chmod(next_path, 0o600)
+        first_backup = log_path.with_name(f"{log_path.name}.1")
+        os.replace(log_path, first_backup)
+        os.chmod(first_backup, 0o600)
+    except OSError as exc:
+        raise ScanSecurityError("unable to rotate scan log safely") from exc
 
-    try:
-        log_path.replace(log_path.with_name(f"{log_path.name}.1"))
-    except OSError:
-        return
+
+def _acquire_log_lock(lock_fd: int, fcntl_module: object | None, msvcrt_module: object | None) -> str:
+    deadline = time.monotonic() + LOG_LOCK_TIMEOUT_SECONDS
+    if fcntl_module is not None:
+        while True:
+            try:
+                fcntl_module.flock(lock_fd, fcntl_module.LOCK_EX | fcntl_module.LOCK_NB)
+                return "posix"
+            except (BlockingIOError, OSError) as exc:
+                if time.monotonic() >= deadline:
+                    raise ScanLimitExceeded("timed out waiting for scan-log lock") from exc
+                time.sleep(LOG_LOCK_POLL_SECONDS)
+    if msvcrt_module is not None:
+        if os.fstat(lock_fd).st_size == 0:
+            os.write(lock_fd, b"\0")
+        while True:
+            try:
+                os.lseek(lock_fd, 0, os.SEEK_SET)
+                msvcrt_module.locking(lock_fd, msvcrt_module.LK_NBLCK, 1)
+                return "windows"
+            except OSError as exc:
+                if time.monotonic() >= deadline:
+                    raise ScanLimitExceeded("timed out waiting for scan-log lock") from exc
+                time.sleep(LOG_LOCK_POLL_SECONDS)
+    raise ScanSecurityError("no supported scan-log lock is available")
+
+
+def _release_log_lock(
+    lock_fd: int,
+    lock_kind: str,
+    fcntl_module: object | None,
+    msvcrt_module: object | None,
+) -> None:
+    if lock_kind == "posix" and fcntl_module is not None:
+        fcntl_module.flock(lock_fd, fcntl_module.LOCK_UN)
+    elif lock_kind == "windows" and msvcrt_module is not None:
+        os.lseek(lock_fd, 0, os.SEEK_SET)
+        msvcrt_module.locking(lock_fd, msvcrt_module.LK_UNLCK, 1)
 
 
 def append_scan_log(
@@ -354,7 +649,7 @@ def append_scan_log(
     findings: list[dict[str, object]],
     note: str = "",
 ) -> None:
-    log_path.parent.mkdir(parents=True, exist_ok=True)
+    _ensure_secure_log_directory(log_path.parent)
     payload: dict[str, object] = {
         "timestamp": timestamp,
         "sessionId": session_id,
@@ -381,35 +676,26 @@ def append_scan_log(
         msvcrt = None
 
     lock_path = log_path.with_name(f"{log_path.name}.lock")
-    lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+    lock_fd = _open_secure_regular(lock_path, os.O_CREAT | os.O_RDWR)
+    lock_kind = ""
     try:
-        if fcntl is not None:
-            fcntl.flock(lock_fd, fcntl.LOCK_EX)
-        elif msvcrt is not None:
-            try:
-                os.lseek(lock_fd, 0, os.SEEK_SET)
-                msvcrt.locking(lock_fd, msvcrt.LK_LOCK, 1)
-            except Exception:
-                pass
+        lock_kind = _acquire_log_lock(lock_fd, fcntl, msvcrt)
         rotate_scan_log(
             log_path,
             int(os.environ.get("AUDIT_LOG_MAX_BYTES", "1048576")),
             int(os.environ.get("AUDIT_LOG_MAX_BACKUPS", "3")),
         )
-        with log_path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+        log_fd = _open_secure_regular(log_path, os.O_APPEND | os.O_CREAT | os.O_WRONLY)
+        with os.fdopen(log_fd, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, ensure_ascii=True, separators=(",", ":")))
             handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
     finally:
-        if fcntl is not None:
+        if lock_kind:
             try:
-                fcntl.flock(lock_fd, fcntl.LOCK_UN)
-            except Exception:
-                pass
-        elif msvcrt is not None:
-            try:
-                os.lseek(lock_fd, 0, os.SEEK_SET)
-                msvcrt.locking(lock_fd, msvcrt.LK_UNLCK, 1)
-            except Exception:
+                _release_log_lock(lock_fd, lock_kind, fcntl, msvcrt)
+            except OSError:
                 pass
         os.close(lock_fd)
 
@@ -441,6 +727,14 @@ def normalized_mode_from_env() -> str:
     return mode
 
 
+def enforce_scan_budget(scan_started: float, total_bytes: int, *, now: float | None = None) -> None:
+    current_time = time.monotonic() if now is None else now
+    if current_time - scan_started > MAX_SCAN_SECONDS:
+        raise ScanLimitExceeded("secret scan exceeds the time limit")
+    if total_bytes > MAX_TOTAL_BYTES:
+        raise ScanLimitExceeded("secret scan exceeds the total-byte limit")
+
+
 def handle_unexpected_exception(_exc: Exception) -> int:
     mode = normalized_mode_from_env()
     reason = f"{SCRIPT_NAME}: unexpected scanner error."
@@ -457,7 +751,7 @@ DEFAULT_SECRETS_LOG_PATH = Path.home() / ".copilot" / "hooks" / "secrets"
 
 def resolve_work_dir(payload: dict) -> Path:
     del payload
-    return repo_root(Path.cwd())
+    return Path.cwd()
 
 
 def findings_denial_reason(scan_log: Path) -> str:
@@ -568,29 +862,31 @@ def main() -> int:
     allowlist = parse_allowlist(os.environ.get("SECRETS_ALLOWLIST"))
     env_files: list[str] = []
     findings: list[tuple[str, str, str, int, str]] = []
+    scan_started = time.monotonic()
+    total_bytes = 0
 
     untracked = untracked_files(root) if scope == "diff" and root_has_head else set()
 
     for path in files:
+        enforce_scan_budget(scan_started, total_bytes)
         raw_bytes = read_candidate_bytes(root, path, scope)
-        if raw_bytes is None:
-            continue
+        total_bytes += len(raw_bytes)
+        enforce_scan_budget(scan_started, total_bytes)
 
         if is_env_path(path) and path not in env_files:
             env_files.append(path)
-
-        if not is_text_candidate(path, raw_bytes):
-            continue
-
-        if scope == "staged" or not root_has_head or path in untracked:
-            candidate_lines = enumerate_file_lines(raw_bytes.decode("utf-8", errors="replace"))
-        else:
-            candidate_lines = emit_diff_added_lines(root, path)
 
         if is_credential_path(path):
             allowlist_text = f"{path}:1:credential_path:[SENSITIVE PATH]"
             if not allowlist_contains("scan_secrets", allowlist_text, allowlist):
                 findings.append(("credential_path", "critical", path, 1, "[SENSITIVE PATH]"))
+
+        if not is_text_candidate(path, raw_bytes):
+            candidate_lines = enumerate_file_lines(decode_ascii_scan_text(raw_bytes))
+        elif scope == "staged" or not root_has_head or path in untracked:
+            candidate_lines = enumerate_file_lines(raw_bytes.decode("utf-8", errors="replace"))
+        else:
+            candidate_lines = emit_diff_added_lines(root, path)
 
         for line_number, line_text in candidate_lines:
             for pattern_name, severity, regex in PATTERNS:
@@ -602,6 +898,8 @@ def main() -> int:
                     findings.append(
                         (pattern_name, severity, path, line_number, redact_match(match_value))
                     )
+
+    enforce_scan_budget(scan_started, total_bytes)
 
     if not findings:
         append_scan_log(

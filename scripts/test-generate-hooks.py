@@ -14,6 +14,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 from types import SimpleNamespace
 import unittest
 from unittest import mock
@@ -502,6 +503,233 @@ class GenerateHooksTests(unittest.TestCase):
             provider_outcomes.append((outcomes, allowlist))
 
         self.assertEqual(provider_outcomes[0], provider_outcomes[1])
+
+    def test_secret_scanner_git_failures_are_not_clean_results(self) -> None:
+        modules = (
+            load_module("copilot_secret_scanner_git_errors", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_module("gemini_secret_scanner_git_errors", ROOT / SECRET_SCANNER_TARGETS[1]),
+        )
+        commands = (
+            ["diff", "--name-only", "--"],
+            ["ls-files", "--others"],
+            ["show", ":notes.txt"],
+        )
+
+        for module in modules:
+            for command in commands:
+                with self.subTest(provider=module.__name__, command=command[0], failure="exit"):
+                    with mock.patch(
+                        "subprocess.run",
+                        return_value=SimpleNamespace(returncode=9, stdout="", stderr="failure"),
+                    ):
+                        with self.assertRaises(module.GitCommandError):
+                            module.run_git(command, cwd=ROOT)
+                with self.subTest(provider=module.__name__, command=command[0], failure="launch"):
+                    with mock.patch("subprocess.run", side_effect=OSError("unavailable")):
+                        with self.assertRaises(module.GitCommandError):
+                            module.run_git(command, cwd=ROOT)
+
+    def test_secret_scanner_parses_git_paths_and_diff_lines_without_ambiguity(self) -> None:
+        modules = (
+            load_module("copilot_secret_scanner_git_parsing", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_module("gemini_secret_scanner_git_parsing", ROOT / SECRET_SCANNER_TARGETS[1]),
+        )
+        path_output = b"line\nbreak.txt\0tab\tname.txt\0nonutf-\xff.txt\0"
+        expected_paths = sorted(
+            ("line\nbreak.txt", "tab\tname.txt", os.fsdecode(b"nonutf-\xff.txt"))
+        )
+        diff_output = (
+            b"diff --git a/notes.txt b/notes.txt\n"
+            b"--- a/notes.txt\n"
+            b"+++ b/notes.txt\n"
+            b"@@ -0,0 +1,2 @@\n"
+            b"+first\n"
+            b"+++starts-with-two-plus\n"
+        )
+
+        for module in modules:
+            with self.subTest(provider=module.__name__, behavior="paths"):
+                with mock.patch.object(module, "run_git", side_effect=(b"", path_output)) as run:
+                    self.assertEqual(module.collect_files(ROOT, "staged", True), expected_paths)
+                diff_args = run.call_args_list[0].args[0]
+                ls_args = run.call_args_list[1].args[0]
+                self.assertIn("-z", diff_args)
+                self.assertIn("-z", ls_args)
+                self.assertIn("--no-color", diff_args)
+                self.assertIn("--no-textconv", diff_args)
+
+            with self.subTest(provider=module.__name__, behavior="diff"):
+                with mock.patch.object(module, "run_git", return_value=diff_output) as run:
+                    self.assertEqual(
+                        module.emit_diff_added_lines(ROOT, "notes.txt"),
+                        [(1, "first"), (2, "++starts-with-two-plus")],
+                    )
+                args = run.call_args.args[0]
+                self.assertIn("--no-color", args)
+                self.assertIn("--no-textconv", args)
+                self.assertIn("--output-indicator-new=+", args)
+
+    def test_secret_scanner_rejects_unsafe_or_oversized_candidate_files(self) -> None:
+        modules = (
+            load_module("copilot_secret_scanner_file_safety", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_module("gemini_secret_scanner_file_safety", ROOT / SECRET_SCANNER_TARGETS[1]),
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            repo = parent / "repo"
+            repo.mkdir()
+            (parent / "outside.txt").write_text("outside", encoding="utf-8")
+            (repo / "regular.txt").write_text("inside", encoding="utf-8")
+
+            for module in modules:
+                with self.subTest(provider=module.__name__, case="regular"):
+                    self.assertEqual(
+                        module.read_candidate_bytes(repo, "regular.txt", "diff"),
+                        b"inside",
+                    )
+                with self.subTest(provider=module.__name__, case="escape"):
+                    with self.assertRaises(module.ScanSecurityError):
+                        module.read_candidate_bytes(repo, "../outside.txt", "diff")
+                oversized = repo / "oversized.bin"
+                oversized.write_bytes(b"x" * (module.MAX_FILE_BYTES + 1))
+                with self.subTest(provider=module.__name__, case="oversized"):
+                    with self.assertRaises(module.ScanLimitExceeded):
+                        module.read_candidate_bytes(repo, "oversized.bin", "diff")
+                oversized.unlink()
+                if hasattr(os, "symlink"):
+                    linked = repo / "linked.txt"
+                    linked.symlink_to(parent / "outside.txt")
+                    with self.subTest(provider=module.__name__, case="symlink"):
+                        with self.assertRaises(module.ScanSecurityError):
+                            module.read_candidate_bytes(repo, "linked.txt", "diff")
+                    linked.unlink()
+
+    def test_secret_scanner_enforces_file_count_total_bytes_and_time_limits(self) -> None:
+        modules = (
+            load_module("copilot_secret_scanner_limits", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_module("gemini_secret_scanner_limits", ROOT / SECRET_SCANNER_TARGETS[1]),
+        )
+        for module in modules:
+            too_many_paths = b"".join(
+                f"file-{index}.txt".encode("ascii") + b"\0"
+                for index in range(module.MAX_FILES + 1)
+            )
+            with self.subTest(provider=module.__name__, case="file-count"):
+                with mock.patch.object(module, "run_git", side_effect=(b"", too_many_paths)):
+                    with self.assertRaises(module.ScanLimitExceeded):
+                        module.collect_files(ROOT, "staged", True)
+            with self.subTest(provider=module.__name__, case="total-bytes"):
+                with self.assertRaises(module.ScanLimitExceeded):
+                    module.enforce_scan_budget(10.0, module.MAX_TOTAL_BYTES + 1, now=10.0)
+            with self.subTest(provider=module.__name__, case="elapsed-time"):
+                with self.assertRaises(module.ScanLimitExceeded):
+                    module.enforce_scan_budget(
+                        10.0,
+                        0,
+                        now=10.0 + module.MAX_SCAN_SECONDS + 0.01,
+                    )
+
+    def test_secret_scanner_logs_are_owner_only_and_reject_links(self) -> None:
+        modules = (
+            load_module("copilot_secret_scanner_log_safety", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_module("gemini_secret_scanner_log_safety", ROOT / SECRET_SCANNER_TARGETS[1]),
+        )
+
+        for module in modules:
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                log_dir = root / "logs"
+                log_dir.mkdir(mode=0o755)
+                log_path = log_dir / "scan.log"
+                arguments = {
+                    "log_path": log_path,
+                    "status": "clean",
+                    "session_id": "safe-session",
+                    "timestamp": "2026-09-17T07:30:00Z",
+                    "mode": "warn",
+                    "scope": "diff",
+                    "repo_root_path": root,
+                    "env_files": [],
+                    "findings": [],
+                }
+                with mock.patch.dict(
+                    os.environ,
+                    {"AUDIT_LOG_MAX_BYTES": "1", "AUDIT_LOG_MAX_BACKUPS": "2"},
+                ):
+                    module.append_scan_log(**arguments)
+                    module.append_scan_log(**arguments)
+
+                self.assertEqual(stat.S_IMODE(log_dir.stat().st_mode), 0o700)
+                self.assertEqual(stat.S_IMODE(log_path.stat().st_mode), 0o600)
+                self.assertEqual(stat.S_IMODE((log_dir / "scan.log.lock").stat().st_mode), 0o600)
+                self.assertEqual(stat.S_IMODE((log_dir / "scan.log.1").stat().st_mode), 0o600)
+
+                if hasattr(os, "symlink"):
+                    log_path.unlink()
+                    target = root / "outside.log"
+                    target.write_text("unchanged\n", encoding="utf-8")
+                    log_path.symlink_to(target)
+                    with self.subTest(provider=module.__name__, case="linked-log"):
+                        with self.assertRaises(module.ScanSecurityError):
+                            module.append_scan_log(**arguments)
+                    self.assertEqual(target.read_text(encoding="utf-8"), "unchanged\n")
+                    log_path.unlink()
+                    lock_path = log_dir / "scan.log.lock"
+                    lock_path.unlink()
+                    lock_path.symlink_to(target)
+                    with self.subTest(provider=module.__name__, case="linked-lock"):
+                        with self.assertRaises(module.ScanSecurityError):
+                            module.append_scan_log(**arguments)
+                    self.assertEqual(target.read_text(encoding="utf-8"), "unchanged\n")
+                    lock_path.unlink()
+                    linked_log_dir = root / "linked-logs"
+                    linked_log_dir.symlink_to(log_dir, target_is_directory=True)
+                    linked_dir_arguments = {
+                        **arguments,
+                        "log_path": linked_log_dir / "scan.log",
+                    }
+                    with self.subTest(provider=module.__name__, case="linked-directory"):
+                        with self.assertRaises(module.ScanSecurityError):
+                            module.append_scan_log(**linked_dir_arguments)
+
+    def test_secret_scanner_log_lock_wait_is_bounded(self) -> None:
+        try:
+            import fcntl
+        except ImportError:
+            self.skipTest("POSIX flock is unavailable")
+
+        modules = (
+            load_module("copilot_secret_scanner_log_lock", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_module("gemini_secret_scanner_log_lock", ROOT / SECRET_SCANNER_TARGETS[1]),
+        )
+        for module in modules:
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                log_path = root / "logs" / "scan.log"
+                log_path.parent.mkdir()
+                lock_path = log_path.with_name("scan.log.lock")
+                lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+                fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                try:
+                    with mock.patch.object(module, "LOG_LOCK_TIMEOUT_SECONDS", 0.1):
+                        started = time.monotonic()
+                        with self.assertRaises(module.ScanLimitExceeded):
+                            module.append_scan_log(
+                                log_path=log_path,
+                                status="clean",
+                                session_id="locked",
+                                timestamp="2026-09-17T07:31:00Z",
+                                mode="block",
+                                scope="diff",
+                                repo_root_path=root,
+                                env_files=[],
+                                findings=[],
+                            )
+                        self.assertLess(time.monotonic() - started, 1.0)
+                finally:
+                    fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                    os.close(lock_fd)
 
     def test_rendering_rejects_unsafe_paths_and_invalid_python_before_writing(self) -> None:
         generator = load_generator()
