@@ -5,6 +5,11 @@ description: Public validation entry points and provider adapter contracts for t
 
 # API Map
 
+## Codex custom-agent installer
+
+- `scripts/install-codex-agents.py --source-dir PATH --destination-dir PATH` converts valid top-level canonical agent Markdown into personal Codex TOML. It owns only TOML paths listed in `.skills-repo-agents.json`, removes stale manifest-owned output, and preserves unmanaged personal agents. It reports a concise install/update/unchanged/removal summary on stdout; status and failures use stderr. Exit `0` is success, `1` is a validation or installation failure, and argparse usage failures use `2`.
+- `scripts/install.sh` and `scripts/install.ps1` call this converter before their existing provider copies. They choose `${CODEX_HOME:-$HOME/.codex}/agents` (Bash) or `$env:CODEX_HOME/agents` with `$HOME/.codex/agents` as the PowerShell fallback.
+
 ## Repository test runner
 
 - `scripts/test-all.py [-h|--help] [--list]` runs every explicitly registered maintained suite with no arguments. Help and command listing use stdout without checking suite dependencies. Unknown or abbreviated flags fail with usage on stderr. The script resolves its checkout from its own location and runs suites there regardless of the caller's current directory.

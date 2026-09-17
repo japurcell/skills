@@ -25,7 +25,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.gemini/` | hooks | Gemini instructions and local hook runtime sources. |
 | `.codex/` | hooks | Inactive source for the user-global Codex required-skills hook and install-time configuration template. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
-| `agents/` | agents | Standalone custom agent prompt files. |
+| `agents/` | agents | Canonical Markdown custom-agent prompt files for Copilot, Gemini, and generated Codex TOML. |
 | `docs/<effort>/` | repo docs | Active research and execution plans that need version history while work is in progress. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `scripts/` | scripts | Installers, importers, the aggregate test runner, validation helpers, and shared shell utilities. |
@@ -45,8 +45,9 @@ This file is a **top-level map only**. For area detail and working rules, read t
 
 | Path | Why it matters |
 | --- | --- |
-| `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, `~/.gemini`, and `~/.codex` targets. |
-| `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout (run with `pwsh scripts/install.ps1`). |
+| `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, `~/.gemini`, and `~/.codex` targets, including generated Codex agents at `${CODEX_HOME:-$HOME/.codex}/agents`. |
+| `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout, including `$CODEX_HOME/agents` when set (run with `pwsh scripts/install.ps1`). |
+| `scripts/install-codex-agents.py` | Strict, transactional converter from top-level `agents/*.md` sources to manifest-managed personal Codex TOML agents. |
 | `scripts/install-codex-hooks.py` | Atomically and idempotently merges the maintained Codex `SessionStart` group into user-global `hooks.json`. |
 | `scripts/test-codex-hooks-startup.sh` | Public-process contract and security regressions for the Codex required-skills hook. |
 | `scripts/test-install.ps1` | Fixture-repo test for `scripts/install.ps1` (run with `pwsh -NoProfile -File scripts/test-install.ps1`). |

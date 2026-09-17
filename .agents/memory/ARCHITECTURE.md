@@ -10,12 +10,12 @@ description: Repo structure, install flows, and how top-level areas relate
 | Path | Role | Main consumer |
 | --- | --- | --- |
 | `skills/` | Source of reusable task skills built around `SKILL.md` entry points. | Installed to `~/.agents/skills` by `scripts/install.sh` (PowerShell: `scripts/install.ps1`) |
-| `agents/` | Source of custom agent definitions. | Installed to both `~/.copilot/agents` and `~/.gemini/agents` |
+| `agents/` | Canonical Markdown source of custom agent definitions. | Copied to `~/.copilot/agents` and `~/.gemini/agents`; top-level files are converted to managed TOML in `~/.codex/agents` or `$CODEX_HOME/agents`. |
 | `references/` | Optional shared reference material shipped with this repo. | Installed to `~/.agents/references` when that target exists |
 | `.github/` | Repository-level Copilot config, including repo-local hooks. | Loaded directly from the workspace by Copilot |
 | `.copilot/` | Copilot-specific instructions and hooks. | Installed to `~/.copilot/` |
 | `.gemini/` | Gemini-specific instructions and hooks. | Installed to `~/.gemini/` |
-| `.codex/` | Inactive source template and script for the user-global Codex required-skills hook. | Installed to `~/.codex/hooks/` and merged into `~/.codex/hooks.json` |
+| `.codex/` | Inactive source template and script for the user-global Codex required-skills hook. | Installed to `~/.codex/hooks/` and merged into `~/.codex/hooks.json`; it is not a custom-agent source. |
 | `scripts/` | Installers, importers, and targeted validation helpers. | Run from repo checkout |
 | `.agents/` | Agent knowledge base with canonical agent-facing rules and durable repo facts. | Copilot/Gemini agents working in this repo |
 | `docs/` | Version-controlled ADRs plus active research and effort plans that complement `.agents/` canonical guidance. | Repo readers and agents who need current project context or human decision history |
@@ -27,7 +27,7 @@ description: Repo structure, install flows, and how top-level areas relate
 
 1. Edit source under `skills/`, `agents/`, `.github/`, `.copilot/`, `.gemini/`, `.codex/`, `references/`, or `scripts/`.
 2. Run narrow validation for changed area from `.agents/memory/TESTING_STRATEGY.md` and any matching `testing/<area>.md` file.
-3. If installed behavior matters, run `./scripts/install.sh` (or `pwsh scripts/install.ps1`) before live checks because Codex, Copilot, and Gemini read installed copies from home-directory targets, not repository source files.
+3. If installed behavior matters, run `./scripts/install.sh` (or `pwsh scripts/install.ps1`) before live checks because Codex, Copilot, and Gemini read installed copies from home-directory targets, not repository source files. Codex uses generated TOML under `${CODEX_HOME:-$HOME/.codex}/agents`; Copilot and Gemini use Markdown copies.
 
 ### Addy import flow
 

@@ -6,7 +6,7 @@ This repository publishes reusable agent assets for Codex, GitHub Copilot, and G
 - **Custom agents** in `agents/` such as `code-architect`, `code-explorer`, `code-reviewer`, and `grader`
 - **Copilot global configs** in `.copilot`
 - **Gemini global configs** in `.gemini`
-- **Codex global hook sources** in `.codex`
+- **Codex global hook sources** in `.codex`; generated Codex custom agents are installed outside the repository
 
 Canonical agent-facing guidance lives in `.agents/`.
 
@@ -30,7 +30,7 @@ The installer copies:
 
 - `skills/` entries into `~/.agents/skills`
 - top-level `references/` entries into `~/.agents/references` when that directory exists
-- `agents/` files into both `~/.gemini/agents` and `~/.copilot/agents`
+- top-level `agents/*.md` files are the canonical custom-agent source for all three providers: Markdown copies go to `~/.gemini/agents` and `~/.copilot/agents`, while generated personal TOML goes to `~/.codex/agents` (or `$CODEX_HOME/agents` when `CODEX_HOME` is set)
 - `.copilot/hooks/` entries are copied to `~/.copilot/hooks` when that directory exists
 - `.gemini/` contents into `~/.gemini`, then `.gemini/global-settings.json` into `~/.gemini/settings.json`
 - `.copilot/copilot-instructions.md` into `~/.copilot/copilot-instructions.md`
@@ -39,6 +39,8 @@ The installer copies:
 The Codex merge preserves unrelated hooks. A real configuration change keeps the previous valid file as owner-only `~/.codex/hooks.json.bak`; malformed existing JSON is left unchanged and stops installation. After installing or changing the non-managed hook, open `/hooks` in Codex CLI to review and trust its exact definition.
 
 Workspace directories whose names end with `-workspace` are skipped during installation.
+
+Codex TOML files and `.skills-repo-agents.json` in the selected Codex agents directory are installer-managed. Do not edit them manually: update the canonical top-level Markdown source and rerun an installer. Each source file must be a regular UTF-8 Markdown file with YAML frontmatter containing non-empty `name` and `description`; its body becomes the exact `developer_instructions` value. The Codex converter removes only stale TOML files recorded in its manifest and leaves every unrecorded personal agent untouched.
 
 ## CLI dependencies
 
@@ -134,6 +136,19 @@ bash scripts/test-install.sh
 ```
 
 When PowerShell 7 is available, also run `pwsh -NoProfile -File scripts/test-install.ps1`.
+
+For the generated Codex custom-agent path, run:
+
+```bash
+python3 scripts/test-codex-agents.py
+bash -n scripts/install.sh
+bash scripts/test-install.sh
+pwsh -NoProfile -File scripts/test-install.ps1
+./scripts/install.sh
+codex --version
+```
+
+The installer output identifies the resolved Codex agent destination. Parse an installed TOML file with `python3` and compare `developer_instructions` with the source body when validating a local client.
 
 ## Additional docs
 

@@ -14,6 +14,7 @@ description: Rules and conventions for repository helper scripts under `scripts/
 - `scripts/lint-okf.py` must load PyYAML 6.0.3 from `scripts/vendor/yaml/`, verify both the version and resolved import path, and fail with `OKF900` instead of falling back to a site package. Keep the linter read-only and offline at runtime.
 - Register cleanup functions by name (for example, `trap cleanup EXIT`) instead of interpolating temporary paths into trap command strings. Quote the exact `mktemp`-created path and pass `--` to recursive cleanup commands.
 - Treat user-facing helper scripts as CLIs: reserve `-h`/`--help` for help, prefer descriptive long flags over multiple positional argument types, and keep interactive prompts optional rather than mandatory.
+- `scripts/install-codex-agents.py --source-dir PATH --destination-dir PATH` is the strict public converter for top-level canonical agent Markdown. It must run before provider copy operations in both installers and may remove only manifest-owned Codex TOML outputs.
 - Gate decorative terminal behavior on TTY detection; if a script introduces color or spinners, it should also respect `TERM=dumb`, `NO_COLOR`, and a direct opt-out flag.
 - **Agent-restricted scripts:** Never run human-only orchestration scripts (such as `import-skill-repos.sh` or `pull-skill-repos.sh`). Agents must strictly run only targeted verification and test scripts (such as `test-*.sh`).
 - PowerShell-specific guidance lives in `.agents/instructions/powershell.md`; shell-focused validation lives in `.agents/memory/testing/scripts.md`.

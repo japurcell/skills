@@ -19,9 +19,11 @@ After this work, running either `./scripts/install.sh` or `pwsh scripts/install.
 - [x] (2026-09-17 03:42Z) [milestone-2] Integrate converter into `scripts/install.sh` and `scripts/install.ps1` before existing copy operations.
 - [x] (2026-09-17 03:42Z) [milestone-2] Register the direct converter suite in `scripts/test-all.py` and update runner-registry expectations.
 - [x] (2026-09-17 03:42Z) [milestone-2] Pass Bash, PowerShell, aggregate-runner, and full maintained test suites.
-- [ ] [milestone-3] Update human documentation and canonical agent memory for the new install flow and validation commands.
-- [ ] [milestone-3] Install generated agents locally and record CLI and desktop-app smoke results with client versions.
-- [ ] [milestone-3] Run the mandatory `update-agent-docs` pass and synchronize this plan's final progress and retrospective.
+- [x] (2026-09-17 03:53Z) [milestone-3] Update human documentation and canonical agent memory for the new install flow, ownership boundary, and validation commands.
+- [x] (2026-09-17 03:53Z) [milestone-3] Run real installation through Codex conversion; parse all 19 generated TOML files with exact decoded instruction comparisons and record CLI version `codex-cli 0.154.0`.
+- [ ] [milestone-3] Run the manual fresh CLI-session `code-reviewer` spawn smoke check and inspect `/agent`; it requires an interactive paid-model session and was not automated.
+- [ ] [milestone-3] Run the manual desktop-app `code-reviewer` spawn smoke check; `/Applications/Codex.app/Contents/Resources/codex` is unavailable in this environment, so no bundled desktop version or discovery result exists.
+- [x] (2026-09-17 03:53Z) [milestone-3] Run the mandatory `update-agent-docs` and OKF passes and synchronize this plan's progress, evidence, and retrospective.
 
 ## Surprises & Discoveries
 
@@ -36,6 +38,12 @@ After this work, running either `./scripts/install.sh` or `pwsh scripts/install.
 
 - Observation: Existing Copilot and Gemini agent installation copies whole trees and does not remove stale installed agents. This plan intentionally does not change that behavior.
   Evidence: `copy_agents` in `scripts/install.sh` and `Copy-Agents` in `scripts/install.ps1` copy `agents/` recursively without an ownership manifest.
+
+- Observation: The real Bash installer completes Codex conversion before it reaches the read-only global skills target.
+  Evidence: `./scripts/install.sh` reported `Codex agents: 19 installed, 0 updated, 0 unchanged, 0 removed.` and then failed copying `/root/.agents/skills/addy-code-review-and-quality/SKILL.md` with `Read-only file system`.
+
+- Observation: This environment has CLI Codex but no desktop bundle executable.
+  Evidence: `codex --version` returned `codex-cli 0.154.0`; `/Applications/Codex.app/Contents/Resources/codex` was unavailable.
 
 - Observation: Repository installer tests already use isolated fixture repositories and redirected home directories. The Codex hook merger already demonstrates same-directory temporary files, `fsync`, `os.replace`, owner-only modes, and link refusal.
   Evidence: `scripts/test-install.sh`, `scripts/test-install.ps1`, and `scripts/install-codex-hooks.py` provide patterns to follow.
@@ -115,6 +123,8 @@ Milestone 1 added a dependency-free converter and public-subprocess unittest sui
 
 Milestone 2 invokes the converter before either installer creates or copies existing provider assets. Both installer suites now validate generated TOML, manifest ownership, Unix modes where applicable, idempotence, malformed-source early failure, and the `CODEX_HOME` destination override. The direct converter suite is registered in the aggregate runner. Validation passed with Bash and PowerShell syntax checks, direct converter and runner tests, `./scripts/test-all.py --list`, and the full maintained suite. Milestone 3 remains open.
 
+Milestone 3 documents the canonical Markdown source, provider-specific destinations, strict converter contract, manifest ownership, no-manual-edit rule, stale-cleanup boundary, and targeted validation. The documentation and knowledge-base pass updated `README.md`, the non-protected `AGENTS.md` introduction, architecture/file/API maps, agent and installer conventions, targeted testing guidance, and the read-only installer recovery note. `python3 -m py_compile scripts/install-codex-agents.py scripts/test-codex-agents.py`, the 13-test converter suite, Bash syntax check, Bash and PowerShell installer suites, the 14-test aggregate-runner suite, `./scripts/lint-okf.py`, and `./scripts/test-all.py` all passed; the full aggregate result was 25 passed and 0 failed in 85.9 seconds. The real Bash installation created 19 managed TOML agents under `/root/.codex/agents`, and a direct parse compared every decoded `developer_instructions` value with its source body exactly. The subsequent skill copy failed because `/root/.agents/skills` is read-only, so `skills/execplan-implement/SKILL.md` did not refresh and differs from its installed copy. CLI version evidence is `codex-cli 0.154.0`; the desktop executable is unavailable. The remaining CLI and desktop agent-spawn checks are intentionally pending because they require interactive client sessions and must not be automated through paid model calls. Milestone 3 is in progress and its acceptance remains unmet pending those manual checks plus a writable full installation refresh.
+
 ## Context and Orientation
 
 `agents/` contains the canonical Markdown custom agents. Each top-level file starts with YAML-like frontmatter containing `name` and `description`; the remaining Markdown is the agent's instructions. `scripts/install.sh` currently copies the entire directory into `~/.gemini/agents` and `~/.copilot/agents`. `scripts/install.ps1` is the PowerShell 7 equivalent and must retain behavioral parity.
@@ -184,7 +194,7 @@ Add `("python3", "scripts/test-codex-agents.py")` to the maintained suite regist
 Run syntax checks, direct tests, both installer suites, and runner tests. Then run `./scripts/test-all.py --list` to confirm registration and the full aggregate suite when prerequisites are available.
 
 ### Milestone 3: Document, install, and verify local clients
-Status: open
+Status: in progress
 Acceptance: not met
 
 Update `README.md` to say that `agents/*.md` is canonical for all three providers, Copilot and Gemini receive Markdown copies, and Codex receives generated personal TOML. Document default and `CODEX_HOME` destinations, generated-file ownership, the no-manual-edit rule, strict source requirements, stale cleanup boundary, and targeted validation commands.
@@ -311,3 +321,5 @@ Revision note (2026-09-17): Initial ExecPlan created after official documentatio
 Revision note (2026-09-17): Milestone 1 completed with strict source conversion, manifest-owned transactional installation, and direct public-CLI tests. The `python3` interpreter spelling was used for local validation because this environment has no `python` executable.
 
 Revision note (2026-09-17): Milestone 2 completed by placing conversion before every existing copy operation in both installers and registering its direct suite in the maintained aggregate runner.
+
+Revision note (2026-09-17): Milestone 3 documented and validated the converter path, refreshed and exactly parsed 19 real Codex agents, and recorded CLI/desktop availability. It remains in progress because interactive CLI and desktop smoke checks were not automated and the read-only global skills target prevented a complete installer refresh, including `skills/execplan-implement/SKILL.md`.
