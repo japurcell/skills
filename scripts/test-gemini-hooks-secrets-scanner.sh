@@ -638,6 +638,81 @@ test_staged_scope_excludes_unrelated_untracked_files() {
   fi
 }
 
+test_staged_zero_prefix_filename_is_scanned() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+  local zero_name
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  zero_name='0:notes.env'
+  printf 'token=%s\n' "$fake_token" > "$repo_dir/$zero_name"
+  git -C "$repo_dir" add -A
+
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      staged \
+      "{\"session_id\":\"zero-prefix\",\"timestamp\":\"2026-06-23T23:52:58Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}"
+  )"
+
+  assert_json_output "$output" "Expected Gemini staged zero-prefix scan to emit JSON."
+  assert_file_contains "$log_dir/scan.log" '"path":"0:notes.env"' \
+    "Expected Gemini staged filenames beginning with 0: to use an unambiguous index lookup."
+  assert_file_contains "$log_dir/scan.log" '"pattern":"github_classic_pat"' \
+    "Expected Gemini to scan the staged zero-prefix file's fake token."
+}
+
+test_diff_scope_scans_cached_secret_when_worktree_matches_head() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  printf 'baseline=true\n' > "$repo_dir/notes.env"
+  git -C "$repo_dir" add notes.env
+  git -C "$repo_dir" commit -qm "baseline"
+
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  printf 'token=%s\n' "$fake_token" > "$repo_dir/notes.env"
+  git -C "$repo_dir" add notes.env
+  git -C "$repo_dir" show HEAD:notes.env > "$repo_dir/notes.env"
+
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      "{\"session_id\":\"cached-only\",\"timestamp\":\"2026-06-23T23:52:59Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}"
+  )"
+
+  assert_json_output "$output" "Expected Gemini cached-only diff scan to emit JSON."
+  assert_file_contains "$log_dir/scan.log" '"path":"notes.env"' \
+    "Expected Gemini default diff scope to scan the HEAD-to-index source independently."
+  assert_file_contains "$log_dir/scan.log" '"pattern":"github_classic_pat"' \
+    "Expected Gemini to detect a fake secret staged only in the index."
+}
+
 test_generic_secrets_filename_stays_clean() {
   local workdir
   local repo_dir
@@ -869,6 +944,8 @@ main() {
   test_unusual_filename_and_double_plus_added_line_are_scanned
   test_committed_literal_pathspec_filename_is_scanned
   test_staged_scope_excludes_unrelated_untracked_files
+  test_staged_zero_prefix_filename_is_scanned
+  test_diff_scope_scans_cached_secret_when_worktree_matches_head
   test_generic_secrets_filename_stays_clean
   test_diff_mode_ignores_unmodified_secret_lines
   test_diff_mode_ignores_unified_diff_headers

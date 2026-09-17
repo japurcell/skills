@@ -88,6 +88,9 @@ MAX_GIT_OUTPUT_BYTES = 8388608
 MAX_SCAN_SECONDS = 8.0
 LOG_LOCK_TIMEOUT_SECONDS = 1.0
 LOG_LOCK_POLL_SECONDS = 0.05
+CANDIDATE_STAGED = "staged"
+CANDIDATE_WORKTREE = "worktree"
+CANDIDATE_UNTRACKED = "untracked"
 
 
 class GitCommandError(RuntimeError):
@@ -342,8 +345,8 @@ def collect_files(
     root_has_head: bool,
     *,
     deadline: float | None = None,
-) -> list[str]:
-    files: list[str] = []
+) -> list[tuple[str, str]]:
+    candidates: list[tuple[str, str]] = []
     diff_options = [
         "--name-only",
         "-z",
@@ -353,25 +356,20 @@ def collect_files(
         "--diff-filter=ACMRTUXB",
     ]
 
-    if scope == "staged":
+    cached_revision = ["HEAD"] if root_has_head else []
+    if scope in {"staged", "diff"}:
         output = run_git(
-            ["diff", "--cached", *diff_options, "--"],
+            ["diff", "--cached", *diff_options, *cached_revision, "--"],
             cwd=root,
             text=False,
             deadline=deadline,
         )
         if isinstance(output, bytes):
-            files.extend(decode_nul_paths(output))
-    elif root_has_head:
-        output = run_git(
-            ["diff", *diff_options, "HEAD", "--"],
-            cwd=root,
-            text=False,
-            deadline=deadline,
-        )
-        if isinstance(output, bytes):
-            files.extend(decode_nul_paths(output))
-    else:
+            candidates.extend(
+                (CANDIDATE_STAGED, path) for path in decode_nul_paths(output)
+            )
+
+    if scope == "diff":
         output = run_git(
             ["diff", *diff_options, "--"],
             cwd=root,
@@ -379,17 +377,9 @@ def collect_files(
             deadline=deadline,
         )
         if isinstance(output, bytes):
-            files.extend(decode_nul_paths(output))
-        output = run_git(
-            ["diff", "--cached", *diff_options, "--"],
-            cwd=root,
-            text=False,
-            deadline=deadline,
-        )
-        if isinstance(output, bytes):
-            files.extend(decode_nul_paths(output))
-
-    if scope == "diff":
+            candidates.extend(
+                (CANDIDATE_WORKTREE, path) for path in decode_nul_paths(output)
+            )
         output = run_git(
             ["ls-files", "-z", "--others", "--exclude-standard"],
             cwd=root,
@@ -397,24 +387,17 @@ def collect_files(
             deadline=deadline,
         )
         if isinstance(output, bytes):
-            files.extend(decode_nul_paths(output))
+            candidates.extend(
+                (CANDIDATE_UNTRACKED, path) for path in decode_nul_paths(output)
+            )
 
-    unique_files = sorted({path for path in files if path})
-    if len(unique_files) > MAX_FILES:
-        raise ScanLimitExceeded("modified file count exceeds the scanner limit")
-    return unique_files
-
-
-def untracked_files(root: Path, *, deadline: float | None = None) -> set[str]:
-    output = run_git(
-        ["ls-files", "-z", "--others", "--exclude-standard"],
-        cwd=root,
-        text=False,
-        deadline=deadline,
+    unique_candidates = sorted(
+        {(source, path) for source, path in candidates if path},
+        key=lambda candidate: (candidate[1], candidate[0]),
     )
-    if not isinstance(output, bytes):
-        return set()
-    return set(decode_nul_paths(output))
+    if len(unique_candidates) > MAX_FILES:
+        raise ScanLimitExceeded("modified file count exceeds the scanner limit")
+    return unique_candidates
 
 
 def _is_reparse_point(details: os.stat_result) -> bool:
@@ -511,14 +494,15 @@ def _read_worktree_candidate(root: Path, path: str) -> bytes:
 def read_candidate_bytes(
     root: Path,
     path: str,
-    scope: str,
+    source: str,
     *,
     deadline: float | None = None,
 ) -> bytes:
-    if scope == "staged":
+    if source == CANDIDATE_STAGED:
         _validate_candidate_parts(path)
+        index_object = f":./{path}"
         size_output = run_git(
-            ["cat-file", "-s", f":{path}"],
+            ["cat-file", "-s", index_object],
             cwd=root,
             text=False,
             deadline=deadline,
@@ -532,7 +516,7 @@ def read_candidate_bytes(
         if size < 0 or size > MAX_FILE_BYTES:
             raise ScanLimitExceeded("candidate file exceeds the scanner limit")
         output = run_git(
-            ["show", "--no-textconv", f":{path}"],
+            ["show", "--no-textconv", index_object],
             cwd=root,
             text=False,
             deadline=deadline,
@@ -592,12 +576,19 @@ def decode_ascii_scan_text(raw_bytes: bytes) -> str:
 def emit_diff_added_lines(
     root: Path,
     path: str,
+    source: str,
     *,
+    root_has_head: bool,
     deadline: float | None = None,
 ) -> list[tuple[int, str]]:
+    if source not in {CANDIDATE_STAGED, CANDIDATE_WORKTREE}:
+        raise ScanSecurityError("unsupported diff candidate source")
+    cached_options = ["--cached"] if source == CANDIDATE_STAGED else []
+    cached_revision = ["HEAD"] if source == CANDIDATE_STAGED and root_has_head else []
     output = run_git(
         [
             "diff",
+            *cached_options,
             "--no-ext-diff",
             "--no-color",
             "--no-textconv",
@@ -607,7 +598,7 @@ def emit_diff_added_lines(
             "--output-indicator-new=+",
             "--output-indicator-old=-",
             "--output-indicator-context= ",
-            "HEAD",
+            *cached_revision,
             "--",
             path,
         ],
@@ -1002,9 +993,9 @@ def main() -> int:
 
     root = repo_root(work_dir, deadline=scan_deadline)
     root_has_head = has_head(root, deadline=scan_deadline)
-    files = collect_files(root, scope, root_has_head, deadline=scan_deadline)
+    candidates = collect_files(root, scope, root_has_head, deadline=scan_deadline)
 
-    if not files:
+    if not candidates:
         append_scan_log(
             log_path=scan_log,
             status="clean",
@@ -1025,15 +1016,9 @@ def main() -> int:
     findings: list[tuple[str, str, str, int, str]] = []
     total_bytes = 0
 
-    untracked = (
-        untracked_files(root, deadline=scan_deadline)
-        if scope == "diff" and root_has_head
-        else set()
-    )
-
-    for path in files:
+    for source, path in candidates:
         enforce_scan_budget(scan_started, total_bytes)
-        raw_bytes = read_candidate_bytes(root, path, scope, deadline=scan_deadline)
+        raw_bytes = read_candidate_bytes(root, path, source, deadline=scan_deadline)
         total_bytes += len(raw_bytes)
         enforce_scan_budget(scan_started, total_bytes)
 
@@ -1047,10 +1032,16 @@ def main() -> int:
 
         if not is_text_candidate(path, raw_bytes):
             candidate_lines = enumerate_file_lines(decode_ascii_scan_text(raw_bytes))
-        elif scope == "staged" or not root_has_head or path in untracked:
+        elif scope == "staged" or not root_has_head or source == CANDIDATE_UNTRACKED:
             candidate_lines = enumerate_file_lines(raw_bytes.decode("utf-8", errors="replace"))
         else:
-            candidate_lines = emit_diff_added_lines(root, path, deadline=scan_deadline)
+            candidate_lines = emit_diff_added_lines(
+                root,
+                path,
+                source,
+                root_has_head=root_has_head,
+                deadline=scan_deadline,
+            )
 
         for line_number, line_text in candidate_lines:
             for pattern_name, severity, regex in PATTERNS:

@@ -594,10 +594,9 @@ class GenerateHooksTests(unittest.TestCase):
             load_module("copilot_secret_scanner_git_parsing", ROOT / SECRET_SCANNER_TARGETS[0]),
             load_module("gemini_secret_scanner_git_parsing", ROOT / SECRET_SCANNER_TARGETS[1]),
         )
-        path_output = b"line\nbreak.txt\0tab\tname.txt\0nonutf-\xff.txt\0"
-        expected_paths = sorted(
-            ("line\nbreak.txt", "tab\tname.txt", os.fsdecode(b"nonutf-\xff.txt"))
-        )
+        cached_output = b"shared.txt\0"
+        worktree_output = b"shared.txt\0"
+        untracked_output = b"line\nbreak.txt\0tab\tname.txt\0nonutf-\xff.txt\0"
         diff_output = (
             b"diff --git a/notes.txt b/notes.txt\n"
             b"--- a/notes.txt\n"
@@ -609,25 +608,68 @@ class GenerateHooksTests(unittest.TestCase):
 
         for module in modules:
             with self.subTest(provider=module.__name__, behavior="paths"):
-                with mock.patch.object(module, "run_git", side_effect=(b"", path_output)) as run:
-                    self.assertEqual(module.collect_files(ROOT, "diff", True), expected_paths)
-                diff_args = run.call_args_list[0].args[0]
-                ls_args = run.call_args_list[1].args[0]
-                self.assertIn("-z", diff_args)
+                expected_candidates = sorted(
+                    (
+                        (module.CANDIDATE_STAGED, "shared.txt"),
+                        (module.CANDIDATE_WORKTREE, "shared.txt"),
+                        (module.CANDIDATE_UNTRACKED, "line\nbreak.txt"),
+                        (module.CANDIDATE_UNTRACKED, "tab\tname.txt"),
+                        (module.CANDIDATE_UNTRACKED, os.fsdecode(b"nonutf-\xff.txt")),
+                    ),
+                    key=lambda candidate: (candidate[1], candidate[0]),
+                )
+                with mock.patch.object(
+                    module,
+                    "run_git",
+                    side_effect=(cached_output, worktree_output, untracked_output),
+                ) as run:
+                    self.assertEqual(
+                        module.collect_files(ROOT, "diff", True),
+                        expected_candidates,
+                    )
+                cached_args = run.call_args_list[0].args[0]
+                worktree_args = run.call_args_list[1].args[0]
+                ls_args = run.call_args_list[2].args[0]
+                self.assertIn("-z", cached_args)
+                self.assertIn("--cached", cached_args)
+                self.assertIn("HEAD", cached_args)
+                self.assertIn("-z", worktree_args)
+                self.assertNotIn("--cached", worktree_args)
+                self.assertNotIn("HEAD", worktree_args)
                 self.assertIn("-z", ls_args)
-                self.assertIn("--no-color", diff_args)
-                self.assertIn("--no-textconv", diff_args)
+                self.assertIn("--no-color", cached_args)
+                self.assertIn("--no-textconv", worktree_args)
 
             with self.subTest(provider=module.__name__, behavior="diff"):
                 with mock.patch.object(module, "run_git", return_value=diff_output) as run:
                     self.assertEqual(
-                        module.emit_diff_added_lines(ROOT, "notes.txt"),
+                        module.emit_diff_added_lines(
+                            ROOT,
+                            "notes.txt",
+                            module.CANDIDATE_WORKTREE,
+                            root_has_head=True,
+                        ),
                         [(1, "first"), (2, "++starts-with-two-plus")],
                     )
                 args = run.call_args.args[0]
                 self.assertIn("--no-color", args)
                 self.assertIn("--no-textconv", args)
                 self.assertIn("--output-indicator-new=+", args)
+                self.assertNotIn("--cached", args)
+                self.assertNotIn("HEAD", args)
+
+            with self.subTest(provider=module.__name__, behavior="staged-index"):
+                with mock.patch.object(module, "run_git", side_effect=(b"5\n", b"token")) as run:
+                    self.assertEqual(
+                        module.read_candidate_bytes(
+                            ROOT,
+                            "0:notes.env",
+                            module.CANDIDATE_STAGED,
+                        ),
+                        b"token",
+                    )
+                self.assertEqual(run.call_args_list[0].args[0][-1], ":./0:notes.env")
+                self.assertEqual(run.call_args_list[1].args[0][-1], ":./0:notes.env")
 
     def test_secret_scanner_rejects_unsafe_or_oversized_candidate_files(self) -> None:
         modules = (
@@ -676,7 +718,11 @@ class GenerateHooksTests(unittest.TestCase):
                 for index in range(module.MAX_FILES + 1)
             )
             with self.subTest(provider=module.__name__, case="file-count"):
-                with mock.patch.object(module, "run_git", side_effect=(b"", too_many_paths)):
+                with mock.patch.object(
+                    module,
+                    "run_git",
+                    side_effect=(too_many_paths, b"", b""),
+                ):
                     with self.assertRaises(module.ScanLimitExceeded):
                         module.collect_files(ROOT, "diff", True)
             with self.subTest(provider=module.__name__, case="total-bytes"):
