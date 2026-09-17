@@ -17,7 +17,7 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 ## Progress
 
-- [ ] [milestone-1] Add generator architecture, CLI, tests, documentation, and the `send-event.py` pilot.
+- [x] (2026-09-17 05:25Z) [milestone-1] Add generator architecture, CLI, tests, documentation, and the `send-event.py` pilot.
 - [ ] [milestone-2] Generate Copilot, Gemini, and GitHub common and audit helpers without changing runtime behavior.
 - [ ] [milestone-3] Generate Copilot and Gemini observability helpers without changing runtime behavior or latency expectations.
 - [ ] [milestone-4] Generate Copilot and Gemini Tool Guardian scripts, remove owned local duplicates, and complete independent security review.
@@ -35,6 +35,9 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - Observation: CLI guidance has one stream-placement disagreement.
   Evidence: `.agents/sources/12-factor-cli-apps.md` and `.agents/sources/clig-dev.md` put warnings and progress on standard error, while `.agents/sources/cli-design-guidelines.md` suggests warnings on standard output. This plan chooses standard error for warnings and progress so redirected standard output remains automation-safe.
+
+- Observation: A real-home installer smoke test cannot run in this agent environment.
+  Evidence: `./scripts/install.sh` stopped while copying to `/root/.agents/skills/addy-code-review-and-quality/SKILL.md` with `Read-only file system`. The targeted installer fixture and both observability suites passed, including installed-copy execution in their temporary homes.
 
 ## Decision Log
 
@@ -70,9 +73,13 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: Build-time canonical sharing beside a strict runtime-isolation rule is consequential and surprising without context.
   Date/Author: 2026-09-17, user and Codex.
 
+- Decision: The milestone-one manifest declares only the two `send_event` outputs.
+  Rationale: The generator must never claim ownership of a future family's handwritten files. Subsequent milestones extend the explicit manifest at the same time as they add a renderer and generated output.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
-No implementation milestones have started. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
+Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
 
 ## Context and Orientation
 
@@ -131,8 +138,8 @@ Implementation is large enough to require subagent orchestration. The coordinato
 All implementation follows test-first development. Before changing a family, add or identify characterization tests that fail when the current provider-specific behavior changes. First prove generator behavior with failing tests, then implement the smallest generator behavior to pass, then refactor canonical sources without weakening provider tests.
 
 ### Milestone 1: Build the generator and prove it with `send-event.py`
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met (repository and temporary-home installed-copy proof; real-home install unavailable in this environment)
 
 Add `hooks/providers.py` with immutable provider identifiers and explicit adapter data. Add `hooks/manifest.py` with a `GeneratedTarget` record containing family name, provider name, repository-relative output path, and mode `0o755`. Reject duplicate output paths and paths outside the declared provider hook trees. Add `hooks/families/send_event.py` as the first renderer.
 
@@ -367,3 +374,5 @@ Use immutable result records so the CLI layer formats output without mixing stre
 Do not make installers generate repository sources. `scripts/install.sh` and `scripts/install.ps1` continue copying checked-in provider-local files. Their tests must prove generated files install unchanged with executable modes.
 
 Revision note, 2026-09-17: Initial ExecPlan created from the confirmed grilling design. It records canonical generation, explicit CLI behavior, transactional safety, migration order, validation, drift separation, security review, and Phase 2 reassessment.
+
+Revision note, 2026-09-17: Completed Milestone 1. The pilot now renders the two provider-local `send-event.py` scripts; the generator test suite covers CLI, freshness, headers, output modes, path defenses, lock timeout, rollback, interruption cleanup, and external working directories. Targeted provider and installer fixture suites passed; the real-home install attempt is recorded above because its destination is read-only.

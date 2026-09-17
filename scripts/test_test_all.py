@@ -109,6 +109,7 @@ class TestTestAll(unittest.TestCase):
             if path.name != "test-common.sh"
         }
         expected.add("scripts/test-codex-agents.py")
+        expected.add("scripts/test-generate-hooks.py")
         listed = {
             part for command in commands for part in command if part.startswith("scripts/")
         }
