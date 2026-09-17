@@ -70,6 +70,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.agents/skills/okf-authoring/SKILL.md` | Repository-local representation workflow for canonical Markdown under `.agents/instructions/` and `.agents/memory/`; invoked one-way after `update-agent-docs` semantic changes. |
 | `.copilot/hooks/rtk-rewrite.json` | RTK rewrite config used by hook-driven tool rewrite flows; points at `.copilot/hooks/scripts/rtk-hook-copilot.py`. |
 | `docs/generated-provider-hooks/EXEC_PLAN.md` | Living execution plan for canonical hook sources and checked-in provider-local generated scripts. |
+| `docs/generated-provider-hooks/handoff.md` | Feature-scoped resume instructions for remaining deployed Gemini `AfterAgent` validation. |
 | `docs/adr/0001-auto-ingest-runtime-shape.md` | Records why source auto-ingest uses runtime-local hook code with one committed repo manifest. |
 | `docs/adr/0002-pending-ingest-gate.md` | Records why the pending-ingest gate blocks normal work until summaries resolve. |
 | `docs/adr/0003-sqlite-backed-hook-observability.md` | Records why hook observability uses SQLite as source of truth with NDJSON fallback. |

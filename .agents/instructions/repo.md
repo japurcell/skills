@@ -10,6 +10,7 @@ description: Repo-wide workflow for top-level docs, install refresh, and documen
 - Keep top-level docs short. Put durable rules in `.agents/instructions/` and durable repo facts in `.agents/memory/`.
 - Put repository-local workflow skills under `.agents/skills/`; put publishable skills installed into user environments under `skills/`. Confirm which boundary a new skill belongs to before applying generic skill workspace or installation conventions.
 - Put active research and planning artifacts that require version control under a focused `docs/<effort>/` subtree; keep transient, disposable working state under `.agents/scratchpad/` unless the user explicitly promotes it.
+- When a user explicitly promotes a feature handoff into `docs/<effort>/`, keep it at `docs/<effort>/handoff.md` and limit it to current status, remaining work, and exact resume instructions.
 - Keep the active generated-provider-hooks ExecPlan at `docs/generated-provider-hooks/EXEC_PLAN.md` synchronized while that effort is in progress; its architectural decision is `docs/adr/0004-generated-provider-hooks.md`.
 - After changing repo source that is installed into home-directory targets, run `./scripts/install.sh` before checking live Copilot or Gemini behavior.
 - Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews.
