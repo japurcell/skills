@@ -12,9 +12,9 @@ After this work, running either `./scripts/install.sh` or `pwsh scripts/install.
 
 - [x] (2026-09-17) [milestone-0] Researched current OpenAI custom-agent requirements and existing repository installer structure.
 - [x] (2026-09-17) [milestone-0] Settled format, ownership, safety, transaction, compatibility, and validation decisions with the user.
-- [ ] [milestone-1] Add failing converter tests for valid conversion, strict parsing, exact body preservation, collisions, ownership, cleanup, locking, links, and rollback.
-- [ ] [milestone-1] Implement `scripts/install-codex-agents.py` with no third-party dependencies.
-- [ ] [milestone-1] Run direct converter tests and Python syntax checks successfully.
+- [x] (2026-09-17 03:30Z) [milestone-1] Add failing converter tests for valid conversion, strict parsing, exact body preservation, collisions, ownership, cleanup, locking, links, and rollback.
+- [x] (2026-09-17 03:30Z) [milestone-1] Implement `scripts/install-codex-agents.py` with no third-party dependencies.
+- [x] (2026-09-17 03:30Z) [milestone-1] Run direct converter tests and Python syntax checks successfully.
 - [ ] [milestone-2] Add failing Bash and PowerShell installer integration assertions.
 - [ ] [milestone-2] Integrate converter into `scripts/install.sh` and `scripts/install.ps1` before existing copy operations.
 - [ ] [milestone-2] Register the direct converter suite in `scripts/test-all.py` and update runner-registry expectations.
@@ -39,6 +39,9 @@ After this work, running either `./scripts/install.sh` or `pwsh scripts/install.
 
 - Observation: Repository installer tests already use isolated fixture repositories and redirected home directories. The Codex hook merger already demonstrates same-directory temporary files, `fsync`, `os.replace`, owner-only modes, and link refusal.
   Evidence: `scripts/test-install.sh`, `scripts/test-install.ps1`, and `scripts/install-codex-hooks.py` provide patterns to follow.
+
+- Observation: This environment provides `python3` but no `python` executable, and the RTK Python wrapper cannot execute the plan's `python` spelling.
+  Evidence: `rtk proxy python scripts/test-codex-agents.py` reported `python: No such file or directory`; `rtk proxy python3 scripts/test-codex-agents.py` ran the suite successfully.
 
 ## Decision Log
 
@@ -108,7 +111,7 @@ After this work, running either `./scripts/install.sh` or `pwsh scripts/install.
 
 ## Outcomes & Retrospective
 
-Planning is complete. Implementation has not started. At completion, replace this paragraph with the installed behavior, validation evidence, any client-version limitations, and lessons learned about cross-platform atomic installation.
+Milestone 1 added a dependency-free converter and public-subprocess unittest suite. The converter accepts strict two-field Markdown frontmatter, preserves decoded instruction bodies exactly in TOML, protects unmanaged destination files through manifest ownership and collision checks, and uses same-directory staging, an exclusive lock, fsync-backed replacement, and caught-error rollback. Direct validation completed with `python3 -m py_compile scripts/install-codex-agents.py scripts/test-codex-agents.py` and `python3 scripts/test-codex-agents.py` (13 passing tests). A separate temporary-destination run converted all 19 current top-level agents and parsed each generated TOML document with an exact instruction-body comparison. Milestones 2 and 3 remain open.
 
 ## Context and Orientation
 
@@ -127,8 +130,8 @@ The lock prevents concurrent installer runs, but no portable collection of file 
 ## Plan of Work
 
 ### Milestone 1: Specify and implement the converter
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Create `scripts/test-codex-agents.py` first using `unittest`, temporary directories, and only the Python standard library. Exercise the converter as a public subprocess, not only imported functions, so exit codes and stream placement remain covered. Initial tests must fail because `scripts/install-codex-agents.py` does not exist.
 
@@ -302,3 +305,5 @@ The implementation may use only Python standard-library modules, including `argp
 No database, network service, schema migration, or new package is involved.
 
 Revision note (2026-09-17): Initial ExecPlan created after official documentation research and seven grilling rounds. It records all confirmed design decisions and leaves implementation milestones open.
+
+Revision note (2026-09-17): Milestone 1 completed with strict source conversion, manifest-owned transactional installation, and direct public-CLI tests. The `python3` interpreter spelling was used for local validation because this environment has no `python` executable.
