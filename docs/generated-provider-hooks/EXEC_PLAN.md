@@ -32,7 +32,7 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 - [x] (2026-09-17 08:31Z) [milestone-5] Resolve the next security rereview's ambiguous index-object and source-collapsing default-diff findings in a third isolated TDD repair.
 - [x] (2026-09-17 08:48Z) [milestone-5] Resolve the next security rereview's unbounded finding retention, match-loop deadline, serialized-record, and incoming-record rotation findings in a fourth isolated TDD repair.
 - [x] (2026-09-17 08:52Z) [milestone-5] Obtain independent security approval for canonical secret patterns, Git subprocess boundaries, output envelopes, logging, timeouts, and rendered files.
-- [ ] [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
+- [x] (2026-09-17 09:04Z) [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
 - [ ] [milestone-7] Finish repository-wide validation, classify drift, update durable documentation, and publish the Phase 2 recommendation.
 
 ## Surprises & Discoveries
@@ -218,6 +218,10 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: High-match inputs must reach a prompt fail-closed decision without building attacker-proportional Python or JSON structures. The log records how many processed findings were omitted and whether detail collection was truncated; match loops enforce the scanner's global deadline, and rotation compares the active file plus the incoming encoded record before appending.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Render the auto-ingest engine from one canonical source with a narrow Gemini payload-root adapter, while retaining provider-local wrapper adapters.
+  Rationale: Source scanning, manifest reconciliation, locking, atomic persistence, blocking, and context rendering are shared behavior. Root derivation and hook envelopes are runtime contracts, so they remain explicit generated-provider differences without cross-runtime imports.
+  Date/Author: 2026-09-17, Codex.
+
 - Decision: Accept Milestone 5 at commit `0816d4672e38bd2cf9a3a126d247cbb82070252f` after independent security rereview.
   Rationale: The reviewer examined the canonical scanner, generated Copilot and Gemini outputs, public regressions, Git and filesystem boundaries, resource limits, redaction, logging, and provider failure envelopes and reported no high-confidence blocker. Extraction, four focused repair commits, validation, and the independent approval gate are complete.
   Date/Author: 2026-09-17, independent security reviewer and Codex.
@@ -253,6 +257,8 @@ Milestone 5 third security repair at 2026-09-17 08:31Z closes SEC-009 and SEC-01
 Milestone 5 fourth security repair at 2026-09-17 08:48Z closes SEC-011. Finding processing now retains at most 100 redacted details and short-circuits at 1,000 processed findings while recording the known omitted-detail count and truncation state. The global scanner deadline is checked inside line, pattern, and match loops and immediately before logging; log-lock waits also honor the smaller remaining global budget. Audit records are encoded and rejected above 64 KiB, and rotation compares the existing file size plus the incoming record before append. Both provider suites prove a 10,000-match staged fake-token input returns a provider-correct denial within eight seconds, retains at most 100 redacted details, reports omitted findings, rotates a nearly full 64 KiB log, and keeps the active record bounded. Shared tests independently prove incoming-record-aware rotation and oversized-record rejection. Final validation passed Python compilation, shell syntax checks, all 20 generator tests, both secret-scanner suites, both Tool Guardian suites, both startup suites, shell and PowerShell installer fixtures, generator freshness for all 14 outputs, and diff hygiene. The PowerShell fixture reported only its expected unsupported-junction skip. Milestone status and acceptance remain unchanged pending independent security rereview.
 
 Independent security rereview approved Milestone 5 at commit `0816d4672e38bd2cf9a3a126d247cbb82070252f` with no high-confidence blocker. The accepted scanner keeps provider-local runtime files generated from one canonical policy, preserves Copilot and Gemini envelopes, fails closed in block mode while retaining warn compatibility, uses bounded literal Git operations, scans staged, worktree, and untracked sources independently, handles credential paths and binary token content, reads candidates and writes logs through hardened filesystem boundaries, redacts stored evidence, and caps files, bytes, time, locks, findings, and audit records. Milestone 5 is done and accepted; Milestone 6 is the next open implementation milestone.
+
+Milestone 6 now owns the two provider-local auto-ingest engines plus GitHub and Gemini startup and prompt/final-response wrappers. The generated outputs retain their provider-specific repository-root versus payload-root resolution, hook envelopes, startup filtering, stop-loop handling, transformed-prompt preservation, audit fail-open behavior, manifest location, and missing-skill recovery. The canonical engine uses an explicit Gemini root adapter while preserving the shared hashing, frontmatter, reconciliation, scaffold, lock, atomic-save, blocking, and context logic. Generator coverage confirms all six targets are owned, headered, executable, and runtime-local. Both auto-ingest suites proved manifest and pending-gate behavior through their public hook seams, including the existing safe-path, draft-frontmatter, body-marker, special-path, missing-cwd, and final-backstop cases; both OKF and startup suites, the shell installer fixture, generator tests, freshness, and diff hygiene also passed. Gemini's version-sensitive `AfterAgent` delivery remains repository-envelope evidence only and still requires a deployed-version live probe before claiming live enforcement.
 
 ## Context and Orientation
 
@@ -389,8 +395,8 @@ Run `bash scripts/test-hooks-secrets-scanner.sh`, `bash scripts/test-gemini-hook
 Acceptance requires shared findings for equivalent inputs, provider-correct output, bounded Git operations, fail-closed block mode, warn-mode compatibility, stable log behavior, and approved security review.
 
 ### Milestone 6: Generate auto-ingest engines and wrappers
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Add `hooks/families/auto_ingest.py`. Canonicalize source records, source hashing, frontmatter parsing, scaffold detection, blocking state, manifest reconciliation, rename and orphan handling, summary scaffolding, locking, atomic persistence, block-reason construction, and context rendering. Preserve GitHub's repository-root APIs and Gemini's payload-derived roots as provider adapters. Keep existing filenames even though GitHub uses `helpers/auto_ingest.py` and Gemini uses `helpers/source_ingest.py`.
 
@@ -577,3 +583,5 @@ Revision note, 2026-09-17: A third isolated Milestone 5 TDD repair disambiguates
 Revision note, 2026-09-17: A fourth isolated Milestone 5 TDD repair bounds finding retention and processing, enforces the global deadline inside match loops and at logging, caps encoded audit records, and makes rotation account for the incoming record. Milestone 5 remains in progress pending independent rereview.
 
 Revision note, 2026-09-17: Independent security rereview approved Milestone 5 at `0816d4672e38bd2cf9a3a126d247cbb82070252f` with no high-confidence blocker. Progress, outcome, status, and acceptance are now synchronized as done and met.
+
+Revision note, 2026-09-17: Completed Milestone 6. The manifest now owns six generated auto-ingest outputs, generated from the canonical family with explicit GitHub and Gemini adapters. A first extraction pass exposed an accidental Gemini summary-root identifier mismatch; the focused public auto-ingest suite reproduced it, and the adapter was corrected before acceptance. Final targeted generator, both auto-ingest, both OKF, both startup, shell-installer fixture, freshness, and diff checks passed. Gemini `AfterAgent` enforcement remains subject to the documented live deployed-version probe.

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# Generated from hooks/families/auto_ingest.py by scripts/generate-hooks.py. Do not edit.
 from __future__ import annotations
 
 import hashlib
@@ -31,50 +29,29 @@ class SourceRecord:
     summary_is_scaffold: bool
 
 
-
-def source_root_for_payload(payload: dict[str, object]) -> Path:
-    override = os.environ.get("AGENTS_SOURCE_SCAN_DIR")
+def source_root(repo_root: Path) -> Path:
+    override = os.environ.get("COPILOT_AUTO_INGEST_SOURCE_DIR")
     if override:
         return Path(override)
-    cwd = str(payload.get("cwd") or "")
-    if cwd:
-        from helpers.common import convert_windows_path_to_posix
-        cwd = convert_windows_path_to_posix(cwd)
-    return Path(cwd) / ".agents/sources" if cwd else Path.cwd() / ".agents/sources"
+    return repo_root / ".agents" / "sources"
 
 
-def summary_root_for_payload(payload: dict[str, object]) -> Path:
-    override = os.environ.get("AGENTS_SOURCE_SUMMARY_DIR")
+def summary_root(repo_root: Path) -> Path:
+    override = os.environ.get("COPILOT_AUTO_INGEST_SUMMARY_DIR")
     if override:
         return Path(override)
-    cwd = str(payload.get("cwd") or "")
-    if cwd:
-        from helpers.common import convert_windows_path_to_posix
-        cwd = convert_windows_path_to_posix(cwd)
-    return Path(cwd) / ".agents/memory/sources" if cwd else Path.cwd() / ".agents/memory/sources"
+    return repo_root / ".agents" / "memory" / "sources"
 
 
-def manifest_path_for_summary_root(summary_dir: Path) -> Path:
+def manifest_path(summary_dir: Path) -> Path:
+    override = os.environ.get("COPILOT_AUTO_INGEST_MANIFEST_PATH")
+    if override:
+        return Path(override)
     return summary_dir / MANIFEST_FILE_NAME
 
 
-def manifest_path_for_payload(payload: dict[str, object], summary_root: Path) -> Path:
-    override = os.environ.get("AGENTS_SOURCE_MANIFEST_PATH")
-    if override:
-        return Path(override)
-    return manifest_path_for_summary_root(summary_root)
-
-
-def repo_root_for_payload(payload: dict[str, object]) -> Path:
-    cwd = str(payload.get("cwd") or "")
-    if cwd:
-        from helpers.common import convert_windows_path_to_posix
-        cwd = convert_windows_path_to_posix(cwd)
-    return Path(cwd) if cwd else Path.cwd()
-
-
 def ingest_skill_path(repo_root: Path) -> Path:
-    override = os.environ.get("AGENTS_SKILLS_DIR") or os.environ.get("GEMINI_SKILLS_DIR")
+    override = os.environ.get("AGENTS_SKILLS_DIR") or os.environ.get("COPILOT_SKILLS_DIR")
     if override:
         return Path(override) / "ingest-source" / "SKILL.md"
     return repo_root / ".agents" / "skills" / "ingest-source" / "SKILL.md"
@@ -231,21 +208,21 @@ def build_block_reason(report_entries: list[dict[str, Any]], skill_available: bo
     return f"{PENDING_INGEST_DIRECTIVE} {PENDING_INGEST_SKILL_MISSING} Pending: {pending}."
 
 
-def scan_sources(source_root: Path, summary_root: Path) -> list[SourceRecord]:
-    if not source_root.exists():
+def scan_sources(sources_dir: Path, summary_dir: Path) -> list[SourceRecord]:
+    if not sources_dir.exists():
         return []
 
     records: list[SourceRecord] = []
-    for source_path in sorted(source_root.rglob("*")):
+    for source_path in sorted(sources_dir.rglob("*")):
         if not source_path.is_file() or source_path.is_symlink():
             continue
 
-        relpath = source_path.relative_to(source_root)
+        relpath = source_path.relative_to(sources_dir)
         if _is_hidden_relative(relpath):
             continue
 
         source_relpath = relpath.as_posix()
-        summary_path = summary_path_for_source(summary_root, source_relpath)
+        summary_path = summary_path_for_source(summary_dir, source_relpath)
         summary_exists, summary_hash, summary_is_scaffold = _summary_details(summary_path)
         records.append(
             SourceRecord(

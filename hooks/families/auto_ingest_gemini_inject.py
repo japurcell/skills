@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Generated from hooks/families/auto_ingest.py by scripts/generate-hooks.py. Do not edit.
 
 from __future__ import annotations
 

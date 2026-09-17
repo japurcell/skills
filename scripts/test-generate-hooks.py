@@ -60,6 +60,14 @@ SECRET_SCANNER_TARGETS = (
     ".copilot/hooks/scripts/scan-secrets.py",
     ".gemini/hooks/scripts/scan-secrets.py",
 )
+AUTO_INGEST_TARGETS = (
+    ".github/hooks/scripts/helpers/auto_ingest.py",
+    ".gemini/hooks/scripts/helpers/source_ingest.py",
+    ".github/hooks/scripts/auto-ingest-source.py",
+    ".gemini/hooks/scripts/auto-ingest.py",
+    ".github/hooks/scripts/inject-auto-ingest-context.py",
+    ".gemini/hooks/scripts/inject-auto-ingest-context.py",
+)
 OBSERVABILITY_ALLOWED_DIFFERENCES = (
     ('OBSERVABILITY_RUNTIME = "copilot"', 'OBSERVABILITY_RUNTIME = "gemini"'),
     ('_truthy_env("COPILOT_OBSERVABILITY_DISABLE", "OBSERVABILITY_DISABLE")',
@@ -136,6 +144,19 @@ class GenerateHooksTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.restore_checked_in_outputs()
 
+    def test_auto_ingest_targets_are_generated_and_keep_runtime_boundaries(self) -> None:
+        generator = load_generator()
+        rendered = {
+            output.target.output_path.as_posix(): output.content.decode("utf-8")
+            for output in generator.render_all(ROOT)
+        }
+        self.assertTrue(set(AUTO_INGEST_TARGETS).issubset(rendered))
+        for target in AUTO_INGEST_TARGETS:
+            with self.subTest(target=target):
+                self.assertIn("# Generated from hooks/families/auto_ingest.py", rendered[target])
+                self.assertNotIn(".github.hooks", rendered[target])
+                self.assertNotIn(".gemini.hooks", rendered[target])
+
     def test_help_and_usage_are_explicit_and_non_mutating(self) -> None:
         before = snapshot(ROOT)
         for flag in ("-h", "--help"):
@@ -158,7 +179,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (14 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (20 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -189,7 +210,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (14 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (20 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -215,7 +236,7 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(AUTO_INGEST_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():
