@@ -20,7 +20,8 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 - [x] (2026-09-17 05:25Z) [milestone-1] Add generator architecture, CLI, tests, documentation, and the `send-event.py` pilot.
 - [x] (2026-09-17 05:37Z) [milestone-2] Generate Copilot, Gemini, and GitHub common and audit helpers without changing runtime behavior.
 - [x] (2026-09-17 05:47Z) [milestone-3] Generate Copilot and Gemini observability helpers without changing runtime behavior or latency expectations.
-- [ ] [milestone-4] Generate Copilot and Gemini Tool Guardian scripts, remove owned local duplicates, and complete independent security review.
+- [x] (2026-09-17 06:01Z) [milestone-4] Generate and validate Copilot and Gemini Tool Guardian scripts from one canonical policy with explicit provider adapters.
+- [ ] [milestone-4] Complete the independent security review and resolve any high-confidence findings before accepting the milestone.
 - [ ] [milestone-5] Generate Copilot and Gemini secret scanners, remove owned local duplicates, and complete independent security review.
 - [ ] [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
 - [ ] [milestone-7] Finish repository-wide validation, classify drift, update durable documentation, and publish the Phase 2 recommendation.
@@ -44,6 +45,9 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - Observation: The observability helpers have eight intentional provider adapter sites and are otherwise identical.
   Evidence: The pre-migration unified diff contains only runtime identity, runtime-prefixed environment variables, and the default runtime-home path. The generator regression normalizes only those eight exact expressions and rejects every other difference.
+
+- Observation: Tool Guardian has no dedicated latency benchmark or numeric latency budget in its focused suites or hook guidance.
+  Evidence: Repository search found latency requirements only for observability and bounded Git-probe timing for secret scanning. Tool Guardian extraction retains each provider's existing imports, adds no runtime template loading or cross-provider imports, and both startup suites pass under their existing hook timeouts.
 
 ## Decision Log
 
@@ -91,6 +95,14 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: Exact replacements make the runtime name, environment precedence, and default path differences reviewable and cause the regression test to fail when a new provider divergence appears.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Render Tool Guardian as one readable policy body surrounded by two marked provider-adapter blocks.
+  Rationale: The policy body now owns all 21 threat matchers, aggregation, allowlist parsing, and allowlist matching once. Marked adapters keep response envelopes, payload-key precedence, logging, paths, and exception formatting explicit, while a generator regression rejects policy drift outside those blocks.
+  Date/Author: 2026-09-17, Codex.
+
+- Decision: Keep Milestone 4 in progress after extraction validation.
+  Rationale: Generator, provider, startup, and installer validation is complete, but the required independent security review is intentionally delegated to a separate reviewer and remains the milestone's only acceptance gate.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
@@ -98,6 +110,8 @@ Milestone 1 introduced a deterministic standard-library generator, its two-file 
 Milestone 2 now owns six generated common and audit helpers. The renderer contract preserves each pre-generation helper body byte-for-byte after excluding the generated ownership header and executable shebang. Provider behavior remains explicit: GitHub has bounded incomplete-input handling and an audit mode prefix, Copilot has standard passive logging, and Gemini has its separate passive shadow configuration. The generator tests and all listed Copilot, GitHub, Gemini, and installer fixture suites passed. No behavior defect or unclassified drift was observed.
 
 Milestone 3 now owns the two observability helpers. The generated runtime bodies preserve SQLite/WAL tracing, transcript finalization, NDJSON fallback, retention, locking, maintenance, and fail-open behavior; only the generated header was added. The eight named adapter expressions cover runtime identity, environment precedence, and the default home-directory log path. Generator, both observability, both startup, and both installer fixture suites passed. PowerShell installer tests passed with the expected junction skip. The direct real-home installer remains unavailable because `/root/.agents/skills` is read-only, so temporary-home installed-copy coverage is the available installed-behavior evidence.
+
+Milestone 4 extraction now owns the two Tool Guardian scripts through one canonical policy and explicit Copilot and Gemini adapters. Shared vectors cover all 21 matchers, positive aggregation, safe negatives, word boundaries, multiline and escaped-multiline cases, encoded fixture construction, allowlist parsing and substring semantics, and cross-provider parity. Provider suites separately prove response envelopes plus malformed and injected unexpected-input failures remain fail closed with exit `0`. Generator, both Tool Guardian, both startup, shell installer, and PowerShell installer suites pass. Acceptance remains pending the separately assigned independent security review.
 
 ## Context and Orientation
 
@@ -208,8 +222,8 @@ Run `bash scripts/test-hooks-observability.sh`, `bash scripts/test-gemini-hooks-
 Classify drift and handle confirmed defects separately as defined above. Acceptance requires matching database, transcript, fallback, maintenance, and installed behavior with no regression in measured hot-path budgets.
 
 ### Milestone 4: Generate Tool Guardian and remove owned policy duplication
-Status: open
-Acceptance: not met
+Status: in progress
+Acceptance: not met (extraction and validation complete; independent security review pending)
 
 Add `hooks/families/tool_guard.py`. Put shared threat detectors, encoded pattern definitions, threat aggregation, and allowlist behavior in one canonical source. Keep Copilot and Gemini payload extraction, decision envelopes, audit behavior, default paths, and fail-closed top-level handling in explicit provider adapters. Move the duplicated `parse_allowlist_csv` and `allowlist_contains` behavior into one canonical definition used in both generated scripts; generated files remain self-contained.
 
@@ -398,3 +412,5 @@ Revision note, 2026-09-17: Completed Milestone 1. The pilot now renders the two 
 Revision note, 2026-09-17: Completed Milestone 2. Canonical common and audit renderers now own all six Copilot, Gemini, and GitHub helper outputs. Their runtime bodies are characterized against the pre-generation sources, with only the generator-required executable shebang and ownership header added. Targeted generator, provider hook, and installer fixture suites passed.
 
 Revision note, 2026-09-17: Completed Milestone 3. Canonical observability rendering now owns the Copilot and Gemini helpers through eight exact, tested provider adapter expressions. Targeted generator, observability, startup, shell installer, and PowerShell installer fixture suites passed; direct real-home installation remained blocked by the existing read-only `/root/.agents/skills` destination.
+
+Revision note, 2026-09-17: Completed the Milestone 4 extraction and validation portion. Canonical Tool Guardian policy now renders both provider-local scripts; shared matcher and allowlist vectors plus separate envelope tests pass, including malformed and unexpected-exception fail-closed paths. The milestone remains in progress until the independent security review is approved.

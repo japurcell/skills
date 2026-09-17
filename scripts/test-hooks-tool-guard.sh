@@ -179,6 +179,40 @@ test_tool_guard_denies_invalid_payload() {
     "Expected Tool Guardian to deny non-object inputs."
 }
 
+test_tool_guard_denies_unexpected_input_exception() {
+  local workdir
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  mkdir -p "$workdir/helpers"
+  cp "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" "$workdir/tool-guard.py"
+  printf '%s\n' \
+    'import json' \
+    'import sys' \
+    'def emit_json(payload):' \
+    '    sys.stdout.write(json.dumps(payload, separators=(",", ":")) + "\n")' \
+    'def read_json_input():' \
+    '    raise RuntimeError("forced input failure")' \
+    'def sanitize_log_field(value):' \
+    '    return str(value)' \
+    >"$workdir/helpers/common.py"
+  printf '%s\n' \
+    'def audit_log_event(*_args, **_kwargs):' \
+    '    return True' \
+    >"$workdir/helpers/audit.py"
+
+  output="$(python3 "$workdir/tool-guard.py" <<<'{}' 2>"$workdir/stderr")"
+
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected Tool Guardian to deny unexpected input failures."
+  assert_equals "Tool Guardian skipped: unexpected exception." \
+    "$(jq -r '.permissionDecisionReason' <<<"$output")" \
+    "Expected the fail-closed Copilot envelope for unexpected input failures."
+  assert_file_contains "$workdir/stderr" 'forced input failure' \
+    "Expected the unexpected input failure to be diagnosed on stderr."
+}
+
 test_tool_guard_rm_env_and_rm_git() {
   local workdir
   local log_dir
@@ -233,6 +267,7 @@ main() {
   test_block_mode_parses_cli_tool_args_objects
   test_skip_mode_returns_explicit_allow_json
   test_tool_guard_denies_invalid_payload
+  test_tool_guard_denies_unexpected_input_exception
   test_tool_guard_rm_env_and_rm_git
 }
 

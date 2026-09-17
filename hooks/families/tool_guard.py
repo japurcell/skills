@@ -1,10 +1,18 @@
-#!/usr/bin/env python3
-# Generated from hooks/families/tool_guard.py by scripts/generate-hooks.py. Do not edit.
+"""Render Tool Guardian from one policy and explicit provider adapters."""
 
 from __future__ import annotations
 
-# BEGIN PROVIDER ADAPTER
-import json
+from hooks.manifest import GeneratedTarget
+from hooks.providers import Provider
+
+
+SHEBANG = "#!/usr/bin/env python3\n"
+HEADER = "# Generated from hooks/families/tool_guard.py by scripts/generate-hooks.py. Do not edit.\n"
+ADAPTER_START = "# BEGIN PROVIDER ADAPTER\n"
+ADAPTER_END = "# END PROVIDER ADAPTER\n"
+
+
+_COPILOT_IMPORT_AND_RESPONSE_ADAPTER = r'''import json
 import os
 import sys
 from datetime import datetime, timezone
@@ -56,8 +64,46 @@ def emit_deny_response(reason: str) -> None:
         }
     )
     raise SystemExit(0)
-# END PROVIDER ADAPTER
+'''
 
+
+_GEMINI_IMPORT_AND_RESPONSE_ADAPTER = r'''import json
+import os
+import sys
+import time
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from helpers.common import emit_json, read_json_input  # noqa: E402
+
+
+TOOL_NAME_KEYS = ("tool_name", "toolName")
+TOOL_INPUT_KEYS = ("tool_input", "toolInput", "toolArgs")
+
+
+def emit_skip_allow_response() -> None:
+    emit_json({"decision": "allow"})
+    raise SystemExit(0)
+
+
+def emit_allow_response(system_message: str | None = None) -> None:
+    payload: dict[str, str] = {"decision": "allow"}
+    if system_message:
+        payload["systemMessage"] = system_message
+    emit_json(payload)
+    raise SystemExit(0)
+
+
+def emit_deny_response(reason: str) -> None:
+    emit_json({"decision": "deny", "reason": reason, "systemMessage": reason})
+    raise SystemExit(0)
+'''
+
+
+_POLICY_SOURCE = r'''
 
 def R(*codes: int) -> str:
     return "".join(chr(code) for code in codes)
@@ -290,9 +336,10 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]]) -> str:
         f"Tool Guardian blocked {tool_name or 'tool invocation'}. {joined}. "
         "Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
     )
+'''
 
-# BEGIN PROVIDER ADAPTER
 
+_COPILOT_LOGGING_ADAPTER = r'''
 def format_error(error: Exception) -> str:
     return sanitize_log_field(error)
 
@@ -333,8 +380,55 @@ def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, th
             os.environ.pop("AUDIT_LOCK", None)
         else:
             os.environ["AUDIT_LOCK"] = old_audit_lock
-# END PROVIDER ADAPTER
+'''
 
+
+_GEMINI_LOGGING_ADAPTER = r'''
+def format_error(error: Exception) -> str:
+    return str(error)
+
+
+def configure_log() -> None:
+    global TIMESTAMP, LOG_FILE
+    log_dir = os.environ.get("TOOL_GUARD_LOG_DIR", os.path.expanduser("~/.gemini/hooks/tool-guardian"))
+    LOG_FILE = f"{log_dir}/guard.log"
+    TIMESTAMP = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def append_log(
+    log_file: str,
+    event: str,
+    mode: str,
+    tool_name: str,
+    timestamp: str,
+    threat_count: int = 0,
+    threats: list[dict[str, str]] | None = None,
+) -> None:
+    parent = os.path.dirname(log_file)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+    payload: dict[str, object] = {
+        "timestamp": timestamp,
+        "event": event,
+        "mode": mode,
+        "tool": tool_name,
+    }
+    if event == "threats_detected":
+        payload["threat_count"] = threat_count
+        payload["threats"] = threats or []
+
+    with open(log_file, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+        handle.write("\n")
+
+
+def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None) -> None:
+    append_log(LOG_FILE, event, mode, tool_name, TIMESTAMP, threat_count, threats)
+'''
+
+
+_MAIN_SOURCE = r'''
 
 def main() -> int:
     if os.environ.get("SKIP_TOOL_GUARD") == "true":
@@ -384,3 +478,33 @@ if __name__ == "__main__":
     except Exception as exc:  # noqa: BLE001 - intentional fail-closed safety net
         print(f"Tool Guardian failed unexpectedly: {format_error(exc)}", file=sys.stderr)
         emit_deny_response("Tool Guardian blocked execution due to an internal error.")
+'''
+
+
+def _adapter_sources(provider: Provider) -> tuple[str, str]:
+    if provider.name == "copilot":
+        return _COPILOT_IMPORT_AND_RESPONSE_ADAPTER, _COPILOT_LOGGING_ADAPTER
+    if provider.name == "gemini":
+        return _GEMINI_IMPORT_AND_RESPONSE_ADAPTER, _GEMINI_LOGGING_ADAPTER
+    raise ValueError(f"Unsupported Tool Guardian provider: {provider.name}")
+
+
+def render(provider: Provider, target: GeneratedTarget) -> str:
+    """Render one self-contained Tool Guardian script."""
+    if target.provider != provider.name or provider.name not in {"copilot", "gemini"}:
+        raise ValueError(f"Unsupported Tool Guardian target/provider: {target.output_path}")
+    import_adapter, logging_adapter = _adapter_sources(provider)
+    return (
+        SHEBANG
+        + HEADER
+        + "\nfrom __future__ import annotations\n\n"
+        + ADAPTER_START
+        + import_adapter
+        + ADAPTER_END
+        + _POLICY_SOURCE
+        + "\n"
+        + ADAPTER_START
+        + logging_adapter
+        + ADAPTER_END
+        + _MAIN_SOURCE
+    )

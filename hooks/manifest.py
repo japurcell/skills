@@ -29,4 +29,6 @@ def targets() -> tuple[GeneratedTarget, ...]:
         GeneratedTarget("audit", "github", PurePosixPath(".github/hooks/scripts/helpers/audit.py")),
         GeneratedTarget("observability", "copilot", PurePosixPath(".copilot/hooks/scripts/helpers/observability.py")),
         GeneratedTarget("observability", "gemini", PurePosixPath(".gemini/hooks/scripts/helpers/observability.py")),
+        GeneratedTarget("tool_guard", "copilot", PurePosixPath(".copilot/hooks/scripts/tool-guard.py")),
+        GeneratedTarget("tool_guard", "gemini", PurePosixPath(".gemini/hooks/scripts/tool-guard.py")),
     )

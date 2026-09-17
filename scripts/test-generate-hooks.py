@@ -48,6 +48,10 @@ OBSERVABILITY_TARGETS = (
     ".copilot/hooks/scripts/helpers/observability.py",
     ".gemini/hooks/scripts/helpers/observability.py",
 )
+TOOL_GUARD_TARGETS = (
+    ".copilot/hooks/scripts/tool-guard.py",
+    ".gemini/hooks/scripts/tool-guard.py",
+)
 OBSERVABILITY_ALLOWED_DIFFERENCES = (
     ('OBSERVABILITY_RUNTIME = "copilot"', 'OBSERVABILITY_RUNTIME = "gemini"'),
     ('_truthy_env("COPILOT_OBSERVABILITY_DISABLE", "OBSERVABILITY_DISABLE")',
@@ -77,6 +81,15 @@ COMMON_AUDIT_TARGETS = {
 
 def load_generator():
     specification = importlib.util.spec_from_file_location("generate_hooks", SCRIPT)
+    assert specification is not None and specification.loader is not None
+    module = importlib.util.module_from_spec(specification)
+    sys.modules[specification.name] = module
+    specification.loader.exec_module(module)
+    return module
+
+
+def load_module(name: str, path: Path):
+    specification = importlib.util.spec_from_file_location(name, path)
     assert specification is not None and specification.loader is not None
     module = importlib.util.module_from_spec(specification)
     sys.modules[specification.name] = module
@@ -137,7 +150,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (10 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (12 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -168,7 +181,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (10 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (12 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -194,7 +207,7 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():
@@ -224,6 +237,84 @@ class GenerateHooksTests(unittest.TestCase):
             self.assertEqual(gemini.count(gemini_value), 1)
             normalized = normalized.replace(copilot_value, gemini_value)
         self.assertEqual(normalized, gemini, "Observability outputs diverged outside their named provider differences.")
+
+    def test_tool_guard_renderings_share_one_policy_outside_provider_adapters(self) -> None:
+        generator = load_generator()
+        rendered = {
+            output.target.output_path.as_posix(): output.content.decode("utf-8")
+            for output in generator.render_all(ROOT)
+        }
+        self.assertTrue(set(TOOL_GUARD_TARGETS).issubset(rendered))
+
+        shared_sections = []
+        for target in TOOL_GUARD_TARGETS:
+            source = rendered[target]
+            self.assertTrue(source.startswith(
+                "#!/usr/bin/env python3\n"
+                "# Generated from hooks/families/tool_guard.py by scripts/generate-hooks.py. Do not edit.\n"
+            ))
+            sections = re.split(
+                r"# BEGIN PROVIDER ADAPTER\n.*?# END PROVIDER ADAPTER\n",
+                source,
+                flags=re.DOTALL,
+            )
+            self.assertEqual(len(sections), 3, f"Expected two explicit provider adapters in {target}.")
+            shared_sections.append(sections)
+
+        self.assertEqual(
+            shared_sections[0],
+            shared_sections[1],
+            "Tool Guardian policy diverged outside explicit provider adapters.",
+        )
+
+    def test_tool_guard_provider_neutral_matcher_and_allowlist_vectors(self) -> None:
+        vectors = load_module(
+            "tool_guard_vectors",
+            ROOT / "scripts" / "fixtures" / "tool_guard_vectors.py",
+        )
+        modules = (
+            load_module("copilot_tool_guard_vectors", ROOT / TOOL_GUARD_TARGETS[0]),
+            load_module("gemini_tool_guard_vectors", ROOT / TOOL_GUARD_TARGETS[1]),
+        )
+
+        provider_outcomes = []
+        for module in modules:
+            self.assertEqual(len(module.PATTERNS), len(vectors.POSITIVE_MATCHER_VECTORS))
+            for pattern, vector in zip(module.PATTERNS, vectors.POSITIVE_MATCHER_VECTORS, strict=True):
+                with self.subTest(provider=module.__name__, vector=vector.name):
+                    category, severity, matcher, suggestion = pattern
+                    self.assertTrue(category)
+                    self.assertTrue(severity)
+                    self.assertTrue(suggestion)
+                    self.assertEqual(matcher(vector.text, vector.text.lower()), vector.expected_match)
+                    aggregated_matches = {
+                        threat["match"] for threat in module.build_threats(vector.text)
+                    }
+                    self.assertIn(vector.expected_match, aggregated_matches)
+
+            outcomes = []
+            for name, text in vectors.NEGATIVE_AGGREGATION_VECTORS:
+                with self.subTest(provider=module.__name__, vector=name):
+                    threats = module.build_threats(text)
+                    self.assertEqual(threats, [])
+                    outcomes.append(threats)
+
+            multi_threats = module.build_threats(vectors.MULTI_THREAT_TEXT)
+            self.assertEqual(
+                [(threat["category"], threat["severity"]) for threat in multi_threats],
+                [("system_danger", "high"), ("system_danger", "high")],
+            )
+            allowlist = module.parse_allowlist_csv(vectors.ALLOWLIST_RAW)
+            self.assertEqual(tuple(allowlist), vectors.ALLOWLIST_ENTRIES)
+            self.assertTrue(module.allowlist_contains(f"bash {vectors.ALLOWLIST_ENTRIES[0]}", allowlist))
+            self.assertTrue(module.allowlist_contains(f"prefix{vectors.ALLOWLIST_ENTRIES[0]}suffix", allowlist))
+            self.assertFalse(module.allowlist_contains("bash echo safe", allowlist))
+            self.assertFalse(module.allowlist_contains(vectors.ALLOWLIST_ENTRIES[0].upper(), allowlist))
+            self.assertEqual(module.parse_allowlist_csv(None), [])
+            self.assertEqual(module.parse_allowlist_csv(" ,  , "), [])
+            provider_outcomes.append((outcomes, multi_threats, allowlist))
+
+        self.assertEqual(provider_outcomes[0], provider_outcomes[1])
 
     def test_rendering_rejects_unsafe_paths_and_invalid_python_before_writing(self) -> None:
         generator = load_generator()

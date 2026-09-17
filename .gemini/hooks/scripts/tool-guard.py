@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+# Generated from hooks/families/tool_guard.py by scripts/generate-hooks.py. Do not edit.
 
 from __future__ import annotations
 
+# BEGIN PROVIDER ADAPTER
 import json
 import os
 import sys
@@ -13,6 +15,29 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from helpers.common import emit_json, read_json_input  # noqa: E402
+
+
+TOOL_NAME_KEYS = ("tool_name", "toolName")
+TOOL_INPUT_KEYS = ("tool_input", "toolInput", "toolArgs")
+
+
+def emit_skip_allow_response() -> None:
+    emit_json({"decision": "allow"})
+    raise SystemExit(0)
+
+
+def emit_allow_response(system_message: str | None = None) -> None:
+    payload: dict[str, str] = {"decision": "allow"}
+    if system_message:
+        payload["systemMessage"] = system_message
+    emit_json(payload)
+    raise SystemExit(0)
+
+
+def emit_deny_response(reason: str) -> None:
+    emit_json({"decision": "deny", "reason": reason, "systemMessage": reason})
+    raise SystemExit(0)
+# END PROVIDER ADAPTER
 
 
 def R(*codes: int) -> str:
@@ -191,24 +216,6 @@ PATTERNS = [
 ]
 
 
-def emit_skip_allow_response() -> None:
-    emit_json({"decision": "allow"})
-    raise SystemExit(0)
-
-
-def emit_allow_response(system_message: str | None = None) -> None:
-    payload: dict[str, str] = {"decision": "allow"}
-    if system_message:
-        payload["systemMessage"] = system_message
-    emit_json(payload)
-    raise SystemExit(0)
-
-
-def emit_deny_response(reason: str) -> None:
-    emit_json({"decision": "deny", "reason": reason, "systemMessage": reason})
-    raise SystemExit(0)
-
-
 def parse_allowlist_csv(raw_allowlist: str | None) -> list[str]:
     if not raw_allowlist:
         return []
@@ -220,7 +227,7 @@ def allowlist_contains(text: str, entries: list[str]) -> bool:
 
 
 def read_tool_name(payload: dict) -> str:
-    for key in ("tool_name", "toolName"):
+    for key in TOOL_NAME_KEYS:
         value = payload.get(key)
         if value is not None:
             return str(value)
@@ -228,7 +235,7 @@ def read_tool_name(payload: dict) -> str:
 
 
 def read_tool_input(payload: dict) -> str:
-    for key in ("tool_input", "toolInput", "toolArgs"):
+    for key in TOOL_INPUT_KEYS:
         if key not in payload:
             continue
         value = payload.get(key)
@@ -265,6 +272,18 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]]) -> str:
         "Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
     )
 
+# BEGIN PROVIDER ADAPTER
+
+def format_error(error: Exception) -> str:
+    return str(error)
+
+
+def configure_log() -> None:
+    global TIMESTAMP, LOG_FILE
+    log_dir = os.environ.get("TOOL_GUARD_LOG_DIR", os.path.expanduser("~/.gemini/hooks/tool-guardian"))
+    LOG_FILE = f"{log_dir}/guard.log"
+    TIMESTAMP = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
 
 def append_log(
     log_file: str,
@@ -294,23 +313,26 @@ def append_log(
         handle.write("\n")
 
 
+def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None) -> None:
+    append_log(LOG_FILE, event, mode, tool_name, TIMESTAMP, threat_count, threats)
+# END PROVIDER ADAPTER
+
+
 def main() -> int:
     if os.environ.get("SKIP_TOOL_GUARD") == "true":
         emit_skip_allow_response()
 
+    configure_log()
     mode = os.environ.get("GUARD_MODE", "block")
     if mode not in {"warn", "block"}:
         mode = "block"
-
-    log_dir = os.environ.get("TOOL_GUARD_LOG_DIR", os.path.expanduser("~/.gemini/hooks/tool-guardian"))
-    log_file = f"{log_dir}/guard.log"
 
     try:
         payload = read_json_input()
     except ValueError:
         emit_deny_response("Tool Guardian skipped: invalid hook input JSON.")
-    except Exception as exc:  # noqa: BLE001 - intentional fallback for hook stability
-        print(f"Tool Guardian failed to read input: {exc}", file=sys.stderr)
+    except Exception as exc:  # noqa: BLE001 - intentional top-level fallback
+        print(f"Tool Guardian failed to read input: {format_error(exc)}", file=sys.stderr)
         emit_deny_response("Tool Guardian skipped: unexpected exception.")
 
     if not isinstance(payload, dict):
@@ -319,18 +341,17 @@ def main() -> int:
     tool_name = read_tool_name(payload)
     tool_text = f"{tool_name} {read_tool_input(payload)}"
     allowlist = parse_allowlist_csv(os.environ.get("TOOL_GUARD_ALLOWLIST"))
-    timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     if allowlist and allowlist_contains(tool_text, allowlist):
-        append_log(log_file, "guard_skipped", mode, tool_name, timestamp)
+        log_payload("guard_skipped", mode, tool_name)
         emit_allow_response()
 
     threats = build_threats(tool_text)
     if not threats:
-        append_log(log_file, "guard_passed", mode, tool_name, timestamp)
+        log_payload("guard_passed", mode, tool_name)
         emit_allow_response()
 
-    append_log(log_file, "threats_detected", mode, tool_name, timestamp, len(threats), threats)
+    log_payload("threats_detected", mode, tool_name, len(threats), threats)
     if mode == "warn":
         emit_allow_response(f"⚠️ Tool Guardian warning: {build_block_reason(tool_name, threats)}")
 
@@ -342,6 +363,6 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except SystemExit:
         raise
-    except Exception as exc:  # noqa: BLE001 - last-resort safety net
-        print(f"Tool Guardian failed unexpectedly: {exc}", file=sys.stderr)
+    except Exception as exc:  # noqa: BLE001 - intentional fail-closed safety net
+        print(f"Tool Guardian failed unexpectedly: {format_error(exc)}", file=sys.stderr)
         emit_deny_response("Tool Guardian blocked execution due to an internal error.")
