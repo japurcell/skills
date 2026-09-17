@@ -19,7 +19,7 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 - [x] (2026-09-17 20:40Z) [milestone-1] Strengthen RTK characterization without changing runtime behavior and record the required-skill-loader no-migration decision.
 - [x] (2026-09-17 20:50Z) [milestone-2] Fix RTK open-pipe completion, preserve accepted input bytes, and add the five-second Gemini outer timeout in an isolated behavior change.
 - [x] (2026-09-17 20:58Z) [milestone-3] Generate the two provider-local RTK forwarders from one canonical family while preserving every approved adapter difference.
-- [ ] [milestone-4] Add read-only generated-hook freshness preflight to both installers before any destination mutation.
+- [x] (2026-09-17) [milestone-4] Add read-only generated-hook freshness preflight to both installers before any destination mutation.
 - [ ] [milestone-5] Run full validation, obtain focused review, synchronize documentation, and record final outcomes.
 
 ## Surprises & Discoveries
@@ -44,6 +44,9 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 
 - Observation: A freshness check can create ignored `__pycache__` files unless bytecode is disabled.
   Evidence: `scripts/generate-hooks.py` imports `hooks.manifest`, `hooks.providers`, and each family module. Both installers must set `PYTHONDONTWRITEBYTECODE=1` only for the preflight subprocess so the check remains read-only in practical checkout state as well as provider output state.
+
+- Observation: A child PowerShell process initializes host-owned XDG state below `HOME` before `install.ps1` runs.
+  Evidence: The fixture's destination fingerprint initially saw PowerShell module and telemetry paths despite the preflight exiting before installer mutations. The PowerShell fixture now redirects XDG cache, config, and data paths under its temporary work directory before the child starts, so its byte-for-byte destination assertion covers installer effects only.
 
 - Observation: Preflight freshness is a check-time guarantee, not an installation transaction.
   Evidence: Another process can modify canonical or generated files after `--check` exits and before copying begins. Holding a repository lock through every installer copy or staging all rendered outputs would add a new transaction protocol. This plan intentionally accepts that race and makes no stronger claim.
@@ -94,6 +97,10 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
   Rationale: Exit 1 means stale, missing, or undeclared generated output and should include the `--write` recovery command. Exit 2 means generator or canonical-source failure and must retain its diagnostic without advising a potentially invalid write. Both cases stop before destination changes.
   Date/Author: 2026-09-17, user and Codex.
 
+- Decision: Populate installer fixtures from the manifest at runtime.
+  Rationale: Copying every `hooks.manifest.targets()` output with its declared mode keeps fixture ownership aligned with the generator without a second handwritten output list. Fixture setup and installer preflight both disable Python bytecode.
+  Date/Author: 2026-09-17, Codex.
+
 - Decision: Treat freshness as proof at check time; do not lock the repository through installation.
   Rationale: Cross-process locking or rendered staging would materially expand installer complexity for a small race in a local authoring workflow.
   Date/Author: 2026-09-17, user and Codex.
@@ -120,7 +127,9 @@ Planning and candidate characterization are complete. Milestone 1 added public J
 
 Milestone 2 is complete. Both handwritten forwarders now read raw pipe bytes until one JSON object is complete, drain immediately available trailing bytes, and pass accepted input unchanged to RTK. They wait at most 0.5 seconds after any incomplete chunk, use POSIX `select` with a Windows `PeekNamedPipe` path, preserve fail-open failures and provider adapters, and apply Gemini's 5000 ms outer timeout. The public-process tests were red against `sys.stdin.read()` and are green after the repair. `bash scripts/test-hooks-rtk.sh`, `bash scripts/test-gemini-hooks-rtk.sh`, `bash scripts/test-hooks-startup.sh`, `bash scripts/test-hooks-observability.sh`, and `bash scripts/test-gemini-hooks-observability.sh` passed.
 
-Milestone 3 is complete. `hooks/families/rtk.py` now renders the two provider-local forwarders declared by `hooks/manifest.py`, bringing the owned output count to 22. The generator test first failed because the RTK targets were not declared, then passed after the canonical family, manifest entries, and generated outputs were added. `python3 scripts/generate-hooks.py --write` refreshed both files; `python3 scripts/generate-hooks.py --check`, `python3 scripts/test-generate-hooks.py`, `bash scripts/test-hooks-rtk.sh`, and `bash scripts/test-gemini-hooks-rtk.sh` passed. Milestones 4 and 5 remain open.
+Milestone 3 is complete. `hooks/families/rtk.py` now renders the two provider-local forwarders declared by `hooks/manifest.py`, bringing the owned output count to 22. The generator test first failed because the RTK targets were not declared, then passed after the canonical family, manifest entries, and generated outputs were added. `python3 scripts/generate-hooks.py --write` refreshed both files; `python3 scripts/generate-hooks.py --check`, `python3 scripts/test-generate-hooks.py`, `bash scripts/test-hooks-rtk.sh`, and `bash scripts/test-gemini-hooks-rtk.sh` passed.
+
+Milestone 4 is complete. Both installers validate the canonical `hooks/` tree and `scripts/generate-hooks.py`, then run a bytecode-disabled `--check` before the Codex converter or any destination mutation. Stale output retains the generator's path list, adds the exact write recovery command, and exits 1; controlled generator failures retain their diagnostic, add a generic preflight message, omit write advice, and exit 2. Installer fixtures now copy the canonical package plus every manifest target and derive the corrupted RTK target from the manifest. The Bash test was red with stale output exiting 0, then passed after the Bash preflight; the PowerShell test had the same red exit-0 evidence and passed after its preflight. Final focused validation passed: `bash -n scripts/install.sh`, `bash scripts/test-install.sh`, and `pwsh -NoProfile -File scripts/test-install.ps1` (the PowerShell suite skipped junction creation on this host).
 
 At implementation completion, replace this paragraph with measured results: number of newly owned outputs, canonical renderer size, duplicate maintained lines removed, targeted and aggregate test results, review findings, installer stale-state proof, any unavailable platform checks, and whether a writable-home smoke test ran.
 
@@ -194,8 +203,8 @@ Run `python3 scripts/generate-hooks.py --write` once after the canonical family 
 Acceptance is met when both RTK files carry generated ownership headers, all 22 outputs are current and executable, no cross-provider runtime import exists, both focused RTK suites pass unchanged, and the generator suite proves only the approved adapters differ.
 
 ### Milestone 4: Fail installation before copying stale generated hooks
-Status: open
-Acceptance: not met
+Status: complete
+Acceptance: met
 
 In `scripts/install.sh`, define an absolute repository path for `scripts/generate-hooks.py`. Treat the generator file and canonical `hooks/` directory as required sources. After all required-source checks and before `scripts/install-codex-agents.py`, invoke:
 

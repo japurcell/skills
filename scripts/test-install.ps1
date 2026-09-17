@@ -202,6 +202,204 @@ function New-FixtureRepo {
     Write-FixtureFile (Join-Path $Repo '.copilot/hooks/scripts/test-upper.PY') @('print("upper hook")')
     Write-FixtureFile (Join-Path $Repo '.gemini/hooks/scripts/test-hook.sh') @('#!/bin/bash', 'echo hook')
     Write-FixtureFile (Join-Path $Repo '.copilot/hooks/scripts/test-hook.sh') @('#!/bin/bash', 'echo hook')
+    Add-GeneratedHookFixture $Repo
+}
+
+function Get-PythonForFixture {
+    $python = @(Get-Command python3 -CommandType Application -ErrorAction SilentlyContinue)[0]
+    $arguments = @()
+    if ($null -eq $python) {
+        $python = @(Get-Command py -CommandType Application -ErrorAction SilentlyContinue)[0]
+        $arguments = @('-3')
+    }
+    if ($null -eq $python) {
+        Fail 'Missing Python executable: expected python3 or py for generated-hook fixtures.'
+    }
+    return [pscustomobject]@{
+        Path = $python.Source
+        Arguments = $arguments
+    }
+}
+
+function Add-GeneratedHookFixture {
+    param([string]$Repo)
+
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/generate-hooks.py') -Destination (Join-Path $Repo 'scripts/generate-hooks.py') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'hooks') -Destination (Join-Path $Repo 'hooks') -Recurse -Force
+    Get-ChildItem -LiteralPath (Join-Path $Repo 'hooks') -Force -Recurse -Directory |
+        Where-Object { $_.Name -ceq '__pycache__' } |
+        Remove-Item -Recurse -Force
+
+    $python = Get-PythonForFixture
+    $copyTargets = @'
+import os
+import shutil
+import sys
+from pathlib import Path
+
+source_root = Path(sys.argv[1])
+fixture_root = Path(sys.argv[2])
+sys.path.insert(0, str(fixture_root))
+from hooks.manifest import targets
+
+for target in targets():
+    source = source_root.joinpath(*target.output_path.parts)
+    destination = fixture_root.joinpath(*target.output_path.parts)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, destination)
+    os.chmod(destination, target.mode)
+'@
+    $oldBytecode = [System.Environment]::GetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', [System.EnvironmentVariableTarget]::Process)
+    try {
+        [System.Environment]::SetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', '1', [System.EnvironmentVariableTarget]::Process)
+        & $python.Path @($python.Arguments) -c $copyTargets $RepoRoot $Repo
+        if ($LASTEXITCODE -ne 0) {
+            Fail 'Could not populate generated-hook fixture targets from hooks.manifest.targets().'
+        }
+    }
+    finally {
+        [System.Environment]::SetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', $oldBytecode, [System.EnvironmentVariableTarget]::Process)
+    }
+}
+
+function Get-GeneratedRtkOutputPath {
+    param([string]$Repo)
+
+    $python = Get-PythonForFixture
+    $script = @'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+sys.path.insert(0, str(root))
+from hooks.manifest import targets
+
+for target in targets():
+    if target.family == "rtk" and target.provider == "copilot":
+        print(target.output_path.as_posix())
+        break
+else:
+    raise SystemExit("fixture manifest did not declare a Copilot RTK target")
+'@
+    $oldBytecode = [System.Environment]::GetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', [System.EnvironmentVariableTarget]::Process)
+    try {
+        [System.Environment]::SetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', '1', [System.EnvironmentVariableTarget]::Process)
+        $output = & $python.Path @($python.Arguments) -c $script $Repo
+        if ($LASTEXITCODE -ne 0) {
+            Fail 'Could not resolve the generated Copilot RTK output from hooks.manifest.targets().'
+        }
+        return $output
+    }
+    finally {
+        [System.Environment]::SetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', $oldBytecode, [System.EnvironmentVariableTarget]::Process)
+    }
+}
+
+function Get-TreeFingerprint {
+    param([string]$Path)
+
+    $python = Get-PythonForFixture
+    $script = @'
+import hashlib
+import os
+import stat
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+digest = hashlib.sha256()
+for path in sorted((root, *root.rglob("*")), key=lambda item: item.relative_to(root).as_posix() if item != root else ""):
+    relative = "." if path == root else path.relative_to(root).as_posix()
+    details = path.lstat()
+    digest.update(f"{relative}\0{stat.S_IFMT(details.st_mode)}\0{stat.S_IMODE(details.st_mode)}\0".encode())
+    if stat.S_ISLNK(details.st_mode):
+        digest.update(os.readlink(path).encode())
+    elif stat.S_ISREG(details.st_mode):
+        digest.update(path.read_bytes())
+    digest.update(b"\0")
+print(digest.hexdigest())
+'@
+    $output = & $python.Path @($python.Arguments) -c $script $Path
+    if ($LASTEXITCODE -ne 0) {
+        Fail 'Could not fingerprint the pre-populated installer destination tree.'
+    }
+    return $output
+}
+
+function Assert-NoBytecodeCache {
+    param([string]$Repo)
+
+    $cache = Get-ChildItem -LiteralPath $Repo -Force -Recurse -Directory |
+        Where-Object { $_.Name -ceq '__pycache__' } |
+        Select-Object -First 1
+    Assert-True -Condition ($null -eq $cache) -Message 'Expected generator preflight to create no __pycache__ directories.'
+}
+
+function Test-FreshGeneratedHooksPreflightInstallsWithoutBytecode {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+
+        New-FixtureRepo $repo
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+
+        Assert-NoBytecodeCache $repo
+        Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir '.copilot/hooks/scripts/rtk-hook-copilot.py') -PathType Leaf) -Message 'Expected fresh generated Copilot RTK output to be installed.'
+        Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir '.gemini/hooks/scripts/rtk-hook-gemini.py') -PathType Leaf) -Message 'Expected fresh generated Gemini RTK output to be installed.'
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-StaleGeneratedHooksStopBeforeDestinationMutation {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+
+        New-FixtureRepo $repo
+        $outputPath = Get-GeneratedRtkOutputPath $repo
+        Add-Content -LiteralPath (Join-Path $repo $outputPath) -Value '# stale fixture output' -Encoding utf8NoBOM
+        Write-FixtureFile (Join-Path $homeDir 'preserved/sentinel.txt') @('do not change')
+        Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
+        $before = Get-TreeFingerprint $homeDir
+
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals -Expected 1 -Actual $result.ExitCode -Message 'Expected stale generated hooks to exit install.ps1 with code 1.'
+        Assert-True -Condition (($result.Stdout -join "`n") -match [regex]::Escape($outputPath)) -Message 'Expected stale repository-relative output path on stdout.'
+        Assert-True -Condition (($result.Stderr -join "`n") -match [regex]::Escape('python3 scripts/generate-hooks.py --write')) -Message 'Expected stale-output recovery command on stderr.'
+        Assert-Equals -Expected $before -Actual (Get-TreeFingerprint $homeDir) -Message 'Expected stale preflight to leave the destination tree byte-for-byte unchanged with no new directories.'
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-GeneratorFailureStopsBeforeDestinationMutation {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+
+        New-FixtureRepo $repo
+        $manifestPath = Join-Path $repo 'hooks/manifest.py'
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw
+        Set-Content -LiteralPath $manifestPath -Value $manifest.Replace('GeneratedTarget("send_event", "copilot"', 'GeneratedTarget("send_event", "unknown"') -Encoding utf8NoBOM -NoNewline
+        Write-FixtureFile (Join-Path $homeDir 'preserved/sentinel.txt') @('do not change')
+        Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
+        $before = Get-TreeFingerprint $homeDir
+
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals -Expected 2 -Actual $result.ExitCode -Message 'Expected a generator failure to exit install.ps1 with code 2.'
+        Assert-True -Condition (($result.Stderr -join "`n") -match "Unknown provider 'unknown'") -Message 'Expected the generator diagnostic on stderr.'
+        Assert-True -Condition (($result.Stderr -join "`n") -notmatch [regex]::Escape('python3 scripts/generate-hooks.py --write')) -Message 'Expected generator failures to omit stale-output recovery advice.'
+        Assert-Equals -Expected $before -Actual (Get-TreeFingerprint $homeDir) -Message 'Expected generator failure preflight to leave the destination tree byte-for-byte unchanged with no new directories.'
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
 }
 
 # Runs the fixture's install.ps1 in a child pwsh with HOME/USERPROFILE redirected to $HomeDir.
@@ -226,12 +424,18 @@ function Invoke-InstallProcess {
     $oldHome = [System.Environment]::GetEnvironmentVariable('HOME', [System.EnvironmentVariableTarget]::Process)
     $oldUserProfile = [System.Environment]::GetEnvironmentVariable('USERPROFILE', [System.EnvironmentVariableTarget]::Process)
     $oldCodexHome = [System.Environment]::GetEnvironmentVariable('CODEX_HOME', [System.EnvironmentVariableTarget]::Process)
+    $oldXdgCacheHome = [System.Environment]::GetEnvironmentVariable('XDG_CACHE_HOME', [System.EnvironmentVariableTarget]::Process)
+    $oldXdgConfigHome = [System.Environment]::GetEnvironmentVariable('XDG_CONFIG_HOME', [System.EnvironmentVariableTarget]::Process)
+    $oldXdgDataHome = [System.Environment]::GetEnvironmentVariable('XDG_DATA_HOME', [System.EnvironmentVariableTarget]::Process)
     $childStdoutPath = Join-Path $Workdir 'child-stdout.txt'
     $childStderrPath = Join-Path $Workdir 'child-stderr.txt'
     try {
         [System.Environment]::SetEnvironmentVariable('HOME', $HomeDir, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('USERPROFILE', $HomeDir, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('CODEX_HOME', $CodexHome, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', (Join-Path $Workdir 'xdg-cache'), [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', (Join-Path $Workdir 'xdg-config'), [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', (Join-Path $Workdir 'xdg-data'), [System.EnvironmentVariableTarget]::Process)
         & pwsh -NoProfile -File (Join-Path $Repo 'scripts/install.ps1') 1> $childStdoutPath 2> $childStderrPath
         $exitCode = $LASTEXITCODE
         $stdout = @()
@@ -247,6 +451,9 @@ function Invoke-InstallProcess {
         [System.Environment]::SetEnvironmentVariable('HOME', $oldHome, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('USERPROFILE', $oldUserProfile, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('CODEX_HOME', $oldCodexHome, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', $oldXdgCacheHome, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', $oldXdgConfigHome, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', $oldXdgDataHome, [System.EnvironmentVariableTarget]::Process)
         Remove-Item -LiteralPath $childStdoutPath -Force -ErrorAction SilentlyContinue
         Remove-Item -LiteralPath $childStderrPath -Force -ErrorAction SilentlyContinue
     }
@@ -254,6 +461,40 @@ function Invoke-InstallProcess {
         Stdout   = $stdout
         Stderr   = $stderr
         ExitCode = $exitCode
+    }
+}
+
+# A child pwsh initializes user-module and telemetry state under HOME before it runs the
+# installer. Establish that host-owned state before a preflight mutation snapshot so the
+# snapshot covers only paths install.ps1 can change.
+function Initialize-ChildPowerShellHome {
+    param(
+        [string]$HomeDir,
+        [string]$Workdir
+    )
+
+    $oldHome = [System.Environment]::GetEnvironmentVariable('HOME', [System.EnvironmentVariableTarget]::Process)
+    $oldUserProfile = [System.Environment]::GetEnvironmentVariable('USERPROFILE', [System.EnvironmentVariableTarget]::Process)
+    $oldXdgCacheHome = [System.Environment]::GetEnvironmentVariable('XDG_CACHE_HOME', [System.EnvironmentVariableTarget]::Process)
+    $oldXdgConfigHome = [System.Environment]::GetEnvironmentVariable('XDG_CONFIG_HOME', [System.EnvironmentVariableTarget]::Process)
+    $oldXdgDataHome = [System.Environment]::GetEnvironmentVariable('XDG_DATA_HOME', [System.EnvironmentVariableTarget]::Process)
+    try {
+        [System.Environment]::SetEnvironmentVariable('HOME', $HomeDir, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('USERPROFILE', $HomeDir, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', (Join-Path $Workdir 'xdg-cache'), [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', (Join-Path $Workdir 'xdg-config'), [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', (Join-Path $Workdir 'xdg-data'), [System.EnvironmentVariableTarget]::Process)
+        & pwsh -NoProfile -Command ''
+        if ($LASTEXITCODE -ne 0) {
+            Fail 'Could not initialize the child PowerShell home for the fixture snapshot.'
+        }
+    }
+    finally {
+        [System.Environment]::SetEnvironmentVariable('HOME', $oldHome, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('USERPROFILE', $oldUserProfile, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', $oldXdgCacheHome, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', $oldXdgConfigHome, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', $oldXdgDataHome, [System.EnvironmentVariableTarget]::Process)
     }
 }
 
@@ -859,6 +1100,9 @@ function Test-MissingSourceFails {
     }
 }
 
+Test-FreshGeneratedHooksPreflightInstallsWithoutBytecode
+Test-StaleGeneratedHooksStopBeforeDestinationMutation
+Test-GeneratorFailureStopsBeforeDestinationMutation
 Test-ExcludesAndPrunesSkillEvals
 Test-SymlinkHandling
 Test-FixedNameHardLinkHandling

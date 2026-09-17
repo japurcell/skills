@@ -45,6 +45,173 @@ create_fixture_repo() {
   printf '%s\n' 'print("hook")' > "$repo/.copilot/hooks/scripts/test-hook.py"
   printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.gemini/hooks/scripts/test-hook.sh"
   printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.copilot/hooks/scripts/test-hook.sh"
+  add_generated_hook_fixture "$repo"
+}
+
+add_generated_hook_fixture() {
+  local repo="$1"
+
+  cp -p "$REPO_ROOT/scripts/generate-hooks.py" "$repo/scripts/generate-hooks.py"
+  cp -Rp "$REPO_ROOT/hooks" "$repo/hooks"
+  find "$repo/hooks" -type d -name __pycache__ -prune -exec rm -rf -- {} +
+
+  PYTHONDONTWRITEBYTECODE=1 python3 - "$REPO_ROOT" "$repo" <<'PY'
+import os
+import shutil
+import sys
+from pathlib import Path
+
+source_root = Path(sys.argv[1])
+fixture_root = Path(sys.argv[2])
+sys.path.insert(0, str(fixture_root))
+from hooks.manifest import targets
+
+for target in targets():
+    source = source_root.joinpath(*target.output_path.parts)
+    destination = fixture_root.joinpath(*target.output_path.parts)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, destination)
+    os.chmod(destination, target.mode)
+PY
+}
+
+generated_rtk_output_path() {
+  local repo="$1"
+
+  PYTHONDONTWRITEBYTECODE=1 python3 - "$repo" <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+sys.path.insert(0, str(root))
+from hooks.manifest import targets
+
+for target in targets():
+    if target.family == "rtk" and target.provider == "copilot":
+        print(target.output_path.as_posix())
+        break
+else:
+    raise SystemExit("fixture manifest did not declare a Copilot RTK target")
+PY
+}
+
+tree_fingerprint() {
+  local path="$1"
+
+  python3 - "$path" <<'PY'
+import hashlib
+import os
+import stat
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+digest = hashlib.sha256()
+for path in sorted((root, *root.rglob("*")), key=lambda item: item.relative_to(root).as_posix() if item != root else ""):
+    relative = "." if path == root else path.relative_to(root).as_posix()
+    details = path.lstat()
+    digest.update(f"{relative}\0{stat.S_IFMT(details.st_mode)}\0{stat.S_IMODE(details.st_mode)}\0".encode())
+    if stat.S_ISLNK(details.st_mode):
+        digest.update(os.readlink(path).encode())
+    elif stat.S_ISREG(details.st_mode):
+        digest.update(path.read_bytes())
+    digest.update(b"\0")
+print(digest.hexdigest())
+PY
+}
+
+assert_no_bytecode_cache() {
+  local repo="$1"
+
+  if find "$repo" -type d -name __pycache__ -print -quit | grep -q .; then
+    echo "Expected generator preflight to create no __pycache__ directories." >&2
+    exit 1
+  fi
+}
+
+test_fresh_generated_hooks_preflight_installs_without_bytecode() {
+  local workdir
+  local repo
+  local home
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+
+  assert_no_bytecode_cache "$repo"
+  if [[ ! -f "$home/.copilot/hooks/scripts/rtk-hook-copilot.py" || ! -f "$home/.gemini/hooks/scripts/rtk-hook-gemini.py" ]]; then
+    echo "Expected fresh generated RTK outputs to be installed." >&2
+    exit 1
+  fi
+}
+
+test_stale_generated_hooks_stop_before_destination_mutation() {
+  local workdir
+  local repo
+  local home
+  local output_path
+  local before
+  local after
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+  output_path="$(generated_rtk_output_path "$repo")"
+  printf '%s\n' '# stale fixture output' >> "$repo/$output_path"
+  mkdir -p "$home/preserved"
+  printf '%s\n' 'do not change' > "$home/preserved/sentinel.txt"
+  before="$(tree_fingerprint "$home")"
+
+  status=0
+  HOME="$home" bash "$repo/scripts/install.sh" >"$workdir/stdout" 2>"$workdir/stderr" || status=$?
+  assert_equals "1" "$status" "Expected stale generated hooks to exit 1."
+  assert_file_contains "$workdir/stdout" "$output_path" "Expected stale output path on stdout."
+  assert_file_contains "$workdir/stderr" "python3 scripts/generate-hooks.py --write" "Expected stale-output recovery command on stderr."
+  after="$(tree_fingerprint "$home")"
+  assert_equals "$before" "$after" "Expected stale preflight to leave the destination tree byte-for-byte unchanged with no new directories."
+}
+
+test_generator_failure_stops_before_destination_mutation() {
+  local workdir
+  local repo
+  local home
+  local before
+  local after
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+  python3 - "$repo/hooks/manifest.py" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+path.write_text(text.replace('GeneratedTarget("send_event", "copilot"', 'GeneratedTarget("send_event", "unknown"', 1), encoding="utf-8")
+PY
+  mkdir -p "$home/preserved"
+  printf '%s\n' 'do not change' > "$home/preserved/sentinel.txt"
+  before="$(tree_fingerprint "$home")"
+
+  status=0
+  HOME="$home" bash "$repo/scripts/install.sh" >"$workdir/stdout" 2>"$workdir/stderr" || status=$?
+  assert_equals "2" "$status" "Expected a generator failure to exit 2."
+  assert_file_contains "$workdir/stderr" "Unknown provider 'unknown'" "Expected the generator diagnostic on stderr."
+  if grep -Fq "python3 scripts/generate-hooks.py --write" "$workdir/stderr"; then
+    echo "Expected generator failures to omit stale-output recovery advice." >&2
+    exit 1
+  fi
+  after="$(tree_fingerprint "$home")"
+  assert_equals "$before" "$after" "Expected generator failure preflight to leave the destination tree byte-for-byte unchanged with no new directories."
 }
 
 test_installs_codex_agents_before_other_assets() {
@@ -570,6 +737,9 @@ test_copies_full_gemini_tree() {
 }
 
 main() {
+  test_fresh_generated_hooks_preflight_installs_without_bytecode
+  test_stale_generated_hooks_stop_before_destination_mutation
+  test_generator_failure_stops_before_destination_mutation
   test_installs_codex_agents_before_other_assets
   test_codex_agents_fail_before_copying_other_assets
   test_codex_home_override_selects_one_agent_destination

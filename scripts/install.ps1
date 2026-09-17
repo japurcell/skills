@@ -44,6 +44,8 @@ $CodexHookSrc = Join-Path $RepoRoot '.codex/hooks/load-required-skills.py'
 $CodexHookTemplateSrc = Join-Path $RepoRoot '.codex/global-hooks.json'
 $CodexHookMergerSrc = Join-Path $RepoRoot 'scripts/install-codex-hooks.py'
 $CodexAgentInstallerSrc = Join-Path $RepoRoot 'scripts/install-codex-agents.py'
+$GenerateHooksSrc = Join-Path $RepoRoot 'scripts/generate-hooks.py'
+$CanonicalHooksSrc = Join-Path $RepoRoot 'hooks'
 
 $SkillsDest = Join-Path $HOME '.agents/skills'
 $ReferencesDest = Join-Path $HOME '.agents/references'
@@ -366,7 +368,7 @@ function Install-CodexHook {
     }
 }
 
-foreach ($src in @($SkillsSrc, $AgentsSrc, $GeminiSrc)) {
+foreach ($src in @($SkillsSrc, $AgentsSrc, $GeminiSrc, $CanonicalHooksSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Container)) {
         Fail "Missing source directory: $src"
     }
@@ -378,13 +380,35 @@ foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSetting
     }
 }
 
-foreach ($src in @($CodexHookSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc)) {
+foreach ($src in @($CodexHookSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $GenerateHooksSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
     }
 }
 
 $pythonCommand = Get-PythonCommand
+$previousBytecodeSetting = [System.Environment]::GetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', [System.EnvironmentVariableTarget]::Process)
+$preflightExitCode = 0
+try {
+    [System.Environment]::SetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', '1', [System.EnvironmentVariableTarget]::Process)
+    & $pythonCommand.Path @($pythonCommand.Arguments) $GenerateHooksSrc --check
+    $preflightExitCode = $LASTEXITCODE
+}
+finally {
+    [System.Environment]::SetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', $previousBytecodeSetting, [System.EnvironmentVariableTarget]::Process)
+}
+if ($preflightExitCode -ne 0) {
+    if ($preflightExitCode -eq 1) {
+        [Console]::Error.WriteLine('Generated hooks are stale. Run: python3 scripts/generate-hooks.py --write')
+        exit 1
+    }
+    [Console]::Error.WriteLine('Generated hook freshness preflight failed.')
+    if ($preflightExitCode -eq 2) {
+        exit 2
+    }
+    exit $preflightExitCode
+}
+
 & $pythonCommand.Path @($pythonCommand.Arguments) $CodexAgentInstallerSrc --source-dir $AgentsSrc --destination-dir $CodexAgentsDest
 if ($LASTEXITCODE -ne 0) {
     Fail "Codex agent converter exited with code $LASTEXITCODE."

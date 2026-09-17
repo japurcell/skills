@@ -15,6 +15,8 @@ readonly CODEX_HOOK_SRC="${REPO_ROOT}/.codex/hooks/load-required-skills.py"
 readonly CODEX_HOOK_TEMPLATE_SRC="${REPO_ROOT}/.codex/global-hooks.json"
 readonly CODEX_HOOK_MERGER="${REPO_ROOT}/scripts/install-codex-hooks.py"
 readonly CODEX_AGENT_INSTALLER="${REPO_ROOT}/scripts/install-codex-agents.py"
+readonly GENERATE_HOOKS="${REPO_ROOT}/scripts/generate-hooks.py"
+readonly CANONICAL_HOOKS_SRC="${REPO_ROOT}/hooks"
 
 readonly SKILLS_DEST="${HOME}/.agents/skills"
 readonly REFERENCES_DEST="${HOME}/.agents/references"
@@ -112,7 +114,7 @@ install_codex_hook() {
     --destination "$CODEX_HOOK_CONFIG_DEST"
 }
 
-for src in "$SKILLS_SRC" "$AGENTS_SRC" "$GEMINI_SRC"; do
+for src in "$SKILLS_SRC" "$AGENTS_SRC" "$GEMINI_SRC" "$CANONICAL_HOOKS_SRC"; do
   [[ -d "$src" ]] || { echo "Missing source directory: $src" >&2; exit 1; }
 done
 
@@ -120,9 +122,24 @@ for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC" "$GEMINI_GLOBAL_SETTIN
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
-for src in "$CODEX_HOOK_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER"; do
+for src in "$CODEX_HOOK_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$GENERATE_HOOKS"; do
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
+
+if PYTHONDONTWRITEBYTECODE=1 python3 "$GENERATE_HOOKS" --check; then
+  :
+else
+  status=$?
+  if [[ "$status" -eq 1 ]]; then
+    echo "Generated hooks are stale. Run: python3 scripts/generate-hooks.py --write" >&2
+    exit 1
+  fi
+  echo "Generated hook freshness preflight failed." >&2
+  if [[ "$status" -eq 2 ]]; then
+    exit 2
+  fi
+  exit "$status"
+fi
 
 python3 "$CODEX_AGENT_INSTALLER" --source-dir "$AGENTS_SRC" --destination-dir "$CODEX_AGENTS_DEST"
 
