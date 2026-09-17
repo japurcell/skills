@@ -20,7 +20,7 @@ description: Public validation entry points and provider adapter contracts for t
 ## Generated provider-hook CLI
 
 - `scripts/generate-hooks.py --write` renders the complete explicit `hooks/manifest.py` target set and transactionally updates only stale generated outputs. `--check` is read-only, reports every stale or missing output, and exits `0` only when source bytes and executable modes are current. Both actions resolve the checkout from the script location; bare invocation and invalid canonical inputs exit `2`.
-- The generator owns 20 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, and `.github/hooks/scripts/`. They carry a `Generated from hooks/families/...` header, remain self-contained at runtime, and are copied unchanged by both installers.
+- The generator owns 22 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, and `.github/hooks/scripts/`. They carry a `Generated from hooks/families/...` header, remain self-contained at runtime, and are copied unchanged by both installers. Before any destination mutation, each installer runs bytecode-disabled `scripts/generate-hooks.py --check`: stale output exits `1` with the exact `--write` recovery command, and invalid canonical input exits `2` without write advice.
 
 ## OKF validation
 

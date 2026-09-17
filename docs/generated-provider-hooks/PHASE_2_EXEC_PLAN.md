@@ -20,7 +20,7 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 - [x] (2026-09-17 21:22Z) [milestone-2] Fix RTK open-pipe completion, preserve accepted input bytes, add the five-second Gemini outer timeout, and repair the reviewed first-byte and diagnostic boundaries.
 - [x] (2026-09-17 21:28Z) [milestone-3] Generate the two provider-local RTK forwarders from one canonical family, preserve every approved adapter difference, and reject swapped or undeclared output paths in `render()`.
 - [x] (2026-09-17) [milestone-4] Add read-only generated-hook freshness preflight to both installers before any destination mutation.
-- [ ] [milestone-5] Run full validation, obtain focused review, synchronize documentation, and record final outcomes.
+- [x] (2026-09-17) [milestone-5] Run full validation, obtain focused review, synchronize documentation, and record final outcomes.
 
 ## Surprises & Discoveries
 
@@ -68,6 +68,9 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 
 - Observation: The RTK subprocess exit code is sufficient for a bounded failure audit.
   Evidence: Public tests first failed because a sentinel plus more than 2 KiB of RTK stderr appeared in each provider's audit log. Omitting stderr retained `rtk exited 23`, kept the audit below 1 KiB, and prevented the sentinel from appearing.
+
+- Observation: The PowerShell installer fixture cannot create a junction on this Linux host.
+  Evidence: `pwsh -NoProfile -File scripts/test-install.ps1` passed while reporting `Skipping: junction creation is not supported on this host.` The fixture proves the shared installer behavior, but native-Windows junction behavior still needs a Windows-capable run.
 
 ## Decision Log
 
@@ -131,6 +134,10 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
   Rationale: `RTK_PROVIDER` and Copilot's approved normalization are the only provider differences. Keeping them together leaves the open-pipe reader, helper imports, subprocess behavior, and failure boundary byte-for-byte aligned across generated outputs without expanding global provider metadata.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Treat the Linux-host PowerShell fixture as installer evidence but not native-Windows junction proof, and do not run a real-home installer smoke test for this milestone.
+  Rationale: The fixture passed while explicitly skipping unavailable junction creation. Its temporary destination is sufficient for the checked installer contract, while a real home would be an external state change outside this documentation-and-validation milestone.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Planning and candidate characterization are complete. Milestone 1 added public JSON-seam characterization without changing either handwritten RTK runtime. The required-skill loaders are rejected as a generated family. The RTK forwarders are approved subject to the test-first open-pipe repair and exact adapter preservation described below. Installer freshness preflight is approved with distinct stale and generator-failure diagnostics.
@@ -141,7 +148,7 @@ Milestone 3 is complete after focused-review repair. `hooks/families/rtk.py` ren
 
 Milestone 4 is complete. Both installers validate the canonical `hooks/` tree and `scripts/generate-hooks.py`, then run a bytecode-disabled `--check` before the Codex converter or any destination mutation. Stale output retains the generator's path list, adds the exact write recovery command, and exits 1; controlled generator failures retain their diagnostic, add a generic preflight message, omit write advice, and exit 2. Installer fixtures now copy the canonical package plus every manifest target and derive the corrupted RTK target from the manifest. The Bash test was red with stale output exiting 0, then passed after the Bash preflight; the PowerShell test had the same red exit-0 evidence and passed after its preflight. Final focused validation passed: `bash -n scripts/install.sh`, `bash scripts/test-install.sh`, and `pwsh -NoProfile -File scripts/test-install.ps1` (the PowerShell suite skipped junction creation on this host).
 
-At implementation completion, replace this paragraph with measured results: number of newly owned outputs, canonical renderer size, duplicate maintained lines removed, targeted and aggregate test results, review findings, installer stale-state proof, any unavailable platform checks, and whether a writable-home smoke test ran.
+Milestone 5 completed the Phase 2 validation and documentation pass. The two RTK outputs bring the explicit manifest to 22 generated executable files. `hooks/families/rtk.py` is 273 lines; it replaces 420 manually maintained Copilot and Gemini forwarder lines, a measured reduction of 147 maintained lines. Freshness reported 22 current files before and after validation. The RTK suites, 23-test generator suite, Bash syntax check, Bash and PowerShell installer fixtures, both startup suites, both observability suites, `git diff --check`, and the 26-suite `python3 scripts/test-all.py` run passed. Focused review found and verified repairs for the initially empty POSIX wait, the native-Windows initial wait, untrusted nonzero-exit stderr, and exact renderer target paths; the final verdict was approve. Both installer fixtures prove stale output stops before destination mutation and prints the recovery command. PowerShell skipped junction creation because this Linux host cannot create one, so native-Windows junction behavior remains unverified. No real-home installer smoke test was run for Phase 2.
 
 ## Context and Orientation
 
@@ -233,8 +240,8 @@ Do not add repository locking or claim snapshot isolation. The acceptance statem
 Acceptance is met when syntax checks and both installer suites pass, both failure classes stop before all destination mutation, a fresh install still copies the 22 current outputs, and preflight creates no bytecode cache.
 
 ### Milestone 5: Validate, review, and synchronize durable documentation
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Run generator freshness before and after the full maintained suite and confirm neither check changes `git status`. Run the two RTK suites, generator tests, shell syntax and installer tests, PowerShell installer tests, relevant startup and observability suites, and finally `python3 scripts/test-all.py`. If the environment cannot run PowerShell or a real-home smoke test, record that limitation precisely and keep fixture evidence distinct from deployed evidence.
 
@@ -385,3 +392,5 @@ Revision note, 2026-09-17: Completed Milestone 3. Added the canonical RTK render
 Revision note, 2026-09-17: Reopened Milestones 2 and 3 after focused review found an unbounded initially empty POSIX pipe, a Windows initial-wait type error, unbounded nonzero RTK diagnostics, and missing exact target-path validation.
 
 Revision note, 2026-09-17: Recompleted Milestone 2 with public regressions for an initially empty POSIX pipe, a controlled Windows initial wait, and bounded redacted nonzero RTK audits. The runtime now starts its 0.5-second deadline before the first byte and audits only nonzero exit codes.
+
+Revision note, 2026-09-17: Completed Milestone 5 after final focused review approved the repaired RTK boundary and installer preflight work. Progress, milestone status, acceptance, outcomes, metrics, platform limitations, and validation evidence are synchronized.

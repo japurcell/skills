@@ -34,7 +34,7 @@ description: Repo structure, install flows, and how top-level areas relate
 
 1. Change canonical build-time source under `hooks/`, never a provider-local file carrying the generated ownership marker.
 2. Run `python3 scripts/generate-hooks.py --write`, then `python3 scripts/generate-hooks.py --check` and `python3 scripts/test-generate-hooks.py`.
-3. Commit the refreshed executable provider-local outputs. Installers copy them unchanged and do not invoke the generator.
+3. Commit the refreshed executable provider-local outputs. Before copying them, installers run the generator's read-only `--check` preflight; they never invoke `--write` and stop before destination mutation when freshness fails.
 
 ### Addy import flow
 

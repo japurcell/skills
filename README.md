@@ -84,8 +84,11 @@ python3 scripts/test-generate-hooks.py
 ```
 
 `--write` is the only generator action that changes files. `--check` is
-read-only and exits `1` when an owned output is stale or missing. Installers copy
-the checked-in generated files; they never generate repository sources.
+read-only and exits `1` when an owned output is stale or missing. Both installers
+run that check before changing an installation destination; on stale output they
+stop and print the `--write` recovery command. Installers copy the checked-in
+generated files; they never generate repository sources. The manifest currently
+owns 22 executable outputs.
 
 Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews. Those files are benchmark fixtures, not maintained source.
 
