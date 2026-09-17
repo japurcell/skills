@@ -16,7 +16,7 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 
 ## Progress
 
-- [ ] [milestone-1] Strengthen RTK characterization without changing runtime behavior and record the required-skill-loader no-migration decision.
+- [x] (2026-09-17 20:40Z) [milestone-1] Strengthen RTK characterization without changing runtime behavior and record the required-skill-loader no-migration decision.
 - [ ] [milestone-2] Fix RTK open-pipe completion and add the five-second Gemini outer timeout in an isolated behavior change.
 - [ ] [milestone-3] Generate the two provider-local RTK forwarders from one canonical family while preserving every approved adapter difference.
 - [ ] [milestone-4] Add read-only generated-hook freshness preflight to both installers before any destination mutation.
@@ -47,6 +47,9 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 
 - Observation: Preflight freshness is a check-time guarantee, not an installation transaction.
   Evidence: Another process can modify canonical or generated files after `--check` exits and before copying begins. Holding a repository lock through every installer copy or staging all rendered outputs would add a new transaction protocol. This plan intentionally accepts that race and makes no stronger claim.
+
+- Observation: The handwritten RTK forwarders already implement the approved response boundary.
+  Evidence: `bash scripts/test-hooks-rtk.sh` and `bash scripts/test-gemini-hooks-rtk.sh` both passed after adding public stdin/stdout characterization for malformed and non-object RTK output, missing executables, exact provider arguments, Copilot decision preservation and normalization, Gemini passthrough, and provider registration contracts.
 
 ## Decision Log
 
@@ -90,9 +93,13 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
   Rationale: Phase 1 is accepted historical work. This plan records the later characterization, one approved migration, and installer policy as a separate restartable effort.
   Date/Author: 2026-09-17, user and Codex.
 
+- Decision: Keep the M1 tests as a behavior-only boundary before changing RTK runtime code.
+  Rationale: The focused suites now prove the exact `rtk hook copilot` and `rtk hook gemini` calls, normal no-op failures, Copilot-only `ask` normalization, Gemini passthrough, and handwritten registration constraints. Subsequent open-pipe work must preserve these public observations.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
-Planning and candidate characterization are complete. Implementation has not started. The required-skill loaders are rejected as a generated family. The RTK forwarders are approved subject to the test-first open-pipe repair and exact adapter preservation described below. Installer freshness preflight is approved with distinct stale and generator-failure diagnostics.
+Planning and candidate characterization are complete. Milestone 1 added public JSON-seam characterization without changing either handwritten RTK runtime. The required-skill loaders are rejected as a generated family. The RTK forwarders are approved subject to the test-first open-pipe repair and exact adapter preservation described below. Installer freshness preflight is approved with distinct stale and generator-failure diagnostics.
 
 At implementation completion, replace this paragraph with measured results: number of newly owned outputs, canonical renderer size, duplicate maintained lines removed, targeted and aggregate test results, review findings, installer stale-state proof, any unavailable platform checks, and whether a writable-home smoke test ran.
 
@@ -122,8 +129,8 @@ Installer fixture repositories are built by `create_fixture_repo` in `scripts/te
 ## Plan of Work
 
 ### Milestone 1: Freeze RTK behavior and record Phase 2 admission
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Strengthen the focused RTK suites before changing runtime code. In `scripts/test-hooks-rtk.sh`, retain the existing two assertions that Copilot maps top-level and nested `ask` to `allow`. Add cases proving an omitted decision remains omitted, explicit `allow` remains `allow`, `deny` remains `deny`, empty RTK output remains a clean no-op, invalid or non-object RTK JSON becomes a no-op, a missing or failing RTK executable becomes a no-op, and the invoked argument vector remains exactly `rtk hook copilot`. Preserve the Windows executable-resolution case for `rtk.cmd` where the host can exercise it.
 
@@ -330,3 +337,5 @@ In `.gemini/global-settings.json`, the existing RTK command registration keeps i
 In the installers, generated-hook preflight is a required phase with no public opt-out. It consumes the generator's existing exit codes rather than defining new ones. It must execute before every destination mutation and with Python bytecode disabled.
 
 Revision note, 2026-09-17: Initial Phase 2 ExecPlan created after candidate characterization and a user-confirmed design-tree review. It rejects required-skill-loader generation, approves RTK generation with intentional Copilot normalization and no byte limits or version pin, and specifies fail-fast installer freshness checks before destination mutation.
+
+Revision note, 2026-09-17: Completed Milestone 1. The focused Copilot and Gemini RTK suites now characterize malformed and non-object RTK output, missing executables, exact provider argument vectors, decision behavior, and handwritten registration order/configuration. Both suites passed without changing runtime code.

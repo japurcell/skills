@@ -154,6 +154,95 @@ exit 0'
   fi
 }
 
+test_invalid_or_non_object_rtk_output_degrades_to_noop_json() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  mock_bin "$workdir" "rtk" '#!/usr/bin/env bash
+printf "%s\\n" invalid-json'
+
+  output="$(
+    run_rtk_hook \
+      "$audit_log" \
+      '{"sessionId":"rtk-invalid-output","tool_name":"run_shell_command"}' \
+      "PATH=$workdir/bin:$PATH"
+  )"
+
+  assert_equals "{}" "$output" \
+    "Expected malformed RTK output to degrade to a no-op JSON response."
+  assert_file_contains "$audit_log" "rtk returned invalid JSON" \
+    "Expected malformed RTK output to be logged as a fallback."
+
+  mock_bin "$workdir" "rtk" '#!/usr/bin/env bash
+printf "%s\\n" "[]"'
+
+  output="$(
+    run_rtk_hook \
+      "$audit_log" \
+      '{"sessionId":"rtk-array-output","tool_name":"run_shell_command"}' \
+      "PATH=$workdir/bin:$PATH"
+  )"
+
+  assert_equals "{}" "$output" \
+    "Expected non-object RTK output to degrade to a no-op JSON response."
+  assert_file_contains "$audit_log" "rtk returned non-object JSON" \
+    "Expected non-object RTK output to be logged as a fallback."
+}
+
+test_missing_rtk_degrades_to_noop_json() {
+  local workdir
+  local audit_log
+  local output
+  local python_dir
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  mkdir -p "$workdir/empty-path"
+  python_dir="$(dirname "$(command -v python3)")"
+
+  output="$(
+    run_rtk_hook \
+      "$audit_log" \
+      '{"sessionId":"rtk-missing","tool_name":"run_shell_command"}' \
+      "PATH=$workdir/empty-path:$python_dir"
+  )"
+
+  assert_equals "{}" "$output" \
+    "Expected a missing RTK executable to degrade to a no-op JSON response."
+  assert_file_contains "$audit_log" "rtk command not found" \
+    "Expected a missing RTK executable to be logged as a fallback."
+}
+
+test_rtk_argument_vector_is_copilot() {
+  local workdir
+  local audit_log
+  local arguments
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+  arguments="$workdir/rtk.arguments"
+
+  mock_bin "$workdir" "rtk" '#!/usr/bin/env bash
+printf "%s\\n" "$*" > "$RTK_ARGUMENTS_FILE"
+printf "%s\\n" "{}"'
+
+  run_rtk_hook \
+    "$audit_log" \
+    '{"sessionId":"rtk-arguments","tool_name":"run_shell_command"}' \
+    "PATH=$workdir/bin:$PATH" \
+    "RTK_ARGUMENTS_FILE=$arguments" >/dev/null
+
+  assert_equals "hook copilot" "$(<"$arguments")" \
+    "Expected the Copilot wrapper to invoke exactly 'rtk hook copilot'."
+}
+
 test_rtk_rewrite_maps_ask_to_allow() {
   local workdir
   local audit_log
@@ -210,13 +299,63 @@ printf "%s\n" '"'"'{"permissionDecision":"ask","permissionDecisionReason":"RTK a
     "Expected the wrapper to map top-level permissionDecision from ask to allow."
 }
 
+test_rtk_rewrite_preserves_other_decisions_and_omissions() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  audit_log="$workdir/audit.log"
+
+  mock_bin "$workdir" "rtk" '#!/usr/bin/env bash
+printf "%s\\n" "$RTK_RESPONSE"'
+
+  output="$(
+    RTK_RESPONSE='{"updatedInput":{"command":"echo unchanged"}}' run_rtk_hook \
+      "$audit_log" \
+      '{"sessionId":"rtk-omitted","tool_name":"run_shell_command"}' \
+      "PATH=$workdir/bin:$PATH"
+  )"
+  assert_equals '{"updatedInput":{"command":"echo unchanged"}}' "$(jq -c . <<<"$output")" \
+    "Expected an omitted permission decision to remain omitted."
+
+  output="$(
+    RTK_RESPONSE='{"permissionDecision":"allow"}' run_rtk_hook \
+      "$audit_log" \
+      '{"sessionId":"rtk-allow","tool_name":"run_shell_command"}' \
+      "PATH=$workdir/bin:$PATH"
+  )"
+  assert_equals '{"permissionDecision":"allow"}' "$(jq -c . <<<"$output")" \
+    "Expected an explicit allow decision to remain allow."
+
+  output="$(
+    RTK_RESPONSE='{"permissionDecision":"deny"}' run_rtk_hook \
+      "$audit_log" \
+      '{"sessionId":"rtk-deny","tool_name":"run_shell_command"}' \
+      "PATH=$workdir/bin:$PATH"
+  )"
+  assert_equals '{"permissionDecision":"deny"}' "$(jq -c . <<<"$output")" \
+    "Expected an explicit deny decision to remain deny."
+}
+
 test_rtk_rewrite_config_points_to_python_wrapper() {
-  assert_equals '$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py' \
-    "$(jq -r '.hooks.PreToolUse[0].bash // empty' "$REPO_ROOT/.copilot/hooks/rtk-rewrite.json")" \
-    "Expected Copilot RTK rewrite config to point at the Python wrapper."
-  assert_equals 'python "$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py"' \
-    "$(jq -r '.hooks.PreToolUse[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/rtk-rewrite.json")" \
-    "Expected Copilot RTK rewrite config to point at the Python wrapper for PowerShell."
+  local event_name
+
+  for event_name in PreToolUse preToolUse; do
+    assert_equals '$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py' \
+      "$(jq -r ".hooks.$event_name[0].bash // empty" "$REPO_ROOT/.copilot/hooks/rtk-rewrite.json")" \
+      "Expected $event_name Copilot RTK rewrite config to point at the Python wrapper."
+    assert_equals 'python "$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py"' \
+      "$(jq -r ".hooks.$event_name[0].powershell // empty" "$REPO_ROOT/.copilot/hooks/rtk-rewrite.json")" \
+      "Expected $event_name Copilot RTK rewrite config to point at the Python wrapper for PowerShell."
+    assert_equals '.' \
+      "$(jq -r ".hooks.$event_name[0].cwd // empty" "$REPO_ROOT/.copilot/hooks/rtk-rewrite.json")" \
+      "Expected $event_name Copilot RTK rewrite config to retain its repository working directory."
+    assert_equals '5' \
+      "$(jq -r ".hooks.$event_name[0].timeoutSec // empty" "$REPO_ROOT/.copilot/hooks/rtk-rewrite.json")" \
+      "Expected $event_name Copilot RTK rewrite config to retain its five-second timeout."
+  done
 }
 
 main() {
@@ -225,8 +364,12 @@ main() {
   test_failed_rtk_rewrite_degrades_to_noop_json
   test_timeout_rtk_rewrite_degrades_to_noop_json
   test_empty_rtk_rewrite_is_treated_as_noop_without_audit_errors
+  test_invalid_or_non_object_rtk_output_degrades_to_noop_json
+  test_missing_rtk_degrades_to_noop_json
+  test_rtk_argument_vector_is_copilot
   test_rtk_rewrite_maps_ask_to_allow
   test_rtk_rewrite_maps_ask_to_allow_top_level
+  test_rtk_rewrite_preserves_other_decisions_and_omissions
   test_rtk_rewrite_config_points_to_python_wrapper
 }
 
