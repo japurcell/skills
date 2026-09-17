@@ -28,6 +28,8 @@ Communication to and from subagents should be sparse. Communicate primarily thro
 
 5. Repeat steps 5–7 until all progress checklist items are implemented, validated, and integrated. The primary agent coordinates this loop; subagents perform implementation. When integration or validation reveals additional implementation work, record it in the ExecPlan by reopening an existing checklist item or adding a new one, then delegate it through this step.
 
+   Assign each distinct progress item or milestone to a fresh implementer subagent. Do not reuse an implementer for a different task-graph node, even with a new worktree. Reuse is allowed only for repairs or follow-up work on that implementer's original node. This preserves context isolation, ownership clarity, and independent task results.
+
    Use **implementer subagents** to implement each ready progress checklist item. Instruct each implementer subagent to:
    1. Activate the `tdd` skill.
    2. Work in its own worktree, on its own branch (see [Working with Worktrees](#working-with-worktrees)).
