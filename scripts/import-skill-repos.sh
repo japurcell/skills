@@ -34,3 +34,9 @@ fi
   "skills/productivity/grilling" "skills" \
   "skills/productivity/teach" "skills" \
   "skills/productivity/writing-for-agents" "skills"
+
+"$SCRIPT_DIR/copy-from-git.sh" \
+  "https://github.com/addyosmani/web-quality-skills.git" \
+  "skills/accessibility/" "skills/web-accessibility" \
+  "skills/best-practices/" "skills/web-best-practices" \
+  "skills/performance/" "skills/web-performance" \

@@ -20,5 +20,3 @@ Simplify recently changed code (or the specified scope) while preserving exact b
    - Dead code → remove after confirming
 6. Apply each simplification incrementally — run tests after each change
 7. Verify all tests pass, the build succeeds, and the diff is clean
-
-If tests fail after a simplification, revert that change and reconsider.

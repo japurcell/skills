@@ -7,9 +7,4 @@ research, planning, or implementation artifact.
 ## Inbox
 
 - Add repo-level hooks for codex to achieve parity with Copilot and Gemini repo-level hooks (see `.github/hooks/hooks.json`).
-- Need to analyze addy-skills because they trigger unwantedly sometimes (i.e. skills/addy-code-review-and-quality requires to run before merge).
-- Review skills for unwanted triggers and ensure proper execution order. Archive outdated or redundant skills as necessary.
-- execplan-implement
-  - have subagents review the same worktree for re-work?
-  - Remove test run from merge?
 - clean-agent-docs: shows potentially lossy compression

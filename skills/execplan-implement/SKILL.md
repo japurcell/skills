@@ -36,7 +36,7 @@ Communication to and from subagents should be sparse. Communicate primarily thro
 
 6. Integrate completed **implementer subagent** branches into the **base topic branch** one at a time:
    1. Confirm the implementer's worktree is clean, then rebase its branch onto the latest **base topic branch**.
-   2. Resolve conflicts there and rerun the affected tests. For a conflict-prone rebase, stop the implementer and give a **merger subagent** exclusive ownership of the existing implementer's worktree before the rebase starts. The merger rebases the implementer branch and does not mutate the base branch.
+   2. If there are conflicts, resolve them and rerun the affected tests. Do not rerun tests if there are no conflicts. For a conflict-prone rebase, stop the implementer and give a **merger subagent** exclusive ownership of the existing implementer's worktree before the rebase starts. The merger rebases the implementer branch and does not mutate the base branch.
       If affected tests fail, pause integration of that branch. Record the required repair as unfinished work in the ExecPlan and delegate it to an **implementer subagent** through step 5. Resume integration after the repair passes the affected tests.
    3. Update and commit any ExecPlan references to SHAs changed by the rebase, then confirm the implementer's worktree is clean.
    4. Confirm the base worktree is clean, then fast-forward the base branch with `git merge --ff-only <implementer-branch>`.

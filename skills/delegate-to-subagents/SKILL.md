@@ -1,6 +1,6 @@
 ---
 name: delegate-to-subagents
-description: Use when spawning subagents for parallelism, specialization, or context isolation.
+description: Use when spawning subagents for parallelism, specialization, or context isolation. Use when the user mentions 'create a subagent', 'spawn a subagent', or 'fan out'.
 ---
 
 Delegating bounded tasks to specialized subagents can reduce cost and latency, improve quality, or preserve the main context. Delegate when the benefit exceeds coordination overhead.
