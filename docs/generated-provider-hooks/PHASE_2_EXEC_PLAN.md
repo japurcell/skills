@@ -17,8 +17,8 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 ## Progress
 
 - [x] (2026-09-17 20:40Z) [milestone-1] Strengthen RTK characterization without changing runtime behavior and record the required-skill-loader no-migration decision.
-- [x] (2026-09-17 20:50Z) [milestone-2] Fix RTK open-pipe completion, preserve accepted input bytes, and add the five-second Gemini outer timeout in an isolated behavior change.
-- [x] (2026-09-17 20:58Z) [milestone-3] Generate the two provider-local RTK forwarders from one canonical family while preserving every approved adapter difference.
+- [ ] [milestone-2] Fix RTK open-pipe completion, preserve accepted input bytes, and add the five-second Gemini outer timeout (completed: complete and incomplete JSON paths; remaining: bound an initially empty pipe on POSIX, fix the Windows initial wait, and bound nonzero RTK diagnostics).
+- [ ] [milestone-3] Generate the two provider-local RTK forwarders from one canonical family while preserving every approved adapter difference (completed: canonical family, manifest ownership, and generated parity; remaining: reject swapped and undeclared output paths in `render()`).
 - [x] (2026-09-17) [milestone-4] Add read-only generated-hook freshness preflight to both installers before any destination mutation.
 - [ ] [milestone-5] Run full validation, obtain focused review, synchronize documentation, and record final outcomes.
 
@@ -62,6 +62,9 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 
 - Observation: The RTK family has exactly one explicit provider-adapter region per generated output.
   Evidence: `scripts/test-generate-hooks.py` splits both rendered scripts at the ownership-marked adapter region, confirms the remaining source is identical, and pins Copilot's two `ask` to `allow` assignments as absent from Gemini.
+
+- Observation: Focused review found three boundary gaps after the aggregate suite passed.
+  Evidence: The initial Windows wait adds `None` to `time.monotonic()`, an initially empty POSIX pipe has no 0.5-second deadline, nonzero RTK stderr reaches the audit reason without a bound, and `render()` accepts undeclared output paths. These repairs reopened Milestones 2 and 3 before documentation completion.
 
 ## Decision Log
 
@@ -171,8 +174,8 @@ Keep all new characterization tests green against the handwritten wrappers. Do n
 Acceptance is met when both focused suites pass before runtime edits, the approved Copilot conversion and Gemini passthrough are explicit, and the previous Phase 2 deferral is replaced by a concrete decision.
 
 ### Milestone 2: Repair open-pipe completion before extraction
-Status: done
-Acceptance: met
+Status: in progress
+Acceptance: not met
 
 Use test-driven development. First add public-process regressions to both RTK suites that launch each wrapper with a real pipe, write one complete UTF-8 JSON object, keep the pipe open, and require the wrapper to respond promptly. Add an incomplete-prefix case that completes within 0.5 seconds and succeeds, and a case that remains incomplete and returns the existing no-op within a bounded interval. Add exact-byte cases for compact JSON, multiline JSON, Unicode, and buffered trailing whitespace. Compare the mock RTK stdin bytes directly rather than normalizing them through `jq`. Buffered trailing non-whitespace must remain invalid and must not invoke RTK.
 
@@ -187,8 +190,8 @@ Run both focused suites and the relevant startup/observability suites because ea
 Acceptance is met when complete JSON on an open pipe returns, incomplete JSON stops within the defined idle window, a payload larger than 1 MiB reaches mock RTK, accepted bytes remain unchanged, every established provider response remains unchanged, and Gemini configuration has the five-second outer timeout.
 
 ### Milestone 3: Generate the RTK family
-Status: done
-Acceptance: met
+Status: in progress
+Acceptance: not met
 
 Create `hooks/families/rtk.py`. Follow existing family structure: define the shebang and generated ownership header, keep shared runtime code in one canonical body, and isolate provider differences in small explicit adapter data or renderer blocks. The `render(provider, target)` function must reject provider/target mismatches and unsupported providers. Do not add RTK-specific fields to the global `Provider` dataclass unless the implementation proves they serve more than this one family; a family-local adapter is clearer for two outputs.
 
@@ -371,3 +374,5 @@ Revision note, 2026-09-17: Initial Phase 2 ExecPlan created after candidate char
 Revision note, 2026-09-17: Completed Milestone 1. The focused Copilot and Gemini RTK suites now characterize malformed and non-object RTK output, missing executables, exact provider argument vectors, decision behavior, and handwritten registration order/configuration. Both suites passed without changing runtime code.
 
 Revision note, 2026-09-17: Completed Milestone 3. Added the canonical RTK renderer and its two manifest-owned outputs, refreshed them only through generator write mode, and added generator assertions for generated ownership, executable modes, provider-local imports, explicit provider adapters, Copilot-only normalization, and 22-file freshness.
+
+Revision note, 2026-09-17: Reopened Milestones 2 and 3 after focused review found an unbounded initially empty POSIX pipe, a Windows initial-wait type error, unbounded nonzero RTK diagnostics, and missing exact target-path validation.
