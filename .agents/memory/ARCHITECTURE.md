@@ -33,6 +33,8 @@ description: Repo structure, install flows, and how top-level areas relate
 
 `scripts/addy-install.sh` is upstream-ingestion path. It syncs `../addy-agent-skills`, copies selected upstream agents, skills, and top-level references into this repository, prefixes imported names with `addy-`, and refreshes `.addy-skills` with source skill names that were installed.
 
+`scripts/import-skill-repos.sh` is separate multi-source importer. It refreshes selected skills from upstream repositories, including `web-accessibility`, `web-best-practices`, and `web-performance` from `addyosmani/web-quality-skills`.
+
 ### Documentation flow
 
 - `README.md` and `AGENTS.md` stay as short top-level entry points.
