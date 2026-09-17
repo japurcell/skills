@@ -12,3 +12,4 @@ research, planning, or implementation artifact.
 - execplan-implement
   - have subagents review the same worktree for re-work?
   - Remove test run from merge?
+- clean-agent-docs: shows potentially lossy compression
