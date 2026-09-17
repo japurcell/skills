@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Generated from hooks/families/audit.py by scripts/generate-hooks.py. Do not edit.
 from __future__ import annotations
 
 try:

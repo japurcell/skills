@@ -18,4 +18,5 @@ class Provider:
 PROVIDERS = {
     "copilot": Provider("copilot", PurePosixPath(".copilot/hooks"), ".copilot"),
     "gemini": Provider("gemini", PurePosixPath(".gemini/hooks"), ".gemini"),
+    "github": Provider("github", PurePosixPath(".github/hooks"), ".copilot"),
 }

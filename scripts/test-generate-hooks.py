@@ -7,6 +7,7 @@ import importlib.util
 import os
 from pathlib import Path
 import re
+from hashlib import sha256
 import shutil
 import stat
 import subprocess
@@ -43,6 +44,14 @@ TARGETS = (
     ".copilot/hooks/scripts/send-event.py",
     ".gemini/hooks/scripts/send-event.py",
 )
+COMMON_AUDIT_TARGETS = {
+    ".copilot/hooks/scripts/helpers/common.py": "ce024e0062ba449229b2ca2f79b44f5409f0df5e40764fafa81ad98efc27ac3f",
+    ".gemini/hooks/scripts/helpers/common.py": "9e67b30751c3fbae8716a2fbb7bd544dfb213b7fcd285999c6f4651b17662e44",
+    ".github/hooks/scripts/helpers/common.py": "6efd2a563b2e8012fe0e8c813630c94a50d3ed5f8cc6cb7c6507c8771dc357be",
+    ".copilot/hooks/scripts/helpers/audit.py": "ffe27670de493f4d07285093927ea1a9bc06b2096941c3f6d52277447407edeb",
+    ".gemini/hooks/scripts/helpers/audit.py": "6a5f20c4af7c4e9eeb7d187c0e24d1e340f15d82634f3de96ddbb2d79e1fcaa5",
+    ".github/hooks/scripts/helpers/audit.py": "4b8fa5f1cfce5b948c3ef54230fa1ead4a5c7ebb6ea125dd45222b9968f403a9",
+}
 
 
 def load_generator():
@@ -107,7 +116,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (2 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (8 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -138,7 +147,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (2 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (8 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -148,11 +157,32 @@ class GenerateHooksTests(unittest.TestCase):
     def test_rendered_pilot_preserves_the_pre_generation_runtime_body(self) -> None:
         generator = load_generator()
         outputs = generator.render_all(ROOT)
-        self.assertEqual(tuple(output.target.output_path.as_posix() for output in outputs), TARGETS)
+        self.assertEqual(
+            tuple(output.target.output_path.as_posix() for output in outputs[:len(TARGETS)]),
+            TARGETS,
+        )
         for target in TARGETS:
             expected = "#!/usr/bin/env python3\n" + OWNERSHIP + PILOT_RUNTIME_BODY
             rendered = next(output.content.decode("utf-8") for output in outputs if output.target.output_path.as_posix() == target)
             self.assertEqual(rendered, expected)
+
+    def test_common_and_audit_renderings_preserve_pre_generation_runtime_bodies(self) -> None:
+        generator = load_generator()
+        rendered = {
+            output.target.output_path.as_posix(): output.content
+            for output in generator.render_all(ROOT)
+        }
+        self.assertEqual(set(rendered) - set(TARGETS), set(COMMON_AUDIT_TARGETS))
+        for target, expected_digest in COMMON_AUDIT_TARGETS.items():
+            with self.subTest(target=target):
+                content = rendered[target].decode("utf-8")
+                lines = content.splitlines(keepends=True)
+                self.assertEqual(lines[0], "#!/usr/bin/env python3\n")
+                self.assertEqual(
+                    lines[1],
+                    f"# Generated from hooks/families/{'common' if target.endswith('common.py') else 'audit'}.py by scripts/generate-hooks.py. Do not edit.\n",
+                )
+                self.assertEqual(sha256("".join(lines[2:]).encode("utf-8")).hexdigest(), expected_digest)
 
     def test_rendering_rejects_unsafe_paths_and_invalid_python_before_writing(self) -> None:
         generator = load_generator()

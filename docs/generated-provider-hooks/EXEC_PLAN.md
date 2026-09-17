@@ -18,7 +18,7 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 ## Progress
 
 - [x] (2026-09-17 05:25Z) [milestone-1] Add generator architecture, CLI, tests, documentation, and the `send-event.py` pilot.
-- [ ] [milestone-2] Generate Copilot, Gemini, and GitHub common and audit helpers without changing runtime behavior.
+- [x] (2026-09-17 05:37Z) [milestone-2] Generate Copilot, Gemini, and GitHub common and audit helpers without changing runtime behavior.
 - [ ] [milestone-3] Generate Copilot and Gemini observability helpers without changing runtime behavior or latency expectations.
 - [ ] [milestone-4] Generate Copilot and Gemini Tool Guardian scripts, remove owned local duplicates, and complete independent security review.
 - [ ] [milestone-5] Generate Copilot and Gemini secret scanners, remove owned local duplicates, and complete independent security review.
@@ -38,6 +38,9 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - Observation: A real-home installer smoke test cannot run in this agent environment.
   Evidence: `./scripts/install.sh` stopped while copying to `/root/.agents/skills/addy-code-review-and-quality/SKILL.md` with `Read-only file system`. The targeted installer fixture and both observability suites passed, including installed-copy execution in their temporary homes.
+
+- Observation: Common and audit helpers did not previously have shebangs, although the generator contract requires every generated output to be executable.
+  Evidence: Their characterization hashes match the pre-generation runtime body after removing only the generated header and added shebang; `scripts/test-generate-hooks.py` proves this for all six helpers.
 
 ## Decision Log
 
@@ -77,9 +80,15 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: The generator must never claim ownership of a future family's handwritten files. Subsequent milestones extend the explicit manifest at the same time as they add a renderer and generated output.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Keep current common and audit differences as named provider adapters in their canonical renderers.
+  Rationale: GitHub retains its bounded incomplete-input wait and does not use observability capture or a passive-log helper. Copilot and Gemini retain observability capture but differ in passive-log entrypoint, shadow mode, environment names, and default audit path. GitHub's audit writer retains its mode-prefixed shadow records and has no `audit_init` or `audit_log_passive_event` API.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
+
+Milestone 2 now owns six generated common and audit helpers. The renderer contract preserves each pre-generation helper body byte-for-byte after excluding the generated ownership header and executable shebang. Provider behavior remains explicit: GitHub has bounded incomplete-input handling and an audit mode prefix, Copilot has standard passive logging, and Gemini has its separate passive shadow configuration. The generator tests and all listed Copilot, GitHub, Gemini, and installer fixture suites passed. No behavior defect or unclassified drift was observed.
 
 ## Context and Orientation
 
@@ -164,8 +173,8 @@ Register `("python3", "scripts/test-generate-hooks.py")` in `scripts/test-all.py
 This milestone is accepted when `--check` detects a manually stale pilot output without writing, `--write` repairs it transactionally, a second write is a no-op, existing provider and installer tests pass, and a direct installed-copy smoke test still consumes JSON and emits `{}`.
 
 ### Milestone 2: Generate common and audit helpers
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Add `hooks/families/common.py` and `hooks/families/audit.py`. Preserve all current differences explicitly in `hooks/providers.py` or named adapter blocks. Important differences include GitHub's bounded incomplete-input wait, Copilot and Gemini observability capture integration, passive logging behavior, Windows path conversion, provider environment names, default audit paths, shadow log semantics, permissions, locking, and rotation.
 
@@ -376,3 +385,5 @@ Do not make installers generate repository sources. `scripts/install.sh` and `sc
 Revision note, 2026-09-17: Initial ExecPlan created from the confirmed grilling design. It records canonical generation, explicit CLI behavior, transactional safety, migration order, validation, drift separation, security review, and Phase 2 reassessment.
 
 Revision note, 2026-09-17: Completed Milestone 1. The pilot now renders the two provider-local `send-event.py` scripts; the generator test suite covers CLI, freshness, headers, output modes, path defenses, lock timeout, rollback, interruption cleanup, and external working directories. Targeted provider and installer fixture suites passed; the real-home install attempt is recorded above because its destination is read-only.
+
+Revision note, 2026-09-17: Completed Milestone 2. Canonical common and audit renderers now own all six Copilot, Gemini, and GitHub helper outputs. Their runtime bodies are characterized against the pre-generation sources, with only the generator-required executable shebang and ownership header added. Targeted generator, provider hook, and installer fixture suites passed.

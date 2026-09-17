@@ -21,4 +21,10 @@ def targets() -> tuple[GeneratedTarget, ...]:
     return (
         GeneratedTarget("send_event", "copilot", PurePosixPath(".copilot/hooks/scripts/send-event.py")),
         GeneratedTarget("send_event", "gemini", PurePosixPath(".gemini/hooks/scripts/send-event.py")),
+        GeneratedTarget("common", "copilot", PurePosixPath(".copilot/hooks/scripts/helpers/common.py")),
+        GeneratedTarget("common", "gemini", PurePosixPath(".gemini/hooks/scripts/helpers/common.py")),
+        GeneratedTarget("common", "github", PurePosixPath(".github/hooks/scripts/helpers/common.py")),
+        GeneratedTarget("audit", "copilot", PurePosixPath(".copilot/hooks/scripts/helpers/audit.py")),
+        GeneratedTarget("audit", "gemini", PurePosixPath(".gemini/hooks/scripts/helpers/audit.py")),
+        GeneratedTarget("audit", "github", PurePosixPath(".github/hooks/scripts/helpers/audit.py")),
     )
