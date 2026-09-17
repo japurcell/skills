@@ -712,6 +712,77 @@ test_block_mode_denies_when_findings_exist() {
     "Expected block mode to log findings before denying."
 }
 
+test_high_match_input_has_bounded_denial_and_log() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+  local elapsed_ms
+  local start_ns
+  local end_ns
+  local log_bytes
+  local index
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir" "$log_dir"
+
+  init_git_repo "$repo_dir"
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  : > "$repo_dir/burst.txt"
+  for ((index = 0; index < 10000; index++)); do
+    printf '%s ' "$fake_token" >> "$repo_dir/burst.txt"
+  done
+  printf '\n' >> "$repo_dir/burst.txt"
+  git -C "$repo_dir" add burst.txt
+  printf '%60000s\n' '' > "$log_dir/scan.log"
+
+  start_ns="$(date +%s%N)"
+  output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      staged \
+      '{"sessionId":"high-match","timestamp":"2026-06-23T23:41:30Z","reason":"complete"}' \
+      'AUDIT_LOG_MAX_BYTES=65536'
+  )"
+  end_ns="$(date +%s%N)"
+  elapsed_ms=$(((end_ns - start_ns) / 1000000))
+
+  assert_json_output "$output" "Expected high-match input to emit structured JSON."
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected high-match input to retain fail-closed denial."
+  if ((elapsed_ms >= 8000)); then
+    echo "Expected high-match scan to finish within 8000ms. Elapsed: ${elapsed_ms}ms" >&2
+    exit 1
+  fi
+  if [[ ! -f "$log_dir/scan.log.1" ]]; then
+    echo "Expected incoming bounded record to rotate the nearly full scan log." >&2
+    exit 1
+  fi
+  log_bytes="$(wc -c < "$log_dir/scan.log")"
+  if ((log_bytes > 65536)); then
+    echo "Expected active scan log to stay within 65536 bytes. Actual: $log_bytes" >&2
+    exit 1
+  fi
+  if ! jq -e '.findings | length <= 100' "$log_dir/scan.log" >/dev/null; then
+    echo "Expected retained high-match finding details to be capped." >&2
+    exit 1
+  fi
+  if ! jq -e '.omittedFindings > 0 and .findingsTruncated == true' "$log_dir/scan.log" >/dev/null; then
+    echo "Expected bounded log to count omitted high-match findings." >&2
+    exit 1
+  fi
+  if grep -Fq "$fake_token" "$log_dir/scan.log"; then
+    echo "Did not expect high-match log to expose the fake token." >&2
+    exit 1
+  fi
+}
+
 test_diff_mode_ignores_unchanged_secrets_in_touched_files() {
   local workdir
   local repo_dir
@@ -1211,6 +1282,7 @@ main() {
   test_invalid_json_block_mode_denies_with_json_and_exit_zero
   test_warn_mode_reports_findings_without_failing
   test_block_mode_denies_when_findings_exist
+  test_high_match_input_has_bounded_denial_and_log
   test_diff_mode_ignores_unchanged_secrets_in_touched_files
   test_warn_mode_flags_sensitive_credential_paths_without_token_match
   test_binary_credential_path_still_scans_ascii_tokens

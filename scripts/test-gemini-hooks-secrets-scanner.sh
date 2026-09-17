@@ -322,6 +322,77 @@ test_warn_mode_reports_findings_with_json_output() {
     "Expected findings to surface via Gemini systemMessage."
 }
 
+test_high_match_input_has_bounded_denial_and_log() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+  local elapsed_ms
+  local start_ns
+  local end_ns
+  local log_bytes
+  local index
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir" "$log_dir"
+
+  init_git_repo "$repo_dir"
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  : > "$repo_dir/burst.txt"
+  for ((index = 0; index < 10000; index++)); do
+    printf '%s ' "$fake_token" >> "$repo_dir/burst.txt"
+  done
+  printf '\n' >> "$repo_dir/burst.txt"
+  git -C "$repo_dir" add burst.txt
+  printf '%60000s\n' '' > "$log_dir/scan.log"
+
+  start_ns="$(date +%s%N)"
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      staged \
+      "{\"session_id\":\"high-match\",\"timestamp\":\"2026-06-23T23:50:30Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}" \
+      'AUDIT_LOG_MAX_BYTES=65536'
+  )"
+  end_ns="$(date +%s%N)"
+  elapsed_ms=$(((end_ns - start_ns) / 1000000))
+
+  assert_json_output "$output" "Expected Gemini high-match input to emit structured JSON."
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected Gemini high-match input to retain fail-closed denial."
+  if ((elapsed_ms >= 8000)); then
+    echo "Expected Gemini high-match scan to finish within 8000ms. Elapsed: ${elapsed_ms}ms" >&2
+    exit 1
+  fi
+  if [[ ! -f "$log_dir/scan.log.1" ]]; then
+    echo "Expected incoming bounded Gemini record to rotate the nearly full scan log." >&2
+    exit 1
+  fi
+  log_bytes="$(wc -c < "$log_dir/scan.log")"
+  if ((log_bytes > 65536)); then
+    echo "Expected active Gemini scan log to stay within 65536 bytes. Actual: $log_bytes" >&2
+    exit 1
+  fi
+  if ! jq -e '.findings | length <= 100' "$log_dir/scan.log" >/dev/null; then
+    echo "Expected retained Gemini high-match finding details to be capped." >&2
+    exit 1
+  fi
+  if ! jq -e '.omittedFindings > 0 and .findingsTruncated == true' "$log_dir/scan.log" >/dev/null; then
+    echo "Expected bounded Gemini log to count omitted high-match findings." >&2
+    exit 1
+  fi
+  if grep -Fq "$fake_token" "$log_dir/scan.log"; then
+    echo "Did not expect Gemini high-match log to expose the fake token." >&2
+    exit 1
+  fi
+}
+
 test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
   local workdir
   local repo_dir
@@ -938,6 +1009,7 @@ main() {
   test_unexpected_exception_block_mode_denies_with_json_and_exit_zero
   test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero
   test_warn_mode_reports_findings_with_json_output
+  test_high_match_input_has_bounded_denial_and_log
   test_env_variants_are_logged_but_not_flagged_by_path_alone
   test_warn_mode_flags_sensitive_credential_paths_without_token_match
   test_binary_credential_path_still_scans_ascii_tokens

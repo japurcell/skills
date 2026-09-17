@@ -759,17 +759,29 @@ class GenerateHooksTests(unittest.TestCase):
                     "env_files": [],
                     "findings": [],
                 }
+                module.append_scan_log(**arguments)
+                existing_size = log_path.stat().st_size
                 with mock.patch.dict(
                     os.environ,
-                    {"AUDIT_LOG_MAX_BYTES": "1", "AUDIT_LOG_MAX_BACKUPS": "2"},
+                    {
+                        "AUDIT_LOG_MAX_BYTES": str(existing_size + 1),
+                        "AUDIT_LOG_MAX_BACKUPS": "2",
+                    },
                 ):
-                    module.append_scan_log(**arguments)
                     module.append_scan_log(**arguments)
 
                 self.assertEqual(stat.S_IMODE(log_dir.stat().st_mode), 0o700)
                 self.assertEqual(stat.S_IMODE(log_path.stat().st_mode), 0o600)
                 self.assertEqual(stat.S_IMODE((log_dir / "scan.log.lock").stat().st_mode), 0o600)
                 self.assertEqual(stat.S_IMODE((log_dir / "scan.log.1").stat().st_mode), 0o600)
+
+                oversized_arguments = {
+                    **arguments,
+                    "session_id": "x" * module.MAX_LOG_RECORD_BYTES,
+                }
+                with self.subTest(provider=module.__name__, case="oversized-record"):
+                    with self.assertRaises(module.ScanLimitExceeded):
+                        module.append_scan_log(**oversized_arguments)
 
                 if hasattr(os, "symlink"):
                     log_path.unlink()

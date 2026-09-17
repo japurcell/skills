@@ -72,6 +72,9 @@ MAX_FILE_BYTES = 1048576
 MAX_TOTAL_BYTES = 8388608
 MAX_GIT_OUTPUT_BYTES = 8388608
 MAX_SCAN_SECONDS = 8.0
+MAX_RETAINED_FINDINGS = 100
+MAX_PROCESSED_FINDINGS = 1000
+MAX_LOG_RECORD_BYTES = 65536
 LOG_LOCK_TIMEOUT_SECONDS = 1.0
 LOG_LOCK_POLL_SECONDS = 0.05
 CANDIDATE_STAGED = "staged"
@@ -89,6 +92,11 @@ class ScanSecurityError(RuntimeError):
 
 class ScanLimitExceeded(ScanSecurityError):
     pass
+
+
+def enforce_deadline(deadline: float | None) -> None:
+    if deadline is not None and time.monotonic() >= deadline:
+        raise ScanLimitExceeded("secret scan exceeds the time limit")
 
 
 def noop() -> None:
@@ -707,15 +715,24 @@ def _open_secure_regular(path: Path, flags: int) -> int:
         raise
 
 
-def rotate_scan_log(log_path: Path, max_bytes: int = 1048576, backups: int = 3) -> None:
+def rotate_scan_log(
+    log_path: Path,
+    incoming_bytes: int,
+    max_bytes: int = 1048576,
+    backups: int = 3,
+) -> None:
     if max_bytes < 1 or backups < 1 or backups > 100:
         raise ScanSecurityError("invalid log rotation limits")
+    if incoming_bytes < 1 or incoming_bytes > MAX_LOG_RECORD_BYTES:
+        raise ScanLimitExceeded("scan-log record exceeds the size limit")
+    if incoming_bytes > max_bytes:
+        raise ScanLimitExceeded("scan-log record exceeds the configured rotation size")
     details = _assert_safe_log_path(log_path)
     if details is None:
         return
     if not stat.S_ISREG(details.st_mode):
         raise ScanSecurityError("scan log must be a regular file")
-    if details.st_size < max_bytes:
+    if details.st_size + incoming_bytes <= max_bytes:
         return
 
     paths = [log_path.with_name(f"{log_path.name}.{index}") for index in range(1, backups + 2)]
@@ -742,27 +759,38 @@ def rotate_scan_log(log_path: Path, max_bytes: int = 1048576, backups: int = 3) 
         raise ScanSecurityError("unable to rotate scan log safely") from exc
 
 
-def _acquire_log_lock(lock_fd: int, fcntl_module: object | None, msvcrt_module: object | None) -> str:
-    deadline = time.monotonic() + LOG_LOCK_TIMEOUT_SECONDS
+def _acquire_log_lock(
+    lock_fd: int,
+    fcntl_module: object | None,
+    msvcrt_module: object | None,
+    *,
+    deadline: float | None = None,
+) -> str:
+    lock_deadline = time.monotonic() + LOG_LOCK_TIMEOUT_SECONDS
+    if deadline is not None:
+        lock_deadline = min(lock_deadline, deadline)
+    enforce_deadline(lock_deadline)
     if fcntl_module is not None:
         while True:
+            enforce_deadline(lock_deadline)
             try:
                 fcntl_module.flock(lock_fd, fcntl_module.LOCK_EX | fcntl_module.LOCK_NB)
                 return "posix"
             except (BlockingIOError, OSError) as exc:
-                if time.monotonic() >= deadline:
+                if time.monotonic() >= lock_deadline:
                     raise ScanLimitExceeded("timed out waiting for scan-log lock") from exc
                 time.sleep(LOG_LOCK_POLL_SECONDS)
     if msvcrt_module is not None:
         if os.fstat(lock_fd).st_size == 0:
             os.write(lock_fd, b"\0")
         while True:
+            enforce_deadline(lock_deadline)
             try:
                 os.lseek(lock_fd, 0, os.SEEK_SET)
                 msvcrt_module.locking(lock_fd, msvcrt_module.LK_NBLCK, 1)
                 return "windows"
             except OSError as exc:
-                if time.monotonic() >= deadline:
+                if time.monotonic() >= lock_deadline:
                     raise ScanLimitExceeded("timed out waiting for scan-log lock") from exc
                 time.sleep(LOG_LOCK_POLL_SECONDS)
     raise ScanSecurityError("no supported scan-log lock is available")
@@ -792,8 +820,12 @@ def append_scan_log(
     repo_root_path: Path,
     env_files: list[str],
     findings: list[dict[str, object]],
+    omitted_findings: int = 0,
+    findings_truncated: bool = False,
     note: str = "",
+    deadline: float | None = None,
 ) -> None:
+    enforce_deadline(deadline)
     _ensure_secure_log_directory(log_path.parent)
     payload: dict[str, object] = {
         "timestamp": timestamp,
@@ -809,6 +841,16 @@ def append_scan_log(
         payload["envFiles"] = env_files
     if findings:
         payload["findings"] = findings
+    if omitted_findings:
+        payload["omittedFindings"] = omitted_findings
+    if findings_truncated:
+        payload["findingsTruncated"] = True
+
+    record = (json.dumps(payload, ensure_ascii=True, separators=(",", ":")) + "\n").encode(
+        "utf-8"
+    )
+    if len(record) > MAX_LOG_RECORD_BYTES:
+        raise ScanLimitExceeded("scan-log record exceeds the size limit")
 
     try:
         import fcntl
@@ -824,16 +866,18 @@ def append_scan_log(
     lock_fd = _open_secure_regular(lock_path, os.O_CREAT | os.O_RDWR)
     lock_kind = ""
     try:
-        lock_kind = _acquire_log_lock(lock_fd, fcntl, msvcrt)
+        lock_kind = _acquire_log_lock(lock_fd, fcntl, msvcrt, deadline=deadline)
+        enforce_deadline(deadline)
         rotate_scan_log(
             log_path,
+            len(record),
             int(os.environ.get("AUDIT_LOG_MAX_BYTES", "1048576")),
             int(os.environ.get("AUDIT_LOG_MAX_BACKUPS", "3")),
         )
+        enforce_deadline(deadline)
         log_fd = _open_secure_regular(log_path, os.O_APPEND | os.O_CREAT | os.O_WRONLY)
-        with os.fdopen(log_fd, "a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload, ensure_ascii=True, separators=(",", ":")))
-            handle.write("\n")
+        with os.fdopen(log_fd, "ab") as handle:
+            handle.write(record)
             handle.flush()
             os.fsync(handle.fileno())
     finally:
@@ -856,6 +900,17 @@ def build_findings_json(findings: list[tuple[str, str, str, int, str]]) -> list[
         }
         for pattern_name, severity, path, line_number, redacted in findings
     ]
+
+
+def record_finding(
+    findings: list[tuple[str, str, str, int, str]],
+    finding: tuple[str, str, str, int, str],
+    processed_findings: int,
+) -> tuple[int, bool]:
+    processed_findings += 1
+    if len(findings) < MAX_RETAINED_FINDINGS:
+        findings.append(finding)
+    return processed_findings, processed_findings >= MAX_PROCESSED_FINDINGS
 
 
 def emit_output(findings_count: int, log_path: Path) -> None:
@@ -966,6 +1021,7 @@ def main() -> int:
             env_files=[],
             findings=[],
             note="scan disabled by SKIP_SECRETS_SCAN",
+            deadline=scan_deadline,
         )
         emit_output(0, scan_log)
         return 0
@@ -982,6 +1038,7 @@ def main() -> int:
             env_files=[],
             findings=[],
             note="not inside git repository",
+            deadline=scan_deadline,
         )
         emit_output(0, scan_log)
         return 0
@@ -1002,6 +1059,7 @@ def main() -> int:
             env_files=[],
             findings=[],
             note="no modified files to scan",
+            deadline=scan_deadline,
         )
         emit_output(0, scan_log)
         return 0
@@ -1009,6 +1067,8 @@ def main() -> int:
     allowlist = parse_allowlist(os.environ.get("SECRETS_ALLOWLIST"))
     env_files: list[str] = []
     findings: list[tuple[str, str, str, int, str]] = []
+    processed_findings = 0
+    stop_scanning = False
     total_bytes = 0
 
     for source, path in candidates:
@@ -1023,7 +1083,14 @@ def main() -> int:
         if is_credential_path(path):
             allowlist_text = f"{path}:1:credential_path:[SENSITIVE PATH]"
             if not allowlist_contains("scan_secrets", allowlist_text, allowlist):
-                findings.append(("credential_path", "critical", path, 1, "[SENSITIVE PATH]"))
+                processed_findings, stop_scanning = record_finding(
+                    findings,
+                    ("credential_path", "critical", path, 1, "[SENSITIVE PATH]"),
+                    processed_findings,
+                )
+
+        if stop_scanning:
+            break
 
         if not is_text_candidate(path, raw_bytes):
             candidate_lines = enumerate_file_lines(decode_ascii_scan_text(raw_bytes))
@@ -1039,15 +1106,28 @@ def main() -> int:
             )
 
         for line_number, line_text in candidate_lines:
+            enforce_scan_budget(scan_started, total_bytes)
             for pattern_name, severity, regex in PATTERNS:
+                enforce_scan_budget(scan_started, total_bytes)
                 for match in regex.finditer(line_text):
+                    enforce_scan_budget(scan_started, total_bytes)
                     match_value = match.group(0)
                     allowlist_text = f"{path}:{line_number}:{pattern_name}:{match_value}"
                     if allowlist_contains("scan_secrets", allowlist_text, allowlist):
                         continue
-                    findings.append(
-                        (pattern_name, severity, path, line_number, redact_match(match_value))
+                    processed_findings, stop_scanning = record_finding(
+                        findings,
+                        (pattern_name, severity, path, line_number, redact_match(match_value)),
+                        processed_findings,
                     )
+                    if stop_scanning:
+                        break
+                if stop_scanning:
+                    break
+            if stop_scanning:
+                break
+        if stop_scanning:
+            break
 
     enforce_scan_budget(scan_started, total_bytes)
 
@@ -1062,11 +1142,14 @@ def main() -> int:
             repo_root_path=root,
             env_files=env_files,
             findings=[],
+            deadline=scan_deadline,
         )
         emit_output(0, scan_log)
         return 0
 
     findings_json = build_findings_json(findings)
+    omitted_findings = processed_findings - len(findings)
+    enforce_scan_budget(scan_started, total_bytes)
     append_scan_log(
         log_path=scan_log,
         status="findings",
@@ -1077,12 +1160,15 @@ def main() -> int:
         repo_root_path=root,
         env_files=env_files,
         findings=findings_json,
+        omitted_findings=omitted_findings,
+        findings_truncated=stop_scanning or omitted_findings > 0,
+        deadline=scan_deadline,
     )
     if mode == "block":
         emit_block_denial(findings_denial_reason(scan_log))
         return 0
 
-    emit_output(len(findings), scan_log)
+    emit_output(processed_findings, scan_log)
     return 0
 
 
