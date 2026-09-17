@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
-
+# Generated from hooks/families/rtk.py by scripts/generate-hooks.py. Do not edit.
 from __future__ import annotations
+# BEGIN PROVIDER ADAPTER
+RTK_PROVIDER = "gemini"
+
+
+def normalize_rewritten(rewritten: dict) -> dict:
+    return rewritten
+
+
+# END PROVIDER ADAPTER
 
 import codecs
 import io
 import json
 import os
 import select
+import shutil
 import subprocess
 import sys
 import time
@@ -136,14 +146,11 @@ def read_hook_input() -> tuple[bytes | None, dict | None, str | None]:
 
 
 def forward_to_rtk(raw_input: bytes) -> tuple[dict | None, str | None]:
-
-    import shutil
-
     rtk_bin = shutil.which("rtk") or "rtk"
 
     try:
         result = subprocess.run(
-            [rtk_bin, "hook", "gemini"],
+            [rtk_bin, "hook", RTK_PROVIDER],
             input=raw_input,
             capture_output=True,
             shell=False,
@@ -152,7 +159,7 @@ def forward_to_rtk(raw_input: bytes) -> tuple[dict | None, str | None]:
     except FileNotFoundError:
         return None, "rtk command not found"
     except subprocess.TimeoutExpired:
-        return None, f"rtk hook gemini timed out after {RTK_TIMEOUT_SECONDS:.1f}s"
+        return None, f"rtk hook {RTK_PROVIDER} timed out after {RTK_TIMEOUT_SECONDS:.1f}s"
     except Exception as exc:  # noqa: BLE001 - safe fallback path
         return None, f"rtk hook invocation failed: {exc}"
 
@@ -172,7 +179,7 @@ def forward_to_rtk(raw_input: bytes) -> tuple[dict | None, str | None]:
     if not isinstance(rewritten, dict):
         return None, "rtk returned non-object JSON"
 
-    return rewritten, None
+    return normalize_rewritten(rewritten), None
 
 
 def main() -> int:

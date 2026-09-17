@@ -39,4 +39,6 @@ def targets() -> tuple[GeneratedTarget, ...]:
         GeneratedTarget("auto_ingest", "gemini", PurePosixPath(".gemini/hooks/scripts/auto-ingest.py")),
         GeneratedTarget("auto_ingest", "github", PurePosixPath(".github/hooks/scripts/inject-auto-ingest-context.py")),
         GeneratedTarget("auto_ingest", "gemini", PurePosixPath(".gemini/hooks/scripts/inject-auto-ingest-context.py")),
+        GeneratedTarget("rtk", "copilot", PurePosixPath(".copilot/hooks/scripts/rtk-hook-copilot.py")),
+        GeneratedTarget("rtk", "gemini", PurePosixPath(".gemini/hooks/scripts/rtk-hook-gemini.py")),
     )

@@ -68,6 +68,10 @@ AUTO_INGEST_TARGETS = (
     ".github/hooks/scripts/inject-auto-ingest-context.py",
     ".gemini/hooks/scripts/inject-auto-ingest-context.py",
 )
+RTK_TARGETS = (
+    ".copilot/hooks/scripts/rtk-hook-copilot.py",
+    ".gemini/hooks/scripts/rtk-hook-gemini.py",
+)
 OBSERVABILITY_ALLOWED_DIFFERENCES = (
     ('OBSERVABILITY_RUNTIME = "copilot"', 'OBSERVABILITY_RUNTIME = "gemini"'),
     ('_truthy_env("COPILOT_OBSERVABILITY_DISABLE", "OBSERVABILITY_DISABLE")',
@@ -157,6 +161,47 @@ class GenerateHooksTests(unittest.TestCase):
                 self.assertNotIn(".github.hooks", rendered[target])
                 self.assertNotIn(".gemini.hooks", rendered[target])
 
+    def test_rtk_targets_share_runtime_body_outside_explicit_provider_adapters(self) -> None:
+        generator = load_generator()
+        rendered = {
+            output.target.output_path.as_posix(): output.content.decode("utf-8")
+            for output in generator.render_all(ROOT)
+        }
+        self.assertTrue(set(RTK_TARGETS).issubset(rendered))
+
+        shared_sections = []
+        for target, provider in zip(RTK_TARGETS, ("copilot", "gemini"), strict=True):
+            with self.subTest(target=target):
+                source = rendered[target]
+                self.assertTrue(source.startswith(
+                    "#!/usr/bin/env python3\n"
+                    "# Generated from hooks/families/rtk.py by scripts/generate-hooks.py. Do not edit.\n"
+                ))
+                self.assertEqual(stat.S_IMODE((ROOT / target).stat().st_mode), 0o755)
+                self.assertIn(f'RTK_PROVIDER = "{provider}"', source)
+                self.assertIn('[rtk_bin, "hook", RTK_PROVIDER]', source)
+                self.assertIn("from helpers.audit import audit_log_event", source)
+                self.assertIn("from helpers.common import emit_json, sanitize_log_field", source)
+                self.assertIn("from helpers.observability import begin_hook_capture", source)
+                self.assertNotIn(".copilot.hooks", source)
+                self.assertNotIn(".gemini.hooks", source)
+                sections = re.split(
+                    r"# BEGIN PROVIDER ADAPTER\n.*?# END PROVIDER ADAPTER\n",
+                    source,
+                    flags=re.DOTALL,
+                )
+                self.assertEqual(len(sections), 2, f"Expected one provider adapter in {target}.")
+                shared_sections.append(sections)
+
+        self.assertEqual(
+            shared_sections[0],
+            shared_sections[1],
+            "RTK outputs diverged outside their explicit provider adapters.",
+        )
+        self.assertIn('rewritten["permissionDecision"] = "allow"', rendered[RTK_TARGETS[0]])
+        self.assertIn('hook_out["permissionDecision"] = "allow"', rendered[RTK_TARGETS[0]])
+        self.assertNotIn('permissionDecision"] = "allow"', rendered[RTK_TARGETS[1]])
+
     def test_help_and_usage_are_explicit_and_non_mutating(self) -> None:
         before = snapshot(ROOT)
         for flag in ("-h", "--help"):
@@ -179,7 +224,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (20 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (22 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -210,7 +255,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (20 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (22 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -236,7 +281,7 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(AUTO_INGEST_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():

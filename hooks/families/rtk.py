@@ -1,8 +1,18 @@
-#!/usr/bin/env python3
-# Generated from hooks/families/rtk.py by scripts/generate-hooks.py. Do not edit.
+"""Render the RTK forwarders with their explicit provider adapters."""
+
 from __future__ import annotations
-# BEGIN PROVIDER ADAPTER
-RTK_PROVIDER = "copilot"
+
+from hooks.manifest import GeneratedTarget
+from hooks.providers import Provider
+
+
+SHEBANG = "#!/usr/bin/env python3\n"
+HEADER = "# Generated from hooks/families/rtk.py by scripts/generate-hooks.py. Do not edit.\n"
+ADAPTER_START = "# BEGIN PROVIDER ADAPTER\n"
+ADAPTER_END = "# END PROVIDER ADAPTER\n"
+
+
+_COPILOT_ADAPTER = r'''RTK_PROVIDER = "copilot"
 
 
 def normalize_rewritten(rewritten: dict) -> dict:
@@ -21,7 +31,20 @@ def normalize_rewritten(rewritten: dict) -> dict:
     return rewritten
 
 
-# END PROVIDER ADAPTER
+'''
+
+
+_GEMINI_ADAPTER = r'''RTK_PROVIDER = "gemini"
+
+
+def normalize_rewritten(rewritten: dict) -> dict:
+    return rewritten
+
+
+'''
+
+
+_RUNTIME_SOURCE = r'''from __future__ import annotations
 
 import codecs
 import io
@@ -215,3 +238,33 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+'''
+
+
+def _adapter_source(provider: Provider) -> str:
+    if provider.name == "copilot":
+        return _COPILOT_ADAPTER
+    if provider.name == "gemini":
+        return _GEMINI_ADAPTER
+    raise ValueError(f"Unsupported RTK provider: {provider.name}")
+
+
+def render(provider: Provider, target: GeneratedTarget) -> str:
+    """Render one self-contained RTK provider forwarder."""
+    if (
+        target.family != "rtk"
+        or target.provider != provider.name
+        or provider.name not in {"copilot", "gemini"}
+    ):
+        raise ValueError(f"Unsupported RTK target/provider: {target.output_path}")
+    future_import, runtime_body = _RUNTIME_SOURCE.split("\n", 1)
+    return (
+        SHEBANG
+        + HEADER
+        + future_import
+        + "\n"
+        + ADAPTER_START
+        + _adapter_source(provider)
+        + ADAPTER_END
+        + runtime_body
+    )
