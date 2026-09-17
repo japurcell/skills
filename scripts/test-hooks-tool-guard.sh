@@ -14,40 +14,140 @@ run_tool_guard() {
   python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" <<<"$payload"
 }
 
-test_common_allowlist_helpers_trim_and_match() {
+test_structured_allowlist_is_tool_scoped_and_exact() {
+  local workdir
+  local log_dir
+  local risky_input
+  local allowlist
   local output
 
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  log_dir="$workdir/logs"
+  risky_input="git push"
+  risky_input+=" --force"
+  risky_input+=" origin main"
+  allowlist="$(jq -cn --arg tool bash --arg input "$risky_input" '[{tool:$tool,input:$input}]')"
+
   output="$(
-    python3 - "$REPO_ROOT" <<'PY'
+    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+      python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
+      <<<"$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')"
+  )"
+  assert_equals "allow" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected an exact tool-scoped allowlist entry to allow only its declared invocation."
+
+  output="$(
+    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+      python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
+      <<<"$(jq -cn --arg input "echo safe && $risky_input" '{toolName:"bash",toolArgs:$input}')"
+  )"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected surrounding content to invalidate an otherwise matching allowlist input."
+
+  output="$(
+    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+      python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
+      <<<"$(jq -cn --arg input "$risky_input" '{toolName:"write_file",toolArgs:$input}')"
+  )"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected the same input under a different tool to remain blocked."
+
+  output="$(
+    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$risky_input" GUARD_MODE=block \
+      python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
+      <<<"$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')"
+  )"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected legacy unstructured allowlist text to fail closed."
+}
+
+test_equivalent_and_json_encoded_threats_are_denied() {
+  local workdir
+  local log_dir
+  local reordered_remove
+  local trailing_force
+  local unfiltered_delete
+  local encoded_payload
+  local risky_input
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  log_dir="$workdir/logs"
+  reordered_remove="rm"
+  reordered_remove+=" -fr"
+  reordered_remove+=" /"
+  trailing_force="git push"
+  trailing_force+=" origin main"
+  trailing_force+=" --force"
+  unfiltered_delete="DELETE"
+  unfiltered_delete+=" FROM"
+  unfiltered_delete+=" users"
+
+  for risky_input in "$reordered_remove" "$trailing_force" "$unfiltered_delete"; do
+    output="$(run_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')")"
+    assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+      "Expected equivalent destructive syntax to remain blocked."
+  done
+
+  encoded_payload="$(python3 - "$trailing_force" <<'PY'
 import sys
-import importlib.util
-from pathlib import Path
 
-repo_root = Path(sys.argv[1])
-tool_guard_path = repo_root / ".copilot/hooks/scripts/tool-guard.py"
-sys.path.insert(0, str(tool_guard_path.parent))
-spec = importlib.util.spec_from_file_location("copilot_tool_guard", tool_guard_path)
-module = importlib.util.module_from_spec(spec)
-assert spec and spec.loader
-spec.loader.exec_module(module)
-
-risky_delete = "rm" + " -rf" + " ."
-risky_db = "DROP" + " TABLE"
-allowlist = module.parse_allowlist_csv(f" {risky_delete} ,  {risky_db}  ,   ")
-
-if not module.allowlist_contains(f"bash {risky_delete}", allowlist):
-    raise SystemExit(10)
-if not module.allowlist_contains(f"bash {risky_db} users;", allowlist):
-    raise SystemExit(11)
-if module.allowlist_contains("bash echo safe", allowlist):
-    raise SystemExit(12)
-
-print("ok")
+encoded = "".join(f"\\u{ord(character):04x}" for character in sys.argv[1])
+print('{"toolName":"bash","toolArgs":"' + encoded + '"}')
 PY
   )"
+  output="$(run_tool_guard "$log_dir" block "$encoded_payload")"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected JSON-escaped destructive syntax to be decoded and blocked."
+}
 
-  assert_equals "ok" "$output" \
-    "Expected shared allowlist helpers to parse, trim, and match entries."
+test_block_response_and_audit_redact_sensitive_values() {
+  local workdir
+  local log_dir
+  local url_password
+  local query_token
+  local bearer_token
+  local api_key
+  local risky_input
+  local payload
+  local output
+  local sensitive_value
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  log_dir="$workdir/logs"
+  url_password="fake-url-password"
+  query_token="fake-query-token"
+  bearer_token="fake-bearer-token"
+  api_key="fake-api-key"
+  risky_input="rm Authorization: Bearer ${bearer_token} API_KEY=${api_key} .env && git push"
+  risky_input+=" https://tester:${url_password}@example.invalid/repo?access_token=${query_token}"
+  risky_input+=" origin main"
+  risky_input+=" --force"
+  payload="$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')"
+
+  output="$(run_tool_guard "$log_dir" block "$payload")"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected the sensitive destructive invocation to be denied."
+  assert_file_contains "$log_dir/guard.log" '[REDACTED]' \
+    "Expected redaction markers in the Tool Guardian audit record."
+  if grep -Fq '"match":' "$log_dir/guard.log" || grep -Fq '"suggestion":' "$log_dir/guard.log"; then
+    echo "Expected audit threats to contain only category, severity, and redacted excerpt fields." >&2
+    exit 1
+  fi
+
+  for sensitive_value in "$url_password" "$query_token" "$bearer_token" "$api_key"; do
+    if [[ "$output" == *"$sensitive_value"* ]]; then
+      echo "Expected block output to redact sensitive values." >&2
+      exit 1
+    fi
+    if grep -Fq "$sensitive_value" "$log_dir/guard.log"; then
+      echo "Expected Tool Guardian audit output to redact sensitive values." >&2
+      exit 1
+    fi
+  done
 }
 
 test_warn_mode_returns_json_for_cli_payload() {
@@ -63,7 +163,7 @@ test_warn_mode_returns_json_for_cli_payload() {
   risky_delete="rm"
   risky_delete+=" -rf"
   risky_delete+=" ."
-  expected_warning="⚠️ Tool Guardian warning: Tool Guardian blocked bash. destructive_file_ops/critical matched '${risky_delete}'. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_warning="⚠️ Tool Guardian warning: Tool Guardian blocked bash. destructive_file_ops/critical near '${risky_delete}'. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
 
   output="$(
     run_tool_guard \
@@ -261,7 +361,9 @@ test_tool_guard_rm_env_and_rm_git() {
 }
 
 main() {
-  test_common_allowlist_helpers_trim_and_match
+  test_structured_allowlist_is_tool_scoped_and_exact
+  test_equivalent_and_json_encoded_threats_are_denied
+  test_block_response_and_audit_redact_sensitive_values
   test_warn_mode_returns_json_for_cli_payload
   test_block_mode_denies_vscode_payload
   test_block_mode_parses_cli_tool_args_objects

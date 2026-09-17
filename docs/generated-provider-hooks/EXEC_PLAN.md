@@ -21,7 +21,8 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 - [x] (2026-09-17 05:37Z) [milestone-2] Generate Copilot, Gemini, and GitHub common and audit helpers without changing runtime behavior.
 - [x] (2026-09-17 05:47Z) [milestone-3] Generate Copilot and Gemini observability helpers without changing runtime behavior or latency expectations.
 - [x] (2026-09-17 06:01Z) [milestone-4] Generate and validate Copilot and Gemini Tool Guardian scripts from one canonical policy with explicit provider adapters.
-- [ ] [milestone-4] Complete the independent security review and resolve any high-confidence findings before accepting the milestone.
+- [x] (2026-09-17 06:27Z) [milestone-4] Resolve the first independent security review's SEC-001, SEC-002, and SEC-003 findings with public-envelope regressions and regenerated outputs.
+- [ ] [milestone-4] Obtain approval from the independent security rereview before accepting the milestone.
 - [ ] [milestone-5] Generate Copilot and Gemini secret scanners, remove owned local duplicates, and complete independent security review.
 - [ ] [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
 - [ ] [milestone-7] Finish repository-wide validation, classify drift, update durable documentation, and publish the Phase 2 recommendation.
@@ -48,6 +49,9 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - Observation: Tool Guardian has no dedicated latency benchmark or numeric latency budget in its focused suites or hook guidance.
   Evidence: Repository search found latency requirements only for observability and bounded Git-probe timing for secret scanning. Tool Guardian extraction retains each provider's existing imports, adds no runtime template loading or cross-provider imports, and both startup suites pass under their existing hook timeouts.
+
+- Observation: The first independent Tool Guardian security review rejected the extracted behavior with three high-confidence findings.
+  Evidence: SEC-001 showed that substring allowlist entries authorized destructive content with surrounding commands; SEC-002 showed that reordered recursive-remove flags, force-push options after the refspec, and unfiltered SQL deletion without a semicolon bypassed detectors; SEC-003 showed that raw matched credentials reached responses and audit records while Gemini created a permissive, unlocked log. Provider-level regressions now reproduce each class through public JSON envelopes.
 
 ## Decision Log
 
@@ -103,6 +107,18 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: Generator, provider, startup, and installer validation is complete, but the required independent security review is intentionally delegated to a separate reviewer and remains the milestone's only acceptance gate.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Replace Tool Guardian's comma-separated substring allowlist with a bounded JSON array of exact `{tool,input}` entries.
+  Rationale: NFKC normalization plus whitespace normalization permits stable configuration while exact tool-scoped comparison prevents an approved fragment from authorizing surrounding commands or a different tool. Malformed and legacy unstructured values fail closed.
+  Date/Author: 2026-09-17, Codex.
+
+- Decision: Normalize and tokenize only bounded command text for the recursive-remove and force-push detectors, and parse bounded SQL statements through semicolon or end of input.
+  Rationale: Equivalent option order, split flags, forced refspecs, JSON-encoded inputs, multiline SQL, and terminal SQL statements must produce the same decision without introducing unbounded parsing work on the hook hot path.
+  Date/Author: 2026-09-17, Codex.
+
+- Decision: Expose only category, severity, and a bounded redacted excerpt for Tool Guardian threats, and harden Gemini audit writes with owner-only no-follow files and a bounded cross-platform lock.
+  Rationale: Tool input can contain URL credentials, query tokens, authorization headers, and credential-like values. Responses and audit records must not reproduce those values, while concurrent or redirected logging must fail closed instead of weakening confidentiality or record integrity.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
@@ -111,7 +127,9 @@ Milestone 2 now owns six generated common and audit helpers. The renderer contra
 
 Milestone 3 now owns the two observability helpers. The generated runtime bodies preserve SQLite/WAL tracing, transcript finalization, NDJSON fallback, retention, locking, maintenance, and fail-open behavior; only the generated header was added. The eight named adapter expressions cover runtime identity, environment precedence, and the default home-directory log path. Generator, both observability, both startup, and both installer fixture suites passed. PowerShell installer tests passed with the expected junction skip. The direct real-home installer remains unavailable because `/root/.agents/skills` is read-only, so temporary-home installed-copy coverage is the available installed-behavior evidence.
 
-Milestone 4 extraction now owns the two Tool Guardian scripts through one canonical policy and explicit Copilot and Gemini adapters. Shared vectors cover all 21 matchers, positive aggregation, safe negatives, word boundaries, multiline and escaped-multiline cases, encoded fixture construction, allowlist parsing and substring semantics, and cross-provider parity. Provider suites separately prove response envelopes plus malformed and injected unexpected-input failures remain fail closed with exit `0`. Generator, both Tool Guardian, both startup, shell installer, and PowerShell installer suites pass. Acceptance remains pending the separately assigned independent security review.
+Milestone 4 extraction now owns the two Tool Guardian scripts through one canonical policy and explicit Copilot and Gemini adapters. The first independent security review found and rejected three behavior defects. The follow-up diff replaces substring authorization with normalized exact tool/input entries, recognizes equivalent destructive syntax through bounded normalization and tokenization, emits only redacted bounded threat excerpts, and gives Gemini owner-only no-follow locked audit writes. Shared vectors and public provider envelopes cover the corrected boundaries, including encoded payloads, credential-bearing matches, concurrent Gemini logging, and fail-closed linked destinations. Extraction and security-fix validation are complete; acceptance remains pending approval from the independent security rereview.
+
+Milestone 4 security-fix validation on 2026-09-17 passed Python compilation, shell syntax checks, `scripts/test-generate-hooks.py` (11 tests), both Tool Guardian suites, both startup suites, the shell installer fixture, and the PowerShell installer fixture with its expected unsupported-junction skip. `scripts/generate-hooks.py --check` reported all 12 outputs current, and `git diff --check` passed. The startup suites remain the available bounded-runtime evidence because this family has no separate numeric latency benchmark.
 
 ## Context and Orientation
 
@@ -223,9 +241,9 @@ Classify drift and handle confirmed defects separately as defined above. Accepta
 
 ### Milestone 4: Generate Tool Guardian and remove owned policy duplication
 Status: in progress
-Acceptance: not met (extraction and validation complete; independent security review pending)
+Acceptance: not met (extraction and security fixes validated; independent security rereview pending)
 
-Add `hooks/families/tool_guard.py`. Put shared threat detectors, encoded pattern definitions, threat aggregation, and allowlist behavior in one canonical source. Keep Copilot and Gemini payload extraction, decision envelopes, audit behavior, default paths, and fail-closed top-level handling in explicit provider adapters. Move the duplicated `parse_allowlist_csv` and `allowlist_contains` behavior into one canonical definition used in both generated scripts; generated files remain self-contained.
+Add `hooks/families/tool_guard.py`. Put shared threat detectors, encoded pattern definitions, threat aggregation, and allowlist behavior in one canonical source. Keep Copilot and Gemini payload extraction, decision envelopes, audit behavior, default paths, and fail-closed top-level handling in explicit provider adapters. Replace the duplicated `parse_allowlist_csv` substring behavior with one structured, exact `parse_allowlist` and `allowlist_contains` definition used in both generated scripts; generated files remain self-contained.
 
 Before extraction, add provider-neutral matcher vectors covering every current positive, negative, boundary, multiline, encoded-threat, allowlist, malformed-input, and unexpected-exception case. Keep provider-envelope assertions separate. Avoid placing raw dangerous command strings directly in maintenance tool payloads; construct exact threat fixtures dynamically as required by `.agents/memory/known-issues/hooks.md`.
 
@@ -414,3 +432,5 @@ Revision note, 2026-09-17: Completed Milestone 2. Canonical common and audit ren
 Revision note, 2026-09-17: Completed Milestone 3. Canonical observability rendering now owns the Copilot and Gemini helpers through eight exact, tested provider adapter expressions. Targeted generator, observability, startup, shell installer, and PowerShell installer fixture suites passed; direct real-home installation remained blocked by the existing read-only `/root/.agents/skills` destination.
 
 Revision note, 2026-09-17: Completed the Milestone 4 extraction and validation portion. Canonical Tool Guardian policy now renders both provider-local scripts; shared matcher and allowlist vectors plus separate envelope tests pass, including malformed and unexpected-exception fail-closed paths. The milestone remains in progress until the independent security review is approved.
+
+Revision note, 2026-09-17: Resolved the first Milestone 4 independent review's SEC-001, SEC-002, and SEC-003 findings in a separate TDD fix. Structured exact allowlists, bounded equivalent-syntax detection, redacted threat excerpts, and hardened Gemini logging now have shared and public-provider regressions. The milestone remains in progress until the independent rereview approves the fixes.

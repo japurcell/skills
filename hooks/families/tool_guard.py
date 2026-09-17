@@ -69,9 +69,20 @@ def emit_deny_response(reason: str) -> None:
 
 _GEMINI_IMPORT_AND_RESPONSE_ADAPTER = r'''import json
 import os
+import stat
 import sys
 import time
 from pathlib import Path
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
+
+try:
+    import msvcrt
+except ImportError:
+    msvcrt = None
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -105,6 +116,17 @@ def emit_deny_response(reason: str) -> None:
 
 _POLICY_SOURCE = r'''
 
+import re
+import shlex
+import unicodedata
+
+
+MAX_SCAN_TEXT = 32768
+MAX_COMMAND_SEGMENTS = 128
+MAX_COMMAND_TOKENS = 256
+MAX_EXCERPT_LENGTH = 160
+REDACTED = "[REDACTED]"
+
 def R(*codes: int) -> str:
     return "".join(chr(code) for code in codes)
 
@@ -133,6 +155,72 @@ def _simple_match(*codes: int):
         if index == -1:
             return None
         return text[index : index + len(needle)]
+
+    return matcher
+
+
+def _command_segments(text: str) -> list[list[str]]:
+    normalized = unicodedata.normalize("NFKC", text[:MAX_SCAN_TEXT])
+    raw_segments = re.split(r"(?:\r?\n|\\[nr]|&&|\|\||;)", normalized)
+    segments: list[list[str]] = []
+    for raw_segment in raw_segments[:MAX_COMMAND_SEGMENTS]:
+        token_source = re.sub(r'[{}\[\]",:]', " ", raw_segment)
+        try:
+            tokens = shlex.split(token_source, comments=False, posix=True)
+        except ValueError:
+            tokens = token_source.split()
+        if tokens:
+            segments.append(tokens[:MAX_COMMAND_TOKENS])
+    return segments
+
+
+def _matches_protected_remove_target(target: str, target_kind: str) -> bool:
+    unquoted = target.rstrip("/") or "/"
+    if target_kind == "/":
+        return unquoted == "/"
+    if target_kind == "~":
+        return unquoted == "~" or unquoted.startswith("~/")
+    if target_kind == ".":
+        return unquoted == "." or unquoted.startswith("./")
+    return unquoted == ".." or unquoted.startswith("../")
+
+
+def _match_recursive_rm_target(*target_codes: int):
+    target_kind = R(*target_codes)
+
+    def matcher(text: str, lower_text: str) -> str | None:
+        del lower_text
+        for tokens in _command_segments(text):
+            for index, token in enumerate(tokens):
+                if token.casefold().rsplit("/", 1)[-1] != "rm":
+                    continue
+                recursive = False
+                force = False
+                target_index = index + 1
+                while target_index < len(tokens):
+                    option = tokens[target_index].casefold()
+                    if option == "--":
+                        target_index += 1
+                        break
+                    if not option.startswith("-") or option == "-":
+                        break
+                    if option in {"--recursive", "--dir"}:
+                        recursive = True
+                    elif option == "--force":
+                        force = True
+                    elif option.startswith("-") and not option.startswith("--"):
+                        flags = option[1:]
+                        recursive = recursive or "r" in flags or "R" in option[1:]
+                        force = force or "f" in flags
+                    target_index += 1
+                if (
+                    recursive
+                    and force
+                    and target_index < len(tokens)
+                    and _matches_protected_remove_target(tokens[target_index], target_kind)
+                ):
+                    return " ".join(tokens[index : target_index + 1])
+        return None
 
     return matcher
 
@@ -189,37 +277,50 @@ def _match_rm_git(text: str, lower_text: str) -> str | None:
 
 def _match_git_push(*prefix_codes: int):
     prefix = R(*prefix_codes)
-    main = R(109, 97, 105, 110)
-    master = R(109, 97, 115, 116, 101, 114)
+    force_option = prefix.split()[-1]
+    protected = {R(109, 97, 105, 110), R(109, 97, 115, 116, 101, 114)}
 
     def matcher(text: str, lower_text: str) -> str | None:
-        index = lower_text.find(prefix)
-        if index == -1:
-            return None
-        tail = lower_text[index + len(prefix) :]
-        branch_index = tail.find(main)
-        branch_len = len(main)
-        if branch_index == -1:
-            branch_index = tail.find(master)
-            branch_len = len(master)
-        if branch_index == -1:
-            return None
-        return text[index : index + len(prefix) + branch_index + branch_len]
+        del lower_text
+        for tokens in _command_segments(text):
+            folded = [token.casefold() for token in tokens]
+            for index in range(len(tokens) - 1):
+                if folded[index : index + 2] != ["git", "push"]:
+                    continue
+                tail = folded[index + 2 :]
+                force_indexes = [offset for offset, token in enumerate(tail) if token == force_option]
+                branch_indexes = [
+                    offset for offset, token in enumerate(tail)
+                    if token.lstrip("+").split(":")[-1] in protected
+                ]
+                forced_refspecs = [
+                    offset for offset in branch_indexes if tail[offset].startswith("+")
+                ]
+                if force_indexes and branch_indexes:
+                    end = max(force_indexes[0], branch_indexes[0]) + index + 3
+                    return " ".join(tokens[index:end])
+                if force_option == "--force" and forced_refspecs:
+                    end = forced_refspecs[0] + index + 3
+                    return " ".join(tokens[index:end])
+        return None
 
     return matcher
 
 
 def _match_delete_from(text: str, lower_text: str) -> str | None:
-    prefix = R(100, 101, 108, 101, 116, 101, 32, 102, 114, 111, 109, 32)
-    index = lower_text.find(prefix)
-    if index == -1:
-        return None
-    semicolon = lower_text.find(";", index + len(prefix))
-    if semicolon == -1:
-        return None
-    if R(119, 104, 101, 114, 101) in lower_text[index:semicolon]:
-        return None
-    return text[index : semicolon + 1]
+    del lower_text
+    normalized = unicodedata.normalize("NFKC", text[:MAX_SCAN_TEXT])
+    statement_pattern = re.compile(
+        R(92, 98, 100, 101, 108, 101, 116, 101, 92, 115, 43, 102, 114, 111, 109, 92, 115, 43)
+        + r"[^\s;]+(?P<tail>.*?)(?:;|$)",
+        re.IGNORECASE | re.DOTALL,
+    )
+    for statement in statement_pattern.finditer(normalized):
+        tail = statement.group("tail")
+        if re.search(R(92, 98, 119, 104, 101, 114, 101, 92, 98), tail, re.IGNORECASE):
+            continue
+        return statement.group(0).strip()
+    return None
 
 
 def _match_pipe_chain(*codes: int):
@@ -257,10 +358,10 @@ def _match_data_upload(text: str, lower_text: str) -> str | None:
 
 
 PATTERNS = [
-    ("destructive_file_ops", "critical", _simple_match(114, 109, 32, 45, 114, 102, 32, 47), "Use targeted removals."),
-    ("destructive_file_ops", "critical", _simple_match(114, 109, 32, 45, 114, 102, 32, 126), "Use targeted removals."),
-    ("destructive_file_ops", "critical", _simple_match(114, 109, 32, 45, 114, 102, 32, 46), "Use targeted removals."),
-    ("destructive_file_ops", "critical", _simple_match(114, 109, 32, 45, 114, 102, 32, 46, 46), "Avoid recursive parent removal."),
+    ("destructive_file_ops", "critical", _match_recursive_rm_target(47), "Use targeted removals."),
+    ("destructive_file_ops", "critical", _match_recursive_rm_target(126), "Use targeted removals."),
+    ("destructive_file_ops", "critical", _match_recursive_rm_target(46), "Use targeted removals."),
+    ("destructive_file_ops", "critical", _match_recursive_rm_target(46, 46), "Avoid recursive parent removal."),
     ("destructive_file_ops", "critical", _match_rm_env, "Back up sensitive files first."),
     ("destructive_file_ops", "critical", _match_rm_git, "Never delete repository metadata."),
     ("destructive_git_ops", "critical", _match_git_push(103, 105, 116, 32, 112, 117, 115, 104, 32, 45, 45, 102, 111, 114, 99, 101), "Use a safer push strategy."),
@@ -281,14 +382,43 @@ PATTERNS = [
 ]
 
 
-def parse_allowlist_csv(raw_allowlist: str | None) -> list[str]:
+def _normalize_allowlist_value(value: str) -> str:
+    return " ".join(unicodedata.normalize("NFKC", value).strip().split())
+
+
+def parse_allowlist(raw_allowlist: str | None) -> list[dict[str, str]]:
     if not raw_allowlist:
         return []
-    return [entry.strip() for entry in raw_allowlist.split(",") if entry.strip()]
+    try:
+        decoded = json.loads(raw_allowlist)
+    except (TypeError, ValueError):
+        return []
+    if not isinstance(decoded, list) or len(decoded) > 64:
+        return []
+
+    entries: list[dict[str, str]] = []
+    for raw_entry in decoded:
+        if not isinstance(raw_entry, dict) or set(raw_entry) != {"tool", "input"}:
+            return []
+        tool = raw_entry.get("tool")
+        tool_input = raw_entry.get("input")
+        if not isinstance(tool, str) or not isinstance(tool_input, str):
+            return []
+        normalized_tool = _normalize_allowlist_value(tool).casefold()
+        normalized_input = _normalize_allowlist_value(tool_input)
+        if not normalized_tool or not normalized_input or len(normalized_tool) > 128 or len(normalized_input) > 8192:
+            return []
+        entries.append({"tool": normalized_tool, "input": normalized_input})
+    return entries
 
 
-def allowlist_contains(text: str, entries: list[str]) -> bool:
-    return any(entry in text for entry in entries)
+def allowlist_contains(tool_name: str, tool_input: str, entries: list[dict[str, str]]) -> bool:
+    normalized_tool = _normalize_allowlist_value(tool_name).casefold()
+    normalized_input = _normalize_allowlist_value(tool_input)
+    return any(
+        entry["tool"] == normalized_tool and entry["input"] == normalized_input
+        for entry in entries
+    )
 
 
 def read_tool_name(payload: dict) -> str:
@@ -312,28 +442,71 @@ def read_tool_input(payload: dict) -> str:
     return ""
 
 
+def redact_excerpt(value: str) -> str:
+    excerpt = unicodedata.normalize("NFKC", value[:4096])
+    excerpt = re.sub(
+        r"(?i)\b(https?://)([^/\s@]+)@",
+        lambda match: f"{match.group(1)}{REDACTED}@",
+        excerpt,
+    )
+    excerpt = re.sub(
+        r"(?i)(//\S+\s+)[^\s@]+@",
+        lambda match: f"//{REDACTED}@",
+        excerpt,
+    )
+    excerpt = re.sub(
+        r"(?i)([?&](?:access[_-]?token|api[_-]?key|token|secret|password|passwd|auth)=)[^&#\s]+",
+        lambda match: f"{match.group(1)}{REDACTED}",
+        excerpt,
+    )
+    excerpt = re.sub(
+        r"(?i)\b(authorization|proxy-authorization|x-api-key|api-key|cookie|set-cookie)\s*:\s*(?:(?:bearer|basic)\s+)?[^\s,;]+",
+        lambda match: f"{match.group(1)}: {REDACTED}",
+        excerpt,
+    )
+    excerpt = re.sub(
+        r"(?i)\b([A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*)\s*=\s*[^\s,;&]+",
+        lambda match: f"{match.group(1)}={REDACTED}",
+        excerpt,
+    )
+    excerpt = re.sub(
+        r"(?i)(--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+))[^\s,;&]+",
+        lambda match: f"{match.group(1)}{REDACTED}",
+        excerpt,
+    )
+    excerpt = re.sub(
+        r"(?i)\b(?:gh[pousr]_[A-Za-z0-9_]{8,}|sk-[A-Za-z0-9_-]{8,}|AKIA[A-Z0-9]{8,})\b",
+        REDACTED,
+        excerpt,
+    )
+    excerpt = " ".join(excerpt.split())
+    if len(excerpt) > MAX_EXCERPT_LENGTH:
+        excerpt = excerpt[: MAX_EXCERPT_LENGTH - 3] + "..."
+    return excerpt
+
+
 def build_threats(tool_text: str) -> list[dict[str, str]]:
     lower_tool_text = tool_text.lower()
     threats: list[dict[str, str]] = []
-    for category, severity, matcher, suggestion in PATTERNS:
+    for category, severity, matcher, _suggestion in PATTERNS:
         match = matcher(tool_text, lower_tool_text)
         if match:
             threats.append(
                 {
                     "category": category,
                     "severity": severity,
-                    "match": match,
-                    "suggestion": suggestion,
+                    "excerpt": redact_excerpt(match),
                 }
             )
     return threats
 
 
 def build_block_reason(tool_name: str, threats: list[dict[str, str]]) -> str:
-    summary = [f"{threat['category']}/{threat['severity']} matched '{threat['match']}'" for threat in threats[:3]]
+    summary = [f"{threat['category']}/{threat['severity']} near '{threat['excerpt']}'" for threat in threats[:3]]
     joined = "; ".join(summary)
+    safe_tool_name = redact_excerpt(tool_name) if tool_name else "tool invocation"
     return (
-        f"Tool Guardian blocked {tool_name or 'tool invocation'}. {joined}. "
+        f"Tool Guardian blocked {safe_tool_name}. {joined}. "
         "Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
     )
 '''
@@ -359,7 +532,7 @@ def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, th
         "timestamp": TIMESTAMP,
         "event": event,
         "mode": mode,
-        "tool": tool_name,
+        "tool": redact_excerpt(tool_name),
     }
     if event == "threats_detected":
         payload["threat_count"] = threat_count
@@ -384,6 +557,9 @@ def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, th
 
 
 _GEMINI_LOGGING_ADAPTER = r'''
+LOG_LOCK_TIMEOUT_SECONDS = 1.0
+
+
 def format_error(error: Exception) -> str:
     return str(error)
 
@@ -393,6 +569,72 @@ def configure_log() -> None:
     log_dir = os.environ.get("TOOL_GUARD_LOG_DIR", os.path.expanduser("~/.gemini/hooks/tool-guardian"))
     LOG_FILE = f"{log_dir}/guard.log"
     TIMESTAMP = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _open_owner_only_no_follow(path: str, flags: int) -> int:
+    no_follow = getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags | no_follow, 0o600)
+    try:
+        details = os.fstat(descriptor)
+        if not stat.S_ISREG(details.st_mode):
+            raise OSError(f"Log path is not a regular file: {path}")
+        if not no_follow:
+            path_details = os.stat(path, follow_symlinks=False)
+            if not stat.S_ISREG(path_details.st_mode) or (
+                path_details.st_dev,
+                path_details.st_ino,
+            ) != (details.st_dev, details.st_ino):
+                raise OSError(f"Refusing linked or replaced log path: {path}")
+        if hasattr(os, "fchmod"):
+            os.fchmod(descriptor, 0o600)
+        else:
+            os.chmod(path, 0o600, follow_symlinks=False)
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _acquire_log_lock(lock_path: str) -> int:
+    descriptor = _open_owner_only_no_follow(lock_path, os.O_CREAT | os.O_RDWR)
+    deadline = time.monotonic() + LOG_LOCK_TIMEOUT_SECONDS
+    if fcntl is not None:
+        while True:
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return descriptor
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    os.close(descriptor)
+                    raise TimeoutError(f"Timed out waiting for Tool Guardian log lock: {lock_path}") from None
+                time.sleep(0.01)
+    if msvcrt is not None:
+        if os.fstat(descriptor).st_size == 0:
+            os.write(descriptor, b"0")
+            os.fsync(descriptor)
+        while True:
+            try:
+                os.lseek(descriptor, 0, os.SEEK_SET)
+                msvcrt.locking(descriptor, msvcrt.LK_NBLCK, 1)
+                return descriptor
+            except OSError:
+                if time.monotonic() >= deadline:
+                    os.close(descriptor)
+                    raise TimeoutError(f"Timed out waiting for Tool Guardian log lock: {lock_path}") from None
+                time.sleep(0.01)
+    os.close(descriptor)
+    raise OSError("No supported Tool Guardian log locking primitive is available")
+
+
+def _release_log_lock(descriptor: int) -> None:
+    try:
+        if fcntl is not None:
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+        elif msvcrt is not None:
+            os.lseek(descriptor, 0, os.SEEK_SET)
+            msvcrt.locking(descriptor, msvcrt.LK_UNLCK, 1)
+    finally:
+        os.close(descriptor)
 
 
 def append_log(
@@ -406,21 +648,33 @@ def append_log(
 ) -> None:
     parent = os.path.dirname(log_file)
     if parent:
-        os.makedirs(parent, exist_ok=True)
+        os.makedirs(parent, mode=0o700, exist_ok=True)
 
     payload: dict[str, object] = {
         "timestamp": timestamp,
         "event": event,
         "mode": mode,
-        "tool": tool_name,
+        "tool": redact_excerpt(tool_name),
     }
     if event == "threats_detected":
         payload["threat_count"] = threat_count
         payload["threats"] = threats or []
 
-    with open(log_file, "a", encoding="utf-8") as handle:
-        handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-        handle.write("\n")
+    lock_descriptor = _acquire_log_lock(f"{log_file}.lock")
+    try:
+        descriptor = _open_owner_only_no_follow(log_file, os.O_APPEND | os.O_CREAT | os.O_WRONLY)
+        try:
+            handle = os.fdopen(descriptor, "a", encoding="utf-8")
+        except BaseException:
+            os.close(descriptor)
+            raise
+        with handle:
+            handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+    finally:
+        _release_log_lock(lock_descriptor)
 
 
 def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None) -> None:
@@ -451,10 +705,11 @@ def main() -> int:
         emit_deny_response("Tool Guardian skipped: invalid hook input JSON.")
 
     tool_name = read_tool_name(payload)
-    tool_text = f"{tool_name} {read_tool_input(payload)}"
-    allowlist = parse_allowlist_csv(os.environ.get("TOOL_GUARD_ALLOWLIST"))
+    tool_input = read_tool_input(payload)
+    tool_text = f"{tool_name} {tool_input}"
+    allowlist = parse_allowlist(os.environ.get("TOOL_GUARD_ALLOWLIST"))
 
-    if allowlist and allowlist_contains(tool_text, allowlist):
+    if allowlist and allowlist_contains(tool_name, tool_input, allowlist):
         log_payload("guard_skipped", mode, tool_name)
         emit_allow_response()
 

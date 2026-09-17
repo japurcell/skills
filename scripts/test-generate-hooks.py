@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 from pathlib import Path
 import re
@@ -287,10 +288,11 @@ class GenerateHooksTests(unittest.TestCase):
                     self.assertTrue(severity)
                     self.assertTrue(suggestion)
                     self.assertEqual(matcher(vector.text, vector.text.lower()), vector.expected_match)
-                    aggregated_matches = {
-                        threat["match"] for threat in module.build_threats(vector.text)
-                    }
-                    self.assertIn(vector.expected_match, aggregated_matches)
+                    aggregated_threats = module.build_threats(vector.text)
+                    self.assertIn(category, {threat["category"] for threat in aggregated_threats})
+                    self.assertTrue(
+                        all(set(threat) == {"category", "severity", "excerpt"} for threat in aggregated_threats)
+                    )
 
             outcomes = []
             for name, text in vectors.NEGATIVE_AGGREGATION_VECTORS:
@@ -299,19 +301,47 @@ class GenerateHooksTests(unittest.TestCase):
                     self.assertEqual(threats, [])
                     outcomes.append(threats)
 
+            for name, text, expected_category in vectors.ADVERSARIAL_AGGREGATION_VECTORS:
+                with self.subTest(provider=module.__name__, vector=name):
+                    threats = module.build_threats(text)
+                    self.assertIn(expected_category, {threat["category"] for threat in threats})
+
             multi_threats = module.build_threats(vectors.MULTI_THREAT_TEXT)
             self.assertEqual(
                 [(threat["category"], threat["severity"]) for threat in multi_threats],
                 [("system_danger", "high"), ("system_danger", "high")],
             )
-            allowlist = module.parse_allowlist_csv(vectors.ALLOWLIST_RAW)
-            self.assertEqual(tuple(allowlist), vectors.ALLOWLIST_ENTRIES)
-            self.assertTrue(module.allowlist_contains(f"bash {vectors.ALLOWLIST_ENTRIES[0]}", allowlist))
-            self.assertTrue(module.allowlist_contains(f"prefix{vectors.ALLOWLIST_ENTRIES[0]}suffix", allowlist))
-            self.assertFalse(module.allowlist_contains("bash echo safe", allowlist))
-            self.assertFalse(module.allowlist_contains(vectors.ALLOWLIST_ENTRIES[0].upper(), allowlist))
-            self.assertEqual(module.parse_allowlist_csv(None), [])
-            self.assertEqual(module.parse_allowlist_csv(" ,  , "), [])
+            sensitive_threats = module.build_threats(vectors.SENSITIVE_THREAT_TEXT)
+            self.assertTrue(sensitive_threats)
+            redacted_excerpt = module.redact_excerpt(vectors.SENSITIVE_THREAT_TEXT)
+            self.assertLessEqual(len(redacted_excerpt), 160)
+            for threat in sensitive_threats:
+                self.assertEqual(set(threat), {"category", "severity", "excerpt"})
+                self.assertLessEqual(len(threat["excerpt"]), 160)
+            serialized_sensitive_output = json.dumps(
+                {
+                    "threats": sensitive_threats,
+                    "reason": module.build_block_reason("bash", sensitive_threats),
+                }
+            )
+            for sensitive_value in vectors.FAKE_SENSITIVE_VALUES:
+                self.assertNotIn(sensitive_value, redacted_excerpt)
+                self.assertNotIn(sensitive_value, serialized_sensitive_output)
+            self.assertIn("[REDACTED]", serialized_sensitive_output)
+            allowlist = module.parse_allowlist(vectors.ALLOWLIST_RAW)
+            self.assertEqual(
+                tuple((entry["tool"], entry["input"]) for entry in allowlist),
+                vectors.ALLOWLIST_ENTRIES,
+            )
+            self.assertTrue(module.allowlist_contains("Bash", f"  {vectors.ALLOWLIST_INPUT}  ", allowlist))
+            self.assertFalse(module.allowlist_contains("write_file", vectors.ALLOWLIST_INPUT, allowlist))
+            self.assertFalse(module.allowlist_contains("bash", f"echo safe && {vectors.ALLOWLIST_INPUT}", allowlist))
+            self.assertFalse(module.allowlist_contains("bash", f"{vectors.ALLOWLIST_INPUT} && echo unsafe", allowlist))
+            self.assertFalse(module.allowlist_contains("bash", vectors.ALLOWLIST_INPUT.upper(), allowlist))
+            self.assertEqual(module.parse_allowlist(None), [])
+            self.assertEqual(module.parse_allowlist(""), [])
+            self.assertEqual(module.parse_allowlist(vectors.ALLOWLIST_INPUT), [])
+            self.assertEqual(module.parse_allowlist('[{"tool":"bash"}]'), [])
             provider_outcomes.append((outcomes, multi_threats, allowlist))
 
         self.assertEqual(provider_outcomes[0], provider_outcomes[1])

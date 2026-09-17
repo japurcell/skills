@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 
 
 def parts(*values: str) -> str:
@@ -23,8 +24,8 @@ class MatcherVector:
 POSITIVE_MATCHER_VECTORS = (
     MatcherVector("root_remove", encoded(114, 109, 32, 45, 114, 102, 32, 47), encoded(114, 109, 32, 45, 114, 102, 32, 47)),
     MatcherVector("home_remove", parts("rm", " -rf", " ~"), parts("rm", " -rf", " ~")),
-    MatcherVector("working_tree_remove", parts("rm", " -rf", " ./build"), parts("rm", " -rf", " .")),
-    MatcherVector("parent_remove", parts("rm", " -rf", " ../build"), parts("rm", " -rf", " ..")),
+    MatcherVector("working_tree_remove", parts("rm", " -rf", " ./build"), parts("rm", " -rf", " ./build")),
+    MatcherVector("parent_remove", parts("rm", " -rf", " ../build"), parts("rm", " -rf", " ../build")),
     MatcherVector("environment_remove", parts("del", " /q ", ".env"), parts("del", " /q ", ".env")),
     MatcherVector("metadata_remove", parts("unlink", " -- ", ".git"), parts("unlink", " -- ", ".git")),
     MatcherVector("forced_push", parts("git push", " --force", " origin main"), parts("git push", " --force", " origin main")),
@@ -58,9 +59,49 @@ NEGATIVE_AGGREGATION_VECTORS = (
 )
 
 
+ADVERSARIAL_AGGREGATION_VECTORS = (
+    ("reordered_remove_flags", parts("rm", " -fr", " /"), "destructive_file_ops"),
+    ("separated_remove_flags", parts("rm", " -r", " -f", " ~"), "destructive_file_ops"),
+    ("long_remove_flags", parts("rm", " --force", " --recursive", " ../cache"), "destructive_file_ops"),
+    ("force_option_after_refspec", parts("git push", " origin main", " --force"), "destructive_git_ops"),
+    ("forced_refspec", parts("git push", " origin +main"), "destructive_git_ops"),
+    ("delete_without_semicolon", parts("DELETE", " FROM", " users"), "database_destruction"),
+    ("multiline_delete_without_semicolon", parts("DELETE", "\n", "FROM", " users"), "database_destruction"),
+)
+
+
 MULTI_THREAT_TEXT = parts("sudo", " ", "npm", " publish")
-ALLOWLIST_RAW = parts("  ", "git push", " --force", " origin main", " , ", "DROP", " TABLE", "  ,  ")
+ALLOWLIST_INPUT = parts("git push", " --force", " origin main")
+ALLOWLIST_RAW = json.dumps(
+    [
+        {"tool": "bash", "input": ALLOWLIST_INPUT},
+        {"tool": "run_shell_command", "input": parts("DROP", " TABLE", " users;")},
+    ],
+    separators=(",", ":"),
+)
 ALLOWLIST_ENTRIES = (
-    parts("git push", " --force", " origin main"),
-    parts("DROP", " TABLE"),
+    ("bash", ALLOWLIST_INPUT),
+    ("run_shell_command", parts("DROP", " TABLE", " users;")),
+)
+
+FAKE_URL_PASSWORD = parts("fake", "-url-password")
+FAKE_QUERY_TOKEN = parts("fake", "-query-token")
+FAKE_BEARER_TOKEN = parts("fake", "-bearer-token")
+FAKE_API_KEY = parts("fake", "-api-key")
+SENSITIVE_THREAT_TEXT = parts(
+    "git push",
+    " https://tester:",
+    FAKE_URL_PASSWORD,
+    "@example.invalid/repo?access_token=",
+    FAKE_QUERY_TOKEN,
+    " origin main --force Authorization: Bearer ",
+    FAKE_BEARER_TOKEN,
+    " API_KEY=",
+    FAKE_API_KEY,
+)
+FAKE_SENSITIVE_VALUES = (
+    FAKE_URL_PASSWORD,
+    FAKE_QUERY_TOKEN,
+    FAKE_BEARER_TOKEN,
+    FAKE_API_KEY,
 )
