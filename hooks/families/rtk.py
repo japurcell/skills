@@ -10,6 +10,10 @@ SHEBANG = "#!/usr/bin/env python3\n"
 HEADER = "# Generated from hooks/families/rtk.py by scripts/generate-hooks.py. Do not edit.\n"
 ADAPTER_START = "# BEGIN PROVIDER ADAPTER\n"
 ADAPTER_END = "# END PROVIDER ADAPTER\n"
+_TARGET_PATHS = {
+    "copilot": ".copilot/hooks/scripts/rtk-hook-copilot.py",
+    "gemini": ".gemini/hooks/scripts/rtk-hook-gemini.py",
+}
 
 
 _COPILOT_ADAPTER = r'''RTK_PROVIDER = "copilot"
@@ -253,7 +257,7 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
     if (
         target.family != "rtk"
         or target.provider != provider.name
-        or provider.name not in {"copilot", "gemini"}
+        or target.output_path.as_posix() != _TARGET_PATHS.get(provider.name)
     ):
         raise ValueError(f"Unsupported RTK target/provider: {target.output_path}")
     future_import, runtime_body = _RUNTIME_SOURCE.split("\n", 1)

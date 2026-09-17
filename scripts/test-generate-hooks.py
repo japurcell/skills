@@ -202,6 +202,31 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertIn('hook_out["permissionDecision"] = "allow"', rendered[RTK_TARGETS[0]])
         self.assertNotIn('permissionDecision"] = "allow"', rendered[RTK_TARGETS[1]])
 
+    def test_rtk_renderer_rejects_swapped_and_undeclared_target_paths(self) -> None:
+        load_generator()
+        from hooks.families import rtk
+        from hooks.manifest import GeneratedTarget
+        from hooks.providers import PROVIDERS
+
+        invalid_targets = (
+            (
+                "swapped",
+                GeneratedTarget("rtk", "copilot", Path(RTK_TARGETS[1])),
+            ),
+            (
+                "undeclared",
+                GeneratedTarget(
+                    "rtk",
+                    "copilot",
+                    Path(".copilot/hooks/scripts/rtk-hook-undeclared.py"),
+                ),
+            ),
+        )
+        for case, target in invalid_targets:
+            with self.subTest(case=case):
+                with self.assertRaisesRegex(ValueError, "Unsupported RTK target/provider"):
+                    rtk.render(PROVIDERS["copilot"], target)
+
     def test_help_and_usage_are_explicit_and_non_mutating(self) -> None:
         before = snapshot(ROOT)
         for flag in ("-h", "--help"):

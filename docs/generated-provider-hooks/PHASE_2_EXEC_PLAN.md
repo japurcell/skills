@@ -18,7 +18,7 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 
 - [x] (2026-09-17 20:40Z) [milestone-1] Strengthen RTK characterization without changing runtime behavior and record the required-skill-loader no-migration decision.
 - [x] (2026-09-17 21:22Z) [milestone-2] Fix RTK open-pipe completion, preserve accepted input bytes, add the five-second Gemini outer timeout, and repair the reviewed first-byte and diagnostic boundaries.
-- [ ] [milestone-3] Generate the two provider-local RTK forwarders from one canonical family while preserving every approved adapter difference (completed: canonical family, manifest ownership, and generated parity; remaining: reject swapped and undeclared output paths in `render()`).
+- [x] (2026-09-17 21:28Z) [milestone-3] Generate the two provider-local RTK forwarders from one canonical family, preserve every approved adapter difference, and reject swapped or undeclared output paths in `render()`.
 - [x] (2026-09-17) [milestone-4] Add read-only generated-hook freshness preflight to both installers before any destination mutation.
 - [ ] [milestone-5] Run full validation, obtain focused review, synchronize documentation, and record final outcomes.
 
@@ -137,7 +137,7 @@ Planning and candidate characterization are complete. Milestone 1 added public J
 
 Milestone 2 is complete after focused-review repair. Both forwarders now read raw pipe bytes until one JSON object is complete, drain immediately available trailing bytes, and pass accepted input unchanged to RTK. The 0.5-second idle window starts before the first byte and renews after every incomplete chunk; the same deadline reaches the Windows `PeekNamedPipe` path as a real float. Nonzero RTK failures audit only the exit code, so arbitrary stderr cannot expand or disclose data through the audit log. The new initially-empty POSIX cases failed by waiting for pipe EOF, and the stderr cases failed by exposing the sentinel before the repairs; both provider suites are green afterward. `bash scripts/test-hooks-rtk.sh`, `bash scripts/test-gemini-hooks-rtk.sh`, both startup suites, both observability suites, and `python3 scripts/test-generate-hooks.py` passed. Generator freshness remained at 22 files.
 
-Milestone 3 is complete. `hooks/families/rtk.py` now renders the two provider-local forwarders declared by `hooks/manifest.py`, bringing the owned output count to 22. The generator test first failed because the RTK targets were not declared, then passed after the canonical family, manifest entries, and generated outputs were added. `python3 scripts/generate-hooks.py --write` refreshed both files; `python3 scripts/generate-hooks.py --check`, `python3 scripts/test-generate-hooks.py`, `bash scripts/test-hooks-rtk.sh`, and `bash scripts/test-gemini-hooks-rtk.sh` passed.
+Milestone 3 is complete after focused-review repair. `hooks/families/rtk.py` renders only the two exact provider and output-path pairs declared by `hooks/manifest.py`, bringing the owned output count to 22 while preserving the approved adapters and supported output bytes. The new swapped-path and undeclared-path subtests first failed together because neither call raised `ValueError`, then passed after the renderer enforced the exact mapping. The full generator suite passed 23 tests; `python3 scripts/generate-hooks.py --check` reported all 22 files current; both provider RTK suites and `git diff --check` passed; and no generated output changed.
 
 Milestone 4 is complete. Both installers validate the canonical `hooks/` tree and `scripts/generate-hooks.py`, then run a bytecode-disabled `--check` before the Codex converter or any destination mutation. Stale output retains the generator's path list, adds the exact write recovery command, and exits 1; controlled generator failures retain their diagnostic, add a generic preflight message, omit write advice, and exit 2. Installer fixtures now copy the canonical package plus every manifest target and derive the corrupted RTK target from the manifest. The Bash test was red with stale output exiting 0, then passed after the Bash preflight; the PowerShell test had the same red exit-0 evidence and passed after its preflight. Final focused validation passed: `bash -n scripts/install.sh`, `bash scripts/test-install.sh`, and `pwsh -NoProfile -File scripts/test-install.ps1` (the PowerShell suite skipped junction creation on this host).
 
@@ -197,8 +197,8 @@ Run both focused suites and the relevant startup/observability suites because ea
 Acceptance is met when complete JSON on an open pipe returns, incomplete JSON stops within the defined idle window, a payload larger than 1 MiB reaches mock RTK, accepted bytes remain unchanged, every established provider response remains unchanged, and Gemini configuration has the five-second outer timeout.
 
 ### Milestone 3: Generate the RTK family
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Create `hooks/families/rtk.py`. Follow existing family structure: define the shebang and generated ownership header, keep shared runtime code in one canonical body, and isolate provider differences in small explicit adapter data or renderer blocks. The `render(provider, target)` function must reject provider/target mismatches and unsupported providers. Do not add RTK-specific fields to the global `Provider` dataclass unless the implementation proves they serve more than this one family; a family-local adapter is clearer for two outputs.
 
