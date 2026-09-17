@@ -22,6 +22,11 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
   local output
   local separator
   local separated_input
+  local compatibility_index
+  local allowlisted_input
+  local compatibility_input
+  local -a ascii_shell_chars=(';' '&' '|' '$' '"' "'" '`')
+  local -a fullwidth_shell_chars=('；' '＆' '｜' '＄' '＂' '＇' '｀')
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -73,6 +78,19 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
     )"
     assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
       "Expected control and escaped separators to be rejected from Copilot allowlist entries."
+  done
+
+  for compatibility_index in "${!ascii_shell_chars[@]}"; do
+    allowlisted_input="${risky_input} ${ascii_shell_chars[$compatibility_index]} echo safe"
+    compatibility_input="${risky_input} ${fullwidth_shell_chars[$compatibility_index]} echo safe"
+    allowlist="$(jq -cn --arg tool bash --arg input "$allowlisted_input" '[{tool:$tool,input:$input}]')"
+    output="$(
+      TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+        python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
+        <<<"$(jq -cn --arg input "$compatibility_input" '{toolName:"bash",toolArgs:$input}')"
+    )"
+    assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+      "Expected fullwidth shell punctuation variant $compatibility_index to remain distinct during Copilot allowlist equality."
   done
 }
 
@@ -169,6 +187,38 @@ test_parser_limits_and_complete_command_forms_fail_closed() {
   )"
   assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
     "Expected parser-bound overflow to fail closed before Copilot allowlist authorization."
+}
+
+test_home_variable_removals_and_git_global_options_are_denied() {
+  local workdir
+  local log_dir
+  local home_target
+  local risky_input
+  local output
+  local -a home_targets=('$HOME' '${HOME}' '"$HOME"' '"${HOME}"' '$env:HOME' '${env:HOME}' '$env:USERPROFILE' '%USERPROFILE%' '%HOMEDRIVE%%HOMEPATH%')
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  log_dir="$workdir/logs"
+
+  for home_target in "${home_targets[@]}"; do
+    risky_input="rm"; risky_input+=" -rf"; risky_input+=" $home_target"
+    output="$(run_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')")"
+    assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+      "Expected Copilot to deny forced recursive removal through home-variable form $home_target."
+  done
+
+  risky_input="git"; risky_input+=" -C repo"; risky_input+=" -c advice.detachedHead=false"; risky_input+=" --no-pager"
+  risky_input+=" push origin refs/heads/main"; risky_input+=" --force"
+  output="$(run_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')")"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected Copilot to parse Git global options before a protected forced push."
+
+  risky_input="/usr/bin/git"; risky_input+=" --git-dir repo/.git"; risky_input+=" --work-tree=repo"; risky_input+=" --no-optional-locks"
+  risky_input+=" push origin master"; risky_input+=" -f"
+  output="$(run_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')")"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected Copilot to parse Git global option/value forms before push."
 }
 
 test_block_response_and_audit_omit_sensitive_evidence() {
@@ -432,6 +482,7 @@ main() {
   test_structured_allowlist_is_tool_scoped_and_exact
   test_equivalent_and_json_encoded_threats_are_denied
   test_parser_limits_and_complete_command_forms_fail_closed
+  test_home_variable_removals_and_git_global_options_are_denied
   test_block_response_and_audit_omit_sensitive_evidence
   test_warn_mode_returns_json_for_cli_payload
   test_block_mode_denies_vscode_payload

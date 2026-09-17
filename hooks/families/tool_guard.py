@@ -183,7 +183,7 @@ def _command_segments(text: str) -> list[list[str]]:
         raise ScanLimitExceeded("tool input exceeds the command-segment limit")
     segments: list[list[str]] = []
     for raw_segment in raw_segments:
-        token_source = re.sub(r'[{}\[\]",]', " ", raw_segment)
+        token_source = re.sub(r'[",]', " ", raw_segment)
         try:
             tokens = shlex.split(token_source, comments=False, posix=True)
         except ValueError:
@@ -204,11 +204,29 @@ def _executable_basename(token: str) -> str:
 
 
 def _matches_protected_remove_target(target: str, target_kind: str) -> bool:
-    unquoted = target.rstrip("/") or "/"
+    unquoted = target.rstrip("/\\") or "/"
     if target_kind == "/":
         return unquoted == "/"
     if target_kind == "~":
-        return unquoted == "~" or unquoted.startswith("~/")
+        folded = unquoted.casefold()
+        home_prefixes = (
+            "~",
+            "$home",
+            "${home}",
+            "$userprofile",
+            "${userprofile}",
+            "$env:home",
+            "${env:home}",
+            "$env:userprofile",
+            "${env:userprofile}",
+            "%userprofile%",
+            "%homepath%",
+            "%homedrive%%homepath%",
+        )
+        return any(
+            folded == prefix or folded.startswith((f"{prefix}/", f"{prefix}\\"))
+            for prefix in home_prefixes
+        )
     if target_kind == ".":
         return unquoted == "." or unquoted.startswith("./")
     return unquoted == ".." or unquoted.startswith("../")
@@ -305,14 +323,69 @@ def _match_git_push(*prefix_codes: int):
     force_option = prefix.split()[-1]
     protected = {R(109, 97, 105, 110), R(109, 97, 115, 116, 101, 114)}
 
+    options_with_values = {
+        "-C",
+        "-c",
+        "--config-env",
+        "--exec-path",
+        "--git-dir",
+        "--namespace",
+        "--super-prefix",
+        "--work-tree",
+    }
+    options_without_values = {
+        "--bare",
+        "--glob-pathspecs",
+        "--html-path",
+        "--icase-pathspecs",
+        "--info-path",
+        "--literal-pathspecs",
+        "--man-path",
+        "--no-advice",
+        "--no-optional-locks",
+        "--no-pager",
+        "--no-replace-objects",
+        "--noglob-pathspecs",
+        "--paginate",
+        "-P",
+        "-p",
+    }
+
+    def push_index(tokens: list[str], git_index: int) -> int | None:
+        index = git_index + 1
+        while index < len(tokens):
+            token = tokens[index]
+            if token.casefold() == "push":
+                return index
+            if token in options_with_values:
+                if index + 1 >= len(tokens):
+                    return None
+                index += 2
+                continue
+            if (
+                (token.startswith("-C") and token != "-C")
+                or (token.startswith("-c") and token != "-c")
+                or any(token.startswith(f"{option}=") for option in options_with_values if option.startswith("--"))
+            ):
+                index += 1
+                continue
+            if token in options_without_values:
+                index += 1
+                continue
+            return None
+        return None
+
     def matcher(text: str, lower_text: str) -> str | None:
         del lower_text
         for tokens in _command_segments(text):
             folded = [token.casefold() for token in tokens]
-            for index in range(len(tokens) - 1):
-                if _executable_basename(tokens[index]) != "git" or folded[index + 1] != "push":
+            for index in range(len(tokens)):
+                if _executable_basename(tokens[index]) != "git":
                     continue
-                tail = folded[index + 2 :]
+                command_index = push_index(tokens, index)
+                if command_index is None:
+                    continue
+                tail = folded[command_index + 1 :]
                 force_indexes = [offset for offset, token in enumerate(tail) if token == force_option]
                 branch_indexes = [
                     offset for offset, token in enumerate(tail)
@@ -322,10 +395,10 @@ def _match_git_push(*prefix_codes: int):
                     offset for offset in branch_indexes if tail[offset].startswith("+")
                 ]
                 if force_indexes and branch_indexes:
-                    end = max(force_indexes[0], branch_indexes[0]) + index + 3
+                    end = max(force_indexes[0], branch_indexes[0]) + command_index + 2
                     return " ".join(tokens[index:end])
                 if force_option == "--force" and forced_refspecs:
-                    end = forced_refspecs[0] + index + 3
+                    end = forced_refspecs[0] + command_index + 2
                     return " ".join(tokens[index:end])
         return None
 
@@ -459,14 +532,12 @@ PATTERNS = [
 
 
 def _normalize_allowlist_value(value: str) -> str:
-    normalized = unicodedata.normalize("NFKC", value)
-    return re.sub(r" +", " ", normalized.strip(" "))
+    return value.strip(" ")
 
 
 def _has_forbidden_allowlist_separator(value: str) -> bool:
-    normalized = unicodedata.normalize("NFKC", value)
-    return any(unicodedata.category(character) == "Cc" for character in normalized) or bool(
-        re.search(r"\\(?:n|r|t|x0[9ad]|u000[9ad])", normalized, re.IGNORECASE)
+    return any(unicodedata.category(character) == "Cc" for character in value) or bool(
+        re.search(r"\\(?:n|r|t|x0[9ad]|u000[9ad])", value, re.IGNORECASE)
     )
 
 

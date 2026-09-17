@@ -74,6 +74,11 @@ ADVERSARIAL_AGGREGATION_VECTORS = (
     ("later_protected_remove_operand", parts("rm", " -rf", " cache", " /"), "destructive_file_ops"),
     ("path_qualified_remove", parts("/usr/bin/rm", " -rf", " /"), "destructive_file_ops"),
     ("qualified_remove_extension", parts("C:/tools/rm.exe", " -rf", " /"), "destructive_file_ops"),
+    ("home_variable_remove", parts("rm", " -rf", " $HOME"), "destructive_file_ops"),
+    ("braced_home_variable_remove", parts("rm", " -rf", " ${HOME}/cache"), "destructive_file_ops"),
+    ("powershell_home_variable_remove", parts("rm", " -rf", " $env:HOME"), "destructive_file_ops"),
+    ("windows_home_variable_remove", parts("rm", " -rf", " %USERPROFILE%"), "destructive_file_ops"),
+    ("windows_home_path_remove", parts("rm", " -rf", " %HOMEDRIVE%%HOMEPATH%"), "destructive_file_ops"),
     (
         "path_qualified_git_full_refspec",
         parts("/usr/bin/git push", " origin feature:refs/heads/main", " --force"),
@@ -82,6 +87,16 @@ ADVERSARIAL_AGGREGATION_VECTORS = (
     (
         "forced_full_refspec",
         parts("git push", " origin +feature:refs/heads/master"),
+        "destructive_git_ops",
+    ),
+    (
+        "git_directory_and_config_options",
+        parts("git", " -C repo", " -c advice.detachedHead=false", " --no-pager", " push origin main --force"),
+        "destructive_git_ops",
+    ),
+    (
+        "git_path_options",
+        parts("git", " --git-dir repo/.git", " --work-tree=repo", " push origin master -f"),
         "destructive_git_ops",
     ),
     (
@@ -122,6 +137,18 @@ ALLOWLIST_RAW = json.dumps(
 ALLOWLIST_ENTRIES = (
     ("bash", ALLOWLIST_INPUT),
     ("run_shell_command", parts("DROP", " TABLE", " users;")),
+)
+
+ALLOWLIST_COMPATIBILITY_PAIRS = tuple(
+    (
+        parts(ALLOWLIST_INPUT, " ", ascii_character, " echo safe"),
+        parts(ALLOWLIST_INPUT, " ", fullwidth_character, " echo safe"),
+    )
+    for ascii_character, fullwidth_character in zip(
+        (";", "&", "|", "$", '"', "'", "`"),
+        ("；", "＆", "｜", "＄", "＂", "＇", "｀"),
+        strict=True,
+    )
 )
 
 FAKE_URL_PASSWORD = parts("fake", "-url-password")

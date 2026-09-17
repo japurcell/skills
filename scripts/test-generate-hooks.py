@@ -349,6 +349,15 @@ class GenerateHooksTests(unittest.TestCase):
                 encoded_allowlist = json.dumps([{"tool": "bash", "input": separated_input}])
                 self.assertEqual(module.parse_allowlist(encoded_allowlist), [])
                 self.assertFalse(module.allowlist_contains("bash", separated_input, allowlist))
+            for allowlisted_input, compatibility_input in vectors.ALLOWLIST_COMPATIBILITY_PAIRS:
+                compatibility_allowlist = module.parse_allowlist(
+                    json.dumps([{"tool": "bash", "input": allowlisted_input}])
+                )
+                self.assertFalse(
+                    module.allowlist_contains("bash", compatibility_input, compatibility_allowlist)
+                )
+            internal_spacing = vectors.ALLOWLIST_INPUT.replace(" ", "  ", 1)
+            self.assertFalse(module.allowlist_contains("bash", internal_spacing, allowlist))
             provider_outcomes.append((outcomes, multi_threats, allowlist))
 
         self.assertEqual(provider_outcomes[0], provider_outcomes[1])
