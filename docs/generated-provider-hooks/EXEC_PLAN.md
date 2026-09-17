@@ -31,7 +31,7 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 - [x] (2026-09-17 08:17Z) [milestone-5] Resolve the security rereview's initial-probe, literal-pathspec, streaming-output/deadline, and staged-scope findings in a second isolated TDD repair.
 - [x] (2026-09-17 08:31Z) [milestone-5] Resolve the next security rereview's ambiguous index-object and source-collapsing default-diff findings in a third isolated TDD repair.
 - [x] (2026-09-17 08:48Z) [milestone-5] Resolve the next security rereview's unbounded finding retention, match-loop deadline, serialized-record, and incoming-record rotation findings in a fourth isolated TDD repair.
-- [ ] [milestone-5] Obtain independent security approval for canonical secret patterns, Git subprocess boundaries, output envelopes, logging, timeouts, and rendered files.
+- [x] (2026-09-17 08:52Z) [milestone-5] Obtain independent security approval for canonical secret patterns, Git subprocess boundaries, output envelopes, logging, timeouts, and rendered files.
 - [ ] [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
 - [ ] [milestone-7] Finish repository-wide validation, classify drift, update durable documentation, and publish the Phase 2 recommendation.
 
@@ -218,6 +218,10 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: High-match inputs must reach a prompt fail-closed decision without building attacker-proportional Python or JSON structures. The log records how many processed findings were omitted and whether detail collection was truncated; match loops enforce the scanner's global deadline, and rotation compares the active file plus the incoming encoded record before appending.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Accept Milestone 5 at commit `0816d4672e38bd2cf9a3a126d247cbb82070252f` after independent security rereview.
+  Rationale: The reviewer examined the canonical scanner, generated Copilot and Gemini outputs, public regressions, Git and filesystem boundaries, resource limits, redaction, logging, and provider failure envelopes and reported no high-confidence blocker. Extraction, four focused repair commits, validation, and the independent approval gate are complete.
+  Date/Author: 2026-09-17, independent security reviewer and Codex.
+
 ## Outcomes & Retrospective
 
 Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
@@ -247,6 +251,8 @@ Milestone 5 second security repair at 2026-09-17 08:17Z closes the rereview's SE
 Milestone 5 third security repair at 2026-09-17 08:31Z closes SEC-009 and SEC-010. Staged blob size and content reads now use the unambiguous `:./<path>` index-object form, while default diff scope separately enumerates cached changes against `HEAD`, worktree changes against the index, and untracked files. Candidate identity includes the source as well as the path, and added-line parsing uses the corresponding cached or worktree diff. Both provider suites prove a staged `0:`-prefixed filename containing a dynamically constructed fake token is scanned and a fake token that exists only in the index remains detectable after the worktree is restored to `HEAD`. Shared generated-code tests prove identical cached and worktree pathnames remain separate and pin the exact index-object arguments. Final validation passed Python compilation, shell syntax checks, all 20 generator tests, both secret-scanner suites, both Tool Guardian suites, both startup suites, shell and PowerShell installer fixtures, generator freshness for all 14 outputs, and diff hygiene. The PowerShell fixture reported only its expected unsupported-junction skip. Milestone status and acceptance remain unchanged pending independent security rereview.
 
 Milestone 5 fourth security repair at 2026-09-17 08:48Z closes SEC-011. Finding processing now retains at most 100 redacted details and short-circuits at 1,000 processed findings while recording the known omitted-detail count and truncation state. The global scanner deadline is checked inside line, pattern, and match loops and immediately before logging; log-lock waits also honor the smaller remaining global budget. Audit records are encoded and rejected above 64 KiB, and rotation compares the existing file size plus the incoming record before append. Both provider suites prove a 10,000-match staged fake-token input returns a provider-correct denial within eight seconds, retains at most 100 redacted details, reports omitted findings, rotates a nearly full 64 KiB log, and keeps the active record bounded. Shared tests independently prove incoming-record-aware rotation and oversized-record rejection. Final validation passed Python compilation, shell syntax checks, all 20 generator tests, both secret-scanner suites, both Tool Guardian suites, both startup suites, shell and PowerShell installer fixtures, generator freshness for all 14 outputs, and diff hygiene. The PowerShell fixture reported only its expected unsupported-junction skip. Milestone status and acceptance remain unchanged pending independent security rereview.
+
+Independent security rereview approved Milestone 5 at commit `0816d4672e38bd2cf9a3a126d247cbb82070252f` with no high-confidence blocker. The accepted scanner keeps provider-local runtime files generated from one canonical policy, preserves Copilot and Gemini envelopes, fails closed in block mode while retaining warn compatibility, uses bounded literal Git operations, scans staged, worktree, and untracked sources independently, handles credential paths and binary token content, reads candidates and writes logs through hardened filesystem boundaries, redacts stored evidence, and caps files, bytes, time, locks, findings, and audit records. Milestone 5 is done and accepted; Milestone 6 is the next open implementation milestone.
 
 ## Context and Orientation
 
@@ -369,8 +375,8 @@ Run `bash scripts/test-hooks-tool-guard.sh`, `bash scripts/test-gemini-hooks-too
 Acceptance requires identical detector outcomes across providers for shared vectors, correct provider-specific responses, fail-closed malformed and exception paths, unchanged latency compliance, and approved security review.
 
 ### Milestone 5: Generate secret scanners and remove owned response duplication
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met (full extraction validation and independent security approval at `0816d4672e38bd2cf9a3a126d247cbb82070252f`)
 
 Add `hooks/families/scan_secrets.py`. Canonicalize Git probing, repository and candidate-file discovery, diff-added-line scanning, credential path rules, binary/text checks, redaction, allowlists, log rotation, findings construction, and mode normalization. Preserve provider-specific denial envelopes, payload keys, session fields, log paths, and audit behavior. Use the same canonical allowlist implementation chosen in Milestone 4 without creating a runtime cross-provider import.
 
@@ -569,3 +575,5 @@ Revision note, 2026-09-17: The first Milestone 5 repair did not satisfy security
 Revision note, 2026-09-17: A third isolated Milestone 5 TDD repair disambiguates staged filenames from Git's stage-selector syntax and preserves cached, worktree, and untracked candidate identity throughout default diff scanning. Milestone 5 remains in progress pending independent rereview.
 
 Revision note, 2026-09-17: A fourth isolated Milestone 5 TDD repair bounds finding retention and processing, enforces the global deadline inside match loops and at logging, caps encoded audit records, and makes rotation account for the incoming record. Milestone 5 remains in progress pending independent rereview.
+
+Revision note, 2026-09-17: Independent security rereview approved Milestone 5 at `0816d4672e38bd2cf9a3a126d247cbb82070252f` with no high-confidence blocker. Progress, outcome, status, and acceptance are now synchronized as done and met.
