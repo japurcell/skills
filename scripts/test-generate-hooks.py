@@ -14,7 +14,9 @@ import stat
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -52,6 +54,10 @@ OBSERVABILITY_TARGETS = (
 TOOL_GUARD_TARGETS = (
     ".copilot/hooks/scripts/tool-guard.py",
     ".gemini/hooks/scripts/tool-guard.py",
+)
+SECRET_SCANNER_TARGETS = (
+    ".copilot/hooks/scripts/scan-secrets.py",
+    ".gemini/hooks/scripts/scan-secrets.py",
 )
 OBSERVABILITY_ALLOWED_DIFFERENCES = (
     ('OBSERVABILITY_RUNTIME = "copilot"', 'OBSERVABILITY_RUNTIME = "gemini"'),
@@ -151,7 +157,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (12 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (14 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -182,7 +188,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (12 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (14 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -208,7 +214,7 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():
@@ -388,6 +394,112 @@ class GenerateHooksTests(unittest.TestCase):
             with self.assertRaises(module.ScanLimitExceeded):
                 module.read_tool_scan_inputs({input_key: overdeep})
             provider_outcomes.append((outcomes, multi_threats, allowlist))
+
+        self.assertEqual(provider_outcomes[0], provider_outcomes[1])
+
+    def test_secret_scanner_renderings_share_policy_outside_provider_adapters(self) -> None:
+        from hooks.families.allowlist import ALLOWLIST_SOURCE
+
+        generator = load_generator()
+        rendered = {
+            output.target.output_path.as_posix(): output.content.decode("utf-8")
+            for output in generator.render_all(ROOT)
+        }
+        self.assertTrue(set(SECRET_SCANNER_TARGETS).issubset(rendered))
+
+        shared_sections = []
+        for target in SECRET_SCANNER_TARGETS:
+            source = rendered[target]
+            self.assertTrue(source.startswith(
+                "#!/usr/bin/env python3\n"
+                "# Generated from hooks/families/scan_secrets.py by scripts/generate-hooks.py. Do not edit.\n"
+            ))
+            sections = re.split(
+                r"# BEGIN PROVIDER ADAPTER\n.*?# END PROVIDER ADAPTER\n",
+                source,
+                flags=re.DOTALL,
+            )
+            self.assertEqual(len(sections), 3, f"Expected two explicit provider adapters in {target}.")
+            self.assertNotIn('"permissionDecision": "deny"', "".join(sections))
+            self.assertNotIn('"decision": "deny"', "".join(sections))
+            self.assertEqual(source.count(ALLOWLIST_SOURCE), 1)
+            shared_sections.append(sections)
+
+        for target in TOOL_GUARD_TARGETS:
+            self.assertEqual(rendered[target].count(ALLOWLIST_SOURCE), 1)
+
+        self.assertEqual(
+            shared_sections[0],
+            shared_sections[1],
+            "Secret scanner policy diverged outside explicit provider adapters.",
+        )
+
+    def test_secret_scanner_provider_neutral_detection_and_allowlist_vectors(self) -> None:
+        vectors = load_module(
+            "secret_scanner_vectors",
+            ROOT / "scripts" / "fixtures" / "secret_scanner_vectors.py",
+        )
+        modules = (
+            load_module("copilot_secret_scanner_vectors", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_module("gemini_secret_scanner_vectors", ROOT / SECRET_SCANNER_TARGETS[1]),
+        )
+
+        provider_outcomes = []
+        for module in modules:
+            patterns = {name: (severity, regex) for name, severity, regex in module.PATTERNS}
+            outcomes = []
+            for name, text, expected_severity, expected_redaction in vectors.PATTERN_VECTORS:
+                with self.subTest(provider=module.__name__, vector=name):
+                    severity, regex = patterns[name]
+                    match = regex.search(text)
+                    self.assertIsNotNone(match)
+                    assert match is not None
+                    self.assertEqual(severity, expected_severity)
+                    self.assertEqual(module.redact_match(match.group(0)), expected_redaction)
+                    outcomes.append((name, severity, expected_redaction))
+            for text in vectors.NEGATIVE_PATTERN_VECTORS:
+                with self.subTest(provider=module.__name__, negative=text):
+                    self.assertFalse(any(regex.search(text) for _severity, regex in patterns.values()))
+            for path, expected in vectors.CREDENTIAL_PATH_VECTORS:
+                self.assertEqual(module.is_credential_path(path), expected)
+            for path, expected in vectors.ENV_PATH_VECTORS:
+                self.assertEqual(module.is_env_path(path), expected)
+            self.assertTrue(module.is_text_candidate("notes.txt", b"safe text\n"))
+            self.assertFalse(module.is_text_candidate("image.bin", b"safe\x00binary"))
+            self.assertEqual(module.enumerate_file_lines("one\ntwo\n"), [(1, "one"), (2, "two")])
+            with mock.patch(
+                "subprocess.run",
+                return_value=SimpleNamespace(returncode=0, stdout=""),
+            ) as run:
+                self.assertEqual(module.run_git(["status"], cwd=ROOT), "")
+            invocation = run.call_args
+            self.assertEqual(invocation.args[0], ["git", "status"])
+            self.assertEqual(invocation.kwargs["timeout"], 5)
+            self.assertEqual(invocation.kwargs["env"]["GIT_TERMINAL_PROMPT"], "0")
+            self.assertEqual(invocation.kwargs["env"]["GIT_ASKPASS"], "")
+
+            allowlist = module.parse_allowlist(vectors.ALLOWLIST_RAW)
+            self.assertEqual(
+                tuple((entry["tool"], entry["input"]) for entry in allowlist),
+                vectors.ALLOWLIST_ENTRIES,
+            )
+            self.assertTrue(
+                module.allowlist_contains("SCAN_SECRETS", f"  {vectors.ALLOWLIST_INPUT}  ", allowlist)
+            )
+            self.assertFalse(module.allowlist_contains("tool_guard", vectors.ALLOWLIST_INPUT, allowlist))
+            self.assertFalse(
+                module.allowlist_contains(
+                    "scan_secrets", f"prefix:{vectors.ALLOWLIST_INPUT}", allowlist
+                )
+            )
+            self.assertEqual(module.parse_allowlist(vectors.ALLOWLIST_INPUT), [])
+            self.assertEqual(module.parse_allowlist('[{"tool":"scan_secrets"}]'), [])
+            separated = f"{vectors.ALLOWLIST_INPUT}\\nextra"
+            self.assertEqual(
+                module.parse_allowlist(json.dumps([{"tool": "scan_secrets", "input": separated}])),
+                [],
+            )
+            provider_outcomes.append((outcomes, allowlist))
 
         self.assertEqual(provider_outcomes[0], provider_outcomes[1])
 

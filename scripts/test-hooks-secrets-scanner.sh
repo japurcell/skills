@@ -163,6 +163,84 @@ test_stalled_git_denies_in_block_mode() {
     "Expected stalled-git block mode to keep hookSpecificOutput deny payload."
 }
 
+test_missing_git_block_mode_uses_copilot_denial_envelope() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local fake_bin
+  local output
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  fake_bin="$workdir/bin"
+  mkdir -p "$repo_dir" "$fake_bin"
+  ln -s "$(command -v python3)" "$fake_bin/python3"
+
+  if output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      diff \
+      '{"sessionId":"missing-git","timestamp":"2026-06-23T23:38:00Z","reason":"tool"}' \
+      "PATH=$fake_bin"
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  assert_equals "0" "$status" \
+    "Expected missing-Git block mode to return exit code 0."
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected missing-Git block mode to deny through the Copilot envelope."
+  assert_equals "scan-secrets.py: required command not found: git" \
+    "$(jq -r '.permissionDecisionReason' <<<"$output")" \
+    "Expected missing-Git denial reason to remain stable."
+}
+
+test_audit_init_failure_block_mode_uses_copilot_denial_envelope() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local occupied_parent
+  local output
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  occupied_parent="$workdir/not-a-directory"
+  mkdir -p "$repo_dir"
+  printf 'occupied\n' > "$occupied_parent"
+
+  if output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      block \
+      diff \
+      '{"sessionId":"audit-init","timestamp":"2026-06-23T23:38:30Z","reason":"tool"}' \
+      "AUDIT_LOG=$occupied_parent/audit.log"
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  assert_equals "0" "$status" \
+    "Expected audit-init block mode to return exit code 0."
+  assert_equals "deny" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
+    "Expected audit-init block mode to deny through the Copilot envelope."
+  assert_equals "scan-secrets.py: failed to initialize audit logging." \
+    "$(jq -r '.permissionDecisionReason' <<<"$output")" \
+    "Expected audit-init denial reason to remain stable."
+}
+
 test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
   local workdir
   local repo_dir
@@ -593,7 +671,7 @@ test_allowlist_suppresses_credential_path_finding() {
       block \
       diff \
       '{"sessionId":"credential-allowlist","timestamp":"2026-06-23T23:46:00Z","reason":"complete"}' \
-      'SECRETS_ALLOWLIST=credentials.md:1:credential_path:[SENSITIVE PATH]'
+      'SECRETS_ALLOWLIST=[{"tool":"scan_secrets","input":"credentials.md:1:credential_path:[SENSITIVE PATH]"}]'
   )"
 
   assert_file_contains "$log_dir/scan.log" '"status":"clean"' \
@@ -637,6 +715,8 @@ test_hooks_json_registers_pre_tool_scanner() {
 main() {
   test_stalled_git_is_bounded_by_timeout
   test_stalled_git_denies_in_block_mode
+  test_missing_git_block_mode_uses_copilot_denial_envelope
+  test_audit_init_failure_block_mode_uses_copilot_denial_envelope
   test_unexpected_exception_block_mode_denies_with_json_and_exit_zero
   test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero
   test_invalid_json_block_mode_denies_with_json_and_exit_zero

@@ -1,5 +1,19 @@
-#!/usr/bin/env python3
-# Generated from hooks/families/scan_secrets.py by scripts/generate-hooks.py. Do not edit.
+"""Render secret scanners from one policy and explicit provider adapters."""
+
+from __future__ import annotations
+
+from hooks.families.allowlist import ALLOWLIST_SOURCE
+from hooks.manifest import GeneratedTarget
+from hooks.providers import Provider
+
+
+SHEBANG = "#!/usr/bin/env python3\n"
+HEADER = "# Generated from hooks/families/scan_secrets.py by scripts/generate-hooks.py. Do not edit.\n"
+ADAPTER_START = "# BEGIN PROVIDER ADAPTER\n"
+ADAPTER_END = "# END PROVIDER ADAPTER\n"
+
+
+_PRELUDE_SOURCE = r'''
 from __future__ import annotations
 
 import json
@@ -73,7 +87,10 @@ def noop() -> None:
 def warn_and_noop(message: str) -> None:
     print(message, file=sys.stderr)
     noop()
-# BEGIN PROVIDER ADAPTER
+'''
+
+
+_COPILOT_RESPONSE_ADAPTER = r'''
 def emit_block_denial(reason: str) -> None:
     emit_json({
         "continue": True,
@@ -84,8 +101,16 @@ def emit_block_denial(reason: str) -> None:
         },
         "permissionDecisionReason": reason,
     })
-# END PROVIDER ADAPTER
+'''
 
+
+_GEMINI_RESPONSE_ADAPTER = r'''
+def emit_block_denial(reason: str) -> None:
+    emit_json({"decision": "deny", "reason": reason})
+'''
+
+
+_POLICY_SOURCE = r'''
 
 def read_payload(mode: str) -> dict | None:
     payload: dict | None = None
@@ -266,55 +291,7 @@ def redact_match(match: str) -> str:
     return f"{match[:4]}...{match[-4:]}"
 
 
-def _normalize_allowlist_value(value: str) -> str:
-    return value.strip(" ")
-
-
-def _has_forbidden_allowlist_separator(value: str) -> bool:
-    return any(unicodedata.category(character) == "Cc" for character in value) or bool(
-        re.search(r"\\(?:n|r|t|x0[9ad]|u000[9ad])", value, re.IGNORECASE)
-    )
-
-
-def parse_allowlist(raw_allowlist: str | None) -> list[dict[str, str]]:
-    if not raw_allowlist:
-        return []
-    try:
-        decoded = json.loads(raw_allowlist)
-    except (TypeError, ValueError):
-        return []
-    if not isinstance(decoded, list) or len(decoded) > 64:
-        return []
-
-    entries: list[dict[str, str]] = []
-    for raw_entry in decoded:
-        if not isinstance(raw_entry, dict) or set(raw_entry) != {"tool", "input"}:
-            return []
-        tool = raw_entry.get("tool")
-        tool_input = raw_entry.get("input")
-        if not isinstance(tool, str) or not isinstance(tool_input, str):
-            return []
-        if _has_forbidden_allowlist_separator(tool) or _has_forbidden_allowlist_separator(tool_input):
-            return []
-        normalized_tool = _normalize_allowlist_value(tool).casefold()
-        normalized_input = _normalize_allowlist_value(tool_input)
-        if not normalized_tool or not normalized_input or len(normalized_tool) > 128 or len(normalized_input) > 8192:
-            return []
-        entries.append({"tool": normalized_tool, "input": normalized_input})
-    return entries
-
-
-def allowlist_contains(tool_name: str, tool_input: str, entries: list[dict[str, str]]) -> bool:
-    if _has_forbidden_allowlist_separator(tool_name) or _has_forbidden_allowlist_separator(tool_input):
-        return False
-    normalized_tool = _normalize_allowlist_value(tool_name).casefold()
-    normalized_input = _normalize_allowlist_value(tool_input)
-    return any(
-        entry["tool"] == normalized_tool and entry["input"] == normalized_input
-        for entry in entries
-    )
-
-
+# __ALLOWLIST_SOURCE__
 def rotate_scan_log(log_path: Path, max_bytes: int = 1048576, backups: int = 3) -> None:
     try:
         if not log_path.exists() or log_path.stat().st_size < max_bytes:
@@ -450,7 +427,10 @@ def handle_unexpected_exception(_exc: Exception) -> int:
         return 0
     emit_json({})
     return 0
-# BEGIN PROVIDER ADAPTER
+'''
+
+
+_COPILOT_RUNTIME_ADAPTER = r'''
 SESSION_ID_KEYS = ("sessionId", "session_id")
 DEFAULT_SECRETS_LOG_PATH = Path.home() / ".copilot" / "hooks" / "secrets"
 
@@ -462,8 +442,25 @@ def resolve_work_dir(payload: dict) -> Path:
 
 def findings_denial_reason(scan_log: Path) -> str:
     return f"{SCRIPT_NAME}: potential secrets detected. See {scan_log}."
-# END PROVIDER ADAPTER
+'''
 
+
+_GEMINI_RUNTIME_ADAPTER = r'''
+SESSION_ID_KEYS = ("session_id",)
+DEFAULT_SECRETS_LOG_PATH = Path.home() / ".gemini" / "hooks" / "secrets"
+
+
+def resolve_work_dir(payload: dict) -> Path:
+    hook_cwd = str(payload.get("cwd") or "")
+    return Path(hook_cwd or os.environ.get("GEMINI_PROJECT_DIR") or Path.cwd())
+
+
+def findings_denial_reason(scan_log: Path) -> str:
+    return f"Potential secrets detected in modified files. See {scan_log}."
+'''
+
+
+_MAIN_SOURCE = r'''
 
 def main() -> int:
     mode = normalized_mode_from_env()
@@ -643,3 +640,36 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except Exception as exc:  # noqa: BLE001
         raise SystemExit(handle_unexpected_exception(exc))
+'''
+
+
+def _adapters(provider: Provider) -> tuple[str, str]:
+    if provider.name == "copilot":
+        return _COPILOT_RESPONSE_ADAPTER, _COPILOT_RUNTIME_ADAPTER
+    if provider.name == "gemini":
+        return _GEMINI_RESPONSE_ADAPTER, _GEMINI_RUNTIME_ADAPTER
+    raise ValueError(f"Unsupported secret scanner provider: {provider.name}")
+
+
+def render(provider: Provider, target: GeneratedTarget) -> str:
+    """Render one self-contained provider-local secret scanner."""
+    if (
+        target.family != "scan_secrets"
+        or target.provider != provider.name
+        or provider.name not in {"copilot", "gemini"}
+    ):
+        raise ValueError(f"Unsupported secret scanner target/provider: {target.output_path}")
+    response_adapter, runtime_adapter = _adapters(provider)
+    return (
+        SHEBANG
+        + HEADER
+        + _PRELUDE_SOURCE.lstrip("\n")
+        + ADAPTER_START
+        + response_adapter.lstrip("\n")
+        + ADAPTER_END
+        + _POLICY_SOURCE.replace("# __ALLOWLIST_SOURCE__\n", ALLOWLIST_SOURCE)
+        + ADAPTER_START
+        + runtime_adapter.lstrip("\n")
+        + ADAPTER_END
+        + _MAIN_SOURCE
+    )

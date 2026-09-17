@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+# Generated from hooks/families/scan_secrets.py by scripts/generate-hooks.py. Do not edit.
 from __future__ import annotations
 
 import json
@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import sys
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -72,10 +73,10 @@ def noop() -> None:
 def warn_and_noop(message: str) -> None:
     print(message, file=sys.stderr)
     noop()
-
-
+# BEGIN PROVIDER ADAPTER
 def emit_block_denial(reason: str) -> None:
     emit_json({"decision": "deny", "reason": reason})
+# END PROVIDER ADAPTER
 
 
 def read_payload(mode: str) -> dict | None:
@@ -257,14 +258,53 @@ def redact_match(match: str) -> str:
     return f"{match[:4]}...{match[-4:]}"
 
 
-def parse_allowlist_csv(raw_allowlist: str | None) -> list[str]:
+def _normalize_allowlist_value(value: str) -> str:
+    return value.strip(" ")
+
+
+def _has_forbidden_allowlist_separator(value: str) -> bool:
+    return any(unicodedata.category(character) == "Cc" for character in value) or bool(
+        re.search(r"\\(?:n|r|t|x0[9ad]|u000[9ad])", value, re.IGNORECASE)
+    )
+
+
+def parse_allowlist(raw_allowlist: str | None) -> list[dict[str, str]]:
     if not raw_allowlist:
         return []
-    return [entry.strip() for entry in raw_allowlist.split(",") if entry.strip()]
+    try:
+        decoded = json.loads(raw_allowlist)
+    except (TypeError, ValueError):
+        return []
+    if not isinstance(decoded, list) or len(decoded) > 64:
+        return []
+
+    entries: list[dict[str, str]] = []
+    for raw_entry in decoded:
+        if not isinstance(raw_entry, dict) or set(raw_entry) != {"tool", "input"}:
+            return []
+        tool = raw_entry.get("tool")
+        tool_input = raw_entry.get("input")
+        if not isinstance(tool, str) or not isinstance(tool_input, str):
+            return []
+        if _has_forbidden_allowlist_separator(tool) or _has_forbidden_allowlist_separator(tool_input):
+            return []
+        normalized_tool = _normalize_allowlist_value(tool).casefold()
+        normalized_input = _normalize_allowlist_value(tool_input)
+        if not normalized_tool or not normalized_input or len(normalized_tool) > 128 or len(normalized_input) > 8192:
+            return []
+        entries.append({"tool": normalized_tool, "input": normalized_input})
+    return entries
 
 
-def allowlist_contains(text: str, entries: list[str]) -> bool:
-    return any(entry in text for entry in entries)
+def allowlist_contains(tool_name: str, tool_input: str, entries: list[dict[str, str]]) -> bool:
+    if _has_forbidden_allowlist_separator(tool_name) or _has_forbidden_allowlist_separator(tool_input):
+        return False
+    normalized_tool = _normalize_allowlist_value(tool_name).casefold()
+    normalized_input = _normalize_allowlist_value(tool_input)
+    return any(
+        entry["tool"] == normalized_tool and entry["input"] == normalized_input
+        for entry in entries
+    )
 
 
 def rotate_scan_log(log_path: Path, max_bytes: int = 1048576, backups: int = 3) -> None:
@@ -402,35 +442,54 @@ def handle_unexpected_exception(_exc: Exception) -> int:
         return 0
     emit_json({})
     return 0
+# BEGIN PROVIDER ADAPTER
+SESSION_ID_KEYS = ("session_id",)
+DEFAULT_SECRETS_LOG_PATH = Path.home() / ".gemini" / "hooks" / "secrets"
+
+
+def resolve_work_dir(payload: dict) -> Path:
+    hook_cwd = str(payload.get("cwd") or "")
+    return Path(hook_cwd or os.environ.get("GEMINI_PROJECT_DIR") or Path.cwd())
+
+
+def findings_denial_reason(scan_log: Path) -> str:
+    return f"Potential secrets detected in modified files. See {scan_log}."
+# END PROVIDER ADAPTER
 
 
 def main() -> int:
     mode = normalized_mode_from_env()
 
     if not git_available():
+        reason = f"{SCRIPT_NAME}: required command not found: git"
         if mode == "block":
-            emit_json({"decision": "deny", "reason": f"{SCRIPT_NAME}: required command not found: git"})
+            emit_block_denial(reason)
             return 0
-        warn_and_noop(f"{SCRIPT_NAME}: required command not found: git")
+        warn_and_noop(reason)
 
     if not audit_init():
+        reason = f"{SCRIPT_NAME}: failed to initialize audit logging."
         if mode == "block":
-            emit_json({"decision": "deny", "reason": f"{SCRIPT_NAME}: failed to initialize audit logging."})
+            emit_block_denial(reason)
             return 0
-        warn_and_noop(f"{SCRIPT_NAME}: failed to initialize audit logging; skipping hook.")
+        warn_and_noop(f"{reason[:-1]}; skipping hook.")
 
     payload = read_payload(mode)
     if payload is None:
         return 0
-    session_id = str(payload.get("session_id") or "")
+    session_id = ""
+    for key in SESSION_ID_KEYS:
+        value = payload.get(key)
+        if value:
+            session_id = str(value)
+            break
     timestamp = str(payload.get("timestamp") or "")
-    hook_cwd = str(payload.get("cwd") or "")
 
     scope = os.environ.get("SCAN_SCOPE", "diff")
     if scope not in {"diff", "staged"}:
         scope = "diff"
 
-    log_dir_str = os.environ.get("SECRETS_LOG_DIR", str(Path.home() / ".gemini" / "hooks" / "secrets"))
+    log_dir_str = os.environ.get("SECRETS_LOG_DIR", str(DEFAULT_SECRETS_LOG_PATH))
     log_path = Path(log_dir_str)
     if log_path.is_dir() or not log_path.suffix:
         scan_log = log_path / "scan.log"
@@ -441,7 +500,7 @@ def main() -> int:
             scan_log = log_path
     else:
         scan_log = log_path / "scan.log"
-    work_dir = Path(hook_cwd or os.environ.get("GEMINI_PROJECT_DIR") or Path.cwd())
+    work_dir = resolve_work_dir(payload)
 
     if not timestamp:
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -498,7 +557,7 @@ def main() -> int:
         emit_output(0, scan_log)
         return 0
 
-    allowlist = parse_allowlist_csv(os.environ.get("SECRETS_ALLOWLIST"))
+    allowlist = parse_allowlist(os.environ.get("SECRETS_ALLOWLIST"))
     env_files: list[str] = []
     findings: list[tuple[str, str, str, int, str]] = []
 
@@ -522,7 +581,7 @@ def main() -> int:
 
         if is_credential_path(path):
             allowlist_text = f"{path}:1:credential_path:[SENSITIVE PATH]"
-            if not allowlist_contains(allowlist_text, allowlist):
+            if not allowlist_contains("scan_secrets", allowlist_text, allowlist):
                 findings.append(("credential_path", "critical", path, 1, "[SENSITIVE PATH]"))
 
         for line_number, line_text in candidate_lines:
@@ -530,7 +589,7 @@ def main() -> int:
                 for match in regex.finditer(line_text):
                     match_value = match.group(0)
                     allowlist_text = f"{path}:{line_number}:{pattern_name}:{match_value}"
-                    if allowlist_contains(allowlist_text, allowlist):
+                    if allowlist_contains("scan_secrets", allowlist_text, allowlist):
                         continue
                     findings.append(
                         (pattern_name, severity, path, line_number, redact_match(match_value))
@@ -564,9 +623,10 @@ def main() -> int:
         findings=findings_json,
     )
     if mode == "block":
-        emit_json({"decision": "deny", "reason": f"Potential secrets detected in modified files. See {scan_log}."})
-    else:
-        emit_output(len(findings), scan_log)
+        emit_block_denial(findings_denial_reason(scan_log))
+        return 0
+
+    emit_output(len(findings), scan_log)
     return 0
 
 
