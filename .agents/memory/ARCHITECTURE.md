@@ -16,6 +16,7 @@ description: Repo structure, install flows, and how top-level areas relate
 | `.copilot/` | Copilot-specific instructions and hooks. | Installed to `~/.copilot/` |
 | `.gemini/` | Gemini-specific instructions and hooks. | Installed to `~/.gemini/` |
 | `.codex/` | Inactive source template and script for the user-global Codex required-skills hook. | Installed to `~/.codex/hooks/` and merged into `~/.codex/hooks.json`; it is not a custom-agent source. |
+| `hooks/` | Canonical build-time source for generated provider-local Python hooks. | Rendered by `scripts/generate-hooks.py` into checked-in executable outputs; never imported across provider runtimes. |
 | `scripts/` | Installers, importers, and targeted validation helpers. | Run from repo checkout |
 | `.agents/` | Agent knowledge base with canonical agent-facing rules and durable repo facts. | Copilot/Gemini agents working in this repo |
 | `docs/` | Version-controlled ADRs plus active research and effort plans that complement `.agents/` canonical guidance. | Repo readers and agents who need current project context or human decision history |
@@ -28,6 +29,12 @@ description: Repo structure, install flows, and how top-level areas relate
 1. Edit source under `skills/`, `agents/`, `.github/`, `.copilot/`, `.gemini/`, `.codex/`, `references/`, or `scripts/`.
 2. Run narrow validation for changed area from `.agents/memory/TESTING_STRATEGY.md` and any matching `testing/<area>.md` file.
 3. If installed behavior matters, run `./scripts/install.sh` (or `pwsh scripts/install.ps1`) before live checks because Codex, Copilot, and Gemini read installed copies from home-directory targets, not repository source files. Codex uses generated TOML under `${CODEX_HOME:-$HOME/.codex}/agents`; Copilot and Gemini use Markdown copies.
+
+### Generated provider-hook flow
+
+1. Change canonical build-time source under `hooks/`, never a provider-local file carrying the generated ownership marker.
+2. Run `python3 scripts/generate-hooks.py --write`, then `python3 scripts/generate-hooks.py --check` and `python3 scripts/test-generate-hooks.py`.
+3. Commit the refreshed executable provider-local outputs. Installers copy them unchanged and do not invoke the generator.
 
 ### Addy import flow
 

@@ -33,7 +33,7 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 - [x] (2026-09-17 08:48Z) [milestone-5] Resolve the next security rereview's unbounded finding retention, match-loop deadline, serialized-record, and incoming-record rotation findings in a fourth isolated TDD repair.
 - [x] (2026-09-17 08:52Z) [milestone-5] Obtain independent security approval for canonical secret patterns, Git subprocess boundaries, output envelopes, logging, timeouts, and rendered files.
 - [x] (2026-09-17 09:04Z) [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
-- [ ] [milestone-7] Finish repository-wide validation, classify drift, update durable documentation, and publish the Phase 2 recommendation.
+- [x] (2026-09-17 09:10Z) [milestone-7] Finish repository-wide validation, classify drift, update durable documentation, and publish the Phase 2 recommendation.
 
 ## Surprises & Discoveries
 
@@ -87,6 +87,9 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - Observation: Input-byte limits did not bound the number or serialized size of secret findings.
   Evidence: A staged file below the per-file byte limit could contain thousands of compact token matches, causing every tuple and JSON object to be retained and appended in one audit record. Log rotation considered only the old file size, so a nearly full active log could grow well past its configured threshold after that record arrived.
+
+- Observation: Final repository validation passed, but direct real-home installation remains unavailable in this environment.
+  Evidence: `python3 scripts/test-all.py` passed all 26 maintained suites in 98.5 seconds, including `pwsh -NoProfile -File scripts/test-install.ps1`; `./scripts/install.sh` exited 1 while copying to `/root/.agents/skills/addy-code-review-and-quality/SKILL.md` because the destination filesystem is read-only. The fixture installer suites remain installed-copy evidence, not a real-home smoke test.
 
 ## Decision Log
 
@@ -226,6 +229,10 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: The reviewer examined the canonical scanner, generated Copilot and Gemini outputs, public regressions, Git and filesystem boundaries, resource limits, redaction, logging, and provider failure envelopes and reported no high-confidence blocker. Extraction, four focused repair commits, validation, and the independent approval gate are complete.
   Date/Author: 2026-09-17, independent security reviewer and Codex.
 
+- Decision: Complete Phase 1 and defer Phase 2 migrations pending targeted characterization.
+  Rationale: All 20 explicit targets are current and covered, but a candidate needs at least two runtime outputs, meaningful shared logic, adapter-sized provider differences, necessary runtime-local files, and a net maintenance reduction. RTK forwarders and required-skill loaders meet the output-count threshold and warrant separate discovery; OKF adapters already delegate to one central linter, audit and observability have deliberately distinct operational contracts, and YAML parser variants lack a qualifying repeated runtime implementation.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
@@ -259,6 +266,12 @@ Milestone 5 fourth security repair at 2026-09-17 08:48Z closes SEC-011. Finding 
 Independent security rereview approved Milestone 5 at commit `0816d4672e38bd2cf9a3a126d247cbb82070252f` with no high-confidence blocker. The accepted scanner keeps provider-local runtime files generated from one canonical policy, preserves Copilot and Gemini envelopes, fails closed in block mode while retaining warn compatibility, uses bounded literal Git operations, scans staged, worktree, and untracked sources independently, handles credential paths and binary token content, reads candidates and writes logs through hardened filesystem boundaries, redacts stored evidence, and caps files, bytes, time, locks, findings, and audit records. Milestone 5 is done and accepted; Milestone 6 is the next open implementation milestone.
 
 Milestone 6 now owns the two provider-local auto-ingest engines plus GitHub and Gemini startup and prompt/final-response wrappers. The generated outputs retain their provider-specific repository-root versus payload-root resolution, hook envelopes, startup filtering, stop-loop handling, transformed-prompt preservation, audit fail-open behavior, manifest location, and missing-skill recovery. The canonical engine uses an explicit Gemini root adapter while preserving the shared hashing, frontmatter, reconciliation, scaffold, lock, atomic-save, blocking, and context logic. Generator coverage confirms all six targets are owned, headered, executable, and runtime-local. Both auto-ingest suites proved manifest and pending-gate behavior through their public hook seams, including the existing safe-path, draft-frontmatter, body-marker, special-path, missing-cwd, and final-backstop cases; both OKF and startup suites, the shell installer fixture, generator tests, freshness, and diff hygiene also passed. Gemini's version-sensitive `AfterAgent` delivery remains repository-envelope evidence only and still requires a deployed-version live probe before claiming live enforcement.
+
+Milestone 7 completed Phase 1 validation and documentation. `python3 scripts/generate-hooks.py --check` passed before and after `python3 scripts/test-all.py`; each check found all 20 generated outputs current, and the suite passed 26 of 26 maintained suites in 98.5 seconds. `git status --short` was clean before validation and remained unchanged through both checks and the suite. PowerShell 7 was available and `pwsh -NoProfile -File scripts/test-install.ps1` passed, with its expected unsupported-junction skip. The direct `./scripts/install.sh` attempt stopped with exit 1 because `/root/.agents/skills/addy-code-review-and-quality/SKILL.md` is on a read-only filesystem, so installed fixture coverage is the available smoke evidence and no real-home or deployed-Gemini `AfterAgent` claim is made.
+
+Phase 1 maintains 20 generated executable outputs through three provider records (Copilot, Gemini, and GitHub). The original aligned duplicate-maintenance baseline was 4,049 lines across the approved families; those paths are now canonicalized under 4,522 lines of `hooks/` source plus a 325-line transactional CLI, replacing independent human edits with generated provider-local outputs. The final freshness checks caught zero stale repository outputs; the 21-test generator suite exercises missing and stale-output detection and transactional recovery. Confirmed behavior corrections stayed separate from extraction: four Tool Guardian security-repair sets, four secret-scanner security-repair sets, and one Gemini auto-ingest adapter identifier correction. There is no remaining unclassified generated-output drift.
+
+Phase 2 recommendation: do not schedule a bulk migration. First characterize the two required-skill loaders and the two RTK forwarders; each has at least two runtime outputs, but their hook envelopes, trust boundaries, and configuration contracts need a focused adapter-cost and security review. Do not migrate OKF adapters because their meaningful shared logic is already the central linter and the wrappers are provider envelopes. Do not merge audit with observability because their failure and storage semantics are intentionally different. Do not migrate YAML parser variants because no repeated runtime-local implementation meets the output-count and maintenance-reduction test. The main usability friction is the read-only real-home install destination; fixture installer coverage and the full suite provide repository evidence, but live installed behavior must be rechecked on a writable home and a deployed Gemini version before stronger claims.
 
 ## Context and Orientation
 
@@ -409,8 +422,8 @@ Run `bash scripts/test-hooks-auto-ingest.sh`, `bash scripts/test-gemini-hooks-au
 Classify drift and fix confirmed defects separately. Acceptance requires unchanged manifest bytes for equivalent inputs, matching pending-state decisions, preserved provider envelopes and ordering, safe path handling, and no cross-provider runtime imports.
 
 ### Milestone 7: Complete validation, documentation, and Phase 2 reassessment
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met (all available repository and fixture-installed checks; real-home and deployed-Gemini live probes remain environment-limited)
 
 Run the full maintained suite through `python3 scripts/test-all.py`. Run `python3 scripts/generate-hooks.py --check` before and after the full suite and confirm both return `0` without changing `git status`. Run `./scripts/install.sh` before live smoke tests, then verify installed scripts match checked-in generated sources and remain executable. Run `pwsh -NoProfile -File scripts/test-install.ps1` on a host with PowerShell 7; document any platform check that cannot run locally.
 
@@ -585,3 +598,5 @@ Revision note, 2026-09-17: A fourth isolated Milestone 5 TDD repair bounds findi
 Revision note, 2026-09-17: Independent security rereview approved Milestone 5 at `0816d4672e38bd2cf9a3a126d247cbb82070252f` with no high-confidence blocker. Progress, outcome, status, and acceptance are now synchronized as done and met.
 
 Revision note, 2026-09-17: Completed Milestone 6. The manifest now owns six generated auto-ingest outputs, generated from the canonical family with explicit GitHub and Gemini adapters. A first extraction pass exposed an accidental Gemini summary-root identifier mismatch; the focused public auto-ingest suite reproduced it, and the adapter was corrected before acceptance. Final targeted generator, both auto-ingest, both OKF, both startup, shell-installer fixture, freshness, and diff checks passed. Gemini `AfterAgent` enforcement remains subject to the documented live deployed-version probe.
+
+Revision note, 2026-09-17: Completed Milestone 7. Generator freshness passed before and after the 26-suite maintained run; all 20 owned outputs remained current and repository status stayed clean during validation. PowerShell installer fixtures passed, while the direct real-home installer attempt was blocked by the read-only `/root/.agents/skills` target. README, ADR, canonical agent documentation, metrics, drift classification, and the Phase 2 admission recommendation are synchronized; no deferred migration is automatically scheduled.

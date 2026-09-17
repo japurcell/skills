@@ -17,6 +17,11 @@ description: Public validation entry points and provider adapter contracts for t
 - Exit `0` means successful suites, `1` means suite failures, `2` means usage/dependency/runner errors, `130` means SIGINT, `143` means SIGTERM, and `141` means the runner encountered a broken pipe. Ordinary child failures, including broken pipes, do not stop later suites. Required dependencies and suite paths are checked before execution; see [Testing Strategy](TESTING_STRATEGY.md) for prerequisites.
 - There is no default suite timeout. Cancellation signals the active child's process group, waits up to five seconds for cleanup, then sends SIGKILL. A repeated interrupt forces termination. PowerShell version preflight has a separate five-second timeout and participates in the same cancellation handling.
 
+## Generated provider-hook CLI
+
+- `scripts/generate-hooks.py --write` renders the complete explicit `hooks/manifest.py` target set and transactionally updates only stale generated outputs. `--check` is read-only, reports every stale or missing output, and exits `0` only when source bytes and executable modes are current. Both actions resolve the checkout from the script location; bare invocation and invalid canonical inputs exit `2`.
+- The generator owns 20 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, and `.github/hooks/scripts/`. They carry a `Generated from hooks/families/...` header, remain self-contained at runtime, and are copied unchanged by both installers.
+
 ## OKF validation
 
 - `scripts/lint-okf.py [--format human|json]` validates both canonical document bundles. Human diagnostics use `path:line:column: ID message`; JSON uses schema version `1` with exact `id`, `path`, `line`, `column`, and `message` fields. Exit `0` is clean, `1` reports profile findings, and `2` reports an untrustworthy `OKF900` result.

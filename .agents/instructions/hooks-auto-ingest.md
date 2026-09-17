@@ -8,6 +8,7 @@ description: Source auto-ingest hook rules; load only when changing scanners, in
 Load this file only for source auto-ingest work. General hook contracts remain in [hooks.md](hooks.md).
 
 - Keep startup scanners separate from required-skill loading. Copilot owns `.github/hooks/scripts/auto-ingest-source.py`, `.github/hooks/scripts/inject-auto-ingest-context.py`, and `.github/hooks/scripts/validate-stop.py`. Gemini owns `.gemini/hooks/scripts/auto-ingest.py` and `.gemini/hooks/scripts/inject-auto-ingest-context.py`; install still copies `.gemini/global-settings.json` to `~/.gemini/settings.json`.
+- The generated auto-ingest engine and its GitHub/Gemini wrappers are maintained in `hooks/families/`; refresh their explicit manifest-owned outputs with `python3 scripts/generate-hooks.py --write` rather than editing runtime files directly. `validate-stop.py` remains a handwritten provider-local coordinator.
 - Keep source state in `.agents/memory/sources/source-ingest-manifest.json`; keep executable helpers inside each runtime tree.
 - Scaffold conforming draft `Source Summary` concepts. Quote dynamic YAML scalars and percent-encode `sources[].resource` paths while preserving `/`.
 - Detect unresolved summaries from normalized top-level `type` and `status` scalar values. Ignore matching body text.

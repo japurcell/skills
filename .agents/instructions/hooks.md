@@ -19,6 +19,7 @@ For source auto-ingest scanners, injectors, manifests, or pending gates, read [H
 
 ## Shared Runtime Rules
 
+- **generated-provider ownership:** Provider-local Python files with a `Generated from hooks/families/...` header are build outputs. Edit their canonical `hooks/families/` renderer or its typed provider metadata, run `python3 scripts/generate-hooks.py --write`, then require `python3 scripts/generate-hooks.py --check` before committing. Never add cross-provider runtime imports; installers copy the checked-in outputs and never invoke the generator.
 - **raw-source authority:** For exact hook behavior questions or changes (visible CLI output, stdout parsing, progress messages, event timing, matcher behavior, or output schemas), read the matching raw source under `.agents/sources/` after the summary. Summary files route the investigation but are not final authority for precise hook behavior.
 - **stdout discipline:** Hook scripts must keep `stdout` JSON-only. Send logs, audit lines, and debug text to `stderr` or the audit log.
 - **installed-copy rule:** Run `./scripts/install.sh` before live validation because Codex, Copilot, and Gemini execute installed hooks from home-directory targets.

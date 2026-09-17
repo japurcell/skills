@@ -11,6 +11,11 @@ focused change, use the narrowest command below. The aggregate runner includes
 its own CLI tests and excludes lint-only checks, formatting, live model evaluations,
 archives, and generated fixtures. Its CLI contract is in [API Map](API_MAP.md#repository-test-runner).
 
+For generated provider hooks, run `python3 scripts/generate-hooks.py --check`
+before and after the relevant suites. Run `python3 scripts/test-generate-hooks.py`
+for generator or canonical-renderer changes; it is registered in the maintained
+aggregate suite. Use `--write` only to intentionally refresh checked-in outputs.
+
 ## Shared rules
 
 - Aggregate test prerequisites are `bash`, `python3`, `git`, `jq`, `flock`, `sqlite3`, and PowerShell 7+ (`pwsh`), plus ordinary Unix utilities and a writable checkout. The runner preflights tools and suite paths; missing dependencies are errors, not successful skips. Existing host-specific skips remain visible in child output.

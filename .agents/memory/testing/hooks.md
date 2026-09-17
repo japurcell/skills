@@ -7,6 +7,7 @@ description: Test routes for Codex, Copilot, and Gemini hook sources and install
 
 ## Repo checks
 
+- For a generated provider-hook or canonical `hooks/` change, run `python3 scripts/generate-hooks.py --check` before and after the relevant provider suites, plus `python3 scripts/test-generate-hooks.py`. Use `--write` only to refresh manifest-owned outputs; provider-local files with the generated header are not edit targets.
 - After changing hook source, run `./scripts/install.sh` before any live validation because installed hooks execute from `~/.codex/hooks`, `~/.copilot/hooks`, or `~/.gemini/hooks`, not from repo source paths.
 - Centralize standard test environment helper utilities (such as `install_into_temp_home()`) in `scripts/test-common.sh` instead of duplicating them across individual test files.
 - Read official hook docs before non-trivial changes and keep implementation aligned with them.

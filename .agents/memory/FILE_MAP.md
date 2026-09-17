@@ -24,6 +24,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.copilot/` | hooks | Copilot instructions and local hook runtime sources. |
 | `.gemini/` | hooks | Gemini instructions and local hook runtime sources. |
 | `.codex/` | hooks | Inactive source for the user-global Codex required-skills hook and install-time configuration template. |
+| `hooks/` | hooks | Canonical build-time renderers, provider metadata, and explicit generated-output ownership manifest. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
 | `agents/` | agents | Canonical Markdown custom-agent prompt files for Copilot, Gemini, and generated Codex TOML. |
 | `docs/<effort>/` | repo docs | Active research and execution plans that need version history while work is in progress. |
@@ -54,6 +55,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/import-skill-repos.sh` | Human-run multi-source importer that refreshes selected upstream skills, including the `web-*` quality skills. |
 | `scripts/common.sh` | Shared shell helper for resolving repo root in small shell tests and utilities. |
 | `scripts/test-all.py` | Executable aggregate test runner with an explicit maintained-suite registry; CLI contract is in `API_MAP.md`. |
+| `scripts/generate-hooks.py` | Read-only freshness checker and transactional writer for the explicit `hooks/manifest.py` output set. |
 | `scripts/test_test_all.py` | Public-process regressions for the aggregate runner, including streams, exit codes, preflight, and descendant cleanup. |
 | `scripts/lint-okf.py` | Provider-neutral full-corpus OKF profile linter with human/JSON output and `0`/`1`/`2` exit semantics. |
 | `scripts/test-okf-lint.sh` | Public-CLI contract suite for the OKF linter; copies the valid two-bundle fixture under `scripts/fixtures/okf-valid-repo/` for isolated mutation cases. |

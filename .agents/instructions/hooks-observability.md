@@ -8,6 +8,7 @@ description: Hook observability and trace-store rules; load only when changing e
 Load this file only for observability, trace-store, transcript, log-rotation, or maintenance work. General hook contracts remain in [hooks.md](hooks.md).
 
 - Keep `send-event.py` registered for every supported Copilot and Gemini event, including Gemini lifecycle events with no other operational behavior.
+- `send-event.py` and the Copilot/Gemini observability helpers are generated from canonical `hooks/families/` sources. Regenerate with `python3 scripts/generate-hooks.py --write` and require a clean `--check`; their installed copies remain runtime-local and self-contained.
 - Create primary and shadow audit files with `0o600` at descriptor creation. Create shadow parents first and keep paired writes inside one lock section.
 - Treat WAL-journaled `observability_v1.db` as trace source of truth. Apply write-heavy WAL and incremental-vacuum PRAGMAs only during schema initialization or recovery; keep connection setup lightweight.
 - Secure SQLite, WAL, SHM, registry, and transcript files with `0o600`; secure `registries/subagents` with `0o700`.

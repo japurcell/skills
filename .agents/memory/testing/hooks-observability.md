@@ -10,6 +10,8 @@ Run both suites for shared observability changes:
 - `bash scripts/test-hooks-observability.sh`
 - `bash scripts/test-gemini-hooks-observability.sh`
 
+For canonical observability renderer changes, also run `python3 scripts/test-generate-hooks.py` and a read-only `python3 scripts/generate-hooks.py --check` after regeneration. The installed smoke test must exercise copied provider-local scripts, not a canonical renderer.
+
 The suites exercise installed hook copies and validate event capture, span records, transcript rollup, lock-wait fail-open behavior, redaction and capping, rotation, and the kill switch. They keep stdin open after compact or multiline JSON, require prompt exit, reject buffered trailing data, verify owner-only primary and shadow logs, test runtime-specific variable precedence over generic fallbacks, and keep stale-backup pruning active when a zero-byte maximum disables rotation.
 
 Use installed-path benchmarks for Gemini Tool Guardian; direct repo invocation can miss the `<40ms` target even when installed behavior passes.

@@ -66,9 +66,26 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 
 ## Working in this repo
 
-1. Edit source files in `skills/`, `agents/`, `.codex/`, `.copilot/`, or `.gemini/`
+1. Edit source files in `skills/`, `agents/`, `hooks/`, `.codex/`, `.copilot/`, or `.gemini/`.
 2. Rerun `./scripts/install.sh` to refresh the installed local copies.
 3. Run `./scripts/test-all.py` for all maintained test suites, or use targeted checks from `.agents/memory/TESTING_STRATEGY.md`.
+
+### Generated provider hooks
+
+The checked-in Python hooks marked `Generated from hooks/families/...` are
+runtime-local outputs; do not edit them directly. Change their canonical source
+under `hooks/`, regenerate all owned outputs, and verify freshness before
+committing:
+
+```bash
+python3 scripts/generate-hooks.py --write
+python3 scripts/generate-hooks.py --check
+python3 scripts/test-generate-hooks.py
+```
+
+`--write` is the only generator action that changes files. `--check` is
+read-only and exits `1` when an owned output is stale or missing. Installers copy
+the checked-in generated files; they never generate repository sources.
 
 Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews. Those files are benchmark fixtures, not maintained source.
 
