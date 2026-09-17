@@ -17,7 +17,7 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 ## Progress
 
 - [x] (2026-09-17 20:40Z) [milestone-1] Strengthen RTK characterization without changing runtime behavior and record the required-skill-loader no-migration decision.
-- [ ] [milestone-2] Fix RTK open-pipe completion and add the five-second Gemini outer timeout in an isolated behavior change.
+- [x] (2026-09-17 20:50Z) [milestone-2] Fix RTK open-pipe completion, preserve accepted input bytes, and add the five-second Gemini outer timeout in an isolated behavior change.
 - [ ] [milestone-3] Generate the two provider-local RTK forwarders from one canonical family while preserving every approved adapter difference.
 - [ ] [milestone-4] Add read-only generated-hook freshness preflight to both installers before any destination mutation.
 - [ ] [milestone-5] Run full validation, obtain focused review, synchronize documentation, and record final outcomes.
@@ -50,6 +50,12 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
 
 - Observation: The handwritten RTK forwarders already implement the approved response boundary.
   Evidence: `bash scripts/test-hooks-rtk.sh` and `bash scripts/test-gemini-hooks-rtk.sh` both passed after adding public stdin/stdout characterization for malformed and non-object RTK output, missing executables, exact provider arguments, Copilot decision preservation and normalization, Gemini passthrough, and provider registration contracts.
+
+- Observation: A complete object on an open pipe exposed the old EOF dependency immediately.
+  Evidence: The new public-process cases failed before the runtime repair in both suites with `AssertionError: compact: wrapper waited for pipe EOF`. After the repair, both focused suites passed while streaming compact, multiline, UTF-8 Unicode, trailing-whitespace, incomplete-prefix, incomplete-idle, buffered-invalid, and greater-than-1-MiB inputs.
+
+- Observation: The completion deadline must be renewed after every incomplete chunk.
+  Evidence: The reader's deadline is an idle bound, so it resets after each incremental read. That keeps a valid large streamed object eligible while still returning the fail-open no-op after 0.5 seconds without another byte.
 
 ## Decision Log
 
@@ -97,9 +103,15 @@ A maintainer can see the completed behavior by running the two RTK suites, both 
   Rationale: The focused suites now prove the exact `rtk hook copilot` and `rtk hook gemini` calls, normal no-op failures, Copilot-only `ask` normalization, Gemini passthrough, and handwritten registration constraints. Subsequent open-pipe work must preserve these public observations.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Implement the handwritten open-pipe reader in both forwarders before their generation migration.
+  Rationale: The pair remains deliberately handwritten through Milestone 2, so the reader is duplicated only for this isolated behavior repair. It uses POSIX `select` and Windows `PeekNamedPipe`, incremental UTF-8 decoding, raw-byte forwarding, and no size limit; Milestone 3 will move this proven behavior into the canonical RTK family.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Planning and candidate characterization are complete. Milestone 1 added public JSON-seam characterization without changing either handwritten RTK runtime. The required-skill loaders are rejected as a generated family. The RTK forwarders are approved subject to the test-first open-pipe repair and exact adapter preservation described below. Installer freshness preflight is approved with distinct stale and generator-failure diagnostics.
+
+Milestone 2 is complete. Both handwritten forwarders now read raw pipe bytes until one JSON object is complete, drain immediately available trailing bytes, and pass accepted input unchanged to RTK. They wait at most 0.5 seconds after any incomplete chunk, use POSIX `select` with a Windows `PeekNamedPipe` path, preserve fail-open failures and provider adapters, and apply Gemini's 5000 ms outer timeout. The public-process tests were red against `sys.stdin.read()` and are green after the repair. `bash scripts/test-hooks-rtk.sh`, `bash scripts/test-gemini-hooks-rtk.sh`, `bash scripts/test-hooks-startup.sh`, `bash scripts/test-hooks-observability.sh`, and `bash scripts/test-gemini-hooks-observability.sh` passed.
 
 At implementation completion, replace this paragraph with measured results: number of newly owned outputs, canonical renderer size, duplicate maintained lines removed, targeted and aggregate test results, review findings, installer stale-state proof, any unavailable platform checks, and whether a writable-home smoke test ran.
 
@@ -141,8 +153,8 @@ Keep all new characterization tests green against the handwritten wrappers. Do n
 Acceptance is met when both focused suites pass before runtime edits, the approved Copilot conversion and Gemini passthrough are explicit, and the previous Phase 2 deferral is replaced by a concrete decision.
 
 ### Milestone 2: Repair open-pipe completion before extraction
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Use test-driven development. First add public-process regressions to both RTK suites that launch each wrapper with a real pipe, write one complete UTF-8 JSON object, keep the pipe open, and require the wrapper to respond promptly. Add an incomplete-prefix case that completes within 0.5 seconds and succeeds, and a case that remains incomplete and returns the existing no-op within a bounded interval. Add exact-byte cases for compact JSON, multiline JSON, Unicode, and buffered trailing whitespace. Compare the mock RTK stdin bytes directly rather than normalizing them through `jq`. Buffered trailing non-whitespace must remain invalid and must not invoke RTK.
 

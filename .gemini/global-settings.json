@@ -342,7 +342,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py\""
+            "command": "python \"$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py\"",
+            "timeout": 5000
           }
         ]
       }
