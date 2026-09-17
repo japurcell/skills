@@ -67,8 +67,12 @@ import unicodedata
 MAX_SCAN_TEXT = 32768
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
-MAX_EXCERPT_LENGTH = 160
+MAX_TOOL_NAME_LENGTH = 160
 REDACTED = "[REDACTED]"
+
+
+class ScanLimitExceeded(ValueError):
+    pass
 
 def R(*codes: int) -> str:
     return "".join(chr(code) for code in codes)
@@ -102,19 +106,44 @@ def _simple_match(*codes: int):
     return matcher
 
 
+def _bounded_normalized_text(text: str) -> str:
+    if len(text) > MAX_SCAN_TEXT or len(text.encode("utf-8")) > MAX_SCAN_TEXT:
+        raise ScanLimitExceeded("tool input exceeds the scan-text limit")
+    normalized = unicodedata.normalize("NFKC", text)
+    if len(normalized) > MAX_SCAN_TEXT or len(normalized.encode("utf-8")) > MAX_SCAN_TEXT:
+        raise ScanLimitExceeded("normalized tool input exceeds the scan-text limit")
+    return normalized
+
+
 def _command_segments(text: str) -> list[list[str]]:
-    normalized = unicodedata.normalize("NFKC", text[:MAX_SCAN_TEXT])
-    raw_segments = re.split(r"(?:\r?\n|\\[nr]|&&|\|\||;)", normalized)
+    normalized = _bounded_normalized_text(text)
+    raw_segments = re.split(
+        r"(?:\r?\n|\\[nr]|&&|\|\||;)",
+        normalized,
+        maxsplit=MAX_COMMAND_SEGMENTS,
+    )
+    if len(raw_segments) > MAX_COMMAND_SEGMENTS:
+        raise ScanLimitExceeded("tool input exceeds the command-segment limit")
     segments: list[list[str]] = []
-    for raw_segment in raw_segments[:MAX_COMMAND_SEGMENTS]:
-        token_source = re.sub(r'[{}\[\]",:]', " ", raw_segment)
+    for raw_segment in raw_segments:
+        token_source = re.sub(r'[{}\[\]",]', " ", raw_segment)
         try:
             tokens = shlex.split(token_source, comments=False, posix=True)
         except ValueError:
             tokens = token_source.split()
+        if len(tokens) > MAX_COMMAND_TOKENS:
+            raise ScanLimitExceeded("command segment exceeds the token limit")
         if tokens:
-            segments.append(tokens[:MAX_COMMAND_TOKENS])
+            segments.append(tokens)
     return segments
+
+
+def _executable_basename(token: str) -> str:
+    basename = token.replace("\\", "/").rsplit("/", 1)[-1].casefold()
+    for suffix in (".exe", ".cmd", ".bat"):
+        if basename.endswith(suffix):
+            return basename[: -len(suffix)]
+    return basename
 
 
 def _matches_protected_remove_target(target: str, target_kind: str) -> bool:
@@ -135,34 +164,30 @@ def _match_recursive_rm_target(*target_codes: int):
         del lower_text
         for tokens in _command_segments(text):
             for index, token in enumerate(tokens):
-                if token.casefold().rsplit("/", 1)[-1] != "rm":
+                if _executable_basename(token) != "rm":
                     continue
                 recursive = False
                 force = False
-                target_index = index + 1
-                while target_index < len(tokens):
+                operands: list[tuple[int, str]] = []
+                options_done = False
+                for target_index in range(index + 1, len(tokens)):
                     option = tokens[target_index].casefold()
                     if option == "--":
-                        target_index += 1
-                        break
-                    if not option.startswith("-") or option == "-":
-                        break
-                    if option in {"--recursive", "--dir"}:
+                        options_done = True
+                    elif not options_done and option in {"--recursive", "--dir"}:
                         recursive = True
-                    elif option == "--force":
+                    elif not options_done and option == "--force":
                         force = True
-                    elif option.startswith("-") and not option.startswith("--"):
+                    elif not options_done and option.startswith("-") and not option.startswith("--"):
                         flags = option[1:]
                         recursive = recursive or "r" in flags or "R" in option[1:]
                         force = force or "f" in flags
-                    target_index += 1
-                if (
-                    recursive
-                    and force
-                    and target_index < len(tokens)
-                    and _matches_protected_remove_target(tokens[target_index], target_kind)
-                ):
-                    return " ".join(tokens[index : target_index + 1])
+                    else:
+                        operands.append((target_index, tokens[target_index]))
+                if recursive and force:
+                    for target_index, operand in operands:
+                        if _matches_protected_remove_target(operand, target_kind):
+                            return " ".join(tokens[index : target_index + 1])
         return None
 
     return matcher
@@ -228,13 +253,13 @@ def _match_git_push(*prefix_codes: int):
         for tokens in _command_segments(text):
             folded = [token.casefold() for token in tokens]
             for index in range(len(tokens) - 1):
-                if folded[index : index + 2] != ["git", "push"]:
+                if _executable_basename(tokens[index]) != "git" or folded[index + 1] != "push":
                     continue
                 tail = folded[index + 2 :]
                 force_indexes = [offset for offset, token in enumerate(tail) if token == force_option]
                 branch_indexes = [
                     offset for offset, token in enumerate(tail)
-                    if token.lstrip("+").split(":")[-1] in protected
+                    if token.lstrip("+").split(":")[-1].removeprefix("refs/heads/") in protected
                 ]
                 forced_refspecs = [
                     offset for offset in branch_indexes if tail[offset].startswith("+")
@@ -250,9 +275,60 @@ def _match_git_push(*prefix_codes: int):
     return matcher
 
 
+def _sql_code_without_comments_or_literals(text: str) -> str:
+    output: list[str] = []
+    index = 0
+    state = "code"
+    while index < len(text):
+        character = text[index]
+        next_character = text[index + 1] if index + 1 < len(text) else ""
+        if state == "code":
+            if character == "-" and next_character == "-":
+                output.extend((" ", " "))
+                index += 2
+                state = "line_comment"
+                continue
+            if character == "#":
+                output.append(" ")
+                index += 1
+                state = "line_comment"
+                continue
+            if character == "/" and next_character == "*":
+                output.extend((" ", " "))
+                index += 2
+                state = "block_comment"
+                continue
+            if character in {"'", '"', "`"}:
+                output.append("_")
+                state = character
+            else:
+                output.append(character)
+        elif state == "line_comment":
+            output.append(character if character in "\r\n" else " ")
+            if character in "\r\n":
+                state = "code"
+        elif state == "block_comment":
+            if character == "*" and next_character == "/":
+                output.extend((" ", " "))
+                index += 2
+                state = "code"
+                continue
+            output.append(character if character in "\r\n" else " ")
+        else:
+            output.append("_")
+            if character == state:
+                if next_character == state:
+                    output.append("_")
+                    index += 2
+                    continue
+                state = "code"
+        index += 1
+    return "".join(output)
+
+
 def _match_delete_from(text: str, lower_text: str) -> str | None:
     del lower_text
-    normalized = unicodedata.normalize("NFKC", text[:MAX_SCAN_TEXT])
+    normalized = _sql_code_without_comments_or_literals(_bounded_normalized_text(text))
     statement_pattern = re.compile(
         R(92, 98, 100, 101, 108, 101, 116, 101, 92, 115, 43, 102, 114, 111, 109, 92, 115, 43)
         + r"[^\s;]+(?P<tail>.*?)(?:;|$)",
@@ -326,7 +402,15 @@ PATTERNS = [
 
 
 def _normalize_allowlist_value(value: str) -> str:
-    return " ".join(unicodedata.normalize("NFKC", value).strip().split())
+    normalized = unicodedata.normalize("NFKC", value)
+    return re.sub(r" +", " ", normalized.strip(" "))
+
+
+def _has_forbidden_allowlist_separator(value: str) -> bool:
+    normalized = unicodedata.normalize("NFKC", value)
+    return any(unicodedata.category(character) == "Cc" for character in normalized) or bool(
+        re.search(r"\\(?:n|r|t|x0[9ad]|u000[9ad])", normalized, re.IGNORECASE)
+    )
 
 
 def parse_allowlist(raw_allowlist: str | None) -> list[dict[str, str]]:
@@ -347,6 +431,8 @@ def parse_allowlist(raw_allowlist: str | None) -> list[dict[str, str]]:
         tool_input = raw_entry.get("input")
         if not isinstance(tool, str) or not isinstance(tool_input, str):
             return []
+        if _has_forbidden_allowlist_separator(tool) or _has_forbidden_allowlist_separator(tool_input):
+            return []
         normalized_tool = _normalize_allowlist_value(tool).casefold()
         normalized_input = _normalize_allowlist_value(tool_input)
         if not normalized_tool or not normalized_input or len(normalized_tool) > 128 or len(normalized_input) > 8192:
@@ -356,6 +442,8 @@ def parse_allowlist(raw_allowlist: str | None) -> list[dict[str, str]]:
 
 
 def allowlist_contains(tool_name: str, tool_input: str, entries: list[dict[str, str]]) -> bool:
+    if _has_forbidden_allowlist_separator(tool_name) or _has_forbidden_allowlist_separator(tool_input):
+        return False
     normalized_tool = _normalize_allowlist_value(tool_name).casefold()
     normalized_input = _normalize_allowlist_value(tool_input)
     return any(
@@ -385,50 +473,54 @@ def read_tool_input(payload: dict) -> str:
     return ""
 
 
-def redact_excerpt(value: str) -> str:
-    excerpt = unicodedata.normalize("NFKC", value[:4096])
-    excerpt = re.sub(
+def sanitize_tool_name(value: str) -> str:
+    sanitized = unicodedata.normalize("NFKC", value[:4096])
+    sanitized = re.sub(
         r"(?i)\b(https?://)([^/\s@]+)@",
         lambda match: f"{match.group(1)}{REDACTED}@",
-        excerpt,
+        sanitized,
     )
-    excerpt = re.sub(
+    sanitized = re.sub(
         r"(?i)(//\S+\s+)[^\s@]+@",
         lambda match: f"//{REDACTED}@",
-        excerpt,
+        sanitized,
     )
-    excerpt = re.sub(
+    sanitized = re.sub(
         r"(?i)([?&](?:access[_-]?token|api[_-]?key|token|secret|password|passwd|auth)=)[^&#\s]+",
         lambda match: f"{match.group(1)}{REDACTED}",
-        excerpt,
+        sanitized,
     )
-    excerpt = re.sub(
+    sanitized = re.sub(
         r"(?i)\b(authorization|proxy-authorization|x-api-key|api-key|cookie|set-cookie)\s*:\s*(?:(?:bearer|basic)\s+)?[^\s,;]+",
         lambda match: f"{match.group(1)}: {REDACTED}",
-        excerpt,
+        sanitized,
     )
-    excerpt = re.sub(
+    sanitized = re.sub(
         r"(?i)\b([A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*)\s*=\s*[^\s,;&]+",
         lambda match: f"{match.group(1)}={REDACTED}",
-        excerpt,
+        sanitized,
     )
-    excerpt = re.sub(
+    sanitized = re.sub(
         r"(?i)(--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+))[^\s,;&]+",
         lambda match: f"{match.group(1)}{REDACTED}",
-        excerpt,
+        sanitized,
     )
-    excerpt = re.sub(
+    sanitized = re.sub(
         r"(?i)\b(?:gh[pousr]_[A-Za-z0-9_]{8,}|sk-[A-Za-z0-9_-]{8,}|AKIA[A-Z0-9]{8,})\b",
         REDACTED,
-        excerpt,
+        sanitized,
     )
-    excerpt = " ".join(excerpt.split())
-    if len(excerpt) > MAX_EXCERPT_LENGTH:
-        excerpt = excerpt[: MAX_EXCERPT_LENGTH - 3] + "..."
-    return excerpt
+    sanitized = " ".join(sanitized.split())
+    if len(sanitized) > MAX_TOOL_NAME_LENGTH:
+        sanitized = sanitized[: MAX_TOOL_NAME_LENGTH - 3] + "..."
+    return sanitized
 
 
 def build_threats(tool_text: str) -> list[dict[str, str]]:
+    try:
+        _command_segments(tool_text)
+    except ScanLimitExceeded:
+        return [{"category": "input_limits", "severity": "critical"}]
     lower_tool_text = tool_text.lower()
     threats: list[dict[str, str]] = []
     for category, severity, matcher, _suggestion in PATTERNS:
@@ -438,16 +530,15 @@ def build_threats(tool_text: str) -> list[dict[str, str]]:
                 {
                     "category": category,
                     "severity": severity,
-                    "excerpt": redact_excerpt(match),
                 }
             )
     return threats
 
 
 def build_block_reason(tool_name: str, threats: list[dict[str, str]]) -> str:
-    summary = [f"{threat['category']}/{threat['severity']} near '{threat['excerpt']}'" for threat in threats[:3]]
+    summary = [f"{threat['category']}/{threat['severity']}" for threat in threats[:3]]
     joined = "; ".join(summary)
-    safe_tool_name = redact_excerpt(tool_name) if tool_name else "tool invocation"
+    safe_tool_name = sanitize_tool_name(tool_name) if tool_name else "tool invocation"
     return (
         f"Tool Guardian blocked {safe_tool_name}. {joined}. "
         "Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
@@ -474,7 +565,7 @@ def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, th
         "timestamp": TIMESTAMP,
         "event": event,
         "mode": mode,
-        "tool": redact_excerpt(tool_name),
+        "tool": sanitize_tool_name(tool_name),
     }
     if event == "threats_detected":
         payload["threat_count"] = threat_count
@@ -521,13 +612,17 @@ def main() -> int:
     tool_name = read_tool_name(payload)
     tool_input = read_tool_input(payload)
     tool_text = f"{tool_name} {tool_input}"
+    threats = build_threats(tool_text)
+    if any(threat["category"] == "input_limits" for threat in threats):
+        log_payload("threats_detected", mode, tool_name, len(threats), threats)
+        emit_deny_response(build_block_reason(tool_name, threats))
+
     allowlist = parse_allowlist(os.environ.get("TOOL_GUARD_ALLOWLIST"))
 
     if allowlist and allowlist_contains(tool_name, tool_input, allowlist):
         log_payload("guard_skipped", mode, tool_name)
         emit_allow_response()
 
-    threats = build_threats(tool_text)
     if not threats:
         log_payload("guard_passed", mode, tool_name)
         emit_allow_response()

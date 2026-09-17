@@ -291,7 +291,7 @@ class GenerateHooksTests(unittest.TestCase):
                     aggregated_threats = module.build_threats(vector.text)
                     self.assertIn(category, {threat["category"] for threat in aggregated_threats})
                     self.assertTrue(
-                        all(set(threat) == {"category", "severity", "excerpt"} for threat in aggregated_threats)
+                        all(set(threat) == {"category", "severity"} for threat in aggregated_threats)
                     )
 
             outcomes = []
@@ -306,6 +306,13 @@ class GenerateHooksTests(unittest.TestCase):
                     threats = module.build_threats(text)
                     self.assertIn(expected_category, {threat["category"] for threat in threats})
 
+            for name, text in vectors.LIMIT_EXCEEDING_VECTORS:
+                with self.subTest(provider=module.__name__, vector=name):
+                    self.assertEqual(
+                        module.build_threats(text),
+                        [{"category": "input_limits", "severity": "critical"}],
+                    )
+
             multi_threats = module.build_threats(vectors.MULTI_THREAT_TEXT)
             self.assertEqual(
                 [(threat["category"], threat["severity"]) for threat in multi_threats],
@@ -313,11 +320,8 @@ class GenerateHooksTests(unittest.TestCase):
             )
             sensitive_threats = module.build_threats(vectors.SENSITIVE_THREAT_TEXT)
             self.assertTrue(sensitive_threats)
-            redacted_excerpt = module.redact_excerpt(vectors.SENSITIVE_THREAT_TEXT)
-            self.assertLessEqual(len(redacted_excerpt), 160)
             for threat in sensitive_threats:
-                self.assertEqual(set(threat), {"category", "severity", "excerpt"})
-                self.assertLessEqual(len(threat["excerpt"]), 160)
+                self.assertEqual(set(threat), {"category", "severity"})
             serialized_sensitive_output = json.dumps(
                 {
                     "threats": sensitive_threats,
@@ -325,9 +329,7 @@ class GenerateHooksTests(unittest.TestCase):
                 }
             )
             for sensitive_value in vectors.FAKE_SENSITIVE_VALUES:
-                self.assertNotIn(sensitive_value, redacted_excerpt)
                 self.assertNotIn(sensitive_value, serialized_sensitive_output)
-            self.assertIn("[REDACTED]", serialized_sensitive_output)
             allowlist = module.parse_allowlist(vectors.ALLOWLIST_RAW)
             self.assertEqual(
                 tuple((entry["tool"], entry["input"]) for entry in allowlist),
@@ -342,6 +344,11 @@ class GenerateHooksTests(unittest.TestCase):
             self.assertEqual(module.parse_allowlist(""), [])
             self.assertEqual(module.parse_allowlist(vectors.ALLOWLIST_INPUT), [])
             self.assertEqual(module.parse_allowlist('[{"tool":"bash"}]'), [])
+            for separator in ("\n", "\r", "\t", r"\n"):
+                separated_input = f"{vectors.ALLOWLIST_INPUT}{separator}echo safe"
+                encoded_allowlist = json.dumps([{"tool": "bash", "input": separated_input}])
+                self.assertEqual(module.parse_allowlist(encoded_allowlist), [])
+                self.assertFalse(module.allowlist_contains("bash", separated_input, allowlist))
             provider_outcomes.append((outcomes, multi_threats, allowlist))
 
         self.assertEqual(provider_outcomes[0], provider_outcomes[1])

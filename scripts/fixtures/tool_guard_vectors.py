@@ -51,6 +51,10 @@ NEGATIVE_AGGREGATION_VECTORS = (
     ("word_prefix_boundary", parts("firm", " ", ".env")),
     ("word_suffix_boundary", parts("rm", " ", ".environment")),
     ("filtered_delete", parts("DELETE", " FROM", " users WHERE id = 1;")),
+    (
+        "filtered_delete_after_comment",
+        parts("DELETE", " FROM", " users", " /* where is required */", " WHERE id = 1;"),
+    ),
     ("non_protected_branch", parts("git push", " --force", " origin feature")),
     ("multiline_sensitive_file", parts("rm", "\n", ".env")),
     ("escaped_multiline_sensitive_file", parts("rm", "\\n", ".env")),
@@ -67,6 +71,42 @@ ADVERSARIAL_AGGREGATION_VECTORS = (
     ("forced_refspec", parts("git push", " origin +main"), "destructive_git_ops"),
     ("delete_without_semicolon", parts("DELETE", " FROM", " users"), "database_destruction"),
     ("multiline_delete_without_semicolon", parts("DELETE", "\n", "FROM", " users"), "database_destruction"),
+    ("later_protected_remove_operand", parts("rm", " -rf", " cache", " /"), "destructive_file_ops"),
+    ("path_qualified_remove", parts("/usr/bin/rm", " -rf", " /"), "destructive_file_ops"),
+    ("qualified_remove_extension", parts("C:/tools/rm.exe", " -rf", " /"), "destructive_file_ops"),
+    (
+        "path_qualified_git_full_refspec",
+        parts("/usr/bin/git push", " origin feature:refs/heads/main", " --force"),
+        "destructive_git_ops",
+    ),
+    (
+        "forced_full_refspec",
+        parts("git push", " origin +feature:refs/heads/master"),
+        "destructive_git_ops",
+    ),
+    (
+        "delete_with_where_only_in_block_comment",
+        parts("DELETE", " FROM", " users", " /* where archived */"),
+        "database_destruction",
+    ),
+    (
+        "delete_with_where_only_in_line_comment",
+        parts("DELETE", " FROM", " users", " -- where archived", "\n"),
+        "database_destruction",
+    ),
+    (
+        "delete_with_where_only_in_hash_comment",
+        parts("DELETE", " FROM", " users", " # where archived", "\n"),
+        "database_destruction",
+    ),
+    ("delete_from_quoted_table", parts("DELETE", " FROM", ' "users"'), "database_destruction"),
+)
+
+
+LIMIT_EXCEEDING_VECTORS = (
+    ("scan_text", parts("echo ", "x" * 32768)),
+    ("command_segments", ";".join("echo safe" for _ in range(129))),
+    ("command_tokens", parts("echo ", " ".join("safe" for _ in range(256)))),
 )
 
 

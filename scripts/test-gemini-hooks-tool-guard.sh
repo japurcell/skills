@@ -20,6 +20,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
   local risky_input
   local allowlist
   local output
+  local separator
+  local separated_input
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -52,6 +54,18 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
   )"
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected a Gemini allowlist entry to remain scoped to its declared tool."
+
+  for separator in $'\n' $'\r' $'\t' '\n'; do
+    separated_input="${risky_input}${separator}echo safe"
+    allowlist="$(jq -cn --arg tool run_shell_command --arg input "$separated_input" '[{tool:$tool,input:$input}]')"
+    output="$(
+      TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+        python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
+        <<<"$(jq -cn --arg input "$separated_input" '{tool_name:"run_shell_command",tool_input:$input}')"
+    )"
+    assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+      "Expected control and escaped separators to be rejected from Gemini allowlist entries."
+  done
 }
 
 test_equivalent_and_json_encoded_threats_are_denied() {
@@ -95,7 +109,61 @@ PY
     "Expected JSON-escaped destructive syntax to be decoded and blocked by Gemini."
 }
 
-test_block_response_and_log_redact_sensitive_values() {
+test_parser_limits_and_complete_command_forms_fail_closed() {
+  local workdir
+  local log_dir
+  local risky_input
+  local output
+  local long_input
+  local many_segments
+  local many_tokens
+  local index
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  log_dir="$workdir/logs"
+
+  local later_operand; later_operand="rm"; later_operand+=" -rf cache"; later_operand+=" /"
+  local qualified_remove; qualified_remove="/usr/bin/rm"; qualified_remove+=" -rf"; qualified_remove+=" /"
+  local qualified_git; qualified_git="/usr/bin/git push"; qualified_git+=" origin feature:refs/heads/main"; qualified_git+=" --force"
+  local forced_refspec; forced_refspec="git push"; forced_refspec+=" origin +feature:refs/heads/master"
+  local block_comment; block_comment="DELETE"; block_comment+=" FROM users"; block_comment+=" /* where archived */"
+  local line_comment; line_comment="DELETE"; line_comment+=" FROM users"; line_comment+=" -- where archived"; line_comment+=$'\n'
+
+  for risky_input in "$later_operand" "$qualified_remove" "$qualified_git" "$forced_refspec" "$block_comment" "$line_comment"; do
+    output="$(run_gemini_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')")"
+    assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+      "Expected Gemini to inspect complete normalized command forms."
+  done
+
+  long_input="$(printf 'x%.0s' {1..32768})"
+  many_segments="echo safe"
+  for index in {1..128}; do many_segments+=";echo safe"; done
+  many_tokens="echo"
+  for index in {1..256}; do many_tokens+=" safe"; done
+
+  for risky_input in "$long_input" "$many_segments" "$many_tokens"; do
+    output="$(run_gemini_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')")"
+    assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+      "Expected Gemini to fail closed when a parser bound is exceeded."
+  done
+
+  output="$(run_gemini_tool_guard "$log_dir" warn "$(jq -cn --arg input "$long_input" '{tool_name:"run_shell_command",tool_input:$input}')")"
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected parser-bound overflow to fail closed even when Gemini warning mode is configured."
+
+  local limit_allowlist
+  limit_allowlist="$(jq -cn --arg tool run_shell_command --arg input "$many_segments" '[{tool:$tool,input:$input}]')"
+  output="$(
+    TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$limit_allowlist" GUARD_MODE=block \
+      python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
+      <<<"$(jq -cn --arg input "$many_segments" '{tool_name:"run_shell_command",tool_input:$input}')"
+  )"
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected parser-bound overflow to fail closed before Gemini allowlist authorization."
+}
+
+test_block_response_and_log_omit_sensitive_evidence() {
   local workdir
   local log_dir
   local url_password
@@ -123,21 +191,19 @@ test_block_response_and_log_redact_sensitive_values() {
   output="$(run_gemini_tool_guard "$log_dir" block "$payload")"
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini to deny the sensitive destructive invocation."
-  assert_file_contains "$log_dir/guard.log" '[REDACTED]' \
-    "Expected redaction markers in the Gemini Tool Guardian log."
-  if ! jq -e 'select(.event == "threats_detected") | all(.threats[]; (keys | sort) == ["category","excerpt","severity"])' \
+  if ! jq -e 'select(.event == "threats_detected") | all(.threats[]; (keys | sort) == ["category","severity"])' \
     "$log_dir/guard.log" >/dev/null; then
-    echo "Expected Gemini log threats to contain only category, severity, and redacted excerpt fields." >&2
+    echo "Expected Gemini log threats to contain only category and severity fields." >&2
     exit 1
   fi
 
   for sensitive_value in "$url_password" "$query_token" "$bearer_token" "$api_key"; do
     if [[ "$output" == *"$sensitive_value"* ]]; then
-      echo "Expected Gemini block output to redact sensitive values." >&2
+      echo "Expected Gemini block output to omit sensitive values." >&2
       exit 1
     fi
     if grep -Fq "$sensitive_value" "$log_dir/guard.log"; then
-      echo "Expected Gemini Tool Guardian log output to redact sensitive values." >&2
+      echo "Expected Gemini Tool Guardian log output to omit sensitive values." >&2
       exit 1
     fi
   done
@@ -216,8 +282,7 @@ test_warn_mode_returns_json_for_gemini_payload() {
     "Expected warn mode to log detected threats."
 
   local expected_msg
-  expected_msg="⚠️ Tool Guardian warning: Tool Guardian blocked run_shell_command. destructive_file_ops/critical near 'rm -rf"
-  expected_msg="${expected_msg} .'. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_msg="⚠️ Tool Guardian warning: Tool Guardian blocked run_shell_command. destructive_file_ops/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
   assert_equals "$expected_msg" "$(jq -r '.systemMessage' <<<"$output")" \
     "Expected warn mode to include correct warning systemMessage."
 }
@@ -243,10 +308,8 @@ test_block_mode_denies_gemini_payload() {
   assert_file_contains "$log_dir/guard.log" '"tool":"run_shell_command"' \
     "Expected guard log to record the Gemini tool name."
 
-  local f; f="force"
-  local m; m="main"
   local expected_msg
-  expected_msg="Tool Guardian blocked run_shell_command. destructive_git_ops/critical near 'git push --${f} origin ${m}'. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_msg="Tool Guardian blocked run_shell_command. destructive_git_ops/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
   assert_equals "$expected_msg" "$(jq -r '.reason' <<<"$output")" \
     "Expected block mode to include correct block reason."
   assert_equals "$expected_msg" "$(jq -r '.systemMessage' <<<"$output")" \
@@ -274,10 +337,8 @@ test_block_mode_parses_gemini_tool_input_objects() {
   assert_file_contains "$log_dir/guard.log" '"category":"database_destruction"' \
     "Expected guard log to capture threat details from object-valued tool_input."
 
-  local d; d="DROP"
-  local t; t="TABLE"
   local expected_msg
-  expected_msg="Tool Guardian blocked run_shell_command. database_destruction/critical near '${d} ${t}'. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_msg="Tool Guardian blocked run_shell_command. database_destruction/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
   assert_equals "$expected_msg" "$(jq -r '.reason' <<<"$output")" \
     "Expected block mode to include correct reason for object-valued input."
   assert_equals "$expected_msg" "$(jq -r '.systemMessage' <<<"$output")" \
@@ -419,7 +480,8 @@ test_tool_guard_rm_env_and_rm_git() {
 main() {
   test_structured_allowlist_is_tool_scoped_and_exact
   test_equivalent_and_json_encoded_threats_are_denied
-  test_block_response_and_log_redact_sensitive_values
+  test_parser_limits_and_complete_command_forms_fail_closed
+  test_block_response_and_log_omit_sensitive_evidence
   test_gemini_log_is_owner_only_locked_and_no_follow
   test_warn_mode_returns_json_for_gemini_payload
   test_block_mode_denies_gemini_payload

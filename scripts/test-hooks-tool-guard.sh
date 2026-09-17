@@ -20,6 +20,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
   local risky_input
   local allowlist
   local output
+  local separator
+  local separated_input
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -60,6 +62,18 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
   )"
   assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
     "Expected legacy unstructured allowlist text to fail closed."
+
+  for separator in $'\n' $'\r' $'\t' '\n'; do
+    separated_input="${risky_input}${separator}echo safe"
+    allowlist="$(jq -cn --arg tool bash --arg input "$separated_input" '[{tool:$tool,input:$input}]')"
+    output="$(
+      TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+        python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
+        <<<"$(jq -cn --arg input "$separated_input" '{toolName:"bash",toolArgs:$input}')"
+    )"
+    assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+      "Expected control and escaped separators to be rejected from Copilot allowlist entries."
+  done
 }
 
 test_equivalent_and_json_encoded_threats_are_denied() {
@@ -103,7 +117,61 @@ PY
     "Expected JSON-escaped destructive syntax to be decoded and blocked."
 }
 
-test_block_response_and_audit_redact_sensitive_values() {
+test_parser_limits_and_complete_command_forms_fail_closed() {
+  local workdir
+  local log_dir
+  local risky_input
+  local output
+  local long_input
+  local many_segments
+  local many_tokens
+  local index
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  log_dir="$workdir/logs"
+
+  local later_operand; later_operand="rm"; later_operand+=" -rf cache"; later_operand+=" /"
+  local qualified_remove; qualified_remove="/usr/bin/rm"; qualified_remove+=" -rf"; qualified_remove+=" /"
+  local qualified_git; qualified_git="/usr/bin/git push"; qualified_git+=" origin feature:refs/heads/main"; qualified_git+=" --force"
+  local forced_refspec; forced_refspec="git push"; forced_refspec+=" origin +feature:refs/heads/master"
+  local block_comment; block_comment="DELETE"; block_comment+=" FROM users"; block_comment+=" /* where archived */"
+  local line_comment; line_comment="DELETE"; line_comment+=" FROM users"; line_comment+=" -- where archived"; line_comment+=$'\n'
+
+  for risky_input in "$later_operand" "$qualified_remove" "$qualified_git" "$forced_refspec" "$block_comment" "$line_comment"; do
+    output="$(run_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')")"
+    assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+      "Expected Copilot to inspect complete normalized command forms."
+  done
+
+  long_input="$(printf 'x%.0s' {1..32768})"
+  many_segments="echo safe"
+  for index in {1..128}; do many_segments+=";echo safe"; done
+  many_tokens="echo"
+  for index in {1..256}; do many_tokens+=" safe"; done
+
+  for risky_input in "$long_input" "$many_segments" "$many_tokens"; do
+    output="$(run_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')")"
+    assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+      "Expected Copilot to fail closed when a parser bound is exceeded."
+  done
+
+  output="$(run_tool_guard "$log_dir" warn "$(jq -cn --arg input "$long_input" '{toolName:"bash",toolArgs:$input}')")"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected parser-bound overflow to fail closed even when Copilot warning mode is configured."
+
+  local limit_allowlist
+  limit_allowlist="$(jq -cn --arg tool bash --arg input "$many_segments" '[{tool:$tool,input:$input}]')"
+  output="$(
+    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$limit_allowlist" GUARD_MODE=block \
+      python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
+      <<<"$(jq -cn --arg input "$many_segments" '{toolName:"bash",toolArgs:$input}')"
+  )"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected parser-bound overflow to fail closed before Copilot allowlist authorization."
+}
+
+test_block_response_and_audit_omit_sensitive_evidence() {
   local workdir
   local log_dir
   local url_password
@@ -131,20 +199,20 @@ test_block_response_and_audit_redact_sensitive_values() {
   output="$(run_tool_guard "$log_dir" block "$payload")"
   assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
     "Expected the sensitive destructive invocation to be denied."
-  assert_file_contains "$log_dir/guard.log" '[REDACTED]' \
-    "Expected redaction markers in the Tool Guardian audit record."
-  if grep -Fq '"match":' "$log_dir/guard.log" || grep -Fq '"suggestion":' "$log_dir/guard.log"; then
-    echo "Expected audit threats to contain only category, severity, and redacted excerpt fields." >&2
+  if ! sed 's/^[^{]*//' "$log_dir/guard.log" \
+    | jq -e 'select(.event == "threats_detected") | all(.threats[]; (keys | sort) == ["category","severity"])' \
+      >/dev/null; then
+    echo "Expected audit threats to contain only category and severity fields." >&2
     exit 1
   fi
 
   for sensitive_value in "$url_password" "$query_token" "$bearer_token" "$api_key"; do
     if [[ "$output" == *"$sensitive_value"* ]]; then
-      echo "Expected block output to redact sensitive values." >&2
+      echo "Expected block output to omit sensitive values." >&2
       exit 1
     fi
     if grep -Fq "$sensitive_value" "$log_dir/guard.log"; then
-      echo "Expected Tool Guardian audit output to redact sensitive values." >&2
+      echo "Expected Tool Guardian audit output to omit sensitive values." >&2
       exit 1
     fi
   done
@@ -163,7 +231,7 @@ test_warn_mode_returns_json_for_cli_payload() {
   risky_delete="rm"
   risky_delete+=" -rf"
   risky_delete+=" ."
-  expected_warning="⚠️ Tool Guardian warning: Tool Guardian blocked bash. destructive_file_ops/critical near '${risky_delete}'. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_warning="⚠️ Tool Guardian warning: Tool Guardian blocked bash. destructive_file_ops/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
 
   output="$(
     run_tool_guard \
@@ -363,7 +431,8 @@ test_tool_guard_rm_env_and_rm_git() {
 main() {
   test_structured_allowlist_is_tool_scoped_and_exact
   test_equivalent_and_json_encoded_threats_are_denied
-  test_block_response_and_audit_redact_sensitive_values
+  test_parser_limits_and_complete_command_forms_fail_closed
+  test_block_response_and_audit_omit_sensitive_evidence
   test_warn_mode_returns_json_for_cli_payload
   test_block_mode_denies_vscode_payload
   test_block_mode_parses_cli_tool_args_objects

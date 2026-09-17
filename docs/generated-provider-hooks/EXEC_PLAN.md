@@ -22,6 +22,7 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 - [x] (2026-09-17 05:47Z) [milestone-3] Generate Copilot and Gemini observability helpers without changing runtime behavior or latency expectations.
 - [x] (2026-09-17 06:01Z) [milestone-4] Generate and validate Copilot and Gemini Tool Guardian scripts from one canonical policy with explicit provider adapters.
 - [x] (2026-09-17 06:27Z) [milestone-4] Resolve the first independent security review's SEC-001, SEC-002, and SEC-003 findings with public-envelope regressions and regenerated outputs.
+- [x] (2026-09-17 06:41Z) [milestone-4] Resolve the security rereview's separator, parser-bound, complete-syntax, SQL-comment, and raw-evidence findings with a second isolated TDD repair.
 - [ ] [milestone-4] Obtain approval from the independent security rereview before accepting the milestone.
 - [ ] [milestone-5] Generate Copilot and Gemini secret scanners, remove owned local duplicates, and complete independent security review.
 - [ ] [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
@@ -52,6 +53,9 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - Observation: The first independent Tool Guardian security review rejected the extracted behavior with three high-confidence findings.
   Evidence: SEC-001 showed that substring allowlist entries authorized destructive content with surrounding commands; SEC-002 showed that reordered recursive-remove flags, force-push options after the refspec, and unfiltered SQL deletion without a semicolon bypassed detectors; SEC-003 showed that raw matched credentials reached responses and audit records while Gemini created a permissive, unlocked log. Provider-level regressions now reproduce each class through public JSON envelopes.
+
+- Observation: The second security review correctly withheld approval because normalization and parser limits still created authorization and detection gaps.
+  Evidence: Exact allowlist normalization collapsed control separators; bounded parsing silently ignored content past 32 KiB, 128 command segments, or 256 tokens; recursive removal inspected only its first operand; executable paths and full Git refspecs were incomplete; and SQL comments containing `where` were mistaken for a filter. The rereview also rejected redacted evidence as unnecessarily risky and required category/severity-only reporting.
 
 ## Decision Log
 
@@ -119,6 +123,18 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: Tool input can contain URL credentials, query tokens, authorization headers, and credential-like values. Responses and audit records must not reproduce those values, while concurrent or redirected logging must fail closed instead of weakening confidentiality or record integrity.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Preserve separators during allowlist normalization and reject both control characters and escaped control-separator spellings.
+  Rationale: A newline, carriage return, tab, or escaped separator changes command structure and must never become equivalent to an ordinary space in an authorization decision. Both configured entries and runtime candidates fail closed at this boundary.
+  Date/Author: 2026-09-17, Codex.
+
+- Decision: Treat every scan-text, command-segment, or token-bound overflow as a critical threat instead of truncating the parse.
+  Rationale: Bounded work protects hook latency only if content beyond the bound cannot hide destructive syntax. Limit validation runs before allowlist authorization and denies overflow even when warning mode is configured. The parser also inspects every recursive-remove operand, normalizes executable basenames and complete protected Git refspec destinations, and removes SQL comments and literals before deciding whether a real `where` clause exists.
+  Date/Author: 2026-09-17, Codex.
+
+- Decision: Supersede redacted threat excerpts with category/severity-only response and audit details.
+  Rationale: Even bounded redaction is unnecessary exposure when the control-flow decision needs only the threat classification. Removing evidence fields entirely gives credentials and other command data no threat-reporting path to stdout or audit storage.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
@@ -127,9 +143,11 @@ Milestone 2 now owns six generated common and audit helpers. The renderer contra
 
 Milestone 3 now owns the two observability helpers. The generated runtime bodies preserve SQLite/WAL tracing, transcript finalization, NDJSON fallback, retention, locking, maintenance, and fail-open behavior; only the generated header was added. The eight named adapter expressions cover runtime identity, environment precedence, and the default home-directory log path. Generator, both observability, both startup, and both installer fixture suites passed. PowerShell installer tests passed with the expected junction skip. The direct real-home installer remains unavailable because `/root/.agents/skills` is read-only, so temporary-home installed-copy coverage is the available installed-behavior evidence.
 
-Milestone 4 extraction now owns the two Tool Guardian scripts through one canonical policy and explicit Copilot and Gemini adapters. The first independent security review found and rejected three behavior defects. The follow-up diff replaces substring authorization with normalized exact tool/input entries, recognizes equivalent destructive syntax through bounded normalization and tokenization, emits only redacted bounded threat excerpts, and gives Gemini owner-only no-follow locked audit writes. Shared vectors and public provider envelopes cover the corrected boundaries, including encoded payloads, credential-bearing matches, concurrent Gemini logging, and fail-closed linked destinations. Extraction and security-fix validation are complete; acceptance remains pending approval from the independent security rereview.
+Milestone 4 extraction now owns the two Tool Guardian scripts through one canonical policy and explicit Copilot and Gemini adapters. Two independent-review repair passes have tightened authorization, parser completeness, information disclosure, and Gemini audit writes. The current policy preserves and rejects command separators at the allowlist boundary, denies every configured parser-bound overflow, inspects complete remove/Git/SQL forms, and exposes only category and severity for detected threats. Shared vectors and public provider envelopes cover encoded and control-separated payloads, credential-bearing matches, concurrent Gemini logging, linked destinations, complete command forms, SQL comments, and fail-closed over-limit input. Acceptance remains pending approval from the independent security rereview.
 
 Milestone 4 security-fix validation on 2026-09-17 passed Python compilation, shell syntax checks, `scripts/test-generate-hooks.py` (11 tests), both Tool Guardian suites, both startup suites, the shell installer fixture, and the PowerShell installer fixture with its expected unsupported-junction skip. `scripts/generate-hooks.py --check` reported all 12 outputs current, and `git diff --check` passed. The startup suites remain the available bounded-runtime evidence because this family has no separate numeric latency benchmark.
+
+Milestone 4 second-repair validation at 2026-09-17 06:46Z passed the same complete matrix after the SQL lexer also proved quoted table identifiers remain detectable and public envelopes proved parser overflow denies before allowlist authorization and even in warning mode: Python compilation, shell syntax checks, all 11 generator tests, both Tool Guardian public-envelope suites, both bounded startup suites, shell and PowerShell installer fixtures, generator freshness for all 12 outputs, and diff hygiene. The PowerShell fixture again reported only its expected unsupported-junction skip. The independent security rereview remains the sole acceptance gate.
 
 ## Context and Orientation
 
@@ -241,7 +259,7 @@ Classify drift and handle confirmed defects separately as defined above. Accepta
 
 ### Milestone 4: Generate Tool Guardian and remove owned policy duplication
 Status: in progress
-Acceptance: not met (extraction and security fixes validated; independent security rereview pending)
+Acceptance: not met (extraction and two security repair passes validated; independent security rereview pending)
 
 Add `hooks/families/tool_guard.py`. Put shared threat detectors, encoded pattern definitions, threat aggregation, and allowlist behavior in one canonical source. Keep Copilot and Gemini payload extraction, decision envelopes, audit behavior, default paths, and fail-closed top-level handling in explicit provider adapters. Replace the duplicated `parse_allowlist_csv` substring behavior with one structured, exact `parse_allowlist` and `allowlist_contains` definition used in both generated scripts; generated files remain self-contained.
 
@@ -434,3 +452,5 @@ Revision note, 2026-09-17: Completed Milestone 3. Canonical observability render
 Revision note, 2026-09-17: Completed the Milestone 4 extraction and validation portion. Canonical Tool Guardian policy now renders both provider-local scripts; shared matcher and allowlist vectors plus separate envelope tests pass, including malformed and unexpected-exception fail-closed paths. The milestone remains in progress until the independent security review is approved.
 
 Revision note, 2026-09-17: Resolved the first Milestone 4 independent review's SEC-001, SEC-002, and SEC-003 findings in a separate TDD fix. Structured exact allowlists, bounded equivalent-syntax detection, redacted threat excerpts, and hardened Gemini logging now have shared and public-provider regressions. The milestone remains in progress until the independent rereview approves the fixes.
+
+Revision note, 2026-09-17: The first fix did not satisfy security rereview. A second isolated TDD repair now preserves and rejects allowlist separators, denies parser-bound overflow, covers every remove operand plus normalized executable and full Git-refspec forms, lexes SQL comments, and removes threat evidence from responses and audit logs. Acceptance remains pending another independent rereview.
