@@ -358,6 +358,35 @@ class GenerateHooksTests(unittest.TestCase):
                 )
             internal_spacing = vectors.ALLOWLIST_INPUT.replace(" ", "  ", 1)
             self.assertFalse(module.allowlist_contains("bash", internal_spacing, allowlist))
+
+            input_key = module.TOOL_INPUT_KEYS[0]
+            structured_inputs = module.read_tool_scan_inputs(
+                {
+                    input_key: {
+                        "request": {"query": vectors.STRUCTURED_DESTRUCTIVE_QUERY},
+                        "options": {"timeout": 5},
+                    }
+                }
+            )
+            self.assertIn(vectors.STRUCTURED_DESTRUCTIVE_QUERY, structured_inputs)
+            self.assertEqual(
+                module.build_input_threats("database_query", structured_inputs),
+                [{"category": "database_destruction", "severity": "high"}],
+            )
+            safe_structured_inputs = module.read_tool_scan_inputs(
+                {
+                    input_key: {
+                        "request": {"query": vectors.STRUCTURED_SAFE_QUERY},
+                        "options": {"timeout": 5},
+                    }
+                }
+            )
+            self.assertEqual(module.build_input_threats("database_query", safe_structured_inputs), [])
+            overdeep: object = "safe"
+            for _ in range(module.MAX_STRUCTURED_DEPTH + 1):
+                overdeep = {"nested": overdeep}
+            with self.assertRaises(module.ScanLimitExceeded):
+                module.read_tool_scan_inputs({input_key: overdeep})
             provider_outcomes.append((outcomes, multi_threats, allowlist))
 
         self.assertEqual(provider_outcomes[0], provider_outcomes[1])

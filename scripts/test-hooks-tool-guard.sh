@@ -347,6 +347,30 @@ test_block_mode_parses_cli_tool_args_objects() {
     "Expected guard log to capture threat details from object-valued toolArgs."
 }
 
+test_nested_structured_tool_args_scan_decoded_string_values() {
+  local workdir
+  local log_dir
+  local query
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  log_dir="$workdir/logs"
+
+  query="DELETE"; query+=" FROM"; query+=" users"
+  payload="$(jq -cn --arg query "$query" '{toolName:"database_query",toolArgs:{request:{query:$query},options:{timeout:5}}}')"
+  output="$(run_tool_guard "$log_dir" block "$payload")"
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected Copilot to scan decoded query strings nested in object-valued tool arguments."
+
+  query="SELECT id"; query+=" FROM users"; query+=" WHERE id = 1"
+  payload="$(jq -cn --arg query "$query" '{toolName:"database_query",toolArgs:{request:{query:$query},options:{timeout:5}}}')"
+  output="$(run_tool_guard "$log_dir" block "$payload")"
+  assert_equals "allow" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected safe nested structured Copilot arguments to remain allowed."
+}
+
 test_skip_mode_returns_explicit_allow_json() {
   local workdir
   local log_dir
@@ -487,6 +511,7 @@ main() {
   test_warn_mode_returns_json_for_cli_payload
   test_block_mode_denies_vscode_payload
   test_block_mode_parses_cli_tool_args_objects
+  test_nested_structured_tool_args_scan_decoded_string_values
   test_skip_mode_returns_explicit_allow_json
   test_tool_guard_denies_invalid_payload
   test_tool_guard_denies_unexpected_input_exception

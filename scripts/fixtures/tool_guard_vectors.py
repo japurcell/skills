@@ -125,6 +125,10 @@ LIMIT_EXCEEDING_VECTORS = (
 )
 
 
+STRUCTURED_DESTRUCTIVE_QUERY = parts("DELETE", " FROM", " users")
+STRUCTURED_SAFE_QUERY = parts("SELECT id", " FROM users", " WHERE id = 1")
+
+
 MULTI_THREAT_TEXT = parts("sudo", " ", "npm", " publish")
 ALLOWLIST_INPUT = parts("git push", " --force", " origin main")
 ALLOWLIST_RAW = json.dumps(

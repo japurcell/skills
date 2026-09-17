@@ -395,6 +395,30 @@ test_block_mode_parses_gemini_tool_input_objects() {
     "Expected block mode to include correct systemMessage for object-valued input."
 }
 
+test_nested_structured_tool_input_scans_decoded_string_values() {
+  local workdir
+  local log_dir
+  local query
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  log_dir="$workdir/logs"
+
+  query="DELETE"; query+=" FROM"; query+=" users"
+  payload="$(jq -cn --arg query "$query" '{tool_name:"database_query",tool_input:{request:{query:$query},options:{timeout:5}}}')"
+  output="$(run_gemini_tool_guard "$log_dir" block "$payload")"
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected Gemini to scan decoded query strings nested in object-valued tool input."
+
+  query="SELECT id"; query+=" FROM users"; query+=" WHERE id = 1"
+  payload="$(jq -cn --arg query "$query" '{tool_name:"database_query",tool_input:{request:{query:$query},options:{timeout:5}}}')"
+  output="$(run_gemini_tool_guard "$log_dir" block "$payload")"
+  assert_equals "allow" "$(jq -r '.decision' <<<"$output")" \
+    "Expected safe nested structured Gemini input to remain allowed."
+}
+
 test_skip_mode_returns_explicit_allow_json() {
   local workdir
   local log_dir
@@ -537,6 +561,7 @@ main() {
   test_warn_mode_returns_json_for_gemini_payload
   test_block_mode_denies_gemini_payload
   test_block_mode_parses_gemini_tool_input_objects
+  test_nested_structured_tool_input_scans_decoded_string_values
   test_skip_mode_returns_explicit_allow_json
   test_gemini_settings_register_tool_guard
   test_tool_guard_denies_invalid_payload

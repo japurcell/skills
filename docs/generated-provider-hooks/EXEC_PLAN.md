@@ -24,6 +24,7 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 - [x] (2026-09-17 06:27Z) [milestone-4] Resolve the first independent security review's SEC-001, SEC-002, and SEC-003 findings with public-envelope regressions and regenerated outputs.
 - [x] (2026-09-17 06:41Z) [milestone-4] Resolve the security rereview's separator, parser-bound, complete-syntax, SQL-comment, and raw-evidence findings with a second isolated TDD repair.
 - [x] (2026-09-17 06:55Z) [milestone-4] Resolve compatibility-normalized allowlist equality plus home-variable removal and Git global-option detection in a third isolated TDD repair.
+- [x] (2026-09-17 07:03Z) [milestone-4] Resolve object-valued tool-input scanning with bounded recursive string extraction, serialized fallback, and safe structured negatives.
 - [ ] [milestone-4] Obtain approval from the independent security rereview before accepting the milestone.
 - [ ] [milestone-5] Generate Copilot and Gemini secret scanners, remove owned local duplicates, and complete independent security review.
 - [ ] [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
@@ -60,6 +61,9 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - Observation: Compatibility normalization remained unsafe even after control separators were rejected, and command parsing still omitted common indirection.
   Evidence: NFKC made ASCII and fullwidth semicolon, ampersand, pipe, dollar, quote, and backtick inputs equal at the authorization boundary. Recursive forced removal through `$HOME`, `${HOME}`, PowerShell environment variables, and `%USERPROFILE%` was not classified, while a protected forced push following Git global options such as `-C`, `-c`, `--git-dir`, and `--work-tree` was missed.
+
+- Observation: Compact JSON fallback was not sufficient for object-valued tool input because SQL string literals were deliberately masked by the SQL lexer.
+  Evidence: A nested decoded `query` value containing unfiltered deletion was allowed after serialization wrapped it in JSON quotes, while the equivalent plain-string input was denied. Both provider-envelope regressions reproduced the bypass and also proved a nested filtered query remains allowed.
 
 ## Decision Log
 
@@ -147,6 +151,10 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: Shell expansion can make `$HOME`, `${HOME}`, `$env:HOME`, `$env:USERPROFILE`, or `%USERPROFILE%` equivalent to a protected home path. Git accepts global flag and option/value forms between its executable and subcommand, so detection must skip those forms before evaluating protected refspecs and force options.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Scan bounded recursively extracted structured string values before retaining compact JSON as a compatibility fallback.
+  Rationale: Decoded `command`, `query`, and nested string values must reach detectors without JSON quoting changing their meaning. Traversal is capped at 32 levels, 256 nodes, 128 strings, and 32 KiB of string data; exceeding a cap maps to the existing critical input-limit denial. Threats from extracted and serialized representations are deduplicated by category and severity.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
@@ -155,13 +163,15 @@ Milestone 2 now owns six generated common and audit helpers. The renderer contra
 
 Milestone 3 now owns the two observability helpers. The generated runtime bodies preserve SQLite/WAL tracing, transcript finalization, NDJSON fallback, retention, locking, maintenance, and fail-open behavior; only the generated header was added. The eight named adapter expressions cover runtime identity, environment precedence, and the default home-directory log path. Generator, both observability, both startup, and both installer fixture suites passed. PowerShell installer tests passed with the expected junction skip. The direct real-home installer remains unavailable because `/root/.agents/skills` is read-only, so temporary-home installed-copy coverage is the available installed-behavior evidence.
 
-Milestone 4 extraction now owns the two Tool Guardian scripts through one canonical policy and explicit Copilot and Gemini adapters. Three independent-review repair passes have tightened authorization, parser completeness, information disclosure, and Gemini audit writes. The current policy uses exact allowlist equality with only ASCII edge-space trimming; rejects control and escaped separators; denies every configured parser-bound overflow; inspects complete remove, home-variable, Git global-option/refspec, and SQL forms; and exposes only category and severity for detected threats. Shared vectors and public provider envelopes cover compatibility punctuation, encoded and control-separated payloads, credential-bearing matches, concurrent Gemini logging, linked destinations, complete command forms, SQL comments, and fail-closed over-limit input. Acceptance remains pending final approval from the independent security rereview.
+Milestone 4 extraction now owns the two Tool Guardian scripts through one canonical policy and explicit Copilot and Gemini adapters. Four independent-review repair passes have tightened authorization, parser completeness, structured-input handling, information disclosure, and Gemini audit writes. The current policy uses exact allowlist equality with only ASCII edge-space trimming; rejects control and escaped separators; denies every configured parser or structured-traversal overflow; scans recursively extracted decoded strings before serialized fallback; inspects complete remove, home-variable, Git global-option/refspec, and SQL forms; and exposes only category and severity for detected threats. Shared vectors and public provider envelopes cover compatibility punctuation, encoded, control-separated, and nested structured payloads, credential-bearing matches, concurrent Gemini logging, linked destinations, complete command forms, SQL comments, safe structured negatives, and fail-closed over-limit input. Acceptance remains pending approval from the independent security rereview.
 
 Milestone 4 security-fix validation on 2026-09-17 passed Python compilation, shell syntax checks, `scripts/test-generate-hooks.py` (11 tests), both Tool Guardian suites, both startup suites, the shell installer fixture, and the PowerShell installer fixture with its expected unsupported-junction skip. `scripts/generate-hooks.py --check` reported all 12 outputs current, and `git diff --check` passed. The startup suites remain the available bounded-runtime evidence because this family has no separate numeric latency benchmark.
 
 Milestone 4 second-repair validation at 2026-09-17 06:46Z passed the same complete matrix after the SQL lexer also proved quoted table identifiers remain detectable and public envelopes proved parser overflow denies before allowlist authorization and even in warning mode: Python compilation, shell syntax checks, all 11 generator tests, both Tool Guardian public-envelope suites, both bounded startup suites, shell and PowerShell installer fixtures, generator freshness for all 12 outputs, and diff hygiene. The PowerShell fixture again reported only its expected unsupported-junction skip. The independent security rereview remains the sole acceptance gate.
 
 Milestone 4 third-repair validation at 2026-09-17 06:56Z passed Python compilation, shell syntax checks, all 11 generator tests, both Tool Guardian public-envelope suites, both bounded startup suites, shell and PowerShell installer fixtures, generator freshness for all 12 outputs, and diff hygiene. Public regressions cover fullwidth semicolon, ampersand, pipe, dollar, single and double quote, and backtick equality collisions; quoted and unquoted common home-variable targets; and Git global flag plus option/value forms. The PowerShell fixture reported only its expected unsupported-junction skip. Final independent security rereview remains the acceptance gate.
+
+Milestone 4 fourth-repair validation at 2026-09-17 07:05Z passed Python compilation, shell syntax checks, all 11 generator tests, both Tool Guardian public-envelope suites, both bounded startup suites, shell and PowerShell installer fixtures, generator freshness for all 12 outputs, and diff hygiene. Shared and provider regressions prove nested decoded unfiltered queries are denied, safe filtered structured queries remain allowed, duplicate findings from decoded plus serialized views collapse to one category/severity record, and overdeep structured input fails at the traversal boundary before fallback serialization. The PowerShell fixture reported only its expected unsupported-junction skip. Independent security rereview remains the acceptance gate.
 
 ## Context and Orientation
 
@@ -273,7 +283,7 @@ Classify drift and handle confirmed defects separately as defined above. Accepta
 
 ### Milestone 4: Generate Tool Guardian and remove owned policy duplication
 Status: in progress
-Acceptance: not met (extraction and three security repair passes validated; final independent security rereview pending)
+Acceptance: not met (extraction and four security repair passes validated; independent security rereview pending)
 
 Add `hooks/families/tool_guard.py`. Put shared threat detectors, encoded pattern definitions, threat aggregation, and allowlist behavior in one canonical source. Keep Copilot and Gemini payload extraction, decision envelopes, audit behavior, default paths, and fail-closed top-level handling in explicit provider adapters. Replace the duplicated `parse_allowlist_csv` substring behavior with one structured, exact `parse_allowlist` and `allowlist_contains` definition used in both generated scripts; generated files remain self-contained.
 
@@ -470,3 +480,5 @@ Revision note, 2026-09-17: Resolved the first Milestone 4 independent review's S
 Revision note, 2026-09-17: The first fix did not satisfy security rereview. A second isolated TDD repair now preserves and rejects allowlist separators, denies parser-bound overflow, covers every remove operand plus normalized executable and full Git-refspec forms, lexes SQL comments, and removes threat evidence from responses and audit logs. Acceptance remains pending another independent rereview.
 
 Revision note, 2026-09-17: A third isolated TDD repair removes NFKC from allowlist equality, proves fullwidth shell punctuation cannot collide with configured ASCII text, protects common home-variable removal targets, and parses Git global options before `push`. Milestone 4 remains in progress pending final independent rereview.
+
+Revision note, 2026-09-17: A fourth focused TDD repair recursively extracts bounded string values from object-valued tool arguments before compact-JSON fallback, closing the nested unfiltered-query bypass while retaining safe structured negatives. Milestone 4 remains in progress pending independent rereview.

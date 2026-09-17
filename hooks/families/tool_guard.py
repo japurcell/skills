@@ -124,6 +124,9 @@ import unicodedata
 MAX_SCAN_TEXT = 32768
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
+MAX_STRUCTURED_DEPTH = 32
+MAX_STRUCTURED_NODES = 256
+MAX_STRUCTURED_STRINGS = 128
 MAX_TOOL_NAME_LENGTH = 160
 REDACTED = "[REDACTED]"
 
@@ -588,17 +591,50 @@ def read_tool_name(payload: dict) -> str:
     return ""
 
 
-def read_tool_input(payload: dict) -> str:
+def _read_tool_input_value(payload: dict) -> object:
     for key in TOOL_INPUT_KEYS:
         if key not in payload:
             continue
         value = payload.get(key)
         if value is None:
             return ""
-        if isinstance(value, str):
-            return value
-        return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+        return value
     return ""
+
+
+def read_tool_input(payload: dict) -> str:
+    value = _read_tool_input_value(payload)
+    if isinstance(value, str):
+        return value
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+def read_tool_scan_inputs(payload: dict) -> tuple[str, ...]:
+    value = _read_tool_input_value(payload)
+    if isinstance(value, str):
+        return (value,)
+
+    stack: list[tuple[object, int]] = [(value, 0)]
+    strings: list[str] = []
+    node_count = 0
+    total_string_bytes = 0
+    while stack:
+        current, depth = stack.pop()
+        node_count += 1
+        if node_count > MAX_STRUCTURED_NODES or depth > MAX_STRUCTURED_DEPTH:
+            raise ScanLimitExceeded("structured tool input exceeds traversal limits")
+        if isinstance(current, str):
+            strings.append(current)
+            total_string_bytes += len(current.encode("utf-8"))
+            if len(strings) > MAX_STRUCTURED_STRINGS or total_string_bytes > MAX_SCAN_TEXT:
+                raise ScanLimitExceeded("structured tool input exceeds string scan limits")
+        elif isinstance(current, dict):
+            stack.extend((child, depth + 1) for child in reversed(tuple(current.values())))
+        elif isinstance(current, (list, tuple)):
+            stack.extend((child, depth + 1) for child in reversed(current))
+
+    serialized = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    return tuple(strings) + (serialized,)
 
 
 def sanitize_tool_name(value: str) -> str:
@@ -660,6 +696,18 @@ def build_threats(tool_text: str) -> list[dict[str, str]]:
                     "severity": severity,
                 }
             )
+    return threats
+
+
+def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...]) -> list[dict[str, str]]:
+    threats: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for tool_input in tool_inputs:
+        for threat in build_threats(f"{tool_name} {tool_input}"):
+            identity = (threat["category"], threat["severity"])
+            if identity not in seen:
+                seen.add(identity)
+                threats.append(threat)
     return threats
 
 
@@ -867,13 +915,16 @@ def main() -> int:
         emit_deny_response("Tool Guardian skipped: invalid hook input JSON.")
 
     tool_name = read_tool_name(payload)
-    tool_input = read_tool_input(payload)
-    tool_text = f"{tool_name} {tool_input}"
-    threats = build_threats(tool_text)
+    try:
+        tool_scan_inputs = read_tool_scan_inputs(payload)
+        threats = build_input_threats(tool_name, tool_scan_inputs)
+    except ScanLimitExceeded:
+        threats = [{"category": "input_limits", "severity": "critical"}]
     if any(threat["category"] == "input_limits" for threat in threats):
         log_payload("threats_detected", mode, tool_name, len(threats), threats)
         emit_deny_response(build_block_reason(tool_name, threats))
 
+    tool_input = read_tool_input(payload)
     allowlist = parse_allowlist(os.environ.get("TOOL_GUARD_ALLOWLIST"))
 
     if allowlist and allowlist_contains(tool_name, tool_input, allowlist):
