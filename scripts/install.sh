@@ -14,6 +14,7 @@ readonly COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
 readonly CODEX_HOOK_SRC="${REPO_ROOT}/.codex/hooks/load-required-skills.py"
 readonly CODEX_HOOK_TEMPLATE_SRC="${REPO_ROOT}/.codex/global-hooks.json"
 readonly CODEX_HOOK_MERGER="${REPO_ROOT}/scripts/install-codex-hooks.py"
+readonly CODEX_AGENT_INSTALLER="${REPO_ROOT}/scripts/install-codex-agents.py"
 
 readonly SKILLS_DEST="${HOME}/.agents/skills"
 readonly REFERENCES_DEST="${HOME}/.agents/references"
@@ -24,6 +25,7 @@ readonly COPILOT_AGENTS_DEST="${COPILOT_DEST}/agents"
 readonly HOOKS_DEST="${HOME}/.copilot/hooks"
 readonly CODEX_HOOKS_DEST="${HOME}/.codex/hooks"
 readonly CODEX_HOOK_CONFIG_DEST="${HOME}/.codex/hooks.json"
+readonly CODEX_AGENTS_DEST="${CODEX_HOME:-${HOME}/.codex}/agents"
 
 copy_skills() {
   local entry
@@ -118,9 +120,11 @@ for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC" "$GEMINI_GLOBAL_SETTIN
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
-for src in "$CODEX_HOOK_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER"; do
+for src in "$CODEX_HOOK_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER"; do
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
+
+python3 "$CODEX_AGENT_INSTALLER" --source-dir "$AGENTS_SRC" --destination-dir "$CODEX_AGENTS_DEST"
 
 mkdir -p "$SKILLS_DEST" "$COPILOT_DEST" "$GEMINI_DEST" "$AGENTS_DEST" "$COPILOT_AGENTS_DEST"
 
@@ -142,6 +146,7 @@ install_codex_hook
 
 echo "Installed skills to $SKILLS_DEST"
 echo "Installed agents to $AGENTS_DEST and $COPILOT_AGENTS_DEST"
+echo "Installed Codex agents to $CODEX_AGENTS_DEST"
 if [[ -d "$REFERENCES_SRC" ]]; then
   echo "Installed references to $REFERENCES_DEST"
 fi

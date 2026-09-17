@@ -160,6 +160,7 @@ function New-FixtureRepo {
     }
 
     Copy-Item -LiteralPath $InstallScriptSrc -Destination (Join-Path $Repo 'scripts/install.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-agents.py') -Destination (Join-Path $Repo 'scripts/install-codex-agents.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-hooks.py') -Destination (Join-Path $Repo 'scripts/install-codex-hooks.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/global-hooks.json') -Destination (Join-Path $Repo '.codex/global-hooks.json') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/hooks/load-required-skills.py') -Destination (Join-Path $Repo '.codex/hooks/load-required-skills.py') -Force
@@ -184,8 +185,8 @@ function New-FixtureRepo {
     # match must be case-sensitive (My-Workspace is NOT excluded, matching bash).
     Write-FixtureFile (Join-Path $Repo 'skills/weird[1]-workspace/SKILL.md') @('bracket workspace skill should not copy')
     Write-FixtureFile (Join-Path $Repo 'skills/My-Workspace/SKILL.md') @('case-variant workspace name should copy')
-    Write-FixtureFile (Join-Path $Repo 'agents/helper.md') @('---', 'name: helper', '---', 'Use alpha.')
-    Write-FixtureFile (Join-Path $Repo 'agents/nested/helper.md') @('---', 'name: nested-helper', '---', 'Use alpha deeply.')
+    Write-FixtureFile (Join-Path $Repo 'agents/helper.md') @('---', 'name: helper', 'description: Fixture helper agent.', '---', 'Use alpha.')
+    Write-FixtureFile (Join-Path $Repo 'agents/nested/helper.md') @('---', 'name: nested-helper', 'description: Nested fixture helper agent.', '---', 'Use alpha deeply.')
     Write-FixtureFile (Join-Path $Repo 'references/notes.md') @('Reference notes.')
     Write-FixtureFile (Join-Path $Repo '.gemini/GEMINI.md') @('Gemini root.')
     Write-FixtureFile (Join-Path $Repo '.gemini/policies/plan-custom-directory.toml') @('Nested policy.')
@@ -218,16 +219,19 @@ function Invoke-InstallProcess {
     param(
         [string]$Repo,
         [string]$HomeDir,
-        [string]$Workdir
+        [string]$Workdir,
+        [string]$CodexHome = $null
     )
 
     $oldHome = [System.Environment]::GetEnvironmentVariable('HOME', [System.EnvironmentVariableTarget]::Process)
     $oldUserProfile = [System.Environment]::GetEnvironmentVariable('USERPROFILE', [System.EnvironmentVariableTarget]::Process)
+    $oldCodexHome = [System.Environment]::GetEnvironmentVariable('CODEX_HOME', [System.EnvironmentVariableTarget]::Process)
     $childStdoutPath = Join-Path $Workdir 'child-stdout.txt'
     $childStderrPath = Join-Path $Workdir 'child-stderr.txt'
     try {
         [System.Environment]::SetEnvironmentVariable('HOME', $HomeDir, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('USERPROFILE', $HomeDir, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('CODEX_HOME', $CodexHome, [System.EnvironmentVariableTarget]::Process)
         & pwsh -NoProfile -File (Join-Path $Repo 'scripts/install.ps1') 1> $childStdoutPath 2> $childStderrPath
         $exitCode = $LASTEXITCODE
         $stdout = @()
@@ -242,6 +246,7 @@ function Invoke-InstallProcess {
     finally {
         [System.Environment]::SetEnvironmentVariable('HOME', $oldHome, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('USERPROFILE', $oldUserProfile, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('CODEX_HOME', $oldCodexHome, [System.EnvironmentVariableTarget]::Process)
         Remove-Item -LiteralPath $childStdoutPath -Force -ErrorAction SilentlyContinue
         Remove-Item -LiteralPath $childStderrPath -Force -ErrorAction SilentlyContinue
     }
@@ -257,10 +262,11 @@ function Invoke-Install {
     param(
         [string]$Repo,
         [string]$HomeDir,
-        [string]$Workdir
+        [string]$Workdir,
+        [string]$CodexHome = $null
     )
 
-    $result = Invoke-InstallProcess -Repo $Repo -HomeDir $HomeDir -Workdir $Workdir
+    $result = Invoke-InstallProcess -Repo $Repo -HomeDir $HomeDir -Workdir $Workdir -CodexHome $CodexHome
     if ($result.ExitCode -ne 0) {
         foreach ($line in $result.Stdout) {
             [Console]::Error.WriteLine($line)
@@ -497,10 +503,10 @@ function Test-CopiesFullGeminiTree {
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
 
         Assert-Equals -Expected "Gemini root." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/GEMINI.md')) -Message "Expected GEMINI.md to be copied into ~/.gemini."
-        Assert-Equals -Expected "---`nname: helper`n---`nUse alpha." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/agents/helper.md')) -Message "Expected agents to be copied into ~/.gemini/agents."
-        Assert-Equals -Expected "---`nname: nested-helper`n---`nUse alpha deeply." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/agents/nested/helper.md')) -Message "Expected nested agents to be copied recursively into ~/.gemini/agents."
-        Assert-Equals -Expected "---`nname: helper`n---`nUse alpha." -Actual (Read-FileContent (Join-Path $homeDir '.copilot/agents/helper.md')) -Message "Expected agents to be copied into ~/.copilot/agents."
-        Assert-Equals -Expected "---`nname: nested-helper`n---`nUse alpha deeply." -Actual (Read-FileContent (Join-Path $homeDir '.copilot/agents/nested/helper.md')) -Message "Expected nested agents to be copied recursively into ~/.copilot/agents."
+        Assert-Equals -Expected "---`nname: helper`ndescription: Fixture helper agent.`n---`nUse alpha." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/agents/helper.md')) -Message "Expected agents to be copied into ~/.gemini/agents."
+        Assert-Equals -Expected "---`nname: nested-helper`ndescription: Nested fixture helper agent.`n---`nUse alpha deeply." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/agents/nested/helper.md')) -Message "Expected nested agents to be copied recursively into ~/.gemini/agents."
+        Assert-Equals -Expected "---`nname: helper`ndescription: Fixture helper agent.`n---`nUse alpha." -Actual (Read-FileContent (Join-Path $homeDir '.copilot/agents/helper.md')) -Message "Expected agents to be copied into ~/.copilot/agents."
+        Assert-Equals -Expected "---`nname: nested-helper`ndescription: Nested fixture helper agent.`n---`nUse alpha deeply." -Actual (Read-FileContent (Join-Path $homeDir '.copilot/agents/nested/helper.md')) -Message "Expected nested agents to be copied recursively into ~/.copilot/agents."
         Assert-Equals -Expected "Nested policy." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/policies/plan-custom-directory.toml')) -Message "Expected nested Gemini files to be copied recursively."
         Assert-Equals -Expected "Hidden note." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/.hidden-note')) -Message "Expected hidden Gemini files to be copied recursively."
         Assert-Equals -Expected "#!/bin/bash`necho hook" -Actual (Read-FileContent (Join-Path $homeDir '.copilot/hooks/test-hook.sh')) -Message "Expected hooks to be copied into ~/.copilot/hooks."
@@ -609,6 +615,120 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
             Assert-Equals -Expected $expectedMode -Actual ([System.IO.File]::GetUnixFileMode($installedHook)) -Message "Expected the installed Codex hook to be executable with mode 755."
             Assert-Equals -Expected $ownerOnly -Actual ([System.IO.File]::GetUnixFileMode($unrelatedHook)) -Message "Expected installation not to change unrelated Codex hook modes."
         }
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Assert-CodexAgentInstallation {
+    param(
+        [string]$AgentPath,
+        [string]$ManifestPath
+    )
+
+    $python = @(Get-Command python3 -CommandType Application -ErrorAction SilentlyContinue)[0]
+    $pythonArguments = @()
+    if ($null -eq $python) {
+        $python = @(Get-Command py -CommandType Application -ErrorAction SilentlyContinue)[0]
+        $pythonArguments = @('-3')
+    }
+    if ($null -eq $python) {
+        Fail 'Missing Python executable: expected python3 or py for Codex agent assertions.'
+    }
+
+    $assertion = @'
+import json
+import os
+import stat
+import sys
+import tomllib
+from pathlib import Path
+
+agent_path = Path(sys.argv[1])
+manifest_path = Path(sys.argv[2])
+assert tomllib.loads(agent_path.read_text(encoding="utf-8")) == {
+    "name": "helper",
+    "description": "Fixture helper agent.",
+    "developer_instructions": "Use alpha.\n",
+}
+assert json.loads(manifest_path.read_text(encoding="utf-8")) == {
+    "version": 1,
+    "agents": [{"source": "helper.md", "output": "helper.toml", "name": "helper"}],
+}
+if os.name != "nt":
+    assert stat.S_IMODE(agent_path.stat().st_mode) == 0o600
+    assert stat.S_IMODE(manifest_path.stat().st_mode) == 0o600
+'@
+    & $python.Source @pythonArguments -c $assertion $AgentPath $ManifestPath
+    if ($LASTEXITCODE -ne 0) {
+        Fail 'Expected generated Codex TOML and manifest to parse with the fixture agent identity and exact instructions.'
+    }
+}
+
+function Test-InstallsCodexAgentsBeforeOtherAssets {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        $agentPath = Join-Path $homeDir '.codex/agents/helper.toml'
+        $manifestPath = Join-Path $homeDir '.codex/agents/.skills-repo-agents.json'
+
+        New-FixtureRepo $repo
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-CodexAgentInstallation -AgentPath $agentPath -ManifestPath $manifestPath
+        Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/agents/nested/helper.toml'))) -Message 'Expected Codex conversion to ignore nested Markdown agents.'
+        $firstAgent = Get-Content -LiteralPath $agentPath -Raw
+        $firstManifest = Get-Content -LiteralPath $manifestPath -Raw
+
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals -Expected $firstAgent -Actual (Get-Content -LiteralPath $agentPath -Raw) -Message 'Expected a second Codex install to leave helper.toml unchanged.'
+        Assert-Equals -Expected $firstManifest -Actual (Get-Content -LiteralPath $manifestPath -Raw) -Message 'Expected a second Codex install to leave the agent manifest unchanged.'
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-CodexAgentsFailBeforeCopyingOtherAssets {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+
+        New-FixtureRepo $repo
+        Write-FixtureFile (Join-Path $repo 'agents/helper.md') @('---', 'name: helper', '---', 'Invalid fixture.')
+
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals -Expected 1 -Actual $result.ExitCode -Message 'Expected invalid Codex agent source to fail install.ps1.'
+        Assert-True -Condition (($result.Stderr -join "`n") -match 'helper.md') -Message 'Expected the invalid Codex source diagnostic on stderr.'
+        foreach ($path in @(
+            (Join-Path $homeDir '.agents/skills'),
+            (Join-Path $homeDir '.gemini/agents'),
+            (Join-Path $homeDir '.copilot/agents'),
+            (Join-Path $homeDir '.codex/hooks')
+        )) {
+            Assert-True -Condition (-not (Test-Path -LiteralPath $path)) -Message "Expected invalid Codex source to stop before copying $path."
+        }
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-CodexHomeOverrideSelectsOneAgentDestination {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        $codexHome = Join-Path $workdir 'custom-codex'
+        $agentPath = Join-Path $codexHome 'agents/helper.toml'
+        $manifestPath = Join-Path $codexHome 'agents/.skills-repo-agents.json'
+
+        New-FixtureRepo $repo
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codexHome
+        Assert-CodexAgentInstallation -AgentPath $agentPath -ManifestPath $manifestPath
+        Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/agents/helper.toml'))) -Message 'Expected CODEX_HOME not to create a duplicate agent under the default home destination.'
     }
     finally {
         Remove-Workdir $workdir
@@ -745,6 +865,9 @@ Test-FixedNameHardLinkHandling
 Test-JunctionHandling
 Test-CopiesFullGeminiTree
 Test-InstalledHooksAreExecutable
+Test-InstallsCodexAgentsBeforeOtherAssets
+Test-CodexAgentsFailBeforeCopyingOtherAssets
+Test-CodexHomeOverrideSelectsOneAgentDestination
 Test-InstallsCodexHookAndGlobalConfiguration
 Test-PreservesCodexConfigurationAndIsIdempotent
 Test-RefusesSymlinkedCodexHookDestination

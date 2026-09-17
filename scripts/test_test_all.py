@@ -108,6 +108,7 @@ class TestTestAll(unittest.TestCase):
             for path in (REPO_ROOT / "scripts").glob(pattern)
             if path.name != "test-common.sh"
         }
+        expected.add("scripts/test-codex-agents.py")
         listed = {
             part for command in commands for part in command if part.startswith("scripts/")
         }
@@ -118,6 +119,7 @@ class TestTestAll(unittest.TestCase):
              "skills/subagent-model-router/evals", "-p", "test_*.py"],
             commands,
         )
+        self.assertIn(["python3", "scripts/test-codex-agents.py"], commands)
 
     def test_missing_dependencies_fail_before_any_suite_runs(self):
         root, env = self.fixture()

@@ -21,6 +21,7 @@ create_fixture_repo() {
     "$repo/.gemini/policies"
 
   cp -p "$REPO_ROOT/scripts/install.sh" "$repo/scripts/install.sh"
+  cp -p "$REPO_ROOT/scripts/install-codex-agents.py" "$repo/scripts/install-codex-agents.py"
   cp -p "$REPO_ROOT/scripts/install-codex-hooks.py" "$repo/scripts/install-codex-hooks.py"
   cp -p "$REPO_ROOT/.codex/global-hooks.json" "$repo/.codex/global-hooks.json"
   cp -p "$REPO_ROOT/.codex/hooks/load-required-skills.py" "$repo/.codex/hooks/load-required-skills.py"
@@ -28,8 +29,8 @@ create_fixture_repo() {
   printf '%s\n' 'fixture eval content' > "$repo/skills/alpha/evals/evals.json"
   printf '%s\n' 'workspace skill should not copy' > "$repo/skills/beta-workspace/SKILL.md"
   printf '%s\n' 'archive entry should not copy' > "$repo/skills/archive/README.md"
-  printf '%s\n' '---' 'name: helper' '---' 'Use alpha.' > "$repo/agents/helper.md"
-  printf '%s\n' '---' 'name: nested-helper' '---' 'Use alpha deeply.' > "$repo/agents/nested/helper.md"
+  printf '%s\n' '---' 'name: helper' 'description: Fixture helper agent.' '---' 'Use alpha.' > "$repo/agents/helper.md"
+  printf '%s\n' '---' 'name: nested-helper' 'description: Nested fixture helper agent.' '---' 'Use alpha deeply.' > "$repo/agents/nested/helper.md"
   printf '%s\n' 'Gemini root.' > "$repo/.gemini/GEMINI.md"
   printf '%s\n' 'Nested policy.' > "$repo/.gemini/policies/plan-custom-directory.toml"
   printf '%s\n' 'Hidden note.' > "$repo/.gemini/.hidden-note"
@@ -44,6 +45,105 @@ create_fixture_repo() {
   printf '%s\n' 'print("hook")' > "$repo/.copilot/hooks/scripts/test-hook.py"
   printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.gemini/hooks/scripts/test-hook.sh"
   printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.copilot/hooks/scripts/test-hook.sh"
+}
+
+test_installs_codex_agents_before_other_assets() {
+  local workdir
+  local repo
+  local home
+  local first_agent
+  local first_manifest
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+
+  env -u CODEX_HOME HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+
+  python3 - "$home/.codex/agents/helper.toml" "$home/.codex/agents/.skills-repo-agents.json" <<'PY'
+import json
+import stat
+import sys
+import tomllib
+from pathlib import Path
+
+agent_path = Path(sys.argv[1])
+manifest_path = Path(sys.argv[2])
+agent = tomllib.loads(agent_path.read_text(encoding="utf-8"))
+assert agent == {
+    "name": "helper",
+    "description": "Fixture helper agent.",
+    "developer_instructions": "Use alpha.\n",
+}
+assert json.loads(manifest_path.read_text(encoding="utf-8")) == {
+    "version": 1,
+    "agents": [{"source": "helper.md", "output": "helper.toml", "name": "helper"}],
+}
+if sys.platform != "win32":
+    assert stat.S_IMODE(agent_path.stat().st_mode) == 0o600
+    assert stat.S_IMODE(manifest_path.stat().st_mode) == 0o600
+PY
+  if [[ -e "$home/.codex/agents/nested.toml" || -e "$home/.codex/agents/nested/helper.toml" ]]; then
+    echo "Expected Codex conversion to ignore nested Markdown agents." >&2
+    exit 1
+  fi
+  first_agent="$(<"$home/.codex/agents/helper.toml")"
+  first_manifest="$(<"$home/.codex/agents/.skills-repo-agents.json")"
+
+  env -u CODEX_HOME HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+  assert_equals "$first_agent" "$(<"$home/.codex/agents/helper.toml")" "Expected a second Codex install to leave helper.toml unchanged."
+  assert_equals "$first_manifest" "$(<"$home/.codex/agents/.skills-repo-agents.json")" "Expected a second Codex install to leave the agent manifest unchanged."
+}
+
+test_codex_agents_fail_before_copying_other_assets() {
+  local workdir
+  local repo
+  local home
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+  printf '%s\n' '---' 'name: helper' '---' 'Invalid fixture.' > "$repo/agents/helper.md"
+
+  if env -u CODEX_HOME HOME="$home" bash "$repo/scripts/install.sh" >"$workdir/stdout" 2>"$workdir/stderr"; then
+    echo "Expected invalid Codex agent source to fail installation." >&2
+    exit 1
+  fi
+  assert_file_contains "$workdir/stderr" "helper.md" "Expected the invalid Codex source diagnostic on stderr."
+  for path in "$home/.agents/skills" "$home/.gemini/agents" "$home/.copilot/agents" "$home/.codex/hooks"; do
+    if [[ -e "$path" ]]; then
+      echo "Expected invalid Codex source to stop before copying $path." >&2
+      exit 1
+    fi
+  done
+}
+
+test_codex_home_override_selects_one_agent_destination() {
+  local workdir
+  local repo
+  local home
+  local codex_home
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  codex_home="$workdir/custom-codex"
+  create_fixture_repo "$repo"
+
+  HOME="$home" CODEX_HOME="$codex_home" bash "$repo/scripts/install.sh" >/dev/null
+  if [[ ! -f "$codex_home/agents/helper.toml" ]]; then
+    echo "Expected CODEX_HOME to select the custom Codex agents destination." >&2
+    exit 1
+  fi
+  if [[ -e "$home/.codex/agents/helper.toml" ]]; then
+    echo "Expected no duplicate Codex agent under the default home destination." >&2
+    exit 1
+  fi
 }
 
 test_installs_codex_hook_and_global_configuration() {
@@ -453,10 +553,10 @@ test_copies_full_gemini_tree() {
   copied_global_settings="$(<"$home/.gemini/settings.json")"
 
   assert_equals "Gemini root." "$copied_gemini" "Expected GEMINI.md to be copied into ~/.gemini."
-  assert_equals $'---\nname: helper\n---\nUse alpha.' "$copied_agent" "Expected agents to be copied into ~/.gemini/agents."
-  assert_equals $'---\nname: nested-helper\n---\nUse alpha deeply.' "$copied_nested_agent" "Expected nested agents to be copied recursively into ~/.gemini/agents."
-  assert_equals $'---\nname: helper\n---\nUse alpha.' "$copied_copilot_agent" "Expected agents to be copied into ~/.copilot/agents."
-  assert_equals $'---\nname: nested-helper\n---\nUse alpha deeply.' "$copied_copilot_nested_agent" "Expected nested agents to be copied recursively into ~/.copilot/agents."
+  assert_equals $'---\nname: helper\ndescription: Fixture helper agent.\n---\nUse alpha.' "$copied_agent" "Expected agents to be copied into ~/.gemini/agents."
+  assert_equals $'---\nname: nested-helper\ndescription: Nested fixture helper agent.\n---\nUse alpha deeply.' "$copied_nested_agent" "Expected nested agents to be copied recursively into ~/.gemini/agents."
+  assert_equals $'---\nname: helper\ndescription: Fixture helper agent.\n---\nUse alpha.' "$copied_copilot_agent" "Expected agents to be copied into ~/.copilot/agents."
+  assert_equals $'---\nname: nested-helper\ndescription: Nested fixture helper agent.\n---\nUse alpha deeply.' "$copied_copilot_nested_agent" "Expected nested agents to be copied recursively into ~/.copilot/agents."
   assert_equals "Nested policy." "$copied_policy" "Expected nested Gemini files to be copied recursively."
   assert_equals "Hidden note." "$copied_hidden" "Expected hidden Gemini files to be copied recursively."
   assert_equals $'#!/bin/bash\necho hook' "$copied_hook" "Expected hooks to be copied into ~/.copilot/hooks."
@@ -470,6 +570,9 @@ test_copies_full_gemini_tree() {
 }
 
 main() {
+  test_installs_codex_agents_before_other_assets
+  test_codex_agents_fail_before_copying_other_assets
+  test_codex_home_override_selects_one_agent_destination
   test_installs_codex_hook_and_global_configuration
   test_preserves_unrelated_codex_configuration_and_replaces_owned_handler
   test_codex_config_backup_is_bounded_and_idempotent

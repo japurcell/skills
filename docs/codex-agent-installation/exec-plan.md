@@ -15,10 +15,10 @@ After this work, running either `./scripts/install.sh` or `pwsh scripts/install.
 - [x] (2026-09-17 03:30Z) [milestone-1] Add failing converter tests for valid conversion, strict parsing, exact body preservation, collisions, ownership, cleanup, locking, links, and rollback.
 - [x] (2026-09-17 03:30Z) [milestone-1] Implement `scripts/install-codex-agents.py` with no third-party dependencies.
 - [x] (2026-09-17 03:30Z) [milestone-1] Run direct converter tests and Python syntax checks successfully.
-- [ ] [milestone-2] Add failing Bash and PowerShell installer integration assertions.
-- [ ] [milestone-2] Integrate converter into `scripts/install.sh` and `scripts/install.ps1` before existing copy operations.
-- [ ] [milestone-2] Register the direct converter suite in `scripts/test-all.py` and update runner-registry expectations.
-- [ ] [milestone-2] Pass Bash, PowerShell, aggregate-runner, and full maintained test suites.
+- [x] (2026-09-17 03:42Z) [milestone-2] Add failing Bash and PowerShell installer integration assertions.
+- [x] (2026-09-17 03:42Z) [milestone-2] Integrate converter into `scripts/install.sh` and `scripts/install.ps1` before existing copy operations.
+- [x] (2026-09-17 03:42Z) [milestone-2] Register the direct converter suite in `scripts/test-all.py` and update runner-registry expectations.
+- [x] (2026-09-17 03:42Z) [milestone-2] Pass Bash, PowerShell, aggregate-runner, and full maintained test suites.
 - [ ] [milestone-3] Update human documentation and canonical agent memory for the new install flow and validation commands.
 - [ ] [milestone-3] Install generated agents locally and record CLI and desktop-app smoke results with client versions.
 - [ ] [milestone-3] Run the mandatory `update-agent-docs` pass and synchronize this plan's final progress and retrospective.
@@ -113,6 +113,8 @@ After this work, running either `./scripts/install.sh` or `pwsh scripts/install.
 
 Milestone 1 added a dependency-free converter and public-subprocess unittest suite. The converter accepts strict two-field Markdown frontmatter, preserves decoded instruction bodies exactly in TOML, protects unmanaged destination files through manifest ownership and collision checks, and uses same-directory staging, an exclusive lock, fsync-backed replacement, and caught-error rollback. Direct validation completed with `python3 -m py_compile scripts/install-codex-agents.py scripts/test-codex-agents.py` and `python3 scripts/test-codex-agents.py` (13 passing tests). A separate temporary-destination run converted all 19 current top-level agents and parsed each generated TOML document with an exact instruction-body comparison. Milestones 2 and 3 remain open.
 
+Milestone 2 invokes the converter before either installer creates or copies existing provider assets. Both installer suites now validate generated TOML, manifest ownership, Unix modes where applicable, idempotence, malformed-source early failure, and the `CODEX_HOME` destination override. The direct converter suite is registered in the aggregate runner. Validation passed with Bash and PowerShell syntax checks, direct converter and runner tests, `./scripts/test-all.py --list`, and the full maintained suite. Milestone 3 remains open.
+
 ## Context and Orientation
 
 `agents/` contains the canonical Markdown custom agents. Each top-level file starts with YAML-like frontmatter containing `name` and `description`; the remaining Markdown is the agent's instructions. `scripts/install.sh` currently copies the entire directory into `~/.gemini/agents` and `~/.copilot/agents`. `scripts/install.ps1` is the PowerShell 7 equivalent and must retain behavioral parity.
@@ -162,8 +164,8 @@ Create the destination directory only after source preflight succeeds. Before mu
 Run direct tests until all converter cases pass. Do not weaken or skip safety cases to make the suite green.
 
 ### Milestone 2: Integrate both installers and aggregate validation
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Extend `scripts/test-install.sh` and `scripts/test-install.ps1` before editing installers. Their fixture agent needs both `name` and `description`, because the new strict Codex schema requires both. Keep the nested Markdown fixture to prove Copilot and Gemini still receive nested files while Codex converts top-level files only. Copy `scripts/install-codex-agents.py` into each temporary fixture repository.
 
@@ -307,3 +309,5 @@ No database, network service, schema migration, or new package is involved.
 Revision note (2026-09-17): Initial ExecPlan created after official documentation research and seven grilling rounds. It records all confirmed design decisions and leaves implementation milestones open.
 
 Revision note (2026-09-17): Milestone 1 completed with strict source conversion, manifest-owned transactional installation, and direct public-CLI tests. The `python3` interpreter spelling was used for local validation because this environment has no `python` executable.
+
+Revision note (2026-09-17): Milestone 2 completed by placing conversion before every existing copy operation in both installers and registering its direct suite in the maintained aggregate runner.

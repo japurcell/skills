@@ -43,6 +43,7 @@ $CopilotLspSrc = Join-Path $RepoRoot '.copilot/lsp-config.json'
 $CodexHookSrc = Join-Path $RepoRoot '.codex/hooks/load-required-skills.py'
 $CodexHookTemplateSrc = Join-Path $RepoRoot '.codex/global-hooks.json'
 $CodexHookMergerSrc = Join-Path $RepoRoot 'scripts/install-codex-hooks.py'
+$CodexAgentInstallerSrc = Join-Path $RepoRoot 'scripts/install-codex-agents.py'
 
 $SkillsDest = Join-Path $HOME '.agents/skills'
 $ReferencesDest = Join-Path $HOME '.agents/references'
@@ -54,12 +55,29 @@ $HooksDest = Join-Path $CopilotDest 'hooks'
 $CodexDest = Join-Path $HOME '.codex'
 $CodexHooksDest = Join-Path $CodexDest 'hooks'
 $CodexHookConfigDest = Join-Path $CodexDest 'hooks.json'
+$CodexAgentsDest = Join-Path $(if ([string]::IsNullOrEmpty($env:CODEX_HOME)) { $CodexDest } else { $env:CODEX_HOME }) 'agents'
 
 function Fail {
     param([string]$Message)
 
     [Console]::Error.WriteLine($Message)
     exit 1
+}
+
+function Get-PythonCommand {
+    $python = @(Get-Command python3 -CommandType Application -ErrorAction SilentlyContinue)[0]
+    $arguments = @()
+    if ($null -eq $python) {
+        $python = @(Get-Command py -CommandType Application -ErrorAction SilentlyContinue)[0]
+        $arguments = @('-3')
+    }
+    if ($null -eq $python) {
+        Fail 'Missing Python executable: expected python3 or py.'
+    }
+    return [pscustomobject]@{
+        Path = $python.Source
+        Arguments = $arguments
+    }
 }
 
 # Recreates a preserved link object at $Destination without following it.
@@ -319,6 +337,11 @@ function Copy-CopilotLsp {
 }
 
 function Install-CodexHook {
+    param(
+        [string]$PythonPath,
+        [string[]]$PythonArguments
+    )
+
     New-Item -ItemType Directory -Path $CodexHooksDest -Force | Out-Null
     $installedHook = Join-Path $CodexHooksDest 'load-required-skills.py'
     $existingHook = Get-Item -Force -LiteralPath $installedHook -ErrorAction SilentlyContinue
@@ -337,17 +360,7 @@ function Install-CodexHook {
         [System.IO.File]::SetUnixFileMode($installedHook, $executable)
     }
 
-    $python = @(Get-Command python3 -CommandType Application -ErrorAction SilentlyContinue)[0]
-    $pythonArguments = @()
-    if ($null -eq $python) {
-        $python = @(Get-Command py -CommandType Application -ErrorAction SilentlyContinue)[0]
-        $pythonArguments = @('-3')
-    }
-    if ($null -eq $python) {
-        Fail 'Missing Python executable: expected python3 or py.'
-    }
-
-    & $python.Source @pythonArguments $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest
+    & $PythonPath @PythonArguments $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest
     if ($LASTEXITCODE -ne 0) {
         Fail "Codex hook configuration merger exited with code $LASTEXITCODE."
     }
@@ -365,10 +378,16 @@ foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSetting
     }
 }
 
-foreach ($src in @($CodexHookSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc)) {
+foreach ($src in @($CodexHookSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
     }
+}
+
+$pythonCommand = Get-PythonCommand
+& $pythonCommand.Path @($pythonCommand.Arguments) $CodexAgentInstallerSrc --source-dir $AgentsSrc --destination-dir $CodexAgentsDest
+if ($LASTEXITCODE -ne 0) {
+    Fail "Codex agent converter exited with code $LASTEXITCODE."
 }
 
 foreach ($dest in @($SkillsDest, $CopilotDest, $GeminiDest, $AgentsDest, $CopilotAgentsDest)) {
@@ -389,10 +408,11 @@ Copy-Gemini
 Copy-GeminiGlobalSettings
 Copy-CopilotInstructions
 Copy-CopilotLsp
-Install-CodexHook
+Install-CodexHook -PythonPath $pythonCommand.Path -PythonArguments $pythonCommand.Arguments
 
 Write-Output "Installed skills to $SkillsDest"
 Write-Output "Installed agents to $AgentsDest and $CopilotAgentsDest"
+Write-Output "Installed Codex agents to $CodexAgentsDest"
 if (Test-Path -LiteralPath $ReferencesSrc) {
     Write-Output "Installed references to $ReferencesDest"
 }
