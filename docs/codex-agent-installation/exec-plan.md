@@ -21,8 +21,8 @@ After this work, running either `./scripts/install.sh` or `pwsh scripts/install.
 - [x] (2026-09-17 03:42Z) [milestone-2] Pass Bash, PowerShell, aggregate-runner, and full maintained test suites.
 - [x] (2026-09-17 03:53Z) [milestone-3] Update human documentation and canonical agent memory for the new install flow, ownership boundary, and validation commands.
 - [x] (2026-09-17 03:53Z) [milestone-3] Run real installation through Codex conversion; parse all 19 generated TOML files with exact decoded instruction comparisons and record CLI version `codex-cli 0.154.0`.
-- [ ] [milestone-3] Run the manual fresh CLI-session `code-reviewer` spawn smoke check and inspect `/agent`; it requires an interactive paid-model session and was not automated.
-- [ ] [milestone-3] Run the manual desktop-app `code-reviewer` spawn smoke check; `/Applications/Codex.app/Contents/Resources/codex` is unavailable in this environment, so no bundled desktop version or discovery result exists.
+- [x] (2026-09-17 04:13Z) [milestone-3] Verify a fresh CLI session discovers and spawns `code-reviewer`; screenshot evidence shows the named subagent completing `/root/review_worktree`.
+- [x] (2026-09-17 04:13Z) [milestone-3] Verify the desktop app discovers and spawns `code-reviewer`; screenshot evidence shows the named subagent assigned `/root/review_worktree`.
 - [x] (2026-09-17 03:53Z) [milestone-3] Run the mandatory `update-agent-docs` and OKF passes and synchronize this plan's progress, evidence, and retrospective.
 
 ## Surprises & Discoveries
@@ -44,6 +44,9 @@ After this work, running either `./scripts/install.sh` or `pwsh scripts/install.
 
 - Observation: This environment has CLI Codex but no desktop bundle executable.
   Evidence: `codex --version` returned `codex-cli 0.154.0`; `/Applications/Codex.app/Contents/Resources/codex` was unavailable.
+
+- Observation: Both user clients discover the generated `code-reviewer` custom agent.
+  Evidence: `Screenshot 2026-09-16 at 9.07.33 PM.png` shows the CLI spawning and completing the named agent; `Screenshot 2026-09-16 at 9.10.49 PM.png` shows the desktop app spawning the same named agent.
 
 - Observation: Repository installer tests already use isolated fixture repositories and redirected home directories. The Codex hook merger already demonstrates same-directory temporary files, `fsync`, `os.replace`, owner-only modes, and link refusal.
   Evidence: `scripts/test-install.sh`, `scripts/test-install.ps1`, and `scripts/install-codex-hooks.py` provide patterns to follow.
@@ -119,11 +122,11 @@ After this work, running either `./scripts/install.sh` or `pwsh scripts/install.
 
 ## Outcomes & Retrospective
 
-Milestone 1 added a dependency-free converter and public-subprocess unittest suite. The converter accepts strict two-field Markdown frontmatter, preserves decoded instruction bodies exactly in TOML, protects unmanaged destination files through manifest ownership and collision checks, and uses same-directory staging, an exclusive lock, fsync-backed replacement, and caught-error rollback. Direct validation completed with `python3 -m py_compile scripts/install-codex-agents.py scripts/test-codex-agents.py` and `python3 scripts/test-codex-agents.py` (13 passing tests). A separate temporary-destination run converted all 19 current top-level agents and parsed each generated TOML document with an exact instruction-body comparison. Milestones 2 and 3 remain open.
+Milestone 1 added a dependency-free converter and public-subprocess unittest suite. The converter accepts strict two-field Markdown frontmatter, preserves decoded instruction bodies exactly in TOML, protects unmanaged destination files through manifest ownership and collision checks, and uses same-directory staging, an exclusive lock, fsync-backed replacement, and caught-error rollback. Direct validation completed with `python3 -m py_compile scripts/install-codex-agents.py scripts/test-codex-agents.py` and `python3 scripts/test-codex-agents.py` (13 passing tests). A separate temporary-destination run converted all 19 current top-level agents and parsed each generated TOML document with an exact instruction-body comparison.
 
-Milestone 2 invokes the converter before either installer creates or copies existing provider assets. Both installer suites now validate generated TOML, manifest ownership, Unix modes where applicable, idempotence, malformed-source early failure, and the `CODEX_HOME` destination override. The direct converter suite is registered in the aggregate runner. Validation passed with Bash and PowerShell syntax checks, direct converter and runner tests, `./scripts/test-all.py --list`, and the full maintained suite. Milestone 3 remains open.
+Milestone 2 invokes the converter before either installer creates or copies existing provider assets. Both installer suites now validate generated TOML, manifest ownership, Unix modes where applicable, idempotence, malformed-source early failure, and the `CODEX_HOME` destination override. The direct converter suite is registered in the aggregate runner. Validation passed with Bash and PowerShell syntax checks, direct converter and runner tests, `./scripts/test-all.py --list`, and the full maintained suite.
 
-Milestone 3 documents the canonical Markdown source, provider-specific destinations, strict converter contract, manifest ownership, no-manual-edit rule, stale-cleanup boundary, and targeted validation. The documentation and knowledge-base pass updated `README.md`, the non-protected `AGENTS.md` introduction, architecture/file/API maps, agent and installer conventions, targeted testing guidance, and the read-only installer recovery note. `python3 -m py_compile scripts/install-codex-agents.py scripts/test-codex-agents.py`, the 13-test converter suite, Bash syntax check, Bash and PowerShell installer suites, the 14-test aggregate-runner suite, `./scripts/lint-okf.py`, and `./scripts/test-all.py` all passed; the full aggregate result was 25 passed and 0 failed in 85.9 seconds. The real Bash installation created 19 managed TOML agents under `/root/.codex/agents`, and a direct parse compared every decoded `developer_instructions` value with its source body exactly. The subsequent skill copy stopped at a read-only path under `/root/.agents/skills`; a direct byte comparison nevertheless confirms that `skills/execplan-implement/SKILL.md` matches its installed copy. CLI version evidence is `codex-cli 0.154.0`; the desktop executable is unavailable. The remaining CLI and desktop agent-spawn checks are intentionally pending because they require interactive client sessions and must not be automated through paid model calls. Milestone 3 is in progress and its acceptance remains unmet pending those manual checks.
+Milestone 3 documents the canonical Markdown source, provider-specific destinations, strict converter contract, manifest ownership, no-manual-edit rule, stale-cleanup boundary, and targeted validation. The documentation and knowledge-base pass updated `README.md`, the non-protected `AGENTS.md` introduction, architecture/file/API maps, agent and installer conventions, targeted testing guidance, and the read-only installer recovery note. `python3 -m py_compile scripts/install-codex-agents.py scripts/test-codex-agents.py`, the 13-test converter suite, Bash syntax check, Bash and PowerShell installer suites, the 14-test aggregate-runner suite, `./scripts/lint-okf.py`, and `./scripts/test-all.py` all passed; the full aggregate result was 25 passed and 0 failed in 85.9 seconds. The real Bash installation created 19 managed TOML agents under `/root/.codex/agents`, and a direct parse compared every decoded `developer_instructions` value with its source body exactly. The subsequent skill copy stopped at a read-only path under `/root/.agents/skills`; a direct byte comparison nevertheless confirms that `skills/execplan-implement/SKILL.md` matches its installed copy. CLI version evidence is `codex-cli 0.154.0`; the desktop executable was unavailable to the automation environment. User-provided screenshots prove that both the CLI and desktop app discover and spawn the generated `code-reviewer` agent. Milestone 3 is complete and acceptance is met.
 
 ## Context and Orientation
 
@@ -194,8 +197,8 @@ Add `("python3", "scripts/test-codex-agents.py")` to the maintained suite regist
 Run syntax checks, direct tests, both installer suites, and runner tests. Then run `./scripts/test-all.py --list` to confirm registration and the full aggregate suite when prerequisites are available.
 
 ### Milestone 3: Document, install, and verify local clients
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Update `README.md` to say that `agents/*.md` is canonical for all three providers, Copilot and Gemini receive Markdown copies, and Codex receives generated personal TOML. Document default and `CODEX_HOME` destinations, generated-file ownership, the no-manual-edit rule, strict source requirements, stale cleanup boundary, and targeted validation commands.
 
@@ -322,4 +325,6 @@ Revision note (2026-09-17): Milestone 1 completed with strict source conversion,
 
 Revision note (2026-09-17): Milestone 2 completed by placing conversion before every existing copy operation in both installers and registering its direct suite in the maintained aggregate runner.
 
-Revision note (2026-09-17): Milestone 3 documented and validated the converter path, refreshed and exactly parsed 19 real Codex agents, and recorded CLI/desktop availability. It remains in progress because interactive CLI and desktop smoke checks were not automated. A later byte comparison confirmed that `skills/execplan-implement/SKILL.md` matches its installed copy despite the installer stopping at another read-only skill path.
+Revision note (2026-09-17): Milestone 3 documented and validated the converter path, refreshed and exactly parsed 19 real Codex agents, and recorded CLI/desktop availability. A later byte comparison confirmed that `skills/execplan-implement/SKILL.md` matches its installed copy despite the installer stopping at another read-only skill path.
+
+Revision note (2026-09-17): Marked milestone 3 complete after user-provided CLI and desktop screenshots proved both clients discover and spawn the generated `code-reviewer` agent.
