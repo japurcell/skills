@@ -16,12 +16,14 @@ These checks validate the installed application, not repository source alone.
 - `./scripts/install.sh` installed the current files without error.
 - Generated-hook freshness reported 22 current files.
 - Installed-copy comparisons and executable checks passed.
-- The remaining work requires a session where `gemini` is installed and can authenticate.
+- A real Gemini turn completed in another session, but the isolated `$probe_log` remained empty.
+- This is not yet proof that `AfterAgent` failed. The hook may have written to the default log if `GEMINI_OBSERVABILITY_LOG_PATH` was not inherited.
+- Exact Gemini version and `/hooks list` status still need recording.
 - Repository state when this handoff was written: `main` at `daadf135903fa33626afa7297e9057a64e91de18`.
 
 ## Next step
 
-Open a terminal on the machine where Gemini CLI is installed. Change to this repository, then complete Steps 1 through 4 below in order.
+In the same shell where `$probe_log` still exists, run the empty-log checks under Step 4. Check the default log first, then invoke the installed script directly against `$probe_log`. This distinguishes missing `AfterAgent` dispatch from environment propagation or script failure.
 
 ## Step 1: Verify the deployed Gemini CLI
 
@@ -156,13 +158,39 @@ ls -l "$HOME/.gemini/hooks/scripts/send-event.py"
 
 Restart Gemini after any settings change. Inside Gemini, use `/hooks list` again. Official command reference: <https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/commands.md#hooks>.
 
+Also check whether Gemini dropped the isolated-log override and wrote to the default log:
+
+```bash
+default_log="$HOME/.gemini/hooks/logs/observability.ndjson"
+wc -l "$probe_log" "$default_log"
+jq -c 'select(.source_event_name == "AfterAgent")' "$default_log" | tail -n 5
+```
+
+Then test the installed emitter independently of Gemini dispatch:
+
+```bash
+printf '%s\n' '{"session_id":"manual-probe","hook_event_name":"AfterAgent","timestamp":"2026-09-17T00:00:00Z","prompt_response":"AFTER_AGENT_PROBE","stop_hook_active":false}' |
+  env GEMINI_OBSERVABILITY_LOG_PATH="$probe_log" \
+    OBSERVABILITY_CAPTURE_EVENT=true \
+    OBSERVABILITY_SOURCE_EVENT_NAME=AfterAgent \
+    python "$HOME/.gemini/hooks/scripts/send-event.py"
+
+tail -n 1 "$probe_log" | jq '{source_event_name,event_name,hook_name,session_id,outcome}'
+```
+
+Classification:
+
+- Default log contains `AfterAgent`: event delivery passed; isolated log override did not reach the hook.
+- Direct invocation writes to `$probe_log`, but real turn writes nowhere: deployed CLI did not dispatch `AfterAgent`.
+- Direct invocation also leaves `$probe_log` empty or errors: installed emitter or environment is failing; capture stderr and inspect that first.
+
 ## Verification state to record
 
 Record all four items before closing the next session:
 
 - exact `gemini --version` output;
 - whether `/hooks list` showed the installed `AfterAgent` hook enabled;
-- whether the probe log contained `source_event_name=AfterAgent` and `event_name=agent_stop`;
+- whether the probe log contained `source_event_name=AfterAgent` and `event_name=agent_stop` (current result: no; isolated log was empty);
 - probe log path or the relevant filtered JSON record.
 
 Keep `probe_dir` until the result is recorded. Afterward, it can be removed with:
@@ -176,4 +204,5 @@ rm -r -- "$probe_dir"
 - Do not edit repository hook output files during this probe.
 - Do not infer live delivery from `scripts/test-gemini-hooks-observability.sh`; that suite verifies the provider envelope and installed script behavior, not Gemini CLI event dispatch.
 - Gemini CLI issue `#27712` reported missing `AfterAgent` execution in version `0.45.0` and related builds. Live proof is required for the deployed version.
+- An empty isolated log alone is ambiguous because the hook can fall back to `$HOME/.gemini/hooks/logs/observability.ndjson` when `GEMINI_OBSERVABILITY_LOG_PATH` is absent.
 - After completing the probe, update this handoff with the version, result, and any failure evidence.

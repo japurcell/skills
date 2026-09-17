@@ -48,3 +48,7 @@ Wrap chunk and final transcript writes in `try...finally`; remove the `.tmp` pat
 ## Progress messages must not complete captures
 
 Ignore payloads with `type: progress` in `complete_hook_capture`. Finalize capture only for the actual hook result.
+
+## Empty Gemini probe logs can hide fallback writes
+
+An empty file selected through `GEMINI_OBSERVABILITY_LOG_PATH` does not by itself prove that Gemini skipped a hook. If the CLI does not pass that variable to the hook process, the emitter falls back to `$HOME/.gemini/hooks/logs/observability.ndjson`. Check that default log, then invoke the installed emitter directly with the override before classifying the failure as event dispatch, environment propagation, or emitter failure.
