@@ -161,6 +161,50 @@ test_stalled_git_denies_in_block_mode() {
     "Expected Gemini stalled-git block mode to deny."
 }
 
+test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+  init_git_repo "$repo_dir"
+  printf '%s\n' '[broken' > "$repo_dir/.git/config"
+
+  if output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir/block" \
+      block \
+      diff \
+      "{\"session_id\":\"initial-probe\",\"timestamp\":\"2026-06-23T23:49:30Z\",\"hook_event_name\":\"BeforeTool\",\"cwd\":\"$repo_dir\",\"reason\":\"tool\"}"
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+  assert_equals "0" "$status" \
+    "Expected a failed Gemini initial Git probe with a repository marker to return exit code 0."
+  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
+    "Expected a failed Gemini initial Git probe with a repository marker to deny in block mode."
+
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir/warn" \
+      warn \
+      diff \
+      "{\"session_id\":\"initial-probe\",\"timestamp\":\"2026-06-23T23:49:31Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}"
+  )"
+  assert_equals "{}" "$output" \
+    "Expected a failed Gemini initial Git probe with a repository marker to no-op in warn mode."
+}
+
 test_missing_git_block_mode_uses_gemini_denial_envelope() {
   local workdir
   local repo_dir
@@ -512,6 +556,88 @@ test_unusual_filename_and_double_plus_added_line_are_scanned() {
     "Expected Gemini added content beginning with two plus signs to be scanned inside a hunk."
 }
 
+test_committed_literal_pathspec_filename_is_scanned() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+  local pathspec_name
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  pathspec_name=':(literal)notes.txt'
+  printf 'baseline\n' > "$repo_dir/$pathspec_name"
+  git -C "$repo_dir" add -A
+  git -C "$repo_dir" commit -qm "baseline"
+
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  printf 'token=%s\n' "$fake_token" >> "$repo_dir/$pathspec_name"
+
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      "{\"session_id\":\"literal-pathspec\",\"timestamp\":\"2026-06-23T23:52:50Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}"
+  )"
+
+  assert_json_output "$output" "Expected Gemini literal-pathspec scan to emit JSON."
+  assert_file_contains "$log_dir/scan.log" '"path":":(literal)notes.txt"' \
+    "Expected Gemini Git pathspec syntax in a committed filename to stay literal."
+  assert_file_contains "$log_dir/scan.log" '"pattern":"github_classic_pat"' \
+    "Expected Gemini to scan the literal pathspec-shaped file's added token."
+}
+
+test_staged_scope_excludes_unrelated_untracked_files() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  printf 'baseline\n' > "$repo_dir/staged.txt"
+  git -C "$repo_dir" add staged.txt
+  git -C "$repo_dir" commit -qm "baseline"
+  printf 'safe staged change\n' >> "$repo_dir/staged.txt"
+  git -C "$repo_dir" add staged.txt
+
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  printf 'token=%s\n' "$fake_token" > "$repo_dir/untracked.txt"
+
+  output="$(
+    run_gemini_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      staged \
+      "{\"session_id\":\"staged-only\",\"timestamp\":\"2026-06-23T23:52:55Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}"
+  )"
+
+  assert_equals "{}" "$output" \
+    "Expected Gemini staged scope to ignore an unrelated untracked secret-bearing file."
+  assert_file_contains "$log_dir/scan.log" '"status":"clean"' \
+    "Expected the safe Gemini staged change to remain clean."
+  if grep -Fq 'untracked.txt' "$log_dir/scan.log"; then
+    echo "Did not expect Gemini staged scope to scan an unrelated untracked file." >&2
+    cat "$log_dir/scan.log" >&2
+    exit 1
+  fi
+}
+
 test_generic_secrets_filename_stays_clean() {
   local workdir
   local repo_dir
@@ -731,6 +857,7 @@ test_gemini_settings_register_before_tool_scanner() {
 main() {
   test_stalled_git_is_bounded_by_timeout
   test_stalled_git_denies_in_block_mode
+  test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode
   test_missing_git_block_mode_uses_gemini_denial_envelope
   test_audit_init_failure_block_mode_uses_gemini_denial_envelope
   test_unexpected_exception_block_mode_denies_with_json_and_exit_zero
@@ -740,6 +867,8 @@ main() {
   test_warn_mode_flags_sensitive_credential_paths_without_token_match
   test_binary_credential_path_still_scans_ascii_tokens
   test_unusual_filename_and_double_plus_added_line_are_scanned
+  test_committed_literal_pathspec_filename_is_scanned
+  test_staged_scope_excludes_unrelated_untracked_files
   test_generic_secrets_filename_stays_clean
   test_diff_mode_ignores_unmodified_secret_lines
   test_diff_mode_ignores_unified_diff_headers

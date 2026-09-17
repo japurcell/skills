@@ -6,8 +6,10 @@ import json
 import os
 import re
 import shutil
+import signal
 import stat
 import sys
+import threading
 import time
 import unicodedata
 from datetime import datetime, timezone
@@ -141,42 +143,119 @@ def run_git(
     cwd: Path,
     text: bool = True,
     allow_nonzero: bool = False,
+    deadline: float | None = None,
 ) -> str | bytes | None:
     import subprocess
 
+    now = time.monotonic()
+    command_deadline = now + 5.0
+    if deadline is not None:
+        command_deadline = min(command_deadline, deadline)
+    if command_deadline <= now:
+        raise ScanLimitExceeded("secret scan exceeds the time limit")
+
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    env["GIT_ASKPASS"] = ""
+    env["GIT_LITERAL_PATHSPECS"] = "1"
+    popen_options: dict[str, object] = {
+        "cwd": str(cwd),
+        "env": env,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.DEVNULL,
+    }
+    if os.name == "posix":
+        popen_options["start_new_session"] = True
+
     try:
-        env = os.environ.copy()
-        env["GIT_TERMINAL_PROMPT"] = "0"
-        env["GIT_ASKPASS"] = ""
-        result = subprocess.run(
-            ["git", *args],
-            cwd=str(cwd),
-            capture_output=True,
-            env=env,
-            text=text,
-            check=False,
-            timeout=5,
-        )
+        process = subprocess.Popen(["git", *args], **popen_options)
     except OSError as exc:
         raise GitCommandError("unable to execute Git") from exc
 
-    if result.returncode != 0:
-        if allow_nonzero:
-            return None
-        raise GitCommandError(f"Git command failed with exit {result.returncode}")
-    output_size = (
-        len(result.stdout.encode("utf-8", errors="surrogatepass"))
-        if isinstance(result.stdout, str)
-        else len(result.stdout)
-    )
-    if output_size > MAX_GIT_OUTPUT_BYTES:
+    assert process.stdout is not None
+    output = bytearray()
+    read_errors: list[BaseException] = []
+
+    def read_stdout() -> None:
+        try:
+            while len(output) <= MAX_GIT_OUTPUT_BYTES:
+                remaining = MAX_GIT_OUTPUT_BYTES + 1 - len(output)
+                chunk = process.stdout.read(min(65536, remaining))
+                if not chunk:
+                    return
+                output.extend(chunk)
+        except BaseException as exc:  # noqa: BLE001
+            read_errors.append(exc)
+        finally:
+            try:
+                process.stdout.close()
+            except OSError:
+                pass
+
+    reader = threading.Thread(target=read_stdout, daemon=True)
+    reader.start()
+    reader.join(max(0.0, command_deadline - time.monotonic()))
+
+    if reader.is_alive():
+        _stop_git_process(process, subprocess)
+        try:
+            process.stdout.close()
+        except OSError:
+            pass
+        reader.join(0.5)
+        raise ScanLimitExceeded("Git command exceeds the scanner time limit")
+    if read_errors:
+        _stop_git_process(process, subprocess)
+        raise GitCommandError("unable to read Git output") from read_errors[0]
+    if len(output) > MAX_GIT_OUTPUT_BYTES:
+        _stop_git_process(process, subprocess)
         raise ScanLimitExceeded("Git output exceeds the scanner limit")
 
-    return result.stdout
+    try:
+        return_code = process.wait(timeout=max(0.0, command_deadline - time.monotonic()))
+    except subprocess.TimeoutExpired as exc:
+        _stop_git_process(process, subprocess)
+        raise ScanLimitExceeded("Git command exceeds the scanner time limit") from exc
+
+    if return_code != 0:
+        if allow_nonzero:
+            return None
+        raise GitCommandError(f"Git command failed with exit {return_code}")
+
+    raw_output = bytes(output)
+    return os.fsdecode(raw_output) if text else raw_output
 
 
-def repo_root(work_dir: Path) -> Path:
-    output = run_git(["rev-parse", "--show-toplevel"], cwd=work_dir)
+def _stop_git_process(process: object, subprocess_module: object) -> None:
+    if process.poll() is not None:
+        return
+    try:
+        if os.name == "posix":
+            os.killpg(process.pid, signal.SIGTERM)
+        else:
+            process.terminate()
+    except (OSError, ProcessLookupError):
+        pass
+    try:
+        process.wait(timeout=0.25)
+        return
+    except subprocess_module.TimeoutExpired:
+        pass
+    try:
+        if os.name == "posix":
+            os.killpg(process.pid, signal.SIGKILL)
+        else:
+            process.kill()
+    except (OSError, ProcessLookupError):
+        pass
+    try:
+        process.wait(timeout=0.25)
+    except subprocess_module.TimeoutExpired:
+        pass
+
+
+def repo_root(work_dir: Path, *, deadline: float | None = None) -> Path:
+    output = run_git(["rev-parse", "--show-toplevel"], cwd=work_dir, deadline=deadline)
     if isinstance(output, str):
         root = output.strip()
         if root:
@@ -184,19 +263,43 @@ def repo_root(work_dir: Path) -> Path:
     return work_dir
 
 
-def is_inside_git_repo(work_dir: Path) -> bool:
+def repository_marker_exists(work_dir: Path) -> bool:
     try:
-        output = run_git(["rev-parse", "--is-inside-work-tree"], cwd=work_dir)
+        current = work_dir.resolve(strict=False)
+    except OSError as exc:
+        raise ScanSecurityError("unable to inspect repository boundary") from exc
+
+    for directory in (current, *current.parents):
+        try:
+            (directory / ".git").lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise ScanSecurityError("unable to inspect repository marker") from exc
+        return True
+    return False
+
+
+def is_inside_git_repo(work_dir: Path, *, deadline: float | None = None) -> bool:
+    try:
+        output = run_git(
+            ["rev-parse", "--is-inside-work-tree"],
+            cwd=work_dir,
+            deadline=deadline,
+        )
     except GitCommandError:
+        if repository_marker_exists(work_dir):
+            raise
         return False
     return isinstance(output, str) and output.strip() == "true"
 
 
-def has_head(root: Path) -> bool:
+def has_head(root: Path, *, deadline: float | None = None) -> bool:
     return run_git(
         ["rev-parse", "--verify", "HEAD"],
         cwd=root,
         allow_nonzero=True,
+        deadline=deadline,
     ) is not None
 
 
@@ -208,7 +311,13 @@ def decode_nul_paths(output: bytes) -> list[str]:
     return [os.fsdecode(path) for path in output[:-1].split(b"\0") if path]
 
 
-def collect_files(root: Path, scope: str, root_has_head: bool) -> list[str]:
+def collect_files(
+    root: Path,
+    scope: str,
+    root_has_head: bool,
+    *,
+    deadline: float | None = None,
+) -> list[str]:
     files: list[str] = []
     diff_options = [
         "--name-only",
@@ -220,24 +329,50 @@ def collect_files(root: Path, scope: str, root_has_head: bool) -> list[str]:
     ]
 
     if scope == "staged":
-        output = run_git(["diff", "--cached", *diff_options, "--"], cwd=root, text=False)
+        output = run_git(
+            ["diff", "--cached", *diff_options, "--"],
+            cwd=root,
+            text=False,
+            deadline=deadline,
+        )
         if isinstance(output, bytes):
             files.extend(decode_nul_paths(output))
     elif root_has_head:
-        output = run_git(["diff", *diff_options, "HEAD", "--"], cwd=root, text=False)
+        output = run_git(
+            ["diff", *diff_options, "HEAD", "--"],
+            cwd=root,
+            text=False,
+            deadline=deadline,
+        )
         if isinstance(output, bytes):
             files.extend(decode_nul_paths(output))
     else:
-        output = run_git(["diff", *diff_options, "--"], cwd=root, text=False)
+        output = run_git(
+            ["diff", *diff_options, "--"],
+            cwd=root,
+            text=False,
+            deadline=deadline,
+        )
         if isinstance(output, bytes):
             files.extend(decode_nul_paths(output))
-        output = run_git(["diff", "--cached", *diff_options, "--"], cwd=root, text=False)
+        output = run_git(
+            ["diff", "--cached", *diff_options, "--"],
+            cwd=root,
+            text=False,
+            deadline=deadline,
+        )
         if isinstance(output, bytes):
             files.extend(decode_nul_paths(output))
 
-    output = run_git(["ls-files", "-z", "--others", "--exclude-standard"], cwd=root, text=False)
-    if isinstance(output, bytes):
-        files.extend(decode_nul_paths(output))
+    if scope == "diff":
+        output = run_git(
+            ["ls-files", "-z", "--others", "--exclude-standard"],
+            cwd=root,
+            text=False,
+            deadline=deadline,
+        )
+        if isinstance(output, bytes):
+            files.extend(decode_nul_paths(output))
 
     unique_files = sorted({path for path in files if path})
     if len(unique_files) > MAX_FILES:
@@ -245,8 +380,13 @@ def collect_files(root: Path, scope: str, root_has_head: bool) -> list[str]:
     return unique_files
 
 
-def untracked_files(root: Path) -> set[str]:
-    output = run_git(["ls-files", "-z", "--others", "--exclude-standard"], cwd=root, text=False)
+def untracked_files(root: Path, *, deadline: float | None = None) -> set[str]:
+    output = run_git(
+        ["ls-files", "-z", "--others", "--exclude-standard"],
+        cwd=root,
+        text=False,
+        deadline=deadline,
+    )
     if not isinstance(output, bytes):
         return set()
     return set(decode_nul_paths(output))
@@ -343,10 +483,21 @@ def _read_worktree_candidate(root: Path, path: str) -> bytes:
         os.close(descriptor)
 
 
-def read_candidate_bytes(root: Path, path: str, scope: str) -> bytes:
+def read_candidate_bytes(
+    root: Path,
+    path: str,
+    scope: str,
+    *,
+    deadline: float | None = None,
+) -> bytes:
     if scope == "staged":
         _validate_candidate_parts(path)
-        size_output = run_git(["cat-file", "-s", f":{path}"], cwd=root, text=False)
+        size_output = run_git(
+            ["cat-file", "-s", f":{path}"],
+            cwd=root,
+            text=False,
+            deadline=deadline,
+        )
         if not isinstance(size_output, bytes):
             raise GitCommandError("Git returned an invalid staged size")
         try:
@@ -355,7 +506,12 @@ def read_candidate_bytes(root: Path, path: str, scope: str) -> bytes:
             raise GitCommandError("Git returned an invalid staged size") from exc
         if size < 0 or size > MAX_FILE_BYTES:
             raise ScanLimitExceeded("candidate file exceeds the scanner limit")
-        output = run_git(["show", "--no-textconv", f":{path}"], cwd=root, text=False)
+        output = run_git(
+            ["show", "--no-textconv", f":{path}"],
+            cwd=root,
+            text=False,
+            deadline=deadline,
+        )
         if not isinstance(output, bytes) or len(output) != size:
             raise GitCommandError("Git returned invalid staged content")
         return output
@@ -408,7 +564,12 @@ def decode_ascii_scan_text(raw_bytes: bytes) -> str:
     )
 
 
-def emit_diff_added_lines(root: Path, path: str) -> list[tuple[int, str]]:
+def emit_diff_added_lines(
+    root: Path,
+    path: str,
+    *,
+    deadline: float | None = None,
+) -> list[tuple[int, str]]:
     output = run_git(
         [
             "diff",
@@ -427,6 +588,7 @@ def emit_diff_added_lines(root: Path, path: str) -> list[tuple[int, str]]:
         ],
         cwd=root,
         text=False,
+        deadline=deadline,
     )
     if not isinstance(output, bytes):
         return []
@@ -760,6 +922,8 @@ def findings_denial_reason(scan_log: Path) -> str:
 
 
 def main() -> int:
+    scan_started = time.monotonic()
+    scan_deadline = scan_started + MAX_SCAN_SECONDS
     mode = normalized_mode_from_env()
 
     if not git_available():
@@ -823,7 +987,7 @@ def main() -> int:
         emit_output(0, scan_log)
         return 0
 
-    if not is_inside_git_repo(work_dir):
+    if not is_inside_git_repo(work_dir, deadline=scan_deadline):
         append_scan_log(
             log_path=scan_log,
             status="skipped",
@@ -839,9 +1003,9 @@ def main() -> int:
         emit_output(0, scan_log)
         return 0
 
-    root = repo_root(work_dir)
-    root_has_head = has_head(root)
-    files = collect_files(root, scope, root_has_head)
+    root = repo_root(work_dir, deadline=scan_deadline)
+    root_has_head = has_head(root, deadline=scan_deadline)
+    files = collect_files(root, scope, root_has_head, deadline=scan_deadline)
 
     if not files:
         append_scan_log(
@@ -862,14 +1026,17 @@ def main() -> int:
     allowlist = parse_allowlist(os.environ.get("SECRETS_ALLOWLIST"))
     env_files: list[str] = []
     findings: list[tuple[str, str, str, int, str]] = []
-    scan_started = time.monotonic()
     total_bytes = 0
 
-    untracked = untracked_files(root) if scope == "diff" and root_has_head else set()
+    untracked = (
+        untracked_files(root, deadline=scan_deadline)
+        if scope == "diff" and root_has_head
+        else set()
+    )
 
     for path in files:
         enforce_scan_budget(scan_started, total_bytes)
-        raw_bytes = read_candidate_bytes(root, path, scope)
+        raw_bytes = read_candidate_bytes(root, path, scope, deadline=scan_deadline)
         total_bytes += len(raw_bytes)
         enforce_scan_budget(scan_started, total_bytes)
 
@@ -886,7 +1053,7 @@ def main() -> int:
         elif scope == "staged" or not root_has_head or path in untracked:
             candidate_lines = enumerate_file_lines(raw_bytes.decode("utf-8", errors="replace"))
         else:
-            candidate_lines = emit_diff_added_lines(root, path)
+            candidate_lines = emit_diff_added_lines(root, path, deadline=scan_deadline)
 
         for line_number, line_text in candidate_lines:
             for pattern_name, severity, regex in PATTERNS:

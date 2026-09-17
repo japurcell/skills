@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -15,7 +16,6 @@ import subprocess
 import sys
 import tempfile
 import time
-from types import SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -468,16 +468,16 @@ class GenerateHooksTests(unittest.TestCase):
             self.assertTrue(module.is_text_candidate("notes.txt", b"safe text\n"))
             self.assertFalse(module.is_text_candidate("image.bin", b"safe\x00binary"))
             self.assertEqual(module.enumerate_file_lines("one\ntwo\n"), [(1, "one"), (2, "two")])
-            with mock.patch(
-                "subprocess.run",
-                return_value=SimpleNamespace(returncode=0, stdout=""),
-            ) as run:
+            process = mock.Mock()
+            process.stdout = io.BytesIO(b"")
+            process.wait.return_value = 0
+            with mock.patch("subprocess.Popen", return_value=process) as run:
                 self.assertEqual(module.run_git(["status"], cwd=ROOT), "")
             invocation = run.call_args
             self.assertEqual(invocation.args[0], ["git", "status"])
-            self.assertEqual(invocation.kwargs["timeout"], 5)
             self.assertEqual(invocation.kwargs["env"]["GIT_TERMINAL_PROMPT"], "0")
             self.assertEqual(invocation.kwargs["env"]["GIT_ASKPASS"], "")
+            self.assertEqual(invocation.kwargs["env"]["GIT_LITERAL_PATHSPECS"], "1")
 
             allowlist = module.parse_allowlist(vectors.ALLOWLIST_RAW)
             self.assertEqual(
@@ -518,16 +518,76 @@ class GenerateHooksTests(unittest.TestCase):
         for module in modules:
             for command in commands:
                 with self.subTest(provider=module.__name__, command=command[0], failure="exit"):
-                    with mock.patch(
-                        "subprocess.run",
-                        return_value=SimpleNamespace(returncode=9, stdout="", stderr="failure"),
-                    ):
+                    process = mock.Mock()
+                    process.stdout = io.BytesIO(b"")
+                    process.wait.return_value = 9
+                    with mock.patch("subprocess.Popen", return_value=process):
                         with self.assertRaises(module.GitCommandError):
                             module.run_git(command, cwd=ROOT)
                 with self.subTest(provider=module.__name__, command=command[0], failure="launch"):
-                    with mock.patch("subprocess.run", side_effect=OSError("unavailable")):
+                    with mock.patch("subprocess.Popen", side_effect=OSError("unavailable")):
                         with self.assertRaises(module.GitCommandError):
                             module.run_git(command, cwd=ROOT)
+
+    def test_secret_scanner_git_output_and_cumulative_deadline_are_bounded(self) -> None:
+        modules = (
+            load_module("copilot_secret_scanner_git_bounds", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_module("gemini_secret_scanner_git_bounds", ROOT / SECRET_SCANNER_TARGETS[1]),
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            fake_bin = Path(directory)
+            git_path = fake_bin / "git"
+            original_path = os.environ.get("PATH", "")
+            bounded_path = f"{fake_bin}{os.pathsep}{original_path}"
+
+            for module in modules:
+                pid_path = fake_bin / f"{module.__name__}.pid"
+                git_path.write_text(
+                    "#!/usr/bin/env python3\n"
+                    "import os\n"
+                    "import time\n"
+                    "from pathlib import Path\n"
+                    "Path(os.environ['GIT_TEST_PID_PATH']).write_text(str(os.getpid()))\n"
+                    "os.write(1, b'x' * 2048)\n"
+                    "time.sleep(10)\n",
+                    encoding="utf-8",
+                )
+                git_path.chmod(0o755)
+                with self.subTest(provider=module.__name__, case="output-cap"):
+                    with mock.patch.dict(
+                        os.environ,
+                        {"PATH": bounded_path, "GIT_TEST_PID_PATH": str(pid_path)},
+                    ):
+                        with mock.patch.object(module, "MAX_GIT_OUTPUT_BYTES", 1024):
+                            started = time.monotonic()
+                            with self.assertRaises(module.ScanLimitExceeded):
+                                module.run_git(
+                                    ["status"],
+                                    cwd=ROOT,
+                                    deadline=time.monotonic() + 2.0,
+                                )
+                            self.assertLess(time.monotonic() - started, 1.0)
+                    stopped_pid = int(pid_path.read_text(encoding="utf-8"))
+                    with self.assertRaises(ProcessLookupError):
+                        os.kill(stopped_pid, 0)
+
+                git_path.write_text(
+                    "#!/usr/bin/env bash\n"
+                    "sleep 0.15\n"
+                    "printf 'ok\\n'\n",
+                    encoding="utf-8",
+                )
+                git_path.chmod(0o755)
+                with self.subTest(provider=module.__name__, case="cumulative-deadline"):
+                    deadline = time.monotonic() + 0.25
+                    with mock.patch.dict(os.environ, {"PATH": bounded_path}):
+                        self.assertEqual(
+                            module.run_git(["status"], cwd=ROOT, deadline=deadline),
+                            "ok\n",
+                        )
+                        with self.assertRaises(module.ScanLimitExceeded):
+                            module.run_git(["status"], cwd=ROOT, deadline=deadline)
 
     def test_secret_scanner_parses_git_paths_and_diff_lines_without_ambiguity(self) -> None:
         modules = (
@@ -550,7 +610,7 @@ class GenerateHooksTests(unittest.TestCase):
         for module in modules:
             with self.subTest(provider=module.__name__, behavior="paths"):
                 with mock.patch.object(module, "run_git", side_effect=(b"", path_output)) as run:
-                    self.assertEqual(module.collect_files(ROOT, "staged", True), expected_paths)
+                    self.assertEqual(module.collect_files(ROOT, "diff", True), expected_paths)
                 diff_args = run.call_args_list[0].args[0]
                 ls_args = run.call_args_list[1].args[0]
                 self.assertIn("-z", diff_args)
@@ -618,7 +678,7 @@ class GenerateHooksTests(unittest.TestCase):
             with self.subTest(provider=module.__name__, case="file-count"):
                 with mock.patch.object(module, "run_git", side_effect=(b"", too_many_paths)):
                     with self.assertRaises(module.ScanLimitExceeded):
-                        module.collect_files(ROOT, "staged", True)
+                        module.collect_files(ROOT, "diff", True)
             with self.subTest(provider=module.__name__, case="total-bytes"):
                 with self.assertRaises(module.ScanLimitExceeded):
                     module.enforce_scan_budget(10.0, module.MAX_TOTAL_BYTES + 1, now=10.0)

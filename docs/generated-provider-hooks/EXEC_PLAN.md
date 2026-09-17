@@ -28,6 +28,7 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 - [x] (2026-09-17 07:08Z) [milestone-4] Obtain independent security approval with no unresolved high-confidence blocker and accept the milestone.
 - [x] (2026-09-17 07:22Z) [milestone-5] Generate and validate Copilot and Gemini secret scanners, remove owned response duplication, and share provider-neutral detection and exact-allowlist vectors.
 - [x] (2026-09-17 07:54Z) [milestone-5] Resolve the first independent security review's SEC-001 through SEC-006 findings with an isolated TDD repair, regenerated outputs, and public fail-closed/warn regressions.
+- [x] (2026-09-17 08:17Z) [milestone-5] Resolve the security rereview's initial-probe, literal-pathspec, streaming-output/deadline, and staged-scope findings in a second isolated TDD repair.
 - [ ] [milestone-5] Obtain independent security approval for canonical secret patterns, Git subprocess boundaries, output envelopes, logging, timeouts, and rendered files.
 - [ ] [milestone-6] Generate GitHub and Gemini auto-ingest engines and wrappers while preserving manifest and gate behavior.
 - [ ] [milestone-7] Finish repository-wide validation, classify drift, update durable documentation, and publish the Phase 2 recommendation.
@@ -75,6 +76,9 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
 
 - Observation: The first independent secret-scanner review found six fail-open, parsing, file-safety, resource-bound, log-permission, and lock-contention defects that extraction characterization did not expose.
   Evidence: SEC-001 through SEC-006 reproduced Git command failures being treated as empty results, ambiguous line-delimited paths and diff markers, binary credential files escaping token scans, link-following and unbounded candidate reads, permissive or redirected logs, and an unbounded blocking log lock. Shared generated-code tests and provider public-envelope suites now exercise each affected boundary with fake credentials only.
+
+- Observation: The first repair still conflated a failed initial Git probe with a verified non-repository and bounded Git output only after the child had completed.
+  Evidence: The rereview reproduced a corrupt repository marker being logged as a harmless skip, pathspec-shaped committed filenames escaping per-file diffs, output being captured before its size check, separate five-second Git calls exceeding the scanner's intended aggregate budget, and untracked files entering staged-only scans. Provider and shared regressions now cover the public envelopes and real Git filenames as well as early child termination and one cumulative deadline.
 
 ## Decision Log
 
@@ -190,6 +194,14 @@ This plan covers a low-risk pilot followed by the high-value duplicate families:
   Rationale: Log directories use mode `0700`, active and rotated files use `0600`, links and reparse points are rejected, and lock timeout follows the same provider failure policy instead of stalling the hook indefinitely.
   Date/Author: 2026-09-17, Codex.
 
+- Decision: Treat an initial Git-probe failure as a verified non-repository only when no `.git` file or directory exists at the working directory or any ancestor.
+  Rationale: A corrupt or inaccessible repository must not silently bypass scanning. Marker-backed failures use the existing provider block-denial or warn-no-op envelope, while a directory with no repository evidence retains the compatible skipped result.
+  Date/Author: 2026-09-17, Codex.
+
+- Decision: Give every Git child literal pathspec semantics, a streaming output cap, and the remaining portion of one deadline created at scanner entry.
+  Rationale: Git syntax embedded in a real filename must remain data, output overflow must terminate before unbounded capture, and several individually successful slow commands must not multiply the scanner's total runtime budget. Staged scope lists only cached changes; untracked discovery remains exclusive to diff scope.
+  Date/Author: 2026-09-17, Codex.
+
 ## Outcomes & Retrospective
 
 Milestone 1 introduced a deterministic standard-library generator, its two-file explicit manifest, transactional write/check behavior, and the `send-event.py` pilot. Both generated scripts retain their previous runtime body with only the ownership header added. Generator CLI and transaction tests, aggregate-registry tests, both observability suites, and the shell installer fixture passed. A direct real-home install remains unverified because this environment's `/root/.agents/skills` destination is read-only; temporary-home installed-copy tests passed. At completion, summarize the number of maintained duplicate lines removed, generated outputs owned, drift defects fixed separately, validation results, generator usability, and the disposition of every deferred candidate. Compare renderer complexity against maintenance savings before recommending Phase 2.
@@ -213,6 +225,8 @@ Milestone 5 extraction now owns the two secret scanners through one canonical po
 Milestone 5 extraction validation at 2026-09-17 07:22Z passed Python compilation, 13 generator tests, both secret-scanner suites, both Tool Guardian suites, both startup suites, the shell installer fixture, and the PowerShell installer fixture with its expected unsupported-junction skip. Generator write/check owns 14 outputs, rejects mismatched secret-scanner provider targets, and left the Tool Guardian files byte-current when the shared allowlist source was extracted. Independent security review remains the sole acceptance gate.
 
 Milestone 5 security repair at 2026-09-17 07:54Z closes SEC-001 through SEC-006 in the canonical renderer and regenerated provider scripts. Git failures no longer become clean scans; Git filenames and unified diffs use unambiguous byte-oriented formats; credential paths and bounded ASCII tokens are inspected even for binary data; candidate reads are contained, descriptor-first, no-follow, regular-file-only, and resource-bounded; and logs use owner-only directories/files, link rejection, mode-preserving rotation, and a bounded POSIX/Windows lock. Public provider regressions prove block denial and warn no-op for Git errors, unsafe or oversized candidates, and lock timeout, while both providers cover unusual filenames, `++` added lines, and NUL-containing credential files. Final validation passed Python compilation, shell syntax checks, all 19 generator tests, both secret-scanner suites, both Tool Guardian suites, both startup suites, shell and PowerShell installer fixtures, generator freshness for all 14 outputs, and diff hygiene. The PowerShell fixture reported only its expected unsupported-junction skip. Milestone status and acceptance remain unchanged pending independent security rereview.
+
+Milestone 5 second security repair at 2026-09-17 08:17Z closes the rereview's SEC-001, SEC-004, SEC-007, and SEC-008 findings. A failed initial probe now checks ancestor repository markers before deciding whether a directory is outside Git; every Git child receives literal pathspec semantics; stdout is read only to the configured cap and an overflowing child is terminated; every runtime Git call receives the remaining portion of one deadline created at `main()` entry; and staged scope no longer appends untracked files. Both provider suites prove corrupt initial probes deny or no-op by mode, real committed pathspec-shaped filenames are scanned, and staged changes ignore unrelated untracked fake credentials. Shared tests prove overflowing children terminate promptly and two individually successful slow Git calls exhaust the same deadline. Final validation passed Python compilation, shell syntax checks, all 20 generator tests, both secret-scanner suites, both Tool Guardian suites, both startup suites, shell and PowerShell installer fixtures, generator freshness for all 14 outputs, and diff hygiene. The PowerShell fixture reported only its expected unsupported-junction skip. Milestone status and acceptance remain unchanged pending independent security rereview.
 
 ## Context and Orientation
 
@@ -529,3 +543,5 @@ Revision note, 2026-09-17: Independent security rereview approved Milestone 4 at
 Revision note, 2026-09-17: Completed the Milestone 5 extraction and targeted validation portion. One canonical secret-scanner policy now renders both provider-local scripts, the exact allowlist source is shared at generation time across both security families, shared fake-credential vectors and provider public-envelope regressions pass, and acceptance remains pending independent security review.
 
 Revision note, 2026-09-17: Resolved the first Milestone 5 independent review's SEC-001 through SEC-006 findings in a separate TDD repair. Strict Git error propagation, unambiguous byte-oriented Git parsing, binary credential scanning, descriptor-first bounded candidate reads, owner-only no-follow logs, and bounded cross-platform log locking now have shared and public-provider regressions. Milestone 5 remains in progress pending independent security rereview.
+
+Revision note, 2026-09-17: The first Milestone 5 repair did not satisfy security rereview. A second isolated TDD repair distinguishes corrupt repositories from verified non-repositories, forces literal Git pathspecs, terminates streaming-output overflow, shares one entry-time deadline across Git calls, and keeps untracked discovery out of staged scope. Milestone 5 remains in progress pending independent rereview.

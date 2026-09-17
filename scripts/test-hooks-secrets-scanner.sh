@@ -178,6 +178,50 @@ test_stalled_git_denies_in_block_mode() {
     "Expected stalled-git block mode to keep hookSpecificOutput deny payload."
 }
 
+test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local status
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+  init_git_repo "$repo_dir"
+  printf '%s\n' '[broken' > "$repo_dir/.git/config"
+
+  if output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir/block" \
+      block \
+      diff \
+      '{"sessionId":"initial-probe","timestamp":"2026-06-23T23:37:30Z","reason":"tool"}'
+  )"; then
+    status=0
+  else
+    status=$?
+  fi
+  assert_equals "0" "$status" \
+    "Expected a failed initial Git probe with a repository marker to return exit code 0."
+  assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
+    "Expected a failed initial Git probe with a repository marker to deny in block mode."
+
+  output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir/warn" \
+      warn \
+      diff \
+      '{"sessionId":"initial-probe","timestamp":"2026-06-23T23:37:31Z","reason":"complete"}'
+  )"
+  assert_equals "{}" "$output" \
+    "Expected a failed initial Git probe with a repository marker to no-op in warn mode."
+}
+
 test_missing_git_block_mode_uses_copilot_denial_envelope() {
   local workdir
   local repo_dir
@@ -263,6 +307,7 @@ test_git_failures_after_repo_detection_respect_fail_closed_mode() {
   local fake_bin
   local real_git
   local output
+  local scope
   local status
   local command_name
 
@@ -282,12 +327,16 @@ test_git_failures_after_repo_detection_respect_fail_closed_mode() {
   create_selectively_failing_git "$fake_bin"
 
   for command_name in diff ls-files show; do
+    scope=staged
+    if [[ "$command_name" == "ls-files" ]]; then
+      scope=diff
+    fi
     if output="$(
       run_scan_hook \
         "$repo_dir" \
         "$log_dir/$command_name-block" \
         block \
-        staged \
+        "$scope" \
         '{"sessionId":"git-failure","timestamp":"2026-06-23T23:38:45Z","reason":"tool"}' \
         "PATH=$fake_bin:$PATH" \
         "REAL_GIT=$real_git" \
@@ -307,7 +356,7 @@ test_git_failures_after_repo_detection_respect_fail_closed_mode() {
         "$repo_dir" \
         "$log_dir/$command_name-warn" \
         warn \
-        staged \
+        "$scope" \
         '{"sessionId":"git-failure","timestamp":"2026-06-23T23:38:46Z","reason":"complete"}' \
         "PATH=$fake_bin:$PATH" \
         "REAL_GIT=$real_git" \
@@ -855,6 +904,88 @@ test_unusual_filename_and_double_plus_added_line_are_scanned() {
     "Expected added content beginning with two plus signs to be scanned inside a hunk."
 }
 
+test_committed_literal_pathspec_filename_is_scanned() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+  local pathspec_name
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  pathspec_name=':(literal)notes.txt'
+  printf 'baseline\n' > "$repo_dir/$pathspec_name"
+  git -C "$repo_dir" add -A
+  git -C "$repo_dir" commit -qm "baseline"
+
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  printf 'token=%s\n' "$fake_token" >> "$repo_dir/$pathspec_name"
+
+  output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      diff \
+      '{"sessionId":"literal-pathspec","timestamp":"2026-06-23T23:43:50Z","reason":"complete"}'
+  )"
+
+  assert_json_output "$output" "Expected literal-pathspec scan to emit JSON."
+  assert_file_contains "$log_dir/scan.log" '"path":":(literal)notes.txt"' \
+    "Expected Git pathspec syntax in a committed filename to stay literal."
+  assert_file_contains "$log_dir/scan.log" '"pattern":"github_classic_pat"' \
+    "Expected the literal pathspec-shaped file's added token to be scanned."
+}
+
+test_staged_scope_excludes_unrelated_untracked_files() {
+  local workdir
+  local repo_dir
+  local log_dir
+  local output
+  local fake_token
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo_dir="$workdir/repo"
+  log_dir="$workdir/logs"
+  mkdir -p "$repo_dir"
+
+  init_git_repo "$repo_dir"
+  printf 'baseline\n' > "$repo_dir/staged.txt"
+  git -C "$repo_dir" add staged.txt
+  git -C "$repo_dir" commit -qm "baseline"
+  printf 'safe staged change\n' >> "$repo_dir/staged.txt"
+  git -C "$repo_dir" add staged.txt
+
+  fake_token="gh""p_$(printf '0%.0s' {1..36})"
+  printf 'token=%s\n' "$fake_token" > "$repo_dir/untracked.txt"
+
+  output="$(
+    run_scan_hook \
+      "$repo_dir" \
+      "$log_dir" \
+      warn \
+      staged \
+      '{"sessionId":"staged-only","timestamp":"2026-06-23T23:43:55Z","reason":"complete"}'
+  )"
+
+  assert_equals "{}" "$output" \
+    "Expected staged scope to ignore an unrelated untracked secret-bearing file."
+  assert_file_contains "$log_dir/scan.log" '"status":"clean"' \
+    "Expected the safe staged change to remain clean."
+  if grep -Fq 'untracked.txt' "$log_dir/scan.log"; then
+    echo "Did not expect staged scope to scan an unrelated untracked file." >&2
+    cat "$log_dir/scan.log" >&2
+    exit 1
+  fi
+}
+
 test_env_variants_are_logged_but_not_flagged_by_path_alone() {
   local workdir
   local repo_dir
@@ -994,6 +1125,7 @@ test_hooks_json_registers_pre_tool_scanner() {
 main() {
   test_stalled_git_is_bounded_by_timeout
   test_stalled_git_denies_in_block_mode
+  test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode
   test_missing_git_block_mode_uses_copilot_denial_envelope
   test_audit_init_failure_block_mode_uses_copilot_denial_envelope
   test_git_failures_after_repo_detection_respect_fail_closed_mode
@@ -1008,6 +1140,8 @@ main() {
   test_warn_mode_flags_sensitive_credential_paths_without_token_match
   test_binary_credential_path_still_scans_ascii_tokens
   test_unusual_filename_and_double_plus_added_line_are_scanned
+  test_committed_literal_pathspec_filename_is_scanned
+  test_staged_scope_excludes_unrelated_untracked_files
   test_env_variants_are_logged_but_not_flagged_by_path_alone
   test_generic_secrets_filename_stays_clean
   test_allowlist_suppresses_credential_path_finding
