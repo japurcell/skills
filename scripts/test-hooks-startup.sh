@@ -383,6 +383,7 @@ test_multiple_skills_loading_works_correctly() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
+  write_required_skill_fixtures "$workdir/skills"
 
   output="$(
     run_copilot_hook \
@@ -390,7 +391,8 @@ test_multiple_skills_loading_works_correctly() {
       "$audit_log" \
       '{"sessionId":"multiple-skills-session","timestamp":"2026-05-21T09:00:05Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "" \
-      "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md,writing-great-skills/SKILL.md"
+      "COPILOT_SKILLS_DIR=$workdir/skills" \
+      "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md,universal-guidelines/SKILL.md"
   )"
   output="$(hook_final_json "$output")"
 
@@ -402,11 +404,11 @@ test_multiple_skills_loading_works_correctly() {
   assert_file_contains <(printf '%s' "$context") "<!-- BEGIN REQUIRED SKILL:" \
     "Expected BEGIN REQUIRED SKILL tag in context."
 
-  assert_file_contains <(printf '%s' "$context") "Respond terse like smart caveman." \
-    "Expected required context to include caveman content."
+  assert_file_contains <(printf '%s' "$context") "# Caveman" \
+    "Expected required context to include the caveman fixture's content."
 
-  assert_file_contains <(printf '%s' "$context") "A skill exists to wrangle determinism out of a stochastic system." \
-    "Expected required context to include writing-great-skills content."
+  assert_file_contains <(printf '%s' "$context") "# Universal Guidelines" \
+    "Expected required context to include the second skill fixture's content."
 }
 
 main() {

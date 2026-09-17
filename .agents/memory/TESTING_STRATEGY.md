@@ -5,12 +5,16 @@ description: Repo-wide test layout, run commands, and shared authoring conventio
 
 # Testing Strategy
 
-Run narrowest command that exercises changed area. There is no single repo-wide
-test runner.
+Run `./scripts/test-all.py` for all maintained automated suites on macOS or Linux.
+Use `--list` to inspect the explicit suite registry and `--help` for usage. For a
+focused change, use the narrowest command below. The aggregate runner includes
+its own CLI tests and excludes lint-only checks, formatting, live model evaluations,
+archives, and generated fixtures. Its CLI contract is in [API Map](API_MAP.md#repository-test-runner).
 
 ## Shared rules
 
-- Install prerequisites before area checks: `bash`, `python3`, `git`, plus `jq` and `flock` for hooks; `npx` with `oxfmt` for JS or TS hook formatting; `dotnet` for C# hook formatting.
+- Aggregate test prerequisites are `bash`, `python3`, `git`, `jq`, `flock`, `sqlite3`, and PowerShell 7+ (`pwsh`), plus ordinary Unix utilities and a writable checkout. The runner preflights tools and suite paths; missing dependencies are errors, not successful skips. Existing host-specific skips remain visible in child output.
+- Formatting is separate from tests: `npx` with `oxfmt` for JS or TS hook formatting; `dotnet` for C# hook formatting.
 - For interactive terminal work, prefer wrapping commands with `rtk`.
 - Repo-source proof is not live proof. File reads and repo-local tests show repository state only.
 - If installed behavior matters, run `./scripts/install.sh` before live checks because Copilot reads `~/.copilot/*` and Gemini reads `~/.gemini/*`.

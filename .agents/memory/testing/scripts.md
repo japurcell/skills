@@ -6,6 +6,8 @@ description: Test and validation guidance for shell helper scripts under `script
 # Shell Scripts - Testing
 
 - Use syntax check plus the smallest relevant script test when one exists.
+- Aggregate runner changes: `python3 scripts/test_test_all.py`. These public-CLI tests need Python and Bash, not the full suite toolchain. They copy the runner into temporary checkouts, substitute suite/tool executables at the process boundary, and cover registry completeness, preflight failures, stdin/stream separation, aggregate exits, broken pipes, and cancellation. Full integration is `./scripts/test-all.py` after its prerequisites are available.
+- Cancellation fixtures inherit output pipes. A successful bounded `communicate()` requires EOF from descendants as well as the runner; cleanup-only kills happen after assertions and cannot make a leaked descendant pass. The suite verifies both graceful shutdown and forced termination after the suite leader exits.
 - Shell installer changes:
   - `bash -n scripts/install.sh && bash scripts/test-install.sh`
   - `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`

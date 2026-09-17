@@ -27,7 +27,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
 | `agents/` | agents | Standalone custom agent prompt files. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
-| `scripts/` | scripts | Installers, importers, validation helpers, and shared shell utilities. |
+| `scripts/` | scripts | Installers, importers, the aggregate test runner, validation helpers, and shared shell utilities. |
 | `references/` | references | Optional shared reference material shipped with installs. |
 
 ## Knowledge and top-level docs
@@ -51,6 +51,8 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/test-install.ps1` | Fixture-repo test for `scripts/install.ps1` (run with `pwsh -NoProfile -File scripts/test-install.ps1`). |
 | `scripts/import-skill-repos.sh` | Human-run multi-source importer that refreshes selected upstream skills, including the `web-*` quality skills. |
 | `scripts/common.sh` | Shared shell helper for resolving repo root in small shell tests and utilities. |
+| `scripts/test-all.py` | Executable aggregate test runner with an explicit maintained-suite registry; CLI contract is in `API_MAP.md`. |
+| `scripts/test_test_all.py` | Public-process regressions for the aggregate runner, including streams, exit codes, preflight, and descendant cleanup. |
 | `scripts/lint-okf.py` | Provider-neutral full-corpus OKF profile linter with human/JSON output and `0`/`1`/`2` exit semantics. |
 | `scripts/test-okf-lint.sh` | Public-CLI contract suite for the OKF linter; copies the valid two-bundle fixture under `scripts/fixtures/okf-valid-repo/` for isolated mutation cases. |
 | `.github/hooks/scripts/lint-okf.py` | Repo-local Copilot adapter for central OKF diagnostics on mutation and stop hooks. |

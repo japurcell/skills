@@ -66,7 +66,7 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 
 1. Edit source files in `skills/`, `agents/`, `.codex/`, `.copilot/`, or `.gemini/`
 2. Rerun `./scripts/install.sh` to refresh the installed local copies.
-3. Use targeted checks from `.agents/memory/TESTING_STRATEGY.md`; there is no single repo-wide test runner.
+3. Run `./scripts/test-all.py` for all maintained test suites, or use targeted checks from `.agents/memory/TESTING_STRATEGY.md`.
 
 Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews. Those files are benchmark fixtures, not maintained source.
 
@@ -88,6 +88,39 @@ Canonical agent-facing authoring rules live in `.agents/instructions/`.
 - Keep the body focused on execution guidance, output shape, and decision criteria.
 
 ## Validation
+
+Run all maintained automated test suites on macOS or Linux with:
+
+```bash
+./scripts/test-all.py
+./scripts/test-all.py --list
+./scripts/test-all.py --help
+```
+
+The runner needs Python 3, `bash`, `git`, `jq`, `flock`, `sqlite3`, and PowerShell
+7+ (`pwsh`) on `PATH`, plus the usual Unix shell utilities. Install missing tools
+with your system package manager before running tests; the runner never installs
+dependencies. `--help` and `--list` need only Python. Invoke the script by its path
+from any directory; suites run from its containing checkout, which must be writable.
+
+Suites run sequentially and continue after failures. Child stdout and stderr stay
+separate and stream live; runner progress, individual failure codes, and the final
+suite summary go to stderr. The runner emits plain text without terminal escape
+sequences. Suites receive EOF on stdin; the runner never reads your input or prompts.
+Host-specific skips remain visible in suite output, so a successful suite run does
+not imply that platform-specific tests ran on every host.
+
+Exit codes are `0` for successful suites, `1` for suite failures, `2` for usage,
+dependency, or runner errors, `130` for Ctrl-C, `143` for SIGTERM, and `141` if the
+runner encounters a broken pipe. Child broken-pipe failures do not stop later suites.
+Cancellation signals the active suite and descendants in its process group, allows
+five seconds for cleanup, then forces termination. A second Ctrl-C forces termination
+immediately. Suites have no default timeout; CI may impose an overall job timeout.
+
+The explicit suite registry includes installer, hook, helper, linter regression,
+runner, and model-router grader tests. It excludes lint-only checks, formatting,
+live model evaluations, archived tests, and generated fixtures. Native Windows is
+not supported by this aggregate command; individual PowerShell tests remain usable.
 
 Run the narrowest command that covers your change. Canonical agent-facing validation routing lives in `.agents/memory/TESTING_STRATEGY.md`.
 

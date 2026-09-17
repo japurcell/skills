@@ -23,6 +23,7 @@ description: Test routes for Codex, Copilot, and Gemini hook sources and install
   - `bash scripts/test-gemini-hooks-okf-lint.sh`
   - `bash scripts/test-gemini-hooks-auto-ingest.sh`
   - `bash scripts/test-gemini-hooks-startup.sh`
+  - `bash scripts/test-gemini-hooks-observability.sh`
   - `bash scripts/test-gemini-hooks-secrets-scanner.sh`
   - `bash scripts/test-gemini-hooks-tool-guard.sh`
   - `bash scripts/test-gemini-hooks-rtk.sh`
@@ -34,6 +35,7 @@ description: Test routes for Codex, Copilot, and Gemini hook sources and install
 - Codex source remains inactive at `.codex/global-hooks.json`; fixture tests validate the user-global merge without writing to the real home directory. After a real install, review and trust the changed non-managed definition through `/hooks` before live validation.
 - The Codex startup suite covers open-stdin completion and malformed-prefix time bounds, raw skill-file and final-context limits, large removable frontmatter, path containment, UTF-8 output, and POSIX audit-link defenses. Exercise PowerShell installer behavior and Windows audit reparse-point handling on a Windows host when available.
 - `scripts/test-gemini-hooks-startup.sh` includes a negative missing-skill case that intentionally prints `Hook hard stop: Required skill file not found...`; trust the script exit status and assertions, not stderr alone.
+- The multiple-skill case in `scripts/test-hooks-startup.sh` uses temporary caveman and universal-guidelines fixtures through `COPILOT_SKILLS_DIR`; it does not require the intentionally deleted writing-great-skills installation. Other startup cases still use the configured or installed caveman skill. Keep multi-file loading assertions independent of which optional skills are installed.
 - **Dynamic-Cleanup traps:** When writing bash function-level traps under `set -u` (nounset), register local cleanup variables using single-quotes inside double-quotes (e.g. `trap 'rm -rf "'"$workdir"'"' RETURN`). This interpolates the variable at trap registration time, preventing unbound variable errors when the function exits and pops local scope before execution.
 
 For source auto-ingest behavior, read [Hook Auto-Ingest Testing](hooks-auto-ingest.md). Skip it for unrelated hooks. For observability, trace, transcript, audit-log, or maintenance behavior, read [Hook Observability Testing](hooks-observability.md). Skip it for operational hooks.

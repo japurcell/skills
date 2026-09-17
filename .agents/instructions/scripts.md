@@ -7,6 +7,7 @@ description: Rules and conventions for repository helper scripts under `scripts/
 
 - Follow existing shebang style for shell helper scripts: `#!/usr/bin/env bash` or `#!/usr/bin/env python3`.
 - Keep scripts directly executable and simple.
+- `scripts/test-all.py` owns the explicit registry of maintained test-suite commands. Update it when adding, moving, or removing a suite; exclude `scripts/test-common.sh`, archived tests, generated workspaces, and fixture trees. Keep the runner's CLI regression suite in `scripts/test_test_all.py` registered without recursively invoking the real aggregate run.
 - Shell-focused helper scripts should stay in the repo-root `scripts/` tree and use `scripts/common.sh` for shared repo-root helpers that require `REPO_ROOT`.
 - Use stdout for primary or machine-readable output and stderr for status, warnings, progress, and errors so piping and redirection stay predictable.
 - Prefer standard-library solutions unless an existing script already implies dependency use.
