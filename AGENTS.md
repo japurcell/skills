@@ -4,7 +4,7 @@ This repository publishes skills from `skills/`, canonical custom-agent Markdown
 
 ## ExecPlans
 
-You MUST activate the `exec-plans` skill and write an ExecPlan before making code changes if the task meets ANY of the following AND there is no existing plan:
+Before changing code, first activate and follow the `exec-plans` skill when no plan exists and the task meets any condition below. Create the ExecPlan before the first code edit.
 
 1. Touches or creates 3 or more files.
 2. Involves multiple distinct milestones or execution phases.
@@ -16,12 +16,12 @@ If the plan is large, you MUST orchestrate the updates with subagents and make f
 
 ## Agent Orientation
 
-Before executing tasks or answering questions, you **must**:
+Before task-specific exploration, implementation, or answers, complete these applicable reads in order:
 
 1. **Read `.agents/memory/INDEX.md` first** (knowledge base loading map) for authoritative answers before searching the file system.
-2. **For non-trivial tasks**, also read `.agents/memory/ARCHITECTURE.md` and `.agents/memory/CONVENTIONS.md`.
-3. **Read the area-scoped instruction file** for edited code (`.agents/instructions/<area>.md`, and matching `.agents/memory/known-issues/<area>.md` and `.agents/memory/testing/<area>.md`).
-4. **Always run the `update-agent-docs` skill at the [end of every _work session_](#end-of-work-session-defined) to keep docs fresh.**
+2. **For every non-trivial task**, read both `.agents/memory/ARCHITECTURE.md` and `.agents/memory/CONVENTIONS.md` before loading task-specific skills or starting task-specific exploration.
+3. **Before editing, identify every affected area** and read each `.agents/instructions/<area>.md`, plus matching `.agents/memory/known-issues/<area>.md` and `.agents/memory/testing/<area>.md` files.
+4. **At the [end of every _work session_](#end-of-work-session-defined), activate `update-agent-docs` before editing `.agents/` documentation, then complete its workflow.**
    - This is a mandatory step to capture findings, conventions, and architectural changes.
    - **Only run at the end of a _work session_:** Running this multiple times in a single session is expensive and wasteful.
 

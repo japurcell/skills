@@ -9,6 +9,8 @@ This document describes the requirements for an execution plan ("ExecPlan"), a d
 
 ## How to use ExecPlans
 
+When this skill triggers before implementation, first create the ExecPlan file and verify it exists. Only then make the first code edit. A stated intention to record a plan does not satisfy this gate.
+
 When authoring an executable specification (ExecPlan), follow the `exec-plans` skill _to the letter_. If it is not in your context, refresh your memory by reading the entire `exec-plans` skill documentation. Be thorough in reading (and re-reading) source material to produce an accurate specification. When creating a spec, start from the skeleton and flesh it out as you do your research.
 
 When implementing an executable specification (ExecPlan), do not prompt the user for "next steps"; simply proceed to the next milestone. Keep all sections up to date, add or split entries in the list at every stopping point to affirmatively state the progress made and next steps. Resolve ambiguities autonomously, and commit frequently.
