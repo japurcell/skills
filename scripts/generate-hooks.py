@@ -166,6 +166,15 @@ def _mode(path: Path) -> int:
     return stat.S_IMODE(path.stat().st_mode)
 
 
+def _output_is_current(path: Path, output: RenderedOutput) -> bool:
+    """Return whether one generated output matches its meaningful host metadata."""
+    return (
+        path.is_file()
+        and path.read_bytes() == output.content
+        and (os.name == "nt" or _mode(path) == output.target.mode)
+    )
+
+
 def _owned_undeclared_paths(repo_root: Path, declared: set[PurePosixPath]) -> tuple[PurePosixPath, ...]:
     found: list[PurePosixPath] = []
     for root in ALLOWED_HOOK_ROOTS:
@@ -188,12 +197,12 @@ def _owned_undeclared_paths(repo_root: Path, declared: set[PurePosixPath]) -> tu
 
 
 def check_outputs(repo_root: Path, outputs: tuple[RenderedOutput, ...]) -> CheckResult:
-    """Compare expected files and modes without creating any filesystem state."""
+    """Compare expected files and POSIX modes, when meaningful, without writing state."""
     stale: list[PurePosixPath] = []
     declared = {output.target.output_path for output in outputs}
     for output in outputs:
         path = validate_target(repo_root, output.target)
-        if not path.is_file() or path.read_bytes() != output.content or _mode(path) != output.target.mode:
+        if not _output_is_current(path, output):
             stale.append(output.target.output_path)
     return CheckResult(tuple(stale), _owned_undeclared_paths(repo_root, declared))
 
@@ -238,8 +247,7 @@ def write_outputs(repo_root: Path, outputs: tuple[RenderedOutput, ...]) -> Write
         validate_rendered_output(repo_root, output)
     changes = tuple(
         output for output in outputs
-        if not (path := validate_target(repo_root, output.target)).is_file()
-        or path.read_bytes() != output.content or _mode(path) != output.target.mode
+        if not _output_is_current(validate_target(repo_root, output.target), output)
     )
     if not changes:
         return WriteResult((), len(outputs))

@@ -7,7 +7,7 @@ import importlib.util
 import io
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 from hashlib import sha256
 import shutil
@@ -268,6 +268,16 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn(undeclared.relative_to(ROOT).as_posix(), result.stdout)
         undeclared.unlink()
+
+    def test_windows_check_ignores_posix_executable_mode(self) -> None:
+        generator = load_generator()
+        outputs = generator.render_all(ROOT)
+        target = ROOT / TARGETS[0]
+        target.chmod(0o644)
+
+        self.assertIn(PurePosixPath(TARGETS[0]), generator.check_outputs(ROOT, outputs).stale_paths)
+        with mock.patch.object(generator.os, "name", "nt"):
+            self.assertTrue(generator.check_outputs(ROOT, outputs).is_current)
 
     def test_write_repairs_outputs_and_is_idempotent_from_any_directory(self) -> None:
         target = ROOT / TARGETS[0]
