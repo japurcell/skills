@@ -11,7 +11,7 @@ description: Test and validation guidance for shell helper scripts under `script
 - Cancellation fixtures inherit output pipes. A successful bounded `communicate()` requires EOF from descendants as well as the runner; cleanup-only kills happen after assertions and cannot make a leaked descendant pass. The suite verifies both graceful shutdown and forced termination after the suite leader exits.
 - Shell installer changes:
   - `bash -n scripts/install.sh && bash scripts/test-install.sh`; the fixture must prove stale generated output stops before destination mutation with the exact `--write` recovery command, while controlled generator failure stops without that advice.
-  - Codex custom-agent conversion: `python3 scripts/test-codex-agents.py`, then `bash -n scripts/install.sh && bash scripts/test-install.sh`; the fixture suite parses generated TOML, checks exact instruction preservation, managed cleanup, and `CODEX_HOME` selection.
+  - Codex custom-agent conversion and global instructions: `python3 scripts/test-codex-agents.py`, then `bash -n scripts/install.sh && bash scripts/test-install.sh`; the fixture suite parses generated TOML, checks exact instruction preservation, managed cleanup, `CODEX_HOME` selection, and replacement of `$HOME/.codex/AGENTS.md` from `.codex/AGENTS.md`.
   - `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`
 - Python helper module unit tests:
   - `python scripts/test_helpers.py`

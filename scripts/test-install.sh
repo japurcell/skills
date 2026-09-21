@@ -24,6 +24,7 @@ create_fixture_repo() {
   cp -p "$REPO_ROOT/scripts/install-codex-agents.py" "$repo/scripts/install-codex-agents.py"
   cp -p "$REPO_ROOT/scripts/install-codex-hooks.py" "$repo/scripts/install-codex-hooks.py"
   cp -p "$REPO_ROOT/.codex/global-hooks.json" "$repo/.codex/global-hooks.json"
+  cp -p "$REPO_ROOT/.codex/AGENTS.md" "$repo/.codex/AGENTS.md"
   cp -p "$REPO_ROOT/.codex/hooks/load-required-skills.py" "$repo/.codex/hooks/load-required-skills.py"
   printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$repo/skills/alpha/SKILL.md"
   printf '%s\n' 'fixture eval content' > "$repo/skills/alpha/evals/evals.json"
@@ -324,8 +325,15 @@ test_installs_codex_hook_and_global_configuration() {
   home="$workdir/home"
 
   create_fixture_repo "$repo"
+  mkdir -p "$home/.codex"
+  printf '%s\n' 'Stale Codex instructions.' > "$home/.codex/AGENTS.md"
 
   HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+
+  if [[ "$(<"$home/.codex/AGENTS.md")" != "$(<"$repo/.codex/AGENTS.md")" ]]; then
+    echo "Expected the global Codex instructions to be replaced from the maintained source." >&2
+    exit 1
+  fi
 
   if [[ ! -x "$home/.codex/hooks/load-required-skills.py" ]]; then
     echo "Expected the Codex required-skills hook to be installed and executable." >&2

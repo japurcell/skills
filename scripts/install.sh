@@ -12,6 +12,7 @@ readonly GEMINI_GLOBAL_SETTINGS_SRC="${REPO_ROOT}/.gemini/global-settings.json"
 readonly COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
 readonly COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
 readonly CODEX_HOOK_SRC="${REPO_ROOT}/.codex/hooks/load-required-skills.py"
+readonly CODEX_INSTRUCTIONS_SRC="${REPO_ROOT}/.codex/AGENTS.md"
 readonly CODEX_HOOK_TEMPLATE_SRC="${REPO_ROOT}/.codex/global-hooks.json"
 readonly CODEX_HOOK_MERGER="${REPO_ROOT}/scripts/install-codex-hooks.py"
 readonly CODEX_AGENT_INSTALLER="${REPO_ROOT}/scripts/install-codex-agents.py"
@@ -27,6 +28,7 @@ readonly COPILOT_AGENTS_DEST="${COPILOT_DEST}/agents"
 readonly HOOKS_DEST="${HOME}/.copilot/hooks"
 readonly CODEX_HOOKS_DEST="${HOME}/.codex/hooks"
 readonly CODEX_HOOK_CONFIG_DEST="${HOME}/.codex/hooks.json"
+readonly CODEX_INSTRUCTIONS_DEST="${HOME}/.codex/AGENTS.md"
 readonly CODEX_AGENTS_DEST="${CODEX_HOME:-${HOME}/.codex}/agents"
 
 copy_skills() {
@@ -114,6 +116,11 @@ install_codex_hook() {
     --destination "$CODEX_HOOK_CONFIG_DEST"
 }
 
+install_codex_instructions() {
+  mkdir -p "$(dirname "$CODEX_INSTRUCTIONS_DEST")"
+  cp -p "$CODEX_INSTRUCTIONS_SRC" "$CODEX_INSTRUCTIONS_DEST"
+}
+
 for src in "$SKILLS_SRC" "$AGENTS_SRC" "$GEMINI_SRC" "$CANONICAL_HOOKS_SRC"; do
   [[ -d "$src" ]] || { echo "Missing source directory: $src" >&2; exit 1; }
 done
@@ -122,7 +129,7 @@ for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC" "$GEMINI_GLOBAL_SETTIN
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
-for src in "$CODEX_HOOK_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$GENERATE_HOOKS"; do
+for src in "$CODEX_HOOK_SRC" "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$GENERATE_HOOKS"; do
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
@@ -159,6 +166,7 @@ copy_gemini
 copy_gemini_global_settings
 copy_copilot_instructions
 copy_copilot_lsp
+install_codex_instructions
 install_codex_hook
 
 echo "Installed skills to $SKILLS_DEST"
@@ -174,5 +182,6 @@ echo "Installed Gemini instructions to $GEMINI_DEST"
 echo "Installed Gemini settings to $GEMINI_DEST/settings.json"
 echo "Installed Copilot instructions to $COPILOT_DEST/copilot-instructions.md"
 echo "Installed Copilot LSP config to $COPILOT_DEST/lsp-config.json"
+echo "Installed Codex instructions to $CODEX_INSTRUCTIONS_DEST"
 echo "Installed Codex hook to $CODEX_HOOKS_DEST/load-required-skills.py"
 echo "Installed Codex hook configuration to $CODEX_HOOK_CONFIG_DEST"

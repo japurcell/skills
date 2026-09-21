@@ -163,6 +163,7 @@ function New-FixtureRepo {
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-agents.py') -Destination (Join-Path $Repo 'scripts/install-codex-agents.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-hooks.py') -Destination (Join-Path $Repo 'scripts/install-codex-hooks.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/global-hooks.json') -Destination (Join-Path $Repo '.codex/global-hooks.json') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/AGENTS.md') -Destination (Join-Path $Repo '.codex/AGENTS.md') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/hooks/load-required-skills.py') -Destination (Join-Path $Repo '.codex/hooks/load-required-skills.py') -Force
 
     Write-FixtureFile (Join-Path $Repo 'skills/alpha/SKILL.md') @('---', 'name: alpha', '---', 'Standalone.')
@@ -825,6 +826,8 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         $homeDir = Join-Path $workdir 'home'
 
         New-FixtureRepo $repo
+        $codexInstructionsPath = Join-Path $homeDir '.codex/AGENTS.md'
+        Write-FixtureFile $codexInstructionsPath @('Stale Codex instructions.')
         $unrelatedHook = Join-Path $homeDir '.codex/hooks/unrelated.py'
         Write-FixtureFile $unrelatedHook @('print("preserve mode")')
         if (-not $IsWindows) {
@@ -832,6 +835,8 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
             [System.IO.File]::SetUnixFileMode($unrelatedHook, $ownerOnly)
         }
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+
+        Assert-Equals -Expected (Read-FileContent (Join-Path $repo '.codex/AGENTS.md')) -Actual (Read-FileContent $codexInstructionsPath) -Message 'Expected the global Codex instructions to be replaced from the maintained source.'
 
         $installedHook = Join-Path $homeDir '.codex/hooks/load-required-skills.py'
         Assert-True -Condition (Test-Path -LiteralPath $installedHook -PathType Leaf) -Message "Expected the Codex required-skills hook to be installed."

@@ -41,6 +41,7 @@ $GeminiGlobalSettingsSrc = Join-Path $RepoRoot '.gemini/global-settings.json'
 $CopilotInstructionsSrc = Join-Path $RepoRoot '.copilot/copilot-instructions.md'
 $CopilotLspSrc = Join-Path $RepoRoot '.copilot/lsp-config.json'
 $CodexHookSrc = Join-Path $RepoRoot '.codex/hooks/load-required-skills.py'
+$CodexInstructionsSrc = Join-Path $RepoRoot '.codex/AGENTS.md'
 $CodexHookTemplateSrc = Join-Path $RepoRoot '.codex/global-hooks.json'
 $CodexHookMergerSrc = Join-Path $RepoRoot 'scripts/install-codex-hooks.py'
 $CodexAgentInstallerSrc = Join-Path $RepoRoot 'scripts/install-codex-agents.py'
@@ -57,6 +58,7 @@ $HooksDest = Join-Path $CopilotDest 'hooks'
 $CodexDest = Join-Path $HOME '.codex'
 $CodexHooksDest = Join-Path $CodexDest 'hooks'
 $CodexHookConfigDest = Join-Path $CodexDest 'hooks.json'
+$CodexInstructionsDest = Join-Path $CodexDest 'AGENTS.md'
 $CodexAgentsDest = Join-Path $(if ([string]::IsNullOrEmpty($env:CODEX_HOME)) { $CodexDest } else { $env:CODEX_HOME }) 'agents'
 
 function Fail {
@@ -368,6 +370,11 @@ function Install-CodexHook {
     }
 }
 
+function Install-CodexInstructions {
+    New-Item -ItemType Directory -Path $CodexDest -Force | Out-Null
+    Copy-FileTo -Source $CodexInstructionsSrc -Destination $CodexInstructionsDest
+}
+
 foreach ($src in @($SkillsSrc, $AgentsSrc, $GeminiSrc, $CanonicalHooksSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Container)) {
         Fail "Missing source directory: $src"
@@ -380,7 +387,7 @@ foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSetting
     }
 }
 
-foreach ($src in @($CodexHookSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $GenerateHooksSrc)) {
+foreach ($src in @($CodexHookSrc, $CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $GenerateHooksSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
     }
@@ -432,6 +439,7 @@ Copy-Gemini
 Copy-GeminiGlobalSettings
 Copy-CopilotInstructions
 Copy-CopilotLsp
+Install-CodexInstructions
 Install-CodexHook -PythonPath $pythonCommand.Path -PythonArguments $pythonCommand.Arguments
 
 Write-Output "Installed skills to $SkillsDest"
@@ -447,5 +455,6 @@ Write-Output "Installed Gemini instructions to $GeminiDest"
 Write-Output "Installed Gemini settings to $(Join-Path $GeminiDest 'settings.json')"
 Write-Output "Installed Copilot instructions to $(Join-Path $CopilotDest 'copilot-instructions.md')"
 Write-Output "Installed Copilot LSP config to $(Join-Path $CopilotDest 'lsp-config.json')"
+Write-Output "Installed Codex instructions to $CodexInstructionsDest"
 Write-Output "Installed Codex hook to $(Join-Path $CodexHooksDest 'load-required-skills.py')"
 Write-Output "Installed Codex hook configuration to $CodexHookConfigDest"

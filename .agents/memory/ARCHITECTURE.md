@@ -15,7 +15,7 @@ description: Repo structure, install flows, and how top-level areas relate
 | `.github/` | Repository-level Copilot config, including repo-local hooks. | Loaded directly from the workspace by Copilot |
 | `.copilot/` | Copilot-specific instructions and hooks. | Installed to `~/.copilot/` |
 | `.gemini/` | Gemini-specific instructions and hooks. | Installed to `~/.gemini/` |
-| `.codex/` | Inactive source template and script for the user-global Codex required-skills hook. | Installed to `~/.codex/hooks/` and merged into `~/.codex/hooks.json`; it is not a custom-agent source. |
+| `.codex/` | Source for user-global Codex instructions and the required-skills hook. | `AGENTS.md` is copied to `~/.codex/AGENTS.md`; the hook is installed to `~/.codex/hooks/` and merged into `~/.codex/hooks.json`. It is not a custom-agent source. |
 | `hooks/` | Canonical build-time source for generated provider-local Python hooks. | Rendered by `scripts/generate-hooks.py` into checked-in executable outputs; never imported across provider runtimes. |
 | `scripts/` | Installers, importers, and targeted validation helpers. | Run from repo checkout |
 | `.agents/` | Agent knowledge base with canonical agent-facing rules and durable repo facts. | Copilot/Gemini agents working in this repo |
@@ -28,7 +28,7 @@ description: Repo structure, install flows, and how top-level areas relate
 
 1. Edit source under `skills/`, `agents/`, `.github/`, `.copilot/`, `.gemini/`, `.codex/`, `references/`, or `scripts/`.
 2. Run narrow validation for changed area from `.agents/memory/TESTING_STRATEGY.md` and any matching `testing/<area>.md` file.
-3. If installed behavior matters, run `./scripts/install.sh` (or `pwsh scripts/install.ps1`) before live checks because Codex, Copilot, and Gemini read installed copies from home-directory targets, not repository source files. Codex uses generated TOML under `${CODEX_HOME:-$HOME/.codex}/agents`; Copilot and Gemini use Markdown copies.
+3. If installed behavior matters, run `./scripts/install.sh` (or `pwsh scripts/install.ps1`) before live checks because Codex, Copilot, and Gemini read installed copies from home-directory targets, not repository source files. Codex reads `.codex/AGENTS.md` from `$HOME/.codex/AGENTS.md` and uses generated TOML under `${CODEX_HOME:-$HOME/.codex}/agents`; Copilot and Gemini use Markdown copies.
 
 ### Generated provider-hook flow
 
