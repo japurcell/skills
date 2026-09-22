@@ -1,6 +1,6 @@
 # Pricing Reference
 
-Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Verified **2026-09-15**. All prices are USD per 1 million tokens for GitHub Copilot. Check the source when exact cost matters; these are not direct-provider API or other-platform prices.
+Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Verified **2026-09-22**. All prices are USD per 1 million tokens for GitHub Copilot. Check the source when exact cost matters; these are not direct-provider API or other-platform prices.
 
 If prices are shown in GitHub AI Credits: 1 credit = $0.01 USD.
 
@@ -51,6 +51,7 @@ Shared repo context across workers does not guarantee cache hits. Verify cache b
 | Anthropic | `claude-opus-4.8-fast` | default | $10.00 | $1.00 | $12.50 | $50.00 |
 | Anthropic | `claude-fable-5` | default | $10.00 | $1.00 | $12.50 | $50.00 |
 | Anthropic | `claude-opus-5` | default | $5.00 | $0.50 | $6.25 | $25.00 |
+| Anthropic | `claude-opus-5.5` | default | $4.00 | $0.20 | $5.00 | $20.00 |
 | Anthropic | `claude-fable-5.1` | default | $10.00 | $0.25 | $12.50 | $50.00 |
 | Google | `gemini-3.5-flash` | default | $1.50 | $0.15 | — | $9.00 |
 | Google | `gemini-3.6-flash` | promotional | $0.75 | $0.075 | — | $3.75 |
@@ -61,13 +62,16 @@ Shared repo context across workers does not guarantee cache hits. Verify cache b
 | xAI | `grok-4.5` | >200K | $4.00 | $1.00 | — | $12.00 |
 | xAI | `grok-4.6` | ≤200K | $2.00 | $0.50 | — | $6.00 |
 | xAI | `grok-4.6` | >200K | $4.00 | $1.00 | — | $12.00 |
+| xAI | `grok-4.7` | ≤200K | $2.00 | $0.50 | — | $6.00 |
+| xAI | `grok-4.7` | >200K | $4.00 | $1.00 | — | $12.00 |
 | Moonshot AI | `kimi-k2.7-code` | default | $0.95 | $0.19 | — | $4.00 |
 | Moonshot AI | `kimi-k3` | default | $3.00 | $0.30 | — | $15.00 |
 
 ## Notes
 
 - Conditions are input-token thresholds; choose the matching row before comparing costs.
-- Anthropic, GPT-5.6 Luna/Sol/Terra, and GPT-6 Astra have cache-write charges. Earlier OpenAI models do not.
+- GitHub lists GPT-6 Luna and GPT-6 Sol as supported but does not publish their token rates on the linked pricing page. Their Copilot cost remains unverified.
+- Anthropic, GPT-5.6 Luna/Sol/Terra, and GPT-6 Astra have published cache-write charges. Earlier OpenAI models do not; GPT-6 Luna/Sol cache-write rates are unknown.
 - Gemini 3.6/3.7/3.8 Flash promotional rates apply through **2026-12-31**; recheck afterward.
 - Existing annual Copilot Pro/Pro+ subscriptions still using request-based billing have [legacy model multipliers](https://docs.github.com/en/copilot/reference/copilot-billing/request-based-billing-legacy/model-multipliers-for-annual-plans). Verify the applicable billing model before estimating usage.
 - Cheapest model within a tier can vary by token mix.

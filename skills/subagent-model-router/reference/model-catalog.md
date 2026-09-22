@@ -2,7 +2,7 @@
 
 Use when `SKILL.md` is not enough to choose a model.
 
-Sources: [Supported AI models in GitHub Copilot](https://docs.github.com/en/copilot/reference/ai-models/supported-models), [AI model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison), and [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Verified **2026-09-15**. This catalog covers models listed on those pages; absence does not establish retirement. IDs below are routing shorthand: use the exact identifier exposed by the runtime.
+Sources: [Supported AI models in GitHub Copilot](https://docs.github.com/en/copilot/reference/ai-models/supported-models), [AI model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison), and [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Verified **2026-09-22**. This catalog covers routable models listed on those pages; absence does not establish retirement. IDs below are routing shorthand: use the exact identifier exposed by the runtime.
 
 Routing tiers are local to this skill and may differ from provider labels. Use `reference/pricing.md` when exact cost matters.
 
@@ -15,6 +15,7 @@ Use for simple, bounded, repetitive, or low-risk work. Not for normal code revie
 | OpenAI | `gpt-5.4-nano` | GA | lightweight work without cache-write charges |
 | OpenAI | `gpt-5-mini` | GA | fast coding/writing; tiny style-only reviews |
 | OpenAI | `gpt-5.6-luna` | GA | lightweight long-context work |
+| OpenAI | `gpt-6-luna` | GA | provisional Fast placement; task fit and Copilot token price unverified |
 | Anthropic | `claude-haiku-4.5` | GA | simple/repetitive tasks |
 | Google | `gemini-3.5-flash` | GA | fast simple work |
 | Microsoft | `mai-code-1.1-flash` | GA | lower-cost lightweight code work |
@@ -28,8 +29,7 @@ Use for most coding, editing, analysis, debugging, agent work, and normal code r
 | OpenAI | `gpt-5.4-mini` | GA | bounded code review |
 | OpenAI | `gpt-5.3-codex` | GA | agentic coding/review with demonstrated task fit |
 | OpenAI | `gpt-5.6-terra` | GA | versatile work; long-context pricing |
-| Anthropic | `claude-sonnet-4` | GA | general coding/analysis |
-| Anthropic | `claude-sonnet-4.6` | GA | general coding/agent tasks |
+| Anthropic | `claude-sonnet-4.6` | annual Pro/Pro+ only | general coding/agent tasks |
 | Anthropic | `claude-sonnet-5` | GA | general coding/agent tasks |
 | Moonshot AI | `kimi-k2.7-code` | GA | code-oriented versatile work |
 | Google | `gemini-3.6-flash` | GA | versatile work; promotional pricing |
@@ -37,6 +37,7 @@ Use for most coding, editing, analysis, debugging, agent work, and normal code r
 | Google | `gemini-3.8-flash` | GA | versatile work; promotional pricing |
 | xAI | `grok-4.5` | GA | versatile work; long-context pricing |
 | xAI | `grok-4.6` | GA | versatile work; long-context pricing |
+| xAI | `grok-4.7` | GA | agentic coding; long-context pricing |
 
 ## Premium
 
@@ -47,12 +48,14 @@ Use for complex, ambiguous, high-stakes, security-sensitive, or failure-sensitiv
 | OpenAI | `gpt-5.4` | GA | broad general work; long-context pricing |
 | OpenAI | `gpt-5.5` | GA | powerful reasoning; long-context pricing |
 | OpenAI | `gpt-5.6-sol` | GA | powerful reasoning; long-context pricing |
+| OpenAI | `gpt-6-sol` | GA | provisional Premium placement; task fit and Copilot token price unverified |
 | Anthropic | `claude-opus-4.7` | GA | deep reasoning/debugging |
 | Anthropic | `claude-opus-4.8` | GA | deep reasoning/debugging |
 | Anthropic | `claude-opus-4.8-fast` | GA | premium reasoning when speed justifies cost |
 | Anthropic | `claude-fable-5` | GA | long-horizon autonomous coding/knowledge work |
 | OpenAI | `gpt-6-astra` | GA | powerful reasoning; long-context pricing |
 | Anthropic | `claude-opus-5` | GA | powerful reasoning |
+| Anthropic | `claude-opus-5.5` | GA | powerful reasoning |
 | Anthropic | `claude-fable-5.1` | GA | powerful reasoning; low cached-input rate |
 | Moonshot AI | `kimi-k3` | GA | powerful reasoning |
 
@@ -73,5 +76,7 @@ Newer names and provider categories alone do not demonstrate security-review acc
 ## Notes
 
 - Public preview models may change behavior, pricing, or availability.
+- GitHub lists GPT-6 Luna and GPT-6 Sol as supported but does not list their token rates on its pricing page. Treat Copilot cost comparisons for them as unverified until rates appear.
+- Claude Sonnet 4.6 is available only to individual annual Pro/Pro+ subscribers after its September 1, 2026 retirement; confirm runtime availability before routing.
 - If two models are close in cost, pick the better task fit.
 - Cost optimization never overrides agent-type floors.
