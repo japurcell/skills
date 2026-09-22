@@ -31,6 +31,7 @@ fi
   "skills/engineering/resolving-merge-conflicts" "skills" \
   "skills/engineering/tdd" "skills" \
   "skills/engineering/wayfinder" "skills" \
+  "skills/in-progress/retro" "skills" \
   "skills/productivity/grilling" "skills" \
   "skills/productivity/teach" "skills" \
   "skills/productivity/writing-for-agents" "skills"
