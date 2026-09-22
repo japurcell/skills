@@ -32,8 +32,8 @@ research, planning, or implementation artifact.
    - Evidence: AGENTS.md orientation mandates reading INDEX.md, ARCHITECTURE.md, and CONVENTIONS.md on every non-trivial task, burning 50k+ tokens during read-only code reviews and reports where only a diff or single doc was needed.
    - Root Cause: Rigid universal orientation checklist lacking task-type scoping.
    - Recommendation: Add clause to AGENTS.md: "Read-only audits, executive reports, and diff reviews are exempt from mandatory memory/conventions pre-reading."
-7. Add note in GEMINI.md: When generating multi-line .ps1 or automation scripts, always use write_file first, then run via shell.
+7. Observed on gemini and may or may not apply to copilot or codex. Recommendation: Add note in GEMINI.md: When generating multi-line .ps1 or automation scripts, always use write_file first, then run via shell.
 8. Ephemeral Probe and Test Scripts Polluting Tracked Repository Tree (Coding Standards)
     - Evidence: Agents authored temporary scripts (probe.ps1, screen.ps1, update_repo_health_paths.py) directly in repo root or scripts/, causing dirty git status and requiring extra cleanup turns.
     - Root Cause: No designated scratch location for temporary probe scripts.
-    - Recommendation: Require all disposable agent test scripts to live in .agents/scratchpad/ or $env:TEMP, and add probe*.ps1 to .gitignore.
+    - Recommendation: Require all disposable agent test scripts to live in .agents/scratchpad/ or $env:TEMP, and add probe*.ps1 to .gitignore in AGENTS.md.
