@@ -13,3 +13,6 @@ research, planning, or implementation artifact.
   - \[rtk\] /!\ No hook installed — run `rtk init -g` for automatic token savings  
   - [Personal Context vs Shared Context](https://dev.to/alexmercedcoder/personal-context-vs-shared-context-a-deep-dive-into-how-humans-and-organizations-should-feed-14md)
     - Read 'How do we keep shared context from going stale?'
+- 'prd' vs 'exec-plan'
+- Check stale docs hook
+- improve subagent-model-router to use cheaper agents more often
