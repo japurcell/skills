@@ -5,9 +5,9 @@
 ### Simplicity and scope
 
 - Make the smallest clear, maintainable change that meets the request, including necessary tests and documentation. Avoid speculative abstractions and unrequested capabilities.
-- Keep unrelated code unchanged; report unrelated problems separately.
 - Match existing codebase patterns and style unless there is a concrete reason not to.
 - Remove imports, variables, and helpers made unused by your changes.
+- When making technical decisions, do not give much weight to development cost. Instead, prefer quality, simplicity, robustness, scalability, and long term maintainability.
 
 ### Assumptions and ambiguity
 
@@ -17,9 +17,8 @@
 ### Verify
 
 - Decide how success will be verified before implementing non-trivial work.
-- For bugs, reproduce the failure before fixing it when practical.
-- After making changes, run checks appropriate to the change's scope and risk.
-- Support completion claims with evidence from this task; state any unverified work and why.
+- For bug fixes, always start with reproducing the bug in an E2E setting as closely aligned with how an end user would experience it as possible. This makes sure you find the real problem so your fix will actually solve it.
+- Support completion claims with evidence from every task; state any unverified work and why.
 
 ### Respond to evidence
 
@@ -36,6 +35,11 @@
 ### Questions are read-only
 
 - If I ask you a question, just answer it and don't edit files. Feel free to offer suggestions when appropriate though.
+
+### Be Proactive
+
+- Be picky about the UI you see and be obsessed with pixel perfection. If something clearly looks off, even if it is not directly related to what you are doing, try to get it fixed along the way.
+- Apply that same high standard to engineering excellence: lint, test failures, and test flakiness. If you see one, even if it is not caused by what you are working on right now, still get it fixed.
 
 ## Coding preferences
 
