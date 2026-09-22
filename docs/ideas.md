@@ -16,3 +16,4 @@ research, planning, or implementation artifact.
 - 'prd' vs 'exec-plan'
 - Check stale docs hook
 - improve subagent-model-router to use cheaper agents more often
+- On gemini, I see 'Tool Guardian blocked complete_task. database_destruction/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional. [tool-guard]'. I also want to see the command blocked in the message. I also want to see this banner on copilot and codex. Ensure that 'scan_secrets' also has this notification banner.
