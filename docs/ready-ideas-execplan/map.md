@@ -9,6 +9,7 @@ This map plans the work; it does not implement the eight changes. Keep each unde
 ## Decisions so far
 
 - [Provider Hook Capabilities](tickets/provider-hook-capabilities.md): provider-specific hook contracts permit pre-tool checks, with different display, timeout, trust, and Windows rules.
+- [RTK Setup Warning](tickets/rtk-setup-warning.md): suppress the CLI's misleading notice on explicit agent-issued RTK commands through scoped command rewrites after stable upstream support is verified.
 
 ## Not yet specified
 

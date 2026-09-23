@@ -33,6 +33,10 @@ With `shell=False`, resolve commands such as `rtk` through `shutil.which()` so `
 
 When RTK exits `0` with empty or whitespace-only stdout, return `({}, None)` instead of attempting JSON parsing.
 
+## Explicit RTK commands can show a misleading hook notice
+
+RTK 0.49 can print `No hook installed` when an agent explicitly runs `rtk ...`, even when that command filters output. The provider RTK forwarders in `hooks/families/rtk.py` capture and discard subprocess stderr, so they do not directly display this notice. Diagnose the explicit CLI invocation before changing hook forwarding or suppressing hook errors.
+
 ## PowerShell command paths need runtime-specific forms
 
 In installed Gemini settings, prefix Python files with `python` and wrap `$HOME/...` paths in escaped double quotes. In repo-local `.gemini/settings.json`, use workspace-relative `python .gemini/hooks/scripts/...py` commands; `$GEMINI_PROJECT_DIR` plus forward slashes can be split as a PowerShell expression.
