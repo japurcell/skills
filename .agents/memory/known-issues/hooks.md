@@ -29,6 +29,18 @@ Run Git with `GIT_TERMINAL_PROMPT=0`, an empty `GIT_ASKPASS`, and a short timeou
 
 With `shell=False`, resolve commands such as `rtk` through `shutil.which()` so `.cmd` or `.bat` executables are found.
 
+## Git metadata paths can use platform aliases
+
+On macOS, a temporary worktree pointer can name `/var/...` while resolved Git/common paths use `/private/var/...`. Compare resolved literal path candidates with resolved Git directories; a string comparison of complete shell text misses this alias. Reject linked `.git`, Git-directory, and `commondir` entries before reading pointers.
+
+## Codex apply_patch path is inside `tool_input.command`
+
+Codex `PreToolUse` reports file edits as `tool_name: "apply_patch"` with patch text under `tool_input.command`; it does not provide a `file_path` field. Parse the patch's Add, Update, Delete, and Move headers before deciding whether a Git metadata path is affected. Missing or malformed patch paths deny the edit.
+
+## Git guard cannot inspect later child-process writes
+
+The repository-state guard sees provider tool arguments before execution. It can block direct editor targets and recognizable literal shell or script text, but cannot prove what `python script.py`, PowerShell child processes, Git hooks, or other later processes will write. Copilot pre-tool hook timeouts also fail open. Treat OS sandbox policy as a separate layer only after inspecting its effective settings on the installed provider and platform; no global sandbox setting is changed by this repository.
+
 ## Empty RTK output is a valid no-op
 
 When RTK exits `0` with empty or whitespace-only stdout, return `({}, None)` instead of attempting JSON parsing.

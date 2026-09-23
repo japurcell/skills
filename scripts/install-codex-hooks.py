@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 
-OWNED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "rtk-explicit-codex.py", "rtk-agent-launcher.py", "tool-guard.py", "markdown-health.py")
+OWNED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "rtk-explicit-codex.py", "rtk-agent-launcher.py", "tool-guard.py", "markdown-health.py", "repository-state.py")
 OWNED_POSIX_COMMANDS = {f"python3 ~/.codex/hooks/{name}" for name in OWNED_HOOK_FILES}
 OWNED_WINDOWS_COMMANDS = {
     f'py -3 "%USERPROFILE%\\.codex\\hooks\\{name}"'.casefold() for name in OWNED_HOOK_FILES

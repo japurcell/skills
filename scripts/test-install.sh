@@ -339,7 +339,7 @@ test_installs_codex_hook_and_global_configuration() {
     echo "Expected the Codex required-skills hook to be installed and executable." >&2
     exit 1
   fi
-  for installed in scan-secrets.py tool-guard.py markdown-health.py rtk-explicit-codex.py rtk-agent-launcher.py helpers/common.py helpers/audit.py; do
+  for installed in scan-secrets.py tool-guard.py markdown-health.py rtk-explicit-codex.py rtk-agent-launcher.py repository-state.py helpers/common.py helpers/audit.py; do
     if [[ ! -x "$home/.codex/hooks/$installed" ]]; then
       echo "Expected maintained Codex hook to be installed and executable: $installed" >&2
       exit 1
@@ -366,7 +366,6 @@ handler = groups[0]["hooks"][0]
 assert handler["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
 assert handler["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
 pre_tool = config["hooks"]["PreToolUse"]
-assert len(pre_tool) == 2
 assert pre_tool[0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/rtk-explicit-codex.py"
 assert pre_tool[0]["hooks"][0]["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\rtk-explicit-codex.py"'
 registered = pre_tool[0]["hooks"][0]["command"].removeprefix("python3 ~/")
@@ -380,6 +379,9 @@ assert "python3 ~/.codex/hooks/scan-secrets.py" in stop_commands
 for event in ("PreToolUse", "PostToolUse", "Stop"):
     commands = [hook["command"] for group in config["hooks"][event] for hook in group["hooks"]]
     assert "python3 ~/.codex/hooks/markdown-health.py" in commands
+assert pre_tool[1]["hooks"][0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
+assert any(group["hooks"][0]["command"] == "python3 ~/.codex/hooks/repository-state.py" for group in pre_tool)
+assert config["hooks"]["Stop"][0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
 PY
 }
 

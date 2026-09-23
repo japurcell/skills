@@ -20,9 +20,14 @@ description: Public validation entry points and provider adapter contracts for t
 ## Generated provider-hook CLI
 
 - `scripts/generate-hooks.py --write` renders the complete explicit `hooks/manifest.py` target set and transactionally updates only stale generated outputs. `--check` is read-only, reports every stale or missing output, and exits `0` only when source bytes and executable modes are current. Both actions resolve the checkout from the script location; bare invocation and invalid canonical inputs exit `2`.
-- The generator owns 32 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, `.github/hooks/scripts/`, and `.codex/hooks/`. They carry a `Generated from hooks/families/...` header, remain self-contained at runtime, and are copied unchanged by both installers. Before any destination mutation, each installer runs bytecode-disabled `scripts/generate-hooks.py --check`: stale output exits `1` with the exact `--write` recovery command, and invalid canonical input exits `2` without write advice.
+- The generator owns 38 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, `.github/hooks/scripts/`, and `.codex/hooks/`. They carry a `Generated from hooks/families/...` header, remain self-contained at runtime, and are copied unchanged by both installers. Before any destination mutation, each installer runs bytecode-disabled `scripts/generate-hooks.py --check`: stale output exits `1` with the exact `--write` recovery command, and invalid canonical input exits `2` without write advice.
 - The generated `tool-guard.py` hooks return provider-native block or warning JSON with one redacted, at-most-160-character `Action:` excerpt. Their owner-only guard records keep threat metadata and the exact displayed excerpt, never raw tool input.
 - The generated `scan-secrets.py` hooks read provider JSON from stdin and return JSON with exit `0`. An incomplete Git scan emits a provider-native denial in block mode or a `scan-secrets warning` naming the scan action in warn mode. They never mark incomplete output clean or expose raw Git output in the response.
+
+## Repository-state protection
+
+- Generated `repository-state.py` hooks at `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, and `.codex/hooks/` accept provider-native pre-tool JSON and emit `{}` for unaffected calls. A denial uses Copilot `permissionDecision: deny`, Gemini `decision: deny`, or Codex `hookSpecificOutput.permissionDecision: deny`, all with exit `0` and a safe reason. Malformed input denies. No hook approval token is accepted.
+- The canonical family checks workspace `.git`, its resolved Git directory, and the common Git directory. It denies direct editor writes, recognizable literal shell/script metadata writes, and Git checkout/restore/reset/clean variants that can discard work. Read-only Git commands and `git clean --dry-run` stay available. The hook cannot inspect operations hidden inside a later child process.
 
 ## Explicit RTK prerelease
 

@@ -69,6 +69,18 @@
             "statusMessage": "Checking touched Markdown"
           }
         ]
+      },
+      {
+        "matcher": "Bash|apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.codex/hooks/repository-state.py",
+            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\repository-state.py\"",
+            "timeout": 10,
+            "statusMessage": "Protecting Git state"
+          }
+        ]
       }
     ],
     "Stop": [

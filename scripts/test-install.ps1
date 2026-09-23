@@ -848,7 +848,7 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         $installedHook = Join-Path $homeDir '.codex/hooks/load-required-skills.py'
         Assert-True -Condition (Test-Path -LiteralPath $installedHook -PathType Leaf) -Message "Expected the Codex required-skills hook to be installed."
         Assert-Equals -Expected (Read-FileContent (Join-Path $repo '.codex/hooks/load-required-skills.py')) -Actual (Read-FileContent $installedHook) -Message "Expected the installed Codex hook to match the maintained source."
-        foreach ($relative in @('scan-secrets.py', 'tool-guard.py', 'markdown-health.py', 'rtk-explicit-codex.py', 'rtk-agent-launcher.py', 'helpers/common.py', 'helpers/audit.py')) {
+        foreach ($relative in @('scan-secrets.py', 'tool-guard.py', 'markdown-health.py', 'rtk-explicit-codex.py', 'rtk-agent-launcher.py', 'repository-state.py', 'helpers/common.py', 'helpers/audit.py')) {
             $installed = Join-Path (Join-Path $homeDir '.codex/hooks') $relative
             Assert-True -Condition (Test-Path -LiteralPath $installed -PathType Leaf) -Message "Expected Codex hook file $relative to be installed."
             Assert-Equals -Expected (Read-FileContent (Join-Path $repo ".codex/hooks/$relative")) -Actual (Read-FileContent $installed) -Message "Expected Codex hook file $relative to match source."
@@ -874,6 +874,10 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
             $commands = @($config['hooks'][$event] | ForEach-Object { $_['hooks'] } | ForEach-Object { $_['command'] })
             Assert-True -Condition ($commands -contains 'python3 ~/.codex/hooks/markdown-health.py') -Message "Expected $event to use the Markdown hook."
         }
+        Assert-Equals -Expected 'python3 ~/.codex/hooks/rtk-explicit-codex.py' -Actual $config['hooks']['PreToolUse'][0]['hooks'][0]['command'] -Message 'Expected PreToolUse to register explicit RTK rewriting.'
+        Assert-Equals -Expected 'python3 ~/.codex/hooks/scan-secrets.py' -Actual $config['hooks']['PreToolUse'][1]['hooks'][0]['command'] -Message 'Expected PreToolUse to retain the maintained scanner.'
+        Assert-True -Condition (@($config['hooks']['PreToolUse'] | Where-Object { $_['hooks'][0]['command'] -ceq 'python3 ~/.codex/hooks/repository-state.py' }).Count -eq 1) -Message 'Expected one repository-state guard registration.'
+        Assert-Equals -Expected 'python3 ~/.codex/hooks/scan-secrets.py' -Actual $config['hooks']['Stop'][0]['hooks'][0]['command'] -Message 'Expected Stop to retain the maintained scanner.'
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/hooks.json.bak'))) -Message "Expected a fresh Codex install not to create a backup."
 
         if (-not $IsWindows) {

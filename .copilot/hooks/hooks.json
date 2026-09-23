@@ -89,6 +89,12 @@
       },
       {
         "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/repository-state.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/repository-state.py\"",
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/tool-guard.py",
         "powershell": "python \"$HOME/.copilot/hooks/scripts/tool-guard.py\"",
         "env": {

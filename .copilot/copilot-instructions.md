@@ -25,6 +25,13 @@
 - Revise assumptions and plans when repository evidence contradicts them.
 - If complexity grows substantially or repeated fixes only address symptoms, reassess the approach before continuing.
 
+### Git state protection
+
+- Never edit `.git` metadata directly. Use Git commands for repository state.
+- Before a command that could discard local work, show `git status`, unstaged `git diff -- <affected-paths>`, staged `git diff --cached -- <affected-paths>`, and untracked files or a dry-run deletion list. Plain `git diff` omits staged and untracked work.
+- If work would be lost, ask the user to approve the exact command. Approval for one command never carries forward. If a hook blocks the command, have the user run it directly after review. Do not infer approval from prose.
+- Hook text checks cannot see arbitrary later writes inside Python, PowerShell, child processes, or Git hooks. Inspect scripts and use platform sandbox controls where proven effective.
+
 ### Boundaries
 
 - Never install or add new dependencies without approval.
