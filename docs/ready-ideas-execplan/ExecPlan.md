@@ -19,7 +19,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - [ ] [milestone-6] Security banners, Codex adapter, and quoted-secret repair are integrated; deployed provider display and native Windows checks remain.
 - [ ] [milestone-7] Git guardrails are committed with local tests; review found quoted-prose false denials requiring repair before integration.
 - [ ] [milestone-8] Checker, registrations, and touched-only/size-bound review repairs are committed; conflict-aware rebase and deployed/native checks remain.
-- [ ] [milestone-9] Checksum-pinned prerelease and rewrites are integrated; review found Codex installer omits the rewrite script and launcher, so installed proof needs a source repair before native/deployed checks.
+- [ ] [milestone-9] Prerelease and rewrites are integrated; Codex installer-copy repair is committed on an isolated branch, awaiting integration and native/deployed checks.
 - [ ] [milestone-10] Run the final cross-provider hook regression, native Windows automated suites, applicable Windows live-check documentation, and one end-of-session agent-doc pass; record observed outcomes.
 - [ ] [milestone-11] In a later session with Copilot CLI and local VS Code hooks available, run deployed hook and guidance checks; record versions, transcripts, outcomes, and cleanup.
 - [ ] [milestone-12] In a later session with Gemini CLI available, run deployed hook and guidance checks; record versions, transcripts, outcomes, and cleanup.
@@ -44,6 +44,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - Milestone 6's conflict-aware rebase resolved seven overlaps with milestone 9 while preserving RTK, scanner, and Tool Guardian registrations plus 32 generated outputs. The Codex scanner test gained an exact three-handler assertion. Generator, security banner, RTK, runner, scanner, Tool Guardian, merger, and POSIX/PowerShell installer suites passed after resolution; native Windows and deployed display proof remain open.
 - Milestone 7's source branch passed 11 public guard cases, generator, Codex merger, POSIX/PowerShell temporary-home installers, runner registration, scanner regression, generated freshness, OKF lint, and whitespace checks. Native Windows suite parsed but skipped its platform cases on macOS, and installed Codex denial remains unproved.
 - Milestone 7 review found a safe Codex shell command `echo 'git checkout branch'` is denied as an uncertain work-discarding command. The Git text matcher reads quoted prose as an operation. Quoted `.git` text plus redirection characters may similarly look like a metadata write; public regressions must preserve unrelated commands before integration.
+- Milestone 9's temporary-home Bash and PowerShell installer suites reproduced missing installed `rtk-explicit-codex.py`. A focused repair now copies both Codex RTK scripts and checks registered POSIX/Windows paths, source parity, and POSIX executable mode. Local installer, RTK, merger, generator, freshness, and OKF checks pass; repair integration and native/deployed checks remain.
 
 ## Decision Log
 
@@ -297,3 +298,5 @@ Milestone 6 integration note, 2026-09-23: Branch tip `723f6ad6` integrates secur
 Milestone 7 source note, 2026-09-23: Branch tip `358abef6` adds a separate repository-state guard with public provider tests, generated adapters, Codex installer ownership, and local-work review guidance. Its 11 public cases and focused generator, merger, installer, runner, scanner, freshness, OKF, and whitespace checks passed. The branch awaits conflict-aware integration with milestones 6 and 8; native Windows and deployed Codex denial remain unverified.
 
 Milestone 7 review note, 2026-09-23: A generated Codex hook falsely denied safe `echo 'git checkout branch'` as uncertain Git. This violates the unrelated-tool-call acceptance. Add a public regression for quoted Git and `.git` prose, then repair shell token recognition before branch integration.
+
+Milestone 9 installer repair note, 2026-09-23: Commit `82467df3` adds the missing Codex RTK rewrite and launcher to installer copy/ownership lists. Temporary-home Bash and PowerShell tests were red on the absent rewrite script and now pass with both files, registered command paths, and POSIX modes checked. Eight RTK adapter cases, existing RTK suites, Codex merger, 24 generator tests, generated freshness, OKF lint, and whitespace checks passed. The repair awaits integration; native Windows and deployed hooks remain open.
