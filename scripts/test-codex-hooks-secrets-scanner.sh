@@ -11,9 +11,13 @@ import sys
 config = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 for event in ("PreToolUse", "Stop"):
     handlers = [handler for group in config["hooks"][event] for handler in group["hooks"]]
-    assert len(handlers) == (2 if event == "PreToolUse" else 1)
-    assert handlers[0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
-    assert handlers[0]["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'
+    assert len(handlers) == (3 if event == "PreToolUse" else 1)
+    if event == "PreToolUse":
+        assert handlers[0]["command"] == "python3 ~/.codex/hooks/rtk-explicit-codex.py"
+        assert handlers[2]["command"] == "python3 ~/.codex/hooks/tool-guard.py"
+    scanner = handlers[1] if event == "PreToolUse" else handlers[0]
+    assert scanner["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
+    assert scanner["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'
 PY
 
 workdir="$(setup_test_workdir)"
