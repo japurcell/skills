@@ -203,6 +203,44 @@ class MarkdownHealthTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 1)
         self.assertIn("new.md:1: missing local target", completed.stdout)
 
+    def test_untouched_large_document_does_not_prevent_touched_link_feedback(self) -> None:
+        (self.root / "unrelated.md").write_bytes(b"x" * (4 * 1024 * 1024 + 1))
+        self.run_hook("copilot", "pre")
+        (self.root / "changed.md").write_text("[broken](missing.md)\n", encoding="utf-8")
+        result = self.run_hook("copilot", "post")
+        output = json.dumps(result)
+        self.assertIn("changed.md:1: missing local target", output)
+        self.assertNotIn("incomplete", output)
+        self.assertIn("status=fail", self.audit.read_text())
+
+    def test_long_direct_paths_keep_response_and_state_bounded(self) -> None:
+        nested = self.root
+        for index in range(12):
+            nested /= f"section-{index:02d}-" + "x" * 48
+            nested.mkdir()
+        self.run_hook("gemini", "pre")
+        for index in range(10):
+            (nested / f"doc-{index}.md").write_text("[broken](missing.md)\n", encoding="utf-8")
+        result = self.run_hook("gemini", "post", tool="write_file",
+                               args={"file_path": str(nested / "doc-0.md")})
+        encoded = json.dumps(result, separators=(",", ":"), ensure_ascii=False).encode()
+        self.assertLessEqual(len(encoded), 8192)
+        self.assertIn("Rerun: ", result["systemMessage"])
+        self.assertIn("more findings omitted", result["systemMessage"])
+        state_files = list(self.state.glob("*.json"))
+        self.assertEqual(len(state_files), 1)
+        self.assertLessEqual(state_files[0].stat().st_size, 1024 * 1024)
+        self.assertNotIn("[broken]", state_files[0].read_text())
+
+    def test_oversized_session_state_is_incomplete(self) -> None:
+        self.run_hook("codex", "pre")
+        state_file, = self.state.glob("*.json")
+        state_file.write_bytes(b"x" * (1024 * 1024 + 1))
+        (self.root / "new.md").write_text("[bad](missing.md)\n", encoding="utf-8")
+        result = self.run_hook("codex", "post")
+        self.assertIn("incomplete", json.dumps(result))
+        self.assertNotIn("missing local target", json.dumps(result))
+
 
 if __name__ == "__main__":
     unittest.main()

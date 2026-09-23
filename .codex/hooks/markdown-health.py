@@ -22,6 +22,7 @@ from helpers.audit import audit_log_event
 PROVIDER = 'codex'
 LIMIT_SECONDS = 8
 MAX_PATHS = 10000
+MAX_STATE_BYTES = 1024 * 1024
 MAX_FILE_BYTES = 4 * 1024 * 1024
 MAX_RESPONSE = 8192
 MAX_AUDIT = 4096
@@ -60,7 +61,8 @@ def snapshot(root, deadline):
                 raise Incomplete("Markdown baseline exceeds file limit")
             if path.is_symlink():
                 continue
-            result[relative] = digest(path, deadline)
+            details = path.stat()
+            result[relative] = [details.st_size, details.st_mtime_ns]
     return result
 
 
@@ -269,14 +271,19 @@ def load_state(path):
         return None
     if path.is_symlink() or time.time() - path.stat().st_mtime > 86400:
         raise Incomplete("Markdown session state is stale or linked")
+    if path.stat().st_size > MAX_STATE_BYTES:
+        raise Incomplete("Markdown session state exceeds size limit")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
 def save_state(path, state):
+    serialized = json.dumps(state, separators=(",", ":")).encode("utf-8")
+    if len(serialized) > MAX_STATE_BYTES:
+        raise Incomplete("Markdown session state exceeds size limit")
     fd, name = tempfile.mkstemp(prefix=".markdown-", dir=path.parent)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(state, handle, separators=(",", ":"))
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(serialized)
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(name, path)
@@ -321,6 +328,7 @@ def response(event, status, findings, warning, retry):
         return {"decision": "allow"} if event == "final" and PROVIDER != "gemini" else {}
     shown = [f"{path}:{line}: {rule}" + (f" ({target})" if target else "")
              for path, line, rule, target in findings[:20]]
+    rerun_path = shlex.quote(findings[0][0]) if findings else "<path>"
 
     def build(rows):
         lines = [*rows]
@@ -329,10 +337,7 @@ def response(event, status, findings, warning, retry):
         if warning:
             lines.append(warning)
         rerun = "python3 ~/." + PROVIDER + "/hooks/" + ("scripts/" if PROVIDER != "codex" else "") + "markdown-health.py --check"
-        if findings:
-            rerun += " " + shlex.quote(findings[0][0])
-        else:
-            rerun += " <path>"
+        rerun += " " + rerun_path
         lines.append("Rerun: " + rerun)
         message = "Markdown health " + status + ": " + "\n".join(lines)
         if PROVIDER == "gemini":
@@ -353,6 +358,9 @@ def response(event, status, findings, warning, retry):
     while len(json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode()) > MAX_RESPONSE and shown:
         shown.pop()
         result = build(shown)
+    if len(json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode()) > MAX_RESPONSE:
+        rerun_path = "<path>"
+        result = build(shown)
     return result
 
 
@@ -360,6 +368,7 @@ def main():
     event = os.environ.get("MARKDOWN_HEALTH_EVENT", "post")
     paths = []
     checked = []
+    content_fingerprints = []
     findings = []
     warning = ""
     state = None
@@ -402,9 +411,10 @@ def main():
         state["touched"] = sorted(touched)
         for path in paths:
             findings.extend(findings_for(root, path, deadline))
+            content_fingerprints.append((path, digest(root / path, deadline)))
             checked.append(path)
         status = "fail" if any(item[2] != "outside workspace, not checked" for item in findings) else "pass"
-        fingerprint = hashlib.sha256(json.dumps([(path, current[path]) for path in paths]).encode()).hexdigest()
+        fingerprint = hashlib.sha256(json.dumps(content_fingerprints).encode()).hexdigest()
         if event == "final" and status == "fail":
             state["retries"] += 1
         duplicate = event == "final" and state.get("last") == [fingerprint, status]
