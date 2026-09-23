@@ -135,3 +135,4 @@ oxfmt
 ## Gotchas
 
 - File-first PowerShell authoring: For a complete multiline `.ps1` or reusable automation script, use Codex's native file-write or file-edit tool, such as `apply_patch`, to create the complete script as a saved file, then execute that saved file. Short, non-script one-line shell commands are allowed. Do not construct saved scripts with `echo`, heredocs, or equivalent shell text injection.
+- Disposable probes: Put a disposable script in `.agents/scratchpad/` when it needs a repository-local path; otherwise use the operating system's temporary directory. Keep permanent tests and tools in tracked source paths. Before finishing, inspect and remove only probes you created, using their exact paths. If a repro must remain, keep it in scratchpad or temp and record its path and purpose in the handoff. Compare final Git status with the starting status, and never overwrite or remove a pre-existing user file.
