@@ -2,11 +2,11 @@
 
 ## Goal and status
 
-Create one implementation-ready ExecPlan for all eight Ready problems in `docs/ideas.md`. The Wayfinder map is [`map.md`](map.md). Provider Hook Capabilities and the first five Ready problem tickets, including [Scan Secrets Shutdown](tickets/scan-secrets-shutdown.md), are closed. Three other problem tickets and ExecPlan Integration remain open. No ExecPlan or implementation exists yet.
+Create one implementation-ready ExecPlan for all eight Ready problems in `docs/ideas.md`. The Wayfinder map is [`map.md`](map.md). Provider Hook Capabilities and the first six Ready problem tickets, including [Read Only Orientation](tickets/read-only-orientation.md), are closed. Two other problem tickets and ExecPlan Integration remain open. No ExecPlan or implementation exists yet.
 
 ## Next step
 
-Read [`map.md`](map.md), then claim [Read Only Orientation](tickets/read-only-orientation.md), the next Ready problem. Resolve its decision with the user, then update its ticket and map. Resolve one Wayfinder ticket per session.
+Read [`map.md`](map.md), then claim [PowerShell Authoring Guidance](tickets/powershell-authoring-guidance.md), the next Ready problem. Resolve its decision with the user, then update its ticket and map. Resolve one Wayfinder ticket per session.
 
 ## Decisions and corrections
 
@@ -20,6 +20,7 @@ Read [`map.md`](map.md), then claim [Read Only Orientation](tickets/read-only-or
 - [Security Hook Notifications](tickets/security-hook-notifications.md) uses consistent native block/warning messages on local Copilot CLI/VS Code, Gemini, and Codex. Tool Guardian shows the matched operation plus leading input context as one redacted, single-line excerpt capped at 160 characters; unsafe content is omitted. Its existing guard log records the same excerpt, never raw input. scan-secrets names the safe action and generic finding without matched values in the banner. Warnings do not change execution. Codex needs new user-level security hook registration. Copilot cloud is outside this user-level feature.
 - [Repository State Guardrails](tickets/repository-state-guardrails.md) uses layered sandbox/path controls where verified, pre-tool checks for direct `.git` access and recognizable scripts, plus instructions. It cannot promise full interception of script-internal operations. For checkout, restore, hard reset, clean, and comparable work-discarding Git commands, show status, staged/unstaged diffs, and untracked or dry-run deletion lists; require explicit per-command approval when local work would be lost. If a provider cannot safely pass approval to a hook, the user runs that command directly. The user rejected a privileged Git service for this effort by accepting the layered recommendation.
 - [Scan Secrets Shutdown](tickets/scan-secrets-shutdown.md) replaces threaded Git pipe reading with secure temporary-file capture, preserving five-second per-command, eight-second total, and 8 MiB accepted-output limits. Incomplete Git output is discarded; pre-tool block mode denies, while session-end warn mode shows an incomplete-scan warning. Automated Windows regressions cover stalled Git and a child retaining stdout; a live-check checklist is also required. User accepted all three recommendations.
+- [Read Only Orientation](tickets/read-only-orientation.md) exempts read-only audits, diff reviews, and reports with no repository edits from mandatory INDEX, ARCHITECTURE, and CONVENTIONS pre-reading. They start with requested material and load guidance needed for accurate conclusions. Full orientation resumes before the first edit. Implementation aligns `AGENTS.md` Agent Orientation and Validation Checklist with `.agents/memory/INDEX.md`; the user's Ready item explicitly requests the protected-section change. User accepted all four recommendations.
 
 ## Evidence and verification
 
