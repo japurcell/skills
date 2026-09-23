@@ -80,6 +80,23 @@ class SecurityBannerTests(unittest.TestCase):
                         self.assertIn(rows[-1]['excerpt'], output)
                         self.assertLessEqual(len(rows[-1]['excerpt']), 160)
 
+    def test_json_credential_field_is_redacted_from_banner_and_log(self) -> None:
+        operation = 'git push' + ' --force origin main'
+        placeholder = 'fake' + '-credential-value'
+        tool_input = {'command': operation, 'password': placeholder}
+        for provider in ('copilot', 'gemini', 'codex'):
+            with self.subTest(provider=provider):
+                blocked, rows = self.invoke(provider, 'block', 'Bash', tool_input)
+                excerpt = rows[-1]['excerpt']
+                self.assertTrue(excerpt.startswith(operation))
+                self.assertIn('"password":"[REDACTED]"', excerpt)
+                self.assertNotIn(placeholder, json.dumps(blocked))
+                self.assertNotIn(placeholder, json.dumps(rows))
+                reason = (blocked.get('permissionDecisionReason') or blocked.get('reason')
+                          or blocked.get('hookSpecificOutput', {}).get('permissionDecisionReason'))
+                self.assertIn(f'Action: {excerpt}.', reason)
+                self.assertLessEqual(len(excerpt), 160)
+
     def test_structured_action(self) -> None:
         operation = 'git push' + ' --force origin main'
         for provider in ('copilot', 'gemini', 'codex'):

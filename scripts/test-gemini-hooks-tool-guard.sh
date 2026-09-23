@@ -441,12 +441,23 @@ test_skip_mode_returns_explicit_allow_json() {
 }
 
 test_gemini_settings_register_tool_guard() {
-  assert_equals 'python "$HOME/.gemini/hooks/scripts/send-event.py"' \
-    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "*") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
-    "Expected .gemini/global-settings.json to register send-event.py before Gemini BeforeTool events."
-  assert_equals 'python "$HOME/.gemini/hooks/scripts/tool-guard.py"' \
-    "$(jq -r '.hooks.BeforeTool[] | select(.matcher == "*") | .hooks[1].command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
-    "Expected .gemini/global-settings.json to register tool-guard.py after observability for all Gemini BeforeTool events."
+  python3 - "$REPO_ROOT/.gemini/global-settings.json" <<'PYTEST'
+import json
+from pathlib import Path
+import sys
+
+settings = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+commands = [
+    hook["command"]
+    for group in settings["hooks"]["BeforeTool"] if group.get("matcher") == "*"
+    for hook in group["hooks"]
+]
+observability = 'python "$HOME/.gemini/hooks/scripts/send-event.py"'
+guard = 'python "$HOME/.gemini/hooks/scripts/tool-guard.py"'
+assert commands.count(observability) == 1, "Expected one Gemini observability handler."
+assert commands.count(guard) == 1, "Expected one Gemini Tool Guardian handler."
+assert commands.index(observability) < commands.index(guard), "Expected Tool Guardian after observability."
+PYTEST
 }
 
 test_tool_guard_denies_invalid_payload() {

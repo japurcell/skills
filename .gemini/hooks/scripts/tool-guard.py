@@ -651,6 +651,10 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...]) -> list[di
 def sanitize_excerpt(value: str) -> str:
     normalized = " ".join(unicodedata.normalize("NFKC", value[:4096]).split())
     normalized = re.sub(r"(?i)\b(https?://)[^/\s@]+@", r"\1[REDACTED]@", normalized)
+    normalized = re.sub(
+        r'(?i)("[A-Z0-9_-]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_-]*"\s*:\s*)"(?:\\.|[^"\\])*(?:"|$)',
+        r'\1"[REDACTED]"', normalized,
+    )
     credential_value = r""""(?:\\.|[^"\\])*(?:"|$)|'(?:\\.|[^'\\])*(?:'|$)|[^\s,;&]+"""
     normalized = re.sub(
         r"(?i)(--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+))(?:" + credential_value + ")",
