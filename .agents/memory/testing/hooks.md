@@ -30,7 +30,7 @@ description: Test routes for Codex, Copilot, and Gemini hook sources and install
   - `bash scripts/test-gemini-hooks-tool-guard.sh`
   - `bash scripts/test-gemini-hooks-rtk.sh`
 - Before treating Gemini `AfterAgent` as an enforced final-response boundary, run a live probe against the deployed CLI version and confirm the configured hook executes. Upstream issue `google-gemini/gemini-cli#27712` remains open for affected builds; simulated provider-envelope tests do not prove event delivery.
-- Security banner contract: `python3 scripts/test-security-banners.py` checks Copilot, Gemini, and Codex Tool Guardian public envelopes, excerpt bounds, redaction, and safe fallback. Scanner suites check action-named block and warning messages. Native Windows workflow runs the Python banner suite; macOS execution does not establish native Windows acceptance.
+- Security banner contract: `python3 scripts/test-security-banners.py` checks Copilot, Gemini, and Codex Tool Guardian public envelopes, excerpt bounds, full quoted-credential redaction, and safe fallback. Scanner suites check action-named block and warning messages. Native Windows workflow runs the Python banner suite; macOS execution does not establish native Windows acceptance.
 - Codex hook checks:
   - `bash scripts/test-codex-hooks-startup.sh`
   - `bash scripts/test-install.sh`

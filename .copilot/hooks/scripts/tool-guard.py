@@ -659,8 +659,15 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...]) -> list[di
 def sanitize_excerpt(value: str) -> str:
     normalized = " ".join(unicodedata.normalize("NFKC", value[:4096]).split())
     normalized = re.sub(r"(?i)\b(https?://)[^/\s@]+@", r"\1[REDACTED]@", normalized)
-    normalized = re.sub(r"(?i)(--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+))[^\s,;&]+", r"\1[REDACTED]", normalized)
-    normalized = re.sub(r"(?i)\b([A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*)\s*=\s*[^\s,;&]+", r"\1=[REDACTED]", normalized)
+    credential_value = r""""(?:\\.|[^"\\])*(?:"|$)|'(?:\\.|[^'\\])*(?:'|$)|[^\s,;&]+"""
+    normalized = re.sub(
+        r"(?i)(--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+))(?:" + credential_value + ")",
+        r"\1[REDACTED]", normalized,
+    )
+    normalized = re.sub(
+        r"(?i)\b([A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*)\s*=\s*(?:" + credential_value + ")",
+        r"\1=[REDACTED]", normalized,
+    )
     normalized = re.sub(r"(?i)\b(authorization|proxy-authorization|x-api-key|api-key|cookie|set-cookie)\s*:\s*(?:(?:bearer|basic)\s+)?[^\s,;]+", r"\1: [REDACTED]", normalized)
     normalized = re.sub(r"(?i)\b(?:gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]{8,}|sk[-_](?:live_)?[A-Za-z0-9_-]{8,}|xox[baprs]-[A-Za-z0-9-]{8,}|AKIA[A-Z0-9]{8,})\b", REDACTED, normalized)
     normalized = re.sub(r"(?<![A-Za-z0-9])(?=[A-Za-z0-9_/-]{24,}(?![A-Za-z0-9_/-]))(?=[A-Za-z0-9_/-]*[A-Za-z])(?=[A-Za-z0-9_/-]*[0-9])[A-Za-z0-9_/-]+", REDACTED, normalized)

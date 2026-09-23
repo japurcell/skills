@@ -62,6 +62,24 @@ class SecurityBannerTests(unittest.TestCase):
                 self.assertIn('command omitted', json.dumps(too_long))
                 self.assertEqual(limit_rows[-1]['excerpt'], 'command omitted')
 
+    def test_quoted_credential_redacts_complete_value(self) -> None:
+        operation = 'git push' + ' --force origin main'
+        secret = 'alpha' + ' bravo'
+        for prefix in ('--password=', 'API_KEY='):
+            for quote in ("'", '"'):
+                command = f'{operation} {prefix}{quote}{secret}{quote}'
+                for provider in ('copilot', 'gemini', 'codex'):
+                    with self.subTest(provider=provider, quote=quote, prefix=prefix):
+                        blocked, rows = self.invoke(provider, 'block', 'Bash', command)
+                        output = json.dumps(blocked)
+                        logged = json.dumps(rows)
+                        self.assertTrue(rows[-1]['excerpt'].startswith(operation))
+                        self.assertIn(f'{prefix}[REDACTED]', rows[-1]['excerpt'])
+                        self.assertNotIn('alpha', output + logged)
+                        self.assertNotIn('bravo', output + logged)
+                        self.assertIn(rows[-1]['excerpt'], output)
+                        self.assertLessEqual(len(rows[-1]['excerpt']), 160)
+
     def test_structured_action(self) -> None:
         operation = 'git push' + ' --force origin main'
         for provider in ('copilot', 'gemini', 'codex'):
