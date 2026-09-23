@@ -13,6 +13,7 @@ This map plans the work; it does not implement the eight changes. Keep each unde
 - [Markdown Health Hook](tickets/markdown-health-hook.md): check touched Markdown after edits and before completion for deterministic syntax and local link defects; use bounded repair attempts and one low-noise audit entry per validation batch.
 - [Security Hook Notifications](tickets/security-hook-notifications.md): show consistent block/warning banners on local provider surfaces; Tool Guardian shows and logs a redacted 160-character action excerpt, while scan-secrets banners omit matched values.
 - [Repository State Guardrails](tickets/repository-state-guardrails.md): layer provider path protection, pre-tool checks, and instructions; require full local-change review and explicit approval before a Git command discards work.
+- [Scan Secrets Shutdown](tickets/scan-secrets-shutdown.md): replace threaded Git pipe reading with bounded temporary-file capture; discard incomplete output, deny in block mode, warn at session end, and test native Windows hang cases.
 
 ## Not yet specified
 
