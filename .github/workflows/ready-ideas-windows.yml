@@ -49,3 +49,6 @@ jobs:
       - name: Test verified RTK prerelease and native rewrite
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-rtk-explicit-windows.ps1
+      - name: Test Markdown health Windows paths and envelopes
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/test-markdown-health-windows.ps1

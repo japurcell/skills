@@ -13,12 +13,12 @@ from pathlib import Path
 from typing import Any
 
 
-OWNED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "rtk-explicit-codex.py", "tool-guard.py")
+OWNED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "rtk-explicit-codex.py", "tool-guard.py", "markdown-health.py")
 OWNED_POSIX_COMMANDS = {f"python3 ~/.codex/hooks/{name}" for name in OWNED_HOOK_FILES}
 OWNED_WINDOWS_COMMANDS = {
     f'py -3 "%USERPROFILE%\\.codex\\hooks\\{name}"'.casefold() for name in OWNED_HOOK_FILES
 }
-MAINTAINED_EVENTS = ("SessionStart", "PreToolUse", "Stop")
+MAINTAINED_EVENTS = ("SessionStart", "PreToolUse", "PostToolUse", "Stop")
 
 
 def parse_arguments() -> argparse.Namespace:

@@ -4,6 +4,13 @@
     "agentStop": [
       {
         "type": "command",
+        "bash": "python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/markdown-health.py\"",
+        "env": {"MARKDOWN_HEALTH_EVENT": "final"},
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
         "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
@@ -48,6 +55,13 @@
     "postToolUse": [
       {
         "type": "command",
+        "bash": "python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/markdown-health.py\"",
+        "env": {"MARKDOWN_HEALTH_EVENT": "post"},
+        "timeoutSec": 10
+      },
+      {
+        "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",
         "powershell": "python \"$HOME/.copilot/hooks/scripts/send-event.py\"",
         "env": {
@@ -57,6 +71,13 @@
       }
     ],
     "preToolUse": [
+      {
+        "type": "command",
+        "bash": "python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/markdown-health.py\"",
+        "env": {"MARKDOWN_HEALTH_EVENT": "pre"},
+        "timeoutSec": 10
+      },
       {
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/send-event.py",

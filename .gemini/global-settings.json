@@ -241,6 +241,13 @@
       {
         "hooks": [
           {
+            "name": "markdown-health",
+            "type": "command",
+            "command": "python \"$HOME/.gemini/hooks/scripts/markdown-health.py\"",
+            "env": {"MARKDOWN_HEALTH_EVENT": "final"},
+            "timeout": 10000
+          },
+          {
             "type": "command",
             "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
@@ -312,6 +319,13 @@
         "matcher": "*",
         "hooks": [
           {
+            "name": "markdown-health-baseline",
+            "type": "command",
+            "command": "python \"$HOME/.gemini/hooks/scripts/markdown-health.py\"",
+            "env": {"MARKDOWN_HEALTH_EVENT": "pre"},
+            "timeout": 10000
+          },
+          {
             "type": "command",
             "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
             "env": {
@@ -357,6 +371,13 @@
     "AfterTool": [
       {
         "hooks": [
+          {
+            "name": "markdown-health",
+            "type": "command",
+            "command": "python \"$HOME/.gemini/hooks/scripts/markdown-health.py\"",
+            "env": {"MARKDOWN_HEALTH_EVENT": "post"},
+            "timeout": 10000
+          },
           {
             "type": "command",
             "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",

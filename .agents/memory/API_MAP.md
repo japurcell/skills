@@ -29,6 +29,11 @@ description: Public validation entry points and provider adapter contracts for t
 - `scripts/install-rtk-prerelease.py [--home PATH] [--archive PATH] [--platform PLATFORM]` fetches or reads a tag-pinned archive, verifies its published SHA-256, and installs `rtk` or `rtk.exe` plus an integrity receipt under `HOME/.agents/rtk/dev-0.50.0-rc.451/`. Unsupported platforms and invalid archives exit `1` before installing a binary. It never replaces stable `rtk`.
 - Generated `rtk-explicit-*.py` adapters accept provider-native pre-tool JSON and emit `{}` when the verified side-by-side binary is absent or shell syntax is unsafe. Safe rewrites use Copilot `modifiedArgs`, Gemini `hookSpecificOutput.tool_input`, or Codex `hookSpecificOutput.updatedInput` with `permissionDecision: allow`. The generated `rtk-agent-launcher.py` applies child-only warning suppression and passes through stdout, stderr, and exit status.
 
+## Markdown health
+
+- Generated `markdown-health.py` entry points take provider hook JSON on stdin and emit provider-native JSON on stdout. Their `MARKDOWN_HEALTH_EVENT` is `pre`, `post`, or `final`. State is keyed by provider session and resolved workspace root. Missing state, unreadable input, and checker failure report `incomplete` instead of a clean pass.
+- `python3 ~/.<provider>/hooks/[scripts/]markdown-health.py --check PATH [PATH ...]` is the explicit, read-only rerun CLI from workspace root; exit `0` means no definite defect, `1` means definite findings, and `2` means incomplete or invalid input. Copilot and Gemini use the `scripts/` segment; Codex does not.
+
 ## OKF validation
 
 - `scripts/lint-okf.py [--format human|json]` validates both canonical document bundles. Human diagnostics use `path:line:column: ID message`; JSON uses schema version `1` with exact `id`, `path`, `line`, `column`, and `message` fields. Exit `0` is clean, `1` reports profile findings, and `2` reports an untrustworthy `OKF900` result.

@@ -108,12 +108,14 @@ class TestTestAll(unittest.TestCase):
             for path in (REPO_ROOT / "scripts").glob(pattern)
             if path.name not in ("test-common.sh", "test-rtk-explicit-windows.ps1")
         }
+        expected.discard("scripts/test-markdown-health-windows.ps1")
         expected.add("scripts/test-codex-agents.py")
         expected.add("scripts/test-generate-hooks.py")
         expected.add("scripts/test-install-codex-hooks.py")
         expected.add("scripts/test-probe-provider-hook-delivery.py")
         expected.add("scripts/test-rtk-explicit.py")
         expected.add("scripts/test-security-banners.py")
+        expected.add("scripts/test-markdown-health.py")
         listed = {
             part for command in commands for part in command if part.startswith("scripts/")
         }

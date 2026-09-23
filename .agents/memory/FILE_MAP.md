@@ -23,13 +23,15 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.github/hooks/` | hooks | Repo-local Copilot hook config, auto-ingest wiring, and final-response validation coordination. |
 | `.copilot/` | hooks | Copilot instructions and local hook runtime sources. |
 | `.gemini/` | hooks | Gemini instructions and local hook runtime sources. |
-| `.codex/` | hooks | Inactive source for the user-global Codex required-skills hook and install-time configuration template. |
+| `.codex/` | hooks | Inactive source for user-global Codex startup, scanner, and Markdown hooks plus install-time configuration template. |
 | `hooks/` | hooks | Canonical build-time renderers, provider metadata, and explicit generated-output ownership manifest. |
+| `hooks/families/markdown_health.py` | hooks | Canonical Markdown checker and self-contained Copilot, Gemini, and Codex adapter renderer. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
 | `agents/` | agents | Canonical Markdown custom-agent prompt files for Copilot, Gemini, and generated Codex TOML. |
 | `docs/<effort>/` | repo docs | Active research and execution plans that need version history while work is in progress. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `scripts/` | scripts | Installers, importers, the aggregate test runner, validation helpers, and shared shell utilities. |
+| `scripts/test-markdown-health.py`, `scripts/test-markdown-health-windows.ps1` | scripts | Public provider-hook checks and native Windows path coverage for Markdown health. |
 | `references/` | references | Optional shared reference material shipped with installs. |
 
 ## Knowledge and top-level docs
