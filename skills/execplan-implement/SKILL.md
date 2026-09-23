@@ -45,6 +45,7 @@ Communication to and from subagents should be sparse. Communicate primarily thro
    3. Update and commit any ExecPlan references to SHAs changed by the rebase, then confirm the implementer's worktree is clean.
    4. Confirm the base worktree is clean, then fast-forward the base branch with `git merge --ff-only <implementer-branch>`.
    5. Confirm the base branch tip matches the tested implementer branch tip.
+   6. After each fast-forward, remove clean worktrees and local branches for the integrated node, including superseded repair/merger branches once their changes are verified on base. Preserve base and unrelated worktrees.
 
    Serialize this integration sequence so concurrent completions cannot race to update the base branch.
 
