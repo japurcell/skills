@@ -11,11 +11,12 @@ This map plans the work; it does not implement the eight changes. Keep each unde
 - [Provider Hook Capabilities](tickets/provider-hook-capabilities.md): provider-specific hook contracts permit pre-tool checks, with different display, timeout, trust, and Windows rules.
 - [RTK Setup Warning](tickets/rtk-setup-warning.md): use command-scoped `RTK_SUPPRESS_HOOK_WARNING=1` with checksum-verified, pinned `dev-0.50.0-rc.451` in agent sessions; verify provider compatibility before switching, while stable v0.49.0 stays the terminal default.
 - [Markdown Health Hook](tickets/markdown-health-hook.md): check touched Markdown after edits and before completion for deterministic syntax and local link defects; use bounded repair attempts and one low-noise audit entry per validation batch.
+- [Security Hook Notifications](tickets/security-hook-notifications.md): show consistent block/warning banners on local provider surfaces; Tool Guardian shows and logs a redacted 160-character action excerpt, while scan-secrets banners omit matched values.
 
 ## Not yet specified
 
 <!-- FOG START -->
-Further decisions may emerge from command redaction and limits of repository guardrails. The final milestone order and shared test matrix depend on the eight item decisions.
+Further decisions may emerge from limits of repository guardrails. The final milestone order and shared test matrix depend on the eight item decisions.
 <!-- FOG END -->
 
 ## Out of scope
@@ -23,3 +24,5 @@ Further decisions may emerge from command redaction and limits of repository gua
 Implementing the eight changes during this wayfinding effort. The destination is an ExecPlan for that work.
 
 Copilot cloud agent coverage for [Markdown Health Hook](tickets/markdown-health-hook.md): cloud runs load repository hooks, while this feature is user-level; the user chose local Copilot CLI and VS Code coverage.
+
+Copilot cloud agent coverage for [Security Hook Notifications](tickets/security-hook-notifications.md): cloud runs do not load user-level hooks; the user chose local Copilot CLI and VS Code coverage.

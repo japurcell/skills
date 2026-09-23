@@ -2,11 +2,11 @@
 
 ## Goal and status
 
-Create one implementation-ready ExecPlan for all eight Ready problems in `docs/ideas.md`. The Wayfinder map is [`map.md`](map.md). Provider Hook Capabilities, RTK Setup Warning, and Markdown Health Hook are closed. Six other problem tickets and ExecPlan Integration remain open. No ExecPlan or implementation exists yet.
+Create one implementation-ready ExecPlan for all eight Ready problems in `docs/ideas.md`. The Wayfinder map is [`map.md`](map.md). Provider Hook Capabilities and the first three Ready problem tickets, including [Security Hook Notifications](tickets/security-hook-notifications.md), are closed. Five other problem tickets and ExecPlan Integration remain open. No ExecPlan or implementation exists yet.
 
 ## Next step
 
-Read [`map.md`](map.md), then claim [Security Hook Notifications](tickets/security-hook-notifications.md), the next Ready problem. Resolve its decision with the user and update its ticket and map. Resolve one Wayfinder ticket per session.
+Read [`map.md`](map.md), then claim [Repository State Guardrails](tickets/repository-state-guardrails.md), the next Ready problem. Resolve its decision with the user, then update its ticket and map. Resolve one Wayfinder ticket per session.
 
 ## Decisions and corrections
 
@@ -17,6 +17,7 @@ Read [`map.md`](map.md), then claim [Security Hook Notifications](tickets/securi
 - RTK notice comes from explicit CLI calls. `hooks/families/rtk.py:187-220` captures and discards RTK hook stderr. Stable v0.49.0 lacks suppression. PR #776 added the flag to prerelease code. No stderr wrapper is needed.
 - [Markdown Health Hook](tickets/markdown-health-hook.md) validates entire touched `.md`/`.markdown` files after edits and before completion. It covers deterministic syntax/structure and workspace-local file, image, and heading links only. It skips web and outside-workspace targets, adds no dependency, and requires bounded repair attempts for definite findings. Checker failures warn. Scope includes local Copilot CLI and VS Code, Gemini CLI, and Codex; user excluded Copilot cloud because it cannot load user-level hooks. Gemini `AfterAgent` delivery needs deployed-version proof or a tested fallback.
 - User added required low-noise auditing for Markdown Health Hook: one entry per nonempty validation batch for pass, fail, or incomplete, with sorted workspace-relative checked paths, total and omitted counts, finding count, and session/event context. Cap one line at 4 KiB, suppress only unchanged duplicate final checks, log no document contents or link targets, and warn if audit write fails. Preserve Copilot/Gemini and Codex native audit formats.
+- [Security Hook Notifications](tickets/security-hook-notifications.md) uses consistent native block/warning messages on local Copilot CLI/VS Code, Gemini, and Codex. Tool Guardian shows the matched operation plus leading input context as one redacted, single-line excerpt capped at 160 characters; unsafe content is omitted. Its existing guard log records the same excerpt, never raw input. scan-secrets names the safe action and generic finding without matched values in the banner. Warnings do not change execution. Codex needs new user-level security hook registration. Copilot cloud is outside this user-level feature.
 
 ## Evidence and verification
 
@@ -26,7 +27,8 @@ Read [`map.md`](map.md), then claim [Security Hook Notifications](tickets/securi
 - Isolated `rtk hook gemini` smoke returned valid rewrite JSON. Copilot and Codex sample payloads exited `0` without JSON; exact provider envelopes and compatibility remain unproven. Existing repository RTK hook tests use fake binaries.
 - Markdown hook repo survey found no general Markdown linter or remote link checker. `scripts/lint-okf.py:529-570` only scans `.agents/instructions/` and `.agents/memory/`; provider registrations currently lack a user-level Markdown validator. See the ticket for contract links and acceptance cases.
 - Audit convention: `hooks/families/audit.py:65-149` writes sanitized, locked, owner-only one-line Copilot/Gemini entries to each provider's `hooks/audit.log`; `.codex/hooks/load-required-skills.py:49-80` writes owner-only key/value lines to `~/.codex/hooks/logs/audit.log`. Markdown auditing must follow both forms.
-- Initial map validation checked ten ticket dependencies and twelve local Markdown links. This ticket closure passed `git diff --check`, eight local-link checks across edited planning files, and `./scripts/lint-okf.py`. No RTK code or tests changed. No live Windows run was performed.
+- Security hook survey: `hooks/families/tool_guard.py:636-674` discards matched action text and formats category/severity only; `:593-633` has a 160-character sanitizer for tool names. `hooks/families/scan_secrets.py:901-905` emits a generic potential-secret message. `.codex/global-hooks.json` has no security hook registration. Generated Copilot/Gemini hooks derive from `hooks/families/`, so implementation must edit canonical source and regenerate outputs.
+- Earlier map validation checked ten ticket dependencies and twelve local Markdown links. Markdown ticket closure passed `git diff --check`, eight local-link checks across edited planning files, and `./scripts/lint-okf.py`. Security Hook Notifications planning diff passed `git diff --check`; no RTK or security hook code changed. No live Windows run was performed.
 - Branch: `codex/ready-ideas-execplan`.
 
 Use `wayfinder` and `grilling` for the next ticket, then `exec-plans` when writing the destination plan.
