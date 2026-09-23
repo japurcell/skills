@@ -15,11 +15,11 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - [ ] [milestone-2] File-first guidance and temporary-home installer checks are committed; native Windows automation remains unverified. Copilot/Gemini representative runs moved to milestones 11 and 12.
 - [x] (2026-09-23 18:24Z) [milestone-3] Add disposable-script placement and cleanup rule only to the same three checked-in provider instructions; review their content without installer, agent-run, or Windows checks for this rule.
 - [ ] [milestone-4] Codex hook transport, baseline scanner, installer, and delivery probe are integrated; deployed Codex `PreToolUse`/`Stop` delivery remains unproved.
-- [ ] [milestone-5] Replace scan-secrets pipe reading with bounded temporary-file capture; prove POSIX and native Windows incomplete-scan behavior in Copilot, Gemini, and Codex.
+- [ ] [milestone-5] Replace scan-secrets pipe reading with bounded temporary-file capture; prove POSIX and native Windows incomplete-scan behavior in Copilot, Gemini, and Codex. Implementation is in progress on an isolated branch.
 - [ ] [milestone-6] Add common Tool Guardian and scan-secrets banners plus the Codex Tool Guardian adapter; verify block/warn behavior and safe logging in all local providers.
 - [ ] [milestone-7] Add Git metadata and local-work guardrails with provider-native approvals or user-run fallback; verify safe Git and denial cases.
 - [ ] [milestone-8] Add dependency-free Markdown checking, touched-file tracking, bounded repair, and one audit line per batch; prove provider feedback and final checks.
-- [ ] [milestone-9] Pin and verify published RTK prerelease assets, rewrite only explicit agent RTK commands with scoped suppression, and prove other diagnostics survive.
+- [ ] [milestone-9] Pin and verify published RTK prerelease assets, rewrite only explicit agent RTK commands with scoped suppression, and prove other diagnostics survive. Implementation is in progress on an isolated branch.
 - [ ] [milestone-10] Run the final cross-provider hook regression, native Windows automated suites, applicable Windows live-check documentation, and one end-of-session agent-doc pass; record observed outcomes.
 - [ ] [milestone-11] In a later session with Copilot CLI and local VS Code hooks available, run deployed hook and guidance checks; record versions, transcripts, outcomes, and cleanup.
 - [ ] [milestone-12] In a later session with Gemini CLI available, run deployed hook and guidance checks; record versions, transcripts, outcomes, and cleanup.
@@ -47,6 +47,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - Decision: Put baseline Codex scan-secrets registration in the shared hook setup milestone, then apply the bounded scanner change to all three providers before changing banner wording. Rationale: Scan Secrets Shutdown needs its own all-provider proof while retaining the accepted scanner-before-banners order. Date/Author: 2026-09-23, Codex, after plan review.
 - Decision: Milestone 4 may edit `.codex/global-hooks.json`, canonical `hooks/` source, and persistent user-level Codex hook registrations. Rationale: Automatic approval review incorrectly applied milestone 3's three-file guidance limit to milestone 4; the user explicitly approved milestone 4's separate scope. Date/Author: 2026-09-23, user.
 - Decision: Do not install absent Copilot or Gemini CLIs in this session. Keep their deployed live checks as separate milestones 11 and 12 for a later session with those CLIs available. Source, temporary-home, Codex-local, and native Windows automated work can finish independently; never claim absent-provider deployed behavior from fixtures. Rationale: The user explicitly chose later live milestones rather than local CLI installation. Date/Author: 2026-09-23, user.
+- Decision: Start milestones 5 and 9 concurrently after the shared hook source is integrated, then serialize their branch integration and resolve only shared workflow or test-runner registration overlaps. Rationale: The scanner capture and explicit RTK rewrite have separate canonical families and no policy dependency; independent work can proceed while deployed Codex hook acceptance remains open. Date/Author: 2026-09-23, Codex.
 
 ## Outcomes & Retrospective
 
@@ -114,7 +115,7 @@ Extend `scripts/test-codex-hooks-startup.sh`, `scripts/test-install.sh`, `script
 
 ### Milestone 5: End incomplete secret scans without pipe waits
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
@@ -164,7 +165,7 @@ For every nonempty batch, write exactly one physical audit line with `pass`, `fa
 
 ### Milestone 9: Suppress only the false RTK notice in agent commands
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
@@ -266,3 +267,5 @@ Milestone 3 completion note, 2026-09-23: Commit `d2a83a9f` adds disposable-probe
 Live-check split note, 2026-09-23: Copilot and Gemini CLIs are absent on this host. The user chose separate later-session live milestones instead of installation here. Milestones 2, 4, 6, 7, 8, 9, and 10 now require their source, temporary-home, available Codex, and automated Windows proofs without treating Copilot/Gemini fixture output as deployed evidence. Milestones 11 and 12 carry the missing installed-provider checks; the full plan remains open until those checks pass.
 
 Milestone 4 integration note, 2026-09-23: Branch tip `a74d5a02` integrates the baseline generated Codex scanner, exact two-command hook ownership, POSIX/PowerShell isolated installers, a native Windows workflow, and the owner-only delivery probe. Source, scanner, generator, installer, merger, runner-registry, and nine probe tests passed on macOS; rebase had no conflicts. `codex exec --sandbox read-only --json --ephemeral` exited `0` but produced no `PreToolUse` marker in two guarded runs, so acceptance remains open. The exact user hook configuration digest was unchanged after cleanup. Native Windows workflow has not run. The scanner source is ready for milestone 5 without treating this missing deployed proof as a pass.
+
+Parallel implementation note, 2026-09-23: Milestones 5 and 9 started in separate worktrees after milestone-4 source integration. Their canonical hook families are disjoint. Integration remains serialized; shared workflow and test-runner edits receive conflict review and affected tests when needed.
