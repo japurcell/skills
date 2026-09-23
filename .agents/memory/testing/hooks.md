@@ -49,6 +49,7 @@ For source auto-ingest behavior, read [Hook Auto-Ingest Testing](hooks-auto-inge
 
 ## Live evidence
 
+- Keep scanner audit paths, Tool Guardian logs, and PTY transcripts outside a disposable Git checkout during live hook checks. The scanner includes untracked files, so logs inside the checkout can become new findings and repeatedly block `Stop`. Remove only exact fake fixtures after recording results. On macOS, `/usr/bin/git` may fail through `xcrun` cache writes under Codex's read-only tool sandbox; use a verified native Git binary with `--no-optional-locks` when testing whether the hook permits safe Git reads.
 - Copilot CLI: verify installed behavior from `~/.copilot/hooks/logs/observability.ndjson` or direct installed-script smoke tests.
 - VS Code Copilot: inspect `GitHub Copilot Chat Hooks.log` and `GitHub Copilot Chat.log` for returned hook JSON and applied context.
 - If VS Code omits `SubagentStart` for `runSubagent` child sessions, verify the direct `SubagentStart` hook is installed and use `SessionStart` as the fallback evidence.
