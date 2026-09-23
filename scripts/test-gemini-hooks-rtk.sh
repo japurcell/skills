@@ -489,15 +489,24 @@ test_gemini_settings_register_rtk_rewrite_hook() {
   assert_equals '["*","run_shell_command"]' \
     "$(jq -c '.hooks.BeforeTool | map(.matcher)' "$REPO_ROOT/.gemini/global-settings.json")" \
     "Expected the Gemini RTK registration to remain after the general BeforeTool hooks."
-  assert_equals 'python "$HOME/.gemini/hooks/scripts/send-event.py"' \
-    "$(jq -r '.hooks.BeforeTool[0].hooks[0].command' "$REPO_ROOT/.gemini/global-settings.json")" \
-    "Expected observability to remain before Gemini RTK rewriting."
-  assert_equals 'tool-guard' \
-    "$(jq -r '.hooks.BeforeTool[0].hooks[1].name' "$REPO_ROOT/.gemini/global-settings.json")" \
-    "Expected Tool Guardian to remain before Gemini RTK rewriting."
-  assert_equals 'scan-secrets' \
-    "$(jq -r '.hooks.BeforeTool[0].hooks[2].name' "$REPO_ROOT/.gemini/global-settings.json")" \
-    "Expected secret scanning to remain before Gemini RTK rewriting."
+  python3 - "$REPO_ROOT/.gemini/global-settings.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+settings = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+commands = [hook["command"] for group in settings["hooks"]["BeforeTool"] for hook in group["hooks"]]
+required = [
+    'python "$HOME/.gemini/hooks/scripts/markdown-health.py"',
+    'python "$HOME/.gemini/hooks/scripts/send-event.py"',
+    'python "$HOME/.gemini/hooks/scripts/tool-guard.py"',
+    'python "$HOME/.gemini/hooks/scripts/scan-secrets.py"',
+    'python "$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py"',
+    'python "$HOME/.gemini/hooks/scripts/rtk-explicit-gemini.py"',
+]
+positions = [commands.index(command) for command in required]
+assert positions == sorted(positions), "Expected Markdown, observability, security, and RTK handlers in order."
+PY
 }
 
 main() {
