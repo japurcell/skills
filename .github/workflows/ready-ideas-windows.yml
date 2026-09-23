@@ -44,3 +44,6 @@ jobs:
       - name: Test generated scanner capture on native Windows
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1
+      - name: Test verified RTK prerelease and native rewrite
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/test-rtk-explicit-windows.ps1

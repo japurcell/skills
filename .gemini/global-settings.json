@@ -344,6 +344,12 @@
             "type": "command",
             "command": "python \"$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py\"",
             "timeout": 5000
+          },
+          {
+            "name": "rtk-explicit-command",
+            "type": "command",
+            "command": "python \"$HOME/.gemini/hooks/scripts/rtk-explicit-gemini.py\"",
+            "timeout": 5000
           }
         ]
       }

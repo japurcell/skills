@@ -860,9 +860,9 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         $handler = $config['hooks']['SessionStart'][0]['hooks'][0]
         Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $handler['command'] -Message "Expected the Codex handler's POSIX command to target the installed hook."
         Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\load-required-skills.py"' -Actual $handler['commandWindows'] -Message "Expected the exact Windows Codex command."
-        foreach ($event in @('PreToolUse', 'Stop')) {
-            Assert-Equals -Expected 'python3 ~/.codex/hooks/scan-secrets.py' -Actual $config['hooks'][$event][0]['hooks'][0]['command'] -Message "Expected $event to use the maintained scanner."
-        }
+        Assert-Equals -Expected 'python3 ~/.codex/hooks/rtk-explicit-codex.py' -Actual $config['hooks']['PreToolUse'][0]['hooks'][0]['command'] -Message 'Expected PreToolUse to register explicit RTK rewriting.'
+        Assert-Equals -Expected 'python3 ~/.codex/hooks/scan-secrets.py' -Actual $config['hooks']['PreToolUse'][1]['hooks'][0]['command'] -Message 'Expected PreToolUse to retain the maintained scanner.'
+        Assert-Equals -Expected 'python3 ~/.codex/hooks/scan-secrets.py' -Actual $config['hooks']['Stop'][0]['hooks'][0]['command'] -Message 'Expected Stop to retain the maintained scanner.'
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/hooks.json.bak'))) -Message "Expected a fresh Codex install not to create a backup."
 
         if (-not $IsWindows) {

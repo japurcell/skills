@@ -106,12 +106,13 @@ class TestTestAll(unittest.TestCase):
             str(path.relative_to(REPO_ROOT))
             for pattern in ("test-*.sh", "test-*.ps1", "test_*.py")
             for path in (REPO_ROOT / "scripts").glob(pattern)
-            if path.name != "test-common.sh"
+            if path.name not in ("test-common.sh", "test-rtk-explicit-windows.ps1")
         }
         expected.add("scripts/test-codex-agents.py")
         expected.add("scripts/test-generate-hooks.py")
         expected.add("scripts/test-install-codex-hooks.py")
         expected.add("scripts/test-probe-provider-hook-delivery.py")
+        expected.add("scripts/test-rtk-explicit.py")
         listed = {
             part for command in commands for part in command if part.startswith("scripts/")
         }

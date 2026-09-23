@@ -365,10 +365,11 @@ groups = config["hooks"]["SessionStart"]
 handler = groups[0]["hooks"][0]
 assert handler["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
 assert handler["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
-for event in ("PreToolUse", "Stop"):
-    groups = config["hooks"][event]
-    assert len(groups) == 1
-    assert groups[0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
+pre_tool = config["hooks"]["PreToolUse"]
+assert len(pre_tool) == 2
+assert pre_tool[0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/rtk-explicit-codex.py"
+assert pre_tool[1]["hooks"][0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
+assert config["hooks"]["Stop"][0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
 PY
 }
 

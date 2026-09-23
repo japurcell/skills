@@ -56,6 +56,8 @@
 
 ## RTK (Rust Token Killer) - Token-Optimized Commands
 
+For explicit RTK commands that a pre-tool hook cannot safely rewrite, after the verified side-by-side prerelease is installed, invoke `python3 "$HOME/.gemini/hooks/scripts/rtk-agent-launcher.py" <rtk-args>` in a POSIX shell or `python "$HOME/.gemini/hooks/scripts/rtk-agent-launcher.py" <rtk-args>` in PowerShell. This scopes the false-notice suppression to that child. Keep ordinary terminal `rtk` unchanged.
+
 ### Default rule
 
 - Prefix shell commands with `rtk` by default.

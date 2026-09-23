@@ -400,7 +400,7 @@ test_missing_rtk_degrades_to_noop_json() {
   trap 'rm -rf "'"$workdir"'"' RETURN
   audit_log="$workdir/audit.log"
   mkdir -p "$workdir/empty-path"
-  python_dir="$(dirname "$(command -v python3)")"
+  python_dir="$(dirname "$(python3 -c 'import sys; print(sys.executable)')")"
 
   output="$(
     run_rtk_hook \

@@ -20,8 +20,13 @@ description: Public validation entry points and provider adapter contracts for t
 ## Generated provider-hook CLI
 
 - `scripts/generate-hooks.py --write` renders the complete explicit `hooks/manifest.py` target set and transactionally updates only stale generated outputs. `--check` is read-only, reports every stale or missing output, and exits `0` only when source bytes and executable modes are current. Both actions resolve the checkout from the script location; bare invocation and invalid canonical inputs exit `2`.
-- The generator owns 25 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, `.codex/hooks/`, and `.github/hooks/scripts/`. They carry a `Generated from hooks/families/...` header, remain self-contained at runtime, and are copied unchanged by both installers. Before any destination mutation, each installer runs bytecode-disabled `scripts/generate-hooks.py --check`: stale output exits `1` with the exact `--write` recovery command, and invalid canonical input exits `2` without write advice.
+- The generator owns 31 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, `.github/hooks/scripts/`, and `.codex/hooks/`. They carry a `Generated from hooks/families/...` header, remain self-contained at runtime, and are copied unchanged by both installers. Before any destination mutation, each installer runs bytecode-disabled `scripts/generate-hooks.py --check`: stale output exits `1` with the exact `--write` recovery command, and invalid canonical input exits `2` without write advice.
 - The generated `scan-secrets.py` hooks read provider JSON from stdin and return JSON with exit `0`. An incomplete Git scan emits a provider-native denial in block mode or a `scan-secrets warning` naming the scan action in warn mode. They never mark incomplete output clean or expose raw Git output in the response.
+
+## Explicit RTK prerelease
+
+- `scripts/install-rtk-prerelease.py [--home PATH] [--archive PATH] [--platform PLATFORM]` fetches or reads a tag-pinned archive, verifies its published SHA-256, and installs `rtk` or `rtk.exe` plus an integrity receipt under `HOME/.agents/rtk/dev-0.50.0-rc.451/`. Unsupported platforms and invalid archives exit `1` before installing a binary. It never replaces stable `rtk`.
+- Generated `rtk-explicit-*.py` adapters accept provider-native pre-tool JSON and emit `{}` when the verified side-by-side binary is absent or shell syntax is unsafe. Safe rewrites use Copilot `modifiedArgs`, Gemini `hookSpecificOutput.tool_input`, or Codex `hookSpecificOutput.updatedInput` with `permissionDecision: allow`. The generated `rtk-agent-launcher.py` applies child-only warning suppression and passes through stdout, stderr, and exit status.
 
 ## OKF validation
 
