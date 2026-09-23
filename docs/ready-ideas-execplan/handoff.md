@@ -11,11 +11,12 @@ Implement [ExecPlan](ExecPlan.md) on `codex/ready-ideas-execplan`. It now has 12
 - **Integrated, acceptance open:** milestone 6 banners, Codex Tool Guardian, and quoted-secret repair are on base at `723f6ad6`; deployed provider display and native Windows remain unverified.
 - **Integrated, acceptance open:** milestone 7 Git metadata and local-work guard with quoted-prose repair are on base at `17068aa1`; native Windows and deployed Codex denial remain unverified.
 - **Integrated, acceptance open:** milestone-9 Codex installer and Gemini order test repairs are on base at `faeddaa3`; native Windows and deployed provider hook behavior remain unverified.
-- **Remaining:** acceptance work for milestones 2 and 4–9, then milestone 10 integrated validation and agent-doc pass, plus later-session live milestones 11 (Copilot CLI and local VS Code) and 12 (Gemini CLI). Do not mark the full plan complete while these remain open.
+- **Active isolated branch:** milestone 10 integrated validation and Windows checklist are running on `codex/ready-ideas-m10` at `/Users/adam/.codex/worktrees/ready-ideas-m10/skills`, based on `fb7d3b3b`. A separate read-only security review of integrated hooks is also running.
+- **Remaining:** acceptance work for milestones 2 and 4–9, milestone 10 validation and agent-doc pass, plus later-session live milestones 11 (Copilot CLI and local VS Code) and 12 (Gemini CLI). Do not mark the full plan complete while these remain open.
 
 ## Next step
 
-Start milestone 10 on a fresh isolated branch: run integrated hook, generator, and installer checks; inspect deployed Codex event/trust behavior; prepare the Windows live-check procedure. Run the formal `update-agent-docs` pass after code workers finish. Native Windows workflow and Copilot/Gemini deployed checks remain open unless actual evidence arrives.
+Wait for milestone 10's integrated validation and the read-only security review. Repair any confirmed high-priority finding through the ExecPlan task graph. Integrate the worker branch, then run the formal `update-agent-docs` pass after code workers finish. Native Windows workflow and Copilot/Gemini deployed checks remain open unless actual evidence arrives.
 
 ## Decisions and constraints
 

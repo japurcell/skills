@@ -20,7 +20,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - [ ] [milestone-7] Git guardrails and quoted-prose repair are integrated; deployed Codex denial and native Windows checks remain.
 - [ ] [milestone-8] Checker, registrations, and touched-only/size-bound repairs are integrated; deployed final-event and native Windows checks remain.
 - [ ] [milestone-9] Prerelease, rewrites, Codex installer, and Gemini handler-order repairs are integrated; native Windows and deployed provider checks remain.
-- [ ] [milestone-10] Run the final cross-provider hook regression, native Windows automated suites, applicable Windows live-check documentation, and one end-of-session agent-doc pass; record observed outcomes.
+- [ ] [milestone-10] Integrated hook/installer regression and Windows checklist are in progress on an isolated branch; native Windows execution and the final agent-doc pass remain.
 - [ ] [milestone-11] In a later session with Copilot CLI and local VS Code hooks available, run deployed hook and guidance checks; record versions, transcripts, outcomes, and cleanup.
 - [ ] [milestone-12] In a later session with Gemini CLI available, run deployed hook and guidance checks; record versions, transcripts, outcomes, and cleanup.
 
@@ -189,7 +189,7 @@ Update `.copilot/hooks/rtk-rewrite.json`, `.gemini/global-settings.json`, and `.
 
 ### Milestone 10: Run integrated acceptance and update agent docs
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
@@ -315,3 +315,5 @@ Milestone 9 test repair note, 2026-09-23: Commit `fa0828ce` replaces the stale G
 Milestone 9 repair integration note, 2026-09-23: Branch tip `faeddaa3` fast-forwards the Codex installer copy and Gemini handler-order repairs after a conflict-free docs-only rebase. Temporary-home tests now assert both registered Codex RTK scripts are present. Native Windows and deployed provider rewrite acceptance remain open.
 
 Milestone 7 integration note, 2026-09-23: Branch tip `17068aa1` integrates the repository-state guard and quoted-prose repair. A separate merger resolved 13 conflict files, restored the Codex guard to `PreToolUse` after auto-merge placed it under `PostToolUse`, and added an exact-once scanner assertion. Guard 12, generator 24, POSIX/PowerShell installers, scanner, security banner, Markdown, RTK, Codex merger, runner, OKF, freshness (38), and whitespace checks passed. Native Windows and deployed Codex denial remain unverified.
+
+Milestone 10 start note, 2026-09-23: A fresh isolated branch is running integrated hook, generator, and installer validation plus the applicable Windows checklist. A separate read-only security review examines the merged hook contracts. The primary agent will run the mandatory end-of-session agent-doc pass after worker code is integrated; native Windows and later Copilot/Gemini deployed checks are not yet proved.
