@@ -46,3 +46,4 @@ clean="$(scan PreToolUse block)"
 jq -e '. == {}' >/dev/null <<<"$clean"
 
 printf 'PASS: Codex scan-secrets public envelopes\n'
+python3 "$REPO_ROOT/scripts/test-scan-secrets-capture.py" codex

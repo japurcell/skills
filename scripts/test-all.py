@@ -42,6 +42,7 @@ SUITES = (
     ("python3", "scripts/test-generate-hooks.py"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-install.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-codex-hooks-windows.ps1"),
+    ("pwsh", "-NoProfile", "-File", "scripts/test-scan-secrets-windows.ps1"),
     ("bash", "scripts/test-install.sh"),
     ("bash", "scripts/test-okf-lint.sh"),
     ("bash", "scripts/test-repo-root.sh"),

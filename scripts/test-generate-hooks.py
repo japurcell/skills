@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import importlib.util
-import io
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -575,9 +574,10 @@ class GenerateHooksTests(unittest.TestCase):
             self.assertFalse(module.is_text_candidate("image.bin", b"safe\x00binary"))
             self.assertEqual(module.enumerate_file_lines("one\ntwo\n"), [(1, "one"), (2, "two")])
             process = mock.Mock()
-            process.stdout = io.BytesIO(b"")
-            process.wait.return_value = 0
-            with mock.patch("subprocess.Popen", return_value=process) as run:
+            process.pid = os.getpid()
+            process.poll.return_value = 0
+            with mock.patch("subprocess.Popen", return_value=process) as run, \
+                 mock.patch("os.killpg", side_effect=ProcessLookupError):
                 self.assertEqual(module.run_git(["status"], cwd=ROOT), "")
             invocation = run.call_args
             self.assertEqual(invocation.args[0], ["git", "status"])
@@ -625,9 +625,10 @@ class GenerateHooksTests(unittest.TestCase):
             for command in commands:
                 with self.subTest(provider=module.__name__, command=command[0], failure="exit"):
                     process = mock.Mock()
-                    process.stdout = io.BytesIO(b"")
-                    process.wait.return_value = 9
-                    with mock.patch("subprocess.Popen", return_value=process):
+                    process.pid = os.getpid()
+                    process.poll.return_value = 9
+                    with mock.patch("subprocess.Popen", return_value=process), \
+                         mock.patch("os.killpg", side_effect=ProcessLookupError):
                         with self.assertRaises(module.GitCommandError):
                             module.run_git(command, cwd=ROOT)
                 with self.subTest(provider=module.__name__, command=command[0], failure="launch"):

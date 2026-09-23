@@ -9,7 +9,7 @@ import shutil
 import signal
 import stat
 import sys
-import threading
+import tempfile
 import time
 import unicodedata
 from datetime import datetime, timezone
@@ -80,6 +80,8 @@ LOG_LOCK_POLL_SECONDS = 0.05
 CANDIDATE_STAGED = "staged"
 CANDIDATE_WORKTREE = "worktree"
 CANDIDATE_UNTRACKED = "untracked"
+INCOMPLETE_LOG: dict[str, object] | None = None
+SCAN_ACTION = "scan"
 
 
 class GitCommandError(RuntimeError):
@@ -164,93 +166,169 @@ def run_git(
     popen_options: dict[str, object] = {
         "cwd": str(cwd),
         "env": env,
-        "stdout": subprocess.PIPE,
         "stderr": subprocess.DEVNULL,
     }
     if os.name == "posix":
         popen_options["start_new_session"] = True
+    if os.name == "nt":
+        popen_options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
 
     try:
-        process = subprocess.Popen(["git", *args], **popen_options)
-    except OSError as exc:
-        raise GitCommandError("unable to execute Git") from exc
-
-    assert process.stdout is not None
-    output = bytearray()
-    read_errors: list[BaseException] = []
-
-    def read_stdout() -> None:
-        try:
-            while len(output) <= MAX_GIT_OUTPUT_BYTES:
-                remaining = MAX_GIT_OUTPUT_BYTES + 1 - len(output)
-                chunk = process.stdout.read(min(65536, remaining))
-                if not chunk:
-                    return
-                output.extend(chunk)
-        except BaseException as exc:  # noqa: BLE001
-            read_errors.append(exc)
-        finally:
+        with tempfile.TemporaryFile(mode="w+b") as capture:
+            process = subprocess.Popen(["git", *args], stdout=capture, **popen_options)
             try:
-                process.stdout.close()
-            except OSError:
-                pass
+                while True:
+                    if os.fstat(capture.fileno()).st_size > MAX_GIT_OUTPUT_BYTES:
+                        raise ScanLimitExceeded("Git output exceeds the scanner limit")
+                    if time.monotonic() >= command_deadline:
+                        raise ScanLimitExceeded("Git command exceeds the scanner time limit")
+                    return_code = process.poll()
+                    if return_code is not None:
+                        break
+                    time.sleep(min(0.02, max(0.0, command_deadline - time.monotonic())))
 
-    reader = threading.Thread(target=read_stdout, daemon=True)
-    reader.start()
-    reader.join(max(0.0, command_deadline - time.monotonic()))
+                if os.name == "posix":
+                    try:
+                        os.killpg(process.pid, 0)
+                    except ProcessLookupError:
+                        pass
+                    else:
+                        raise GitCommandError("Git left a running descendant")
+                elif _windows_capture_has_other_handles(capture.fileno()):
+                    raise GitCommandError("Git left an open output handle")
+                size = os.fstat(capture.fileno()).st_size
+                if size > MAX_GIT_OUTPUT_BYTES:
+                    raise ScanLimitExceeded("Git output exceeds the scanner limit")
+                if return_code != 0:
+                    if allow_nonzero and args == ["rev-parse", "--verify", "HEAD"]:
+                        return None
+                    raise GitCommandError("Git command failed")
+                capture.seek(0)
+                raw_output = capture.read(size)
+                if len(raw_output) != size:
+                    raise GitCommandError("Git output changed during capture")
+                return os.fsdecode(raw_output) if text else raw_output
+            except BaseException:
+                _stop_git_process(process, subprocess)
+                raise
+    except OSError as exc:
+        raise GitCommandError("unable to capture Git output") from exc
 
-    if reader.is_alive():
-        _stop_git_process(process, subprocess)
-        try:
-            process.stdout.close()
-        except OSError:
-            pass
-        reader.join(0.5)
-        raise ScanLimitExceeded("Git command exceeds the scanner time limit")
-    if read_errors:
-        _stop_git_process(process, subprocess)
-        raise GitCommandError("unable to read Git output") from read_errors[0]
-    if len(output) > MAX_GIT_OUTPUT_BYTES:
-        _stop_git_process(process, subprocess)
-        raise ScanLimitExceeded("Git output exceeds the scanner limit")
 
+def _windows_capture_has_other_handles(descriptor: int) -> bool:
+    import ctypes
+    import msvcrt
+    import struct
+
+    # The captured file must have only our handle after Git exits. A descendant
+    # that inherited stdout keeps another handle even though its parent is gone.
+    details = ctypes.create_string_buffer(64)
+    query = ctypes.windll.ntdll.NtQueryObject
+    query.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p,
+                      ctypes.c_ulong, ctypes.c_void_p]
+    query.restype = ctypes.c_long
+    result = query(
+        ctypes.c_void_p(msvcrt.get_osfhandle(descriptor)), 0, details, len(details), None
+    )
+    if result != 0:
+        raise GitCommandError("unable to verify Git output handles")
+    return struct.unpack_from("<I", details, 8)[0] > 1
+
+
+def _windows_git_descendants(parent_pid: int) -> list[int]:
+    import ctypes
+    from ctypes import wintypes
+
+    class ProcessEntry(ctypes.Structure):
+        _fields_ = [
+            ("size", wintypes.DWORD), ("usage", wintypes.DWORD),
+            ("pid", wintypes.DWORD), ("default_heap", ctypes.c_void_p),
+            ("module", wintypes.DWORD), ("threads", wintypes.DWORD),
+            ("parent_pid", wintypes.DWORD), ("priority", ctypes.c_long),
+            ("flags", wintypes.DWORD), ("name", ctypes.c_wchar * 260),
+        ]
+
+    kernel = ctypes.windll.kernel32
+    kernel.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+    kernel.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+    kernel.Process32FirstW.argtypes = [wintypes.HANDLE, ctypes.POINTER(ProcessEntry)]
+    kernel.Process32NextW.argtypes = [wintypes.HANDLE, ctypes.POINTER(ProcessEntry)]
+    kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    snapshot = kernel.CreateToolhelp32Snapshot(2, 0)
+    if snapshot == ctypes.c_void_p(-1).value:
+        return []
+    parents: dict[int, int] = {}
     try:
-        return_code = process.wait(timeout=max(0.0, command_deadline - time.monotonic()))
-    except subprocess.TimeoutExpired as exc:
-        _stop_git_process(process, subprocess)
-        raise ScanLimitExceeded("Git command exceeds the scanner time limit") from exc
-
-    if return_code != 0:
-        if allow_nonzero:
-            return None
-        raise GitCommandError(f"Git command failed with exit {return_code}")
-
-    raw_output = bytes(output)
-    return os.fsdecode(raw_output) if text else raw_output
+        entry = ProcessEntry()
+        entry.size = ctypes.sizeof(entry)
+        if kernel.Process32FirstW(snapshot, ctypes.byref(entry)):
+            while True:
+                parents[int(entry.pid)] = int(entry.parent_pid)
+                if not kernel.Process32NextW(snapshot, ctypes.byref(entry)):
+                    break
+    finally:
+        kernel.CloseHandle(snapshot)
+    descendants: set[int] = set()
+    frontier = {parent_pid}
+    while frontier:
+        children = {pid for pid, parent in parents.items() if parent in frontier}
+        children -= descendants
+        descendants.update(children)
+        frontier = children
+    return list(descendants)
 
 
 def _stop_git_process(process: object, subprocess_module: object) -> None:
-    if process.poll() is not None:
-        return
+    descendants = _windows_git_descendants(process.pid) if os.name == "nt" else []
     try:
         if os.name == "posix":
             os.killpg(process.pid, signal.SIGTERM)
-        else:
+        elif process.poll() is None:
             process.terminate()
     except (OSError, ProcessLookupError):
-        pass
-    try:
-        process.wait(timeout=0.25)
-        return
-    except subprocess_module.TimeoutExpired:
-        pass
-    try:
+        if process.poll() is None:
+            try:
+                process.terminate()
+            except OSError:
+                pass
+    cleanup_deadline = time.monotonic() + 0.25
+    group_alive = True
+    while time.monotonic() < cleanup_deadline:
         if os.name == "posix":
-            os.killpg(process.pid, signal.SIGKILL)
-        else:
-            process.kill()
-    except (OSError, ProcessLookupError):
-        pass
+            try:
+                os.killpg(process.pid, 0)
+            except ProcessLookupError:
+                group_alive = False
+                break
+            except OSError:
+                break
+        elif process.poll() is not None:
+            group_alive = False
+            break
+        time.sleep(0.01)
+    for pid in ([process.pid, *descendants] if os.name == "nt" else []):
+        try:
+            subprocess_module.run(
+                ["taskkill", "/F", "/T", "/PID", str(pid)],
+                stdout=subprocess_module.DEVNULL,
+                stderr=subprocess_module.DEVNULL,
+                timeout=0.25,
+                check=False,
+            )
+        except (OSError, subprocess_module.TimeoutExpired):
+            pass
+    if group_alive:
+        try:
+            if os.name == "posix":
+                os.killpg(process.pid, signal.SIGKILL)
+            elif process.poll() is None:
+                process.kill()
+        except (OSError, ProcessLookupError):
+            if process.poll() is None:
+                try:
+                    process.kill()
+                except OSError:
+                    pass
     try:
         process.wait(timeout=0.25)
     except subprocess_module.TimeoutExpired:
@@ -583,6 +661,8 @@ def emit_diff_added_lines(
     )
     if not isinstance(output, bytes):
         return []
+    if output and (not output.startswith(b"diff --git ") or not output.endswith(b"\n")):
+        raise GitCommandError("Git returned malformed unified diff output")
 
     lines: list[tuple[int, str]] = []
     current_line: int | None = None
@@ -937,12 +1017,18 @@ def enforce_scan_budget(scan_started: float, total_bytes: int, *, now: float | N
 
 def handle_unexpected_exception(_exc: Exception) -> int:
     mode = normalized_mode_from_env()
-    reason = f"{SCRIPT_NAME}: unexpected scanner error."
+    reason = "scan-secrets: scan incomplete; unable to verify modified files."
     print(reason, file=sys.stderr)
+    if INCOMPLETE_LOG is not None:
+        try:
+            append_scan_log(**INCOMPLETE_LOG, status="incomplete", env_files=[], findings=[],
+                            note="scan incomplete; unable to verify modified files")
+        except Exception:
+            pass
     if mode == "block":
         emit_block_denial(reason)
         return 0
-    emit_json({})
+    emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION} was incomplete."})
     return 0
 # BEGIN PROVIDER ADAPTER
 SESSION_ID_KEYS = ("session_id",)
@@ -960,6 +1046,7 @@ def findings_denial_reason(scan_log: Path) -> str:
 
 
 def main() -> int:
+    global INCOMPLETE_LOG, SCAN_ACTION
     scan_started = time.monotonic()
     scan_deadline = scan_started + MAX_SCAN_SECONDS
     mode = normalized_mode_from_env()
@@ -981,6 +1068,13 @@ def main() -> int:
     payload = read_payload(mode)
     if payload is None:
         return 0
+    event = payload.get("hook_event_name")
+    SCAN_ACTION = (
+        "session-end scan"
+        if event in {"Stop", "SessionEnd", "agentStop", "subagentStop"}
+        or payload.get("reason") == "complete"
+        else "tool scan"
+    )
     session_id = ""
     for key in SESSION_ID_KEYS:
         value = payload.get(key)
@@ -1008,6 +1102,15 @@ def main() -> int:
 
     if not timestamp:
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    INCOMPLETE_LOG = {
+        "log_path": scan_log,
+        "session_id": session_id,
+        "timestamp": timestamp,
+        "mode": mode,
+        "scope": scope,
+        "repo_root_path": work_dir,
+    }
 
     if os.environ.get("SKIP_SECRETS_SCAN") == "true":
         append_scan_log(

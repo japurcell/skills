@@ -50,6 +50,12 @@ assert_json_output() {
   fi
 }
 
+assert_incomplete_warning() {
+  local output="$1"
+  jq -e '.systemMessage | contains("scan-secrets warning") and contains("incomplete")' \
+    >/dev/null <<<"$output"
+}
+
 create_stalling_git() {
   local fake_bin="$1"
 
@@ -114,8 +120,7 @@ test_stalled_git_is_bounded_by_timeout() {
   elapsed_ms=$(((end_ns - start_ns) / 1000000))
 
   assert_json_output "$output" "Expected Gemini scanner to emit JSON after stalled git returns."
-  assert_equals "{}" "$output" \
-    "Expected Gemini scanner to noop after stalled git times out."
+  assert_incomplete_warning "$output"
   if (( elapsed_ms >= 8000 )); then
     echo "Expected Gemini scanner to stop stalled git within 8000ms. Elapsed: ${elapsed_ms}ms" >&2
     exit 1
@@ -201,8 +206,7 @@ test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode() {
       diff \
       "{\"session_id\":\"initial-probe\",\"timestamp\":\"2026-06-23T23:49:31Z\",\"hook_event_name\":\"SessionEnd\",\"cwd\":\"$repo_dir\",\"reason\":\"exit\"}"
   )"
-  assert_equals "{}" "$output" \
-    "Expected a failed Gemini initial Git probe with a repository marker to no-op in warn mode."
+  assert_incomplete_warning "$output"
 }
 
 test_missing_git_block_mode_uses_gemini_denial_envelope() {
@@ -219,7 +223,7 @@ test_missing_git_block_mode_uses_gemini_denial_envelope() {
   log_dir="$workdir/logs"
   fake_bin="$workdir/bin"
   mkdir -p "$repo_dir" "$fake_bin"
-  ln -s "$(command -v python3)" "$fake_bin/python3"
+  ln -s "$(python3 -c 'import sys; print(sys.executable)')" "$fake_bin/python3"
 
   if output="$(
     run_gemini_scan_hook \
@@ -431,7 +435,7 @@ test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
   assert_json_output "$output" "Expected Gemini block-mode exception handling to emit JSON."
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini block-mode exception handling to deny."
-  assert_file_contains "$errfile" 'scan-secrets.py: unexpected scanner error.' \
+  assert_file_contains "$errfile" 'scan-secrets: scan incomplete' \
     "Expected sanitized Gemini block-mode scanner error on stderr."
   if grep -Fq 'Traceback' "$errfile"; then
     echo "Did not expect traceback in Gemini block-mode sanitized scanner output." >&2
@@ -440,7 +444,7 @@ test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
   fi
 }
 
-test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero() {
+test_unexpected_exception_warn_mode_warns_with_json_and_exit_zero() {
   local workdir
   local repo_dir
   local log_dir
@@ -475,9 +479,8 @@ test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero() {
 
   assert_equals "0" "$status" \
     "Expected Gemini warn-mode exception handling to return exit code 0."
-  assert_equals "{}" "$output" \
-    "Expected Gemini warn-mode exception handling to degrade to noop JSON output."
-  assert_file_contains "$errfile" 'scan-secrets.py: unexpected scanner error.' \
+  assert_incomplete_warning "$output"
+  assert_file_contains "$errfile" 'scan-secrets: scan incomplete' \
     "Expected sanitized Gemini warn-mode scanner error on stderr."
   if grep -Fq 'Traceback' "$errfile"; then
     echo "Did not expect traceback in Gemini warn-mode sanitized scanner output." >&2
@@ -1001,13 +1004,14 @@ test_gemini_settings_register_before_tool_scanner() {
 }
 
 main() {
+  python3 "$REPO_ROOT/scripts/test-scan-secrets-capture.py" gemini
   test_stalled_git_is_bounded_by_timeout
   test_stalled_git_denies_in_block_mode
   test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode
   test_missing_git_block_mode_uses_gemini_denial_envelope
   test_audit_init_failure_block_mode_uses_gemini_denial_envelope
   test_unexpected_exception_block_mode_denies_with_json_and_exit_zero
-  test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero
+  test_unexpected_exception_warn_mode_warns_with_json_and_exit_zero
   test_warn_mode_reports_findings_with_json_output
   test_high_match_input_has_bounded_denial_and_log
   test_env_variants_are_logged_but_not_flagged_by_path_alone

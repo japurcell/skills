@@ -41,3 +41,6 @@ jobs:
       - name: Test Codex scanner Windows envelopes
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-codex-hooks-windows.ps1
+      - name: Test generated scanner capture on native Windows
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1

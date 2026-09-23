@@ -50,6 +50,12 @@ assert_json_output() {
   fi
 }
 
+assert_incomplete_warning() {
+  local output="$1"
+  jq -e '.systemMessage | contains("scan-secrets warning") and contains("incomplete")' \
+    >/dev/null <<<"$output"
+}
+
 create_stalling_git() {
   local fake_bin="$1"
 
@@ -129,8 +135,7 @@ test_stalled_git_is_bounded_by_timeout() {
   elapsed_ms=$(((end_ns - start_ns) / 1000000))
 
   assert_json_output "$output" "Expected scanner to emit JSON after stalled git returns."
-  assert_equals "{}" "$output" \
-    "Expected scanner to noop after stalled git times out."
+  assert_incomplete_warning "$output"
   if (( elapsed_ms >= 8000 )); then
     echo "Expected scanner to stop stalled git within 8000ms. Elapsed: ${elapsed_ms}ms" >&2
     exit 1
@@ -218,8 +223,7 @@ test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode() {
       diff \
       '{"sessionId":"initial-probe","timestamp":"2026-06-23T23:37:31Z","reason":"complete"}'
   )"
-  assert_equals "{}" "$output" \
-    "Expected a failed initial Git probe with a repository marker to no-op in warn mode."
+  assert_incomplete_warning "$output"
 }
 
 test_missing_git_block_mode_uses_copilot_denial_envelope() {
@@ -236,7 +240,7 @@ test_missing_git_block_mode_uses_copilot_denial_envelope() {
   log_dir="$workdir/logs"
   fake_bin="$workdir/bin"
   mkdir -p "$repo_dir" "$fake_bin"
-  ln -s "$(command -v python3)" "$fake_bin/python3"
+  ln -s "$(python3 -c 'import sys; print(sys.executable)')" "$fake_bin/python3"
 
   if output="$(
     run_scan_hook \
@@ -362,8 +366,7 @@ test_git_failures_after_repo_detection_respect_fail_closed_mode() {
         "REAL_GIT=$real_git" \
         "FAIL_GIT_COMMAND=$command_name"
     )"
-    assert_equals "{}" "$output" \
-      "Expected $command_name failure in warn mode to degrade to JSON no-op."
+    assert_incomplete_warning "$output"
   done
 }
 
@@ -417,8 +420,7 @@ test_unsafe_and_oversized_candidates_respect_fail_closed_mode() {
         diff \
         '{"sessionId":"candidate-limit","timestamp":"2026-06-23T23:38:51Z","reason":"complete"}'
     )"
-    assert_equals "{}" "$output" \
-      "Expected $candidate_case candidate rejection in warn mode to no-op."
+    assert_incomplete_warning "$output"
     unlink "$repo_dir/candidate.txt"
   done
 }
@@ -485,8 +487,7 @@ PY
       diff \
       '{"sessionId":"locked-log","timestamp":"2026-06-23T23:38:56Z","reason":"complete"}'
   )"
-  assert_equals "{}" "$output" \
-    "Expected a scan-log lock timeout to no-op in warn mode."
+  assert_incomplete_warning "$output"
 
   kill "$locker_pid" 2>/dev/null || true
   wait "$locker_pid" 2>/dev/null || true
@@ -532,7 +533,7 @@ test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
     "Expected block-mode exception handling to deny."
   assert_equals "deny" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
     "Expected block-mode exception handling to keep hookSpecificOutput deny payload."
-  assert_file_contains "$errfile" 'scan-secrets.py: unexpected scanner error.' \
+  assert_file_contains "$errfile" 'scan-secrets: scan incomplete' \
     "Expected sanitized scanner error on stderr."
   if grep -Fq 'Traceback' "$errfile"; then
     echo "Did not expect traceback in sanitized scanner error output." >&2
@@ -541,7 +542,7 @@ test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
   fi
 }
 
-test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero() {
+test_unexpected_exception_warn_mode_warns_with_json_and_exit_zero() {
   local workdir
   local repo_dir
   local log_dir
@@ -576,9 +577,8 @@ test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero() {
 
   assert_equals "0" "$status" \
     "Expected warn-mode exception handling to return exit code 0."
-  assert_equals "{}" "$output" \
-    "Expected warn-mode exception handling to degrade to noop JSON output."
-  assert_file_contains "$errfile" 'scan-secrets.py: unexpected scanner error.' \
+  assert_incomplete_warning "$output"
+  assert_file_contains "$errfile" 'scan-secrets: scan incomplete' \
     "Expected sanitized warn-mode scanner error on stderr."
   if grep -Fq 'Traceback' "$errfile"; then
     echo "Did not expect traceback in warn-mode sanitized scanner output." >&2
@@ -1269,6 +1269,7 @@ test_hooks_json_registers_pre_tool_scanner() {
 }
 
 main() {
+  python3 "$REPO_ROOT/scripts/test-scan-secrets-capture.py" copilot
   test_stalled_git_is_bounded_by_timeout
   test_stalled_git_denies_in_block_mode
   test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode
@@ -1278,7 +1279,7 @@ main() {
   test_unsafe_and_oversized_candidates_respect_fail_closed_mode
   test_scan_log_lock_timeout_respects_fail_closed_mode
   test_unexpected_exception_block_mode_denies_with_json_and_exit_zero
-  test_unexpected_exception_warn_mode_noops_with_json_and_exit_zero
+  test_unexpected_exception_warn_mode_warns_with_json_and_exit_zero
   test_invalid_json_block_mode_denies_with_json_and_exit_zero
   test_warn_mode_reports_findings_without_failing
   test_block_mode_denies_when_findings_exist
