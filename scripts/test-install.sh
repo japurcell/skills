@@ -339,7 +339,7 @@ test_installs_codex_hook_and_global_configuration() {
     echo "Expected the Codex required-skills hook to be installed and executable." >&2
     exit 1
   fi
-  for installed in scan-secrets.py tool-guard.py markdown-health.py helpers/common.py helpers/audit.py; do
+  for installed in scan-secrets.py tool-guard.py markdown-health.py rtk-explicit-codex.py rtk-agent-launcher.py helpers/common.py helpers/audit.py; do
     if [[ ! -x "$home/.codex/hooks/$installed" ]]; then
       echo "Expected maintained Codex hook to be installed and executable: $installed" >&2
       exit 1
@@ -351,7 +351,7 @@ test_installs_codex_hook_and_global_configuration() {
     exit 1
   fi
 
-  python3 - "$home/.codex/hooks.json" <<'PY'
+  python3 - "$home/.codex/hooks.json" "$home" <<'PY'
 import json
 import stat
 import sys
@@ -368,6 +368,10 @@ assert handler["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-r
 pre_tool = config["hooks"]["PreToolUse"]
 assert len(pre_tool) == 2
 assert pre_tool[0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/rtk-explicit-codex.py"
+assert pre_tool[0]["hooks"][0]["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\rtk-explicit-codex.py"'
+registered = pre_tool[0]["hooks"][0]["command"].removeprefix("python3 ~/")
+assert (Path(sys.argv[2]) / registered).is_file()
+assert (Path(sys.argv[2]) / ".codex/hooks/rtk-agent-launcher.py").is_file()
 pre_commands = [hook["command"] for hook in pre_tool[1]["hooks"]]
 assert "python3 ~/.codex/hooks/scan-secrets.py" in pre_commands
 assert "python3 ~/.codex/hooks/tool-guard.py" in pre_commands
