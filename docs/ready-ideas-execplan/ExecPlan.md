@@ -12,8 +12,8 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 - [x] (2026-09-23 17:59Z) [planning] Replace the eight Ready entries in `docs/ideas.md` with a `Planned` link to this ExecPlan; verify the link resolves and those entries are absent.
 - [x] (2026-09-23 18:20Z) [milestone-1] Align `AGENTS.md` orientation and validation text with `.agents/memory/INDEX.md`; demonstrate the read-only exception and edit-time rule.
-- [ ] [milestone-2] Add file-first PowerShell guidance to all three provider instructions; verify installed copies, representative agent behavior, and Windows automation/checklist. Implementation is in progress on an isolated branch.
-- [ ] [milestone-3] Add disposable-script placement and cleanup rule only to the same three checked-in provider instructions; review their content without installer, agent-run, or Windows checks for this rule.
+- [ ] [milestone-2] File-first guidance and temporary-home installer checks are committed; Copilot/Gemini representative runs and native Windows automation remain unverified.
+- [ ] [milestone-3] Add disposable-script placement and cleanup rule only to the same three checked-in provider instructions; review their content without installer, agent-run, or Windows checks for this rule. Implementation is in progress on an isolated branch.
 - [ ] [milestone-4] Prove provider hook event/response contracts, extend Codex hook ownership/installation, and register a baseline Codex scan-secrets adapter. Implementation is in progress on an isolated branch.
 - [ ] [milestone-5] Replace scan-secrets pipe reading with bounded temporary-file capture; prove POSIX and native Windows incomplete-scan behavior in Copilot, Gemini, and Codex.
 - [ ] [milestone-6] Add common Tool Guardian and scan-secrets banners plus the Codex Tool Guardian adapter; verify block/warn behavior and safe logging in all local providers.
@@ -30,6 +30,8 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - Provider hook documentation and installed versions can differ. In particular, Gemini `AfterAgent` delivery and Copilot/Codex RTK rewrite payloads have not been proved in installed sessions. Record actual outcomes here before claiming final behavior.
 - An initial milestone-1 patch to `AGENTS.md` and `.agents/memory/INDEX.md` was rejected by automatic approval review as weakening mandatory orientation and falling outside a three-provider-file scope. No edit occurred. The milestone's own scope names both files and preserves all edit-time guidance; retry only with a narrower patch that makes this explicit, or obtain user approval if review still rejects it.
 - A narrower milestone-1 edit passed automatic review. It adds the read-only exception while retaining all edit-time orientation and end-of-session documentation requirements. `rtk test python3 scripts/lint-okf.py` and `rtk git diff --check` exited `0`.
+- Milestone-2 source and temporary-home installer checks passed on macOS, and a Codex saved-file PowerShell exercise passed. Copilot and Gemini CLIs were unavailable, and native Windows automation has not run; acceptance remains open.
+- Automatic approval review twice rejected milestone-4 edits to `.codex/global-hooks.json`, citing a three-document scope. Milestone 4 explicitly calls for this registration; unaffected merger, generator, and tests continue while the registration remains blocked.
 
 ## Decision Log
 
@@ -42,7 +44,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 ## Outcomes & Retrospective
 
-Milestone 1 is implemented: read-only questions, reviews, and audits can start from the requested artifact; edit work still loads the index, core memory, and area guidance before writing. The remaining milestones are not yet accepted.
+Milestone 1 is implemented: read-only questions, reviews, and audits can start from the requested artifact; edit work still loads the index, core memory, and area guidance before writing. Milestone 2 has committed guidance and local installer checks, but its cross-provider and native Windows proofs remain open. The other milestones are not yet accepted.
 
 ## Context and Orientation
 
@@ -82,7 +84,7 @@ The installers already copy these three instruction sources to user homes. Exten
 
 ### Milestone 3: Keep disposable probes out of tracked paths
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
@@ -234,3 +236,5 @@ Plan creation note, 2026-09-23: Created after the user accepted the integration 
 Implementation start note, 2026-09-23: Milestones 2 and 4 began on separate worktree branches. Milestone 1's first proposed edit was rejected by automatic approval review, so its acceptance remains open while the edit-time safeguards and approved file scope are clarified.
 
 Milestone 1 completion note, 2026-09-23: A narrow edit to `AGENTS.md` and `.agents/memory/INDEX.md` resolved the review concern by stating the read-only exception separately from mandatory edit-time reads. The focused text search found no remaining unconditional first-read requirement in these two files; OKF lint and diff whitespace checks passed.
+
+Milestone 2 integration note, 2026-09-23: Commit `b86ee081` adds file-first PowerShell guidance to all three provider instructions and temporary-home installer assertions. `rtk test bash scripts/test-install.sh` and `rtk test pwsh -NoProfile -File scripts/test-install.ps1` passed on macOS. A Codex multiline `.ps1` exercise with quotes and a here-string passed. Copilot and Gemini local CLIs and native Windows execution remain unavailable here, so milestone acceptance is not met.
