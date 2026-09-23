@@ -229,7 +229,9 @@ def prepare(args: argparse.Namespace) -> int:
         raise ValueError("Probe timing must be positive whole seconds")
     if args.mode == "timeout" and args.delay_seconds <= args.timeout_seconds:
         raise ValueError("Probe delay must exceed its hook timeout")
-    config_path = Path.home() / CONFIG_PATHS[args.provider]
+    codex_home = os.environ.get("CODEX_HOME")
+    config_path = (Path(codex_home) / "hooks.json" if args.provider == "codex" and codex_home
+                   else Path.home() / CONFIG_PATHS[args.provider])
     if config_path.parent.is_symlink():
         raise ValueError(f"Refusing linked settings directory: {config_path.parent}")
     check_regular_path(config_path)
@@ -266,10 +268,20 @@ def prepare(args: argparse.Namespace) -> int:
         write_private(directory / "state.json", json.dumps(state).encode("utf-8"))
         replace_file(config_path, installed)
     except BaseException:
-        shutil.rmtree(directory)
+        if state.get("after_hash") and config_path.exists() and digest(config_path.read_bytes()) == state["after_hash"]:
+            print(f"Settings changed; recover with cleanup --provider {args.provider} --id {identifier}",
+                  file=sys.stderr)
+        else:
+            shutil.rmtree(directory)
         raise
-    print(json.dumps({"id": identifier, "config": str(config_path), "backup": str(directory / "backup"),
-                      "marker": str(marker), "handler": str(handler), "transcript": str(transcript)}))
+    try:
+        print(json.dumps({"id": identifier, "config": str(config_path), "backup": str(directory / "backup"),
+                          "marker": str(marker), "handler": str(handler), "transcript": str(transcript)}),
+              flush=True)
+    except OSError:
+        print(f"Settings changed; recover with cleanup --provider {args.provider} --id {identifier}",
+              file=sys.stderr)
+        return 1
     return 0
 
 

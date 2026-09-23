@@ -24,9 +24,11 @@ EVENTS = {
 
 class ProbeTests(unittest.TestCase):
     def cli(self, home: Path, *args: str) -> subprocess.CompletedProcess[str]:
+        env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home)}
+        env.pop("CODEX_HOME", None)
         return subprocess.run(
             [sys.executable, str(SCRIPT), *args],
-            env={**os.environ, "HOME": str(home), "USERPROFILE": str(home)},
+            env=env,
             text=True,
             capture_output=True,
             check=False,
@@ -146,6 +148,49 @@ class ProbeTests(unittest.TestCase):
             info = json.loads(prepared.stdout)
             self.assertEqual(self.cli(home, "cleanup", "--provider", "codex", "--id", info["id"]).returncode, 0)
             self.assertFalse(Path(info["config"]).exists())
+
+    def test_codex_home_is_probe_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "home"
+            home.mkdir()
+            codex_home = Path(temporary) / "custom-codex"
+            codex_home.mkdir()
+            default = home / ".codex/hooks.json"
+            default.parent.mkdir()
+            default.write_text('{"untouched": true}\n', encoding="utf-8")
+            env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home), "CODEX_HOME": str(codex_home)}
+            prepared = subprocess.run([sys.executable, str(SCRIPT), "prepare", "--provider", "codex"],
+                                      env=env, text=True, capture_output=True)
+            self.assertEqual(prepared.returncode, 0, prepared.stderr)
+            info = json.loads(prepared.stdout)
+            try:
+                self.assertEqual(info["config"], str(codex_home / "hooks.json"))
+                self.assertTrue((codex_home / "hooks.json").exists())
+                self.assertEqual(default.read_text(encoding="utf-8"), '{"untouched": true}\n')
+            finally:
+                self.assertEqual(subprocess.run([sys.executable, str(SCRIPT), "cleanup", "--provider", "codex",
+                                                 "--id", info["id"]], env=env).returncode, 0)
+            self.assertFalse((codex_home / "hooks.json").exists())
+
+    def test_prepare_output_failure_reports_recoverable_probe(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home)}
+            env.pop("CODEX_HOME", None)
+            reader, writer = os.pipe()
+            os.close(reader)
+            try:
+                prepared = subprocess.run([sys.executable, str(SCRIPT), "prepare", "--provider", "codex"],
+                                          env=env, stdout=writer, stderr=subprocess.PIPE, text=True)
+            finally:
+                os.close(writer)
+            self.assertNotEqual(prepared.returncode, 0)
+            self.assertIn("cleanup --provider codex --id ", prepared.stderr)
+            identifier = prepared.stderr.split("cleanup --provider codex --id ", 1)[1].split()[0]
+            self.assertTrue((home / ".codex/hooks.json").exists())
+            cleaned = self.cli(home, "cleanup", "--provider", "codex", "--id", identifier)
+            self.assertEqual(cleaned.returncode, 0, cleaned.stderr)
+            self.assertFalse((home / ".codex/hooks.json").exists())
 
     @unittest.skipIf(os.name == "nt", "select does not support Windows pipes")
     def test_handler_reads_one_json_object_without_waiting_for_stdin_close(self) -> None:
