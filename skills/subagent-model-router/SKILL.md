@@ -22,7 +22,7 @@ Choose the narrowest capable `agent_type`, then the cheapest capable model that 
 | ----------------- | -----------: | ----------------------------------------------------------------------------- |
 | `task`            |         Fast | Tests, scripts, builds, lint, formatting, deterministic edits/checks.         |
 | `explore`         |         Fast | Search, inspect, enumerate, gather evidence.                                  |
-| `editor`          |         Fast | Mechanical edits. Use Standard for substantive rewrites or connected changes. |
+| `editor`          |         Fast | Scoped edits with clear requirements, including small self-contained code changes. Use Standard for substantive rewrites or connected changes. |
 | `debugger`        |     Standard | Bugs needing reasoning, especially across files.                              |
 | `code-reviewer`   |     Standard | Diff/PR review. Fast only for tiny single-file style-only diffs.              |
 | `security-review` |      Premium | Auth, permissions, secrets, sensitive data, policy/security controls.         |
@@ -30,8 +30,8 @@ Choose the narrowest capable `agent_type`, then the cheapest capable model that 
 
 ## Tier guide
 
-- **Fast**: bounded, deterministic, repetitive, low-risk work; tiny single-file style-only review.
-- **Standard**: normal coding, editing, debugging, analysis, and meaningful code review.
+- **Fast**: bounded, low-risk work with clear requirements and local reasoning, including small self-contained code changes; tiny single-file style-only review.
+- **Standard**: connected coding, substantive rewrites, nontrivial debugging, broader analysis, and meaningful code review.
 - **Premium**: security-sensitive, high-stakes, ambiguous, subtle correctness, cross-file contracts, false-pass tests, repeated failure, prior missed issue, or user-requested best quality.
 
 ## Workflow
@@ -69,7 +69,7 @@ Return:
 
 ## References
 
-Catalog and pricing references were verified against [Supported AI models in GitHub Copilot](https://docs.github.com/en/copilot/reference/ai-models/supported-models), [AI model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison), and [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) on **2026-09-22**. Recheck those sources when current pricing is required; plan and runtime availability can differ. GPT-6 Luna and GPT-6 Sol are listed as supported but lack published Copilot token rates.
+Catalog and pricing references were verified against [Supported AI models in GitHub Copilot](https://docs.github.com/en/copilot/reference/ai-models/supported-models), [AI model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison), and [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) on **2026-09-22**. Recheck those sources when current pricing is required; plan and runtime availability can differ.
 
 Load only when needed:
 

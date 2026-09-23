@@ -13,8 +13,19 @@ class RoutingGraderTests(unittest.TestCase):
         return all(item['passed'] for item in grade(eval_id, value, ''))
 
     def test_current_fast_route(self):
-        self.assertTrue(self.passes(0, decision('task', 'fast', 'gpt-5.6-luna')))
-        self.assertTrue(self.passes(0, decision('task', 'fast', 'mai-code-1.1-flash')))
+        self.assertTrue(self.passes(0, decision('task', 'fast', 'gpt-6-luna')))
+        self.assertFalse(self.passes(0, decision('task', 'fast', 'gpt-5.6-luna')))
+        self.assertFalse(self.passes(0, decision('task', 'fast', 'mai-code-1.1-flash')))
+
+    def test_unavailable_gpt_6_luna_uses_5_6_luna_fallback(self):
+        reason = 'gpt-6-luna is unavailable; use gpt-5.6-luna fallback'
+        self.assertTrue(self.passes(10, decision('task', 'fast', 'gpt-5.6-luna', reason)))
+        self.assertTrue(self.passes(10, decision('task', 'fast', 'gpt-5.6-luna', 'GPT-6 Luna is not available')))
+        self.assertFalse(self.passes(10, decision('task', 'fast', 'gpt-6-luna', reason)))
+        self.assertFalse(self.passes(10, decision('task', 'fast', 'mai-code-1.1-flash', reason)))
+        self.assertFalse(self.passes(10, decision('task', 'fast', 'gpt-5.6-luna')))
+        wrong_reason = 'gpt-6-luna is available; mai-code-1.1-flash is unavailable'
+        self.assertFalse(self.passes(10, decision('task', 'fast', 'gpt-5.6-luna', wrong_reason)))
 
     def test_standard_model_cannot_masquerade_as_fast(self):
         self.assertFalse(self.passes(0, decision('task', 'fast', 'gpt-5.4-mini')))
@@ -24,6 +35,12 @@ class RoutingGraderTests(unittest.TestCase):
 
     def test_editor_standard_route(self):
         self.assertTrue(self.passes(1, decision('editor', 'standard', 'gpt-5.6-terra')))
+
+    def test_bounded_coding_uses_fast_luna(self):
+        self.assertTrue(self.passes(11, decision('editor', 'fast', 'gpt-6-luna')))
+        self.assertFalse(self.passes(11, decision('editor', 'standard', 'gpt-5.6-terra')))
+        self.assertFalse(self.passes(11, decision('task', 'fast', 'gpt-6-luna')))
+        self.assertFalse(self.passes(11, decision('editor', 'fast', 'gpt-5.6-luna')))
 
     def test_standard_review_fallback(self):
         self.assertTrue(self.passes(2, decision('code-reviewer', 'standard', 'gpt-5.4-mini')))

@@ -3,20 +3,20 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "Use the skill under test to route this delegated task: `Launch a worker to run the backend pytest suite, capture failing tests, and summarize the failures.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
-      "expected_output": "A routing decision that applies the skill, picks the `task` agent, uses the fast tier, and avoids an expensive reasoning model for bounded execution.",
+      "prompt": "Use the skill under test to route this delegated task: `Launch a worker to run the backend pytest suite, capture failing tests, and summarize the failures. Both gpt-6-luna and gpt-5.6-luna are available.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+      "expected_output": "A routing decision that applies the skill, picks the `task` agent and fast tier, and chooses the available GPT-6 Luna default.",
       "files": [],
       "expectations": [
         "The decision marks the skill as applicable.",
         "The agent type is `task`.",
         "The model tier is `fast`.",
-        "The chosen model is a fast-tier model rather than a standard or premium model."
+        "The chosen model is `gpt-6-luna` when both Luna models are available."
       ],
       "assertions": [
         "The decision marks the skill as applicable.",
         "The agent type is `task`.",
         "The model tier is `fast`.",
-        "The chosen model is a fast-tier model rather than a standard or premium model."
+        "The chosen model is `gpt-6-luna` when both Luna models are available."
       ]
     },
     {
@@ -163,6 +163,40 @@
         "The decision marks the skill as applicable.",
         "Security review chooses the evaluated lowest-cost Premium candidate.",
         "The reason accounts for demonstrated capability and cost."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Use the skill under test to route this delegated task: `Launch a worker to run the backend pytest suite and summarize failures. gpt-6-luna is unavailable; gpt-5.6-luna and mai-code-1.1-flash are available.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+      "expected_output": "Use task + Fast + gpt-5.6-luna as the first availability fallback and explain that gpt-6-luna is unavailable.",
+      "files": [],
+      "expectations": [
+        "The decision marks the skill as applicable.",
+        "Unavailable GPT-6 Luna uses `task` + Fast + `gpt-5.6-luna`.",
+        "The reason cites GPT-6 Luna's unavailability."
+      ],
+      "assertions": [
+        "The decision marks the skill as applicable.",
+        "Unavailable GPT-6 Luna uses `task` + Fast + `gpt-5.6-luna`.",
+        "The reason cites GPT-6 Luna's unavailability."
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Use the skill under test to route this delegated task: `Launch an agent to change only src/formatting.py: display_name(name) should return the first 37 characters plus three periods when name exceeds 40 characters. Existing tests specify the boundary behavior. Requirements are clear; no sensitive behavior or cross-file contract is involved. An editor agent is available. gpt-6-luna, gpt-5.6-luna, and gpt-5.6-terra are available.` Write only `outputs/decision.json` with keys `applicable`, `agent_type`, `model_tier`, `model`, `justification`, and `fallback_strategy`.",
+      "expected_output": "Use editor + Fast + gpt-6-luna for this small self-contained code change, rather than routing to Terra or falling back to gpt-5.6-luna while GPT-6 Luna is available.",
+      "files": [],
+      "expectations": [
+        "The decision marks the skill as applicable.",
+        "The agent type is `editor`.",
+        "The model tier is `fast`.",
+        "The bounded coding task uses `gpt-6-luna` rather than Terra or another Fast model."
+      ],
+      "assertions": [
+        "The decision marks the skill as applicable.",
+        "The agent type is `editor`.",
+        "The model tier is `fast`.",
+        "The bounded coding task uses `gpt-6-luna` rather than Terra or another Fast model."
       ]
     }
   ]

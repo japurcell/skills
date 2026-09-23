@@ -176,8 +176,8 @@ def grade(eval_id: int, decision: dict, raw_text: str) -> list[dict]:
             expectation("The agent type is `task`.", agent_type == "task", evidence),
             expectation("The model tier is `fast`.", model_tier == "fast", evidence),
             expectation(
-                "The chosen model is a fast-tier model rather than a standard or premium model.",
-                model_is_fast(model) and model not in STANDARD_MODELS and model not in PREMIUM_MODELS,
+                "The chosen model is `gpt-6-luna` when both Luna models are available.",
+                model == "gpt-6-luna" and model_is_fast(model),
                 evidence,
             ),
         ]
@@ -329,6 +329,37 @@ def grade(eval_id: int, decision: dict, raw_text: str) -> list[dict]:
                 "The reason accounts for demonstrated capability and cost.",
                 justification_mentions(justification, "evaluat", "demonstrat", "proven")
                 and justification_mentions(justification, "cost", "cheap"),
+                evidence,
+            ),
+        ]
+
+    if eval_id == 10:
+        reason = justification + " " + fallback
+        return [
+            expectation("The decision marks the skill as applicable.", applicable, evidence),
+            expectation(
+                "Unavailable GPT-6 Luna uses `task` + Fast + `gpt-5.6-luna`.",
+                agent_type == "task" and model_tier == "fast" and model == "gpt-5.6-luna" and model_is_fast(model),
+                evidence,
+            ),
+            expectation(
+                "The reason cites GPT-6 Luna's unavailability.",
+                bool(re.search(
+                    r"\bgpt-6[- ]luna\b(?:\s+(?:is|was|currently|now)){0,2}[\s:]+(?:unavailable|not available|cannot be launched)\b",
+                    reason.replace("`", ""),
+                )),
+                evidence,
+            ),
+        ]
+
+    if eval_id == 11:
+        return [
+            expectation("The decision marks the skill as applicable.", applicable, evidence),
+            expectation("The agent type is `editor`.", agent_type == "editor", evidence),
+            expectation("The model tier is `fast`.", model_tier == "fast", evidence),
+            expectation(
+                "The bounded coding task uses `gpt-6-luna` rather than Terra or another Fast model.",
+                model == "gpt-6-luna" and model_is_fast(model),
                 evidence,
             ),
         ]
