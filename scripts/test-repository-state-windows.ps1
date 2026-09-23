@@ -25,7 +25,9 @@ try {
     )
     foreach ($provider in $providers) {
         $hook = Join-Path $repoRoot $provider.Hook
-        foreach ($command in @('Set-Content .GIT\config bad', 'git restore tracked.txt', 'git clean -fd')) {
+        foreach ($command in @('Set-Content .GIT\config bad', 'git restore tracked.txt', 'git clean -fd',
+                            'sed.exe -Ei -e s/a/b/ .GIT\config', 'perl.exe -pi -e s/a/b/ .GIT\config',
+                            'truncate.exe -s 0 .GIT\config', 'install.exe source.txt .GIT\config')) {
             if ($provider.Name -eq 'copilot') { $hookPayload = @{ cwd=$repo; toolName=$provider.Tool; toolArgs=@{ command=$command } } }
             else { $hookPayload = @{ cwd=$repo; tool_name=$provider.Tool; tool_input=@{ command=$command } } }
             $json = $hookPayload | ConvertTo-Json -Compress -Depth 5
@@ -50,10 +52,12 @@ try {
             $quotedResult = ($quotedPayload | ConvertTo-Json -Compress -Depth 5) | & python -I -S -B $hook | ConvertFrom-Json
             if ($LASTEXITCODE -ne 0 -or $quotedResult.PSObject.Properties.Count -ne 0) { throw "quoted prose was denied for $($provider.Name)" }
         }
-        $read = if ($provider.Name -eq 'copilot') { @{ cwd=$repo; toolName=$provider.Tool; toolArgs=@{ command='git status' } } }
-                else { @{ cwd=$repo; tool_name=$provider.Tool; tool_input=@{ command='git status' } } }
-        $readResult = ($read | ConvertTo-Json -Compress -Depth 5) | & python -I -S -B $hook | ConvertFrom-Json
-        if ($LASTEXITCODE -ne 0 -or $readResult.PSObject.Properties.Count -ne 0) { throw "safe Git read blocked for $($provider.Name)" }
+        foreach ($readCommand in @('git status', 'sed.exe -n -e p .GIT\config', 'perl.exe -ne print .GIT\config')) {
+            $read = if ($provider.Name -eq 'copilot') { @{ cwd=$repo; toolName=$provider.Tool; toolArgs=@{ command=$readCommand } } }
+                    else { @{ cwd=$repo; tool_name=$provider.Tool; tool_input=@{ command=$readCommand } } }
+            $readResult = ($read | ConvertTo-Json -Compress -Depth 5) | & python -I -S -B $hook | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0 -or $readResult.PSObject.Properties.Count -ne 0) { throw "safe read blocked for $($provider.Name): $readCommand" }
+        }
     }
     Write-Output 'PASS: native Windows repository-state hook envelopes'
 }

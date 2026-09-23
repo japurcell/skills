@@ -232,13 +232,13 @@ def _writes_metadata(command, layout, script_source=False, depth=0):
     except ValueError:
         return True
     writer_commands = {"tee", "touch", "rm", "mv", "cp", "chmod", "set-content", "add-content",
-                       "out-file", "remove-item", "copy-item", "move-item", "new-item"}
+                       "out-file", "remove-item", "copy-item", "move-item", "new-item", "truncate", "install"}
     script_write = re.compile(r"(?i)\b(?:write_text|write_bytes|unlink|remove|rmtree|mkdir|makedirs)\s*\(|\bopen\s*\([^)]*,\s*['\"]?[wax+]")
     for tokens in segments:
         start = _command_start(tokens)
         if start >= len(tokens):
             continue
-        command_name = _unquote(tokens[start]).lower()
+        command_name = ntpath.basename(_unquote(tokens[start]).lower()).removesuffix(".exe")
         if command_name in ("bash", "sh", "zsh", "pwsh", "powershell"):
             for option in range(start + 1, len(tokens) - 1):
                 if _unquote(tokens[option]).lower() in ("-c", "-command"):
@@ -248,8 +248,20 @@ def _writes_metadata(command, layout, script_source=False, depth=0):
         for index, token in enumerate(tokens):
             if token in (">", ">>") and index + 1 < len(tokens) and _metadata_token(tokens[index + 1], layout):
                 return True
-        if command_name in writer_commands and any(_metadata_token(token, layout) for token in tokens[start + 1:]):
+        target_is_metadata = any(_metadata_token(token, layout) for token in tokens[start + 1:])
+        if command_name in writer_commands and target_is_metadata:
             return True
+        if command_name == "sed" and target_is_metadata:
+            options = (_unquote(token) for token in tokens[start + 1:])
+            if any(option.startswith("--in-place") or
+                   (option.startswith("-") and not option.startswith("--") and "i" in option[1:])
+                   for option in options):
+                return True
+        if command_name == "perl" and target_is_metadata:
+            options = (_unquote(token) for token in tokens[start + 1:])
+            if any(option.startswith("-") and not option.startswith("--") and "i" in option[1:]
+                   for option in options):
+                return True
         if script_source or command_name in ("python", "python3", "py", "pwsh", "powershell", "bash", "sh", "zsh"):
             if any(script_write.search(_unquote(token)) and _metadata_token(token, layout) for token in tokens[start:]):
                 return True

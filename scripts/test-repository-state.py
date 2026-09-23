@@ -146,7 +146,7 @@ class RepositoryStateTests(unittest.TestCase):
 
     def test_shell_quoted_prose_does_not_trigger_git_guard(self):
         for provider, shell in (("copilot", "bash"), ("gemini", "run_shell_command"), ("codex", "Bash")):
-            for command in ("echo 'git checkout branch'", "echo 'note; git restore file'", "echo git checkout branch", "echo '.git/config > file'", "cat .git/config > copy.txt"):
+            for command in ("echo 'git checkout branch'", "echo 'note; git restore file'", "echo git checkout branch", "echo '.git/config > file'", "echo 'sed -i s/a/b/ .git/config'", "cat .git/config > copy.txt"):
                 with self.subTest(provider=provider, command=command):
                     self.assertEqual(self.invoke(provider, shell, {"command": command}), {})
             self.denied(provider, self.invoke(provider, shell, {"command": "git checkout branch"}))
@@ -155,6 +155,45 @@ class RepositoryStateTests(unittest.TestCase):
             self.denied(provider, self.invoke(provider, shell, {"command": "bash -c 'git checkout branch'"}))
             self.denied(provider, self.invoke(provider, shell, {"command": "pwsh -Command 'git restore tracked.txt'"}))
             self.denied(provider, self.invoke(provider, shell, {"command": "python -c \"open('.git/config','w')\""}))
+
+    def test_in_place_editor_cannot_mutate_git_metadata(self):
+        command = " ".join(("sed", "-i", "-e", "s/a/b/", ".git/config"))
+        for provider, shell in (("copilot", "bash"), ("gemini", "run_shell_command"), ("codex", "Bash")):
+            with self.subTest(provider=provider):
+                reason = self.denied(provider, self.invoke(provider, shell, {"command": command}))
+                self.assertIn("Git metadata write", reason)
+
+    def test_other_literal_metadata_mutators_are_denied(self):
+        mutations = (
+            " ".join(("sed", "--in-place", "-e", "s/a/b/", ".git/config")),
+            " ".join(("sed", "-Ei", "-e", "s/a/b/", ".git/config")),
+            " ".join(("perl", "-pi", "-e", "s/a/b/", ".git/config")),
+            " ".join(("truncate", "-s", "0", ".git/config")),
+            " ".join(("install", "source.txt", ".git/config")),
+        )
+        reads = (
+            " ".join(("sed", "-n", "-e", "p", ".git/config")),
+            " ".join(("perl", "-ne", "print", ".git/config")),
+        )
+        for provider, shell in (("copilot", "bash"), ("gemini", "run_shell_command"), ("codex", "Bash")):
+            for command in mutations:
+                with self.subTest(provider=provider, command=command):
+                    self.denied(provider, self.invoke(provider, shell, {"command": command}))
+            for command in reads:
+                with self.subTest(provider=provider, command=command):
+                    self.assertEqual(self.invoke(provider, shell, {"command": command}), {})
+
+    def test_windows_executable_names_are_guarded(self):
+        commands = (
+            " ".join(("sed.exe", "-i", "-e", "s/a/b/", ".GIT\\config")),
+            " ".join(("perl.exe", "-pi", "-e", "s/a/b/", ".GIT\\config")),
+            " ".join(("truncate.exe", "-s", "0", ".GIT\\config")),
+            " ".join(("install.exe", "source.txt", ".GIT\\config")),
+        )
+        for provider, shell in (("copilot", "powershell"), ("gemini", "run_shell_command"), ("codex", "Bash")):
+            for command in commands:
+                with self.subTest(provider=provider, command=command):
+                    self.denied(provider, self.invoke(provider, shell, {"command": command}))
 
     def test_documentation_can_quote_a_blocked_command(self):
         for provider, editor in (("copilot", "edit"), ("gemini", "write_file"), ("codex", "Edit")):
