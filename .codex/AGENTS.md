@@ -31,6 +31,7 @@
 - Never modify database schemas without approval.
 - Never put secrets in code or version control.
 - Never delete, disable, skip, or weaken failing tests just to make the suite pass.
+- When asking the user for input, wait indefinitely for the user's answer. Do not set or pass `autoResolutionMs` to `request_user_input` unless the user explicitly asks for auto-resolution in the current thread.
 
 ### Questions are read-only
 
