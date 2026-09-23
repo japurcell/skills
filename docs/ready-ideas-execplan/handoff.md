@@ -7,6 +7,7 @@ Implement [ExecPlan](ExecPlan.md) on `codex/ready-ideas-execplan`. It now has 12
 - **Accepted and integrated:** milestone 1 read-only orientation (`AGENTS.md`, `.agents/memory/INDEX.md`); milestone 3 disposable-probe guidance in only the three provider instruction files.
 - **Integrated, acceptance open:** milestone 2 file-first PowerShell guidance and temporary-home installer checks; native Windows automation remains. Milestone 4 Codex scanner transport, installer merger, Windows workflow, and delivery probe; deployed Codex `PreToolUse`/`Stop` and timeout behavior remain unproved.
 - **Active isolated branches:** milestone 5 scanner shutdown in `codex/ready-ideas-m5` at `/Users/adam/.codex/worktrees/ready-ideas-m5/skills`; milestone 9 explicit RTK rewrite in `codex/ready-ideas-m9` at `/Users/adam/.codex/worktrees/ready-ideas-m9/skills`. Both started from base tip `92b5adf0`; preserve their edits and integrate one at a time.
+- **Prepared, not started:** milestone 8 has a clean isolated branch `codex/ready-ideas-m8` at `/Users/adam/.codex/worktrees/ready-ideas-m8/skills`. Agent spawn returned `agent thread limit reached`; do not mistake this branch for implementation progress.
 - **Remaining:** milestones 6–8 and 10, plus later-session live milestones 11 (Copilot CLI and local VS Code) and 12 (Gemini CLI). Do not mark the full plan complete while these remain open.
 
 ## Next step
@@ -30,6 +31,7 @@ Wait for milestone-5 and milestone-9 implementers. Review their evidence and cle
 - Custom `CODEX_HOME` remains a Codex hook-install limitation: installers put hooks/config under `HOME/.codex` and registered commands point there, while the probe can target custom `CODEX_HOME`. Coordinate installer and template paths before claiming custom-home support.
 - `.github/workflows/ready-ideas-windows.yml` exists but has not run on native Windows. `rtk gh auth status` failed because the local GitHub token is invalid; do not claim CI proof until a runner result exists. macOS `pwsh` is not native Windows evidence.
 - Copilot and Gemini CLIs are absent on this Mac. No provider versions or live outcomes were fabricated. Copilot cloud is outside user-level hook scope; arbitrary child-process writes cannot be fully intercepted by pre-tool hooks.
+- Agent runtime currently rejected a fresh milestone-8 implementer with `agent thread limit reached` even though its isolated worktree and branch were created. Retry after active workers finish; if the limit persists, record the constraint and continue the ExecPlan without losing the prepared branch.
 
 ## Relevant files
 
