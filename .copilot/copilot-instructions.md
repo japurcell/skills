@@ -135,3 +135,4 @@ oxfmt
 ## Gotchas
 
 - Structured file output: Do not create JSON, markdown, or code-containing files via shell commands (`echo`, `heredocs`, `cat <<EOF`). Use a native file-write/edit tool when available; otherwise return the file contents directly for the caller to save.
+- File-first PowerShell authoring: For a complete multiline `.ps1` or reusable automation script, use Copilot's native file-create or file-edit tool to create the complete script as a saved file, then execute that saved file. Short, non-script one-line shell commands are allowed. Do not construct saved scripts with `echo`, heredocs, or equivalent shell text injection.

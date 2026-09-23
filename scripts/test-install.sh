@@ -32,10 +32,10 @@ create_fixture_repo() {
   printf '%s\n' 'archive entry should not copy' > "$repo/skills/archive/README.md"
   printf '%s\n' '---' 'name: helper' 'description: Fixture helper agent.' '---' 'Use alpha.' > "$repo/agents/helper.md"
   printf '%s\n' '---' 'name: nested-helper' 'description: Nested fixture helper agent.' '---' 'Use alpha deeply.' > "$repo/agents/nested/helper.md"
-  printf '%s\n' 'Gemini root.' > "$repo/.gemini/GEMINI.md"
+  cp -p "$REPO_ROOT/.gemini/GEMINI.md" "$repo/.gemini/GEMINI.md"
   printf '%s\n' 'Nested policy.' > "$repo/.gemini/policies/plan-custom-directory.toml"
   printf '%s\n' 'Hidden note.' > "$repo/.gemini/.hidden-note"
-  printf '%s\n' 'Copilot instructions.' > "$repo/.copilot/copilot-instructions.md"
+  cp -p "$REPO_ROOT/.copilot/copilot-instructions.md" "$repo/.copilot/copilot-instructions.md"
   printf '%s\n' '{}' > "$repo/.copilot/lsp-config.json"
   printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.copilot/hooks/test-hook.sh"
   printf '%s\n' '{"global":"settings"}' > "$repo/.gemini/global-settings.json"
@@ -727,7 +727,11 @@ test_copies_full_gemini_tree() {
   copied_hook="$(<"$home/.copilot/hooks/test-hook.sh")"
   copied_global_settings="$(<"$home/.gemini/settings.json")"
 
-  assert_equals "Gemini root." "$copied_gemini" "Expected GEMINI.md to be copied into ~/.gemini."
+  assert_equals "$(<"$repo/.gemini/GEMINI.md")" "$copied_gemini" "Expected GEMINI.md to be copied into ~/.gemini."
+  if [[ "$copied_gemini" != *'use `write_file` to create the complete script as a saved file, then execute that saved file.'* ]]; then
+    echo "Expected installed Gemini guidance to require file-first PowerShell authoring." >&2
+    exit 1
+  fi
   assert_equals $'---\nname: helper\ndescription: Fixture helper agent.\n---\nUse alpha.' "$copied_agent" "Expected agents to be copied into ~/.gemini/agents."
   assert_equals $'---\nname: nested-helper\ndescription: Nested fixture helper agent.\n---\nUse alpha deeply.' "$copied_nested_agent" "Expected nested agents to be copied recursively into ~/.gemini/agents."
   assert_equals $'---\nname: helper\ndescription: Fixture helper agent.\n---\nUse alpha.' "$copied_copilot_agent" "Expected agents to be copied into ~/.copilot/agents."
@@ -736,6 +740,15 @@ test_copies_full_gemini_tree() {
   assert_equals "Hidden note." "$copied_hidden" "Expected hidden Gemini files to be copied recursively."
   assert_equals $'#!/bin/bash\necho hook' "$copied_hook" "Expected hooks to be copied into ~/.copilot/hooks."
   assert_equals '{"global":"settings"}' "$copied_global_settings" "Expected global Gemini settings to overwrite repo-local settings during install."
+  assert_equals "$(<"$repo/.copilot/copilot-instructions.md")" "$(<"$home/.copilot/copilot-instructions.md")" "Expected Copilot instructions to be copied into ~/.copilot."
+  if [[ "$(<"$home/.copilot/copilot-instructions.md")" != *"use Copilot's native file-create or file-edit tool to create the complete script as a saved file, then execute that saved file."* ]]; then
+    echo "Expected installed Copilot guidance to require file-first PowerShell authoring." >&2
+    exit 1
+  fi
+  if [[ "$(<"$home/.codex/AGENTS.md")" != *"use Codex's native file-write or file-edit tool, such as \`apply_patch\`, to create the complete script as a saved file, then execute that saved file."* ]]; then
+    echo "Expected installed Codex guidance to require file-first PowerShell authoring." >&2
+    exit 1
+  fi
 
   if [[ -e "$home/.gemini/.gemini" ]]; then
     echo "Expected the installer to copy Gemini contents into ~/.gemini, not nest another .gemini directory." >&2

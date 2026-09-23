@@ -189,10 +189,10 @@ function New-FixtureRepo {
     Write-FixtureFile (Join-Path $Repo 'agents/helper.md') @('---', 'name: helper', 'description: Fixture helper agent.', '---', 'Use alpha.')
     Write-FixtureFile (Join-Path $Repo 'agents/nested/helper.md') @('---', 'name: nested-helper', 'description: Nested fixture helper agent.', '---', 'Use alpha deeply.')
     Write-FixtureFile (Join-Path $Repo 'references/notes.md') @('Reference notes.')
-    Write-FixtureFile (Join-Path $Repo '.gemini/GEMINI.md') @('Gemini root.')
+    Copy-Item -LiteralPath (Join-Path $RepoRoot '.gemini/GEMINI.md') -Destination (Join-Path $Repo '.gemini/GEMINI.md') -Force
     Write-FixtureFile (Join-Path $Repo '.gemini/policies/plan-custom-directory.toml') @('Nested policy.')
     Write-FixtureFile (Join-Path $Repo '.gemini/.hidden-note') @('Hidden note.')
-    Write-FixtureFile (Join-Path $Repo '.copilot/copilot-instructions.md') @('Copilot instructions.')
+    Copy-Item -LiteralPath (Join-Path $RepoRoot '.copilot/copilot-instructions.md') -Destination (Join-Path $Repo '.copilot/copilot-instructions.md') -Force
     Write-FixtureFile (Join-Path $Repo '.copilot/lsp-config.json') @('{}')
     Write-FixtureFile (Join-Path $Repo '.copilot/hooks/test-hook.sh') @('#!/bin/bash', 'echo hook')
     Write-FixtureFile (Join-Path $Repo '.gemini/global-settings.json') @('{"global":"settings"}')
@@ -744,7 +744,14 @@ function Test-CopiesFullGeminiTree {
 
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
 
-        Assert-Equals -Expected "Gemini root." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/GEMINI.md')) -Message "Expected GEMINI.md to be copied into ~/.gemini."
+        $installedGeminiInstructions = Read-FileContent (Join-Path $homeDir '.gemini/GEMINI.md')
+        $installedCopilotInstructions = Read-FileContent (Join-Path $homeDir '.copilot/copilot-instructions.md')
+        $installedCodexInstructions = Read-FileContent (Join-Path $homeDir '.codex/AGENTS.md')
+        Assert-Equals -Expected (Read-FileContent (Join-Path $repo '.gemini/GEMINI.md')) -Actual $installedGeminiInstructions -Message "Expected GEMINI.md to be copied into ~/.gemini."
+        Assert-True -Condition $installedGeminiInstructions.Contains('use `write_file` to create the complete script as a saved file, then execute that saved file.') -Message 'Expected installed Gemini guidance to require file-first PowerShell authoring.'
+        Assert-Equals -Expected (Read-FileContent (Join-Path $repo '.copilot/copilot-instructions.md')) -Actual $installedCopilotInstructions -Message 'Expected Copilot instructions to be copied into ~/.copilot.'
+        Assert-True -Condition $installedCopilotInstructions.Contains("use Copilot's native file-create or file-edit tool to create the complete script as a saved file, then execute that saved file.") -Message 'Expected installed Copilot guidance to require file-first PowerShell authoring.'
+        Assert-True -Condition $installedCodexInstructions.Contains('use Codex''s native file-write or file-edit tool, such as `apply_patch`, to create the complete script as a saved file, then execute that saved file.') -Message 'Expected installed Codex guidance to require file-first PowerShell authoring.'
         Assert-Equals -Expected "---`nname: helper`ndescription: Fixture helper agent.`n---`nUse alpha." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/agents/helper.md')) -Message "Expected agents to be copied into ~/.gemini/agents."
         Assert-Equals -Expected "---`nname: nested-helper`ndescription: Nested fixture helper agent.`n---`nUse alpha deeply." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/agents/nested/helper.md')) -Message "Expected nested agents to be copied recursively into ~/.gemini/agents."
         Assert-Equals -Expected "---`nname: helper`ndescription: Fixture helper agent.`n---`nUse alpha." -Actual (Read-FileContent (Join-Path $homeDir '.copilot/agents/helper.md')) -Message "Expected agents to be copied into ~/.copilot/agents."
@@ -1076,7 +1083,7 @@ function Test-CopiesCopilotConfigAndReferences {
 
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
 
-        Assert-Equals -Expected "Copilot instructions." -Actual (Read-FileContent (Join-Path $homeDir '.copilot/copilot-instructions.md')) -Message "Expected .copilot/copilot-instructions.md to be installed into ~/.copilot."
+        Assert-Equals -Expected (Read-FileContent (Join-Path $repo '.copilot/copilot-instructions.md')) -Actual (Read-FileContent (Join-Path $homeDir '.copilot/copilot-instructions.md')) -Message "Expected .copilot/copilot-instructions.md to be installed into ~/.copilot."
         Assert-Equals -Expected "{}" -Actual (Read-FileContent (Join-Path $homeDir '.copilot/lsp-config.json')) -Message "Expected .copilot/lsp-config.json to be installed into ~/.copilot."
         Assert-Equals -Expected "Reference notes." -Actual (Read-FileContent (Join-Path $homeDir '.agents/references/notes.md')) -Message "Expected references content to be copied into ~/.agents/references."
     }

@@ -131,3 +131,7 @@ Examples of commands that may need to run without `rtk`:
 dotnet format
 oxfmt
 ```
+
+## Gotchas
+
+- File-first PowerShell authoring: For a complete multiline `.ps1` or reusable automation script, use Codex's native file-write or file-edit tool, such as `apply_patch`, to create the complete script as a saved file, then execute that saved file. Short, non-script one-line shell commands are allowed. Do not construct saved scripts with `echo`, heredocs, or equivalent shell text injection.
