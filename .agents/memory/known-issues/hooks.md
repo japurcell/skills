@@ -37,6 +37,10 @@ On macOS, a temporary worktree pointer can name `/var/...` while resolved Git/co
 
 Codex `PreToolUse` reports file edits as `tool_name: "apply_patch"` with patch text under `tool_input.command`; it does not provide a `file_path` field. Parse the patch's Add, Update, Delete, and Move headers before deciding whether a Git metadata path is affected. Missing or malformed patch paths deny the edit.
 
+## Quoted shell prose is not an executable Git command
+
+Do not search raw shell text for `git checkout` or redirection markers. `echo 'git checkout branch'` and `echo '.git/config > file'` are data. Tokenize with quote boundaries intact, inspect executable command positions and redirection targets, and recurse only into recognized shell `-c`/PowerShell `-Command` arguments. Malformed actual commands still deny; a quote-blind split on `;` or `>` creates false denials.
+
 ## Git guard cannot inspect later child-process writes
 
 The repository-state guard sees provider tool arguments before execution. It can block direct editor targets and recognizable literal shell or script text, but cannot prove what `python script.py`, PowerShell child processes, Git hooks, or other later processes will write. Copilot pre-tool hook timeouts also fail open. Treat OS sandbox policy as a separate layer only after inspecting its effective settings on the installed provider and platform; no global sandbox setting is changed by this repository.

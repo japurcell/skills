@@ -129,57 +129,131 @@ def metadata_path(path, cwd, layout):
     return any(_inside(candidate, root) or _inside(resolved, root) for root in layout)
 
 
-def _git_action(command):
-    for fragment in re.split(r"[;&|\n]+", command):
-        for match in re.finditer(r"(?i)(?<![\w.-])git(?:\.exe)?\s+", fragment):
-            try:
-                tokens = shlex.split(fragment[match.start():], posix=True)
-            except ValueError:
-                return "uncertain Git command"
-            index = 1
-            while index < len(tokens):
-                token = tokens[index]
-                if token in ("-C", "-c", "--git-dir", "--work-tree", "--namespace", "--config-env"):
-                    index += 2
-                elif token.startswith("-"):
-                    index += 1
-                else:
+def _shell_segments(command):
+    lexer = shlex.shlex(command, posix=False, punctuation_chars=";&|<>\n")
+    lexer.whitespace = " \t\r"
+    lexer.whitespace_split = True
+    lexer.commenters = ""
+    segments = [[]]
+    for token in lexer:
+        if token in (";", "&&", "||", "|", "&", "\n"):
+            segments.append([])
+        else:
+            segments[-1].append(token)
+    return segments
+
+
+def _unquote(token):
+    if len(token) >= 2 and token[0] == token[-1] and token[0] in ("'", '"'):
+        return token[1:-1]
+    return token
+
+
+def _command_start(tokens):
+    index = 0
+    while index < len(tokens) and re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*=.*", tokens[index]):
+        index += 1
+    while index < len(tokens) and _unquote(tokens[index]).lower() in ("command", "env", "sudo", "rtk"):
+        index += 1
+        if index < len(tokens) and _unquote(tokens[index]).lower() == "proxy":
+            index += 1
+    return index
+
+
+def _git_action(command, depth=0):
+    if depth > 3:
+        return "uncertain nested command"
+    try:
+        segments = _shell_segments(command)
+    except ValueError:
+        return "uncertain Git command"
+    for tokens in segments:
+        start = _command_start(tokens)
+        if start >= len(tokens):
+            continue
+        name = _unquote(tokens[start]).lower()
+        if name in ("bash", "sh", "zsh", "pwsh", "powershell"):
+            for option in range(start + 1, len(tokens) - 1):
+                if _unquote(tokens[option]).lower() in ("-c", "-command"):
+                    nested = _git_action(_unquote(tokens[option + 1]), depth + 1)
+                    if nested:
+                        return nested
                     break
-            if index >= len(tokens):
-                continue
-            operation = tokens[index].lower()
-            arguments = [part.lower() for part in tokens[index + 1:]]
-            if operation == "clean" and any(part in ("-n", "--dry-run") or
-                                            (part.startswith("-") and "n" in part[1:]) for part in arguments):
-                continue
-            if operation in ("checkout", "restore", "reset", "clean", "switch"):
-                return f"git {operation}"
-            if operation == "stash" and any(part in ("drop", "clear") for part in arguments):
-                return "git stash"
-            if operation == "checkout-index" and any(part in ("-f", "--force", "-a", "--all") for part in arguments):
-                return "git checkout-index"
-            if operation == "read-tree" and any(part in ("--reset", "-u") for part in arguments):
-                return "git read-tree"
-            if operation == "worktree" and "remove" in arguments and any(part in ("-f", "--force") for part in arguments):
-                return "git worktree remove"
-            if operation == "branch" and any(part in ("-D", "--delete", "-d") for part in tokens[index + 1:]):
-                return "git branch delete"
+        if name not in ("git", "git.exe"):
+            continue
+        tokens = [_unquote(token) for token in tokens[start:]]
+        index = 1
+        while index < len(tokens):
+            token = tokens[index]
+            if token in ("-C", "-c", "--git-dir", "--work-tree", "--namespace", "--config-env"):
+                index += 2
+            elif token.startswith("-"):
+                index += 1
+            else:
+                break
+        if index >= len(tokens):
+            continue
+        operation = tokens[index].lower()
+        arguments = [part.lower() for part in tokens[index + 1:]]
+        if operation == "clean" and any(part in ("-n", "--dry-run") or
+                                        (part.startswith("-") and "n" in part[1:]) for part in arguments):
+            continue
+        if operation in ("checkout", "restore", "reset", "clean", "switch"):
+            return f"git {operation}"
+        if operation == "stash" and any(part in ("drop", "clear") for part in arguments):
+            return "git stash"
+        if operation == "checkout-index" and any(part in ("-f", "--force", "-a", "--all") for part in arguments):
+            return "git checkout-index"
+        if operation == "read-tree" and any(part in ("--reset", "-u") for part in arguments):
+            return "git read-tree"
+        if operation == "worktree" and "remove" in arguments and any(part in ("-f", "--force") for part in arguments):
+            return "git worktree remove"
+        if operation == "branch" and any(part in ("-D", "--delete", "-d") for part in tokens[index + 1:]):
+            return "git branch delete"
     return ""
 
 
-def _writes_metadata(command, layout):
-    # Recognize literal write syntax only. Runtime-computed paths in child programs are outside this hook's view.
-    normalized = command.replace("\\", "/")
-    absolute_paths = re.findall(r"(?:[A-Za-z]:[\\/]|/)[^\s'\";|><]+", command)
-    path_seen = _mentions_dotgit(normalized) or any(
-        _inside(Path(path).resolve(strict=False), root)
-        for path in absolute_paths for root in layout
-    )
-    if not path_seen:
+def _metadata_token(token, layout):
+    path = _unquote(token).replace("\\", "/")
+    if _mentions_dotgit(path):
+        return True
+    if not (path.startswith("/") or re.match(r"^[A-Za-z]:/", path)):
         return False
-    return bool(re.search(r"(?i)(?:>>?|\btee\b|\btouch\b|\brm\b|\bmv\b|\bcp\b|\bchmod\b|"
-                          r"\b(?:Set|Add|Out|Remove|Copy|Move|New)-\w+\b|\b(?:write_text|write_bytes|"
-                          r"unlink|remove|rmtree|mkdir|makedirs)\s*\(|\bopen\s*\([^)]*,\s*['\"]?[wax+])", command))
+    candidate = Path(path).resolve(strict=False)
+    return any(_inside(candidate, root) for root in layout)
+
+
+def _writes_metadata(command, layout, script_source=False, depth=0):
+    if depth > 3:
+        return True
+    # Inspect shell tokens. Quoted prose is data, not a write operation.
+    try:
+        segments = _shell_segments(command)
+    except ValueError:
+        return True
+    writer_commands = {"tee", "touch", "rm", "mv", "cp", "chmod", "set-content", "add-content",
+                       "out-file", "remove-item", "copy-item", "move-item", "new-item"}
+    script_write = re.compile(r"(?i)\b(?:write_text|write_bytes|unlink|remove|rmtree|mkdir|makedirs)\s*\(|\bopen\s*\([^)]*,\s*['\"]?[wax+]")
+    for tokens in segments:
+        start = _command_start(tokens)
+        if start >= len(tokens):
+            continue
+        command_name = _unquote(tokens[start]).lower()
+        if command_name in ("bash", "sh", "zsh", "pwsh", "powershell"):
+            for option in range(start + 1, len(tokens) - 1):
+                if _unquote(tokens[option]).lower() in ("-c", "-command"):
+                    if _writes_metadata(_unquote(tokens[option + 1]), layout, depth=depth + 1):
+                        return True
+                    break
+        for index, token in enumerate(tokens):
+            if token in (">", ">>") and index + 1 < len(tokens) and _metadata_token(tokens[index + 1], layout):
+                return True
+        if command_name in writer_commands and any(_metadata_token(token, layout) for token in tokens[start + 1:]):
+            return True
+        if script_source or command_name in ("python", "python3", "py", "pwsh", "powershell", "bash", "sh", "zsh"):
+            if any(script_write.search(_unquote(token)) and _metadata_token(token, layout) for token in tokens[start:]):
+                return True
+    return False
 
 
 def _editor_paths(tool_input):
@@ -236,7 +310,7 @@ def inspect(payload):
                 return "Git metadata write blocked. Use Git commands for repository state."
             content = args.get("content", "") if isinstance(args, dict) else ""
             script_path = any(Path(path).suffix.lower() in (".py", ".ps1", ".sh", ".bash", ".cmd", ".bat") for path in paths)
-            if script_path and isinstance(content, str) and _writes_metadata(content, layout):
+            if script_path and isinstance(content, str) and _writes_metadata(content, layout, script_source=True):
                 return "Git metadata write in script text blocked. Use Git commands for repository state."
         except (OSError, ValueError):
             return "Editor path could not be verified; Git metadata write blocked."

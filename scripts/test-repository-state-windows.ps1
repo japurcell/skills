@@ -44,6 +44,12 @@ try {
                         else { $editorResult.hookSpecificOutput.permissionDecision }
             if ($LASTEXITCODE -ne 0 -or $decision -cne 'deny') { throw "linked Git metadata write was not denied for $($provider.Name)" }
         }
+        foreach ($quotedCommand in @("echo 'git checkout branch'", "echo '.git/config > file'")) {
+            $quotedPayload = if ($provider.Name -eq 'copilot') { @{ cwd=$repo; toolName=$provider.Tool; toolArgs=@{ command=$quotedCommand } } }
+                             else { @{ cwd=$repo; tool_name=$provider.Tool; tool_input=@{ command=$quotedCommand } } }
+            $quotedResult = ($quotedPayload | ConvertTo-Json -Compress -Depth 5) | & python -I -S -B $hook | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0 -or $quotedResult.PSObject.Properties.Count -ne 0) { throw "quoted prose was denied for $($provider.Name)" }
+        }
         $read = if ($provider.Name -eq 'copilot') { @{ cwd=$repo; toolName=$provider.Tool; toolArgs=@{ command='git status' } } }
                 else { @{ cwd=$repo; tool_name=$provider.Tool; tool_input=@{ command='git status' } } }
         $readResult = ($read | ConvertTo-Json -Compress -Depth 5) | & python -I -S -B $hook | ConvertFrom-Json

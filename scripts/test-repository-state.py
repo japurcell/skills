@@ -144,6 +144,18 @@ class RepositoryStateTests(unittest.TestCase):
             output = self.invoke(provider, editor, {"file_path": "sample.ps1", "content": "Set-Content .git/config bad"})
             self.denied(provider, output)
 
+    def test_shell_quoted_prose_does_not_trigger_git_guard(self):
+        for provider, shell in (("copilot", "bash"), ("gemini", "run_shell_command"), ("codex", "Bash")):
+            for command in ("echo 'git checkout branch'", "echo 'note; git restore file'", "echo git checkout branch", "echo '.git/config > file'", "cat .git/config > copy.txt"):
+                with self.subTest(provider=provider, command=command):
+                    self.assertEqual(self.invoke(provider, shell, {"command": command}), {})
+            self.denied(provider, self.invoke(provider, shell, {"command": "git checkout branch"}))
+            self.denied(provider, self.invoke(provider, shell, {"command": "git checkout 'unfinished"}))
+            self.denied(provider, self.invoke(provider, shell, {"command": "echo bad > .git/config"}))
+            self.denied(provider, self.invoke(provider, shell, {"command": "bash -c 'git checkout branch'"}))
+            self.denied(provider, self.invoke(provider, shell, {"command": "pwsh -Command 'git restore tracked.txt'"}))
+            self.denied(provider, self.invoke(provider, shell, {"command": "python -c \"open('.git/config','w')\""}))
+
     def test_documentation_can_quote_a_blocked_command(self):
         for provider, editor in (("copilot", "edit"), ("gemini", "write_file"), ("codex", "Edit")):
             self.assertEqual(self.invoke(provider, editor, {"file_path": "guide.md", "content": "Example: echo x > .git/config"}), {})
