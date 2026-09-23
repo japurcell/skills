@@ -13,7 +13,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - [x] (2026-09-23 17:59Z) [planning] Replace the eight Ready entries in `docs/ideas.md` with a `Planned` link to this ExecPlan; verify the link resolves and those entries are absent.
 - [x] (2026-09-23 18:20Z) [milestone-1] Align `AGENTS.md` orientation and validation text with `.agents/memory/INDEX.md`; demonstrate the read-only exception and edit-time rule.
 - [ ] [milestone-2] File-first guidance and temporary-home installer checks are committed; Copilot/Gemini representative runs and native Windows automation remain unverified.
-- [ ] [milestone-3] Add disposable-script placement and cleanup rule only to the same three checked-in provider instructions; review their content without installer, agent-run, or Windows checks for this rule. Implementation is in progress on an isolated branch.
+- [x] (2026-09-23 18:24Z) [milestone-3] Add disposable-script placement and cleanup rule only to the same three checked-in provider instructions; review their content without installer, agent-run, or Windows checks for this rule.
 - [ ] [milestone-4] Prove provider hook event/response contracts, extend Codex hook ownership/installation, and register a baseline Codex scan-secrets adapter. Implementation is in progress on an isolated branch.
 - [ ] [milestone-5] Replace scan-secrets pipe reading with bounded temporary-file capture; prove POSIX and native Windows incomplete-scan behavior in Copilot, Gemini, and Codex.
 - [ ] [milestone-6] Add common Tool Guardian and scan-secrets banners plus the Codex Tool Guardian adapter; verify block/warn behavior and safe logging in all local providers.
@@ -41,10 +41,11 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - Decision: The Disposable Probe Files milestone edits only `.gemini/GEMINI.md`, `.copilot/copilot-instructions.md`, and `.codex/AGENTS.md` and has no installer checks, local agent runs, automated Windows checks, or Windows checklist. Rationale: The user narrowed this milestone after the original broader decision. Date/Author: 2026-09-23, user and Codex.
 - Decision: Replace the eight Ready entries in `docs/ideas.md` with a short link to this plan after the plan exists. Rationale: The inbox should not present planned work as unplanned ideas. Date/Author: 2026-09-23, user and Codex.
 - Decision: Put baseline Codex scan-secrets registration in the shared hook setup milestone, then apply the bounded scanner change to all three providers before changing banner wording. Rationale: Scan Secrets Shutdown needs its own all-provider proof while retaining the accepted scanner-before-banners order. Date/Author: 2026-09-23, Codex, after plan review.
+- Decision: Milestone 4 may edit `.codex/global-hooks.json`, canonical `hooks/` source, and persistent user-level Codex hook registrations. Rationale: Automatic approval review incorrectly applied milestone 3's three-file guidance limit to milestone 4; the user explicitly approved milestone 4's separate scope. Date/Author: 2026-09-23, user.
 
 ## Outcomes & Retrospective
 
-Milestone 1 is implemented: read-only questions, reviews, and audits can start from the requested artifact; edit work still loads the index, core memory, and area guidance before writing. Milestone 2 has committed guidance and local installer checks, but its cross-provider and native Windows proofs remain open. The other milestones are not yet accepted.
+Milestones 1 and 3 are implemented. Read-only work can start from the requested artifact while edit-time orientation remains mandatory. Disposable-probe guidance now lives only in the three provider instruction sources. Milestone 2 has committed guidance and local installer checks, but its cross-provider and native Windows proofs remain open. Later milestones are not yet accepted.
 
 ## Context and Orientation
 
@@ -84,9 +85,9 @@ The installers already copy these three instruction sources to user homes. Exten
 
 ### Milestone 3: Keep disposable probes out of tracked paths
 
-Status: in progress
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
 Add the disposable probe rule only to `.gemini/GEMINI.md`, `.copilot/copilot-instructions.md`, and `.codex/AGENTS.md`. A disposable script that needs a repository-local path goes in `.agents/scratchpad/`; otherwise use the operating system's temporary directory. Keep permanent tests and tools in tracked source paths. Before finishing, inspect and remove only agent-created probes by exact path. If a repro must remain, keep it in scratchpad or temp and name its path and purpose in the handoff. Compare final Git status with the starting status so no new tracked-tree change is mistaken for an old user edit. Never overwrite or remove a pre-existing user file.
 
@@ -238,3 +239,5 @@ Implementation start note, 2026-09-23: Milestones 2 and 4 began on separate work
 Milestone 1 completion note, 2026-09-23: A narrow edit to `AGENTS.md` and `.agents/memory/INDEX.md` resolved the review concern by stating the read-only exception separately from mandatory edit-time reads. The focused text search found no remaining unconditional first-read requirement in these two files; OKF lint and diff whitespace checks passed.
 
 Milestone 2 integration note, 2026-09-23: Commit `b86ee081` adds file-first PowerShell guidance to all three provider instructions and temporary-home installer assertions. `rtk test bash scripts/test-install.sh` and `rtk test pwsh -NoProfile -File scripts/test-install.ps1` passed on macOS. A Codex multiline `.ps1` exercise with quotes and a here-string passed. Copilot and Gemini local CLIs and native Windows execution remain unavailable here, so milestone acceptance is not met.
+
+Milestone 3 completion note, 2026-09-23: Commit `d2a83a9f` adds disposable-probe placement and cleanup guidance only to `.gemini/GEMINI.md`, `.copilot/copilot-instructions.md`, and `.codex/AGENTS.md`. The three-file diff and `rtk git diff --check` passed. No installer, agent-run, or Windows check was used as acceptance for this rule. The user separately confirmed milestone 4's Codex hook source and registration scope after automatic approval review conflated it with milestone 3.
