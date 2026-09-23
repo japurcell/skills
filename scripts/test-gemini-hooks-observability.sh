@@ -1414,7 +1414,7 @@ PY
   fi
 
   # 5. Fallback fcntl gracefully on Windows/non-POSIX using python mock
-  python3 - "$home" <<'PY'
+  HOME="$home" python3 - "$home" <<'PY'
 import sys
 sys.modules["fcntl"] = None
 
@@ -1834,6 +1834,7 @@ test_observability_log_rotation_fail_open() {
 
   # Create active log and fill it past max_bytes
   mkdir -p "$(dirname "$obs_log")"
+  touch "$(dirname "$obs_log")/.maintenance_last_run"
   echo '{"test":"active"}' > "$obs_log"
 
   # Create a directory where the rotated log wants to go to force an OSError on rename
