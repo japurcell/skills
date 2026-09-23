@@ -379,9 +379,9 @@ assert "python3 ~/.codex/hooks/scan-secrets.py" in stop_commands
 for event in ("PreToolUse", "PostToolUse", "Stop"):
     commands = [hook["command"] for group in config["hooks"][event] for hook in group["hooks"]]
     assert "python3 ~/.codex/hooks/markdown-health.py" in commands
-assert pre_tool[1]["hooks"][0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
+assert sum(hook["command"] == "python3 ~/.codex/hooks/scan-secrets.py" for group in pre_tool for hook in group["hooks"]) == 1
 assert any(group["hooks"][0]["command"] == "python3 ~/.codex/hooks/repository-state.py" for group in pre_tool)
-assert config["hooks"]["Stop"][0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
+assert sum(hook["command"] == "python3 ~/.codex/hooks/scan-secrets.py" for group in config["hooks"]["Stop"] for hook in group["hooks"]) == 1
 PY
 }
 

@@ -35,7 +35,9 @@
             "type": "command",
             "command": "python3 ~/.codex/hooks/markdown-health.py",
             "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\markdown-health.py\"",
-            "env": {"MARKDOWN_HEALTH_EVENT": "pre"},
+            "env": {
+              "MARKDOWN_HEALTH_EVENT": "pre"
+            },
             "timeout": 10,
             "statusMessage": "Recording Markdown baseline"
           },
@@ -54,21 +56,6 @@
             "statusMessage": "Checking dangerous tool actions"
           }
         ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash|apply_patch|Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ~/.codex/hooks/markdown-health.py",
-            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\markdown-health.py\"",
-            "env": {"MARKDOWN_HEALTH_EVENT": "post"},
-            "timeout": 10,
-            "statusMessage": "Checking touched Markdown"
-          }
-        ]
       },
       {
         "matcher": "Bash|apply_patch|Edit|Write",
@@ -83,6 +70,23 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.codex/hooks/markdown-health.py",
+            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\markdown-health.py\"",
+            "env": {
+              "MARKDOWN_HEALTH_EVENT": "post"
+            },
+            "timeout": 10,
+            "statusMessage": "Checking touched Markdown"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -90,7 +94,9 @@
             "type": "command",
             "command": "python3 ~/.codex/hooks/markdown-health.py",
             "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\markdown-health.py\"",
-            "env": {"MARKDOWN_HEALTH_EVENT": "final"},
+            "env": {
+              "MARKDOWN_HEALTH_EVENT": "final"
+            },
             "timeout": 10,
             "statusMessage": "Checking Markdown before completion"
           },
