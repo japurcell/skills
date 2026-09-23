@@ -37,6 +37,10 @@ On macOS, a temporary worktree pointer can name `/var/...` while resolved Git/co
 
 Codex `PreToolUse` reports file edits as `tool_name: "apply_patch"` with patch text under `tool_input.command`; it does not provide a `file_path` field. Parse the patch's Add, Update, Delete, and Move headers before deciding whether a Git metadata path is affected. Missing or malformed patch paths deny the edit.
 
+## Codex handler environment does not select Markdown event
+
+Codex CLI 0.155.1 ignores per-handler `env` in `~/.codex/hooks.json`. The Markdown hook reads `hook_event_name` from the input JSON to distinguish `PreToolUse`, `PostToolUse`, and `Stop`. A `PostToolUse` envelope at `Stop` produces `hook returned invalid stop hook JSON output`; Codex `Stop` accepts the common message fields and `decision: "block"` with `reason`, but not `hookSpecificOutput` or `decision: "allow"`.
+
 ## Quoted shell prose is not an executable Git command
 
 Do not search raw shell text for `git checkout` or redirection markers. `echo 'git checkout branch'` and `echo '.git/config > file'` are data. Tokenize with quote boundaries intact, inspect executable command positions and redirection targets, and recurse only into recognized shell `-c`/PowerShell `-Command` arguments. Malformed actual commands still deny; a quote-blind split on `;` or `>` creates false denials.

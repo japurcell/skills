@@ -331,7 +331,7 @@ def audit(status, paths, count, context):
 
 def response(event, status, findings, warning, retry):
     if status == "pass" and not findings and not warning:
-        return {"decision": "allow"} if event == "final" and PROVIDER != "gemini" else {}
+        return {"decision": "allow"} if event == "final" and PROVIDER == "copilot" else {}
     shown = [f"{path}:{line}: {rule}" + (f" ({target})" if target else "")
              for path, line, rule, target in findings[:20]]
     rerun_path = shlex.quote(findings[0][0]) if findings else "<path>"
@@ -354,8 +354,10 @@ def response(event, status, findings, warning, retry):
             return {"systemMessage": message}
         if PROVIDER == "codex":
             if event == "final":
-                return {"decision": "block" if status == "fail" and retry < 2 else "allow", "reason": message}
-            return {"systemMessage": message, "hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": message}}
+                return {"decision": "block", "reason": message} if status == "fail" and retry < 2 else {"systemMessage": message}
+            if event == "post":
+                return {"systemMessage": message, "hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": message}}
+            return {"systemMessage": message}
         if event == "final":
             return {"decision": "block" if status == "fail" and retry < 2 else "allow", "reason": message}
         return {"additionalContext": message}
@@ -371,7 +373,7 @@ def response(event, status, findings, warning, retry):
 
 
 def main():
-    event = os.environ.get("MARKDOWN_HEALTH_EVENT", "post")
+    event = "unknown" if PROVIDER == "codex" else os.environ.get("MARKDOWN_HEALTH_EVENT", "post")
     paths = []
     checked = []
     content_fingerprints = []
@@ -383,6 +385,10 @@ def main():
         payload = read_json_input()
         if not isinstance(payload, dict):
             raise Incomplete("Invalid Markdown hook input")
+        if PROVIDER == "codex":
+            event = {"PreToolUse": "pre", "PostToolUse": "post", "Stop": "final"}.get(payload.get("hook_event_name"), "unknown")
+            if event == "unknown":
+                raise Incomplete("Unknown Codex hook event")
         session = payload.get("sessionId") or payload.get("session_id") or ""
         root_value = payload.get("cwd")
         if not isinstance(root_value, str) or not Path(root_value).is_dir() or not isinstance(session, str) or not session:
@@ -412,7 +418,7 @@ def main():
                 touched.add(resolved.relative_to(root).as_posix())
         paths = sorted(path for path in touched if path in current)
         if not paths:
-            emit_json({"decision": "allow"} if event == "final" and PROVIDER != "gemini" else {})
+            emit_json({"decision": "allow"} if event == "final" and PROVIDER == "copilot" else {})
             return
         state["touched"] = sorted(touched)
         for path in paths:

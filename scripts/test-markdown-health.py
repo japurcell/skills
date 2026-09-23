@@ -34,12 +34,14 @@ class MarkdownHealthTests(unittest.TestCase):
             payload = {"sessionId": "test-session", "cwd": str(self.root), "toolName": tool,
                        "toolArgs": args or {}, "stop_hook_active": False}
         else:
+            hook_event = {"pre": "PreToolUse", "post": "PostToolUse", "final": "Stop"}[event] if provider == "codex" else event
             payload = {"session_id": "test-session", "cwd": str(self.root),
-                       "hook_event_name": event, "tool_name": tool,
+                       "hook_event_name": hook_event, "tool_name": tool,
                        "tool_input": args or {}, "stop_hook_active": False}
         environment = os.environ.copy()
-        environment.update(MARKDOWN_HEALTH_EVENT=event, MARKDOWN_HEALTH_STATE_DIR=str(self.state),
-                           AUDIT_LOG=str(self.audit))
+        environment.update(MARKDOWN_HEALTH_STATE_DIR=str(self.state), AUDIT_LOG=str(self.audit))
+        if provider != "codex":
+            environment["MARKDOWN_HEALTH_EVENT"] = event
         completed = subprocess.run([sys.executable, str(HOOKS[provider])], input=json.dumps(payload),
                                    text=True, capture_output=True, env=environment, timeout=10)
         self.assertEqual(completed.returncode, 0, completed.stderr)
@@ -92,6 +94,8 @@ class MarkdownHealthTests(unittest.TestCase):
                     if provider != "copilot":
                         handlers = [hook for group in handlers for hook in group["hooks"]]
                     self.assertTrue(any("markdown-health.py" in json.dumps(hook) for hook in handlers))
+                    if provider == "codex":
+                        self.assertTrue(all("env" not in hook for hook in handlers if "markdown-health.py" in hook.get("command", "")))
 
     def test_parser_ignores_code_and_checks_references_and_duplicate_slugs(self) -> None:
         (self.root / "target.md").write_text("# Repeat\n# Repeat\n", encoding="utf-8")
@@ -128,6 +132,12 @@ class MarkdownHealthTests(unittest.TestCase):
         self.assertIn("incomplete", json.dumps(result))
         self.assertFalse(self.audit.exists())
 
+    def test_clean_codex_final_has_valid_stop_output(self) -> None:
+        self.run_hook("codex", "pre")
+        self.assertEqual(self.run_hook("codex", "final"), {})
+        (self.root / "new.md").write_text("okay\n", encoding="utf-8")
+        self.assertEqual(self.run_hook("codex", "final"), {})
+
     @unittest.skipUnless(os.name == "nt", "native Windows path case")
     def test_native_windows_absolute_tool_path(self) -> None:
         self.run_hook("codex", "pre")
@@ -147,7 +157,8 @@ class MarkdownHealthTests(unittest.TestCase):
         third = self.run_hook("codex", "final")
         self.assertEqual(first["decision"], "block")
         self.assertEqual(second["decision"], "block")
-        self.assertEqual(third["decision"], "allow")
+        self.assertNotIn("decision", third)
+        self.assertIn("missing local target", third["systemMessage"])
         self.assertEqual(len(self.audit.read_text().splitlines()), 2)
 
     def test_unclosed_fence_and_missing_heading_fragment(self) -> None:
