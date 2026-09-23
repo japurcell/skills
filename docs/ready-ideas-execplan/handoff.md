@@ -6,14 +6,14 @@ Implement [ExecPlan](ExecPlan.md) on `codex/ready-ideas-execplan`. It now has 12
 
 - **Accepted and integrated:** milestone 1 read-only orientation (`AGENTS.md`, `.agents/memory/INDEX.md`); milestone 3 disposable-probe guidance in only the three provider instruction files.
 - **Integrated, acceptance open:** milestone 2 file-first PowerShell guidance and temporary-home installer checks; native Windows automation remains. Milestone 4 Codex scanner transport, installer merger, Windows workflow, and delivery probe; deployed Codex `PreToolUse`/`Stop` and timeout behavior remain unproved.
-- **Integrated, acceptance open:** milestone 5 scanner shutdown is on base at `510b16fc`; native Windows scanner execution remains. Milestone 9 explicit RTK rewrite is committed privately at `943b1ca8` in `/Users/adam/.codex/worktrees/ready-ideas-m9/skills` and awaits conflict-aware rebase onto base.
+- **Integrated, acceptance open:** milestone 5 scanner shutdown is on base at `510b16fc`; native Windows scanner execution remains. Milestone 9 RTK rewrite is on base at `5a5c47c0`; native Windows and deployed provider hook behavior remain.
 - **Active isolated branch:** milestone 8 Markdown health hook is running on `codex/ready-ideas-m8` at `/Users/adam/.codex/worktrees/ready-ideas-m8/skills`; it started from an earlier base, so integration must account for later hooks and workflow edits.
-- **Prepared, not started:** milestone 6 has a clean isolated branch `codex/ready-ideas-m6` at `/Users/adam/.codex/worktrees/ready-ideas-m6/skills`, based on integrated milestone 5. Agent spawn returned `agent thread limit reached` while the milestone-9 merger and milestone-8 worker were active.
+- **Active isolated branch:** milestone 6 security banners and Codex Tool Guardian are running on `codex/ready-ideas-m6` at `/Users/adam/.codex/worktrees/ready-ideas-m6/skills`; it started after milestone 5 but before milestone 9 integration.
 - **Remaining:** milestones 6–8 and 10, plus later-session live milestones 11 (Copilot CLI and local VS Code) and 12 (Gemini CLI). Do not mark the full plan complete while these remain open.
 
 ## Next step
 
-Wait for the separate milestone-9 merger agent to finish its conflict-aware rebase onto base `codex/ready-ideas-execplan`. Review the result and fast-forward the clean branch, then update the ExecPlan and this handoff. Start milestone 6's prepared branch when an agent slot opens; milestone 8 is already running.
+Wait for milestone-6 and milestone-8 implementers. Review clean committed branches and integrate one at a time through conflict-aware rebases where shared generated-hook registration or test files overlap. Milestone 7 is the next independent source node and needs a new isolated worktree and fresh implementer when an agent slot opens.
 
 ## Decisions and constraints
 
@@ -30,11 +30,11 @@ Wait for the separate milestone-9 merger agent to finish its conflict-aware reba
 - Milestone 3: three-file diff review and whitespace check passed. No probes or extra checks were created.
 - Milestone 4: integrated tip `a74d5a02` had passing scanner, startup, merger, installer, generator, runner-registry, and nine probe tests on macOS. `codex-cli 0.155.1` exited `0` in two guarded read-only probes but produced zero `PreToolUse` markers; cleanup restored the original `~/.codex/hooks.json` bytes. [Codex hook docs](https://developers.openai.com/codex/hooks) say non-managed hooks require exact-definition trust through `/hooks`; no trust bypass was used. Inspect trust and event delivery before claiming installed behavior.
 - Milestone 5: generated-hook descendant-held-stdout reproduction exceeded three seconds before the fix and passed afterward. Three provider scanner suites, 24 generator tests, 14 runner tests, freshness, OKF lint, and diff checks passed. Rebase onto base had no conflicts. Windows suite is registered but native cases did not run on macOS.
-- Milestone 9: source branch tests passed, including RTK provider envelopes, generator, installers, runner, merger, and OKF. Official macOS arm64 and Windows x64 archive checksums matched; isolated installs passed. The macOS verified launcher preserved missing-file stderr/exit `1` and hid the false notice. The user-home prerelease is installed side by side; stable terminal RTK remains `0.49.0`. Native Windows workflow and deployed Codex `PreToolUse` remain unverified.
+- Milestone 9: integrated at `5a5c47c0`. Source checks passed, including RTK provider envelopes, generator, installers, runner, merger, and OKF. Official macOS arm64 and Windows x64 archive checksums matched; isolated installs passed. The real macOS launcher preserved missing-file stderr/exit `1` and hid the false notice. The user-home prerelease is installed side by side; terminal RTK remains `0.49.0`. Merger resolved API-map and Windows-workflow conflicts with milestone 5; affected generator, RTK, scanner, runner, freshness, and whitespace checks passed. Native Windows workflow and deployed Codex `PreToolUse` remain unverified.
 - Custom `CODEX_HOME` remains a Codex hook-install limitation: installers put hooks/config under `HOME/.codex` and registered commands point there, while the probe can target custom `CODEX_HOME`. Coordinate installer and template paths before claiming custom-home support.
 - `.github/workflows/ready-ideas-windows.yml` exists but has not run on native Windows. `rtk gh auth status` failed because the local GitHub token is invalid; do not claim CI proof until a runner result exists. macOS `pwsh` is not native Windows evidence.
 - Copilot and Gemini CLIs are absent on this Mac. No provider versions or live outcomes were fabricated. Copilot cloud is outside user-level hook scope; arbitrary child-process writes cannot be fully intercepted by pre-tool hooks.
-- Agent runtime rejected fresh implementer spawns with `agent thread limit reached` while two workers plus the root were active. A retry succeeded after milestone-5 and milestone-9 workers finished; milestone 8 is active now. Milestone 6 remains prepared until the merger frees a slot.
+- Agent runtime rejected fresh implementer spawns with `agent thread limit reached` while two workers plus the root were active. Retries succeeded when prior workers finished; use the same bounded parallelism for milestone 7 and later nodes.
 
 ## Relevant files
 

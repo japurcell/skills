@@ -16,10 +16,10 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - [x] (2026-09-23 18:24Z) [milestone-3] Add disposable-script placement and cleanup rule only to the same three checked-in provider instructions; review their content without installer, agent-run, or Windows checks for this rule.
 - [ ] [milestone-4] Codex hook transport, baseline scanner, installer, and delivery probe are integrated; deployed Codex `PreToolUse`/`Stop` delivery remains unproved.
 - [ ] [milestone-5] Bounded temporary-file capture and all three provider scanner regressions are integrated; native Windows execution remains unverified.
-- [ ] [milestone-6] Add common Tool Guardian and scan-secrets banners plus the Codex Tool Guardian adapter; verify block/warn behavior and safe logging in all local providers.
+- [ ] [milestone-6] Common security banners and the Codex Tool Guardian adapter are in progress on an isolated branch; block/warn and installed checks remain.
 - [ ] [milestone-7] Add Git metadata and local-work guardrails with provider-native approvals or user-run fallback; verify safe Git and denial cases.
-- [ ] [milestone-8] Add dependency-free Markdown checking, touched-file tracking, bounded repair, and one audit line per batch; prove provider feedback and final checks.
-- [ ] [milestone-9] Pin and verify published RTK prerelease assets, rewrite only explicit agent RTK commands with scoped suppression, and prove other diagnostics survive. Implementation is in progress on an isolated branch.
+- [ ] [milestone-8] Dependency-free Markdown checking, touched-file tracking, bounded repair, and batch audit are in progress on an isolated branch.
+- [ ] [milestone-9] Checksum-pinned prerelease installation and explicit-command rewrites are integrated; native Windows and deployed provider behavior remain unverified.
 - [ ] [milestone-10] Run the final cross-provider hook regression, native Windows automated suites, applicable Windows live-check documentation, and one end-of-session agent-doc pass; record observed outcomes.
 - [ ] [milestone-11] In a later session with Copilot CLI and local VS Code hooks available, run deployed hook and guidance checks; record versions, transcripts, outcomes, and cleanup.
 - [ ] [milestone-12] In a later session with Gemini CLI available, run deployed hook and guidance checks; record versions, transcripts, outcomes, and cleanup.
@@ -37,6 +37,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - Milestone-4 source and isolated tests now pass, including nine probe tests, but guarded `codex-cli 0.155.1` read-only runs produced zero `PreToolUse` markers. Probe cleanup restored `~/.codex/hooks.json` byte for byte; deployed event, display, and timeout behavior remain unproved. The CLI reported no explicit trust or hook-delivery error in the sanitized transcript.
 - Codex installers still place hook settings and scripts under `HOME/.codex`, with registered commands hardcoded there. A custom `CODEX_HOME` is supported for Codex agents only; the probe can target custom `CODEX_HOME`, but this does not prove hooks install there. Treat custom-home hook installation as a limitation until template and installer paths are coordinated.
 - Milestone 5 reproduced a descendant-held stdout stall through the generated public hook: the pre-fix run exceeded three seconds, while the temporary-file implementation returned within the bound. Three provider scanner suites, generator, runner, freshness, and OKF checks passed. A native Windows PowerShell suite is registered in CI but has only parsed and skipped its native cases on macOS.
+- Milestone 9's published `dev-0.50.0-rc.451` macOS arm64 and Windows x64 archives matched pinned SHA-256 values and installed in disposable homes. A real macOS launcher preserved a missing-file error and exit `1` while hiding the false hook notice; terminal RTK still reports stable `0.49.0`. Rebase conflicts in API map and Windows workflow were resolved with both milestone 5 and 9 contracts retained. Affected generator, RTK, scanner, runner, freshness, and whitespace checks passed. Native Windows and deployed provider hooks remain unverified.
 
 ## Decision Log
 
@@ -52,7 +53,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 ## Outcomes & Retrospective
 
-Milestones 1 and 3 are implemented. Read-only work can start from the requested artifact while edit-time orientation remains mandatory. Disposable-probe guidance now lives only in the three provider instruction sources. Milestone 2 has committed guidance and local installer checks, but native Windows proof remains open. Milestone 4 has integrated source and isolated proof, but deployed Codex delivery remains unproved. Milestone 5 has integrated bounded scanner capture and local provider regressions; native Windows proof remains open. Copilot and Gemini deployed checks are explicitly deferred to milestones 11 and 12; they remain unverified until run in another session.
+Milestones 1 and 3 are implemented. Read-only work can start from the requested artifact while edit-time orientation remains mandatory. Disposable-probe guidance now lives only in the three provider instruction sources. Milestone 2 has committed guidance and local installer checks, but native Windows proof remains open. Milestone 4 has integrated source and isolated proof, but deployed Codex delivery remains unproved. Milestone 5 has integrated bounded scanner capture and local provider regressions; native Windows proof remains open. Milestone 9 has integrated checksum-pinned RTK installation and explicit-command rewrite; native Windows and deployed hook proof remain open. Copilot and Gemini deployed checks are explicitly deferred to milestones 11 and 12; they remain unverified until run in another session.
 
 ## Context and Orientation
 
@@ -128,7 +129,7 @@ Regenerate `.copilot/hooks/scripts/scan-secrets.py`, `.gemini/hooks/scripts/scan
 
 ### Milestone 6: Show safe security decisions in every local provider
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
@@ -152,7 +153,7 @@ Apply OS path protection only where effective-policy inspection and safe probes 
 
 ### Milestone 8: Validate only touched Markdown, with one audit line per batch
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
@@ -272,3 +273,5 @@ Milestone 4 integration note, 2026-09-23: Branch tip `a74d5a02` integrates the b
 Parallel implementation note, 2026-09-23: Milestones 5 and 9 started in separate worktrees after milestone-4 source integration. Their canonical hook families are disjoint. Integration remains serialized; shared workflow and test-runner edits receive conflict review and affected tests when needed.
 
 Milestone 5 integration note, 2026-09-23: Branch tip `510b16fc` integrates bounded temporary-file Git capture and generated scanner updates across all three providers. The generated-hook descendant-held-stdout case exceeded three seconds before the fix and completed within the bound afterward. Three scanner suites, 24 generator tests, 14 runner tests, generated freshness, OKF lint, and diff whitespace checks passed; rebase had no conflicts. Native Windows cases are wired into CI but did not run on this macOS host, so acceptance remains open.
+
+Milestone 9 integration note, 2026-09-23: Branch tip `5a5c47c0` integrates verified prerelease installation and explicit RTK command rewrites. The published macOS arm64 and Windows x64 archives matched pinned checksums; disposable installs passed, and the user-home prerelease remains beside terminal RTK `0.49.0`. A real macOS command preserved missing-file stderr/exit `1` without the false warning. The merger resolved API-map and Windows-workflow conflicts with milestone 5 and reran affected checks successfully. Native Windows and deployed provider hook acceptance remain open. Milestones 6 and 8 have started on separate branches.
