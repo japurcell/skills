@@ -14,7 +14,7 @@ Implement [ExecPlan](ExecPlan.md) on `codex/ready-ideas-execplan`. Its 12 milest
 1. Review the installed non-managed Codex hook definitions through `/hooks`, then rerun the harmless `scripts/probe-provider-hook-delivery.py` normal and one-second timeout probes. Do not bypass provider trust. The latest read-only `codex exec` exited `0` but produced zero `PreToolUse` and `Stop` markers; probe cleanup restored the exact post-install config digest. Until delivery is observed, Codex display, denial, final-event, and timeout claims remain open.
 2. Run `.github/workflows/ready-ideas-windows.yml` on native Windows once GitHub authentication or a Windows runner is available. Local `gh auth status` reports invalid authentication. macOS PowerShell runs and skipped Windows cases do not close this gate. Record each workflow step and any failure in the ExecPlan.
 3. In later sessions with already installed Copilot CLI/local VS Code and Gemini CLI, complete milestones 11 and 12 using [the Windows and live-check procedure](windows-live-check.md). The user chose separate sessions rather than installing those CLIs on this Mac.
-4. After any new code or configuration work, run the final agent-doc pass for that work session, update this handoff and ExecPlan, and commit synchronized docs. This session's `update-agent-docs` and `okf-authoring` pass is complete; commit its pending `.agents/memory/` and plan changes before stopping.
+4. After any new code or configuration work, run the final agent-doc pass for that work session, update this handoff and ExecPlan, and commit synchronized docs. This session's `update-agent-docs` and `okf-authoring` pass is committed at `594e49c9`.
 
 ## Evidence and constraints
 
