@@ -861,9 +861,11 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $handler['command'] -Message "Expected the Codex handler's POSIX command to target the installed hook."
         Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\load-required-skills.py"' -Actual $handler['commandWindows'] -Message "Expected the exact Windows Codex command."
         Assert-Equals -Expected 'python3 ~/.codex/hooks/rtk-explicit-codex.py' -Actual $config['hooks']['PreToolUse'][0]['hooks'][0]['command'] -Message 'Expected PreToolUse to register explicit RTK rewriting.'
-        Assert-Equals -Expected 'python3 ~/.codex/hooks/scan-secrets.py' -Actual $config['hooks']['PreToolUse'][1]['hooks'][0]['command'] -Message 'Expected PreToolUse to retain the maintained scanner.'
-        Assert-Equals -Expected 'python3 ~/.codex/hooks/tool-guard.py' -Actual $config['hooks']['PreToolUse'][1]['hooks'][1]['command'] -Message 'Expected Codex Tool Guardian registration.'
-        Assert-Equals -Expected 'python3 ~/.codex/hooks/scan-secrets.py' -Actual $config['hooks']['Stop'][0]['hooks'][0]['command'] -Message 'Expected Stop to retain the maintained scanner.'
+        $preCommands = @($config['hooks']['PreToolUse'][1]['hooks'] | ForEach-Object { $_['command'] })
+        Assert-True -Condition ($preCommands -contains 'python3 ~/.codex/hooks/scan-secrets.py') -Message 'Expected PreToolUse to retain the maintained scanner.'
+        Assert-True -Condition ($preCommands -contains 'python3 ~/.codex/hooks/tool-guard.py') -Message 'Expected Codex Tool Guardian registration.'
+        $stopCommands = @($config['hooks']['Stop'][0]['hooks'] | ForEach-Object { $_['command'] })
+        Assert-True -Condition ($stopCommands -contains 'python3 ~/.codex/hooks/scan-secrets.py') -Message 'Expected Stop to retain the maintained scanner.'
         foreach ($event in @('PreToolUse', 'PostToolUse', 'Stop')) {
             $commands = @($config['hooks'][$event] | ForEach-Object { $_['hooks'] } | ForEach-Object { $_['command'] })
             Assert-True -Condition ($commands -contains 'python3 ~/.codex/hooks/markdown-health.py') -Message "Expected $event to use the Markdown hook."

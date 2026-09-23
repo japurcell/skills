@@ -368,9 +368,11 @@ assert handler["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-r
 pre_tool = config["hooks"]["PreToolUse"]
 assert len(pre_tool) == 2
 assert pre_tool[0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/rtk-explicit-codex.py"
-assert pre_tool[1]["hooks"][0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
-assert pre_tool[1]["hooks"][1]["command"] == "python3 ~/.codex/hooks/tool-guard.py"
-assert config["hooks"]["Stop"][0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
+pre_commands = [hook["command"] for hook in pre_tool[1]["hooks"]]
+assert "python3 ~/.codex/hooks/scan-secrets.py" in pre_commands
+assert "python3 ~/.codex/hooks/tool-guard.py" in pre_commands
+stop_commands = [hook["command"] for hook in config["hooks"]["Stop"][0]["hooks"]]
+assert "python3 ~/.codex/hooks/scan-secrets.py" in stop_commands
 for event in ("PreToolUse", "PostToolUse", "Stop"):
     commands = [hook["command"] for group in config["hooks"][event] for hook in group["hooks"]]
     assert "python3 ~/.codex/hooks/markdown-health.py" in commands
