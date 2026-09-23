@@ -7,12 +7,13 @@ Implement [ExecPlan](ExecPlan.md) on `codex/ready-ideas-execplan`. It now has 12
 - **Accepted and integrated:** milestone 1 read-only orientation (`AGENTS.md`, `.agents/memory/INDEX.md`); milestone 3 disposable-probe guidance in only the three provider instruction files.
 - **Integrated, acceptance open:** milestone 2 file-first PowerShell guidance and temporary-home installer checks; native Windows automation remains. Milestone 4 Codex scanner transport, installer merger, Windows workflow, and delivery probe; deployed Codex `PreToolUse`/`Stop` and timeout behavior remain unproved.
 - **Integrated, acceptance open:** milestone 5 scanner shutdown is on base at `510b16fc`; native Windows scanner execution remains. Milestone 9 explicit RTK rewrite is committed privately at `943b1ca8` in `/Users/adam/.codex/worktrees/ready-ideas-m9/skills` and awaits conflict-aware rebase onto base.
-- **Prepared, not started:** milestone 8 has a clean isolated branch `codex/ready-ideas-m8` at `/Users/adam/.codex/worktrees/ready-ideas-m8/skills`. Agent spawn returned `agent thread limit reached`; do not mistake this branch for implementation progress.
+- **Active isolated branch:** milestone 8 Markdown health hook is running on `codex/ready-ideas-m8` at `/Users/adam/.codex/worktrees/ready-ideas-m8/skills`; it started from an earlier base, so integration must account for later hooks and workflow edits.
+- **Prepared, not started:** milestone 6 has a clean isolated branch `codex/ready-ideas-m6` at `/Users/adam/.codex/worktrees/ready-ideas-m6/skills`, based on integrated milestone 5. Agent spawn returned `agent thread limit reached` while the milestone-9 merger and milestone-8 worker were active.
 - **Remaining:** milestones 6–8 and 10, plus later-session live milestones 11 (Copilot CLI and local VS Code) and 12 (Gemini CLI). Do not mark the full plan complete while these remain open.
 
 ## Next step
 
-Assign a separate merger agent exclusive ownership of milestone 9's clean worktree, then rebase it onto base `codex/ready-ideas-execplan`. Both branches edited `.github/workflows/ready-ideas-windows.yml` and `scripts/test-all.py`; resolve any conflicts and rerun affected tests. Review and fast-forward the rebased branch, then update the ExecPlan and this handoff. Milestone 6 can now begin because scanner shutdown is integrated.
+Wait for the separate milestone-9 merger agent to finish its conflict-aware rebase onto base `codex/ready-ideas-execplan`. Review the result and fast-forward the clean branch, then update the ExecPlan and this handoff. Start milestone 6's prepared branch when an agent slot opens; milestone 8 is already running.
 
 ## Decisions and constraints
 
@@ -33,7 +34,7 @@ Assign a separate merger agent exclusive ownership of milestone 9's clean worktr
 - Custom `CODEX_HOME` remains a Codex hook-install limitation: installers put hooks/config under `HOME/.codex` and registered commands point there, while the probe can target custom `CODEX_HOME`. Coordinate installer and template paths before claiming custom-home support.
 - `.github/workflows/ready-ideas-windows.yml` exists but has not run on native Windows. `rtk gh auth status` failed because the local GitHub token is invalid; do not claim CI proof until a runner result exists. macOS `pwsh` is not native Windows evidence.
 - Copilot and Gemini CLIs are absent on this Mac. No provider versions or live outcomes were fabricated. Copilot cloud is outside user-level hook scope; arbitrary child-process writes cannot be fully intercepted by pre-tool hooks.
-- Agent runtime currently rejected a fresh milestone-8 implementer with `agent thread limit reached` even though its isolated worktree and branch were created. Retry after active workers finish; if the limit persists, record the constraint and continue the ExecPlan without losing the prepared branch.
+- Agent runtime rejected fresh implementer spawns with `agent thread limit reached` while two workers plus the root were active. A retry succeeded after milestone-5 and milestone-9 workers finished; milestone 8 is active now. Milestone 6 remains prepared until the merger frees a slot.
 
 ## Relevant files
 
