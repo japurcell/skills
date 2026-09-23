@@ -15,6 +15,7 @@ This map plans the work; it does not implement the eight changes. Keep each unde
 - [Repository State Guardrails](tickets/repository-state-guardrails.md): layer provider path protection, pre-tool checks, and instructions; require full local-change review and explicit approval before a Git command discards work.
 - [Scan Secrets Shutdown](tickets/scan-secrets-shutdown.md): replace threaded Git pipe reading with bounded temporary-file capture; discard incomplete output, deny in block mode, warn at session end, and test native Windows hang cases.
 - [Read Only Orientation](tickets/read-only-orientation.md): exempt read-only audits, diff reviews, and reports from mandatory memory pre-reading; load task-relevant guidance and complete full orientation before any edit.
+- [PowerShell Authoring Guidance](tickets/powershell-authoring-guidance.md): instruct local Gemini, Copilot, and Codex to write multiline PowerShell and reusable automation scripts with native file tools before running saved files; verify installed guidance and agent behavior.
 
 ## Not yet specified
 
