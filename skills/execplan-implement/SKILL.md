@@ -20,7 +20,9 @@ Communication to and from subagents should be sparse. Communicate primarily thro
 
 1. Activate the `exec-plans` and `delegate-to-subagents` skills.
 
-2. Read the ExecPlan and progress checklist items. Read enough to understand the task graph.
+2. Read the ExecPlan and progress checklist items. Read just enough to understand the task graph at the orchestration level.
+
+   **Prevent double file reads:** Avoid reading task-specific files that are going to be read by the **implementer subagents** unless absolutely necessary for orchestration purposes. Double-reading files is inefficient and expensive.
 
 3. (optional) Use an **exploration subagent** to conduct any exploration required by the progress checklist items - relevant codebase files or external documentation. Ensure the exploration subagent can save files - it should save its markdown notes beside the ExecPlan, accessible by all future subagents. This lets **implementer subagents** focus on implementation rather than exploration.
 
