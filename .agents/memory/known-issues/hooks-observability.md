@@ -52,3 +52,7 @@ Ignore payloads with `type: progress` in `complete_hook_capture`. Finalize captu
 ## Empty Gemini probe logs can hide fallback writes
 
 An empty file selected through `GEMINI_OBSERVABILITY_LOG_PATH` does not by itself prove that Gemini skipped a hook. If the CLI does not pass that variable to the hook process, the emitter falls back to `$HOME/.gemini/hooks/logs/observability.ndjson`. Check that default log, then invoke the installed emitter directly with the override before classifying the failure as event dispatch, environment propagation, or emitter failure.
+
+## Detached maintenance can race test cleanup
+
+A `SessionEnd` hook can launch detached maintenance when a disposable home's maintenance sentinel is absent. A test that immediately removes that home can fail with `Directory not empty`. For tests unrelated to maintenance, create a fresh sentinel in that disposable home's hook log directory before invoking the event. Scope mocked locking subprocesses to the disposable `HOME`; otherwise they can write a trace database in the real user home.

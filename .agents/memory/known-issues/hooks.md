@@ -41,6 +41,10 @@ Codex `PreToolUse` reports file edits as `tool_name: "apply_patch"` with patch t
 
 Do not search raw shell text for `git checkout` or redirection markers. `echo 'git checkout branch'` and `echo '.git/config > file'` are data. Tokenize with quote boundaries intact, inspect executable command positions and redirection targets, and recurse only into recognized shell `-c`/PowerShell `-Command` arguments. Malformed actual commands still deny; a quote-blind split on `;` or `>` creates false denials.
 
+## In-place writers bypass output-redirection checks
+
+A shell command can modify `.git` without `>` or a direct editor tool. Recognize in-place `sed`, `perl`, `truncate`, and `install` forms at executable positions in `_writes_metadata`, including `.exe` names, while preserving read-only commands and quoted prose. Test provider-native public hook envelopes before accepting a writer-rule change.
+
 ## Git guard cannot inspect later child-process writes
 
 The repository-state guard sees provider tool arguments before execution. It can block direct editor targets and recognizable literal shell or script text, but cannot prove what `python script.py`, PowerShell child processes, Git hooks, or other later processes will write. Copilot pre-tool hook timeouts also fail open. Treat OS sandbox policy as a separate layer only after inspecting its effective settings on the installed provider and platform; no global sandbox setting is changed by this repository.
