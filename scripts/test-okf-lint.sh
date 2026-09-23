@@ -456,6 +456,7 @@ test_okf006_explicit_offset_timestamps() {
 test_okf007_lowercase_reserved_paths() {
   local case_repo
   case_repo="$(new_case_repo okf007-index)"
+  rm -f "$case_repo/.agents/memory/INDEX.md"
   cp "$case_repo/.agents/memory/DRAFT.md" "$case_repo/.agents/memory/index.md"
   expect_diagnostic "$case_repo" OKF007 .agents/memory/index.md 1 1
   assert_json_only_id OKF007

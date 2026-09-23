@@ -143,13 +143,13 @@ assert_hook_registered_with_observability_emitter() {
   local source_event_name="$2"
 
   assert_equals 'python "$HOME/.gemini/hooks/scripts/send-event.py"' \
-    "$(jq -r ".hooks.${hook_name}[0].hooks[0].command // empty" "$REPO_ROOT/.gemini/global-settings.json")" \
-    "Expected $hook_name to start with send-event.py."
+    "$(jq -r --arg event "$hook_name" '.hooks[$event][].hooks[] | select(.env.OBSERVABILITY_CAPTURE_EVENT == "true") | .command' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected $hook_name to register send-event.py."
   assert_equals true \
-    "$(jq -r ".hooks.${hook_name}[0].hooks[0].env.OBSERVABILITY_CAPTURE_EVENT == \"true\"" "$REPO_ROOT/.gemini/global-settings.json")" \
+    "$(jq -r --arg event "$hook_name" '[.hooks[$event][].hooks[] | select(.env.OBSERVABILITY_CAPTURE_EVENT == "true")] | length == 1' "$REPO_ROOT/.gemini/global-settings.json")" \
     "Expected $hook_name to capture observability input."
   assert_equals "$source_event_name" \
-    "$(jq -r ".hooks.${hook_name}[0].hooks[0].env.OBSERVABILITY_SOURCE_EVENT_NAME" "$REPO_ROOT/.gemini/global-settings.json")" \
+    "$(jq -r --arg event "$hook_name" '.hooks[$event][].hooks[] | select(.env.OBSERVABILITY_CAPTURE_EVENT == "true") | .env.OBSERVABILITY_SOURCE_EVENT_NAME' "$REPO_ROOT/.gemini/global-settings.json")" \
     "Expected $hook_name to preserve its source event name."
 }
 
@@ -1211,8 +1211,8 @@ test_sqlite_finalization_and_transcripts() {
 
   local stale_epoch
   stale_epoch="$(python3 -c "import time; print(int(time.time() - 30 * 3600))")"
-  touch -d "@$stale_epoch" "$active_dir_stale"
-  touch -d "@$stale_epoch" "$reg_file_stale"
+  python3 -c 'import os, sys; stamp = int(sys.argv[1]); [os.utime(path, (stamp, stamp)) for path in sys.argv[2:]]' \
+    "$stale_epoch" "$active_dir_stale" "$reg_file_stale"
 
   env HOME="$home" PYTHONPATH="$home/.gemini/hooks/scripts" python3 -m helpers.observability --maintenance
 
@@ -1579,7 +1579,7 @@ complete_hook_capture({'sessionId': '$session_gap2', 'timestamp': '2026-06-23T23
   touch "$sentinel"
 
   # Manually set its mtime to 1 hour ago
-  touch -m -d "1 hour ago" "$sentinel"
+  python3 -c 'import os, sys, time; stamp = time.time() - 3600; os.utime(sys.argv[1], (stamp, stamp))' "$sentinel"
   local mtime_before
   if [[ "$OSTYPE" == "darwin"* ]]; then
     mtime_before="$(stat -f "%m" "$sentinel")"

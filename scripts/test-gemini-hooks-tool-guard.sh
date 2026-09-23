@@ -452,10 +452,13 @@ commands = [
     for group in settings["hooks"]["BeforeTool"] if group.get("matcher") == "*"
     for hook in group["hooks"]
 ]
+markdown = 'python "$HOME/.gemini/hooks/scripts/markdown-health.py"'
 observability = 'python "$HOME/.gemini/hooks/scripts/send-event.py"'
 guard = 'python "$HOME/.gemini/hooks/scripts/tool-guard.py"'
+assert commands.count(markdown) == 1, "Expected one Gemini Markdown baseline handler."
 assert commands.count(observability) == 1, "Expected one Gemini observability handler."
 assert commands.count(guard) == 1, "Expected one Gemini Tool Guardian handler."
+assert commands.index(markdown) < commands.index(observability), "Expected Markdown baseline before observability."
 assert commands.index(observability) < commands.index(guard), "Expected Tool Guardian after observability."
 PYTEST
 }

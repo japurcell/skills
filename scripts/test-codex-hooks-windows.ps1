@@ -33,7 +33,7 @@ try {
     $stop = Invoke-Scanner -Event Stop -Mode block
     if ($stop.decision -cne 'block') { throw 'Stop response was invalid' }
     $warn = Invoke-Scanner -Event PreToolUse -Mode warn
-    if (-not $warn.systemMessage.Contains('Potential secrets detected')) { throw 'Warning was absent' }
+    if ($warn.systemMessage -cne 'scan-secrets warning: tool scan; potential secrets detected.') { throw 'Warning was absent or lacked action' }
     if (($pretool | ConvertTo-Json -Compress) -match 'sk_live_1234567890abcdefghij') { throw 'Secret leaked to hook response' }
 
     Remove-Item -LiteralPath (Join-Path $workdir 'credentials.txt')

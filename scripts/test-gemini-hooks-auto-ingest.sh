@@ -9,6 +9,8 @@ run_installed_auto_ingest_hook() {
   local payload="$2"
   shift 2
 
+  mkdir -p "$home/.gemini/hooks/logs"
+  touch "$home/.gemini/hooks/logs/.maintenance_last_run"
   env HOME="$home" AUDIT_LOG="$home/audit.log" "$@" python3 "$home/.gemini/hooks/scripts/auto-ingest.py" <<<"$payload"
 }
 
