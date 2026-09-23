@@ -15,7 +15,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - [ ] [milestone-2] File-first guidance and temporary-home installer checks are committed; native Windows automation remains unverified. Copilot/Gemini representative runs moved to milestones 11 and 12.
 - [x] (2026-09-23 18:24Z) [milestone-3] Add disposable-script placement and cleanup rule only to the same three checked-in provider instructions; review their content without installer, agent-run, or Windows checks for this rule.
 - [ ] [milestone-4] Codex hook transport, baseline scanner, installer, and delivery probe are integrated; deployed Codex `PreToolUse`/`Stop` delivery remains unproved.
-- [ ] [milestone-5] Replace scan-secrets pipe reading with bounded temporary-file capture; prove POSIX and native Windows incomplete-scan behavior in Copilot, Gemini, and Codex. Implementation is in progress on an isolated branch.
+- [ ] [milestone-5] Bounded temporary-file capture and all three provider scanner regressions are integrated; native Windows execution remains unverified.
 - [ ] [milestone-6] Add common Tool Guardian and scan-secrets banners plus the Codex Tool Guardian adapter; verify block/warn behavior and safe logging in all local providers.
 - [ ] [milestone-7] Add Git metadata and local-work guardrails with provider-native approvals or user-run fallback; verify safe Git and denial cases.
 - [ ] [milestone-8] Add dependency-free Markdown checking, touched-file tracking, bounded repair, and one audit line per batch; prove provider feedback and final checks.
@@ -36,6 +36,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - Automatic approval review twice rejected milestone-4 edits to `.codex/global-hooks.json`, citing milestone 3's three-document scope. The user explicitly approved milestone 4's separate hook source and registration scope; that approval allowed the source implementation to proceed.
 - Milestone-4 source and isolated tests now pass, including nine probe tests, but guarded `codex-cli 0.155.1` read-only runs produced zero `PreToolUse` markers. Probe cleanup restored `~/.codex/hooks.json` byte for byte; deployed event, display, and timeout behavior remain unproved. The CLI reported no explicit trust or hook-delivery error in the sanitized transcript.
 - Codex installers still place hook settings and scripts under `HOME/.codex`, with registered commands hardcoded there. A custom `CODEX_HOME` is supported for Codex agents only; the probe can target custom `CODEX_HOME`, but this does not prove hooks install there. Treat custom-home hook installation as a limitation until template and installer paths are coordinated.
+- Milestone 5 reproduced a descendant-held stdout stall through the generated public hook: the pre-fix run exceeded three seconds, while the temporary-file implementation returned within the bound. Three provider scanner suites, generator, runner, freshness, and OKF checks passed. A native Windows PowerShell suite is registered in CI but has only parsed and skipped its native cases on macOS.
 
 ## Decision Log
 
@@ -51,7 +52,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 ## Outcomes & Retrospective
 
-Milestones 1 and 3 are implemented. Read-only work can start from the requested artifact while edit-time orientation remains mandatory. Disposable-probe guidance now lives only in the three provider instruction sources. Milestone 2 has committed guidance and local installer checks, but native Windows proof remains open. Milestone 4 has integrated source and isolated proof, but deployed Codex delivery remains unproved. Copilot and Gemini deployed checks are explicitly deferred to milestones 11 and 12; they remain unverified until run in another session.
+Milestones 1 and 3 are implemented. Read-only work can start from the requested artifact while edit-time orientation remains mandatory. Disposable-probe guidance now lives only in the three provider instruction sources. Milestone 2 has committed guidance and local installer checks, but native Windows proof remains open. Milestone 4 has integrated source and isolated proof, but deployed Codex delivery remains unproved. Milestone 5 has integrated bounded scanner capture and local provider regressions; native Windows proof remains open. Copilot and Gemini deployed checks are explicitly deferred to milestones 11 and 12; they remain unverified until run in another session.
 
 ## Context and Orientation
 
@@ -269,3 +270,5 @@ Live-check split note, 2026-09-23: Copilot and Gemini CLIs are absent on this ho
 Milestone 4 integration note, 2026-09-23: Branch tip `a74d5a02` integrates the baseline generated Codex scanner, exact two-command hook ownership, POSIX/PowerShell isolated installers, a native Windows workflow, and the owner-only delivery probe. Source, scanner, generator, installer, merger, runner-registry, and nine probe tests passed on macOS; rebase had no conflicts. `codex exec --sandbox read-only --json --ephemeral` exited `0` but produced no `PreToolUse` marker in two guarded runs, so acceptance remains open. The exact user hook configuration digest was unchanged after cleanup. Native Windows workflow has not run. The scanner source is ready for milestone 5 without treating this missing deployed proof as a pass.
 
 Parallel implementation note, 2026-09-23: Milestones 5 and 9 started in separate worktrees after milestone-4 source integration. Their canonical hook families are disjoint. Integration remains serialized; shared workflow and test-runner edits receive conflict review and affected tests when needed.
+
+Milestone 5 integration note, 2026-09-23: Branch tip `510b16fc` integrates bounded temporary-file Git capture and generated scanner updates across all three providers. The generated-hook descendant-held-stdout case exceeded three seconds before the fix and completed within the bound afterward. Three scanner suites, 24 generator tests, 14 runner tests, generated freshness, OKF lint, and diff whitespace checks passed; rebase had no conflicts. Native Windows cases are wired into CI but did not run on this macOS host, so acceptance remains open.
