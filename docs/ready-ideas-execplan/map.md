@@ -17,6 +17,7 @@ This map plans the work; it does not implement the eight changes. Keep each unde
 - [Read Only Orientation](tickets/read-only-orientation.md): exempt read-only audits, diff reviews, and reports from mandatory memory pre-reading; load task-relevant guidance and complete full orientation before any edit.
 - [PowerShell Authoring Guidance](tickets/powershell-authoring-guidance.md): instruct local Gemini, Copilot, and Codex to write multiline PowerShell and reusable automation scripts with native file tools before running saved files; verify installed guidance and agent behavior.
 - [Disposable Probe Files](tickets/disposable-probe-files.md): add placement and cleanup rules only to the three provider instruction files; keep permanent tests tracked and avoid a broad probe ignore rule, with no installer or agent-run checks for this milestone.
+- [ExecPlan Integration](tickets/execplan-integration.md): order eight independently verifiable outcomes with shared hook setup and final regression in one [ExecPlan](ExecPlan.md); replace the Ready list with its link.
 
 ## Not yet specified
 
