@@ -16,9 +16,9 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - [x] (2026-09-23 18:24Z) [milestone-3] Add disposable-script placement and cleanup rule only to the same three checked-in provider instructions; review their content without installer, agent-run, or Windows checks for this rule.
 - [ ] [milestone-4] Codex hook transport, baseline scanner, installer, and delivery probe are integrated; deployed Codex `PreToolUse`/`Stop` delivery remains unproved.
 - [ ] [milestone-5] Bounded temporary-file capture and all three provider scanner regressions are integrated; native Windows execution remains unverified.
-- [ ] [milestone-6] Common security banners and the Codex Tool Guardian adapter are in progress on an isolated branch; block/warn and installed checks remain.
-- [ ] [milestone-7] Add Git metadata and local-work guardrails with provider-native approvals or user-run fallback; verify safe Git and denial cases.
-- [ ] [milestone-8] Dependency-free Markdown checking, touched-file tracking, bounded repair, and batch audit are in progress on an isolated branch.
+- [ ] [milestone-6] Security banners and Codex adapter are committed on an isolated branch; review found a quoted-secret leak that must be fixed before integration.
+- [ ] [milestone-7] Git metadata and local-work guardrails are in progress on an isolated branch; safe Git and denial cases remain.
+- [ ] [milestone-8] Checker and registrations are committed on an isolated branch; review found untouched-file and size-bound repairs needed before integration.
 - [ ] [milestone-9] Checksum-pinned prerelease installation and explicit-command rewrites are integrated; native Windows and deployed provider behavior remain unverified.
 - [ ] [milestone-10] Run the final cross-provider hook regression, native Windows automated suites, applicable Windows live-check documentation, and one end-of-session agent-doc pass; record observed outcomes.
 - [ ] [milestone-11] In a later session with Copilot CLI and local VS Code hooks available, run deployed hook and guidance checks; record versions, transcripts, outcomes, and cleanup.
@@ -38,6 +38,8 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - Codex installers still place hook settings and scripts under `HOME/.codex`, with registered commands hardcoded there. A custom `CODEX_HOME` is supported for Codex agents only; the probe can target custom `CODEX_HOME`, but this does not prove hooks install there. Treat custom-home hook installation as a limitation until template and installer paths are coordinated.
 - Milestone 5 reproduced a descendant-held stdout stall through the generated public hook: the pre-fix run exceeded three seconds, while the temporary-file implementation returned within the bound. Three provider scanner suites, generator, runner, freshness, and OKF checks passed. A native Windows PowerShell suite is registered in CI but has only parsed and skipped its native cases on macOS.
 - Milestone 9's published `dev-0.50.0-rc.451` macOS arm64 and Windows x64 archives matched pinned SHA-256 values and installed in disposable homes. A real macOS launcher preserved a missing-file error and exit `1` while hiding the false hook notice; terminal RTK still reports stable `0.49.0`. Rebase conflicts in API map and Windows workflow were resolved with both milestone 5 and 9 contracts retained. Affected generator, RTK, scanner, runner, freshness, and whitespace checks passed. Native Windows and deployed provider hooks remain unverified.
+- Milestone 8's first committed checker passes its focused local suite, but review found `snapshot()` reads and size-checks untouched Markdown files. An oversized untouched file can turn a touched small-file check into `incomplete`. State and response size bounds also need long-path regressions before integration.
+- Milestone 6's first committed banners pass focused provider suites, but a public Copilot hook exposed part of a quoted password: `--password='alpha bravo'` became `--password=[REDACTED] bravo'` in its displayed action and guard log. Redact the entire quoted value before integrating this branch.
 
 ## Decision Log
 
@@ -141,7 +143,7 @@ Extend the canonical family renderers, `hooks/providers.py`, and `hooks/manifest
 
 ### Milestone 7: Guard Git metadata and local work
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
@@ -275,3 +277,7 @@ Parallel implementation note, 2026-09-23: Milestones 5 and 9 started in separate
 Milestone 5 integration note, 2026-09-23: Branch tip `510b16fc` integrates bounded temporary-file Git capture and generated scanner updates across all three providers. The generated-hook descendant-held-stdout case exceeded three seconds before the fix and completed within the bound afterward. Three scanner suites, 24 generator tests, 14 runner tests, generated freshness, OKF lint, and diff whitespace checks passed; rebase had no conflicts. Native Windows cases are wired into CI but did not run on this macOS host, so acceptance remains open.
 
 Milestone 9 integration note, 2026-09-23: Branch tip `5a5c47c0` integrates verified prerelease installation and explicit RTK command rewrites. The published macOS arm64 and Windows x64 archives matched pinned checksums; disposable installs passed, and the user-home prerelease remains beside terminal RTK `0.49.0`. A real macOS command preserved missing-file stderr/exit `1` without the false warning. The merger resolved API-map and Windows-workflow conflicts with milestone 5 and reran affected checks successfully. Native Windows and deployed provider hook acceptance remain open. Milestones 6 and 8 have started on separate branches.
+
+Milestone 8 review note, 2026-09-23: Initial branch `2f865815` adds generated checker hooks, registration, tests, and documentation. Focused checker, generator, temporary-home installer, merger, runner, and OKF checks passed on macOS; native Windows and deployed Codex remain unverified. Review found touched-only and size-bound gaps, so integration waits for a focused repair on that same milestone branch.
+
+Milestone 6 review note, 2026-09-23: Initial branch `22bf39fb` adds security banners and Codex Tool Guardian with passing focused provider, scanner, generator, installer, runner, and OKF checks. A generated Copilot hook reproduced a quoted-password leak in the displayed and logged action excerpt. Integration waits for a public regression and redaction repair on that same milestone branch.
