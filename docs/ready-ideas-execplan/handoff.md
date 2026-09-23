@@ -9,11 +9,12 @@ Implement [ExecPlan](ExecPlan.md) on `codex/ready-ideas-execplan`. It now has 12
 - **Integrated, acceptance open:** milestone 5 scanner shutdown is on base at `510b16fc`; native Windows scanner execution remains. Milestone 9 RTK rewrite is on base at `5a5c47c0`; native Windows and deployed provider hook behavior remain.
 - **Active isolated branch:** milestone 8 Markdown health hook is running on `codex/ready-ideas-m8` at `/Users/adam/.codex/worktrees/ready-ideas-m8/skills`; it started from an earlier base, so integration must account for later hooks and workflow edits.
 - **Active isolated branch:** milestone 6 security banners and Codex Tool Guardian are running on `codex/ready-ideas-m6` at `/Users/adam/.codex/worktrees/ready-ideas-m6/skills`; it started after milestone 5 but before milestone 9 integration.
+- **Prepared, not started:** milestone 7 has a clean isolated branch `codex/ready-ideas-m7` at `/Users/adam/.codex/worktrees/ready-ideas-m7/skills`, based on the milestone-9 integration tip.
 - **Remaining:** milestones 6–8 and 10, plus later-session live milestones 11 (Copilot CLI and local VS Code) and 12 (Gemini CLI). Do not mark the full plan complete while these remain open.
 
 ## Next step
 
-Wait for milestone-6 and milestone-8 implementers. Review clean committed branches and integrate one at a time through conflict-aware rebases where shared generated-hook registration or test files overlap. Milestone 7 is the next independent source node and needs a new isolated worktree and fresh implementer when an agent slot opens.
+Wait for milestone-6 and milestone-8 implementers. Review clean committed branches and integrate one at a time through conflict-aware rebases where shared generated-hook registration or test files overlap. Assign a fresh implementer to milestone 7's prepared branch when an agent slot opens.
 
 ## Decisions and constraints
 
