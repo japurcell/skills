@@ -38,6 +38,7 @@ SUITES = (
     ("bash", "scripts/test-hooks-tool-guard.sh"),
     ("python3", "scripts/test-codex-agents.py"),
     ("python3", "scripts/test-install-codex-hooks.py"),
+    ("python3", "scripts/test-probe-provider-hook-delivery.py"),
     ("python3", "scripts/test-generate-hooks.py"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-install.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-codex-hooks-windows.ps1"),

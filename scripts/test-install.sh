@@ -393,7 +393,8 @@ test_preserves_unrelated_codex_configuration_and_replaces_owned_handler() {
         {"type": "command", "command": "echo keep"},
         {"type": "command", "command": "python3 ~/.CODEX/hooks/load-required-skills.py"},
         {"type": "command", "command": "echo ~/.codex/hooks/load-required-skills.py"},
-        {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py"}
+        {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py"},
+        {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py", "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\load-required-skills.py\""}
       ]},
       {"matcher": "resume", "hooks": []},
       {"matcher": "clear", "hooks": [
@@ -420,9 +421,13 @@ assert groups[0]["hooks"] == [
     {"type": "command", "command": "echo keep"},
     {"type": "command", "command": "python3 ~/.CODEX/hooks/load-required-skills.py"},
     {"type": "command", "command": "echo ~/.codex/hooks/load-required-skills.py"},
+    {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py"},
 ]
 assert groups[1] == {"matcher": "resume", "hooks": []}
-assert groups[2]["hooks"][0]["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
+assert groups[2]["hooks"] == [
+    {"type": "command", "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'},
+]
+assert groups[3]["hooks"][0]["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
 PY
 }
 

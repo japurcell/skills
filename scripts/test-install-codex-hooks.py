@@ -41,7 +41,12 @@ def main() -> None:
             "hooks": {
                 "PreToolUse": [{"matcher": "Bash", "custom": "keep", "hooks": [
                     {"type": "command", "command": "echo user"},
-                    {"type": "command", "command": "python3 ~/.codex/hooks/scan-secrets.py"},
+                    {"type": "command", "command": "python3 ~/.codex/hooks/scan-secrets.py",
+                     "commandWindows": "echo windows user"},
+                    {"type": "command", "command": "echo unix user",
+                     "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'},
+                    {"type": "command", "command": "python3 ~/.codex/hooks/scan-secrets.py",
+                     "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'},
                 ]}],
                 "Stop": [{"hooks": [{"type": "command", "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-secrets.py\""}]}],
                 "SessionStart": [{"hooks": [{"type": "command", "command": "echo unrelated"}]}],
@@ -53,13 +58,15 @@ def main() -> None:
         merged = json.loads(destination.read_text(encoding="utf-8"))
         assert merged["custom"] == original["custom"]
         assert merged["hooks"]["PreToolUse"][0]["custom"] == "keep"
-        assert merged["hooks"]["PreToolUse"][0]["hooks"][0]["command"] == "echo user"
+        assert merged["hooks"]["PreToolUse"][0]["hooks"] == original["hooks"]["PreToolUse"][0]["hooks"][:3]
         for event in ("SessionStart", "PreToolUse", "Stop"):
             for group in maintained["hooks"][event]:
                 for handler in group["hooks"]:
                     command = handler["command"]
                     matches = [candidate for existing_group in merged["hooks"][event]
-                               for candidate in existing_group["hooks"] if candidate.get("command") == command]
+                               for candidate in existing_group["hooks"]
+                               if candidate.get("command") == command
+                               and candidate.get("commandWindows") == handler["commandWindows"]]
                     assert matches == [handler], (event, command, matches)
         first_bytes = destination.read_bytes()
         second = run(template, destination)

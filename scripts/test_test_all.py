@@ -111,6 +111,7 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-codex-agents.py")
         expected.add("scripts/test-generate-hooks.py")
         expected.add("scripts/test-install-codex-hooks.py")
+        expected.add("scripts/test-probe-provider-hook-delivery.py")
         listed = {
             part for command in commands for part in command if part.startswith("scripts/")
         }

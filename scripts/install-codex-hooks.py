@@ -97,11 +97,14 @@ def template_groups(template: dict[str, Any]) -> dict[str, list[dict[str, Any]]]
 
 def is_owned_handler(handler: dict[str, Any]) -> bool:
     posix = handler.get("command")
-    if isinstance(posix, str) and posix.strip() in OWNED_POSIX_COMMANDS:
-        return True
-
     windows = handler.get("commandWindows")
-    return isinstance(windows, str) and windows.strip().casefold() in OWNED_WINDOWS_COMMANDS
+    if not isinstance(posix, str) or not isinstance(windows, str):
+        return False
+    if posix not in OWNED_POSIX_COMMANDS:
+        return False
+    filename = posix.removeprefix("python3 ~/.codex/hooks/")
+    expected_windows = f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"'
+    return windows.casefold() == expected_windows.casefold()
 
 
 def merged_config(existing: dict[str, Any], maintained: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
