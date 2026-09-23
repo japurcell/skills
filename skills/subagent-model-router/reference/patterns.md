@@ -9,17 +9,16 @@ Use named defaults from [the catalog](model-catalog.md#task-defaults).
 Reuse a route only when work class, stakes, ambiguity, agent type, touched areas, review history, and model constraints are unchanged.
 
 | Situation | Decision |
-|---|---|
+| --- | --- |
 | Same deterministic fixture checks across workers | Route once as `task` + Fast; reuse. |
 | Similar reviews with same risk/model constraints | Route once; reuse while constraints match. |
 | Tests change to architecture analysis | Fresh route. |
-| Normal review changes to security audit | Fresh route; Premium. |
 | Prior same-class review missed a bug | Fresh route; escalate one tier. |
 
 ## Examples
 
 | Request | Route |
-|---|---|
+| --- | --- |
 | Run tests and summarize failures | `task` + Fast |
 | Search repo for token lifecycle code | `explore` + Fast |
 | Format files or apply mechanical edits | `task` or `editor` + Fast |
@@ -51,7 +50,7 @@ For review:
 ## Token-shape examples
 
 | Request | Optimize for |
-|---|---|
+| --- | --- |
 | Huge logs, short diagnosis | input cost |
 | Long proposal from short prompt | output cost |
 | Same repo context across subagents | actual cache reuse; budget uncached input if unconfirmed |

@@ -11,11 +11,10 @@ Routing tiers are local to this skill and may differ from provider labels. Use `
 Use for bounded, low-risk work with clear requirements, including small self-contained code changes. Not for normal code review.
 
 | Provider | Model | Status | Best for |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | OpenAI | `gpt-5.4-nano` | GA | lightweight work without cache-write charges |
 | OpenAI | `gpt-5-mini` | GA | fast coding/writing; tiny style-only reviews |
-| OpenAI | `gpt-5.6-luna` | GA | lightweight long-context work |
-| OpenAI | `gpt-6-luna` | GA | bounded, low-risk coding with clear requirements; verify output |
+| OpenAI | `gpt-6-luna` with `medium` effort | GA | bounded, low-risk coding with clear requirements; verify output; fallback to `gpt-5.6-luna` when not available |
 | Anthropic | `claude-haiku-4.5` | GA | simple/repetitive tasks |
 | Google | `gemini-3.5-flash` | GA; retires 2026-10-02 | fast simple work |
 | Microsoft | `mai-code-1.1-flash` | GA | lower-cost lightweight code work |
@@ -25,8 +24,10 @@ Use for bounded, low-risk work with clear requirements, including small self-con
 Use for connected coding, substantive rewrites, nontrivial debugging, broader analysis, agent work, and normal code review.
 
 | Provider | Model | Status | Best for |
-|---|---|---|---|
+| --- | --- | --- | --- |
+| OpenAI | `gpt-6-luna` with `max` effort | GA | agentic coding/review with demonstrated task fit; fallback to `gpt-5.6-luna` with `max` effort when not available |
 | OpenAI | `gpt-5.4-mini` | GA | bounded code review |
+| OpenAI | `gpt-6-sol` | GA | connected coding and broader analysis; long-context pricing |
 | OpenAI | `gpt-5.3-codex` | GA | agentic coding/review with demonstrated task fit |
 | OpenAI | `gpt-5.6-terra` | GA | connected coding and broader analysis; long-context pricing |
 | Anthropic | `claude-sonnet-4.6` | annual Pro/Pro+ only | general coding/agent tasks |
@@ -44,11 +45,10 @@ Use for connected coding, substantive rewrites, nontrivial debugging, broader an
 Use for complex, ambiguous, high-stakes, security-sensitive, or failure-sensitive work.
 
 | Provider | Model | Status | Best for |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | OpenAI | `gpt-5.4` | GA | broad general work; long-context pricing |
 | OpenAI | `gpt-5.5` | GA | powerful reasoning; long-context pricing |
 | OpenAI | `gpt-5.6-sol` | GA | powerful reasoning; long-context pricing |
-| OpenAI | `gpt-6-sol` | GA | provisional Premium placement; task-specific fit remains unverified |
 | Anthropic | `claude-opus-4.7` | GA; retires 2026-10-02 | deep reasoning/debugging |
 | Anthropic | `claude-opus-4.8` | GA | deep reasoning/debugging |
 | Anthropic | `claude-opus-4.8-fast` | GA | premium reasoning when speed justifies cost |
@@ -64,12 +64,12 @@ Use for complex, ambiguous, high-stakes, security-sensitive, or failure-sensitiv
 These are provisional starting candidates, not measured quality rankings. They follow [GitHub's task guidance](https://docs.github.com/en/copilot/reference/ai-models/model-comparison) and the pricing snapshot. Prefer demonstrated task fit when local evaluations disagree. Restrict every choice to the current runtime's models and exact IDs.
 
 | Default | Tier | Starting candidate | Alternatives and conditions |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Bounded work / tiny style review | Fast | `gpt-6-luna` | Includes small self-contained coding changes with clear requirements and low risk. If GPT-6 Luna is unavailable, use `gpt-5.6-luna` as the first fallback; use `mai-code-1.1-flash` if neither Luna model is available. |
-| Budget review | Standard | `gpt-5.4-mini` | Ordinary bounded code diffs with clear scope; use general work default for broader review. |
-| General work | Standard | `gpt-5.6-terra` | Connected implementation, substantive rewrites, debugging, and broader review. Route small self-contained coding changes through the bounded-work default; retain `gpt-5.3-codex` for demonstrated task fit. |
-| Demanding review | Premium | `gpt-5.6-sol` | Subtle correctness, security, complex contracts; consider `gpt-6-sol` when available and demonstrated suitable. Its published Copilot rates are lower across input, cached input, cache writes, and output. |
-| Demanding autonomous work / repeated Premium misses | Premium | `gpt-6-astra` | Consider `claude-fable-5.1`; justify the added cost and verification approach. |
+| Budget review | Standard | `gpt-6-luna` with `max` effort | Ordinary bounded code diffs with clear scope; use general work default for broader review. |
+| General work | Standard | `gpt-6-sol` | Connected implementation, substantive rewrites, debugging, and broader review. Route small self-contained coding changes through the bounded-work default; retain `gpt-5.3-codex` for demonstrated task fit. |
+| Demanding review | Premium | `gpt-6-sol` with `high` or greater effort | Subtle correctness, security, complex contracts. |
+| Demanding autonomous work / repeated Premium misses | Premium | `gpt-6-astra` | justify the added cost and verification approach. |
 
 Newer names and provider categories alone do not demonstrate security-review accuracy. For unvalidated task classes, state uncertainty and require independent verification; do not describe a provisional default as proven.
 

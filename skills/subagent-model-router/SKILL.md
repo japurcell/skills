@@ -18,15 +18,15 @@ Choose the narrowest capable `agent_type`, then the cheapest capable model that 
 
 ## Agent-type floors
 
-| Agent type        | Minimum tier | Use for                                                                       |
-| ----------------- | -----------: | ----------------------------------------------------------------------------- |
-| `task`            |         Fast | Tests, scripts, builds, lint, formatting, deterministic edits/checks.         |
-| `explore`         |         Fast | Search, inspect, enumerate, gather evidence.                                  |
+| Agent type        | Minimum tier | Use for                                                                                                                                        |
+| ----------------- | -----------: | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `task`            |         Fast | Tests, scripts, builds, lint, formatting, deterministic edits/checks.                                                                          |
+| `explore`         |         Fast | Search, inspect, enumerate, gather evidence.                                                                                                   |
 | `editor`          |         Fast | Scoped edits with clear requirements, including small self-contained code changes. Use Standard for substantive rewrites or connected changes. |
-| `debugger`        |     Standard | Bugs needing reasoning, especially across files.                              |
-| `code-reviewer`   |     Standard | Diff/PR review. Fast only for tiny single-file style-only diffs.              |
-| `security-review` |      Premium | Auth, permissions, secrets, sensitive data, policy/security controls.         |
-| general agent     |     Standard | Only when no narrower type fits.                                              |
+| `debugger`        |     Standard | Bugs needing reasoning, especially across files.                                                                                               |
+| `code-reviewer`   |     Standard | Diff/PR review. Fast only for tiny single-file style-only diffs.                                                                               |
+| `security-review` |      Premium | Auth, permissions, secrets, sensitive data, policy/security controls.                                                                          |
+| general agent     |     Standard | Only when no narrower type fits.                                                                                                               |
 
 ## Tier guide
 
@@ -63,6 +63,7 @@ Return:
 - agent_type:
 - tier:
 - model:
+- effort, if specified:
 - reason (task fit, cost assumptions, and evidence or uncertainty):
 - escalation_trigger, if any:
 - fallback, if any:
