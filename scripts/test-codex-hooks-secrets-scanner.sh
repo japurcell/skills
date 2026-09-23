@@ -11,7 +11,7 @@ import sys
 config = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 for event in ("PreToolUse", "Stop"):
     handlers = [handler for group in config["hooks"][event] for handler in group["hooks"]]
-    assert len(handlers) == 1
+    assert len(handlers) == (2 if event == "PreToolUse" else 1)
     assert handlers[0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
     assert handlers[0]["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'
 PY
@@ -38,7 +38,7 @@ jq -e '.hookSpecificOutput == {"hookEventName":"PreToolUse","permissionDecision"
 stop="$(scan Stop block)"
 jq -e '.decision == "block" and (.reason | contains("potential secrets detected"))' >/dev/null <<<"$stop"
 warn="$(scan PreToolUse warn)"
-jq -e '.systemMessage | contains("Potential secrets detected")' >/dev/null <<<"$warn"
+jq -e '.systemMessage | contains("scan-secrets warning")' >/dev/null <<<"$warn"
 [[ "$pretool$stop$warn" != *"sk_live_1234567890abcdefghij"* ]]
 
 rm "$workdir/credentials.txt"

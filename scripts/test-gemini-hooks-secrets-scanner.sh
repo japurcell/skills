@@ -243,7 +243,7 @@ test_missing_git_block_mode_uses_gemini_denial_envelope() {
     "Expected Gemini missing-Git block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini missing-Git block mode to deny."
-  assert_equals "scan-secrets.py: required command not found: git" \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked." \
     "$(jq -r '.reason' <<<"$output")" \
     "Expected Gemini missing-Git denial reason to remain stable."
 }
@@ -282,7 +282,7 @@ test_audit_init_failure_block_mode_uses_gemini_denial_envelope() {
     "Expected Gemini audit-init block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini audit-init block mode to deny."
-  assert_equals "scan-secrets.py: failed to initialize audit logging." \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked." \
     "$(jq -r '.reason' <<<"$output")" \
     "Expected Gemini audit-init denial reason to remain stable."
 }
@@ -322,7 +322,7 @@ test_warn_mode_reports_findings_with_json_output() {
     "Expected warn mode log to record detected pattern."
   assert_file_contains "$log_dir/scan.log" '"redactedMatch":"ghp_...3456"' \
     "Expected warn mode log to redact stored match values."
-  assert_equals "Potential secrets detected in modified files. See $log_dir/scan.log." "$(jq -r '.systemMessage' <<<"$output")" \
+  assert_equals "scan-secrets warning: session-end scan; potential secrets detected." "$(jq -r '.systemMessage' <<<"$output")" \
     "Expected findings to surface via Gemini systemMessage."
 }
 
@@ -435,7 +435,7 @@ test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
   assert_json_output "$output" "Expected Gemini block-mode exception handling to emit JSON."
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini block-mode exception handling to deny."
-  assert_file_contains "$errfile" 'scan-secrets: scan incomplete' \
+  assert_file_contains "$errfile" 'scan incomplete' \
     "Expected sanitized Gemini block-mode scanner error on stderr."
   if grep -Fq 'Traceback' "$errfile"; then
     echo "Did not expect traceback in Gemini block-mode sanitized scanner output." >&2
@@ -480,7 +480,7 @@ test_unexpected_exception_warn_mode_warns_with_json_and_exit_zero() {
   assert_equals "0" "$status" \
     "Expected Gemini warn-mode exception handling to return exit code 0."
   assert_incomplete_warning "$output"
-  assert_file_contains "$errfile" 'scan-secrets: scan incomplete' \
+  assert_file_contains "$errfile" 'scan incomplete' \
     "Expected sanitized Gemini warn-mode scanner error on stderr."
   if grep -Fq 'Traceback' "$errfile"; then
     echo "Did not expect traceback in Gemini warn-mode sanitized scanner output." >&2
@@ -951,8 +951,7 @@ test_invalid_json_degrades_to_noop_json() {
   )"
 
   assert_json_output "$output" "Expected invalid-input Gemini secrets scan to emit JSON."
-  assert_equals "{}" "$output" \
-    "Expected invalid-input Gemini secrets scan to degrade to a no-op JSON response."
+  jq -e '.systemMessage | contains("scan-secrets warning") and contains("incomplete")' >/dev/null <<<"$output"
 }
 
 test_invalid_json_block_mode_denies_with_json_and_exit_zero() {

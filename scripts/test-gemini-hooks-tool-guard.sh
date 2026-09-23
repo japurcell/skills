@@ -276,9 +276,9 @@ test_gemini_log_is_owner_only_locked_and_no_follow() {
   output="$(run_gemini_tool_guard "$log_dir" block '{"tool_name":"run_shell_command","tool_input":"echo safe"}')"
   assert_equals "allow" "$(jq -r '.decision' <<<"$output")" \
     "Expected a safe invocation to create the hardened Gemini log."
-  assert_equals "600" "$(stat -c '%a' "$log_dir/guard.log")" \
+  assert_equals "600" "$(python3 -c 'import os, sys; print(oct(os.stat(sys.argv[1]).st_mode & 0o777)[2:])' "$log_dir/guard.log")" \
     "Expected the Gemini Tool Guardian log to be owner-only."
-  assert_equals "600" "$(stat -c '%a' "$log_dir/guard.log.lock")" \
+  assert_equals "600" "$(python3 -c 'import os, sys; print(oct(os.stat(sys.argv[1]).st_mode & 0o777)[2:])' "$log_dir/guard.log.lock")" \
     "Expected the Gemini Tool Guardian lock file to be owner-only."
 
   : >"$log_dir/guard.log"
@@ -332,7 +332,7 @@ test_warn_mode_returns_json_for_gemini_payload() {
     "Expected warn mode to log detected threats."
 
   local expected_msg
-  expected_msg="⚠️ Tool Guardian warning: Tool Guardian blocked run_shell_command. destructive_file_ops/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_msg="Tool Guardian warning run_shell_command. destructive_file_ops/critical. Action: rm -rf .. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
   assert_equals "$expected_msg" "$(jq -r '.systemMessage' <<<"$output")" \
     "Expected warn mode to include correct warning systemMessage."
 }
@@ -359,11 +359,11 @@ test_block_mode_denies_gemini_payload() {
     "Expected guard log to record the Gemini tool name."
 
   local expected_msg
-  expected_msg="Tool Guardian blocked run_shell_command. destructive_git_ops/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_msg="Tool Guardian blocked run_shell_command. destructive_git_ops/critical. Action: git push --force origin main; {\"command\":\"git push --force origin main\"}. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
   assert_equals "$expected_msg" "$(jq -r '.reason' <<<"$output")" \
     "Expected block mode to include correct block reason."
-  assert_equals "$expected_msg" "$(jq -r '.systemMessage' <<<"$output")" \
-    "Expected block mode to include correct block systemMessage."
+  assert_equals "null" "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected Gemini denial reason to avoid duplicate native display."
 }
 
 test_block_mode_parses_gemini_tool_input_objects() {
@@ -388,11 +388,11 @@ test_block_mode_parses_gemini_tool_input_objects() {
     "Expected guard log to capture threat details from object-valued tool_input."
 
   local expected_msg
-  expected_msg="Tool Guardian blocked run_shell_command. database_destruction/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_msg="Tool Guardian blocked run_shell_command. database_destruction/critical. Action: DROP TABLE; {\"command\":\"DROP TABLE users;\"}. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
   assert_equals "$expected_msg" "$(jq -r '.reason' <<<"$output")" \
     "Expected block mode to include correct reason for object-valued input."
-  assert_equals "$expected_msg" "$(jq -r '.systemMessage' <<<"$output")" \
-    "Expected block mode to include correct systemMessage for object-valued input."
+  assert_equals "null" "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected Gemini denial reason to avoid duplicate native display."
 }
 
 test_nested_structured_tool_input_scans_decoded_string_values() {
@@ -500,7 +500,7 @@ test_tool_guard_denies_unexpected_input_exception() {
   assert_equals "Tool Guardian skipped: unexpected exception." \
     "$(jq -r '.reason' <<<"$output")" \
     "Expected the fail-closed Gemini envelope for unexpected input failures."
-  assert_file_contains "$workdir/stderr" 'forced input failure' \
+  assert_file_contains "$workdir/stderr" 'RuntimeError' \
     "Expected the unexpected input failure to be diagnosed on stderr."
 }
 

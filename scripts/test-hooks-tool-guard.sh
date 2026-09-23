@@ -281,7 +281,7 @@ test_warn_mode_returns_json_for_cli_payload() {
   risky_delete="rm"
   risky_delete+=" -rf"
   risky_delete+=" ."
-  expected_warning="⚠️ Tool Guardian warning: Tool Guardian blocked bash. destructive_file_ops/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_warning="Tool Guardian warning bash. destructive_file_ops/critical. Action: rm -rf .. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
 
   output="$(
     run_tool_guard \
@@ -451,7 +451,7 @@ test_tool_guard_denies_unexpected_input_exception() {
   assert_equals "Tool Guardian skipped: unexpected exception." \
     "$(jq -r '.permissionDecisionReason' <<<"$output")" \
     "Expected the fail-closed Copilot envelope for unexpected input failures."
-  assert_file_contains "$workdir/stderr" 'forced input failure' \
+  assert_file_contains "$workdir/stderr" 'RuntimeError' \
     "Expected the unexpected input failure to be diagnosed on stderr."
 }
 

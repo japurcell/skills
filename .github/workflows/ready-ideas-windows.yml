@@ -35,6 +35,8 @@ jobs:
           }
       - name: Check generated hooks
         run: python scripts/generate-hooks.py --check
+      - name: Test security banner envelopes
+        run: python scripts/test-security-banners.py
       - name: Test native PowerShell installer
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-install.ps1

@@ -49,8 +49,10 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, `~/.gemini`, and `~/.codex` targets, including generated Codex agents at `${CODEX_HOME:-$HOME/.codex}/agents`. |
 | `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout, including `$CODEX_HOME/agents` when set (run with `pwsh scripts/install.ps1`). |
 | `scripts/install-codex-agents.py` | Strict, transactional converter from top-level `agents/*.md` sources to manifest-managed personal Codex TOML agents. |
-| `scripts/install-codex-hooks.py` | Atomically and idempotently merges the maintained Codex `SessionStart` group into user-global `hooks.json`. |
+| `scripts/install-codex-hooks.py` | Atomically and idempotently merges the maintained Codex startup and security handlers into user-global `hooks.json`. |
 | `scripts/test-codex-hooks-startup.sh` | Public-process contract and security regressions for the Codex required-skills hook. |
+| `scripts/test-security-banners.py` | Public block, warning, excerpt, redaction, and fallback envelopes across three provider Tool Guardian adapters. |
+| `.codex/hooks/tool-guard.py` | Generated Codex Tool Guardian adapter installed through the maintained hook merger. |
 | `scripts/test-scan-secrets-capture.py` | Public generated-hook capture regressions shared by the three provider scanner suites. |
 | `scripts/test-scan-secrets-windows.ps1` | Native Windows generated-scanner capture suite used by the focused Windows workflow. |
 | `scripts/test-install.ps1` | Fixture-repo test for `scripts/install.ps1` (run with `pwsh -NoProfile -File scripts/test-install.ps1`). |

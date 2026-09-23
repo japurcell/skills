@@ -108,7 +108,8 @@ def noop() -> None:
 
 def warn_and_noop(message: str) -> None:
     print(message, file=sys.stderr)
-    noop()
+    emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; scan incomplete; potential secrets could not be checked."})
+    raise SystemExit(0)
 # BEGIN PROVIDER ADAPTER
 def emit_block_denial(reason: str) -> None:
     emit_json({
@@ -127,21 +128,21 @@ def read_payload(mode: str) -> dict | None:
     payload: dict | None = None
     try:
         payload = read_json_input()
-    except Exception as exc:
+    except Exception:
         if mode == "block":
-            reason = f"{SCRIPT_NAME}: {exc}"
+            reason = "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked."
             print(reason, file=sys.stderr)
             emit_block_denial(reason)
             return None
-        warn_and_noop(f"{SCRIPT_NAME}: {exc}")
+        warn_and_noop("scan-secrets: invalid hook input")
 
     if not isinstance(payload, dict):
         if mode == "block":
-            reason = f"{SCRIPT_NAME}: invalid JSON input."
+            reason = "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked."
             print(reason, file=sys.stderr)
             emit_block_denial(reason)
             return None
-        warn_and_noop(f"{SCRIPT_NAME}: invalid JSON input; skipping hook.")
+        warn_and_noop("scan-secrets: invalid hook input")
 
     return payload
 
@@ -1003,7 +1004,7 @@ def record_finding(
 
 def emit_output(findings_count: int, log_path: Path) -> None:
     if findings_count > 0:
-        emit_json({"systemMessage": f"Potential secrets detected in modified files. See {log_path}."})
+        emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; potential secrets detected."})
         return
     emit_json({})
 
@@ -1025,7 +1026,7 @@ def enforce_scan_budget(scan_started: float, total_bytes: int, *, now: float | N
 
 def handle_unexpected_exception(_exc: Exception) -> int:
     mode = normalized_mode_from_env()
-    reason = "scan-secrets: scan incomplete; unable to verify modified files."
+    reason = f"scan-secrets blocked: {SCAN_ACTION}; scan incomplete; potential secrets could not be checked."
     print(reason, file=sys.stderr)
     if INCOMPLETE_LOG is not None:
         try:
@@ -1036,7 +1037,7 @@ def handle_unexpected_exception(_exc: Exception) -> int:
     if mode == "block":
         emit_block_denial(reason)
         return 0
-    emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION} was incomplete."})
+    emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; scan incomplete; potential secrets could not be checked."})
     return 0
 # BEGIN PROVIDER ADAPTER
 SESSION_ID_KEYS = ("sessionId", "session_id")
@@ -1049,7 +1050,7 @@ def resolve_work_dir(payload: dict) -> Path:
 
 
 def findings_denial_reason(scan_log: Path) -> str:
-    return f"{SCRIPT_NAME}: potential secrets detected. See {scan_log}."
+    return f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected."
 # END PROVIDER ADAPTER
 
 
@@ -1060,14 +1061,14 @@ def main() -> int:
     mode = normalized_mode_from_env()
 
     if not git_available():
-        reason = f"{SCRIPT_NAME}: required command not found: git"
+        reason = "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked."
         if mode == "block":
             emit_block_denial(reason)
             return 0
         warn_and_noop(reason)
 
     if not audit_init():
-        reason = f"{SCRIPT_NAME}: failed to initialize audit logging."
+        reason = "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked."
         if mode == "block":
             emit_block_denial(reason)
             return 0

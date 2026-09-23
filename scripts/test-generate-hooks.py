@@ -54,6 +54,7 @@ OBSERVABILITY_TARGETS = (
 TOOL_GUARD_TARGETS = (
     ".copilot/hooks/scripts/tool-guard.py",
     ".gemini/hooks/scripts/tool-guard.py",
+    ".codex/hooks/tool-guard.py",
 )
 SECRET_SCANNER_TARGETS = (
     ".copilot/hooks/scripts/scan-secrets.py",
@@ -253,7 +254,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (31 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (32 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -294,7 +295,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (31 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (32 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -403,7 +404,7 @@ class GenerateHooksTests(unittest.TestCase):
                     aggregated_threats = module.build_threats(vector.text)
                     self.assertIn(category, {threat["category"] for threat in aggregated_threats})
                     self.assertTrue(
-                        all(set(threat) == {"category", "severity"} for threat in aggregated_threats)
+                        all(set(threat) == {"category", "severity", "matched"} for threat in aggregated_threats)
                     )
 
             outcomes = []
@@ -433,11 +434,15 @@ class GenerateHooksTests(unittest.TestCase):
             sensitive_threats = module.build_threats(vectors.SENSITIVE_THREAT_TEXT)
             self.assertTrue(sensitive_threats)
             for threat in sensitive_threats:
-                self.assertEqual(set(threat), {"category", "severity"})
+                self.assertEqual(set(threat), {"category", "severity", "matched"})
             serialized_sensitive_output = json.dumps(
                 {
-                    "threats": sensitive_threats,
-                    "reason": module.build_block_reason("bash", sensitive_threats),
+                    "threats": module.log_threat_metadata(sensitive_threats),
+                    "reason": module.build_block_reason(
+                        "bash", sensitive_threats,
+                        module.build_action_excerpt(vectors.SENSITIVE_THREAT_TEXT, sensitive_threats),
+                        "blocked",
+                    ),
                 }
             )
             for sensitive_value in vectors.FAKE_SENSITIVE_VALUES:
@@ -482,7 +487,7 @@ class GenerateHooksTests(unittest.TestCase):
             )
             self.assertIn(vectors.STRUCTURED_DESTRUCTIVE_QUERY, structured_inputs)
             self.assertEqual(
-                module.build_input_threats("database_query", structured_inputs),
+                module.log_threat_metadata(module.build_input_threats("database_query", structured_inputs)),
                 [{"category": "database_destruction", "severity": "high"}],
             )
             safe_structured_inputs = module.read_tool_scan_inputs(

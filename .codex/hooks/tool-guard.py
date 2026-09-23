@@ -6,47 +6,38 @@ from __future__ import annotations
 # BEGIN PROVIDER ADAPTER
 import json
 import os
-import stat
 import sys
-import time
+from datetime import datetime, timezone
 from pathlib import Path
-
-try:
-    import fcntl
-except ImportError:
-    fcntl = None
-
-try:
-    import msvcrt
-except ImportError:
-    msvcrt = None
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+from helpers.audit import audit_log_event  # noqa: E402
 from helpers.common import emit_json, read_json_input  # noqa: E402
 
-
+SCRIPT_NAME = Path(__file__).name
 TOOL_NAME_KEYS = ("tool_name", "toolName")
 TOOL_INPUT_KEYS = ("tool_input", "toolInput", "toolArgs")
 
 
 def emit_skip_allow_response() -> None:
-    emit_json({"decision": "allow"})
+    emit_json({})
     raise SystemExit(0)
 
 
 def emit_allow_response(system_message: str | None = None) -> None:
-    payload: dict[str, str] = {"decision": "allow"}
-    if system_message:
-        payload["systemMessage"] = system_message
-    emit_json(payload)
+    emit_json({"systemMessage": system_message} if system_message else {})
     raise SystemExit(0)
 
 
 def emit_deny_response(reason: str) -> None:
-    emit_json({"decision": "deny", "reason": reason})
+    emit_json({"hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "deny",
+        "permissionDecisionReason": reason,
+    }})
     raise SystemExit(0)
 # END PROVIDER ADAPTER
 
@@ -689,102 +680,23 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: s
 
 # BEGIN PROVIDER ADAPTER
 
-LOG_LOCK_TIMEOUT_SECONDS = 1.0
-
-
 def format_error(error: Exception) -> str:
     return type(error).__name__
 
 
 def configure_log() -> None:
-    global TIMESTAMP, LOG_FILE
-    log_dir = os.environ.get("TOOL_GUARD_LOG_DIR", os.path.expanduser("~/.gemini/hooks/tool-guardian"))
-    LOG_FILE = f"{log_dir}/guard.log"
-    TIMESTAMP = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    global TIMESTAMP, LOG_FILE, LOCK_FILE
+    TIMESTAMP = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    LOG_FILE = os.environ.get(
+        "TOOL_GUARD_LOG_DIR",
+        str(Path.home() / ".codex" / "hooks" / "tool-guardian" / "guard.log"),
+    )
+    LOCK_FILE = f"{LOG_FILE}.lock"
 
 
-def _open_owner_only_no_follow(path: str, flags: int) -> int:
-    no_follow = getattr(os, "O_NOFOLLOW", 0)
-    descriptor = os.open(path, flags | no_follow, 0o600)
-    try:
-        details = os.fstat(descriptor)
-        if not stat.S_ISREG(details.st_mode):
-            raise OSError(f"Log path is not a regular file: {path}")
-        if not no_follow:
-            path_details = os.stat(path, follow_symlinks=False)
-            if not stat.S_ISREG(path_details.st_mode) or (
-                path_details.st_dev,
-                path_details.st_ino,
-            ) != (details.st_dev, details.st_ino):
-                raise OSError(f"Refusing linked or replaced log path: {path}")
-        if hasattr(os, "fchmod"):
-            os.fchmod(descriptor, 0o600)
-        else:
-            os.chmod(path, 0o600, follow_symlinks=False)
-        return descriptor
-    except BaseException:
-        os.close(descriptor)
-        raise
-
-
-def _acquire_log_lock(lock_path: str) -> int:
-    descriptor = _open_owner_only_no_follow(lock_path, os.O_CREAT | os.O_RDWR)
-    deadline = time.monotonic() + LOG_LOCK_TIMEOUT_SECONDS
-    if fcntl is not None:
-        while True:
-            try:
-                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                return descriptor
-            except BlockingIOError:
-                if time.monotonic() >= deadline:
-                    os.close(descriptor)
-                    raise TimeoutError(f"Timed out waiting for Tool Guardian log lock: {lock_path}") from None
-                time.sleep(0.01)
-    if msvcrt is not None:
-        if os.fstat(descriptor).st_size == 0:
-            os.write(descriptor, b"0")
-            os.fsync(descriptor)
-        while True:
-            try:
-                os.lseek(descriptor, 0, os.SEEK_SET)
-                msvcrt.locking(descriptor, msvcrt.LK_NBLCK, 1)
-                return descriptor
-            except OSError:
-                if time.monotonic() >= deadline:
-                    os.close(descriptor)
-                    raise TimeoutError(f"Timed out waiting for Tool Guardian log lock: {lock_path}") from None
-                time.sleep(0.01)
-    os.close(descriptor)
-    raise OSError("No supported Tool Guardian log locking primitive is available")
-
-
-def _release_log_lock(descriptor: int) -> None:
-    try:
-        if fcntl is not None:
-            fcntl.flock(descriptor, fcntl.LOCK_UN)
-        elif msvcrt is not None:
-            os.lseek(descriptor, 0, os.SEEK_SET)
-            msvcrt.locking(descriptor, msvcrt.LK_UNLCK, 1)
-    finally:
-        os.close(descriptor)
-
-
-def append_log(
-    log_file: str,
-    event: str,
-    mode: str,
-    tool_name: str,
-    timestamp: str,
-    threat_count: int = 0,
-    threats: list[dict[str, str]] | None = None,
-    excerpt: str | None = None,
-) -> None:
-    parent = os.path.dirname(log_file)
-    if parent:
-        os.makedirs(parent, mode=0o700, exist_ok=True)
-
+def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None, excerpt: str | None = None) -> None:
     payload: dict[str, object] = {
-        "timestamp": timestamp,
+        "timestamp": TIMESTAMP,
         "event": event,
         "mode": mode,
         "tool": sanitize_tool_name(tool_name),
@@ -794,25 +706,21 @@ def append_log(
         payload["threats"] = threats or []
         payload["excerpt"] = excerpt or "command omitted"
 
-    lock_descriptor = _acquire_log_lock(f"{log_file}.lock")
+    old_audit_log = os.environ.get("AUDIT_LOG")
+    old_audit_lock = os.environ.get("AUDIT_LOCK")
     try:
-        descriptor = _open_owner_only_no_follow(log_file, os.O_APPEND | os.O_CREAT | os.O_WRONLY)
-        try:
-            handle = os.fdopen(descriptor, "a", encoding="utf-8")
-        except BaseException:
-            os.close(descriptor)
-            raise
-        with handle:
-            handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-            handle.write("\n")
-            handle.flush()
-            os.fsync(handle.fileno())
+        os.environ["AUDIT_LOG"] = LOG_FILE
+        os.environ["AUDIT_LOCK"] = LOCK_FILE
+        audit_log_event(SCRIPT_NAME, json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
     finally:
-        _release_log_lock(lock_descriptor)
-
-
-def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None, excerpt: str | None = None) -> None:
-    append_log(LOG_FILE, event, mode, tool_name, TIMESTAMP, threat_count, threats, excerpt)
+        if old_audit_log is None:
+            os.environ.pop("AUDIT_LOG", None)
+        else:
+            os.environ["AUDIT_LOG"] = old_audit_log
+        if old_audit_lock is None:
+            os.environ.pop("AUDIT_LOCK", None)
+        else:
+            os.environ["AUDIT_LOCK"] = old_audit_lock
 # END PROVIDER ADAPTER
 
 

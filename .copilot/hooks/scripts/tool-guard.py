@@ -15,7 +15,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from helpers.audit import audit_log_event  # noqa: E402
-from helpers.common import emit_json, read_json_input, sanitize_log_field  # noqa: E402
+from helpers.common import emit_json, read_json_input  # noqa: E402
 
 
 SCRIPT_NAME = Path(__file__).name
@@ -71,6 +71,7 @@ MAX_STRUCTURED_DEPTH = 32
 MAX_STRUCTURED_NODES = 256
 MAX_STRUCTURED_STRINGS = 128
 MAX_TOOL_NAME_LENGTH = 160
+MAX_EXCERPT_LENGTH = 160
 REDACTED = "[REDACTED]"
 
 
@@ -637,6 +638,7 @@ def build_threats(tool_text: str) -> list[dict[str, str]]:
                 {
                     "category": category,
                     "severity": severity,
+                    "matched": match,
                 }
             )
     return threats
@@ -654,19 +656,49 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...]) -> list[di
     return threats
 
 
-def build_block_reason(tool_name: str, threats: list[dict[str, str]]) -> str:
+def sanitize_excerpt(value: str) -> str:
+    normalized = " ".join(unicodedata.normalize("NFKC", value[:4096]).split())
+    normalized = re.sub(r"(?i)\b(https?://)[^/\s@]+@", r"\1[REDACTED]@", normalized)
+    normalized = re.sub(r"(?i)(--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+))[^\s,;&]+", r"\1[REDACTED]", normalized)
+    normalized = re.sub(r"(?i)\b([A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*)\s*=\s*[^\s,;&]+", r"\1=[REDACTED]", normalized)
+    normalized = re.sub(r"(?i)\b(authorization|proxy-authorization|x-api-key|api-key|cookie|set-cookie)\s*:\s*(?:(?:bearer|basic)\s+)?[^\s,;]+", r"\1: [REDACTED]", normalized)
+    normalized = re.sub(r"(?i)\b(?:gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]{8,}|sk[-_](?:live_)?[A-Za-z0-9_-]{8,}|xox[baprs]-[A-Za-z0-9-]{8,}|AKIA[A-Z0-9]{8,})\b", REDACTED, normalized)
+    normalized = re.sub(r"(?<![A-Za-z0-9])(?=[A-Za-z0-9_/-]{24,}(?![A-Za-z0-9_/-]))(?=[A-Za-z0-9_/-]*[A-Za-z])(?=[A-Za-z0-9_/-]*[0-9])[A-Za-z0-9_/-]+", REDACTED, normalized)
+    return normalized
+
+
+def build_action_excerpt(tool_input: str, threats: list[dict[str, str]]) -> str:
+    matched = next((threat.get("matched", "") for threat in threats if threat.get("matched")), "")
+    if not matched:
+        return "command omitted"
+    try:
+        safe_match = sanitize_excerpt(matched)
+        safe_context = sanitize_excerpt(tool_input)
+        if not safe_match or "\n" in safe_match or "\r" in safe_match:
+            return "command omitted"
+        excerpt = safe_match if safe_context == safe_match else f"{safe_match}; {safe_context}"
+        return excerpt[:MAX_EXCERPT_LENGTH]
+    except (TypeError, ValueError, UnicodeError):
+        return "command omitted"
+
+
+def log_threat_metadata(threats: list[dict[str, str]]) -> list[dict[str, str]]:
+    return [{"category": threat["category"], "severity": threat["severity"]} for threat in threats]
+
+
+def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: str, mode: str) -> str:
     summary = [f"{threat['category']}/{threat['severity']}" for threat in threats[:3]]
     joined = "; ".join(summary)
     safe_tool_name = sanitize_tool_name(tool_name) if tool_name else "tool invocation"
     return (
-        f"Tool Guardian blocked {safe_tool_name}. {joined}. "
+        f"Tool Guardian {mode} {safe_tool_name}. {joined}. Action: {excerpt}. "
         "Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
     )
 
 # BEGIN PROVIDER ADAPTER
 
 def format_error(error: Exception) -> str:
-    return sanitize_log_field(error)
+    return type(error).__name__
 
 
 def configure_log() -> None:
@@ -679,7 +711,7 @@ def configure_log() -> None:
     LOCK_FILE = f"{LOG_FILE}.lock"
 
 
-def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None) -> None:
+def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None, excerpt: str | None = None) -> None:
     payload: dict[str, object] = {
         "timestamp": TIMESTAMP,
         "event": event,
@@ -689,6 +721,7 @@ def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, th
     if event == "threats_detected":
         payload["threat_count"] = threat_count
         payload["threats"] = threats or []
+        payload["excerpt"] = excerpt or "command omitted"
 
     old_audit_log = os.environ.get("AUDIT_LOG")
     old_audit_lock = os.environ.get("AUDIT_LOCK")
@@ -735,8 +768,9 @@ def main() -> int:
     except ScanLimitExceeded:
         threats = [{"category": "input_limits", "severity": "critical"}]
     if any(threat["category"] == "input_limits" for threat in threats):
-        log_payload("threats_detected", mode, tool_name, len(threats), threats)
-        emit_deny_response(build_block_reason(tool_name, threats))
+        excerpt = "command omitted"
+        log_payload("threats_detected", mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
+        emit_deny_response(build_block_reason(tool_name, threats, excerpt, "blocked"))
 
     tool_input = read_tool_input(payload)
     allowlist = parse_allowlist(os.environ.get("TOOL_GUARD_ALLOWLIST"))
@@ -749,11 +783,12 @@ def main() -> int:
         log_payload("guard_passed", mode, tool_name)
         emit_allow_response()
 
-    log_payload("threats_detected", mode, tool_name, len(threats), threats)
+    excerpt = build_action_excerpt(tool_input, threats)
+    log_payload("threats_detected", mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
     if mode == "warn":
-        emit_allow_response(f"⚠️ Tool Guardian warning: {build_block_reason(tool_name, threats)}")
+        emit_allow_response(build_block_reason(tool_name, threats, excerpt, "warning"))
 
-    emit_deny_response(build_block_reason(tool_name, threats))
+    emit_deny_response(build_block_reason(tool_name, threats, excerpt, "blocked"))
 
 
 if __name__ == "__main__":

@@ -260,7 +260,7 @@ test_missing_git_block_mode_uses_copilot_denial_envelope() {
     "Expected missing-Git block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
     "Expected missing-Git block mode to deny through the Copilot envelope."
-  assert_equals "scan-secrets.py: required command not found: git" \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked." \
     "$(jq -r '.permissionDecisionReason' <<<"$output")" \
     "Expected missing-Git denial reason to remain stable."
 }
@@ -299,7 +299,7 @@ test_audit_init_failure_block_mode_uses_copilot_denial_envelope() {
     "Expected audit-init block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
     "Expected audit-init block mode to deny through the Copilot envelope."
-  assert_equals "scan-secrets.py: failed to initialize audit logging." \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked." \
     "$(jq -r '.permissionDecisionReason' <<<"$output")" \
     "Expected audit-init denial reason to remain stable."
 }
@@ -533,7 +533,7 @@ test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
     "Expected block-mode exception handling to deny."
   assert_equals "deny" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
     "Expected block-mode exception handling to keep hookSpecificOutput deny payload."
-  assert_file_contains "$errfile" 'scan-secrets: scan incomplete' \
+  assert_file_contains "$errfile" 'scan incomplete' \
     "Expected sanitized scanner error on stderr."
   if grep -Fq 'Traceback' "$errfile"; then
     echo "Did not expect traceback in sanitized scanner error output." >&2
@@ -578,7 +578,7 @@ test_unexpected_exception_warn_mode_warns_with_json_and_exit_zero() {
   assert_equals "0" "$status" \
     "Expected warn-mode exception handling to return exit code 0."
   assert_incomplete_warning "$output"
-  assert_file_contains "$errfile" 'scan-secrets: scan incomplete' \
+  assert_file_contains "$errfile" 'scan incomplete' \
     "Expected sanitized warn-mode scanner error on stderr."
   if grep -Fq 'Traceback' "$errfile"; then
     echo "Did not expect traceback in warn-mode sanitized scanner output." >&2
@@ -656,7 +656,7 @@ test_warn_mode_reports_findings_without_failing() {
     "Expected warn mode log to record detected pattern."
   assert_file_contains "$log_dir/scan.log" '"redactedMatch":"ghp_...3456"' \
     "Expected warn mode log to redact stored match values."
-  if [[ "$output" != *"Potential secrets detected in modified files"* ]]; then
+  if [[ "$output" != *"scan-secrets warning:"* || "$output" != *"potential secrets detected"* ]]; then
     echo "Expected warn mode to print findings summary via systemMessage." >&2
     echo "Actual output: $output" >&2
     exit 1
@@ -703,8 +703,8 @@ test_block_mode_denies_when_findings_exist() {
     "Expected block mode findings to emit top-level permissionDecision deny."
   assert_equals "deny" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
     "Expected block mode findings to emit hookSpecificOutput permissionDecision deny."
-  if [[ "$(jq -r '.permissionDecisionReason' <<<"$output")" != *"scan.log"* ]]; then
-    echo "Expected block mode denial reason to reference scan log path." >&2
+  if [[ "$(jq -r '.permissionDecisionReason' <<<"$output")" != *"scan-secrets blocked: session-end scan; potential secrets detected."* ]]; then
+    echo "Expected block mode denial reason to name the safe action and finding." >&2
     echo "Actual output: $output" >&2
     exit 1
   fi
@@ -891,7 +891,7 @@ test_warn_mode_flags_sensitive_credential_paths_without_token_match() {
     "Expected sensitive credential-like paths to produce a finding even without token-shaped content."
   assert_file_contains "$log_dir/scan.log" '"path":"credentials.md"' \
     "Expected credential-path finding to record the file path."
-  if [[ "$output" != *"Potential secrets detected"* ]]; then
+  if [[ "$output" != *"potential secrets detected"* ]]; then
     echo "Expected credential-path warning in hook output." >&2
     echo "Actual output: $output" >&2
     exit 1
