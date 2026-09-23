@@ -40,7 +40,8 @@ $GeminiSrc = Join-Path $RepoRoot '.gemini'
 $GeminiGlobalSettingsSrc = Join-Path $RepoRoot '.gemini/global-settings.json'
 $CopilotInstructionsSrc = Join-Path $RepoRoot '.copilot/copilot-instructions.md'
 $CopilotLspSrc = Join-Path $RepoRoot '.copilot/lsp-config.json'
-$CodexHookSrc = Join-Path $RepoRoot '.codex/hooks/load-required-skills.py'
+$CodexHookSrcDir = Join-Path $RepoRoot '.codex/hooks'
+$CodexHookFiles = @('load-required-skills.py', 'scan-secrets.py', 'helpers/common.py', 'helpers/audit.py')
 $CodexInstructionsSrc = Join-Path $RepoRoot '.codex/AGENTS.md'
 $CodexHookTemplateSrc = Join-Path $RepoRoot '.codex/global-hooks.json'
 $CodexHookMergerSrc = Join-Path $RepoRoot 'scripts/install-codex-hooks.py'
@@ -346,22 +347,37 @@ function Install-CodexHook {
         [string[]]$PythonArguments
     )
 
-    New-Item -ItemType Directory -Path $CodexHooksDest -Force | Out-Null
-    $installedHook = Join-Path $CodexHooksDest 'load-required-skills.py'
-    $existingHook = Get-Item -Force -LiteralPath $installedHook -ErrorAction SilentlyContinue
-    if ($null -ne $existingHook -and [string]$existingHook.LinkType) {
-        Fail "Refusing to overwrite linked Codex hook destination: $installedHook"
+    & $PythonPath @PythonArguments $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest --check
+    if ($LASTEXITCODE -ne 0) {
+        Fail "Codex hook configuration preflight exited with code $LASTEXITCODE."
     }
-    Copy-FileTo -Source $CodexHookSrc -Destination $installedHook
-    if (-not $IsWindows) {
-        $executable = [System.IO.UnixFileMode]::UserRead -bor
-            [System.IO.UnixFileMode]::UserWrite -bor
-            [System.IO.UnixFileMode]::UserExecute -bor
-            [System.IO.UnixFileMode]::GroupRead -bor
-            [System.IO.UnixFileMode]::GroupExecute -bor
-            [System.IO.UnixFileMode]::OtherRead -bor
-            [System.IO.UnixFileMode]::OtherExecute
-        [System.IO.File]::SetUnixFileMode($installedHook, $executable)
+    foreach ($directory in @($CodexHooksDest, (Join-Path $CodexHooksDest 'helpers'))) {
+        $existingDirectory = Get-Item -Force -LiteralPath $directory -ErrorAction SilentlyContinue
+        if ($null -ne $existingDirectory -and [string]$existingDirectory.LinkType) {
+            Fail "Refusing linked Codex hook directory: $directory"
+        }
+    }
+    foreach ($relative in $CodexHookFiles) {
+        $installedHook = Join-Path $CodexHooksDest $relative
+        $existingHook = Get-Item -Force -LiteralPath $installedHook -ErrorAction SilentlyContinue
+        if ($null -ne $existingHook -and ([string]$existingHook.LinkType -or $existingHook.PSIsContainer)) {
+            Fail "Refusing linked or non-file Codex hook destination: $installedHook"
+        }
+    }
+    New-Item -ItemType Directory -Path (Join-Path $CodexHooksDest 'helpers') -Force | Out-Null
+    foreach ($relative in $CodexHookFiles) {
+        $installedHook = Join-Path $CodexHooksDest $relative
+        Copy-FileTo -Source (Join-Path $CodexHookSrcDir $relative) -Destination $installedHook
+        if (-not $IsWindows) {
+            $executable = [System.IO.UnixFileMode]::UserRead -bor
+                [System.IO.UnixFileMode]::UserWrite -bor
+                [System.IO.UnixFileMode]::UserExecute -bor
+                [System.IO.UnixFileMode]::GroupRead -bor
+                [System.IO.UnixFileMode]::GroupExecute -bor
+                [System.IO.UnixFileMode]::OtherRead -bor
+                [System.IO.UnixFileMode]::OtherExecute
+            [System.IO.File]::SetUnixFileMode($installedHook, $executable)
+        }
     }
 
     & $PythonPath @PythonArguments $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest
@@ -387,9 +403,15 @@ foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSetting
     }
 }
 
-foreach ($src in @($CodexHookSrc, $CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $GenerateHooksSrc)) {
+foreach ($src in @($CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $GenerateHooksSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
+    }
+}
+foreach ($relative in $CodexHookFiles) {
+    $source = Join-Path $CodexHookSrcDir $relative
+    if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
+        Fail "Missing source file: $source"
     }
 }
 

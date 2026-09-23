@@ -339,6 +339,13 @@ test_installs_codex_hook_and_global_configuration() {
     echo "Expected the Codex required-skills hook to be installed and executable." >&2
     exit 1
   fi
+  for installed in scan-secrets.py helpers/common.py helpers/audit.py; do
+    if [[ ! -x "$home/.codex/hooks/$installed" ]]; then
+      echo "Expected maintained Codex hook to be installed and executable: $installed" >&2
+      exit 1
+    fi
+    cmp "$repo/.codex/hooks/$installed" "$home/.codex/hooks/$installed"
+  done
   if [[ -e "$home/.codex/hooks.json.bak" ]]; then
     echo "Expected a fresh Codex install not to create a backup." >&2
     exit 1
@@ -358,6 +365,10 @@ groups = config["hooks"]["SessionStart"]
 handler = groups[0]["hooks"][0]
 assert handler["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
 assert handler["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
+for event in ("PreToolUse", "Stop"):
+    groups = config["hooks"][event]
+    assert len(groups) == 1
+    assert groups[0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/scan-secrets.py"
 PY
 }
 
@@ -498,6 +509,10 @@ test_rejects_invalid_codex_configuration_without_mutation_and_can_retry() {
     exit 1
   fi
   assert_equals "$malformed" "$(<"$home/.codex/hooks.json")" "Expected malformed Codex config to remain unchanged."
+  if [[ -e "$home/.codex/hooks/scan-secrets.py" ]]; then
+    echo "Expected malformed Codex config to stop before copying hook files." >&2
+    exit 1
+  fi
   if [[ -e "$home/.codex/hooks.json.bak" ]]; then
     echo "Expected no backup for a malformed Codex config." >&2
     exit 1

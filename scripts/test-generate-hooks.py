@@ -59,6 +59,11 @@ TOOL_GUARD_TARGETS = (
 SECRET_SCANNER_TARGETS = (
     ".copilot/hooks/scripts/scan-secrets.py",
     ".gemini/hooks/scripts/scan-secrets.py",
+    ".codex/hooks/scan-secrets.py",
+)
+CODEX_HELPER_TARGETS = (
+    ".codex/hooks/helpers/common.py",
+    ".codex/hooks/helpers/audit.py",
 )
 AUTO_INGEST_TARGETS = (
     ".github/hooks/scripts/helpers/auto_ingest.py",
@@ -249,7 +254,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (22 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (25 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -290,7 +295,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (22 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (25 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -316,7 +321,7 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():

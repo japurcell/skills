@@ -1,20 +1,7 @@
-"""Render provider-local common hook helpers from explicit runtime adapters."""
-
+#!/usr/bin/env python3
+# Generated from hooks/families/common.py by scripts/generate-hooks.py. Do not edit.
 from __future__ import annotations
 
-from hooks.manifest import GeneratedTarget
-from hooks.providers import Provider
-
-
-SHEBANG = "#!/usr/bin/env python3\n"
-
-
-def _header() -> str:
-    return "# Generated from hooks/families/common.py by scripts/generate-hooks.py. Do not edit.\n"
-
-
-STANDARD_IMPORTS = """from __future__ import annotations
-
 import codecs
 import json
 import os
@@ -24,53 +11,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Sequence
 
-"""
 
-GITHUB_IMPORTS = """from __future__ import annotations
-
-import codecs
-import json
-import os
-import select
-import subprocess
-import sys
-import time
-from collections.abc import Mapping
-from pathlib import Path
-from typing import Any, Sequence
-
-
-INPUT_COMPLETION_IDLE_SECONDS = 0.5
-
-
-def _stdin_is_ready(stdin_fd: int, timeout: float = 0) -> bool:
-    if os.name != "nt":
-        return bool(select.select([stdin_fd], [], [], timeout)[0])
-
-    import ctypes
-    import msvcrt
-
-    deadline = time.monotonic() + timeout
-    pipe_handle = ctypes.c_void_p(msvcrt.get_osfhandle(stdin_fd))
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    while True:
-        available = ctypes.c_ulong()
-        if kernel32.PeekNamedPipe(
-            pipe_handle,
-            None,
-            0,
-            None,
-            ctypes.byref(available),
-            None,
-        ) and available.value:
-            return True
-        if time.monotonic() >= deadline:
-            return False
-        time.sleep(0.01)
-
-"""
-
-INPUT_READER = """def _read_available_stdin_bytes(stdin_fd: int) -> bytes:
+def _read_available_stdin_bytes(stdin_fd: int) -> bytes:
     if os.name == "nt":
         import ctypes
         import msvcrt
@@ -125,7 +67,7 @@ def _read_json_input_text() -> str:
     raw_input = ""
 
     while True:
-{idle_wait}        chunk = os.read(stdin_fd, 65536)
+        chunk = os.read(stdin_fd, 65536)
         if not chunk:
             return raw_input + decoder.decode(b"", final=True)
 
@@ -139,9 +81,8 @@ def _read_json_input_text() -> str:
         raw_input += decoder.decode(_read_available_stdin_bytes(stdin_fd))
         return raw_input + decoder.decode(b"", final=True)
 
-"""
 
-COPILOT_JSON = """def read_json_input() -> dict:
+def read_json_input() -> dict:
     try:
         payload = json.loads(_read_json_input_text())
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
@@ -163,7 +104,7 @@ COPILOT_JSON = """def read_json_input() -> dict:
 def emit_json(payload: dict) -> None:
     try:
         sys.stdout.buffer.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
-        sys.stdout.buffer.write(b"\\n")
+        sys.stdout.buffer.write(b"\n")
         sys.stdout.buffer.flush()
     except Exception:
         try:
@@ -171,7 +112,7 @@ def emit_json(payload: dict) -> None:
         except Exception:
             pass
         sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-        sys.stdout.write("\\n")
+        sys.stdout.write("\n")
         sys.stdout.flush()
 
     try:
@@ -181,38 +122,9 @@ def emit_json(payload: dict) -> None:
     except Exception:
         pass
 
-"""
 
-PLAIN_JSON = """def read_json_input() -> dict:
-    try:
-        payload = json.loads(_read_json_input_text())
-    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-        raise ValueError("Invalid hook input: expected a JSON object") from exc
-
-    if not isinstance(payload, dict):
-        raise ValueError("Invalid hook input: expected a JSON object")
-
-    return payload
-
-
-def emit_json(payload: dict) -> None:
-    try:
-        sys.stdout.buffer.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
-        sys.stdout.buffer.write(b"\\n")
-        sys.stdout.buffer.flush()
-    except Exception:
-        try:
-            sys.stdout.reconfigure(encoding="utf-8")
-        except Exception:
-            pass
-        sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-        sys.stdout.write("\\n")
-        sys.stdout.flush()
-
-"""
-
-COMMON_HELPERS = """def sanitize_log_field(value: object) -> str:
-    return str(value or "").translate({ord("\\r"): " ", ord("\\n"): " ", ord("\\t"): " "})
+def sanitize_log_field(value: object) -> str:
+    return str(value or "").translate({ord("\r"): " ", ord("\n"): " ", ord("\t"): " "})
 
 
 def first_present(payload: Mapping[str, Any], *keys: str) -> Any:
@@ -232,17 +144,16 @@ def nested_present(payload: Mapping[str, Any], *keys: str) -> Any:
 
     return current if current is not None else ""
 
-"""
 
-COPILOT_WINDOWS_PATH = """def convert_windows_path_to_posix(path_str: str) -> str:
+def convert_windows_path_to_posix(path_str: str) -> str:
     if not path_str:
         return ""
     if os.name == "nt":
-        return path_str.replace("/", "\\\\")
+        return path_str.replace("/", "\\")
 
     if len(path_str) >= 2 and path_str[1] == ":" and path_str[0].isalpha():
         drive = path_str[0].lower()
-        rest = path_str[2:].replace("\\\\", "/")
+        rest = path_str[2:].replace("\\", "/")
         if not rest.startswith("/"):
             rest = "/" + rest
 
@@ -252,67 +163,13 @@ COPILOT_WINDOWS_PATH = """def convert_windows_path_to_posix(path_str: str) -> st
             return f"/{drive}{rest}"
         return f"/mnt/{drive}{rest}"
 
-    if "\\\\" in path_str:
-        return path_str.replace("\\\\", "/")
+    if "\\" in path_str:
+        return path_str.replace("\\", "/")
 
     return path_str
 
-"""
 
-GEMINI_WINDOWS_PATH = """def convert_windows_path_to_posix(path_str: str) -> str:
-    import os
-    if not path_str:
-        return ""
-    if os.name == "nt":
-        return path_str.replace("/", "\\\\")
-
-    if len(path_str) >= 2 and path_str[1] == ":" and path_str[0].isalpha():
-        drive = path_str[0].lower()
-        rest = path_str[2:].replace("\\\\", "/")
-        if not rest.startswith("/"):
-            rest = "/" + rest
-
-        if os.path.exists(f"/mnt/{drive}"):
-            return f"/mnt/{drive}{rest}"
-        elif os.path.exists(f"/{drive}"):
-            return f"/{drive}{rest}"
-        else:
-            return f"/mnt/{drive}{rest}"
-
-    if "\\\\" in path_str:
-        return path_str.replace("\\\\", "/")
-
-    return path_str
-
-"""
-
-GITHUB_WINDOWS_PATH = """def convert_windows_path_to_posix(path_str: str) -> str:
-    if not path_str:
-        return ""
-    if os.name == "nt":
-        return path_str.replace("/", "\\\\")
-
-    if len(path_str) >= 2 and path_str[1] == ":" and path_str[0].isalpha():
-        drive = path_str[0].lower()
-        rest = path_str[2:].replace("\\\\", "/")
-        if not rest.startswith("/"):
-            rest = "/" + rest
-
-        if os.path.exists(f"/mnt/{drive}"):
-            return f"/mnt/{drive}{rest}"
-        elif os.path.exists(f"/{drive}"):
-            return f"/{drive}{rest}"
-        else:
-            return f"/mnt/{drive}{rest}"
-
-    if "\\\\" in path_str:
-        return path_str.replace("\\\\", "/")
-
-    return path_str
-
-"""
-
-TAIL = """def stringify_value(value: Any) -> str:
+def stringify_value(value: Any) -> str:
     if isinstance(value, str):
         return value
     if value is None:
@@ -354,9 +211,9 @@ def merge_env_skill_files(raw: str | None, skills_dir: str, home: str | None) ->
     import re
 
     if os.name == "nt":
-        parts = re.split(r"[\\r\\n,;]", raw)
+        parts = re.split(r"[\r\n,;]", raw)
     else:
-        parts = re.split(r"[\\r\\n,;]|(?<!\\b[a-zA-Z]):", raw)
+        parts = re.split(r"[\r\n,;]|(?<!\b[a-zA-Z]):", raw)
 
     resolved: list[str] = []
 
@@ -392,7 +249,7 @@ def strip_yaml_frontmatter(text: str) -> str:
 
         body.append(line)
 
-    return "\\n".join(body)
+    return "\n".join(body)
 
 
 def run_command(
@@ -418,9 +275,8 @@ def run_command(
         timeout=timeout,
         shell=False,
     )
-"""
 
-COPILOT_PASSIVE_LOG = """
+
 def run_passive_log_hook(script_name: str, build_log_message_func) -> int:
     from .audit import audit_log_event
 
@@ -447,81 +303,3 @@ def run_passive_log_hook(script_name: str, build_log_message_func) -> int:
     except Exception as exc:  # noqa: BLE001
         fail_safe(f"Unexpected exception: {exc}")
     return 0
-"""
-
-GEMINI_PASSIVE_LOG = """
-def run_gemini_passive_log_hook(script_name: str, build_log_message_func) -> int:
-    from .audit import audit_init, audit_log_passive_event
-
-    def noop() -> None:
-        emit_json({})
-        raise SystemExit(0)
-
-    try:
-        input_payload = read_json_input()
-
-        if not isinstance(input_payload, dict):
-            noop()
-
-        if not audit_init():
-            noop()
-
-        log_string = build_log_message_func(input_payload)
-
-        if log_string and not audit_log_passive_event(script_name, log_string):
-            noop()
-
-        noop()
-    except ValueError as exc:
-        noop()
-    except Exception as exc:  # noqa: BLE001
-        noop()
-    return 0
-"""
-
-
-def render(provider: Provider, target: GeneratedTarget) -> str:
-    """Render the complete common helper for one supported runtime."""
-    if target.provider != provider.name:
-        raise ValueError(f"Common target/provider mismatch: {target.output_path}")
-    if provider.name in {"copilot", "codex"}:
-        body = "\n".join(
-            (
-                STANDARD_IMPORTS,
-                INPUT_READER.format(idle_wait=""),
-                COPILOT_JSON,
-                COMMON_HELPERS,
-                COPILOT_WINDOWS_PATH,
-                TAIL,
-                COPILOT_PASSIVE_LOG,
-            )
-        )
-    elif provider.name == "gemini":
-        body = "\n".join(
-            (
-                STANDARD_IMPORTS,
-                INPUT_READER.format(idle_wait=""),
-                COPILOT_JSON,
-                COMMON_HELPERS,
-                GEMINI_WINDOWS_PATH,
-                TAIL,
-                GEMINI_PASSIVE_LOG,
-            )
-        )
-    elif provider.name == "github":
-        body = "\n".join(
-            (
-                GITHUB_IMPORTS,
-                INPUT_READER.format(
-                    idle_wait="        if not _stdin_is_ready(stdin_fd, INPUT_COMPLETION_IDLE_SECONDS):\n"
-                    "            raise ValueError(\"Invalid hook input: malformed or incomplete JSON\")\n"
-                ),
-                PLAIN_JSON,
-                COMMON_HELPERS,
-                GITHUB_WINDOWS_PATH,
-                TAIL,
-            )
-        )
-    else:
-        raise ValueError(f"Unsupported common provider: {provider.name}")
-    return SHEBANG + _header() + body

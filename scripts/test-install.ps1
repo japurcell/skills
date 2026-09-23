@@ -848,6 +848,11 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         $installedHook = Join-Path $homeDir '.codex/hooks/load-required-skills.py'
         Assert-True -Condition (Test-Path -LiteralPath $installedHook -PathType Leaf) -Message "Expected the Codex required-skills hook to be installed."
         Assert-Equals -Expected (Read-FileContent (Join-Path $repo '.codex/hooks/load-required-skills.py')) -Actual (Read-FileContent $installedHook) -Message "Expected the installed Codex hook to match the maintained source."
+        foreach ($relative in @('scan-secrets.py', 'helpers/common.py', 'helpers/audit.py')) {
+            $installed = Join-Path (Join-Path $homeDir '.codex/hooks') $relative
+            Assert-True -Condition (Test-Path -LiteralPath $installed -PathType Leaf) -Message "Expected Codex hook file $relative to be installed."
+            Assert-Equals -Expected (Read-FileContent (Join-Path $repo ".codex/hooks/$relative")) -Actual (Read-FileContent $installed) -Message "Expected Codex hook file $relative to match source."
+        }
 
         $configPath = Join-Path $homeDir '.codex/hooks.json'
         Assert-True -Condition (Test-Path -LiteralPath $configPath -PathType Leaf) -Message "Expected Codex global hooks.json to be installed."
@@ -855,6 +860,9 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         $handler = $config['hooks']['SessionStart'][0]['hooks'][0]
         Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $handler['command'] -Message "Expected the Codex handler's POSIX command to target the installed hook."
         Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\load-required-skills.py"' -Actual $handler['commandWindows'] -Message "Expected the exact Windows Codex command."
+        foreach ($event in @('PreToolUse', 'Stop')) {
+            Assert-Equals -Expected 'python3 ~/.codex/hooks/scan-secrets.py' -Actual $config['hooks'][$event][0]['hooks'][0]['command'] -Message "Expected $event to use the maintained scanner."
+        }
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/hooks.json.bak'))) -Message "Expected a fresh Codex install not to create a backup."
 
         if (-not $IsWindows) {

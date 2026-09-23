@@ -11,7 +11,8 @@ readonly GEMINI_SRC="${REPO_ROOT}/.gemini"
 readonly GEMINI_GLOBAL_SETTINGS_SRC="${REPO_ROOT}/.gemini/global-settings.json"
 readonly COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
 readonly COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
-readonly CODEX_HOOK_SRC="${REPO_ROOT}/.codex/hooks/load-required-skills.py"
+readonly CODEX_HOOK_SRC_DIR="${REPO_ROOT}/.codex/hooks"
+readonly CODEX_HOOK_FILES=(load-required-skills.py scan-secrets.py helpers/common.py helpers/audit.py)
 readonly CODEX_INSTRUCTIONS_SRC="${REPO_ROOT}/.codex/AGENTS.md"
 readonly CODEX_HOOK_TEMPLATE_SRC="${REPO_ROOT}/.codex/global-hooks.json"
 readonly CODEX_HOOK_MERGER="${REPO_ROOT}/scripts/install-codex-hooks.py"
@@ -104,13 +105,28 @@ copy_copilot_lsp() {
 }
 
 install_codex_hook() {
-  mkdir -p "$CODEX_HOOKS_DEST"
-  if [[ -L "$CODEX_HOOKS_DEST/load-required-skills.py" ]]; then
-    echo "Refusing to overwrite symlinked Codex hook destination: $CODEX_HOOKS_DEST/load-required-skills.py" >&2
-    return 1
-  fi
-  cp -p "$CODEX_HOOK_SRC" "$CODEX_HOOKS_DEST/load-required-skills.py"
-  chmod 755 "$CODEX_HOOKS_DEST/load-required-skills.py"
+  local hook
+  python3 "$CODEX_HOOK_MERGER" \
+    --template "$CODEX_HOOK_TEMPLATE_SRC" \
+    --destination "$CODEX_HOOK_CONFIG_DEST" \
+    --check
+  for hook in "$CODEX_HOOKS_DEST" "$CODEX_HOOKS_DEST/helpers"; do
+    if [[ -L "$hook" ]]; then
+      echo "Refusing linked Codex hook directory: $hook" >&2
+      return 1
+    fi
+  done
+  for hook in "${CODEX_HOOK_FILES[@]}"; do
+    if [[ -L "$CODEX_HOOKS_DEST/$hook" || ( -e "$CODEX_HOOKS_DEST/$hook" && ! -f "$CODEX_HOOKS_DEST/$hook" ) ]]; then
+      echo "Refusing linked or non-file Codex hook destination: $CODEX_HOOKS_DEST/$hook" >&2
+      return 1
+    fi
+  done
+  mkdir -p "$CODEX_HOOKS_DEST/helpers"
+  for hook in "${CODEX_HOOK_FILES[@]}"; do
+    cp -p "$CODEX_HOOK_SRC_DIR/$hook" "$CODEX_HOOKS_DEST/$hook"
+    chmod 755 "$CODEX_HOOKS_DEST/$hook"
+  done
   python3 "$CODEX_HOOK_MERGER" \
     --template "$CODEX_HOOK_TEMPLATE_SRC" \
     --destination "$CODEX_HOOK_CONFIG_DEST"
@@ -129,8 +145,11 @@ for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC" "$GEMINI_GLOBAL_SETTIN
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
-for src in "$CODEX_HOOK_SRC" "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$GENERATE_HOOKS"; do
+for src in "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$GENERATE_HOOKS"; do
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
+done
+for hook in "${CODEX_HOOK_FILES[@]}"; do
+  [[ -f "$CODEX_HOOK_SRC_DIR/$hook" ]] || { echo "Missing source file: $CODEX_HOOK_SRC_DIR/$hook" >&2; exit 1; }
 done
 
 if PYTHONDONTWRITEBYTECODE=1 python3 "$GENERATE_HOOKS" --check; then

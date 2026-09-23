@@ -36,7 +36,12 @@ LOCK_NAME = ".generate-hooks.lock"
 LOCK_TIMEOUT_SECONDS = 1.0
 TEST_FAILURE_ENVIRONMENT = "GENERATE_HOOKS_TEST_FAIL_AFTER_REPLACEMENTS"
 TEST_INTERRUPT_ENVIRONMENT = "GENERATE_HOOKS_TEST_INTERRUPT_AFTER_REPLACEMENTS"
-ALLOWED_HOOK_ROOTS = (PurePosixPath(".copilot/hooks"), PurePosixPath(".gemini/hooks"), PurePosixPath(".github/hooks"))
+ALLOWED_HOOK_ROOTS = (
+    PurePosixPath(".copilot/hooks"),
+    PurePosixPath(".gemini/hooks"),
+    PurePosixPath(".github/hooks"),
+    PurePosixPath(".codex/hooks"),
+)
 
 
 class GenerateError(ValueError):

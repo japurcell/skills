@@ -295,8 +295,11 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
     """Render the complete audit helper for one supported runtime."""
     if target.provider != provider.name:
         raise ValueError(f"Audit target/provider mismatch: {target.output_path}")
-    if provider.name == "copilot":
-        body = "\n\n".join((PREAMBLE, COPILOT_ADAPTER, ROTATE))
+    if provider.name in {"copilot", "codex"}:
+        adapter = COPILOT_ADAPTER
+        if provider.name == "codex":
+            adapter = adapter.replace(' / ".copilot" / ', ' / ".codex" / ')
+        body = "\n\n".join((PREAMBLE, adapter, ROTATE))
     elif provider.name == "gemini":
         body = "\n\n".join((PREAMBLE, GEMINI_ADAPTER, ROTATE))
     elif provider.name == "github":

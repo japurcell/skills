@@ -1,0 +1,43 @@
+name: Ready ideas Windows hooks
+
+on:
+  push:
+    paths:
+      - '.codex/**'
+      - 'hooks/**'
+      - 'scripts/**'
+      - '.github/workflows/ready-ideas-windows.yml'
+  pull_request:
+    paths:
+      - '.codex/**'
+      - 'hooks/**'
+      - 'scripts/**'
+      - '.github/workflows/ready-ideas-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hooks:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Check native prerequisites
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($name in @('python', 'git', 'pwsh')) {
+            Get-Command $name -CommandType Application -ErrorAction Stop | Out-Null
+          }
+      - name: Check generated hooks
+        run: python scripts/generate-hooks.py --check
+      - name: Test native PowerShell installer
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/test-install.ps1
+      - name: Test Codex scanner Windows envelopes
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/test-codex-hooks-windows.ps1

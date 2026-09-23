@@ -14,6 +14,33 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.codex/hooks/scan-secrets.py",
+            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-secrets.py\"",
+            "timeout": 10,
+            "statusMessage": "Scanning modified files for secrets"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.codex/hooks/scan-secrets.py",
+            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-secrets.py\"",
+            "timeout": 10,
+            "statusMessage": "Checking modified files for secrets"
+          }
+        ]
+      }
     ]
   }
 }
