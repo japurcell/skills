@@ -5,13 +5,13 @@ description: Index and loading map for all .agents/memory/ knowledge-base files
 
 # Memory Index
 
-This is the loading map for the agent knowledge base under `.agents/memory/`. **Read this file first** when starting any task. Load other files **on demand** — and read only the area-scoped **instruction file** for the area you're working in (see below), not all of them. This keeps context small.
+This is the loading map for the agent knowledge base under `.agents/memory/`. **Read this file before repository edits.** For read-only questions, reviews, and audits that make no repository edits, start with the requested artifact and load guidance only as needed. For edit work, load other files **on demand** — and read only the area-scoped **instruction file** for the area you're working in (see below), not all of them. This keeps context small.
 
 ## Repo-wide files (load as the task needs)
 
 | File                       | Purpose                                                                 | When to load                                  |
 | -------------------------- | ----------------------------------------------------------------------- | --------------------------------------------- |
-| **[INDEX.md](INDEX.md)** (this file) | Discovery map for the knowledge base                                    | Always — read first                           |
+| **[INDEX.md](INDEX.md)** (this file) | Discovery map for the knowledge base                                    | Before repository edits; read-only work as needed |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)**      | Top-level repo structure, install flows, and documentation boundaries   | Load when task needs repo structure, install flows, or docs boundaries |
 | **[CONVENTIONS.md](CONVENTIONS.md)**       | Repo-wide formatting and agent-workspace boundaries                     | When writing or reviewing code                |
 | **[FILE_MAP.md](FILE_MAP.md)**          | Top-level map (one line per area) + layer pointers                      | When deciding which area/layer to work in     |

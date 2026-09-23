@@ -11,7 +11,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 ## Progress
 
 - [x] (2026-09-23 17:59Z) [planning] Replace the eight Ready entries in `docs/ideas.md` with a `Planned` link to this ExecPlan; verify the link resolves and those entries are absent.
-- [ ] [milestone-1] Align `AGENTS.md` orientation and validation text with `.agents/memory/INDEX.md`; demonstrate the read-only exception and edit-time rule. An initial patch was rejected by automatic approval review; no files changed.
+- [x] (2026-09-23 18:20Z) [milestone-1] Align `AGENTS.md` orientation and validation text with `.agents/memory/INDEX.md`; demonstrate the read-only exception and edit-time rule.
 - [ ] [milestone-2] Add file-first PowerShell guidance to all three provider instructions; verify installed copies, representative agent behavior, and Windows automation/checklist. Implementation is in progress on an isolated branch.
 - [ ] [milestone-3] Add disposable-script placement and cleanup rule only to the same three checked-in provider instructions; review their content without installer, agent-run, or Windows checks for this rule.
 - [ ] [milestone-4] Prove provider hook event/response contracts, extend Codex hook ownership/installation, and register a baseline Codex scan-secrets adapter. Implementation is in progress on an isolated branch.
@@ -29,6 +29,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - The published RTK prerelease tag is `dev-0.50.0-rc.451`; its macOS arm64 archive matched SHA-256 `05a32507b07dc38bca835808deb8f32bd182446e8adc90b00209deda0404d321`. Its binary reports `rtk 0.48.0`, so the version string does not prove provenance. Stable v0.49.0 ignores `RTK_SUPPRESS_HOOK_WARNING`.
 - Provider hook documentation and installed versions can differ. In particular, Gemini `AfterAgent` delivery and Copilot/Codex RTK rewrite payloads have not been proved in installed sessions. Record actual outcomes here before claiming final behavior.
 - An initial milestone-1 patch to `AGENTS.md` and `.agents/memory/INDEX.md` was rejected by automatic approval review as weakening mandatory orientation and falling outside a three-provider-file scope. No edit occurred. The milestone's own scope names both files and preserves all edit-time guidance; retry only with a narrower patch that makes this explicit, or obtain user approval if review still rejects it.
+- A narrower milestone-1 edit passed automatic review. It adds the read-only exception while retaining all edit-time orientation and end-of-session documentation requirements. `rtk test python3 scripts/lint-okf.py` and `rtk git diff --check` exited `0`.
 
 ## Decision Log
 
@@ -41,7 +42,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 ## Outcomes & Retrospective
 
-Plan authored. None of its milestones has been implemented or accepted. As milestones finish, summarize observed behavior, remaining limitations, and any change to the design here.
+Milestone 1 is implemented: read-only questions, reviews, and audits can start from the requested artifact; edit work still loads the index, core memory, and area guidance before writing. The remaining milestones are not yet accepted.
 
 ## Context and Orientation
 
@@ -61,9 +62,9 @@ Provider event names and limits matter. Copilot CLI uses lower-camel `preToolUse
 
 ### Milestone 1: Make read-only orientation proportional
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
 Edit the otherwise protected `## Agent Orientation` and `## Validation Checklist` sections in `AGENTS.md`; the user explicitly requested this exception. Align the introductory loading map and conventions in `.agents/memory/INDEX.md`. A read-only audit, diff review, or report that changes no repository file starts with the requested artifact and loads only guidance needed for accurate conclusions. No memory file is mandatory at the start of such work. A report written into the repository is an edit. Before the first edit, complete the normal orientation: `INDEX.md`, for nontrivial work `ARCHITECTURE.md` and `CONVENTIONS.md`, then affected area instructions and matching known-issue/testing files. Keep the end-of-session documentation pass for code/config changes.
 
@@ -231,3 +232,5 @@ The only external binary added by this plan is the user-approved RTK prerelease,
 Plan creation note, 2026-09-23: Created after the user accepted the integration order, shared verification, and replacement of the Ready entries with this plan link. The later three-file-only Disposable Probe Files instruction supersedes its earlier broad test proposal. No implementation milestone is complete.
 
 Implementation start note, 2026-09-23: Milestones 2 and 4 began on separate worktree branches. Milestone 1's first proposed edit was rejected by automatic approval review, so its acceptance remains open while the edit-time safeguards and approved file scope are clarified.
+
+Milestone 1 completion note, 2026-09-23: A narrow edit to `AGENTS.md` and `.agents/memory/INDEX.md` resolved the review concern by stating the read-only exception separately from mandatory edit-time reads. The focused text search found no remaining unconditional first-read requirement in these two files; OKF lint and diff whitespace checks passed.

@@ -16,7 +16,7 @@ If the plan is large, you MUST orchestrate the updates with subagents and make f
 
 ## Agent Orientation
 
-Before task-specific exploration, implementation, or answers, complete these applicable reads in order:
+For read-only questions, reviews, and audits that make no repository edits, start with the requested artifact and load only guidance needed for accurate conclusions. Before any repository edit, complete these applicable reads in order:
 
 1. **Read `.agents/memory/INDEX.md` first** (knowledge base loading map) for authoritative answers before searching the file system.
 2. **For every non-trivial task**, read both `.agents/memory/ARCHITECTURE.md` and `.agents/memory/CONVENTIONS.md` before loading task-specific skills or starting task-specific exploration.
@@ -60,7 +60,9 @@ You are at the end of a _work session_ when:
 
 ## Validation Checklist
 
-1. **Read `.agents/memory/INDEX.md`** at start.
+For a read-only question, review, or audit, load guidance as needed. Before repository edits, complete the checklist:
+
+1. **Read `.agents/memory/INDEX.md`** before editing.
 2. **Read core architecture, conventions, and area-scoped instructions** (for non-trivial tasks).
 3. **Build modified project(s)** (e.g., `yarn build`).
 4. **Run targeted tests** for affected project(s).
