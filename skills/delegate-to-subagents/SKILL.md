@@ -17,6 +17,8 @@ For each task:
    - Keep the router result out of the subagent prompt.
    - Set a runtime limit appropriate to the task.
 
+   If `$ARGUMENTS`contain anything like `spawn a subagent`, do not include that in the subagent prompt because it encourages the subagent to spawn a nested subagent unnecessarily.
+
 Wait for all subagents to complete their tasks before proceeding so that you don't duplicate work or encounter conflicts.
 
 If an agent fails or times out, record and preserve it's output: all errors, mistakes, learnings, and partial progress. Then delegate the task to a replacement subagent with the preserved context.
