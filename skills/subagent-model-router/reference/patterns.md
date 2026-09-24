@@ -6,11 +6,11 @@ Use named defaults from [the catalog](model-catalog.md#task-defaults).
 
 ## Reuse vs fresh routing
 
-Reuse a route only when work class, stakes, ambiguity, agent type, touched areas, review history, and model constraints are unchanged.
+Reuse a route only when work class, stakes, ambiguity, touched areas, review history, and model constraints are unchanged.
 
 | Situation | Decision |
 | --- | --- |
-| Same deterministic fixture checks across workers | Route once as `task` + Fast; reuse. |
+| Same deterministic fixture checks across workers | Route once as Fast; reuse. |
 | Similar reviews with same risk/model constraints | Route once; reuse while constraints match. |
 | Tests change to architecture analysis | Fresh route. |
 | Prior same-class review missed a bug | Fresh route; escalate one tier. |
@@ -19,18 +19,18 @@ Reuse a route only when work class, stakes, ambiguity, agent type, touched areas
 
 | Request | Route |
 | --- | --- |
-| Run tests and summarize failures | `task` + Fast |
-| Search repo for token lifecycle code | `explore` + Fast |
-| Format files or apply mechanical edits | `task` or `editor` + Fast |
-| Edit connected files | `editor` + Standard |
-| Debug multi-file behavior | `debugger` + Standard |
+| Run tests and summarize failures | Fast |
+| Search repo for token lifecycle code | Fast |
+| Format files or apply mechanical edits | Fast |
+| Edit connected files | Standard |
+| Debug multi-file behavior | Standard |
 | Debug auth/cache/concurrency interaction | Premium when security or subtle correctness is involved |
-| Review whitespace/comment-only single-file diff | `code-reviewer` + Fast + the bounded-work default |
-| Review bounded ordinary feature PR | `code-reviewer` + Standard + budget-review default |
-| Review backend + frontend PR | `code-reviewer` + Standard + general-work default; Premium for subtle contracts |
+| Review whitespace/comment-only single-file diff | Fast |
+| Review bounded ordinary feature PR | Standard + budget-review default |
+| Review backend + frontend PR | Standard + general-work default |
 | Review tests/guard logic | Standard; Premium if false-pass risk is subtle |
-| Review auth callback or redirect validation | `code-reviewer` or `security-review` + Premium |
-| Run security audit | `security-review` + Premium |
+| Review auth callback or redirect validation | Premium |
+| Run security audit | Premium |
 
 ## Availability fallback
 
@@ -44,7 +44,7 @@ When a model is unavailable:
 For review:
 
 - Preserve the review floor.
-- Do not fall back to the bounded-work default unless the review is truly tiny, single-file, and style-only.
+- Do not fall back to the bounded-work default unless the review is single-file or style-only.
 - If the demanding-review default is unavailable, choose another Premium code/security reasoning model.
 
 ## Token-shape examples

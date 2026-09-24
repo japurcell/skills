@@ -8,7 +8,7 @@ Routing tiers are local to this skill and may differ from provider labels. Use `
 
 ## Fast
 
-Use for bounded, low-risk work with clear requirements, including small self-contained code changes. Not for normal code review.
+Use for bounded, low-risk work with clear requirements, codebase exploration, fast help with simple or repetitive tasks, and small file reviews. Not for normal code review.
 
 | Provider | Model | Status | Best for |
 | --- | --- | --- | --- |
@@ -21,15 +21,15 @@ Use for bounded, low-risk work with clear requirements, including small self-con
 
 ## Standard
 
-Use for connected coding, substantive rewrites, nontrivial debugging, broader analysis, agent work, and normal code review.
+Use for general purpose and interactive coding, agentic tasks, substantive rewrites, deep reasoning and debugging, and meaningful code review.
 
 | Provider | Model | Status | Best for |
 | --- | --- | --- | --- |
 | OpenAI | `gpt-6-luna` with `max` effort | GA | agentic coding/review with demonstrated task fit; fallback to `gpt-5.6-luna` with `max` effort when not available |
 | OpenAI | `gpt-5.4-mini` | GA | bounded code review |
 | OpenAI | `gpt-6-sol` | GA | connected coding and broader analysis; long-context pricing |
-| OpenAI | `gpt-5.3-codex` | GA | agentic coding/review with demonstrated task fit |
 | OpenAI | `gpt-5.6-terra` | GA | connected coding and broader analysis; long-context pricing |
+| OpenAI | `gpt-5.3-codex` | GA | agentic coding/review with demonstrated task fit |
 | Anthropic | `claude-sonnet-4.6` | annual Pro/Pro+ only | general coding/agent tasks |
 | Anthropic | `claude-sonnet-5` | GA | general coding/agent tasks |
 | Moonshot AI | `kimi-k2.7-code` | GA; retires 2026-10-02 | code-oriented versatile work |
@@ -42,13 +42,12 @@ Use for connected coding, substantive rewrites, nontrivial debugging, broader an
 
 ## Premium
 
-Use for complex, ambiguous, high-stakes, security-sensitive, or failure-sensitive work.
+Use for complex reasoning over large codebases and long-running agentic work, long-horizon autonomous coding, high-stakes, repeated failure, prior missed issue, or user-requested best quality
 
 | Provider | Model | Status | Best for |
 | --- | --- | --- | --- |
 | OpenAI | `gpt-5.4` | GA | broad general work; long-context pricing |
 | OpenAI | `gpt-5.5` | GA | powerful reasoning; long-context pricing |
-| OpenAI | `gpt-5.6-sol` | GA | powerful reasoning; long-context pricing |
 | Anthropic | `claude-opus-4.7` | GA; retires 2026-10-02 | deep reasoning/debugging |
 | Anthropic | `claude-opus-4.8` | GA | deep reasoning/debugging |
 | Anthropic | `claude-opus-4.8-fast` | GA | premium reasoning when speed justifies cost |
@@ -65,10 +64,10 @@ These are provisional starting candidates, not measured quality rankings. They f
 
 | Default | Tier | Starting candidate | Alternatives and conditions |
 | --- | --- | --- | --- |
-| Bounded work / tiny style review | Fast | `gpt-6-luna` | Includes small self-contained coding changes with clear requirements and low risk. If GPT-6 Luna is unavailable, use `gpt-5.6-luna` as the first fallback; use `mai-code-1.1-flash` if neither Luna model is available. |
+| Bounded work / small file review | Fast | `gpt-6-luna` | Includes low-risk coding changes with clear requirements. If GPT-6 Luna is unavailable, use `gpt-5.6-luna` as the first fallback; use `mai-code-1.1-flash` if neither Luna model is available. |
 | Budget review | Standard | `gpt-6-luna` with `max` effort | Ordinary bounded code diffs with clear scope; use general work default for broader review. |
-| General work | Standard | `gpt-6-sol` | Connected implementation, substantive rewrites, debugging, and broader review. Route small self-contained coding changes through the bounded-work default; retain `gpt-5.3-codex` for demonstrated task fit. |
-| Demanding review | Premium | `gpt-6-sol` with `high` or greater effort | Subtle correctness, security, complex contracts. |
+| General work | Standard | `gpt-6-sol` | Interactive and agentic coding, substantive rewrites, debugging, and broader review. Route small self-contained coding changes through the bounded-work default; retain `gpt-5.6-terra`, then `gpt-5.3-codex` for demonstrated task fit. |
+| Demanding review | Premium | `gpt-6-sol` with `high` or greater effort | High stakes, repeated failures/misses; retain `gpt-5.6-terra`, then `gpt-5.3-codex` for demonstrated task fit. |
 | Demanding autonomous work / repeated Premium misses | Premium | `gpt-6-astra` | justify the added cost and verification approach. |
 
 Newer names and provider categories alone do not demonstrate security-review accuracy. For unvalidated task classes, state uncertainty and require independent verification; do not describe a provisional default as proven.
@@ -80,4 +79,3 @@ Newer names and provider categories alone do not demonstrate security-review acc
 - GitHub schedules Claude Opus 4.7, Gemini 3.5 Flash, Gemini 3.6 Flash, and Kimi K2.7 Code for retirement on **2026-10-02**. Prefer listed replacements after retirement: Claude Opus 5, Gemini 3.8 Flash, and Kimi K3.
 - Claude Sonnet 4.6 is available only to individual annual Pro/Pro+ subscribers after its September 1, 2026 retirement; confirm runtime availability before routing.
 - If two models are close in cost, pick the better task fit.
-- Cost optimization never overrides agent-type floors.

@@ -6,13 +6,13 @@ If prices are shown in GitHub AI Credits: 1 credit = $0.01 USD.
 
 ## Cost rules
 
-1. First satisfy agent-type floor and task capability.
+1. First satisfy task capability.
 2. Then minimize expected total cost of successful completion: input, output, cache writes/reads, retries, and verification. Use dominant token cost only as a shortcut when other factors are comparable.
 3. Never choose Fast for normal code review only because it is cheaper.
 4. Never pay Premium for bounded execution unless stakes require it.
 
 | Token shape | Optimize for |
-|---|---|
+| --- | --- |
 | Reads a lot, writes little | input cost |
 | Writes a lot | output cost |
 | Reuses large context | confirmed cache hits plus any cache-write charges |
@@ -25,7 +25,7 @@ Shared repo context across workers does not guarantee cache hits. Verify cache b
 `—` means not listed or not applicable.
 
 | Provider | Model | Condition | Input | Cached input | Cache write | Output |
-|---|---|---|---:|---:|---:|---:|
+| --- | --- | --- | ---: | ---: | ---: | ---: |
 | OpenAI | `gpt-5.4-nano` | default | $0.20 | $0.02 | — | $1.25 |
 | OpenAI | `gpt-5-mini` | default | $0.25 | $0.025 | — | $2.00 |
 | OpenAI | `gpt-5.4-mini` | default | $0.75 | $0.075 | — | $4.50 |

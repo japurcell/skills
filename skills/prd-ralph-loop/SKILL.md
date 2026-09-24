@@ -16,7 +16,7 @@ disable-model-invocation: true
    - `review_base_sha = git rev-parse HEAD`
    - initial `git status --porcelain`
      If either fails, stop and report the issue.
-2. Activate or load the `subagent-model-router` skill.
+2. Activate or load the `delegate-to-subagents` skill.
 3. Repeat sequentially:
    - Start one fresh subagent with this prompt: activate the `prd-ralph` skill on `prd_file`.
    - If it returns `<promise>COMPLETE</promise>`, stop the loop.

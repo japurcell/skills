@@ -11,7 +11,7 @@ For each task:
 
 1. Define the tasks's **objective** including: context, constraints, deliverable, verification, and allowed files.
 2. Activate the `subagent-model-router` skill and record its full result.
-3. Apply `agent_type` and `model` through the runtime's spawn configuration. Apply the effort/reasoning level if provided.
+3. Apply `model` through the runtime's spawn configuration. Apply the effort/reasoning level if provided.
 4. Subagent prompt:
    - Provide the subagent with the task's **objective**.
    - Keep the router result out of the subagent prompt.
