@@ -6,13 +6,13 @@ If prices are shown in GitHub AI Credits: 1 credit = $0.01 USD.
 
 ## Cost rules
 
-1. First satisfy agent-type floor and task capability.
+1. First satisfy task capability.
 2. Then minimize expected total cost of successful completion: input, output, cache writes/reads, retries, and verification. Use dominant token cost only as a shortcut when other factors are comparable.
 3. Never choose Fast for normal code review only because it is cheaper.
 4. Never pay Premium for bounded execution unless stakes require it.
 
 | Token shape | Optimize for |
-|---|---|
+| --- | --- |
 | Reads a lot, writes little | input cost |
 | Writes a lot | output cost |
 | Reuses large context | confirmed cache hits plus any cache-write charges |
@@ -25,7 +25,7 @@ Shared repo context across workers does not guarantee cache hits. Verify cache b
 `—` means not listed or not applicable.
 
 | Provider | Model | Condition | Input | Cached input | Cache write | Output |
-|---|---|---|---:|---:|---:|---:|
+| --- | --- | --- | ---: | ---: | ---: | ---: |
 | OpenAI | `gpt-5.4-nano` | default | $0.20 | $0.02 | — | $1.25 |
 | OpenAI | `gpt-5-mini` | default | $0.25 | $0.025 | — | $2.00 |
 | OpenAI | `gpt-5.4-mini` | default | $0.75 | $0.075 | — | $4.50 |
@@ -42,6 +42,10 @@ Shared repo context across workers does not guarantee cache hits. Verify cache b
 | OpenAI | `gpt-5.6-sol` | >272K | $8.00 | $0.80 | $10.00 | $30.00 |
 | OpenAI | `gpt-6-astra` | ≤272K | $10.00 | $1.00 | $12.50 | $50.00 |
 | OpenAI | `gpt-6-astra` | >272K | $20.00 | $2.00 | $25.00 | $75.00 |
+| OpenAI | `gpt-6-luna` | ≤272K | $0.10 | $0.01 | $0.125 | $0.50 |
+| OpenAI | `gpt-6-luna` | >272K | $0.20 | $0.02 | $0.25 | $0.75 |
+| OpenAI | `gpt-6-sol` | ≤272K | $2.00 | $0.20 | $2.50 | $10.00 |
+| OpenAI | `gpt-6-sol` | >272K | $4.00 | $0.40 | $5.00 | $15.00 |
 | Anthropic | `claude-haiku-4.5` | default | $1.00 | $0.10 | $1.25 | $5.00 |
 | Anthropic | `claude-sonnet-4` | default | $3.00 | $0.30 | $3.75 | $15.00 |
 | Anthropic | `claude-sonnet-4.6` | default | $3.00 | $0.30 | $3.75 | $15.00 |
@@ -70,8 +74,8 @@ Shared repo context across workers does not guarantee cache hits. Verify cache b
 ## Notes
 
 - Conditions are input-token thresholds; choose the matching row before comparing costs.
-- GitHub lists GPT-6 Luna and GPT-6 Sol as supported but does not publish their token rates on the linked pricing page. Their Copilot cost remains unverified.
-- Anthropic, GPT-5.6 Luna/Sol/Terra, and GPT-6 Astra have published cache-write charges. Earlier OpenAI models do not; GPT-6 Luna/Sol cache-write rates are unknown.
+- GitHub publishes GPT-6 Luna and GPT-6 Sol rates, including cache-write charges. Confirm model availability and pricing in the target runtime before routing; Copilot rates do not apply to other platforms.
+- Anthropic, GPT-5.6 Luna/Sol/Terra, GPT-6 Astra, GPT-6 Luna, and GPT-6 Sol have published cache-write charges. Earlier OpenAI models do not.
 - Gemini 3.6/3.7/3.8 Flash promotional rates apply through **2026-12-31**; recheck afterward.
 - Existing annual Copilot Pro/Pro+ subscriptions still using request-based billing have [legacy model multipliers](https://docs.github.com/en/copilot/reference/copilot-billing/request-based-billing-legacy/model-multipliers-for-annual-plans). Verify the applicable billing model before estimating usage.
 - Cheapest model within a tier can vary by token mix.

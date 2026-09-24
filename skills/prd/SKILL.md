@@ -26,7 +26,7 @@ Save to `.agents/scratchpad/[feature-name]/prd.md`, where `[feature-name]` is sh
 
 ## Workflow
 
-1. Activate or load the `subagent-model-router` skill and delegate tasks to the most suitable subagents whenever possible.
+1. Activate or load the `delegate-to-subagents` skill and delegate tasks to the most suitable subagents whenever possible.
 2. If codebase context is missing, activate or load the `explore` skill.
 3. Identify existing patterns, affected modules, contracts, test seams, risks, edge cases, rollout constraints, and conflicts with workspace conventions.
 4. Draft the PRD using the template below.

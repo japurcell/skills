@@ -38,6 +38,8 @@ Reduce agent-doc context cost while preserving durable guidance.
 - Do not invent policy or silently discard unique durable guidance.
 - Keep session history, one-off task state, secrets, and raw work logs out of durable docs.
 - Do not broaden default-load scope unless necessary.
+- Purge content that the codebase already shows.
+- Prefer rewriting or pruning existing entries over appending new ones.
 
 ## Return
 

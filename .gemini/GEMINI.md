@@ -1,65 +1,14 @@
-# Gemini Instructions
+# Global Agent Instructions
 
-## Universal Rules
-
-### Simplicity and scope
-
-- Make the smallest clear, maintainable change that meets the request, including necessary tests and documentation. Avoid speculative abstractions and unrequested capabilities.
-- Match existing codebase patterns and style unless there is a concrete reason not to.
-- Remove imports, variables, and helpers made unused by your changes.
+- Never use the em dash "—". Use plain dash "-" instead.
 - When making technical decisions, do not give much weight to development cost. Instead, prefer quality, simplicity, robustness, scalability, and long term maintainability.
-
-### Assumptions and ambiguity
-
-- Resolve ambiguity from repository context where possible. State consequential assumptions, and ask when unresolved alternatives would materially change scope, behavior, or risk.
-- Do not block progress on minor details with an obvious, low-risk choice.
-
-### Verify
-
-- Decide how success will be verified before implementing non-trivial work.
 - For bug fixes, always start with reproducing the bug in an E2E setting as closely aligned with how an end user would experience it as possible. This makes sure you find the real problem so your fix will actually solve it.
-- Support completion claims with evidence from every task; state any unverified work and why.
-
-### Respond to evidence
-
-- Revise assumptions and plans when repository evidence contradicts them.
-- If complexity grows substantially or repeated fixes only address symptoms, reassess the approach before continuing.
-
-### Git state protection
-
-- Never edit `.git` metadata directly. Use Git commands for repository state.
-- Before a command that could discard local work, show `git status`, unstaged `git diff -- <affected-paths>`, staged `git diff --cached -- <affected-paths>`, and untracked files or a dry-run deletion list. Plain `git diff` omits staged and untracked work.
-- If work would be lost, ask the user to approve the exact command. Approval for one command never carries forward. If a hook blocks the command, have the user run it directly after review. Do not infer approval from prose.
-- Hook text checks cannot see arbitrary later writes inside Python, PowerShell, child processes, or Git hooks. Inspect scripts and use platform sandbox controls where proven effective.
-
-### Boundaries
-
-- Never install or add new dependencies without approval.
-- Never modify database schemas without approval.
 - Never put secrets in code or version control.
 - Never delete, disable, skip, or weaken failing tests just to make the suite pass.
-
-### Questions are read-only
-
-- If I ask you a question, just answer it and don't edit files. Feel free to offer suggestions when appropriate though.
-
-### Be Proactive
-
-- Be picky about the UI you see and be obsessed with pixel perfection. If something clearly looks off, even if it is not directly related to what you are doing, try to get it fixed along the way.
+- If I ask you a question, answer it and stop.
+- When end-to-end testing a product, be picky about the UI you see and be obsessed with pixel perfection. If something clearly looks off, even if it is not directly related to what you are doing, try to get it fixed along the way.
 - Apply that same high standard to engineering excellence: lint, test failures, and test flakiness. If you see one, even if it is not caused by what you are working on right now, still get it fixed.
-
-## Coding preferences
-
-### General
-
-- Take advantage of type safety when a language supports it.
 - Never write regression tests for feature deletions.
-- Comment only where needed to explain complex logic, and keep comments current.
-
-### TypeScript
-
-- For TypeScript, prefer inference and avoid `any`.
-- I love Vite; prefer it for applicable frontend projects.
 
 ## RTK (Rust Token Killer) - Token-Optimized Commands
 
@@ -140,9 +89,3 @@ Examples of commands that may need to run without `rtk`:
 dotnet format
 oxfmt
 ```
-
-## Gotchas
-
-- Structured file output: Do not create JSON, markdown, or code-containing files via shell commands (`echo`, `heredocs`, `cat <<EOF`). Use a native file-write/edit tool when available; otherwise return the file contents directly for the caller to save.
-- File-first PowerShell authoring: For a complete multiline `.ps1` or reusable automation script, use `write_file` to create the complete script as a saved file, then execute that saved file. Short, non-script one-line shell commands are allowed. Do not construct saved scripts with `echo`, heredocs, or equivalent shell text injection.
-- Disposable probes: Put a disposable script in `.agents/scratchpad/` when it needs a repository-local path; otherwise use the operating system's temporary directory. Keep permanent tests and tools in tracked source paths. Before finishing, inspect and remove only probes you created, using their exact paths. If a repro must remain, keep it in scratchpad or temp and record its path and purpose in the handoff. Compare final Git status with the starting status, and never overwrite or remove a pre-existing user file.
