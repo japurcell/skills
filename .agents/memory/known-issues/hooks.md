@@ -25,6 +25,8 @@ Under `set -u`, interpolate function-local cleanup paths when registering the tr
 
 Run Git with `GIT_TERMINAL_PROMPT=0`, an empty `GIT_ASKPASS`, and a short timeout. Let timeout errors reach the top-level handler so block mode denies; warn mode may emit a sanitized no-op.
 
+The native Windows scanner suite once reported a leftover temporary Git-output capture file, then passed six complete reruns. The failing scenario and cause were not recorded, so this is an unresolved intermittent cleanup risk, not a confirmed fix or disclosure. The Windows test now includes provider, mode, scenario, and leaked filenames in its failure; on recurrence, inspect the surviving Git descendant and file handle before changing cleanup behavior.
+
 ## Extensionless commands fail on Windows
 
 With `shell=False`, resolve commands such as `rtk` through `shutil.which()` so `.cmd` or `.bat` executables are found.
@@ -80,6 +82,18 @@ Do not use `sys.stdin.read()` or one `readline()`. Incrementally decode until `J
 ## Copilot overrides repeated stop blocks
 
 Copilot ends a turn after eight consecutive `agentStop` or `subagentStop` block continuations. `stop_hook_active` identifies an `agentStop` turn already forced by a prior block. Stop validators cannot guarantee an unlimited hard gate: keep them bounded and idempotent, self-limit before the platform cap, and test repeated-block behavior when changing final-response enforcement.
+
+## Copilot CLI may hide unsupported hook response messages
+
+In CLI 1.0.88, a successful `systemMessage` in ordinary `preToolUse`, `postToolUse`, or `agentStop` command-hook JSON produced invocation markers but no visible CLI message. For a visible delivery probe, emit a separate `{"type":"progress","message":"..."}` line before one final provider-valid JSON result; `additionalContext` reaches the model, not necessarily the terminal timeline. A one-second hook timeout can be fail-open and invisible in the CLI transcript: distinguish entry markers, absent completion markers, and the tool's actual result from any claim that the user saw a timeout.
+
+## Copilot-only install should preserve custom user guidance
+
+`scripts/install.ps1` also copies agent skills, Gemini settings, and Copilot global instructions. When a Copilot-only deployed check finds different user-global instructions, do not replace them with the repository copy: inspect and back up the exact maintained hook destinations and install only those hooks. Keep logs and unrelated user files untouched. Use a disposable workspace for the live test.
+
+## Copilot native `create` needs an editor-tool guard
+
+Copilot CLI 1.0.88 uses `create` for new files. A live disposable request to create a harmless file under `.git` succeeded while the guard covered `edit` but not `create`; a work-discarding Git command was separately denied. Treat `create` as an editor tool in the shared repository-state family, test the public Copilot envelope, regenerate provider outputs, and verify a fresh installed Copilot session denies the real native create without relying on shell-command detection.
 
 ## Gemini `AfterAgent` needs deployed-version proof
 

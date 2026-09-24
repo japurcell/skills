@@ -53,7 +53,8 @@ class ProbeTests(unittest.TestCase):
             self.assertEqual(prepared.returncode, 0, prepared.stderr)
             info = json.loads(prepared.stdout)
             self.assertEqual(Path(info["backup"]).read_bytes(), original_bytes)
-            self.assertEqual(stat.S_IMODE(Path(info["marker"]).stat().st_mode), 0o600)
+            if os.name != "nt":
+                self.assertEqual(stat.S_IMODE(Path(info["marker"]).stat().st_mode), 0o600)
             self.assertEqual(json.loads(config.read_text())["userSetting"], "preserve")
             if provider == "codex":
                 installed = json.loads(config.read_text(encoding="utf-8"))
@@ -81,7 +82,13 @@ class ProbeTests(unittest.TestCase):
                         input=json.dumps(payload), text=True, capture_output=True, check=False,
                     )
                     self.assertEqual(call.returncode, 0, call.stderr)
-                    response = json.loads(call.stdout)
+                    lines = call.stdout.splitlines()
+                    if provider == "copilot":
+                        progress = json.loads(lines[0])
+                        self.assertEqual(progress["type"], "progress")
+                        self.assertIn(event, progress["message"])
+                        self.assertEqual(len(lines), 2)
+                    response = json.loads(lines[-1])
                     self.assertIsInstance(response, dict)
                     output.write(call.stdout)
             verified = self.cli(home, "verify", "--provider", provider, "--id", info["id"],

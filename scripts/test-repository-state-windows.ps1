@@ -50,13 +50,17 @@ try {
             $quotedPayload = if ($provider.Name -eq 'copilot') { @{ cwd=$repo; toolName=$provider.Tool; toolArgs=@{ command=$quotedCommand } } }
                              else { @{ cwd=$repo; tool_name=$provider.Tool; tool_input=@{ command=$quotedCommand } } }
             $quotedResult = ($quotedPayload | ConvertTo-Json -Compress -Depth 5) | & python -I -S -B $hook | ConvertFrom-Json
-            if ($LASTEXITCODE -ne 0 -or $quotedResult.PSObject.Properties.Count -ne 0) { throw "quoted prose was denied for $($provider.Name)" }
+            $quotedExitCode = $LASTEXITCODE
+            $quotedPropertyCount = @($quotedResult.PSObject.Properties).Count
+            if ($quotedExitCode -ne 0 -or $quotedPropertyCount -ne 0) { throw "quoted prose was denied for $($provider.Name)" }
         }
         foreach ($readCommand in @('git status', 'sed.exe -n -e p .GIT\config', 'perl.exe -ne print .GIT\config')) {
             $read = if ($provider.Name -eq 'copilot') { @{ cwd=$repo; toolName=$provider.Tool; toolArgs=@{ command=$readCommand } } }
                     else { @{ cwd=$repo; tool_name=$provider.Tool; tool_input=@{ command=$readCommand } } }
             $readResult = ($read | ConvertTo-Json -Compress -Depth 5) | & python -I -S -B $hook | ConvertFrom-Json
-            if ($LASTEXITCODE -ne 0 -or $readResult.PSObject.Properties.Count -ne 0) { throw "safe read blocked for $($provider.Name): $readCommand" }
+            $readExitCode = $LASTEXITCODE
+            $readPropertyCount = @($readResult.PSObject.Properties).Count
+            if ($readExitCode -ne 0 -or $readPropertyCount -ne 0) { throw "safe read blocked for $($provider.Name): $readCommand" }
         }
     }
     Write-Output 'PASS: native Windows repository-state hook envelopes'

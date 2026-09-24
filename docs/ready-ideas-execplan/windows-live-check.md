@@ -34,13 +34,15 @@ hook groups and files. Review changed non-managed Codex definitions through
 
 ## Exercise available local providers
 
-Use local Copilot CLI and VS Code, Gemini CLI, and Codex only where already
-available. Record each version before testing. Keep probe transcripts in OS
+Use local Copilot CLI, Gemini CLI, and Codex only where already
+available. Deployed VS Code Copilot hooks are not required for acceptance;
+retain source-level compatibility tests. Record each available CLI version
+before testing. Keep probe transcripts in OS
 temp and clean up only exact files created for this check. The deployed
 Copilot and Gemini checks belong to ExecPlan milestones 11 and 12; source
 fixtures alone do not close them.
 
-For each available provider:
+For each available CLI provider:
 
 1. Use its native file-edit tool to write a multiline `.ps1` in OS temp or
    `.agents/scratchpad/`, with quotes and a here-string. Run the saved file.
@@ -71,7 +73,7 @@ For each available provider:
 For Codex, verify `PreToolUse` and `Stop` delivery with
 `scripts/probe-provider-hook-delivery.py` after trust review, including a
 one-second timeout probe. For Copilot CLI, verify `preToolUse`, `postToolUse`,
-and `agentStop`; use the matching Pascal-case events in local VS Code. For
+and `agentStop`. For
 Gemini, verify `BeforeTool`, `AfterTool`, `AfterAgent`, and scanner `SessionEnd`.
 Use the probe's `prepare`, `verify`, and `cleanup` commands from `ExecPlan.md`,
 and always run cleanup after a timeout or failure. Record whether each timed

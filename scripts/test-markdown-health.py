@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -29,13 +30,22 @@ class MarkdownHealthTests(unittest.TestCase):
         self.state = Path(self.temp.name) / "state"
         self.audit = Path(self.temp.name) / "audit.log"
 
-    def run_hook(self, provider: str, event: str, *, tool: str = "Bash", args: dict | None = None) -> dict:
+    def run_hook(
+        self,
+        provider: str,
+        event: str,
+        *,
+        tool: str = "Bash",
+        args: dict | None = None,
+        workspace: Path | None = None,
+    ) -> dict:
+        workspace = workspace or self.root
         if provider == "copilot":
-            payload = {"sessionId": "test-session", "cwd": str(self.root), "toolName": tool,
+            payload = {"sessionId": "test-session", "cwd": str(workspace), "toolName": tool,
                        "toolArgs": args or {}, "stop_hook_active": False}
         else:
             hook_event = {"pre": "PreToolUse", "post": "PostToolUse", "final": "Stop"}[event] if provider == "codex" else event
-            payload = {"session_id": "test-session", "cwd": str(self.root),
+            payload = {"session_id": "test-session", "cwd": str(workspace),
                        "hook_event_name": hook_event, "tool_name": tool,
                        "tool_input": args or {}, "stop_hook_active": False}
         environment = os.environ.copy()
@@ -225,23 +235,28 @@ class MarkdownHealthTests(unittest.TestCase):
         self.assertIn("status=fail", self.audit.read_text())
 
     def test_long_direct_paths_keep_response_and_state_bounded(self) -> None:
-        nested = self.root
-        for index in range(12):
-            nested /= f"section-{index:02d}-" + "x" * 48
-            nested.mkdir()
-        self.run_hook("gemini", "pre")
-        for index in range(10):
-            (nested / f"doc-{index}.md").write_text("[broken](missing.md)\n", encoding="utf-8")
-        result = self.run_hook("gemini", "post", tool="write_file",
-                               args={"file_path": str(nested / "doc-0.md")})
-        encoded = json.dumps(result, separators=(",", ":"), ensure_ascii=False).encode()
-        self.assertLessEqual(len(encoded), 8192)
-        self.assertIn("Rerun: ", result["systemMessage"])
-        self.assertIn("more findings omitted", result["systemMessage"])
-        state_files = list(self.state.glob("*.json"))
-        self.assertEqual(len(state_files), 1)
-        self.assertLessEqual(state_files[0].stat().st_size, 1024 * 1024)
-        self.assertNotIn("[broken]", state_files[0].read_text())
+        workspace = Path("\\\\?\\" + str(self.root)) if os.name == "nt" else self.root
+        try:
+            nested = workspace
+            for index in range(12):
+                nested /= f"section-{index:02d}-" + "x" * 48
+                nested.mkdir()
+            self.run_hook("gemini", "pre", workspace=workspace)
+            for index in range(10):
+                (nested / f"doc-{index}.md").write_text("[broken](missing.md)\n", encoding="utf-8")
+            result = self.run_hook("gemini", "post", tool="write_file", workspace=workspace,
+                                   args={"file_path": str(nested / "doc-0.md")})
+            encoded = json.dumps(result, separators=(",", ":"), ensure_ascii=False).encode()
+            self.assertLessEqual(len(encoded), 8192)
+            self.assertIn("Rerun: ", result["systemMessage"])
+            self.assertIn("more findings omitted", result["systemMessage"])
+            state_files = list(self.state.glob("*.json"))
+            self.assertEqual(len(state_files), 1)
+            self.assertLessEqual(state_files[0].stat().st_size, 1024 * 1024)
+            self.assertNotIn("[broken]", state_files[0].read_text())
+        finally:
+            if os.name == "nt":
+                shutil.rmtree(str(workspace))
 
     def test_oversized_session_state_is_incomplete(self) -> None:
         self.run_hook("codex", "pre")

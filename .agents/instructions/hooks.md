@@ -73,6 +73,7 @@ For source auto-ingest scanners, injectors, manifests, or pending gates, read [H
 
 ## Copilot and VS Code compatibility
 
+- Register Copilot's native `create` as a repository-state editor operation, with the same metadata-path checks as `edit` and `write`; a safe shell command denial does not prove native file tools are protected.
 - On Windows systems, Copilot hooks config (e.g. `hooks.json` and `rtk-rewrite.json`) must explicitly define both `"bash"` (Unix) and `"powershell"` (Windows) keys for command hooks to execute natively and in VS Code on Windows.
 - In `.copilot/hooks/hooks.json`, keep both `subagentStart` (CLI) and `SubagentStart` (VS Code).
 - CLI responses return top-level `additionalContext`; VS Code responses return `hookSpecificOutput` plus `additionalContext`.

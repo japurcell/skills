@@ -99,7 +99,8 @@ function Invoke-Case {
                 if ($decision -ne 'deny') { throw "$Provider $Scenario did not deny" }
             }
         }
-        if (Get-ChildItem -LiteralPath $caseDir -Filter 'tmp*') { throw "$Provider $Scenario leaked a capture file" }
+        $leaked = @(Get-ChildItem -LiteralPath $caseDir -Filter 'tmp*')
+        if ($leaked.Count) { throw "$Provider $Mode $Scenario leaked capture files: $($leaked.Name -join ', ')" }
     }
     finally {
         $env:PATH = $savedPath

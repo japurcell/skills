@@ -193,7 +193,7 @@ else:
         required.add("prompt_response")
 missing = sorted(required - payload.keys())
 token = f"READY_IDEAS_HOOK_{state['nonce']}_{event}"
-response = {"systemMessage": token}
+response = {} if provider == "copilot" and surface == "cli" else {"systemMessage": token}
 if provider == "copilot" and event in {"postToolUse", "PostToolUse"}:
     response["additionalContext"] = token
 if provider == "copilot" and event in {"agentStop", "Stop"}:
@@ -215,6 +215,9 @@ append("marker.jsonl", {"provider": provider, "event": event, "invocation_id": i
                         "missing_keys": missing, "response_keys": sorted(response)})
 if state["mode"] == "timeout":
     time.sleep(state["delay_seconds"])
+if provider == "copilot" and surface == "cli":
+    sys.stdout.write(json.dumps({"type": "progress", "message": token}, separators=(",", ":")) + "\n")
+    sys.stdout.flush()
 sys.stdout.write(json.dumps(response, separators=(",", ":")) + "\n")
 sys.stdout.flush()
 append("completed.jsonl", {"event": event, "invocation_id": invocation_id})
@@ -315,7 +318,9 @@ def verify(args: argparse.Namespace) -> int:
             raise ValueError(f"No invocation marker for {event}")
         if any(entry.get("missing_keys") for entry in entries):
             raise ValueError(f"Unexpected payload keys for {event}")
-        if any("systemMessage" not in entry.get("response_keys", []) for entry in entries):
+        if not (args.provider == "copilot" and state["surface"] == "cli") and any(
+            "systemMessage" not in entry.get("response_keys", []) for entry in entries
+        ):
             raise ValueError(f"Invalid response shape for {event}")
         token = f"READY_IDEAS_HOOK_{state['nonce']}_{event}"
         event_completions = [entry for entry in completed if entry.get("event") == event]

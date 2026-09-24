@@ -161,6 +161,10 @@ def run_git(
 ) -> str | bytes | None:
     import subprocess
 
+    git_executable = shutil.which("git")
+    if git_executable is None:
+        raise GitCommandError("Git is unavailable")
+
     now = time.monotonic()
     command_deadline = now + 5.0
     if deadline is not None:
@@ -184,7 +188,7 @@ def run_git(
 
     try:
         with tempfile.TemporaryFile(mode="w+b") as capture:
-            process = subprocess.Popen(["git", *args], stdout=capture, **popen_options)
+            process = subprocess.Popen([git_executable, *args], stdout=capture, **popen_options)
             try:
                 while True:
                     if os.fstat(capture.fileno()).st_size > MAX_GIT_OUTPUT_BYTES:
@@ -203,8 +207,8 @@ def run_git(
                         pass
                     else:
                         raise GitCommandError("Git left a running descendant")
-                elif _windows_capture_has_other_handles(capture.fileno()):
-                    raise GitCommandError("Git left an open output handle")
+                elif _windows_git_descendants(process.pid):
+                    raise GitCommandError("Git left a running descendant")
                 size = os.fstat(capture.fileno()).st_size
                 if size > MAX_GIT_OUTPUT_BYTES:
                     raise ScanLimitExceeded("Git output exceeds the scanner limit")
@@ -222,26 +226,6 @@ def run_git(
                 raise
     except OSError as exc:
         raise GitCommandError("unable to capture Git output") from exc
-
-
-def _windows_capture_has_other_handles(descriptor: int) -> bool:
-    import ctypes
-    import msvcrt
-    import struct
-
-    # The captured file must have only our handle after Git exits. A descendant
-    # that inherited stdout keeps another handle even though its parent is gone.
-    details = ctypes.create_string_buffer(64)
-    query = ctypes.windll.ntdll.NtQueryObject
-    query.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p,
-                      ctypes.c_ulong, ctypes.c_void_p]
-    query.restype = ctypes.c_long
-    result = query(
-        ctypes.c_void_p(msvcrt.get_osfhandle(descriptor)), 0, details, len(details), None
-    )
-    if result != 0:
-        raise GitCommandError("unable to verify Git output handles")
-    return struct.unpack_from("<I", details, 8)[0] > 1
 
 
 def _windows_git_descendants(parent_pid: int) -> list[int]:

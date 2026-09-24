@@ -18,7 +18,7 @@ from helpers.common import emit_json, read_json_input
 
 PROVIDER = "copilot"
 SHELL_TOOLS = {"bash", "shell", "run_shell_command", "powershell", "pwsh", "exec_command"}
-EDITOR_TOOLS = {"edit", "write", "write_file", "replace", "apply_patch", "multiedit"}
+EDITOR_TOOLS = {"create", "edit", "write", "write_file", "replace", "apply_patch", "multiedit"}
 PATH_KEYS = {"file_path", "filepath", "path", "target_file", "filename", "old_path", "new_path", "destination"}
 COMMAND_KEYS = ("command", "cmd", "script")
 REVIEW = ("Show git status, unstaged git diff for affected paths, git diff --cached for affected paths, "

@@ -27,7 +27,9 @@ class RepositoryStateTests(unittest.TestCase):
         subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
         (self.repo / "tracked.txt").write_text("first\n")
         subprocess.run(["git", "-C", str(self.repo), "add", "tracked.txt"], check=True)
-        subprocess.run(["git", "-C", str(self.repo), "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "initial"], check=True)
+        subprocess.run(["git", "-C", str(self.repo), "-c", "user.name=Test",
+                        "-c", "user.email=test@example.invalid", "-c", "commit.gpgsign=false",
+                        "commit", "-qm", "initial"], check=True)
         (self.repo / "tracked.txt").write_text("changed\n")
         (self.repo / "staged.txt").write_text("staged\n")
         subprocess.run(["git", "-C", str(self.repo), "add", "staged.txt"], check=True)
@@ -93,6 +95,15 @@ class RepositoryStateTests(unittest.TestCase):
                 self.assertEqual(self.invoke(provider, shell, {"command": "git diff --cached -- tracked.txt"}), {})
                 self.assertEqual(self.invoke(provider, shell, {"command": "cat .git/config"}), {})
                 self.assertEqual(self.invoke(provider, editor, {"file_path": "notes.md", "content": "fine"}), {})
+
+    def test_copilot_create_denies_git_metadata(self):
+        for key in ("file_path", "path"):
+            with self.subTest(key=key):
+                reason = self.denied("copilot", self.invoke(
+                    "copilot", "create", {key: ".git/ready-ideas-guard-probe.txt", "content": "test"}
+                ))
+                self.assertIn("Git metadata", reason)
+                self.assertEqual(self.invoke("copilot", "create", {key: "notes.md", "content": "fine"}), {})
 
     def test_discarding_git_commands_always_require_user_run(self):
         variants = ("git checkout -- tracked.txt", "git restore tracked.txt", "git reset --hard HEAD",
@@ -214,9 +225,16 @@ class RepositoryStateTests(unittest.TestCase):
         self.assertEqual(self.invoke("codex", "apply_patch", {"command": safe_patch}), {})
         self.denied("codex", self.invoke("codex", "apply_patch", {"command": blocked_patch}))
 
-    def test_patch_metadata_path_and_symlink_alias(self):
+    def test_patch_metadata_path_and_linked_alias(self):
         alias = self.repo / "alias"
-        alias.symlink_to(self.repo / ".git", target_is_directory=True)
+        if os.name == "nt":
+            quoted_alias = str(alias).replace("'", "''")
+            quoted_gitdir = str(self.repo / ".git").replace("'", "''")
+            subprocess.run(["pwsh", "-NoProfile", "-Command",
+                            f"New-Item -ItemType Junction -Path '{quoted_alias}' "
+                            f"-Target '{quoted_gitdir}' | Out-Null"], check=True)
+        else:
+            alias.symlink_to(self.repo / ".git", target_is_directory=True)
         for provider, editor in (("copilot", "edit"), ("gemini", "write_file"), ("codex", "apply_patch")):
             self.denied(provider, self.invoke(provider, editor, {"file_path": "alias/config", "content": "bad"}))
             self.denied(provider, self.invoke(provider, "apply_patch", "*** Begin Patch\n*** Update File: .git/config\n*** End Patch"))

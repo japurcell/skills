@@ -24,8 +24,14 @@ description: Public validation entry points and provider adapter contracts for t
 - The generated `tool-guard.py` hooks return provider-native block or warning JSON with one redacted, at-most-160-character `Action:` excerpt. Quoted CLI credentials and JSON credential fields are redacted before truncation. Their owner-only guard records keep threat metadata and the exact displayed excerpt, never raw tool input.
 - The generated `scan-secrets.py` hooks read provider JSON from stdin and return JSON with exit `0`. An incomplete Git scan emits a provider-native denial in block mode or a `scan-secrets warning` naming the scan action in warn mode. They never mark incomplete output clean or expose raw Git output in the response.
 
+## Installed hook delivery probe
+
+- `scripts/probe-provider-hook-delivery.py prepare --provider copilot|gemini|codex [--mode normal|timeout]` installs only nonce-tagged temporary handlers and prints exact backup, marker, and transcript paths. `verify --provider NAME --id ID --transcript PATH [--mode timeout]` checks invocation, valid response, native visible feedback, and timeout indication where required; `cleanup --provider NAME --id ID` removes only probe-owned state and restores or merges existing hook settings. Always cleanup after a failed verify.
+- For Copilot CLI, the probe emits one progress JSON line containing the nonce before its one final provider-valid JSON object. Its normal verification requires visible nonces for `preToolUse`, `postToolUse`, and `agentStop`. A timeout verify requires an observed timeout message as well as entry markers and no completion markers; a silent fail-open timeout fails verification even if the tool runs.
+
 ## Repository-state protection
 
+- Copilot's native `create` joins `edit` and `write` in the guarded editor-tool set. A `.git` target in its `file_path` or `path` input denies before file creation; ordinary workspace file creation still allows.
 - Generated `repository-state.py` hooks at `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, and `.codex/hooks/` accept provider-native pre-tool JSON and emit `{}` for unaffected calls. A denial uses Copilot `permissionDecision: deny`, Gemini `decision: deny`, or Codex `hookSpecificOutput.permissionDecision: deny`, all with exit `0` and a safe reason. Malformed input denies. No hook approval token is accepted.
 - The canonical family checks workspace `.git`, its resolved Git directory, and the common Git directory. It denies direct editor writes, recognizable literal shell/script metadata writes including in-place `sed`, `perl`, `truncate`, and `install`, and Git checkout/restore/reset/clean variants that can discard work. Read-only Git commands and `git clean --dry-run` stay available. The hook cannot inspect operations hidden inside a later child process.
 

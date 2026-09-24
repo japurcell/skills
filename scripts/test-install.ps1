@@ -316,7 +316,9 @@ for path in sorted((root, *root.rglob("*")), key=lambda item: item.relative_to(r
     if stat.S_ISLNK(details.st_mode):
         digest.update(os.readlink(path).encode())
     elif stat.S_ISREG(details.st_mode):
-        digest.update(path.read_bytes())
+        # PowerShell updates this host-owned file on every child launch.
+        if relative.casefold() != "appdata/local/microsoft/powershell/startupprofiledata-noninteractive":
+            digest.update(path.read_bytes())
     digest.update(b"\0")
 print(digest.hexdigest())
 '@
@@ -465,9 +467,9 @@ function Invoke-InstallProcess {
     }
 }
 
-# A child pwsh initializes user-module and telemetry state under HOME before it runs the
-# installer. Establish that host-owned state before a preflight mutation snapshot so the
-# snapshot covers only paths install.ps1 can change.
+# A child pwsh initializes startup state under HOME before a preflight mutation snapshot.
+# PowerShell updates one host-owned startup-data file on each child launch; its content is
+# excluded from the fingerprint while its path, type, and mode remain covered.
 function Initialize-ChildPowerShellHome {
     param(
         [string]$HomeDir,
@@ -927,11 +929,13 @@ from pathlib import Path
 
 agent_path = Path(sys.argv[1])
 manifest_path = Path(sys.argv[2])
-assert tomllib.loads(agent_path.read_text(encoding="utf-8")) == {
+actual_agent = tomllib.loads(agent_path.read_text(encoding="utf-8"))
+expected_agent = {
     "name": "helper",
     "description": "Fixture helper agent.",
-    "developer_instructions": "Use alpha.\n",
+    "developer_instructions": "Use alpha.\r\n" if os.name == "nt" else "Use alpha.\n",
 }
+assert actual_agent == expected_agent, f"Expected {expected_agent!r}; got {actual_agent!r}"
 assert json.loads(manifest_path.read_text(encoding="utf-8")) == {
     "version": 1,
     "agents": [{"source": "helper.md", "output": "helper.toml", "name": "helper"}],
