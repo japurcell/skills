@@ -99,3 +99,5 @@ Copilot CLI 1.0.88 uses `create` for new files. A live disposable request to cre
 ## Gemini `AfterAgent` needs deployed-version proof
 
 Upstream Gemini CLI issue `google-gemini/gemini-cli#27712` reports that configured `AfterAgent` hooks did not execute in version `0.45.0` and related builds. The issue remained open on 2026-09-16. Treat final-response enforcement through `AfterAgent` as version-sensitive and require a live capability probe on the deployed CLI instead of relying only on configuration or simulated tests.
+
+On Windows with Gemini CLI 0.60.0, a one-second probe displayed a timeout yet recorded no `BeforeTool` entry, even with the probe handler first; the harmless tool still ran. The same handler and matcher at two seconds recorded all three event entries and passed timeout verification. This does not isolate process-start latency as the cause or establish one-second enforcement. Check each event's entry and completion markers, not just the visible timeout text. A separate nonce-visible `SessionEnd` probe and a live incomplete scanner warning prove those other events independently.
