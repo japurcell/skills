@@ -11,6 +11,9 @@ research, planning, or implementation artifact.
 - Add repo-level hooks for codex to achieve parity with Copilot and Gemini repo-level hooks (see `.github/hooks/hooks.json`).
 - clean-agent-docs: shows potentially lossy compression
 - complete novice to implement the feature end-to-end without prior knowledge of this repo
+- I want to investigate ways to run agent workflows (e.g. plan -> implement -> checkpoints -> prototypes -> review/fix loops).
+  - the transcipt from this video describes shopify's process: <https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd>
+  - validation pipeline: <https://github.com/kunchenguid/no-mistakes>
 
 ## Ready
 
