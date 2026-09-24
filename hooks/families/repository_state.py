@@ -234,6 +234,9 @@ def _metadata_token(token, layout):
 def _writes_metadata(command, layout, script_source=False, depth=0):
     if depth > 3:
         return True
+    if script_source:
+        command = re.sub(r'(?ms)@(?P<quote>["\'])\r?\n.*?^[ \t]*(?P=quote)@(?=\r?$)',
+                         "'literal'", command)
     # Inspect shell tokens. Quoted prose is data, not a write operation.
     try:
         segments = _shell_segments(command)

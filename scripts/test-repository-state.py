@@ -155,6 +155,16 @@ class RepositoryStateTests(unittest.TestCase):
             output = self.invoke(provider, editor, {"file_path": "sample.ps1", "content": "Set-Content .git/config bad"})
             self.denied(provider, output)
 
+    def test_powershell_here_string_script_authoring(self):
+        harmless = "$quoted = 'Quote: \"hello\"'\n$here = @'\nHere: synthetic sample\n'@\nWrite-Output $here\n"
+        with_metadata_write = harmless + "Set-Content .git/config bad\n"
+        for provider, editor in (("copilot", "edit"), ("gemini", "write_file"), ("codex", "Edit")):
+            with self.subTest(provider=provider):
+                self.assertEqual(self.invoke(provider, editor, {"file_path": "probe.ps1", "content": harmless}), {})
+                self.denied(provider, self.invoke(provider, editor, {
+                    "file_path": "probe.ps1", "content": with_metadata_write
+                }))
+
     def test_shell_quoted_prose_does_not_trigger_git_guard(self):
         for provider, shell in (("copilot", "bash"), ("gemini", "run_shell_command"), ("codex", "Bash")):
             for command in ("echo 'git checkout branch'", "echo 'note; git restore file'", "echo git checkout branch", "echo '.git/config > file'", "echo 'sed -i s/a/b/ .git/config'", "cat .git/config > copy.txt"):

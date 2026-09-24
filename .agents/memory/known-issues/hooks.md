@@ -46,6 +46,7 @@ Codex CLI 0.155.1 ignores per-handler `env` in `~/.codex/hooks.json`. The Markdo
 ## Quoted shell prose is not an executable Git command
 
 Do not search raw shell text for `git checkout` or redirection markers. `echo 'git checkout branch'` and `echo '.git/config > file'` are data. Tokenize with quote boundaries intact, inspect executable command positions and redirection targets, and recurse only into recognized shell `-c`/PowerShell `-Command` arguments. Malformed actual commands still deny; a quote-blind split on `;` or `>` creates false denials.
+When inspecting a saved PowerShell script, a balanced multiline here-string is literal data, not an unterminated shell quote. Strip only complete here-string bodies before shell tokenization, then still inspect executable lines after the closing delimiter for Git metadata writes. An unmatched delimiter must remain fail-closed.
 
 ## In-place writers bypass output-redirection checks
 
