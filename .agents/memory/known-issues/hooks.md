@@ -25,7 +25,7 @@ Under `set -u`, interpolate function-local cleanup paths when registering the tr
 
 Run Git with `GIT_TERMINAL_PROMPT=0`, an empty `GIT_ASKPASS`, and a short timeout. Let timeout errors reach the top-level handler so block mode denies; warn mode may emit a sanitized no-op.
 
-The native Windows scanner suite once reported a leftover temporary Git-output capture file, then passed six complete reruns. The failing scenario and cause were not recorded, so this is an unresolved intermittent cleanup risk, not a confirmed fix or disclosure. The Windows test now includes provider, mode, scenario, and leaked filenames in its failure; on recurrence, inspect the surviving Git descendant and file handle before changing cleanup behavior.
+The native Windows `gemini/block/descendant` fixture intermittently saw a `tmp*` Git-output capture file immediately after the hook returned. A surviving `cmd.exe` child was still running; the file disappeared after that child exited. `handle64` found no handle by the time its scan completed, so it did not establish a specific handle owner. Windows cleanup now terminates and waits for captured child processes directly through Win32 handles instead of launching `taskkill` with a 250 ms subprocess timeout. The native matrix and six bounded replays of that exact case passed after the change. Keep the test's immediate `tmp*` assertion and exact provider/mode/scenario/filename failure text: a later recurrence needs fresh process and handle evidence rather than an assumed cause.
 
 ## Extensionless commands fail on Windows
 

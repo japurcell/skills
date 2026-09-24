@@ -274,6 +274,34 @@ def _windows_git_descendants(parent_pid: int) -> list[int]:
 
 def _stop_git_process(process: object, subprocess_module: object) -> None:
     descendants = _windows_git_descendants(process.pid) if os.name == "nt" else []
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        kernel = ctypes.windll.kernel32
+        kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        kernel.OpenProcess.restype = wintypes.HANDLE
+        kernel.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
+        kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        cleanup_deadline = time.monotonic() + 0.75
+        for pid in [*descendants, process.pid]:
+            handle = kernel.OpenProcess(0x00100001, False, pid)
+            if not handle:
+                continue
+            try:
+                kernel.TerminateProcess(handle, 1)
+                remaining_ms = max(0, int((cleanup_deadline - time.monotonic()) * 1000))
+                kernel.WaitForSingleObject(handle, remaining_ms)
+            finally:
+                kernel.CloseHandle(handle)
+        if process.poll() is None:
+            process.kill()
+        try:
+            process.wait(timeout=max(0.0, cleanup_deadline - time.monotonic()))
+        except subprocess_module.TimeoutExpired:
+            pass
+        return
     try:
         if os.name == "posix":
             os.killpg(process.pid, signal.SIGTERM)
@@ -300,17 +328,6 @@ def _stop_git_process(process: object, subprocess_module: object) -> None:
             group_alive = False
             break
         time.sleep(0.01)
-    for pid in ([process.pid, *descendants] if os.name == "nt" else []):
-        try:
-            subprocess_module.run(
-                ["taskkill", "/F", "/T", "/PID", str(pid)],
-                stdout=subprocess_module.DEVNULL,
-                stderr=subprocess_module.DEVNULL,
-                timeout=0.25,
-                check=False,
-            )
-        except (OSError, subprocess_module.TimeoutExpired):
-            pass
     if group_alive:
         try:
             if os.name == "posix":
