@@ -1,9 +1,9 @@
 ---
 name: exec-plans
-description: Mandatory whenever starting, executing, orchestrating, or modifying any exec-plan/ExecPlan/execution plan. Use when the user mentions 'execute {plan,ExecPlan,exec-plan}', 'continue {plan,ExecPlan,exec-plan}', 'continue progress on {plan,ExecPlan,exec-plan}' or similar. Use when implementing complex tasks touching multiple files or layers, creating multiple scripts, system-wide refactors, or multi-milestone features without a plan.
+description: Mandatory whenever starting, executing, orchestrating, or modifying any exec-plan/ExecPlan/execution plan. Always use when implementing complex tasks touching files in multiple layers, creating multiple scripts, system-wide refactors, multi-milestone features, or executing in multiple phases without a plan. Use when the user mentions 'execute {plan,ExecPlan,exec-plan}', 'continue {plan,ExecPlan,exec-plan}', 'continue progress on {plan,ExecPlan,exec-plan}' or similar. Load before the first code edit.
 ---
 
-# Execution Plans (ExecPlans):
+# Execution Plans (ExecPlans)
 
 This document describes the requirements for an execution plan ("ExecPlan"), a design document that a coding agent can follow to deliver a working feature or system change. Treat the reader as a complete beginner to this repository: they have only the current working tree and the single ExecPlan file you provide. There is no memory of prior plans and no external context.
 
@@ -87,7 +87,7 @@ Prefer additive code changes followed by subtractions that keep tests passing. P
 
     This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds.
 
-    If PLANS.md file is checked into the repo, reference the path to that file here from the repository root and note that this document must be maintained in accordance with the `exec-plans` skill.
+    If this file is checked into the repo, reference the path to that file here from the repository root and note that this document must be maintained in accordance with the `exec-plans` skill.
 
     ## Purpose / Big Picture
 

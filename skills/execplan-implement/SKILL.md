@@ -12,8 +12,6 @@ Before creating any commit, read and follow [commit message guidelines](referenc
 
 The progress checklist items are not a list of steps. They are a **task graph** with blocking relationships between them. This means there is always a **frontier** of progress checklist items which are ready to be grabbed.
 
-Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the ExecPlan, progress checklist items, research notes, and previous commits. Don't duplicate information already available via pointers.
-
 **Implementer subagents** should be run in the background where possible for **maximum concurrency**.
 
 ## Steps
@@ -22,13 +20,11 @@ Communication to and from subagents should be sparse. Communicate primarily thro
 
 2. Read the ExecPlan and progress checklist items. Read just enough to understand the task graph at the orchestration level.
 
-   **Prevent double file reads:** Avoid reading task-specific files that are going to be read by the **implementer subagents** unless absolutely necessary for orchestration purposes. Double-reading files is inefficient and expensive.
-
 3. (optional) Use an **exploration subagent** to conduct any exploration required by the progress checklist items - relevant codebase files or external documentation. Ensure the exploration subagent can save files - it should save its markdown notes beside the ExecPlan, accessible by all future subagents. This lets **implementer subagents** focus on implementation rather than exploration.
 
 4. If current branch is `main` or `master`, create a new **base topic branch**.
 
-5. Repeat steps 5–7 until all progress checklist items are implemented, validated, and integrated. The primary agent coordinates this loop; subagents perform implementation. When integration or validation reveals additional implementation work, record it in the ExecPlan by reopening an existing checklist item or adding a new one, then delegate it through this step.
+5. Repeat steps 5–7 until all progress checklist items are implemented, validated, and integrated. You - the primary agent - coordinates this loop; subagents perform implementation. When integration or validation reveals additional implementation work, record it in the ExecPlan by reopening an existing checklist item or adding a new one, then delegate it through this step.
 
    Assign each distinct progress item or milestone to a fresh implementer subagent. Do not reuse an implementer for a different task-graph node, even with a new worktree. Reuse is allowed only for repairs or follow-up work on that implementer's original node. This preserves context isolation, ownership clarity, and independent task results.
 
@@ -69,8 +65,11 @@ ls ../
   project-feature-a/    ← task-creation branch
   project-feature-b/    ← user-settings branch
 
-# After integration, clean up the worktree
+# After integration, clean up the worktree and it's associated branch
 git worktree remove ../project-feature-a
+git branch -d feature/task-creation
+git worktree remove ../project-feature-b
+git branch -d feature/user-settings
 ```
 
 Benefits:

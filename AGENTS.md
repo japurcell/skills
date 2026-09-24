@@ -4,15 +4,7 @@ This repository publishes skills from `skills/`, canonical custom-agent Markdown
 
 ## ExecPlans
 
-Before changing code, first activate and follow the `exec-plans` skill when no plan exists and the task meets any condition below. Create the ExecPlan before the first code edit.
-
-1. Touches or creates 3 or more files.
-2. Involves multiple distinct milestones or execution phases.
-3. Spans different packages or layers.
-
 The default location for ExecPlans is `docs/<feature-slug>/`.
-
-If the plan is large, you MUST orchestrate the updates with subagents and make file and task ownership explicit for each subagent to avoid conflicts. Choose the smallest subagent model type that can effectively handle the task to avoid unnecessary cost and latency.
 
 ## Agent Orientation
 

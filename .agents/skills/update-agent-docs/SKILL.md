@@ -19,7 +19,7 @@ Keep agent documentation small, current, and easy to route.
 7. When shortening or splitting a doc, preserve every durable rule in the appropriate focused doc.
 8. Apply [document quality](refs/doc-quality.md).
 9. Update frontmatter, indexes, and links using [indexes and frontmatter](refs/indexes-frontmatter.md).
-10. After semantic changes to canonical documents, invoke `okf-authoring` to apply and verify the OKF representation contract. `okf-authoring` does not invoke `update-agent-docs`.
+10. After semantic changes to canonical documents, invoke `okf-authoring` to apply and verify the OKF representation contract.
 11. Report the result.
 
 ## Rules
@@ -31,11 +31,8 @@ Keep agent documentation small, current, and easy to route.
 - Record diagnostics, linter rules, and framework quirks only when they reveal durable, non-obvious guidance.
 - If no durable knowledge changed, make no edits.
 - Do not leave broken links.
-- If a cleanup is too large:
-  - activate the `exec-plans` skill
-  - orchestrate the updates with subagents
-  - make file ownership explicit for each subagent to avoid conflicts
-  - choose the smallest subagent model type that can effectively handle the task to avoid unnecessary cost and latency
+- Do not document what the codebase already shows.
+- Prefer rewriting or pruning existing entries over appending new ones.
 
 ## Final Response
 

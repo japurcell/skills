@@ -19,6 +19,7 @@ Confirm:
 
 Find and fix:
 
+- Purge content the codebase already shows
 - Duplicate or near-duplicate rules
 - Stale instructions
 - Contradictory requirements
@@ -55,7 +56,7 @@ When rules conflict:
 Classify removed content in working notes:
 
 - **MOVE** — unique, durable guidance. Move it to the narrowest relevant document.
-- **DROP** — exact duplicates, stale task state, session history, secrets, or noncanonical raw dumps.
+- **DROP** — content the codebase already shows, exact duplicates, stale task state, session history, secrets, or noncanonical raw dumps.
 
 Redact secrets; never move them into another document.
 

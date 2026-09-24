@@ -1,59 +1,14 @@
-# Codex Instructions
+# Global Agent Instructions
 
-## Universal Rules
-
-### Simplicity and scope
-
-- Make the smallest clear, maintainable change that meets the request, including necessary tests and documentation. Avoid speculative abstractions and unrequested capabilities.
-- Match existing codebase patterns and style unless there is a concrete reason not to.
-- Remove imports, variables, and helpers made unused by your changes.
+- Never use the em dash "—". Use plain dash "-" instead.
 - When making technical decisions, do not give much weight to development cost. Instead, prefer quality, simplicity, robustness, scalability, and long term maintainability.
-
-### Assumptions and ambiguity
-
-- Resolve ambiguity from repository context where possible. State consequential assumptions, and ask when unresolved alternatives would materially change scope, behavior, or risk.
-- Do not block progress on minor details with an obvious, low-risk choice.
-
-### Verify
-
-- Decide how success will be verified before implementing non-trivial work.
 - For bug fixes, always start with reproducing the bug in an E2E setting as closely aligned with how an end user would experience it as possible. This makes sure you find the real problem so your fix will actually solve it.
-- Support completion claims with evidence from every task; state any unverified work and why.
-
-### Respond to evidence
-
-- Revise assumptions and plans when repository evidence contradicts them.
-- If complexity grows substantially or repeated fixes only address symptoms, reassess the approach before continuing.
-
-### Boundaries
-
-- Never install or add new dependencies without approval.
-- Never modify database schemas without approval.
 - Never put secrets in code or version control.
 - Never delete, disable, skip, or weaken failing tests just to make the suite pass.
-- When asking the user for input, wait indefinitely for the user's answer. Do not set or pass `autoResolutionMs` to `request_user_input` unless the user explicitly asks for auto-resolution in the current thread.
-
-### Questions are read-only
-
-- If I ask you a question, just answer it and don't edit files. Feel free to offer suggestions when appropriate though.
-
-### Be Proactive
-
-- Be picky about the UI you see and be obsessed with pixel perfection. If something clearly looks off, even if it is not directly related to what you are doing, try to get it fixed along the way.
+- If I ask you a question, answer it and stop.
+- When end-to-end testing a product, be picky about the UI you see and be obsessed with pixel perfection. If something clearly looks off, even if it is not directly related to what you are doing, try to get it fixed along the way.
 - Apply that same high standard to engineering excellence: lint, test failures, and test flakiness. If you see one, even if it is not caused by what you are working on right now, still get it fixed.
-
-## Coding preferences
-
-### General
-
-- Take advantage of type safety when a language supports it.
 - Never write regression tests for feature deletions.
-- Comment only where needed to explain complex logic, and keep comments current.
-
-### TypeScript
-
-- For TypeScript, prefer inference and avoid `any`.
-- I love Vite; prefer it for applicable frontend projects.
 
 ## RTK (Rust Token Killer) - Token-Optimized Commands
 

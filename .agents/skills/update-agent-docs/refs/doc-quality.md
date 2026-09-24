@@ -40,7 +40,7 @@ When guidance is duplicated:
 - Debug transcripts
 - Temporary workarounds
 - Speculation
-- Obvious facts visible in nearby code
+- What the codebase already shows
 - Summaries of previous work
 
 ## Final Check
@@ -53,3 +53,4 @@ Check touched and related docs for:
 - Missing or vague index entries
 - Broken links
 - Task narratives, logs, or temporary details
+- What the codebase already shows
