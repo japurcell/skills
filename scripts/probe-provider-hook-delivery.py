@@ -212,7 +212,8 @@ def append(name, record):
 
 invocation_id = str(payload.get("tool_use_id") or payload.get("toolUseId") or uuid.uuid4().hex)
 append("marker.jsonl", {"provider": provider, "event": event, "invocation_id": invocation_id,
-                        "missing_keys": missing, "response_keys": sorted(response)})
+                        "missing_keys": missing, "response_keys": sorted(response),
+                        "timestamp_unix_ns": time.time_ns(), "monotonic_ns": time.monotonic_ns()})
 if state["mode"] == "timeout":
     time.sleep(state["delay_seconds"])
 if provider == "copilot" and surface == "cli":
@@ -220,7 +221,8 @@ if provider == "copilot" and surface == "cli":
     sys.stdout.flush()
 sys.stdout.write(json.dumps(response, separators=(",", ":")) + "\n")
 sys.stdout.flush()
-append("completed.jsonl", {"event": event, "invocation_id": invocation_id})
+append("completed.jsonl", {"event": event, "invocation_id": invocation_id,
+                           "timestamp_unix_ns": time.time_ns(), "monotonic_ns": time.monotonic_ns()})
 '''
     return source.encode("utf-8")
 
@@ -312,6 +314,28 @@ def verify(args: argparse.Namespace) -> int:
     output = transcript.read_text(encoding="utf-8", errors="replace")
     markers = read_jsonl(directory / "marker.jsonl")
     completed = read_jsonl(directory / "completed.jsonl")
+    latencies: list[tuple[str, str, float]] = []
+    if args.mode == "normal":
+        pending: dict[tuple[str, str], list[dict]] = {}
+        for entry in markers:
+            pending.setdefault((entry.get("event"), entry.get("invocation_id")), []).append(entry)
+        for completion in completed:
+            key = (completion.get("event"), completion.get("invocation_id"))
+            if not pending.get(key):
+                raise ValueError(f"Unpaired completion for {key[0]}")
+            entry = pending[key].pop(0)
+            start = entry.get("monotonic_ns")
+            end = completion.get("monotonic_ns")
+            if (not isinstance(start, int) or isinstance(start, bool) or
+                not isinstance(end, int) or isinstance(end, bool) or
+                not 0 < start <= end < 2**63 or
+                any(not isinstance(record.get("timestamp_unix_ns"), int) or
+                    not 946684800000000000 <= record["timestamp_unix_ns"] < 4102444800000000000
+                    for record in (entry, completion))):
+                raise ValueError(f"Invalid timestamps for {key[0]}")
+            latencies.append((key[0], key[1], (end - start) / 1_000_000))
+        if any(entries for entries in pending.values()):
+            raise ValueError("Unpaired invocation entry")
     for event in state["events"]:
         entries = [entry for entry in markers if entry.get("provider") == args.provider and entry.get("event") == event]
         if not entries:
@@ -332,6 +356,8 @@ def verify(args: argparse.Namespace) -> int:
     if args.mode == "timeout" and not re.search(r"timed? ?out|timeout", output, re.IGNORECASE):
         raise ValueError("Provider timeout indication was absent")
     print(f"PASS: {args.provider} {state['surface']} {args.mode} hook delivery")
+    for event, invocation_id, milliseconds in latencies:
+        print(f"{event} invocation_id={invocation_id} entry_to_completion_ms={milliseconds:.3f}")
     return 0
 
 

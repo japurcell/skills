@@ -11,6 +11,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 
@@ -94,6 +95,19 @@ class ProbeTests(unittest.TestCase):
             verified = self.cli(home, "verify", "--provider", provider, "--id", info["id"],
                                 "--transcript", str(transcript))
             self.assertEqual(verified.returncode, 0, verified.stderr)
+            entries = [json.loads(line) for line in Path(info["marker"]).read_text().splitlines()]
+            completions = [json.loads(line) for line in
+                           (Path(info["marker"]).parent / "completed.jsonl").read_text().splitlines()]
+            self.assertEqual(len(entries), len(EVENTS[provider]))
+            self.assertEqual(len(completions), len(entries))
+            for entry, completion in zip(entries, completions):
+                self.assertEqual((entry["event"], entry["invocation_id"]),
+                                 (completion["event"], completion["invocation_id"]))
+                self.assertLess(abs(entry["timestamp_unix_ns"] - time.time_ns()), 10_000_000_000)
+                self.assertLess(abs(completion["timestamp_unix_ns"] - time.time_ns()), 10_000_000_000)
+                self.assertLessEqual(entry["monotonic_ns"], completion["monotonic_ns"])
+                self.assertIn(f"{entry['event']} invocation_id={entry['invocation_id']} "
+                              "entry_to_completion_ms=", verified.stdout)
 
             cleaned = self.cli(home, "cleanup", "--provider", provider, "--id", info["id"])
             self.assertEqual(cleaned.returncode, 0, cleaned.stderr)
@@ -247,6 +261,31 @@ class ProbeTests(unittest.TestCase):
                 self.assertEqual(verified.returncode, 0, verified.stderr)
             finally:
                 self.cli(home, "cleanup", "--provider", "codex", "--id", info["id"])
+
+    def test_normal_verification_rejects_unpaired_completion(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            prepared = self.cli(home, "prepare", "--provider", "gemini")
+            self.assertEqual(prepared.returncode, 0, prepared.stderr)
+            info = json.loads(prepared.stdout)
+            try:
+                event = "BeforeTool"
+                payload = {"hook_event_name": event, "session_id": "test", "cwd": str(home),
+                           "tool_name": "run_shell_command", "tool_input": {}}
+                call = subprocess.run([sys.executable, info["handler"], event],
+                                      input=json.dumps(payload), text=True, capture_output=True)
+                self.assertEqual(call.returncode, 0, call.stderr)
+                Path(info["transcript"]).write_text(call.stdout, encoding="utf-8")
+                completion = Path(info["marker"]).parent / "completed.jsonl"
+                record = json.loads(completion.read_text(encoding="utf-8"))
+                record["invocation_id"] = "different-invocation"
+                completion.write_text(json.dumps(record) + "\n", encoding="utf-8")
+                verified = self.cli(home, "verify", "--provider", "gemini", "--id", info["id"],
+                                    "--transcript", info["transcript"])
+                self.assertNotEqual(verified.returncode, 0)
+                self.assertIn("Unpaired completion", verified.stderr)
+            finally:
+                self.cli(home, "cleanup", "--provider", "gemini", "--id", info["id"])
 
 
 if __name__ == "__main__":
