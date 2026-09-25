@@ -179,7 +179,7 @@ def _git_action(command, depth=0):
         start = _command_start(tokens)
         if start >= len(tokens):
             continue
-        name = _unquote(tokens[start]).lower()
+        name = ntpath.basename(_unquote(tokens[start])).lower()
         if name in ("bash", "sh", "zsh", "pwsh", "powershell"):
             for option in range(start + 1, len(tokens) - 1):
                 if _unquote(tokens[option]).lower() in ("-c", "-command"):
@@ -202,10 +202,18 @@ def _git_action(command, depth=0):
         if index >= len(tokens):
             continue
         operation = tokens[index].lower()
-        arguments = [part.lower() for part in tokens[index + 1:]]
-        if operation == "clean" and any(part in ("-n", "--dry-run") or
-                                        (part.startswith("-") and "n" in part[1:]) for part in arguments):
-            continue
+        raw_arguments = tokens[index + 1:]
+        arguments = [part.lower() for part in raw_arguments]
+        if operation == "clean":
+            dry_run = False
+            for part in raw_arguments:
+                if part == "--":
+                    break
+                if part in ("-n", "--dry-run") or (re.fullmatch(r"-[dfinqxX]+", part) and "n" in part[1:]):
+                    dry_run = True
+                    break
+            if dry_run:
+                continue
         if operation in ("checkout", "restore", "reset", "clean", "switch"):
             return f"git {operation}"
         if operation == "stash" and any(part in ("drop", "clear") for part in arguments):

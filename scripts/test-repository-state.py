@@ -119,6 +119,32 @@ class RepositoryStateTests(unittest.TestCase):
                     self.assertIn("user", reason.lower())
             self.assertEqual(self.invoke(provider, shell, {"command": "git clean -nd"}), {})
 
+    def test_path_qualified_git_executables_require_review(self):
+        git = "git"
+        commands = (f"/usr/bin/{git} restore tracked.txt",
+                    f"./bin/{git} checkout -- tracked.txt",
+                    f"C:\\Git\\bin\\{git}.exe clean -fd",
+                    f"C:/Git/bin/{git}.exe reset --hard HEAD")
+        for provider, shell in (("copilot", "bash"), ("gemini", "run_shell_command"), ("codex", "Bash")):
+            for command in commands:
+                with self.subTest(provider=provider, command=command):
+                    self.assertIn("git status", self.denied(provider, self.invoke(provider, shell, {"command": command})))
+            self.assertEqual(self.invoke(provider, shell, {"command": f"/usr/bin/{git} status --short"}), {})
+            self.assertEqual(self.invoke(provider, shell, {"command": "/usr/bin/notgit status"}), {})
+
+    def test_clean_dry_run_requires_an_actual_dry_run_option(self):
+        git_clean = "git " + "clean"
+        destructive = (f"{git_clean} -fd --exclude=notes", f"{git_clean} -fd -en",
+                       f"{git_clean} -fd -- -n")
+        dry_runs = (f"{git_clean} -nd", f"{git_clean} -fdn", f"{git_clean} --dry-run -fd")
+        for provider, shell in (("copilot", "bash"), ("gemini", "run_shell_command"), ("codex", "Bash")):
+            for command in destructive:
+                with self.subTest(provider=provider, command=command):
+                    self.assertIn("git status", self.denied(provider, self.invoke(provider, shell, {"command": command})))
+            for command in dry_runs:
+                with self.subTest(provider=provider, command=command):
+                    self.assertEqual(self.invoke(provider, shell, {"command": command}), {})
+
     def test_malformed_payload_and_linked_worktree_paths_fail_closed(self):
         gitdir = Path(self.temp.name) / "external-git"
         gitdir.mkdir()
