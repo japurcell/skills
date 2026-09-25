@@ -13,6 +13,8 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - [ ] [milestone-13-review-guard] Deny path-qualified Git work-discard commands and destructive `git clean` commands whose non-dry-run options contain `n`; prove all three provider envelopes and safe dry-run behavior.
 - [ ] [milestone-14-review-excerpt] Prevent unrecognized credentials in Tool Guardian context from reaching banners or owner-only logs; prove redaction or safe omission through public provider envelopes.
 - [ ] [milestone-15-review-router] Restore a runnable aggregate suite after router eval deletion and align code-review tier routing with the model catalog; verify runner and routing tests.
+- [ ] [milestone-14-review-excerpt] Re-review repair: hide short credentials embedded in a matched `git push --force` remote URL before display or audit.
+- [ ] [milestone-15-review-router] Re-review repair: allow a Standard-tier result for the tiny style-review eval where Fast is permitted, not required.
 - [ ] [milestone-16-review-windows] Run the native Windows hook workflow for provider-only Copilot and Gemini changes; verify both path filters.
 - [ ] [review-fixes] Have the original correctness, security, test, and generalist review agents re-review their respective fixes; resolve any surviving high-confidence finding.
 - [x] (2026-09-25 00:00Z) [milestone-5-review-repair] Public scanner regression reproduced a false clean result, then passed for all three generated providers in both modes after the HEAD classification repair. Native Windows syntax passed.
@@ -39,6 +41,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 ## Surprises & Discoveries
 
+- Focused re-review cleared the Git guard and Windows CI fixes. Security re-review found that a matched `git push --force` operation can itself include a credential-bearing remote URL; context omission alone does not sanitize that match. Generalist re-review found that the restored style-review grader rejects Standard even though the routing policy only permits Fast. Both owning milestones stay open for repair and re-review.
 - A fixed-point review of `7db18f38...HEAD` found six change-linked issues after the first review repair. The repository-state guard mistakes `--exclude=notes` for `git clean --dry-run` and misses path-qualified Git executables. Tool Guardian can copy an unrecognized short credential from full tool input into its excerpt. The aggregate runner still calls a deleted router eval directory. The router sends ordinary code diffs to Fast despite its Standard review floor. The native Windows workflow omits provider-only Copilot and Gemini paths. These are new repair work; earlier accepted milestones remain historical evidence, not proof of the repairs.
 - The new public scanner test initially failed for a committed repository with simulated `rev-parse --verify HEAD` exit 128: Codex block mode returned `{}` instead of an incomplete denial. The same test passed across Copilot, Gemini, and Codex after independent unborn-branch verification. The generated hook writer needed a scoped sandbox escalation for `.codex/hooks`; its first attempt rolled back cleanly.
 - `scripts/test-generate-hooks.py` still expected a literal `git` executable, while the scanner already resolves its absolute path. Its exact assertion now matches the resolved executable. The 24-test generator suite passed. Native Windows scanner execution remains unavailable on this Mac; PowerShell parsing passed and the suite explicitly skipped.
@@ -288,6 +291,8 @@ Acceptance: not met
 
 In `hooks/families/tool_guard.py`, replace the full-context excerpt path in `build_action_excerpt()` with a conservative construction that retains the matched dangerous operation and useful leading input context only when safe to show. If safety cannot be established, show the safe match alone or `command omitted`. Keep the 160-character total cap, same displayed/logged excerpt, and block/warn meaning. A public case containing a short unrecognized header such as `X-Session-ID: localpass7` must place neither `localpass7` nor raw tool input in any provider response or guard log. Preserve the existing quoted and JSON credential cases. Regenerate provider scripts and run `python3 scripts/test-security-banners.py`, provider Tool Guardian suites, and freshness check.
 
+Re-review repair: `_match_git_push()` can put a remote URL with a short query credential into the matched operation itself, such as `git push --force 'https://example.invalid/repo.git?sig=localpass7' main`. Build a safe structural description of the operation without echoing the URL or its query in banners or logs. Add a public provider test for this class and recheck excerpt/log equality.
+
 ### Milestone 15: Restore router validation and review tier consistency
 
 Status: open
@@ -295,6 +300,8 @@ Status: open
 Acceptance: not met
 
 The fixed-point change deleted `skills/subagent-model-router/evals/` while `scripts/test-all.py` and `scripts/test_test_all.py` still register its test command. Restore meaningful router eval tests and their grader if the skill still promises that interface, or remove the retired suite from the aggregate registry and update `.agents/memory/testing/skills.md` and skill guidance together. Do not keep a registered command pointing at a missing directory, and do not delete or weaken a failing test merely to make the runner pass. In `skills/subagent-model-router/reference/review-routing.md`, make ordinary meaningful code reviews Standard by default; reserve Fast for a clearly bounded, low-risk review consistent with `reference/model-catalog.md`. Verify the affected runner tests, router checks, and the aggregate registry command.
+
+Re-review repair: the restored style-review grader currently rejects Standard even though the routing rule permits Fast and does not require it. Accept either capable Fast or Standard for the tiny style-review scenario, and preserve failure for an unrelated or incapable tier. Update the grader test first, then run the router eval suite.
 
 ### Milestone 16: Cover provider-only changes in native Windows CI
 
