@@ -10,6 +10,11 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 ## Progress
 
+- [ ] [milestone-13-review-guard] Deny path-qualified Git work-discard commands and destructive `git clean` commands whose non-dry-run options contain `n`; prove all three provider envelopes and safe dry-run behavior.
+- [ ] [milestone-14-review-excerpt] Prevent unrecognized credentials in Tool Guardian context from reaching banners or owner-only logs; prove redaction or safe omission through public provider envelopes.
+- [ ] [milestone-15-review-router] Restore a runnable aggregate suite after router eval deletion and align code-review tier routing with the model catalog; verify runner and routing tests.
+- [ ] [milestone-16-review-windows] Run the native Windows hook workflow for provider-only Copilot and Gemini changes; verify both path filters.
+- [ ] [review-fixes] Have the original correctness, security, test, and generalist review agents re-review their respective fixes; resolve any surviving high-confidence finding.
 - [x] (2026-09-25 00:00Z) [milestone-5-review-repair] Public scanner regression reproduced a false clean result, then passed for all three generated providers in both modes after the HEAD classification repair. Native Windows syntax passed.
 - [ ] [milestone-5-review-repair] Run `pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1` on native Windows; the Mac host skips its cases.
 - [x] (2026-09-25 00:00Z) [milestone-9-review-repair] Consolidated RTK provenance verification in one canonical renderer source. Generated outputs remained byte-identical and eight RTK tests passed.
@@ -34,6 +39,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 ## Surprises & Discoveries
 
+- A fixed-point review of `7db18f38...HEAD` found six change-linked issues after the first review repair. The repository-state guard mistakes `--exclude=notes` for `git clean --dry-run` and misses path-qualified Git executables. Tool Guardian can copy an unrecognized short credential from full tool input into its excerpt. The aggregate runner still calls a deleted router eval directory. The router sends ordinary code diffs to Fast despite its Standard review floor. The native Windows workflow omits provider-only Copilot and Gemini paths. These are new repair work; earlier accepted milestones remain historical evidence, not proof of the repairs.
 - The new public scanner test initially failed for a committed repository with simulated `rev-parse --verify HEAD` exit 128: Codex block mode returned `{}` instead of an incomplete denial. The same test passed across Copilot, Gemini, and Codex after independent unborn-branch verification. The generated hook writer needed a scoped sandbox escalation for `.codex/hooks`; its first attempt rolled back cleanly.
 - `scripts/test-generate-hooks.py` still expected a literal `git` executable, while the scanner already resolves its absolute path. Its exact assertion now matches the resolved executable. The 24-test generator suite passed. Native Windows scanner execution remains unavailable on this Mac; PowerShell parsing passed and the suite explicitly skipped.
 - At planning start, `hooks/manifest.py` had no Codex Tool Guardian, scanner, or RTK targets, and `scripts/install-codex-hooks.py` merged only `SessionStart`. The implemented Codex targets and expanded merger have since passed installed checks.
@@ -265,6 +271,46 @@ Acceptance: met
 Run this milestone on a host where Gemini CLI is already available. Record its version and effective hook trust, run generated-output and temporary-home installer checks, inspect destination changes and backups, then install maintained source. Use the owner-only delivery probe to verify `BeforeTool`, `AfterTool`, `AfterAgent`, and the scanner's `SessionEnd`, including native visible messages, a 2,000 ms timeout in the temporary probe configuration, and cleanup after success and failure. Require entry markers, a visible timeout, and no completion markers for all three timed-out events, and record whether the harmless Git read proceeds. Separately measure and record normal-case hook latency for those events in a deployed CLI session, without imposing an unmeasured threshold; document if any result approaches 2,000 ms. The probe in `scripts/probe-provider-hook-delivery.py` now records bounded Unix and monotonic nanoseconds at entry and completion, verifies invocation-ID pairing, and reports normal handler runtime in milliseconds; its focused tests passed. Report hook entry-to-completion time separately from provider startup-to-entry time; the former alone cannot establish process-start latency. Write and execute a multiline PowerShell script with quotes and a here-string through Gemini `write_file`. Exercise safe block/warn security text and redacted logs, Git metadata and local-work denials without discarding work, touched Markdown diagnostics and one audit line, a controlled incomplete secret scan, and explicit RTK command suppression that preserves other diagnostics. If installed `AfterAgent` does not deliver, prove the milestone-8 `AfterTool` feedback and explicit pre-completion checker fallback and label it weaker. Record command, transcript path, version, outcome, and every limitation; restore only probe-owned settings and temporary files. Acceptance requires observed Gemini behavior or the tested fallback where the plan permits one, plus the normal-latency measurement. Source fixtures alone cannot close this milestone. The earlier 1,000 ms probe's missing `BeforeTool` entry and a tool proceeding after the 2,000 ms timeout are accepted limitations, not evidence of fail-closed security.
 
 The initial 2026-09-24 fresh normal `-y` run recorded paired monotonic runtimes (BeforeTool 7.181 ms, AfterTool 6.111 ms, AfterAgent 7.409 ms) but omitted nonce messages from the headless transcript; interactive pseudo-terminal runs showed tool-event nonces but no AfterAgent. Replaying the previously successful `--approval-mode yolo --skip-trust` command subsequently gave two fresh deployed PASS results with all three visible nonce-bearing responses and paired timings: 6.469/6.286/6.102 ms and 6.621/6.542/6.514 ms. The strict verifier was not relaxed. Do not equate fast handler execution with fast process launch.
+
+### Milestone 13: Close Git work-discard guard bypasses
+
+Status: open
+
+Acceptance: not met
+
+In `hooks/families/repository_state.py`, recognize Git executables by normalized basename for POSIX and Windows path forms, while keeping unrelated executables allowed. Change `_git_action()` so only exact `-n`, `--dry-run`, or valid short-option bundles containing `n` classify `git clean` as dry-run. Long option values such as `--exclude=notes` must not qualify. Add public Copilot, Gemini, and Codex envelope cases in `scripts/test-repository-state.py` for both bypasses and a real dry-run. Regenerate the three provider scripts, run the focused test and `python3 scripts/generate-hooks.py --check`, and check native Windows cases where available. A destructive form must return each provider's native denial; a safe read and real dry-run must remain allowed.
+
+### Milestone 14: Keep unrecognized credentials out of security excerpts
+
+Status: open
+
+Acceptance: not met
+
+In `hooks/families/tool_guard.py`, replace the full-context excerpt path in `build_action_excerpt()` with a conservative construction that retains the matched dangerous operation and useful leading input context only when safe to show. If safety cannot be established, show the safe match alone or `command omitted`. Keep the 160-character total cap, same displayed/logged excerpt, and block/warn meaning. A public case containing a short unrecognized header such as `X-Session-ID: localpass7` must place neither `localpass7` nor raw tool input in any provider response or guard log. Preserve the existing quoted and JSON credential cases. Regenerate provider scripts and run `python3 scripts/test-security-banners.py`, provider Tool Guardian suites, and freshness check.
+
+### Milestone 15: Restore router validation and review tier consistency
+
+Status: open
+
+Acceptance: not met
+
+The fixed-point change deleted `skills/subagent-model-router/evals/` while `scripts/test-all.py` and `scripts/test_test_all.py` still register its test command. Restore meaningful router eval tests and their grader if the skill still promises that interface, or remove the retired suite from the aggregate registry and update `.agents/memory/testing/skills.md` and skill guidance together. Do not keep a registered command pointing at a missing directory, and do not delete or weaken a failing test merely to make the runner pass. In `skills/subagent-model-router/reference/review-routing.md`, make ordinary meaningful code reviews Standard by default; reserve Fast for a clearly bounded, low-risk review consistent with `reference/model-catalog.md`. Verify the affected runner tests, router checks, and the aggregate registry command.
+
+### Milestone 16: Cover provider-only changes in native Windows CI
+
+Status: open
+
+Acceptance: not met
+
+In `.github/workflows/ready-ideas-windows.yml`, add `.copilot/**` and `.gemini/**` to both `push.paths` and `pull_request.paths`. Keep manual dispatch. Add a focused workflow-path assertion to the maintained Python test suite so either omission fails. Verify both event filters include both provider roots and the workflow still runs the existing native Windows hook steps. Native execution of milestone 5's committed-repository HEAD-failure scenario remains a separate open gate above.
+
+### Review and integrate repair branches
+
+Status: open
+
+Acceptance: not met
+
+Use one private worktree branch per repair milestone, integrate only tested clean branches into `codex/ready-ideas-execplan`, and remove each integrated private worktree and branch. Ask the original correctness, security, test, and generalist review agents to inspect the corresponding integrated fixes against the findings above. Resolve confirmed issues before marking a repair accepted. Update this plan after integration, rerun affected focused checks, and perform the mandatory agent-documentation pass. Do not claim the old native Windows scanner gate passed on a Mac.
 
 ## Concrete Steps
 
