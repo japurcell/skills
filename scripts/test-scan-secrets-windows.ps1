@@ -24,12 +24,20 @@ function Invoke-Case {
     New-Item -ItemType Directory -Path $repo, $bin | Out-Null
     & $realGit -C $repo init -q
     if ($LASTEXITCODE -ne 0) { throw 'Git init failed' }
+    if ($Scenario -eq 'head-failure') {
+        [System.IO.File]::WriteAllText((Join-Path $repo 'README.md'), "safe fixture`n")
+        & $realGit -C $repo add README.md
+        if ($LASTEXITCODE -ne 0) { throw 'Git add failed' }
+        & $realGit -C $repo -c user.name=ScannerTest -c user.email=scanner@example.invalid -c commit.gpgsign=false commit -qm fixture
+        if ($LASTEXITCODE -ne 0) { throw 'Git commit failed' }
+    }
 
     $shim = switch ($Scenario) {
         'descendant' { '@echo off' + "`r`n" + 'if "%1 %2"=="rev-parse --is-inside-work-tree" (start "" /B cmd /c "ping -n 11 127.0.0.1 >nul" & echo true & exit /b 0)' + "`r`n" + 'exit /b 9' }
         'partial' { '@echo off' + "`r`n" + 'echo true' + "`r`n" + 'ping -n 11 127.0.0.1 >nul' }
         'oversized' { '@echo off' + "`r`n" + 'powershell -NoProfile -Command "$b = New-Object byte[] 8388609; [Console]::OpenStandardOutput().Write($b, 0, $b.Length)"' + "`r`n" + 'ping -n 11 127.0.0.1 >nul' }
         'nonzero' { "@echo off`r`nexit /b 9" }
+        'head-failure' { "@echo off`r`nif `"%1 %2 %3`"==`"rev-parse --verify HEAD`" exit /b 128`r`n`"$realGit`" %*" }
         'malformed' { '@echo off' + "`r`n" + 'if "%1 %2"=="rev-parse --is-inside-work-tree" (echo true & exit /b 0)' + "`r`n" + 'if "%1 %2"=="rev-parse --show-toplevel" (echo %CD% & exit /b 0)' + "`r`n" + 'if "%1"=="diff" (echo partial-path & exit /b 0)' + "`r`n" + 'exit /b 9' }
         'capture-error' { "@echo off`r`n`"$realGit`" %*" }
         'success' { "@echo off`r`n`"$realGit`" %*" }
@@ -115,7 +123,7 @@ try {
     New-Item -ItemType Directory -Path $workdir | Out-Null
     foreach ($provider in @('copilot', 'gemini', 'codex')) {
         foreach ($mode in @('block', 'warn')) {
-            foreach ($scenario in @('descendant', 'partial', 'oversized', 'nonzero', 'malformed', 'capture-error', 'success')) {
+            foreach ($scenario in @('descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
                 Invoke-Case -Provider $provider -Mode $mode -Scenario $scenario
             }
         }

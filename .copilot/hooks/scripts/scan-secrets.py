@@ -213,8 +213,12 @@ def run_git(
                 if size > MAX_GIT_OUTPUT_BYTES:
                     raise ScanLimitExceeded("Git output exceeds the scanner limit")
                 if return_code != 0:
-                    if allow_nonzero and args == ["rev-parse", "--verify", "HEAD"]:
-                        return None
+                    if allow_nonzero and size == 0:
+                        if args == ["rev-parse", "--verify", "HEAD"] and return_code == 128:
+                            return None
+                        if (len(args) == 4 and args[:3] == ["show-ref", "--verify", "--quiet"]
+                                and return_code == 1):
+                            return None
                     raise GitCommandError("Git command failed")
                 capture.seek(0)
                 raw_output = capture.read(size)
@@ -386,12 +390,26 @@ def is_inside_git_repo(work_dir: Path, *, deadline: float | None = None) -> bool
 
 
 def has_head(root: Path, *, deadline: float | None = None) -> bool:
-    return run_git(
+    head = run_git(
         ["rev-parse", "--verify", "HEAD"],
         cwd=root,
         allow_nonzero=True,
         deadline=deadline,
-    ) is not None
+    )
+    if head is not None:
+        return True
+    branch = run_git(["symbolic-ref", "--quiet", "HEAD"], cwd=root, deadline=deadline)
+    if not isinstance(branch, str) or not branch.startswith("refs/heads/") or branch.count("\n") != 1:
+        raise GitCommandError("Git HEAD is not an unborn branch")
+    branch_exists = run_git(
+        ["show-ref", "--verify", "--quiet", branch.rstrip("\n")],
+        cwd=root,
+        allow_nonzero=True,
+        deadline=deadline,
+    )
+    if branch_exists is not None:
+        raise GitCommandError("Git HEAD verification failed")
+    return False
 
 
 def decode_nul_paths(output: bytes) -> list[str]:

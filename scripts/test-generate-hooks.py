@@ -595,7 +595,7 @@ class GenerateHooksTests(unittest.TestCase):
                  mock.patch("os.killpg", side_effect=ProcessLookupError):
                 self.assertEqual(module.run_git(["status"], cwd=ROOT), "")
             invocation = run.call_args
-            self.assertEqual(invocation.args[0], ["git", "status"])
+            self.assertEqual(invocation.args[0], [shutil.which("git"), "status"])
             self.assertEqual(invocation.kwargs["env"]["GIT_TERMINAL_PROMPT"], "0")
             self.assertEqual(invocation.kwargs["env"]["GIT_ASKPASS"], "")
             self.assertEqual(invocation.kwargs["env"]["GIT_LITERAL_PATHSPECS"], "1")

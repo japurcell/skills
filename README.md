@@ -34,7 +34,7 @@ The installer copies:
 - `.copilot/hooks/` entries are copied to `~/.copilot/hooks` when that directory exists
 - `.gemini/` contents into `~/.gemini`, then `.gemini/global-settings.json` into `~/.gemini/settings.json`
 - `.copilot/copilot-instructions.md` into `~/.copilot/copilot-instructions.md`
-- `.codex/hooks/load-required-skills.py` into `~/.codex/hooks`, then safely merges `.codex/global-hooks.json` into `~/.codex/hooks.json`
+- maintained `.codex/hooks/` scripts for startup, security, Markdown, Git-state, and RTK handling into `~/.codex/hooks`, then safely merges their `SessionStart`, `PreToolUse`, and `Stop` registrations from `.codex/global-hooks.json` into `~/.codex/hooks.json`
 
 The Codex merge preserves unrelated hooks. A real configuration change keeps the previous valid file as owner-only `~/.codex/hooks.json.bak`; malformed existing JSON is left unchanged and stops installation. After installing or changing the non-managed hook, open `/hooks` in Codex CLI to review and trust its exact definition.
 

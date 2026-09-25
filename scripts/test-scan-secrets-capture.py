@@ -34,7 +34,7 @@ def payload(provider: str, repo: Path, mode: str) -> dict[str, object]:
 
 def run_case(
     provider: str, mode: str, fake_git: str, maximum: float = 3.0,
-    capture_failure: bool = False,
+    capture_failure: bool = False, committed: bool = False,
 ) -> tuple[dict, str]:
     with tempfile.TemporaryDirectory(prefix="scan-capture-test-") as directory:
         root = Path(directory)
@@ -49,6 +49,14 @@ def run_case(
         real_git = shutil.which("git")
         assert real_git is not None
         subprocess.run([real_git, "-C", str(repo), "init", "-q"], check=True)
+        if committed:
+            (repo / "README.md").write_text("safe fixture\n", encoding="utf-8")
+            subprocess.run([real_git, "-C", str(repo), "add", "README.md"], check=True)
+            subprocess.run([
+                real_git, "-C", str(repo), "-c", "user.name=Scanner Test",
+                "-c", "user.email=scanner@example.invalid", "-c", "commit.gpgsign=false",
+                "commit", "-qm", "fixture",
+            ], check=True)
         output_path = root / "response.json"
         error_path = root / "stderr.txt"
         env = os.environ.copy()
@@ -147,6 +155,12 @@ else:
     sys.exit(9)
 """
     real_git = "#!/usr/bin/env python3\nimport os\nos.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *__import__('sys').argv[1:]])\n"
+    failed_head_git = """#!/usr/bin/env python3
+import os, sys
+if sys.argv[1:] == ['rev-parse', '--verify', 'HEAD']:
+    sys.exit(128)
+os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
+"""
     for mode in ("block", "warn"):
         for fake_git, maximum in ((descendant_git, 3.0), (partial_git, 7.0),
                                   (oversized_git, 3.0), (failed_git, 3.0),
@@ -154,6 +168,9 @@ else:
             assert_incomplete(provider, mode, run_case(provider, mode, fake_git, maximum))
         assert_incomplete(provider, mode, run_case(
             provider, mode, real_git, capture_failure=True,
+        ))
+        assert_incomplete(provider, mode, run_case(
+            provider, mode, failed_head_git, committed=True,
         ))
         response, log = run_case(provider, mode, real_git)
         assert response == {}, (provider, mode, response)

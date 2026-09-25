@@ -266,9 +266,13 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
     """Render one self-contained RTK provider forwarder."""
     if target.family == "rtk" and target.provider == provider.name:
         if target.output_path.as_posix() == _EXPLICIT_PATHS.get(provider.name):
-            return SHEBANG + HEADER + _EXPLICIT_SOURCE.replace("PROVIDER_NAME", provider.name)
+            return SHEBANG + HEADER + _EXPLICIT_SOURCE.replace(
+                "PROVIDER_NAME", provider.name
+            ).replace("RTK_VERIFICATION_SOURCE", _VERIFICATION_SOURCE.rstrip("\n"))
         if target.output_path.as_posix() == _LAUNCHER_PATHS.get(provider.name):
-            return SHEBANG + HEADER + _LAUNCHER_SOURCE
+            return SHEBANG + HEADER + _LAUNCHER_SOURCE.replace(
+                "RTK_VERIFICATION_SOURCE", _VERIFICATION_SOURCE.rstrip("\n")
+            )
     if (
         target.family != "rtk"
         or target.provider != provider.name
@@ -288,18 +292,7 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
     )
 
 
-_LAUNCHER_SOURCE = r'''"""Launch the verified side-by-side RTK with child-only warning suppression."""
-from __future__ import annotations
-
-import hashlib
-import json
-import os
-from pathlib import Path
-import subprocess
-import sys
-
-
-APPROVED_ASSET_DIGESTS = {
+_VERIFICATION_SOURCE = r'''APPROVED_ASSET_DIGESTS = {
     "05a32507b07dc38bca835808deb8f32bd182446e8adc90b00209deda0404d321",
     "10345f57214b2f9a14f3de1ae1f4235f6eef0669dfed9ab1758a94601b7b829a",
     "4993afdf43a93d09dcce1bef0b0167464f96aa9e973fa5644ca244604a1846b8",
@@ -316,6 +309,21 @@ def verified(binary: Path) -> bool:
                 and hashlib.sha256(binary.read_bytes()).hexdigest() == receipt.get("binary_sha256"))
     except (OSError, ValueError):
         return False
+'''
+
+
+_LAUNCHER_SOURCE = r'''"""Launch the verified side-by-side RTK with child-only warning suppression."""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+
+RTK_VERIFICATION_SOURCE
 
 
 def main() -> int:
@@ -354,23 +362,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from helpers.common import emit_json, read_json_input
 
 PROVIDER = "PROVIDER_NAME"
-APPROVED_ASSET_DIGESTS = {
-    "05a32507b07dc38bca835808deb8f32bd182446e8adc90b00209deda0404d321",
-    "10345f57214b2f9a14f3de1ae1f4235f6eef0669dfed9ab1758a94601b7b829a",
-    "4993afdf43a93d09dcce1bef0b0167464f96aa9e973fa5644ca244604a1846b8",
-    "bf8a1d0e44afb28db9e88859e1f7668c56ecd074264f0c36637c4e07a0c2f1db",
-    "636262ec8341455c09a3826329f90c92a57e2ef64d8761511eb123f1b84642d7",
-}
-
-
-def verified(binary: Path) -> bool:
-    try:
-        receipt = json.loads((binary.parent / "receipt.json").read_text(encoding="utf-8"))
-        return (receipt.get("tag") == "dev-0.50.0-rc.451"
-                and receipt.get("asset_sha256") in APPROVED_ASSET_DIGESTS
-                and hashlib.sha256(binary.read_bytes()).hexdigest() == receipt.get("binary_sha256"))
-    except (OSError, ValueError):
-        return False
+RTK_VERIFICATION_SOURCE
 
 
 def split_segments(command: str, powershell: bool) -> list[tuple[int, int]] | None:
