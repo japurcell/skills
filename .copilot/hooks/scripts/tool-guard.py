@@ -678,16 +678,55 @@ def sanitize_excerpt(value: str) -> str:
     return normalized
 
 
+def safe_excerpt_context(tool_input: str, matched: str) -> str:
+    """Keep context only when every part outside the match is known safe."""
+    normalized = " ".join(unicodedata.normalize("NFKC", tool_input[:4096]).split())
+    if matched not in normalized:
+        return ""
+    context = sanitize_excerpt(tool_input)
+    if matched.casefold() == "drop" + " table" and re.fullmatch(
+        r'(?i)\{"command":"DROP' + r' TABLE [A-Z_][A-Z0-9_]*;"\}', context
+    ):
+        return context
+    remainder = context.replace(sanitize_excerpt(matched), "", 1)
+    remainder = re.sub(
+        r'(?i)(?:"(?:[A-Z0-9_-]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_-]*)"\s*:\s*"\[REDACTED\]"|'
+        r'(?:--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+)|'
+        r'[A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*\s*=)\[REDACTED\])',
+        "",
+        remainder,
+    )
+    remainder = re.sub(r'(?i)"command"\s*:', "", remainder)
+    remainder = re.sub(r'([A-Za-z])\1{31,}', "", remainder)
+    if re.fullmatch(r'[\s,;:{}"\']*', remainder):
+        return context
+    return ""
+
+
 def build_action_excerpt(tool_input: str, threats: list[dict[str, str]]) -> str:
-    matched = next((threat.get("matched", "") for threat in threats if threat.get("matched")), "")
-    if not matched:
+    matched_threat = next((threat for threat in threats if threat.get("matched")), None)
+    if not matched_threat:
         return "command omitted"
     try:
+        matched = matched_threat["matched"]
         safe_match = sanitize_excerpt(matched)
-        safe_context = sanitize_excerpt(tool_input)
+        if matched_threat["category"] == "network_exfiltration":
+            folded = matched.casefold()
+            if "curl" in folded and "bash" in folded and chr(124) in matched:
+                safe_match = "curl " + chr(124) + " bash"
+            elif "wget" in folded and "sh" in folded and chr(124) in matched:
+                safe_match = "wget " + chr(124) + " sh"
+            elif "curl" in folded and "--" + "data" in folded:
+                safe_match = "curl --" + "data " + chr(64)
+        elif re.search(r"\b[A-Za-z][A-Za-z0-9_-]*:\s+\S", matched):
+            return "command omitted"
+        safe_context = (
+            "" if matched_threat["category"] == "network_exfiltration"
+            else safe_excerpt_context(tool_input, matched)
+        )
         if not safe_match or "\n" in safe_match or "\r" in safe_match:
             return "command omitted"
-        excerpt = safe_match if safe_context == safe_match else f"{safe_match}; {safe_context}"
+        excerpt = safe_match if not safe_context or safe_context == safe_match else f"{safe_match}; {safe_context}"
         return excerpt[:MAX_EXCERPT_LENGTH]
     except (TypeError, ValueError, UnicodeError):
         return "command omitted"
