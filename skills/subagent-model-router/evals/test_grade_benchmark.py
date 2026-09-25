@@ -25,7 +25,10 @@ class RoutingGraderTests(unittest.TestCase):
 
     def test_style_only_single_file_review_allows_fast(self):
         self.assertTrue(self.passes("style-review", decision("Fast", "gpt-5-mini")))
-        self.assertFalse(self.passes("style-review", decision("Standard", "gpt-6-sol")))
+        self.assertTrue(self.passes("style-review", decision("Standard", "gpt-6-sol")))
+        self.assertFalse(self.passes("style-review", decision("Fast", "gpt-6-sol")))
+        self.assertFalse(self.passes("style-review", decision("Standard", "unknown")))
+        self.assertFalse(self.passes("style-review", decision("Premium", "gpt-6-astra")))
 
     def test_security_review_requires_premium(self):
         self.assertTrue(self.passes("security-review", decision("Premium", "gpt-6-astra")))

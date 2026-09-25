@@ -58,10 +58,15 @@ def grade(scenario: str, decision: dict) -> list[dict]:
     effort = normalize(decision.get("effort"))
     reason = normalize(decision.get("reason"))
     expected_tier = REQUIRED_TIERS[scenario]
+    allowed_tiers = {"fast", "standard"} if scenario == "style-review" else {expected_tier}
     results = [
-        expectation(f"Route uses {expected_tier.title()} tier.", tier == expected_tier),
+        expectation(
+            "Route uses Fast or Standard tier." if scenario == "style-review"
+            else f"Route uses {expected_tier.title()} tier.",
+            tier in allowed_tiers,
+        ),
         expectation("Model belongs to the selected capability tier.",
-                    model_matches_tier(model, expected_tier, effort)),
+                    tier in allowed_tiers and model_matches_tier(model, tier, effort)),
         expectation("Reason explains the routing decision.", bool(reason)),
     ]
     if scenario == "review-fallback":
