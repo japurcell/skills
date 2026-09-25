@@ -1030,5 +1030,21 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertFalse(lock.exists())
 
 
+class ReadyIdeasWindowsWorkflowTests(unittest.TestCase):
+    def test_provider_hook_changes_trigger_push_and_pull_request_checks(self) -> None:
+        workflow = (ROOT / ".github/workflows/ready-ideas-windows.yml").read_text(
+            encoding="utf-8"
+        )
+        for event in ("push", "pull_request"):
+            with self.subTest(event=event):
+                match = re.search(
+                    rf"(?m)^  {event}:\n    paths:\n((?:      - '[^']+'\n)+)",
+                    workflow,
+                )
+                self.assertIsNotNone(match, f"{event} needs a paths filter")
+                paths = set(re.findall(r"^      - '([^']+)'$", match.group(1), re.MULTILINE))
+                self.assertTrue({".copilot/**", ".gemini/**"} <= paths)
+
+
 if __name__ == "__main__":
     unittest.main()

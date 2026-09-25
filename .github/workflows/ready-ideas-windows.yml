@@ -4,12 +4,16 @@ on:
   push:
     paths:
       - '.codex/**'
+      - '.copilot/**'
+      - '.gemini/**'
       - 'hooks/**'
       - 'scripts/**'
       - '.github/workflows/ready-ideas-windows.yml'
   pull_request:
     paths:
       - '.codex/**'
+      - '.copilot/**'
+      - '.gemini/**'
       - 'hooks/**'
       - 'scripts/**'
       - '.github/workflows/ready-ideas-windows.yml'
