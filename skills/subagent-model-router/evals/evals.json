@@ -1,0 +1,40 @@
+{
+  "skill_name": "subagent-model-router",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Route a code reviewer for a two-file bug fix with behavior changes and clear tests. No security sensitivity or prior misses. Write outputs/decision.json with tier, model, reason, and optional effort, escalation_trigger, and fallback. Use only models in the current catalog.",
+      "expected_output": "An ordinary meaningful code review uses Standard and a Standard-capable model."
+    },
+    {
+      "id": 1,
+      "prompt": "Route a reviewer for a tiny single-file comment-only diff. There is no logic, API, policy, test, or security change. Write outputs/decision.json with tier, model, reason, and optional effort, escalation_trigger, and fallback. Use only models in the current catalog.",
+      "expected_output": "A clearly bounded low-risk style review may use Fast."
+    },
+    {
+      "id": 2,
+      "prompt": "Route a security reviewer for an authentication callback and redirect validation audit. Write outputs/decision.json with tier, model, reason, and optional effort, escalation_trigger, and fallback. Use only models in the current catalog.",
+      "expected_output": "Security review uses Premium and a Premium-capable model."
+    },
+    {
+      "id": 3,
+      "prompt": "Route an ordinary code reviewer for a two-file logic diff. The first-choice Standard model gpt-6-sol is unavailable; gpt-5.4-mini is available. Write outputs/decision.json with tier, model, reason, and optional effort, escalation_trigger, and fallback. Use only models in the current catalog.",
+      "expected_output": "The review remains Standard with an available same-tier replacement and an explicit availability fallback."
+    },
+    {
+      "id": 4,
+      "prompt": "Route a worker to run a specified test command and summarize failures. The work is bounded and low risk. Write outputs/decision.json with tier, model, reason, and optional effort, escalation_trigger, and fallback. Use only models in the current catalog.",
+      "expected_output": "Bounded execution uses Fast."
+    },
+    {
+      "id": 5,
+      "prompt": "Route an agent to fix behavior across three connected source and test files. The change needs debugging and has no security-sensitive behavior. Write outputs/decision.json with tier, model, reason, and optional effort, escalation_trigger, and fallback. Use only models in the current catalog.",
+      "expected_output": "Connected code changes use Standard."
+    },
+    {
+      "id": 6,
+      "prompt": "A Fast worker running tests reports a missing dependency before tests start. Route continued diagnosis; no reasoning failure or new risk exists. Write outputs/decision.json with tier, model, reason, and optional effort, escalation_trigger, and fallback. Use only models in the current catalog.",
+      "expected_output": "Keep Fast and diagnose the missing dependency before escalation."
+    }
+  ]
+}

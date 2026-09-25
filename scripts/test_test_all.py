@@ -341,6 +341,14 @@ class TestTestAll(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertIn("scripts/test_helpers.py", result.stderr)
 
+    def test_missing_router_eval_directory_is_a_preflight_error(self):
+        root, env = self.fixture()
+        shutil.rmtree(root / "skills/subagent-model-router/evals")
+        result = self.run_fixture(root, env)
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("skills/subagent-model-router/evals", result.stderr)
+
     def test_unexecutable_dependency_is_a_runner_error(self):
         root, env = self.fixture()
         (Path(env["PATH"]) / "pwsh").write_text("not an executable format\n", encoding="utf-8")
