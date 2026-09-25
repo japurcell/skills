@@ -130,6 +130,26 @@ class SecurityBannerTests(unittest.TestCase):
                 self.assertNotIn(credential, json.dumps(rows))
                 self.assertIn(f'Action: {excerpt}.', json.dumps(blocked))
 
+    def test_short_query_credential_inside_git_push_match_is_omitted(self) -> None:
+        credential = 'localpass7'
+        remote = f'https://example.invalid/repo.git?sig={credential}'
+        commands = (
+            'git push' + f' --force {remote} main',
+            'git push' + f" --force '{remote}' main",
+        )
+        for provider in ('copilot', 'gemini', 'codex'):
+            for mode in ('block', 'warn'):
+                for command in commands:
+                    with self.subTest(provider=provider, mode=mode, command=command):
+                        response, rows = self.invoke(provider, mode, 'Bash', command)
+                        excerpt = rows[-1]['excerpt']
+                        self.assertTrue(excerpt.startswith('git push --force'))
+                        self.assertNotIn(remote, excerpt)
+                        self.assertNotIn(credential, json.dumps(response))
+                        self.assertNotIn(credential, json.dumps(rows))
+                        self.assertIn(f'Action: {excerpt}.', json.dumps(response))
+                        self.assertLessEqual(len(excerpt), 160)
+
     def test_structured_action(self) -> None:
         operation = 'git push' + ' --force origin main'
         for provider in ('copilot', 'gemini', 'codex'):

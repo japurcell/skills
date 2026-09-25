@@ -686,6 +686,33 @@ def safe_excerpt_context(tool_input: str, matched: str) -> str:
     return ""
 
 
+def safe_git_push_match(matched: str) -> str:
+    """Describe a protected push using only known flags, remotes, and branches."""
+    tokens = matched.split()
+    try:
+        push_index = next(index for index, token in enumerate(tokens) if token.casefold() == "push")
+    except StopIteration:
+        return " ".join(("git", "push"))
+    tail = tokens[push_index + 1 :]
+    folded = [token.casefold() for token in tail]
+    force = "--force" if "--force" in folded else "-f" if "-f" in folded else ""
+    remote = next((token for token in folded if token in {"origin", "upstream"}), "")
+    branch = ""
+    for token in folded:
+        destination = token.lstrip("+").split(":")[-1].removeprefix("refs/heads/")
+        if destination in {"main", "master"}:
+            branch = ("+" if token.startswith("+") and not force else "") + destination
+            break
+    summary = ["git", "push"]
+    if force:
+        summary.append(force)
+    if remote:
+        summary.append(remote)
+    if branch:
+        summary.append(branch)
+    return " ".join(summary)
+
+
 def build_action_excerpt(tool_input: str, threats: list[dict[str, str]]) -> str:
     matched_threat = next((threat for threat in threats if threat.get("matched")), None)
     if not matched_threat:
@@ -693,7 +720,9 @@ def build_action_excerpt(tool_input: str, threats: list[dict[str, str]]) -> str:
     try:
         matched = matched_threat["matched"]
         safe_match = sanitize_excerpt(matched)
-        if matched_threat["category"] == "network_exfiltration":
+        if matched_threat["category"] == "destructive_git_ops" and "push" in matched.casefold().split():
+            safe_match = safe_git_push_match(matched)
+        elif matched_threat["category"] == "network_exfiltration":
             folded = matched.casefold()
             if "curl" in folded and "bash" in folded and chr(124) in matched:
                 safe_match = "curl " + chr(124) + " bash"
@@ -704,7 +733,7 @@ def build_action_excerpt(tool_input: str, threats: list[dict[str, str]]) -> str:
         elif re.search(r"\b[A-Za-z][A-Za-z0-9_-]*:\s+\S", matched):
             return "command omitted"
         safe_context = (
-            "" if matched_threat["category"] == "network_exfiltration"
+            "" if matched_threat["category"] == "network_exfiltration" or safe_match != sanitize_excerpt(matched)
             else safe_excerpt_context(tool_input, matched)
         )
         if not safe_match or "\n" in safe_match or "\r" in safe_match:
