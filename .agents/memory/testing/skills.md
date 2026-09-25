@@ -13,4 +13,4 @@ description: Test and validation guidance for skills under `skills/`
 
 ## Subagent model router
 
-Run `python3 -m unittest discover -s skills/subagent-model-router/evals -p 'test_*.py'` for grader changes or catalog tier changes. These tests verify accepted/rejected routing decisions, including unknown models, capability floors, fallback availability, and environment failures. They do not establish comparative model quality; default-model quality claims require representative live evaluations.
+Run `python3 -m unittest discover -s skills/subagent-model-router/evals -p 'test_*.py'` for grader changes or catalog tier changes. These tests verify accepted/rejected routing decisions, including unknown models, capability floors, Fast or Standard for tiny style reviews, fallback availability, and environment failures. They do not establish comparative model quality; default-model quality claims require representative live evaluations.

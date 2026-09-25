@@ -10,13 +10,14 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 ## Progress
 
-- [ ] [milestone-13-review-guard] Deny path-qualified Git work-discard commands and destructive `git clean` commands whose non-dry-run options contain `n`; prove all three provider envelopes and safe dry-run behavior.
-- [ ] [milestone-14-review-excerpt] Prevent unrecognized credentials in Tool Guardian context from reaching banners or owner-only logs; prove redaction or safe omission through public provider envelopes.
-- [ ] [milestone-15-review-router] Restore a runnable aggregate suite after router eval deletion and align code-review tier routing with the model catalog; verify runner and routing tests.
-- [ ] [milestone-14-review-excerpt] Re-review repair: hide short credentials embedded in a matched `git push --force` remote URL before display or audit.
-- [ ] [milestone-15-review-router] Re-review repair: allow a Standard-tier result for the tiny style-review eval where Fast is permitted, not required.
-- [ ] [milestone-16-review-windows] Run the native Windows hook workflow for provider-only Copilot and Gemini changes; verify both path filters.
-- [ ] [review-fixes] Have the original correctness, security, test, and generalist review agents re-review their respective fixes; resolve any surviving high-confidence finding.
+- [x] (2026-09-25 00:32Z) [milestone-13-review-guard] All three public provider hooks deny path-qualified Git work-discard commands and destructive `git clean --exclude=notes`; 19 guard tests and focused re-review passed.
+- [x] (2026-09-25 00:32Z) [milestone-14-review-excerpt] All three public provider hooks omit unverified input context from Tool Guardian banners and logs; eight security banner tests passed.
+- [x] (2026-09-25 00:32Z) [milestone-15-review-router] Restored router eval suite and Standard default for meaningful code review; 10 router tests and 15 runner tests passed.
+- [x] (2026-09-25 00:32Z) [milestone-14-review-excerpt] Follow-up hides short credentials inside matched Git remote URLs; all provider block/warn cases and security re-review passed.
+- [x] (2026-09-25 00:32Z) [milestone-15-review-router] Follow-up accepts capable Fast or Standard tiny style reviews; generalist re-review passed.
+- [x] (2026-09-25 00:32Z) [milestone-16-review-windows] Both workflow path filters include Copilot and Gemini provider files; 25 generator/workflow tests and test re-review passed.
+- [x] (2026-09-25 00:32Z) [review-fixes] Original correctness, security, test, and generalist reviewers cleared their focused fixes after the two follow-up repairs.
+- [ ] [cleanup-review-branches] Six integrated private worktrees are removed; the repository guard blocked branch deletion, so the user must run the reviewed `git branch -d` commands directly.
 - [x] (2026-09-25 00:00Z) [milestone-5-review-repair] Public scanner regression reproduced a false clean result, then passed for all three generated providers in both modes after the HEAD classification repair. Native Windows syntax passed.
 - [ ] [milestone-5-review-repair] Run `pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1` on native Windows; the Mac host skips its cases.
 - [x] (2026-09-25 00:00Z) [milestone-9-review-repair] Consolidated RTK provenance verification in one canonical renderer source. Generated outputs remained byte-identical and eight RTK tests passed.
@@ -41,6 +42,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 ## Surprises & Discoveries
 
+- All six review repair commits are integrated into `codex/ready-ideas-execplan`, and all original review agents cleared the final focused fixes. Their clean private worktrees were removed. The repository-state hook denied `git branch -d codex/ready-ideas-fix-guard` even after status, staged/unstaged diff, and untracked checks showed no work; under `AGENTS.md`, the user must run branch deletion directly. This Mac cannot execute the native Windows scanner case, and `gh auth status` reports an invalid token, so the existing milestone-5 Windows gate remains open.
 - Focused re-review cleared the Git guard and Windows CI fixes. Security re-review found that a matched `git push --force` operation can itself include a credential-bearing remote URL; context omission alone does not sanitize that match. Generalist re-review found that the restored style-review grader rejects Standard even though the routing policy only permits Fast. Both owning milestones stay open for repair and re-review.
 - A fixed-point review of `7db18f38...HEAD` found six change-linked issues after the first review repair. The repository-state guard mistakes `--exclude=notes` for `git clean --dry-run` and misses path-qualified Git executables. Tool Guardian can copy an unrecognized short credential from full tool input into its excerpt. The aggregate runner still calls a deleted router eval directory. The router sends ordinary code diffs to Fast despite its Standard review floor. The native Windows workflow omits provider-only Copilot and Gemini paths. These are new repair work; earlier accepted milestones remain historical evidence, not proof of the repairs.
 - The new public scanner test initially failed for a committed repository with simulated `rev-parse --verify HEAD` exit 128: Codex block mode returned `{}` instead of an incomplete denial. The same test passed across Copilot, Gemini, and Codex after independent unborn-branch verification. The generated hook writer needed a scoped sandbox escalation for `.codex/hooks`; its first attempt rolled back cleanly.
@@ -89,6 +91,7 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 
 ## Decision Log
 
+- Decision: Repair the six fixed-point findings in four independent milestones, then use the original reviewers to verify each fix. Use structural, allowlisted Tool Guardian excerpts for matched Git pushes, and allow both capable Fast and Standard models for tiny style reviews. Rationale: The first re-review found sensitive data inside the matched operation and an overly strict restored grader; both needed focused follow-up before acceptance. Date/Author: 2026-09-25, Codex.
 - Decision: Classify a HEAD verification failure as an unborn branch only when exit 128 has no stdout, `symbolic-ref --quiet HEAD` returns one local branch ref, and `show-ref --verify --quiet` confirms that ref is absent. Otherwise return the existing incomplete decision. Rationale: Exit 128 alone also occurs for unexpected Git failures; a committed-repository public-hook regression proved the false clean result. Date/Author: 2026-09-25, Codex.
 - Decision: Keep each of the eight underlying problems and use one integrated plan with separately verifiable outcomes. Rationale: The Ready list spans shared provider infrastructure and distinct user-visible problems. Date/Author: 2026-09-23, user and Codex.
 - Decision: Order guidance first, then shared hook setup, scanner shutdown, security banners, Git guardrails, Markdown checking, and RTK rewriting. Keep PowerShell and Disposable as separate milestones even though both edit the same files. Rationale: This preserves the later three-file-only Disposable scope while giving later hooks a common Codex installation path. Date/Author: 2026-09-23, user and Codex.
@@ -114,6 +117,8 @@ This plan covers all eight former Ready ideas. It creates one independently veri
 - Decision: Close milestone 12 only after replaying the exact prior successful headless CLI route and passing the unchanged strict nonce verifier with paired timestamp records. Rationale: The first `-y` and interactive retries gave incomplete visibility, but explicit `--approval-mode yolo --skip-trust` yielded all three normal events twice in fresh deployed sessions, with byte-identical settings restoration each time. The second success used stdout-only capture, so do not attribute the failure solely to transcript redirection or claim the specific flag causing it is isolated. Date/Author: 2026-09-24, Copilot milestone-12 worker.
 
 ## Outcomes & Retrospective
+
+Review repair integration, 2026-09-25: The Git guard, Tool Guardian, router grader/eval suite, and Windows workflow filters are repaired on the base branch. Public guard tests passed 19 cases, security banners eight, generator/workflow tests 25, router tests 10, runner tests 15, generated-hook freshness 38 files, OKF lint, and whitespace checks. The owning review agents cleared all fixes after two narrow follow-ups. This host lacks `flock`, so the full aggregate runner was not executed; its restored router command and CLI tests passed independently. Six clean repair worktrees are gone, while six integrated private branches await user-run deletion because the repository guard blocks agent-issued `git branch -d`. The earlier native Windows scanner HEAD-failure case also remains open; a Mac PowerShell skip does not satisfy it.
 
 Review repair checkpoint, 2026-09-25: README now describes maintained Codex hooks and event groups. RTK asset digests and receipt verification live once in the canonical renderer, with unchanged generated runtime bytes. Scanner HEAD classification denies or warns on unexpected failure in all three provider envelopes and preserves clean scans for real unborn repositories. Focused provider suites, 24 generator tests, eight RTK tests, OKF lint, and whitespace checks passed. Milestone 5 acceptance remains open only for the newly added native Windows HEAD-failure scenario; a Mac PowerShell run skipped execution.
 
@@ -277,43 +282,43 @@ The initial 2026-09-24 fresh normal `-y` run recorded paired monotonic runtimes 
 
 ### Milestone 13: Close Git work-discard guard bypasses
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
 In `hooks/families/repository_state.py`, recognize Git executables by normalized basename for POSIX and Windows path forms, while keeping unrelated executables allowed. Change `_git_action()` so only exact `-n`, `--dry-run`, or valid short-option bundles containing `n` classify `git clean` as dry-run. Long option values such as `--exclude=notes` must not qualify. Add public Copilot, Gemini, and Codex envelope cases in `scripts/test-repository-state.py` for both bypasses and a real dry-run. Regenerate the three provider scripts, run the focused test and `python3 scripts/generate-hooks.py --check`, and check native Windows cases where available. A destructive form must return each provider's native denial; a safe read and real dry-run must remain allowed.
 
 ### Milestone 14: Keep unrecognized credentials out of security excerpts
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
 In `hooks/families/tool_guard.py`, replace the full-context excerpt path in `build_action_excerpt()` with a conservative construction that retains the matched dangerous operation and useful leading input context only when safe to show. If safety cannot be established, show the safe match alone or `command omitted`. Keep the 160-character total cap, same displayed/logged excerpt, and block/warn meaning. A public case containing a short unrecognized header such as `X-Session-ID: localpass7` must place neither `localpass7` nor raw tool input in any provider response or guard log. Preserve the existing quoted and JSON credential cases. Regenerate provider scripts and run `python3 scripts/test-security-banners.py`, provider Tool Guardian suites, and freshness check.
 
-Re-review repair: `_match_git_push()` can put a remote URL with a short query credential into the matched operation itself, such as `git push --force 'https://example.invalid/repo.git?sig=localpass7' main`. Build a safe structural description of the operation without echoing the URL or its query in banners or logs. Add a public provider test for this class and recheck excerpt/log equality.
+Re-review repair: `_match_git_push()` previously put a remote URL with a short query credential into the matched operation itself, such as `git push --force 'https://example.invalid/repo.git?sig=localpass7' main`. The follow-up builds a safe structural description without echoing the URL or its query in banners or logs. Public provider tests cover this class and excerpt/log equality.
 
 ### Milestone 15: Restore router validation and review tier consistency
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
 The fixed-point change deleted `skills/subagent-model-router/evals/` while `scripts/test-all.py` and `scripts/test_test_all.py` still register its test command. Restore meaningful router eval tests and their grader if the skill still promises that interface, or remove the retired suite from the aggregate registry and update `.agents/memory/testing/skills.md` and skill guidance together. Do not keep a registered command pointing at a missing directory, and do not delete or weaken a failing test merely to make the runner pass. In `skills/subagent-model-router/reference/review-routing.md`, make ordinary meaningful code reviews Standard by default; reserve Fast for a clearly bounded, low-risk review consistent with `reference/model-catalog.md`. Verify the affected runner tests, router checks, and the aggregate registry command.
 
-Re-review repair: the restored style-review grader currently rejects Standard even though the routing rule permits Fast and does not require it. Accept either capable Fast or Standard for the tiny style-review scenario, and preserve failure for an unrelated or incapable tier. Update the grader test first, then run the router eval suite.
+Re-review repair: the initially restored style-review grader rejected Standard even though the routing rule permits Fast and does not require it. The follow-up accepts either capable Fast or Standard for the tiny style-review scenario and still rejects an unrelated or incapable tier. The grader test failed first, then the router eval suite passed.
 
-### Milestone 16: Cover provider-only changes in native Windows CI
+### Milestone 16: Trigger native Windows CI for provider-only changes
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
 In `.github/workflows/ready-ideas-windows.yml`, add `.copilot/**` and `.gemini/**` to both `push.paths` and `pull_request.paths`. Keep manual dispatch. Add a focused workflow-path assertion to the maintained Python test suite so either omission fails. Verify both event filters include both provider roots and the workflow still runs the existing native Windows hook steps. Native execution of milestone 5's committed-repository HEAD-failure scenario remains a separate open gate above.
 
-### Review and integrate repair branches
+### Review and clean up repair branches
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
