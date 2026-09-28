@@ -8,12 +8,20 @@ research, planning, or implementation artifact.
 
 - [Personal Context vs Shared Context](https://dev.to/alexmercedcoder/personal-context-vs-shared-context-a-deep-dive-into-how-humans-and-organizations-should-feed-14md)
   - Read 'How do we keep shared context from going stale?'
-- Add repo-level hooks for codex to achieve parity with Copilot and Gemini repo-level hooks (see `.github/hooks/hooks.json`).
-- clean-agent-docs: shows potentially lossy compression
 - complete novice to implement the feature end-to-end without prior knowledge of this repo
 - I want to investigate ways to run agent workflows (e.g. plan -> implement -> checkpoints -> prototypes -> review/fix loops).
   - the transcipt from this video describes shopify's process: <https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd>
   - validation pipeline: <https://github.com/kunchenguid/no-mistakes>
+- [subagent-model-router](../skills/subagent-model-router/) improvements
+  - Suggested edit: Add under Selection Guidelines:
+
+    Classify each task-graph node separately. A bounded, single-file edit with explicit acceptance criteria starts in Fast, even when its parent ExecPlan is large. Examples: local symbol rename, redundant initialization cleanup, focused test assertion rewrite, or test setup deduplication. Escalate only when the node itself needs cross-system reasoning, difficult debugging, or high-stakes judgment.
+
+    Suggested edit: Add under Output format:
+
+    Before launch, record the chosen model and confirm the runtime will apply it. If runtime rules prevent a model override, report that routing cannot be enforced; do not treat an omitted  model  as the selected Fast model.
+
+    Reason: Those four nodes fit Fast. I loaded the router but omitted  model , so runtime defaults selected GPT-6 Sol. Classification guidance alone would not prevent that mistake; routing needs an enforceable launch check.
 
 ## Ready
 
