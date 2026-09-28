@@ -16,6 +16,7 @@ This map is reopened on 2026-09-28 after the original implementation. Existing c
 - [RTK Setup Warning](tickets/rtk-setup-warning.md): historical prerelease solution superseded by [Stable RTK Simplification](tickets/stable-rtk-simplification.md).
 - [Markdown Health Hook](tickets/markdown-health-hook.md): historical workspace checker decision; [Markdown Health Retirement](tickets/markdown-health-retirement.md) supersedes it, and [Repository OKF Hook](tickets/repository-okf-hook.md) will decide the narrower replacement.
 - [Markdown Health Retirement](tickets/markdown-health-retirement.md): remove maintained user-global checker code and registrations, keep independent OKF lint and audit history, and document possible installed leftovers without automatic cleanup.
+- [Repository OKF Hook](tickets/repository-okf-hook.md): use existing repository lint at Copilot and Gemini turn end, add Codex, remove redundant post-tool OKF runs, bound repair, and audit each result.
 - [Security Hook Notifications](tickets/security-hook-notifications.md): show consistent block/warning banners on local provider surfaces; Tool Guardian shows and logs a redacted 160-character action excerpt, while scan-secrets banners omit matched values.
 - [Repository State Guardrails](tickets/repository-state-guardrails.md): historical hook decision; [Repository State Retirement](tickets/repository-state-retirement.md) supersedes it.
 - [Scan Secrets Shutdown](tickets/scan-secrets-shutdown.md): replace threaded Git pipe reading with bounded temporary-file capture; discard incomplete output, deny in block mode, warn at session end, and test native Windows hang cases.
@@ -34,5 +35,7 @@ This map is reopened on 2026-09-28 after the original implementation. Existing c
 Implementing hook, generator, installer, or configuration changes during this wayfinding effort. The destination is a revised ExecPlan for that work.
 
 Copilot cloud agent coverage for [Security Hook Notifications](tickets/security-hook-notifications.md): cloud runs do not load user-level hooks; the user chose local Copilot CLI and VS Code coverage.
+
+VS Code Local and Copilot Agent Host coverage for [Repository OKF Hook](tickets/repository-okf-hook.md): the user chose Copilot CLI, Gemini CLI, and Codex CLI only for this repo-local lint behavior. Copilot cloud is not an acceptance surface for that ticket.
 
 Designing a replacement repository-state enforcement service is beyond the user's retirement request. Existing agent Git safety instructions remain in force until the retirement ticket decides their future wording.
