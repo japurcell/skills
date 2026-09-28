@@ -2,7 +2,7 @@
 
 **Type:** grilling
 **Status:** open
-**Blocked By:** stable-rtk-simplification.md, repository-state-retirement.md, markdown-health-retirement.md, lifecycle-notifications.md, high-rate-hook-performance-review.md
+**Blocked By:** stable-rtk-simplification.md, repository-state-retirement.md, markdown-health-retirement.md, repository-okf-hook.md, lifecycle-notifications.md, high-rate-hook-performance-review.md
 **Research Dir:** none
 
 ## Question

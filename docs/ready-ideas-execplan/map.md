@@ -1,18 +1,21 @@
 ## Destination
 
-Revise the existing, self-contained [ExecPlan](ExecPlan.md) for the current local Copilot, Gemini, and Codex hook system. The revision must use verified stable RTK 0.50.0, retire the repository-state and Markdown-health hooks, define sparse user-visible lifecycle messages, and specify a performance-focused review of every high-rate hook. Planning must finish before implementation resumes.
+Revise the existing, self-contained [ExecPlan](ExecPlan.md) for the current local Copilot, Gemini, and Codex hook system. The revision must use verified stable RTK 0.50.0, retire the repository-state hook and user-global Markdown checker, define a repository-local OKF lint hook, set sparse user-visible lifecycle messages, and specify a performance-focused review of every high-rate hook. Planning must finish before implementation resumes.
 
 ## Notes
 
-This map is reopened on 2026-09-28 after the original implementation. Existing closed tickets and milestones record past decisions and evidence, not instructions to preserve behavior the user has withdrawn. This session charts tickets only; no hook or installer implementation starts before the revised plan is approved. Use `exec-plans` for the destination, `grilling` for human decisions, and `research` for external facts. The referenced `domain-modeling` skill is not installed, so use Wayfinder's explicit question, dependency, and resolution structure. Distinguish checked-in sources, installed user hooks, and historical test results.
+This map is reopened on 2026-09-28 after the original implementation. Existing closed tickets and milestones record past decisions and evidence, not instructions to preserve behavior the user has withdrawn. The user later narrowed Markdown Health to a repository-local OKF lint hook; it is a new design, not the old checker's existing behavior. Wayfinding remains planning only; no hook or installer implementation starts before the revised plan is approved. Use `exec-plans` for the destination, `grilling` for human decisions, and `research` for external facts. The referenced `domain-modeling` skill is not installed, so use Wayfinder's explicit question, dependency, and resolution structure. Distinguish checked-in sources, installed user hooks, and historical test results.
 
 ## Decisions so far
 
 - [RTK 0.50.0 Release Facts](tickets/rtk-050-release-facts.md): official stable release and checksummed assets support suppression of the missing-hook warning; command exit-code preservation still needs verification.
+- [Stable RTK Simplification](tickets/stable-rtk-simplification.md): require stable RTK before installs, manage persistent warning suppression, keep automatic Copilot/Gemini forwarders, and retire verified owned prerelease rewrite assets.
 - [Provider Lifecycle Facts](tickets/provider-lifecycle-facts.md): official event and message contracts differ across Copilot, Gemini, and Codex; the observed required-skills message does not prove every event is visible.
+- [Repository OKF Hook Capabilities](tickets/repository-okf-hook-capabilities.md): all local provider surfaces have repository-local turn-end hooks, but their event, trust, and response contracts differ; session-end events cannot require repair.
 - [Provider Hook Capabilities](tickets/provider-hook-capabilities.md): provider-specific hook contracts permit pre-tool checks, with different display, timeout, trust, and Windows rules.
-- [RTK Setup Warning](tickets/rtk-setup-warning.md): historical prerelease solution; [Stable RTK Simplification](tickets/stable-rtk-simplification.md) reopens it after the verified 0.50.0 release.
-- [Markdown Health Hook](tickets/markdown-health-hook.md): historical checker decision; [Markdown Health Retirement](tickets/markdown-health-retirement.md) supersedes it.
+- [RTK Setup Warning](tickets/rtk-setup-warning.md): historical prerelease solution superseded by [Stable RTK Simplification](tickets/stable-rtk-simplification.md).
+- [Markdown Health Hook](tickets/markdown-health-hook.md): historical workspace checker decision; [Markdown Health Retirement](tickets/markdown-health-retirement.md) supersedes it, and [Repository OKF Hook](tickets/repository-okf-hook.md) will decide the narrower replacement.
+- [Markdown Health Retirement](tickets/markdown-health-retirement.md): remove maintained user-global checker code and registrations, keep independent OKF lint and audit history, and document possible installed leftovers without automatic cleanup.
 - [Security Hook Notifications](tickets/security-hook-notifications.md): show consistent block/warning banners on local provider surfaces; Tool Guardian shows and logs a redacted 160-character action excerpt, while scan-secrets banners omit matched values.
 - [Repository State Guardrails](tickets/repository-state-guardrails.md): historical hook decision; [Repository State Retirement](tickets/repository-state-retirement.md) supersedes it.
 - [Scan Secrets Shutdown](tickets/scan-secrets-shutdown.md): replace threaded Git pipe reading with bounded temporary-file capture; discard incomplete output, deny in block mode, warn at session end, and test native Windows hang cases.
