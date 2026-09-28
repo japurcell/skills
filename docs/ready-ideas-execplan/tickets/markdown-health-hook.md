@@ -1,5 +1,7 @@
 # Markdown Health Hook
 
+Historical resolution. The user withdrew this hook on 2026-09-28; [Markdown Health Retirement](markdown-health-retirement.md) determines removal and migration.
+
 **Type:** grilling
 **Status:** closed
 **Blocked By:** provider-hook-capabilities.md

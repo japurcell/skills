@@ -1,5 +1,7 @@
 # Windows live-check procedure
 
+**Historical procedure, paused 2026-09-28.** This checklist verifies the previous hook design, including repository-state, Markdown-health, and prerelease RTK paths that the user now wants retired. Do not use it as acceptance for the revised design. Follow [the reopened map](map.md) and replace affected steps only after its tickets close; current repository tests still reflect the installed code until implementation changes.
+
 This procedure supplements the native Windows automation in
 `.github/workflows/ready-ideas-windows.yml`. A live Windows run is not the
 completion gate; every workflow step must exit `0` on a Windows runner. A

@@ -1,5 +1,7 @@
 # RTK Setup Warning
 
+Historical resolution. The user's 2026-09-28 stable-release direction reopens this design in [Stable RTK Simplification](stable-rtk-simplification.md); do not use the prerelease recipe for new implementation.
+
 **Type:** grilling
 **Status:** closed
 **Blocked By:** none

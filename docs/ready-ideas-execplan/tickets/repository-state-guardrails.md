@@ -1,5 +1,7 @@
 # Repository State Guardrails
 
+Historical resolution. The user withdrew this hook on 2026-09-28; [Repository State Retirement](repository-state-retirement.md) determines removal and migration.
+
 **Type:** grilling
 **Status:** closed
 **Blocked By:** provider-hook-capabilities.md

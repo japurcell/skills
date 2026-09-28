@@ -17,4 +17,4 @@ research, planning, or implementation artifact.
 
 ## Planned
 
-- [Ready ideas ExecPlan](ready-ideas-execplan/ExecPlan.md) covers all eight former Ready problems and their implementation milestones.
+- [Ready ideas revision map](ready-ideas-execplan/map.md) reopens planning after changed hook requirements. The [existing ExecPlan](ready-ideas-execplan/ExecPlan.md) records prior implementation and is paused pending revision.
