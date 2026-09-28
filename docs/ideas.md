@@ -13,6 +13,7 @@ research, planning, or implementation artifact.
   - the transcipt from this video describes shopify's process: <https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd>
   - validation pipeline: <https://github.com/kunchenguid/no-mistakes>
 - Look at migrating agent kb/memory to nested AGENTS.md files like [https://github.com/lopopolo/harness-engineering](https://github.com/lopopolo/harness-engineering)
+- Tool Guardian blocked write_file. input_limits/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional `[tool-guard]`
 
 ## Ready
 
