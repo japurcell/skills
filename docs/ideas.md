@@ -12,6 +12,7 @@ research, planning, or implementation artifact.
 - I want to investigate ways to run agent workflows (e.g. plan -> implement -> checkpoints -> prototypes -> review/fix loops).
   - the transcipt from this video describes shopify's process: <https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd>
   - validation pipeline: <https://github.com/kunchenguid/no-mistakes>
+- Look at migrating agent kb/memory to nested AGENTS.md files like [https://github.com/lopopolo/harness-engineering](https://github.com/lopopolo/harness-engineering)
 
 ## Ready
 
