@@ -37,7 +37,7 @@ The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca
 
 ## Next step
 
-Begin milestone 17: stable RTK preflight/config migration and retirement of verified owned prerelease assets. Use an isolated implementer branch and worktree, test first, then integrate on `codex/ready-ideas-execplan`. Keep Copilot and Gemini live checks as separate later milestones; no live CLI check is required for the macOS performance audit.
+Milestone 17 is active in the isolated `/Users/adam/.codex/worktrees/ready-rtk-stable/skills` worktree. Await its test-first implementation, review results, rebase onto `codex/ready-ideas-execplan`, then fast-forward integrate. Keep Copilot and Gemini live checks as separate later milestones; no live CLI check is required for the macOS performance audit.
 
 ## Verification state
 

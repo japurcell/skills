@@ -14,7 +14,7 @@ A user can verify the result by running an explicit RTK command, observing start
 
 - [x] (2026-09-28) [planning] Close the reopened Wayfinder decisions and revise this ExecPlan and windows-live-check.md before source work.
 - [x] (2026-09-29 00:09Z) [approval] User explicitly approved the revised ExecPlan and Windows checklist before source changes.
-- [ ] [milestone-17] Require stable RTK and migrate warning suppression; retire verified owned prerelease assets.
+- [ ] (2026-09-29 00:12Z) [milestone-17] In progress on isolated implementer branch: require stable RTK and migrate warning suppression; retire verified owned prerelease assets.
 - [ ] [milestone-18] Retire maintained repository-state hook pieces and adjust Git guidance.
 - [ ] [milestone-19] Retire maintained global Markdown Health pieces while preserving OKF lint.
 - [ ] [milestone-20] Run repository-local OKF lint at turn end on three CLIs.
@@ -78,7 +78,7 @@ Use safe disposable repositories and fake data for security examples. Keep logs 
 
 ### Milestone 17: Move warning suppression to stable RTK
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Require RTK 0.50.0 or newer before either installer changes installed files. Do not download RTK. In scripts/install.sh and scripts/install.ps1, locate the user RTK TOML config at the platform location: macOS Library/Application Support/rtk/config.toml under the home directory, Linux .config/rtk/config.toml under the home directory, or Windows APPDATA/rtk/config.toml. Set only hooks.suppress_hook_warning to true. Preserve all other settings and comments where possible, back up a changed file, leave a correct file byte-identical, and stop safely on ambiguous or malformed config. An older or missing RTK stops the installer before any destination mutation and prints upgrade guidance.
