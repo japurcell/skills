@@ -4,7 +4,7 @@ Revise the existing, self-contained [ExecPlan](ExecPlan.md) for the current loca
 
 ## Notes
 
-This map was reopened on 2026-09-28 after the original implementation. All decision tickets are now closed. The revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) are written; source work awaits the user's explicit approval of both. Existing completed milestones record past evidence, not acceptance of withdrawn behavior. The user narrowed Markdown Health to a repository-local OKF lint hook, and [Actionable Tool Guardian Denials](tickets/actionable-tool-guardian-denials.md) refines [Security Hook Notifications](tickets/security-hook-notifications.md) without weakening redaction. Wayfinding remains planning only. Use `exec-plans` for execution after approval. Distinguish checked-in sources, installed user hooks, and historical test results.
+This map was reopened on 2026-09-28 after the original implementation. All decision tickets are now closed. The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) on 2026-09-28; execution is active under the ExecPlan. Existing completed milestones record past evidence, not acceptance of withdrawn behavior. The user narrowed Markdown Health to a repository-local OKF lint hook, and [Actionable Tool Guardian Denials](tickets/actionable-tool-guardian-denials.md) refines [Security Hook Notifications](tickets/security-hook-notifications.md) without weakening redaction. Wayfinding remains planning only. Distinguish checked-in sources, installed user hooks, and historical test results.
 
 ## Decisions so far
 

@@ -2,7 +2,7 @@
 
 This ExecPlan is a living document. Keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective current. Work from the repository root and follow .agents/skills/exec-plans/SKILL.md.
 
-Planning revision: 2026-09-28. The prior implementation through c0d9ca34 remains checked in. Its completed tests prove the former design only. No revised source, installer, registration, or user installation has changed. The user must explicitly approve this revised ExecPlan and windows-live-check.md before source implementation resumes.
+Planning revision: 2026-09-28. The prior implementation through c0d9ca34 remains checked in. Its completed tests prove the former design only. The user approved this revised ExecPlan and windows-live-check.md on 2026-09-28. Revised source implementation may proceed.
 
 ## Purpose / Big Picture
 
@@ -13,7 +13,7 @@ A user can verify the result by running an explicit RTK command, observing start
 ## Progress
 
 - [x] (2026-09-28) [planning] Close the reopened Wayfinder decisions and revise this ExecPlan and windows-live-check.md before source work.
-- [ ] [approval] Obtain the user's explicit approval of the completed revised plan before source changes.
+- [x] (2026-09-29 00:09Z) [approval] User explicitly approved the revised ExecPlan and Windows checklist before source changes.
 - [ ] [milestone-17] Require stable RTK and migrate warning suppression; retire verified owned prerelease assets.
 - [ ] [milestone-18] Retire maintained repository-state hook pieces and adjust Git guidance.
 - [ ] [milestone-19] Retire maintained global Markdown Health pieces while preserving OKF lint.
@@ -47,6 +47,9 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Decision: Require explicit user approval of this revised plan and the Windows checklist before source implementation.
   Rationale: The user required planning to finish before implementation restarts.
   Date/Author: 2026-09-28, user and Codex.
+- Decision: The user approved the revised ExecPlan and Windows checklist and directed implementation to begin.
+  Rationale: The agreed planning gate is satisfied; milestone 17 is the first source milestone.
+  Date/Author: 2026-09-28, user.
 - Decision: Migrate stable RTK and retire obsolete hooks first; add OKF and visible messages; refine Tool Guardian; measure the final high-rate hook set; finish with platform and live checks.
   Rationale: Each later gate can inspect the registrations that will actually remain.
   Date/Author: 2026-09-28, user and Codex.
@@ -59,7 +62,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 
 ## Outcomes & Retrospective
 
-Planning decisions are complete. Revised implementation acceptance is not met: no new source, installed-hook, RTK configuration, or benchmark change has run. Prior provider and Windows results are historical evidence for the old design. The next action after user approval is milestone 17. Keep this section current after every milestone and name any unmet live or native Windows gate.
+Planning decisions are complete and the user approved the revised plan. Revised implementation acceptance is not met: no new source, installed-hook, RTK configuration, or benchmark change has run. Prior provider and Windows results are historical evidence for the old design. The next action is milestone 17. Keep this section current after every milestone and name any unmet live or native Windows gate.
 
 ## Context and Orientation
 
@@ -223,4 +226,6 @@ Canonical generated hook families expose render(provider, target) through hooks/
 
 RTK stable 0.50.0 or newer is an external prerequisite, not installed by this repository. Python standard-library code and existing scripts supply the hook behavior; no new package, database, or service is planned. Existing scan-secrets file-backed Git capture remains a security boundary and must return complete output or a typed incomplete result, never partial bytes. The OKF adapter calls scripts/lint-okf.py rather than copying its rules. Tool Guardian uses safe structured rule metadata and the prior redacted Action formatter; no provider runtime imports another provider's code.
 
-Revision note, 2026-09-28: The user replaced the old prerelease and guard/checker outcomes, requested lifecycle visibility and high-rate performance review, then added exact Tool Guardian causes. This revision compresses old milestones, adds new gates, and removes old-design implementation instructions. Source work waits for explicit approval of this plan and the updated Windows checklist.
+Revision note, 2026-09-28: The user replaced the old prerelease and guard/checker outcomes, requested lifecycle visibility and high-rate performance review, then added exact Tool Guardian causes. This revision compresses old milestones, adds new gates, and removes old-design implementation instructions.
+
+Revision note, 2026-09-29: The user explicitly approved this plan and the Windows checklist, clearing the source implementation gate.

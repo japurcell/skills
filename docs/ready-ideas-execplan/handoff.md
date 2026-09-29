@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user changed requirements on 2026-09-28 and invoked Wayfinder. All tickets in the [map](map.md) are closed, including [Revised ExecPlan Integration](tickets/revised-execplan-integration.md). The [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) have been rewritten for the new design. The ExecPlan keeps compact historical evidence and opens milestones 17-27 for migration, new behavior, performance, platform checks, and separate live CLI checks. The user explicitly chose an approval gate: obtain approval of these completed planning documents before any source, installer, registration, or installed-user change. No such change has occurred in this restart.
+The user changed requirements on 2026-09-28 and invoked Wayfinder. All tickets in the [map](map.md) are closed, including [Revised ExecPlan Integration](tickets/revised-execplan-integration.md). The [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) have been rewritten for the new design. The ExecPlan keeps compact historical evidence and opens milestones 17-27 for migration, new behavior, performance, platform checks, and separate live CLI checks. The user explicitly approved both planning documents on 2026-09-28 and directed implementation to begin. No revised source change has occurred yet.
 
 The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca34`. Its six fixed-point review findings were repaired and cleared by their original reviewers. Existing repository-state and Markdown-health hooks, prerelease RTK rewrite path, and user-level installations still represent the old design. Do not claim new requirements are implemented merely because the old checks passed.
 
@@ -13,7 +13,7 @@ The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca
 - Keep sparse, user-visible hook messages at key lifecycle events across local Copilot, Gemini, and Codex. The existing visible `load-required-skills` behavior is evidence for that hook only; verify other native message fields separately.
 - Discover every high-rate event and retained handler, then plan a performance-focused code review that measures latency, including startup and notification cost where observable.
 - Make Tool Guardian block/warning text identify the exact safe-to-disclose policy violation. Reuse a static correction only when cheap and accurate, so agents need not inspect hook source.
-- Obtain explicit approval of the revised ExecPlan and Windows checklist before implementation. Old milestone text authorizes no new source edit.
+- The user approved the revised ExecPlan and Windows checklist. Implement the new milestones without treating old acceptance as proof.
 
 ## Current evidence and cautions
 
@@ -37,7 +37,7 @@ The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca
 
 ## Next step
 
-Present the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) for the user's explicit approval. Do not start milestone 17 or any other source work until that approval arrives. After approval, begin with stable RTK preflight/config migration, then retire obsolete hook families in the documented order. Keep the live Copilot and Gemini checks as separate later milestones; no live CLI check is required for the macOS performance audit.
+Begin milestone 17: stable RTK preflight/config migration and retirement of verified owned prerelease assets. Use an isolated implementer branch and worktree, test first, then integrate on `codex/ready-ideas-execplan`. Keep Copilot and Gemini live checks as separate later milestones; no live CLI check is required for the macOS performance audit.
 
 ## Verification state
 
