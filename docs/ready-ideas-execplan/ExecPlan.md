@@ -24,7 +24,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29) [milestone-22] Integrated exact Tool Guardian reasons at `cb3f0093`; generator and provider suites pass on Mac. Native display remains in milestones 25-27.
 - [x] (2026-09-29) [milestone-23] Inventory all retained high-rate registrations and benchmark direct macOS entrypoints in 45 synthetic scenarios; record method, timing distributions, and host-specific budgets in `docs/ready-ideas-execplan/high-rate-hooks-performance.md`.
 - [x] (2026-09-29) [milestone-23] Replace scanner Git polling sleep with early-return process wait, regenerate three provider outputs, and rerun the exact 25-sample matrix. Focused scanner suites and 25 generator tests pass.
-- [ ] [milestone-23] Integrate the isolated source commit on the accepted base, then mark milestone 23 accepted.
+- [x] (2026-09-29) [milestone-23] Integrated tested performance audit and scanner wait change at `9dbb901d`; native CLI and Windows timing were not required.
 - [ ] [milestone-24] Pass integrated source, temporary-home installer, and native Windows automation, including the scanner HEAD-failure case.
 - [ ] [milestone-25] Verify installed Codex CLI behavior.
 - [ ] [milestone-26] Verify installed Copilot CLI behavior in a session with that CLI.
@@ -103,7 +103,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 
 ## Outcomes & Retrospective
 
-Planning decisions are complete and the user approved the revised plan. Milestones 17-22 are integrated. Milestone 19 retired maintained global Markdown Health code while preserving the independent OKF linter and old installed registrations during refresh. Milestone 20 added repository-local turn-end lint for all three CLIs with bounded audit and repair behavior. Milestone 21 added sparse startup and turn-end messages. Milestone 22 added exact safe Tool Guardian reasons and matching log detail. Focused and disposable-home checks passed before the base branch fast-forwarded to tested tip `cb3f0093`. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
+Planning decisions are complete and the user approved the revised plan. Milestones 17-23 are integrated. Milestone 19 retired maintained global Markdown Health code while preserving the independent OKF linter and old installed registrations during refresh. Milestone 20 added repository-local turn-end lint for all three CLIs with bounded audit and repair behavior. Milestone 21 added sparse startup and turn-end messages. Milestone 22 added exact safe Tool Guardian reasons and matching log detail. Milestone 23 measured every high-rate handler and cut scanner clean-call median latency from 216-225 ms to 102-110 ms on this Mac. Focused and disposable-home checks passed before the base branch fast-forwarded to tested tip `9dbb901d`. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
 
 Milestone 20 source was integrated at `07d1f133` after focused public-hook, linter, installer, and generator checks passed on macOS. The audit distinguishes first and retry attempts and omits diagnostic text. Native Windows automation and provider-visible messages are later gates.
 
@@ -200,14 +200,14 @@ Do not tell an agent to adjust TOOL_GUARD_ALLOWLIST for input limits, since that
 
 ### Milestone 23: Measure and improve every retained high-rate hook
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met for direct macOS script performance and source checks.
 
 After milestones 17-22 fix the final hook graph, enumerate every retained handler called per tool or faster across three providers. Include security, RTK automatic forwarding, no-op paths, observability telemetry, and Gemini AfterModel streaming chunks. Record provider, source scope, event, matcher, executable, and expected call rate. On macOS, invoke each entrypoint directly with representative provider JSON and environment. Include clean, finding, failure, repeated, large-input, and concurrent workloads. Measure whole subprocess wall time, including Python startup, input/output, synchronous logging, and message creation. Where practical, measure handler-only time separately and compare a minimal process control and previous handler version. Report cold and warm median, p95, variation, and unisolatable cost.
 
 Set numeric budgets only after the baseline shows noise and configured timeout headroom. Review redundant launches, parsing, scans, disk sync, locks, and unbounded work. Fix clear redundant or reproducibly slow hot paths and rerun exact scenarios. Never remove a security check, weaken fail-closed behavior, or suppress needed diagnostics for speed. Record before/after measurements, units, environment, sample count, risk, and remaining cost. This milestone requires no live provider CLI or Windows benchmark.
 
-The isolated implementation and direct-script proof are recorded in `high-rate-hooks-performance.md`. Integration onto the accepted base is the remaining acceptance step. The test command is `rtk test python3 scripts/benchmark-high-rate-hooks.py --samples 25 --warmups 3 --output /private/tmp/high-rate-hooks.json` from the repository root. Expect 45 measured scenarios, provider-valid denials on synthetic findings, and approximately 100-110 ms clean scanner medians on the recorded Mac host after the change. Do not treat those host-specific numbers as Windows or installed CLI proof.
+The integrated implementation and direct-script proof are recorded in `high-rate-hooks-performance.md`. The test command is `rtk test python3 scripts/benchmark-high-rate-hooks.py --samples 25 --warmups 3 --output /private/tmp/high-rate-hooks.json` from the repository root. Expect 45 measured scenarios, provider-valid denials on synthetic findings, and approximately 100-110 ms clean scanner medians on the recorded Mac host after the change. Do not treat those host-specific numbers as Windows or installed CLI proof.
 
 ### Milestone 24: Prove integrated source and native Windows behavior
 
