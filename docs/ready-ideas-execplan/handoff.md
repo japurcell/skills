@@ -38,7 +38,7 @@ The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca
 
 ## Next step
 
-Stop now as requested. When the user resumes implementation, inspect `/Users/adam/.codex/worktrees/ready-rtk-stable/skills` before editing: branch `codex/ready-rtk-stable` starts at `9687149d` and currently has untracked `scripts/configure-rtk.py` and `scripts/test-rtk-stable.py`. Resume milestone 17 test-first work without discarding those files. Then review results, rebase onto the latest base branch, and fast-forward integrate only after tests and a clean implementer worktree. Base branch currently tips at `79edc649` after a separate model-router skill commit and merge. Keep Copilot and Gemini live checks as later milestones; macOS performance audit needs no live CLI run.
+Stop now as requested. When the user resumes implementation, inspect `/Users/adam/.codex/worktrees/ready-rtk-stable/skills` before editing: branch `codex/ready-rtk-stable` starts at `9687149d` and currently has untracked `scripts/configure-rtk.py` and `scripts/test-rtk-stable.py`. Resume milestone 17 test-first work without discarding those files. Then review results, rebase onto the latest base branch, and fast-forward integrate only after tests and a clean implementer worktree. The base branch includes a separate model-router skill commit and merge after the milestone worktree was created. Keep Copilot and Gemini live checks as later milestones; macOS performance audit needs no live CLI run.
 
 ## Verification state
 
