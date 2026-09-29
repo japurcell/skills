@@ -17,7 +17,7 @@ Choose the cheapest capable model that satisfies the required tier.
 
 - Reuse a route only when work class, stakes, ambiguity, touched areas, review history, and model constraints are unchanged.
 - If this is code or security review, apply `reference/review-routing.md`.
-- Pick the lowest capable tier after accounting for isolation, tests, and review. File count or cross-platform scope alone does not justify escalation. Consider:
+- Pick the lowest capable tier after accounting for isolation, tests, and review. For bounded, low-risk fixes, choose Fast unless a concrete interaction or ambiguity cannot be settled by focused verification. File count, language mix, platform scope, and test count alone do not justify escalation. Consider
   - task complexity and stakes
   - context size
   - review history
