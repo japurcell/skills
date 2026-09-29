@@ -30,6 +30,10 @@ description: Public validation entry points and provider adapter contracts for t
 - The generated `scan-secrets.py` hooks read provider JSON from stdin and return JSON with exit `0`. An incomplete Git scan emits a provider-native denial in block mode or a `scan-secrets warning` naming the scan action in warn mode. They never mark incomplete output clean or expose raw Git output in the response.
 - Codex `Stop` scanner success uses `systemMessage` with the count of modified files inspected; a skipped scan says `skipped`. Its `PreToolUse` pass stays `{}`. Copilot and Gemini scanner success at tool or SessionEnd events stays `{}`; their existing warning and denial fields carry actionable results.
 
+## High-rate hook benchmark
+
+- `scripts/benchmark-high-rate-hooks.py [--samples N] [--warmups N] [--concurrency N] [--output PATH]` runs direct macOS JSON subprocess workloads against retained Copilot, Gemini, and Codex high-rate handlers. Defaults are 25 warm samples, three discarded warmups, and four concurrent calls. It requires RTK on `PATH`, creates disposable Git repositories and homes, verifies expected synthetic denials, and emits JSON with environment, first-call timing, warm median/p95/MAD/min/max, and one concurrent batch per selected handler. It does not install hooks or measure provider dispatch.
+
 ## Lifecycle message envelopes
 
 - Copilot required-skill and repository startup hooks emit a single progress object before their final JSON. The repository `validate-stop.py` coordinator emits progress for an allowed pass or notice and prefixes its native block reason on denial; no extra stop coordinator is installed.

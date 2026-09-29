@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-22 and Repair 19A are integrated on `codex/ready-ideas-execplan` through `cb3f0093`. Milestones 23-27 remain open.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-22 and Repair 19A are integrated on `codex/ready-ideas-execplan` through accepted tip `9ef9e8e5`. Milestone 23 is implemented in isolation and awaits integration; milestones 24-27 remain open.
 
 ## Current evidence
 
@@ -15,6 +15,7 @@ The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](wi
 - M21 focused startup, auto-ingest, OKF, scanner, security-banner, generator (25 tests), aggregate-runner (15 tests), and both temporary-home installer suites passed on macOS. Generated outputs are current (26). The PowerShell installer skipped one unsupported junction case. The new `scripts/test-lifecycle-messages-windows.ps1` is registered in the workflow and aggregate runner. Its embedded Python checks passed a Mac compatibility run after correcting the Codex `hookSpecificOutput` denial assertion; the native entrypoint skipped here. No live CLI display is claimed. No real user home was changed.
 - Two startup suites still asserted old post-tool OKF registrations after M20; their assertions now require turn-end-only OKF. The generator writer and mutation tests required scoped checkout write access for their lock file. These are test and workspace lessons, not a revived runtime registration.
 - M22's sole rebase conflict was `.agents/memory/API_MAP.md`: retain the base's 26 generated outputs after hook retirement and M22's exact safe Tool Guardian reason/log contract. `python3 scripts/generate-hooks.py --check` confirms 26 current files. Shared security banners pass 13 tests; Copilot, Gemini, and Codex Tool Guardian suites pass; generator tests pass 25 with scoped worktree write access after five sandbox permission errors on the first run; aggregate-runner registry passes 15; OKF lint and Git diff check pass. The source and generated provider files are in `892b8584`. Native Windows and live provider display are not claimed.
+- M23 is implemented in isolated branch `codex/ready-hook-performance` based on accepted `9ef9e8e5`, pending base integration. `high-rate-hooks-performance.md` inventories all high-rate registrations and records a reproducible direct macOS benchmark of 45 synthetic scenarios: one first call, 25 warm subprocess samples after three warmups, and four-process clean batches. Scanner clean medians dropped from 225 to 110 ms for Copilot and 216 to about 102-104 ms for Gemini/Codex after replacing a repeated 20 ms Git polling sleep with bounded process wait. Finding and large-file paths improved similarly. All three scanner public suites, generator freshness for 26 outputs, 25 generator tests, OKF lint, and a final benchmark smoke run pass. Generator mutation tests needed scoped checkout write permission after five initial sandbox errors. No real home, provider CLI, or Windows benchmark was used.
 
 ## Decisions and limits
 
@@ -22,4 +23,4 @@ Older installations may still execute repository-state or Markdown Health script
 
 ## Next step
 
-Run milestone 23 direct-script performance audit on macOS against the integrated high-rate hook graph. Then complete milestone 24 integrated and native Windows checks. Installed CLI display remains milestones 25-27.
+Integrate the isolated M23 commit onto `codex/ready-ideas-execplan`, rerun its generated-output and focused scanner checks, then mark M23 accepted in the ExecPlan. Milestone 24 integrated and native Windows checks follow. Installed CLI display remains milestones 25-27.

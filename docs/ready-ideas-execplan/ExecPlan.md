@@ -22,7 +22,9 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29) [milestone-20] Integrated repository-local turn-end OKF adapters and bounded audit at `07d1f133`; focused Mac checks pass. Native Windows proof remains in milestone 24 and installed display in milestones 25-27.
 - [x] (2026-09-29) [milestone-21] Integrated sparse lifecycle envelopes and focused Windows automation at `828e4c75`; source checks pass. Native Windows execution and installed CLI display remain later gates.
 - [x] (2026-09-29) [milestone-22] Integrated exact Tool Guardian reasons at `cb3f0093`; generator and provider suites pass on Mac. Native display remains in milestones 25-27.
-- [ ] [milestone-23] Inventory, measure, review, and improve retained high-rate hooks on macOS.
+- [x] (2026-09-29) [milestone-23] Inventory all retained high-rate registrations and benchmark direct macOS entrypoints in 45 synthetic scenarios; record method, timing distributions, and host-specific budgets in `docs/ready-ideas-execplan/high-rate-hooks-performance.md`.
+- [x] (2026-09-29) [milestone-23] Replace scanner Git polling sleep with early-return process wait, regenerate three provider outputs, and rerun the exact 25-sample matrix. Focused scanner suites and 25 generator tests pass.
+- [ ] [milestone-23] Integrate the isolated source commit on the accepted base, then mark milestone 23 accepted.
 - [ ] [milestone-24] Pass integrated source, temporary-home installer, and native Windows automation, including the scanner HEAD-failure case.
 - [ ] [milestone-25] Verify installed Codex CLI behavior.
 - [ ] [milestone-26] Verify installed Copilot CLI behavior in a session with that CLI.
@@ -35,7 +37,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 
 - Stable RTK 0.50.0 has a persistent hooks.suppress_hook_warning setting. The user has already upgraded this Mac's PATH RTK. The former pinned prerelease launcher is no longer needed for this warning.
 - The old Markdown Health hook used its own workspace checker. scripts/lint-okf.py is separate and remains useful for canonical agent documentation.
-- Gemini AfterModel observability may run once per streaming chunk, faster than per-tool hooks. The previous approximately 6-7 ms Gemini probe measured handler entry-to-completion, not process startup or full provider latency. No new benchmark has run.
+- Gemini AfterModel observability may run once per streaming chunk, faster than per-tool hooks. The previous approximately 6-7 ms Gemini probe measured handler entry-to-completion, not process startup or full provider latency. The milestone 23 direct macOS subprocess measurement is about 27 ms median per synthetic chunk; provider delivery and chunk rate remain unmeasured.
 - Before milestone 22, Tool Guardian reduced limit failures to input_limits/critical and discarded the specific bound. The rebased implementation retains safe rule metadata and measured limits; the allowlist still cannot bypass input limits.
 - Another machine may still run old user-level repository-state or Markdown Health registrations after source retirement. Their installed files and state directories are left for manual cleanup. Fresh-install acceptance cannot prove every old installation is clean.
 - Prior Copilot CLI timeout probing showed a harmless Git read proceed after a one-second pre-tool timeout without a native timeout message. Treat visible progress as informational, not proof of enforcement.
@@ -52,6 +54,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - The Copilot and Gemini startup suites retained obsolete post-tool OKF registration assertions after milestone 20 removed those registrations. The tests now assert turn-end-only repository OKF wiring; no runtime registration was restored.
 - The generated-hook writer needs checkout write access to create its lock file in this isolated worktree. Read-only generator checks and provider suites ran normally; the transactional writer and 25 mutation tests ran with scoped checkout write permission.
 - Milestone 22 rebased onto accepted M17-21 with one conflict in `.agents/memory/API_MAP.md`: keep the base's 26 generated outputs after hook retirements and the M22 exact-reason contract. The generated output check reports 26 current files. The generator suite's first run hit five sandbox permission errors while mutating fixture copies in this worktree; all 25 tests passed with scoped write access.
+- Direct scanner profiling found a 20 ms polling sleep after each fast Git launch. A clean scan has several distinct Git checks, so this repeated delay dominated subprocess wall time. The same 25-sample benchmark fell from 216-225 ms clean-scan median to 102-110 ms after `Popen.wait(timeout=...)`, while malformed-input failure time stayed about 29-38 ms. Scanner timeout, capture-size, descendant, and fail-closed tests still pass.
 
 ## Decision Log
 
@@ -91,6 +94,12 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Decision: Use Copilot progress JSON for allowed startup and stop messages, Gemini and Codex `systemMessage` for allowed low-rate outcomes, and the existing denial reason for blocked outcomes. Codex Stop scanner alone adds a safe modified-file count on success.
   Rationale: These are the provider-native display surfaces supported by the existing adapters; denial reasons already have their own display path, and high-rate success must remain quiet.
   Date/Author: 2026-09-29, Codex.
+- Decision: Benchmark each distinct high-rate executable through its public JSON process boundary in disposable macOS homes, including Gemini model chunks, then set host-specific budgets from the measured baseline.
+  Rationale: Whole-process time captures startup, Git and RTK children, synchronous logging, and no-op cost without claiming provider delivery latency.
+  Date/Author: 2026-09-29, Codex.
+- Decision: Keep the scanner's distinct Git completeness checks and replace only the unconditional polling sleep with bounded `Popen.wait(timeout=...)`.
+  Rationale: The measured repeated sleep was the clear hot-path defect; the replacement wakes on process exit without removing timeout, output-size, descendant, denial, or audit checks.
+  Date/Author: 2026-09-29, Codex.
 
 ## Outcomes & Retrospective
 
@@ -100,7 +109,9 @@ Milestone 20 source was integrated at `07d1f133` after focused public-hook, lint
 
 Milestone 21 source was integrated at `eba08529` and emits brief native-envelope messages for operational startup and turn-end hooks while retaining silent high-rate passes, SessionEnd success, observability events, and the bell. Focused Mac suites and temporary-home installers passed. Native Windows execution and installed display are later gates.
 
-Milestone 22 source now reports safe exact Tool Guardian rules and true input-limit counts across the three generated provider hooks, with guard-log parity. Its private branch was rebased onto accepted M17-21 at `892b8584`. The 13 shared banner tests, three provider Tool Guardian suites, 25 generator tests, 15 aggregate-runner registry tests, generated-output check, and OKF lint pass on macOS. Acceptance remains open until the base branch is fast-forwarded; native Windows and provider display proof remain later gates.
+Milestone 22 source now reports safe exact Tool Guardian rules and true input-limit counts across the three generated provider hooks, with guard-log parity. Its source commit `892b8584` was integrated at `cb3f0093`. The 13 shared banner tests, three provider Tool Guardian suites, 25 generator tests, 15 aggregate-runner registry tests, generated-output check, and OKF lint passed on macOS. Native Windows and provider display proof remain later gates.
+
+Milestone 23 isolated source measured all retained high-rate executable families and event-specific telemetry on macOS with 25 warm whole-subprocess samples per case. Scanner clean medians fell from 216-225 ms to 102-110 ms after the bounded Git wait change; the three scanner suites, generated-output check, and 25 generator tests pass. The full inventory, workloads, cold and warm distributions, budgets, and remaining costs are in `docs/ready-ideas-execplan/high-rate-hooks-performance.md`. Base integration remains before milestone 23 acceptance.
 
 ## Context and Orientation
 
@@ -189,12 +200,14 @@ Do not tell an agent to adjust TOOL_GUARD_ALLOWLIST for input limits, since that
 
 ### Milestone 23: Measure and improve every retained high-rate hook
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 After milestones 17-22 fix the final hook graph, enumerate every retained handler called per tool or faster across three providers. Include security, RTK automatic forwarding, no-op paths, observability telemetry, and Gemini AfterModel streaming chunks. Record provider, source scope, event, matcher, executable, and expected call rate. On macOS, invoke each entrypoint directly with representative provider JSON and environment. Include clean, finding, failure, repeated, large-input, and concurrent workloads. Measure whole subprocess wall time, including Python startup, input/output, synchronous logging, and message creation. Where practical, measure handler-only time separately and compare a minimal process control and previous handler version. Report cold and warm median, p95, variation, and unisolatable cost.
 
 Set numeric budgets only after the baseline shows noise and configured timeout headroom. Review redundant launches, parsing, scans, disk sync, locks, and unbounded work. Fix clear redundant or reproducibly slow hot paths and rerun exact scenarios. Never remove a security check, weaken fail-closed behavior, or suppress needed diagnostics for speed. Record before/after measurements, units, environment, sample count, risk, and remaining cost. This milestone requires no live provider CLI or Windows benchmark.
+
+The isolated implementation and direct-script proof are recorded in `high-rate-hooks-performance.md`. Integration onto the accepted base is the remaining acceptance step. The test command is `rtk test python3 scripts/benchmark-high-rate-hooks.py --samples 25 --warmups 3 --output /private/tmp/high-rate-hooks.json` from the repository root. Expect 45 measured scenarios, provider-valid denials on synthetic findings, and approximately 100-110 ms clean scanner medians on the recorded Mac host after the change. Do not treat those host-specific numbers as Windows or installed CLI proof.
 
 ### Milestone 24: Prove integrated source and native Windows behavior
 
@@ -285,6 +298,8 @@ Milestone 20 rebase evidence (2026-09-29, source commit `a58ae3bb` on `73db7d4d`
 
 Milestone 21 isolated source evidence (2026-09-29, `codex/ready-lifecycle-messages` based on `30e621d2`): Copilot/Gemini/Codex startup and OKF focused suites, both source-ingest suites, all three scanner suites, the security-banner suite, 15 aggregate-runner tests, both disposable-home installer suites, central OKF lint, generated-hook check (26 outputs), and 25 generated-hook tests passed on macOS. The PowerShell installer skipped its unsupported junction fixture. `scripts/test-lifecycle-messages-windows.ps1` parsed and skipped native cases here; its embedded Python envelope checks also passed in a Mac compatibility run with only the native-OS guard removed. This does not claim a native Windows or live CLI display pass. The generator writer and its mutation tests required scoped checkout write permission. No real user home was installed or changed.
 
+Milestone 23 isolated source evidence (2026-09-29, `codex/ready-hook-performance` based on `9ef9e8e5`): `scripts/benchmark-high-rate-hooks.py` ran 45 direct-script scenarios with 25 warm samples after three warmups, first-call cold values, and four-process clean-handler batches. The scanner's clean median improved from 225.1 to 110.3 ms for Copilot, 216.4 to 102.3 ms for Gemini, and 216.4 to 103.6 ms for Codex. Finding and large-file paths improved similarly, beyond baseline variation. The malformed-input path remained about 29-38 ms. All three scanner public suites, generator `--check` for 26 outputs, and 25 generator tests passed. The first generator mutation run had five sandbox lock-write errors; scoped checkout write access made all 25 pass. The report `docs/ready-ideas-execplan/high-rate-hooks-performance.md` has the full inventory, method, budgets, remaining cost, and limits. No live provider or Windows benchmark ran.
+
 Capture concise evidence after execution: RTK version and config backup path without private contents; an explicit missing-file RTK exit; current registration lists; one safe OKF audit line with counts; a redacted Tool Guardian reason and matching log fields; per-handler timing distributions; native Windows scanner HEAD-failure result; and provider-visible messages. Do not paste raw tool input, credential values, entire logs, or private home paths unnecessarily. The Windows checklist is docs/ready-ideas-execplan/windows-live-check.md.
 
 ## Interfaces and Dependencies
@@ -311,4 +326,6 @@ Revision note, 2026-09-29: Rebased milestone 20 source as `a58ae3bb` onto accept
 
 Revision note, 2026-09-29: Implemented milestone 21 on an isolated branch with provider-native sparse lifecycle messages and a registered Windows fixture. Source checks pass; integration, native Windows execution, and installed display remain open.
 
-Revision note, 2026-09-29: Rebased milestone 22 onto accepted M17-21, resolved the API map output-count conflict, and reran focused Tool Guardian, generator, registry, and OKF checks. Keep milestone 22 acceptance open until the base branch fast-forward.
+Revision note, 2026-09-29: Rebased milestone 22 onto accepted M17-21, resolved the API map output-count conflict, and reran focused Tool Guardian, generator, registry, and OKF checks. The base later integrated and accepted it at `cb3f0093`.
+
+Revision note, 2026-09-29: Recorded milestone 23's direct macOS high-rate inventory and benchmark evidence, set host-specific budgets after the baseline, and reduced scanner Git polling delay without changing security checks. Acceptance remains open until the isolated source commit is integrated.

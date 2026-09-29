@@ -190,7 +190,10 @@ def run_git(
                     return_code = process.poll()
                     if return_code is not None:
                         break
-                    time.sleep(min(0.02, max(0.0, command_deadline - time.monotonic())))
+                    try:
+                        process.wait(timeout=min(0.02, max(0.0, command_deadline - time.monotonic())))
+                    except subprocess.TimeoutExpired:
+                        pass
 
                 if os.name == "posix":
                     try:

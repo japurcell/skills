@@ -56,6 +56,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/test-codex-hooks-tool-guard.sh` | Focused Codex Tool Guardian envelope, limit-advice, warning, and guard-log checks. |
 | `.codex/hooks/tool-guard.py` | Generated Codex Tool Guardian adapter installed through the maintained hook merger. |
 | `scripts/test-scan-secrets-capture.py` | Public generated-hook capture regressions shared by the three provider scanner suites. |
+| `scripts/benchmark-high-rate-hooks.py` | Direct macOS subprocess benchmark for retained per-tool and model-chunk hook handlers using disposable Git repositories and homes. |
 | `scripts/test-scan-secrets-windows.ps1` | Native Windows generated-scanner capture suite used by the focused Windows workflow. |
 | `scripts/test-lifecycle-messages-windows.ps1` | Native Windows lifecycle message envelopes for startup, turn-end, and scanner hooks in disposable fixtures. |
 | `scripts/test-install.ps1` | Fixture-repo test for `scripts/install.ps1` (run with `pwsh -NoProfile -File scripts/test-install.ps1`). |
@@ -81,6 +82,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/configure-rtk.py` | Validates stable RTK and safely sets the persistent hook-warning option in user TOML; retires only verified old prerelease files. |
 | `scripts/test-rtk-stable.py`, `scripts/test-rtk-stable-windows.ps1` | Disposable-home stable RTK config and installer tests, plus native Windows diagnostic proof. |
 | `docs/ready-ideas-execplan/windows-live-check.md` | Manual Windows provider check procedure accompanying the automated Windows workflow; records versions, tool results, audit evidence, and unverified cases. |
+| `docs/ready-ideas-execplan/high-rate-hooks-performance.md` | Milestone 23 high-rate registration inventory, direct macOS benchmark method, distributions, budgets, and remaining cost. |
 | `docs/generated-provider-hooks/handoff.md` | Feature-scoped resume instructions for remaining deployed Gemini `AfterAgent` validation. |
 | `docs/adr/0001-auto-ingest-runtime-shape.md` | Records why source auto-ingest uses runtime-local hook code with one committed repo manifest. |
 | `docs/adr/0002-pending-ingest-gate.md` | Records why the pending-ingest gate blocks normal work until summaries resolve. |
