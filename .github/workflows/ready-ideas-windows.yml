@@ -57,9 +57,6 @@ jobs:
       - name: Test generated scanner capture on native Windows
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1
-      - name: Test native Windows repository-state protection
-        shell: pwsh
-        run: pwsh -NoProfile -File scripts/test-repository-state-windows.ps1
       - name: Test stable RTK configuration on native Windows
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-rtk-stable-windows.ps1

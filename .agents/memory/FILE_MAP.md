@@ -57,9 +57,6 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/test-security-banners.py` | Public block, warning, excerpt, redaction, and fallback envelopes across three provider Tool Guardian adapters. |
 | `.codex/hooks/tool-guard.py` | Generated Codex Tool Guardian adapter installed through the maintained hook merger. |
 | `scripts/test-scan-secrets-capture.py` | Public generated-hook capture regressions shared by the three provider scanner suites. |
-| `hooks/families/repository_state.py` | Canonical Git metadata and work-discard guard, rendered into provider-local pre-tool hooks. |
-| `scripts/test-repository-state.py` | Public Copilot, Gemini, and Codex guard-envelope and registration tests. |
-| `scripts/test-repository-state-windows.ps1` | Native Windows path, linked-worktree, PowerShell, and guard-envelope tests. |
 | `scripts/test-scan-secrets-windows.ps1` | Native Windows generated-scanner capture suite used by the focused Windows workflow. |
 | `scripts/test-install.ps1` | Fixture-repo test for `scripts/install.ps1` (run with `pwsh -NoProfile -File scripts/test-install.ps1`). |
 | `scripts/import-skill-repos.sh` | Human-run multi-source importer that refreshes selected upstream skills, including the `web-*` quality skills. |

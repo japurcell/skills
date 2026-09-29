@@ -31,30 +31,9 @@ The native Windows `gemini/block/descendant` fixture intermittently saw a `tmp*`
 
 With `shell=False`, resolve commands such as `rtk` through `shutil.which()` so `.cmd` or `.bat` executables are found.
 
-## Git metadata paths can use platform aliases
-
-On macOS, a temporary worktree pointer can name `/var/...` while resolved Git/common paths use `/private/var/...`. Compare resolved literal path candidates with resolved Git directories; a string comparison of complete shell text misses this alias. Reject linked `.git`, Git-directory, and `commondir` entries before reading pointers.
-
-## Codex apply_patch path is inside `tool_input.command`
-
-Codex `PreToolUse` reports file edits as `tool_name: "apply_patch"` with patch text under `tool_input.command`; it does not provide a `file_path` field. Parse the patch's Add, Update, Delete, and Move headers before deciding whether a Git metadata path is affected. Missing or malformed patch paths deny the edit.
-
 ## Codex handler environment does not select Markdown event
 
 Codex CLI 0.155.1 ignores per-handler `env` in `~/.codex/hooks.json`. The Markdown hook reads `hook_event_name` from the input JSON to distinguish `PreToolUse`, `PostToolUse`, and `Stop`. A `PostToolUse` envelope at `Stop` produces `hook returned invalid stop hook JSON output`; Codex `Stop` accepts the common message fields and `decision: "block"` with `reason`, but not `hookSpecificOutput` or `decision: "allow"`.
-
-## Quoted shell prose is not an executable Git command
-
-Do not search raw shell text for `git checkout` or redirection markers. `echo 'git checkout branch'` and `echo '.git/config > file'` are data. Tokenize with quote boundaries intact, inspect executable command positions and redirection targets, and recurse only into recognized shell `-c`/PowerShell `-Command` arguments. Malformed actual commands still deny; a quote-blind split on `;` or `>` creates false denials.
-When inspecting a saved PowerShell script, a balanced multiline here-string is literal data, not an unterminated shell quote. Strip only complete here-string bodies before shell tokenization, then still inspect executable lines after the closing delimiter for Git metadata writes. An unmatched delimiter must remain fail-closed.
-
-## In-place writers bypass output-redirection checks
-
-A shell command can modify `.git` without `>` or a direct editor tool. Recognize in-place `sed`, `perl`, `truncate`, and `install` forms at executable positions in `_writes_metadata`, including `.exe` names, while preserving read-only commands and quoted prose. Test provider-native public hook envelopes before accepting a writer-rule change.
-
-## Git guard cannot inspect later child-process writes
-
-The repository-state guard sees provider tool arguments before execution. It can block direct editor targets and recognizable literal shell or script text, but cannot prove what `python script.py`, PowerShell child processes, Git hooks, or other later processes will write. Copilot pre-tool hook timeouts also fail open. Treat OS sandbox policy as a separate layer only after inspecting its effective settings on the installed provider and platform; no global sandbox setting is changed by this repository.
 
 ## Empty RTK output is a valid no-op
 
@@ -95,10 +74,6 @@ In CLI 1.0.88, a successful `systemMessage` in ordinary `preToolUse`, `postToolU
 ## Retired installed hooks require manual cleanup
 
 The Bash and PowerShell installers preserve existing Copilot and Gemini repository-state and Markdown Health registrations when refreshing a user home, even after those handlers leave the maintained source. Fresh installs receive only the current source registrations. An old installed registration and its script can therefore continue to execute until the user removes them manually; source and fresh-home checks do not certify an existing home.
-
-## Copilot native `create` needs an editor-tool guard
-
-Copilot CLI 1.0.88 uses `create` for new files. A live disposable request to create a harmless file under `.git` succeeded while the guard covered `edit` but not `create`; a work-discarding Git command was separately denied. Treat `create` as an editor tool in the shared repository-state family, test the public Copilot envelope, regenerate provider outputs, and verify a fresh installed Copilot session denies the real native create without relying on shell-command detection.
 
 ## Gemini `AfterAgent` needs deployed-version proof
 

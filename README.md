@@ -34,11 +34,13 @@ The installer copies:
 - `.copilot/hooks/` entries are copied to `~/.copilot/hooks` when that directory exists
 - `.gemini/` contents into `~/.gemini`, then `.gemini/global-settings.json` into `~/.gemini/settings.json`
 - `.copilot/copilot-instructions.md` into `~/.copilot/copilot-instructions.md`
-- maintained `.codex/hooks/` scripts for startup, security, Markdown, and Git-state handling into `~/.codex/hooks`, then safely merges their `SessionStart`, `PreToolUse`, `PostToolUse`, and `Stop` registrations from `.codex/global-hooks.json` into `~/.codex/hooks.json`
+- maintained `.codex/hooks/` scripts for startup, security, and Markdown handling into `~/.codex/hooks`, then safely merges their `SessionStart`, `PreToolUse`, `PostToolUse`, and `Stop` registrations from `.codex/global-hooks.json` into `~/.codex/hooks.json`
 
 Both installers require stable Rust Token Killer (RTK) 0.50.0 or newer on `PATH` before changing installed files. They set only `[hooks] suppress_hook_warning = true` in the user's RTK config (`~/Library/Application Support/rtk/config.toml` on macOS, `~/.config/rtk/config.toml` on Linux, or `%APPDATA%\rtk\config.toml` on Windows). An existing config is backed up as `config.toml.bak` before a change; a correct config stays byte-identical. An existing backup or ambiguous TOML stops the install for manual review. This account-wide setting suppresses the false missing-hook advisory for explicit commands while leaving other RTK diagnostics visible. The installers do not download RTK. They remove old prerelease files only when ownership and content or receipt hashes match, and report modified files for manual review. Copilot and Gemini still use automatic RTK forwarding.
 
 The Codex merge preserves unrelated hooks. A real configuration change keeps the previous valid file as owner-only `~/.codex/hooks.json.bak`; malformed existing JSON is left unchanged and stops installation. After installing or changing the non-managed hook, open `/hooks` in Codex CLI to review and trust its exact definition.
+
+The repository-state guard is retired from maintained source and fresh installs. An older installation may still have `~/.copilot/hooks/scripts/repository-state.py`, `~/.gemini/hooks/scripts/repository-state.py`, or `~/.codex/hooks/repository-state.py`. Review `~/.copilot/hooks/hooks.json`, `~/.gemini/settings.json`, and `~/.codex/hooks.json` for matching `repository-state.py` commands before manually removing those entries and files. On Windows, use the equivalent paths under `%USERPROFILE%`; Gemini's settings path is `%USERPROFILE%\.gemini\settings.json`. Back up modified configuration first, preserve unrelated hooks, and use each provider's hook review or trust flow afterward. The installers do not delete old installed scripts or clean old Codex registrations.
 
 Workspace directories whose names end with `-workspace` are skipped during installation.
 
@@ -89,8 +91,8 @@ python3 scripts/test-generate-hooks.py
 read-only and exits `1` when an owned output is stale or missing. Both installers
 run that check before changing an installation destination; on stale output they
 stop and print the `--write` recovery command. Installers copy the checked-in
-generated files; they never generate repository sources. The manifest currently
-owns 22 executable outputs.
+generated files; they never generate repository sources. The manifest lists all
+maintained executable outputs.
 
 Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews. Those files are benchmark fixtures, not maintained source.
 

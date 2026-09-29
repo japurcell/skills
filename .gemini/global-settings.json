@@ -341,13 +341,6 @@
             }
           },
           {
-            "name": "repository-state",
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/repository-state.py\"",
-            "timeout": 10000,
-            "description": "Blocks direct Git metadata writes and commands that can discard local work."
-          },
-          {
             "name": "tool-guard",
             "type": "command",
             "command": "python \"$HOME/.gemini/hooks/scripts/tool-guard.py\"",
