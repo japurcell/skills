@@ -114,7 +114,23 @@ function Invoke-Case {
             }
         }
         $leaked = @(Get-ChildItem -LiteralPath $caseDir -Filter 'tmp*')
-        if ($leaked.Count) { throw "$Provider $Mode $Scenario leaked capture files: $($leaked.Name -join ', ')" }
+        if ($leaked.Count) {
+            try {
+                $active = @(Get-CimInstance Win32_Process -ErrorAction Stop |
+                    Where-Object {
+                        $commandLine = [string]$_.CommandLine
+                        $commandLine.Contains($caseDir) -or
+                            ($_.Name -ieq 'ping.exe' -and $commandLine.Contains('127.0.0.1')) -or
+                            ($_.Name -ieq 'powershell.exe' -and $commandLine.Contains('8388609'))
+                    } |
+                    Select-Object -First 12 |
+                    ForEach-Object { "$($_.Name):$($_.ProcessId)/$($_.ParentProcessId)" })
+            } catch {
+                $active = @('snapshot unavailable')
+            }
+            $processes = if ($active.Count) { $active -join ', ' } else { 'none' }
+            throw "$Provider $Mode $Scenario leaked capture files: $($leaked.Name -join ', '); hook pid: $($process.Id); active process candidates: $processes"
+        }
     }
     finally {
         $env:PATH = $savedPath
