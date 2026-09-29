@@ -19,7 +19,8 @@ for event in ("PreToolUse", "Stop"):
 PY
 
 workdir="$(setup_test_workdir)"
-trap 'rm -rf "$workdir"' EXIT
+logdir="$(setup_test_workdir)"
+trap 'rm -rf "$workdir" "$logdir"' EXIT
 git -C "$workdir" init -q
 printf '%s\n' 'sk_live_1234567890abcdefghij' > "$workdir/credentials.txt"
 
@@ -27,7 +28,7 @@ scan() {
   local event="$1" mode="$2"
   (
     cd "$workdir"
-    SCAN_MODE="$mode" SECRETS_LOG_DIR="$workdir/logs" \
+    SCAN_MODE="$mode" SECRETS_LOG_DIR="$logdir" \
       python3 -I -S -B "$REPO_ROOT/.codex/hooks/scan-secrets.py" \
       <<JSON
 {"hook_event_name":"$event","session_id":"m4-test","cwd":"$workdir","tool_name":"Bash","tool_input":{"command":"git status --short"}}
@@ -46,6 +47,8 @@ jq -e '.systemMessage | contains("scan-secrets warning")' >/dev/null <<<"$warn"
 rm "$workdir/credentials.txt"
 clean="$(scan PreToolUse block)"
 jq -e '. == {}' >/dev/null <<<"$clean"
+clean_stop="$(scan Stop block)"
+jq -e '.systemMessage == "scan-secrets: pass; 0 modified files"' >/dev/null <<<"$clean_stop"
 
 printf 'PASS: Codex scan-secrets public envelopes\n'
 python3 "$REPO_ROOT/scripts/test-scan-secrets-capture.py" codex

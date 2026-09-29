@@ -41,19 +41,19 @@ with tempfile.TemporaryDirectory() as temporary:
         return json.loads(completed.stdout)
 
     payload = {"hook_event_name": "Stop", "session_id": "test-session", "cwd": str(root)}
-    assert run(payload) == {}
+    assert run(payload) == {"systemMessage": "repository-okf: pass; 0 diagnostics"}
     first_audit = audit.read_text().splitlines()
     assert len(first_audit) == 1, first_audit
     assert json.loads(first_audit[0])["outcome"] == "pass"
-    assert run(payload) == {}
+    assert run(payload) == {"systemMessage": "repository-okf: pass; 0 diagnostics"}
     assert len(audit.read_text().splitlines()) == 1, "repeated stop duplicated audit"
 
     file = root / ".agents/instructions/repo.md"
     file.write_text(file.read_text().replace("type: Agent Instruction", "type: Agent Memory"))
     first = run(payload)
-    assert first["decision"] == "block" and "OKF101" in first["reason"], first
+    assert first["decision"] == "block" and first["reason"].startswith("repository-okf: blocked; 1 diagnostic") and "OKF101" in first["reason"], first
     retry = run({**payload, "stop_hook_active": True})
-    assert set(retry) == {"systemMessage"} and "OKF101" in retry["systemMessage"], retry
+    assert set(retry) == {"systemMessage"} and retry["systemMessage"].startswith("repository-okf: unresolved; 1 diagnostic") and "OKF101" in retry["systemMessage"], retry
     records = [json.loads(line) for line in audit.read_text().splitlines()]
     assert len(records) == 3 and records[-1]["outcome"] == "fail" and records[-1]["attempt"] == "retry", records
     assert all(len(line.encode()) <= 4096 for line in audit.read_text().splitlines())
@@ -73,7 +73,7 @@ with tempfile.TemporaryDirectory() as temporary:
 
     (root / "scripts/lint-okf.py").unlink()
     incomplete = run(payload)
-    assert "OKF900" in incomplete["systemMessage"], incomplete
+    assert incomplete["systemMessage"].startswith("repository-okf: incomplete;") and "OKF900" in incomplete["systemMessage"], incomplete
     assert json.loads(audit.read_text().splitlines()[-1])["outcome"] == "incomplete"
 
     for index in range(100):

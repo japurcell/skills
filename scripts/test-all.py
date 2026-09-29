@@ -47,6 +47,7 @@ SUITES = (
     ("pwsh", "-NoProfile", "-File", "scripts/test-codex-hooks-windows.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-scan-secrets-windows.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-repository-okf-windows.ps1"),
+    ("pwsh", "-NoProfile", "-File", "scripts/test-lifecycle-messages-windows.ps1"),
     ("bash", "scripts/test-install.sh"),
     ("bash", "scripts/test-okf-lint.sh"),
     ("bash", "scripts/test-repo-root.sh"),

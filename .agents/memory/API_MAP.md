@@ -25,9 +25,15 @@ description: Public validation entry points and provider adapter contracts for t
 ## Generated provider-hook CLI
 
 - `scripts/generate-hooks.py --write` renders the complete explicit `hooks/manifest.py` target set and transactionally updates only stale generated outputs. `--check` is read-only, reports every stale or missing output, and exits `0` only when source bytes and executable modes are current. Both actions resolve the checkout from the script location; bare invocation and invalid canonical inputs exit `2`.
-- The generator owns 29 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, `.github/hooks/scripts/`, and `.codex/hooks/`. They carry a `Generated from hooks/families/...` header, remain self-contained at runtime, and are copied unchanged by both installers. Before any destination mutation, each installer runs bytecode-disabled `scripts/generate-hooks.py --check`: stale output exits `1` with the exact `--write` recovery command, and invalid canonical input exits `2` without write advice.
+- The generator owns 26 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, `.github/hooks/scripts/`, and `.codex/hooks/`. They carry a `Generated from hooks/families/...` header, remain self-contained at runtime, and are copied unchanged by both installers. Before any destination mutation, each installer runs bytecode-disabled `scripts/generate-hooks.py --check`: stale output exits `1` with the exact `--write` recovery command, and invalid canonical input exits `2` without write advice.
 - The generated `tool-guard.py` hooks return provider-native block or warning JSON with one redacted, at-most-160-character `Action:` excerpt. Quoted CLI credentials and JSON credential fields are redacted before truncation. Their owner-only guard records keep threat metadata and the exact displayed excerpt, never raw tool input.
 - The generated `scan-secrets.py` hooks read provider JSON from stdin and return JSON with exit `0`. An incomplete Git scan emits a provider-native denial in block mode or a `scan-secrets warning` naming the scan action in warn mode. They never mark incomplete output clean or expose raw Git output in the response.
+- Codex `Stop` scanner success uses `systemMessage` with the count of modified files inspected; a skipped scan says `skipped`. Its `PreToolUse` pass stays `{}`. Copilot and Gemini scanner success at tool or SessionEnd events stays `{}`; their existing warning and denial fields carry actionable results.
+
+## Lifecycle message envelopes
+
+- Copilot required-skill and repository startup hooks emit a single progress object before their final JSON. The repository `validate-stop.py` coordinator emits progress for an allowed pass or notice and prefixes its native block reason on denial; no extra stop coordinator is installed.
+- Gemini startup and `AfterAgent` operational hooks, and Codex startup and `Stop` operational hooks, use `systemMessage` for allowed pass, retry, or incomplete outcomes. A denial uses `reason` or `stopReason` without a duplicate `systemMessage`. Safe counts identify skill files, pending sources, diagnostics, checks, or modified files. Observability-only events and successful high-rate tool checks remain silent.
 
 ## Installed hook delivery probe
 

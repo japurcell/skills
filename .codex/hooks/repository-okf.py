@@ -67,7 +67,11 @@ def diagnostics(root: Path) -> list[dict[str, object]]:
 
 
 def finding_reason(values: list[dict[str, object]], retry: bool) -> str:
-    header = "OKF unresolved after repair attempt:" if retry else "OKF validation failed:"
+    count = len(values)
+    noun = "diagnostic" if count == 1 else "diagnostics"
+    header = f"repository-okf: {'unresolved' if retry else 'blocked'}; {count} {noun}\n" + (
+        "OKF unresolved after repair attempt:" if retry else "OKF validation failed:"
+    )
     lines = [f"{item['path']}:{item['line']}:{item['column']}: {item['id']} {' '.join(str(item['message']).splitlines())}" for item in values[:MAX_DIAGNOSTICS]]
     envelope = (lambda text: {"systemMessage": text}) if retry else (lambda text: {"decision": "block", "reason": text})
     selected: list[str] = []
@@ -92,14 +96,14 @@ def main() -> int:
         findings = len(values)
         if not values:
             outcome = "pass"
-            emit_json({})
+            emit_json({"systemMessage": "repository-okf: pass; 0 diagnostics"})
             return 0
         outcome = "fail"
         retry = payload.get("stop_hook_active") is True or payload.get("stopHookActive") is True
         reason = finding_reason(values, retry)
         emit_json({"systemMessage": reason} if retry else {"decision": "block", "reason": reason})
     except Exception:
-        emit_json({"systemMessage": f"OKF900: repository OKF validation incomplete. Rerun: {rerun()}"})
+        emit_json({"systemMessage": f"repository-okf: incomplete; OKF900: repository OKF validation incomplete. Rerun: {rerun()}"})
     finally:
         if root is not None:
             try:

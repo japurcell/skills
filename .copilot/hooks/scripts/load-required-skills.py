@@ -21,7 +21,7 @@ SCRIPT_NAME = Path(__file__).name
 
 def build_output(message: str, event_name: str, is_failure: bool) -> dict:
     payload = {
-        "systemMessage": "Required skill context was NOT loaded." if is_failure else None,
+        "systemMessage": "load-required-skills: blocked; required context unavailable" if is_failure else None,
         "additionalContext": message,
     }
     if payload["systemMessage"] is None:
@@ -104,7 +104,7 @@ def main() -> int:
                 SCRIPT_NAME,
                 f"Message: No skills loaded, Event: {event_name}, Session: {safe_session_id}",
             )
-            emit_json({"systemMessage": "No skills loaded"})
+            emit_json({"systemMessage": "load-required-skills: pass; 0 skill files"})
             return 0
 
         context_parts: list[str] = []
@@ -132,7 +132,7 @@ def main() -> int:
 
         count = len(required_skill_files)
         if supports_progress_messages(event_name):
-            emit_progress_message(f"Required skill context loaded from {count} file(s).")
+            emit_progress_message(f"load-required-skills: pass; {count} skill {'file' if count == 1 else 'files'}")
         required_skill_context = "Required skill context loaded.\n\n" + "\n\n".join(context_parts)
         emit_json(build_output(required_skill_context, event_name, False))
         return 0

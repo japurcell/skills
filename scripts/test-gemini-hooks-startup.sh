@@ -97,6 +97,17 @@ test_before_agent_default_mode_returns_caveman_only_context() {
   assert_caveman_context_shape "$context"
 }
 
+test_session_start_shows_short_success() {
+  local workdir skills_dir output
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  skills_dir="$workdir/skills"
+  write_required_skill_fixtures "$skills_dir"
+  output="$(AUDIT_LOG="$workdir/audit.log" AGENTS_REQUIRED_SKILL_FILES="caveman/SKILL.md" run_skill_context_injector "$skills_dir" '{"session_id":"startup","hook_event_name":"SessionStart","cwd":"/repo"}')"
+  assert_equals 'skill-context-injector: pass; 1 skill file' "$(jq -r '.systemMessage' <<<"$output")" 'Expected native startup message.'
+  assert_equals 'false' "$(jq -r 'has("suppressOutput")' <<<"$output")" 'Expected startup message to remain visible.'
+}
+
 test_compact_mode_override_still_returns_caveman_only_context() {
   local workdir
   local output
@@ -152,7 +163,7 @@ test_missing_required_skill_file_fails_explicitly() {
 
   assert_equals "false" "$(jq -r '.continue' <<<"$output")" \
     "Expected missing skill files to hard-stop the hook output."
-  assert_equals "Required skill file not found: $missing_path" "$(jq -r '.stopReason' <<<"$output")" \
+  assert_equals "skill-context-injector: blocked; Required skill file not found: $missing_path" "$(jq -r '.stopReason' <<<"$output")" \
     "Expected missing skill files to report an explicit stop reason."
 }
 
@@ -210,8 +221,8 @@ test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output() {
       '{"session_id":"gemini-empty","timestamp":"2026-06-24T10:00:04Z","hook_event_name":"BeforeAgent","cwd":"/repo","prompt":"hello"}'
   )"
 
-  assert_equals "No skills loaded" "$(jq -r '.systemMessage' <<<"$output")" \
-    "Expected empty skills output to have systemMessage 'No skills loaded'."
+  assert_equals "null" "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected non-startup pass to stay silent."
   assert_equals "true" "$(jq -r '.suppressOutput' <<<"$output")" \
     "Expected empty skills output to have suppressOutput true."
   assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
@@ -222,6 +233,7 @@ test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output() {
 }
 
 main() {
+  test_session_start_shows_short_success
   test_before_agent_default_mode_returns_caveman_only_context
   test_compact_mode_override_still_returns_caveman_only_context
   test_missing_required_skill_file_fails_explicitly

@@ -16,6 +16,7 @@ Load this file only for source auto-ingest work. General hook contracts remain i
 - Stream source hashing in 64 KiB chunks.
 - Catch scaffold `OSError` failures. Clean manifest `.tmp` files in `finally` after write or replace failures.
 - Keep scanners, prompt-time injectors, and final-response backstops aligned on manifest schema, summary naming, pending-entry text, and source-ingest-first ordering.
+- Keep startup summaries visible through the provider's native message envelope while leaving source paths and manifest detail in agent context or audit only. The Gemini `AfterAgent` pending gate reports pass, denial, and its allowed retry independently of the OKF adapter; its retry says the pending state was not rechecked.
 - Use `.agents/skills/ingest-source/SKILL.md` as the only canonical recovery path; it must process every blocking entry in one run.
 - Audit failures, injected findings with path/state/reason, and non-injection causes to the runtime-local audit log. Distinguish all-summaries-current from no-sources-found.
 

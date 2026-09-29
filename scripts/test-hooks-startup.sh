@@ -114,7 +114,7 @@ test_session_start_emits_copilot_progress_announcement() {
   output="$(run_session_start_hook "$audit_log" '{"sessionId":"progress-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}')"
   final_json="$(hook_final_json "$output")"
 
-  assert_progress_message "$output" "Required skill context loaded from 1 file(s)."
+  assert_progress_message "$output" "load-required-skills: pass; 1 skill file"
   assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$final_json")" \
     "Expected final hook JSON to survive progress-line stripping."
   assert_caveman_context_shape "$(jq -r '.additionalContext' <<<"$final_json")"
@@ -133,7 +133,7 @@ test_session_start_emits_progress_for_camel_case_event_name() {
   output="$(run_session_start_hook "$audit_log" '{"hookEventName":"sessionStart","sessionId":"progress-session","timestamp":"2026-05-21T09:00:00Z","source":"startup","initialPrompt":"hello"}')"
   final_json="$(hook_final_json "$output")"
 
-  assert_progress_message "$output" "Required skill context loaded from 1 file(s)."
+  assert_progress_message "$output" "load-required-skills: pass; 1 skill file"
   assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$final_json")" \
     "Expected final hook JSON to survive progress-line stripping for camelCase events."
 }
@@ -277,18 +277,9 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.subagentStop | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
     "Expected repo-local subagentStop to expose one combined stop validator."
 
-  assert_equals 'bash|powershell|create|edit' \
-    "$(jq -r '.hooks.postToolUse[0].matcher // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local postToolUse OKF lint to match the accepted mutation tools."
-  assert_equals '.github/hooks/scripts/lint-okf.py' \
-    "$(jq -r '.hooks.postToolUse[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local postToolUse to register the OKF linter."
-  assert_equals 'python ".github/hooks/scripts/lint-okf.py"' \
-    "$(jq -r '.hooks.postToolUse[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local postToolUse to register the OKF PowerShell command."
-  assert_equals 10 \
-    "$(jq -r '.hooks.postToolUse[0].timeoutSec // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local postToolUse OKF lint to use a 10-second timeout."
+  assert_equals '0' \
+    "$(jq -r '(.hooks.postToolUse // []) | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
+    "Expected repo-local OKF validation only at turn end."
 
   assert_equals '' \
     "$(jq -r '.hooks.sessionStart[] | select(.bash | test("auto-ingest-source\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
@@ -363,8 +354,8 @@ test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output() {
       "AGENTS_REQUIRED_SKILL_FILES="
   )"
 
-  assert_equals "No skills loaded" "$(jq -r '.systemMessage' <<<"$output")" \
-    "Expected empty skills output to have systemMessage 'No skills loaded'."
+  assert_equals "load-required-skills: pass; 0 skill files" "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected empty skills output to report a safe count."
   assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
     "Expected no hookSpecificOutput for empty skills payload."
   assert_equals "false" "$(jq -r 'has("additionalContext")' <<<"$output")" \

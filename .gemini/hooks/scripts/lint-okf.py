@@ -177,7 +177,7 @@ def _format_reason(payload: Mapping[str, Any], diagnostics: list[dict[str, objec
 
 def _okf900_reason(error: BaseException) -> str:
     detail = _bounded_text(_one_line(str(error)).strip() or "untrusted linter failure", 7_000)
-    return f"OKF900: {detail}\n0 additional diagnostic(s) omitted.\nRun: {_rerun_command()}"
+    return f"lint-okf: incomplete; OKF900: {detail}\n0 additional diagnostic(s) omitted.\nRun: {_rerun_command()}"
 
 
 def _response_for_failure(payload: Mapping[str, Any] | None, reason: str) -> dict[str, object]:
@@ -210,11 +210,15 @@ def main() -> int:
         findings = len(diagnostics)
         if not diagnostics:
             outcome = "pass"
-            _emit_response(payload, {})
+            _emit_response(payload, {"systemMessage": "lint-okf: pass; 0 diagnostics"} if payload.get("hook_event_name") == "AfterAgent" else {})
             return 0
 
         outcome = "fail"
         reason = _format_reason(payload, diagnostics)
+        if payload.get("hook_event_name") == "AfterAgent":
+            retry = payload.get("stop_hook_active") is True or payload.get("stopHookActive") is True
+            noun = "diagnostic" if len(diagnostics) == 1 else "diagnostics"
+            reason = f"lint-okf: {'unresolved' if retry else 'blocked'}; {len(diagnostics)} {noun}\n" + reason
         _emit_response(payload, _response_for_failure(payload, reason))
         return 0
     except (LintFailure, ValueError) as error:

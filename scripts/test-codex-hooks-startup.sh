@@ -52,7 +52,7 @@ import pathlib
 import sys
 
 payload = json.loads(pathlib.Path(sys.argv[1]).read_bytes().decode("utf-8"))
-assert payload["systemMessage"] == "Required skill context loaded from 1 file(s)."
+assert payload["systemMessage"] == "load-required-skills: pass; 1 skill file"
 assert payload["hookSpecificOutput"] == {
     "hookEventName": "SessionStart",
     "additionalContext": (
@@ -107,7 +107,7 @@ import sys
 payload = json.loads(pathlib.Path(sys.argv[1]).read_bytes().decode("utf-8"))
 assert payload["continue"] is False
 assert sys.argv[2] in payload["stopReason"]
-assert payload["systemMessage"] == "Required skill context was NOT loaded."
+assert payload["stopReason"].startswith("load-required-skills: blocked;") and "systemMessage" not in payload
 PY
 }
 
@@ -227,7 +227,7 @@ process.stdin.write(b'{"hook_event_name":"SessionStart","source":"startup"}')
 process.stdin.flush()
 assert select.select([process.stdout], [], [], 2)[0], "hook waited for stdin EOF"
 payload = json.loads(process.stdout.readline().decode("utf-8"))
-assert payload["systemMessage"] == "Required skill context loaded from 1 file(s)."
+assert payload["systemMessage"] == "load-required-skills: pass; 1 skill file"
 process.stdin.close()
 assert process.wait(timeout=2) == 0
 assert b"audit unavailable" in process.stderr.read()
@@ -270,7 +270,7 @@ import json
 import pathlib
 import sys
 payload = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-assert payload["systemMessage"] == "Required skill context loaded from 2 file(s)."
+assert payload["systemMessage"] == "load-required-skills: pass; 2 skill files"
 assert "first" in payload["hookSpecificOutput"]["additionalContext"]
 assert "second" in payload["hookSpecificOutput"]["additionalContext"]
 PY
@@ -365,7 +365,7 @@ import stat
 import sys
 
 response = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-assert response["systemMessage"] == "Required skill context loaded from 1 file(s)."
+assert response["systemMessage"] == "load-required-skills: pass; 1 skill file"
 assert "audit unavailable" in pathlib.Path(sys.argv[2]).read_text(encoding="utf-8")
 outside = pathlib.Path(sys.argv[3])
 assert stat.S_IMODE(outside.stat().st_mode) == 0o755
@@ -387,7 +387,7 @@ import stat
 import sys
 
 response = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-assert response["systemMessage"] == "Required skill context loaded from 1 file(s)."
+assert response["systemMessage"] == "load-required-skills: pass; 1 skill file"
 assert "audit unavailable" in pathlib.Path(sys.argv[2]).read_text(encoding="utf-8")
 outside = pathlib.Path(sys.argv[3])
 assert outside.read_text(encoding="utf-8") == "external audit\n"
@@ -405,7 +405,7 @@ import pathlib
 import sys
 
 response = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-assert response["systemMessage"] == "Required skill context loaded from 1 file(s)."
+assert response["systemMessage"] == "load-required-skills: pass; 1 skill file"
 assert "audit unavailable" in pathlib.Path(sys.argv[2]).read_text(encoding="utf-8")
 assert not pathlib.Path(sys.argv[3]).exists()
 PY
@@ -438,10 +438,7 @@ for payload in payloads:
     )
     assert process.returncode == 0, process.stderr.decode("utf-8", errors="replace")
     response = json.loads(process.stdout.decode("utf-8"))
-    assert response["systemMessage"] in {
-        "Required skill context loaded from 1 file(s).",
-        "Required skill context was NOT loaded.",
-    }
+    assert response.get("systemMessage") == "load-required-skills: pass; 1 skill file" or response.get("stopReason", "").startswith("load-required-skills: blocked;")
 PY
 }
 
@@ -508,7 +505,7 @@ valid.stdin.write(b' "SessionStart",\n  "source": "startup"\n}')
 valid.stdin.flush()
 assert select.select([valid.stdout], [], [], 2)[0], "hook did not accept completed multiline JSON"
 valid_response = json.loads(valid.stdout.readline().decode("utf-8"))
-assert valid_response["systemMessage"] == "Required skill context loaded from 1 file(s)."
+assert valid_response["systemMessage"] == "load-required-skills: pass; 1 skill file"
 valid.stdin.close()
 assert valid.wait(timeout=2) == 0
 
@@ -523,7 +520,7 @@ number.stdin.write(b'2}')
 number.stdin.flush()
 assert select.select([number.stdout], [], [], 2)[0], "hook did not accept a completed JSON number"
 number_response = json.loads(number.stdout.readline().decode("utf-8"))
-assert number_response["systemMessage"] == "Required skill context loaded from 1 file(s)."
+assert number_response["systemMessage"] == "load-required-skills: pass; 1 skill file"
 number.stdin.close()
 assert number.wait(timeout=2) == 0
 PY

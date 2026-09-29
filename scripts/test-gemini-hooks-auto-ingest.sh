@@ -121,12 +121,9 @@ test_session_start_startup_registers_auto_ingest_hook() {
   assert_equals '10000' \
     "$(jq -r '.hooks.AfterAgent[] | select(.matcher == "*") | .hooks[1].timeout // empty' "$REPO_ROOT/.gemini/settings.json")" \
     "Expected only the OKF validator to use the 10-second timeout."
-  assert_equals 'python .gemini/hooks/scripts/lint-okf.py' \
-    "$(jq -r '.hooks.AfterTool[] | select(.matcher == "write_file|replace|run_shell_command") | .hooks[0].command // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected Gemini mutation tools to run the repo-local OKF linter."
-  assert_equals '10000' \
-    "$(jq -r '.hooks.AfterTool[] | select(.matcher == "write_file|replace|run_shell_command") | .hooks[0].timeout // empty' "$REPO_ROOT/.gemini/settings.json")" \
-    "Expected the Gemini AfterTool OKF validator to use the 10-second timeout."
+  assert_equals '0' \
+    "$(jq -r '(.hooks.AfterTool // []) | length' "$REPO_ROOT/.gemini/settings.json")" \
+    "Expected repository OKF validation only at turn end."
 }
 
 test_new_source_injects_scaffold_context_and_updates_manifest() {
@@ -362,6 +359,15 @@ test_after_model_blocks_pending_ingest() {
     "Expected Gemini AfterAgent block reason to call out pending ingest."
   assert_file_contains <(jq -r '.reason' <<<"$output") 'after-model.md' \
     "Expected Gemini AfterAgent block reason to list the pending source."
+  assert_file_contains <(jq -r '.reason' <<<"$output") 'block-pending-ingest: blocked; 1 pending source' \
+    "Expected the denial itself to identify the hook and safe count."
+  output="$(run_repo_local_after_model_auto_ingest_hook '{"hook_event_name":"AfterAgent","stop_hook_active":true,"cwd":"'"$repo_dir"'"}' HOME="$home_dir" AUDIT_LOG="$workdir/audit.log" AGENTS_SOURCE_SCAN_DIR="$source_dir" AGENTS_SOURCE_SUMMARY_DIR="$summary_dir")"
+  assert_equals 'block-pending-ingest: retry allowed; pending state not rechecked' "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected every stop attempt to report an outcome."
+  mkdir -p "$workdir/clean-sources" "$workdir/clean-summaries"
+  output="$(run_repo_local_after_model_auto_ingest_hook '{"hook_event_name":"AfterAgent","cwd":"'"$repo_dir"'"}' HOME="$home_dir" AUDIT_LOG="$workdir/audit.log" AGENTS_SOURCE_SCAN_DIR="$workdir/clean-sources" AGENTS_SOURCE_SUMMARY_DIR="$workdir/clean-summaries")"
+  assert_equals 'block-pending-ingest: pass; 0 pending sources' "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected a visible clean turn-end result."
 }
 
 test_modified_source_keeps_existing_summary_and_marks_stale() {
@@ -636,6 +642,8 @@ test_gemini_auto_ingest_robust_audit_logging() {
       AGENTS_SOURCE_SCAN_DIR="$source_dir" \
       AGENTS_SOURCE_SUMMARY_DIR="$summary_dir"
   )"
+  assert_equals 'auto-ingest: pass; 0 pending sources' "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected a short native startup result."
   assert_file_contains "$audit_log" "Message: auto-ingest scan complete: no context injected (no sources found)" \
     "Expected Gemini audit log to record no context injected when no sources found."
 

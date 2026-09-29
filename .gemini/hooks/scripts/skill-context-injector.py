@@ -26,19 +26,22 @@ SCRIPT_NAME = Path(__file__).name
 def hard_stop(reason: str) -> None:
     message = reason.strip() or "Hook failed"
     print(f"Hook hard stop: {message}", file=sys.stderr)
-    emit_json({"continue": False, "stopReason": message, "suppressOutput": True})
+    emit_json({"continue": False, "stopReason": f"skill-context-injector: blocked; {message}"})
     raise SystemExit(0)
 
 
 def build_output(context_payload: str, event_name: str, count: int) -> dict:
-    return {
+    response = {
         "hookSpecificOutput": {
             "hookEventName": event_name,
             "additionalContext": context_payload,
         },
-        "systemMessage": f"Required skill context loaded from {count} file(s).",
-        "suppressOutput": True,
     }
+    if event_name == "SessionStart":
+        response["systemMessage"] = f"skill-context-injector: pass; {count} skill {'file' if count == 1 else 'files'}"
+    else:
+        response["suppressOutput"] = True
+    return response
 
 
 def parse_skill_context(skill_file: Path) -> str:
@@ -93,7 +96,7 @@ def main() -> int:
             ):
                 hard_stop("Failed to write audit event")
 
-            emit_json({"systemMessage": "No skills loaded", "suppressOutput": True})
+            emit_json({"systemMessage": "skill-context-injector: pass; 0 skill files"} if event_name == "SessionStart" else {"suppressOutput": True})
             return 0
 
         context_parts: list[str] = []

@@ -91,7 +91,7 @@ def run_registered_stop_hook(root: Path, payload: dict[str, object]) -> dict:
         )
         assert completed.returncode == 0, completed
         assert completed.stderr == "", completed.stderr
-        responses.append(json.loads(completed.stdout))
+        responses.append(json.loads(completed.stdout.splitlines()[-1]))
     return responses[-1]
 
 
@@ -114,7 +114,7 @@ def run_with_open_stdin(program: Path, payload: dict[str, object] | None = None,
         assert process.stdout is not None
         assert process.stderr is not None
         assert process.stderr.read() == b""
-        return json.loads(process.stdout.read().decode("utf-8"))
+        return json.loads(process.stdout.read().decode("utf-8").splitlines()[-1])
     finally:
         if process.poll() is None:
             process.kill()
@@ -259,6 +259,11 @@ with repo() as root:
     registrations = json.loads((root / ".github/hooks/hooks.json").read_text())["hooks"]
     assert not any("lint-okf.py" in item.get("bash", "") for item in registrations.get("postToolUse", []))
     payload = copilot_agent_stop(root)
+    completed = subprocess.run([sys.executable, str(root / ".github/hooks/scripts/validate-stop.py")],
+        input=json.dumps(payload), text=True, capture_output=True, check=True)
+    messages = [json.loads(line) for line in completed.stdout.splitlines()]
+    assert messages[0] == {"type": "progress", "message": "validate-stop: pass; 2 checks"}, messages
+    assert messages[-1] == {"decision": "allow"}, messages
     assert run(root, payload) == {"decision": "allow"}
     assert run(root, payload) == {"decision": "allow"}
     audit = root / "audit.log"

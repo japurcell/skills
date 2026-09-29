@@ -173,7 +173,8 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
             provider, mode, failed_head_git, committed=True,
         ))
         response, log = run_case(provider, mode, real_git)
-        assert response == {}, (provider, mode, response)
+        expected = {"systemMessage": "scan-secrets: pass; 0 modified files"} if provider == "codex" and mode == "warn" else {}
+        assert response == expected, (provider, mode, response)
         assert '"status":"clean"' in log, (provider, mode, log)
     print(f"PASS: {provider} scanner capture failures and no-HEAD success")
 

@@ -1013,9 +1013,15 @@ def record_finding(
     return processed_findings, processed_findings >= MAX_PROCESSED_FINDINGS
 
 
-def emit_output(findings_count: int, log_path: Path) -> None:
+def emit_output(findings_count: int, log_path: Path, checked_files: int = 0, skipped: bool = False) -> None:
     if findings_count > 0:
         emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; potential secrets detected."})
+        return
+    if HOOK_EVENT == "Stop":
+        if skipped:
+            emit_json({"systemMessage": "scan-secrets: skipped"})
+        else:
+            emit_json({"systemMessage": f"scan-secrets: pass; {checked_files} modified {'file' if checked_files == 1 else 'files'}"})
         return
     emit_json({})
 
@@ -1056,6 +1062,7 @@ def handle_unexpected_exception(_exc: Exception) -> int:
 _COPILOT_RUNTIME_ADAPTER = r'''
 SESSION_ID_KEYS = ("sessionId", "session_id")
 DEFAULT_SECRETS_LOG_PATH = Path.home() / ".copilot" / "hooks" / "secrets"
+HOOK_EVENT = ""
 
 
 def resolve_work_dir(payload: dict) -> Path:
@@ -1071,6 +1078,7 @@ def findings_denial_reason(scan_log: Path) -> str:
 _GEMINI_RUNTIME_ADAPTER = r'''
 SESSION_ID_KEYS = ("session_id",)
 DEFAULT_SECRETS_LOG_PATH = Path.home() / ".gemini" / "hooks" / "secrets"
+HOOK_EVENT = ""
 
 
 def resolve_work_dir(payload: dict) -> Path:
@@ -1183,7 +1191,7 @@ def main() -> int:
             note="scan disabled by SKIP_SECRETS_SCAN",
             deadline=scan_deadline,
         )
-        emit_output(0, scan_log)
+        emit_output(0, scan_log, skipped=True)
         return 0
 
     if not is_inside_git_repo(work_dir, deadline=scan_deadline):
@@ -1200,7 +1208,7 @@ def main() -> int:
             note="not inside git repository",
             deadline=scan_deadline,
         )
-        emit_output(0, scan_log)
+        emit_output(0, scan_log, skipped=True)
         return 0
 
     root = repo_root(work_dir, deadline=scan_deadline)
@@ -1304,7 +1312,7 @@ def main() -> int:
             findings=[],
             deadline=scan_deadline,
         )
-        emit_output(0, scan_log)
+        emit_output(0, scan_log, checked_files=len(candidates))
         return 0
 
     findings_json = build_findings_json(findings)

@@ -96,11 +96,19 @@ def main() -> int:
 
     response: dict[str, str]
     if reasons:
-        response = {"decision": "block", "reason": _bounded_combined_block(reasons)}
+        count = len(reasons)
+        noun = "check" if count == 1 else "checks"
+        verb = "needs" if count == 1 else "need"
+        response = {"decision": "block", "reason": _bounded_combined_block([f"validate-stop: blocked; {count} {noun} {verb} attention.", *reasons])}
     elif notices:
         response = {"decision": "allow", "reason": _bounded_combined_block(notices)}
+        count = len(notices)
+        noun = "check" if count == 1 else "checks"
+        verb = "needs" if count == 1 else "need"
+        emit_json({"type": "progress", "message": f"validate-stop: warning; {count} {noun} {verb} attention"})
     else:
         response = {"decision": "allow"}
+        emit_json({"type": "progress", "message": f"validate-stop: pass; {len(VALIDATORS)} checks"})
     emit_json(response)
     return 0
 

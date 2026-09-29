@@ -55,6 +55,8 @@ def fail_safe(reason: str, event_name: str = "") -> None:
     safe_reason = sanitize_log_field(reason).strip() or "Hook failed"
     print(f"{SCRIPT_NAME}: {safe_reason}", file=sys.stderr)
     log_event(f"Error: {safe_reason}")
+    if event_name in {"", "SessionStart"}:
+        emit_json({"type": "progress", "message": "auto-ingest-source: incomplete"})
     emit_json(build_output(f"Auto-ingest source scan failed.\n\nReason: {safe_reason}", event_name))
 
 
@@ -108,6 +110,7 @@ def main() -> int:
                     f"Message: auto-ingest scan complete, Event: {event_name or 'SessionStart'}, "
                     f"Session: {session_id}, Findings: 0, no context injected (all summaries up to date)"
                 )
+            emit_json({"type": "progress", "message": "auto-ingest-source: pass; 0 pending sources"})
             emit_json({})
             return 0
 
@@ -121,6 +124,8 @@ def main() -> int:
             source_path = sanitize_log_field(str(entry.get("source_path") or ""))
             log_event(f"Finding: state={state}, reason={reason}, path={source_path}, Session: {session_id}")
 
+        count = len(report_entries)
+        emit_json({"type": "progress", "message": f"auto-ingest-source: changed; {count} pending {'source' if count == 1 else 'sources'}"})
         emit_json(build_output(message, event_name))
         return 0
     except ValueError as exc:

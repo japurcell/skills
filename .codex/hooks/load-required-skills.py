@@ -209,7 +209,7 @@ def load_context(skill_root: Path) -> tuple[str, list[str]]:
 def failure(reason: str, event: str, source: str, session_id: str) -> int:
     safe_reason = sanitize(reason) or "Required skill hook failed"
     audit(event, source, session_id, f"failure:{safe_reason}")
-    emit_json({"continue": False, "stopReason": safe_reason, "systemMessage": "Required skill context was NOT loaded."})
+    emit_json({"continue": False, "stopReason": f"load-required-skills: blocked; {safe_reason}"})
     return 0
 
 
@@ -233,7 +233,7 @@ def main() -> int:
         for loaded_path in loaded_paths:
             audit(event, source, session_id, f"loaded:{loaded_path}")
         emit_json({
-            "systemMessage": f"Required skill context loaded from {len(loaded_paths)} file(s).",
+            "systemMessage": f"load-required-skills: pass; {len(loaded_paths)} skill {'file' if len(loaded_paths) == 1 else 'files'}",
             "hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": context},
         })
         return 0

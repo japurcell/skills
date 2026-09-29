@@ -41,13 +41,10 @@ def log_event(message: str) -> None:
 
 
 def main() -> int:
+    event_name = ""
     try:
         payload = read_json_input()
         if not isinstance(payload, dict):
-            emit_json({})
-            return 0
-
-        if payload.get("stop_hook_active") or payload.get("stopHookActive"):
             emit_json({})
             return 0
 
@@ -57,6 +54,9 @@ def main() -> int:
             return 0
         if not event_name:
             event_name = "BeforeAgent"
+        if event_name == "AfterAgent" and (payload.get("stop_hook_active") or payload.get("stopHookActive")):
+            emit_json({"systemMessage": "block-pending-ingest: retry allowed; pending state not rechecked"})
+            return 0
 
         session_id = sanitize_log_field(str(payload.get("session_id") or ""))
         source_root = source_root_for_payload(payload)
@@ -74,14 +74,15 @@ def main() -> int:
         if event_name == "AfterAgent":
             reason = build_block_reason(report_entries, skill_available)
             if not reason:
-                emit_json({})
+                emit_json({"systemMessage": "block-pending-ingest: pass; 0 pending sources"})
                 return 0
 
             log_event(
                 f"Message: blocked model response while ingest is pending, "
                 f"Session: {session_id}, Findings: {len(blocking_entries(report_entries))}"
             )
-            emit_json({"decision": "deny", "reason": reason})
+            count = len(blocking_entries(report_entries))
+            emit_json({"decision": "deny", "reason": f"block-pending-ingest: blocked; {count} pending {'source' if count == 1 else 'sources'}\n" + reason})
             return 0
 
         context = build_context(report_entries, manifest_path, skill_available)
@@ -106,10 +107,10 @@ def main() -> int:
         return 0
     except ValueError as exc:
         log_event(f"Error: {sanitize_log_field(str(exc))}")
-        emit_json({})
+        emit_json({"systemMessage": "block-pending-ingest: incomplete"} if event_name == "AfterAgent" else {})
     except Exception as exc:  # noqa: BLE001 - fail open on context-injection errors
         log_event(f"Error: Unexpected exception: {sanitize_log_field(str(exc))}")
-        emit_json({})
+        emit_json({"systemMessage": "block-pending-ingest: incomplete"} if event_name == "AfterAgent" else {})
     return 0
 
 

@@ -49,12 +49,13 @@ test_clean_events_return_empty_json() {
   repo="$workdir/repo"
   create_fixture_repo "$repo"
 
-  for event in AfterTool AfterAgent; do
-    output="$(run_adapter "$repo" '{"hook_event_name":"'"$event"'","cwd":"'"$repo"'"}')"
-    assert_json_only_stdout "$output"
-    assert_equals '{}' "$(jq -c . <<<"$output")" \
-      "Expected clean $event validation to be a Gemini no-op."
-  done
+  output="$(run_adapter "$repo" '{"hook_event_name":"AfterTool","cwd":"'"$repo"'"}')"
+  assert_equals '{}' "$(jq -c . <<<"$output")" \
+    "Expected clean AfterTool validation to be a Gemini no-op."
+  output="$(run_adapter "$repo" '{"hook_event_name":"AfterAgent","cwd":"'"$repo"'"}')"
+  assert_json_only_stdout "$output"
+  assert_equals 'lint-okf: pass; 0 diagnostics' "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected a short native turn-end message."
 }
 
 test_payload_cwd_stays_within_adapter_checkout() {

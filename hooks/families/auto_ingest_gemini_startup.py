@@ -37,7 +37,7 @@ def hard_stop(reason: str) -> None:
         audit_log_event(SCRIPT_NAME, f"Error: Hook hard stop: {sanitize_log_field(message)}")
     except Exception:
         pass
-    emit_json({"continue": False, "stopReason": message, "suppressOutput": True})
+    emit_json({"continue": False, "stopReason": f"auto-ingest: blocked; {message}"})
     raise SystemExit(0)
 
 
@@ -49,7 +49,7 @@ def main() -> int:
     try:
         input_payload = read_json_input()
         if not isinstance(input_payload, dict):
-            emit_json({})
+            emit_json({"systemMessage": "auto-ingest: incomplete"})
             return 0
 
         if not _is_startup_only(input_payload):
@@ -96,7 +96,7 @@ def main() -> int:
                     SCRIPT_NAME,
                     f"[{safe_timestamp}] Message: auto-ingest scan complete: no context injected (all summaries up to date), Session: {safe_session_id}"
                 )
-            emit_json({})
+            emit_json({"systemMessage": "auto-ingest: pass; 0 pending sources"})
             return 0
 
         audit_log_event(
@@ -118,7 +118,7 @@ def main() -> int:
                     "hookEventName": "SessionStart",
                     "additionalContext": context,
                 },
-                "suppressOutput": True,
+                "systemMessage": f"auto-ingest: changed; {len(report_entries)} pending {'source' if len(report_entries) == 1 else 'sources'}",
             }
         )
         return 0
@@ -131,7 +131,7 @@ def main() -> int:
             audit_log_event(SCRIPT_NAME, f"Error: Unexpected exception: {safe_exc}")
         except Exception:
             pass
-        emit_json({})
+        emit_json({"systemMessage": "auto-ingest: incomplete"})
         return 0
     return 0
 

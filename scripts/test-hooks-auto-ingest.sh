@@ -85,7 +85,7 @@ run_repo_local_auto_ingest_hook() {
     extra_env+=("HOME=$home")
   fi
 
-  env "${extra_env[@]}" python3 "$REPO_ROOT/.github/hooks/scripts/auto-ingest-source.py" <<<"$payload"
+  env "${extra_env[@]}" python3 "$REPO_ROOT/.github/hooks/scripts/auto-ingest-source.py" <<<"$payload" | tail -n 1
 }
 
 run_user_prompt_transformed_auto_ingest_hook() {
@@ -373,6 +373,13 @@ test_session_start_auto_ingest_outputs_vscode_schema_for_new_sources() {
 
   mkdir -p "$workdir/.agents/sources"
   make_text_file "$workdir/.agents/sources/sample.md" $'sample source v1\n'
+
+  local raw
+  raw="$(AUDIT_LOG="$audit_log" COPILOT_AUTO_INGEST_REPO_ROOT="$workdir" COPILOT_AUTO_INGEST_SUMMARY_DIR="$workdir/.agents/memory/sources" python3 "$REPO_ROOT/.github/hooks/scripts/auto-ingest-source.py" <<<'{"hookEventName":"SessionStart","cwd":"'"$workdir"'"}')"
+  assert_equals 'auto-ingest-source: changed; 1 pending source' "$(head -n 1 <<<"$raw" | jq -r '.message')" \
+    "Expected a short Copilot startup progress message."
+  assert_equals 'SessionStart' "$(tail -n 1 <<<"$raw" | jq -r '.hookSpecificOutput.hookEventName')" \
+    "Expected startup context in the final JSON envelope."
 
   output="$(
     run_repo_local_auto_ingest_hook \

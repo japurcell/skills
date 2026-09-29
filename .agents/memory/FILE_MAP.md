@@ -56,6 +56,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.codex/hooks/tool-guard.py` | Generated Codex Tool Guardian adapter installed through the maintained hook merger. |
 | `scripts/test-scan-secrets-capture.py` | Public generated-hook capture regressions shared by the three provider scanner suites. |
 | `scripts/test-scan-secrets-windows.ps1` | Native Windows generated-scanner capture suite used by the focused Windows workflow. |
+| `scripts/test-lifecycle-messages-windows.ps1` | Native Windows lifecycle message envelopes for startup, turn-end, and scanner hooks in disposable fixtures. |
 | `scripts/test-install.ps1` | Fixture-repo test for `scripts/install.ps1` (run with `pwsh -NoProfile -File scripts/test-install.ps1`). |
 | `scripts/import-skill-repos.sh` | Human-run multi-source importer that refreshes selected upstream skills, including the `web-*` quality skills. |
 | `scripts/common.sh` | Shared shell helper for resolving repo root in small shell tests and utilities. |

@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-20 and Repair 19A are integrated on `codex/ready-ideas-execplan` at `07d1f133`. Milestone 22 is committed in its isolated branch. Milestones 21 and 23-27 remain open.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-20 and Repair 19A are integrated on `codex/ready-ideas-execplan` through `30e621d2`. Milestone 21 is implemented in the isolated `codex/ready-lifecycle-messages` worktree but awaits review and integration. Milestone 22 is committed in its isolated branch. Milestones 23-27 remain open.
 
 ## Current evidence
 
@@ -11,6 +11,9 @@ The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](wi
 - Milestone 20 adds project-local OKF turn-end validation for Copilot, Gemini, and Codex with a bounded audit, one repair attempt, checkout containment, and provider-valid incomplete results. The isolated branch passed `bash scripts/test-hooks-okf-lint.sh`, `bash scripts/test-gemini-hooks-okf-lint.sh`, `bash scripts/test-codex-repository-okf.sh`, `bash scripts/test-okf-lint.sh`, `python3 scripts/test_test_all.py`, `python3 scripts/test-install-codex-hooks.py`, `bash scripts/test-install.sh`, `pwsh -NoProfile -File scripts/test-install.ps1`, `python3 scripts/generate-hooks.py --check`, and `python3 scripts/lint-okf.py` on macOS. Native Windows OKF checks skipped here.
 - The milestone 20 rebase onto `73db7d4d` resolved four content conflicts in the file map, Windows workflow, ExecPlan, and this handoff. It kept the retired Markdown Health Windows test removed and added the repository OKF Windows test. Post-rebase focused Copilot, Gemini, Codex, central linter, aggregate-runner registry (15 tests), Codex merge, generator freshness (26 outputs), OKF lint, and Bash and PowerShell temporary-home installer checks all passed. The native Windows OKF script skipped on macOS, and PowerShell skipped unsupported junction creation. An earlier automatic review rejected broad Gemini incomplete-result handling; the source commit limits that change to `AfterAgent`.
 - The full aggregate runner exits 2 at prerequisite preflight because this Mac lacks external `flock`; it runs no suites. Native Windows scanner HEAD-failure, junction behavior, OKF envelopes, and live provider display remain later gates. No real user home was changed.
+- Milestone 21 sends short Copilot progress JSON on allowed startup and stop results, Gemini/Codex `systemMessage` on allowed low-rate results, and one native reason on denials. Startup loaders, source-ingest checks, repository OKF, and Codex Stop scanner report hook name, outcome, and safe count where useful. High-rate pass, SessionEnd success, observability events, and bell text remain silent. See `.github/hooks/scripts/validate-stop.py:96`, `.gemini/hooks/scripts/lint-okf.py:210`, `.codex/hooks/repository-okf.py:90`, and `hooks/families/scan_secrets.py:1016`.
+- M21 focused startup, auto-ingest, OKF, scanner, security-banner, generator (25 tests), aggregate-runner (15 tests), and both temporary-home installer suites passed on macOS. Generated outputs are current (26). The PowerShell installer skipped one unsupported junction case. The new `scripts/test-lifecycle-messages-windows.ps1` is registered in the workflow and aggregate runner. Its embedded Python checks passed a Mac compatibility run after correcting the Codex `hookSpecificOutput` denial assertion; the native entrypoint skipped here. No live CLI display is claimed. No real user home was changed.
+- Two startup suites still asserted old post-tool OKF registrations after M20; their assertions now require turn-end-only OKF. The generator writer and mutation tests required scoped checkout write access for their lock file. These are test and workspace lessons, not a revived runtime registration.
 
 ## Decisions and limits
 
@@ -18,4 +21,4 @@ Older installations may still execute repository-state or Markdown Health script
 
 ## Next step
 
-Implement milestone 21 sparse lifecycle messages from the integrated milestone 20 hook graph. Then rebase and integrate milestone 22 Tool Guardian detail, and continue the remaining plan frontier.
+Review and integrate the isolated milestone 21 commit from `codex/ready-lifecycle-messages` into the plan base, preserving its synchronized agent docs and Windows test registration. Then rebase and integrate milestone 22 Tool Guardian detail and continue milestone 23. Native Windows execution and installed CLI display remain milestones 24-27.
