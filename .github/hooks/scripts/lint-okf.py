@@ -17,6 +17,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from helpers.common import convert_windows_path_to_posix, emit_json, first_present, read_json_input, run_command, stringify_value
+from helpers.okf_audit import record as audit_record
 
 
 MAX_DISPLAY_DIAGNOSTICS = 20
@@ -136,16 +137,14 @@ def _format_diagnostics(event_name: str, diagnostics: list[dict[str, Any]]) -> s
 
 
 def _okf900_response(event_name: str, omitted_diagnostics: int) -> dict[str, str]:
-    return _response(
-        event_name,
-        "\n".join(
-            (
-                "OKF900: unable to run OKF validation.",
-                _omitted_diagnostics_line(omitted_diagnostics),
-                f"Rerun: {_rerun_command()}",
-            )
-        ),
+    reason = "\n".join(
+        (
+            "OKF900: unable to run OKF validation.",
+            _omitted_diagnostics_line(omitted_diagnostics),
+            f"Rerun: {_rerun_command()}",
+        )
     )
+    return _response(event_name, reason) if event_name == "postToolUse" else {"decision": "allow", "reason": reason}
 
 
 def _run_linter(repo_root: Path) -> list[dict[str, Any]]:
@@ -175,31 +174,37 @@ def _run_linter(repo_root: Path) -> list[dict[str, Any]]:
 def _emit_response(event_name: str, response: dict[str, str], omitted_diagnostics: int = 0) -> None:
     encoded = json.dumps(response, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     if len(encoded) >= MAX_HOOK_OUTPUT_BYTES:
-        response = _response(
-            event_name,
-            "\n".join(
-                (
-                    "OKF validation failed. Diagnostics were truncated.",
-                    _omitted_diagnostics_line(omitted_diagnostics),
-                    f"Rerun: {_rerun_command()}",
-                )
-            ),
+        reason = "\n".join(
+            (
+                "OKF validation failed. Diagnostics were truncated.",
+                _omitted_diagnostics_line(omitted_diagnostics),
+                f"Rerun: {_rerun_command()}",
+            )
         )
+        response = {"decision": "allow", "reason": reason} if response.get("decision") == "allow" else _response(event_name, reason)
     emit_json(response)
 
 
 def main() -> int:
     event_name = ""
     diagnostics: list[dict[str, Any]] | None = None
+    payload: dict[str, object] | None = None
+    repo_root: Path | None = None
+    outcome = "incomplete"
     try:
         payload = read_json_input()
         event_name = _event_name(payload)
         repo_root = _repo_root(payload)
         diagnostics = _run_linter(repo_root)
         if not diagnostics:
+            outcome = "pass"
             _emit_response(event_name, _clean_response(event_name))
             return 0
-        _emit_response(event_name, _response(event_name, _format_diagnostics(event_name, diagnostics)), len(diagnostics))
+        outcome = "fail"
+        reason = _format_diagnostics(event_name, diagnostics)
+        retry = payload.get("stop_hook_active") is True or payload.get("stopHookActive") is True
+        response = {"decision": "allow", "reason": "OKF unresolved after repair attempt.\n" + reason} if retry and event_name != "postToolUse" else _response(event_name, reason)
+        _emit_response(event_name, response, len(diagnostics))
     except LinterExecutionFailure as error:
         _emit_response(event_name, _okf900_response(event_name, len(error.diagnostics)), len(error.diagnostics))
     except (Exception, subprocess.TimeoutExpired):
@@ -209,6 +214,12 @@ def main() -> int:
             _okf900_response(event_name, omitted_diagnostics),
             omitted_diagnostics,
         )
+    finally:
+        if repo_root is not None and event_name != "postToolUse":
+            try:
+                audit_record(repo_root, payload, outcome, len(diagnostics or []), "copilot")
+            except Exception:
+                print("lint-okf warning: audit log unavailable", file=sys.stderr)
     return 0
 
 

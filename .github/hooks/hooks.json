@@ -17,15 +17,6 @@
         "timeoutSec": 10
       }
     ],
-    "postToolUse": [
-      {
-        "type": "command",
-        "matcher": "bash|powershell|create|edit",
-        "bash": ".github/hooks/scripts/lint-okf.py",
-        "powershell": "python \".github/hooks/scripts/lint-okf.py\"",
-        "timeoutSec": 10
-      }
-    ],
     "sessionStart": [
       {
         "type": "command",

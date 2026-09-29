@@ -19,7 +19,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29) [repair-provider-guidance] Restored approved Gemini and Copilot file-first PowerShell instructions; both existing installer suites pass. The PowerShell suite skips one unsupported junction fixture on this Mac.
 - [x] (2026-09-29) [milestone-19] Integrated global Markdown Health retirement at `d54d5619`; source and disposable-home checks pass on Mac. Native Windows proof remains in milestone 24.
 - [x] (2026-09-29) [repair-retired-registrations] Integrated Copilot/Gemini refresh preservation at `44daea14`; Bash and PowerShell installer suites and 12 stable RTK tests pass. Native Windows junction behavior remains open in milestone 24.
-- [ ] [milestone-20] Run repository-local OKF lint at turn end on three CLIs.
+- [ ] (2026-09-29 02:16Z) [milestone-20] Implemented repository-local turn-end OKF adapters, bounded audit, and focused tests on `codex/ready-repository-okf`; awaiting branch integration and native Windows proof in milestone 24.
 - [ ] [milestone-21] Show sparse operational lifecycle messages.
 - [ ] (2026-09-29 00:41Z) [milestone-22] Implemented and tested on isolated branch `codex/ready-tool-guardian`; awaiting review and integration.
 - [ ] [milestone-23] Inventory, measure, review, and improve retained high-rate hooks on macOS.
@@ -48,6 +48,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - macOS `/var` is a symlink to `/private/var`, so safe RTK destination checks normalize the selected home before checking for user-created links. The generator suite needs checkout write permission because it temporarily corrupts and restores generated files; its 25 tests passed with that permission.
 - The milestone 18 rebase had 11 content conflicts where stable RTK replaced prerelease registrations and the provider-preservation repair changed documentation. The resolved installer lists and generator expectations keep stable RTK, omit the retired guard, and retain exact old Copilot/Gemini registrations during refresh. Its first generator-suite run hit five sandbox `PermissionError`s while intentionally modifying generated files; the same 25-test suite passed with checkout write access.
 - The milestone 19 rebase onto `cc0ca9c7` had 13 conflicted files. Stable RTK and old-registration preservation remained intact; the old Markdown checker and its maintained ownership were removed. The generator now owns 26 outputs. The full aggregate runner stops at dependency preflight on this Mac because external `flock` is absent. Targeted suites below passed; native Windows proof remains in milestone 24.
+- Codex runs project hook commands with the session `cwd`, which may be nested. The repository Stop registration resolves its script from the Git root; the POSIX public test invokes that exact command from a nested directory. Native Windows execution remains for milestone 24.
 
 ## Decision Log
 
@@ -81,10 +82,15 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Decision: Resolve milestone 18 on top of stable RTK and the provider-preservation repair by removing only repository-state ownership, source, and fresh registrations.
   Rationale: Current installations may retain exact retired registrations for manual cleanup, while new installations must contain only maintained handlers.
   Date/Author: 2026-09-29, Codex.
+- Decision: Treat a definite OKF finding as one repair request, then permit the next stop with an unresolved-finding message; treat infrastructure failure as an allowed `OKF900` warning. Keep source-ingest blocking independent in the Copilot coordinator and Gemini sequential group.
+  Rationale: The approved bounded turn-end contract requires useful repair feedback without trapping the turn on a broken checker.
+  Date/Author: 2026-09-29, Codex.
 
 ## Outcomes & Retrospective
 
 Planning decisions are complete and the user approved the revised plan. Milestones 17-19 are integrated. Milestone 19 source commit `46eef579` removes the maintained global Markdown Health family, generated scripts, registrations, installer ownership, and dedicated suites while preserving the independent OKF linter and old installed registrations during refresh. Source and disposable-home checks passed before the base branch fast-forwarded to tested tip `d54d5619`. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
+
+Milestone 20 source is implemented on the isolated `codex/ready-repository-okf` branch. Focused public-hook, linter, installer, and generator checks pass on macOS. The audit distinguishes first and retry attempts and omits diagnostic text. Acceptance remains open for integration; native Windows automation and provider-visible messages are later gates.
 
 ## Context and Orientation
 
@@ -138,7 +144,7 @@ When `install.sh` or `install.ps1` refreshes an existing user home, preserve exa
 
 ### Milestone 20: Validate repository OKF at turn end
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Keep scripts/lint-okf.py as the only OKF rule authority. It checks canonical Markdown under .agents/instructions/ and .agents/memory/, exiting 0 for pass, 1 for findings, and 2 for infrastructure failure. Keep Copilot's repository-local agentStop adapter through .github/hooks/scripts/validate-stop.py and Gemini's repository-local AfterAgent adapter under .gemini/hooks/scripts/lint-okf.py. Remove only redundant Copilot postToolUse and Gemini AfterTool OKF registrations. Add a repository-local .codex/hooks.json Stop command and self-contained adapter, never a user-global Codex registration. If installed provider versions or worktree rules differ, record the observed limit and keep acceptance open.
@@ -146,6 +152,8 @@ Keep scripts/lint-okf.py as the only OKF rule authority. It checks canonical Mar
 Validate the full canonical OKF tree once per turn-end attempt. Report pass, definite findings, or incomplete with provider-valid, bounded JSON. Give the agent one repair attempt after a definite finding; on the next stop attempt permit completion with visible unresolved findings. A checker crash, timeout, or malformed output is incomplete and must not strand the turn. Emit one audit.log line per nonempty validation batch with outcome, safe counts, and sorted workspace-relative checked paths. Cap the physical line at 4 KiB, show omitted-path count, suppress identical repeated stop events, and keep content, link targets, and diagnostic text out. An audit-write failure warns without changing the lint decision.
 
 Extend scripts/test-hooks-okf-lint.sh and scripts/test-gemini-hooks-okf-lint.sh, and add scripts/test-codex-repository-okf.sh and scripts/test-repository-okf-windows.ps1. Use public envelope tests for pass, findings, incomplete, first block, allowed second stop, repeated stop deduplication, path and output caps, nested-worktree resolution, and Windows path behavior. Verify no post-tool OKF entry and no user-global copy. Run scripts/test-okf-lint.sh for the independent central linter. Installed native message proof belongs to milestones 25-27; Windows automated behavior belongs to milestone 24.
+
+The isolated `codex/ready-repository-okf` branch now has the adapters, project registrations, and focused public-envelope suites. Copilot and Gemini post-tool OKF registrations are absent. Codex uses a project-local Stop command resolved from the Git root, with no global installer copy. Copilot, Gemini, and Codex direct tests, central linter, generator freshness, aggregate-runner CLI tests, Codex hook merger, and both temporary-home installer suites pass on macOS. PowerShell installer tests skip one unsupported junction fixture, and the new Windows suite skips native behavior here. Integration, native Windows execution, and installed provider display remain separate acceptance gates; do not mark this milestone accepted from isolated source proof alone.
 
 ### Milestone 21: Show sparse lifecycle messages
 
@@ -257,6 +265,8 @@ Milestone 19 rebase evidence (2026-09-29, isolated `codex/ready-retire-markdown`
 
 Repair 19A evidence (2026-09-29, isolated `codex/ready-preserve-retired` checkout rebased onto milestone 17): both installer suites passed with the provider configuration checks preceding RTK configuration writes. The 12 stable RTK tests, generated-hook freshness check for 32 files, OKF lint, Bash syntax check, and `git diff --check` passed. The PowerShell suite skipped its junction fixture on this Mac; native Windows proof remains later work.
 
+Milestone 20 isolated source evidence (2026-09-29, `codex/ready-repository-okf`): `bash scripts/test-hooks-okf-lint.sh`, `bash scripts/test-gemini-hooks-okf-lint.sh`, `bash scripts/test-codex-repository-okf.sh`, `bash scripts/test-okf-lint.sh`, `python3 scripts/test_test_all.py`, `python3 scripts/test-install-codex-hooks.py`, `bash scripts/test-install.sh`, `pwsh -NoProfile -File scripts/test-install.ps1`, `python3 scripts/generate-hooks.py --check`, and `python3 scripts/lint-okf.py` passed. The native Windows OKF suite skipped on macOS, and PowerShell installer junction creation was unsupported here. No real user home was modified.
+
 Capture concise evidence after execution: RTK version and config backup path without private contents; an explicit missing-file RTK exit; current registration lists; one safe OKF audit line with counts; a redacted Tool Guardian reason and matching log fields; per-handler timing distributions; native Windows scanner HEAD-failure result; and provider-visible messages. Do not paste raw tool input, credential values, entire logs, or private home paths unnecessarily. The Windows checklist is docs/ready-ideas-execplan/windows-live-check.md.
 
 ## Interfaces and Dependencies
@@ -275,4 +285,6 @@ Revision note, 2026-09-29: Milestone 17 implementation now uses stable RTK confi
 
 Revision note, 2026-09-29: Repair 19A now preserves retired Copilot and Gemini registrations during refresh while checking both configurations before stable RTK changes the home. Its isolated rebase and tests passed; integration and milestone acceptance remain open.
 
-Revision note, 2026-09-29: Milestone 19 was rebased onto integrated stable RTK, repository-state retirement, and Repair 19A. It has source and disposable-home proof but awaits base fast-forward; the Mac aggregate preflight lacks `flock`.
+Revision note, 2026-09-29: Milestone 19 was rebased onto integrated stable RTK, repository-state retirement, and Repair 19A. Its source and disposable-home proof preceded acceptance at `73db7d4d`; the Mac aggregate preflight lacks `flock`.
+
+Revision note, 2026-09-29: Milestone 20 implementation added project-local turn-end OKF validation, bounded audit, and public-envelope suites. This isolated result is recorded for integration without claiming native Windows or live provider acceptance.

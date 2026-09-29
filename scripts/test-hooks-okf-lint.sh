@@ -46,13 +46,19 @@ def make_repo() -> tuple[tempfile.TemporaryDirectory[str], Path]:
 @contextmanager
 def repo():
     tempdir, root = make_repo()
+    previous_audit = os.environ.get("AUDIT_LOG")
+    os.environ["AUDIT_LOG"] = str(root / "audit.log")
     try:
         yield root
     finally:
+        if previous_audit is None:
+            os.environ.pop("AUDIT_LOG", None)
+        else:
+            os.environ["AUDIT_LOG"] = previous_audit
         tempdir.cleanup()
 
 
-def run(root: Path, payload: object | None = None, raw: str | None = None, extra_env: dict[str, str] | None = None) -> dict:
+def run(root: Path, payload: object | None = None, raw: str | None = None, extra_env: dict[str, str] | None = None, allow_audit_warning: bool = False) -> dict:
     environment = os.environ.copy()
     if extra_env:
         environment.update(extra_env)
@@ -65,7 +71,8 @@ def run(root: Path, payload: object | None = None, raw: str | None = None, extra
         env=environment,
     )
     assert completed.returncode == 0, completed
-    assert completed.stderr == "", completed.stderr
+    expected_stderr = "lint-okf warning: audit log unavailable\n" if allow_audit_warning else ""
+    assert completed.stderr == expected_stderr, completed.stderr
     assert len(completed.stdout.encode("utf-8")) < 8192, len(completed.stdout.encode("utf-8"))
     return json.loads(completed.stdout)
 
@@ -248,6 +255,26 @@ with repo() as root:
     windows_payload["cwd"] = str(nested).replace("/", "\\")
     assert run(root, windows_payload) == {}
 
+with repo() as root:
+    registrations = json.loads((root / ".github/hooks/hooks.json").read_text())["hooks"]
+    assert not any("lint-okf.py" in item.get("bash", "") for item in registrations.get("postToolUse", []))
+    payload = copilot_agent_stop(root)
+    assert run(root, payload) == {"decision": "allow"}
+    assert run(root, payload) == {"decision": "allow"}
+    audit = root / "audit.log"
+    assert len(audit.read_text().splitlines()) == 1
+    assert json.loads(audit.read_text().splitlines()[0])["outcome"] == "pass"
+    invalidate(root)
+    first = run(root, payload)
+    assert first["decision"] == "block" and "OKF101" in first["reason"], first
+    assert json.loads(audit.read_text().splitlines()[-1])["outcome"] == "fail"
+    payload["stop_hook_active"] = True
+    second = run(root, payload)
+    assert second["decision"] == "allow" and "OKF101" in second.get("reason", ""), second
+    assert len(audit.read_text().splitlines()) == 3
+    unavailable = run(root, payload, extra_env={"AUDIT_LOG": str(root)}, allow_audit_warning=True)
+    assert unavailable["decision"] == "allow" and "OKF101" in unavailable["reason"]
+
 
 with repo() as root:
     outside = root.parent / "decoy"
@@ -267,7 +294,7 @@ with repo() as root:
     assert "OKF900" in response["additionalContext"], response
     response = run(root, copilot_subagent_stop(outside))
     assert not marker.exists(), marker
-    assert response["decision"] == "block" and "OKF900" in response["reason"], response
+    assert response["decision"] == "allow" and "OKF900" in response["reason"], response
 
 
 with repo() as root:
@@ -288,7 +315,7 @@ with repo() as root:
 with repo() as root:
     for raw in (b"{", b"{not json"):
         adapter_response = run_with_open_stdin(root / ".github/hooks/scripts/lint-okf.py", raw=raw)
-        assert adapter_response["decision"] == "block" and "OKF900" in adapter_response["reason"], adapter_response
+        assert adapter_response["decision"] == "allow" and "OKF900" in adapter_response["reason"], adapter_response
         coordinator_response = run_with_open_stdin(root / ".github/hooks/scripts/validate-stop.py", raw=raw)
         assert coordinator_response["decision"] == "block", coordinator_response
 
@@ -302,7 +329,7 @@ with repo() as root:
 with repo() as root:
     raw = json.dumps(copilot_agent_stop(root)).encode("utf-8") + b" trailing"
     adapter_response = run_with_open_stdin(root / ".github/hooks/scripts/lint-okf.py", raw=raw)
-    assert adapter_response["decision"] == "block" and "OKF900" in adapter_response["reason"], adapter_response
+    assert adapter_response["decision"] == "allow" and "OKF900" in adapter_response["reason"], adapter_response
     assert run_with_open_stdin(root / ".github/hooks/scripts/validate-stop.py", raw=raw)["decision"] == "block"
 
 with repo() as root:
@@ -418,9 +445,11 @@ with repo() as root:
     missing = root / "scripts/lint-okf.py"
     missing.unlink()
     response = run(root, copilot_agent_stop(root))
-    assert response["decision"] == "block" and "OKF900" in response["reason"], response
+    assert response["decision"] == "allow" and "OKF900" in response["reason"], response
+    coordinated = run_registered_stop_hook(root, copilot_agent_stop(root))
+    assert coordinated["decision"] == "allow" and "OKF900" in coordinated["reason"], coordinated
     malformed = run(root, raw="{")
-    assert malformed["decision"] == "block" and "OKF900" in malformed["reason"], malformed
+    assert malformed["decision"] == "allow" and "OKF900" in malformed["reason"], malformed
 
 with repo() as root:
     shutil.rmtree(root / "scripts/vendor/yaml")

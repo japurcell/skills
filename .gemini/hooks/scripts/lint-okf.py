@@ -19,6 +19,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from helpers.common import convert_windows_path_to_posix, emit_json, read_json_input, run_command  # noqa: E402
+from helpers.okf_audit import record as audit_record
 
 
 MAX_PROVIDER_JSON_BYTES = 8_192
@@ -183,7 +184,7 @@ def _response_for_failure(payload: Mapping[str, Any] | None, reason: str) -> dic
     event = "" if payload is None else str(payload.get("hook_event_name") or payload.get("hookEventName") or "")
     stop_hook_active = payload is not None and (payload.get("stop_hook_active") is True or payload.get("stopHookActive") is True)
     if event == "AfterAgent" and stop_hook_active:
-        return {"continue": False, "stopReason": reason}
+        return {"continue": True, "systemMessage": "OKF unresolved after repair attempt.\n" + reason}
     if event in {"AfterTool", "AfterAgent"}:
         return {"decision": "deny", "reason": reason}
     return {"continue": False, "stopReason": reason}
@@ -192,29 +193,48 @@ def _response_for_failure(payload: Mapping[str, Any] | None, reason: str) -> dic
 def _emit_response(payload: Mapping[str, Any] | None, response: dict[str, object]) -> None:
     serialized = json.dumps(response, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     if len(serialized) >= MAX_PROVIDER_JSON_BYTES:
-        response = _response_for_failure(payload, f"OKF900: response exceeded provider limit.\nRun: {_rerun_command()}")
+        reason = f"OKF900: response exceeded provider limit.\nRun: {_rerun_command()}"
+        response = {"continue": True, "systemMessage": reason} if response.get("continue") is True else _response_for_failure(payload, reason)
     emit_json(response)
 
 
 def main() -> int:
     payload: Mapping[str, Any] | None = None
+    repository: Path | None = None
+    outcome = "incomplete"
+    findings = 0
     try:
         payload = read_json_input()
         repository = _repository_for_payload(payload)
         diagnostics = _run_linter(repository)
+        findings = len(diagnostics)
         if not diagnostics:
+            outcome = "pass"
             _emit_response(payload, {})
             return 0
 
+        outcome = "fail"
         reason = _format_reason(payload, diagnostics)
         _emit_response(payload, _response_for_failure(payload, reason))
         return 0
     except (LintFailure, ValueError) as error:
-        _emit_response(payload, _response_for_failure(payload, _okf900_reason(error)))
+        if payload is not None and payload.get("hook_event_name") == "AfterAgent":
+            _emit_response(payload, {"continue": True, "systemMessage": _okf900_reason(error)})
+        else:
+            _emit_response(payload, _response_for_failure(payload, _okf900_reason(error)))
         return 0
     except Exception as error:  # noqa: BLE001 - provider boundary must remain JSON-only.
-        _emit_response(payload, _response_for_failure(payload, _okf900_reason(error)))
-        return 0
+        if payload is not None and payload.get("hook_event_name") == "AfterAgent":
+            _emit_response(payload, {"continue": True, "systemMessage": _okf900_reason(error)})
+        else:
+            _emit_response(payload, _response_for_failure(payload, _okf900_reason(error)))
+    finally:
+        if repository is not None and payload is not None and payload.get("hook_event_name") == "AfterAgent":
+            try:
+                audit_record(repository, payload, outcome, findings, "gemini")
+            except Exception:
+                print("lint-okf warning: audit log unavailable", file=sys.stderr)
+    return 0
 
 
 if __name__ == "__main__":

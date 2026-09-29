@@ -53,19 +53,20 @@ def _bounded_combined_block(reasons: list[str]) -> str:
     return bounded
 
 
-def _block_reason(response: object, validator: Path) -> str | None:
+def _block_reason(response: object, validator: Path) -> tuple[str | None, str | None]:
     if not isinstance(response, Mapping):
         raise ValueError(f"{validator.name} returned a non-object response")
 
     decision = response.get("decision")
     if decision == "allow":
-        return None
+        reason = response.get("reason")
+        return None, reason if isinstance(reason, str) and reason.strip() else None
     if decision == "block" and isinstance(response.get("reason"), str) and response["reason"].strip():
-        return response["reason"]
+        return response["reason"], None
     raise ValueError(f"{validator.name} returned an invalid stop response")
 
 
-def _run_validator(validator: Path, payload: str) -> str | None:
+def _run_validator(validator: Path, payload: str) -> tuple[str | None, str | None]:
     completed = subprocess.run(
         [sys.executable, str(validator)],
         input=payload,
@@ -80,19 +81,24 @@ def _run_validator(validator: Path, payload: str) -> str | None:
 
 def main() -> int:
     reasons: list[str] = []
+    notices: list[str] = []
 
     try:
         payload = json.dumps(read_json_input(), ensure_ascii=False, separators=(",", ":"))
         for validator in VALIDATORS:
-            reason = _run_validator(validator, payload)
+            reason, notice = _run_validator(validator, payload)
             if reason:
                 reasons.append(reason)
+            if notice:
+                notices.append(notice)
     except (OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError):
         reasons.append("Copilot stop validation failed. Run the source-ingest and OKF validators directly, then retry.")
 
     response: dict[str, str]
     if reasons:
         response = {"decision": "block", "reason": _bounded_combined_block(reasons)}
+    elif notices:
+        response = {"decision": "allow", "reason": _bounded_combined_block(notices)}
     else:
         response = {"decision": "allow"}
     emit_json(response)

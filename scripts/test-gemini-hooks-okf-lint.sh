@@ -22,7 +22,7 @@ run_adapter() {
   local repo="$1"
   local payload="$2"
 
-  python3 "$repo/.gemini/hooks/scripts/lint-okf.py" <<<"$payload"
+  AUDIT_LOG="${AUDIT_LOG:-$repo/audit.log}" GEMINI_OBSERVABILITY_DISABLE=1 python3 "$repo/.gemini/hooks/scripts/lint-okf.py" <<<"$payload"
 }
 
 write_fake_linter() {
@@ -117,10 +117,29 @@ test_after_agent_retry_is_bounded() {
     "Expected the first invalid AfterAgent result to request a retry."
 
   retry="$(run_adapter "$repo" '{"hook_event_name":"AfterAgent","stop_hook_active":true,"cwd":"'"$repo"'"}')"
-  assert_equals "false" "$(jq -r '.continue' <<<"$retry")" \
-    "Expected an active stop hook to halt retrying."
-  assert_file_contains <(jq -r '.stopReason' <<<"$retry") "OKF002" \
-    "Expected the retry stop reason to retain the OKF finding."
+  assert_equals "true" "$(jq -r '.continue' <<<"$retry")" \
+    "Expected an active stop hook to permit completion after one repair attempt."
+  assert_file_contains <(jq -r '.systemMessage' <<<"$retry") "OKF002" \
+    "Expected the retry message to retain the unresolved OKF finding."
+}
+
+test_after_agent_audit_is_bounded_and_deduplicated() {
+  local workdir repo payload response
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf -- "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  create_fixture_repo "$repo"
+  payload='{"hook_event_name":"AfterAgent","session_id":"audit-session","cwd":"'"$repo"'"}'
+  run_adapter "$repo" "$payload" >/dev/null
+  run_adapter "$repo" "$payload" >/dev/null
+  assert_equals "1" "$(wc -l < "$repo/audit.log" | tr -d ' ')" \
+    "Expected repeated identical stop events to share one audit line."
+  jq -e '.outcome == "pass" and .checked > 0 and .omitted_paths == 0 and (.paths | all(startswith(".agents/")))' \
+    "$repo/audit.log" >/dev/null
+  printf '# invalid\n' > "$repo/.agents/memory/invalid.md"
+  response="$(AUDIT_LOG="$repo" run_adapter "$repo" "$payload" 2>/dev/null)"
+  assert_equals "deny" "$(jq -r '.decision' <<<"$response")" \
+    "Expected audit-write failure to preserve the definite lint decision."
 }
 
 test_malformed_payload_and_linter_failures_are_okf900_blocks() {
@@ -160,9 +179,9 @@ test_invalid_linter_json_exit_two_and_timeout_are_okf900() {
 
   write_fake_linter "$repo" 'import sys; print("{}") ; sys.exit(2)'
   output="$(run_adapter "$repo" '{"hook_event_name":"AfterAgent","cwd":"'"$repo"'"}')"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected exit 2 to deny the first AfterAgent completion."
-  assert_file_contains <(jq -r '.reason' <<<"$output") "OKF900" \
+  assert_equals "true" "$(jq -r '.continue' <<<"$output")" \
+    "Expected exit 2 to report incomplete without trapping completion."
+  assert_file_contains <(jq -r '.systemMessage' <<<"$output") "OKF900" \
     "Expected exit 2 to become OKF900."
 
   write_fake_linter "$repo" 'import time; time.sleep(9)'
@@ -307,7 +326,7 @@ test_simultaneous_pending_ingest_and_okf_keep_both_reasons() {
   printf '# pending\n' > "$repo/.agents/sources/pending.md"
   printf '# invalid\n' > "$repo/.agents/memory/invalid.md"
 
-  source_output="$(AUDIT_LOG="$workdir/audit.log" python3 "$REPO_ROOT/.gemini/hooks/scripts/inject-auto-ingest-context.py" <<<'{"hook_event_name":"AfterAgent","cwd":"'"$repo"'"}')"
+  source_output="$(AUDIT_LOG="$workdir/audit.log" GEMINI_OBSERVABILITY_DISABLE=1 python3 "$REPO_ROOT/.gemini/hooks/scripts/inject-auto-ingest-context.py" <<<'{"hook_event_name":"AfterAgent","cwd":"'"$repo"'"}')"
   okf_output="$(run_adapter "$repo" '{"hook_event_name":"AfterAgent","cwd":"'"$repo"'"}')"
   assert_file_contains <(jq -r '.reason' <<<"$source_output") 'Pending ingest blocks normal work.' \
     "Expected the real source-ingest helper to report pending ingestion."
@@ -320,6 +339,7 @@ main() {
   test_payload_cwd_stays_within_adapter_checkout
   test_invalid_after_tool_matches_central_diagnostics
   test_after_agent_retry_is_bounded
+  test_after_agent_audit_is_bounded_and_deduplicated
   test_malformed_payload_and_linter_failures_are_okf900_blocks
   test_invalid_linter_json_exit_two_and_timeout_are_okf900
   test_truncates_sorted_diagnostics_and_keeps_rerun_command

@@ -46,20 +46,6 @@
           }
         ]
       }
-    ],
-    "AfterTool": [
-      {
-        "matcher": "write_file|replace|run_shell_command",
-        "hooks": [
-          {
-            "name": "lint-okf",
-            "type": "command",
-            "command": "python .gemini/hooks/scripts/lint-okf.py",
-            "timeout": 10000,
-            "description": "Reports OKF profile violations after repository mutation tools."
-          }
-        ]
-      }
     ]
   }
 }

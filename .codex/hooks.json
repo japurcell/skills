@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/repository-okf.py\"",
+            "commandWindows": "py -3 -c \"import pathlib,runpy,subprocess; p=pathlib.Path(subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip()); runpy.run_path(str(p/'.codex/hooks/repository-okf.py'),run_name='__main__')\"",
+            "timeout": 10,
+            "statusMessage": "Checking repository OKF"
+          }
+        ]
+      }
+    ]
+  }
+}

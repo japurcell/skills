@@ -60,3 +60,6 @@ jobs:
       - name: Test stable RTK configuration on native Windows
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-rtk-stable-windows.ps1
+      - name: Test repository OKF hooks on native Windows
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/test-repository-okf-windows.ps1

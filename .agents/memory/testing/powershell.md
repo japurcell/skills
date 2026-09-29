@@ -12,6 +12,7 @@ description: Test and validation guidance for PowerShell scripts under `scripts/
   - The disposable-home provider refresh cases cover preservation of old and custom hook entries, nested Gemini settings, idempotence, fresh absence, malformed/ambiguous JSON, hard-linked destination safety, and linked parent refusal before mutation. Linked-parent coverage uses symlinks on POSIX and junctions on Windows when the host permits them.
   - The same suite covers Codex custom-agent conversion before copy operations, generated TOML decoding, idempotence, malformed-source early failure, `$env:CODEX_HOME` destination selection, and replacement of `$HOME/.codex/AGENTS.md` from `.codex/AGENTS.md`.
 - Generated secret-scanner capture: `pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1` on native Windows; the script skips on other hosts. It is registered in `.github/workflows/ready-ideas-windows.yml` and exercises all three generated providers through JSON input with `git.cmd` failure, descendant, size, malformed output, temporary-file failure, and no-HEAD cases.
+- Repository OKF envelopes: `pwsh -NoProfile -File scripts/test-repository-okf-windows.ps1` on native Windows; it checks all three project adapters, Windows rerun text, and Codex registered-command resolution from a nested directory. The script skips on other hosts.
 
 ## Scope note
 
