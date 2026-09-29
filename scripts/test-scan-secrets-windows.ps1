@@ -17,8 +17,8 @@ $hooks = @{
 }
 
 function Invoke-Case {
-    param([string]$Provider, [string]$Mode, [string]$Scenario)
-    $caseDir = Join-Path $workdir "$Provider-$Mode-$Scenario"
+    param([string]$Provider, [string]$Mode, [string]$Scenario, [int]$Attempt = 0)
+    $caseDir = Join-Path $workdir "$Provider-$Mode-$Scenario-$Attempt"
     $repo = Join-Path $caseDir 'repo'
     $bin = Join-Path $caseDir 'bin'
     New-Item -ItemType Directory -Path $repo, $bin | Out-Null
@@ -149,6 +149,10 @@ try {
                 Invoke-Case -Provider $provider -Mode $mode -Scenario $scenario
             }
         }
+    }
+    for ($attempt = 1; $attempt -le 5; $attempt++) {
+        Invoke-Case -Provider gemini -Mode block -Scenario descendant -Attempt $attempt
+        Invoke-Case -Provider gemini -Mode warn -Scenario oversized -Attempt $attempt
     }
     Write-Output 'PASS: native Windows generated scanner capture tests'
 }

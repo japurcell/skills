@@ -229,6 +229,7 @@ def run_git(
     try:
         with tempfile.TemporaryFile(mode="w+b") as capture:
             process = subprocess.Popen([git_executable, *args], stdout=capture, **popen_options)
+            observed_descendants: list[int] = []
             try:
                 while True:
                     if os.fstat(capture.fileno()).st_size > MAX_GIT_OUTPUT_BYTES:
@@ -250,8 +251,10 @@ def run_git(
                         pass
                     else:
                         raise GitCommandError("Git left a running descendant")
-                elif _windows_git_descendants(process.pid):
-                    raise GitCommandError("Git left a running descendant")
+                elif os.name == "nt":
+                    observed_descendants = _windows_git_descendants(process.pid)
+                    if observed_descendants:
+                        raise GitCommandError("Git left a running descendant")
                 size = os.fstat(capture.fileno()).st_size
                 if size > MAX_GIT_OUTPUT_BYTES:
                     raise ScanLimitExceeded("Git output exceeds the scanner limit")
@@ -269,13 +272,15 @@ def run_git(
                     raise GitCommandError("Git output changed during capture")
                 return os.fsdecode(raw_output) if text else raw_output
             except BaseException:
-                _stop_git_process(process, subprocess)
+                _stop_git_process(process, subprocess, observed_descendants)
                 raise
     except OSError as exc:
         raise GitCommandError("unable to capture Git output") from exc
 
 
-def _windows_git_descendants(parent_pid: int) -> list[int]:
+def _windows_git_descendants(
+    parent_pid: int, ancestor_pids: set[int] | None = None,
+) -> list[int]:
     import ctypes
     from ctypes import wintypes
 
@@ -310,6 +315,8 @@ def _windows_git_descendants(parent_pid: int) -> list[int]:
         kernel.CloseHandle(snapshot)
     descendants: set[int] = set()
     frontier = {parent_pid}
+    if ancestor_pids:
+        frontier.update(ancestor_pids)
     while frontier:
         children = {pid for pid, parent in parents.items() if parent in frontier}
         children -= descendants
@@ -318,8 +325,10 @@ def _windows_git_descendants(parent_pid: int) -> list[int]:
     return list(descendants)
 
 
-def _stop_git_process(process: object, subprocess_module: object) -> None:
-    descendants = _windows_git_descendants(process.pid) if os.name == "nt" else []
+def _stop_git_process(
+    process: object, subprocess_module: object,
+    observed_descendants: list[int] | None = None,
+) -> None:
     if os.name == "nt":
         import ctypes
         from ctypes import wintypes
@@ -331,16 +340,35 @@ def _stop_git_process(process: object, subprocess_module: object) -> None:
         kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
         kernel.CloseHandle.argtypes = [wintypes.HANDLE]
         cleanup_deadline = time.monotonic() + 0.75
-        for pid in [*descendants, process.pid]:
-            handle = kernel.OpenProcess(0x00100001, False, pid)
-            if not handle:
-                continue
+        known_descendants = set(observed_descendants or [])
+        quiet_scans = 0
+        while time.monotonic() < cleanup_deadline:
+            known_descendants.update(_windows_git_descendants(process.pid, known_descendants))
+            handles = []
+            for pid in [process.pid, *sorted(known_descendants)]:
+                handle = kernel.OpenProcess(0x00100001, False, pid)
+                if not handle:
+                    continue
+                if kernel.WaitForSingleObject(handle, 0) == 0x102:
+                    handles.append(handle)
+                else:
+                    kernel.CloseHandle(handle)
             try:
-                kernel.TerminateProcess(handle, 1)
-                remaining_ms = max(0, int((cleanup_deadline - time.monotonic()) * 1000))
-                kernel.WaitForSingleObject(handle, remaining_ms)
+                if not handles:
+                    quiet_scans += 1
+                    if quiet_scans >= 2:
+                        break
+                    time.sleep(min(0.01, max(0.0, cleanup_deadline - time.monotonic())))
+                    continue
+                quiet_scans = 0
+                for handle in handles:
+                    kernel.TerminateProcess(handle, 1)
+                for handle in handles:
+                    remaining_ms = max(0, min(50, int((cleanup_deadline - time.monotonic()) * 1000)))
+                    kernel.WaitForSingleObject(handle, remaining_ms)
             finally:
-                kernel.CloseHandle(handle)
+                for handle in handles:
+                    kernel.CloseHandle(handle)
         if process.poll() is None:
             process.kill()
         try:
