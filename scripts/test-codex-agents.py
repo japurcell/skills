@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import os
+import runpy
 import stat
 import subprocess
 import sys
@@ -144,7 +145,12 @@ class CodexAgentConverterTests(unittest.TestCase):
         self.assert_failure_without_mutation({})
         self.sources.joinpath("two.md").unlink()
         self.write_agent("ONE.md", name="two")
-        self.assert_failure_without_mutation({})
+        source_entries = list(self.sources.iterdir())
+        if len(source_entries) == 2:
+            self.assert_failure_without_mutation({})
+        else:
+            self.assertEqual(len(source_entries), 1)
+            self.assertFalse(self.destination.exists())
         self.sources.joinpath("ONE.md").unlink()
         if hasattr(os, "symlink"):
             target = self.write_agent("target.md", name="target")
@@ -153,6 +159,17 @@ class CodexAgentConverterTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("linked.md", result.stderr)
             self.assertFalse(self.destination.exists())
+
+    def test_rejects_casefolded_source_collision_at_decision_seam(self) -> None:
+        converter = runpy.run_path(str(SCRIPT))
+        agent = converter["AgentDefinition"]
+        candidates = [
+            agent("one.md", "one.toml", "one", "First", "First\n"),
+            agent("ONE.md", "ONE.toml", "two", "Second", "Second\n"),
+        ]
+        with self.assertRaisesRegex(converter["InstallError"], "Case-folded duplicate output 'ONE.toml'"):
+            converter["validate_agent_collisions"](candidates, self.sources)
+        self.assertFalse(self.destination.exists())
 
     def test_updates_removes_and_preserves_unmanaged_files(self) -> None:
         self.write_agent("one.md", name="one", body="one\n")

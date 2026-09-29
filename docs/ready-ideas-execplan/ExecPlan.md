@@ -27,7 +27,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29) [milestone-23] Integrated tested performance audit and scanner wait change at `9dbb901d`; native CLI and Windows timing were not required.
 - [x] (2026-09-29) [milestone-24/source] Rechecked 26 generated outputs, 25 parity cases, affected public hook suites, stable RTK, and Bash/PowerShell disposable-home installers on macOS; updated Windows RTK version and processor gates. This is source evidence only.
 - [ ] [milestone-24] Pass integrated source, temporary-home installer, and native Windows automation, including the scanner HEAD-failure case.
-- [ ] [repair-24A] Preserve Codex agent converter case-fold collision coverage on case-insensitive macOS filesystems; restore a passing local suite without weakening the case-sensitive end-to-end case.
+- [ ] (2026-09-29) [repair-24A] Isolated branch `codex/ready-converter-portable` now passes all 14 converter tests with a portable collision decision assertion and retains real-file CLI coverage where supported. Integrate the committed branch before accepting this repair.
 - [ ] [milestone-25] Verify installed Codex CLI behavior.
 - [ ] [milestone-26] Verify installed Copilot CLI behavior in a session with that CLI.
 - [ ] [milestone-27] Verify installed Gemini CLI behavior in a session with that CLI.
@@ -45,6 +45,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Prior Copilot CLI timeout probing showed a harmless Git read proceed after a one-second pre-tool timeout without a native timeout message. Treat visible progress as informational, not proof of enforcement.
 - Native Windows scan-secrets HEAD-failure proof remains open. A macOS PowerShell skip is not native Windows evidence.
 - The milestone 24 source sweep exposed a separate `scripts/test-codex-agents.py` failure on this case-insensitive APFS volume: two case-fold-equivalent fixture filenames collapse into one file before the CLI sees them. Keep the case-sensitive end-to-end test and add portable collision coverage through a suitable internal seam under Repair 24A. No test may be skipped or weakened merely to pass locally.
+- Repair 24A reproduced the failure: the converter suite returned `FAILED (failures=1)` because the CLI reported one installed agent after `ONE.md` overwrote `one.md` on APFS. The extracted `validate_agent_collisions` seam permits a two-candidate assertion on every host while the two-file CLI case still runs when both directory entries exist. All 14 converter tests pass on this Mac; the real-file source collision branch remains unexercised here because APFS cannot represent the fixture.
 - On 2026-09-29, milestone 18 fresh-install checks passed, but `scripts/test-install.sh` and `scripts/test-install.ps1` failed an existing copied-Gemini-guidance assertion. `.gemini/GEMINI.md` lacks the approved `write_file` saved-script sentence expected by both tests. Preserve the tests and repair the instruction before integrating the affected installer branch.
 - The guidance repair made the Gemini assertion pass in both suites. The same suites then exposed missing approved Copilot file-first wording. The PowerShell suite also reports unsupported junction creation on this Mac, which needs separate environmental classification after guidance is repaired.
 - Disposable-home refresh tests revealed that both installers replace Copilot and Gemini user hook configuration, incidentally removing old repository-state and Markdown Health registrations. Codex's merge already preserves them. The approved retirement decisions require leaving old installed registrations for manual cleanup; a separate repair must make refresh behavior match that decision without reintroducing retired entries on fresh installs.
@@ -107,6 +108,9 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Decision: Rebase the private M24 workflow preparation onto the Repair 24A planning commit while preserving both records in the handoff.
   Rationale: The native Windows gate and converter repair are separate open work; neither source evidence nor planning should imply acceptance of the other.
   Date/Author: 2026-09-29, Codex.
+- Decision: Extract the existing Codex-agent source collision loop into `validate_agent_collisions` and assert its output collision with two in-memory candidates on every filesystem. Keep the real-file CLI assertion when the fixture creates two distinct directory entries.
+  Rationale: A case-insensitive filesystem cannot supply the two files needed by the CLI case, while the extracted decision applies the same production checks without changing converter behavior.
+  Date/Author: 2026-09-29, Codex.
 
 ## Outcomes & Retrospective
 
@@ -120,7 +124,9 @@ Milestone 22 source now reports safe exact Tool Guardian rules and true input-li
 
 Milestone 23 isolated source measured all retained high-rate executable families and event-specific telemetry on macOS with 25 warm whole-subprocess samples per case. Scanner clean medians fell from 216-225 ms to 102-110 ms after the bounded Git wait change; the three scanner suites, generated-output check, and 25 generator tests pass. The full inventory, workloads, cold and warm distributions, budgets, and remaining costs are in `docs/ready-ideas-execplan/high-rate-hooks-performance.md`. Base integration remains before milestone 23 acceptance.
 
-Milestone 24 workflow preparation is rebased as `cc94dcda` onto Repair 24A planning base `743abc01`. Only the handoff conflicted; its resolution keeps the converter repair open alongside the completed Mac source sweep. The workflow and source files had no rebase conflict. Post-rebase `python3 scripts/lint-okf.py`, staged and unstaged `git diff --check`, and conflict-marker scans passed. Native Windows execution remains required for M24 acceptance.
+Milestone 24 source and Windows workflow preparation are integrated on `codex/ready-ideas-execplan` at `e98cb87a`. The Mac source sweep passed except for the converter collision fixture, which Repair 24A addresses. Native Windows execution remains required for M24 acceptance.
+
+Repair 24A has a passing isolated macOS converter suite after preserving the file-based collision case on capable filesystems and adding an in-memory assertion of the same decision. Bash and PowerShell temporary-home installer suites pass; PowerShell skips unsupported junction creation on this Mac. Integration remains outstanding, so repair acceptance is pending. A case-sensitive run can later exercise the retained two-file branch.
 
 ## Context and Orientation
 
@@ -229,10 +235,12 @@ Update .github/workflows/ready-ideas-windows.yml and windows-live-check.md for t
 
 ### Repair 24A: Make converter collision coverage portable
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 The `scripts/test-codex-agents.py` case-fold collision fixture cannot create two distinct case-fold-equivalent filenames on this Mac's case-insensitive APFS volume. Reproduce the existing suite failure, retain its real-file end-to-end collision case on filesystems that support both names, and add an internal test seam that exercises the same collision decision portably. Do not skip, delete, or weaken the collision assertion. Run the complete converter suite on this Mac and record the filesystem limit of the end-to-end fixture. Keep this repair separate from milestone 24 hook and Windows work.
+
+The isolated implementation extracts the existing collision loop into `scripts/install-codex-agents.py:validate_agent_collisions`. `scripts/test-codex-agents.py` asserts the duplicate output error with two in-memory agent definitions on every host. The original two-file CLI assertion still runs when the fixture produces two directory entries. The current Mac produces one entry, so its real-file branch cannot execute; retain that branch for a case-sensitive filesystem. Integrate the isolated commit before marking this repair done.
 
 ### Milestone 25: Verify installed Codex CLI
 
@@ -318,6 +326,8 @@ Milestone 23 isolated source evidence (2026-09-29, `codex/ready-hook-performance
 
 Milestone 24 macOS source evidence (2026-09-29, isolated `codex/ready-integrated-windows` based on `342d6391`): `scripts/generate-hooks.py --write` found 26 current outputs, `--check` passed, and all 25 generator parity tests passed with scoped worktree write access. Bash and PowerShell disposable-home installer suites passed; PowerShell skipped unsupported junction creation. Twelve stable RTK tests, 13 shared security-banner tests, 15 aggregate-runner CLI/registry tests, central OKF lint and its CLI suite, all three startup, scanner, and Tool Guardian suites, Copilot/Gemini auto-ingest, repository OKF, Copilot/Gemini RTK, and both sequential observability suites passed. The checked-in Copilot, Gemini, and user-global Codex registration files contain no retired commands; repository Codex OKF is registered only in `.codex/hooks.json`. The aggregate runner itself exited 2 at `flock` preflight before suites. The separate Codex-agent converter suite passed 12 of 13 tests; its case-folded filename collision fixture cannot form distinct source files on this case-insensitive volume and awaits Repair 24A. The native Windows scanner, RTK, repository OKF, and lifecycle scripts all skipped on macOS. No real home, Windows runner, provider CLI, workflow dispatch, or push was used. The workflow now installs the official `rtk-ai.rtk` winget package and requires a stable version at least 0.50.0 plus `copilot` and `gemini` processors; actual runner version and native outcomes remain unverified.
 
+Repair 24A isolated source evidence (2026-09-29, `codex/ready-converter-portable` based on `743abc01`): before the change, `python3 scripts/test-codex-agents.py` ran 13 tests with one failure at the two-file source collision fixture; the CLI installed one agent because APFS merged `one.md` and `ONE.md`. The test-first seam case initially failed with missing `validate_agent_collisions`. After extracting the unchanged collision loop, the complete converter suite passed 14 tests. `bash -n scripts/install.sh`, `bash scripts/test-install.sh`, `pwsh -NoProfile -File scripts/test-install.ps1`, `python3 scripts/test_test_all.py` (15 tests), `python3 scripts/lint-okf.py`, and `git diff --check` passed. PowerShell skipped only junction creation, unsupported on this host. The two-file CLI branch remains for a case-sensitive filesystem and was not exercised here; no native Windows result or integration is claimed.
+
 Capture concise evidence after execution: RTK version and config backup path without private contents; an explicit missing-file RTK exit; current registration lists; one safe OKF audit line with counts; a redacted Tool Guardian reason and matching log fields; per-handler timing distributions; native Windows scanner HEAD-failure result; and provider-visible messages. Do not paste raw tool input, credential values, entire logs, or private home paths unnecessarily. The Windows checklist is docs/ready-ideas-execplan/windows-live-check.md.
 
 ## Interfaces and Dependencies
@@ -351,3 +361,5 @@ Revision note, 2026-09-29: Recorded milestone 23's direct macOS high-rate invent
 Revision note, 2026-09-29: Milestone 24 source and Windows workflow preparation are recorded without native Windows acceptance. Repair 24A owns the existing converter collision fixture's case-insensitive-volume failure; keep M24 open until a native Windows run proves the scanner HEAD-failure distinction and other current suites.
 
 Revision note, 2026-09-29: Rebased M24 preparation as `cc94dcda` over Repair 24A planning at `743abc01`. The handoff conflict now preserves both records; Windows acceptance and converter repair stay open.
+
+Revision note, 2026-09-29: Repair 24A preserves the real-file Codex-agent collision case on capable filesystems and adds a portable assertion at the extracted collision decision. The local converter and pertinent installer checks pass. Acceptance remains pending branch integration; the case-sensitive CLI branch remains available for later verification.

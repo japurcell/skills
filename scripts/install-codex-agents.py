@@ -183,6 +183,11 @@ def discover_sources(source_dir: Path) -> list[AgentDefinition]:
         if entry.suffix.casefold() != ".md":
             continue
         agents.append(parse_agent(entry))
+    validate_agent_collisions(agents, source_dir)
+    return agents
+
+
+def validate_agent_collisions(agents: Sequence[AgentDefinition], source_dir: Path) -> None:
     names: dict[str, Path] = {}
     outputs: dict[str, Path] = {}
     for agent in agents:
@@ -194,7 +199,6 @@ def discover_sources(source_dir: Path) -> list[AgentDefinition]:
             raise InstallError(f"Case-folded duplicate output {agent.output!r}: {outputs[output_key]} and {source_dir / agent.source}")
         names[name_key] = source_dir / agent.source
         outputs[output_key] = source_dir / agent.source
-    return agents
 
 
 def validate_manifest_entry(value: object, destination: Path) -> ManifestEntry:
