@@ -38,6 +38,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Another machine may still run old user-level repository-state or Markdown Health registrations after source retirement. Their installed files and state directories are left for manual cleanup. Fresh-install acceptance cannot prove every old installation is clean.
 - Prior Copilot CLI timeout probing showed a harmless Git read proceed after a one-second pre-tool timeout without a native timeout message. Treat visible progress as informational, not proof of enforcement.
 - Native Windows scan-secrets HEAD-failure proof remains open. A macOS PowerShell skip is not native Windows evidence.
+- `rtk gain` fails in this Mac sandbox with `Failed to initialize tracking database: unable to open database file` even though `rtk --version` reports 0.50.0 and `rtk hook --help` lists Copilot and Gemini. Treat `rtk gain` as optional diagnostics, not an installation identity gate.
 
 ## Decision Log
 
@@ -59,6 +60,9 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Decision: Leave old installed repository-state and Markdown Health copies and state for manual cleanup. Preserve audit history. Remove only verified owned prerelease RTK assets.
   Rationale: Unknown or modified user files must not be deleted by migration.
   Date/Author: 2026-09-28, user and Codex.
+- Decision: Verify stable RTK on Windows with its version and supported hook subcommands rather than requiring `rtk gain`.
+  Rationale: The tracking dashboard can fail when its database is unwritable despite a working 0.50.0 binary; installer identity and hook capability are the relevant checks.
+  Date/Author: 2026-09-29, Codex.
 
 ## Outcomes & Retrospective
 
@@ -148,7 +152,7 @@ Acceptance: not met
 
 Regenerate all maintained targets and run the generator's check and parity tests. Run affected public hook suites, scripts/test-all.py where it provides distinct integration proof, and Bash and PowerShell temporary-home installer tests. Verify both installers preserve unrelated settings, stop before mutation on preflight failure, keep owner-only permissions, and install only current maintained handlers. Check no repository-state, global Markdown Health, or prerelease RTK registration appears in a fresh home. Verify the new repository Codex OKF registration stays in the checkout. Update README.md, the three provider instruction sources, .agents/instructions/hooks.md, relevant script guidance, and the .agents file, API, testing, and known-issue maps to describe the retained hook set. Review all changed source and docs for obsolete claims.
 
-Update .github/workflows/ready-ideas-windows.yml and windows-live-check.md for the current hook set. Provision stable RTK on the Windows runner with the official winget package rtk-ai.rtk before installer tests, then verify rtk --version is at least 0.50.0 and rtk gain identifies Rust Token Killer. Keep the repository installers free of RTK download logic. Remove obsolete deletion-only suites from the workflow and run scripts/test-rtk-stable-windows.ps1, scripts/test-repository-okf-windows.ps1, scripts/test-lifecycle-messages-windows.ps1, and existing current-hook Windows tests. Run the existing native Windows scripts/test-scan-secrets-windows.ps1 committed-repository HEAD-failure case: an unexpected rev-parse failure must be incomplete, not clean; a genuinely unborn branch must still work. A macOS skip does not satisfy this gate. Windows automation plus a documented live-check procedure is required; a live Windows provider run is not the completion gate. Do not fabricate a pass if a runner is unavailable.
+Update .github/workflows/ready-ideas-windows.yml and windows-live-check.md for the current hook set. Provision stable RTK on the Windows runner with the official winget package rtk-ai.rtk before installer tests, then verify rtk --version is at least 0.50.0 and rtk hook --help lists copilot and gemini processors. Keep the repository installers free of RTK download logic. Remove obsolete deletion-only suites from the workflow and run scripts/test-rtk-stable-windows.ps1, scripts/test-repository-okf-windows.ps1, scripts/test-lifecycle-messages-windows.ps1, and existing current-hook Windows tests. Run the existing native Windows scripts/test-scan-secrets-windows.ps1 committed-repository HEAD-failure case: an unexpected rev-parse failure must be incomplete, not clean; a genuinely unborn branch must still work. A macOS skip does not satisfy this gate. Windows automation plus a documented live-check procedure is required; a live Windows provider run is not the completion gate. Do not fabricate a pass if a runner is unavailable.
 
 ### Milestone 25: Verify installed Codex CLI
 
@@ -229,3 +233,5 @@ RTK stable 0.50.0 or newer is an external prerequisite, not installed by this re
 Revision note, 2026-09-28: The user replaced the old prerelease and guard/checker outcomes, requested lifecycle visibility and high-rate performance review, then added exact Tool Guardian causes. This revision compresses old milestones, adds new gates, and removes old-design implementation instructions.
 
 Revision note, 2026-09-29: The user explicitly approved this plan and the Windows checklist, clearing the source implementation gate.
+
+Revision note, 2026-09-29: A working local RTK 0.50.0 could not open its tracking database for `rtk gain`. Windows proof now checks version and the hook command surface rather than dashboard storage.

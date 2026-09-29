@@ -12,7 +12,9 @@ The Windows workflow at .github/workflows/ready-ideas-windows.yml must install t
 
     winget install --id rtk-ai.rtk --exact --accept-package-agreements --accept-source-agreements
     rtk --version
-    rtk gain
+    rtk hook --help
+
+Confirm the help lists the `copilot` and `gemini` processors. `rtk gain` is an optional tracking dashboard check; a database initialization failure does not prove the RTK binary or hook processors are missing.
 
 The repository installer must not download RTK. Its own preflight tests must also prove that absent or old RTK stops before destination mutation. Record the actual workflow setup command and installed version in the ExecPlan when implemented. If winget or its PATH refresh fails on the runner, keep the gate open and use an official stable release asset with checksum verification; do not treat a version shim as proof of real stable RTK behavior.
 
