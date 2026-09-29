@@ -63,7 +63,7 @@ Milestones are narrative, not bureaucracy. If you break the work into milestones
 
 Each milestone must be independently verifiable and incrementally implement the overall goal of the execution plan.
 
-Make milestone state explicit. At the start of each milestone section, add short lines for `Status: done|in progress|open` and `Acceptance: met|not met` so the next contributor does not need to infer whether that milestone is complete.
+Make milestone state explicit. At the start of each milestone section, add short lines for `Status: done|in progress|open` and `Acceptance: met|not met` so the next contributor does not need to infer whether that milestone is complete. Atomic update rule: whenever changing a milestone to `Status: done`, update its matching `- [ ] [milestone-X]` entry in `## Progress` to `- [x] (date) [milestone-X]` in the same edit.
 
 ## Living plans and design decisions
 
