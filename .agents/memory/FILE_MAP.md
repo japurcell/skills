@@ -53,6 +53,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/install-provider-hooks.py` | Preflights and merges maintained Copilot/Gemini configuration while retaining unrelated user settings and retired installed hook registrations. |
 | `scripts/test-codex-hooks-startup.sh` | Public-process contract and security regressions for the Codex required-skills hook. |
 | `scripts/test-security-banners.py` | Public block, warning, excerpt, redaction, and fallback envelopes across three provider Tool Guardian adapters. |
+| `scripts/test-codex-hooks-tool-guard.sh` | Focused Codex Tool Guardian envelope, limit-advice, warning, and guard-log checks. |
 | `.codex/hooks/tool-guard.py` | Generated Codex Tool Guardian adapter installed through the maintained hook merger. |
 | `scripts/test-scan-secrets-capture.py` | Public generated-hook capture regressions shared by the three provider scanner suites. |
 | `scripts/test-scan-secrets-windows.ps1` | Native Windows generated-scanner capture suite used by the focused Windows workflow. |

@@ -250,9 +250,9 @@ test_block_response_and_audit_omit_sensitive_evidence() {
   assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
     "Expected the sensitive destructive invocation to be denied."
   if ! sed 's/^[^{]*//' "$log_dir/guard.log" \
-    | jq -e 'select(.event == "threats_detected") | all(.threats[]; (keys | sort) == ["category","severity"])' \
+    | jq -e 'select(.event == "threats_detected") | all(.threats[]; (keys | sort) == ["category","cause","rule_id","severity"])' \
       >/dev/null; then
-    echo "Expected audit threats to contain only category and severity fields." >&2
+    echo "Expected audit threats to contain only safe rule metadata." >&2
     exit 1
   fi
 
@@ -281,7 +281,7 @@ test_warn_mode_returns_json_for_cli_payload() {
   risky_delete="rm"
   risky_delete+=" -rf"
   risky_delete+=" ."
-  expected_warning="Tool Guardian warning bash. destructive_file_ops/critical. Action: rm -rf .. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_warning="Tool Guardian warning bash. destructive_file_ops/critical [recursive_remove_current]: recursive forced removal targets the current directory. Action: rm -rf .. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
 
   output="$(
     run_tool_guard \

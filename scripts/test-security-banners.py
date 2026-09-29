@@ -28,6 +28,96 @@ class SecurityBannerTests(unittest.TestCase):
             rows = [json.loads(line[line.find('{'):]) for line in log_file.read_text().splitlines()] if log_file.exists() else []
             return json.loads(result.stdout), rows
 
+    @staticmethod
+    def reason(response: dict) -> str:
+        return (response.get('permissionDecisionReason') or response.get('reason')
+                or response.get('hookSpecificOutput', {}).get('permissionDecisionReason')
+                or response.get('systemMessage') or '')
+
+    def test_structured_byte_limit_explains_known_field_and_matches_log(self) -> None:
+        value = {'content': 'x' * 33000, 'file_path': '/tmp/demo.txt'}
+        for provider in ('copilot', 'gemini', 'codex'):
+            with self.subTest(provider=provider):
+                response, rows = self.invoke(provider, 'block', 'write_file', value)
+                reason = self.reason(response)
+                self.assertIn('structured_bytes', reason)
+                self.assertIn('write_file.content', reason)
+                self.assertIn('32768', reason)
+                self.assertIn('33000', reason)
+                self.assertNotIn('TOOL_GUARD_ALLOWLIST', reason)
+                self.assertEqual(rows[-1]['threats'][0]['rule_id'], 'structured_bytes')
+                self.assertIn(rows[-1]['threats'][0]['cause'], reason)
+                self.assertEqual(rows[-1]['excerpt'], 'command omitted')
+                warned, _ = self.invoke(provider, 'warn', 'write_file', value)
+                self.assertIn('blocked', self.reason(warned))
+                self.assertNotIn('TOOL_GUARD_ALLOWLIST', self.reason(warned))
+
+    def test_dangerous_operation_names_exact_rule_without_secret(self) -> None:
+        operation = 'git push' + ' --force origin main'
+        secret = 'fake' + '-credential-value'
+        for provider in ('copilot', 'gemini', 'codex'):
+            with self.subTest(provider=provider):
+                response, rows = self.invoke(provider, 'block', 'Bash',
+                                             {'command': operation, 'password': secret})
+                reason = self.reason(response)
+                self.assertIn('force_push_protected_branch', reason)
+                self.assertIn('protected branch', reason)
+                self.assertEqual(rows[-1]['threats'][0]['rule_id'], 'force_push_protected_branch')
+                self.assertIn(rows[-1]['threats'][0]['cause'], reason)
+                self.assertNotIn(secret, reason + json.dumps(rows))
+
+    def test_every_input_limit_reports_threshold_count_and_unit(self) -> None:
+        deep: object = 'safe'
+        for _ in range(33):
+            deep = [deep]
+        cases = (
+            ('scan_text_characters', '32768 characters', '32774 characters', 'x' * 32769),
+            ('command_segments', '128 segments', '129 segments', 'echo x;' * 128 + 'echo x'),
+            ('command_tokens', '256 tokens', '258 tokens', 'x ' * 257),
+            ('structured_depth', '32 levels', '33 levels', deep),
+            ('structured_nodes', '256 nodes', '257 nodes', [0] * 256),
+            ('structured_strings', '128 strings', '129 strings', ['x'] * 129),
+            ('structured_bytes', '32768 bytes', '33000 bytes', {'unknown_secret_field': 'x' * 33000}),
+        )
+        for provider in ('copilot', 'gemini', 'codex'):
+            for rule, limit, count, value in cases:
+                with self.subTest(provider=provider, rule=rule):
+                    response, rows = self.invoke(provider, 'block', 'Bash', value)
+                    reason = self.reason(response)
+                    self.assertIn(rule, reason)
+                    self.assertIn(limit, reason)
+                    self.assertIn(count, reason)
+                    self.assertNotIn('unknown_secret_field', reason + json.dumps(rows))
+                    if rule == 'structured_bytes':
+                        self.assertIn('tool input:', reason)
+                    self.assertEqual(rows[-1]['threats'][0]['rule_id'], rule)
+                    self.assertIn(rows[-1]['threats'][0]['cause'], reason)
+                    self.assertNotIn('TOOL_GUARD_ALLOWLIST', reason)
+
+    def test_multiple_distinct_reasons_have_omitted_count(self) -> None:
+        command = 'sudo echo safe; npm publish; git reset --hard; git clean -fd'
+        for provider in ('copilot', 'gemini', 'codex'):
+            with self.subTest(provider=provider):
+                response, rows = self.invoke(provider, 'block', 'Bash', command)
+                reason = self.reason(response)
+                self.assertIn('1 more finding omitted', reason)
+                self.assertIn('hard_reset', reason)
+                self.assertIn('forced_git_clean', reason)
+                self.assertNotIn('publish_package', reason)
+                self.assertEqual(len({finding['rule_id'] for finding in rows[-1]['threats']}), 4)
+
+    def test_unencodable_input_reports_safe_inspection_failure(self) -> None:
+        value = {'content': '\ud800', 'private_surprise_key': 'fake-value'}
+        for provider in ('copilot', 'gemini', 'codex'):
+            with self.subTest(provider=provider):
+                response, rows = self.invoke(provider, 'block', 'write_file', value)
+                reason = self.reason(response)
+                self.assertIn('inspection_failure', reason)
+                self.assertIn('UTF-8', reason)
+                self.assertNotIn('private_surprise_key', reason + json.dumps(rows))
+                self.assertNotIn('fake-value', reason + json.dumps(rows))
+                self.assertEqual(rows[-1]['threats'][0]['rule_id'], 'inspection_failure')
+
     def test_block_and_warning_excerpt(self) -> None:
         operation = 'git push' + ' --force origin main'
         secret = 'sk-' + 'a' * 30

@@ -13,6 +13,10 @@ Tool Guardian scans patch, search, replacement, and cleanup payloads. Raw danger
 
 Secret scanning has the same self-edit risk for realistic fake credentials. Use unmistakably fake values such as `fake-api-key`; never write a real secret.
 
+## Structured input can reach its byte limit before text scanning
+
+Tool Guardian traverses structured input before matching command text. A large `write_file.content` value therefore reports `structured_bytes` first, with its 32768-byte threshold and measured UTF-8 byte count. The generic scan-text limit applies to later text scanning and includes the tool name prefix. Keep those counts and units distinct when adding rule details or tests.
+
 ## Same-named hook modules confuse mypy
 
 Copilot and Gemini contain same-relative-path modules such as `observability.py`. Run mypy on each file separately instead of passing both in one invocation.

@@ -404,7 +404,7 @@ class GenerateHooksTests(unittest.TestCase):
                     aggregated_threats = module.build_threats(vector.text)
                     self.assertIn(category, {threat["category"] for threat in aggregated_threats})
                     self.assertTrue(
-                        all(set(threat) == {"category", "severity", "matched"} for threat in aggregated_threats)
+                        all(set(threat) == {"category", "severity", "rule_id", "cause", "matched"} for threat in aggregated_threats)
                     )
 
             outcomes = []
@@ -421,10 +421,12 @@ class GenerateHooksTests(unittest.TestCase):
 
             for name, text in vectors.LIMIT_EXCEEDING_VECTORS:
                 with self.subTest(provider=module.__name__, vector=name):
-                    self.assertEqual(
-                        module.build_threats(text),
-                        [{"category": "input_limits", "severity": "critical"}],
-                    )
+                    threats = module.build_threats(text)
+                    self.assertEqual(len(threats), 1)
+                    self.assertEqual(threats[0]["category"], "input_limits")
+                    self.assertEqual(threats[0]["severity"], "critical")
+                    self.assertTrue(threats[0]["rule_id"])
+                    self.assertIn("exceeds limit", threats[0]["cause"])
 
             multi_threats = module.build_threats(vectors.MULTI_THREAT_TEXT)
             self.assertEqual(
@@ -434,7 +436,7 @@ class GenerateHooksTests(unittest.TestCase):
             sensitive_threats = module.build_threats(vectors.SENSITIVE_THREAT_TEXT)
             self.assertTrue(sensitive_threats)
             for threat in sensitive_threats:
-                self.assertEqual(set(threat), {"category", "severity", "matched"})
+                self.assertEqual(set(threat), {"category", "severity", "rule_id", "cause", "matched"})
             serialized_sensitive_output = json.dumps(
                 {
                     "threats": module.log_threat_metadata(sensitive_threats),
@@ -486,10 +488,12 @@ class GenerateHooksTests(unittest.TestCase):
                 }
             )
             self.assertIn(vectors.STRUCTURED_DESTRUCTIVE_QUERY, structured_inputs)
-            self.assertEqual(
-                module.log_threat_metadata(module.build_input_threats("database_query", structured_inputs)),
-                [{"category": "database_destruction", "severity": "high"}],
-            )
+            metadata = module.log_threat_metadata(module.build_input_threats("database_query", structured_inputs))
+            self.assertEqual(len(metadata), 1)
+            self.assertEqual(metadata[0]["category"], "database_destruction")
+            self.assertEqual(metadata[0]["severity"], "high")
+            self.assertEqual(metadata[0]["rule_id"], "delete_without_where")
+            self.assertEqual(metadata[0]["cause"], "SQL DELETE has no WHERE clause")
             safe_structured_inputs = module.read_tool_scan_inputs(
                 {
                     input_key: {

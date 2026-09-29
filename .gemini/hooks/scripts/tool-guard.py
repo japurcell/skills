@@ -65,10 +65,31 @@ MAX_STRUCTURED_STRINGS = 128
 MAX_TOOL_NAME_LENGTH = 160
 MAX_EXCERPT_LENGTH = 160
 REDACTED = "[REDACTED]"
+KNOWN_TOOL_FIELDS = {
+    "write_file": frozenset({"content"}),
+    "run_shell_command": frozenset({"command"}),
+    "bash": frozenset({"command"}),
+    "apply_patch": frozenset({"command"}),
+}
 
 
 class ScanLimitExceeded(ValueError):
-    pass
+    def __init__(self, rule_id: str, limit: int, measured: int, unit: str, field: str = "tool input") -> None:
+        self.rule_id = rule_id
+        self.limit = limit
+        self.measured = measured
+        self.unit = unit
+        self.field = field
+        super().__init__(rule_id)
+
+    def threat(self) -> dict[str, str]:
+        cause = f"{self.field}: {self.measured} {self.unit} exceeds limit {self.limit} {self.unit}"
+        return {
+            "category": "input_limits",
+            "severity": "critical",
+            "rule_id": self.rule_id,
+            "cause": cause,
+        }
 
 def R(*codes: int) -> str:
     return "".join(chr(code) for code in codes)
@@ -103,11 +124,17 @@ def _simple_match(*codes: int):
 
 
 def _bounded_normalized_text(text: str) -> str:
-    if len(text) > MAX_SCAN_TEXT or len(text.encode("utf-8")) > MAX_SCAN_TEXT:
-        raise ScanLimitExceeded("tool input exceeds the scan-text limit")
+    if len(text) > MAX_SCAN_TEXT:
+        raise ScanLimitExceeded("scan_text_characters", MAX_SCAN_TEXT, len(text), "characters")
+    text_bytes = len(text.encode("utf-8"))
+    if text_bytes > MAX_SCAN_TEXT:
+        raise ScanLimitExceeded("scan_text_bytes", MAX_SCAN_TEXT, text_bytes, "bytes")
     normalized = unicodedata.normalize("NFKC", text)
-    if len(normalized) > MAX_SCAN_TEXT or len(normalized.encode("utf-8")) > MAX_SCAN_TEXT:
-        raise ScanLimitExceeded("normalized tool input exceeds the scan-text limit")
+    if len(normalized) > MAX_SCAN_TEXT:
+        raise ScanLimitExceeded("normalized_scan_text_characters", MAX_SCAN_TEXT, len(normalized), "characters")
+    normalized_bytes = len(normalized.encode("utf-8"))
+    if normalized_bytes > MAX_SCAN_TEXT:
+        raise ScanLimitExceeded("normalized_scan_text_bytes", MAX_SCAN_TEXT, normalized_bytes, "bytes")
     return normalized
 
 
@@ -119,7 +146,7 @@ def _command_segments(text: str) -> list[list[str]]:
         maxsplit=MAX_COMMAND_SEGMENTS,
     )
     if len(raw_segments) > MAX_COMMAND_SEGMENTS:
-        raise ScanLimitExceeded("tool input exceeds the command-segment limit")
+        raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, len(raw_segments), "segments")
     segments: list[list[str]] = []
     for raw_segment in raw_segments:
         token_source = re.sub(r'[",]', " ", raw_segment)
@@ -128,7 +155,7 @@ def _command_segments(text: str) -> list[list[str]]:
         except ValueError:
             tokens = token_source.split()
         if len(tokens) > MAX_COMMAND_TOKENS:
-            raise ScanLimitExceeded("command segment exceeds the token limit")
+            raise ScanLimitExceeded("command_tokens", MAX_COMMAND_TOKENS, len(tokens), "tokens")
         if tokens:
             segments.append(tokens)
     return segments
@@ -469,6 +496,30 @@ PATTERNS = [
     ("system_danger", "high", _simple_match(110, 112, 109, 32, 112, 117, 98, 108, 105, 115, 104), "Dry-run publication first."),
 ]
 
+RULE_DETAILS = (
+    ("recursive_remove_root", "recursive forced removal targets the filesystem root"),
+    ("recursive_remove_home", "recursive forced removal targets the home directory"),
+    ("recursive_remove_current", "recursive forced removal targets the current directory"),
+    ("recursive_remove_parent", "recursive forced removal targets a parent directory"),
+    ("remove_env_file", "removal targets an environment file"),
+    ("remove_git_metadata", "removal targets Git metadata"),
+    ("force_push_protected_branch", "forced push targets a protected branch"),
+    ("force_push_protected_branch", "forced push targets a protected branch"),
+    ("hard_reset", "hard reset can discard local work"),
+    ("forced_git_clean", "forced Git clean can delete untracked work"),
+    ("drop_table", "SQL drops a table"),
+    ("drop_database", "SQL drops a database"),
+    ("truncate_table", "SQL truncates a table"),
+    ("delete_without_where", "SQL DELETE has no WHERE clause"),
+    ("recursive_world_writable", "recursive permissions grant write access to everyone"),
+    ("world_writable", "permissions grant write access to everyone"),
+    ("download_execute_bash", "download output is piped to bash"),
+    ("download_execute_sh", "download output is piped to sh"),
+    ("upload_local_data", "curl uploads local data"),
+    ("privileged_command", "command requests elevated privileges"),
+    ("publish_package", "command publishes a package"),
+)
+
 
 def _normalize_allowlist_value(value: str) -> str:
     return value.strip(" ")
@@ -550,24 +601,35 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...]:
     if isinstance(value, str):
         return (value,)
 
-    stack: list[tuple[object, int]] = [(value, 0)]
+    tool_name = read_tool_name(payload).casefold()
+    known_fields = KNOWN_TOOL_FIELDS.get(tool_name, frozenset())
+    stack: list[tuple[object, int, str]] = [(value, 0, "tool input")]
     strings: list[str] = []
     node_count = 0
     total_string_bytes = 0
     while stack:
-        current, depth = stack.pop()
+        current, depth, field = stack.pop()
         node_count += 1
-        if node_count > MAX_STRUCTURED_NODES or depth > MAX_STRUCTURED_DEPTH:
-            raise ScanLimitExceeded("structured tool input exceeds traversal limits")
+        if node_count > MAX_STRUCTURED_NODES:
+            raise ScanLimitExceeded("structured_nodes", MAX_STRUCTURED_NODES, node_count, "nodes")
+        if depth > MAX_STRUCTURED_DEPTH:
+            raise ScanLimitExceeded("structured_depth", MAX_STRUCTURED_DEPTH, depth, "levels")
         if isinstance(current, str):
             strings.append(current)
-            total_string_bytes += len(current.encode("utf-8"))
-            if len(strings) > MAX_STRUCTURED_STRINGS or total_string_bytes > MAX_SCAN_TEXT:
-                raise ScanLimitExceeded("structured tool input exceeds string scan limits")
+            current_bytes = len(current.encode("utf-8"))
+            total_string_bytes += current_bytes
+            if len(strings) > MAX_STRUCTURED_STRINGS:
+                raise ScanLimitExceeded("structured_strings", MAX_STRUCTURED_STRINGS, len(strings), "strings")
+            if total_string_bytes > MAX_SCAN_TEXT:
+                source = field if current_bytes > MAX_SCAN_TEXT else "tool input"
+                raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, total_string_bytes, "bytes", source)
         elif isinstance(current, dict):
-            stack.extend((child, depth + 1) for child in reversed(tuple(current.values())))
+            stack.extend(
+                (child, depth + 1, f"{tool_name}.{key}" if depth == 0 and key in known_fields and isinstance(child, str) else "tool input")
+                for key, child in reversed(tuple(current.items()))
+            )
         elif isinstance(current, (list, tuple)):
-            stack.extend((child, depth + 1) for child in reversed(current))
+            stack.extend((child, depth + 1, "tool input") for child in reversed(current))
 
     serialized = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
     return tuple(strings) + (serialized,)
@@ -619,17 +681,19 @@ def sanitize_tool_name(value: str) -> str:
 def build_threats(tool_text: str) -> list[dict[str, str]]:
     try:
         _command_segments(tool_text)
-    except ScanLimitExceeded:
-        return [{"category": "input_limits", "severity": "critical"}]
+    except ScanLimitExceeded as limit:
+        return [limit.threat()]
     lower_tool_text = tool_text.lower()
     threats: list[dict[str, str]] = []
-    for category, severity, matcher, _suggestion in PATTERNS:
+    for (category, severity, matcher, _suggestion), (rule_id, cause) in zip(PATTERNS, RULE_DETAILS, strict=True):
         match = matcher(tool_text, lower_tool_text)
         if match:
             threats.append(
                 {
                     "category": category,
                     "severity": severity,
+                    "rule_id": rule_id,
+                    "cause": cause,
                     "matched": match,
                 }
             )
@@ -638,10 +702,10 @@ def build_threats(tool_text: str) -> list[dict[str, str]]:
 
 def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...]) -> list[dict[str, str]]:
     threats: list[dict[str, str]] = []
-    seen: set[tuple[str, str]] = set()
+    seen: set[str] = set()
     for tool_input in tool_inputs:
         for threat in build_threats(f"{tool_name} {tool_input}"):
-            identity = (threat["category"], threat["severity"])
+            identity = threat["rule_id"]
             if identity not in seen:
                 seen.add(identity)
                 threats.append(threat)
@@ -754,17 +818,27 @@ def build_action_excerpt(tool_input: str, threats: list[dict[str, str]]) -> str:
 
 
 def log_threat_metadata(threats: list[dict[str, str]]) -> list[dict[str, str]]:
-    return [{"category": threat["category"], "severity": threat["severity"]} for threat in threats]
+    return [
+        {key: threat[key] for key in ("category", "severity", "rule_id", "cause") if key in threat}
+        for threat in threats
+    ]
 
 
 def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: str, mode: str) -> str:
-    summary = [f"{threat['category']}/{threat['severity']}" for threat in threats[:3]]
+    summary = [
+        f"{threat['category']}/{threat['severity']} [{threat['rule_id']}]: {threat['cause']}"
+        if "rule_id" in threat else f"{threat['category']}/{threat['severity']}"
+        for threat in threats[:3]
+    ]
     joined = "; ".join(summary)
+    omitted = max(0, len(threats) - 3)
+    if omitted:
+        joined += f"; {omitted} more finding{'s' if omitted != 1 else ''} omitted"
     safe_tool_name = sanitize_tool_name(tool_name) if tool_name else "tool invocation"
-    return (
-        f"Tool Guardian {mode} {safe_tool_name}. {joined}. Action: {excerpt}. "
-        "Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
-    )
+    message = f"Tool Guardian {mode} {safe_tool_name}. {joined}. Action: {excerpt}."
+    if not any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats):
+        message += " Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+    return message
 
 # BEGIN PROVIDER ADAPTER
 
@@ -919,9 +993,11 @@ def main() -> int:
     try:
         tool_scan_inputs = read_tool_scan_inputs(payload)
         threats = build_input_threats(tool_name, tool_scan_inputs)
-    except ScanLimitExceeded:
-        threats = [{"category": "input_limits", "severity": "critical"}]
-    if any(threat["category"] == "input_limits" for threat in threats):
+    except ScanLimitExceeded as limit:
+        threats = [limit.threat()]
+    except UnicodeError:
+        threats = [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "tool input cannot be encoded as UTF-8 for inspection"}]
+    if any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats):
         excerpt = "command omitted"
         log_payload("threats_detected", mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
         emit_deny_response(build_block_reason(tool_name, threats, excerpt, "blocked"))
