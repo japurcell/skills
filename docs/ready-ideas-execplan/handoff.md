@@ -2,9 +2,9 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) on 2026-09-28. All [Wayfinder map](map.md) tickets are closed. Implementation resumed on 2026-09-29. Milestone 17 is complete on its isolated branch and rebased onto the current base, awaiting fast-forward integration. Milestones 18, 19, and 22 are committed in isolated worktrees but not integrated or accepted. The provider-guidance repair is integrated and both installer suites pass. Installer-refresh preservation Repair 19A is active and blocks acceptance of milestones 18 and 19. Milestones 20-21 and 23-27 remain open.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) on 2026-09-28. All [Wayfinder map](map.md) tickets are closed. Implementation resumed on 2026-09-29. Milestone 17 is integrated and accepted for local source and disposable-home proof at base commit `46ee3607`; native Windows and provider display remain later gates. Milestones 18, 19, and 22 are committed in isolated worktrees but not integrated or accepted. The provider-guidance repair is integrated and both installer suites pass. Installer-refresh preservation Repair 19A is active and blocks acceptance of milestones 18 and 19. Milestones 20-21 and 23-27 remain open.
 
-The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca34`. Its six fixed-point review findings were repaired and cleared by their original reviewers. Existing repository-state and Markdown-health hooks, prerelease RTK rewrite path, and user-level installations still represent the old design. Do not claim new requirements are implemented merely because the old checks passed.
+The prior implementation through `c0d9ca34` remains historical evidence only. Its six fixed-point review findings were repaired and cleared by their original reviewers. The base now has stable RTK source; repository-state and Markdown Health hooks and old user-level installations still represent the old design. Do not claim new requirements are implemented merely because old checks passed.
 
 ## New requirements
 
@@ -38,7 +38,7 @@ The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca
 
 ## Next step
 
-Repair 19A is active on `codex/ready-preserve-retired` in the reused `/Users/adam/.codex/worktrees/ready-gemini-guidance/skills`; validate it before accepting milestones 18 and 19. Review and fast-forward integrate milestone 17 from `codex/ready-rtk-stable` in `/Users/adam/.codex/worktrees/ready-rtk-stable/skills`; its rebased implementation commit is `31f15fa8`. Milestone 18 is committed as `d21ae442` in `/Users/adam/.codex/worktrees/ready-retire-git-guard/skills`; milestone 19 is committed as `09fc8266` in `/Users/adam/.codex/worktrees/ready-retire-markdown/skills`; milestone 22 is committed as `4da20b29` in `/Users/adam/.codex/worktrees/ready-tool-guardian/skills`. Rebase and fast-forward integrate clean tested branches serially. Copilot and Gemini live checks remain later milestones; macOS performance audit needs no live CLI run.
+Finish Repair 19A on `codex/ready-preserve-retired` in `/Users/adam/.codex/worktrees/ready-gemini-guidance/skills`, then validate it before accepting milestones 18 and 19. Milestone 18 is committed as `d21ae442` in `/Users/adam/.codex/worktrees/ready-retire-git-guard/skills`; milestone 19 is committed as `09fc8266` in `/Users/adam/.codex/worktrees/ready-retire-markdown/skills`; milestone 22 is committed as `4da20b29` in `/Users/adam/.codex/worktrees/ready-tool-guardian/skills`. Rebase and fast-forward integrate clean tested branches serially. Milestone 17 worktree `/Users/adam/.codex/worktrees/ready-rtk-stable/skills` is clean and merged; the app archive tool refused it as protected, so reuse it for a later milestone. Copilot and Gemini live checks remain later milestones; macOS performance audit needs no live CLI run.
 
 ## Verification state
 
