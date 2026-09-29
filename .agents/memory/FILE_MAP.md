@@ -77,9 +77,9 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/addy-install.sh` | Imports selected upstream addy skills, agents, and references into this repo. |
 | `.agents/memory/sources/source-ingest-manifest.json` | Shared source-summary state file for Copilot and Gemini auto-ingest hooks plus pending-ingest gating. |
 | `.agents/skills/okf-authoring/SKILL.md` | Repository-local representation workflow for canonical Markdown under `.agents/instructions/` and `.agents/memory/`; invoked one-way after `update-agent-docs` semantic changes. |
-| `.copilot/hooks/rtk-rewrite.json` | Automatic RTK forwarder and explicit-command rewrite registrations for Copilot; generated adapters and launchers come from `hooks/families/rtk.py`. |
-| `scripts/install-rtk-prerelease.py` | Checksum-verifies and installs the pinned RTK prerelease beside stable RTK, with a receipt used by explicit-command adapters. |
-| `scripts/test-rtk-explicit-windows.ps1` | Native Windows archive, PowerShell rewrite, and diagnostic proof in the dedicated Windows workflow. |
+| `.copilot/hooks/rtk-rewrite.json` | Automatic RTK forwarding registration for Copilot; its generated adapter comes from `hooks/families/rtk.py`. |
+| `scripts/configure-rtk.py` | Validates stable RTK and safely sets the persistent hook-warning option in user TOML; retires only verified old prerelease files. |
+| `scripts/test-rtk-stable.py`, `scripts/test-rtk-stable-windows.ps1` | Disposable-home stable RTK config and installer tests, plus native Windows diagnostic proof. |
 | `docs/ready-ideas-execplan/windows-live-check.md` | Manual Windows provider check procedure accompanying the automated Windows workflow; records versions, tool results, audit evidence, and unverified cases. |
 | `docs/generated-provider-hooks/handoff.md` | Feature-scoped resume instructions for remaining deployed Gemini `AfterAgent` validation. |
 | `docs/adr/0001-auto-ingest-runtime-shape.md` | Records why source auto-ingest uses runtime-local hook code with one committed repo manifest. |

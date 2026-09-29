@@ -40,7 +40,7 @@ SUITES = (
     ("python3", "scripts/test-install-codex-hooks.py"),
     ("python3", "scripts/test-probe-provider-hook-delivery.py"),
     ("python3", "scripts/test-generate-hooks.py"),
-    ("python3", "scripts/test-rtk-explicit.py"),
+    ("python3", "scripts/test-rtk-stable.py"),
     ("python3", "scripts/test-security-banners.py"),
     ("python3", "scripts/test-markdown-health.py"),
     ("python3", "scripts/test-repository-state.py"),

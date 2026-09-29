@@ -41,12 +41,13 @@ $GeminiGlobalSettingsSrc = Join-Path $RepoRoot '.gemini/global-settings.json'
 $CopilotInstructionsSrc = Join-Path $RepoRoot '.copilot/copilot-instructions.md'
 $CopilotLspSrc = Join-Path $RepoRoot '.copilot/lsp-config.json'
 $CodexHookSrcDir = Join-Path $RepoRoot '.codex/hooks'
-$CodexHookFiles = @('load-required-skills.py', 'scan-secrets.py', 'tool-guard.py', 'markdown-health.py', 'rtk-explicit-codex.py', 'rtk-agent-launcher.py', 'repository-state.py', 'helpers/common.py', 'helpers/audit.py')
+$CodexHookFiles = @('load-required-skills.py', 'scan-secrets.py', 'tool-guard.py', 'markdown-health.py', 'repository-state.py', 'helpers/common.py', 'helpers/audit.py')
 $CodexInstructionsSrc = Join-Path $RepoRoot '.codex/AGENTS.md'
 $CodexHookTemplateSrc = Join-Path $RepoRoot '.codex/global-hooks.json'
 $CodexHookMergerSrc = Join-Path $RepoRoot 'scripts/install-codex-hooks.py'
 $CodexAgentInstallerSrc = Join-Path $RepoRoot 'scripts/install-codex-agents.py'
 $GenerateHooksSrc = Join-Path $RepoRoot 'scripts/generate-hooks.py'
+$ConfigureRtkSrc = Join-Path $RepoRoot 'scripts/configure-rtk.py'
 $CanonicalHooksSrc = Join-Path $RepoRoot 'hooks'
 
 $SkillsDest = Join-Path $HOME '.agents/skills'
@@ -403,7 +404,7 @@ foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSetting
     }
 }
 
-foreach ($src in @($CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $GenerateHooksSrc)) {
+foreach ($src in @($CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $GenerateHooksSrc, $ConfigureRtkSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
     }
@@ -416,6 +417,8 @@ foreach ($relative in $CodexHookFiles) {
 }
 
 $pythonCommand = Get-PythonCommand
+& $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME --check
+if ($LASTEXITCODE -ne 0) { Fail "RTK preflight exited with code $LASTEXITCODE." }
 $previousBytecodeSetting = [System.Environment]::GetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', [System.EnvironmentVariableTarget]::Process)
 $preflightExitCode = 0
 try {
@@ -438,6 +441,8 @@ if ($preflightExitCode -ne 0) {
     exit $preflightExitCode
 }
 
+& $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME
+if ($LASTEXITCODE -ne 0) { Fail "RTK configuration exited with code $LASTEXITCODE." }
 & $pythonCommand.Path @($pythonCommand.Arguments) $CodexAgentInstallerSrc --source-dir $AgentsSrc --destination-dir $CodexAgentsDest
 if ($LASTEXITCODE -ne 0) {
     Fail "Codex agent converter exited with code $LASTEXITCODE."

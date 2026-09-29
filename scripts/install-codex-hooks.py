@@ -13,7 +13,10 @@ from pathlib import Path
 from typing import Any
 
 
-OWNED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "rtk-explicit-codex.py", "rtk-agent-launcher.py", "tool-guard.py", "markdown-health.py", "repository-state.py")
+MAINTAINED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "tool-guard.py", "markdown-health.py", "repository-state.py")
+RETIRED_RTK_HOOK_FILES = ("rtk-explicit-codex.py", "rtk-agent-launcher.py")
+MAINTAINED_POSIX_COMMANDS = {f"python3 ~/.codex/hooks/{name}" for name in MAINTAINED_HOOK_FILES}
+OWNED_HOOK_FILES = MAINTAINED_HOOK_FILES + RETIRED_RTK_HOOK_FILES
 OWNED_POSIX_COMMANDS = {f"python3 ~/.codex/hooks/{name}" for name in OWNED_HOOK_FILES}
 OWNED_WINDOWS_COMMANDS = {
     f'py -3 "%USERPROFILE%\\.codex\\hooks\\{name}"'.casefold() for name in OWNED_HOOK_FILES
@@ -80,7 +83,7 @@ def template_groups(template: dict[str, Any]) -> dict[str, list[dict[str, Any]]]
             for handler in group["hooks"]:
                 posix = handler.get("command")
                 windows = handler.get("commandWindows")
-                if not isinstance(posix, str) or posix not in OWNED_POSIX_COMMANDS:
+                if not isinstance(posix, str) or posix not in MAINTAINED_POSIX_COMMANDS:
                     raise ValueError(f"Template hooks.{event} contains an unowned command")
                 if not isinstance(windows, str) or windows.casefold() not in OWNED_WINDOWS_COMMANDS:
                     raise ValueError(f"Template hooks.{event} contains an unowned Windows command")

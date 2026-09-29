@@ -14,7 +14,7 @@ A user can verify the result by running an explicit RTK command, observing start
 
 - [x] (2026-09-28) [planning] Close the reopened Wayfinder decisions and revise this ExecPlan and windows-live-check.md before source work.
 - [x] (2026-09-29 00:09Z) [approval] User explicitly approved the revised ExecPlan and Windows checklist before source changes.
-- [ ] (2026-09-29 00:12Z) [milestone-17] Implemented and tested on isolated branch `codex/ready-rtk-stable`; awaiting review and integration.
+- [x] (2026-09-29 01:01Z) [milestone-17] Require stable RTK and migrate warning suppression; retire verified owned prerelease assets. Source and disposable-home proof pass; native Windows real RTK proof remains in milestone 24.
 - [ ] (2026-09-29 00:41Z) [milestone-18] Implemented and tested on isolated branch `codex/ready-retire-git-guard`; awaiting installer-preservation repair and integration.
 - [x] (2026-09-29) [repair-provider-guidance] Restored approved Gemini and Copilot file-first PowerShell instructions; both existing installer suites pass. The PowerShell suite skips one unsupported junction fixture on this Mac.
 - [ ] (2026-09-29) [milestone-19] Implemented and tested on isolated branch `codex/ready-retire-markdown`; awaiting installer-preservation repair and integration.
@@ -44,6 +44,8 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - The guidance repair made the Gemini assertion pass in both suites. The same suites then exposed missing approved Copilot file-first wording. The PowerShell suite also reports unsupported junction creation on this Mac, which needs separate environmental classification after guidance is repaired.
 - Disposable-home refresh tests revealed that both installers replace Copilot and Gemini user hook configuration, incidentally removing old repository-state and Markdown Health registrations. Codex's merge already preserves them. The approved retirement decisions require leaving old installed registrations for manual cleanup; a separate repair must make refresh behavior match that decision without reintroducing retired entries on fresh installs.
 - `rtk gain` fails in this Mac sandbox with `Failed to initialize tracking database: unable to open database file` even though `rtk --version` reports 0.50.0 and `rtk hook --help` lists Copilot and Gemini. Treat `rtk gain` as optional diagnostics, not an installation identity gate.
+- Milestone 17's disposable-home Bash and PowerShell installer suites pass with stable-version shims. The macOS RTK 0.50.0 explicit missing-file command preserved its error and exit, but this non-agent shell did not emit the old false advisory even when the documented environment override forced it on; native provider and Windows checks remain separate gates.
+- macOS `/var` is a symlink to `/private/var`, so safe RTK destination checks normalize the selected home before checking for user-created links. The generator suite needs checkout write permission because it temporarily corrupts and restores generated files; its 25 tests passed with that permission.
 
 ## Decision Log
 
@@ -68,10 +70,16 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Decision: Verify stable RTK on Windows with its version and supported hook subcommands rather than requiring `rtk gain`.
   Rationale: The tracking dashboard can fail when its database is unwritable despite a working 0.50.0 binary; installer identity and hook capability are the relevant checks.
   Date/Author: 2026-09-29, Codex.
+- Decision: Share stable RTK version, TOML, backup, and verified-file retirement logic through one Python helper called by both installers.
+  Rationale: The same public behavior and safety checks apply on Bash and PowerShell, while neither installer downloads a binary.
+  Date/Author: 2026-09-29, Codex.
+- Decision: Refuse to overwrite an existing RTK config backup; retire old installed scripts only on exact byte hashes and the old bundle only when its receipt names a known asset digest and matches the binary.
+  Rationale: A repeated or modified installation must preserve unknown user data for manual review.
+  Date/Author: 2026-09-29, Codex.
 
 ## Outcomes & Retrospective
 
-Planning decisions are complete and the user approved the revised plan. Revised implementation acceptance is not met: no new source, installed-hook, RTK configuration, or benchmark change has run. Prior provider and Windows results are historical evidence for the old design. The next action is milestone 17. Keep this section current after every milestone and name any unmet live or native Windows gate.
+Planning decisions are complete and the user approved the revised plan. Milestone 17 source is implemented: both installers preflight stable RTK and safely configure its TOML, obsolete prerelease source and registrations are removed, automatic Copilot/Gemini forwarders remain, and verified old installed assets are retired only when ownership evidence matches. Local source and disposable-home tests pass; no real user home was changed. Native Windows execution and live provider display remain unverified for later milestones. The next action is milestone 18.
 
 ## Context and Orientation
 
@@ -87,8 +95,10 @@ Use safe disposable repositories and fake data for security examples. Keep logs 
 
 ### Milestone 17: Move warning suppression to stable RTK
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
+
+Local source and disposable-home acceptance is met. Native Windows execution and provider-visible behavior remain in milestones 24-27.
 
 Require RTK 0.50.0 or newer before either installer changes installed files. Do not download RTK. In scripts/install.sh and scripts/install.ps1, locate the user RTK TOML config at the platform location: macOS Library/Application Support/rtk/config.toml under the home directory, Linux .config/rtk/config.toml under the home directory, or Windows APPDATA/rtk/config.toml. Set only hooks.suppress_hook_warning to true. Preserve all other settings and comments where possible, back up a changed file, leave a correct file byte-identical, and stop safely on ambiguous or malformed config. An older or missing RTK stops the installer before any destination mutation and prints upgrade guidance.
 
@@ -232,7 +242,9 @@ Scanner failure discards partial Git output and returns incomplete, with block-m
 
 ## Artifacts and Notes
 
-Planning inputs are the closed decision tickets under docs/ready-ideas-execplan/tickets/ and the provider facts in its research directory. This plan embeds their executable requirements, so an executor need not read the tickets to know the target behavior. The prior implementation reached c0d9ca34 and passed old source/provider tests and live Copilot, Gemini, and Codex probes. Its scanner HEAD-failure native Windows extension still needs proof. The old prerelease RTK and retired hooks are checked in as of this revision; no new behavior is claimed.
+Planning inputs are the closed decision tickets under docs/ready-ideas-execplan/tickets/ and the provider facts in its research directory. This plan embeds their executable requirements, so an executor need not read the tickets to know the target behavior. The prior implementation reached c0d9ca34 and passed old source/provider tests and live Copilot, Gemini, and Codex probes. Its scanner HEAD-failure native Windows extension still needs proof. Milestone 17 removes checked-in prerelease RTK source; repository-state and Markdown Health retirement remain later work.
+
+Milestone 17 local evidence (2026-09-29, isolated `codex/ready-rtk-stable` checkout): `rtk --version` reported `rtk 0.50.0`; `python3 scripts/test-rtk-stable.py` passed 12 tests; `bash scripts/test-install.sh` and `pwsh -NoProfile -File scripts/test-install.ps1` passed in disposable homes; `python3 scripts/test-generate-hooks.py` passed 25 tests with checkout write permission; `python3 scripts/generate-hooks.py --check` reported 32 current outputs. The Copilot and Gemini automatic RTK suites and Codex hook merger test passed. `python3 scripts/lint-okf.py` and `rtk git diff --check` passed. A disposable migration probe removed an exact old Codex adapter while preserving a modified Gemini file for manual review. A disposable explicit `rtk read absent-file` kept nonzero exit and file error, but this shell did not show the former warning before or after configuration; no live provider display or native Windows run is claimed.
 
 Capture concise evidence after execution: RTK version and config backup path without private contents; an explicit missing-file RTK exit; current registration lists; one safe OKF audit line with counts; a redacted Tool Guardian reason and matching log fields; per-handler timing distributions; native Windows scanner HEAD-failure result; and provider-visible messages. Do not paste raw tool input, credential values, entire logs, or private home paths unnecessarily. The Windows checklist is docs/ready-ideas-execplan/windows-live-check.md.
 
@@ -247,3 +259,5 @@ Revision note, 2026-09-28: The user replaced the old prerelease and guard/checke
 Revision note, 2026-09-29: The user explicitly approved this plan and the Windows checklist, clearing the source implementation gate.
 
 Revision note, 2026-09-29: A working local RTK 0.50.0 could not open its tracking database for `rtk gain`. Windows proof now checks version and the hook command surface rather than dashboard storage.
+
+Revision note, 2026-09-29: Milestone 17 implementation now uses stable RTK config and verified legacy-file cleanup. Its local tests and generator checks pass; real Windows and provider-session proof remain in later milestones.

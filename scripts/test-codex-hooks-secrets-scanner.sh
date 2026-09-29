@@ -15,7 +15,6 @@ for event in ("PreToolUse", "Stop"):
     assert len(scanner) == 1
     assert scanner[0]["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'
     if event == "PreToolUse":
-        assert any(handler.get("command") == "python3 ~/.codex/hooks/rtk-explicit-codex.py" for handler in handlers)
         assert any(handler.get("command") == "python3 ~/.codex/hooks/tool-guard.py" for handler in handlers)
 PY
 

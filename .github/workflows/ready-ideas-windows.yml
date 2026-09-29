@@ -30,11 +30,18 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
+      - name: Install stable Rust Token Killer
+        shell: pwsh
+        run: |
+          winget install --id rtk-ai.rtk --exact --accept-package-agreements --accept-source-agreements
+          if ($LASTEXITCODE -ne 0) { throw 'Stable RTK installation failed.' }
+          rtk --version
+          if ($LASTEXITCODE -ne 0) { throw 'Stable RTK is not on PATH.' }
       - name: Check native prerequisites
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          foreach ($name in @('python', 'git', 'pwsh')) {
+          foreach ($name in @('python', 'git', 'pwsh', 'rtk')) {
             Get-Command $name -CommandType Application -ErrorAction Stop | Out-Null
           }
       - name: Check generated hooks
@@ -53,9 +60,9 @@ jobs:
       - name: Test native Windows repository-state protection
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-repository-state-windows.ps1
-      - name: Test verified RTK prerelease and native rewrite
+      - name: Test stable RTK configuration on native Windows
         shell: pwsh
-        run: pwsh -NoProfile -File scripts/test-rtk-explicit-windows.ps1
+        run: pwsh -NoProfile -File scripts/test-rtk-stable-windows.ps1
       - name: Test Markdown health Windows paths and envelopes
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-markdown-health-windows.ps1

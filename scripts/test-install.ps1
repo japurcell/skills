@@ -162,6 +162,15 @@ function New-FixtureRepo {
     Copy-Item -LiteralPath $InstallScriptSrc -Destination (Join-Path $Repo 'scripts/install.ps1') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-agents.py') -Destination (Join-Path $Repo 'scripts/install-codex-agents.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-hooks.py') -Destination (Join-Path $Repo 'scripts/install-codex-hooks.py') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/configure-rtk.py') -Destination (Join-Path $Repo 'scripts/configure-rtk.py') -Force
+    $bin = Join-Path $Repo 'bin'
+    New-Item -ItemType Directory -Path $bin -Force | Out-Null
+    if ($IsWindows) {
+        Write-FixtureFile (Join-Path $bin 'rtk.cmd') @('@echo off', 'echo rtk 0.50.0')
+    } else {
+        Write-FixtureFile (Join-Path $bin 'rtk') @('#!/bin/sh', 'printf "rtk 0.50.0\n"')
+        [System.IO.File]::SetUnixFileMode((Join-Path $bin 'rtk'), ([System.IO.UnixFileMode]::UserRead -bor [System.IO.UnixFileMode]::UserWrite -bor [System.IO.UnixFileMode]::UserExecute))
+    }
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/global-hooks.json') -Destination (Join-Path $Repo '.codex/global-hooks.json') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/AGENTS.md') -Destination (Join-Path $Repo '.codex/AGENTS.md') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/hooks/load-required-skills.py') -Destination (Join-Path $Repo '.codex/hooks/load-required-skills.py') -Force
@@ -427,6 +436,7 @@ function Invoke-InstallProcess {
     $oldHome = [System.Environment]::GetEnvironmentVariable('HOME', [System.EnvironmentVariableTarget]::Process)
     $oldUserProfile = [System.Environment]::GetEnvironmentVariable('USERPROFILE', [System.EnvironmentVariableTarget]::Process)
     $oldCodexHome = [System.Environment]::GetEnvironmentVariable('CODEX_HOME', [System.EnvironmentVariableTarget]::Process)
+    $oldPath = [System.Environment]::GetEnvironmentVariable('PATH', [System.EnvironmentVariableTarget]::Process)
     $oldXdgCacheHome = [System.Environment]::GetEnvironmentVariable('XDG_CACHE_HOME', [System.EnvironmentVariableTarget]::Process)
     $oldXdgConfigHome = [System.Environment]::GetEnvironmentVariable('XDG_CONFIG_HOME', [System.EnvironmentVariableTarget]::Process)
     $oldXdgDataHome = [System.Environment]::GetEnvironmentVariable('XDG_DATA_HOME', [System.EnvironmentVariableTarget]::Process)
@@ -436,6 +446,7 @@ function Invoke-InstallProcess {
         [System.Environment]::SetEnvironmentVariable('HOME', $HomeDir, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('USERPROFILE', $HomeDir, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('CODEX_HOME', $CodexHome, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('PATH', "$(Join-Path $Repo 'bin')$([System.IO.Path]::PathSeparator)$oldPath", [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', (Join-Path $Workdir 'xdg-cache'), [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', (Join-Path $Workdir 'xdg-config'), [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', (Join-Path $Workdir 'xdg-data'), [System.EnvironmentVariableTarget]::Process)
@@ -454,6 +465,7 @@ function Invoke-InstallProcess {
         [System.Environment]::SetEnvironmentVariable('HOME', $oldHome, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('USERPROFILE', $oldUserProfile, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('CODEX_HOME', $oldCodexHome, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('PATH', $oldPath, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', $oldXdgCacheHome, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', $oldXdgConfigHome, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', $oldXdgDataHome, [System.EnvironmentVariableTarget]::Process)
@@ -850,7 +862,7 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         $installedHook = Join-Path $homeDir '.codex/hooks/load-required-skills.py'
         Assert-True -Condition (Test-Path -LiteralPath $installedHook -PathType Leaf) -Message "Expected the Codex required-skills hook to be installed."
         Assert-Equals -Expected (Read-FileContent (Join-Path $repo '.codex/hooks/load-required-skills.py')) -Actual (Read-FileContent $installedHook) -Message "Expected the installed Codex hook to match the maintained source."
-        foreach ($relative in @('scan-secrets.py', 'tool-guard.py', 'markdown-health.py', 'rtk-explicit-codex.py', 'rtk-agent-launcher.py', 'repository-state.py', 'helpers/common.py', 'helpers/audit.py')) {
+        foreach ($relative in @('scan-secrets.py', 'tool-guard.py', 'markdown-health.py', 'repository-state.py', 'helpers/common.py', 'helpers/audit.py')) {
             $installed = Join-Path (Join-Path $homeDir '.codex/hooks') $relative
             Assert-True -Condition (Test-Path -LiteralPath $installed -PathType Leaf) -Message "Expected Codex hook file $relative to be installed."
             Assert-Equals -Expected (Read-FileContent (Join-Path $repo ".codex/hooks/$relative")) -Actual (Read-FileContent $installed) -Message "Expected Codex hook file $relative to match source."
@@ -862,12 +874,7 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         $handler = $config['hooks']['SessionStart'][0]['hooks'][0]
         Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $handler['command'] -Message "Expected the Codex handler's POSIX command to target the installed hook."
         Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\load-required-skills.py"' -Actual $handler['commandWindows'] -Message "Expected the exact Windows Codex command."
-        $rtkCommand = $config['hooks']['PreToolUse'][0]['hooks'][0]['command']
-        Assert-Equals -Expected 'python3 ~/.codex/hooks/rtk-explicit-codex.py' -Actual $rtkCommand -Message 'Expected PreToolUse to register explicit RTK rewriting.'
-        Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\rtk-explicit-codex.py"' -Actual $config['hooks']['PreToolUse'][0]['hooks'][0]['commandWindows'] -Message 'Expected the Windows Codex RTK command to target the installed hook.'
-        $registeredRtkPath = Join-Path $homeDir $rtkCommand.Replace('python3 ~/', '')
-        Assert-True -Condition (Test-Path -LiteralPath $registeredRtkPath -PathType Leaf) -Message 'Expected the registered Codex RTK command to resolve to an installed file.'
-        $preCommands = @($config['hooks']['PreToolUse'][1]['hooks'] | ForEach-Object { $_['command'] })
+        $preCommands = @($config['hooks']['PreToolUse'][0]['hooks'] | ForEach-Object { $_['command'] })
         Assert-True -Condition ($preCommands -contains 'python3 ~/.codex/hooks/scan-secrets.py') -Message 'Expected PreToolUse to retain the maintained scanner.'
         Assert-True -Condition ($preCommands -contains 'python3 ~/.codex/hooks/tool-guard.py') -Message 'Expected Codex Tool Guardian registration.'
         $stopCommands = @($config['hooks']['Stop'][0]['hooks'] | ForEach-Object { $_['command'] })
@@ -876,7 +883,6 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
             $commands = @($config['hooks'][$event] | ForEach-Object { $_['hooks'] } | ForEach-Object { $_['command'] })
             Assert-True -Condition ($commands -contains 'python3 ~/.codex/hooks/markdown-health.py') -Message "Expected $event to use the Markdown hook."
         }
-        Assert-Equals -Expected 'python3 ~/.codex/hooks/rtk-explicit-codex.py' -Actual $config['hooks']['PreToolUse'][0]['hooks'][0]['command'] -Message 'Expected PreToolUse to register explicit RTK rewriting.'
         Assert-True -Condition (@($config['hooks']['PreToolUse'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -ceq 'python3 ~/.codex/hooks/scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one PreToolUse scanner registration.'
         Assert-True -Condition (@($config['hooks']['PreToolUse'] | Where-Object { $_['hooks'][0]['command'] -ceq 'python3 ~/.codex/hooks/repository-state.py' }).Count -eq 1) -Message 'Expected one repository-state guard registration.'
         Assert-True -Condition (@($config['hooks']['Stop'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -ceq 'python3 ~/.codex/hooks/scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one Stop scanner registration.'
@@ -891,10 +897,6 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
                 [System.IO.UnixFileMode]::OtherRead -bor
                 [System.IO.UnixFileMode]::OtherExecute
             Assert-Equals -Expected $expectedMode -Actual ([System.IO.File]::GetUnixFileMode($installedHook)) -Message "Expected the installed Codex hook to be executable with mode 755."
-            foreach ($relative in @('rtk-explicit-codex.py', 'rtk-agent-launcher.py')) {
-                $rtkInstalled = Join-Path $homeDir ".codex/hooks/$relative"
-                Assert-Equals -Expected $expectedMode -Actual ([System.IO.File]::GetUnixFileMode($rtkInstalled)) -Message "Expected installed Codex RTK file $relative to use mode 755."
-            }
             Assert-Equals -Expected $ownerOnly -Actual ([System.IO.File]::GetUnixFileMode($unrelatedHook)) -Message "Expected installation not to change unrelated Codex hook modes."
         }
     }

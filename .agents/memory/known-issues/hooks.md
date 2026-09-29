@@ -60,9 +60,9 @@ The repository-state guard sees provider tool arguments before execution. It can
 
 When RTK exits `0` with empty or whitespace-only stdout, return `({}, None)` instead of attempting JSON parsing.
 
-## Explicit RTK commands can show a misleading hook notice
+## Explicit RTK command notice
 
-RTK 0.49 can print `No hook installed` when an agent explicitly runs `rtk ...`, even when that command filters output. The provider RTK forwarders in `hooks/families/rtk.py` capture and discard subprocess stderr, so they do not directly display this notice. Diagnose the explicit CLI invocation before changing hook forwarding or suppressing hook errors.
+RTK 0.49 can print `No hook installed` when an agent explicitly runs `rtk ...`, even when that command filters output. Stable RTK 0.50.0 supports `hooks.suppress_hook_warning = true`; both installers set it in user config. The Copilot and Gemini forwarders still capture subprocess stderr and never display that notice directly. Diagnose explicit CLI behavior separately from automatic forwarding.
 
 ## PowerShell command paths need runtime-specific forms
 

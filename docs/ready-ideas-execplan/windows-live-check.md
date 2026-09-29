@@ -1,6 +1,6 @@
 # Windows validation and optional live-check procedure
 
-Planning revision, 2026-09-28. This describes the intended stable RTK and retained-hook design. Source and workflow still implement the former design until the revised ExecPlan is approved and its implementation milestones run. Do not count old repository-state, global Markdown Health, or prerelease RTK results as revised acceptance.
+Planning revision, 2026-09-28. This describes the intended stable RTK and retained-hook design. Milestone 17 source and workflow now use stable RTK; repository-state and global Markdown Health retirement and native Windows proof remain open. Do not count old repository-state, global Markdown Health, or prerelease RTK results as revised acceptance.
 
 Native Windows automation is required. A live Windows provider run is supplemental, not the completion gate. Separate Copilot CLI and Gemini CLI live milestones may run in another session with those CLIs available. The macOS high-rate performance audit runs hook scripts directly and has no CLI or Windows timing gate.
 

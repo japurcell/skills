@@ -23,6 +23,12 @@ create_fixture_repo() {
   cp -p "$REPO_ROOT/scripts/install.sh" "$repo/scripts/install.sh"
   cp -p "$REPO_ROOT/scripts/install-codex-agents.py" "$repo/scripts/install-codex-agents.py"
   cp -p "$REPO_ROOT/scripts/install-codex-hooks.py" "$repo/scripts/install-codex-hooks.py"
+  cp -p "$REPO_ROOT/scripts/configure-rtk.py" "$repo/scripts/configure-rtk.py"
+  mkdir -p "$repo/bin"
+  printf '%s\n' '#!/bin/sh' 'printf "rtk 0.50.0\\n"' > "$repo/bin/rtk"
+  chmod 755 "$repo/bin/rtk"
+  PATH="$repo/bin:$PATH"
+  export PATH
   cp -p "$REPO_ROOT/.codex/global-hooks.json" "$repo/.codex/global-hooks.json"
   cp -p "$REPO_ROOT/.codex/AGENTS.md" "$repo/.codex/AGENTS.md"
   cp -p "$REPO_ROOT/.codex/hooks/load-required-skills.py" "$repo/.codex/hooks/load-required-skills.py"
@@ -339,7 +345,7 @@ test_installs_codex_hook_and_global_configuration() {
     echo "Expected the Codex required-skills hook to be installed and executable." >&2
     exit 1
   fi
-  for installed in scan-secrets.py tool-guard.py markdown-health.py rtk-explicit-codex.py rtk-agent-launcher.py repository-state.py helpers/common.py helpers/audit.py; do
+  for installed in scan-secrets.py tool-guard.py markdown-health.py repository-state.py helpers/common.py helpers/audit.py; do
     if [[ ! -x "$home/.codex/hooks/$installed" ]]; then
       echo "Expected maintained Codex hook to be installed and executable: $installed" >&2
       exit 1
@@ -366,12 +372,7 @@ handler = groups[0]["hooks"][0]
 assert handler["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
 assert handler["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
 pre_tool = config["hooks"]["PreToolUse"]
-assert pre_tool[0]["hooks"][0]["command"] == "python3 ~/.codex/hooks/rtk-explicit-codex.py"
-assert pre_tool[0]["hooks"][0]["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\rtk-explicit-codex.py"'
-registered = pre_tool[0]["hooks"][0]["command"].removeprefix("python3 ~/")
-assert (Path(sys.argv[2]) / registered).is_file()
-assert (Path(sys.argv[2]) / ".codex/hooks/rtk-agent-launcher.py").is_file()
-pre_commands = [hook["command"] for hook in pre_tool[1]["hooks"]]
+pre_commands = [hook["command"] for hook in pre_tool[0]["hooks"]]
 assert "python3 ~/.codex/hooks/scan-secrets.py" in pre_commands
 assert "python3 ~/.codex/hooks/tool-guard.py" in pre_commands
 stop_commands = [hook["command"] for hook in config["hooks"]["Stop"][0]["hooks"]]

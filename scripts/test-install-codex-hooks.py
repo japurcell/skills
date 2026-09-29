@@ -47,6 +47,8 @@ def main() -> None:
                      "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'},
                     {"type": "command", "command": "python3 ~/.codex/hooks/scan-secrets.py",
                      "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'},
+                    {"type": "command", "command": "python3 ~/.codex/hooks/rtk-explicit-codex.py",
+                     "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\rtk-explicit-codex.py"'},
                 ]}],
                 "Stop": [{"hooks": [{"type": "command", "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-secrets.py\""}]}],
                 "SessionStart": [{"hooks": [{"type": "command", "command": "echo unrelated"}]}],
@@ -59,6 +61,7 @@ def main() -> None:
         assert merged["custom"] == original["custom"]
         assert merged["hooks"]["PreToolUse"][0]["custom"] == "keep"
         assert merged["hooks"]["PreToolUse"][0]["hooks"] == original["hooks"]["PreToolUse"][0]["hooks"][:3]
+        assert "rtk-explicit-codex.py" not in destination.read_text(encoding="utf-8")
         for event in ("SessionStart", "PreToolUse", "Stop"):
             for group in maintained["hooks"][event]:
                 for handler in group["hooks"]:

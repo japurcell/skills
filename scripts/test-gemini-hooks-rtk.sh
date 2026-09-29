@@ -502,7 +502,6 @@ required = [
     'python "$HOME/.gemini/hooks/scripts/tool-guard.py"',
     'python "$HOME/.gemini/hooks/scripts/scan-secrets.py"',
     'python "$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py"',
-    'python "$HOME/.gemini/hooks/scripts/rtk-explicit-gemini.py"',
 ]
 positions = [commands.index(command) for command in required]
 assert positions == sorted(positions), "Expected Markdown, observability, security, and RTK handlers in order."

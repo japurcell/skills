@@ -12,7 +12,7 @@
 
 ## RTK (Rust Token Killer) - Token-Optimized Commands
 
-For explicit RTK commands that a pre-tool hook cannot safely rewrite, after the verified side-by-side prerelease is installed, invoke `python3 "$HOME/.copilot/hooks/scripts/rtk-agent-launcher.py" <rtk-args>` in a POSIX shell or `python "$HOME/.copilot/hooks/scripts/rtk-agent-launcher.py" <rtk-args>` in PowerShell. This scopes the false-notice suppression to that child. Keep ordinary terminal `rtk` unchanged.
+Use stable RTK 0.50.0 or newer for explicit `rtk` commands. The installer sets `[hooks] suppress_hook_warning = true` in the user's RTK config, so the false missing-hook advisory is suppressed while other diagnostics remain visible.
 
 When authoring a PowerShell script, use Copilot's native file-create or file-edit tool to create the complete script as a saved file, then execute that saved file.
 
@@ -91,3 +91,7 @@ Examples of commands that may need to run without `rtk`:
 dotnet format
 oxfmt
 ```
+
+## Gotchas
+
+- File-first PowerShell authoring: For a complete multiline `.ps1` or reusable automation script, use Copilot's native file-create or file-edit tool to create the complete script as a saved file, then execute that saved file. Short, non-script one-line shell commands are allowed.

@@ -12,12 +12,13 @@ readonly GEMINI_GLOBAL_SETTINGS_SRC="${REPO_ROOT}/.gemini/global-settings.json"
 readonly COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
 readonly COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
 readonly CODEX_HOOK_SRC_DIR="${REPO_ROOT}/.codex/hooks"
-readonly CODEX_HOOK_FILES=(load-required-skills.py scan-secrets.py tool-guard.py markdown-health.py rtk-explicit-codex.py rtk-agent-launcher.py repository-state.py helpers/common.py helpers/audit.py)
+readonly CODEX_HOOK_FILES=(load-required-skills.py scan-secrets.py tool-guard.py markdown-health.py repository-state.py helpers/common.py helpers/audit.py)
 readonly CODEX_INSTRUCTIONS_SRC="${REPO_ROOT}/.codex/AGENTS.md"
 readonly CODEX_HOOK_TEMPLATE_SRC="${REPO_ROOT}/.codex/global-hooks.json"
 readonly CODEX_HOOK_MERGER="${REPO_ROOT}/scripts/install-codex-hooks.py"
 readonly CODEX_AGENT_INSTALLER="${REPO_ROOT}/scripts/install-codex-agents.py"
 readonly GENERATE_HOOKS="${REPO_ROOT}/scripts/generate-hooks.py"
+readonly CONFIGURE_RTK="${REPO_ROOT}/scripts/configure-rtk.py"
 readonly CANONICAL_HOOKS_SRC="${REPO_ROOT}/hooks"
 
 readonly SKILLS_DEST="${HOME}/.agents/skills"
@@ -145,9 +146,11 @@ for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC" "$GEMINI_GLOBAL_SETTIN
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
-for src in "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$GENERATE_HOOKS"; do
+for src in "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$GENERATE_HOOKS" "$CONFIGURE_RTK"; do
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
+
+python3 "$CONFIGURE_RTK" --home "$HOME" --check
 for hook in "${CODEX_HOOK_FILES[@]}"; do
   [[ -f "$CODEX_HOOK_SRC_DIR/$hook" ]] || { echo "Missing source file: $CODEX_HOOK_SRC_DIR/$hook" >&2; exit 1; }
 done
@@ -167,6 +170,7 @@ else
   exit "$status"
 fi
 
+python3 "$CONFIGURE_RTK" --home "$HOME"
 python3 "$CODEX_AGENT_INSTALLER" --source-dir "$AGENTS_SRC" --destination-dir "$CODEX_AGENTS_DEST"
 
 mkdir -p "$SKILLS_DEST" "$COPILOT_DEST" "$GEMINI_DEST" "$AGENTS_DEST" "$COPILOT_AGENTS_DEST"
