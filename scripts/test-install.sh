@@ -29,6 +29,7 @@ create_fixture_repo() {
   chmod 755 "$repo/bin/rtk"
   PATH="$repo/bin:$PATH"
   export PATH
+  cp -p "$REPO_ROOT/scripts/install-provider-hooks.py" "$repo/scripts/install-provider-hooks.py"
   cp -p "$REPO_ROOT/.codex/global-hooks.json" "$repo/.codex/global-hooks.json"
   cp -p "$REPO_ROOT/.codex/AGENTS.md" "$repo/.codex/AGENTS.md"
   cp -p "$REPO_ROOT/.codex/hooks/load-required-skills.py" "$repo/.codex/hooks/load-required-skills.py"
@@ -44,6 +45,7 @@ create_fixture_repo() {
   cp -p "$REPO_ROOT/.copilot/copilot-instructions.md" "$repo/.copilot/copilot-instructions.md"
   printf '%s\n' '{}' > "$repo/.copilot/lsp-config.json"
   printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.copilot/hooks/test-hook.sh"
+  printf '%s\n' '{"version":1,"hooks":{"preToolUse":[{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"}]}}' > "$repo/.copilot/hooks/hooks.json"
   printf '%s\n' '{"global":"settings"}' > "$repo/.gemini/global-settings.json"
   printf '%s\n' '{"local":"settings"}' > "$repo/.gemini/settings.json"
 
@@ -80,6 +82,115 @@ for target in targets():
     shutil.copy2(source, destination)
     os.chmod(destination, target.mode)
 PY
+}
+
+test_provider_refresh_preserves_retired_and_user_entries() {
+  local workdir repo home first second
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+  # Model the pending provider retirements in this disposable checkout only.
+  python3 - "$repo" <<'PY'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+manifest = root / 'hooks/manifest.py'
+lines = manifest.read_text().splitlines(keepends=True)
+manifest.write_text(''.join(line for line in lines if not ('GeneratedTarget(' in line and ('"repository_state"' in line or '"markdown_health"' in line) and ('"copilot"' in line or '"gemini"' in line))))
+for provider in ('copilot', 'gemini'):
+    for name in ('repository-state.py', 'markdown-health.py'):
+        (root / f'.{provider}/hooks/scripts/{name}').unlink(missing_ok=True)
+PY
+  printf '%s\n' '{"general":{"enableAutoUpdate":false},"hooks":{"BeforeTool":[{"hooks":[{"command":"python \"$HOME/.gemini/hooks/scripts/tool-guard.py\""}]}]}}' > "$repo/.gemini/global-settings.json"
+  mkdir -p "$home/.copilot/hooks" "$home/.gemini"
+  cat > "$home/.copilot/hooks/hooks.json" <<'EOF'
+{"version":1,"userSetting":{"keep":true},"hooks":{"preToolUse":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/repository-state.py\"","powershell":"python \"$HOME/.copilot/hooks/scripts/repository-state.py\"","timeoutSec":17},{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"},{"type":"command","bash":"echo custom"}],"agentStop":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}},{"type":"command","bash":"echo unrelated"}]}}
+EOF
+  cat > "$home/.gemini/settings.json" <<'EOF'
+{"general":{"enableAutoUpdate":true,"custom":42},"userSetting":{"keep":true},"hooks":{"BeforeTool":[{"matcher":"legacy","hooks":[{"name":"repository-state","type":"command","command":"python \"$HOME/.gemini/hooks/scripts/repository-state.py\"","timeout":17000},{"command":"echo custom"}]}],"AfterAgent":[{"hooks":[{"name":"markdown-health","command":"python \"$HOME/.gemini/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}}]}]}}
+EOF
+  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+  python3 - "$home" <<'PY'
+import json
+import os
+import stat
+import sys
+from pathlib import Path
+home = Path(sys.argv[1])
+copilot = json.loads((home / '.copilot/hooks/hooks.json').read_text())
+gemini = json.loads((home / '.gemini/settings.json').read_text())
+if os.name != 'nt':
+    for path in (home / '.copilot/hooks/hooks.json', home / '.gemini/settings.json'):
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+pre = copilot['hooks']['preToolUse']
+assert copilot['userSetting'] == {'keep': True}, copilot
+assert pre[0] == {'type': 'command', 'bash': 'python3 "$HOME/.copilot/hooks/scripts/repository-state.py"', 'powershell': 'python "$HOME/.copilot/hooks/scripts/repository-state.py"', 'timeoutSec': 17}, pre
+assert sum('tool-guard.py' in item.get('bash', '') for item in pre) == 1
+assert {'type': 'command', 'bash': 'echo custom'} in pre
+assert copilot['hooks']['agentStop'][0]['env'] == {'MARKDOWN_HEALTH_EVENT': 'final'}
+assert copilot['hooks']['agentStop'][1]['bash'] == 'echo unrelated'
+assert gemini['general'] == {'enableAutoUpdate': False, 'custom': 42}
+assert gemini['userSetting'] == {'keep': True}
+assert gemini['hooks']['BeforeTool'][0] == {'matcher': 'legacy', 'hooks': [{'name': 'repository-state', 'type': 'command', 'command': 'python "$HOME/.gemini/hooks/scripts/repository-state.py"', 'timeout': 17000}, {'command': 'echo custom'}]}
+assert gemini['hooks']['AfterAgent'][0]['hooks'][0] == {'name': 'markdown-health', 'command': 'python "$HOME/.gemini/hooks/scripts/markdown-health.py"', 'env': {'MARKDOWN_HEALTH_EVENT': 'final'}}
+PY
+  first="$(tree_fingerprint "$home")"
+  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+  second="$(tree_fingerprint "$home")"
+  assert_equals "$first" "$second" "Expected repeated provider refresh to be idempotent."
+  rm -rf -- "$home"
+  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+  python3 - "$home" <<'PY'
+import json
+import sys
+from pathlib import Path
+home = Path(sys.argv[1])
+for path in (home / '.copilot/hooks/hooks.json', home / '.gemini/settings.json'):
+    text = path.read_text()
+    assert 'repository-state.py' not in text and 'markdown-health.py' not in text
+assert not (home / '.copilot/hooks/scripts/repository-state.py').exists()
+assert not (home / '.gemini/hooks/scripts/markdown-health.py').exists()
+PY
+}
+
+test_provider_malformed_json_stops_before_mutation() {
+  local workdir repo home before after
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+  mkdir -p "$home/.copilot/hooks" "$home/.gemini" "$home/.agents/skills"
+  printf '%s\n' 'sentinel' > "$home/.agents/skills/sentinel"
+  printf '%s\n' '{"hooks":[],"hooks":{}}' > "$home/.copilot/hooks/hooks.json"
+  printf '%s\n' '{"userSetting":true}' > "$home/.gemini/settings.json"
+  before="$(tree_fingerprint "$home")"
+  if HOME="$home" bash "$repo/scripts/install.sh" >"$workdir/out" 2>"$workdir/err"; then
+    echo "Expected ambiguous Copilot JSON to stop installation." >&2
+    exit 1
+  fi
+  after="$(tree_fingerprint "$home")"
+  assert_equals "$before" "$after" "Expected malformed provider JSON to stop before home mutation."
+  printf '%s\n' '{"hooks":{}}' > "$home/.copilot/hooks/hooks.json"
+  printf '%s\n' '{bad' > "$home/.gemini/settings.json"
+  before="$(tree_fingerprint "$home")"
+  if HOME="$home" bash "$repo/scripts/install.sh" >"$workdir/out" 2>"$workdir/err"; then
+    echo "Expected malformed Gemini JSON to stop installation." >&2
+    exit 1
+  fi
+  after="$(tree_fingerprint "$home")"
+  assert_equals "$before" "$after" "Expected malformed Gemini JSON to stop before home mutation."
+  printf '%s\n' '{"hooks":{"preToolUse":[{"bash":"$HOME/.copilot/hooks/scripts/repository-state.py","powershell":"$HOME/.copilot/hooks/scripts/markdown-health.py"}]}}' > "$home/.copilot/hooks/hooks.json"
+  printf '%s\n' '{"hooks":{}}' > "$home/.gemini/settings.json"
+  before="$(tree_fingerprint "$home")"
+  if HOME="$home" bash "$repo/scripts/install.sh" >"$workdir/out" 2>"$workdir/err"; then
+    echo "Expected ambiguous retired commands to stop installation." >&2
+    exit 1
+  fi
+  after="$(tree_fingerprint "$home")"
+  assert_equals "$before" "$after" "Expected ambiguous retired commands to stop before home mutation."
 }
 
 generated_rtk_output_path() {
@@ -773,7 +884,12 @@ test_copies_full_gemini_tree() {
   assert_equals "Nested policy." "$copied_policy" "Expected nested Gemini files to be copied recursively."
   assert_equals "Hidden note." "$copied_hidden" "Expected hidden Gemini files to be copied recursively."
   assert_equals $'#!/bin/bash\necho hook' "$copied_hook" "Expected hooks to be copied into ~/.copilot/hooks."
-  assert_equals '{"global":"settings"}' "$copied_global_settings" "Expected global Gemini settings to overwrite repo-local settings during install."
+  python3 - "$home/.gemini/settings.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+assert json.loads(Path(sys.argv[1]).read_text()) == {'global': 'settings'}
+PY
   assert_equals "$(<"$repo/.copilot/copilot-instructions.md")" "$(<"$home/.copilot/copilot-instructions.md")" "Expected Copilot instructions to be copied into ~/.copilot."
   if [[ "$(<"$home/.copilot/copilot-instructions.md")" != *"use Copilot's native file-create or file-edit tool to create the complete script as a saved file, then execute that saved file."* ]]; then
     echo "Expected installed Copilot guidance to require file-first PowerShell authoring." >&2
@@ -792,6 +908,8 @@ test_copies_full_gemini_tree() {
 }
 
 main() {
+  test_provider_refresh_preserves_retired_and_user_entries
+  test_provider_malformed_json_stops_before_mutation
   test_fresh_generated_hooks_preflight_installs_without_bytecode
   test_stale_generated_hooks_stop_before_destination_mutation
   test_generator_failure_stops_before_destination_mutation

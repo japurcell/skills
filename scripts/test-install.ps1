@@ -171,6 +171,7 @@ function New-FixtureRepo {
         Write-FixtureFile (Join-Path $bin 'rtk') @('#!/bin/sh', 'printf "rtk 0.50.0\n"')
         [System.IO.File]::SetUnixFileMode((Join-Path $bin 'rtk'), ([System.IO.UnixFileMode]::UserRead -bor [System.IO.UnixFileMode]::UserWrite -bor [System.IO.UnixFileMode]::UserExecute))
     }
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-provider-hooks.py') -Destination (Join-Path $Repo 'scripts/install-provider-hooks.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/global-hooks.json') -Destination (Join-Path $Repo '.codex/global-hooks.json') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/AGENTS.md') -Destination (Join-Path $Repo '.codex/AGENTS.md') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/hooks/load-required-skills.py') -Destination (Join-Path $Repo '.codex/hooks/load-required-skills.py') -Force
@@ -204,6 +205,7 @@ function New-FixtureRepo {
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.copilot/copilot-instructions.md') -Destination (Join-Path $Repo '.copilot/copilot-instructions.md') -Force
     Write-FixtureFile (Join-Path $Repo '.copilot/lsp-config.json') @('{}')
     Write-FixtureFile (Join-Path $Repo '.copilot/hooks/test-hook.sh') @('#!/bin/bash', 'echo hook')
+    Write-FixtureFile (Join-Path $Repo '.copilot/hooks/hooks.json') @('{"version":1,"hooks":{"preToolUse":[{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"}]}}')
     Write-FixtureFile (Join-Path $Repo '.gemini/global-settings.json') @('{"global":"settings"}')
     Write-FixtureFile (Join-Path $Repo '.gemini/settings.json') @('{"local":"settings"}')
     Write-FixtureFile (Join-Path $Repo '.gemini/hooks/scripts/test-hook.py') @('print("hook")')
@@ -694,11 +696,11 @@ function Test-FixedNameHardLinkHandling {
         $installedSettingsPath = Join-Path $homeDir '.gemini/settings.json'
         $installed = Get-Item -Force -LiteralPath $installedSettingsPath
         Assert-Equals -Expected '' -Actual $installed.LinkType -Message "Expected the fixed-name hard-linked file to install as a regular file, not a preserved hard link."
-        Assert-Equals -Expected '{"global":"hardlink-settings"}' -Actual (Read-FileContent $installedSettingsPath) -Message "Expected the installed settings.json to keep the hard-linked source content."
+        Assert-Equals -Expected 'hardlink-settings' -Actual ((Get-Content -LiteralPath $installedSettingsPath -Raw | ConvertFrom-Json -AsHashtable)['global']) -Message "Expected installed settings to retain the hard-linked source value."
         Assert-True -Condition (([int]$installed.Attributes -band [int][System.IO.FileAttributes]::ReparsePoint) -eq 0) -Message "Expected the installed settings.json to be a regular file."
         if (-not $IsWindows) {
-            $targetMode = [System.IO.File]::GetUnixFileMode($hardLinkSource)
-            Assert-Equals -Expected $targetMode -Actual ([System.IO.File]::GetUnixFileMode($installedSettingsPath)) -Message "Expected the installed settings.json to keep the hard-linked source file mode."
+            $ownerOnly = [System.IO.UnixFileMode]::UserRead -bor [System.IO.UnixFileMode]::UserWrite
+            Assert-Equals -Expected $ownerOnly -Actual ([System.IO.File]::GetUnixFileMode($installedSettingsPath)) -Message "Expected merged settings.json to be owner-only."
         }
     }
     finally {
@@ -773,13 +775,114 @@ function Test-CopiesFullGeminiTree {
         Assert-Equals -Expected "Nested policy." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/policies/plan-custom-directory.toml')) -Message "Expected nested Gemini files to be copied recursively."
         Assert-Equals -Expected "Hidden note." -Actual (Read-FileContent (Join-Path $homeDir '.gemini/.hidden-note')) -Message "Expected hidden Gemini files to be copied recursively."
         Assert-Equals -Expected "#!/bin/bash`necho hook" -Actual (Read-FileContent (Join-Path $homeDir '.copilot/hooks/test-hook.sh')) -Message "Expected hooks to be copied into ~/.copilot/hooks."
-        Assert-Equals -Expected '{"global":"settings"}' -Actual (Read-FileContent (Join-Path $homeDir '.gemini/settings.json')) -Message "Expected global Gemini settings to overwrite repo-local settings during install."
+        Assert-Equals -Expected 'settings' -Actual ((Get-Content -LiteralPath (Join-Path $homeDir '.gemini/settings.json') -Raw | ConvertFrom-Json -AsHashtable)['global']) -Message "Expected global Gemini settings to determine the installed setting."
 
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.gemini/.gemini'))) -Message "Expected the installer to copy Gemini contents into ~/.gemini, not nest another .gemini directory."
     }
     finally {
         Remove-Workdir $workdir
     }
+}
+
+function Set-PostRetirementFixture {
+    param([string]$Repo)
+
+    $manifest = Join-Path $Repo 'hooks/manifest.py'
+    @(Get-Content -LiteralPath $manifest | Where-Object {
+        -not ($_.Contains('GeneratedTarget(') -and
+            ($_.Contains('"repository_state"') -or $_.Contains('"markdown_health"')) -and
+            ($_.Contains('"copilot"') -or $_.Contains('"gemini"')))
+    }) | Set-Content -LiteralPath $manifest
+    foreach ($provider in @('copilot', 'gemini')) {
+        foreach ($name in @('repository-state.py', 'markdown-health.py')) {
+            Remove-Item -LiteralPath (Join-Path $Repo ".$provider/hooks/scripts/$name") -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Test-ProviderRefreshPreservesRetiredAndUserEntries {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        New-FixtureRepo $repo
+        Set-PostRetirementFixture $repo
+        Write-FixtureFile (Join-Path $repo '.gemini/global-settings.json') @('{"general":{"enableAutoUpdate":false},"hooks":{"BeforeTool":[{"hooks":[{"command":"python \"$HOME/.gemini/hooks/scripts/tool-guard.py\""}]}]}}')
+        $copilotPath = Join-Path $homeDir '.copilot/hooks/hooks.json'
+        $geminiPath = Join-Path $homeDir '.gemini/settings.json'
+        Write-FixtureFile $copilotPath @('{"version":1,"userSetting":{"keep":true},"hooks":{"preToolUse":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/repository-state.py\"","powershell":"python \"$HOME/.copilot/hooks/scripts/repository-state.py\"","timeoutSec":17},{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"},{"type":"command","bash":"echo custom"}],"agentStop":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}},{"type":"command","bash":"echo unrelated"}]}}')
+        Write-FixtureFile $geminiPath @('{"general":{"enableAutoUpdate":true,"custom":42},"userSetting":{"keep":true},"hooks":{"BeforeTool":[{"matcher":"legacy","hooks":[{"name":"repository-state","type":"command","command":"python \"$HOME/.gemini/hooks/scripts/repository-state.py\"","timeout":17000},{"command":"echo custom"}]}],"AfterAgent":[{"hooks":[{"name":"markdown-health","command":"python \"$HOME/.gemini/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}}]}]}}')
+
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        $copilot = Get-Content -LiteralPath $copilotPath -Raw | ConvertFrom-Json -AsHashtable
+        $gemini = Get-Content -LiteralPath $geminiPath -Raw | ConvertFrom-Json -AsHashtable
+        if (-not $IsWindows) {
+            $ownerOnly = [System.IO.UnixFileMode]::UserRead -bor [System.IO.UnixFileMode]::UserWrite
+            foreach ($path in @($copilotPath, $geminiPath)) {
+                Assert-Equals -Expected $ownerOnly -Actual ([System.IO.File]::GetUnixFileMode($path)) -Message 'Expected merged provider JSON to be owner-only.'
+            }
+        }
+        Assert-True -Condition $copilot['userSetting']['keep'] -Message 'Expected unrelated Copilot settings to survive refresh.'
+        Assert-Equals -Expected 17 -Actual $copilot['hooks']['preToolUse'][0]['timeoutSec'] -Message 'Expected the exact old Copilot repository-state registration.'
+        Assert-Equals -Expected 'echo custom' -Actual $copilot['hooks']['preToolUse'][1]['bash'] -Message 'Expected custom Copilot hook to survive.'
+        Assert-Equals -Expected 1 -Actual @($copilot['hooks']['preToolUse'] | Where-Object { $_['bash'] -clike '*tool-guard.py' }).Count -Message 'Expected one maintained Copilot handler.'
+        Assert-Equals -Expected 'final' -Actual $copilot['hooks']['agentStop'][0]['env']['MARKDOWN_HEALTH_EVENT'] -Message 'Expected old Copilot Markdown Health registration.'
+        Assert-Equals -Expected 'echo unrelated' -Actual $copilot['hooks']['agentStop'][1]['bash'] -Message 'Expected unrelated Copilot stop handler.'
+        Assert-Equals -Expected $false -Actual $gemini['general']['enableAutoUpdate'] -Message 'Expected maintained Gemini setting to update.'
+        Assert-Equals -Expected 42 -Actual $gemini['general']['custom'] -Message 'Expected unrelated nested Gemini setting.'
+        Assert-True -Condition $gemini['userSetting']['keep'] -Message 'Expected unrelated Gemini settings.'
+        Assert-Equals -Expected 17000 -Actual $gemini['hooks']['BeforeTool'][0]['hooks'][0]['timeout'] -Message 'Expected exact old Gemini repository-state registration.'
+        Assert-Equals -Expected 'echo custom' -Actual $gemini['hooks']['BeforeTool'][0]['hooks'][1]['command'] -Message 'Expected custom Gemini hook in the same group.'
+        Assert-Equals -Expected 'final' -Actual $gemini['hooks']['AfterAgent'][0]['hooks'][0]['env']['MARKDOWN_HEALTH_EVENT'] -Message 'Expected old Gemini Markdown Health registration.'
+
+        $beforeSecond = Get-TreeFingerprint $homeDir
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals -Expected $beforeSecond -Actual (Get-TreeFingerprint $homeDir) -Message 'Expected provider refresh to be idempotent.'
+
+        $freshHome = Join-Path $workdir 'fresh-home'
+        Invoke-Install -Repo $repo -HomeDir $freshHome -Workdir $workdir
+        foreach ($path in @((Join-Path $freshHome '.copilot/hooks/hooks.json'), (Join-Path $freshHome '.gemini/settings.json'))) {
+            $content = Get-Content -LiteralPath $path -Raw
+            Assert-True -Condition (-not $content.Contains('repository-state.py') -and -not $content.Contains('markdown-health.py')) -Message 'Expected no retired registration in fresh provider config.'
+        }
+        foreach ($provider in @('copilot', 'gemini')) {
+            foreach ($name in @('repository-state.py', 'markdown-health.py')) {
+                Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $freshHome ".$provider/hooks/scripts/$name"))) -Message 'Expected no retired script in fresh provider install.'
+            }
+        }
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-ProviderMalformedJsonStopsBeforeMutation {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        New-FixtureRepo $repo
+        Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
+        $copilotPath = Join-Path $homeDir '.copilot/hooks/hooks.json'
+        $geminiPath = Join-Path $homeDir '.gemini/settings.json'
+        Write-FixtureFile $copilotPath @('{"hooks":[],"hooks":{}}')
+        Write-FixtureFile $geminiPath @('{"userSetting":true}')
+        $before = Get-TreeFingerprint $homeDir
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals -Expected 1 -Actual $result.ExitCode -Message 'Expected duplicate Copilot JSON key to fail preflight.'
+        Assert-Equals -Expected $before -Actual (Get-TreeFingerprint $homeDir) -Message 'Expected failed Copilot preflight to leave home untouched.'
+        Write-FixtureFile $copilotPath @('{"hooks":{}}')
+        Write-FixtureFile $geminiPath @('{bad')
+        $before = Get-TreeFingerprint $homeDir
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals -Expected 1 -Actual $result.ExitCode -Message 'Expected malformed Gemini JSON to fail preflight.'
+        Assert-Equals -Expected $before -Actual (Get-TreeFingerprint $homeDir) -Message 'Expected failed Gemini preflight to leave home untouched.'
+        Write-FixtureFile $copilotPath @('{"hooks":{"preToolUse":[{"bash":"$HOME/.copilot/hooks/scripts/repository-state.py","powershell":"$HOME/.copilot/hooks/scripts/markdown-health.py"}]}}')
+        Write-FixtureFile $geminiPath @('{"hooks":{}}')
+        $before = Get-TreeFingerprint $homeDir
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals -Expected 1 -Actual $result.ExitCode -Message 'Expected ambiguous retired commands to fail preflight.'
+        Assert-Equals -Expected $before -Actual (Get-TreeFingerprint $homeDir) -Message 'Expected ambiguous retired commands to leave home untouched.'
+    }
+    finally { Remove-Workdir $workdir }
 }
 
 function Test-InstalledHooksAreExecutable {
@@ -1146,6 +1249,8 @@ function Test-MissingSourceFails {
 }
 
 Test-FreshGeneratedHooksPreflightInstallsWithoutBytecode
+Test-ProviderRefreshPreservesRetiredAndUserEntries
+Test-ProviderMalformedJsonStopsBeforeMutation
 Test-StaleGeneratedHooksStopBeforeDestinationMutation
 Test-GeneratorFailureStopsBeforeDestinationMutation
 Test-ExcludesAndPrunesSkillEvals

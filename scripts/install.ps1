@@ -36,8 +36,10 @@ $SkillsSrc = Join-Path $RepoRoot 'skills'
 $AgentsSrc = Join-Path $RepoRoot 'agents'
 $ReferencesSrc = Join-Path $RepoRoot 'references'
 $HooksSrc = Join-Path $RepoRoot '.copilot/hooks'
+$CopilotHookTemplateSrc = Join-Path $HooksSrc 'hooks.json'
 $GeminiSrc = Join-Path $RepoRoot '.gemini'
 $GeminiGlobalSettingsSrc = Join-Path $RepoRoot '.gemini/global-settings.json'
+$ProviderHookMergerSrc = Join-Path $RepoRoot 'scripts/install-provider-hooks.py'
 $CopilotInstructionsSrc = Join-Path $RepoRoot '.copilot/copilot-instructions.md'
 $CopilotLspSrc = Join-Path $RepoRoot '.copilot/lsp-config.json'
 $CodexHookSrcDir = Join-Path $RepoRoot '.codex/hooks'
@@ -57,6 +59,8 @@ $CopilotDest = Join-Path $HOME '.copilot'
 $AgentsDest = Join-Path $GeminiDest 'agents'
 $CopilotAgentsDest = Join-Path $CopilotDest 'agents'
 $HooksDest = Join-Path $CopilotDest 'hooks'
+$CopilotHookConfigDest = Join-Path $HooksDest 'hooks.json'
+$GeminiSettingsDest = Join-Path $GeminiDest 'settings.json'
 $CodexDest = Join-Path $HOME '.codex'
 $CodexHooksDest = Join-Path $CodexDest 'hooks'
 $CodexHookConfigDest = Join-Path $CodexDest 'hooks.json'
@@ -280,14 +284,16 @@ function Copy-References {
 }
 
 function Copy-Hooks {
-    Copy-DirectoryContents -Source $HooksSrc -Destination $HooksDest
+    Get-ChildItem -Force -Path $HooksSrc |
+        Where-Object { $_.Name -cne 'hooks.json' } |
+        ForEach-Object { Copy-Entry -Entry $_ -DestinationDir $HooksDest }
     Set-CopiedFileModes -Source $HooksSrc -Destination $HooksDest
     Set-HookScriptsExecutable -Root $HooksDest
 }
 
 function Copy-Gemini {
     Get-ChildItem -Force -Path $GeminiSrc |
-        Where-Object { $_.Name -cne 'hooks' } |
+        Where-Object { $_.Name -cne 'hooks' -and $_.Name -cne 'global-settings.json' -and $_.Name -cne 'settings.json' } |
         ForEach-Object { Copy-Entry -Entry $_ -DestinationDir $GeminiDest }
 
     $geminiHooksSrc = Join-Path $GeminiSrc 'hooks'
@@ -297,8 +303,6 @@ function Copy-Gemini {
         Where-Object { $_.Name -cne 'logs' } |
         ForEach-Object { Copy-Entry -Entry $_ -DestinationDir $geminiHooksDest }
 
-    Remove-IfExists (Join-Path $GeminiDest 'global-settings.json')
-    Remove-IfExists (Join-Path $GeminiDest 'settings.json')
     Set-CopiedFileModes -Source $GeminiSrc -Destination $GeminiDest
     Set-HookScriptsExecutable -Root (Join-Path $GeminiDest 'hooks')
 }
@@ -331,7 +335,13 @@ function Copy-FileTo {
 }
 
 function Copy-GeminiGlobalSettings {
-    Copy-FileTo -Source $GeminiGlobalSettingsSrc -Destination (Join-Path $GeminiDest 'settings.json')
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider gemini --template $GeminiGlobalSettingsSrc --destination $GeminiSettingsDest
+    if ($LASTEXITCODE -ne 0) { Fail "Gemini settings merger exited with code $LASTEXITCODE." }
+}
+
+function Install-CopilotHookConfig {
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider copilot --template $CopilotHookTemplateSrc --destination $CopilotHookConfigDest
+    if ($LASTEXITCODE -ne 0) { Fail "Copilot hooks merger exited with code $LASTEXITCODE." }
 }
 
 function Copy-CopilotInstructions {
@@ -398,7 +408,7 @@ foreach ($src in @($SkillsSrc, $AgentsSrc, $GeminiSrc, $CanonicalHooksSrc)) {
     }
 }
 
-foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSettingsSrc)) {
+foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSettingsSrc, $CopilotHookTemplateSrc, $ProviderHookMergerSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
     }
@@ -441,6 +451,14 @@ if ($preflightExitCode -ne 0) {
     exit $preflightExitCode
 }
 
+foreach ($config in @(
+    @{ Provider = 'copilot'; Template = $CopilotHookTemplateSrc; Destination = $CopilotHookConfigDest },
+    @{ Provider = 'gemini'; Template = $GeminiGlobalSettingsSrc; Destination = $GeminiSettingsDest }
+)) {
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider $config.Provider --template $config.Template --destination $config.Destination --check
+    if ($LASTEXITCODE -ne 0) { Fail "$($config.Provider) configuration preflight exited with code $LASTEXITCODE." }
+}
+
 & $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME
 if ($LASTEXITCODE -ne 0) { Fail "RTK configuration exited with code $LASTEXITCODE." }
 & $pythonCommand.Path @($pythonCommand.Arguments) $CodexAgentInstallerSrc --source-dir $AgentsSrc --destination-dir $CodexAgentsDest
@@ -462,6 +480,7 @@ if (Test-Path -LiteralPath $HooksSrc) {
     New-Item -ItemType Directory -Path $HooksDest -Force | Out-Null
     Copy-Hooks
 }
+Install-CopilotHookConfig
 Copy-Gemini
 Copy-GeminiGlobalSettings
 Copy-CopilotInstructions

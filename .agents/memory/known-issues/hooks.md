@@ -92,6 +92,10 @@ In CLI 1.0.88, a successful `systemMessage` in ordinary `preToolUse`, `postToolU
 
 `scripts/install.ps1` also copies agent skills, Gemini settings, and Copilot global instructions. When a Copilot-only deployed check finds different user-global instructions, do not replace them with the repository copy: inspect and back up the exact maintained hook destinations and install only those hooks. Keep logs and unrelated user files untouched. Use a disposable workspace for the live test.
 
+## Retired installed hooks require manual cleanup
+
+The Bash and PowerShell installers preserve existing Copilot and Gemini repository-state and Markdown Health registrations when refreshing a user home, even after those handlers leave the maintained source. Fresh installs receive only the current source registrations. An old installed registration and its script can therefore continue to execute until the user removes them manually; source and fresh-home checks do not certify an existing home.
+
 ## Copilot native `create` needs an editor-tool guard
 
 Copilot CLI 1.0.88 uses `create` for new files. A live disposable request to create a harmless file under `.git` succeeded while the guard covered `edit` but not `create`; a work-discarding Git command was separately denied. Treat `create` as an editor tool in the shared repository-state family, test the public Copilot envelope, regenerate provider outputs, and verify a fresh installed Copilot session denies the real native create without relying on shell-command detection.

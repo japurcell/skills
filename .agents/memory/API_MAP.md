@@ -10,6 +10,11 @@ description: Public validation entry points and provider adapter contracts for t
 - `scripts/install-codex-agents.py --source-dir PATH --destination-dir PATH` converts valid top-level canonical agent Markdown into personal Codex TOML. It owns only TOML paths listed in `.skills-repo-agents.json`, removes stale manifest-owned output, and preserves unmanaged personal agents. It reports a concise install/update/unchanged/removal summary on stdout; status and failures use stderr. Exit `0` is success, `1` is a validation or installation failure, and argparse usage failures use `2`.
 - `scripts/install.sh` and `scripts/install.ps1` call this converter before their existing provider copies. They choose `${CODEX_HOME:-$HOME/.codex}/agents` (Bash) or `$env:CODEX_HOME/agents` with `$HOME/.codex/agents` as the PowerShell fallback.
 
+## Copilot and Gemini configuration installer
+
+- `scripts/install-provider-hooks.py --provider copilot|gemini --template PATH --destination PATH [--check]` merges current source settings and managed hook handlers with existing user configuration. Unrelated settings and hook handlers remain, including retired repository-state and Markdown Health registrations absent from the source. A fresh destination receives only template entries. `--check` validates both inputs and the proposed merge without writing; invalid, duplicate-key, or structurally ambiguous JSON exits `1` before either installer mutates the home.
+- Both installers run the Copilot and Gemini checks before Codex-agent conversion or asset copying, then write owner-only merged JSON. Changed existing files receive a `.bak` copy of their immediately previous bytes. An unchanged refresh does not rewrite the configuration or backup.
+
 ## Repository test runner
 
 - `scripts/test-all.py [-h|--help] [--list]` runs every explicitly registered maintained suite with no arguments. Help and command listing use stdout without checking suite dependencies. Unknown or abbreviated flags fail with usage on stderr. The script resolves its checkout from its own location and runs suites there regardless of the caller's current directory.

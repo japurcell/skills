@@ -52,6 +52,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout, including `$CODEX_HOME/agents` when set (run with `pwsh scripts/install.ps1`). |
 | `scripts/install-codex-agents.py` | Strict, transactional converter from top-level `agents/*.md` sources to manifest-managed personal Codex TOML agents. |
 | `scripts/install-codex-hooks.py` | Atomically and idempotently merges exact maintained Codex `SessionStart`, `PreToolUse`, and `Stop` handlers into user-global `hooks.json`. |
+| `scripts/install-provider-hooks.py` | Preflights and merges maintained Copilot/Gemini configuration while retaining unrelated user settings and retired installed hook registrations. |
 | `scripts/test-codex-hooks-startup.sh` | Public-process contract and security regressions for the Codex required-skills hook. |
 | `scripts/test-security-banners.py` | Public block, warning, excerpt, redaction, and fallback envelopes across three provider Tool Guardian adapters. |
 | `.codex/hooks/tool-guard.py` | Generated Codex Tool Guardian adapter installed through the maintained hook merger. |
