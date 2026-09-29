@@ -85,7 +85,7 @@ PY
 }
 
 test_provider_refresh_preserves_retired_and_user_entries() {
-  local workdir repo home first second
+  local workdir repo home first second first_config_inodes second_config_inodes
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   repo="$workdir/repo"
@@ -137,9 +137,24 @@ assert gemini['hooks']['BeforeTool'][0] == {'matcher': 'legacy', 'hooks': [{'nam
 assert gemini['hooks']['AfterAgent'][0]['hooks'][0] == {'name': 'markdown-health', 'command': 'python "$HOME/.gemini/hooks/scripts/markdown-health.py"', 'env': {'MARKDOWN_HEALTH_EVENT': 'final'}}
 PY
   first="$(tree_fingerprint "$home")"
+  first_config_inodes="$(python3 - "$home" <<'PY'
+import sys
+from pathlib import Path
+home = Path(sys.argv[1])
+print(*(str((home / path).stat().st_ino) for path in ('.copilot/hooks/hooks.json', '.gemini/settings.json')))
+PY
+)"
   HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
   second="$(tree_fingerprint "$home")"
   assert_equals "$first" "$second" "Expected repeated provider refresh to be idempotent."
+  second_config_inodes="$(python3 - "$home" <<'PY'
+import sys
+from pathlib import Path
+home = Path(sys.argv[1])
+print(*(str((home / path).stat().st_ino) for path in ('.copilot/hooks/hooks.json', '.gemini/settings.json')))
+PY
+)"
+  assert_equals "$first_config_inodes" "$second_config_inodes" "Expected owner-only unchanged provider configs not to be replaced."
   rm -rf -- "$home"
   HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
   python3 - "$home" <<'PY'
@@ -191,6 +206,64 @@ test_provider_malformed_json_stops_before_mutation() {
   fi
   after="$(tree_fingerprint "$home")"
   assert_equals "$before" "$after" "Expected ambiguous retired commands to stop before home mutation."
+}
+
+test_provider_config_hard_links_do_not_change_other_files() {
+  local workdir repo home outside path before
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+  for path in .copilot/hooks/hooks.json .gemini/settings.json; do
+    outside="$workdir/$(basename "$(dirname "$path")")-outside.json"
+    cp -p "$home/$path" "$outside"
+    rm -- "$home/$path"
+    ln "$outside" "$home/$path"
+    chmod 644 "$outside"
+    before="$(<"$outside")"
+    HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+    assert_equals "$before" "$(<"$outside")" "Expected refresh not to alter the other hard-linked file."
+    python3 - "$outside" "$home/$path" <<'PY'
+import os
+import stat
+import sys
+from pathlib import Path
+outside, installed = map(Path, sys.argv[1:])
+assert stat.S_IMODE(outside.stat().st_mode) == 0o644
+assert stat.S_IMODE(installed.stat().st_mode) == 0o600
+assert os.stat(outside).st_ino != os.stat(installed).st_ino
+PY
+  done
+}
+
+test_provider_config_linked_parent_stops_before_mutation() {
+  local workdir repo home outside before_home before_outside
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  create_fixture_repo "$repo"
+  for provider in copilot gemini; do
+    home="$workdir/home-$provider"
+    outside="$workdir/outside-$provider"
+    mkdir -p "$outside" "$home"
+    printf '%s\n' sentinel > "$outside/sentinel"
+    if [[ "$provider" == copilot ]]; then
+      mkdir -p "$home/.copilot"
+      ln -s "$outside" "$home/.copilot/hooks"
+    else
+      ln -s "$outside" "$home/.gemini"
+    fi
+    before_home="$(tree_fingerprint "$home")"
+    before_outside="$(tree_fingerprint "$outside")"
+    if HOME="$home" bash "$repo/scripts/install.sh" >"$workdir/out" 2>"$workdir/err"; then
+      echo "Expected linked $provider config parent to stop installation." >&2
+      exit 1
+    fi
+    assert_equals "$before_home" "$(tree_fingerprint "$home")" "Expected linked-parent preflight to leave home untouched."
+    assert_equals "$before_outside" "$(tree_fingerprint "$outside")" "Expected linked-parent preflight to leave link target untouched."
+  done
 }
 
 generated_rtk_output_path() {
@@ -908,6 +981,8 @@ PY
 }
 
 main() {
+  test_provider_config_hard_links_do_not_change_other_files
+  test_provider_config_linked_parent_stops_before_mutation
   test_provider_refresh_preserves_retired_and_user_entries
   test_provider_malformed_json_stops_before_mutation
   test_fresh_generated_hooks_preflight_installs_without_bytecode

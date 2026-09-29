@@ -228,7 +228,8 @@ function Set-FileModeFrom {
 function Set-CopiedFileModes {
     param(
         [string]$Source,
-        [string]$Destination
+        [string]$Destination,
+        [string[]]$ExcludedRelativePaths = @()
     )
 
     if ($IsWindows -or -not (Test-Path -LiteralPath $Source) -or -not (Test-Path -LiteralPath $Destination)) {
@@ -239,6 +240,9 @@ function Set-CopiedFileModes {
     Get-ChildItem -Force -Path $Source -Recurse -File |
         Where-Object { -not $_.LinkType } | ForEach-Object {
         $relativePath = $_.FullName.Substring($Source.Length).TrimStart('/', '\')
+        if ($ExcludedRelativePaths -ccontains $relativePath) {
+            return
+        }
         $installedPath = Join-Path $Destination $relativePath
         Set-FileModeFrom -Source $_.FullName -Destination $installedPath
     }
@@ -287,7 +291,7 @@ function Copy-Hooks {
     Get-ChildItem -Force -Path $HooksSrc |
         Where-Object { $_.Name -cne 'hooks.json' } |
         ForEach-Object { Copy-Entry -Entry $_ -DestinationDir $HooksDest }
-    Set-CopiedFileModes -Source $HooksSrc -Destination $HooksDest
+    Set-CopiedFileModes -Source $HooksSrc -Destination $HooksDest -ExcludedRelativePaths @('hooks.json')
     Set-HookScriptsExecutable -Root $HooksDest
 }
 
@@ -303,7 +307,7 @@ function Copy-Gemini {
         Where-Object { $_.Name -cne 'logs' } |
         ForEach-Object { Copy-Entry -Entry $_ -DestinationDir $geminiHooksDest }
 
-    Set-CopiedFileModes -Source $GeminiSrc -Destination $GeminiDest
+    Set-CopiedFileModes -Source $GeminiSrc -Destination $GeminiDest -ExcludedRelativePaths @('settings.json', 'global-settings.json')
     Set-HookScriptsExecutable -Root (Join-Path $GeminiDest 'hooks')
 }
 
@@ -335,12 +339,12 @@ function Copy-FileTo {
 }
 
 function Copy-GeminiGlobalSettings {
-    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider gemini --template $GeminiGlobalSettingsSrc --destination $GeminiSettingsDest
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider gemini --template $GeminiGlobalSettingsSrc --destination $GeminiSettingsDest --home $HOME
     if ($LASTEXITCODE -ne 0) { Fail "Gemini settings merger exited with code $LASTEXITCODE." }
 }
 
 function Install-CopilotHookConfig {
-    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider copilot --template $CopilotHookTemplateSrc --destination $CopilotHookConfigDest
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider copilot --template $CopilotHookTemplateSrc --destination $CopilotHookConfigDest --home $HOME
     if ($LASTEXITCODE -ne 0) { Fail "Copilot hooks merger exited with code $LASTEXITCODE." }
 }
 
@@ -455,7 +459,7 @@ foreach ($config in @(
     @{ Provider = 'copilot'; Template = $CopilotHookTemplateSrc; Destination = $CopilotHookConfigDest },
     @{ Provider = 'gemini'; Template = $GeminiGlobalSettingsSrc; Destination = $GeminiSettingsDest }
 )) {
-    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider $config.Provider --template $config.Template --destination $config.Destination --check
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider $config.Provider --template $config.Template --destination $config.Destination --home $HOME --check
     if ($LASTEXITCODE -ne 0) { Fail "$($config.Provider) configuration preflight exited with code $LASTEXITCODE." }
 }
 

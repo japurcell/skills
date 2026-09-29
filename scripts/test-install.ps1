@@ -885,6 +885,82 @@ function Test-ProviderMalformedJsonStopsBeforeMutation {
     finally { Remove-Workdir $workdir }
 }
 
+function Test-ProviderConfigHardLinksDoNotChangeOtherFiles {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        New-FixtureRepo $repo
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        foreach ($relative in @('.copilot/hooks/hooks.json', '.gemini/settings.json')) {
+            $installed = Join-Path $homeDir $relative
+            $outside = Join-Path $workdir ((Split-Path -Leaf (Split-Path -Parent $relative)) + '-outside.json')
+            Copy-Item -LiteralPath $installed -Destination $outside -Force
+            Remove-Item -LiteralPath $installed -Force
+            try {
+                New-Item -ItemType HardLink -Path $installed -Target $outside -Force | Out-Null
+            }
+            catch {
+                Write-Host "Skipping: provider hard-link creation is not supported on this host ($($_.Exception.Message))."
+                return
+            }
+            if (-not $IsWindows) {
+                $looseMode = [System.IO.UnixFileMode]::UserRead -bor [System.IO.UnixFileMode]::UserWrite -bor
+                    [System.IO.UnixFileMode]::GroupRead -bor [System.IO.UnixFileMode]::OtherRead
+                [System.IO.File]::SetUnixFileMode($outside, $looseMode)
+            }
+            $outsideBefore = Read-FileContent $outside
+            Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+            Assert-Equals -Expected $outsideBefore -Actual (Read-FileContent $outside) -Message 'Expected refresh not to alter the other hard-linked file.'
+            Assert-Equals -Expected '' -Actual (Get-Item -Force -LiteralPath $installed).LinkType -Message 'Expected installed config to become an independent regular file.'
+            if (-not $IsWindows) {
+                $ownerOnly = [System.IO.UnixFileMode]::UserRead -bor [System.IO.UnixFileMode]::UserWrite
+                Assert-Equals -Expected $looseMode -Actual ([System.IO.File]::GetUnixFileMode($outside)) -Message 'Expected external hard-link mode to remain unchanged.'
+                Assert-Equals -Expected $ownerOnly -Actual ([System.IO.File]::GetUnixFileMode($installed)) -Message 'Expected installed config mode 600.'
+                $python = Get-PythonForFixture
+                & $python.Path @($python.Arguments) -c 'import os, sys; assert os.stat(sys.argv[1]).st_ino != os.stat(sys.argv[2]).st_ino' $outside $installed
+                Assert-Equals -Expected 0 -Actual $LASTEXITCODE -Message 'Expected the installed config to break the hard link.'
+            }
+        }
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-ProviderConfigLinkedParentStopsBeforeMutation {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        New-FixtureRepo $repo
+        foreach ($provider in @('copilot', 'gemini')) {
+            $homeDir = Join-Path $workdir "home-$provider"
+            $outside = Join-Path $workdir "outside-$provider"
+            Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
+            Write-FixtureFile (Join-Path $outside 'sentinel') @('sentinel')
+            if ($provider -ceq 'copilot') {
+                $parent = Join-Path $homeDir '.copilot/hooks'
+            } else {
+                $parent = Join-Path $homeDir '.gemini'
+            }
+            New-Item -ItemType Directory -Path (Split-Path -Parent $parent) -Force | Out-Null
+            try {
+                $linkType = if ($IsWindows) { 'Junction' } else { 'SymbolicLink' }
+                New-Item -ItemType $linkType -Path $parent -Target $outside -Force | Out-Null
+            }
+            catch {
+                Write-Host "Skipping: provider parent link creation is not supported on this host ($($_.Exception.Message))."
+                return
+            }
+            $homeBefore = Get-TreeFingerprint $homeDir
+            $outsideBefore = Get-TreeFingerprint $outside
+            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+            Assert-Equals -Expected 1 -Actual $result.ExitCode -Message 'Expected linked config parent to fail preflight.'
+            Assert-Equals -Expected $homeBefore -Actual (Get-TreeFingerprint $homeDir) -Message 'Expected linked-parent preflight to leave home unchanged.'
+            Assert-Equals -Expected $outsideBefore -Actual (Get-TreeFingerprint $outside) -Message 'Expected linked-parent preflight to leave link target unchanged.'
+        }
+    }
+    finally { Remove-Workdir $workdir }
+}
+
 function Test-InstalledHooksAreExecutable {
     if ($IsWindows) {
         Write-Host "Skipping: executable-bit assertions do not apply on Windows."
@@ -1249,6 +1325,8 @@ function Test-MissingSourceFails {
 }
 
 Test-FreshGeneratedHooksPreflightInstallsWithoutBytecode
+Test-ProviderConfigHardLinksDoNotChangeOtherFiles
+Test-ProviderConfigLinkedParentStopsBeforeMutation
 Test-ProviderRefreshPreservesRetiredAndUserEntries
 Test-ProviderMalformedJsonStopsBeforeMutation
 Test-StaleGeneratedHooksStopBeforeDestinationMutation

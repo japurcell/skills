@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import re
+import stat
 import sys
 import tempfile
 from pathlib import Path
@@ -108,8 +109,37 @@ def merge_hooks(existing: dict[str, Any], template: dict[str, Any], provider: st
     return result
 
 
-def atomic_write(path: Path, content: bytes) -> None:
+def check_parent_directories(home: Path, destination: Path) -> None:
+    home = Path(os.path.abspath(home))
+    destination = Path(os.path.abspath(destination))
+    try:
+        relative = destination.relative_to(home)
+    except ValueError as exc:
+        raise ValueError(f"Destination is outside the install home: {destination}") from exc
+    if not relative.parts:
+        raise ValueError(f"Destination must be a file below the install home: {destination}")
+
+    current = home
+    for part in ("", *relative.parts[:-1]):
+        if part:
+            current /= part
+        try:
+            info = current.lstat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISLNK(info.st_mode) or (
+            getattr(info, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+        ):
+            raise ValueError(f"Refusing linked configuration directory: {current}")
+        if not stat.S_ISDIR(info.st_mode):
+            raise ValueError(f"Configuration parent must be a directory: {current}")
+
+
+def atomic_write(path: Path, content: bytes, home: Path) -> None:
+    check_parent_directories(home, path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    check_parent_directories(home, path)
     descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     temporary = Path(name)
     try:
@@ -132,19 +162,26 @@ def main() -> int:
     parser.add_argument("--provider", choices=("copilot", "gemini"), required=True)
     parser.add_argument("--template", type=Path, required=True)
     parser.add_argument("--destination", type=Path, required=True)
+    parser.add_argument("--home", type=Path, required=True, help="Install home directory boundary.")
     parser.add_argument("--check", action="store_true")
     arguments = parser.parse_args()
     try:
         template, _ = load_object(arguments.template, "template")
-        destination = arguments.destination
+        home = Path(os.path.abspath(arguments.home))
+        destination = Path(os.path.abspath(arguments.destination))
+        check_parent_directories(home, destination)
         if destination.is_symlink():
             raise ValueError(f"Destination must not be a symbolic link: {destination}")
         exists = destination.exists()
         existing, old_bytes = load_object(destination, "existing") if exists else ({}, b"")
         merged = merge_hooks(existing, template, arguments.provider)
         if exists and merged == existing:
-            if not arguments.check:
-                os.chmod(destination, 0o600)
+            info = destination.stat()
+            needs_private_copy = info.st_nlink > 1 or (
+                os.name != "nt" and stat.S_IMODE(info.st_mode) != 0o600
+            )
+            if needs_private_copy and not arguments.check:
+                atomic_write(destination, old_bytes, home)
             return 0
         backup = destination.with_name(destination.name + ".bak")
         if exists and backup.is_symlink():
@@ -152,8 +189,8 @@ def main() -> int:
         if arguments.check:
             return 0
         if exists:
-            atomic_write(backup, old_bytes)
-        atomic_write(destination, (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8"))
+            atomic_write(backup, old_bytes, home)
+        atomic_write(destination, (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8"), home)
         return 0
     except (OSError, ValueError) as exc:
         print(f"{arguments.provider.capitalize()} install failed: {exc}", file=sys.stderr)
