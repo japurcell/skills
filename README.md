@@ -34,7 +34,7 @@ The installer copies:
 - `.copilot/hooks/` entries are copied to `~/.copilot/hooks` when that directory exists
 - `.gemini/` contents into `~/.gemini`, then `.gemini/global-settings.json` into `~/.gemini/settings.json`
 - `.copilot/copilot-instructions.md` into `~/.copilot/copilot-instructions.md`
-- maintained `.codex/hooks/` scripts for startup and security into `~/.codex/hooks`, then safely merges their `SessionStart`, `PreToolUse` and `Stop` registrations from `.codex/global-hooks.json` into `~/.codex/hooks.json`
+- maintained `.codex/hooks/` scripts for startup and security into `~/.codex/hooks`, then safely merges their `SessionStart`, `PreToolUse`, and `Stop` registrations from `.codex/global-hooks.json` into `~/.codex/hooks.json`
 
 Both installers require stable Rust Token Killer (RTK) 0.50.0 or newer on `PATH` before changing installed files. They set only `[hooks] suppress_hook_warning = true` in the user's RTK config (`~/Library/Application Support/rtk/config.toml` on macOS, `~/.config/rtk/config.toml` on Linux, or `%APPDATA%\rtk\config.toml` on Windows). An existing config is backed up as `config.toml.bak` before a change; a correct config stays byte-identical. An existing backup or ambiguous TOML stops the install for manual review. This account-wide setting suppresses the false missing-hook advisory for explicit commands while leaving other RTK diagnostics visible. The installers do not download RTK. They remove old prerelease files only when ownership and content or receipt hashes match, and report modified files for manual review. Copilot and Gemini still use automatic RTK forwarding.
 
