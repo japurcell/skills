@@ -16,8 +16,9 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29 00:09Z) [approval] User explicitly approved the revised ExecPlan and Windows checklist before source changes.
 - [ ] (2026-09-29 00:12Z) [milestone-17] In progress on isolated implementer branch: require stable RTK and migrate warning suppression; retire verified owned prerelease assets.
 - [ ] (2026-09-29 00:41Z) [milestone-18] In progress on isolated implementer branch: retire maintained repository-state hook pieces and adjust Git guidance.
-- [ ] (2026-09-29) [repair-provider-guidance] In progress on an isolated branch: restore approved file-first PowerShell instructions in provider sources; Gemini assertion now passes, and existing installer suites next expose missing Copilot guidance.
+- [x] (2026-09-29) [repair-provider-guidance] Restored approved Gemini and Copilot file-first PowerShell instructions; both existing installer suites pass. The PowerShell suite skips one unsupported junction fixture on this Mac.
 - [ ] (2026-09-29) [milestone-19] In progress on an isolated branch: retire maintained global Markdown Health pieces while preserving OKF lint.
+- [ ] [repair-retired-registrations] Preserve exact existing user-level repository-state and Markdown Health registrations during installer refresh; fresh installs remain free of them.
 - [ ] [milestone-20] Run repository-local OKF lint at turn end on three CLIs.
 - [ ] [milestone-21] Show sparse operational lifecycle messages.
 - [ ] (2026-09-29 00:41Z) [milestone-22] Implemented and tested on isolated branch `codex/ready-tool-guardian`; awaiting review and integration.
@@ -41,6 +42,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Native Windows scan-secrets HEAD-failure proof remains open. A macOS PowerShell skip is not native Windows evidence.
 - On 2026-09-29, milestone 18 fresh-install checks passed, but `scripts/test-install.sh` and `scripts/test-install.ps1` failed an existing copied-Gemini-guidance assertion. `.gemini/GEMINI.md` lacks the approved `write_file` saved-script sentence expected by both tests. Preserve the tests and repair the instruction before integrating the affected installer branch.
 - The guidance repair made the Gemini assertion pass in both suites. The same suites then exposed missing approved Copilot file-first wording. The PowerShell suite also reports unsupported junction creation on this Mac, which needs separate environmental classification after guidance is repaired.
+- Disposable-home refresh tests revealed that both installers replace Copilot and Gemini user hook configuration, incidentally removing old repository-state and Markdown Health registrations. Codex's merge already preserves them. The approved retirement decisions require leaving old installed registrations for manual cleanup; a separate repair must make refresh behavior match that decision without reintroducing retired entries on fresh installs.
 - `rtk gain` fails in this Mac sandbox with `Failed to initialize tracking database: unable to open database file` even though `rtk --version` reports 0.50.0 and `rtk hook --help` lists Copilot and Gemini. Treat `rtk gain` as optional diagnostics, not an installation identity gate.
 
 ## Decision Log
@@ -109,6 +111,13 @@ Acceptance: not met
 Remove hooks/families/markdown_health.py, its generated Copilot/Gemini/Codex scripts, manifest targets, maintained user-level pre/post/stop registrations, installer copy and ownership rules, and dedicated tests or aggregate references. Preserve scripts/lint-okf.py and its tests. Preserve existing audit.log history and dedicated markdown-health-state directories. Do not automatically remove installed old hook files or registrations; document them for manual cleanup and state clearly that they may still execute. Do not add deletion regression tests.
 
 Inspect checked-in source, generated targets, registrations, installers, and a fresh temporary-home installation. Show that the old checker is absent and unrelated hook groups remain. This source and fresh-install proof does not certify older user installations.
+
+### Repair 19A: Preserve retired installed registrations on refresh
+
+Status: open
+Acceptance: not met
+
+When `install.sh` or `install.ps1` refreshes an existing user home, preserve exact existing Copilot and Gemini registrations that invoke the retired repository-state or Markdown Health scripts. Preserve unrelated user settings and hook entries. Do not restore retired registrations to a fresh install, add duplicate entries on repeated refresh, or copy retired scripts into a new home. Stop safely on malformed or ambiguous existing JSON rather than overwriting it. Keep the existing Codex merge behavior, which already leaves old unowned registrations alone. Add disposable-home Bash and PowerShell tests for old-entry preservation, fresh absence, unrelated entries, idempotence, and malformed input. Record the old-hook manual cleanup limitation. Integrate this repair before accepting milestones 18 and 19.
 
 ### Milestone 20: Validate repository OKF at turn end
 
