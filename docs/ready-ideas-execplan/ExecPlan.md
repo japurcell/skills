@@ -21,7 +21,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29) [repair-retired-registrations] Integrated Copilot/Gemini refresh preservation at `44daea14`; Bash and PowerShell installer suites and 12 stable RTK tests pass. Native Windows junction behavior remains open in milestone 24.
 - [x] (2026-09-29) [milestone-20] Integrated repository-local turn-end OKF adapters and bounded audit at `07d1f133`; focused Mac checks pass. Native Windows proof remains in milestone 24 and installed display in milestones 25-27.
 - [x] (2026-09-29) [milestone-21] Integrated sparse lifecycle envelopes and focused Windows automation at `828e4c75`; source checks pass. Native Windows execution and installed CLI display remain later gates.
-- [ ] (2026-09-29 03:10Z) [milestone-22] Rebased tested Tool Guardian source onto accepted M17-21 tip `eba08529` as `892b8584`; source checks pass, and base fast-forward acceptance remains pending.
+- [x] (2026-09-29) [milestone-22] Integrated exact Tool Guardian reasons at `cb3f0093`; generator and provider suites pass on Mac. Native display remains in milestones 25-27.
 - [ ] [milestone-23] Inventory, measure, review, and improve retained high-rate hooks on macOS.
 - [ ] [milestone-24] Pass integrated source, temporary-home installer, and native Windows automation, including the scanner HEAD-failure case.
 - [ ] [milestone-25] Verify installed Codex CLI behavior.
@@ -94,7 +94,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 
 ## Outcomes & Retrospective
 
-Planning decisions are complete and the user approved the revised plan. Milestones 17-21 are integrated. Milestone 19 retired maintained global Markdown Health code while preserving the independent OKF linter and old installed registrations during refresh. Milestone 20 added repository-local turn-end lint for all three CLIs with bounded audit and repair behavior. Milestone 21 added sparse startup and turn-end messages. Focused and disposable-home checks passed before the base branch fast-forwarded to tested tip `828e4c75`. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
+Planning decisions are complete and the user approved the revised plan. Milestones 17-22 are integrated. Milestone 19 retired maintained global Markdown Health code while preserving the independent OKF linter and old installed registrations during refresh. Milestone 20 added repository-local turn-end lint for all three CLIs with bounded audit and repair behavior. Milestone 21 added sparse startup and turn-end messages. Milestone 22 added exact safe Tool Guardian reasons and matching log detail. Focused and disposable-home checks passed before the base branch fast-forwarded to tested tip `cb3f0093`. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
 
 Milestone 20 source was integrated at `07d1f133` after focused public-hook, linter, installer, and generator checks passed on macOS. The audit distinguishes first and retry attempts and omits diagnostic text. Native Windows automation and provider-visible messages are later gates.
 
@@ -178,10 +178,10 @@ The integrated implementation updates startup loaders, source-ingest startup hoo
 
 ### Milestone 22: Explain Tool Guardian violations
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met for checked-in source and provider envelopes; native display remains in milestones 25-27.
 
-The tested source is rebased as `892b8584` on `codex/ready-tool-guardian` above accepted M17-21 tip `eba08529`. One API map conflict retained the base's current 26-output generator count and the new exact-reason contract. Focused source and generated-output checks pass; base integration is still pending.
+The tested source commit `892b8584` is integrated at tip `cb3f0093`. One API map conflict retained the current 26-output generator count and the new exact-reason contract. Focused source and generated-output checks pass.
 
 Edit canonical hooks/families/tool_guard.py and regenerate provider outputs. Retain a safe rule identifier and cause when building threats instead of reducing each finding to category/severity. Show up to three distinct reasons and an omitted count while preserving blocked versus warning wording, severity, safe action name, and one redacted Action excerpt of at most 160 characters. For an input limit, identify the exact limit, configured threshold, and measured count with its true unit when available. Name a provider field such as write_file.content only from a trusted known-field list; otherwise say tool input. For known inspection failure, state only a safe cause and keep fail-closed behavior. Do not echo exception text, arbitrary keys, raw input, or matched secrets.
 

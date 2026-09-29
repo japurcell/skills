@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-21 and Repair 19A are integrated on `codex/ready-ideas-execplan` through `eba08529`. Milestone 22 is rebased and tested on private branch `codex/ready-tool-guardian` at source commit `892b8584`; acceptance awaits base fast-forward. Milestones 23-27 remain open.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-22 and Repair 19A are integrated on `codex/ready-ideas-execplan` through `cb3f0093`. Milestones 23-27 remain open.
 
 ## Current evidence
 
@@ -22,4 +22,4 @@ Older installations may still execute repository-state or Markdown Health script
 
 ## Next step
 
-Review the rebased M22 branch and fast-forward `codex/ready-ideas-execplan` from `eba08529` only after integration approval. Then mark M22 accepted in the ExecPlan, update this handoff, and continue milestone 23 direct-script performance audit. Native Windows execution and installed CLI display remain milestones 24-27.
+Run milestone 23 direct-script performance audit on macOS against the integrated high-rate hook graph. Then complete milestone 24 integrated and native Windows checks. Installed CLI display remains milestones 25-27.
