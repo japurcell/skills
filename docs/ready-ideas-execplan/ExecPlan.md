@@ -14,11 +14,11 @@ A user can verify the result by running an explicit RTK command, observing start
 
 - [x] (2026-09-28) [planning] Close the reopened Wayfinder decisions and revise this ExecPlan and windows-live-check.md before source work.
 - [x] (2026-09-29 00:09Z) [approval] User explicitly approved the revised ExecPlan and Windows checklist before source changes.
-- [ ] (2026-09-29 00:12Z) [milestone-17] In progress on isolated implementer branch: require stable RTK and migrate warning suppression; retire verified owned prerelease assets.
-- [ ] (2026-09-29 00:41Z) [milestone-18] In progress on isolated implementer branch: retire maintained repository-state hook pieces and adjust Git guidance.
+- [ ] (2026-09-29 00:12Z) [milestone-17] Implemented and tested on isolated branch `codex/ready-rtk-stable`; awaiting review and integration.
+- [ ] (2026-09-29 00:41Z) [milestone-18] Implemented and tested on isolated branch `codex/ready-retire-git-guard`; awaiting installer-preservation repair and integration.
 - [x] (2026-09-29) [repair-provider-guidance] Restored approved Gemini and Copilot file-first PowerShell instructions; both existing installer suites pass. The PowerShell suite skips one unsupported junction fixture on this Mac.
-- [ ] (2026-09-29) [milestone-19] In progress on an isolated branch: retire maintained global Markdown Health pieces while preserving OKF lint.
-- [ ] [repair-retired-registrations] Preserve exact existing user-level repository-state and Markdown Health registrations during installer refresh; fresh installs remain free of them.
+- [ ] (2026-09-29) [milestone-19] Implemented and tested on isolated branch `codex/ready-retire-markdown`; awaiting installer-preservation repair and integration.
+- [ ] (2026-09-29) [repair-retired-registrations] In progress on isolated branch `codex/ready-preserve-retired`: preserve existing retired registrations during installer refresh while keeping fresh installs free of them.
 - [ ] [milestone-20] Run repository-local OKF lint at turn end on three CLIs.
 - [ ] [milestone-21] Show sparse operational lifecycle messages.
 - [ ] (2026-09-29 00:41Z) [milestone-22] Implemented and tested on isolated branch `codex/ready-tool-guardian`; awaiting review and integration.
@@ -114,7 +114,7 @@ Inspect checked-in source, generated targets, registrations, installers, and a f
 
 ### Repair 19A: Preserve retired installed registrations on refresh
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 When `install.sh` or `install.ps1` refreshes an existing user home, preserve exact existing Copilot and Gemini registrations that invoke the retired repository-state or Markdown Health scripts. Preserve unrelated user settings and hook entries. Do not restore retired registrations to a fresh install, add duplicate entries on repeated refresh, or copy retired scripts into a new home. Stop safely on malformed or ambiguous existing JSON rather than overwriting it. Keep the existing Codex merge behavior, which already leaves old unowned registrations alone. Add disposable-home Bash and PowerShell tests for old-entry preservation, fresh absence, unrelated entries, idempotence, and malformed input. Record the old-hook manual cleanup limitation. Integrate this repair before accepting milestones 18 and 19.
