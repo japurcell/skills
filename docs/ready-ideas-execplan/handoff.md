@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17 and 18 and Repair 19A are integrated on `codex/ready-ideas-execplan` at `cc0ca9c7`. Milestone 19 is rebased and locally tested on private `codex/ready-retire-markdown` at source commit `46eef579`; it remains unaccepted until the base branch fast-forwards. Milestone 22 is active on its isolated branch. Milestones 20-21 and 23-27 remain open.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-19 and Repair 19A are integrated on `codex/ready-ideas-execplan` at `d54d5619`. Milestone 20 is active in `/Users/adam/.codex/worktrees/ready-retire-git-guard/skills` on `codex/ready-repository-okf`; milestone 22 is committed in its isolated branch. Milestones 21 and 23-27 remain open.
 
 ## Current evidence
 
@@ -14,8 +14,8 @@ The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](wi
 
 ## Decisions and limits
 
-Older installations on another machine may still execute repository-state or Markdown Health scripts. Review exact user hook registrations and scripts for manual cleanup as described in [README.md](../../README.md); preserve `audit.log` and Markdown Health state by default. The source and fresh-home evidence does not certify an older home. Do not weaken tests, add deletion regression tests, or claim milestone 19 accepted before base fast-forward. Keep the private branch unpushed.
+Older installations on another machine may still execute repository-state or Markdown Health scripts. Review exact user hook registrations and scripts for manual cleanup as described in [README.md](../../README.md); preserve `audit.log` and Markdown Health state by default. The source and fresh-home evidence does not certify an older home. Do not weaken tests or add deletion regression tests. Keep milestone branches private and unpushed.
 
 ## Next step
 
-Confirm the milestone 19 branch remains clean, then fast-forward `codex/ready-ideas-execplan` to its tested tip and mark milestone 19 accepted in the ExecPlan. After integration, continue milestone 22 review and the remaining plan frontier.
+Complete milestone 20's repository-local OKF hook and tests in its isolated worktree. Rebase its branch onto the latest base before fast-forward integration. Then implement milestone 21 lifecycle messages, integrate milestone 22 Tool Guardian detail, and continue the remaining plan frontier.

@@ -17,7 +17,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29 01:01Z) [milestone-17] Require stable RTK and migrate warning suppression; retire verified owned prerelease assets. Source and disposable-home proof pass; native Windows real RTK proof remains in milestone 24.
 - [x] (2026-09-29) [milestone-18] Integrated repository-state retirement at `6b8e0938`; generator, installer, and retained-hook checks pass on Mac. Native Windows proof remains in milestone 24.
 - [x] (2026-09-29) [repair-provider-guidance] Restored approved Gemini and Copilot file-first PowerShell instructions; both existing installer suites pass. The PowerShell suite skips one unsupported junction fixture on this Mac.
-- [ ] (2026-09-29) [milestone-19] Rebased and tested on isolated branch `codex/ready-retire-markdown` at source commit `46eef579`; awaiting base fast-forward before acceptance.
+- [x] (2026-09-29) [milestone-19] Integrated global Markdown Health retirement at `d54d5619`; source and disposable-home checks pass on Mac. Native Windows proof remains in milestone 24.
 - [x] (2026-09-29) [repair-retired-registrations] Integrated Copilot/Gemini refresh preservation at `44daea14`; Bash and PowerShell installer suites and 12 stable RTK tests pass. Native Windows junction behavior remains open in milestone 24.
 - [ ] [milestone-20] Run repository-local OKF lint at turn end on three CLIs.
 - [ ] [milestone-21] Show sparse operational lifecycle messages.
@@ -84,7 +84,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 
 ## Outcomes & Retrospective
 
-Planning decisions are complete and the user approved the revised plan. Milestones 17 and 18 are integrated. Milestone 19 source commit `46eef579` removes the maintained global Markdown Health family, generated scripts, registrations, installer ownership, and dedicated suites while preserving the independent OKF linter and old installed registrations during refresh. Source and disposable-home checks pass on the isolated branch; milestone 19 remains open until the base branch fast-forwards to that tested branch. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
+Planning decisions are complete and the user approved the revised plan. Milestones 17-19 are integrated. Milestone 19 source commit `46eef579` removes the maintained global Markdown Health family, generated scripts, registrations, installer ownership, and dedicated suites while preserving the independent OKF linter and old installed registrations during refresh. Source and disposable-home checks passed before the base branch fast-forwarded to tested tip `d54d5619`. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
 
 ## Context and Orientation
 
@@ -122,8 +122,8 @@ Do not automatically remove old installed scripts or registrations. Document the
 
 ### Milestone 19: Retire global Markdown Health
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met for checked-in source and fresh disposable installs; native Windows proof remains in milestone 24.
 
 Remove hooks/families/markdown_health.py, its generated Copilot/Gemini/Codex scripts, manifest targets, maintained user-level pre/post/stop registrations, installer copy and ownership rules, and dedicated tests or aggregate references. Preserve scripts/lint-okf.py and its tests. Preserve existing audit.log history and dedicated markdown-health-state directories. Do not automatically remove installed old hook files or registrations; document them for manual cleanup and state clearly that they may still execute. Do not add deletion regression tests.
 
