@@ -28,6 +28,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29) [milestone-24/source] Rechecked 26 generated outputs, 25 parity cases, affected public hook suites, stable RTK, and Bash/PowerShell disposable-home installers on macOS; updated Windows RTK version and processor gates. This is source evidence only.
 - [ ] [milestone-24] Pass integrated source, temporary-home installer, and native Windows automation, including the scanner HEAD-failure case.
 - [x] (2026-09-29) [repair-24A] Integrated portable converter collision coverage at `3d89d501`; all 14 Mac converter tests and both installer suites pass. The retained real-file case awaits a case-sensitive filesystem.
+- [ ] [repair-24B] Preserve the winget-installed RTK directory for later Windows workflow steps, then rerun native automation through the hook suites.
 - [x] (2026-09-29) [milestone-25] Integrated disposable Codex CLI 0.158.0 native startup, RTK, Stop, OKF, Tool Guardian, scanner, and probe delivery evidence at `b91be52e`.
 - [ ] [milestone-26] Verify installed Copilot CLI behavior in a session with that CLI.
 - [ ] [milestone-27] Verify installed Gemini CLI behavior in a session with that CLI.
@@ -46,7 +47,8 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Prior Copilot CLI timeout probing showed a harmless Git read proceed after a one-second pre-tool timeout without a native timeout message. Treat visible progress as informational, not proof of enforcement.
 - Native Windows scan-secrets HEAD-failure proof remains open. A macOS PowerShell skip is not native Windows evidence.
 - The milestone 24 source sweep exposed a separate `scripts/test-codex-agents.py` failure on this case-insensitive APFS volume: two case-fold-equivalent fixture filenames collapse into one file before the CLI sees them. Keep the case-sensitive end-to-end test and add portable collision coverage through a suitable internal seam under Repair 24A. No test may be skipped or weakened merely to pass locally.
-- Native Windows automation requires a remote branch. The base branch is local and ahead of origin; `gh auth status` currently reports an invalid token for the configured account. Do not claim a Windows pass until credentials are restored, the final branch is published, and the job completes.
+- Native Windows automation requires a remote branch. Authentication works outside this Mac's sandbox through the GitHub keyring, though sandboxed `gh auth status` reports an invalid token. The user approved a non-force push; `546c07b9` was published to `origin/codex/ready-ideas-execplan`.
+- Windows run `https://github.com/japurcell/skills/actions/runs/36569388561` installed and verified RTK in one PowerShell step, then failed `Check native prerequisites` because the next step could not resolve `rtk`. GitHub Actions does not carry a step-local PATH refresh into later steps; use the documented `$GITHUB_PATH` file. None of the hook suites ran.
 - Repair 24A reproduced the failure: the converter suite returned `FAILED (failures=1)` because the CLI reported one installed agent after `ONE.md` overwrote `one.md` on APFS. The extracted `validate_agent_collisions` seam permits a two-candidate assertion on every host while the two-file CLI case still runs when both directory entries exist. All 14 converter tests pass on this Mac; the real-file source collision branch remains unexercised here because APFS cannot represent the fixture.
 - On 2026-09-29, milestone 18 fresh-install checks passed, but `scripts/test-install.sh` and `scripts/test-install.ps1` failed an existing copied-Gemini-guidance assertion. `.gemini/GEMINI.md` lacks the approved `write_file` saved-script sentence expected by both tests. Preserve the tests and repair the instruction before integrating the affected installer branch.
 - The guidance repair made the Gemini assertion pass in both suites. The same suites then exposed missing approved Copilot file-first wording. The PowerShell suite also reports unsupported junction creation on this Mac, which needs separate environmental classification after guidance is repaired.
@@ -116,10 +118,13 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Decision: Prove Codex CLI delivery with a private temporary HOME/CODEX_HOME, a disposable local Git clone, installed maintained hook copies, and explicit `/hooks` trust. Keep the real user home unchanged.
   Rationale: The current real user config has only SessionStart and no RTK TOML; a scoped temporary install provides the full fresh registration surface without changing existing settings or backups.
   Date/Author: 2026-09-29, Codex.
+- Decision: Resolve the Windows RTK executable found in the successful install step and append its directory to `$GITHUB_PATH` for later steps.
+  Rationale: The winget install and same-step version and hook-processor checks pass, but the next PowerShell process cannot find `rtk`. GitHub Actions documents `$GITHUB_PATH` as the cross-step path mechanism.
+  Date/Author: 2026-09-29, Codex.
 
 ## Outcomes & Retrospective
 
-Planning decisions are complete and the user approved the revised plan. Milestones 17-23 and 25 are integrated. Milestone 19 retired maintained global Markdown Health code while preserving the independent OKF linter and old installed registrations during refresh. Milestone 20 added repository-local turn-end lint for all three CLIs with bounded audit and repair behavior. Milestone 21 added sparse startup and turn-end messages. Milestone 22 added exact safe Tool Guardian reasons and matching log detail. Milestone 23 measured every high-rate handler and cut scanner clean-call median latency from 216-225 ms to 102-110 ms on this Mac. Milestone 25 verified installed Codex CLI messages in a disposable home. Milestone 24 source and Windows workflow preparation is integrated, but native Windows automation has not run. Copilot and Gemini live CLI checks remain separate sessions. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed.
+Planning decisions are complete and the user approved the revised plan. Milestones 17-23 and 25 are integrated. Milestone 19 retired maintained global Markdown Health code while preserving the independent OKF linter and old installed registrations during refresh. Milestone 20 added repository-local turn-end lint for all three CLIs with bounded audit and repair behavior. Milestone 21 added sparse startup and turn-end messages. Milestone 22 added exact safe Tool Guardian reasons and matching log detail. Milestone 23 measured every high-rate handler and cut scanner clean-call median latency from 216-225 ms to 102-110 ms on this Mac. Milestone 25 verified installed Codex CLI messages in a disposable home. Milestone 24's first native Windows run stopped before hook suites because RTK was missing from the next step's PATH; Repair 24B addresses that workflow issue. Copilot and Gemini live CLI checks remain separate sessions. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed.
 
 Milestone 20 source was integrated at `07d1f133` after focused public-hook, linter, installer, and generator checks passed on macOS. The audit distinguishes first and retry attempts and omits diagnostic text. Native Windows automation and provider-visible messages are later gates.
 
@@ -240,6 +245,8 @@ Regenerate all maintained targets and run the generator's check and parity tests
 
 Update .github/workflows/ready-ideas-windows.yml and windows-live-check.md for the current hook set. Provision stable RTK on the Windows runner with the official winget package rtk-ai.rtk before installer tests, then verify rtk --version is at least 0.50.0 and rtk hook --help lists copilot and gemini processors. Keep the repository installers free of RTK download logic. Remove obsolete deletion-only suites from the workflow and run scripts/test-rtk-stable-windows.ps1, scripts/test-repository-okf-windows.ps1, scripts/test-lifecycle-messages-windows.ps1, and existing current-hook Windows tests. Run the existing native Windows scripts/test-scan-secrets-windows.ps1 committed-repository HEAD-failure case: an unexpected rev-parse failure must be incomplete, not clean; a genuinely unborn branch must still work. A macOS skip does not satisfy this gate. Windows automation plus a documented live-check procedure is required; a live Windows provider run is not the completion gate. Do not fabricate a pass if a runner is unavailable.
 
+The first native run on commit `546c07b9` installed and verified RTK, then failed the next step's executable lookup. Keep M24 open through Repair 24B and until the full Windows job reaches and passes the scanner HEAD-failure cases and other retained suites.
+
 ### Repair 24A: Make converter collision coverage portable
 
 Status: done
@@ -248,6 +255,13 @@ Acceptance: met for portable collision decision coverage and the full Mac conver
 The `scripts/test-codex-agents.py` case-fold collision fixture cannot create two distinct case-fold-equivalent filenames on this Mac's case-insensitive APFS volume. Reproduce the existing suite failure, retain its real-file end-to-end collision case on filesystems that support both names, and add an internal test seam that exercises the same collision decision portably. Do not skip, delete, or weaken the collision assertion. Run the complete converter suite on this Mac and record the filesystem limit of the end-to-end fixture. Keep this repair separate from milestone 24 hook and Windows work.
 
 The integrated implementation extracts the existing collision loop into `scripts/install-codex-agents.py:validate_agent_collisions`. `scripts/test-codex-agents.py` asserts the duplicate output error with two in-memory agent definitions on every host. The original two-file CLI assertion still runs when the fixture produces two directory entries. The current Mac produces one entry, so its real-file branch cannot execute; retain that branch for a case-sensitive filesystem.
+
+### Repair 24B: Carry stable RTK into later Windows workflow steps
+
+Status: in progress
+Acceptance: not met
+
+The push-triggered Windows job at `https://github.com/japurcell/skills/actions/runs/36569388561` verified RTK 0.50.0 or newer and its Copilot and Gemini hook processors in `.github/workflows/ready-ideas-windows.yml`, but the following `Check native prerequisites` step failed with `The term 'rtk' is not recognized`. In the successful install step, resolve one RTK application path and append its parent directory to `$env:GITHUB_PATH` after capability checks. Keep the existing version and processor checks. Do not guess a winget installation directory or change repository installers. GitHub Actions applies `$GITHUB_PATH` to subsequent steps. Verify the workflow edit locally, push the integrated repair, and require a new native Windows run to pass the prerequisite and all hook suites. Record any new failure as unfinished repair work before accepting M24.
 
 ### Milestone 25: Verify installed Codex CLI
 
@@ -382,3 +396,5 @@ Revision note, 2026-09-29: Repair 24A preserves the real-file Codex-agent collis
 Revision note, 2026-09-29: Rebased Repair 24A source as `fe189186` onto the integrated M24 preparation at `e98cb87a`. The ExecPlan and handoff conflicts were resolved with both evidence sets preserved. The converter suite, both installer suites, OKF lint, and diff checks passed after resolution; native Windows and case-sensitive two-file verification remain open.
 
 Revision note, 2026-09-29: Recorded isolated Codex CLI 0.158.0 native M25 proof from a private temporary home and disposable checkout. All stated display cases and probe verification passed; acceptance waits for evidence integration. Native Windows M24 and Copilot/Gemini live M26-27 remain open.
+
+Revision note, 2026-09-29: The user restored GitHub keyring authentication and approved a non-force push of `codex/ready-ideas-execplan`. Run `36569388561` failed at the first later-step RTK lookup before any hook suite; Repair 24B records the `$GITHUB_PATH` fix and keeps native Windows acceptance open.
