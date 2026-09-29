@@ -73,7 +73,7 @@ In CLI 1.0.88, a successful `systemMessage` in ordinary `preToolUse`, `postToolU
 
 ## Retired installed hooks require manual cleanup
 
-The Bash and PowerShell installers preserve existing Copilot and Gemini repository-state and Markdown Health registrations when refreshing a user home, even after those handlers leave the maintained source. Fresh installs receive only the current source registrations. An old installed registration and its script can therefore continue to execute until the user removes them manually; source and fresh-home checks do not certify an existing home.
+The Bash and PowerShell installers preserve existing Copilot and Gemini registrations that are absent from maintained source when refreshing a user home. This includes retired repository-state entries. Fresh installs receive only current source registrations. An old installed registration and its script can therefore continue to execute until the user removes them manually; source and fresh-home checks do not certify an existing home.
 
 ## Gemini `AfterAgent` needs deployed-version proof
 

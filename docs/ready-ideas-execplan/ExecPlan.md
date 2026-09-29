@@ -15,7 +15,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-28) [planning] Close the reopened Wayfinder decisions and revise this ExecPlan and windows-live-check.md before source work.
 - [x] (2026-09-29 00:09Z) [approval] User explicitly approved the revised ExecPlan and Windows checklist before source changes.
 - [x] (2026-09-29 01:01Z) [milestone-17] Require stable RTK and migrate warning suppression; retire verified owned prerelease assets. Source and disposable-home proof pass; native Windows real RTK proof remains in milestone 24.
-- [ ] (2026-09-29 00:41Z) [milestone-18] Implemented and tested on isolated branch `codex/ready-retire-git-guard`; awaiting installer-preservation repair and integration.
+- [ ] (2026-09-29) [milestone-18] Rebased source commit `21e14129` onto `87dfa115`; conflict resolution and affected Mac checks pass on isolated branch `codex/ready-retire-git-guard`. Awaiting base fast-forward and final acceptance.
 - [x] (2026-09-29) [repair-provider-guidance] Restored approved Gemini and Copilot file-first PowerShell instructions; both existing installer suites pass. The PowerShell suite skips one unsupported junction fixture on this Mac.
 - [ ] (2026-09-29) [milestone-19] Implemented and tested on isolated branch `codex/ready-retire-markdown`; awaiting installer-preservation repair and integration.
 - [x] (2026-09-29) [repair-retired-registrations] Integrated Copilot/Gemini refresh preservation at `44daea14`; Bash and PowerShell installer suites and 12 stable RTK tests pass. Native Windows junction behavior remains open in milestone 24.
@@ -46,6 +46,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - `rtk gain` fails in this Mac sandbox with `Failed to initialize tracking database: unable to open database file` even though `rtk --version` reports 0.50.0 and `rtk hook --help` lists Copilot and Gemini. Treat `rtk gain` as optional diagnostics, not an installation identity gate.
 - Milestone 17's disposable-home Bash and PowerShell installer suites pass with stable-version shims. The macOS RTK 0.50.0 explicit missing-file command preserved its error and exit, but this non-agent shell did not emit the old false advisory even when the documented environment override forced it on; native provider and Windows checks remain separate gates.
 - macOS `/var` is a symlink to `/private/var`, so safe RTK destination checks normalize the selected home before checking for user-created links. The generator suite needs checkout write permission because it temporarily corrupts and restores generated files; its 25 tests passed with that permission.
+- The milestone 18 rebase had 11 content conflicts where stable RTK replaced prerelease registrations and the provider-preservation repair changed documentation. The resolved installer lists and generator expectations keep stable RTK, omit the retired guard, and retain exact old Copilot/Gemini registrations during refresh. The generator has 29 current outputs. Its first run in the isolated worktree hit five sandbox `PermissionError`s while intentionally modifying generated files; the same 25-test suite passed with checkout write access.
 
 ## Decision Log
 
@@ -76,10 +77,13 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Decision: Refuse to overwrite an existing RTK config backup; retire old installed scripts only on exact byte hashes and the old bundle only when its receipt names a known asset digest and matches the binary.
   Rationale: A repeated or modified installation must preserve unknown user data for manual review.
   Date/Author: 2026-09-29, Codex.
+- Decision: Resolve milestone 18 on top of stable RTK and the provider-preservation repair by removing only repository-state ownership, source, and fresh registrations.
+  Rationale: Current installations may retain exact retired registrations for manual cleanup, while new installations must contain only maintained handlers.
+  Date/Author: 2026-09-29, Codex.
 
 ## Outcomes & Retrospective
 
-Planning decisions are complete and the user approved the revised plan. Milestone 17 source is implemented: both installers preflight stable RTK and safely configure its TOML, obsolete prerelease source and registrations are removed, automatic Copilot/Gemini forwarders remain, and verified old installed assets are retired only when ownership evidence matches. Local source and disposable-home tests pass; no real user home was changed. Native Windows execution and live provider display remain unverified for later milestones. The next action is milestone 18.
+Planning decisions are complete and the user approved the revised plan. Milestone 17 is integrated. Milestone 18's rebased source commit `21e14129` removes the maintained repository-state family, three generated scripts, source registrations, installer ownership, and dedicated suites. Fresh temporary-home installer checks pass, while existing exact Copilot/Gemini registrations remain preserved on refresh. Generator, Codex merge, retained startup, Tool Guardian, scanner, Markdown Health, RTK, and aggregate-runner checks pass on this Mac. No real user home was changed. Milestone 18 remains open until the base branch fast-forwards to the tested isolated branch. Native Windows execution and live provider display remain later gates.
 
 ## Context and Orientation
 
@@ -108,6 +112,8 @@ Keep the Copilot and Gemini automatic RTK forwarders and their registrations. Th
 
 Status: in progress
 Acceptance: not met
+
+Rebased source commit: `21e14129` on `codex/ready-retire-git-guard`, based on `87dfa115`. The source and fresh-install checks pass locally. Base integration and formal acceptance remain open.
 
 Remove hooks/families/repository_state.py, its three generated provider scripts, manifest targets, Copilot/Gemini/Codex registrations, installer ownership entries, dedicated tests, and aggregate test or workflow references. Preserve shared audit infrastructure and unrelated hooks. Do not add deletion regression tests. Update AGENTS.md Git protection text: keep the direct .git edit ban and review before destructive Git commands, but remove instructions that depend on a repository-state hook blocking them. Do not claim instructions prevent arbitrary writes.
 
