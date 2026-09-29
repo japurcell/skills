@@ -126,7 +126,7 @@ Milestone 23 isolated source measured all retained high-rate executable families
 
 Milestone 24 source and Windows workflow preparation are integrated on `codex/ready-ideas-execplan` at `e98cb87a`. The Mac source sweep passed except for the converter collision fixture, which Repair 24A addresses. Native Windows execution remains required for M24 acceptance.
 
-Repair 24A has a passing isolated macOS converter suite after preserving the file-based collision case on capable filesystems and adding an in-memory assertion of the same decision. Bash and PowerShell temporary-home installer suites pass; PowerShell skips unsupported junction creation on this Mac. Integration remains outstanding, so repair acceptance is pending. A case-sensitive run can later exercise the retained two-file branch.
+Repair 24A source commit `fe189186` is rebased onto integrated M24 preparation at `e98cb87a`. The macOS converter suite passes after preserving the file-based collision case on capable filesystems and adding an in-memory assertion of the same decision. Bash and PowerShell temporary-home installer suites pass; PowerShell skips unsupported junction creation on this Mac. Base integration remains outstanding, so repair acceptance is pending. A case-sensitive run can later exercise the retained two-file branch.
 
 ## Context and Orientation
 
@@ -363,3 +363,5 @@ Revision note, 2026-09-29: Milestone 24 source and Windows workflow preparation 
 Revision note, 2026-09-29: Rebased M24 preparation as `cc94dcda` over Repair 24A planning at `743abc01`. The handoff conflict now preserves both records; Windows acceptance and converter repair stay open.
 
 Revision note, 2026-09-29: Repair 24A preserves the real-file Codex-agent collision case on capable filesystems and adds a portable assertion at the extracted collision decision. The local converter and pertinent installer checks pass. Acceptance remains pending branch integration; the case-sensitive CLI branch remains available for later verification.
+
+Revision note, 2026-09-29: Rebased Repair 24A source as `fe189186` onto the integrated M24 preparation at `e98cb87a`. The ExecPlan and handoff conflicts were resolved with both evidence sets preserved. The converter suite, both installer suites, OKF lint, and diff checks passed after resolution; native Windows and case-sensitive two-file verification remain open.
