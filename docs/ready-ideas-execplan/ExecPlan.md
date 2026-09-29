@@ -18,7 +18,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [ ] (2026-09-29 00:41Z) [milestone-18] Implemented and tested on isolated branch `codex/ready-retire-git-guard`; awaiting installer-preservation repair and integration.
 - [x] (2026-09-29) [repair-provider-guidance] Restored approved Gemini and Copilot file-first PowerShell instructions; both existing installer suites pass. The PowerShell suite skips one unsupported junction fixture on this Mac.
 - [ ] (2026-09-29) [milestone-19] Implemented and tested on isolated branch `codex/ready-retire-markdown`; awaiting installer-preservation repair and integration.
-- [ ] (2026-09-29) [repair-retired-registrations] In progress on isolated branch `codex/ready-preserve-retired`: preserve existing retired registrations during installer refresh while keeping fresh installs free of them.
+- [ ] (2026-09-29) [repair-retired-registrations] Implemented and tested on isolated branch `codex/ready-preserve-retired`; awaiting integration before milestones 18 and 19 can be accepted.
 - [ ] [milestone-20] Run repository-local OKF lint at turn end on three CLIs.
 - [ ] [milestone-21] Show sparse operational lifecycle messages.
 - [ ] (2026-09-29 00:41Z) [milestone-22] Implemented and tested on isolated branch `codex/ready-tool-guardian`; awaiting review and integration.
@@ -246,6 +246,8 @@ Planning inputs are the closed decision tickets under docs/ready-ideas-execplan/
 
 Milestone 17 local evidence (2026-09-29, isolated `codex/ready-rtk-stable` checkout): `rtk --version` reported `rtk 0.50.0`; `python3 scripts/test-rtk-stable.py` passed 12 tests; `bash scripts/test-install.sh` and `pwsh -NoProfile -File scripts/test-install.ps1` passed in disposable homes; `python3 scripts/test-generate-hooks.py` passed 25 tests with checkout write permission; `python3 scripts/generate-hooks.py --check` reported 32 current outputs. The Copilot and Gemini automatic RTK suites and Codex hook merger test passed. `python3 scripts/lint-okf.py` and `rtk git diff --check` passed. A disposable migration probe removed an exact old Codex adapter while preserving a modified Gemini file for manual review. A disposable explicit `rtk read absent-file` kept nonzero exit and file error, but this shell did not show the former warning before or after configuration; no live provider display or native Windows run is claimed.
 
+Repair 19A evidence (2026-09-29, isolated `codex/ready-preserve-retired` checkout rebased onto milestone 17): both installer suites passed with the provider configuration checks preceding RTK configuration writes. The 12 stable RTK tests, generated-hook freshness check for 32 files, OKF lint, Bash syntax check, and `git diff --check` passed. The PowerShell suite skipped its junction fixture on this Mac; native Windows proof remains later work.
+
 Capture concise evidence after execution: RTK version and config backup path without private contents; an explicit missing-file RTK exit; current registration lists; one safe OKF audit line with counts; a redacted Tool Guardian reason and matching log fields; per-handler timing distributions; native Windows scanner HEAD-failure result; and provider-visible messages. Do not paste raw tool input, credential values, entire logs, or private home paths unnecessarily. The Windows checklist is docs/ready-ideas-execplan/windows-live-check.md.
 
 ## Interfaces and Dependencies
@@ -261,3 +263,5 @@ Revision note, 2026-09-29: The user explicitly approved this plan and the Window
 Revision note, 2026-09-29: A working local RTK 0.50.0 could not open its tracking database for `rtk gain`. Windows proof now checks version and the hook command surface rather than dashboard storage.
 
 Revision note, 2026-09-29: Milestone 17 implementation now uses stable RTK config and verified legacy-file cleanup. Its local tests and generator checks pass; real Windows and provider-session proof remain in later milestones.
+
+Revision note, 2026-09-29: Repair 19A now preserves retired Copilot and Gemini registrations during refresh while checking both configurations before stable RTK changes the home. Its isolated rebase and tests passed; integration and milestone acceptance remain open.
