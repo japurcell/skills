@@ -4,7 +4,7 @@ Revise the existing, self-contained [ExecPlan](ExecPlan.md) for the current loca
 
 ## Notes
 
-This map is reopened on 2026-09-28 after the original implementation. Existing closed tickets and milestones record past decisions and evidence, not instructions to preserve behavior the user has withdrawn. The user later narrowed Markdown Health to a repository-local OKF lint hook; it is a new design, not the old checker's existing behavior. The new Tool Guardian denial ticket refines [Security Hook Notifications](tickets/security-hook-notifications.md) without weakening redaction. Wayfinding remains planning only; no hook or installer implementation starts before the revised plan is approved. Use `exec-plans` for the destination, `grilling` for human decisions, and `research` for external facts. The referenced `domain-modeling` skill is not installed, so use Wayfinder's explicit question, dependency, and resolution structure. Distinguish checked-in sources, installed user hooks, and historical test results.
+This map was reopened on 2026-09-28 after the original implementation. All decision tickets are now closed. The revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) are written; source work awaits the user's explicit approval of both. Existing completed milestones record past evidence, not acceptance of withdrawn behavior. The user narrowed Markdown Health to a repository-local OKF lint hook, and [Actionable Tool Guardian Denials](tickets/actionable-tool-guardian-denials.md) refines [Security Hook Notifications](tickets/security-hook-notifications.md) without weakening redaction. Wayfinding remains planning only. Use `exec-plans` for execution after approval. Distinguish checked-in sources, installed user hooks, and historical test results.
 
 ## Decisions so far
 
@@ -28,6 +28,7 @@ This map is reopened on 2026-09-28 after the original implementation. Existing c
 - [PowerShell Authoring Guidance](tickets/powershell-authoring-guidance.md): instruct local Gemini, Copilot, and Codex to write multiline PowerShell and reusable automation scripts with native file tools before running saved files; verify installed guidance and agent behavior.
 - [Disposable Probe Files](tickets/disposable-probe-files.md): add placement and cleanup rules only to the three provider instruction files; keep permanent tests tracked and avoid a broad probe ignore rule, with no installer or agent-run checks for this milestone.
 - [ExecPlan Integration](tickets/execplan-integration.md): order eight independently verifiable outcomes with shared hook setup and final regression in one [ExecPlan](ExecPlan.md); replace the Ready list with its link.
+- [Revised ExecPlan Integration](tickets/revised-execplan-integration.md): preserve compact historical evidence, add new milestones in dependency order with separate live gates, and require explicit approval of revised planning docs before source work.
 
 ## Not yet specified
 

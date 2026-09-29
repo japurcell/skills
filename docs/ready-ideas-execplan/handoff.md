@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user changed requirements on 2026-09-28 and invoked Wayfinder. The [map](map.md) is reopened with new tickets. The [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) are marked historical and paused as execution guides. No hook source, registration, installer, or installed user file has changed in this restart. Stable RTK simplification, Markdown Health retirement, repository OKF design, [Repository State Retirement](tickets/repository-state-retirement.md), [Lifecycle Notifications](tickets/lifecycle-notifications.md), [High-Rate Hook Performance Review](tickets/high-rate-hook-performance-review.md), and [Actionable Tool Guardian Denials](tickets/actionable-tool-guardian-denials.md) are closed. [Revised ExecPlan Integration](tickets/revised-execplan-integration.md) is the only open ticket and is now unblocked.
+The user changed requirements on 2026-09-28 and invoked Wayfinder. All tickets in the [map](map.md) are closed, including [Revised ExecPlan Integration](tickets/revised-execplan-integration.md). The [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) have been rewritten for the new design. The ExecPlan keeps compact historical evidence and opens milestones 17-27 for migration, new behavior, performance, platform checks, and separate live CLI checks. The user explicitly chose an approval gate: obtain approval of these completed planning documents before any source, installer, registration, or installed-user change. No such change has occurred in this restart.
 
 The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca34`. Its six fixed-point review findings were repaired and cleared by their original reviewers. Existing repository-state and Markdown-health hooks, prerelease RTK rewrite path, and user-level installations still represent the old design. Do not claim new requirements are implemented merely because the old checks passed.
 
@@ -10,10 +10,10 @@ The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca
 
 - Official research verified stable RTK 0.50.0 and its `RTK_SUPPRESS_HOOK_WARNING` support. Plan replacement of the pinned prerelease route and removal of unnecessary hook code.
 - Retire the repository-state hook and existing user-global Markdown checker. Keep `scripts/lint-okf.py`; design a simplified repository-local OKF hook that runs after an agent turn. Resolve checked-in cleanup, tests, documentation, and remaining Git safety guidance before implementation.
-- Keep user-visible hook messages at key lifecycle events across local Copilot, Gemini, and Codex, using the existing visible `load-required-skills` behavior as evidence. Decide sparse message policy without assuming every hook event displays the same field.
+- Keep sparse, user-visible hook messages at key lifecycle events across local Copilot, Gemini, and Codex. The existing visible `load-required-skills` behavior is evidence for that hook only; verify other native message fields separately.
 - Discover every high-rate event and retained handler, then plan a performance-focused code review that measures latency, including startup and notification cost where observable.
-- Make Tool Guardian block/warning text identify the exact safe-to-disclose policy violation and useful correction, so agents do not need to inspect hook source.
-- Update affected planning docs before any implementation. Complete reopened Wayfinder tickets, then revise the entire ExecPlan and acceptance checklist. No source edit is authorized by the old milestone text.
+- Make Tool Guardian block/warning text identify the exact safe-to-disclose policy violation. Reuse a static correction only when cheap and accurate, so agents need not inspect hook source.
+- Obtain explicit approval of the revised ExecPlan and Windows checklist before implementation. Old milestone text authorizes no new source edit.
 
 ## Current evidence and cautions
 
@@ -37,10 +37,10 @@ The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca
 
 ## Next step
 
-Claim [Revised ExecPlan Integration](tickets/revised-execplan-integration.md), the only open ticket. Activate `exec-plans` before editing [ExecPlan](ExecPlan.md), but first grill the user on milestone order and the precise gate before implementation. Keep Wayfinder planning-only and resolve at most one grilling ticket per session.
+Present the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) for the user's explicit approval. Do not start milestone 17 or any other source work until that approval arrives. After approval, begin with stable RTK preflight/config migration, then retire obsolete hook families in the documented order. Keep the live Copilot and Gemini checks as separate later milestones; no live CLI check is required for the macOS performance audit.
 
 ## Verification state
 
-This restart has changed planning docs only. No hook source, installed hook, or RTK config has changed. The direct OKF lint run passed in about 0.11 seconds; no provider live run or code test establishes the new design. The performance inventory and Tool Guardian fact check were read-only and unbenchmarked. `rtk git diff --check` passed after closing Actionable Tool Guardian Denials. Only Revised ExecPlan Integration remains open. Earlier link and ticket-dependency checks passed. The `update-agent-docs` pass found no current `.agents/` behavior to change while source still reflects the old design.
+This restart has changed planning docs only. No hook source, installed hook, or RTK config has changed. The direct OKF lint run passed in about 0.11 seconds; no provider live run or code test establishes the new design. The performance inventory, Tool Guardian fact check, and prior-plan inventory were read-only and unbenchmarked. The new ExecPlan milestone numbers and Progress entries match; `rtk git diff --check` passed after revision. All Wayfinder blockers and ticket statuses were checked closed. The `update-agent-docs` pass found no current `.agents/` behavior to change while source still reflects the old design.
 
-Prior code tests and live checks in the paused ExecPlan are historical evidence, not revised-plan acceptance. Run `rtk git diff --check` and ticket-dependency checks after each planning update.
+Prior code tests and live checks in the ExecPlan are historical evidence, not revised-plan acceptance. Native Windows scanner HEAD-failure proof remains open. Six blocked review-branch deletions remain separate user-run housekeeping, not a hook gate. `rtk git diff --check` should be rerun after any further planning edit.
