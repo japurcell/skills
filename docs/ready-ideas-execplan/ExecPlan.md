@@ -18,7 +18,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [ ] (2026-09-29 00:41Z) [milestone-18] Implemented and tested on isolated branch `codex/ready-retire-git-guard`; awaiting installer-preservation repair and integration.
 - [x] (2026-09-29) [repair-provider-guidance] Restored approved Gemini and Copilot file-first PowerShell instructions; both existing installer suites pass. The PowerShell suite skips one unsupported junction fixture on this Mac.
 - [ ] (2026-09-29) [milestone-19] Implemented and tested on isolated branch `codex/ready-retire-markdown`; awaiting installer-preservation repair and integration.
-- [ ] (2026-09-29) [repair-retired-registrations] Implemented and tested on isolated branch `codex/ready-preserve-retired`; awaiting integration before milestones 18 and 19 can be accepted.
+- [x] (2026-09-29) [repair-retired-registrations] Integrated Copilot/Gemini refresh preservation at `44daea14`; Bash and PowerShell installer suites and 12 stable RTK tests pass. Native Windows junction behavior remains open in milestone 24.
 - [ ] [milestone-20] Run repository-local OKF lint at turn end on three CLIs.
 - [ ] [milestone-21] Show sparse operational lifecycle messages.
 - [ ] (2026-09-29 00:41Z) [milestone-22] Implemented and tested on isolated branch `codex/ready-tool-guardian`; awaiting review and integration.
@@ -124,8 +124,8 @@ Inspect checked-in source, generated targets, registrations, installers, and a f
 
 ### Repair 19A: Preserve retired installed registrations on refresh
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met for source and disposable-home behavior; native Windows junction proof remains in milestone 24.
 
 When `install.sh` or `install.ps1` refreshes an existing user home, preserve exact existing Copilot and Gemini registrations that invoke the retired repository-state or Markdown Health scripts. Preserve unrelated user settings and hook entries. Do not restore retired registrations to a fresh install, add duplicate entries on repeated refresh, or copy retired scripts into a new home. Stop safely on malformed or ambiguous existing JSON rather than overwriting it. Keep the existing Codex merge behavior, which already leaves old unowned registrations alone. Add disposable-home Bash and PowerShell tests for old-entry preservation, fresh absence, unrelated entries, idempotence, and malformed input. Record the old-hook manual cleanup limitation. Integrate this repair before accepting milestones 18 and 19.
 
