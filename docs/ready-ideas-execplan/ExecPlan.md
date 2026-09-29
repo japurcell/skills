@@ -15,7 +15,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-28) [planning] Close the reopened Wayfinder decisions and revise this ExecPlan and windows-live-check.md before source work.
 - [x] (2026-09-29 00:09Z) [approval] User explicitly approved the revised ExecPlan and Windows checklist before source changes.
 - [x] (2026-09-29 01:01Z) [milestone-17] Require stable RTK and migrate warning suppression; retire verified owned prerelease assets. Source and disposable-home proof pass; native Windows real RTK proof remains in milestone 24.
-- [ ] (2026-09-29) [milestone-18] Rebased source commit `21e14129` onto `87dfa115`; conflict resolution and affected Mac checks pass on isolated branch `codex/ready-retire-git-guard`. Awaiting base fast-forward and final acceptance.
+- [x] (2026-09-29) [milestone-18] Integrated repository-state retirement at `6b8e0938`; generator, installer, and retained-hook checks pass on Mac. Native Windows proof remains in milestone 24.
 - [x] (2026-09-29) [repair-provider-guidance] Restored approved Gemini and Copilot file-first PowerShell instructions; both existing installer suites pass. The PowerShell suite skips one unsupported junction fixture on this Mac.
 - [ ] (2026-09-29) [milestone-19] Implemented and tested on isolated branch `codex/ready-retire-markdown`; awaiting installer-preservation repair and integration.
 - [x] (2026-09-29) [repair-retired-registrations] Integrated Copilot/Gemini refresh preservation at `44daea14`; Bash and PowerShell installer suites and 12 stable RTK tests pass. Native Windows junction behavior remains open in milestone 24.
@@ -110,10 +110,10 @@ Keep the Copilot and Gemini automatic RTK forwarders and their registrations. Th
 
 ### Milestone 18: Retire maintained repository-state enforcement
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met for checked-in source and fresh disposable installs; native Windows proof remains in milestone 24.
 
-Rebased source commit: `21e14129` on `codex/ready-retire-git-guard`, based on `87dfa115`. The source and fresh-install checks pass locally. Base integration and formal acceptance remain open.
+Integrated source commit: `21e14129`; tested branch tip `6b8e0938` matches the base after fast-forward. The source and fresh-install checks pass locally.
 
 Remove hooks/families/repository_state.py, its three generated provider scripts, manifest targets, Copilot/Gemini/Codex registrations, installer ownership entries, dedicated tests, and aggregate test or workflow references. Preserve shared audit infrastructure and unrelated hooks. Do not add deletion regression tests. Update AGENTS.md Git protection text: keep the direct .git edit ban and review before destructive Git commands, but remove instructions that depend on a repository-state hook blocking them. Do not claim instructions prevent arbitrary writes.
 
