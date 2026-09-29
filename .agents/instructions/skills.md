@@ -48,6 +48,3 @@ python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspa
 ## Subagent router maintenance
 
 - `skills/subagent-model-router/reference/model-catalog.md` owns tier membership and the task-default model table. Other routing references use named defaults instead of copying preferred model IDs.
-- The router benchmark grader reads model membership from the catalog's `## Fast`, `## Standard`, and `## Premium` tables. Preserve that structure or update the parser and `evals/test_grade_benchmark.py` together.
-- `skills/subagent-model-router/evals/test_grade_benchmark.py` checks routing decisions at the grader interface. Its command is listed in the skills testing guide.
-- Keep eval prompts and grader expectations synchronized. Use the matching skill/grader snapshot for historical benchmark artifacts when scenario semantics change.

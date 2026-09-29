@@ -41,13 +41,6 @@ class TestTestAll(unittest.TestCase):
                     path.write_text(f"print({part!r})\n", encoding="utf-8")
                 else:
                     path.touch()
-        evaluations = root / "skills/subagent-model-router/evals"
-        evaluations.mkdir(parents=True)
-        (evaluations / "test_fixture.py").write_text(
-            "import unittest\nprint('router evaluation')\n"
-            "class TestFixture(unittest.TestCase):\n"
-            "    def test_fixture(self):\n        pass\n", encoding="utf-8"
-        )
         bin_dir = directory / "bin"
         bin_dir.mkdir()
         (bin_dir / "bash").symlink_to(shutil.which("bash"))
@@ -118,12 +111,7 @@ class TestTestAll(unittest.TestCase):
             part for command in commands for part in command if part.startswith("scripts/")
         }
         self.assertEqual(listed, expected)
-        self.assertEqual(len(commands), len(expected) + 1)
-        self.assertIn(
-            ["python3", "-m", "unittest", "discover", "-s",
-             "skills/subagent-model-router/evals", "-p", "test_*.py"],
-            commands,
-        )
+        self.assertEqual(len(commands), len(expected))
         self.assertIn(["python3", "scripts/test-codex-agents.py"], commands)
 
     def test_missing_dependencies_fail_before_any_suite_runs(self):
@@ -151,7 +139,7 @@ class TestTestAll(unittest.TestCase):
         self.assertNotIn("FIRST_STDERR", result.stdout)
         self.assertIn("FIRST_STDERR", result.stderr)
         self.assertNotIn("FIRST_STDOUT", result.stderr)
-        self.assertIn("router evaluation", result.stdout)
+        self.assertIn("scripts/test_test_all.py", result.stdout)
         self.assertIn("1 failed", result.stderr)
         self.assertIn("exit 7", result.stderr)
         self.assertIn("SKIP: host-specific junction test", result.stderr)
@@ -162,7 +150,7 @@ class TestTestAll(unittest.TestCase):
         result = self.run_fixture(root, env)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("0 failed", result.stderr)
-        self.assertIn("router evaluation", result.stdout)
+        self.assertIn("scripts/test_test_all.py", result.stdout)
         for flag in ("--unknown", "--li"):
             with self.subTest(flag=flag):
                 result = self.run_fixture(root, env, flag)
@@ -327,7 +315,7 @@ class TestTestAll(unittest.TestCase):
             os.close(write_fd)
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertIn("exit 141", result.stderr)
-        self.assertIn("RUN python3 -m unittest discover", result.stderr)
+        self.assertIn("RUN python3 scripts/test_test_all.py", result.stderr)
         self.assertIn("Suites:", result.stderr)
 
     def test_missing_suite_is_a_preflight_error(self):
@@ -337,14 +325,6 @@ class TestTestAll(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertEqual(result.stdout, "")
         self.assertIn("scripts/test_helpers.py", result.stderr)
-
-    def test_missing_router_eval_directory_is_a_preflight_error(self):
-        root, env = self.fixture()
-        shutil.rmtree(root / "skills/subagent-model-router/evals")
-        result = self.run_fixture(root, env)
-        self.assertEqual(result.returncode, 2, result.stderr)
-        self.assertEqual(result.stdout, "")
-        self.assertIn("skills/subagent-model-router/evals", result.stderr)
 
     def test_unexecutable_dependency_is_a_runner_error(self):
         root, env = self.fixture()

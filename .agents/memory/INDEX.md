@@ -5,7 +5,7 @@ description: Index and loading map for all .agents/memory/ knowledge-base files
 
 # Memory Index
 
-This is the loading map for the agent knowledge base under `.agents/memory/`. **Read this file before repository edits.** For read-only questions, reviews, and audits that make no repository edits, start with the requested artifact and load guidance only as needed. For edit work, load other files **on demand** — and read only the area-scoped **instruction file** for the area you're working in (see below), not all of them. This keeps context small.
+This is the loading map for the agent knowledge base under `.agents/memory/`. **Read this file before repository edits.** For read-only questions, reviews, and audits that make no repository edits, start with the requested artifact and load guidance only as needed. For edit work, load other files **on demand**, and read only the area-scoped **instruction file** for the area you're working in (see below), not all of them. This keeps context small.
 
 ## Repo-wide files (load as the task needs)
 

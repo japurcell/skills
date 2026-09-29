@@ -155,19 +155,6 @@ print(*(str((home / path).stat().st_ino) for path in ('.copilot/hooks/hooks.json
 PY
 )"
   assert_equals "$first_config_inodes" "$second_config_inodes" "Expected owner-only unchanged provider configs not to be replaced."
-  rm -rf -- "$home"
-  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
-  python3 - "$home" <<'PY'
-import json
-import sys
-from pathlib import Path
-home = Path(sys.argv[1])
-for path in (home / '.copilot/hooks/hooks.json', home / '.gemini/settings.json'):
-    text = path.read_text()
-    assert 'repository-state.py' not in text and 'markdown-health.py' not in text
-assert not (home / '.copilot/hooks/scripts/repository-state.py').exists()
-assert not (home / '.gemini/hooks/scripts/markdown-health.py').exists()
-PY
 }
 
 test_provider_malformed_json_stops_before_mutation() {

@@ -54,8 +54,6 @@ SUITES = (
     ("bash", "scripts/test-repo-root.sh"),
     ("python3", "scripts/test_helpers.py"),
     ("python3", "scripts/test_test_all.py"),
-    ("python3", "-m", "unittest", "discover", "-s",
-     "skills/subagent-model-router/evals", "-p", "test_*.py"),
 )
 
 

@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-25 and Repairs 19A and 24A-24D are integrated on `codex/ready-ideas-execplan`. The user approved non-force pushes for Windows CI. Commit `c455a412` reached `origin/codex/ready-ideas-execplan`; both native Windows workflow attempts passed. M26-27 remain open for separate sessions with Copilot and Gemini CLIs.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-25 and Repairs 19A and 24A-24D are integrated on `codex/ready-ideas-execplan`. The user approved non-force pushes for Windows CI. Commit `c455a412` reached `origin/codex/ready-ideas-execplan`; both native Windows workflow attempts passed. M26-27 remain open for separate sessions with Copilot and Gemini CLIs. The post-review fixes below are on the local branch and have not been pushed.
 
 ## Current evidence
 
@@ -28,10 +28,18 @@ The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](wi
 
 ## Decisions and limits
 
-On 2026-09-29 the user staged removal of the provider RTK explanation, file-first PowerShell and disposable-probe instructions, the root Git-state section, and two obsolete planning files. These staged changes supersede the earlier instruction decisions; do not restore their text from historical tickets or milestones. Stable RTK installer behavior remains. Current docs and installer copy assertions were aligned without changing hook behavior. `scripts/test-install.sh`, `scripts/test-install.ps1`, and `scripts/lint-okf.py` pass on this Mac; PowerShell still skips unsupported junction creation. The user's staged deletions remain staged, while follow-up docs and test edits are unstaged.
+On 2026-09-29 the user removed the provider RTK explanation, file-first PowerShell and disposable-probe instructions, the root Git-state section, and two obsolete planning files. Those committed changes supersede the earlier instruction decisions; do not restore their text from historical tickets or milestones. Stable RTK installer behavior remains. Current docs and installer copy assertions were aligned without changing hook behavior.
+
+## Post-review fixes
+
+- The `origin/main...HEAD` review found eight new scripts without executable mode, fresh-install assertions for retired hooks, added em dashes, and unrelated router eval/review-routing changes. The user reserved M26-27 for later sessions and authorized the other fixes.
+- Eight `scripts/` entry points now have mode `0755`. `scripts/test-install.sh` and `scripts/test-install.ps1` no longer assert absence of deleted hooks; their preservation and idempotence checks remain. The added em dashes in `.agents/memory/INDEX.md` and the repository-state research and ticket were replaced with punctuation.
+- The router eval/grader and review-routing changes were removed from the working tree, leaving `skills/subagent-model-router/` identical to `origin/main`. Branches `codex/ready-ideas-fix-router` and `codex/ready-ideas-fix-router-tier` preserve that unrelated work. No refs or history were rewritten. The user-merged router `SKILL.md` wording remains.
+- Removing the router evals exposed a pre-existing `scripts/test-all.py` registration for a directory absent from `origin/main`. A disposable public-runner preflight reproduced exit 2 with `missing suite paths: skills/subagent-model-router/evals`. The registration, fixture, and obsolete deletion-only test were removed; `.agents/instructions/skills.md` and `.agents/memory/testing/skills.md` no longer point to the removed grader.
+- Verification: Bash and PowerShell installer suites passed (PowerShell skipped unsupported junction creation); `scripts/test_test_all.py` passed 14 tests; router skill quick validation, OKF lint, script syntax checks, and `git diff --check` passed. A disposable runner preflight passed suite-path validation and then stopped at an intentionally mocked PowerShell 6 version gate. No live CLI check or push was performed for these fixes.
 
 Older installations may still execute repository-state or Markdown Health scripts. Review exact user hook registrations and scripts for manual cleanup as described in [README.md](../../README.md); preserve `audit.log` and Markdown Health state by default. The five integrated feature worktrees are clean and detached; their merged branches were deleted. The app archive tool refused the worktrees because pinned tasks or workspace protection applies, so do not remove them through the shell. Six older `codex/ready-ideas-fix-*` branches remain separate historical housekeeping. Do not touch `codex/design-context-freshness-system`. Do not weaken tests or add deletion regression tests.
 
 ## Next step
 
-Complete Copilot installed CLI display milestone 26 in a session with Copilot CLI, then Gemini milestone 27 in a session with Gemini CLI. Follow each milestone's disposable-home probe and cleanup steps in [ExecPlan](ExecPlan.md). The overall plan remains open until both pass. A case-sensitive converter run can separately exercise the retained two-file CLI branch.
+Review the local post-review commit. M26 Copilot and M27 Gemini installed CLI display checks remain separate later work; follow their disposable-home steps in [ExecPlan](ExecPlan.md). The overall plan remains open until both pass. A case-sensitive converter run can separately exercise the retained two-file CLI branch.

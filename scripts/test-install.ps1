@@ -836,18 +836,6 @@ function Test-ProviderRefreshPreservesRetiredAndUserEntries {
         $beforeSecond = Get-TreeFingerprint $homeDir
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
         Assert-Equals -Expected $beforeSecond -Actual (Get-TreeFingerprint $homeDir) -Message 'Expected provider refresh to be idempotent.'
-
-        $freshHome = Join-Path $workdir 'fresh-home'
-        Invoke-Install -Repo $repo -HomeDir $freshHome -Workdir $workdir
-        foreach ($path in @((Join-Path $freshHome '.copilot/hooks/hooks.json'), (Join-Path $freshHome '.gemini/settings.json'))) {
-            $content = Get-Content -LiteralPath $path -Raw
-            Assert-True -Condition (-not $content.Contains('repository-state.py') -and -not $content.Contains('markdown-health.py')) -Message 'Expected no retired registration in fresh provider config.'
-        }
-        foreach ($provider in @('copilot', 'gemini')) {
-            foreach ($name in @('repository-state.py', 'markdown-health.py')) {
-                Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $freshHome ".$provider/hooks/scripts/$name"))) -Message 'Expected no retired script in fresh provider install.'
-            }
-        }
     }
     finally { Remove-Workdir $workdir }
 }

@@ -5,7 +5,7 @@ description: Local CLI sandbox and permission controls relevant to protecting Gi
 
 # Provider CLI settings for Git-metadata protection
 
-**Question:** Can Copilot CLI, Gemini CLI, or Codex CLI prevent every direct modification of a repository's Git metadata—including an arbitrary Python or PowerShell script—while preserving normal Git commands?
+**Question:** Can Copilot CLI, Gemini CLI, or Codex CLI prevent every direct modification of a repository's Git metadata, including an arbitrary Python or PowerShell script, while preserving normal Git commands?
 
 **Conclusion:** No documented local-CLI setting supplies that complete, command-identity-aware boundary across all three providers. A filesystem sandbox or OS ACL controls paths, not whether the writer is `git`, Python, or PowerShell. If it makes the Git directory read-only, state-changing Git commands fail too. Hooks, custom instructions, ignored-file rules, tool allow/deny patterns, and approval prompts can reduce accidents, but none is a complete control over writes performed after an allowed arbitrary shell command starts.
 
