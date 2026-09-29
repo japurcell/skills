@@ -15,11 +15,11 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-28) [planning] Close the reopened Wayfinder decisions and revise this ExecPlan and windows-live-check.md before source work.
 - [x] (2026-09-29 00:09Z) [approval] User explicitly approved the revised ExecPlan and Windows checklist before source changes.
 - [ ] (2026-09-29 00:12Z) [milestone-17] In progress on isolated implementer branch: require stable RTK and migrate warning suppression; retire verified owned prerelease assets.
-- [ ] [milestone-18] Retire maintained repository-state hook pieces and adjust Git guidance.
+- [ ] (2026-09-29 00:41Z) [milestone-18] In progress on isolated implementer branch: retire maintained repository-state hook pieces and adjust Git guidance.
 - [ ] [milestone-19] Retire maintained global Markdown Health pieces while preserving OKF lint.
 - [ ] [milestone-20] Run repository-local OKF lint at turn end on three CLIs.
 - [ ] [milestone-21] Show sparse operational lifecycle messages.
-- [ ] [milestone-22] Explain exact safe Tool Guardian violations.
+- [ ] (2026-09-29 00:41Z) [milestone-22] In progress on isolated implementer branch: explain exact safe Tool Guardian violations.
 - [ ] [milestone-23] Inventory, measure, review, and improve retained high-rate hooks on macOS.
 - [ ] [milestone-24] Pass integrated source, temporary-home installer, and native Windows automation, including the scanner HEAD-failure case.
 - [ ] [milestone-25] Verify installed Codex CLI behavior.
@@ -91,7 +91,7 @@ Keep the Copilot and Gemini automatic RTK forwarders and their registrations. Th
 
 ### Milestone 18: Retire maintained repository-state enforcement
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Remove hooks/families/repository_state.py, its three generated provider scripts, manifest targets, Copilot/Gemini/Codex registrations, installer ownership entries, dedicated tests, and aggregate test or workflow references. Preserve shared audit infrastructure and unrelated hooks. Do not add deletion regression tests. Update AGENTS.md Git protection text: keep the direct .git edit ban and review before destructive Git commands, but remove instructions that depend on a repository-state hook blocking them. Do not claim instructions prevent arbitrary writes.
@@ -129,7 +129,7 @@ Use provider-native message fields, keep stdout JSON-only, and avoid a second di
 
 ### Milestone 22: Explain Tool Guardian violations
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Edit canonical hooks/families/tool_guard.py and regenerate provider outputs. Retain a safe rule identifier and cause when building threats instead of reducing each finding to category/severity. Show up to three distinct reasons and an omitted count while preserving blocked versus warning wording, severity, safe action name, and one redacted Action excerpt of at most 160 characters. For an input limit, identify the exact limit, configured threshold, and measured count with its true unit when available. Name a provider field such as write_file.content only from a trusted known-field list; otherwise say tool input. For known inspection failure, state only a safe cause and keep fail-closed behavior. Do not echo exception text, arbitrary keys, raw input, or matched secrets.

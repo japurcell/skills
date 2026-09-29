@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) on 2026-09-28. All [Wayfinder map](map.md) tickets are closed. Milestone 17 started in an isolated worktree, then the user asked for explanation only and requested this handoff followed by a stop. The implementer was interrupted. The base branch has no uncommitted changes; the isolated worktree has two untracked partial files, listed below. Preserve them. Milestones 17-27 remain unaccepted.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) on 2026-09-28. All [Wayfinder map](map.md) tickets are closed. Implementation resumed on 2026-09-29. Milestones 17, 18, and 22 are active in separate worktrees; none is accepted yet. Milestones 19-21 and 23-27 remain open.
 
 The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca34`. Its six fixed-point review findings were repaired and cleared by their original reviewers. Existing repository-state and Markdown-health hooks, prerelease RTK rewrite path, and user-level installations still represent the old design. Do not claim new requirements are implemented merely because the old checks passed.
 
@@ -38,11 +38,11 @@ The prior implementation remains on `codex/ready-ideas-execplan` through `c0d9ca
 
 ## Next step
 
-Stop now as requested. When the user resumes implementation, inspect `/Users/adam/.codex/worktrees/ready-rtk-stable/skills` before editing: branch `codex/ready-rtk-stable` starts at `9687149d` and currently has untracked `scripts/configure-rtk.py` and `scripts/test-rtk-stable.py`. Resume milestone 17 test-first work without discarding those files. Then review results, rebase onto the latest base branch, and fast-forward integrate only after tests and a clean implementer worktree. The base branch includes a separate model-router skill commit and merge after the milestone worktree was created. Keep Copilot and Gemini live checks as later milestones; macOS performance audit needs no live CLI run.
+Wait for the milestone 17, 18, and 22 implementers, then review each result. Milestone 17 runs in `/Users/adam/.codex/worktrees/ready-rtk-stable/skills` on `codex/ready-rtk-stable`; its preserved untracked `scripts/configure-rtk.py` and `scripts/test-rtk-stable.py` were inspected before resumption. Milestone 18 runs in `/Users/adam/.codex/worktrees/ready-retire-git-guard/skills` on `codex/ready-retire-git-guard`. Milestone 22 runs in `/Users/adam/.codex/worktrees/ready-tool-guardian/skills` on `codex/ready-tool-guardian`. Rebase and fast-forward integrate each clean, tested branch serially. Start milestone 19 when an implementer slot opens. Keep Copilot and Gemini live checks as later milestones; macOS performance audit needs no live CLI run.
 
 ## Verification state
 
-Revised hook behavior is not verified. The base branch is clean, and no real user RTK config or installed hook was changed in this implementation turn. The interrupted milestone 17 branch has two untracked files; no test result or completed commit from that implementer was reported. The direct OKF lint run from planning passed in about 0.11 seconds; old provider tests are historical evidence only. `rtk --version` and `rtk hook --help` passed locally; `rtk gain` failed on its tracking database. `rtk git diff --check` passed for the committed plan updates. Native Windows scanner HEAD-failure proof remains open.
+Revised hook behavior is not verified. No real user RTK config or installed hook was changed by this resumed turn. The three implementers have not yet reported final tests or commits. The direct OKF lint run from planning passed in about 0.11 seconds; old provider tests are historical evidence only. `rtk --version` and `rtk hook --help` passed locally; `rtk gain` failed on its tracking database. Native Windows scanner HEAD-failure proof remains open.
 
 The initial milestone 17 implementer used Astra High because the installer migration touches user config and several providers. The user agreed Sol High was sufficient: isolated tests, a clear spec, and review reduce the residual risk. A separate session committed `d60abc88` to clarify the model-router selection guidelines; do not redo that edit here. No milestone 17 work was accepted from the interrupted implementer.
 
