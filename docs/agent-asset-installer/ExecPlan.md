@@ -3,7 +3,7 @@
 
 This ExecPlan is a living document. Maintain `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` as work proceeds. Its repository path is `docs/agent-asset-installer/ExecPlan.md`. Follow `.agents/skills/exec-plans/SKILL.md`, including synchronized milestone status and progress checkboxes.
 
-This session creates the implementation plan only. No implementation milestone has started. Native package publication is a separate future effort.
+Planning is complete. The user accepted all three test seams on 2026-09-29 and explicitly instructed not to start implementation yet. Wait for an explicit implementation request. No implementation milestone has started. Native package publication is a separate future effort.
 
 ## Purpose / Big Picture
 
@@ -17,7 +17,8 @@ Success is observable from a disposable project: install a review workflow, see 
 
 - [x] (2026-09-29 21:27Z) [planning] Read the closed contract, source inventory, current installer entry points, configuration merger, generated-hook manifest, and area guidance. Create this self-contained implementation plan.
 - [x] (2026-09-29 21:46Z) [planning] Complete canonical routing/documentation pass. OKF lint, whitespace, 15 Markdown documents, 69 local links, seven synchronized open milestones, and four closed decisions pass.
-- [ ] [planning] Obtain acceptance of proposed public test seams before writing tests, as required by `tdd`.
+- [x] (2026-09-29 21:50Z) [planning] User accepts public CLI/file effects, Bash/PowerShell entry points, and native discovery/hook execution as test seams.
+- [x] (2026-09-29 21:50Z) [planning] Record the user's explicit instruction not to start implementation yet. All seven implementation milestones remain open.
 - [ ] [milestone-1] Deliver one committed, pinned skill installation through the public CLI.
 - [ ] [milestone-2] Deliver asset selection, required dependencies, and curated bundles.
 - [ ] [milestone-3] Deliver preview, update, recorded restoration, conflict protection, and safe pruning.
@@ -72,10 +73,14 @@ Decision: Distinguish interrupted-operation recovery from version rollback. A te
 
 Rationale: Recovering incomplete writes protects integrity without the excluded rollback feature. Date/author: 2026-09-29, Codex planning.
 
+Decision: All three public test seams are accepted, but implementation remains on hold until an explicit user request. Do not write tests, source, or scaffolding yet.
+
+Rationale: The user accepted test boundaries and separately instructed, "Don't start implementation yet." Test-scope acceptance does not authorize execution. Date/author: 2026-09-29, user instruction recorded by Codex.
+
 ## Outcomes & Retrospective
 
 
-Planning is complete. Implementation is not started. Seven verifiable milestones cover commands, catalog/dependencies, ownership, provider constraints, personal adoption, and OS/client acceptance. No installer, installed home, runtime, or workflow has changed. Test seams remain proposed until explicit acceptance. Planning does not establish live support.
+Planning is complete and all three test seams are accepted. Implementation is not started and is on hold at the user's explicit request. Seven verifiable milestones cover commands, catalog/dependencies, ownership, provider constraints, personal adoption, and OS/client acceptance. No installer, installed home, runtime, or workflow has changed. Planning does not establish live support.
 
 Planning validation on 2026-09-29: `rtk proxy ./scripts/lint-okf.py` exits `0`, `rtk git diff --check` passes, and a read-only validator checks 15 Markdown documents, 69 local links, all required plan sections, seven open milestones with matching unchecked progress, and four closed decision resolutions. Canonical edits are limited to the existing repository-instruction and file-map routing entries. No implementation test command has run.
 
@@ -86,7 +91,7 @@ Run repository commands from the root containing `AGENTS.md`, `skills/`, `agents
 
 Canonical skills are `skills/<name>/` with `SKILL.md`. Canonical agents are regular top-level `agents/*.md` with `name` and `description` frontmatter. `scripts/install-codex-agents.py` converts them to TOML containing `name`, `description`, and `developer_instructions`. `hooks/manifest.py` maps renderers to generated scripts in `.codex/`, `.copilot/`, `.gemini/`, and `.github/`. Shell installers currently copy personal setups. `scripts/test-all.py` registers maintained suites. `.github/workflows/ready-ideas-windows.yml` runs native Windows acceptance.
 
-A catalog describes assets, bundles, dependencies, clients, and runtime requirements. An asset ID uses a type prefix, such as `skill:code-review` or `hook:tool-guard`. A bundle names a curated selection. Required dependency closure means every asset needed directly or indirectly. A provider adapter translates selected source into native paths/configuration. A seam is the interface used by callers and tests. Proposed seams are command processes and native execution, not private helpers.
+A catalog describes assets, bundles, dependencies, clients, and runtime requirements. An asset ID uses a type prefix, such as `skill:code-review` or `hook:tool-guard`. A bundle names a curated selection. Required dependency closure means every asset needed directly or indirectly. A provider adapter translates selected source into native paths/configuration. A seam is the interface used by callers and tests. Accepted seams are command processes and native execution, not private helpers.
 
 Provenance describes repository, full commit, digest, and renderer version. Ownership identifies the file or configuration entry the installer may change. A baseline digest describes last verified managed content. Compare current content with that baseline before replacement/removal. A lock record stores the current resolved installation. It is separate from the mutex preventing concurrent writers.
 
@@ -125,7 +130,7 @@ Status: open
 
 Acceptance: not met
 
-After seam acceptance, add subprocess suite `scripts/test-agent-assets.py` using disposable source/target Git repositories. First invoke the new CLI for `skill:caveman` and Codex. Assert native content, requested selection, immutable commit, and SHA-256. Observe failure, then add only the CLI/catalog/acquisition/copying slice needed to pass. Add repetition behavior after the first case passes.
+After the user explicitly requests implementation, add subprocess suite `scripts/test-agent-assets.py` using disposable source/target Git repositories. The test seams are already accepted. First invoke the new CLI for `skill:caveman` and Codex. Assert native content, requested selection, immutable commit, and SHA-256. Observe failure, then add only the CLI/catalog/acquisition/copying slice needed to pass. Add repetition behavior after the first case passes.
 
 Write `.agents/skills/caveman/` and both team records. Do not invoke hooks/clients, alter the target index, commit output, or configure personal RTK. Acquire committed content only. Dirty selected source paths fail before installation. Unrelated uncommitted docs need not prevent it. Register the suite in `scripts/test-all.py`.
 
@@ -236,7 +241,7 @@ Acceptance is help matching documentation, earlier milestone gates met, no stale
 
 Commands below describe future implementation/validation unless explicitly recorded otherwise. Work from this source repository root. Use disposable targets outside the checkout. Never test against real home. Native Windows can use `py -3` or `python` where `python3` is unavailable, and `pwsh -NoProfile -File scripts/install.ps1` for wrapper cases.
 
-First agree three proposed seams: the public `scripts/agent-assets.py` subprocess CLI and its filesystem/configuration effects, existing Bash/PowerShell entry points, and installed native discovery plus registered hook processes. Private helper calls/internal collaborator mocks are outside the test surface. Implement milestone 1 one red/green behavior at a time.
+The user accepted three seams: the public `scripts/agent-assets.py` subprocess CLI and its filesystem/configuration effects, existing Bash/PowerShell entry points, and installed native discovery plus registered hook processes. Do not ask for that acceptance again. Private helper calls/internal collaborator mocks are outside the test surface. Wait for an explicit implementation request, then implement milestone 1 one red/green behavior at a time.
 
 After those commands exist, a skill-only example needs no client authentication:
 
@@ -271,7 +276,7 @@ Private `git status` shows no new files. Exact native payload paths and local re
 ## Validation and Acceptance
 
 
-The first proposed seam exercises lifecycle end to end with real disposable Git repositories/remotes. Assert literal fixture content, independent known hashes, semantic settings, exits, streams, and complete target fingerprints on refusal. Cover install/repetition, branch advancement, pins, acquisition failure, digest mismatch, dependency/selection changes, restoration, edited retained/updated/pruned items, borrowed files, malformed records/settings, and interruptions. Do not merely assert operations inside a private plan.
+The first accepted seam exercises lifecycle end to end with real disposable Git repositories/remotes. Assert literal fixture content, independent known hashes, semantic settings, exits, streams, and complete target fingerprints on refusal. Cover install/repetition, branch advancement, pins, acquisition failure, digest mismatch, dependency/selection changes, restoration, edited retained/updated/pruned items, borrowed files, malformed records/settings, and interruptions. Do not merely assert operations inside a private plan.
 
 The second seam proves both entry points implement equivalent selected behavior and preserve legacy refresh before adoption. Continue existing installer/converter/configuration suites. A failing targeted suite is a real failure to reproduce/fix. Never delete, skip, weaken, or rename it to obtain green results. Do not add regression tests for feature deletions.
 
@@ -296,3 +301,5 @@ Retry after an interrupted write to recover only that pending operation before c
 Adapter snapshots/live versions are not pinned by planning. Record versions/evidence in milestone 6 and distinguish documented from installed behavior. No stable release channel is assumed. Earlier source inspection found no local tags and did not inspect remote releases.
 
 Revision note, 2026-09-29: Created a separate implementation ExecPlan from the closed contract. Added concrete lifecycle/data design and seven acceptance milestones. Kept test seams pending confirmation and source untouched. Recorded tracked-local limits and tool input limits rather than inventing uniform settings or bypassing checks.
+
+Revision note, 2026-09-29 21:50Z: Recorded acceptance of all three test seams and the subsequent explicit instruction not to start implementation. Updated the resume gate, progress, and outcome. No source or tests were created.
