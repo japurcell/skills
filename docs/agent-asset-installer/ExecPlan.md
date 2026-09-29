@@ -3,7 +3,7 @@
 
 This ExecPlan is a living document. Maintain `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` as work proceeds. Its repository path is `docs/agent-asset-installer/ExecPlan.md`. Follow `.agents/skills/exec-plans/SKILL.md`, including synchronized milestone status and progress checkboxes.
 
-Planning is complete. The user accepted all three test seams on 2026-09-29 and explicitly instructed not to start implementation yet. Wait for an explicit implementation request. No implementation milestone has started. Native package publication is a separate future effort.
+The initial plan is complete. The user accepted all three test seams on 2026-09-29 and explicitly instructed not to start implementation yet. The requested comparison with six existing distribution repositories is complete, and two proposed refinements await a live user decision. The existing design remains unchanged until that decision. Wait for an explicit implementation request after the review. No implementation milestone has started. Native package publication is a separate future effort.
 
 ## Purpose / Big Picture
 
@@ -19,6 +19,8 @@ Success is observable from a disposable project: install a review workflow, see 
 - [x] (2026-09-29 21:46Z) [planning] Complete canonical routing/documentation pass. OKF lint, whitespace, 15 Markdown documents, 69 local links, seven synchronized open milestones, and four closed decisions pass.
 - [x] (2026-09-29 21:50Z) [planning] User accepts public CLI/file effects, Bash/PowerShell entry points, and native discovery/hook execution as test seams.
 - [x] (2026-09-29 21:50Z) [planning] Record the user's explicit instruction not to start implementation yet. All seven implementation milestones remain open.
+- [x] (2026-09-29 23:47Z) [planning] Complete the six-repository comparison and record the evidence-backed recommendation without changing the approved design.
+- [ ] [planning] Obtain the user's decision on retaining the architecture and the proposed verification/line-ending refinements. Keep implementation on hold.
 - [ ] [milestone-1] Deliver one committed, pinned skill installation through the public CLI.
 - [ ] [milestone-2] Deliver asset selection, required dependencies, and curated bundles.
 - [ ] [milestone-3] Deliver preview, update, recorded restoration, conflict protection, and safe pruning.
@@ -45,6 +47,8 @@ The interview encountered missing `domain-modeling`. Catalog entries can describ
 Native local configuration is uneven. Codex adds matching hooks across sources and skips untrusted project layers. Gemini documents project `.gemini/settings.json`, without project `settings.local.json`. Git excludes cannot hide tracked changes. Local mode must refuse tracked configuration writes unless a verified native local override expresses the selection. Never substitute a system layer to bypass project trust. [Official OpenAI documentation: hooks](https://learn.chatgpt.com/docs/hooks), [OpenAI project trust](https://learn.chatgpt.com/docs/config-file/config-basic), [Gemini configuration](https://geminicli.com/docs/reference/configuration/).
 
 Two initial plan patches were blocked before mutation by Tool Guardian input limits: `46899 bytes exceeds limit 32768 bytes` and `129 segments exceeds limit 128 segments`. Write long documents with smaller independent patches below both limits. Do not disable the guard or raise its limits.
+
+The existing-repository review found that APM supports committing generated payloads, but ordinary install overwrites managed files; ECC's tagged release also retains replacement of managed files during successful upgrades. Their ownership/configuration examples remain useful, but they do not satisfy this plan's edit/conflict contract as drop-in engines. APM's audit-only CI pattern motivates a proposed read-only `status --check`. Its line-ending normalization also exposed an unaddressed design detail: Git checkout conversion can change exact payload hashes across operating systems. A proposed declared line-ending policy and narrow owned attributes would preserve exact hashes. Neither refinement is approved or implemented. Evidence and source-review limits are in [the existing-repository comparison](../agent-asset-distribution/existing-repos-review.md), [APM's audit-only guidance](https://microsoft.github.io/apm/enterprise/enforce-in-ci/#audit-only-ci-pattern), [ECC's release notes](https://github.com/affaan-m/ECC/releases/tag/v2.2.1), and [Git's attribute documentation](https://git-scm.com/docs/gitattributes).
 
 ## Decision Log
 
@@ -77,12 +81,20 @@ Decision: All three public test seams are accepted, but implementation remains o
 
 Rationale: The user accepted test boundaries and separately instructed, "Don't start implementation yet." Test-scope acceptance does not authorize execution. Date/author: 2026-09-29, user instruction recorded by Codex.
 
+Decision: Revisit the design only through evidence and a live user decision after the requested comparison with ECC, Microsoft APM, skills-lock, superpowers, wshobson/agents, and skillet. Existing implementation choices remain the baseline during research.
+
+Rationale: The user supplied another agent's research and requested help deciding whether its discoveries justify changes before implementation. That request authorizes research and planning, not product execution or automatic contract changes. Date/author: 2026-09-29, user request recorded by Codex.
+
+Pending proposals, not execution instructions: retain the existing engine and delivery architecture; add offline, read-only `status --check` that detects selection/lock disagreement, missing files, changed file hashes, and changed owned config values without installing or fetching; declare expected line endings for managed payloads and own narrow Git attribute entries so fresh cross-platform clones preserve those exact hashes. Neither arbitrary-whitespace normalization nor repository-wide renormalization is proposed. The user must decide these refinements before this plan's public interface, catalog, ownership model, or acceptance commands change. Date/author: 2026-09-29, Codex recommendation pending the user.
+
 ## Outcomes & Retrospective
 
 
-Planning is complete and all three test seams are accepted. Implementation is not started and is on hold at the user's explicit request. Seven verifiable milestones cover commands, catalog/dependencies, ownership, provider constraints, personal adoption, and OS/client acceptance. No installer, installed home, runtime, or workflow has changed. Planning does not establish live support.
+The initial plan is complete and all three test seams are accepted. The six-repository review is complete and recommends retaining the architecture with two focused refinements; the user's decision is pending. Implementation is not started and is on hold at the user's explicit request. Seven verifiable milestones cover commands, catalog/dependencies, ownership, provider constraints, personal adoption, and OS/client acceptance. No installer, installed home, runtime, or workflow has changed. Planning does not establish live support.
 
 Planning validation on 2026-09-29: `rtk proxy ./scripts/lint-okf.py` exits `0`, `rtk git diff --check` passes, and a read-only validator checks 15 Markdown documents, 69 local links, all required plan sections, seven open milestones with matching unchecked progress, and four closed decision resolutions. Canonical edits are limited to the existing repository-instruction and file-map routing entries. No implementation test command has run.
+
+Comparison validation on 2026-09-29: OKF lint and whitespace checks pass; a read-only validator checks 23 Markdown documents, 92 local links, seven closed ticket resolutions, the live decision's exact closed dependencies, seven open milestones, preserved canonical frontmatter, and the explicit hold. Three research agents completed their assigned files. No implementation or third-party installer/client test ran.
 
 ## Context and Orientation
 
@@ -303,3 +315,7 @@ Adapter snapshots/live versions are not pinned by planning. Record versions/evid
 Revision note, 2026-09-29: Created a separate implementation ExecPlan from the closed contract. Added concrete lifecycle/data design and seven acceptance milestones. Kept test seams pending confirmation and source untouched. Recorded tracked-local limits and tool input limits rather than inventing uniform settings or bypassing checks.
 
 Revision note, 2026-09-29 21:50Z: Recorded acceptance of all three test seams and the subsequent explicit instruction not to start implementation. Updated the resume gate, progress, and outcome. No source or tests were created.
+
+Revision note, 2026-09-29 23:21Z: Recorded the user's requested review of six existing distribution repositories. Kept all implementation choices as the baseline, pending evidence and a live decision. All implementation milestones remain open and implementation remains on hold.
+
+Revision note, 2026-09-29 23:47Z: Completed the comparison, recorded incompatible managed-edit semantics in APM/ECC, and proposed read-only verification plus explicit checkout line-ending policy. These are pending proposals; the existing public interface and milestone requirements remain unchanged until the user decides. Implementation remains on hold.

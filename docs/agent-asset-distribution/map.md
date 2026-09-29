@@ -17,7 +17,7 @@ Produce a decision-ready recommendation for distributing selected skills, custom
 - Research agents own only their assigned ticket and research directory. The coordinating agent owns this map, synthesis, and local inventory.
 - Existing installers and installed user directories remain unchanged during this effort.
 - Read the [distribution recommendation](recommendation.md) for the synthesis and the [current source inventory](local-inventory.md) for repository-specific constraints. Recommendations remain distinct from approved implementation decisions.
-- The human decision interview is complete. The separate [implementation ExecPlan](../agent-asset-installer/ExecPlan.md) is prepared. Use the [current handoff](handoff.md) for the resume gate and next milestone; the closed decision ticket is the contract's authority.
+- The original human decision interview is complete and the separate [implementation ExecPlan](../agent-asset-installer/ExecPlan.md) is prepared. On 2026-09-29 the user requested a pre-implementation review of six existing distribution repositories. New research and one human decision ticket cover that review. The closed original contract remains authoritative until the user accepts an amendment. Implementation remains on hold; use the [current handoff](handoff.md) for the resume gate.
 
 ## Decisions so far
 
@@ -25,11 +25,14 @@ Produce a decision-ready recommendation for distributing selected skills, custom
 - [Claude Code and Gemini Distribution Support](tickets/claude-gemini-distribution.md): Native package formats differ, and committed workspace activation does not install teammates' package copies.
 - [Portable Distribution Methods and Additional Clients](tickets/portable-distribution-methods.md): Committed copies plus selective client adapters cover complete bundles; skills tooling and shared plugins cover narrower portable components.
 - [Choose the Distribution Contract](tickets/choose-distribution-contract.md): Selective installation, explicit updates, and safe managed pruning; native packages later, without a rollback feature.
+- [Evaluate APM Reuse](tickets/evaluate-apm-reuse.md): Committed outputs are possible, but managed edits, conflict sequencing, and transaction scope differ from the approved lifecycle.
+- [Evaluate ECC Ownership](tickets/evaluate-ecc-ownership.md): Useful catalogs and semantic hook IDs; ordinary managed-file replacement and partial application differ from the approved policy.
+- [Evaluate Distribution References](tickets/evaluate-distribution-references.md): Frozen integrity and generated adapters reinforce the contract; skills-only transports and symlinks do not require expanding initial scope.
 
 ## Not yet specified
 
 <!-- FOG START -->
-The route is clear and this map's destination is reached. All four tickets are closed, with no remaining in-scope decision or fog. Implementation planning is a separate next effort.
+The newly requested comparison is specified by research and decision tickets. No additional in-scope fog is known. Existing distribution requirements remain settled while that comparison is evaluated.
 <!-- FOG END -->
 
 ## Out of scope
