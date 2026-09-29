@@ -1,6 +1,6 @@
 # Windows validation and optional live-check procedure
 
-Planning revision, 2026-09-28. This describes the intended stable RTK and retained-hook design. Milestone 17 source and workflow now use stable RTK; repository-state and global Markdown Health retirement and native Windows proof remain open. Do not count old repository-state, global Markdown Health, or prerelease RTK results as revised acceptance.
+Source revision, 2026-09-29. Stable RTK, repository-state retirement, global Markdown Health retirement, repository-local OKF, and sparse lifecycle messages are integrated. Native Windows proof remains open. Do not count old repository-state, global Markdown Health, or prerelease RTK results as revised acceptance.
 
 Native Windows automation is required. A live Windows provider run is supplemental, not the completion gate. Separate Copilot CLI and Gemini CLI live milestones may run in another session with those CLIs available. The macOS high-rate performance audit runs hook scripts directly and has no CLI or Windows timing gate.
 
@@ -14,11 +14,11 @@ The Windows workflow at .github/workflows/ready-ideas-windows.yml must install t
     rtk --version
     rtk hook --help
 
-Confirm the help lists the `copilot` and `gemini` processors. `rtk gain` is an optional tracking dashboard check; a database initialization failure does not prove the RTK binary or hook processors are missing.
+The workflow checks an exact stable `rtk X.Y.Z` version at least `0.50.0` and requires both `copilot` and `gemini` in the hook help. Record its actual version output. `rtk gain` is an optional tracking dashboard check; a database initialization failure does not prove the RTK binary or hook processors are missing.
 
-The repository installer must not download RTK. Its own preflight tests must also prove that absent or old RTK stops before destination mutation. Record the actual workflow setup command and installed version in the ExecPlan when implemented. If winget or its PATH refresh fails on the runner, keep the gate open and use an official stable release asset with checksum verification; do not treat a version shim as proof of real stable RTK behavior.
+The repository installer must not download RTK. Its own preflight tests must also prove that absent or old RTK stops before destination mutation. After the native job runs, record its actual installed version and results in the ExecPlan. If winget or its PATH refresh fails on the runner, keep the gate open and use an official stable release asset with checksum verification; do not treat a version shim as proof of real stable RTK behavior.
 
-After implementation, run these repository-root commands in PowerShell on native Windows. The stable-RTK, OKF, and lifecycle suites are planned additions; their filenames are fixed here so the workflow and plan can agree. Every suite must exit 0 without a Windows-specific skip.
+Run these repository-root commands in PowerShell on native Windows. Every suite must exit 0 without a Windows-specific skip.
 
     python scripts/generate-hooks.py --check
     python scripts/test-security-banners.py
@@ -29,7 +29,7 @@ After implementation, run these repository-root commands in PowerShell on native
     pwsh -NoProfile -File scripts/test-repository-okf-windows.ps1
     pwsh -NoProfile -File scripts/test-lifecycle-messages-windows.ps1
 
-Update the Windows workflow to run this current list. Remove its former repository-state, prerelease RTK, and Markdown Health test steps because those features are being deleted. Do not add deletion regression tests. Inspect checked-in registrations and fresh temporary-home installer output to confirm those handlers are absent, while unrelated handlers remain.
+The Windows workflow runs this current list. It has no repository-state, prerelease RTK, or Markdown Health test steps. Do not add deletion regression tests. Inspect checked-in registrations and fresh temporary-home installer output to confirm those handlers are absent, while unrelated handlers remain.
 
 The scanner suite must include a committed Git repository whose rev-parse --verify HEAD call fails unexpectedly. All three provider outputs must say incomplete and must not say clean. Separately verify that a genuinely unborn branch still works. A macOS PowerShell run that skips this fixture does not satisfy this gate.
 

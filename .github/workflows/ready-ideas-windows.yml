@@ -33,10 +33,24 @@ jobs:
       - name: Install stable Rust Token Killer
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           winget install --id rtk-ai.rtk --exact --accept-package-agreements --accept-source-agreements
           if ($LASTEXITCODE -ne 0) { throw 'Stable RTK installation failed.' }
-          rtk --version
-          if ($LASTEXITCODE -ne 0) { throw 'Stable RTK is not on PATH.' }
+          $versionText = (& rtk --version | Out-String).Trim()
+          if ($LASTEXITCODE -ne 0 -or $versionText -cnotmatch '^rtk (\d+\.\d+\.\d+)$') {
+            throw "Expected stable Rust Token Killer on PATH, got: $versionText"
+          }
+          if ([version]$Matches[1] -lt [version]'0.50.0') {
+            throw "RTK 0.50.0 or newer is required, got: $versionText"
+          }
+          $hookHelp = & rtk hook --help 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0) { throw 'RTK hook command is unavailable.' }
+          foreach ($processor in @('copilot', 'gemini')) {
+            if ($hookHelp -cnotmatch "(?m)^\s+$processor\s+") {
+              throw "RTK hook processor is missing: $processor"
+            }
+          }
+          Write-Output "Verified $versionText with Copilot and Gemini hook processors."
       - name: Check native prerequisites
         shell: pwsh
         run: |
