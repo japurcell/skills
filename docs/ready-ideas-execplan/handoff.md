@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-20 and Repair 19A are integrated on `codex/ready-ideas-execplan` through `30e621d2`. Milestone 21 is implemented in the isolated `codex/ready-lifecycle-messages` worktree but awaits review and integration. Milestone 22 is committed in its isolated branch. Milestones 23-27 remain open.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-21 and Repair 19A are integrated on `codex/ready-ideas-execplan` through `828e4c75`. Milestone 22 is committed in its isolated branch. Milestones 23-27 remain open.
 
 ## Current evidence
 
@@ -21,4 +21,4 @@ Older installations may still execute repository-state or Markdown Health script
 
 ## Next step
 
-Review and integrate the isolated milestone 21 commit from `codex/ready-lifecycle-messages` into the plan base, preserving its synchronized agent docs and Windows test registration. Then rebase and integrate milestone 22 Tool Guardian detail and continue milestone 23. Native Windows execution and installed CLI display remain milestones 24-27.
+Rebase the tested milestone 22 Tool Guardian branch onto the current base, rerun affected tests after conflicts, then fast-forward integration. Continue milestone 23 direct-script performance audit. Native Windows execution and installed CLI display remain milestones 24-27.

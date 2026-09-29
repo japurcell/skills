@@ -20,7 +20,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29) [milestone-19] Integrated global Markdown Health retirement at `d54d5619`; source and disposable-home checks pass on Mac. Native Windows proof remains in milestone 24.
 - [x] (2026-09-29) [repair-retired-registrations] Integrated Copilot/Gemini refresh preservation at `44daea14`; Bash and PowerShell installer suites and 12 stable RTK tests pass. Native Windows junction behavior remains open in milestone 24.
 - [x] (2026-09-29) [milestone-20] Integrated repository-local turn-end OKF adapters and bounded audit at `07d1f133`; focused Mac checks pass. Native Windows proof remains in milestone 24 and installed display in milestones 25-27.
-- [ ] (2026-09-29 02:59Z) [milestone-21] Implemented sparse lifecycle envelopes and focused Windows automation on isolated `codex/ready-lifecycle-messages`; source checks pass, awaiting integration. Native Windows execution and installed CLI display remain later gates.
+- [x] (2026-09-29) [milestone-21] Integrated sparse lifecycle envelopes and focused Windows automation at `828e4c75`; source checks pass. Native Windows execution and installed CLI display remain later gates.
 - [ ] (2026-09-29 00:41Z) [milestone-22] Implemented and tested on isolated branch `codex/ready-tool-guardian`; awaiting review and integration.
 - [ ] [milestone-23] Inventory, measure, review, and improve retained high-rate hooks on macOS.
 - [ ] [milestone-24] Pass integrated source, temporary-home installer, and native Windows automation, including the scanner HEAD-failure case.
@@ -93,7 +93,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 
 ## Outcomes & Retrospective
 
-Planning decisions are complete and the user approved the revised plan. Milestones 17-20 are integrated. Milestone 19 retired maintained global Markdown Health code while preserving the independent OKF linter and old installed registrations during refresh. Milestone 20 added repository-local turn-end lint for all three CLIs with bounded audit and repair behavior. Focused and disposable-home checks passed before the base branch fast-forwarded to tested tip `07d1f133`. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
+Planning decisions are complete and the user approved the revised plan. Milestones 17-21 are integrated. Milestone 19 retired maintained global Markdown Health code while preserving the independent OKF linter and old installed registrations during refresh. Milestone 20 added repository-local turn-end lint for all three CLIs with bounded audit and repair behavior. Milestone 21 added sparse startup and turn-end messages. Focused and disposable-home checks passed before the base branch fast-forwarded to tested tip `828e4c75`. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
 
 Milestone 20 source is implemented at `a58ae3bb` on the isolated `codex/ready-repository-okf` branch, rebased onto accepted M19 tip `73db7d4d`. Focused public-hook, linter, installer, and generator checks pass on macOS. The audit distinguishes first and retry attempts and omits diagnostic text. Acceptance remains open for integration; native Windows automation and provider-visible messages are later gates.
 
@@ -164,14 +164,14 @@ The integrated source has the adapters, project registrations, and focused publi
 
 ### Milestone 21: Show sparse lifecycle messages
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met for checked-in source and temporary-home installs; native Windows proof remains in milestone 24 and installed provider display in milestones 25-27.
 
 For local Copilot CLI, Gemini CLI, and Codex CLI only, make each retained operational low-rate startup or turn-end hook report one short native message with hook name, outcome, and safe count when useful. Show every stop attempt, including a repair retry; do not add a turn-end coordinator. Ordinary success lines contain no path, command, or document content. SessionEnd success, telemetry-only hooks, and the completion bell stay silent. High-rate pre/post-tool passes stay silent, while a block, warning, incomplete result, or meaningful change appears immediately.
 
 Use provider-native message fields, keep stdout JSON-only, and avoid a second display when the provider already shows a denial reason. Existing Tool Guardian and scanner logs plus RTK observability traces supply high-rate run evidence; do not add one RTK audit line per call or claim one shared audit log covers every hook. Add scripts/test-lifecycle-messages-windows.ps1 and focused provider-envelope cases for startup pass, turn-end pass/fail/incomplete, repeated stop, tool pass silence, block/warn visibility, message bounds, and safe counts in provider envelopes. Native CLI display proof is in milestones 25-27. The new repository OKF hook follows this policy.
 
-The isolated implementation updates startup loaders, source-ingest startup hooks, the Copilot stop coordinator, Gemini source-ingest and OKF `AfterAgent` hooks, Codex repository OKF, and Codex Stop scanner. Generated provider outputs are current. The new Windows fixture is registered in the focused workflow and aggregate runner, but its native cases have not run on this Mac. Source and disposable-home proof is recorded below; integrate this isolated branch before checking this milestone's Progress item and Acceptance.
+The integrated implementation updates startup loaders, source-ingest startup hooks, the Copilot stop coordinator, Gemini source-ingest and OKF `AfterAgent` hooks, Codex repository OKF, and Codex Stop scanner. Generated provider outputs are current. The new Windows fixture is registered in the focused workflow and aggregate runner, but its native cases have not run on this Mac. Source and disposable-home proof is recorded below.
 
 ### Milestone 22: Explain Tool Guardian violations
 
