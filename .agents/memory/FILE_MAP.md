@@ -83,7 +83,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/test-rtk-stable.py`, `scripts/test-rtk-stable-windows.ps1` | Disposable-home stable RTK config and installer tests, plus native Windows diagnostic proof. |
 | `docs/ready-ideas-execplan/windows-live-check.md` | Manual Windows provider check procedure accompanying the automated Windows workflow; records versions, tool results, audit evidence, and unverified cases. |
 | `docs/ready-ideas-execplan/high-rate-hooks-performance.md` | Milestone 23 high-rate registration inventory, direct macOS benchmark method, distributions, budgets, and remaining cost. |
-| `docs/ready-ideas-execplan/handoff.md` | Current status and resume instructions for the remaining Copilot and Gemini CLI validation. |
+| `docs/ready-ideas-execplan/handoff.md` | Final acceptance summary, remaining limitations, and follow-up route for the completed hook plan. |
 | `docs/adr/0001-auto-ingest-runtime-shape.md` | Records why source auto-ingest uses runtime-local hook code with one committed repo manifest. |
 | `docs/adr/0002-pending-ingest-gate.md` | Records why the pending-ingest gate blocks normal work until summaries resolve. |
 | `docs/adr/0003-sqlite-backed-hook-observability.md` | Records why hook observability uses SQLite as source of truth with NDJSON fallback. |
