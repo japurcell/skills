@@ -13,6 +13,8 @@ Tool Guardian scans patch, search, replacement, and cleanup payloads. Raw danger
 
 Secret scanning has the same self-edit risk for realistic fake credentials. Use unmistakably fake values such as `fake-api-key`; never write a real secret.
 
+Large multi-file Markdown patches can hit Tool Guardian's 128-command-segment limit before mutation. Split the work into focused patches instead of retrying the same oversized payload; this limit is distinct from structured byte and string limits.
+
 ## Structured input can reach its byte limit before text scanning
 
 Tool Guardian traverses structured input before matching command text. A large `write_file.content` value therefore reports `structured_bytes` first, with its 32768-byte threshold and measured UTF-8 byte count. The generic scan-text limit applies to later text scanning and includes the tool name prefix. Keep those counts and units distinct when adding rule details or tests.

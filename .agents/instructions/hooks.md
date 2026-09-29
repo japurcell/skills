@@ -12,7 +12,8 @@ For source auto-ingest scanners, injectors, manifests, or pending gates, read [H
 ## Official References
 
 - **GitHub Copilot hooks reference:** `https://docs.github.com/en/copilot/reference/hooks-reference`
-- **VS Code GitHub Copilot hooks reference:** `https://code.visualstudio.com/docs/copilot/customization/hooks`
+- **VS Code harness selection and Local hooks:** `https://code.visualstudio.com/docs/agent-customization/hooks`
+- **VS Code Local hook schemas:** `https://code.visualstudio.com/docs/agents/reference/hooks-reference`
 - **Gemini CLI hooks reference:** `https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md`
 - **Gemini CLI exit-code best practices:** `https://geminicli.com/docs/hooks/best-practices/#check-exit-codes`
 - **Codex hooks:** `https://learn.chatgpt.com/docs/hooks`
@@ -37,7 +38,7 @@ For source auto-ingest scanners, injectors, manifests, or pending gates, read [H
 - **Copilot stop-loop bound:** Keep stop validators bounded and idempotent. For `agentStop`, use `stop_hook_active` to detect a turn already forced by a prior block and self-limit before Copilot's eight-consecutive-block runaway guard overrides the hook.
 - **Copilot required-skill announcement:** `.copilot/hooks/scripts/load-required-skills.py` emits a display-only progress message, `Required skill context loaded from N file(s).`, before its final `additionalContext` JSON for Copilot CLI-shaped payloads when required skills load. Supported progress payloads have no event name or a lowerCamelCase event name such as `sessionStart` or `subagentStart`; VS Code-compatible PascalCase events keep stdout to one final JSON object.
 - **Copilot fail behavior:** `userPromptTransformed` can rewrite only the transformed prompt text. Command `preToolUse` hooks fail closed on non-timeout errors, but timeouts stay fail-open. For block-mode policy denials, emit structured deny JSON and exit `0` so Copilot surfaces `permissionDecisionReason` instead of only generic failure output.
-- **VS Code compatibility:** VS Code accepts Claude and Copilot hook formats, maps Copilot lowerCamelCase event names to PascalCase, ignores Claude matcher filters, and only enables custom-agent frontmatter hooks when `chat.useCustomAgentHooks` is on.
+- **VS Code compatibility:** Identify the selected harness before applying hook contracts. Local accepts Claude and Copilot formats, maps Copilot lowerCamelCase events to PascalCase, ignores Claude matcher filters, and requires `chat.useCustomAgentHooks` for custom-agent frontmatter hooks. Copilot Agent Host uses the shared Copilot CLI/SDK contract; verify event availability in the deployed version.
 - **Gemini precedence and trust:** Gemini merges hook config in project, user, system, then extension order; project hook trust is fingerprinted from `name` plus `command`, and changed project hooks are warned as new.
 - **Gemini selection and redaction:** Multiple Gemini `BeforeToolSelection` hooks union their allowed tool sets, and environment-variable redaction is off by default unless explicitly enabled and allowlisted.
 - **Separate but Unified:** Keep the `.copilot` and `.gemini` hook scripts completely separated (no cross-directory imports), but structurally unified and synchronized. Use identical helper logic where possible, parameterizing only runtime-specific variables (like default paths or environment lookups) and emitting only the specific JSON decision output expected by each hook platform.
@@ -59,7 +60,7 @@ For source auto-ingest scanners, injectors, manifests, or pending gates, read [H
 - **GitHub Hooks Scope:**
   - `agentStop` / `subagentStop` outputs must use: `{ "decision": "allow|block", "reason": ... }`
   - `postToolUse` formatting hooks should emit valid JSON only: use `{}` for no-op success, or `{ "additionalContext": ... }` when the agent should see a formatter/setup failure.
-  - `preToolUse` / `PreToolUse` command hooks can control tool execution via `"permissionDecision"`. Set to `"ask"` to trigger a manual interactive confirmation dialog in Copilot CLI, or set to `"allow"` to silently execute the tool call or rewritten `updatedInput` without prompts.
+  - Copilot CLI command `preToolUse` uses top-level `permissionDecision` (`allow`, `deny`, or `ask`) and `modifiedArgs` for rewritten tool arguments. VS Code Local `PreToolUse` uses event-specific `hookSpecificOutput.permissionDecision` and `hookSpecificOutput.updatedInput`. Verify the harness, event format, and deployed schema before changing an existing adapter.
   - Expected `agentStop` and `postToolUse` control flow must exit `0` so Copilot parses `stdout` JSON. Exit code `2` is warning-only for most GitHub hook events and does not apply these decision schemas.
 
 ## Repository OKF validation hooks
@@ -75,8 +76,8 @@ For source auto-ingest scanners, injectors, manifests, or pending gates, read [H
 ## Copilot and VS Code compatibility
 
 - On Windows systems, Copilot hooks config (e.g. `hooks.json` and `rtk-rewrite.json`) must explicitly define both `"bash"` (Unix) and `"powershell"` (Windows) keys for command hooks to execute natively and in VS Code on Windows.
-- In `.copilot/hooks/hooks.json`, keep both `subagentStart` (CLI) and `SubagentStart` (VS Code).
-- CLI responses return top-level `additionalContext`; VS Code responses return `hookSpecificOutput` plus `additionalContext`.
+- In `.copilot/hooks/hooks.json`, keep both `subagentStart` (CLI) and `SubagentStart` (VS Code Local).
+- Copilot CLI and Copilot Agent Host use the shared Copilot output contract. VS Code Local uses event-specific `hookSpecificOutput` for context and decisions; verify the event schema rather than inferring it from the VS Code product name.
 - Prefer `agentStop` over `subagentStop` for final-response quality validators; `subagentStop` has no matcher support in Copilot hook docs and built-in `general-purpose` agents do not emit `subagentStart` or `subagentStop`.
 - Keep `SessionStart` injection path active even when `SubagentStart` exists because some VS Code `runSubagent` child sessions omit `SubagentStart`.
 
