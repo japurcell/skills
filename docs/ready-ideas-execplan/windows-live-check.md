@@ -1,6 +1,6 @@
 # Windows validation and optional live-check procedure
 
-Source revision, 2026-09-29. Stable RTK, repository-state retirement, global Markdown Health retirement, repository-local OKF, and sparse lifecycle messages are integrated. Native Windows proof remains open. Do not count old repository-state, global Markdown Health, or prerelease RTK results as revised acceptance.
+Source revision, 2026-09-29. Stable RTK, repository-state retirement, global Markdown Health retirement, repository-local OKF, and sparse lifecycle messages are integrated. Native Windows workflow [run 36573663358](https://github.com/japurcell/skills/actions/runs/36573663358) passed twice. Do not count old repository-state, global Markdown Health, or prerelease RTK results as revised acceptance.
 
 Native Windows automation is required. A live Windows provider run is supplemental, not the completion gate. Separate Copilot CLI and Gemini CLI live milestones may run in another session with those CLIs available. The macOS high-rate performance audit runs hook scripts directly and has no CLI or Windows timing gate.
 
@@ -49,7 +49,7 @@ For each available Copilot CLI, Gemini CLI, or Codex CLI, record version and exa
 4. Edit a canonical .agents Markdown fixture only in a disposable checkout. Observe repository OKF pass or actionable findings at turn end and one bounded audit record for each nonduplicate validation attempt. Confirm the old workspace-wide Markdown checker does not run from fresh user-level registrations.
 5. Use the safe scanner stall fixture or a disposable Git shim. A blocked pre-tool scan or warned session-end scan must finish as incomplete, never clean. Keep scanner logs and CLI transcripts outside the fixture repository.
 
-The file-first PowerShell guidance remains accepted historical work: if rechecked, create a multiline .ps1 with the provider's native file tool and run the saved file. Disposable Probe Files requires only its three checked-in instruction sources, with no new live gate. No live repository-state guard check is required because that hook is retired. Keep the AGENTS.md ban on direct .git edits and review before destructive Git commands; do not execute a destructive action in this checklist.
+File-first PowerShell authoring, disposable probe placement, and root `AGENTS.md` Git-state rules were later removed from the checked-in instructions. They are no longer live-check requirements. No live repository-state guard check is required because that hook is retired. Do not execute a destructive action in this checklist.
 
 For Codex verify PreToolUse and Stop delivery after trust review. For Copilot verify preToolUse, postToolUse, and agentStop. For Gemini verify BeforeTool, AfterTool, AfterAgent, and actionable SessionEnd warnings. The existing scripts/probe-provider-hook-delivery.py can insert uniquely named nonce handlers; run prepare, verify, and cleanup in that order, and always cleanup on failure. A nonce must not be in the agent prompt. Record timeout tool continuation as a provider limitation, not an enforcement guarantee.
 

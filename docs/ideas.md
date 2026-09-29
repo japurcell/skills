@@ -13,8 +13,7 @@ research, planning, or implementation artifact.
   - the transcipt from this video describes shopify's process: <https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd>
   - validation pipeline: <https://github.com/kunchenguid/no-mistakes>
 - Look at migrating agent kb/memory to nested AGENTS.md files like [https://github.com/lopopolo/harness-engineering](https://github.com/lopopolo/harness-engineering)
-- Tool Guardian blocked write_file. input_limits/critical. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional `[tool-guard]`
 
-## Planned
+## Active
 
-- [Ready ideas revision map](ready-ideas-execplan/map.md) reopens planning after changed hook requirements. The [existing ExecPlan](ready-ideas-execplan/ExecPlan.md) records prior implementation and is paused pending revision.
+- [Ready ideas ExecPlan](ready-ideas-execplan/ExecPlan.md) is implemented through milestone 25. Installed Copilot and Gemini CLI checks remain open.

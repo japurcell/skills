@@ -4,7 +4,7 @@ Revise the existing, self-contained [ExecPlan](ExecPlan.md) for the current loca
 
 ## Notes
 
-This map was reopened on 2026-09-28 after the original implementation. All decision tickets are now closed. The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) on 2026-09-28; execution is active under the ExecPlan. Existing completed milestones record past evidence, not acceptance of withdrawn behavior. The user narrowed Markdown Health to a repository-local OKF lint hook, and [Actionable Tool Guardian Denials](tickets/actionable-tool-guardian-denials.md) refines [Security Hook Notifications](tickets/security-hook-notifications.md) without weakening redaction. Wayfinding remains planning only. Distinguish checked-in sources, installed user hooks, and historical test results.
+This map was reopened on 2026-09-28 after the original implementation. All decision tickets are now closed. The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md) on 2026-09-28; execution is active under the ExecPlan. Existing completed milestones record past evidence, not acceptance of withdrawn behavior. On 2026-09-29 the user removed the provider RTK explanation, file-first PowerShell and disposable-probe text, plus the root Git-state section; the related tickets below are historical decisions, not current instruction requirements. The stable RTK installer behavior remains. The user narrowed Markdown Health to a repository-local OKF lint hook, and [Actionable Tool Guardian Denials](tickets/actionable-tool-guardian-denials.md) refines [Security Hook Notifications](tickets/security-hook-notifications.md) without weakening redaction. Wayfinding remains planning only. Distinguish checked-in sources, installed user hooks, and historical test results.
 
 ## Decisions so far
 
@@ -20,13 +20,13 @@ This map was reopened on 2026-09-28 after the original implementation. All decis
 - [Security Hook Notifications](tickets/security-hook-notifications.md): show consistent block/warning banners on local provider surfaces; Tool Guardian shows and logs a redacted 160-character action excerpt, while scan-secrets banners omit matched values.
 - [Actionable Tool Guardian Denials](tickets/actionable-tool-guardian-denials.md): name exact safe rule causes and limit counts, bound multiple findings, keep redaction and matching logs, and avoid misleading allowlist advice.
 - [Repository State Guardrails](tickets/repository-state-guardrails.md): historical hook decision; [Repository State Retirement](tickets/repository-state-retirement.md) supersedes it.
-- [Repository State Retirement](tickets/repository-state-retirement.md): remove maintained guard code and registrations, leave old installed copies for manual cleanup, retain core Git safety instructions, and verify fresh installs.
+- [Repository State Retirement](tickets/repository-state-retirement.md): remove maintained guard code and registrations, leave old installed copies for manual cleanup, and verify fresh installs. Its original instruction-retention decision was later superseded.
 - [Lifecycle Notifications](tickets/lifecycle-notifications.md): independent operational hooks show sparse startup and turn-end results on three CLIs; tool passes stay quiet and live checks prove visibility.
 - [High-Rate Hook Performance Review](tickets/high-rate-hook-performance-review.md): audit every retained high-rate registration with direct macOS script timing, evidence-based budgets, and fixes for clear hot-path defects; no live CLI timing gate.
 - [Scan Secrets Shutdown](tickets/scan-secrets-shutdown.md): replace threaded Git pipe reading with bounded temporary-file capture; discard incomplete output, deny in block mode, warn at session end, and test native Windows hang cases.
 - [Read Only Orientation](tickets/read-only-orientation.md): exempt read-only audits, diff reviews, and reports from mandatory memory pre-reading; load task-relevant guidance and complete full orientation before any edit.
-- [PowerShell Authoring Guidance](tickets/powershell-authoring-guidance.md): instruct local Gemini, Copilot, and Codex to write multiline PowerShell and reusable automation scripts with native file tools before running saved files; verify installed guidance and agent behavior.
-- [Disposable Probe Files](tickets/disposable-probe-files.md): add placement and cleanup rules only to the three provider instruction files; keep permanent tests tracked and avoid a broad probe ignore rule, with no installer or agent-run checks for this milestone.
+- [PowerShell Authoring Guidance](tickets/powershell-authoring-guidance.md): historical instruction decision; the provider text was later removed.
+- [Disposable Probe Files](tickets/disposable-probe-files.md): historical three-file instruction decision; the provider text was later removed.
 - [ExecPlan Integration](tickets/execplan-integration.md): order eight independently verifiable outcomes with shared hook setup and final regression in one [ExecPlan](ExecPlan.md); replace the Ready list with its link.
 - [Revised ExecPlan Integration](tickets/revised-execplan-integration.md): preserve compact historical evidence, add new milestones in dependency order with separate live gates, and require explicit approval of revised planning docs before source work.
 
@@ -43,4 +43,4 @@ Copilot cloud agent coverage for [Security Hook Notifications](tickets/security-
 
 VS Code Local and Copilot Agent Host coverage for [Repository OKF Hook](tickets/repository-okf-hook.md): the user chose Copilot CLI, Gemini CLI, and Codex CLI only for this repo-local lint behavior. Copilot cloud is not an acceptance surface for that ticket.
 
-Designing a replacement repository-state enforcement service is beyond the user's retirement request. [Repository State Retirement](tickets/repository-state-retirement.md) keeps core Git safety instructions while removing hook-specific wording.
+Designing a replacement repository-state enforcement service is beyond the user's retirement request. The core Git safety instructions retained by [Repository State Retirement](tickets/repository-state-retirement.md) were later removed from root `AGENTS.md`.

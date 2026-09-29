@@ -5,6 +5,8 @@
 **Blocked By:** none
 **Research Dir:** none
 
+> Historical decision: the user removed this ticket's three provider instruction rules on 2026-09-29. The accepted implementation record below does not describe current provider guidance.
+
 ## Question
 
 Where should agents place disposable probe and test scripts, how should they clean them up, and is a `probe*.ps1` ignore rule useful or harmful? Decide provider guidance that keeps tracked areas clean without hiding meaningful files.
@@ -23,4 +25,4 @@ Implementation adds the rule only to `.gemini/GEMINI.md`, `.copilot/copilot-inst
 
 Completion condition: each of the three instruction files states the placement, cleanup, retained-repro, permanent-test, and Git-status guidance above. This milestone requires no installer checks, local agent runs, automated Windows checks, or Windows live-check checklist.
 
-The user initially accepted broader guidance placement and verification, then narrowed this milestone to the three provider instruction files with no installer checks, local agent runs, or automated Windows checks. This later instruction controls the plan. This is planning only; no provider instructions or `.gitignore` rules changed while resolving the ticket.
+The user initially accepted broader guidance placement and verification, then narrowed this milestone to the three provider instruction files with no installer checks, local agent runs, or automated Windows checks. This later instruction controlled the original plan. This was planning only; no provider instructions or `.gitignore` rules changed while resolving the ticket.

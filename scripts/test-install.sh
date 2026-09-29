@@ -942,10 +942,6 @@ test_copies_full_gemini_tree() {
   copied_global_settings="$(<"$home/.gemini/settings.json")"
 
   assert_equals "$(<"$repo/.gemini/GEMINI.md")" "$copied_gemini" "Expected GEMINI.md to be copied into ~/.gemini."
-  if [[ "$copied_gemini" != *'use `write_file` to create the complete script as a saved file, then execute that saved file.'* ]]; then
-    echo "Expected installed Gemini guidance to require file-first PowerShell authoring." >&2
-    exit 1
-  fi
   assert_equals $'---\nname: helper\ndescription: Fixture helper agent.\n---\nUse alpha.' "$copied_agent" "Expected agents to be copied into ~/.gemini/agents."
   assert_equals $'---\nname: nested-helper\ndescription: Nested fixture helper agent.\n---\nUse alpha deeply.' "$copied_nested_agent" "Expected nested agents to be copied recursively into ~/.gemini/agents."
   assert_equals $'---\nname: helper\ndescription: Fixture helper agent.\n---\nUse alpha.' "$copied_copilot_agent" "Expected agents to be copied into ~/.copilot/agents."
@@ -960,14 +956,7 @@ from pathlib import Path
 assert json.loads(Path(sys.argv[1]).read_text()) == {'global': 'settings'}
 PY
   assert_equals "$(<"$repo/.copilot/copilot-instructions.md")" "$(<"$home/.copilot/copilot-instructions.md")" "Expected Copilot instructions to be copied into ~/.copilot."
-  if [[ "$(<"$home/.copilot/copilot-instructions.md")" != *"use Copilot's native file-create or file-edit tool to create the complete script as a saved file, then execute that saved file."* ]]; then
-    echo "Expected installed Copilot guidance to require file-first PowerShell authoring." >&2
-    exit 1
-  fi
-  if [[ "$(<"$home/.codex/AGENTS.md")" != *"use Codex's native file-write or file-edit tool, such as \`apply_patch\`, to create the complete script as a saved file, then execute that saved file."* ]]; then
-    echo "Expected installed Codex guidance to require file-first PowerShell authoring." >&2
-    exit 1
-  fi
+  assert_equals "$(<"$repo/.codex/AGENTS.md")" "$(<"$home/.codex/AGENTS.md")" "Expected Codex instructions to be copied into ~/.codex."
 
   if [[ -e "$home/.gemini/.gemini" ]]; then
     echo "Expected the installer to copy Gemini contents into ~/.gemini, not nest another .gemini directory." >&2

@@ -12,10 +12,6 @@
 
 ## RTK (Rust Token Killer) - Token-Optimized Commands
 
-Use stable RTK 0.50.0 or newer for explicit `rtk` commands. The installer sets `[hooks] suppress_hook_warning = true` in the user's RTK config, so the false missing-hook advisory is suppressed while other diagnostics remain visible.
-
-When authoring a PowerShell script, use `write_file` to create the complete script as a saved file, then execute that saved file.
-
 ### Default rule
 
 - Prefix shell commands with `rtk` by default.
@@ -91,7 +87,3 @@ Examples of commands that may need to run without `rtk`:
 dotnet format
 oxfmt
 ```
-
-## Gotchas
-
-- File-first PowerShell authoring: For a complete multiline `.ps1` or reusable automation script, use `write_file` to create the complete script as a saved file, then execute that saved file. Short, non-script one-line shell commands are allowed.

@@ -2,13 +2,6 @@
 
 This repository publishes skills from `skills/`, canonical custom-agent Markdown from `agents/`, repo-local Copilot hooks from `.github/hooks/`, installed Copilot hook sources from `.copilot/hooks/`, Gemini hooks plus config from `.gemini/`, and user-global Codex hook sources from `.codex/`. The repository `.codex/` directory is not a source for generated Codex custom agents.
 
-## Git state protection
-
-- Never edit `.git` metadata directly. Use Git commands for repository state.
-- Before a command that could discard local work, show `git status`, unstaged `git diff -- <affected-paths>`, staged `git diff --cached -- <affected-paths>`, and untracked files or a dry-run deletion list. Plain `git diff` omits staged and untracked work.
-- If work would be lost, ask the user to approve the exact command. Approval for one command never carries forward. Do not infer approval from prose.
-- Inspect scripts and use platform sandbox controls where proven effective. Written instructions alone cannot prevent arbitrary writes by child processes or Git hooks.
-
 ## ExecPlans
 
 The default location for ExecPlans is `docs/<feature-slug>/`.

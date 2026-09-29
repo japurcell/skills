@@ -28,6 +28,8 @@ The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](wi
 
 ## Decisions and limits
 
+On 2026-09-29 the user staged removal of the provider RTK explanation, file-first PowerShell and disposable-probe instructions, the root Git-state section, and two obsolete planning files. These staged changes supersede the earlier instruction decisions; do not restore their text from historical tickets or milestones. Stable RTK installer behavior remains. Current docs and installer copy assertions were aligned without changing hook behavior. `scripts/test-install.sh`, `scripts/test-install.ps1`, and `scripts/lint-okf.py` pass on this Mac; PowerShell still skips unsupported junction creation. The user's staged deletions remain staged, while follow-up docs and test edits are unstaged.
+
 Older installations may still execute repository-state or Markdown Health scripts. Review exact user hook registrations and scripts for manual cleanup as described in [README.md](../../README.md); preserve `audit.log` and Markdown Health state by default. The five integrated feature worktrees are clean and detached; their merged branches were deleted. The app archive tool refused the worktrees because pinned tasks or workspace protection applies, so do not remove them through the shell. Six older `codex/ready-ideas-fix-*` branches remain separate historical housekeeping. Do not touch `codex/design-context-freshness-system`. Do not weaken tests or add deletion regression tests.
 
 ## Next step

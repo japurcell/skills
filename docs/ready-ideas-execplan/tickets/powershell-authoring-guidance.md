@@ -5,6 +5,8 @@
 **Blocked By:** none
 **Research Dir:** none
 
+> Historical decision: the user removed this ticket's provider instruction text on 2026-09-29. The accepted implementation record below does not describe current provider guidance.
+
 ## Question
 
 When should Gemini write a multiline PowerShell or automation script to a file before running it, and where should that instruction live so installed Gemini sessions see it? Define exceptions for short commands and a concrete success check.

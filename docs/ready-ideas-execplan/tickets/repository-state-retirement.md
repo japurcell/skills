@@ -5,6 +5,8 @@
 **Blocked By:** none
 **Research Dir:** none
 
+> Historical decision: the user later removed the retained Git-state rules from root `AGENTS.md` on 2026-09-29. The hook-retirement decision and evidence below remain historical.
+
 ## Question
 
 The user has withdrawn the repository-state hook. What is the exact retirement boundary across canonical source, generated provider scripts, registrations, installers, tests, logs, installed user hooks, and current guidance? Which Git safety instructions and provider sandbox behavior remain, and how should the plan verify that the removed hook no longer runs without claiming stronger protection?
