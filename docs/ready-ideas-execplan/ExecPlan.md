@@ -16,6 +16,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29 00:09Z) [approval] User explicitly approved the revised ExecPlan and Windows checklist before source changes.
 - [ ] (2026-09-29 00:12Z) [milestone-17] In progress on isolated implementer branch: require stable RTK and migrate warning suppression; retire verified owned prerelease assets.
 - [ ] (2026-09-29 00:41Z) [milestone-18] In progress on isolated implementer branch: retire maintained repository-state hook pieces and adjust Git guidance.
+- [ ] (2026-09-29) [repair-gemini-guidance] In progress on an isolated branch: restore the approved Gemini file-first PowerShell instruction; both existing installer suites currently fail their copied-guidance assertion.
 - [ ] [milestone-19] Retire maintained global Markdown Health pieces while preserving OKF lint.
 - [ ] [milestone-20] Run repository-local OKF lint at turn end on three CLIs.
 - [ ] [milestone-21] Show sparse operational lifecycle messages.
@@ -38,6 +39,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Another machine may still run old user-level repository-state or Markdown Health registrations after source retirement. Their installed files and state directories are left for manual cleanup. Fresh-install acceptance cannot prove every old installation is clean.
 - Prior Copilot CLI timeout probing showed a harmless Git read proceed after a one-second pre-tool timeout without a native timeout message. Treat visible progress as informational, not proof of enforcement.
 - Native Windows scan-secrets HEAD-failure proof remains open. A macOS PowerShell skip is not native Windows evidence.
+- On 2026-09-29, milestone 18 fresh-install checks passed, but `scripts/test-install.sh` and `scripts/test-install.ps1` failed an existing copied-Gemini-guidance assertion. `.gemini/GEMINI.md` lacks the approved `write_file` saved-script sentence expected by both tests. Preserve the tests and repair the instruction before integrating the affected installer branch.
 - `rtk gain` fails in this Mac sandbox with `Failed to initialize tracking database: unable to open database file` even though `rtk --version` reports 0.50.0 and `rtk hook --help` lists Copilot and Gemini. Treat `rtk gain` as optional diagnostics, not an installation identity gate.
 
 ## Decision Log
