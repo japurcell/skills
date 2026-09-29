@@ -26,6 +26,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29) [milestone-23] Replace scanner Git polling sleep with early-return process wait, regenerate three provider outputs, and rerun the exact 25-sample matrix. Focused scanner suites and 25 generator tests pass.
 - [x] (2026-09-29) [milestone-23] Integrated tested performance audit and scanner wait change at `9dbb901d`; native CLI and Windows timing were not required.
 - [ ] [milestone-24] Pass integrated source, temporary-home installer, and native Windows automation, including the scanner HEAD-failure case.
+- [ ] [repair-24A] Preserve Codex agent converter case-fold collision coverage on case-insensitive macOS filesystems; restore a passing local suite without weakening the case-sensitive end-to-end case.
 - [ ] [milestone-25] Verify installed Codex CLI behavior.
 - [ ] [milestone-26] Verify installed Copilot CLI behavior in a session with that CLI.
 - [ ] [milestone-27] Verify installed Gemini CLI behavior in a session with that CLI.
@@ -42,6 +43,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Another machine may still run old user-level repository-state or Markdown Health registrations after source retirement. Their installed files and state directories are left for manual cleanup. Fresh-install acceptance cannot prove every old installation is clean.
 - Prior Copilot CLI timeout probing showed a harmless Git read proceed after a one-second pre-tool timeout without a native timeout message. Treat visible progress as informational, not proof of enforcement.
 - Native Windows scan-secrets HEAD-failure proof remains open. A macOS PowerShell skip is not native Windows evidence.
+- The milestone 24 source sweep exposed a separate `scripts/test-codex-agents.py` failure on this case-insensitive APFS volume: two case-fold-equivalent fixture filenames collapse into one file before the CLI sees them. Keep the case-sensitive end-to-end test and add portable collision coverage through a suitable internal seam under Repair 24A. No test may be skipped or weakened merely to pass locally.
 - On 2026-09-29, milestone 18 fresh-install checks passed, but `scripts/test-install.sh` and `scripts/test-install.ps1` failed an existing copied-Gemini-guidance assertion. `.gemini/GEMINI.md` lacks the approved `write_file` saved-script sentence expected by both tests. Preserve the tests and repair the instruction before integrating the affected installer branch.
 - The guidance repair made the Gemini assertion pass in both suites. The same suites then exposed missing approved Copilot file-first wording. The PowerShell suite also reports unsupported junction creation on this Mac, which needs separate environmental classification after guidance is repaired.
 - Disposable-home refresh tests revealed that both installers replace Copilot and Gemini user hook configuration, incidentally removing old repository-state and Markdown Health registrations. Codex's merge already preserves them. The approved retirement decisions require leaving old installed registrations for manual cleanup; a separate repair must make refresh behavior match that decision without reintroducing retired entries on fresh installs.
@@ -217,6 +219,13 @@ Acceptance: not met
 Regenerate all maintained targets and run the generator's check and parity tests. Run affected public hook suites, scripts/test-all.py where it provides distinct integration proof, and Bash and PowerShell temporary-home installer tests. Verify both installers preserve unrelated settings, stop before mutation on preflight failure, keep owner-only permissions, and install only current maintained handlers. Check no repository-state, global Markdown Health, or prerelease RTK registration appears in a fresh home. Verify the new repository Codex OKF registration stays in the checkout. Update README.md, the three provider instruction sources, .agents/instructions/hooks.md, relevant script guidance, and the .agents file, API, testing, and known-issue maps to describe the retained hook set. Review all changed source and docs for obsolete claims.
 
 Update .github/workflows/ready-ideas-windows.yml and windows-live-check.md for the current hook set. Provision stable RTK on the Windows runner with the official winget package rtk-ai.rtk before installer tests, then verify rtk --version is at least 0.50.0 and rtk hook --help lists copilot and gemini processors. Keep the repository installers free of RTK download logic. Remove obsolete deletion-only suites from the workflow and run scripts/test-rtk-stable-windows.ps1, scripts/test-repository-okf-windows.ps1, scripts/test-lifecycle-messages-windows.ps1, and existing current-hook Windows tests. Run the existing native Windows scripts/test-scan-secrets-windows.ps1 committed-repository HEAD-failure case: an unexpected rev-parse failure must be incomplete, not clean; a genuinely unborn branch must still work. A macOS skip does not satisfy this gate. Windows automation plus a documented live-check procedure is required; a live Windows provider run is not the completion gate. Do not fabricate a pass if a runner is unavailable.
+
+### Repair 24A: Make converter collision coverage portable
+
+Status: open
+Acceptance: not met
+
+The `scripts/test-codex-agents.py` case-fold collision fixture cannot create two distinct case-fold-equivalent filenames on this Mac's case-insensitive APFS volume. Reproduce the existing suite failure, retain its real-file end-to-end collision case on filesystems that support both names, and add an internal test seam that exercises the same collision decision portably. Do not skip, delete, or weaken the collision assertion. Run the complete converter suite on this Mac and record the filesystem limit of the end-to-end fixture. Keep this repair separate from milestone 24 hook and Windows work.
 
 ### Milestone 25: Verify installed Codex CLI
 

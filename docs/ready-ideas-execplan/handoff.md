@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-23 and Repair 19A are integrated on `codex/ready-ideas-execplan` through accepted tip `9dbb901d`. Milestones 24-27 remain open.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-23 and Repair 19A are integrated on `codex/ready-ideas-execplan` through accepted tip `9dbb901d`. Milestone 24 is active in `codex/ready-integrated-windows`; Repair 24A and milestones 25-27 remain open.
 
 ## Current evidence
 
@@ -16,6 +16,7 @@ The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](wi
 - Two startup suites still asserted old post-tool OKF registrations after M20; their assertions now require turn-end-only OKF. The generator writer and mutation tests required scoped checkout write access for their lock file. These are test and workspace lessons, not a revived runtime registration.
 - M22's sole rebase conflict was `.agents/memory/API_MAP.md`: retain the base's 26 generated outputs after hook retirement and M22's exact safe Tool Guardian reason/log contract. `python3 scripts/generate-hooks.py --check` confirms 26 current files. Shared security banners pass 13 tests; Copilot, Gemini, and Codex Tool Guardian suites pass; generator tests pass 25 with scoped worktree write access after five sandbox permission errors on the first run; aggregate-runner registry passes 15; OKF lint and Git diff check pass. The source and generated provider files are in `892b8584`. Native Windows and live provider display are not claimed.
 - M23 is integrated at `9dbb901d`. `high-rate-hooks-performance.md` inventories all high-rate registrations and records a reproducible direct macOS benchmark of 45 synthetic scenarios: one first call, 25 warm subprocess samples after three warmups, and four-process clean batches. Scanner clean medians dropped from 225 to 110 ms for Copilot and 216 to about 102-104 ms for Gemini/Codex after replacing a repeated 20 ms Git polling sleep with bounded process wait. Finding and large-file paths improved similarly. All three scanner public suites, generator freshness for 26 outputs, 25 generator tests, OKF lint, and a final benchmark smoke run pass. Generator mutation tests needed scoped checkout write permission after five initial sandbox errors. No real home, provider CLI, or Windows benchmark was used.
+- M24's source sweep found `scripts/test-codex-agents.py` fails one collision case on this case-insensitive APFS volume because two case-fold-equivalent filenames cannot coexist. The implementer probed 1,172 Unicode pairs and found no usable distinct pair here. Repair 24A will preserve real-file end-to-end coverage where supported and add portable internal-seam coverage. Observability suites conflicted when run concurrently because they shared a database, then passed sequentially.
 
 ## Decisions and limits
 
@@ -23,4 +24,4 @@ Older installations may still execute repository-state or Markdown Health script
 
 ## Next step
 
-Complete milestone 24 integrated source and temporary-home checks, update the Windows workflow's stable RTK version and hook capability assertions, and run native Windows automation including scanner HEAD failure. Installed CLI display remains milestones 25-27.
+Implement Repair 24A on an isolated branch while M24 finishes source/workflow checks. Then integrate both, run native Windows automation including scanner HEAD failure, and complete installed CLI display milestones 25-27.
