@@ -50,6 +50,8 @@ jobs:
               throw "RTK hook processor is missing: $processor"
             }
           }
+          $rtkCommand = Get-Command rtk -CommandType Application -ErrorAction Stop | Select-Object -First 1
+          Split-Path -Parent $rtkCommand.Source >> $env:GITHUB_PATH
           Write-Output "Verified $versionText with Copilot and Gemini hook processors."
       - name: Check native prerequisites
         shell: pwsh
