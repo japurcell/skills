@@ -92,7 +92,13 @@ function Invoke-Case {
         $logPath = Join-Path $caseDir 'logs/scan.log'
         $log = if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath -Raw } else { '' }
         if ($Scenario -eq 'success') {
-            if ($response.Count -ne 0 -or $log -notmatch '"status":"clean"') { throw "$Provider $Mode no-HEAD scan failed" }
+            $cleanResponse = if ($Provider -eq 'codex' -and $Mode -eq 'warn') {
+                $response.Count -eq 1 -and $response.systemMessage -ceq 'scan-secrets: pass; 0 modified files'
+            } else {
+                $response.Count -eq 0
+            }
+            if (-not $cleanResponse) { throw "$Provider $Mode no-HEAD response failed" }
+            if ($log -notmatch '"status":"clean"') { throw "$Provider $Mode no-HEAD audit failed" }
         } else {
             $rendered = $response | ConvertTo-Json -Compress
             if ($rendered -notmatch 'incomplete' -or $log -match '"status":"clean"' -or $log -notmatch '"status":"incomplete"') {
