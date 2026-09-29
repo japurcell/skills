@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-21 and Repair 19A are integrated on `codex/ready-ideas-execplan` through `828e4c75`. Milestone 22 is committed in its isolated branch. Milestones 23-27 remain open.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-21 and Repair 19A are integrated on `codex/ready-ideas-execplan` through `eba08529`. Milestone 22 is rebased and tested on private branch `codex/ready-tool-guardian` at source commit `892b8584`; acceptance awaits base fast-forward. Milestones 23-27 remain open.
 
 ## Current evidence
 
@@ -14,6 +14,7 @@ The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](wi
 - Milestone 21 sends short Copilot progress JSON on allowed startup and stop results, Gemini/Codex `systemMessage` on allowed low-rate results, and one native reason on denials. Startup loaders, source-ingest checks, repository OKF, and Codex Stop scanner report hook name, outcome, and safe count where useful. High-rate pass, SessionEnd success, observability events, and bell text remain silent. See `.github/hooks/scripts/validate-stop.py:96`, `.gemini/hooks/scripts/lint-okf.py:210`, `.codex/hooks/repository-okf.py:90`, and `hooks/families/scan_secrets.py:1016`.
 - M21 focused startup, auto-ingest, OKF, scanner, security-banner, generator (25 tests), aggregate-runner (15 tests), and both temporary-home installer suites passed on macOS. Generated outputs are current (26). The PowerShell installer skipped one unsupported junction case. The new `scripts/test-lifecycle-messages-windows.ps1` is registered in the workflow and aggregate runner. Its embedded Python checks passed a Mac compatibility run after correcting the Codex `hookSpecificOutput` denial assertion; the native entrypoint skipped here. No live CLI display is claimed. No real user home was changed.
 - Two startup suites still asserted old post-tool OKF registrations after M20; their assertions now require turn-end-only OKF. The generator writer and mutation tests required scoped checkout write access for their lock file. These are test and workspace lessons, not a revived runtime registration.
+- M22's sole rebase conflict was `.agents/memory/API_MAP.md`: retain the base's 26 generated outputs after hook retirement and M22's exact safe Tool Guardian reason/log contract. `python3 scripts/generate-hooks.py --check` confirms 26 current files. Shared security banners pass 13 tests; Copilot, Gemini, and Codex Tool Guardian suites pass; generator tests pass 25 with scoped worktree write access after five sandbox permission errors on the first run; aggregate-runner registry passes 15; OKF lint and Git diff check pass. The source and generated provider files are in `892b8584`. Native Windows and live provider display are not claimed.
 
 ## Decisions and limits
 
@@ -21,4 +22,4 @@ Older installations may still execute repository-state or Markdown Health script
 
 ## Next step
 
-Rebase the tested milestone 22 Tool Guardian branch onto the current base, rerun affected tests after conflicts, then fast-forward integration. Continue milestone 23 direct-script performance audit. Native Windows execution and installed CLI display remain milestones 24-27.
+Review the rebased M22 branch and fast-forward `codex/ready-ideas-execplan` from `eba08529` only after integration approval. Then mark M22 accepted in the ExecPlan, update this handoff, and continue milestone 23 direct-script performance audit. Native Windows execution and installed CLI display remain milestones 24-27.
