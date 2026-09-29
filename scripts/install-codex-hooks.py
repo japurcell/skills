@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 
-MAINTAINED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "tool-guard.py", "markdown-health.py")
+MAINTAINED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "tool-guard.py")
 RETIRED_RTK_HOOK_FILES = ("rtk-explicit-codex.py", "rtk-agent-launcher.py")
 MAINTAINED_POSIX_COMMANDS = {f"python3 ~/.codex/hooks/{name}" for name in MAINTAINED_HOOK_FILES}
 OWNED_HOOK_FILES = MAINTAINED_HOOK_FILES + RETIRED_RTK_HOOK_FILES

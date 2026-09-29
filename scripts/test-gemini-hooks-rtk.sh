@@ -497,7 +497,6 @@ from pathlib import Path
 settings = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 commands = [hook["command"] for group in settings["hooks"]["BeforeTool"] for hook in group["hooks"]]
 required = [
-    'python "$HOME/.gemini/hooks/scripts/markdown-health.py"',
     'python "$HOME/.gemini/hooks/scripts/send-event.py"',
     'python "$HOME/.gemini/hooks/scripts/tool-guard.py"',
     'python "$HOME/.gemini/hooks/scripts/scan-secrets.py"',

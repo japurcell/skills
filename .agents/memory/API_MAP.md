@@ -39,11 +39,6 @@ description: Public validation entry points and provider adapter contracts for t
 - `scripts/configure-rtk.py [--home PATH] [--platform darwin|linux|win32] [--check]` requires RTK 0.50.0 or newer on `PATH`. `--check` validates without writes; default mode creates or updates only `[hooks] suppress_hook_warning = true` in platform RTK TOML. An existing changed file gets an owner-only `.toml.bak`; an unchanged file stays byte-identical. Invalid, ambiguous, or linked destinations exit `1` with stderr guidance. Default mode also removes only exact-hash installed prerelease adapters and launchers, plus a receipt-verified prerelease bundle; modified files are reported for manual review.
 - Both installers call `--check` before any installed-file mutation and apply the configuration after generator freshness succeeds. They do not download RTK. Copilot and Gemini automatic forwarders remain; Codex uses explicit RTK commands.
 
-## Markdown health
-
-- Generated `markdown-health.py` entry points take provider hook JSON on stdin and emit provider-native JSON on stdout. Their `MARKDOWN_HEALTH_EVENT` is `pre`, `post`, or `final`. State is keyed by provider session and resolved workspace root. Missing state, unreadable input, and checker failure report `incomplete` instead of a clean pass.
-- `python3 ~/.<provider>/hooks/[scripts/]markdown-health.py --check PATH [PATH ...]` is the explicit, read-only rerun CLI from workspace root; exit `0` means no definite defect, `1` means definite findings, and `2` means incomplete or invalid input. Copilot and Gemini use the `scripts/` segment; Codex does not.
-
 ## OKF validation
 
 - `scripts/lint-okf.py [--format human|json]` validates both canonical document bundles. Human diagnostics use `path:line:column: ID message`; JSON uses schema version `1` with exact `id`, `path`, `line`, `column`, and `message` fields. Exit `0` is clean, `1` reports profile findings, and `2` reports an untrustworthy `OKF900` result.

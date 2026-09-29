@@ -60,6 +60,3 @@ jobs:
       - name: Test stable RTK configuration on native Windows
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-rtk-stable-windows.ps1
-      - name: Test Markdown health Windows paths and envelopes
-        shell: pwsh
-        run: pwsh -NoProfile -File scripts/test-markdown-health-windows.ps1

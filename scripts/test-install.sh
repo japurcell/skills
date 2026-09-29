@@ -529,7 +529,7 @@ test_installs_codex_hook_and_global_configuration() {
     echo "Expected the Codex required-skills hook to be installed and executable." >&2
     exit 1
   fi
-  for installed in scan-secrets.py tool-guard.py markdown-health.py helpers/common.py helpers/audit.py; do
+  for installed in scan-secrets.py tool-guard.py helpers/common.py helpers/audit.py; do
     if [[ ! -x "$home/.codex/hooks/$installed" ]]; then
       echo "Expected maintained Codex hook to be installed and executable: $installed" >&2
       exit 1
@@ -561,9 +561,6 @@ assert "python3 ~/.codex/hooks/scan-secrets.py" in pre_commands
 assert "python3 ~/.codex/hooks/tool-guard.py" in pre_commands
 stop_commands = [hook["command"] for hook in config["hooks"]["Stop"][0]["hooks"]]
 assert "python3 ~/.codex/hooks/scan-secrets.py" in stop_commands
-for event in ("PreToolUse", "PostToolUse", "Stop"):
-    commands = [hook["command"] for group in config["hooks"][event] for hook in group["hooks"]]
-    assert "python3 ~/.codex/hooks/markdown-health.py" in commands
 assert sum(hook["command"] == "python3 ~/.codex/hooks/scan-secrets.py" for group in pre_tool for hook in group["hooks"]) == 1
 assert sum(hook["command"] == "python3 ~/.codex/hooks/scan-secrets.py" for group in config["hooks"]["Stop"] for hook in group["hooks"]) == 1
 PY

@@ -21,13 +21,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/.codex/hooks/markdown-health.py",
-            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\markdown-health.py\"",
-            "timeout": 10,
-            "statusMessage": "Recording Markdown baseline"
-          },
-          {
-            "type": "command",
             "command": "python3 ~/.codex/hooks/scan-secrets.py",
             "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-secrets.py\"",
             "timeout": 10,
@@ -43,30 +36,9 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash|apply_patch|Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ~/.codex/hooks/markdown-health.py",
-            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\markdown-health.py\"",
-            "timeout": 10,
-            "statusMessage": "Checking touched Markdown"
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ~/.codex/hooks/markdown-health.py",
-            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\markdown-health.py\"",
-            "timeout": 10,
-            "statusMessage": "Checking Markdown before completion"
-          },
           {
             "type": "command",
             "command": "python3 ~/.codex/hooks/scan-secrets.py",

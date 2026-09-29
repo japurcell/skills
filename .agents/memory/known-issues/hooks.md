@@ -31,9 +31,6 @@ The native Windows `gemini/block/descendant` fixture intermittently saw a `tmp*`
 
 With `shell=False`, resolve commands such as `rtk` through `shutil.which()` so `.cmd` or `.bat` executables are found.
 
-## Codex handler environment does not select Markdown event
-
-Codex CLI 0.155.1 ignores per-handler `env` in `~/.codex/hooks.json`. The Markdown hook reads `hook_event_name` from the input JSON to distinguish `PreToolUse`, `PostToolUse`, and `Stop`. A `PostToolUse` envelope at `Stop` produces `hook returned invalid stop hook JSON output`; Codex `Stop` accepts the common message fields and `decision: "block"` with `reason`, but not `hookSpecificOutput` or `decision: "allow"`.
 
 ## Empty RTK output is a valid no-op
 
@@ -73,7 +70,7 @@ In CLI 1.0.88, a successful `systemMessage` in ordinary `preToolUse`, `postToolU
 
 ## Retired installed hooks require manual cleanup
 
-The Bash and PowerShell installers preserve existing Copilot and Gemini registrations that are absent from maintained source when refreshing a user home. This includes retired repository-state entries. Fresh installs receive only current source registrations. An old installed registration and its script can therefore continue to execute until the user removes them manually; source and fresh-home checks do not certify an existing home.
+The Bash and PowerShell installers preserve existing Copilot and Gemini registrations that are absent from maintained source when refreshing a user home. This includes retired repository-state and Markdown Health entries. Fresh installs receive only current source registrations. An old installed registration and its script can therefore continue to execute until the user removes them manually; source and fresh-home checks do not certify an existing home.
 
 ## Gemini `AfterAgent` needs deployed-version proof
 
