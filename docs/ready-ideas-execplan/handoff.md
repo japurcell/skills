@@ -2,7 +2,7 @@
 
 ## Goal and status
 
-The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-23, Repairs 19A and 24A, and M24 source/workflow preparation are integrated on `codex/ready-ideas-execplan` through `054b63a2`. M24 remains open pending native Windows acceptance. M25 has isolated Codex CLI live evidence on `codex/ready-codex-live`; acceptance waits for evidence integration. M26-27 remain open.
+The user approved the revised [ExecPlan](ExecPlan.md) and [Windows checklist](windows-live-check.md). Milestones 17-23 and 25, Repairs 19A and 24A, and M24 source/workflow preparation are integrated on `codex/ready-ideas-execplan` through `b91be52e`. M24 remains open pending native Windows acceptance. M26-27 remain open for separate sessions with those CLIs.
 
 ## Current evidence
 
@@ -27,4 +27,4 @@ Older installations may still execute repository-state or Markdown Health script
 
 ## Next step
 
-Integrate the private M25 evidence commit into `codex/ready-ideas-execplan` and mark M25 accepted there. Run native Windows automation including scanner committed-HEAD failure and genuine unborn-branch cases, then complete Copilot and Gemini installed CLI display milestones 26-27. Rerun the converter suite on a case-sensitive filesystem to exercise the retained two-file CLI branch. GitHub CLI authentication currently fails on this Mac, so publishing and dispatching the Windows workflow needs restored credentials.
+Run native Windows automation including scanner committed-HEAD failure and genuine unborn-branch cases, then complete Copilot and Gemini installed CLI display milestones 26-27 in sessions with those CLIs. Rerun the converter suite on a case-sensitive filesystem to exercise the retained two-file CLI branch. GitHub CLI authentication currently fails on this Mac, so publishing and dispatching the Windows workflow needs restored credentials.
