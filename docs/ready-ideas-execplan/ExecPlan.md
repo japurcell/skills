@@ -27,7 +27,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29) [milestone-23] Integrated tested performance audit and scanner wait change at `9dbb901d`; native CLI and Windows timing were not required.
 - [x] (2026-09-29) [milestone-24/source] Rechecked 26 generated outputs, 25 parity cases, affected public hook suites, stable RTK, and Bash/PowerShell disposable-home installers on macOS; updated Windows RTK version and processor gates. This is source evidence only.
 - [ ] [milestone-24] Pass integrated source, temporary-home installer, and native Windows automation, including the scanner HEAD-failure case.
-- [ ] (2026-09-29) [repair-24A] Isolated branch `codex/ready-converter-portable` now passes all 14 converter tests with a portable collision decision assertion and retains real-file CLI coverage where supported. Integrate the committed branch before accepting this repair.
+- [x] (2026-09-29) [repair-24A] Integrated portable converter collision coverage at `3d89d501`; all 14 Mac converter tests and both installer suites pass. The retained real-file case awaits a case-sensitive filesystem.
 - [ ] [milestone-25] Verify installed Codex CLI behavior.
 - [ ] [milestone-26] Verify installed Copilot CLI behavior in a session with that CLI.
 - [ ] [milestone-27] Verify installed Gemini CLI behavior in a session with that CLI.
@@ -45,6 +45,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Prior Copilot CLI timeout probing showed a harmless Git read proceed after a one-second pre-tool timeout without a native timeout message. Treat visible progress as informational, not proof of enforcement.
 - Native Windows scan-secrets HEAD-failure proof remains open. A macOS PowerShell skip is not native Windows evidence.
 - The milestone 24 source sweep exposed a separate `scripts/test-codex-agents.py` failure on this case-insensitive APFS volume: two case-fold-equivalent fixture filenames collapse into one file before the CLI sees them. Keep the case-sensitive end-to-end test and add portable collision coverage through a suitable internal seam under Repair 24A. No test may be skipped or weakened merely to pass locally.
+- Native Windows automation requires a remote branch. The base branch is local and ahead of origin; `gh auth status` currently reports an invalid token for the configured account. Do not claim a Windows pass until credentials are restored, the final branch is published, and the job completes.
 - Repair 24A reproduced the failure: the converter suite returned `FAILED (failures=1)` because the CLI reported one installed agent after `ONE.md` overwrote `one.md` on APFS. The extracted `validate_agent_collisions` seam permits a two-candidate assertion on every host while the two-file CLI case still runs when both directory entries exist. All 14 converter tests pass on this Mac; the real-file source collision branch remains unexercised here because APFS cannot represent the fixture.
 - On 2026-09-29, milestone 18 fresh-install checks passed, but `scripts/test-install.sh` and `scripts/test-install.ps1` failed an existing copied-Gemini-guidance assertion. `.gemini/GEMINI.md` lacks the approved `write_file` saved-script sentence expected by both tests. Preserve the tests and repair the instruction before integrating the affected installer branch.
 - The guidance repair made the Gemini assertion pass in both suites. The same suites then exposed missing approved Copilot file-first wording. The PowerShell suite also reports unsupported junction creation on this Mac, which needs separate environmental classification after guidance is repaired.
@@ -235,12 +236,12 @@ Update .github/workflows/ready-ideas-windows.yml and windows-live-check.md for t
 
 ### Repair 24A: Make converter collision coverage portable
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met for portable collision decision coverage and the full Mac converter suite; real-file two-name execution remains a separate case-sensitive check.
 
 The `scripts/test-codex-agents.py` case-fold collision fixture cannot create two distinct case-fold-equivalent filenames on this Mac's case-insensitive APFS volume. Reproduce the existing suite failure, retain its real-file end-to-end collision case on filesystems that support both names, and add an internal test seam that exercises the same collision decision portably. Do not skip, delete, or weaken the collision assertion. Run the complete converter suite on this Mac and record the filesystem limit of the end-to-end fixture. Keep this repair separate from milestone 24 hook and Windows work.
 
-The isolated implementation extracts the existing collision loop into `scripts/install-codex-agents.py:validate_agent_collisions`. `scripts/test-codex-agents.py` asserts the duplicate output error with two in-memory agent definitions on every host. The original two-file CLI assertion still runs when the fixture produces two directory entries. The current Mac produces one entry, so its real-file branch cannot execute; retain that branch for a case-sensitive filesystem. Integrate the isolated commit before marking this repair done.
+The integrated implementation extracts the existing collision loop into `scripts/install-codex-agents.py:validate_agent_collisions`. `scripts/test-codex-agents.py` asserts the duplicate output error with two in-memory agent definitions on every host. The original two-file CLI assertion still runs when the fixture produces two directory entries. The current Mac produces one entry, so its real-file branch cannot execute; retain that branch for a case-sensitive filesystem.
 
 ### Milestone 25: Verify installed Codex CLI
 
