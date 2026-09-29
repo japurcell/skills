@@ -1,6 +1,6 @@
 # Distribution Recommendation
 
-Research date: 2026-09-29. This is a recommendation for discussion, not an approved implementation design. The user requires both committed team setup and local untracked setup, with committed team setup as the default.
+Research date: 2026-09-29. The user-approved distribution contract is recorded in [Choose the Distribution Contract](tickets/choose-distribution-contract.md). This document retains the comparative research and rationale. The contract is approved for implementation planning; installer and updater behavior have not been implemented or live-tested.
 
 ## Recommended direction
 
@@ -51,27 +51,22 @@ A committed setup should record selected components, enabled clients, and an imm
 
 The Vercel CLI's project lock records source information and content hashes, but its experimental restoration behavior should not be assumed to provide universal immutable restoration for every supported client. It also does not establish installation dependencies between workflows that activate other skills. These limits matter here because [several existing workflows invoke other skills](local-inventory.md). [Portable methods findings](research/portable-methods/findings.md).
 
-For local untracked setup, use native local configuration where supported and keep generated local artifacts excluded without changing the shared team configuration. The installer should report where each component is installed and activated. Define collision handling and update/removal ownership before implementing it; project/global precedence differs across clients.
+For local untracked setup, use native local configuration where supported and keep generated local artifacts excluded without changing the shared team configuration. The installer should report where each component is installed and activated. Apply the approved contract's collision, ownership, and removal policies; project/global precedence still differs across clients.
 
 ## Changes required before implementation
 
 The current installers use fixed personal destinations and copy whole collections. Hook templates contain home paths, the Codex skill loader directly reads the global skill root, and Gemini global settings combine selected behavior with personal configuration. A repository option needs provider-aware output and dependency handling, rather than copying the entire personal installation into a project. [Current source inventory](local-inventory.md).
 
-Keep canonical hooks as build-time sources and package their generated provider-local runtime files. Separate package code from writable logs and state. Extract repository policy from personal instructions and settings. Preserve unrelated client configuration and only remove files owned by the installer. These are proposed requirements supported by current source behavior; exact choices remain in the [Choose the Distribution Contract](tickets/choose-distribution-contract.md) decision ticket.
+Keep canonical hooks as build-time sources and package their generated provider-local runtime files. Separate package code from writable logs and state. Extract repository policy from personal instructions and settings. Preserve unrelated client configuration and apply the approved pruning rules to managed items. These source constraints inform implementation planning; behavioral decisions are authoritative in the [Choose the Distribution Contract](tickets/choose-distribution-contract.md) decision ticket.
 
-## Next decision
+## Ready for implementation planning
 
-Choose the initial supported clients and component groups, then settle the balance between direct repository installation and native plugin packages. The recommended starting point is complete repository support for the existing Codex, Copilot, and Gemini workflows, plus portable skill distribution and generated native package adapters where their documented capabilities fit. Claude Code, Cursor, and OpenCode should be explicit compatibility targets rather than advertised as complete bundle support before their adapters are verified.
+The distribution interview is complete, including source targeting, restoration, managed ownership and pruning, project/global coexistence, and operating-system targets. Easy updates are part of the initial contract. Implementation planning is the next separate effort.
+
+The confirmed choices, including the user's exclusion of a rollback feature, are authoritative in the ticket. Native package caches and updater policies still must not be assumed to behave identically across clients. A scoped check of current release conventions appears in [the source inventory](local-inventory.md); it does not establish an existing stable release channel.
 
 Research and decision history live in the [Agent Asset Distribution map](map.md). Installer changes and publishing are outside this research session.
 
 ## Validation and documentation pass
 
-- Added: Research, inventory, recommendation, map, tickets, and routing record under this effort. No canonical knowledge document was added.
-- Changed: [Repository instructions](../../.agents/instructions/repo.md), type `Agent Instruction`, now route distribution work to this map. [File map](../../.agents/memory/FILE_MAP.md), type `Agent Memory`, indexes this effort. Existing frontmatter was preserved.
-- Split or moved: The complete effort moved from `.agents/scratchpad/agent-asset-distribution` into `docs/agent-asset-distribution` at the user's request. The old effort path is absent.
-- Deduplicated: None. Detailed external findings remain in research files rather than being copied into canonical memory.
-- Index updates: `FILE_MAP.md`; no memory document was added, removed, renamed, or repurposed, so `INDEX.md` needs no change.
-- Remaining documentation quality TODOs: None. The distribution decision remains open by design.
-
-OKF authoring used the [profile branch](../../.agents/skills/okf-authoring/references/profile.md); the source-summary branch was not applicable. `rtk proxy ./scripts/lint-okf.py` exited `0`, and `rtk git diff --check` passed. The scoped canonical diff contains exactly the two authorized routing changes listed above. Local links, Markdown whitespace, relocation, ticket statuses, and dependency readiness were checked. All three research tickets are closed, and the distribution decision is the only open, unblocked ticket. No source, installer, runtime configuration, public API, or test behavior changed; client installation was not live-tested.
+Current documentation-pass and verification results are recorded in the [feature handoff](handoff.md). All four decision tickets are closed. Source, installer, runtime configuration, public API, and test behavior remain unchanged; client installation was not live-tested.

@@ -35,6 +35,14 @@ Gemini's global settings combine hooks with UI preferences, authentication selec
 
 Skill workflows invoke other skills. For example, [wayfinder](../../skills/wayfinder/SKILL.md) activates research and grilling, and [delegate-to-subagents](../../skills/delegate-to-subagents/SKILL.md) activates the model router. Installing only a named top-level workflow can therefore leave required workflows missing even when its `SKILL.md` is valid. The absent `domain-modeling` skill referenced by wayfinder was encountered during this session. Model discovery, workflow dependency resolution, and hook execution dependencies are distinct requirements.
 
-## Implications for the pending decision
+## Implications for implementation planning
 
-The recommendation should preserve current user-global installation, add explicitly selected repository behavior, retain provider-local hook generation, and treat configuration merging and owned-file removal as public installation behavior. These are implications inferred from current source, not an approved design. Both committed team setup and local untracked setup are required, with committed team setup as the user-confirmed default.
+Current source constrains repository discovery, provider-local hook generation, configuration merging, and owned-file management. The approved scope and lifecycle choices are authoritative in [Choose the Distribution Contract](tickets/choose-distribution-contract.md); this inventory describes existing behavior rather than implemented repository-install support.
+
+## Current release and refresh conventions
+
+A scoped read-only check on 2026-09-29 found that [README](../../README.md) documents rerunning the installer to refresh locally loaded copies. Asset source paths in [the Bash installer](../../scripts/install.sh) resolve from its own checkout; this asset-copying entrypoint does not retrieve a remote asset revision. The minimum stable RTK version is a dependency requirement, not a source-repository release version.
+
+`rtk git show-ref --tags` returned no local tag refs. No remote hosting or release state was checked, so this does not prove that remote releases are absent. The scoped README and workflow scan found no documented stable repository release channel or distribution release workflow; the sole checked-in workflow is [the Windows validation workflow](../../.github/workflows/ready-ideas-windows.yml).
+
+Do not promise an existing stable release channel based on the inspected checkout. Apply the approved contract's source-targeting policy when designing the updater; immutable restoration and an explicit update are different operations.

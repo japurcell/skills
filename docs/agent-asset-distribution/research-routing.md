@@ -12,3 +12,14 @@ These provisional routes follow the installed subagent-model-router catalog and 
 - fallback: gpt-6-sol with medium effort.
 
 Tickets: Codex and Copilot Distribution Support; Claude Code and Gemini Distribution Support; Portable Distribution Methods and Additional Clients. Each has non-overlapping write ownership.
+
+## Route for the release-policy fact check
+
+- tier: Fast
+- model: gpt-6-luna
+- effort: medium
+- reason: Bounded, read-only inspection of local Git tags and existing release/update conventions. No implementation, external research, or security judgment. The lowest capable exposed model is provisional; results require source evidence. Exact token pricing was not needed for this route.
+- escalation_trigger: Conflicting release conventions or inability to distinguish observed local tags from promised release behavior.
+- fallback: gpt-5.6-luna with medium effort if unavailable; gpt-6.1-sol with medium effort only if focused verification cannot resolve a conflict.
+
+The runtime explicitly applied the selected model and effort with no inherited turns. The agent had no write ownership. Its scoped findings are recorded in [the source inventory](local-inventory.md); no remote release state was checked.
