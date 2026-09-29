@@ -19,7 +19,7 @@ A user can verify the result by running an explicit RTK command, observing start
 - [x] (2026-09-29) [repair-provider-guidance] Restored approved Gemini and Copilot file-first PowerShell instructions; both existing installer suites pass. The PowerShell suite skips one unsupported junction fixture on this Mac.
 - [x] (2026-09-29) [milestone-19] Integrated global Markdown Health retirement at `d54d5619`; source and disposable-home checks pass on Mac. Native Windows proof remains in milestone 24.
 - [x] (2026-09-29) [repair-retired-registrations] Integrated Copilot/Gemini refresh preservation at `44daea14`; Bash and PowerShell installer suites and 12 stable RTK tests pass. Native Windows junction behavior remains open in milestone 24.
-- [ ] (2026-09-29 02:16Z) [milestone-20] Implemented repository-local turn-end OKF adapters and bounded audit; rebased source commit `a58ae3bb` onto accepted M19 tip `73db7d4d` and passed focused Mac checks. Awaiting base integration; native Windows proof remains in milestone 24.
+- [x] (2026-09-29) [milestone-20] Integrated repository-local turn-end OKF adapters and bounded audit at `07d1f133`; focused Mac checks pass. Native Windows proof remains in milestone 24 and installed display in milestones 25-27.
 - [ ] [milestone-21] Show sparse operational lifecycle messages.
 - [ ] (2026-09-29 00:41Z) [milestone-22] Implemented and tested on isolated branch `codex/ready-tool-guardian`; awaiting review and integration.
 - [ ] [milestone-23] Inventory, measure, review, and improve retained high-rate hooks on macOS.
@@ -88,7 +88,7 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 
 ## Outcomes & Retrospective
 
-Planning decisions are complete and the user approved the revised plan. Milestones 17-19 are integrated. Milestone 19 source commit `46eef579` removes the maintained global Markdown Health family, generated scripts, registrations, installer ownership, and dedicated suites while preserving the independent OKF linter and old installed registrations during refresh. Source and disposable-home checks passed before the base branch fast-forwarded to tested tip `d54d5619`. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
+Planning decisions are complete and the user approved the revised plan. Milestones 17-20 are integrated. Milestone 19 retired maintained global Markdown Health code while preserving the independent OKF linter and old installed registrations during refresh. Milestone 20 added repository-local turn-end lint for all three CLIs with bounded audit and repair behavior. Focused and disposable-home checks passed before the base branch fast-forwarded to tested tip `07d1f133`. The aggregate runner is blocked at Mac prerequisite preflight by missing `flock`; targeted suites pass. No real user home was changed. Native Windows execution and live provider display remain later gates.
 
 Milestone 20 source is implemented at `a58ae3bb` on the isolated `codex/ready-repository-okf` branch, rebased onto accepted M19 tip `73db7d4d`. Focused public-hook, linter, installer, and generator checks pass on macOS. The audit distinguishes first and retry attempts and omits diagnostic text. Acceptance remains open for integration; native Windows automation and provider-visible messages are later gates.
 
@@ -144,8 +144,8 @@ When `install.sh` or `install.ps1` refreshes an existing user home, preserve exa
 
 ### Milestone 20: Validate repository OKF at turn end
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met for checked-in source and temporary-home installs; native Windows proof remains in milestone 24 and installed provider display in milestones 25-27.
 
 Keep scripts/lint-okf.py as the only OKF rule authority. It checks canonical Markdown under .agents/instructions/ and .agents/memory/, exiting 0 for pass, 1 for findings, and 2 for infrastructure failure. Keep Copilot's repository-local agentStop adapter through .github/hooks/scripts/validate-stop.py and Gemini's repository-local AfterAgent adapter under .gemini/hooks/scripts/lint-okf.py. Remove only redundant Copilot postToolUse and Gemini AfterTool OKF registrations. Add a repository-local .codex/hooks.json Stop command and self-contained adapter, never a user-global Codex registration. If installed provider versions or worktree rules differ, record the observed limit and keep acceptance open.
 
@@ -153,7 +153,7 @@ Validate the full canonical OKF tree once per turn-end attempt. Report pass, def
 
 Extend scripts/test-hooks-okf-lint.sh and scripts/test-gemini-hooks-okf-lint.sh, and add scripts/test-codex-repository-okf.sh and scripts/test-repository-okf-windows.ps1. Use public envelope tests for pass, findings, incomplete, first block, allowed second stop, repeated stop deduplication, path and output caps, nested-worktree resolution, and Windows path behavior. Verify no post-tool OKF entry and no user-global copy. Run scripts/test-okf-lint.sh for the independent central linter. Installed native message proof belongs to milestones 25-27; Windows automated behavior belongs to milestone 24.
 
-The isolated `codex/ready-repository-okf` branch now has the adapters, project registrations, and focused public-envelope suites. Copilot and Gemini post-tool OKF registrations are absent. Codex uses a project-local Stop command resolved from the Git root, with no global installer copy. Copilot, Gemini, and Codex direct tests, central linter, generator freshness, aggregate-runner CLI tests, Codex hook merger, and both temporary-home installer suites pass on macOS. PowerShell installer tests skip one unsupported junction fixture, and the new Windows suite skips native behavior here. Integration, native Windows execution, and installed provider display remain separate acceptance gates; do not mark this milestone accepted from isolated source proof alone.
+The integrated source has the adapters, project registrations, and focused public-envelope suites. Copilot and Gemini post-tool OKF registrations are absent. Codex uses a project-local Stop command resolved from the Git root, with no global installer copy. Copilot, Gemini, and Codex direct tests, central linter, generator freshness, aggregate-runner CLI tests, Codex hook merger, and both temporary-home installer suites pass on macOS. PowerShell installer tests skip one unsupported junction fixture, and the new Windows suite skips native behavior here. Native Windows execution and installed provider display remain separate later acceptance gates.
 
 ### Milestone 21: Show sparse lifecycle messages
 
