@@ -1,0 +1,298 @@
+# Install and update selected agent assets at repository scope
+
+
+This ExecPlan is a living document. Maintain `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` as work proceeds. Its repository path is `docs/agent-asset-installer/ExecPlan.md`. Follow `.agents/skills/exec-plans/SKILL.md`, including synchronized milestone status and progress checkboxes.
+
+This session creates the implementation plan only. No implementation milestone has started. Native package publication is a separate future effort.
+
+## Purpose / Big Picture
+
+
+Let a developer install selected skills, custom agents, and hooks into a project, commit actual files for teammates, and refresh them with one explicit update command. A developer can instead keep a repository installation untracked or use a personal installation. Updates remember selections, show changes, preserve unrelated files, and stop before destination writes when they would replace conflicting local edits.
+
+Success is observable from a disposable project: install a review workflow, see its skill and dependency files at native discovery paths, commit and clone the project, and discover those skills without the source checkout. Updating from source revision A to B produces a reviewable Git diff and provenance record. Editing a managed file before an incompatible update causes a conflict and leaves installation destinations unchanged.
+
+## Progress
+
+
+- [x] (2026-09-29 21:27Z) [planning] Read the closed contract, source inventory, current installer entry points, configuration merger, generated-hook manifest, and area guidance. Create this self-contained implementation plan.
+- [x] (2026-09-29 21:46Z) [planning] Complete canonical routing/documentation pass. OKF lint, whitespace, 15 Markdown documents, 69 local links, seven synchronized open milestones, and four closed decisions pass.
+- [ ] [planning] Obtain acceptance of proposed public test seams before writing tests, as required by `tdd`.
+- [ ] [milestone-1] Deliver one committed, pinned skill installation through the public CLI.
+- [ ] [milestone-2] Deliver asset selection, required dependencies, and curated bundles.
+- [ ] [milestone-3] Deliver preview, update, recorded restoration, conflict protection, and safe pruning.
+- [ ] [milestone-4] Deliver native repository adapters for Codex, Copilot CLI/VS Code, and Gemini CLI.
+- [ ] [milestone-5] Deliver local and personal installations, verified adoption, and legacy entry-point integration.
+- [ ] [milestone-6] Prove Windows, Linux, macOS, and installed client behavior.
+- [ ] [milestone-7] Publish usage documentation, synchronize canonical knowledge, and finish acceptance.
+
+## Surprises & Discoveries
+
+
+The Bash installer derives destinations from `HOME` at `scripts/install.sh:26`. PowerShell has an empty parameter declaration at `scripts/install.ps1:29`. Neither implements selection or repository scope. Preserve personal entry points while adding one lifecycle engine.
+
+`scripts/install-provider-hooks.py:82` recognizes maintained hooks by script names in home-relative commands. Its recursive settings merge replaces template values. Neither proves ownership for selective updates. Ownership must identify exact files and configuration entries, not basenames or directory placement.
+
+`scripts/install.sh:163` preflights RTK and generated-hook freshness before provider JSON checks. Mutations start at `scripts/install.sh:186`, before agent conversion and copies. The new engine needs whole-operation preflight rather than a sequence of mutating helpers. Existing personal tests remain acceptance requirements.
+
+`hooks/manifest.py:19` lists generated files. Keep renderers under `hooks/families/` and separate installed provider trees without cross-provider imports. `scripts/generate-hooks.py --check` remains a read-only installation gate.
+
+`.codex/hooks/load-required-skills.py:232` reads only personal skills. Copilot and Gemini support skill-root overrides with different precedence. Explicit runtime configuration must select repository skills and work after a teammate relocates a clone.
+
+The interview encountered missing `domain-modeling`. Catalog entries can describe unavailable dependencies so listing remains useful. Selecting an affected workflow must fail before writes with its dependency chain. The user's interview fallback does not authorize silently dropping distribution dependencies.
+
+Native local configuration is uneven. Codex adds matching hooks across sources and skips untrusted project layers. Gemini documents project `.gemini/settings.json`, without project `settings.local.json`. Git excludes cannot hide tracked changes. Local mode must refuse tracked configuration writes unless a verified native local override expresses the selection. Never substitute a system layer to bypass project trust. [Official OpenAI documentation: hooks](https://learn.chatgpt.com/docs/hooks), [OpenAI project trust](https://learn.chatgpt.com/docs/config-file/config-basic), [Gemini configuration](https://geminicli.com/docs/reference/configuration/).
+
+Two initial plan patches were blocked before mutation by Tool Guardian input limits: `46899 bytes exceeds limit 32768 bytes` and `129 segments exceeds limit 128 segments`. Write long documents with smaller independent patches below both limits. Do not disable the guard or raise its limits.
+
+## Decision Log
+
+
+Decision: Preserve the closed contract. Full repository setup initially targets Codex, Copilot CLI/VS Code, and Gemini CLI. Claude Code, Cursor, and OpenCode initially receive skills only. Committed team setup is default. Local untracked and personal setups remain available. Support bundles and individual assets with dependencies, actual committed payloads, immutable commits/digests, explicit updates/preview, ownership-based pruning, preservation of edits, native precedence, and macOS/Linux/Windows. Hosted/cloud support and native packages require separate validation. No rollback command or retained installation history is authorized.
+
+Rationale: These are settled user requirements, not questions to reopen. Date/author: 2026-09-29, user decisions recorded by Codex.
+
+Decision: Use Python 3.11+ standard-library lifecycle code and retain Bash/PowerShell compatibility entry points. Expose `scripts/agent-assets.py` as the installer/updater. Git supplies acquisition and revisions. No package-manager bootstrap, remote service, marketplace, or symlink team delivery is required.
+
+Rationale: Python already implements TOML conversion and configuration helpers. Python 3.11 provides `tomllib`. One engine concentrates safety across operating systems. Windows users can invoke `py -3` or their configured Python. Date/author: 2026-09-29, Codex planning.
+
+Decision: Keep research at `docs/agent-asset-distribution/` and implementation planning at `docs/agent-asset-installer/`. Store new exploration findings here instead of recreating the promoted scratchpad effort.
+
+Rationale: Preserve the closed record and the user's requested `docs/` location. Date/author: 2026-09-29, Codex planning.
+
+Decision: Use native discovery paths, copies, and two records: desired selection and resolved ownership. Reconcile team/local records before removal. Shared files remain while another selection needs them.
+
+Rationale: Clones carry working assets. Updating bundles preserves requested identity while recalculating membership/dependencies. Date/author: 2026-09-29, Codex planning.
+
+Decision: Local mode writes only untracked files or verified native local overrides. Tracked shared configuration is a conflict. Offer team mode, assets without that configuration requirement, or explicit resolution of the existing target. Never use Git index flags to conceal tracked changes.
+
+Rationale: Preserve local semantics, trust, and team policy. The contract does not promise universal personal/team isolation. Date/author: 2026-09-29, Codex planning.
+
+Decision: Distinguish interrupted-operation recovery from version rollback. A temporary journal retains pre-write bytes only for one incomplete operation. Delete it after successful application or recovery. Expose no historical version selector.
+
+Rationale: Recovering incomplete writes protects integrity without the excluded rollback feature. Date/author: 2026-09-29, Codex planning.
+
+## Outcomes & Retrospective
+
+
+Planning is complete. Implementation is not started. Seven verifiable milestones cover commands, catalog/dependencies, ownership, provider constraints, personal adoption, and OS/client acceptance. No installer, installed home, runtime, or workflow has changed. Test seams remain proposed until explicit acceptance. Planning does not establish live support.
+
+Planning validation on 2026-09-29: `rtk proxy ./scripts/lint-okf.py` exits `0`, `rtk git diff --check` passes, and a read-only validator checks 15 Markdown documents, 69 local links, all required plan sections, seven open milestones with matching unchecked progress, and four closed decision resolutions. Canonical edits are limited to the existing repository-instruction and file-map routing entries. No implementation test command has run.
+
+## Context and Orientation
+
+
+Run repository commands from the root containing `AGENTS.md`, `skills/`, `agents/`, and `scripts/`. Planning starts at HEAD `6424adf06f5c08577e7848e4c63cc0bd421e73d0` on `codex/research-agent-distribution-options`. Before edits, read `.agents/memory/INDEX.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`, and affected-area instructions, known issues, and testing guidance. Load `tdd` before source design or implementation. Use one failing public test, minimal implementation, and next test. Do not write all milestone tests first.
+
+Canonical skills are `skills/<name>/` with `SKILL.md`. Canonical agents are regular top-level `agents/*.md` with `name` and `description` frontmatter. `scripts/install-codex-agents.py` converts them to TOML containing `name`, `description`, and `developer_instructions`. `hooks/manifest.py` maps renderers to generated scripts in `.codex/`, `.copilot/`, `.gemini/`, and `.github/`. Shell installers currently copy personal setups. `scripts/test-all.py` registers maintained suites. `.github/workflows/ready-ideas-windows.yml` runs native Windows acceptance.
+
+A catalog describes assets, bundles, dependencies, clients, and runtime requirements. An asset ID uses a type prefix, such as `skill:code-review` or `hook:tool-guard`. A bundle names a curated selection. Required dependency closure means every asset needed directly or indirectly. A provider adapter translates selected source into native paths/configuration. A seam is the interface used by callers and tests. Proposed seams are command processes and native execution, not private helpers.
+
+Provenance describes repository, full commit, digest, and renderer version. Ownership identifies the file or configuration entry the installer may change. A baseline digest describes last verified managed content. Compare current content with that baseline before replacement/removal. A lock record stores the current resolved installation. It is separate from the mutex preventing concurrent writers.
+
+Committed records are `.agent-assets/selection.json` and `.agent-assets/lock.json`. Local records are `.agent-assets/local/selection.json` and `.agent-assets/local/lock.json`, excluded through Git's resolved `info/exclude`. Personal records are `<home>/.agent-assets/selection.json` and `<home>/.agent-assets/lock.json`. Repository records contain relative destinations and no developer-specific absolute paths. Payloads live at native discovery paths.
+
+The closed authority is `docs/agent-asset-distribution/tickets/choose-distribution-contract.md`. Its research reports preserve comparisons. This plan embeds execution requirements. Verify native documentation and actual versions during adapter acceptance because discovery/event behavior changes independently of this code.
+
+## Interfaces and Dependencies
+
+
+Create executable `scripts/agent-assets.py` with `main(argv: Sequence[str] | None = None) -> int`, delegating to `scripts/agent_assets/cli.py`. Put selection/lifecycle behavior in `core.py`, Git acquisition in `sources.py`, and varying renderers in `providers.py` beneath the same package. Add a package initializer. These are internal modules. Avoid a generic plugin framework and private-method tests.
+
+Commands are `list`, `install`, `update`, `restore`, and `status`, with `--help` and `--format human|json`. `list` reports client-filtered assets, availability, and dependencies without destination writes. `install` requires a client and repeatable `--asset` or `--bundle`. Defaults are `--scope repo --mode team` and current Git root, with `--repo PATH` available. `--scope user --home PATH` selects personal destinations. `--mode` is repository-only. `--home` routes tests explicitly without repurposing `HOME` or `CODEX_HOME`. Ordinary use honors native home and the existing Codex agent override. Explicit test homes must contain or reject external Codex overrides.
+
+`install` accepts `--source PATH_OR_GIT_URL` and mutually exclusive `--branch BRANCH` or `--revision TAG_OR_COMMIT`. Default source is the command's checkout. For a local source, initially install its committed HEAD and record its named current branch for updates. An explicit branch/revision overrides that choice. For a Git URL, resolve its remote default branch. A detached local source needs an explicit branch or revision. Record a credential-free fetch URL or clearly local-only path, source policy, full commit, and digest. Acquisition never changes, resets, stashes, or commits the caller's checkout. Reject credential-bearing URLs and use Git credential handling.
+
+Acquire revisions through argument-list Git subprocesses in disposable directories. Resolve a full commit, read catalog and selected paths from that committed tree, and materialize only validated regular files. Reject traversal and escaping links rather than extracting an unchecked archive. Reuse the existing generator's read-only check for the selected source snapshot, never generator write mode. Do not import arbitrary catalog paths as Python or execute installed hooks during installation. Renderer/schema compatibility is preflighted before destination mutation.
+
+`update` uses saved clients, assets/bundles, source policy, and ownership. `--preview` shares planning but changes no installation files, configuration, records, or Git excludes. Disposable acquisition files outside the target are allowed. Explicit updates follow the configured branch. Pins stay pinned. `--revision` changes policy to a pin. `--branch` resumes branch following. Persist policy only after success. `restore` materializes the currently recorded full commit and verifies its digest, never follows a branch or silently upgrades. `status` reports missing/unchanged/modified assets, unmanaged overlaps, native precedence, and trust/runtime uncertainty without writes.
+
+Human output includes clients, requested/required assets, commit/policy, added/updated/retained/removed counts, conflicts, and trust actions. JSON emits one stdout document containing `schema_version`, `command`, `source`, `selection`, `changes`, `conflicts`, and `warnings`. Diagnostics/progress go to stderr. Exit `0` means success or successful preview. Exit `1` means conflict or unavailable dependency. Exit `2` means malformed input/schema, missing prerequisites, acquisition failure, or unrecoverable interrupted operation. Stable codes include `ASSET_CONFLICT`, `ASSET_DEPENDENCY_MISSING`, and `ASSET_LOCAL_TRACKED_TARGET`, with safe paths and resolution advice.
+
+Add `distribution/catalog.json`, schema version `1`, with assets keyed by ID and bundles by name. Each asset specifies source paths, required IDs, clients, OS/runtime restrictions, and rendering kind. Include maintained skills/agents and selectable hook families with explicit helper/launcher files. Exclude archives, benchmark workspaces, ignored runtime state, and eval output. Preserve licenses and runtime references instead of blanket README/license removal. Maintain dependencies explicitly, not through install-time prose inference. Reject cycles, invalid paths, case-folded output collisions, and undeclared runtime files. Known missing dependencies are unavailable entries with reasons.
+
+Selection records store installation ID, scope/mode, clients, requested assets/bundles, and source policy. Lock records store schema/renderer version, full commit/digest, resolved assets, and owned items. File items store destination, type/mode, owners, and baseline digest. Configuration items store destination, stable semantic locator, owners, last managed value, and digest. Identify a named handler or uniquely matching exact value. An array index alone is insufficient. Ambiguous matches conflict. Validate records before trusting ownership or destinations.
+
+SHA-256 covers a sorted, unambiguous sequence of selected source paths, file types, executable intent, and content hashes. Include catalog and rendering inputs affecting output, excluding target paths/timestamps. Record rendered hashes separately. Reject source links escaping the tree and unrepresented submodules. Materialize regular copies on every platform. Validate Windows reserved/case-colliding names before writes. POSIX mode checks do not establish Windows ACL safety.
+
+## Plan of Work
+
+
+### Milestone 1: Install one pinned skill into a team repository
+
+
+Status: open
+
+Acceptance: not met
+
+After seam acceptance, add subprocess suite `scripts/test-agent-assets.py` using disposable source/target Git repositories. First invoke the new CLI for `skill:caveman` and Codex. Assert native content, requested selection, immutable commit, and SHA-256. Observe failure, then add only the CLI/catalog/acquisition/copying slice needed to pass. Add repetition behavior after the first case passes.
+
+Write `.agents/skills/caveman/` and both team records. Do not invoke hooks/clients, alter the target index, commit output, or configure personal RTK. Acquire committed content only. Dirty selected source paths fail before installation. Unrelated uncommitted docs need not prevent it. Register the suite in `scripts/test-all.py`.
+
+Run `rtk proxy python3 scripts/test-agent-assets.py --group team-install` and `rtk proxy python3 scripts/test_test_all.py`. Acceptance is one selected skill without other trees, provenance, unchanged index, and repetition reporting no changes. These commands/behaviors are future work, not planning verification.
+
+### Milestone 2: Resolve bundles and required assets
+
+
+Status: open
+
+Acceptance: not met
+
+Extend catalog and commands one behavioral slice at a time. Audit workflow calls/imports before declaring dependencies. Initial bundles are `review`, rooted in `skill:code-review`, `security-hooks`, containing `hook:tool-guard` and `hook:scan-secrets`, and `required-context`, containing `hook:required-skills` and its declared skill files. Include all audited required dependencies. A curated bundle is not every repository asset.
+
+`list` reports unavailable workflows and full missing-dependency chains. Selecting one fails before copies. Agents/hooks for Claude Code, Cursor, or OpenCode produce the initial skills-only restriction. Use shared `.agents/skills` after verification and dedicated documented paths where supported versions lack shared discovery. Do not make one client discover duplicate named copies.
+
+Run `rtk proxy python3 scripts/test-agent-assets.py --group selection`. Prove individual assets, transitive/shared dependencies, missing requirements without writes, and case-folded collision refusal. Expected membership comes from literal fixture data, not the resolver being tested.
+
+### Milestone 3: Update, restore, and prune owned content safely
+
+
+Status: open
+
+Acceptance: not met
+
+Resolve source, recalculate closure, render desired files/configuration, validate destinations, and compare baselines before applying any part. Recheck observations under the mutex immediately before replacements. Concurrent changes conflict. Preview and application share planning, but application revalidates current targets.
+
+Use a local Git remote with commits A and B. Bundle B adds/removes assets and changes a dependency. Preview reports changes without altering the target. Update applies them and advances only the current lock. Restore reconstructs missing unchanged owned files from the recorded commit after another branch advancement. Missing commits/digest mismatches fail rather than following a branch.
+
+Current content different from baseline and desired upstream content different from baseline conflicts, unless current content already equals the desired result. Stop the whole operation before destination writes. If upstream is unchanged, retain/report local edits without adopting them as upstream. Preserve each retained item's baseline and origin commit in the current lock so overall revision advancement does not erase edit detection. Compare owned configuration values, not unrelated settings. Edited removals stop the whole operation. Require explicit resolution/rerun without automatic merging or backup replacement.
+
+Prune only owned, unchanged items required by no remaining selection/dependency closure. Reconcile relevant team/local records. Never recursively delete an installation directory. Remove managed empty directories only after verifying no unrelated entries.
+
+Use the resolved per-worktree Git directory for repository mutexes/journals, and personal state for user scope. Stage bytes, verify observations, atomically replace files, and write selection/lock records with payload/configuration success. Recover one failed/interrupted operation to its pre-operation state before another operation. Delete preimages/journal after success or recovery. Preview/conflict exits create no installation history or rollback command.
+
+Run `rtk proxy python3 scripts/test-agent-assets.py --group lifecycle`. Prove branch updates, pinning, restoration, whole-operation conflict refusal, safe pruning, unrelated preservation, concurrency refusal, and interrupted-write recovery. Exercise failure through disposable process/filesystem conditions. Do not assert private helpers or add test-only product switches without justification.
+
+### Milestone 4: Materialize native repository setups
+
+
+Status: open
+
+Acceptance: not met
+
+Implement rendering in `scripts/agent_assets/providers.py`. Codex uses `.agents/skills`, `.codex/agents/*.toml`, and project `.codex/hooks.json`. Preserve strict canonical serialization from `scripts/install-codex-agents.py`. Reuse a side-effect-free renderer instead of invoking its mutating installer. Copilot uses shared skills where supported, `.github/agents/*.agent.md`, and installer-owned `.github/hooks/agent-assets.json`. Gemini uses shared or verified native skills, `.gemini/agents/*.md`, and a selective merge into `.gemini/settings.json`.
+
+Package hooks in separate runtime trees such as `.codex/hooks/agent-assets/`, `.github/hooks/agent-assets/`, and `.gemini/hooks/agent-assets/`, preserving provider-local helper layout. Per-provider launchers locate their own root and explicit runtime configuration. Registration commands locate the Git root when clients start in nested directories. Quote POSIX and Windows paths separately. Copilot needs `bash` and `powershell` commands. Codex uses its documented Windows override. Reuse maintained event names, envelopes, timeout units, and bounded stdin behavior. Installation does not redesign hook protocols.
+
+Introduce `AGENT_ASSETS_RUNTIME_CONFIG`, passed by the launcher to the selected provider process. The configuration contains package-relative skill/reference paths, required skill files, and installation ID. Required-skill loaders prefer this validated configuration, then existing personal defaults. Change canonical `hooks/families/` sources for generated files and regenerate outputs. Never hand-edit generated Python. Clones must work without the source checkout or installer user's home. Never choose skill roots from untrusted hook input.
+
+Keep writable state outside payloads. Use explicit `AGENT_ASSETS_STATE_DIR`, otherwise per-user state under `XDG_STATE_HOME` or `~/.local/state` on Linux, `~/Library/Application Support/agent-assets` on macOS, and `LOCALAPPDATA/agent-assets` on Windows. Partition by provider and normalized-target-path hash so independent clones do not share sessions. Do not commit personal absolute paths. Before changing audit/trace or auto-ingest integration, load the focused observability/auto-ingest instructions and raw source references.
+
+Extract selected registrations and reviewed repository-relevant instruction fragments. Never copy all `.gemini/global-settings.json` or personal instructions into a teammate's project. Make fragments explicit selectable catalog assets. Use owned marked blocks only in native-loaded instruction files and preserve surrounding text. If no meaningful repository-safe fragment exists, report it unavailable. Do not distribute unrelated authentication, account MCP, UI/model, or LSP settings.
+
+Preflight duplicate-key/malformed JSON, invalid TOML, linked/reparse-point destination parents, and hard links. Replace with independent atomic files rather than chmod through external links. Preserve unowned settings. Avoid duplicate managed registrations within a native layer. Do not add inline Codex hooks alongside managed `hooks.json`. Report additive personal/project hooks when no documented deduplication exists. Repository operations never rewrite/suppress personal hooks. Status reports observed configuration and expected precedence while separating file presence from trust/runtime proof.
+
+Run `rtk proxy python3 scripts/test-agent-assets.py --group providers`, `rtk proxy python3 scripts/generate-hooks.py --check`, and `rtk proxy python3 scripts/test-generate-hooks.py`. Run existing `bash scripts/test-codex-hooks-startup.sh`, `bash scripts/test-hooks-startup.sh`, and `bash scripts/test-gemini-hooks-startup.sh` through RTK for changed loaders. Run security suites for changed families. Acceptance includes strict conversion, all selected runtime dependencies, relocation/nested-directory execution, settings preservation, correct provider envelopes, and required native trust. Prove installed hook subprocess execution for all three complete adapters before marking this milestone done. Normal client delivery remains milestone 6.
+
+### Milestone 5: Add private repository and personal lifecycle support
+
+
+Status: open
+
+Acceptance: not met
+
+Implement local mode with untracked native files and exact Git excludes. Resolve Git directories/excludes through Git so linked worktrees work. Preserve existing text and other worktrees' entries. Refuse excludes concealing tracked changes or broad unrelated trees. Copilot CLI's `.github/copilot/settings.local.json` can express appropriate local configuration. Verify VS Code independently before relying on that overlay for its hooks. Without a native local override, use ordinary native paths only when no tracked file must change. Detect the whole operation's tracked-target conflict before copying assets.
+
+When team/local selections need identical bytes at one path, record local borrowing of the team-owned file. Local operations never overwrite or claim team ownership. Different required bytes conflict. Reconcile records before pruning. A remaining borrower keeps the item required. Changing mode requires an explicit selection operation and ownership validation, never hiding team files silently.
+
+Add personal destinations matching the current workflow and Codex agent override. Add `install --scope user --adopt` for selected copies. Compare regular files and exact known configuration values with verified repository outputs, including legacy rendering. Existing `.skills-repo-agents.json` proves names were managed, not that bytes are unchanged. Refuse ambiguous, edited, unknown-revision, or merely similarly named copies. Preserve unowned personal files and old backups. Tests never mutate the real home.
+
+Forward explicit scoped arguments from `scripts/install.sh` and `scripts/install.ps1` to Python. Before adoption, preserve no-argument legacy personal behavior. Once managed personal records exist, route no-argument refresh through saved selection so legacy copying cannot bypass conflict protection. Test and document the transition. Legacy copying can include old workflows with undeclared dependencies. The selective managed path must not advertise these workflows as complete. Preserve required freshness/prerequisite checks and error streams.
+
+Repository installs never change account-wide RTK settings. For selected RTK hooks, check supported RTK availability and report the existing personal setup command when needed. Keep personal RTK configuration within the explicitly personal workflow. Skill-only installs do not require RTK. Git/Python are installer prerequisites. Client runtimes/tools are checked according to selected asset requirements and reported per client.
+
+Run `rtk proxy python3 scripts/test-agent-assets.py --group scopes`, `rtk proxy bash scripts/test-install.sh`, `rtk proxy pwsh -NoProfile -File scripts/test-install.ps1`, `rtk proxy python3 scripts/test-codex-agents.py`, and `rtk proxy python3 scripts/test-rtk-stable.py`. Acceptance includes private files absent from `git status`, no tracked changes, team/local ownership coexistence, saved-selection updates, verified adoption, edited-copy refusal, and both wrappers. Native local limitations appear in help/diagnostics rather than accidental Git changes.
+
+### Milestone 6: Validate operating systems and native loading
+
+
+Status: open
+
+Acceptance: not met
+
+Add `.github/workflows/agent-assets.yml` for public subprocess tests on macOS/Linux/native Windows with Python 3.11 and the supported newer Python. Resolve action versions against conventions/official sources during implementation. Register the suite in existing native Windows coverage as appropriate, without replacing current tests. Prove path quoting, reserved/case-colliding names, reparse refusal where supported, replacement/recovery, and PowerShell forwarding on native Windows. PowerShell on macOS is not Windows acceptance.
+
+During implementation create `docs/agent-asset-installer/client-validation.md` with exact versions, OS, discovery, hook evidence, trust steps, and unsupported cases. For Codex local clients, Copilot CLI, Copilot VS Code, and Gemini CLI, install a disposable project, select a skill/agent, and run a harmless hook through normal client operation. Clone to another path and repeat without source checkout. For Claude Code, Cursor, and OpenCode, prove skills/supporting-reference access only. Use distinctive fixture responses so discovery cannot be mistaken for a personal copy.
+
+Complete setup means assets the approved native surface supports, not identical hook events everywhere. Never infer IDE plugin support or hosted/cloud behavior. Missing clients/credentials are unmet live gates, not passing tests. Use disposable profiles where supported and native trust. Do not bypass trust or change real-home state. Verify current official instructions and the actual installed source before live checks.
+
+Run `rtk proxy python3 scripts/test-agent-assets.py` on every OS, targeted native PowerShell suites on Windows, and `rtk proxy ./scripts/test-all.py` with full prerequisites. Record actual counts/failing names. Acceptance requires green automated OS jobs and discovery/event proof for advertised surfaces. Keep unverified surfaces visibly limited until evidence exists.
+
+### Milestone 7: Document usage and close acceptance
+
+
+Status: open
+
+Acceptance: not met
+
+Update `README.md` with short team/local/personal examples, preview/update, and recorded-revision restoration. Add `docs/agent-asset-installer/usage.md` for flags, catalog/selection, trust/runtime requirements, explicit conflict resolution, pruning, tracked-local limitations, and supported client/OS matrix. Explain that clones contain working payloads. Updating requires Python, Git, and this repository's command checkout. This delivery channel does not require teammates to bootstrap package caches.
+
+Run `update-agent-docs` once at session end after implementation/review. Update `FILE_MAP.md`, script/hook/provider instructions, `API_MAP.md`, and testing/known-issue guidance for implemented behavior only. Apply `okf-authoring`, run `rtk proxy ./scripts/lint-okf.py` and `rtk git diff --check`, and preserve protected `AGENTS.md` sections. Synchronize milestone statuses/checkboxes, capture measured outcomes, and update the feature handoff. Commit synchronized docs with source changes. Never automatically commit installed team changes.
+
+Acceptance is help matching documentation, earlier milestone gates met, no stale generated outputs/ownership conflicts, clean worktree after scoped commits, and a supported/limited matrix backed by evidence. Native publication remains separate.
+
+## Concrete Steps
+
+
+Commands below describe future implementation/validation unless explicitly recorded otherwise. Work from this source repository root. Use disposable targets outside the checkout. Never test against real home. Native Windows can use `py -3` or `python` where `python3` is unavailable, and `pwsh -NoProfile -File scripts/install.ps1` for wrapper cases.
+
+First agree three proposed seams: the public `scripts/agent-assets.py` subprocess CLI and its filesystem/configuration effects, existing Bash/PowerShell entry points, and installed native discovery plus registered hook processes. Private helper calls/internal collaborator mocks are outside the test surface. Implement milestone 1 one red/green behavior at a time.
+
+After those commands exist, a skill-only example needs no client authentication:
+
+    rtk proxy git init /tmp/agent-assets-demo
+    rtk proxy python3 scripts/agent-assets.py install --repo /tmp/agent-assets-demo --client codex --asset skill:caveman --source .
+    rtk proxy python3 scripts/agent-assets.py status --repo /tmp/agent-assets-demo --format json
+    rtk git -C /tmp/agent-assets-demo status --short
+
+Expect `.agents/skills/caveman/SKILL.md` and both `.agent-assets/` team records. The index is untouched. The lock shows a full commit/SHA-256, not only a branch. Automated tests use unique temporary paths rather than this example. Repeat with target paths containing spaces.
+
+After dependency resolution and complete adapters exist:
+
+    rtk proxy python3 scripts/agent-assets.py list --client codex --format json
+    rtk proxy python3 scripts/agent-assets.py install --repo /tmp/agent-assets-demo --client codex --client copilot --client gemini --bundle review --bundle security-hooks
+    rtk proxy python3 scripts/agent-assets.py update --repo /tmp/agent-assets-demo --preview
+    rtk proxy python3 scripts/agent-assets.py update --repo /tmp/agent-assets-demo
+    rtk git -C /tmp/agent-assets-demo diff --stat
+
+The second install explicitly replaces desired selection in that scope. Support `install --preview` through the same planner so the developer can inspect resulting removals first. Do not alter other scopes. Team updates remain uncommitted. A conflict prints its code/path, exits `1`, and leaves the complete target fingerprint unchanged.
+
+Private/personal examples use new disposable targets:
+
+    rtk proxy git init /tmp/agent-assets-private
+    rtk proxy python3 scripts/agent-assets.py install --repo /tmp/agent-assets-private --mode local --client cursor --asset skill:caveman
+    rtk proxy python3 scripts/agent-assets.py update --repo /tmp/agent-assets-private --mode local --preview
+    rtk proxy python3 scripts/agent-assets.py install --scope user --home /tmp/agent-assets-home --client codex --asset skill:caveman
+    rtk proxy python3 scripts/agent-assets.py update --scope user --home /tmp/agent-assets-home
+    rtk proxy python3 scripts/agent-assets.py restore --scope user --home /tmp/agent-assets-home
+
+Private `git status` shows no new files. Exact native payload paths and local records are excluded. A clone does not carry private selection. Personal commands remember selection at the specified disposable home, leaving real home untouched.
+
+## Validation and Acceptance
+
+
+The first proposed seam exercises lifecycle end to end with real disposable Git repositories/remotes. Assert literal fixture content, independent known hashes, semantic settings, exits, streams, and complete target fingerprints on refusal. Cover install/repetition, branch advancement, pins, acquisition failure, digest mismatch, dependency/selection changes, restoration, edited retained/updated/pruned items, borrowed files, malformed records/settings, and interruptions. Do not merely assert operations inside a private plan.
+
+The second seam proves both entry points implement equivalent selected behavior and preserve legacy refresh before adoption. Continue existing installer/converter/configuration suites. A failing targeted suite is a real failure to reproduce/fix. Never delete, skip, weaken, or rename it to obtain green results. Do not add regression tests for feature deletions.
+
+The third seam proves files are used. Clients discover distinctive repository skills/agents, and registered hooks run through native events with provider-valid output. Direct installed-script checks prove protocol behavior but cannot replace event delivery. Record version, OS, trigger, output, and trust. Skills-only compatibility is not full adapter support.
+
+The public suite supports `--group team-install|selection|lifecycle|providers|scopes`, with no group running all. Add cases when their vertical slices are implemented, not as a bulk imagined suite. Tests use and clean only unique temporary source/target roots. Automated groups need no client/network credentials. Native evidence is separate. Documentation validation does not satisfy implementation acceptance.
+
+## Idempotence and Recovery
+
+
+Repeat operations produce zero payload/configuration writes. Acquisition failure, missing dependencies, malformed settings, tracked-local targets, and conflicting managed edits stop before destination mutation. Record mismatch is an error, not permission to infer ownership. An unowned preexisting destination is a conflict, even if similarly named. Claim it only through the explicit verified adoption operation. Preserve unrelated settings/logs. Records contain no secrets.
+
+Resolve a conflict by explicitly restoring known baseline content or incorporating edits into maintained source, then rerun. Removing an edited obsolete item still requires explicit resolution. Do not suggest dropping it from selection as a way to bypass that check. Never auto-merge or replace edited assets with backups.
+
+Retry after an interrupted write to recover only that pending operation before calculating a new plan. Recovery refuses ambiguous external changes. Keep an unresolved journal only for that incomplete operation and report its recovery error. Delete it after recovery. There is no rollback command/history. Restore uses the current record and the same edit policy. Unsupported record/renderer versions fail with the recorded source revision and instructions to use that compatible command checkout instead of silently changing output.
+
+## Artifacts and Notes
+
+
+`scripts/install.sh:40` strips eval/README/license files. New packaging preserves required supporting files/notices. `scripts/install-provider-hooks.py:51` validates hook shape. Retain schema and duplicate-key checks without basename-based ownership. `scripts/install-codex-agents.py:280` renders strict TOML. Preserve canonical text. `hooks/manifest.py:19` defines generated ownership. Installation never runs generator write mode.
+
+Adapter snapshots/live versions are not pinned by planning. Record versions/evidence in milestone 6 and distinguish documented from installed behavior. No stable release channel is assumed. Earlier source inspection found no local tags and did not inspect remote releases.
+
+Revision note, 2026-09-29: Created a separate implementation ExecPlan from the closed contract. Added concrete lifecycle/data design and seven acceptance milestones. Kept test seams pending confirmation and source untouched. Recorded tracked-local limits and tool input limits rather than inventing uniform settings or bypassing checks.

@@ -17,7 +17,7 @@ Produce a decision-ready recommendation for distributing selected skills, custom
 - Research agents own only their assigned ticket and research directory. The coordinating agent owns this map, synthesis, and local inventory.
 - Existing installers and installed user directories remain unchanged during this effort.
 - Read the [distribution recommendation](recommendation.md) for the synthesis and the [current source inventory](local-inventory.md) for repository-specific constraints. Recommendations remain distinct from approved implementation decisions.
-- The human decision interview is complete. Use the [current handoff](handoff.md) for the next implementation-planning context; the closed decision ticket is the contract's authority.
+- The human decision interview is complete. The separate [implementation ExecPlan](../agent-asset-installer/ExecPlan.md) is prepared. Use the [current handoff](handoff.md) for the resume gate and next milestone; the closed decision ticket is the contract's authority.
 
 ## Decisions so far
 

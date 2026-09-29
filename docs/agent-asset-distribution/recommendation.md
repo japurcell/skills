@@ -59,9 +59,9 @@ The current installers use fixed personal destinations and copy whole collection
 
 Keep canonical hooks as build-time sources and package their generated provider-local runtime files. Separate package code from writable logs and state. Extract repository policy from personal instructions and settings. Preserve unrelated client configuration and apply the approved pruning rules to managed items. These source constraints inform implementation planning; behavioral decisions are authoritative in the [Choose the Distribution Contract](tickets/choose-distribution-contract.md) decision ticket.
 
-## Ready for implementation planning
+## Implementation plan prepared
 
-The distribution interview is complete, including source targeting, restoration, managed ownership and pruning, project/global coexistence, and operating-system targets. Easy updates are part of the initial contract. Implementation planning is the next separate effort.
+The distribution interview is complete, including source targeting, restoration, managed ownership and pruning, project/global coexistence, and operating-system targets. Easy updates are part of the initial contract. The separate [implementation ExecPlan](../agent-asset-installer/ExecPlan.md) translates these choices into milestones and acceptance. Source implementation has not started; the [handoff](handoff.md) records the current resume gate.
 
 The confirmed choices, including the user's exclusion of a rollback feature, are authoritative in the ticket. Native package caches and updater policies still must not be assumed to behave identically across clients. A scoped check of current release conventions appears in [the source inventory](local-inventory.md); it does not establish an existing stable release channel.
 
