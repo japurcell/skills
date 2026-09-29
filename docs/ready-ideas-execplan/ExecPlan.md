@@ -104,6 +104,9 @@ Historical work: prior milestones 1-16 were accepted for the former design. They
 - Decision: Keep the scanner's distinct Git completeness checks and replace only the unconditional polling sleep with bounded `Popen.wait(timeout=...)`.
   Rationale: The measured repeated sleep was the clear hot-path defect; the replacement wakes on process exit without removing timeout, output-size, descendant, denial, or audit checks.
   Date/Author: 2026-09-29, Codex.
+- Decision: Rebase the private M24 workflow preparation onto the Repair 24A planning commit while preserving both records in the handoff.
+  Rationale: The native Windows gate and converter repair are separate open work; neither source evidence nor planning should imply acceptance of the other.
+  Date/Author: 2026-09-29, Codex.
 
 ## Outcomes & Retrospective
 
@@ -116,6 +119,8 @@ Milestone 21 source was integrated at `eba08529` and emits brief native-envelope
 Milestone 22 source now reports safe exact Tool Guardian rules and true input-limit counts across the three generated provider hooks, with guard-log parity. Its source commit `892b8584` was integrated at `cb3f0093`. The 13 shared banner tests, three provider Tool Guardian suites, 25 generator tests, 15 aggregate-runner registry tests, generated-output check, and OKF lint passed on macOS. Native Windows and provider display proof remain later gates.
 
 Milestone 23 isolated source measured all retained high-rate executable families and event-specific telemetry on macOS with 25 warm whole-subprocess samples per case. Scanner clean medians fell from 216-225 ms to 102-110 ms after the bounded Git wait change; the three scanner suites, generated-output check, and 25 generator tests pass. The full inventory, workloads, cold and warm distributions, budgets, and remaining costs are in `docs/ready-ideas-execplan/high-rate-hooks-performance.md`. Base integration remains before milestone 23 acceptance.
+
+Milestone 24 workflow preparation is rebased as `cc94dcda` onto Repair 24A planning base `743abc01`. Only the handoff conflicted; its resolution keeps the converter repair open alongside the completed Mac source sweep. The workflow and source files had no rebase conflict. Post-rebase `python3 scripts/lint-okf.py`, staged and unstaged `git diff --check`, and conflict-marker scans passed. Native Windows execution remains required for M24 acceptance.
 
 ## Context and Orientation
 
@@ -344,3 +349,5 @@ Revision note, 2026-09-29: Rebased milestone 22 onto accepted M17-21, resolved t
 Revision note, 2026-09-29: Recorded milestone 23's direct macOS high-rate inventory and benchmark evidence, set host-specific budgets after the baseline, and reduced scanner Git polling delay without changing security checks. Acceptance remains open until the isolated source commit is integrated.
 
 Revision note, 2026-09-29: Milestone 24 source and Windows workflow preparation are recorded without native Windows acceptance. Repair 24A owns the existing converter collision fixture's case-insensitive-volume failure; keep M24 open until a native Windows run proves the scanner HEAD-failure distinction and other current suites.
+
+Revision note, 2026-09-29: Rebased M24 preparation as `cc94dcda` over Repair 24A planning at `743abc01`. The handoff conflict now preserves both records; Windows acceptance and converter repair stay open.
