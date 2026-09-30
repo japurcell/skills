@@ -2,47 +2,54 @@
 
 ## Goal and status
 
-Lifecycle Guarantees is closed after the user confirms its contract on 2026-09-29. The map contains ten tickets: six closed and four open, with no active claims. The frontier contains Context Organization and Skill Boundary and Maintenance Scheduling and Pruning. Only Lifecycle Guarantees is resolved in this decision session; other closed contracts remain authoritative.
+Plan an implementation-ready specification for reusable automatic context management, piloted here. The user confirms Context Organization and Skill Boundary on 2026-09-29; its resolution is saved and the ticket is closed. The map contains ten tickets: seven closed, three open, and no active claims. This decision session resolves only that human ticket. No product implementation or installation is performed.
 
-## Agreed constraints
+## Next focus and next step
 
-- Reusable across the user's repositories, piloted here.
-- First-version targets are Codex desktop, Codex CLI, Copilot CLI, and Gemini CLI; both VS Code harnesses are deferred. Entry paths include fresh interactive, resume, compaction, noninteractive CLI, and supported delegation. Exact deployed versions and paths require certification.
-- Additions, corrections, reorganization, and pruning run automatically with reversible, evidenced maintenance.
-- Explicit user instructions remain authoritative.
-- The user says domain-modeling is not needed. Do not block on that missing dependency.
-- The user requires the map under docs/<feature-slug> rather than .agents/scratchpad/<feature-slug>. All effort artifacts are in docs/just-in-time-context/.
-- Unified skill subcommands and nested AGENTS.md remain hypotheses.
+Next session: [Maintenance Scheduling and Pruning](tickets/maintenance-scheduling-and-pruning.md), the only open frontier ticket. Load [Just-in-time Context](map.md), verify its exact blockers Knowledge Evidence Policy and Lifecycle Guarantees are closed, and claim Maintenance Scheduling and Pruning before grilling. Load the closed [Context Organization and Skill Boundary](tickets/context-organization-and-skill-boundary.md) for the selected execution boundary. Do not reopen accepted policy or start implementation.
 
-## Next step
+Failure and Concurrency Contract remains blocked by Maintenance Scheduling and Pruning. Adoption and Validation Contract remains blocked by Failure and Concurrency Contract. Existing ticket questions now carry the organization decision; no new ticket or dependency edge is needed.
 
-Start a new Wayfinder decision session with tickets/context-organization-and-skill-boundary.md. Verify its exact blockers, reference-evidence.md, context-retrieval-contract.md, and lifecycle-guarantees.md, are closed. Claim it with a six-character assignee ID before work. Use grilling to select knowledge representation, semantic-unit and evidence metadata, component ownership, skill packaging, and provider integration under the closed contracts. Compare indexed, nested, and hybrid approaches without assuming universal native discovery. Resolve only that human ticket and update this handoff before stopping. Maintenance Scheduling and Pruning is independently available for a separate session.
+## Standing constraints
 
-## Artifacts and verification
+- Keep effort artifacts under docs/just-in-time-context/, overriding wayfinder's scratchpad default. The user explicitly waives domain-modeling.
+- Plan only. Resolve at most one human decision ticket per session; research exceptions remain allowed. No push is requested.
+- Share tooling across repositories, with repository-isolated knowledge. Automatic additions, corrections, reorganization, and pruning must remain reversible and evidenced. Explicit user instructions govern.
+- First-version targets are Codex desktop and Codex/Copilot/Gemini CLIs. Both VS Code harnesses are deferred. Fresh interactive, resume/compaction, noninteractive CLI, and supported child paths need separate deployed-version certification; targets are not certified support.
+- Preserve the closed Success Criteria, Knowledge Evidence Policy, Context Retrieval Contract, and Lifecycle Guarantees. Their full resolutions own quality, evidence, retrieval, completion, recovery, and performance requirements.
 
-- map.md indexes resolved tickets and carries the remaining fog.
-- tickets/ contains questions and their exact dependency filenames.
-- baseline.md records current source-inspected behavior. Research documents official contracts; installed-version behavior remains unverified.
-- brief.md retains the original idea, agreed scope, and source references.
-- This session starts at commit 03b9e00 with a clean worktree on codex/plan-just-in-time-context. Changes close Lifecycle Guarantees, update the map's index/fog/scope, refine four dependent questions, and refresh this handoff. No product source, hook configuration, or installed behavior changes.
-- Both research investigations remain complete. A read-only briefing from the existing provider researcher reconciles documented lifecycle capabilities and unverified boundaries; the source of detail remains research/provider-lifecycle-capabilities/findings.md. No new research file, live provider probe, or acceptance measurement is produced.
-- Validation confirms ten tickets, six closed and four open, no active claims, exact valid blockers and research paths, an acyclic dependency graph, a closed-only map index, and fifty-five valid local Markdown links in the effort. Only Lifecycle Guarantees changes status. The frontier is named above.
-- `rtk proxy python3 scripts/lint-okf.py` exits 0 across both canonical bundles. `rtk git diff --check` passes. No product build or runtime test is needed for these documentation-only changes.
-- The formal update-agent-docs pass is complete. Existing routing in repo.md and FILE_MAP.md remains accurate; no source behavior, canonical rule, file location, API, or index changes. No canonical edit is needed. Feature decisions remain in their tickets; the OKF representation pass is not applicable because no canonical document changes.
-- Planning artifacts and synchronized knowledge documentation belong in one commit under the repository's validation contract. No push is requested.
+## Current decision and boundaries
 
-## Execution findings
+The organization ticket owns the full contract. Key choices for the next session:
 
-- The user finds full replayable evidence for every lesson excessive. Do not restore that rejected universal requirement. Use compact claim-specific evidence and stronger checks for broader or higher-impact claims. When explaining this policy, prefer a concrete existing KB entry over a hypothetical example; the Tool Guardian patch-limit entry is used here without claiming a replay was performed.
-- The user accepts inactivity only as a review signal. Delivery does not prove application, and missing reads may expose routing failures. Detailed usage attribution is not required. Follow the closed Knowledge Evidence Policy rather than inferring deletion authority from age or retrieval counts.
+- agent-brain names both the skill and bundled Python CLI. Semantic stages are recall, learn, and dream. Use dream rather than maintain. Simplicity and compatibility across CLI providers govern the design.
+- Foreground provider agents perform semantic work through one progressively disclosed skill. The cooperative CLI supplies inputs, deterministic retrieval/state operations, and outcome checks. Thin native adapters initiate stages and enforce verified outcomes. No independent model runner, daemon, or maintenance subagent is required by the core.
+- Indexed Markdown remains authoritative. Use stable section/document units with compact JSON annotations and inherited metadata while preserving OKF frontmatter. Map existing or protected whole artifacts without forced relocation. New repositories start minimally. Explicit loading obligations survive.
+- Keep compact evidence colocated and selectively disclosed. Version knowledge, configuration, and durable candidates; isolate persistent ignored runtime state per worktree. Defaults are .agents/context/config.json and .agents/context/state/. Concrete identity, ownership, recovery, publication, and retention remain later decisions.
+- Mutating learn/dream requires valid integration-issued invocation context. Invalid context fails before mutation with an actionable nonzero error. Generic provider environment variables, successful process exits, injected prompts, and self-reports do not prove semantic execution. Help and standalone informational recall remain available everywhere.
+- Consumers need no hooks/families or generator. Packaged adapters and registration templates add missing native hooks or merge managed entries while preserving unrelated hooks. Skill installation alone does not activate automatic stages. Publisher adapters stay in canonical hook families with isolated generated outputs.
+- Existing update-agent-docs and clean-agent-docs entries delegate canonical learn/dream without duplicate execution. One source scanner/manifest owns freshness; focused ingestion joins one coordinated learn pass. The adapter is optional for repositories without source ingestion.
+- Pilot reporting adds observable total provider task usage/credits and stage boundaries alongside delivered-guidance tokens. Disclose unavailable data. No precise per-stage attribution or new cost threshold is required; foreground execution has no universal cost advantage claim.
 
-- Success Criteria sets product targets, not measured results. Its full Resolution owns thresholds, counting definitions, failure gates, and measurement limitations. Baseline values, concrete pilot cases, repetitions, and instrumentation are not yet selected or measured.
-- All predefined critical checks must pass on every supported surface, including after repeated maintenance cycles. The token metric counts delivered guidance and attributable maintenance, not total billed input tokens. Reading guidance alone and agent self-reports do not establish correctness.
+Scheduling selects dream eligibility and due-work handling within foreground execution. Recording an idle obligation does not execute it. An additional autonomous execution path would require an explicit scope decision. Closed or idle sessions have no unconditional execution guarantee; recovery occurs at the next eligible supported event and respects cancellation and pauses.
 
-- Tool Guardian rejects a large apply_patch input with "129 segments exceeds limit 128 segments". Smaller focused patches succeed. Do not retry the full multi-file patch unchanged.
-- The documentation-only patch and a later patch quoting its diagnostic identifier receive Tool Guardian's database_destruction/critical warning. Rewording the prose succeeds; both rejected patches make no edits. The durable observation and successful wording are recorded once in .agents/memory/known-issues/hooks.md under "Active guards can block their own maintenance". No guard setting changes, and the error alone does not establish attribution to a repository hook.
-- The sandbox denies creating directories under the read-only .agents tree. No scratchpad files were created. The user-selected docs/ location is writable and version controlled.
-- Verified paper inspection identifies arxiv 2510.04618v3 as Agentic Context Engineering, which evaluates external-context adaptation. Do not assume it studies model-weight training. Harmful updates and context collapse are relevant to acceptance criteria.
-- Hook context injection does not itself execute semantic maintenance. Shutdown and idle-work guarantees differ by provider and harness. These facts constrain later decisions without selecting an architecture.
-- A read-only question about the recorded patch-limit observation can start at .agents/memory/known-issues/hooks.md:16. Nontrivial edits retain INDEX, architecture, conventions, and affected-area prerequisites from root AGENTS.md. The repository hook's matching 128-segment limit does not establish that it emitted the recorded outer tool rejection; no attribution trace is retained.
-- No skill improvements are proposed. The domain-modeling waiver and docs/ path choice are explicit user overrides, not blockers or global skill changes.
+## Artifacts, evidence, and verification
+
+- [Just-in-time Context](map.md) is the closed-decision index and remaining fog. [Just-in-time Context Brief](brief.md) preserves the original scope; [Current Context Lifecycle](baseline.md) records inspected current behavior.
+- [Semantic stage invocation interfaces](research/context-stage-invocation/findings.md) captures official documentation checked on 2026-09-29. Headless launches exist for three CLIs; desktop foreground continuation is documented. No supported attachment to an existing desktop conversation is established. Exact permissions, flags, native payloads, and semantic outcomes require deployed-version certification.
+- Read-only baseline and provider briefings are complete. Current OKF has document identity/provenance but no unit metadata schema. Existing source hooks detect and gate pending work; agents perform semantic integration. Skill installers retain bundled scripts/references; new Codex handlers require explicit registration. No agent-brain skill or registration exists yet.
+- This session starts from 2b0858882d7fb338a88ce174be368ceff126732f on codex/plan-just-in-time-context. Scope is seven effort Markdown files: the organization resolution, map, three dependent questions, handoff, and new stage-invocation findings.
+- Formal update-agent-docs pass is complete. Existing repo instructions and FILE_MAP already route this effort's tickets/research/handoff. No verified current architecture, API, instruction, or memory routing changes; no canonical edits are needed.
+- `rtk proxy python3 scripts/lint-okf.py` exits 0 across both canonical bundles. The inline Python validator passes: ten tickets, seven closed, three open, no claims, acyclic dependencies, a closed-only map index, valid research paths/fog delimiters, and Maintenance Scheduling and Pruning as the sole frontier. Only the organization ticket changes status; all previously closed contracts remain unchanged. All 86 local Markdown links and formatting checks pass across 17 effort Markdown files. `rtk git diff --check` passes.
+- No product build, runtime test, live provider probe, certification, baseline measurement, or acceptance benchmark is performed. Product targets remain unmeasured. All changes belong in one scoped commit.
+
+## Review findings and corrections
+
+- The user rejects full replayable evidence for every lesson. Follow the closed proportional evidence policy; use stronger checks for broader or higher-impact claims. Explain with existing KB examples when requested. The Tool Guardian tip is a scoped observation, not a claimed replay.
+- Inactivity prioritizes review; pruning needs evidence of error, obsolescence, or complete redundancy. Delivery does not prove application. Do not reintroduce detailed usage attribution.
+- Hook injection does not execute semantic maintenance. Provider stopping does not prove work-session completion. Native continuation caps, advisory events, and uncertain child delivery constrain certification; unsupported paths must be explicit.
+- The user corrects the proposed skill name to agent-brain and semantic maintenance stage to dream. CLI UX sources disagree about diagnostic streams; the accepted contract keeps primary/JSON results on stdout and diagnostics/progress on stderr.
+- A patch with later-file hunks before earlier-file hunks fails verification without changes. Inspecting exact locations and ordering hunks by source position succeeds. Keep independent patches small; no skill-specific improvement is identified.
+- Tool Guardian rejects an oversized patch with "129 segments exceeds limit 128 segments". Smaller focused patches succeed. Earlier documentation wording also triggers an outer database_destruction/critical rejection; rewording succeeds without changing guards. The existing durable observation is in .agents/memory/known-issues/hooks.md under "Active guards can block their own maintenance". The rejection alone does not establish repository-hook attribution.
+- The sandbox denies writes under .agents/; the user-selected docs/ path is writable. No scratchpad artifacts are created. Read-only questions may start at the requested KB artifact; nontrivial edits still require root AGENTS.md orientation.
+- Reference Evidence verifies arxiv 2510.04618v3 as Agentic Context Engineering, studying external-context adaptation. Do not characterize it as model-weight training.

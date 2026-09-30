@@ -13,6 +13,8 @@ Define scheduling signals, maintenance scope, stale-knowledge detection, retenti
 
 Preserve the required work-session learning/refresh and verified no-change behavior in [Lifecycle Guarantees](lifecycle-guarantees.md). Select periodic consolidation/pruning schedules and how due work joins the automatic lifecycle. Next-event recovery is already agreed; decide separately whether periodic maintenance needs validated execution when no session is active. Do not assume a shutdown hook or a voluntary reminder executes semantic maintenance.
 
+Apply [Context Organization and Skill Boundary](context-organization-and-skill-boundary.md): dream performs semantic pruning and maintenance in an eligible foreground agent through the cooperative agent-brain skill/CLI. Distinguish recording due work while idle from executing it. The selected core requires no daemon, maintenance subagent, or independent model job; any additional autonomous execution path needs an explicit scope decision. Select retention for versioned candidates and ignored operational records without losing unfinished obligations or treating inactivity as deletion authority.
+
 ---
 
 <!-- Resolution will be appended here. -->

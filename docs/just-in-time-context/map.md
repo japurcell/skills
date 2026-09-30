@@ -10,7 +10,7 @@ An implementation-ready specification for a reusable, autonomous context managem
 - The user chooses a reusable system across their repositories, with this repository as the pilot.
 - The first-version scope and lifecycle guarantees are selected in [Lifecycle Guarantees](tickets/lifecycle-guarantees.md). Deployed versions and entry paths require certification before support is claimed.
 - The user authorizes automatic additions, corrections, reorganization, and pruning. Maintenance must be reversible and supported by evidence; explicit user instructions remain authoritative.
-- A unified skill with recall, learn, and dream entry points and nested AGENTS.md files are hypotheses, not selected architecture.
+- Knowledge representation and skill/CLI boundaries are selected in [Context Organization and Skill Boundary](tickets/context-organization-and-skill-boundary.md). That ticket owns the names, responsibilities, and integration boundaries.
 - Use wayfinder and grilling for decision sessions. The user explicitly waives wayfinder's domain-modeling dependency for this effort.
 - Research sessions use research and official-sources. Codex product research also uses openai-docs. Do not resolve human decision tickets while charting this map.
 - Resolve at most one human decision ticket per session. Research tickets may resolve in parallel. Each assignee owns its ticket and research directory; only the coordinating session updates this map.
@@ -28,14 +28,14 @@ An implementation-ready specification for a reusable, autonomous context managem
 - [Knowledge Evidence Policy](tickets/knowledge-evidence-policy.md): Compact, proportional evidence preserves explicit policy; uncertain claims remain candidates and pruning requires evidence beyond inactivity.
 - [Context Retrieval Contract](tickets/context-retrieval-contract.md): Scoped guidance arrives before dependent work, preserves meaning and uncertainty, and is checked and restored across context changes.
 - [Lifecycle Guarantees](tickets/lifecycle-guarantees.md): Codex desktop and three CLIs require automatic stages, verified completion, next-event recovery, and separately certified native or fallback paths.
+- [Context Organization and Skill Boundary](tickets/context-organization-and-skill-boundary.md): Indexed knowledge and the cooperative agent-brain skill/CLI use foreground semantics, compact metadata, and separately certified native adapters.
 
 ## Not yet specified
 
 <!-- FOG START -->
 
-- Provider-specific exceptions may expose new decisions when capability certification exercises the selected deployed versions and entry paths. Limits in native delivery or context visibility may reveal gaps that require extending the selected automatic integration.
-- A concrete walkthrough of the selected representation and components may reveal exceptional combinations of scope growth, knowledge changes, compaction, delegation, and disputed-source investigation that cannot yet be specified. Revisit these combinations after the representation choices.
-- Repository-specific migration exceptions and the shape of a minimal pilot remain unclear until the knowledge representation is selected. The final scenario mix may expose further gaps in the accepted quality checks and repeated-cycle evidence.
+- Capability certification may expose an unexpected interaction between native events, invocation-context binding, and foreground continuation that requires a new integration choice. Revisit only exceptions not already settled by the selected design and unsupported-path policy.
+- A concrete legacy-repository pilot may expose unanticipated interactions among protected documents, existing metadata, custom hooks, and worktree state. Ordinary setup, recovery, and pilot validation are covered by the live tickets; newly exposed exceptions may need another decision.
 
 <!-- FOG END -->
 
