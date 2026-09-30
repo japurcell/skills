@@ -86,6 +86,10 @@ The existing-repository review found that APM supports committing generated payl
 ## Decision Log
 
 
+Decision: Route the M4 documentation-conflict rebase to a fresh exclusive merger using Standard `gpt-6.1-sol`, effort `high`, after the writer commits and its private worktree is clean. Preserve completed adapter evidence and all parent runtime/research/review routing checkpoints. Rebase only the private branch; never change base. Documentation-only conflicts require plan, local-link, OKF, and whitespace checks plus unchanged source/test patch proof; source conflicts require corresponding public checks. Exact available runtime ID/effort will be applied at launch. Escalate semantic ambiguity to the original M4 writer; same-tier unavailable fallback is `gpt-6-sol`, effort `high`. Billing and task fit remain provisional.
+
+Rationale: Parent checkpoints and M4 both edit the ExecPlan, requiring serialized conflict resolution without concurrent worktree writers. Date/author: 2026-09-29, Codex orchestration.
+
 Decision: Route read-only native Windows filesystem contract research to Premium `gpt-6.1-sol`, effort `high`. Collect first-party API/source evidence for parent-handle stability, reparse refusal, atomic replacement, and ambiguous recovery before M6 implementation. Save one note in the retained probes worktree; do not implement source or claim native proof. Exact runtime ID/effort are applied. Escalate unsupported guarantees to the M6 implementer, retaining fail-closed behavior. Same-tier unavailable fallback is `gpt-6-sol`, effort `high`; billing and task fit are provisional.
 
 Rationale: The pending native safety design involves destructive file authority and must not inherit unverified POSIX assumptions. Independent read-only API research can proceed while M4 review runs. Date/author: 2026-09-29, Codex orchestration.
@@ -184,6 +188,8 @@ Rationale: Filesystem integrity needs connected reasoning and independent verifi
 
 ## Outcomes & Retrospective
 
+
+M4 private-branch acceptance reaches final source freeze and independent approval on 2026-09-30 UTC. The complete installer suite passes 78 cases, including 14 provider cases; independent provider review also passes all 14. Converter and runner acceptance each pass 14, generator acceptance passes 25, and affected startup/security/observability plus Bash/PowerShell installer suites pass. OKF and whitespace checks pass. Required repairs cover Copilot metadata/recursive JSON type equality, malformed unmanaged Codex agents and native name collisions, converter bytecode side effects, and explicit legacy fixture dependency copies. Source commit and integration are pending at this checkpoint. Native client delivery, Python 3.11 execution, and Windows mutation remain M6 gates. Completed first-party Windows filesystem research is retained in the probes worktree for M6 promotion, with no native safety claim.
 
 Integrated macOS aggregate acceptance on 2026-09-30 UTC: `rtk proxy ./scripts/test-all.py` completes all 37 registered suites with 37 passed and zero failed in 378.4 seconds on Python 3.14.6. The 64 installer public cases pass within it. A separate complete public installer run on Python 3.13.14 passes all 64 cases in 64.547 seconds. Previous SQLite, path, protected-fixture, personal capture-state, and resource-warning issues are repaired without weakening assertions. Existing native-Windows-only host skips are reported and do not establish Windows evidence. Python 3.11 and other operating systems remain unverified. Updated prerequisite evidence is promoted to `docs/agent-asset-installer/prerequisites.md`.
 
