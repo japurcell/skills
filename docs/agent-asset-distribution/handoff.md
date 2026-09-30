@@ -2,18 +2,18 @@
 
 ## Status
 
-All eight decision/research tickets are closed with no remaining in-scope question or fog. On 2026-09-29 the user accepted retaining the architecture, strict offline `status --check`, and narrow owned checkout line-ending policy. [Revisit Design After Existing Repositories](tickets/revisit-design-after-existing-repos.md) records the approved refinements alongside the [original contract](tickets/choose-distribution-contract.md). The [ExecPlan](../agent-asset-installer/ExecPlan.md) incorporates both refinements throughout interfaces, records, ownership, milestones, and acceptance. All three test boundaries remain accepted. Implementation is still explicitly on hold, and all seven milestones remain open. No source, tests, scaffolding, or live installation has started.
+All eight decision/research tickets are closed. Architecture, strict offline `status --check`, checkout policy, and three test seams are accepted. The user explicitly requested full implementation through `execplan-implement` on 2026-09-29, lifting the earlier hold. Milestone 1 is in progress; milestones 2 through 7 remain open. The base branch is `codex/research-agent-distribution-options`. Implementers use isolated unpushed worktrees; integration is serialized.
 
 ## Next step
 
-Wait for an explicit implementation request. Do not reopen the architecture, strict verification, checkout policy, or accepted test boundaries. When requested, load `exec-plans` and `tdd` and begin milestone 1 through the accepted public CLI seam: one pinned skill, team records, and narrow owned text attributes in a disposable repository. Add one failing public test and minimal implementation at a time. Planning acceptance does not lift the hold; do not write source, tests, or scaffolding yet.
+Implement milestone 1 through the public CLI seam with one failing subprocess behavior at a time. Integrate its clean tested branch, remove its worktree, then dispatch a fresh implementer for milestone 2. Follow the task graph and acceptance gates in [the ExecPlan](../agent-asset-installer/ExecPlan.md). Complete all milestones without reopening settled decisions. Never claim live client or native OS evidence that was not run.
 
 ## Important boundaries
 
 - The user explicitly excluded a rollback feature. Restoring the currently recorded immutable revision is supported; a rollback command or retained installation history is not part of the contract.
 - Keep this effort and its cited findings under `docs/agent-asset-distribution/`, as the user requested. Use [the map](map.md) as the closed decision index, [the recommendation](recommendation.md) for comparative evidence, and [the source inventory](local-inventory.md) for current code constraints.
 - The user authorized the grilling/research fallback without the unavailable `domain-modeling` skill on 2026-09-29. Do not ask for that authorization again. Missing workflow dependencies still need explicit handling in the future distribution catalog.
-- Acceptance of test boundaries does not authorize implementation. The user's explicit hold overrides the earlier proposed next step. Native publication and real-home mutations have not been requested.
+- The later explicit implementation request lifts the earlier hold. Native publication and real-home mutations have not been requested.
 
 ## Implementation constraints and durable learnings
 

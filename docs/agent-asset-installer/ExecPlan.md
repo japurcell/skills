@@ -3,7 +3,7 @@
 
 This ExecPlan is a living document. Maintain `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` as work proceeds. Its repository path is `docs/agent-asset-installer/ExecPlan.md`. Follow `.agents/skills/exec-plans/SKILL.md`, including synchronized milestone status and progress checkboxes.
 
-Planning and the six-repository review are complete. On 2026-09-29 the user accepted retaining the current architecture, strict read-only verification, and declared checkout line-ending policy. All three test seams are already accepted. This plan incorporates the agreed refinements, with no remaining planning question. The user's explicit instruction not to start implementation still applies. Wait for an explicit implementation request. No implementation milestone has started. Native package publication is a separate future effort.
+Planning and the six-repository review are complete. On 2026-09-29 the user accepted retaining the current architecture, strict read-only verification, and declared checkout line-ending policy. All three test seams are already accepted. The user explicitly requested implementation through `execplan-implement` on 2026-09-29, lifting the earlier hold. Implement all milestones on `codex/research-agent-distribution-options` using isolated private worktrees and serialized fast-forward integration. Native package publication remains a separate future effort.
 
 ## Purpose / Big Picture
 
@@ -23,6 +23,7 @@ Success is observable from a disposable project: install a review workflow, see 
 - [x] (2026-09-29 21:50Z) [planning] Record the user's explicit instruction not to start implementation yet. All seven implementation milestones remain open.
 - [x] (2026-09-29 23:47Z) [planning] Complete the six-repository comparison and record the evidence-backed recommendation without changing the approved design.
 - [x] (2026-09-30 00:01Z) [planning] User accepts retaining the architecture, strict verification, and declared checkout line-ending policy on 2026-09-29 local time. Incorporate the agreed refinements; implementation remains on hold.
+- [x] (2026-09-30 00:25Z) [orchestration] User explicitly requests full implementation. Lift the prior hold and start isolated milestone worktrees.
 - [ ] [milestone-1] Deliver one committed, pinned skill installation through the public CLI.
 - [ ] [milestone-2] Deliver asset selection, required dependencies, and curated bundles.
 - [ ] [milestone-3] Deliver preview, update, recorded restoration, strict read-only verification, conflict protection, and safe pruning.
@@ -91,10 +92,18 @@ Decision: Retain the existing engine and delivery architecture after the reposit
 
 Rationale: The user accepted the architecture and strict verification, then accepted the remaining checkout policy. APM/ECC lifecycle semantics differ from the approved edit/conflict rules. Checking committed files before repair exposes drift; declaring checkout policy prevents Git conversion from producing false edit conflicts. These are planning amendments, and the explicit implementation hold remains in effect. Date/author: 2026-09-29, user decisions recorded by Codex.
 
+Decision: Execute the entire plan after the user's explicit `execplan-implement` request. Each milestone gets a fresh implementer in its own unpushed worktree. Integrate clean tested branches one at a time by rebase and fast-forward. The milestone graph is 1 -> 2 -> 3; milestone 4 depends on 2 and 3; milestone 5 depends on 3 and 4; milestone 6 depends on 4 and 5; milestone 7 depends on 6. Exploration can run beside implementation without source ownership. Live-client and native OS gates remain evidence requirements, not assumptions.
+
+Rationale: Later explicit execution authorization lifts the prior hold. Lifecycle, provider, and scope changes share public interfaces, so their dependency order prevents incompatible independent edits. Date/author: 2026-09-29, user request recorded by Codex.
+
+Decision: Route milestone 1 to Standard tier, `gpt-6.1-sol`, effort `high`. Connected Git acquisition, safe filesystem writes, ownership records, attributes, and public TDD require general agentic coding rather than bounded low-risk work. Exact runtime ID is available and applied. Copilot pricing is not treated as this platform's billing. Escalate after repeated safety or integration failures; fallback is `gpt-6-sol` at the same effort if unavailable.
+
+Rationale: Standard meets the task's connected-code requirements; Premium is not justified before evidence of failure. Task-specific capability is provisional and checked through subprocess acceptance. Date/author: 2026-09-29, Codex orchestration.
+
 ## Outcomes & Retrospective
 
 
-Planning, test-seam approval, and the six-repository review are complete. The user accepted retaining the architecture, strict read-only verification, and declared checkout line-ending policy. No planning question remains. Implementation is not started and remains on hold at the user's explicit request. Seven verifiable milestones cover commands, catalog/dependencies, ownership, provider constraints, personal adoption, and OS/client acceptance. No installer, installed home, runtime, or workflow has changed. Planning does not establish live support.
+Planning, test-seam approval, and the six-repository review are complete. The user accepted retaining the architecture, strict read-only verification, and declared checkout line-ending policy. No planning question remains. Implementation is now authorized by the user's explicit execution request. Milestone 1 is in progress; milestones 2 through 7 remain open. Seven verifiable milestones cover commands, catalog/dependencies, ownership, provider constraints, personal adoption, and OS/client acceptance. No installer, installed home, runtime, or workflow has changed. Planning does not establish live support.
 
 Planning validation on 2026-09-29: `rtk proxy ./scripts/lint-okf.py` exits `0`, `rtk git diff --check` passes, and a read-only validator checks 15 Markdown documents, 69 local links, all required plan sections, seven open milestones with matching unchecked progress, and four closed decision resolutions. Canonical edits are limited to the existing repository-instruction and file-map routing entries. No implementation test command has run.
 
@@ -148,11 +157,11 @@ Declare text/binary content and expected line endings for every delivered file i
 ### Milestone 1: Install one pinned skill into a team repository
 
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
-After the user explicitly requests implementation, add subprocess suite `scripts/test-agent-assets.py` using disposable source/target Git repositories. The test seams are already accepted. First invoke the new CLI for `skill:caveman` and Codex. Assert native content, requested selection, immutable commit, and SHA-256. Observe failure, then add only the CLI/catalog/acquisition/copying slice needed to pass. Add repetition behavior after the first case passes.
+Add subprocess suite `scripts/test-agent-assets.py` using disposable source/target Git repositories. The test seams are already accepted. First invoke the new CLI for `skill:caveman` and Codex. Assert native content, requested selection, immutable commit, and SHA-256. Observe failure, then add only the CLI/catalog/acquisition/copying slice needed to pass. Add repetition behavior after the first case passes.
 
 Write `.agents/skills/caveman/`, both team records with matching selection identity, and narrowly owned LF attributes for delivered text. Preserve an existing attribute file and refuse incompatible rules before writes. Do not invoke hooks/clients, alter the target index, commit output, or configure personal RTK. Acquire committed content only. Dirty selected source paths fail before installation. Unrelated uncommitted docs need not prevent it. Register the suite in `scripts/test-all.py`.
 
@@ -269,7 +278,7 @@ Acceptance is help matching documentation, earlier milestone gates met, no stale
 
 Commands below describe future implementation/validation unless explicitly recorded otherwise. Work from this source repository root. Use disposable targets outside the checkout. Never test against real home. Native Windows can use `py -3` or `python` where `python3` is unavailable, and `pwsh -NoProfile -File scripts/install.ps1` for wrapper cases.
 
-The user accepted three seams: the public `scripts/agent-assets.py` subprocess CLI and its filesystem/configuration effects, existing Bash/PowerShell entry points, and installed native discovery plus registered hook processes. Do not ask for that acceptance again. Private helper calls/internal collaborator mocks are outside the test surface. Wait for an explicit implementation request, then implement milestone 1 one red/green behavior at a time.
+The user accepted three seams: the public `scripts/agent-assets.py` subprocess CLI and its filesystem/configuration effects, existing Bash/PowerShell entry points, and installed native discovery plus registered hook processes. Do not ask for that acceptance again. Private helper calls/internal collaborator mocks are outside the test surface. Implementation is authorized. Implement milestone 1 one red/green behavior at a time.
 
 After those commands exist, a skill-only example needs no client authentication:
 
@@ -347,3 +356,6 @@ Revision note, 2026-09-29 23:21Z: Recorded the user's requested review of six ex
 Revision note, 2026-09-29 23:47Z: Completed the comparison, recorded incompatible managed-edit semantics in APM/ECC, and proposed read-only verification plus explicit checkout line-ending policy. These are pending proposals; the existing public interface and milestone requirements remain unchanged until the user decides. Implementation remains on hold.
 
 Revision note, 2026-09-29 local date (2026-09-30 00:01Z): Recorded the user's acceptance of retaining the architecture, strict verification, and checkout line-ending policy. Incorporated the command flag/diagnostic, selection fingerprint, exact-byte attribute ownership, milestone 1/3/6/7 behavior, clone/CI examples, and acceptance conditions. The decision map is closed with no remaining question. All implementation milestones remain open and the explicit implementation hold remains in effect.
+
+
+Revision note, 2026-09-30 00:25Z: The user requests full implementation through `execplan-implement`. Lift the hold, record task dependencies and model routing, and begin milestone 1 in an isolated private worktree. Historical hold decisions remain as history.
