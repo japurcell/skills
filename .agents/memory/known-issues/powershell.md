@@ -5,6 +5,8 @@ description: PowerShell (`pwsh`) gotchas hit while writing `scripts/install.ps1`
 
 # PowerShell - Known Issues
 
+- PowerShell creates/updates module-analysis caches while launching. Public installer refusal fingerprints must redirect `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, and `XDG_DATA_HOME` to separate disposable paths so runtime cache writes cannot masquerade as installer mutations; retain complete destination fingerprints.
+- Wrapper managed-record detection uses `Get-Item -Force`, including broken symbolic links. `Test-Path` alone can miss a broken record link and incorrectly enter legacy copying.
 - The PS7 automatic `$HOME` is fixed at process start. Setting `$env:HOME` inside a running pwsh session does not change `$HOME`, so tests cannot redirect the installer's home in-session. Redirect by setting the `HOME` (and `USERPROFILE`, for Windows) environment variable for the child process before launch.
 - In pwsh 7.4+, `$env:HOME` is read-only; assign via `[System.Environment]::SetEnvironmentVariable('HOME', $dir, [System.EnvironmentVariableTarget]::Process)` in a try/finally that restores the original (`scripts/test-install.ps1` `Invoke-InstallProcess` shows the pattern).
 - `Set-Item -UnixFileMode` does not exist in pwsh 7.6.5. Use `[System.IO.File]::SetUnixFileMode(path, mode)`; flag names are `UserRead`, `UserWrite`, `UserExecute`, `GroupRead`, `GroupExecute`, `OtherRead`, `OtherExecute`.

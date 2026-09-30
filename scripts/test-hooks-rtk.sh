@@ -557,7 +557,7 @@ test_rtk_rewrite_config_points_to_python_wrapper() {
   local event_name
 
   for event_name in PreToolUse preToolUse; do
-    assert_equals '$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py' \
+    assert_equals '"$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py"' \
       "$(jq -r ".hooks.$event_name[0].bash // empty" "$REPO_ROOT/.copilot/hooks/rtk-rewrite.json")" \
       "Expected $event_name Copilot RTK rewrite config to point at the Python wrapper."
     assert_equals 'python "$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py"' \

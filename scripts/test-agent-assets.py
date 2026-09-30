@@ -1586,7 +1586,8 @@ class ProviderTests(Fixture):
     def maintained_source(self):
         checkout = SCRIPT.parent.parent
         catalog = json.loads(checkout.joinpath("distribution/catalog.json").read_bytes())
-        for path in [*checkout.joinpath("hooks").rglob("*.py"), checkout / "scripts/generate-hooks.py"]:
+        for path in [*checkout.joinpath("hooks").rglob("*.py"), checkout / "scripts/generate-hooks.py",
+                     checkout / ".codex/global-hooks.json", checkout / ".copilot/hooks/hooks.json", checkout / ".gemini/global-settings.json"]:
             relative = path.relative_to(checkout)
             self.source.joinpath(relative).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(path, self.source / relative)
@@ -1693,13 +1694,404 @@ class ProviderTests(Fixture):
         self.assertEqual(list(home.iterdir()), [])
 
 
+class ScopeTests(Fixture):
+    maintained_source = ProviderTests.maintained_source
+    catalog = SelectionTests.catalog
+    save_catalog = SelectionTests.save_catalog
+
+    def test_local_effective_ignore_negation_refuses_and_status_reports_privacy_drift(self):
+        exclude = self.target / ".git/info/exclude"
+        original = exclude.read_bytes()
+        exclude.write_bytes(original + b"\n/.agents/skills/caveman/SKILL.md\n!/.agents/skills/caveman/SKILL.md\n")
+        before = self.files(), exclude.read_bytes()
+        result = self.install("--mode", "local")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_LOCAL_IGNORE_CONFLICT", result.stderr)
+        self.assertEqual((self.files(), exclude.read_bytes()), before)
+        exclude.write_bytes(original)
+        ignore = self.target / ".gitignore"
+        ignore.write_bytes(b"!/.agents/skills/caveman/SKILL.md\n")
+        before = self.files(), exclude.read_bytes()
+        result = self.install("--mode", "local")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_LOCAL_IGNORE_CONFLICT", result.stderr)
+        self.assertEqual((self.files(), exclude.read_bytes()), before)
+        ignore.unlink()
+        result = self.install("--mode", "local")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        ignore.write_bytes(b"!/.agents/skills/caveman/SKILL.md\n")
+        before = self.files(), exclude.read_bytes()
+        result = self.cli("status", "--mode", "local", "--check")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_DRIFT", result.stderr)
+        self.assertEqual((self.files(), exclude.read_bytes()), before)
+        ignore.unlink()
+        self.git(self.target, "add", "--force", ".agents/skills/caveman/SKILL.md")
+        index = self.target.joinpath(".git/index").read_bytes()
+        before = self.files(), exclude.read_bytes()
+        result = self.cli("status", "--mode", "local", "--check")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_DRIFT", result.stderr)
+        self.assertEqual((self.files(), exclude.read_bytes()), before)
+        self.assertEqual(self.target.joinpath(".git/index").read_bytes(), index)
+
+    def test_codex_agents_borrow_and_promote_only_authenticated_companion_paths(self):
+        self.source.joinpath("agents").mkdir()
+        self.source.joinpath("agents/reviewer.md").write_text('---\nname: reviewer\ndescription: Review code\n---\nReview carefully.\n')
+        catalog = self.catalog()
+        catalog["assets"]["agent:reviewer"] = {"source_paths": [{"path": "agents/reviewer.md", "content": "text", "line_endings": "lf"}],
+            "requires": [], "clients": ["codex"], "os": [], "runtime": [], "rendering": "agent"}
+        self.save_catalog(catalog)
+        for initial, following in (("team", "local"), ("local", "team")):
+            target = self.root / (initial + " agents")
+            target.mkdir()
+            self.git(target, "init", "-b", "main")
+            args = ("install", "--repo", str(target), "--source", str(self.source), "--client", "codex", "--asset", "agent:reviewer")
+            result = self.cli(*args, "--mode", initial)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            agent = target / ".codex/agents/reviewer.toml"
+            before = agent.read_bytes(), agent.stat().st_ino, agent.stat().st_mtime_ns
+            result = self.cli(*args, "--mode", following)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((agent.read_bytes(), agent.stat().st_ino, agent.stat().st_mtime_ns), before)
+            self.assertEqual(self.cli("status", "--repo", str(target), "--mode", "local", "--check").returncode, 0)
+
+    def test_tracked_local_native_config_and_different_shared_bytes_stop_whole_operation(self):
+        self.maintained_source()
+        config = self.target / ".gemini/settings.json"
+        config.parent.mkdir()
+        config.write_bytes(b'{"personal":true}\n')
+        self.git(self.target, "add", ".")
+        before = self.files(), self.target.joinpath(".git/info/exclude").read_bytes(), self.target.joinpath(".git/index").read_bytes()
+        result = self.cli("install", "--mode", "local", "--source", str(self.source), "--client", "gemini", "--asset", "hook:required-skills")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_LOCAL_TRACKED_CONFLICT", result.stderr)
+        self.assertEqual((self.files(), self.target.joinpath(".git/info/exclude").read_bytes(), self.target.joinpath(".git/index").read_bytes()), before)
+        self.assertEqual(self.install().returncode, 0)
+        self.source.joinpath("skills/caveman/SKILL.md").write_bytes(SKILL + b"changed\n")
+        self.save_catalog(self.catalog())
+        before = self.files(), self.target.joinpath(".git/info/exclude").read_bytes()
+        result = self.install("--mode", "local")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_CONFLICT", result.stderr)
+        self.assertEqual((self.files(), self.target.joinpath(".git/info/exclude").read_bytes()), before)
+
+    def test_explicit_team_install_promotes_local_files_without_hiding_team_payload(self):
+        self.assertEqual(self.install("--mode", "local").returncode, 0)
+        before = self.target.joinpath(".agents/skills/caveman/SKILL.md").stat().st_ino
+        result = self.install()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.target.joinpath(".agents/skills/caveman/SKILL.md").stat().st_ino, before)
+        self.assertIn(".agents/skills/caveman/SKILL.md", self.git(self.target, "status", "--porcelain", "--untracked-files=all"))
+        local = json.loads(self.target.joinpath(".agent-assets/local/lock.json").read_bytes())
+        team = json.loads(self.target.joinpath(".agent-assets/selection.json").read_bytes())
+        self.assertEqual(local["items"][0]["borrowed_from"], team["installation_id"])
+        self.assertNotIn(".agents/skills/caveman/SKILL.md", local["excludes"])
+        self.assertEqual(self.cli("status", "--mode", "local", "--check").returncode, 0)
+
+
+    def test_selected_rtk_prerequisite_is_checked_without_personal_configuration(self):
+        tools = self.root / "tools"
+        tools.mkdir()
+        (tools / "git").symlink_to(shutil.which("git"))
+        rtk = tools / "rtk"
+        marker = self.root / "rtk invoked"
+        rtk.write_text('#!/bin/sh\nprintf invoked >> "' + str(marker) + '"\nprintf "rtk 0.49.0\\n"\n')
+        rtk.chmod(0o755)
+        env = {**os.environ, "PATH": str(tools)}
+        command = [sys.executable, str(SCRIPT), "install", "--repo", str(self.target), "--source", str(self.source), "--client", "codex", "--asset", "skill:caveman"]
+        result = subprocess.run(command, env=env, text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(marker.exists())
+        catalog = self.catalog()
+        catalog["assets"]["skill:caveman"]["runtime"] = ["rtk"]
+        self.save_catalog(catalog)
+        before = self.files()
+        result = subprocess.run(command, env=env, text=True, capture_output=True)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_PREREQUISITE_MISSING", result.stderr)
+        self.assertIn("configure-rtk.py", result.stderr)
+        self.assertEqual(self.files(), before)
+        self.assertTrue(marker.exists())
+
+
+    def test_forged_local_excludes_and_other_scope_ownership_refuse_without_writes(self):
+        self.assertEqual(self.install("--mode", "local").returncode, 0)
+        lock_path = self.target / ".agent-assets/local/lock.json"
+        original = lock_path.read_bytes()
+        lock = json.loads(original)
+        lock["excludes"].append(".agents/")
+        lock_path.write_text(json.dumps(lock))
+        before = self.files(), self.target.joinpath(".git/info/exclude").read_bytes()
+        result = self.cli("update", "--mode", "local")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_RECORD_INVALID", result.stderr)
+        self.assertEqual((self.files(), self.target.joinpath(".git/info/exclude").read_bytes()), before)
+        lock = json.loads(original)
+        lock["items"][0]["baseline_digest"] = "0" * 64
+        lock_path.write_text(json.dumps(lock))
+        before = self.files(), self.target.joinpath(".git/info/exclude").read_bytes()
+        result = self.install()
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_SOURCE_MISMATCH", result.stderr)
+        self.assertEqual((self.files(), self.target.joinpath(".git/info/exclude").read_bytes()), before)
+
+
+    def test_personal_adopts_known_legacy_config_and_preserves_unowned_values_and_backups(self):
+        self.maintained_source()
+        home = self.root / "legacy home"
+        config = home / ".codex/hooks.json"
+        config.parent.mkdir(parents=True)
+        value = json.loads(self.source.joinpath(".codex/global-hooks.json").read_bytes())
+        value["personal"] = {"keep": True}
+        config.write_text(json.dumps(value))
+        config.chmod(0o600)
+        backup = config.with_suffix(".json.bak")
+        backup.write_bytes(b"old preserved backup\n")
+        args = ("install", "--scope", "user", "--home", str(home), "--source", str(self.source), "--client", "codex",
+                "--asset", "hook:required-skills", "--asset", "hook:tool-guard", "--asset", "hook:scan-secrets", "--adopt")
+        original = config.read_bytes()
+        edited = json.loads(original)
+        edited["hooks"]["Stop"][0]["hooks"][0]["timeout"] = 11
+        config.write_text(json.dumps(edited))
+        result = self.cli(*args)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertFalse((home / ".agent-assets").exists())
+        self.assertFalse((home / ".agents").exists())
+        config.write_bytes(original)
+        result = self.cli(*args)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(config.read_bytes(), original)
+        self.assertEqual(backup.read_bytes(), b"old preserved backup\n")
+        result = self.cli("status", "--scope", "user", "--home", str(home), "--check")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+
+    def test_personal_codex_override_requires_explicit_matching_authority(self):
+        self.source.joinpath("agents").mkdir()
+        self.source.joinpath("agents/reviewer.md").write_text('---\nname: reviewer\ndescription: Review code\n---\nReview carefully.\n')
+        catalog = self.catalog()
+        catalog["assets"]["agent:reviewer"] = {"source_paths": [{"path": "agents/reviewer.md", "content": "text", "line_endings": "lf"}],
+            "requires": [], "clients": ["codex"], "os": [], "runtime": [], "rendering": "agent"}
+        self.save_catalog(catalog)
+        home, override = self.root / "personal", self.root / "external codex"
+        home.mkdir()
+        args = ("--scope", "user", "--home", str(home), "--codex-home", str(override))
+        result = self.cli("install", *args, "--source", str(self.source), "--client", "codex", "--asset", "agent:reviewer")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        path = override / "agents/reviewer.toml"
+        self.assertIn(b'Review carefully.', path.read_bytes())
+        self.assertFalse((home / ".codex/agents").exists())
+        path.unlink()
+        result = self.cli("restore", *args)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(path.is_file())
+        before = path.read_bytes()
+        result = self.cli("update", "--scope", "user", "--home", str(home))
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_RECORD_INVALID", result.stderr)
+        self.assertEqual(path.read_bytes(), before)
+
+
+    def test_personal_adopts_exact_legacy_agents_and_rejects_edited_unknown_and_hardlinked_copies(self):
+        self.source.joinpath("agents").mkdir()
+        self.source.joinpath("agents/reviewer.md").write_text('---\nname: reviewer\ndescription: Review code\n---\nReview carefully.\n')
+        catalog = self.catalog()
+        catalog["assets"]["agent:reviewer"] = {"source_paths": [{"path": "agents/reviewer.md", "content": "text", "line_endings": "lf"}],
+            "requires": [], "clients": ["codex", "copilot", "gemini"], "os": [], "runtime": [], "rendering": "agent"}
+        self.save_catalog(catalog)
+        home = self.root / "adopt home"
+        home.mkdir()
+        result = subprocess.run([sys.executable, str(SCRIPT.with_name("install-codex-agents.py")), "--source-dir", str(self.source / "agents"),
+                                 "--destination-dir", str(home / ".codex/agents")], text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        path = home / ".codex/agents/reviewer.toml"
+        original = path.read_bytes()
+        args = ("install", "--scope", "user", "--home", str(home), "--source", str(self.source), "--client", "codex", "--asset", "agent:reviewer", "--adopt")
+        path.write_bytes(original + b"# edited\n")
+        result = self.cli(*args)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertFalse((home / ".agent-assets").exists())
+        path.write_bytes(original)
+        external = self.root / "linked copy"
+        os.link(path, external)
+        result = self.cli(*args)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertFalse((home / ".agent-assets").exists())
+        path.unlink()
+        path.write_bytes(original)
+        result = self.cli(*args, "--revision", "unknown")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((home / ".agent-assets").exists())
+        result = self.cli(*args)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((home / ".codex/agents/.skills-repo-agents.json").is_file())
+
+
+    def test_wrappers_forward_scopes_and_saved_selection_refuses_tampering(self):
+        for executable, script in (("bash", "install.sh"), ("pwsh", "install.ps1")):
+            with self.subTest(wrapper=script):
+                home = self.root / (script + " home")
+                home.mkdir()
+                env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home),
+                       **{name: str(self.root / (script + name)) for name in ("XDG_CACHE_HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME")}}
+                command = [executable, *(["-NoProfile", "-File"] if executable == "pwsh" else []), str(SCRIPT.with_name(script))]
+                result = subprocess.run([*command, "install", "--scope", "user", "--home", str(home), "--source", str(self.source), "--client", "codex", "--asset", "skill:caveman"],
+                                        env=env, cwd=self.target, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                path = home / ".agents/skills/caveman/SKILL.md"
+                path.unlink()
+                result = subprocess.run(command, env=env, cwd=self.target, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(path.read_bytes(), SKILL)
+                lock_path = home / ".agent-assets/lock.json"
+                lock = json.loads(lock_path.read_bytes())
+                lock["items"][0]["baseline_digest"] = "0" * 64
+                lock_path.write_text(json.dumps(lock))
+                before = {p.relative_to(home).as_posix(): p.read_bytes() for p in home.rglob("*") if p.is_file()}
+                result = subprocess.run(command, env=env, cwd=self.target, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("ASSET_SOURCE_MISMATCH", result.stderr)
+                self.assertEqual({p.relative_to(home).as_posix(): p.read_bytes() for p in home.rglob("*") if p.is_file()}, before)
+
+    def test_personal_hooks_use_native_home_paths_and_run_without_git_home(self):
+        self.maintained_source()
+        home = self.root / "personal home"
+        home.mkdir()
+        result = self.cli("install", "--scope", "user", "--home", str(home), "--source", str(self.source),
+                          "--client", "codex", "--client", "copilot", "--client", "gemini", "--asset", "hook:tool-guard")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for name in (".codex/hooks/tool-guard.py", ".copilot/hooks/scripts/tool-guard.py", ".gemini/hooks/scripts/tool-guard.py"):
+            self.assertTrue(home.joinpath(name).is_file(), name)
+        self.assertFalse(home.joinpath(".github").exists())
+        for provider, path, event in (("codex", ".codex/hooks.json", "PreToolUse"), ("copilot", ".copilot/hooks/hooks.json", "preToolUse"), ("gemini", ".gemini/settings.json", "BeforeTool")):
+            config = json.loads(home.joinpath(path).read_bytes())
+            handler = config["hooks"][event][0] if provider == "copilot" else config["hooks"][event][0]["hooks"][0]
+            command = handler.get("bash", handler.get("command"))
+            result = subprocess.run(["bash", "-c", command], input=json.dumps({"tool_name": "Bash" if provider != "gemini" else "run_shell_command", "tool_input": {"command": "r" + "m -rf /"}, "cwd": str(self.target)}),
+                                    env={**os.environ, "HOME": str(home), "USERPROFILE": str(home)}, cwd=self.target,
+                                    text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, provider + result.stderr)
+            self.assertIn("deny", result.stdout)
+
+    def test_personal_saved_selection_update_restore_and_verified_adoption(self):
+        home = self.root / "personal home"
+        home.mkdir()
+        existing = home / ".agents/skills/caveman/SKILL.md"
+        existing.parent.mkdir(parents=True)
+        existing.write_bytes(SKILL)
+        unrelated = home / "private-token-file"
+        unrelated.write_bytes(b"preserve unrelated personal state\n")
+        args = ("--scope", "user", "--home", str(home))
+        result = self.cli("install", *args, "--source", str(self.source), "--client", "codex", "--asset", "skill:caveman")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        result = self.cli("install", *args, "--source", str(self.source), "--client", "codex", "--asset", "skill:caveman", "--adopt")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(unrelated.read_bytes(), b"preserve unrelated personal state\n")
+        self.assertFalse((home / ".gitattributes").exists())
+        result = self.cli("status", *args, "--check")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        existing.unlink()
+        result = self.cli("restore", *args)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(existing.read_bytes(), SKILL)
+        self.source.joinpath("skills/caveman/SKILL.md").write_bytes(SKILL + b"Updated upstream.\n")
+        self.git(self.source, "add", ".")
+        self.git(self.source, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false", "commit", "-m", "update")
+        result = self.cli("update", *args)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(existing.read_bytes(), SKILL + b"Updated upstream.\n")
+
+    def test_team_local_share_and_prune_keeps_remaining_requirement(self):
+        self.assertEqual(self.install().returncode, 0)
+        before = self.target.joinpath(".agents/skills/caveman/SKILL.md").stat().st_mtime_ns
+        result = self.install("--mode", "local")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        lock = json.loads(self.target.joinpath(".agent-assets/local/lock.json").read_bytes())
+        self.assertEqual(lock["items"][0]["borrowed_from"], json.loads(self.target.joinpath(".agent-assets/selection.json").read_bytes())["installation_id"])
+        self.assertEqual(self.target.joinpath(".agents/skills/caveman/SKILL.md").stat().st_mtime_ns, before)
+        path = self.source / "skills/other/SKILL.md"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"Other selected skill.\n")
+        catalog_path = self.source / "distribution/catalog.json"
+        catalog = json.loads(catalog_path.read_bytes())
+        catalog["assets"]["skill:other"] = {**catalog["assets"]["skill:caveman"], "source_paths": [{"path": "skills/other/SKILL.md", "content": "text", "line_endings": "lf"}]}
+        catalog_path.write_text(json.dumps(catalog))
+        self.git(self.source, "add", ".")
+        self.git(self.source, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false", "commit", "-m", "other")
+        result = self.cli("install", "--source", str(self.source), "--client", "codex", "--asset", "skill:other")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.target.joinpath(".agents/skills/caveman/SKILL.md").read_bytes(), SKILL)
+        self.assertNotIn(".agents/skills/caveman/SKILL.md", self.git(self.target, "status", "--porcelain", "--untracked-files=all"))
+        result = self.cli("status", "--mode", "local", "--check")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = self.cli("install", "--source", str(self.source), "--mode", "local", "--client", "codex", "--asset", "skill:other")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(self.target.joinpath(".agents/skills/caveman/SKILL.md").exists())
+        self.assertTrue(self.target.joinpath(".agents/skills/other/SKILL.md").exists())
+
+    def test_local_tracked_payload_refuses_before_any_target_or_exclude_change(self):
+        path = self.target / ".agents/skills/caveman/SKILL.md"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(SKILL)
+        self.git(self.target, "add", ".")
+        before = self.files(), (self.target / ".git/info/exclude").read_bytes(), (self.target / ".git/index").read_bytes()
+        result = self.install("--mode", "local")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_LOCAL_TRACKED_CONFLICT", result.stderr)
+        self.assertEqual((self.files(), (self.target / ".git/info/exclude").read_bytes(), (self.target / ".git/index").read_bytes()), before)
+
+    def test_local_install_in_linked_worktree_preserves_other_worktree_excludes(self):
+        self.target.joinpath("tracked.txt").write_text("baseline\n")
+        self.git(self.target, "add", ".")
+        self.git(self.target, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false", "commit", "-m", "target")
+        result = self.install("--mode", "local")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        exclude = self.target / ".git/info/exclude"
+        before = exclude.read_bytes()
+        linked = self.root / "linked worktree"
+        self.git(self.target, "worktree", "add", "-b", "linked", str(linked))
+        result = self.cli("install", "--repo", str(linked), "--source", str(self.source), "--client", "codex", "--asset", "skill:caveman", "--mode", "local")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(exclude.read_bytes(), before)
+        self.assertEqual(self.git(linked, "status", "--porcelain", "--untracked-files=all"), "")
+        self.assertEqual(self.git(self.target, "status", "--porcelain", "--untracked-files=all"), "")
+        before = self.files(), exclude.read_bytes()
+        result = self.install()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_CONFLICT", result.stderr)
+        self.assertEqual((self.files(), exclude.read_bytes()), before)
+        self.assertEqual(self.git(linked, "status", "--porcelain", "--untracked-files=all"), "")
+
+    def test_local_install_is_private_and_preserves_git_metadata_and_indexes(self):
+        exclude = self.target / ".git/info/exclude"
+        original = exclude.read_bytes() + b"\n# personal rule\nnotes.txt\n"
+        exclude.write_bytes(original)
+        source_index = (self.source / ".git/index").read_bytes()
+        result = self.install("--mode", "local")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.target.joinpath(".agents/skills/caveman/SKILL.md").read_bytes(), SKILL)
+        self.assertFalse(self.target.joinpath(".gitattributes").exists())
+        self.assertEqual(self.git(self.target, "status", "--porcelain", "--untracked-files=all"), "")
+        self.assertEqual((self.source / ".git/index").read_bytes(), source_index)
+        self.assertFalse(self.target.joinpath(".git/index").exists())
+        self.assertTrue(exclude.read_bytes().startswith(original))
+        self.assertIn(b"/.agents/skills/caveman/SKILL.md\n", exclude.read_bytes())
+        self.assertNotIn(b"/.agents/\n", exclude.read_bytes())
+        before = self.files(), exclude.read_bytes()
+        self.assertEqual(self.install("--mode", "local").returncode, 0)
+        self.assertEqual((self.files(), exclude.read_bytes()), before)
+        checked = self.cli("status", "--mode", "local", "--check")
+        self.assertEqual(checked.returncode, 0, checked.stderr)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--group", choices=("team-install", "selection", "lifecycle", "providers", "scopes"))
     args, remaining = parser.parse_known_args()
-    if args.group not in (None, "team-install", "selection", "lifecycle", "providers"):
+    if args.group not in (None, "team-install", "selection", "lifecycle", "providers", "scopes"):
         parser.error(f"group {args.group} has no implemented cases yet")
-    groups = {"team-install": TeamInstallTests, "selection": SelectionTests, "lifecycle": LifecycleTests, "providers": ProviderTests}
+    groups = {"team-install": TeamInstallTests, "selection": SelectionTests, "lifecycle": LifecycleTests, "providers": ProviderTests, "scopes": ScopeTests}
     unittest.main(argv=[sys.argv[0], *([groups[args.group].__name__] if args.group else []), *remaining])
 
 

@@ -5,7 +5,7 @@ import tomllib
 
 from .sources import AssetError, canonical, digest, read_json
 
-PATHS = {"codex": ".codex/hooks.json", "copilot": ".github/hooks/agent-assets.json", "gemini": ".gemini/settings.json"}
+PATHS = {"codex": ".codex/hooks.json", "copilot": ".github/hooks/agent-assets.json", "gemini": ".gemini/settings.json", "copilot-user": ".copilot/hooks/hooks.json"}
 
 
 def parse(data):

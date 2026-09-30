@@ -18,9 +18,10 @@ from .providers import CLIENTS
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     commands = parser.add_subparsers(dest="command", required=True)
-    sub = commands.add_parser("install", help="Install selected committed skills and supporting assets into a team repository.", allow_abbrev=False)
+    sub = commands.add_parser("install", help="Install selected committed skills and supporting assets into team, private, or personal native paths.", allow_abbrev=False)
     sub.add_argument("--repo", help="Target Git repository (defaults to the current Git root).")
     sub.add_argument("--preview", action="store_true", help="Plan changes without writing target files.")
+    sub.add_argument("--adopt", action="store_true", help="Adopt only exact verified personal copies at the selected immutable revision.")
     sub.add_argument("--client", action="append", required=True, choices=CLIENTS)
     sub.add_argument("--asset", action="append", default=[])
     sub.add_argument("--bundle", action="append", default=[])
@@ -48,6 +49,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     sub.add_argument("--repo")
     sub.add_argument("--check", action="store_true")
     sub.add_argument("--format", choices=("human", "json"), default="human")
+    for name, command in commands.choices.items():
+        if name == "list":
+            continue
+        command.add_argument("--scope", choices=("repo", "user"), default="repo")
+        command.add_argument("--mode", choices=("team", "local"), default="team",
+                             help="Local mode refuses changes to tracked native files; no universal local-settings overlay is assumed.")
+        command.add_argument("--codex-home", help="Explicit personal Codex home for agent outputs; repeat for lifecycle commands.")
+        command.add_argument("--home", help="Personal destination home (requires --scope user).")
     args = parser.parse_args(argv)
     def failure(code, message, exit_code):
         print(f"{code}: {message}", file=sys.stderr)

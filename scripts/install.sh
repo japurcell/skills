@@ -3,6 +3,15 @@
 set -euo pipefail
 
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if (( $# )); then
+  if [[ "$1" == -* ]]; then
+    set -- install "$@"
+  fi
+  exec python3 "${REPO_ROOT}/scripts/agent-assets.py" "$@"
+fi
+if [[ -e "${HOME}/.agent-assets/selection.json" || -L "${HOME}/.agent-assets/selection.json" || -e "${HOME}/.agent-assets/lock.json" || -L "${HOME}/.agent-assets/lock.json" ]]; then
+  exec python3 "${REPO_ROOT}/scripts/agent-assets.py" update --scope user --home "$HOME"
+fi
 readonly SKILLS_SRC="${REPO_ROOT}/skills"
 readonly AGENTS_SRC="${REPO_ROOT}/agents"
 readonly REFERENCES_SRC="${REPO_ROOT}/references"

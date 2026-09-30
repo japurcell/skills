@@ -25,9 +25,6 @@
     Requires PowerShell 7+ and runs with -NoProfile; no external modules are used.
 #>
 
-[CmdletBinding()]
-param()
-
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
@@ -88,6 +85,20 @@ function Get-PythonCommand {
         Path = $python.Source
         Arguments = $arguments
     }
+}
+
+$SelectionRecord = Get-Item -LiteralPath (Join-Path $HOME '.agent-assets/selection.json') -Force -ErrorAction SilentlyContinue
+$LockRecord = Get-Item -LiteralPath (Join-Path $HOME '.agent-assets/lock.json') -Force -ErrorAction SilentlyContinue
+if ($args.Count -gt 0 -or $null -ne $SelectionRecord -or $null -ne $LockRecord) {
+    $python = Get-PythonCommand
+    $forward = @($args)
+    if ($forward.Count -eq 0) {
+        $forward = @('update', '--scope', 'user', '--home', $HOME)
+    } elseif ($forward[0].StartsWith('-')) {
+        $forward = @('install') + $forward
+    }
+    & $python.Path @($python.Arguments) (Join-Path $RepoRoot 'scripts/agent-assets.py') @forward
+    exit $LASTEXITCODE
 }
 
 # Recreates a preserved link object at $Destination without following it.

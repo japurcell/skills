@@ -44,22 +44,27 @@ def render_agents(snapshot, catalog, assets, clients):
     return files
 
 
-def preflight_agents(root, files, existing, inspect):
+def preflight_agents(root, files, existing, inspect, *, adopt=False, codex_home=None, companion=None):
+    prefix = str(Path(codex_home) / "agents") + "/" if codex_home else ".codex/agents/"
     desired = {path: tomllib.loads(value[0].decode("utf-8"))["name"].casefold()
-               for path, value in files.items() if path.startswith(".codex/agents/")}
+               for path, value in files.items() if path.startswith(prefix)}
     if not desired:
         return []
-    inspect(root, ".codex/agents/.agent-assets-preflight")
-    directory = root / ".codex/agents"
+    inspect(root, prefix + ".agent-assets-preflight")
+    directory = root / prefix
     old_paths = {item["destination"] for item in existing[1]["items"]} if existing else set()
+    if companion:
+        old_paths.update(item["destination"] for item in companion[1]["items"])
     inspected, seen = [], {}
     for target in sorted(directory.iterdir() if directory.exists() else []):
         if target.suffix.casefold() != ".toml":
             continue
-        path = target.relative_to(root).as_posix()
+        path = target.as_posix() if codex_home else target.relative_to(root).as_posix()
         inspect(root, path)
         inspected.append(path)
         if path in old_paths:
+            continue
+        if adopt and path in files and target.read_bytes() == files[path][0] and target.stat().st_nlink == 1 and target.stat().st_mode & 0o777 == files[path][1]:
             continue
         try:
             value = tomllib.loads(target.read_text(encoding="utf-8"))

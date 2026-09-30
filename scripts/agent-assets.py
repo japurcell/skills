@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install selected committed agent assets into a team repository."""
+"""Install selected committed agent assets into team, private, or personal native layouts."""
 
 from collections.abc import Sequence
 

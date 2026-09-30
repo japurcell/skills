@@ -484,11 +484,11 @@ test_draft_scaffold_detection_reads_only_frontmatter() {
 }
 
 test_hooks_json_registers_auto_ingest_between_send_event_and_required_skills() {
-  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+  assert_equals '"$HOME/.copilot/hooks/scripts/send-event.py"' \
     "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected send-event.py to remain first for sessionStart."
 
-  assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
+  assert_equals '"$HOME/.copilot/hooks/scripts/load-required-skills.py"' \
     "$(jq -r '.hooks.sessionStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected load-required-skills.py to remain after send-event.py."
 

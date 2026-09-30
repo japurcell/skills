@@ -9,18 +9,23 @@ import uuid
 import re
 
 from .sources import AssetError, git, canonical, digest, read_json
+from .scopes import Layout
 
 
-def state_path(root, name):
-    path = Path(git(root, "rev-parse", "--path-format=absolute", "--git-path", name).decode().strip())
+def state_path(root, name, *, layout=Layout()):
+    path = layout.state(root, name)
     if path.is_symlink() or (path.exists() and (not path.is_file() or path.stat().st_nlink != 1 or getattr(path.stat(), "st_file_attributes", 0) & 0x400)):
         raise AssetError("ASSET_RECORD_INVALID", "Unsafe installer state path.")
     return path
 
 
 @contextmanager
-def mutex(root):
-    path = state_path(root, "agent-assets.mutex")
+def mutex(root, *, layout=Layout()):
+    path = state_path(root, "agent-assets.mutex", layout=layout)
+    if layout.scope == "user":
+        from .core import destination_parent
+        with destination_parent(path, create=True):
+            pass
     fd = os.open(path, os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
     stream = os.fdopen(fd, "r+b")
     try:
@@ -62,8 +67,8 @@ def observe(root, paths):
     return result
 
 
-def pending(root):
-    return state_path(root, "agent-assets-journal.json").exists()
+def pending(root, *, layout=Layout()):
+    return state_path(root, "agent-assets-journal.json", layout=layout).exists()
 
 
 def encode(value):
@@ -87,42 +92,54 @@ def decode(value):
     return data, value["mode"]
 
 
-def record_pair(states):
+def record_pair(states, *, layout=Layout()):
     from .core import validate_records
-    names = (".agent-assets/selection.json", ".agent-assets/lock.json")
+    names = layout.records
     if all(states.get(name) is None for name in names):
         return None
     if any(states.get(name) is None for name in names):
         raise AssetError("ASSET_INTERRUPTED", "Incomplete interrupted ownership records.")
     pair = tuple(read_json(states[name][0], "ASSET_INTERRUPTED") for name in names)
     validate_records(*pair)
+    from .scopes import validate_layout
+    validate_layout(pair[0], layout)
     return pair
 
 
-def validate_journal(journal):
+def validate_journal(journal, *, root=None, layout=Layout()):
     from .core import owned_destination
     if not isinstance(journal, dict) or type(journal.get("schema_version")) is not int or journal["schema_version"] != 1 or not isinstance(journal.get("entries"), list):
         raise AssetError("ASSET_INTERRUPTED", "Unsupported interrupted-operation journal.")
     operation_id = journal.get("operation_id")
     if not isinstance(operation_id, str) or not re.fullmatch("[0-9a-f]{32}", operation_id):
         raise AssetError("ASSET_INTERRUPTED", "Invalid interrupted operation identity.")
+    metadata = {".gitattributes", *layout.records}
+    companion_layout = Layout(mode="team" if layout.mode == "local" else "local")
+    if layout.scope == "repo":
+        metadata.update(companion_layout.records)
+        metadata.add(layout.exclude(root))
     before, after = {}, {}
     for entry in journal["entries"]:
         if not isinstance(entry, dict) or set(entry) != {"destination", "before", "after"}:
             raise AssetError("ASSET_INTERRUPTED", "Invalid interrupted-operation entry.")
         path = entry["destination"]
-        if path not in (".gitattributes", ".agent-assets/selection.json", ".agent-assets/lock.json"):
-            owned_destination(path)
+        if path not in metadata:
+            owned_destination(path, codex_home=layout.codex_home)
         if path in before:
             raise AssetError("ASSET_INTERRUPTED", "Duplicate interrupted destination.")
         before[path], after[path] = decode(entry["before"]), decode(entry["after"])
-    old, new = record_pair(before), record_pair(after)
+    old, new = record_pair(before, layout=layout), record_pair(after, layout=layout)
     if not new or (old and old[0]["installation_id"] != new[0]["installation_id"]):
         raise AssetError("ASSET_INTERRUPTED", "Interrupted ownership identity mismatch.")
-    for states, pair in ((before, old), (after, new)):
-        items = {item["destination"]: item for item in pair[1]["items"]} if pair else {}
+    old_companion = record_pair(before, layout=companion_layout) if layout.scope == "repo" else None
+    new_companion = record_pair(after, layout=companion_layout) if layout.scope == "repo" else None
+    if bool(old_companion) != bool(new_companion):
+        raise AssetError("ASSET_INTERRUPTED", "Interrupted operation cannot invent or remove another scope.")
+    for states, pair, companion in ((before, old, old_companion), (after, new, new_companion)):
+        items = {item["destination"]: item for item in companion[1]["items"]} if companion else {}
+        items.update({item["destination"]: item for item in pair[1]["items"]} if pair else {})
         for path, value in states.items():
-            if path in (".gitattributes", ".agent-assets/selection.json", ".agent-assets/lock.json") or value is None:
+            if path in metadata or value is None:
                 continue
             item = items.get(path)
             from . import configuration
@@ -141,7 +158,7 @@ def validate_journal(journal):
             item = next((item for item in pair[1]["items"] if item["destination"] == path), None) if pair else None
             data = states[path][0] if states[path] else None
             unowned = configuration.without_owned(data, item["entries"]) if item and data is not None else configuration.parse(data)
-            if path == configuration.PATHS["copilot"] and type(unowned.get("version")) is int and unowned["version"] == 1:
+            if path in (configuration.PATHS["copilot"], configuration.PATHS["copilot-user"]) and type(unowned.get("version")) is int and unowned["version"] == 1:
                 unowned.pop("version")
             unrelated_configs.append(unowned)
         if unrelated_configs[0] != unrelated_configs[1]:
@@ -159,6 +176,59 @@ def validate_journal(journal):
         return data.rstrip(b"\n")
     if unrelated(before, old) != unrelated(after, new):
         raise AssetError("ASSET_INTERRUPTED", "Interrupted attributes modify unowned rules.")
+    if layout.mode == "local":
+        from .scopes import exclude_line
+        path = layout.exclude(root)
+        if path in before:
+            left = before[path][0] if before[path] else b""
+            right = after[path][0] if after[path] else b""
+            valid = set(layout.records) | {item["destination"] for item in new[1]["items"] if "borrowed_from" not in item}
+            recorded = new[1].get("excludes", [])
+            prior = old[1].get("excludes", []) if old else []
+            if any(name not in valid and name not in prior for name in recorded):
+                raise AssetError("ASSET_INTERRUPTED", "Private exclude is not authorized by owned destinations.")
+            expected = left
+            for name in sorted(set(valid)):
+                line = exclude_line(name)
+                if line not in expected.splitlines(keepends=True):
+                    expected += (b"\n" if expected and not expected.endswith(b"\n") else b"") + line
+            if right != expected:
+                raise AssetError("ASSET_INTERRUPTED", "Interrupted excludes modify unrelated rules.")
+    if layout.scope == "repo" and layout.mode == "team" and old_companion:
+        from .scopes import exclude_line
+        from copy import deepcopy
+        expected_lock = deepcopy(old_companion[1])
+        promoted = {item["destination"] for item in new[1]["items"]}
+        exclude = layout.exclude(root)
+        expected_exclude = before[exclude][0] if before.get(exclude) else None
+        for item in expected_lock["items"]:
+            if item["destination"] in promoted:
+                item["borrowed_from"] = new[0]["installation_id"]
+                if item["destination"] in expected_lock.get("excludes", []):
+                    if expected_exclude is None:
+                        raise AssetError("ASSET_INTERRUPTED", "Missing excludes for scope promotion.")
+                    expected_exclude = expected_exclude.replace(exclude_line(item["destination"]), b"")
+                    expected_lock["excludes"].remove(item["destination"])
+        old_paths = {item["destination"] for item in old[1]["items"]} if old else set()
+        for item in expected_lock["items"]:
+            name = item["destination"]
+            if name in old_paths - promoted and item.get("borrowed_from") == new[0]["installation_id"] and not git(root, "ls-files", "-z", "--", name):
+                if expected_exclude is None:
+                    raise AssetError("ASSET_INTERRUPTED", "Missing excludes for scope release.")
+                item.pop("borrowed_from", None)
+                line = exclude_line(name)
+                if line not in expected_exclude.splitlines(keepends=True):
+                    expected_exclude += (b"\n" if expected_exclude and not expected_exclude.endswith(b"\n") else b"") + line
+                    expected_lock.setdefault("excludes", []).append(name)
+        expected_lock["excludes"] = sorted(expected_lock.get("excludes", []))
+        if canonical(old_companion[0]) != canonical(new_companion[0]) or canonical(expected_lock) != canonical(new_companion[1]):
+            raise AssetError("ASSET_INTERRUPTED", "Interrupted operation changes unrelated scope authority.")
+        if exclude in before and (after[exclude] is None or after[exclude][0] != expected_exclude):
+            raise AssetError("ASSET_INTERRUPTED", "Interrupted scope promotion changes unrelated excludes.")
+    elif layout.scope == "repo" and layout.mode == "team" and layout.exclude(root) in before and before[layout.exclude(root)] != after[layout.exclude(root)]:
+        raise AssetError("ASSET_INTERRUPTED", "Interrupted operation has no authority to change private excludes.")
+    elif old_companion and canonical(old_companion) != canonical(new_companion):
+        raise AssetError("ASSET_INTERRUPTED", "Interrupted operation changes another scope.")
     directories = journal.get("created_directories")
     if not isinstance(directories, list) or len(set(directories)) != len(directories):
         raise AssetError("ASSET_INTERRUPTED", "Invalid interrupted directory list.")
@@ -216,31 +286,33 @@ def check_directories(root, journal):
             raise AssetError("ASSET_INTERRUPTED", "Interrupted destination parent identity changed: " + name)
 
 
-def recover(root):
+def recover(root, *, layout=Layout()):
     try:
-        _recover(root)
+        _recover(root, layout=layout)
     except AssetError as error:
         if error.exit_code == 1:
             raise AssetError("ASSET_INTERRUPTED", "Cannot safely recover the pending operation: " + str(error)) from None
         raise
 
 
-def _recover(root):
+def _recover(root, *, layout=Layout()):
     from .core import write_atomic, unlink_owned, prune_empty, authenticate_ownership
     require_mutation_support()
-    path = state_path(root, "agent-assets-journal.json")
+    path = state_path(root, "agent-assets-journal.json", layout=layout)
     if not path.exists():
         return
-    with mutex(root):
+    with mutex(root, layout=layout):
         journal_bytes = path.read_bytes()
         journal_mode = path.stat().st_mode & 0o777
         journal = read_json(journal_bytes, "ASSET_INTERRUPTED")
-        before, after = validate_journal(journal)
+        before, after = validate_journal(journal, root=root, layout=layout)
         check_directories(root, journal)
         for states in (before, after):
-            recorded = record_pair(states)
-            if recorded:
-                authenticate_ownership(recorded)
+            layouts = [layout] + ([Layout(mode="team" if layout.mode == "local" else "local")] if layout.scope == "repo" else [])
+            for recorded_layout in layouts:
+                recorded = record_pair(states, layout=recorded_layout)
+                if recorded:
+                    authenticate_ownership(recorded)
         current = observe(root, before)
         for name, value in current.items():
             if value not in (before[name], after[name]):
@@ -266,16 +338,20 @@ def _recover(root):
         unlink_owned(path, (journal_bytes, journal_mode))
 
 
-def apply(root, writes, removals, observations, recheck):
+def apply(root, writes, removals, observations, recheck, *, layout=Layout()):
     from .core import write_atomic, unlink_owned, prune_empty, directory_identity
     require_mutation_support()
-    with mutex(root):
-        if pending(root):
+    with mutex(root, layout=layout):
+        if pending(root, layout=layout):
             raise AssetError("ASSET_INTERRUPTED", "A pending interrupted operation appeared; retry to recover it.")
         if observe(root, observations) != observations:
             raise AssetError("ASSET_CONFLICT", "Target changed during planning; inspect it and rerun.", 1)
         recheck()
-        paths = set(writes) | set(removals) | {".agent-assets/selection.json", ".agent-assets/lock.json", ".gitattributes"}
+        paths = set(writes) | set(removals) | {*layout.records, ".gitattributes"}
+        if layout.scope == "repo":
+            companion_names = Layout(mode="team" if layout.mode == "local" else "local").records
+            if any(observations.get(name) is not None or name in writes for name in companion_names):
+                paths.update(companion_names)
         entries = []
         directories = set()
         for path in sorted(paths):
@@ -294,13 +370,13 @@ def apply(root, writes, removals, observations, recheck):
                 identities[name] = None
         journal = {"schema_version": 1, "operation_id": uuid.uuid4().hex, "entries": entries,
                    "created_directories": sorted(directories), "directory_identities": identities}
-        validate_journal(journal)
-        journal_path = state_path(root, "agent-assets-journal.json")
+        validate_journal(journal, root=root, layout=layout)
+        journal_path = state_path(root, "agent-assets-journal.json", layout=layout)
         journal_bytes = canonical(journal) + b"\n"
         write_atomic(journal_path, journal_bytes, 0o600)
         def bind_created(parent_fd, created):
             nonlocal journal_bytes
-            created_names = {path.relative_to(root).as_posix() for path in created}
+            created_names = {path.relative_to(root).as_posix() if path.is_relative_to(root) else path.as_posix() for path in created}
             changed = False
             for name in created_names:
                 if name not in directories or identities[name] is not None:
@@ -328,6 +404,10 @@ def apply(root, writes, removals, observations, recheck):
         expected = {entry["destination"]: decode(entry["after"]) for entry in entries}
         if observe(root, expected) != expected:
             raise AssetError("ASSET_INTERRUPTED", "Target changed before transaction completion.")
+        if layout.mode == "local":
+            from .scopes import verify_excludes
+            pair = record_pair(expected, layout=layout)
+            verify_excludes(root, layout, *pair)
         unlink_owned(journal_path, (journal_bytes, 0o600))
         for path in removals:
             parent = (root / path).parent

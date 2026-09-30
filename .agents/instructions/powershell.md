@@ -11,6 +11,7 @@ description: PowerShell (`pwsh`) rules for installer and validation scripts unde
 - PowerShell matching that must mirror case-sensitive Bash `[[ == pattern ]]` or `find -name` must use explicit case-sensitive primitives (`-ceq`, `-clike`, `.EndsWith`); see `.agents/memory/known-issues/powershell.md` for host-specific quirks.
 - `Get-Command -CommandType Application` can return multiple PATH matches. Select one command explicitly before invoking `.Source`; do not let an array stringify into a combined executable path.
 - Keep Codex custom-agent installation equivalent to Bash: invoke `install-codex-agents.py` before provider copy operations and resolve `$env:CODEX_HOME/agents` when set, otherwise `$HOME/.codex/agents`.
+- Preserve arbitrary explicit argument forwarding through the basic script `$args` array; advanced parameter binding rejects the Python CLI flags before they reach Python. Managed-record presence routes no-argument calls through saved selection.
 - Run syntax check plus narrow script validation from `.agents/memory/testing/powershell.md`.
 
 ## Scope note

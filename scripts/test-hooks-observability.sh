@@ -141,7 +141,7 @@ assert_hook_registered_with_observability_emitter() {
   local event_name="$1"
   local source_event_name="$2"
 
-  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+  assert_equals '"$HOME/.copilot/hooks/scripts/send-event.py"' \
     "$(jq -r --arg event "$event_name" '.hooks[$event][] | select(.env.OBSERVABILITY_CAPTURE_EVENT == "true") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected $event_name to register send-event.py."
   assert_equals true \

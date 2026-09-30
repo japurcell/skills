@@ -1247,26 +1247,26 @@ test_allowlist_suppresses_credential_path_finding() {
 }
 
 test_hooks_json_registers_session_end_scanner() {
-  assert_equals '$HOME/.copilot/hooks/scripts/bell.py' \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/bell.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+  assert_equals '"$HOME/.copilot/hooks/scripts/bell.py"' \
+    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "\"$HOME/.copilot/hooks/scripts/bell.py\"") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register the session-end bell Python hook."
-  assert_equals '$HOME/.copilot/hooks/scripts/scan-secrets.py' \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+  assert_equals '"$HOME/.copilot/hooks/scripts/scan-secrets.py"' \
+    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "\"$HOME/.copilot/hooks/scripts/scan-secrets.py\"") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register the secrets scanner on sessionEnd."
   assert_equals warn \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .env.SCAN_MODE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "\"$HOME/.copilot/hooks/scripts/scan-secrets.py\"") | .env.SCAN_MODE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to default secrets scanning to warn mode."
   assert_equals diff \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .env.SCAN_SCOPE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "\"$HOME/.copilot/hooks/scripts/scan-secrets.py\"") | .env.SCAN_SCOPE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to scan working tree diffs by default."
 }
 
 test_hooks_json_registers_pre_tool_scanner() {
-  assert_equals '$HOME/.copilot/hooks/scripts/scan-secrets.py' \
-    "$(jq -r '.hooks.preToolUse[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+  assert_equals '"$HOME/.copilot/hooks/scripts/scan-secrets.py"' \
+    "$(jq -r '.hooks.preToolUse[] | select(.bash == "\"$HOME/.copilot/hooks/scripts/scan-secrets.py\"") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register the secrets scanner on preToolUse."
   assert_equals block \
-    "$(jq -r '.hooks.preToolUse[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .env.SCAN_MODE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "$(jq -r '.hooks.preToolUse[] | select(.bash == "\"$HOME/.copilot/hooks/scripts/scan-secrets.py\"") | .env.SCAN_MODE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to default secrets scanning to block mode under preToolUse."
 }
 

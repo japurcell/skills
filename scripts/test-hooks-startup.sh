@@ -206,14 +206,14 @@ test_subagent_start_outputs_vscode_schema_with_caveman_only_context() {
 }
 
 test_hooks_json_registers_cli_and_vscode_start_events() {
-  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+  assert_equals '"$HOME/.copilot/hooks/scripts/send-event.py"' \
     "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for sessionStart."
   assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
     "$(jq -r '.hooks.sessionStart[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py PowerShell command for sessionStart."
 
-  assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
+  assert_equals '"$HOME/.copilot/hooks/scripts/load-required-skills.py"' \
     "$(jq -r '.hooks.sessionStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register load-required-skills.py after send-event.py for sessionStart."
   assert_equals 'python "$HOME/.copilot/hooks/scripts/load-required-skills.py"' \
@@ -224,14 +224,14 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.agentStop[] | select(.bash | test("inject-auto-ingest-context\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to stop owning the pending-ingest agentStop backstop."
 
-  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+  assert_equals '"$HOME/.copilot/hooks/scripts/send-event.py"' \
     "$(jq -r '.hooks.subagentStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for subagentStart."
   assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
     "$(jq -r '.hooks.subagentStart[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py PowerShell command for subagentStart."
 
-  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+  assert_equals '"$HOME/.copilot/hooks/scripts/send-event.py"' \
     "$(jq -r '.hooks.userPromptTransformed[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for userPromptTransformed."
   assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \

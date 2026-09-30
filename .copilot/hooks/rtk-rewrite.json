@@ -4,7 +4,7 @@
     "PreToolUse": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py",
+        "bash": "\"$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py\"",
         "powershell": "python \"$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py\"",
         "cwd": ".",
         "timeoutSec": 5
@@ -13,7 +13,7 @@
     "preToolUse": [
       {
         "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py",
+        "bash": "\"$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py\"",
         "powershell": "python \"$HOME/.copilot/hooks/scripts/rtk-hook-copilot.py\"",
         "cwd": ".",
         "timeoutSec": 5
