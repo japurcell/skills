@@ -86,6 +86,10 @@ The existing-repository review found that APM supports committing generated payl
 ## Decision Log
 
 
+Decision: Route M4 native adapters to Premium `gpt-6-astra`, effort `high`, in a fresh private worktree. Semantic configuration ownership, executable hook packaging, runtime/state relocation, strict canonical conversion, and three native event surfaces interact with reviewed lifecycle invariants. Earlier demonstrated integrity defects require explicit verification; separate a different-model final review. Exact available model/effort are applied. Escalate repeated integrity/semantic failures through public evidence; unavailable fallback is `gpt-6.1-sol`, effort `xhigh`. Platform billing and task-specific capability remain provisional.
+
+Rationale: This connected security-sensitive adapter node warrants demanding autonomous reasoning rather than routing by file count. Date/author: 2026-09-29, Codex orchestration.
+
 Decision: Give M3 conflict-prone rebase to a fresh merger using Standard `gpt-6.1-sol`, effort `high`, after its writer finishes and the worktree is clean. The merger has exclusive ownership of the existing private M3 worktree and never changes base. Preserve the parent repair graph/checkpoints and the completed node evidence. For documentation-only conflicts run the affected plan/OKF/whitespace validation; source conflicts require corresponding public tests. Escalate semantic integrity ambiguity to the original replacement implementer; same-tier unavailable fallback is `gpt-6-sol`, effort `high`. Exact available runtime ID is applied; cost/capability remain provisional.
 
 Rationale: Parent and writer both changed the plan during repairs; resolve that conflict explicitly without concurrent writes or loss of evidence. Date/author: 2026-09-29, Codex orchestration.
@@ -168,6 +172,8 @@ Rationale: Filesystem integrity needs connected reasoning and independent verifi
 
 ## Outcomes & Retrospective
 
+
+M3 is integrated at `b1bcc63257ba3a32bf61d58f865ea5854eef15d5`. Exclusive merger resolves only the plan, validates 25 documents/168 links, preserves all status/progress and repair evidence, and proves the source/test patch unchanged. Clean base matches the verified rebased branch; the original M3 worktree and branch are removed. The final aggregate is running after both repair nodes and M3. M4 is the ready frontier and starts in a fresh private worktree.
 
 Integrated aggregate repairs: fixture portability and bounded subprocess cleanup are reviewed and integrated at `82943218bbc2a484295337334df53c0e80f8b908`. Observability test isolation and maintenance coordination are reviewed and integrated at `40f06f865ee4b6849b5b5585e3c89411438742a7`. Both clean private worktrees and branches are removed after verified fast-forward, with no conflict reruns. The final full aggregate will run after M3 integration. M3 final public suite passes 64 (24 team, 17 selection, 23 lifecycle); independent final review approves after fixing unsupported checkout transforms on owned paths. M3 is committed on its private branch; integration remains pending.
 
@@ -290,7 +296,7 @@ Current public acceptance has 23 lifecycle cases and 64 cases across implemented
 ### Milestone 4: Materialize native repository setups
 
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 

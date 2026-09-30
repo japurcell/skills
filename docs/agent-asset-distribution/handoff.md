@@ -4,13 +4,13 @@
 
 All eight planning tickets are closed. Implementation is authorized through the user's explicit `execplan-implement` request and resumed after the user installs flock. Base branch is `codex/research-agent-distribution-options`.
 
-Milestones 1 and 2 are integrated. M3 is independently approved with 64 passing public cases (24 team, 17 selection, 23 lifecycle), but its private commit/rebase/integration is pending in `/private/tmp/agent-assets-m3` on `codex/agent-assets-m3`. Replacement writer `/root/installer_m3_repair` finishes that original node; `/root/installer_m3_final_review` completed final approval. Earlier writer/review turns ended with service content flags before verdicts; their work and findings were preserved, never treated as approval.
+Milestones 1 through 3 are integrated. M3 tip is `b1bcc63257ba3a32bf61d58f865ea5854eef15d5`; 64 public cases (24 team, 17 selection, 23 lifecycle) and final independent review pass. Its original clean worktree/branch are removed. Exclusive merger resolves only the ExecPlan conflict and verifies unchanged source/test patch, 25 documents/168 links, milestone synchronization, OKF, and whitespace. Earlier writer/review turns ended with service content flags; their findings were repaired and separately approved, never assumed green.
 
-Independent aggregate repairs are integrated: fixture portability/pipe cleanup at `82943218bbc2a484295337334df53c0e80f8b908`, observability test isolation/maintenance coordination at `40f06f865ee4b6849b5b5585e3c89411438742a7`. Their clean worktrees/branches are removed. Milestones 4 through 7 remain open. Native package publication and real-home changes are outside the authorization.
+Independent aggregate repairs are integrated: fixture portability/pipe cleanup at `82943218bbc2a484295337334df53c0e80f8b908`, observability test isolation/maintenance coordination at `40f06f865ee4b6849b5b5585e3c89411438742a7`. Their clean worktrees/branches are removed. M4 starts in `/private/tmp/agent-assets-m4` on private `codex/agent-assets-m4`; M5 through M7 remain open. Native package publication and real-home changes are outside the authorization.
 
 ## Next step
 
-Finish M3's clean private commit, then give a fresh merger exclusive ownership of the existing worktree for its conflict-prone rebase onto current base. Preserve the parent repair/checkpoint evidence and completed M3 status/checkbox. Run checks affected by conflicts, verify clean branches, fast-forward base, compare tips, and remove only the clean integrated node worktree/branch. Then run the complete aggregate and dispatch a fresh M4 implementer. Follow [the ExecPlan](../agent-asset-installer/ExecPlan.md), not historical implementation holds.
+Complete M4 native repository agents/hooks, explicit runtime configuration and relocated state, selective native configuration ownership, and installed-hook subprocess proof. Review, validate, commit, and serialize integration. The full aggregate after M3 and both test repairs is running; record its result and repair any observed failure without weakening tests. Follow [the ExecPlan](../agent-asset-installer/ExecPlan.md). M5 depends on M4, then M6 native OS/client proof and M7 final documentation remain.
 
 ## Decisions and constraints
 
@@ -38,6 +38,6 @@ This Mac has Python 3.14.6 (`/Users/adam/.pyenv/versions/3.14.6/bin/python3`), G
 
 ## Retained artifacts and documentation
 
-Keep `/private/tmp/agent-assets-m3` until verified integration. `/private/tmp/agent-assets-probes/docs/agent-asset-installer/prerequisites.md` and `provider-runtime-audit.md` hold exploration notes for M4/M6; promote corrected relevant content before cleaning that worktree. The older temporary catalog audit is superseded by the committed [catalog audit](../agent-asset-installer/catalog-audit.md). Routing and service-error context are preserved at `/private/tmp/agent-assets-routing.json` and `/private/tmp/agent-assets-review-failure.txt`.
+Keep `/private/tmp/agent-assets-m4` until verified integration; the completed M3 worktree is removed. `/private/tmp/agent-assets-probes/docs/agent-asset-installer/prerequisites.md` and `provider-runtime-audit.md` hold exploration notes for M4/M6; promote corrected relevant content before cleaning that worktree. The older temporary catalog audit is superseded by the committed [catalog audit](../agent-asset-installer/catalog-audit.md). Routing and service-error context are preserved at `/private/tmp/agent-assets-routing.json` and `/private/tmp/agent-assets-review-failure.txt`.
 
 Node-specific canonical script and observability docs are synchronized with implemented behavior. The primary final `update-agent-docs` pass remains due at session end after all implementation/review. Preserve protected AGENTS sections, apply OKF authoring to canonical Markdown, synchronize the plan before stopping, and keep this feature-scoped handoff current.
