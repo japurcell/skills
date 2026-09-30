@@ -17,7 +17,7 @@ Produce a decision-ready recommendation for distributing selected skills, custom
 - Research agents own only their assigned ticket and research directory. The coordinating agent owns this map, synthesis, and local inventory.
 - Existing installers and installed user directories remain unchanged during this effort.
 - Read the [distribution recommendation](recommendation.md) for the synthesis and the [current source inventory](local-inventory.md) for repository-specific constraints. Recommendations remain distinct from approved implementation decisions.
-- The original human decision interview and six-repository review are complete. On 2026-09-29 the user accepted retaining the architecture, strict read-only verification, and declared checkout line-ending policy. The original contract plus the closed refinement ticket are authoritative; the separate [implementation ExecPlan](../agent-asset-installer/ExecPlan.md) incorporates them. Implementation remains on hold; use the [current handoff](handoff.md) for the resume gate.
+- The original human decision interview and six-repository review are complete. On 2026-09-29 the user accepted retaining the architecture, strict read-only verification, and declared checkout line-ending policy. The original contract plus the closed refinement ticket are authoritative; the separate [implementation ExecPlan](../agent-asset-installer/ExecPlan.md) incorporates them. The user subsequently requested full implementation through `execplan-implement`; use the [current handoff](handoff.md) for execution status.
 
 ## Decisions so far
 
@@ -33,7 +33,7 @@ Produce a decision-ready recommendation for distributing selected skills, custom
 ## Not yet specified
 
 <!-- FOG START -->
-The original contract and subsequent existing-repository review are settled. All eight tickets are closed, with no remaining in-scope question or fog. Implementation remains a separate effort and is explicitly on hold.
+The original contract and subsequent existing-repository review are settled. All eight tickets are closed, with no remaining in-scope question or fog. Implementation is a separate authorized effort tracked in the ExecPlan and current handoff.
 <!-- FOG END -->
 
 ## Out of scope
