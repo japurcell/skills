@@ -54,6 +54,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/test-agent-assets.py` | Disposable Git subprocess acceptance for selected installations; registered in the aggregate runner. |
 | `.github/workflows/agent-assets.yml` | POSIX public suites, immutable cross-OS clone/audit jobs, and visibly unmet native Windows mutation acceptance. |
 | `docs/agent-asset-installer/client-validation.md` | Measured platform/protocol evidence, native trust prerequisites and unmet surfaces; companion CI, Windows filesystem and Codex isolation research remain beside it. |
+| `docs/agent-asset-installer/windows-established-practice.md` | Pinned mature-project Windows replacement code, metadata guarantees and limits; read before deciding the unfinished Windows writer's metadata contract. Research does not authorize a contract change. |
 | `docs/agent-asset-installer/codex-native-probe.md` | Local macOS filesystem/network containment and normal trust UI evidence; managed-preference synchronization blocks trust persistence before discovery/events. Read before further native Codex acceptance. |
 | `docs/agent-asset-installer/catalog-audit.md` | Historical milestone-2 dependency/source inventory and required-versus-optional classification; read before changing dependencies, and use the current CLI for current installability. |
 | `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout, including `$CODEX_HOME/agents` when set (run with `pwsh scripts/install.ps1`). |
