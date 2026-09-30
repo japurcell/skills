@@ -92,6 +92,10 @@ The existing-repository review found that APM supports committing generated payl
 ## Decision Log
 
 
+Decision: Route independent M5 review to Premium `gpt-6.1-sol`, effort `xhigh`, different from writer `gpt-6-astra`. Review cross-scope authority, shared files and Git excludes, immutable legacy adoption, external Codex destination authority, journal recovery, wrapper refresh, and selected runtime preflight. Exact exposed model/effort are applied. Require public reproductions for substantive findings and return repairs to the existing M5 implementer. Same-tier unavailable fallback is `gpt-6-sol`, effort `xhigh`; billing and model task fit remain provisional.
+
+Rationale: Scope sharing and verified adoption extend authority over existing files and operation metadata, requiring demanding independent integrity review before integration. Date/author: 2026-09-29, Codex orchestration.
+
 Decision: Route M5 local/personal scopes and legacy transition to a fresh Premium `gpt-6-astra` implementer, effort `high`, in an isolated private worktree. Cross-scope borrowing/pruning, exact Git excludes, authenticated adoption, semantic native configuration, and saved-selection wrapper refresh interact with ownership and recovery invariants. Exact exposed model/effort are applied at launch. Require public red/green behavior and a separate different-model review. Escalate demonstrated authority/conflict failures through public evidence; unavailable fallback is `gpt-6.1-sol`, effort `xhigh`. Billing and task fit remain provisional.
 
 Rationale: Verified adoption and shared team/local ownership can change authority over preexisting developer files, making this a connected integrity-sensitive node. Date/author: 2026-09-29, Codex orchestration.
@@ -202,6 +206,8 @@ Rationale: Filesystem integrity needs connected reasoning and independent verifi
 
 ## Outcomes & Retrospective
 
+
+M5 reaches an initial source review checkpoint with 92 passing public CLI cases (24 team, 17 selection, 23 lifecycle, 14 providers, 14 scopes) in 121.443 seconds. Bash/PowerShell legacy installers, converter 14, RTK 12, runner 14, all 35 generated outputs, syntax/OKF/whitespace, and affected Copilot suites pass. Public personal execution first reproduces unquoted `$HOME` command splitting at paths with spaces; canonical Copilot registrations now quote those paths, preserving assertion strength. The writer identifies an unverified team-owned Codex agent borrowing preflight gap for independent review; M5 remains in progress with acceptance unmet. Selected runtime checks use trusted supported tools; the maintained initial catalog has three hook families and does not advertise a selectable RTK renderer. Formal scoped canonical documentation is synchronized, with root session-end closure still due.
 
 Post-M4 integrated acceptance on macOS: all 37 aggregate suites pass with zero failures in 412.7 seconds on Python 3.14.6, including all 78 public installer cases in 102.690 seconds and all 25 generator cases. A separate complete public installer run on Python 3.13.14 passes all 78 cases in 102.190 seconds. No new failures, resource warnings, personal-state writes, or test weakening occur. Existing host-specific Windows skips remain visible and do not establish native Windows acceptance. Python 3.11, native Linux/Windows, and normal client discovery/event delivery remain M6 gates.
 
