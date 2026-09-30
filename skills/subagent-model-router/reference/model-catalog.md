@@ -30,9 +30,7 @@ Use for general purpose and interactive coding, agentic tasks, substantive rewri
 | OpenAI | `gpt-6.1-sol` | GA | connected/complex coding with efficient reasoning and broader analysis; lower cached-input rates than GPT-6 Sol; long-context pricing; fallback to `gpt-6-sol` when not available |
 | OpenAI | `gpt-5.6-terra` | GA | connected coding and broader analysis; long-context pricing |
 | OpenAI | `gpt-5.3-codex` | GA | agentic coding/review with demonstrated task fit |
-| Anthropic | `claude-sonnet-4.6` | annual Pro/Pro+ only | general coding/agent tasks |
-| Anthropic | `claude-sonnet-5` | GA | general coding/agent tasks |
-| Anthropic | `claude-sonnet-5.5` | GA | general coding/agent tasks with fewer steps and tool calls |
+| Anthropic | `claude-sonnet-5.5` | GA | general coding/agent tasks with fewer steps and tool calls; fallback to `claude-sonnet-5` when not available |
 | Moonshot AI | `kimi-k2.7-code` | GA; retires 2026-10-02 | code-oriented versatile work |
 | Google | `gemini-3.6-flash` | GA; retires 2026-10-02 | versatile work; promotional pricing |
 | Google | `gemini-3.7-flash` | GA | versatile work; promotional pricing |

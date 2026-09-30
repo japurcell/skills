@@ -17,13 +17,14 @@ Choose the cheapest capable model that satisfies the required tier.
 
 - Reuse a route only when work class, stakes, ambiguity, touched areas, review history, and model constraints are unchanged.
 - If this is code or security review, apply `reference/review-routing.md`.
-- Pick the lowest capable tier after accounting for isolation, tests, and review. For bounded, low-risk fixes, choose Fast unless a concrete interaction or ambiguity cannot be settled by focused verification. File count, language mix, platform scope, and test count alone do not justify escalation. Consider
+- Pick the lowest capable tier after accounting for isolation, tests, and review. For bounded, low-risk fixes, choose Fast unless a concrete interaction or ambiguity cannot be settled by focused verification. File count, language mix, platform scope, and test count alone do not justify escalation. Consider:
   - task complexity and stakes
   - context size
   - review history
   - user/model constraints
 - Use `reference/model-catalog.md` to choose a capable model in the tier, restricted to models exposed by the current runtime. Confirm its exact model ID before launching.
 - If several models fit, use `reference/pricing.md` to compare Copilot costs for the token shape, including cache writes, long-context rates, retries, and verification. Optimize expected cost to complete the task successfully, not just token rates. For other platforms, use their pricing.
+- If there are multiple versions of the same model supported by the current runtime (e.g. `gpt-6-sol` and `gpt-6.1-sol`, `claude-sonnet-5` and `claude-sonnet-5.5`), pick the latest version unless the older version is cheaper.
 - If unavailable, prefer a same-tier fallback. Change tier only if needed.
 - For large context, prefer a same-tier long-context model before escalating, unless reasoning difficulty also increases.
 
@@ -50,6 +51,7 @@ Return:
 - Using Premium for bounded execution when stakes/security do not require judgment.
 - Using Fast for high-stakes work.
 - Escalating without a concrete trigger.
+- Picking an older version of a model when a newer version is available in the current runtime, and the newer version is the same price or cheaper.
 
 ## References
 
