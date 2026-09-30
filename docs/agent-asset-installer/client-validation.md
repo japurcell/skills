@@ -4,9 +4,19 @@ Observed 2026-09-30 UTC on macOS 26.7 arm64. This is measured local subprocess e
 
 ## Local environment
 
-The command host reports Python 3.14.6, Apple Git 2.50.1, Bash 3.2.57, PowerShell 7.6.6, and RTK 0.50.0. Separate installed interpreters are Python 3.13.14 and the desktop runtime Python 3.12.14. Python 3.11 and native Windows/Linux runners are unavailable. CI requests Python 3.11 and 3.14 but has not run from this private branch. Syntax parsing with a 3.11 grammar is not a 3.11 runtime result.
+The command Mac reports Python 3.14.6, Apple Git 2.50.1, Bash 3.2.57, PowerShell 7.6.6, and RTK 0.50.0. Separate installed interpreters are Python 3.13.14 and the desktop runtime Python 3.12.14. Python 3.11 and native Linux execution are unavailable here. The user now reports an available native Windows host; its versions, access route, runtimes, and test results have not been measured. CI requests Python 3.11 and 3.14 but has not run from this private branch. Syntax parsing with a 3.11 grammar is not a 3.11 runtime result.
 
 Codex CLI 0.159.0 is present. The earlier [prerequisite inspection](codex-cli-prerequisites.md) encountered a refused PATH-alias write even for help. A subsequent [native containment probe](codex-native-probe.md) demonstrates filesystem/network confinement and clean help startup with a disposable home. The normal folder-trust screen appears, but approval fails with `Failed to synchronize managed preferences (code -32603)`. No model prompt, discovery, or native hook event occurs. Other advertised clients are unavailable locally. No dependencies, clients, credentials, or real-home configuration were installed or changed.
+
+## Authorized native validation allocation
+
+On 2026-09-30 the user states that only Copilot CLI and Gemini CLI are available in the native Windows environment and that installing other providers is prohibited. This is reported availability, not native execution evidence. Use only those two clients for Windows discovery, trust, agent activation, and registered hook-event sessions, including relocation of a committed clone. Record actual client/Windows versions and isolation/authentication constraints before execution; do not install other providers or use personal-state/trust bypasses.
+
+Codex CLI, Copilot VS Code, and skills-only OpenCode retain required native gates on authorized non-Windows hosts. Their Windows native loading is unverified and outside this delivery's required native gates. Evidence from another OS or Copilot CLI does not validate those excluded Windows/IDE surfaces. Missing prerequisites for the required pairs remain unmet gates.
+
+The user also explicitly defers Claude Code and Cursor native verification for the initial release. Their skills-only representations and automated file/path tests remain, but native activation/reference access stays unverified on every OS and does not block this release. This is a validation deferral, not a passed check or permission to remove automated assertions. OpenCode native skill/reference proof remains required.
+
+All three-OS installer requirements remain: safe writes, authenticated ownership, conflict protection, interruption/recovery, clone audit before repair, exact checkout bytes, path quoting, PowerShell forwarding, and installed launcher execution. The public tests render provider files and execute hook scripts without invoking provider clients; their other-provider cases remain intact. The existing CI workflow does not install provider clients, so this restriction requires no workflow change.
 
 ## Automated evidence and limits
 
@@ -26,15 +36,15 @@ Offline record-authority limit: matching version-1 records predating this requir
 
 | Surface | Installed representation | Completed evidence | Required native evidence |
 | --- | --- | --- | --- |
-| Codex local CLI | `.agents/skills`, `.codex/agents`, `.codex/hooks.json` | Exact files, strict TOML, direct hook protocols; local containment and normal trust UI, with approval blocked | Isolated managed-preference synchronization and normal trust persistence, separate current hook-definition review, explicit skill activation, custom-agent spawn, native event delivery before and after relocation |
-| Copilot CLI | `.agents/skills`, `.github/agents`, `.github/hooks/agent-assets.json` | Exact files and direct startup/tool/end protocols | Installed client/version, normal trust, skill/agent activation, native event delivery and relocation |
-| Copilot VS Code | Same repository paths | Adapter files only | Exact extension/version, disposable editor profile, native trust/loading/events; CLI evidence cannot substitute |
-| Gemini CLI | `.agents/skills`, `.gemini/agents`, `.gemini/settings.json` | Exact files and direct startup/tool/end protocols | Installed client/version, disposable profile, normal trust/loading/events and relocation |
-| Claude Code | `.claude/skills` and supporting references | File placement and preservation | Exact client/version, native skill activation and reference reads only |
-| Cursor | `.agents/skills` and supporting references | File placement and preservation | Exact client/version, native skill activation and reference reads only |
-| OpenCode | `.agents/skills` and supporting references | File placement and preservation | Exact client/version, native skill activation and reference reads only |
+| Codex local CLI | `.agents/skills`, `.codex/agents`, `.codex/hooks.json` | Exact files, strict TOML, direct hook protocols; local containment and normal trust UI, with approval blocked | Authorized non-Windows host: isolated managed-preference synchronization and normal trust persistence, separate current hook-definition review, explicit skill activation, custom-agent spawn, native event delivery before and after relocation |
+| Copilot CLI | `.agents/skills`, `.github/agents`, `.github/hooks/agent-assets.json` | Exact files and direct startup/tool/end protocols; user reports client available on Windows, unmeasured | Available Windows host: installed client/version, normal trust, skill/agent activation, native event delivery and relocation |
+| Copilot VS Code | Same repository paths | Adapter files only | Authorized non-Windows host: exact extension/version, disposable editor profile, native trust/loading/events; CLI evidence cannot substitute |
+| Gemini CLI | `.agents/skills`, `.gemini/agents`, `.gemini/settings.json` | Exact files and direct startup/tool/end protocols; user reports client available on Windows, unmeasured | Available Windows host: installed client/version, disposable profile, normal trust/loading/events and relocation |
+| Claude Code | `.claude/skills` and supporting references | File placement and preservation only; native loading unverified | Native verification deferred for initial release by explicit user decision; not a release gate on any OS |
+| Cursor | `.agents/skills` and supporting references | File placement and preservation only; native loading unverified | Native verification deferred for initial release by explicit user decision; not a release gate on any OS |
+| OpenCode | `.agents/skills` and supporting references | File placement and preservation | Authorized non-Windows host: exact client/version, native skill activation and reference reads only |
 
-No IDE, cloud, or hosted-client support is inferred. Skills-only adapters do not advertise agents/hooks. Native loading on every surface above remains unverified.
+No IDE, cloud, or hosted-client support is inferred. Skills-only adapters do not advertise agents/hooks. Native loading on every surface above remains unverified. Only Copilot CLI and Gemini CLI require Windows native sessions; all other Windows native surfaces remain explicitly unverified without blocking this allocated validation scope.
 
 ## Codex isolation and normal trust
 

@@ -31,8 +31,16 @@ The user approved the following distribution contract through the live interview
 12. **Project/global coexistence:** Follow each client's native precedence and report effective configuration, overlaps, and additive hook behavior. Avoid duplicate managed registrations where the client supports it. Preserve unrelated personal configuration. Universal isolation from personal configuration is not an initial requirement.
 13. **Operating systems:** Target macOS, Linux, and Windows for the installer and updater. Document and check each selected asset's client and runtime restrictions rather than inferring universal feature availability.
 
+## Validation allocation constraint, 2026-09-30
+
+During implementation, the user reports that the available native Windows environment has only Copilot CLI and Gemini CLI and prohibits installing other providers. Require native Windows client discovery/trust/events only for those existing CLI clients. Allocate Codex CLI, Copilot VS Code, and skills-only OpenCode native proof to authorized non-Windows hosts. Their Windows native loading remains unverified and is outside this delivery's required native gates. Reported availability is not execution evidence.
+
+The user subsequently explicitly defers Claude Code and Cursor native verification for the initial release. Their skills-only asset representations and automated file/path tests remain. Native discovery/reference access stays unverified on every OS and is not an initial release gate. This does not remove OpenCode's required native skill/reference check or authorize suppressing automated assertions.
+
+The three-OS installer/updater target and initial six-client asset scope remain unchanged. Preserve all Windows filesystem, ownership, mutation, interruption/recovery, clone, quoting, PowerShell, and direct installed-hook protocol requirements. Rendering another provider's assets in a disposable fixture does not install that provider client. This constraint changes validation allocation, not the accepted distribution architecture. The current [ExecPlan](../../agent-asset-installer/ExecPlan.md) and [client evidence](../../agent-asset-installer/client-validation.md) record the required client/OS pairs and remaining work.
+
 ## Consequences and next effort
 
-The route to the map's destination is clear. Prepare an implementation plan in a separate effort when implementation work is requested. It must translate this contract into the asset catalog, declared dependency data, provenance/ownership records, client adapters, and public-process validation. Existing installers and user-global copies have not been changed by this decision.
+This contract guides the separate [implementation ExecPlan](../../agent-asset-installer/ExecPlan.md), which translates it into the asset catalog, declared dependencies, provenance/ownership records, client adapters, and public-process validation. The original planning decision made no installer or user-directory changes; the user's subsequent execution request authorized implementation. Use the [current handoff](../handoff.md) for delivered behavior and remaining acceptance.
 
 Use [the recommendation](../recommendation.md) for comparative evidence and [the current source inventory](../local-inventory.md) for existing constraints. The installer currently refreshes assets from its local checkout; the scoped release check does not establish a stable release channel. Native trust requirements and the research's unverified product-surface limits still apply.

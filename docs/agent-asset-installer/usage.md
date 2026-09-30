@@ -111,11 +111,14 @@ The installer checks only declared supported runtime prerequisites and does not 
 | Codex | Skills, agents, and hooks | Public file/protocol checks; CLI 0.159.0 displayed the normal trust screen, but continuing failed during managed-preferences synchronization. Skill discovery and native hook-event delivery remain unproven. See [client validation](client-validation.md). |
 | Copilot CLI and VS Code | Skills, agents, and hooks | Documented separate surfaces; no normal client discovery or event run is claimed. |
 | Gemini CLI | Skills, agents, and hooks | Public file/protocol checks; trust and normal event delivery remain unverified. |
-| Claude Code, Cursor, OpenCode | Skills only | Do not select agent or hook assets for these clients. |
+| Claude Code, Cursor | Skills only | Native verification deferred for initial release; loading remains unverified. Do not select agent or hook assets. |
+| OpenCode | Skills only | Native skill/reference verification remains required on an authorized non-Windows host. Do not select agent or hook assets. |
 | macOS | POSIX mutation path | Public installer suite passes 100 cases on Python 3.14.6; normal client behavior is separate. |
 | Linux | Intended POSIX target | Native OS acceptance and Python 3.11 validation remain incomplete. |
 | Windows | Preview/status available; mutation and recovery fail closed | Native Windows backend and acceptance remain incomplete. PowerShell on macOS is not Windows proof. |
 
 The final public 100-case run passed on Python 3.14.6. Separate clone checks covered two clone cases; a genuine prior paired-record migration and malformed-format refusal also passed. These checks cover file and protocol behavior. They do not replace native OS jobs, an actual Python 3.11 run, or normal client trust, discovery, and event acceptance. Milestones 6 and 7 remain in progress until those gates are met.
+
+The available native Windows validation host has only Copilot CLI and Gemini CLI; installing other providers there is prohibited. Windows native client acceptance is limited to those two clients and has not yet run. Codex CLI, Copilot VS Code, and OpenCode require native proof on authorized non-Windows hosts; their Windows loading remains unverified. Claude Code and Cursor native verification is explicitly deferred for the initial release on every OS, with skills-only rendering and automated file tests retained. All Windows installer, recovery, clone, and direct launcher tests remain required; those tests do not require installing provider clients. This validation allocation does not make the unfinished Windows mutation backend supported.
 
 The [catalog audit](catalog-audit.md) is the historical milestone-2 dependency inventory; use `list` against the current source for current availability and installability. See [current client validation](client-validation.md) for measured rendering/protocol evidence and [the ExecPlan](ExecPlan.md) for remaining acceptance gates.
