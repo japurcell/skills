@@ -26,6 +26,7 @@ Success is observable from a disposable project: install a review workflow, see 
 - [x] (2026-09-30 00:25Z) [orchestration] User explicitly requests full implementation. Lift the prior hold and start isolated milestone worktrees.
 - [x] (2026-09-30 00:51Z) [milestone-1] Deliver one committed, pinned skill installation through the public CLI. Public subprocess acceptance has 24 passing cases; aggregate-runner CLI acceptance has 14 passing cases.
 - [x] (2026-09-30 01:23Z) [milestone-2] Deliver asset selection, required dependencies, and curated bundles. Selection acceptance has 17 passing public cases; the combined suite has 41 passing cases.
+- [ ] [aggregate-observability] Reproduce and repair the resumed aggregate failure in `scripts/test-gemini-hooks-observability.sh` (`Error: stepping, database is locked (5)`) without weakening assertions. This independent repair blocks final validation and any overlapping provider changes.
 - [ ] [milestone-3] Deliver preview, update, recorded restoration, strict read-only verification, conflict protection, and safe pruning (completed in isolated worktree: initial lifecycle/recovery and source-policy repair; remaining: regular-directory movement, authenticated pruning ownership, final review/validation/integration).
 - [ ] [milestone-4] Deliver native repository adapters for Codex, Copilot CLI/VS Code, and Gemini CLI.
 - [ ] [milestone-5] Deliver local and personal installations, verified adoption, and legacy entry-point integration.
@@ -34,6 +35,8 @@ Success is observable from a disposable project: install a review workflow, see 
 
 ## Surprises & Discoveries
 
+
+The first aggregate run after the user supplies flock reaches the registered suites and fails Gemini observability with `Error: stepping, database is locked (5)`. Its remaining suites continue. Treat this as an independent public-E2E repair node; preserve all assertions and disposable test boundaries.
 
 Milestone 3 independent review is unfinished. Its first review worker terminated with `This content was flagged for possible cybersecurity risk` before a verdict; a replacement general reviewer continued authorized temporary-file correctness checks. A real 32MiB staging directory replacement reproduced an external overwrite; POSIX parent descriptors repaired the linked-directory case. Non-POSIX mutation/recovery currently fails closed with `ASSET_PLATFORM_UNSUPPORTED`, requiring native Windows implementation in milestone 6. Replacement review also reproduced source-policy disagreement passing strict verification; shared selection/lock source agreement now repairs that case. Two required findings remain: a regular-directory replacement can leave visible payload and committed lock inconsistent, and a forged valid in-root lock item can authorize pruning an unrelated file. No approval or milestone completion is recorded.
 
@@ -63,6 +66,10 @@ The existing-repository review found that APM supports committing generated payl
 
 ## Decision Log
 
+
+Decision: Route the independent aggregate observability repair to Standard `gpt-6.1-sol`, effort `high`, on a private worktree. SQLite capture and shell test concurrency need connected reasoning; use public reproduction before source changes. Its files do not overlap lifecycle M3. Escalate repeated unexplained lock/data-integrity failures to Premium; fallback is `gpt-6-sol`, effort `high`. Available model ID is applied. Cost fit is provisional because published Copilot prices do not establish platform billing. Final acceptance and overlapping provider work wait for this repair.
+
+Rationale: The user requires fixing observed test failures and flakiness even outside the feature. Date/author: 2026-09-29, Codex orchestration.
 
 Decision: Permit an explicit maintained skill source root of `skills/<name>` or `.agents/skills/<same-name>`, defaulting to the published root. Ship the tracked repo-local `exec-plans` prerequisite with its declared bytes and repository notice. Keep genuinely absent required dependencies unavailable.
 
@@ -122,6 +129,8 @@ Rationale: Filesystem integrity needs connected reasoning and independent verifi
 
 ## Outcomes & Retrospective
 
+
+Execution resumed, 2026-09-30 02:09Z: the user installed `flock` and explicitly requested continuation. `/Users/adam/homebrew/bin/flock` reports 0.4.0; aggregate dependency preflight now passes and all 37 registered suites are scheduled. The original M3 implementer and replacement reviewer resume their unfinished node without discarding work. Both required findings remain acceptance blockers until repaired and independently verified. Native Windows/Linux and absent-client gates remain unmet.
 
 Execution checkpoint, 2026-09-30 01:58Z: milestones 1 and 2 are integrated. Milestone 3 has uncommitted implementation and review work in `/private/tmp/agent-assets-m3` on private `codex/agent-assets-m3`. Initial 54 public cases passed before final path/source-policy hardening, but required review repairs and a complete final rerun remain. The user confirmed this Mac has Codex only and asked whether `flock` needs installing. Under the standing direct-question instruction, active implementation/review agents are interrupted while the question is answered. Nothing was installed. Resume milestone 3's original implementer/reviewer with the two findings before integration; do not mark acceptance met. Native Windows/Linux/client gates remain unmet.
 
@@ -398,3 +407,6 @@ Revision note, 2026-09-30 01:28Z: Independently review and integrate milestone 2
 
 
 Revision note, 2026-09-30 01:58Z: Preserve the stopped milestone 3 worktree and required review findings while answering the user's prerequisite question. No source is integrated, no acceptance is claimed, and no dependency/home/client installation occurs.
+
+
+Revision note, 2026-09-30 02:09Z: Resume the authorized full execution after the user supplies flock. Reactivate original M3 agents, preserve unfinished work, and run the previously blocked aggregate without weakening prerequisites.
