@@ -2,11 +2,11 @@
 
 ## Status
 
-All eight decision/research tickets are closed. Architecture, strict offline `status --check`, checkout policy, and three test seams are accepted. The user explicitly requested full implementation through `execplan-implement` on 2026-09-29, lifting the earlier hold. Milestones 1 and 2 are integrated; milestone 3 is in progress; milestones 4 through 7 remain open. The base branch is `codex/research-agent-distribution-options`. Implementers use isolated unpushed worktrees; integration is serialized.
+All eight planning tickets are closed. Milestones 1 and 2 are integrated. Milestone 3 is unfinished in `/private/tmp/agent-assets-m3` on private `codex/agent-assets-m3`; it has uncommitted source/test/doc work and required review repairs. Active implementer `/root/installer_m3` and replacement reviewer `/root/installer_m3_recheck` are interrupted while answering the user's direct prerequisite question, under the standing answer-and-stop instruction. Implementation authorization remains established, but no further work or installation occurs this turn. Milestones 4 through 7 remain open. Base branch: `codex/research-agent-distribution-options`.
 
 ## Next step
 
-Complete milestone 3 through the accepted public lifecycle seam: preview/update/recorded restoration, retained-edit protection, safe pruning, interruption recovery, and offline strict verification. Then independently review and integrate its clean tested private branch. Milestone 2 integrated at `c0351a9a5daecb5f797baa1a0b6c794fbe2941c8`; its clean worktree/branch are removed. Both integrations had no rebase conflicts, so integration did not repeat tests. Follow the [ExecPlan](../agent-asset-installer/ExecPlan.md) and retain unrun native gates.
+On an explicit resume, reactivate the original milestone 3 implementer for repairs and replacement reviewer for its original review. Preserve their worktree; do not replace or discard uncommitted work. Repair (1) pruning authority from forged valid in-root lock items and (2) regular-directory movement during staged replacement leaving visible content inconsistent with the lock. Rerun affected public cases and final suite, complete independent review/doc pass, then commit and serialize integration. Windows mutations currently fail closed until safe native support is added in milestone 6. Use the [ExecPlan](../agent-asset-installer/ExecPlan.md). Milestone 2 tip is `c0351a9a5daecb5f797baa1a0b6c794fbe2941c8`; earlier clean node worktrees/branches are removed.
 
 ## Important boundaries
 
@@ -33,6 +33,8 @@ Complete milestone 3 through the accepted public lifecycle seam: preview/update/
 
 ## Verification
 
+Milestone 3's initial 54 public cases passed before final hardening. Review reproduced a same-target parent link replacement overwriting an external temporary sentinel; POSIX descriptor operations now fix that case. Source kind/location/policy disagreement previously passed strict check and now has a passing repair case. Final review and full rerun are outstanding. A structurally valid extra lock item still permits unrelated-file pruning; a regular-directory replacement can still produce successful lock/content disagreement. Do not trust unfinished M3 acceptance. The first security-review worker stopped with a service content flag before a verdict; its partial concern was retained and reproduced by the writer, then a replacement reviewer continued.
+
 Milestone 2 passes 17 public selection cases, 24 team-install cases, all 41 combined cases, and 14 runner cases. Independent code/security review approves without blocking findings. Compilation, OKF/whitespace, committed catalog listing, and actual repo-local exec-plans dependency installation pass. [The catalog audit](../agent-asset-installer/catalog-audit.md) records explicit required/conditional dependencies, support files, and unavailable chains. Maintained tracked prerequisites can declare a narrow `.agents/skills/<name>` source root without editing canonical authored skills. Optional prose mentions are excluded from dependency requirements. Agents/hooks remain unavailable to install until milestone 4.
 
 Milestone 1 passes 24 public team-install cases, 14 aggregate-runner CLI cases, Python compileall, OKF lint, and whitespace checks. A committed-catalog smoke proves actual caveman files, immutable HEAD, unchanged index, and no-write repetition. Primary review reproduced an unlisted tracked file's clean filter executing during equal-length content verification; the implementer repaired transform preflight for all selected-root index paths. Review confirmed the repair before integration. Source-index stat-cache mutation and nested attribute cancellation are also repaired and documented.
@@ -49,3 +51,14 @@ The aggregate baseline exits `2` before suites because this macOS host lacks `fl
 - Remaining documentation quality TODOs: None.
 
 Canonical targets are [repository instructions](../../.agents/instructions/repo.md), type `Agent Instruction`, and [the file map](../../.agents/memory/FILE_MAP.md), type `Agent Memory`. Frontmatter and unrelated content are preserved. OKF authoring uses the [profile branch](../../.agents/skills/okf-authoring/references/profile.md); the source-summary branch is not applicable.
+
+
+## Retained implementation artifacts
+
+- `/private/tmp/agent-assets-m3`: unfinished original M3 worktree and private branch. Do not clean it.
+- `/private/tmp/agent-assets-probes/docs/agent-asset-installer/prerequisites.md`: observed local prerequisites and native gates, not yet promoted.
+- `/private/tmp/agent-assets-probes/docs/agent-asset-installer/provider-runtime-audit.md`: canonical/provider loader, state, and registration anchors for M4, not yet promoted.
+- `docs/agent-asset-installer/catalog-audit.md`: corrected M2 audit already committed; the older temporary audit is superseded.
+- `/private/tmp/agent-assets-routing.json` and `/private/tmp/agent-assets-review-failure.txt`: applied model routing and failed review's preserved output/context.
+
+The user confirms this Mac has Codex only. `flock` is needed for the aggregate repository test suite, not the selected skill-only installer. No dependency has been installed.
