@@ -114,6 +114,10 @@ Decision: Route milestone 2 to Standard tier, `gpt-6.1-sol`, effort `high`, for 
 
 Rationale: Separate bounded evidence gathering from connected production implementation and verify every claim at the accepted public seams. Date/author: 2026-09-29, Codex orchestration.
 
+Decision: Route milestone 3 to Premium tier, `gpt-6-astra`, effort `high`, for demanding autonomous lifecycle work involving destructive pruning, retained-edit baselines, concurrent writers, interruption recovery, and offline verification. These interacting invariants and demonstrated earlier transform-preflight failure justify the tier. Exact available runtime ID is applied. Escalation trigger is a repeated integrity failure; fallback is `gpt-6.1-sol` with `xhigh` effort and independent review. Route independent security-sensitive review to Premium `gpt-6-sol`, effort `high`, using a different model from the writer. Its uncached rates match the skill's 6.1 snapshot, but platform billing is unknown. Review escalates to `gpt-6-astra` after repeated misses; same-tier fallback is `gpt-6.1-sol` with `high` effort. Bounded provider-runtime exploration retains Fast `gpt-6-luna`, effort `medium`, with the earlier exploration fallback and ambiguity trigger.
+
+Rationale: Filesystem integrity needs connected reasoning and independent verification; the tier follows the interaction and stakes rather than file count. Date/author: 2026-09-29, Codex orchestration.
+
 ## Outcomes & Retrospective
 
 
@@ -201,7 +205,7 @@ Run `rtk proxy python3 scripts/test-agent-assets.py --group selection`. Prove in
 ### Milestone 3: Update, restore, and prune owned content safely
 
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
@@ -384,3 +388,6 @@ Revision note, 2026-09-30 00:51Z: Complete milestone 1 in its isolated worktree,
 Revision note, 2026-09-30 00:55Z: Review and integrate milestone 1 by conflict-free rebase/fast-forward. The unlisted same-length clean-filter defect is repaired and reviewed. Remove its clean worktree/branch and dispatch a fresh milestone 2 implementer.
 
 Revision note, 2026-09-30 01:23Z: Complete milestone 2 catalog, selection, missing dependency chains, six-client skill paths, explicit repo-local prerequisite roots, and public schema/refusal acceptance. Copy and correct the source audit, synchronize milestone status/checkbox and actual validation outcomes, and finish the canonical documentation pass. Agent/hook rendering and all later milestone/native gates remain open.
+
+
+Revision note, 2026-09-30 01:28Z: Independently review and integrate milestone 2 at c0351a9a5daecb5f797baa1a0b6c794fbe2941c8 without rebase conflicts. Remove its clean worktree/branch and start the fresh lifecycle implementer for milestone 3. Native providers/scopes and external OS/client gates remain later work.

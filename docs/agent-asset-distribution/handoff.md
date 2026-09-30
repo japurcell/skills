@@ -2,11 +2,11 @@
 
 ## Status
 
-All eight decision/research tickets are closed. Architecture, strict offline `status --check`, checkout policy, and three test seams are accepted. The user explicitly requested full implementation through `execplan-implement` on 2026-09-29, lifting the earlier hold. Milestone 1 is integrated; milestone 2 is in progress; milestones 3 through 7 remain open. The base branch is `codex/research-agent-distribution-options`. Implementers use isolated unpushed worktrees; integration is serialized.
+All eight decision/research tickets are closed. Architecture, strict offline `status --check`, checkout policy, and three test seams are accepted. The user explicitly requested full implementation through `execplan-implement` on 2026-09-29, lifting the earlier hold. Milestones 1 and 2 are integrated; milestone 3 is in progress; milestones 4 through 7 remain open. The base branch is `codex/research-agent-distribution-options`. Implementers use isolated unpushed worktrees; integration is serialized.
 
 ## Next step
 
-Complete milestone 2 through public catalog/selection/dependency behavior, then review and integrate its clean tested private branch. Follow the task graph in [the ExecPlan](../agent-asset-installer/ExecPlan.md). Milestone 1 integrated at `58a0e1cde5516f57451626d75f1a59451443c714`; its clean worktree and branch are removed. No rebase conflicts occurred, so tests were not repeated during integration. Complete remaining milestones without reopening settled decisions or claiming unrun native gates.
+Complete milestone 3 through the accepted public lifecycle seam: preview/update/recorded restoration, retained-edit protection, safe pruning, interruption recovery, and offline strict verification. Then independently review and integrate its clean tested private branch. Milestone 2 integrated at `c0351a9a5daecb5f797baa1a0b6c794fbe2941c8`; its clean worktree/branch are removed. Both integrations had no rebase conflicts, so integration did not repeat tests. Follow the [ExecPlan](../agent-asset-installer/ExecPlan.md) and retain unrun native gates.
 
 ## Important boundaries
 
@@ -32,6 +32,8 @@ Complete milestone 2 through public catalog/selection/dependency behavior, then 
 - APM's audit motivates checking committed files before any repair. Git's documented checkout conversion motivates declaring line-ending policy, retaining exact hashes, and testing fresh Windows clones. The comparison holds the accepted refinements and evidence limits.
 
 ## Verification
+
+Milestone 2 passes 17 public selection cases, 24 team-install cases, all 41 combined cases, and 14 runner cases. Independent code/security review approves without blocking findings. Compilation, OKF/whitespace, committed catalog listing, and actual repo-local exec-plans dependency installation pass. [The catalog audit](../agent-asset-installer/catalog-audit.md) records explicit required/conditional dependencies, support files, and unavailable chains. Maintained tracked prerequisites can declare a narrow `.agents/skills/<name>` source root without editing canonical authored skills. Optional prose mentions are excluded from dependency requirements. Agents/hooks remain unavailable to install until milestone 4.
 
 Milestone 1 passes 24 public team-install cases, 14 aggregate-runner CLI cases, Python compileall, OKF lint, and whitespace checks. A committed-catalog smoke proves actual caveman files, immutable HEAD, unchanged index, and no-write repetition. Primary review reproduced an unlisted tracked file's clean filter executing during equal-length content verification; the implementer repaired transform preflight for all selected-root index paths. Review confirmed the repair before integration. Source-index stat-cache mutation and nested attribute cancellation are also repaired and documented.
 
