@@ -104,10 +104,14 @@ Decision: Route milestone 1 to Standard tier, `gpt-6.1-sol`, effort `high`. Conn
 
 Rationale: Standard meets the task's connected-code requirements; Premium is not justified before evidence of failure. Task-specific capability is provisional and checked through subprocess acceptance. Date/author: 2026-09-29, Codex orchestration.
 
+Decision: Route milestone 2 to Standard tier, `gpt-6.1-sol`, effort `high`, for connected catalog/dependency resolution and client selection with public TDD. Runtime applies this exact available ID. Escalate after repeated dependency/safety failures; same-tier fallback is `gpt-6-sol` with `high` effort. Route prerequisite and three-bundle dependency exploration to Fast tier, `gpt-6-luna`, effort `medium`, because each is bounded read-only evidence gathering. Escalate ambiguous semantics to the implementer; fallback is `gpt-5.6-luna` with `medium` effort. Cost assumptions remain provisional because Copilot rates do not establish this platform's billing.
+
+Rationale: Separate bounded evidence gathering from connected production implementation and verify every claim at the accepted public seams. Date/author: 2026-09-29, Codex orchestration.
+
 ## Outcomes & Retrospective
 
 
-Planning, test-seam approval, and the six-repository review are complete. Implementation is authorized by the user's explicit execution request. Milestone 1 is complete: the isolated `codex/agent-assets-m1` worktree adds one selected committed skill installation for Codex with provenance, exact files, narrow checkout policy, whole-operation conflict preflight, unchanged indexes, and no-write repetition. Milestones 2 through 7 remain open. No real home, client, hook runtime, or legacy installer has changed. Native support and interruption recovery are later acceptance gates.
+Planning, test-seam approval, and the six-repository review are complete. Implementation is authorized by the user's explicit execution request. Milestone 1 is complete: the isolated `codex/agent-assets-m1` worktree adds one selected committed skill installation for Codex with provenance, exact files, narrow checkout policy, whole-operation conflict preflight, unchanged indexes, and no-write repetition. Milestone 2 is in progress; milestones 3 through 7 remain open. No real home, client, hook runtime, or legacy installer has changed. Native support and interruption recovery are later acceptance gates.
 
 Milestone 1 validation on 2026-09-30 UTC: `rtk proxy python3 scripts/test-agent-assets.py --group team-install` passes 24 public CLI/file-effects cases, including pinned revisions and disposable Git-URL acquisition. `rtk proxy python3 scripts/test_test_all.py` passes 14 cases after synchronizing both maintained-suite registries. `rtk proxy python3 -m compileall -q scripts/agent-assets.py scripts/agent_assets scripts/test-agent-assets.py scripts/test-all.py scripts/test_test_all.py`, `rtk proxy ./scripts/lint-okf.py`, and `rtk git diff --check` pass. The real `rtk proxy ./scripts/test-all.py` exits `2` before suites because `flock` is unavailable on this macOS host, matching the baseline; no prerequisite was weakened. Initial red proof was the missing public CLI; later red cases verified actual repetition writes, source-index churn, unsupported checkout rules, marker removal, credential URL validation, output reporting, source executable intent, and filter execution. The catalog currently contains only `skill:caveman` for Codex. Dependencies, bundles, lifecycle/status, other adapters/scopes, transactional recovery, native Windows/Linux, and live-client acceptance remain unimplemented.
 
@@ -176,7 +180,7 @@ Run `rtk proxy python3 scripts/test-agent-assets.py --group team-install` and `r
 ### Milestone 2: Resolve bundles and required assets
 
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
@@ -367,3 +371,6 @@ Revision note, 2026-09-29 local date (2026-09-30 00:01Z): Recorded the user's ac
 Revision note, 2026-09-30 00:25Z: The user requests full implementation through `execplan-implement`. Lift the hold, record task dependencies and model routing, and begin milestone 1 in an isolated private worktree. Historical hold decisions remain as history.
 
 Revision note, 2026-09-30 00:51Z: Complete milestone 1 in its isolated worktree, atomically synchronize its status and checkbox, and record actual public acceptance, source-index/filter discoveries, canonical doc pass, and the missing aggregate prerequisite. Leave all later milestone behavior and native acceptance open.
+
+
+Revision note, 2026-09-30 00:55Z: Review and integrate milestone 1 by conflict-free rebase/fast-forward. The unlisted same-length clean-filter defect is repaired and reviewed. Remove its clean worktree/branch and dispatch a fresh milestone 2 implementer.

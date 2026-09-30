@@ -2,11 +2,11 @@
 
 ## Status
 
-All eight decision/research tickets are closed. Architecture, strict offline `status --check`, checkout policy, and three test seams are accepted. The user explicitly requested full implementation through `execplan-implement` on 2026-09-29, lifting the earlier hold. Milestone 1 is in progress; milestones 2 through 7 remain open. The base branch is `codex/research-agent-distribution-options`. Implementers use isolated unpushed worktrees; integration is serialized.
+All eight decision/research tickets are closed. Architecture, strict offline `status --check`, checkout policy, and three test seams are accepted. The user explicitly requested full implementation through `execplan-implement` on 2026-09-29, lifting the earlier hold. Milestone 1 is integrated; milestone 2 is in progress; milestones 3 through 7 remain open. The base branch is `codex/research-agent-distribution-options`. Implementers use isolated unpushed worktrees; integration is serialized.
 
 ## Next step
 
-Implement milestone 1 through the public CLI seam with one failing subprocess behavior at a time. Integrate its clean tested branch, remove its worktree, then dispatch a fresh implementer for milestone 2. Follow the task graph and acceptance gates in [the ExecPlan](../agent-asset-installer/ExecPlan.md). Complete all milestones without reopening settled decisions. Never claim live client or native OS evidence that was not run.
+Complete milestone 2 through public catalog/selection/dependency behavior, then review and integrate its clean tested private branch. Follow the task graph in [the ExecPlan](../agent-asset-installer/ExecPlan.md). Milestone 1 integrated at `58a0e1cde5516f57451626d75f1a59451443c714`; its clean worktree and branch are removed. No rebase conflicts occurred, so tests were not repeated during integration. Complete remaining milestones without reopening settled decisions or claiming unrun native gates.
 
 ## Important boundaries
 
@@ -33,14 +33,14 @@ Implement milestone 1 through the public CLI seam with one failing subprocess be
 
 ## Verification
 
-`rtk proxy ./scripts/lint-okf.py` and `rtk git diff --check` pass. A read-only validator checks 23 Markdown files, 93 local links, eight closed ticket resolutions, no remaining planning question, the explicit hold, seven synchronized open implementation milestones, and the exact six-document scope. Only planning documents and one file-map phrase changed. No implementation tests have run. Research inspected first-party documentation and code without executing third-party installers or clients. Some citations use moving upstream `main`; release evidence is distinguished from inspected source.
+Milestone 1 passes 24 public team-install cases, 14 aggregate-runner CLI cases, Python compileall, OKF lint, and whitespace checks. A committed-catalog smoke proves actual caveman files, immutable HEAD, unchanged index, and no-write repetition. Primary review reproduced an unlisted tracked file's clean filter executing during equal-length content verification; the implementer repaired transform preflight for all selected-root index paths. Review confirmed the repair before integration. Source-index stat-cache mutation and nested attribute cancellation are also repaired and documented.
 
-No live client installation was run. Codex hosted/cloud customization, Gemini extension-packaged agent maturity, and uniform native-plugin pinning remain unverified research limits. The local release-policy probe did not inspect remote hosting; see the source inventory's scoped findings.
+The aggregate baseline exits `2` before suites because this macOS host lacks `flock`; prerequisites were not weakened. macOS has Python 3.14.6, Git 2.50.1, Bash 3.2.57, PowerShell 7.6.6, RTK 0.50.0, and Codex CLI 0.159.0. Other advertised client commands are absent from PATH. No native Windows/Linux job, live client, real-home installation, or hook delivery has run. These remain acceptance gates.
 
 ## Documentation pass
 
-- Added: None.
-- Changed: Refinement ticket, decision map, comparison, feature handoff, and ExecPlan to reflect accepted decisions; file-map wording remains independent of proposal status.
+- Added: Milestone 1 public CLI, internal package, explicit catalog, and public subprocess suite.
+- Changed: Milestone 1 source/test registry plus script instructions, API/file maps, script known issues/testing guidance, ExecPlan, and feature handoff reflect implemented behavior. Later milestones remain unimplemented.
 - Split or moved: None. Retained research stays at the user-requested `docs/` location.
 - Deduplicated: Accepted decisions live in the closed refinement ticket; execution requirements are incorporated in the self-contained ExecPlan.
 - Index updates: Distribution map includes the closed refinement ticket. Existing canonical file-map wording is updated; memory INDEX remains unchanged because no memory file was added, removed, renamed, or repurposed.
