@@ -7,9 +7,9 @@
 
 ## Question
 
-When is maintenance due, and what evidence makes knowledge eligible for refresh, consolidation, relocation, or pruning?
+When is maintenance due, and how does it apply the agreed eligibility rules for refresh, consolidation, relocation, and pruning?
 
-Define scheduling signals, maintenance scope, stale-knowledge detection, retention rules, and reversible change records. Decide how maintenance proceeds when no agent session is active or no semantic changes are needed. Preserve authoritative instructions under the Knowledge Evidence Policy and avoid depending on a voluntary periodic reminder.
+Define scheduling signals, maintenance scope, stale-knowledge detection, retention rules, and reversible change records. Decide how maintenance proceeds when no agent session is active or no semantic changes are needed. Apply the closed [Knowledge Evidence Policy](knowledge-evidence-policy.md), including compact proportional evidence, preserved policy meaning, and inactivity as a review signal only. Avoid depending on a voluntary periodic reminder.
 
 ---
 

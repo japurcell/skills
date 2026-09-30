@@ -13,6 +13,8 @@ Define always-present guidance, task-scoped knowledge, lookup units, relevance s
 
 Use [Reference Evidence](reference-evidence.md) to distinguish provider discovery rules, filenames, CWD-based loading, and tool-triggered loading. Include compaction and child-agent context propagation rather than assuming inherited knowledge.
 
+Apply [Knowledge Evidence Policy](knowledge-evidence-policy.md) when defining delivery of established guidance, uncertain freshness, disputed facts, and candidates available for investigation. Preserve the distinction between delivery and demonstrated application without requiring detailed usage attribution.
+
 ---
 
 <!-- Resolution will be appended here. -->
