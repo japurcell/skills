@@ -9,7 +9,7 @@ Commands were discovered with `command -v` and queried using `--version` only. P
 | Command | Observed |
 | --- | --- |
 | Python (`python3`) | 3.14.6; resolves through `/Users/adam/.pyenv/shims/python3`. |
-| Additional Python | 3.13.14 is installed. The complete current 64-case public installer suite passes on this runtime in 64.547 seconds. This is macOS evidence only. |
+| Additional Python | 3.13.14 is installed. The complete post-M4 78-case public installer suite passes on this runtime in 102.190 seconds. This is macOS evidence only. |
 | flock | 0.4.0 at `/Users/adam/homebrew/bin/flock`, installed by the user. |
 | Git | 2.50.1 (Apple Git-155). |
 | Bash | GNU bash 3.2.57(1)-release (arm64-apple-darwin25). |
@@ -23,7 +23,7 @@ Commands were discovered with `command -v` and queried using `--version` only. P
 | Cursor CLI (`cursor`) | Not found on PATH. |
 | OpenCode CLI (`opencode`) | Not found on PATH. |
 
-**Prerequisite refresh:** flock is now available and the aggregate dependency preflight succeeds. The resumed baseline runs 37 suites, with 34 passing and three existing fixture failures; those failures and provider trace-state isolation are repaired and integrated. The aggregate after M3 and both repair nodes passes all 37 suites with zero failures in 378.4 seconds. Existing host-specific skips remain unverified native Windows evidence. Git and Python remain installer prerequisites; selected RTK hooks require RTK. Do not add flock as a skill-only installer prerequisite. No Windows or Linux host evidence is available, and Python 3.11 has not been observed locally.
+**Prerequisite refresh:** flock is now available and the aggregate dependency preflight succeeds. The resumed baseline runs 37 suites, with 34 passing and three existing fixture failures; those failures and provider trace-state isolation are repaired and integrated. The aggregate after M3 and both repair nodes passes all 37 suites with zero failures in 378.4 seconds. The post-M4 aggregate again passes all 37 suites with zero failures in 412.7 seconds on Python 3.14.6, including 78 public installer cases; all 78 also pass separately on Python 3.13.14. Existing host-specific skips remain unverified native Windows evidence. Git and Python remain installer prerequisites; selected RTK hooks require RTK. Do not add flock as a skill-only installer prerequisite. No Windows or Linux host evidence is available, and Python 3.11 has not been observed locally.
 
 ## Official paths and trust constraints
 
