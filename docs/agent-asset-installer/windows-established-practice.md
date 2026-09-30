@@ -2,6 +2,8 @@
 
 Research date: 2026-09-30. This report evaluates the unfinished Windows writer in [the ExecPlan](ExecPlan.md), not native client loading. Research makes no implementation or contract change.
 
+Decision update, 2026-09-30 20:24Z: The user subsequently approves ordinary-rights DACL and mandatory-integrity-label preservation and explicitly rejects additional Windows requirements. Comprehensive arbitrary audit-SACL preservation is not guaranteed and is not a universal support gate. Keep existing ownership, ancestor identity, conflict and authenticated recovery protections; refuse known unsupported metadata loss without elevation. Implementation resumes with one public install/update/recovery slice. This approval changes the execution policy, not the research evidence below.
+
 ## Conclusion
 
 **The blanket audit-SACL preservation requirement appears over-scoped relative to the established implementations inspected.** CPython, Git, Rust, .NET and VS Code have practical Windows publication paths without wrapper-level inspection or verification of the displaced file's complete audit policy. None of the cited paths requests `SeSecurityPrivilege`. That supports reconsidering our requirement, not claiming that security metadata is irrelevant or that the underlying APIs never preserve it.
@@ -43,7 +45,7 @@ Likewise, none of this establishes equivalence for concurrent parent substitutio
 
 ## Recommended decision and implementation direction
 
-Decide the owned-file metadata contract before more backend expansion. A defensible proposal is to preserve DACLs and mandatory integrity labels at ordinary rights, or refuse their replacement; retain explicit refusal for unsupported metadata such as named streams until preservation is implemented. Treat comprehensive arbitrary audit-SACL preservation as a separate capability rather than an implicit universal gate. **The user has not approved this narrowing.**
+The approved owned-file metadata contract preserves DACLs and mandatory integrity labels at ordinary rights, or refuses their replacement; retain explicit refusal for known unsupported metadata loss such as named streams until preservation is implemented. Comprehensive arbitrary audit-SACL preservation is not guaranteed and is not an implicit universal gate. **The user approves this policy on 2026-09-30; no additional Windows requirements are introduced.**
 
 Keep the staged-file publication design, ancestor/reparse protection, exact ownership and conflict checks, and authenticated interrupted-operation recovery. Preserve every existing regression. Limit the next implementation experiment to one public install/update/recovery slice using the decided metadata policy; do not build another disabled general-purpose security-descriptor facade.
 
