@@ -30,13 +30,14 @@ An implementation-ready specification for a reusable, autonomous context managem
 - [Lifecycle Guarantees](tickets/lifecycle-guarantees.md): Codex desktop and three CLIs require automatic stages, verified completion, next-event recovery, and separately certified native or fallback paths.
 - [Context Organization and Skill Boundary](tickets/context-organization-and-skill-boundary.md): Indexed knowledge and the cooperative agent-brain skill/CLI use foreground semantics, compact metadata, and separately certified native adapters.
 - [Maintenance Scheduling and Pruning](tickets/maintenance-scheduling-and-pruning.md): Foreground dream uses periodic bounded review with rotating coverage, evidenced pruning, and retention that protects unfinished work and reversible history.
+- [Failure and Concurrency Contract](tickets/failure-and-concurrency-contract.md): Worktree-local invocation and ownership coordinate verifiable publication, bounded retries, and recovery that preserves pending work and portable evidence.
 
 ## Not yet specified
 
 <!-- FOG START -->
 
-- Capability certification may expose an unexpected interaction among native events, invocation-context binding, and foreground continuation that requires another integration choice. Revisit exceptions beyond the selected lifecycle and scheduling contracts and the unsupported-path policy.
-- A concrete legacy-repository pilot may expose unanticipated interactions among protected documents, existing metadata, custom hooks, and worktree state. Ordinary setup, batch limits, retention implementation, recovery, and pilot validation belong to the live tickets; newly exposed exceptions may need another decision.
+- Capability certification may expose an unexpected interaction among native events, invocation-context binding, foreground continuation, and managed publication visibility. Revisit exceptions beyond the selected lifecycle, ownership, recovery, and unsupported-path contracts.
+- A concrete legacy-repository pilot may expose unanticipated interactions among protected documents, existing metadata, custom hooks, and worktree state. Concrete setup, schemas, SQLite/runtime settings, batch limits, publication/recovery checks, and pilot measurements belong to Adoption and Validation Contract; newly exposed exceptions may need another decision.
 
 <!-- FOG END -->
 
