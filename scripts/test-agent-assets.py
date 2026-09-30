@@ -71,6 +71,74 @@ class Fixture(unittest.TestCase):
                 for p in self.target.rglob("*") if p.is_file() and ".git" not in p.relative_to(self.target).parts}
 
 class TeamInstallTests(Fixture):
+    def test_modern_metadata_requirement_cannot_be_omitted_or_mistyped(self):
+        self.target.joinpath(".gitattributes").write_bytes(b'.gitattributes text eol=lf\n')
+        self.assertEqual(self.install().returncode, 0)
+        lock_path = self.target / ".agent-assets/lock.json"
+        original = json.loads(lock_path.read_bytes())
+        source_index = self.source.joinpath(".git/index").read_bytes()
+        for corruption in ("missing", "type", "version"):
+            with self.subTest(corruption=corruption):
+                lock = json.loads(json.dumps(original))
+                if corruption == "missing":
+                    lock.pop("attribute_file_policy")
+                elif corruption == "type":
+                    lock["attribute_file_policy"] = "text eol=lf"
+                else:
+                    lock["schema_version"] = 1
+                lock_path.write_text(json.dumps(lock), encoding="utf-8")
+                before = SelectionTests.fingerprint(self)
+                for command in (("status", "--check"), ("restore",)):
+                    result = self.cli(*command, "--repo", str(self.target))
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertIn("ASSET_RECORD_INVALID", result.stderr)
+                    self.assertEqual(SelectionTests.fingerprint(self), before)
+                    self.assertEqual(self.source.joinpath(".git/index").read_bytes(), source_index)
+
+    def test_borrowed_metadata_policy_drift_is_read_only_failure(self):
+        attributes = self.target / ".gitattributes"
+        attributes.write_bytes(b'.gitattributes text eol=lf\n*.png -text\n')
+        self.assertEqual(self.install().returncode, 0)
+        lock = json.loads(self.target.joinpath(".agent-assets/lock.json").read_bytes())
+        self.assertNotIn(".gitattributes", [entry["destination"] for entry in lock["attributes"]])
+        attributes.write_bytes(attributes.read_bytes() + b'.gitattributes text eol=crlf\n')
+        before = SelectionTests.fingerprint(self)
+        result = self.cli("status", "--repo", str(self.target), "--check", "--format", "json")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn(".gitattributes", [entry["destination"] for entry in json.loads(result.stdout)["verification"]["drift"]])
+        self.assertEqual(SelectionTests.fingerprint(self), before)
+
+    def test_older_authentic_records_update_to_metadata_checkout_policy(self):
+        self.assertEqual(self.install().returncode, 0)
+        lock_path = self.target / ".agent-assets/lock.json"
+        lock = json.loads(lock_path.read_bytes())
+        lock["attributes"] = [entry for entry in lock["attributes"] if entry["destination"] != ".gitattributes"]
+        lock.pop("attribute_file_policy", None)
+        lock["schema_version"] = 1
+        selection_path = self.target / ".agent-assets/selection.json"
+        selection = json.loads(selection_path.read_bytes())
+        selection["schema_version"] = 1
+        selection_bytes = json.dumps(selection, sort_keys=True, separators=(",", ":")).encode()
+        selection_path.write_bytes(selection_bytes)
+        lock["selection_digest"] = hashlib.sha256(selection_bytes).hexdigest()
+        lock_path.write_text(json.dumps(lock), encoding="utf-8")
+        attributes = self.target / ".gitattributes"
+        attributes.write_bytes(attributes.read_bytes().replace(b'".gitattributes" text eol=lf\n', b""))
+        self.assertEqual(self.cli("status", "--repo", str(self.target), "--check").returncode, 0)
+        result = self.cli("restore", "--repo", str(self.target))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(b'".gitattributes" text eol=lf\n', attributes.read_bytes())
+        self.assertEqual(self.cli("status", "--repo", str(self.target), "--check").returncode, 0)
+
+    def test_metadata_checkout_conflicts_preserve_the_complete_target(self):
+        for policy in (b'.gitattributes text eol=crlf\n', b'.gitattributes filter=foreign\n'):
+            self.target.joinpath(".gitattributes").write_bytes(policy)
+            before = SelectionTests.fingerprint(self)
+            result = self.install()
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("ASSET_CONFLICT", result.stderr)
+            self.assertEqual(SelectionTests.fingerprint(self), before)
+
     def test_installs_one_committed_skill_with_provenance_and_untouched_index(self):
         index = self.git(self.target, "ls-files", "--stage")
         result = self.install()
@@ -2085,14 +2153,193 @@ class ScopeTests(Fixture):
         self.assertEqual(checked.returncode, 0, checked.stderr)
 
 
+class CloneTests(Fixture):
+    """Audit committed payloads before repair, including on read-only Windows."""
+
+    catalog = SelectionTests.catalog
+    save_catalog = SelectionTests.save_catalog
+    maintained_source = ProviderTests.maintained_source
+
+    def tearDown(self):
+        # Native hook maintenance is detached and may finish opening its SQLite
+        # files just after the launcher exits. Allow that real process to close.
+        deadline = time.monotonic() + 5
+        while True:
+            try:
+                super().tearDown()
+                return
+            except OSError:
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.05)
+
+    def prepare_bundle(self, bundle):
+        self.assertEqual(os.name, "posix", "Fixture installation requires the safe POSIX writer")
+        self.maintained_source()
+        catalog = self.catalog()
+        specs = catalog["assets"]["skill:caveman"]["source_paths"]
+        for name, data, content, endings in (
+            ("literal.txt", b"first\nsecond\n", "text", "lf"),
+            ("literal.cmd", b"@echo off\r\necho fixture\r\n", "text", "crlf"),
+            ("literal.bin", b"\x00\xff\r\n\x80\n", "binary", "none"),
+        ):
+            path = "skills/caveman/" + name
+            self.source.joinpath(path).write_bytes(data)
+            specs.append({"path": path, "content": content, "line_endings": endings})
+        self.save_catalog(catalog)
+        result = self.cli("install", "--repo", str(self.target), "--source", self.source.as_uri(),
+                          "--client", "codex", "--client", "copilot", "--client", "gemini",
+                          "--asset", "hook:required-skills")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.git(self.target, "add", ".")
+        self.git(self.target, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-m", "committed payload")
+        self.git(self.target, "bundle", "create", str(bundle), "HEAD")
+        shutil.rmtree(self.source)
+
+    def bundle(self):
+        provided = os.environ.get("AGENT_ASSETS_CLONE_BUNDLE")
+        if provided:
+            bundle = Path(provided).resolve()
+            self.assertTrue(bundle.is_file(), "The committed CI payload bundle is required")
+            return bundle
+        bundle = self.root / "payload.bundle"
+        self.prepare_bundle(bundle)
+        return bundle
+
+    def clone(self, bundle, autocrlf):
+        clone = self.root / ("relocated 'quoted' ü & payload " + autocrlf)
+        self.git(self.root, "-c", "core.autocrlf=" + autocrlf, "clone", str(bundle), str(clone))
+        self.git(clone, "config", "core.autocrlf", autocrlf)
+        return clone
+
+    def audit(self, clone, expected=0):
+        before = {p.relative_to(clone).as_posix(): (p.stat().st_mtime_ns, p.read_bytes())
+                  for p in clone.rglob("*") if p.is_file()}
+        result = self.cli("status", "--repo", str(clone), "--check", "--format", "json")
+        self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+        self.assertEqual({p.relative_to(clone).as_posix(): (p.stat().st_mtime_ns, p.read_bytes())
+                          for p in clone.rglob("*") if p.is_file()}, before)
+        return json.loads(result.stdout)
+
+    def test_committed_clone_audits_literal_bytes_then_runs_relocated_launchers(self):
+        bundle = self.bundle()
+        for autocrlf in ("true", "false"):
+            with self.subTest(autocrlf=autocrlf):
+                clone = self.clone(bundle, autocrlf)
+                self.assertTrue(self.audit(clone)["verification"]["passed"])
+                expected = {"SKILL.md": SKILL, "literal.txt": b"first\nsecond\n",
+                            "literal.cmd": b"@echo off\r\necho fixture\r\n", "literal.bin": b"\x00\xff\r\n\x80\n"}
+                lock = json.loads(clone.joinpath(".agent-assets/lock.json").read_bytes())
+                recorded = {item["destination"]: item["baseline_digest"] for item in lock["items"]}
+                for name, data in expected.items():
+                    path = ".agents/skills/caveman/" + name
+                    self.assertEqual(clone.joinpath(path).read_bytes(), data)
+                    self.assertEqual(recorded[path], hashlib.sha256(data).hexdigest())
+                self.run_launchers(clone, autocrlf)
+                self.assertEqual(self.git(clone, "status", "--porcelain"), "")
+
+    def run_launchers(self, clone, label):
+        nested = clone / "nested directory"
+        nested.mkdir()
+        home, state = self.root / ("empty home " + label), self.root / ("state " + label)
+        home.mkdir()
+        env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home),
+               "AGENT_ASSETS_STATE_DIR": str(state), "PYTHONDONTWRITEBYTECODE": "1",
+               "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]}
+        for provider, path, event in (("codex", ".codex/hooks.json", "SessionStart"),
+                                      ("copilot", ".github/hooks/agent-assets.json", "sessionStart"),
+                                      ("gemini", ".gemini/settings.json", "SessionStart")):
+            config = json.loads(clone.joinpath(path).read_bytes())
+            entry = config["hooks"][event][-1]
+            hook = entry if provider == "copilot" else entry["hooks"][0]
+            if os.name == "nt":
+                command = hook.get("powershell", hook.get("commandWindows", hook.get("command")))
+                shell = ["pwsh", "-NoProfile", "-Command", command] if provider == "copilot" else ["cmd", "/d", "/s", "/c", command]
+            else:
+                command = hook.get("bash", hook.get("command"))
+                shell = ["bash", "-c", command]
+            payload = {"hook_event_name": event, "source": "startup", "session_id": "clone-fixture", "cwd": str(nested)}
+            result = subprocess.run(shell, input=json.dumps(payload), text=True, capture_output=True,
+                                    cwd=nested, env=env, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            response = json.loads(result.stdout.splitlines()[-1])
+            context = response.get("additionalContext") or response.get("hookSpecificOutput", {}).get("additionalContext")
+            self.assertIn("Fixture skill.", context or "", result.stdout + result.stderr)
+            self.assertTrue(any(state.joinpath(provider).rglob("audit.log")))
+        self.assertEqual(list(home.iterdir()), [])
+
+    def test_committed_damage_fails_offline_audit_without_repair(self):
+        bundle = self.bundle()
+        for autocrlf in ("true", "false"):
+            with self.subTest(autocrlf=autocrlf):
+                clone = self.clone(bundle, autocrlf)
+                path = ".agents/skills/caveman/literal.bin"
+                clone.joinpath(path).write_bytes(b"intentional committed damage\x00")
+                self.git(clone, "add", path)
+                self.git(clone, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                         "-c", "commit.gpgsign=false", "commit", "-m", "damaged payload")
+                report = self.audit(clone, expected=1)
+                self.assertIn(path, [entry["destination"] for entry in report["verification"]["drift"]])
+                self.assertEqual(self.git(clone, "status", "--porcelain"), "")
+
+
+class WindowsBoundaryTests(Fixture):
+    """Native refusal evidence only; this does not certify a Windows writer."""
+
+    fingerprint = SelectionTests.fingerprint
+
+    def setUp(self):
+        self.assertEqual(os.name, "nt", "windows-boundary requires actual native Windows")
+        super().setUp()
+
+    def test_native_install_and_powershell_refuse_before_mutation(self):
+        before = self.fingerprint()
+        result = self.install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ASSET_PLATFORM_UNSUPPORTED", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        result = subprocess.run(["pwsh", "-NoProfile", "-File", str(SCRIPT.with_name("install.ps1")),
+                                 "install", "--repo", str(self.target), "--source", str(self.source),
+                                 "--client", "codex", "--asset", "skill:caveman"],
+                                text=True, capture_output=True, cwd=self.target, timeout=30)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ASSET_PLATFORM_UNSUPPORTED", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_native_pending_recovery_preserves_evidence_and_strict_check_never_recovers(self):
+        journal = self.target / ".git/agent-assets-journal.json"
+        journal.write_bytes(b'{"interrupted":"unverified Windows operation"}\n')
+        before = self.fingerprint()
+        result = self.install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ASSET_PLATFORM_UNSUPPORTED", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        result = self.cli("status", "--repo", str(self.target), "--check")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ASSET_INTERRUPTED", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--group", choices=("team-install", "selection", "lifecycle", "providers", "scopes"))
+    groups = {"team-install": TeamInstallTests, "selection": SelectionTests, "lifecycle": LifecycleTests,
+              "providers": ProviderTests, "scopes": ScopeTests, "clone": CloneTests,
+              "windows-boundary": WindowsBoundaryTests}
+    parser.add_argument("--group", choices=tuple(groups))
+    parser.add_argument("--export-clone-bundle", type=Path, help="Create a committed POSIX-installed payload for cross-OS read-only checks")
     args, remaining = parser.parse_known_args()
-    if args.group not in (None, "team-install", "selection", "lifecycle", "providers", "scopes"):
-        parser.error(f"group {args.group} has no implemented cases yet")
-    groups = {"team-install": TeamInstallTests, "selection": SelectionTests, "lifecycle": LifecycleTests, "providers": ProviderTests, "scopes": ScopeTests}
-    unittest.main(argv=[sys.argv[0], *([groups[args.group].__name__] if args.group else []), *remaining])
+    if args.export_clone_bundle:
+        fixture = CloneTests()
+        fixture.setUp()
+        try:
+            fixture.prepare_bundle(args.export_clone_bundle.resolve())
+        finally:
+            fixture.tearDown()
+        return
+    selected = [groups[args.group].__name__] if args.group else [group.__name__ for name, group in groups.items()
+                                                               if name != "windows-boundary" or os.name == "nt"]
+    unittest.main(argv=[sys.argv[0], *selected, *remaining])
 
 
 if __name__ == "__main__":

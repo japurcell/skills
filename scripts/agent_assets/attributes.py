@@ -51,6 +51,16 @@ def plan(root: Path, files, existing):
            if name in owned_names or not compatible(values, current[name])]
     if not new:
         return original, []
+    # The owned block is byte-exact too. Protect its LF markers from autocrlf
+    # without claiming a preexisting compatible metadata rule.
+    policy[".gitattributes"] = ["text", "eol=lf"]
+    metadata = observed(root, [".gitattributes"])[".gitattributes"]
+    if any(metadata[key] != "unspecified" for key in ("filter", "working-tree-encoding", "ident", "crlf")) or (
+        metadata["text"] not in ("unspecified", "set", "auto") or metadata["eol"] not in ("unspecified", "lf")
+    ):
+        raise AssetError("ASSET_CONFLICT", "Incompatible checkout policy: .gitattributes. Resolve Git attributes first.", 1)
+    if ".gitattributes" in owned_names or not compatible(policy[".gitattributes"], metadata):
+        new.insert(0, {"destination": ".gitattributes", "values": policy[".gitattributes"]})
     if b"# agent-assets begin" in original or b"# agent-assets end" in original:
         raise AssetError("ASSET_CONFLICT", "Unowned agent-assets checkout block exists; resolve its ownership first.", 1)
     block = b"# agent-assets begin\n" + b"".join(
@@ -105,7 +115,13 @@ def verify(root, lock):
             line = ('"' + entry["destination"] + '" ' + " ".join(entry["values"]) + "\n").encode()
             if original.count(line) != 1 or block.count(line) != 1:
                 raise AssetError("ASSET_DRIFT", "Owned checkout rule changed: " + entry["destination"], 1)
-    current = observed(root, [item["destination"] for item in lock["items"]])
+    paths = [item["destination"] for item in lock["items"]]
+    if lock.get("attribute_file_policy") or any(entry["destination"] == ".gitattributes" for entry in owned):
+        paths.append(".gitattributes")
+    current = observed(root, paths)
+    if ".gitattributes" in paths and (not compatible(["text", "eol=lf"], current[".gitattributes"])
+            or any(current[".gitattributes"][key] != "unspecified" for key in ("filter", "working-tree-encoding", "ident", "crlf"))):
+        raise AssetError("ASSET_DRIFT", "Effective checkout policy changed: .gitattributes", 1)
     for item in lock["items"]:
         policy = ["-text"] if item["content"] == "binary" else ["text", "eol=" + item["line_endings"]]
         values = current[item["destination"]]

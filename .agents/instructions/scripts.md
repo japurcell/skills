@@ -5,6 +5,8 @@ description: Rules and conventions for repository helper scripts under `scripts/
 
 # Shell Scripts Conventions
 
+- New owned checkout blocks also require an effective LF policy for `.gitattributes` itself. Record the narrow self-rule when needed, borrow compatible preexisting policy, and refuse conflicting transforms without changing unrelated text. Record the metadata requirement separately from rule ownership so strict checks validate borrowed rules too. Authentic older records remain valid and acquire the requirement during explicit update/restore. Never normalize arbitrary bytes during strict verification. Platform CI lives in `.github/workflows/agent-assets.yml`; distinguish clone/refusal checks from its explicitly unmet Windows mutation job and from live client acceptance in `docs/agent-asset-installer/client-validation.md`.
+
 - Follow existing shebang style for shell helper scripts: `#!/usr/bin/env bash` or `#!/usr/bin/env python3`.
 - Keep scripts directly executable and simple.
 - `scripts/test-all.py` owns the explicit registry of maintained test-suite commands. Update it when adding, moving, or removing a suite; exclude `scripts/test-common.sh`, archived tests, generated workspaces, and fixture trees. Keep the runner's CLI regression suite in `scripts/test_test_all.py` registered without recursively invoking the real aggregate run.

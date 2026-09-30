@@ -260,10 +260,12 @@ def validate_records(selection, lock, *, check_agreement=True):
     def names(value):
         return isinstance(value, list) and all(isinstance(v, str) and v for v in value) and value == sorted(set(value))
     if not isinstance(selection, dict) or not isinstance(lock, dict) or any(
-        type(record.get("schema_version")) is not int or record["schema_version"] != 1 for record in (selection, lock)
+        type(record.get("schema_version")) is not int or record["schema_version"] not in (1, 2) for record in (selection, lock)
     ) or type(lock.get("renderer_version")) is not int or lock["renderer_version"] != 1:
         revision = lock.get("source", {}).get("commit", "unknown") if isinstance(lock, dict) and isinstance(lock.get("source"), dict) else "unknown"
         invalid("Unsupported record/renderer version at " + str(revision) + "; use the compatible command checkout.")
+    if selection["schema_version"] != lock["schema_version"]:
+        invalid("Selection/lock format versions disagree; restore matching records.")
     override = selection.get("codex_home")
     if override is not None and (selection.get("scope") != "user" or not isinstance(override, str) or not Path(override).is_absolute() or ".." in Path(override).parts):
         invalid("Invalid personal Codex override.")
@@ -295,6 +297,12 @@ def validate_records(selection, lock, *, check_agreement=True):
         invalid("Selection/lock identity or digest mismatch; restore agreeing records.")
     if not isinstance(lock.get("items"), list) or not isinstance(lock.get("attributes"), list):
         invalid("Malformed ownership record.")
+    if lock["schema_version"] == 2:
+        expected_metadata = ["text", "eol=lf"] if selection["scope"] == "repo" and selection["mode"] == "team" and lock["attributes"] else None
+        if "attribute_file_policy" not in lock or lock["attribute_file_policy"] != expected_metadata:
+            invalid("Missing or invalid metadata checkout requirement in version-2 records.")
+    elif "attribute_file_policy" in lock:
+        invalid("Legacy records cannot contain a version-2 metadata requirement.")
     destinations = set()
     for item in lock["items"]:
         if not isinstance(item, dict):
@@ -325,8 +333,9 @@ def validate_records(selection, lock, *, check_agreement=True):
     for entry in lock["attributes"]:
         if not isinstance(entry, dict):
             invalid("Invalid attribute entry.")
-        path = owned_destination(entry.get("destination"))
-        if path.casefold() not in destinations or path.casefold() in attribute_paths or entry.get("values") not in (["-text"], ["text", "eol=lf"], ["text", "eol=crlf"]):
+        metadata = entry.get("destination") == ".gitattributes"
+        path = ".gitattributes" if metadata else owned_destination(entry.get("destination"))
+        if (metadata and (selection["scope"] != "repo" or selection["mode"] != "team" or entry.get("values") != ["text", "eol=lf"])) or (not metadata and path.casefold() not in destinations) or path.casefold() in attribute_paths or entry.get("values") not in (["-text"], ["text", "eol=lf"], ["text", "eol=crlf"]):
             invalid("Invalid attribute ownership.")
         attribute_paths.add(path.casefold())
 
@@ -469,7 +478,7 @@ def install(args):
             warnings.append("Project and personal hooks are additive; this installation does not alter personal hooks. Review native hook trust before use.")
         if runtime:
             warnings.append("Runtime requirements must be supplied by the consumer: " + ", ".join(runtime))
-        selection = {"schema_version": 1, "installation_id": installation_id, "scope": layout.scope, "mode": layout.mode,
+        selection = {"schema_version": 2, "installation_id": installation_id, "scope": layout.scope, "mode": layout.mode,
                      "clients": clients, "assets": requested, "bundles": bundles, "source": existing[0]["source"] if args.command == "restore" else snapshot.source}
         if layout.codex_home:
             selection["codex_home"] = layout.codex_home
@@ -487,9 +496,10 @@ def install(args):
                 raise AssetError("ASSET_SOURCE_MISMATCH", "Recorded rendered payload differs from the exact source; use the compatible command checkout.")
         attribute_bytes, owned_attributes = (attributes.plan(root, files, existing)
             if layout.scope == "repo" and layout.mode == "team" else (None, []))
-        lock = {"schema_version": 1, "renderer_version": 1, "installation_id": installation_id,
+        lock = {"schema_version": 2, "renderer_version": 1, "installation_id": installation_id,
                 "source": source, "assets": assets, "items": items, "selection_digest": digest(canonical(selection)),
-                "attributes": owned_attributes}
+                "attributes": owned_attributes,
+                "attribute_file_policy": ["text", "eol=lf"] if owned_attributes else None}
         changes = {"added": 0, "updated": 0, "retained": 0, "removed": 0}
         old_items = {item["destination"]: item for item in existing[1]["items"]} if existing else {}
         writes = {}
