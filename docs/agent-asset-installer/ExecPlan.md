@@ -26,7 +26,8 @@ Success is observable from a disposable project: install a review workflow, see 
 - [x] (2026-09-30 00:25Z) [orchestration] User explicitly requests full implementation. Lift the prior hold and start isolated milestone worktrees.
 - [x] (2026-09-30 00:51Z) [milestone-1] Deliver one committed, pinned skill installation through the public CLI. Public subprocess acceptance has 24 passing cases; aggregate-runner CLI acceptance has 14 passing cases.
 - [x] (2026-09-30 01:23Z) [milestone-2] Deliver asset selection, required dependencies, and curated bundles. Selection acceptance has 17 passing public cases; the combined suite has 41 passing cases.
-- [ ] [aggregate-observability] Reproduce and repair the resumed aggregate failure in `scripts/test-gemini-hooks-observability.sh` (`Error: stepping, database is locked (5)`) without weakening assertions. This independent repair blocks final validation and any overlapping provider changes.
+- [ ] [aggregate-observability] Repair Gemini observability SQLite fixture flakiness and related provider test-state isolation. The resumed aggregate reports `Error: stepping, database is locked (5)` and capture attempts against inherited personal state. Preserve all runtime/assertion behavior and isolate disposable state. This independent repair blocks final validation and overlapping provider changes.
+- [ ] [aggregate-fixtures] Repair macOS temporary-path expectations and protected-checkout fixture placement; close observed delivery-probe streams. Preserve semantic assertions and run focused public cases.
 - [ ] [milestone-3] Deliver preview, update, recorded restoration, strict read-only verification, conflict protection, and safe pruning (completed in isolated worktree: initial lifecycle/recovery and source-policy repair; remaining: regular-directory movement, authenticated pruning ownership, final review/validation/integration).
 - [ ] [milestone-4] Deliver native repository adapters for Codex, Copilot CLI/VS Code, and Gemini CLI.
 - [ ] [milestone-5] Deliver local and personal installations, verified adoption, and legacy entry-point integration.
@@ -35,6 +36,10 @@ Success is observable from a disposable project: install a review workflow, see 
 
 ## Surprises & Discoveries
 
+
+The resumed aggregate also finds `test-repo-root.sh` comparing macOS `/var` and normalized `/private/var` strings, and `test_helpers.py` trying to create fixtures under protected `.agents/scratchpad`. The delivery-probe suite emits unclosed subprocess stream warnings on Python 3.14. A separate bounded fixture repair owns those three tests. Observability inspection confirms several provider tests inherit personal capture state instead of explicitly isolating it; repair that in the observability node before running those fixtures again.
+
+On explicit resume, the original M3 writer also ended with the same service content flag before completion. Its dirty worktree and exact error remain preserved. A replacement implementer now owns that same unfinished node, using the declared Premium fallback `gpt-6.1-sol` at `xhigh`; the separate `gpt-6-sol` reviewer continues. No safety requirement, test, or prior finding is removed. This is not a sandbox auto-review rejection or an approval verdict.
 
 The first aggregate run after the user supplies flock reaches the registered suites and fails Gemini observability with `Error: stepping, database is locked (5)`. Its remaining suites continue. Treat this as an independent public-E2E repair node; preserve all assertions and disposable test boundaries.
 
@@ -66,6 +71,10 @@ The existing-repository review found that APM supports committing generated payl
 
 ## Decision Log
 
+
+Decision: Route bounded aggregate fixture portability and stream cleanup to Fast `gpt-6-luna`, effort `medium`, in a private worktree. Explicit files are `scripts/test-repo-root.sh`, `scripts/test_helpers.py`, and `scripts/test-probe-provider-hook-delivery.py`; no production behavior changes are authorized for this node. Escalate ambiguous public behavior or repeated test failures to Standard `gpt-6.1-sol`, effort `high`; same-tier unavailable fallback is `gpt-5.6-luna`, effort `medium`. Model selection is applied; task fit and platform cost remain provisional.
+
+Rationale: Observed failures have bounded disposable-fixture and resource-lifecycle causes, independently verifiable without changing hook protocols. Date/author: 2026-09-29, Codex orchestration.
 
 Decision: Route the independent aggregate observability repair to Standard `gpt-6.1-sol`, effort `high`, on a private worktree. SQLite capture and shell test concurrency need connected reasoning; use public reproduction before source changes. Its files do not overlap lifecycle M3. Escalate repeated unexplained lock/data-integrity failures to Premium; fallback is `gpt-6-sol`, effort `high`. Available model ID is applied. Cost fit is provisional because published Copilot prices do not establish platform billing. Final acceptance and overlapping provider work wait for this repair.
 
