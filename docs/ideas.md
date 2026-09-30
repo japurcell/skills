@@ -6,6 +6,8 @@ research, planning, or implementation artifact.
 
 ## Inbox
 
+- [ ] **Tool guardian tuning**: Tool guardian hook is excessively blocking file write operations because of input size. Check you own session logs to see this happening.
+
 - [ ] **Just-in-time context**: The agents kb/memory management system is currently spread across AGENTS.md, .agents/skills/clean-agent-docs, .agents/skills/update-agent-docs. It tries to guide agents through a workflow:
   1. Session Start -> AGENTS.md##Agent Orientation: load the knowledge base map to find relevant context for a task
   2. Session End -> activate 'update-agents-docs' skill to repair and refresh the knowledge base with new information from the session for continual improvement
