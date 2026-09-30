@@ -12,6 +12,56 @@ Canonical agent-facing guidance lives in `.agents/`.
 
 ## Installation
 
+### Selective project and personal assets
+
+The selective installer places chosen skills, agents, and supported hooks at
+client-native paths. It records the selected source revision and managed files
+so an explicit update can show a reviewable diff. Start with a preview:
+
+```bash
+python3 scripts/agent-assets.py list --client codex
+python3 scripts/agent-assets.py install --repo /path/to/project \
+  --client codex --asset skill:caveman --preview
+```
+
+For a committed team setup, rerun without `--preview` and commit the payload
+and `.agent-assets/` records:
+
+```bash
+python3 scripts/agent-assets.py install --repo /path/to/project \
+  --client codex --asset skill:caveman
+```
+
+For an untracked repository setup, use local mode. It refuses changes to
+tracked native paths and keeps its records in `.agent-assets/local/`:
+
+```bash
+python3 scripts/agent-assets.py install --repo /path/to/project \
+  --client codex --asset skill:caveman --mode local
+```
+
+For a personal setup, omit `--repo` and select user scope. Use a disposable
+home path when trying the command:
+
+```bash
+mkdir -p /tmp/agent-home
+python3 scripts/agent-assets.py install --scope user --home /tmp/agent-home \
+  --client codex --asset skill:caveman
+```
+
+Preview an update before applying it, check committed content without repair,
+or restore the exact recorded source revision:
+
+```bash
+python3 scripts/agent-assets.py update --repo /path/to/project --preview
+python3 scripts/agent-assets.py status --repo /path/to/project --check
+python3 scripts/agent-assets.py restore --repo /path/to/project
+```
+
+See [the installer usage guide](docs/agent-asset-installer/usage.md) for scope,
+client, checkout, conflict, and platform details. Native client trust and
+runtime requirements still apply after files are installed.
+
 Install or refresh the locally loaded copies with:
 
 ```bash

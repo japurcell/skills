@@ -16,7 +16,7 @@ from .providers import CLIENTS
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    parser = argparse.ArgumentParser(description="Install, update, and verify selected agent assets.", allow_abbrev=False)
     commands = parser.add_subparsers(dest="command", required=True)
     sub = commands.add_parser("install", help="Install selected committed skills and supporting assets into team, private, or personal native paths.", allow_abbrev=False)
     sub.add_argument("--repo", help="Target Git repository (defaults to the current Git root).")

@@ -28,6 +28,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
 | `agents/` | agents | Canonical Markdown custom-agent prompt files for Copilot, Gemini, and generated Codex TOML. |
 | `docs/<effort>/` | repo docs | Active research and execution plans that need version history while work is in progress. |
+| `docs/agent-asset-installer/usage.md` | repo docs | Public usage, scope behavior, checkout policy, and evidence limits for selected agent assets. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `scripts/` | scripts | Installers, importers, the aggregate test runner, validation helpers, and shared shell utilities. |
 | `distribution/` | scripts | Committed asset catalog with explicit source-file and checkout policy declarations. |
