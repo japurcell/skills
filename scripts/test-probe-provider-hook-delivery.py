@@ -227,12 +227,27 @@ class ProbeTests(unittest.TestCase):
                 assert process.stdin is not None and process.stdout is not None
                 payload = {"hook_event_name": "PreToolUse", "session_id": "test", "cwd": str(home),
                            "tool_name": "Bash", "tool_input": {}}
-                process.stdin.write(json.dumps(payload).encode())
-                process.stdin.flush()
-                self.assertTrue(select.select([process.stdout], [], [], 2)[0], "handler waited for stdin EOF")
-                self.assertIn("systemMessage", json.loads(process.stdout.readline()))
-                process.stdin.close()
-                self.assertEqual(process.wait(timeout=2), 0)
+                try:
+                    process.stdin.write(json.dumps(payload).encode())
+                    process.stdin.flush()
+                    self.assertTrue(select.select([process.stdout], [], [], 2)[0], "handler waited for stdin EOF")
+                    self.assertIn("systemMessage", json.loads(process.stdout.readline()))
+                finally:
+                    process.stdin.close()
+                    try:
+                        process.wait(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        process.terminate()
+                        try:
+                            process.wait(timeout=2)
+                        except subprocess.TimeoutExpired:
+                            process.kill()
+                            process.wait(timeout=2)
+                    finally:
+                        process.stdout.close()
+                        assert process.stderr is not None
+                        process.stderr.close()
+                self.assertEqual(process.returncode, 0)
             finally:
                 self.cli(home, "cleanup", "--provider", "codex", "--id", info["id"])
 

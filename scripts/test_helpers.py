@@ -4,6 +4,7 @@ import importlib.util
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -38,18 +39,18 @@ class TestHookHelpers(unittest.TestCase):
         """
         runtime_name = path.parts[-3].replace(".", "")
         common_file = path / "helpers" / "common.py"
-        common_spec = importlib.util.spec_from_file_location(f"helpers.common_{runtime_name}", common_file)
+        package_name = f"helpers_{runtime_name}"
+        common_spec = importlib.util.spec_from_file_location(f"{package_name}.common", common_file)
         common_mod = importlib.util.module_from_spec(common_spec)
         common_spec.loader.exec_module(common_mod)
 
         file_path = path / "helpers" / "observability.py"
-        spec = importlib.util.spec_from_file_location(f"helpers.observability_{runtime_name}", file_path)
+        spec = importlib.util.spec_from_file_location(f"{package_name}.observability", file_path)
         if spec is None or spec.loader is None:
             raise ImportError(f"Cannot load module from {file_path}")
         module = importlib.util.module_from_spec(spec)
-        module.__package__ = f"helpers_{runtime_name}"
-        sys.modules[f"helpers_{runtime_name}"] = common_mod
-        sys.modules[f"helpers_{runtime_name}.common"] = common_mod
+        sys.modules[package_name] = common_mod
+        sys.modules[f"{package_name}.common"] = common_mod
         spec.loader.exec_module(module)
         return module
 
@@ -60,27 +61,25 @@ class TestHookHelpers(unittest.TestCase):
         """
         runtime_name = path.parts[-3].replace(".", "")
         common_file = path / "helpers" / "common.py"
-        common_spec = importlib.util.spec_from_file_location(f"helpers.common_{runtime_name}", common_file)
+        package_name = f"helpers_{runtime_name}"
+        common_spec = importlib.util.spec_from_file_location(f"{package_name}.common", common_file)
         if common_spec is None or common_spec.loader is None:
             raise ImportError(f"Cannot load module from {common_file}")
         common_mod = importlib.util.module_from_spec(common_spec)
         common_spec.loader.exec_module(common_mod)
 
         file_path = path / "helpers" / "audit.py"
-        spec = importlib.util.spec_from_file_location(f"helpers.audit_{runtime_name}", file_path)
+        spec = importlib.util.spec_from_file_location(f"{package_name}.audit", file_path)
         if spec is None or spec.loader is None:
             raise ImportError(f"Cannot load module from {file_path}")
         module = importlib.util.module_from_spec(spec)
-        module.__package__ = f"helpers_{runtime_name}"
-        sys.modules[f"helpers_{runtime_name}"] = common_mod
-        sys.modules[f"helpers_{runtime_name}.common"] = common_mod
+        sys.modules[package_name] = common_mod
+        sys.modules[f"{package_name}.common"] = common_mod
         spec.loader.exec_module(module)
         return module
 
     def _create_repo_test_dir(self, name: str) -> Path:
-        test_dir = repo_root / ".agents" / "scratchpad" / "test-artifacts" / f"{name}-{uuid4().hex}"
-        test_dir.mkdir(parents=True, exist_ok=True)
-        return test_dir
+        return Path(tempfile.mkdtemp(prefix=f"{name}-{uuid4().hex}-"))
 
     def test_github_convert_windows_path_to_posix(self):
         common = self._get_common_module(github_helpers_path)

@@ -15,6 +15,7 @@ assert_repo_root_with_common_sh() {
 
   workdir="$(mktemp -d)"
   trap 'rm -rf "'"$workdir"'"' RETURN
+  workdir="$(cd "$workdir" && pwd -P)"
 
   git_repo_dir="$workdir/git-repo"
   fallback_dir="$workdir/fallback"
