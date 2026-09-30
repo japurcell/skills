@@ -11,19 +11,20 @@ import uuid
 from contextlib import contextmanager
 
 from .sources import AssetError, acquire, canonical, digest, git, read_json
-from . import attributes, transaction
+from . import attributes, transaction, configuration
+from .hook_rendering import render_hooks
 from .catalog import resolve, installation_restrictions, validate_runtime_files, skill_source_root
-from .providers import skill_roots
+from .providers import skill_roots, render_agents, preflight_agents
 from .paths import safe_path
 
 
 
 
-def render(snapshot, catalog, assets, clients):
+def render(snapshot, catalog, assets, clients, installation_id=None, *, freshness=True):
     files, inputs = {}, []
     for asset_id in assets:
         asset = catalog["assets"].get(asset_id)
-        if not asset or asset.get("rendering") not in ("skill", "reference", "notice"):
+        if not asset or asset.get("rendering") not in ("skill", "reference", "notice", "agent", "hook"):
             raise AssetError("ASSET_RENDERER_UNAVAILABLE", f"Unavailable rendering: {asset_id}", 1)
         if any(client not in asset["clients"] for client in clients):
             raise AssetError("ASSET_DEPENDENCY_MISSING", f"Skill is unavailable for a selected client: {asset_id}", 1)
@@ -38,6 +39,8 @@ def render(snapshot, catalog, assets, clients):
                 raise AssetError("ASSET_CATALOG_INVALID", f"Skill path is outside its declared root: {path}")
             data, executable = snapshot.read(path)
             inputs.append({"path": path, "type": "file", "executable": executable, "digest": digest(data)})
+            if asset["rendering"] in ("agent", "hook"):
+                continue
             content, endings = spec["content"], spec["line_endings"]
             if (content, endings) not in (("text", "lf"), ("text", "crlf"), ("binary", "none")):
                 raise AssetError("ASSET_CATALOG_INVALID", f"Missing or invalid payload representation: {path}")
@@ -62,6 +65,10 @@ def render(snapshot, catalog, assets, clients):
                         raise AssetError("ASSET_CATALOG_INVALID", f"Conflicting declared output: {destination}.")
                     owners = sorted(set([*previous_owners, asset_id]))
                 files[destination] = (data, mode, owners, spec)
+    files.update(render_agents(snapshot, catalog, assets, clients))
+    hook_files, hook_inputs = render_hooks(snapshot, catalog, assets, clients, installation_id, freshness=freshness)
+    files.update(hook_files)
+    inputs.extend(hook_inputs)
     return files, inputs
 
 
@@ -221,8 +228,10 @@ def owned_destination(path):
         safe_path(path)
     except AssetError:
         raise AssetError("ASSET_RECORD_INVALID", "Unsafe owned destination.") from None
-    roots = (".agents/skills/", ".claude/skills/", ".agents/references/", ".claude/references/", ".agent-assets/notices/")
-    if not path.startswith(roots) or any(part.casefold() in (".git", ".agent-assets") for part in PurePosixPath(path).parts[1:]):
+    roots = (".agents/skills/", ".claude/skills/", ".agents/references/", ".claude/references/", ".agent-assets/notices/",
+             ".codex/agents/", ".github/agents/", ".gemini/agents/",
+             ".codex/hooks/agent-assets/", ".github/hooks/agent-assets/", ".gemini/hooks/agent-assets/")
+    if (not path.startswith(roots) and path not in configuration.PATHS.values()) or any(part.casefold() in (".git", ".agent-assets") for part in PurePosixPath(path).parts[1:]):
         raise AssetError("ASSET_RECORD_INVALID", "Owned destination is outside supported payload roots.")
     return path
 
@@ -281,8 +290,10 @@ def validate_records(selection, lock, *, check_agreement=True):
         if path.casefold() in destinations:
             invalid("Duplicate/case-colliding ownership.")
         destinations.add(path.casefold())
-        if item.get("type") != "file" or type(item.get("mode")) is not int or item["mode"] not in (0o644, 0o755) or not sha(item.get("baseline_digest")) or not names(item.get("owners")) or not item["owners"] or not set(item["owners"]).issubset(lock["assets"]):
+        if item.get("type") not in ("file", "configuration") or type(item.get("mode")) is not int or item["mode"] not in (0o644, 0o755) or not sha(item.get("baseline_digest")) or not names(item.get("owners")) or not item["owners"] or not set(item["owners"]).issubset(lock["assets"]):
             invalid("Invalid file baseline, mode or owners.")
+        if item["type"] == "configuration":
+            configuration.validate_item(item)
         if (item.get("content"), item.get("line_endings")) not in (("text", "lf"), ("text", "crlf"), ("binary", "none")):
             invalid("Invalid payload representation.")
         origin = item.get("origin_commit", lock["source"]["commit"])
@@ -310,7 +321,7 @@ def authenticate_ownership(existing):
     with acquire(selection["source"]["location"], None, lock["source"]["commit"]) as snapshot:
         catalog, catalog_bytes = snapshot.catalog()
         assets = resolve(catalog, selection["assets"], selection["bundles"])
-        files, inputs = render(snapshot, catalog, assets, selection["clients"])
+        files, inputs = render(snapshot, catalog, assets, selection["clients"], selection["installation_id"], freshness=False)
         old = {item["destination"]: item for item in lock["items"]}
         if (snapshot.commit != lock["source"]["commit"] or assets != lock["assets"]
                 or source_digest(snapshot, catalog_bytes, inputs) != lock["source"]["digest"]
@@ -322,6 +333,8 @@ def authenticate_ownership(existing):
             actual = (item["baseline_digest"], item["mode"], item["owners"], item["content"], item["line_endings"])
             if actual != expected:
                 raise AssetError("ASSET_SOURCE_MISMATCH", "Recorded baseline differs from its immutable source: " + path)
+            if item.get("entries") != spec.get("configuration") or item["type"] != ("configuration" if "configuration" in spec else "file"):
+                raise AssetError("ASSET_SOURCE_MISMATCH", "Recorded configuration ownership differs from its immutable source: " + path)
     origins = sorted({item.get("origin_commit", lock["source"]["commit"]) for item in lock["items"]})
     for origin in origins:
         if origin == lock["source"]["commit"]:
@@ -335,7 +348,7 @@ def authenticate_ownership(existing):
                 if any(owner not in catalog["assets"] for owner in owners):
                     raise AssetError("ASSET_SOURCE_MISMATCH", "Recorded origin lacks its owner: " + item["destination"])
                 clients = sorted(set.intersection(*(set(catalog["assets"][owner]["clients"]) for owner in owners)))
-                files, _ = render(snapshot, catalog, owners, clients)
+                files, _ = render(snapshot, catalog, owners, clients, selection["installation_id"], freshness=False)
                 value = files.get(item["destination"])
                 if value is None:
                     raise AssetError("ASSET_SOURCE_MISMATCH", "Recorded origin lacks its payload: " + item["destination"])
@@ -386,6 +399,7 @@ def install(args):
             else:
                 args.revision = policy["value"]
     clients, requested, bundles = sorted(set(args.client)), sorted(set(args.asset)), sorted(set(args.bundle))
+    installation_id = existing[0]["installation_id"] if existing else str(uuid.uuid4())
     with acquire(args.source, args.branch, args.revision) as snapshot:
         catalog, catalog_bytes = snapshot.catalog()
         assets = resolve(catalog, requested, bundles)
@@ -394,7 +408,13 @@ def install(args):
             first = restrictions[0]
             raise AssetError(first["code"], first["asset"] + ": " + first["reason"], 1)
         validate_runtime_files(snapshot, catalog, assets)
-        files, inputs = render(snapshot, catalog, assets, clients)
+        files, inputs = render(snapshot, catalog, assets, clients, installation_id)
+        has_hooks = any(asset.startswith("hook:") for asset in assets)
+        if any(asset.startswith(("hook:", "agent:")) for asset in assets):
+            configuration.preflight(root, clients, inspect_destination, hooks=has_hooks)
+            if "codex" in clients:
+                observations.update(transaction.observe(root, [".codex/config.toml"]))
+        observations.update(transaction.observe(root, preflight_agents(root, files, existing, inspect_destination)))
         for path in [*files, ".gitattributes", ".agent-assets/selection.json", ".agent-assets/lock.json"]:
             inspect_destination(root, path)
         observations.update(transaction.observe(root, [path for path in files if path not in observations]))
@@ -420,14 +440,19 @@ def install(args):
             source = existing[1]["source"]
         runtime = sorted({requirement for asset in assets for requirement in catalog["assets"][asset]["runtime"]})
         warnings = ["Native client discovery and trust have not been verified."]
+        if has_hooks:
+            warnings.append("Project and personal hooks are additive; this installation does not alter personal hooks. Review native hook trust before use.")
         if runtime:
             warnings.append("Runtime requirements must be supplied by the consumer: " + ", ".join(runtime))
-        installation_id = existing[0]["installation_id"] if existing else str(uuid.uuid4())
         selection = {"schema_version": 1, "installation_id": installation_id, "scope": "repo", "mode": "team",
                      "clients": clients, "assets": requested, "bundles": bundles, "source": existing[0]["source"] if args.command == "restore" else snapshot.source}
         items = [{"destination": path, "type": "file", "mode": mode, "owners": owners,
                   "baseline_digest": digest(data), "origin_commit": snapshot.commit, "content": spec["content"], "line_endings": spec["line_endings"]}
                  for path, (data, mode, owners, spec) in sorted(files.items())]
+        for item in items:
+            spec = files[item["destination"]][3]
+            if "configuration" in spec:
+                item.update(type="configuration", entries=spec["configuration"])
         if args.command == "restore":
             old = {item["destination"]: item for item in existing[1]["items"]}
             compared = ("type", "mode", "owners", "baseline_digest", "content", "line_endings")
@@ -445,6 +470,27 @@ def install(args):
             data, mode, _, _ = files[path]
             target = root / path
             previous = old_items.get(path)
+            if item["type"] == "configuration":
+                current_bytes = target.read_bytes() if target.exists() else None
+                if current_bytes is not None:
+                    configuration.parse(current_bytes)
+                if previous and previous["entries"] == item["entries"] and current_bytes is not None:
+                    item["origin_commit"] = previous.get("origin_commit", existing[1]["source"]["commit"])
+                    changes["retained"] += 1
+                    if not configuration.entries_match(current_bytes, item["entries"]) or (os.name != "nt" and target.stat().st_mode & 0o777 != mode):
+                        warnings.append("Retained local edit: " + path)
+                    elif target.stat().st_nlink != 1:
+                        writes[path] = (current_bytes, mode)
+                    continue
+                if previous and current_bytes is not None and os.name != "nt" and target.stat().st_mode & 0o777 != previous["mode"]:
+                    raise AssetError("ASSET_CONFLICT", "Managed configuration mode changed: " + path, 1)
+                data = configuration.merge(current_bytes, previous["entries"] if previous and current_bytes is not None else None, item["entries"])
+                if current_bytes == data and (os.name == "nt" or target.stat().st_mode & 0o777 == mode) and target.stat().st_nlink == 1:
+                    changes["retained"] += 1
+                else:
+                    writes[path] = (data, mode)
+                    changes["updated" if previous else "added"] += 1
+                continue
             current = (digest(target.read_bytes()), target.stat().st_mode & 0o777) if target.exists() else None
             desired = (digest(data), mode)
             baseline = (previous["baseline_digest"], previous["mode"]) if previous else None
@@ -472,6 +518,14 @@ def install(args):
                 continue
             inspect_destination(root, path)
             target = root / path
+            if previous["type"] == "configuration":
+                if target.exists():
+                    if os.name != "nt" and target.stat().st_mode & 0o777 != previous["mode"]:
+                        raise AssetError("ASSET_CONFLICT", "Managed configuration mode changed: " + path, 1)
+                    data = configuration.merge(target.read_bytes(), previous["entries"], {"hooks": {}})
+                    writes[path] = (data, previous["mode"])
+                changes["removed"] += 1
+                continue
             if target.exists():
                 if digest(target.read_bytes()) != previous["baseline_digest"] or (os.name != "nt" and target.stat().st_mode & 0o777 != previous["mode"]):
                     raise AssetError("ASSET_CONFLICT", f"Edited obsolete managed file: {path}. Resolve the edit before removing it.", 1)
@@ -484,7 +538,12 @@ def install(args):
             if not (root / path).exists() or (root / path).read_bytes() != data:
                 writes[path] = (data, 0o644)
         if not args.preview and (writes or removals):
-            transaction.apply(root, writes, removals, observations, lambda: attributes.plan(root, files, existing))
+            def recheck():
+                attributes.plan(root, files, existing)
+                preflight_agents(root, files, existing, inspect_destination)
+                if has_hooks:
+                    configuration.preflight(root, clients, inspect_destination)
+            transaction.apply(root, writes, removals, observations, recheck)
         return {"schema_version": 1, "command": args.command, "source": source, "selection": selection,
                 "resolved_assets": assets, "changes": changes, "conflicts": [], "warnings": warnings}
 
@@ -512,6 +571,8 @@ def status(args):
             if not target.exists():
                 reason = "missing"
             elif digest(target.read_bytes()) != item["baseline_digest"] or (os.name != "nt" and target.stat().st_mode & 0o777 != item["mode"]):
+                if item["type"] == "configuration" and configuration.entries_match(target.read_bytes(), item["entries"]) and (os.name == "nt" or target.stat().st_mode & 0o777 == item["mode"]):
+                    continue
                 reason = "modified"
             else:
                 continue
@@ -520,5 +581,9 @@ def status(args):
         drift.append({"code": "ASSET_DRIFT", "destination": path, "reason": reason})
     return {"schema_version": 1, "command": "status", "source": lock["source"], "selection": selection,
             "resolved_assets": lock["assets"], "changes": {"added": 0, "updated": 0, "removed": 0, "retained": len(lock["items"])},
-            "conflicts": [], "warnings": ["Offline content verification does not establish source freshness or native trust."],
+            "conflicts": [], "warnings": ["Offline content verification does not establish source freshness or native trust.",
+                "Project and personal hook registrations are additive; user settings are unchanged."],
+            "native_configuration": [{"client": client, "destination": path, "present": (root / path).is_file(),
+                                      "trust": "unverified", "precedence": "additive"}
+                                     for client, path in configuration.PATHS.items() if client in selection["clients"]],
             "verification": {"passed": not drift, "drift": drift}}

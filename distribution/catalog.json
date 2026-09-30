@@ -2550,6 +2550,46 @@
           "path": ".gemini/hooks/scripts/helpers/audit.py",
           "content": "text",
           "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/repository-launcher.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/helpers/runtime_config.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/repository-launcher.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/runtime_config.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/repository-launcher.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/runtime_config.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/observability.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/observability.py",
+          "content": "text",
+          "line_endings": "lf"
         }
       ],
       "requires": [
@@ -2612,6 +2652,46 @@
         },
         {
           "path": ".gemini/hooks/scripts/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/repository-launcher.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/helpers/runtime_config.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/repository-launcher.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/runtime_config.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/repository-launcher.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/runtime_config.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/observability.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/observability.py",
           "content": "text",
           "line_endings": "lf"
         }
@@ -2677,6 +2757,46 @@
         },
         {
           "path": ".gemini/hooks/scripts/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/repository-launcher.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/helpers/runtime_config.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/repository-launcher.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/runtime_config.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/repository-launcher.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/runtime_config.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/observability.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/observability.py",
           "content": "text",
           "line_endings": "lf"
         }

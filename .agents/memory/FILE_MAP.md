@@ -48,11 +48,12 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | Path | Why it matters |
 | --- | --- |
 | `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, `~/.gemini`, and `~/.codex` targets, including generated Codex agents at `${CODEX_HOME:-$HOME/.codex}/agents`. |
-| `scripts/agent-assets.py`, `scripts/agent_assets/` | Selected team CLI and internal catalog/dependency, committed-source, ownership, and Git-attribute preflight modules. `catalog.py` validates/solves selection, `providers.py` maps documented skill roots, `paths.py` validates portable paths, and `transaction.py` owns worktree-resolved writer exclusion, one interrupted-operation journal, and validated staging recovery. |
+| `scripts/agent-assets.py`, `scripts/agent_assets/` | Selected team CLI and internal catalog/dependency, committed-source, ownership, and Git-attribute preflight modules. `catalog.py` validates/solves selection, `providers.py` maps native skill/agent outputs, `hook_rendering.py` packages native hooks through trusted generation verification, `configuration.py` owns exact-entry native JSON merges, `paths.py` validates portable paths, and `transaction.py` owns worktree-resolved writer exclusion, one interrupted-operation journal, and validated staging recovery. |
 | `distribution/catalog.json` | Version 1 explicit maintained skill/agent/hook/reference/notice inventory, required dependencies, unavailable workflows, client/runtime constraints, and three curated bundles. |
 | `scripts/test-agent-assets.py` | Disposable Git subprocess acceptance for selected installations; registered in the aggregate runner. |
 | `docs/agent-asset-installer/catalog-audit.md` | Verified dependency/source inventory and explicit required-versus-optional classification for the installer catalog; read before changing bundle membership or workflow dependencies. |
 | `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout, including `$CODEX_HOME/agents` when set (run with `pwsh scripts/install.ps1`). |
+| `scripts/canonical_agents.py` | Side-effect-free canonical agent parser and Codex TOML renderer shared by both installation paths. |
 | `scripts/install-codex-agents.py` | Strict, transactional converter from top-level `agents/*.md` sources to manifest-managed personal Codex TOML agents. |
 | `scripts/install-codex-hooks.py` | Atomically and idempotently merges exact maintained Codex `SessionStart`, `PreToolUse`, and `Stop` handlers into user-global `hooks.json`. |
 | `scripts/install-provider-hooks.py` | Preflights and merges maintained Copilot/Gemini configuration while retaining unrelated user settings and retired installed hook registrations. |
@@ -68,6 +69,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/import-skill-repos.sh` | Human-run multi-source importer that refreshes selected upstream skills, including the `web-*` quality skills. |
 | `scripts/common.sh` | Shared shell helper for resolving repo root in small shell tests and utilities. |
 | `scripts/test-all.py` | Executable aggregate test runner with an explicit maintained-suite registry; CLI contract is in `API_MAP.md`. |
+| `hooks/families/required_skills.py`, `hooks/families/repository_runtime.py` | Canonical required-skill loaders and selected repository runtime launch/configuration helpers. |
 | `scripts/generate-hooks.py` | Read-only freshness checker and transactional writer for the explicit `hooks/manifest.py` output set. |
 | `scripts/test_test_all.py` | Public-process regressions for the aggregate runner, including streams, exit codes, preflight, and descendant cleanup. |
 | `scripts/lint-okf.py` | Provider-neutral full-corpus OKF profile linter with human/JSON output and `0`/`1`/`2` exit semantics. |

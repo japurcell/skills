@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Generated from hooks/families/required_skills.py by scripts/generate-hooks.py. Do not edit.
 
 from __future__ import annotations
 
@@ -49,7 +50,7 @@ def is_link_or_reparse_point(path: Path) -> bool:
 def audit(event: str, source: str, session_id: str, detail: str) -> None:
     directory_descriptor = -1
     try:
-        audit_dir = Path.home() / ".codex" / "hooks" / "logs"
+        audit_dir = Path(os.environ["AGENT_ASSETS_AUDIT_DIR"]) if os.environ.get("AGENT_ASSETS_RUNTIME_CONFIG") and os.environ.get("AGENT_ASSETS_AUDIT_DIR") else Path.home() / ".codex" / "hooks" / "logs"
         audit_dir.mkdir(parents=True, mode=0o700, exist_ok=True)
         if is_link_or_reparse_point(audit_dir):
             raise OSError("audit directory must not be a link or reparse point")
@@ -229,7 +230,13 @@ def main() -> int:
         if source not in SUPPORTED_SOURCES:
             raise ValueError(f"Unsupported SessionStart source: {source or '(missing)'}")
 
-        context, loaded_paths = load_context(Path.home() / ".agents" / "skills")
+        skills_root = Path.home() / ".agents" / "skills"
+        if os.environ.get("AGENT_ASSETS_RUNTIME_CONFIG"):
+            from helpers.runtime_config import load_runtime_config
+            configuration, skills_root, _root = load_runtime_config()
+            global required_skill_files
+            required_skill_files = configuration["required_skill_files"]
+        context, loaded_paths = load_context(skills_root)
         for loaded_path in loaded_paths:
             audit(event, source, session_id, f"loaded:{loaded_path}")
         emit_json({

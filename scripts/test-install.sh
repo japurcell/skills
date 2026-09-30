@@ -22,6 +22,7 @@ create_fixture_repo() {
 
   cp -p "$REPO_ROOT/scripts/install.sh" "$repo/scripts/install.sh"
   cp -p "$REPO_ROOT/scripts/install-codex-agents.py" "$repo/scripts/install-codex-agents.py"
+  cp -p "$REPO_ROOT/scripts/canonical_agents.py" "$repo/scripts/canonical_agents.py"
   cp -p "$REPO_ROOT/scripts/install-codex-hooks.py" "$repo/scripts/install-codex-hooks.py"
   cp -p "$REPO_ROOT/scripts/configure-rtk.py" "$repo/scripts/configure-rtk.py"
   mkdir -p "$repo/bin"

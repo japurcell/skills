@@ -172,7 +172,8 @@ def listing(snapshot, catalog, clients):
                          "restrictions": restrictions}
     return {"schema_version": 1, "command": "list", "source": {**snapshot.source, "commit": snapshot.commit},
             "selection": {"clients": clients}, "assets": assets, "bundles": catalog["bundles"], "bundle_details": bundles,
-            "changes": {"added": 0, "updated": 0, "retained": 0, "removed": 0}, "conflicts": [], "warnings": []}
+            "changes": {"added": 0, "updated": 0, "retained": 0, "removed": 0}, "conflicts": [],
+            "warnings": ["No repository-safe instruction fragments are currently cataloged; personal instructions and settings are not distributed."]}
 
 
 def installation_restrictions(catalog, assets, clients):
@@ -189,9 +190,9 @@ def installation_restrictions(catalog, assets, clients):
         elif any(client not in asset["clients"] for client in clients):
             problems.append({"code": "ASSET_CLIENT_UNSUPPORTED", "asset": asset_id,
                              "reason": "Asset is unavailable for a selected client."})
-        elif asset["rendering"] in ("agent", "hook"):
+        elif asset["rendering"] in ("agent", "hook") and not asset["source_paths"]:
             problems.append({"code": "ASSET_RENDERER_UNAVAILABLE", "asset": asset_id,
-                             "reason": "Native agent/hook rendering is pending milestone 4; no files were installed."})
+                             "reason": "Native asset has no declared maintained sources; no files were installed."})
     return problems
 
 

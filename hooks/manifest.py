@@ -45,4 +45,13 @@ def targets() -> tuple[GeneratedTarget, ...]:
         GeneratedTarget("auto_ingest", "gemini", PurePosixPath(".gemini/hooks/scripts/inject-auto-ingest-context.py")),
         GeneratedTarget("rtk", "copilot", PurePosixPath(".copilot/hooks/scripts/rtk-hook-copilot.py")),
         GeneratedTarget("rtk", "gemini", PurePosixPath(".gemini/hooks/scripts/rtk-hook-gemini.py")),
+        GeneratedTarget("required_skills", "codex", PurePosixPath(".codex/hooks/load-required-skills.py")),
+        GeneratedTarget("repository_runtime", "codex", PurePosixPath(".codex/hooks/repository-launcher.py")),
+        GeneratedTarget("repository_runtime", "codex", PurePosixPath(".codex/hooks/helpers/runtime_config.py")),
+        GeneratedTarget("required_skills", "copilot", PurePosixPath(".copilot/hooks/scripts/load-required-skills.py")),
+        GeneratedTarget("repository_runtime", "copilot", PurePosixPath(".copilot/hooks/scripts/repository-launcher.py")),
+        GeneratedTarget("repository_runtime", "copilot", PurePosixPath(".copilot/hooks/scripts/helpers/runtime_config.py")),
+        GeneratedTarget("required_skills", "gemini", PurePosixPath(".gemini/hooks/scripts/skill-context-injector.py")),
+        GeneratedTarget("repository_runtime", "gemini", PurePosixPath(".gemini/hooks/scripts/repository-launcher.py")),
+        GeneratedTarget("repository_runtime", "gemini", PurePosixPath(".gemini/hooks/scripts/helpers/runtime_config.py")),
     )

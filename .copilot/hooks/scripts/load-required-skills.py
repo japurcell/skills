@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Generated from hooks/families/required_skills.py by scripts/generate-hooks.py. Do not edit.
 
 from __future__ import annotations
 
@@ -91,11 +92,16 @@ def main() -> int:
         )
         home = os.environ.get("HOME")
 
-        required_skill_files = merge_env_skill_files(
-            os.environ.get("AGENTS_REQUIRED_SKILL_FILES"),
-            skills_dir,
-            home,
-        )
+        if os.environ.get("AGENT_ASSETS_RUNTIME_CONFIG"):
+            from helpers.runtime_config import load_runtime_config
+            configuration, configured_skills, _root = load_runtime_config()
+            required_skill_files = [str(configured_skills / name) for name in configuration["required_skill_files"]]
+        else:
+            required_skill_files = merge_env_skill_files(
+                os.environ.get("AGENTS_REQUIRED_SKILL_FILES"),
+                skills_dir,
+                home,
+            )
 
         safe_session_id = sanitize_log_field(session_id)
 

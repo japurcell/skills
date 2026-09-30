@@ -125,8 +125,27 @@ def validate_journal(journal):
             if path in (".gitattributes", ".agent-assets/selection.json", ".agent-assets/lock.json") or value is None:
                 continue
             item = items.get(path)
+            from . import configuration
+            if path in configuration.PATHS.values():
+                if item and (item["type"] != "configuration" or not configuration.entries_match(value[0], item["entries"]) or (os.name != "nt" and value[1] != item["mode"])):
+                    raise AssetError("ASSET_INTERRUPTED", "Interrupted configuration is not authorized by its ownership baseline.")
+                continue
             if not item or digest(value[0]) != item["baseline_digest"] or (os.name != "nt" and value[1] != item["mode"]):
                 raise AssetError("ASSET_INTERRUPTED", "Interrupted payload is not authorized by its ownership baseline.")
+    from . import configuration
+    for path in configuration.PATHS.values():
+        if path not in before:
+            continue
+        unrelated_configs = []
+        for states, pair in ((before, old), (after, new)):
+            item = next((item for item in pair[1]["items"] if item["destination"] == path), None) if pair else None
+            data = states[path][0] if states[path] else None
+            unowned = configuration.without_owned(data, item["entries"]) if item and data is not None else configuration.parse(data)
+            if path == configuration.PATHS["copilot"] and type(unowned.get("version")) is int and unowned["version"] == 1:
+                unowned.pop("version")
+            unrelated_configs.append(unowned)
+        if unrelated_configs[0] != unrelated_configs[1]:
+            raise AssetError("ASSET_INTERRUPTED", "Interrupted configuration changes unowned settings.")
     def unrelated(states, pair):
         value = states.get(".gitattributes")
         data = value[0] if value else b""

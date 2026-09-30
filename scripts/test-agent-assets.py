@@ -8,6 +8,8 @@ import hashlib
 import json
 import os
 import signal
+import shutil
+import tomllib
 from pathlib import Path
 import subprocess
 import sys
@@ -581,7 +583,7 @@ class SelectionTests(Fixture):
             "notice:repository-license",
         ])
         self.assertIn("skill:caveman", report["assets"]["hook:required-skills"]["requires"])
-        self.assertFalse(report["assets"]["hook:required-skills"]["installable"])
+        self.assertTrue(report["assets"]["hook:required-skills"]["installable"])
         self.assertEqual(self.fingerprint(), before)
 
     def test_shared_skill_paths_are_materialized_once_for_five_clients(self):
@@ -1360,13 +1362,344 @@ sys.stdin.read()
         self.assertEqual(self.git(self.target, "ls-files"), "")
 
 
+class ProviderTests(Fixture):
+    catalog = SelectionTests.catalog
+    save_catalog = SelectionTests.save_catalog
+    fingerprint = SelectionTests.fingerprint
+
+    def test_gemini_lifecycle_registrations_do_not_filter_on_a_literal_wildcard(self):
+        self.maintained_source()
+        result = self.hook_install("hook:required-skills", "hook:scan-secrets")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        hooks = json.loads(self.target.joinpath(".gemini/settings.json").read_bytes())["hooks"]
+        for event in ("SessionStart", "SessionEnd"):
+            for group in hooks[event]:
+                self.assertNotIn("matcher", group)
+
+    def test_native_agent_preflight_refuses_invalid_unmanaged_toml_and_name_collisions(self):
+        self.source.joinpath("agents").mkdir()
+        self.source.joinpath("agents/reviewer.md").write_text('---\nname: reviewer\ndescription: Review code\n---\nReview carefully.\n')
+        catalog = self.catalog()
+        catalog["assets"]["agent:reviewer"] = {
+            "source_paths": [{"path": "agents/reviewer.md", "content": "text", "line_endings": "lf"}],
+            "requires": [], "clients": ["codex"], "os": [], "runtime": [], "rendering": "agent"}
+        self.save_catalog(catalog)
+        path = self.target / ".codex/agents/mine.toml"
+        path.parent.mkdir(parents=True)
+        for data in ['name = "broken', 'name = "REVIEWER"\ndescription = "Mine"\ndeveloper_instructions = "Mine"\n']:
+            path.write_text(data)
+            before = self.fingerprint()
+            result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                              "--client", "codex", "--asset", "agent:reviewer")
+            self.assertNotEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(self.fingerprint(), before)
+
+    def test_copilot_owned_version_changes_drift_and_block_pruning(self):
+        self.maintained_source()
+        result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                          "--client", "copilot", "--asset", "hook:required-skills")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        path = self.target / ".github/hooks/agent-assets.json"
+        original = json.loads(path.read_bytes())
+        for version in (None, 2, True, 1.0):
+            value = dict(original)
+            value["unrelated"] = "preserve"
+            if version is None:
+                value.pop("version")
+            else:
+                value["version"] = version
+            path.write_text(json.dumps(value))
+            before = self.fingerprint()
+            self.assertEqual(self.cli("status", "--repo", str(self.target), "--check").returncode, 1)
+            self.assertEqual(self.fingerprint(), before)
+            result = self.cli("update", "--repo", str(self.target), "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(any("Retained local edit" in warning for warning in json.loads(result.stdout)["warnings"]))
+            self.assertEqual(self.fingerprint(), before)
+            result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                              "--client", "copilot", "--asset", "skill:caveman")
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertEqual(self.fingerprint(), before)
+
+    def test_update_authenticates_old_hook_bytes_without_executing_old_generator(self):
+        self.maintained_source()
+        self.assertEqual(self.hook_install("hook:required-skills").returncode, 0)
+        command = self.root / "updated command checkout"
+        for directory in ("scripts", "hooks"):
+            shutil.copytree(SCRIPT.parent.parent / directory, command / directory, ignore=shutil.ignore_patterns("__pycache__"))
+        family = "hooks/families/required_skills.py"
+        updated = self.source.joinpath(family).read_bytes() + b"\n# compatible canonical maintenance\n"
+        self.source.joinpath(family).write_bytes(updated)
+        command.joinpath(family).write_bytes(updated)
+        self.source.joinpath("skills/caveman/SKILL.md").write_bytes(SKILL + b"Updated skill.\n")
+        self.save_catalog(self.catalog())
+        result = subprocess.run([sys.executable, str(command / "scripts/agent-assets.py"), "update", "--repo", str(self.target)],
+                                text=True, capture_output=True, cwd=self.target)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(b"Updated skill.", self.target.joinpath(".agents/skills/caveman/SKILL.md").read_bytes())
+
+    def test_native_restore_repairs_missing_configuration_without_repeating_owned_handlers(self):
+        self.maintained_source()
+        self.assertEqual(self.hook_install("hook:required-skills").returncode, 0)
+        config = self.target / ".gemini/settings.json"
+        expected = json.loads(config.read_bytes())
+        config.unlink()
+        result = self.cli("restore", "--repo", str(self.target))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(config.read_bytes()), expected)
+        before = self.fingerprint()
+        result = self.cli("restore", "--repo", str(self.target))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def hook_install(self, *assets):
+        return self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                        "--client", "gemini", *[part for asset in assets for part in ("--asset", asset)])
+
+    def test_native_config_hardlinks_are_replaced_without_changing_external_inode(self):
+        self.maintained_source()
+        external = self.root / "external settings.json"
+        external.write_text('{"theme":"mine"}')
+        external.chmod(0o640)
+        config = self.target / ".gemini/settings.json"
+        config.parent.mkdir()
+        os.link(external, config)
+        before = (external.read_bytes(), external.stat().st_mode, external.stat().st_ino)
+        result = self.hook_install("hook:required-skills")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((external.read_bytes(), external.stat().st_mode, external.stat().st_ino), before)
+        self.assertNotEqual(config.stat().st_ino, external.stat().st_ino)
+
+        external.unlink()
+        os.link(config, external)
+        before = (external.read_bytes(), external.stat().st_mode, external.stat().st_ino)
+        result = self.cli("update", "--repo", str(self.target))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((external.read_bytes(), external.stat().st_mode, external.stat().st_ino), before)
+        self.assertNotEqual(config.stat().st_ino, external.stat().st_ino)
+
+    def test_native_config_preflight_refuses_ambiguous_settings_and_inline_codex_hooks(self):
+        self.maintained_source()
+        for relative, content, client in [
+                (".gemini/settings.json", '{"hooks":{},"hooks":{}}', "gemini"),
+                (".gemini/settings.json", '{"hooks":', "gemini"),
+                (".github/hooks/agent-assets.json", '{"version":true,"hooks":{}}', "copilot"),
+                (".github/hooks/agent-assets.json", '{"version":1.0,"hooks":{}}', "copilot"),
+                (".codex/config.toml", 'model = "unterminated', "codex"),
+                (".codex/config.toml", '[hooks]\n', "codex")]:
+            path = self.target / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content)
+            before = self.fingerprint()
+            result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                              "--client", client, "--asset", "hook:required-skills")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(self.fingerprint(), before)
+            path.unlink()
+
+    def test_acquired_generator_is_never_executed_and_stale_outputs_refuse_before_writes(self):
+        self.maintained_source()
+        path = self.source / "scripts/generate-hooks.py"
+        original = path.read_bytes()
+        marker = self.root / "acquired-code-executed"
+        path.write_text("from pathlib import Path\nPath(" + repr(str(marker)) + ").write_text('executed')\n")
+        self.save_catalog(self.catalog())
+        before = self.fingerprint()
+        result = self.hook_install("hook:required-skills")
+        self.assertIn("compatible command checkout", result.stderr)
+        self.assertFalse(marker.exists())
+        self.assertEqual(self.fingerprint(), before)
+
+        path.write_bytes(original)
+        generated = self.source / ".gemini/hooks/scripts/skill-context-injector.py"
+        generated.write_bytes(generated.read_bytes() + b"\n# stale\n")
+        self.save_catalog(self.catalog())
+        result = self.hook_install("hook:required-skills")
+        self.assertIn("ASSET_SOURCE_STALE", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_installed_hook_optional_capture_is_self_contained_and_external(self):
+        self.maintained_source()
+        self.assertEqual(self.hook_install("hook:required-skills").returncode, 0)
+        state, home = self.root / "capture state", self.root / "capture home"
+        home.mkdir()
+        config = json.loads(self.target.joinpath(".gemini/settings.json").read_bytes())
+        command = config["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+        env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home), "AGENT_ASSETS_STATE_DIR": str(state),
+               "OBSERVABILITY_CAPTURE_EVENT": "true", "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]}
+        completed = subprocess.run(["bash", "-c", command], input=json.dumps({"hook_event_name": "SessionStart", "session_id": "capture", "cwd": str(self.target)}),
+                                   text=True, capture_output=True, cwd=self.target, env=env, timeout=20)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertTrue(list(state.rglob("observability_v1.db")), completed.stderr)
+        self.assertEqual(list(home.iterdir()), [])
+
+    def test_configuration_ownership_is_authenticated_before_pruning(self):
+        self.maintained_source()
+        self.assertEqual(self.hook_install("hook:required-skills").returncode, 0)
+        config_path = self.target / ".gemini/settings.json"
+        value = json.loads(config_path.read_bytes())
+        unrelated = {"hooks": [{"type": "command", "command": "echo mine"}]}
+        value["hooks"]["SessionStart"].append(unrelated)
+        config_path.write_text(json.dumps(value))
+        lock_path = self.target / ".agent-assets/lock.json"
+        lock = json.loads(lock_path.read_bytes())
+        item = next(item for item in lock["items"] if item["destination"] == ".gemini/settings.json")
+        item["entries"] = {"hooks": {"SessionStart": [unrelated]}}
+        data = json.dumps(item["entries"], sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode() + b"\n"
+        item["baseline_digest"] = hashlib.sha256(data).hexdigest()
+        lock_path.write_text(json.dumps(lock))
+        before = self.fingerprint()
+        result = self.hook_install("skill:caveman")
+        self.assertIn("ASSET_SOURCE_MISMATCH", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_native_configuration_retains_unrelated_settings_and_owned_edits_until_conflicting_change(self):
+        self.maintained_source()
+        self.assertEqual(self.hook_install("hook:required-skills").returncode, 0)
+        path = self.target / ".gemini/settings.json"
+        config = json.loads(path.read_bytes())
+        config["theme"] = "my-theme"
+        config["hooks"]["SessionStart"].insert(0, {"hooks": [{"type": "command", "command": "echo mine"}]})
+        path.write_text(json.dumps(config))
+        self.assertEqual(self.cli("status", "--repo", str(self.target), "--check").returncode, 0)
+        self.assertEqual(self.cli("update", "--repo", str(self.target)).returncode, 0)
+        config = json.loads(path.read_bytes())
+        self.assertEqual(config["theme"], "my-theme")
+        self.assertEqual(len(config["hooks"]["SessionStart"]), 2)
+        config["hooks"]["SessionStart"][1]["hooks"][0]["timeout"] = 17000
+        path.write_text(json.dumps(config))
+        changed = path.read_bytes()
+        result = self.cli("update", "--repo", str(self.target))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(path.read_bytes(), changed)
+        self.assertEqual(self.cli("status", "--repo", str(self.target), "--check").returncode, 1)
+        before = self.fingerprint()
+        result = self.hook_install("skill:caveman")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        config["hooks"]["SessionStart"][1]["hooks"][0]["timeout"] = 30000
+        path.write_text(json.dumps(config))
+        result = self.hook_install("skill:caveman")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(path.read_bytes()), {"theme": "my-theme", "hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "echo mine"}]}]}})
+
+    def maintained_source(self):
+        checkout = SCRIPT.parent.parent
+        catalog = json.loads(checkout.joinpath("distribution/catalog.json").read_bytes())
+        for path in [*checkout.joinpath("hooks").rglob("*.py"), checkout / "scripts/generate-hooks.py"]:
+            relative = path.relative_to(checkout)
+            self.source.joinpath(relative).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, self.source / relative)
+        for asset in catalog["assets"].values():
+            for spec in asset["source_paths"]:
+                relative = spec["path"]
+                self.source.joinpath(relative).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(checkout / relative, self.source / relative)
+        self.source.joinpath("skills/caveman/SKILL.md").write_bytes(SKILL)
+        self.save_catalog(catalog)
+
+    def test_installed_required_hooks_survive_clone_and_nested_start_without_personal_state(self):
+        self.maintained_source()
+        self.target.joinpath(".gemini").mkdir()
+        self.target.joinpath(".gemini/settings.json").write_text('{"theme":"fixture","hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo unrelated"}]}]}}')
+        result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                          "--client", "codex", "--client", "copilot", "--client", "gemini", "--asset", "hook:required-skills")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(self.target.joinpath(".gemini/settings.json").read_bytes())["theme"], "fixture")
+        self.git(self.target, "add", ".")
+        self.git(self.target, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-m", "installed")
+        clone = self.root / "relocated clone 'quoted'"
+        self.git(self.root, "clone", str(self.target), str(clone))
+        shutil.rmtree(self.source)
+        nested = clone / "nested directory"
+        nested.mkdir()
+        state, home = self.root / "state", self.root / "empty home"
+        home.mkdir()
+        env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home), "AGENT_ASSETS_STATE_DIR": str(state),
+               "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]}
+        for provider, path, event in [("codex", ".codex/hooks.json", "SessionStart"),
+                                      ("copilot", ".github/hooks/agent-assets.json", "sessionStart"),
+                                      ("gemini", ".gemini/settings.json", "SessionStart")]:
+            config = json.loads(clone.joinpath(path).read_bytes())
+            entries = config["hooks"][event]
+            hook = entries[-1] if provider == "copilot" else entries[-1]["hooks"][0]
+            command = hook.get("bash", hook.get("command"))
+            payload = {"hook_event_name": event, "source": "startup", "session_id": "fixture", "cwd": str(nested)}
+            completed = subprocess.run(["bash", "-c", command], input=json.dumps(payload), text=True,
+                                       capture_output=True, cwd=nested, env=env, timeout=20)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            response = json.loads(completed.stdout.splitlines()[-1])
+            context = response.get("additionalContext") or response.get("hookSpecificOutput", {}).get("additionalContext")
+            self.assertIn("Fixture skill.", context or "", completed.stdout + completed.stderr)
+            self.assertTrue(any(state.joinpath(provider).rglob("audit.log")))
+        self.assertEqual(list(home.iterdir()), [])
+        self.assertEqual(self.git(clone, "status", "--porcelain"), "")
+        self.assertEqual(self.cli("status", "--repo", str(clone), "--check").returncode, 0)
+
+    def test_native_agents_use_strict_canonical_conversion_and_discovery_paths(self):
+        source = b'---\nname: reviewer\ndescription: Review "quoted" code\n---\nReview carefully.\n'
+        self.source.joinpath("agents").mkdir()
+        self.source.joinpath("agents/reviewer.md").write_bytes(source)
+        catalog = self.catalog()
+        catalog["assets"]["agent:reviewer"] = {
+            "source_paths": [{"path": "agents/reviewer.md", "content": "text", "line_endings": "lf"}],
+            "requires": [], "clients": ["codex", "copilot", "gemini"], "os": [], "runtime": [], "rendering": "agent"}
+        self.save_catalog(catalog)
+        result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                          "--client", "codex", "--client", "copilot", "--client", "gemini", "--asset", "agent:reviewer")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        converted = tomllib.loads(self.target.joinpath(".codex/agents/reviewer.toml").read_text())
+        self.assertEqual(converted, {"name": "reviewer", "description": 'Review "quoted" code',
+                                     "developer_instructions": "Review carefully.\n"})
+        self.assertEqual(self.target.joinpath(".github/agents/reviewer.agent.md").read_bytes(), source)
+        self.assertEqual(self.target.joinpath(".gemini/agents/reviewer.md").read_bytes(), source)
+        self.assertEqual(self.cli("status", "--repo", str(self.target), "--check").returncode, 0)
+
+    def test_security_hooks_install_all_dependencies_and_native_tool_and_end_registrations(self):
+        self.maintained_source()
+        result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                          "--client", "codex", "--client", "copilot", "--client", "gemini",
+                          "--asset", "hook:tool-guard", "--asset", "hook:scan-secrets")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        home, state = self.root / "home", self.root / "security state"
+        home.mkdir()
+        env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home), "AGENT_ASSETS_STATE_DIR": str(state),
+               "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]}
+        nested = self.target / "nested"
+        nested.mkdir()
+        for provider, config_path, tool_event, stop_event in [
+                ("codex", ".codex/hooks.json", "PreToolUse", "Stop"),
+                ("copilot", ".github/hooks/agent-assets.json", "preToolUse", "agentStop"),
+                ("gemini", ".gemini/settings.json", "BeforeTool", "SessionEnd")]:
+            config = json.loads(self.target.joinpath(config_path).read_bytes())
+            self.assertIn(stop_event, config["hooks"])
+            tool_entries = config["hooks"][tool_event]
+            for entry in tool_entries:
+                hook = entry if provider == "copilot" else entry["hooks"][0]
+                command = hook.get("bash", hook.get("command"))
+                payload = {"hook_event_name": tool_event, "tool_name": "Bash" if provider != "gemini" else "run_shell_command",
+                           "tool_input": {"command": "echo fixture"}, "cwd": str(nested), "session_id": "safe"}
+                if "tool-guard" in command:
+                    payload["tool_input"]["command"] = "r" + "m -rf /"
+                completed = subprocess.run(["bash", "-c", command], input=json.dumps(payload), text=True,
+                                           capture_output=True, cwd=nested, env=env, timeout=20)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                response = json.loads(completed.stdout.splitlines()[-1])
+                if "tool-guard" in command:
+                    self.assertIn("deny", json.dumps(response), completed.stdout)
+                else:
+                    self.assertNotIn("incomplete", json.dumps(response), completed.stdout)
+        self.assertEqual(list(home.iterdir()), [])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--group", choices=("team-install", "selection", "lifecycle", "providers", "scopes"))
     args, remaining = parser.parse_known_args()
-    if args.group not in (None, "team-install", "selection", "lifecycle"):
+    if args.group not in (None, "team-install", "selection", "lifecycle", "providers"):
         parser.error(f"group {args.group} has no implemented cases yet")
-    groups = {"team-install": TeamInstallTests, "selection": SelectionTests, "lifecycle": LifecycleTests}
+    groups = {"team-install": TeamInstallTests, "selection": SelectionTests, "lifecycle": LifecycleTests, "providers": ProviderTests}
     unittest.main(argv=[sys.argv[0], *([groups[args.group].__name__] if args.group else []), *remaining])
 
 

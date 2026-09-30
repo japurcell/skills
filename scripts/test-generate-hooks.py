@@ -77,6 +77,17 @@ RTK_TARGETS = (
     ".copilot/hooks/scripts/rtk-hook-copilot.py",
     ".gemini/hooks/scripts/rtk-hook-gemini.py",
 )
+REPOSITORY_RUNTIME_TARGETS = (
+    '.codex/hooks/load-required-skills.py',
+    '.codex/hooks/repository-launcher.py',
+    '.codex/hooks/helpers/runtime_config.py',
+    '.copilot/hooks/scripts/load-required-skills.py',
+    '.copilot/hooks/scripts/repository-launcher.py',
+    '.copilot/hooks/scripts/helpers/runtime_config.py',
+    '.gemini/hooks/scripts/skill-context-injector.py',
+    '.gemini/hooks/scripts/repository-launcher.py',
+    '.gemini/hooks/scripts/helpers/runtime_config.py',
+)
 OBSERVABILITY_ALLOWED_DIFFERENCES = (
     ('OBSERVABILITY_RUNTIME = "copilot"', 'OBSERVABILITY_RUNTIME = "gemini"'),
     ('_truthy_env("COPILOT_OBSERVABILITY_DISABLE", "OBSERVABILITY_DISABLE")',
@@ -254,7 +265,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (26 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (35 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -295,7 +306,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (26 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (35 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -321,7 +332,7 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS) - set(REPOSITORY_RUNTIME_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():
