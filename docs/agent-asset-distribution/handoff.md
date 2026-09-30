@@ -10,7 +10,7 @@ Independent aggregate repairs are integrated: fixture portability/pipe cleanup a
 
 ## Next step
 
-Complete M5 local/private repository scope, personal scope, authenticated adoption, cross-scope borrowing/pruning, and saved-selection legacy entry-point transition. Require public scope/wrapper acceptance and independent review before serialized integration. The post-M4 aggregate passes all 37 suites with zero failures in 412.7 seconds while M5 owns its separate private worktree. All 78 installer cases also pass separately on Python 3.13.14 in 102.190 seconds. Follow [the ExecPlan](../agent-asset-installer/ExecPlan.md). M6 native OS/client proof and M7 final documentation remain.
+Complete M5 independent review and its effective Git-ignore repair, then require final public acceptance and approval before serialized integration. Its initial 92-case checkpoint passes; an authenticated Codex agent borrowing/promotion repair raises the passing checkpoint to 93 cases in 120.712 seconds. A subsequent public review reproduction exposes local files through negated ignore rules while strict status passes, so M5 remains unfinished. The original writer owns that repair. The post-M4 aggregate passes all 37 suites with zero failures in 412.7 seconds; all 78 base installer cases separately pass on Python 3.13.14 in 102.190 seconds. Follow [the ExecPlan](../agent-asset-installer/ExecPlan.md). M6 native OS/client proof and M7 final documentation remain.
 
 ## Decisions and constraints
 
@@ -21,6 +21,10 @@ The engine uses Python 3.11+ and Git, with Bash/PowerShell compatibility entry p
 Keep retained research under `docs/agent-asset-distribution/` as requested. [The map](map.md) indexes closed decisions, [the comparison](existing-repos-review.md) records distributor evidence, and [the ExecPlan](../agent-asset-installer/ExecPlan.md) embeds execution requirements. The user already accepts the grilling/research fallback without domain-modeling; do not ask again. Genuinely missing distribution dependencies remain unavailable.
 
 ## Review findings and durable corrections
+
+M5 native-name preflight now receives authenticated companion paths before classifying Codex agents as unmanaged, with public borrowing/promotion proof preserving bytes, inode, and mtime. Effective local privacy also requires Git's evaluated ignore rules rather than textual exact-line ownership alone; that required repair is in progress. Keep unrelated ignore rules unchanged and preserve linked-worktree common-exclude authority. The current source has not received final independent approval.
+
+The fresh optional Codex isolation researcher could not launch: `collab spawn failed: agent thread limit reached`. No new researcher or result exists. Reuse the completed read-only M4 reviewer for related feasibility research at its actual retained model/effort; do not silently describe the failed route as applied. Keep distinct implementation nodes assigned to fresh implementers when the runtime permits.
 
 M3 now authenticates old file ownership and retained baseline origins against recorded immutable source before changing/pruning files. POSIX writes check final preimage/type/inode, parent identity, and desired bytes/mode; journal directory identities prevent ambiguous recovery after directory movement. Concurrent leaf replacement is preserved and requires explicit resolution. Selection/lock source kind, location, and policy must agree. Owned paths and proposed attributes now reject unsupported filters/encodings/ident/crlf transforms before writes. Final independent review approves these repairs and an eight-shape malformed-record sweep across status/update/restore; strict status stays offline.
 
