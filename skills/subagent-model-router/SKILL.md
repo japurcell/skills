@@ -63,4 +63,6 @@ Load only when needed:
 
 ## Sources
 
-Catalog and pricing references were verified against [Supported AI models in GitHub Copilot](https://docs.github.com/en/copilot/reference/ai-models/supported-models), [AI model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison), and [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) on **2026-09-22**. Recheck those sources when current pricing is required; plan and runtime availability can differ.
+Catalog and pricing references were verified against [Supported AI models in GitHub Copilot](https://docs.github.com/en/copilot/reference/ai-models/supported-models), [AI model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison), and [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) on **2026-09-29**. Recheck those sources when current pricing is required; plan and runtime availability can differ. Use supported-models for availability and retirement, model-comparison for task guidance, and models-and-pricing for rates. A published price does not establish that a model is selectable.
+
+For refreshes, fetch live sources directly. Reconcile every supported model and pricing row, including context thresholds and cache charges; document exclusions and availability restrictions before completion. If retrieval disagrees with the user's live page, bypass caches before claiming an entry is absent.
