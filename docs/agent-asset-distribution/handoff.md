@@ -2,11 +2,11 @@
 
 ## Status
 
-The six-repository pre-implementation review is complete. Seven research/contract tickets are closed. [Revisit Design After Existing Repositories](tickets/revisit-design-after-existing-repos.md) is claimed and awaits the user's live decision. [The comparison](existing-repos-review.md) recommends retaining the planned lifecycle engine and committed-copy default, with read-only `status --check` and explicit checkout line-ending policy as proposed refinements. Neither refinement is approved yet. The original [closed contract](tickets/choose-distribution-contract.md) remains authoritative. All three test boundaries are accepted, implementation remains explicitly on hold, and all seven milestones remain open. No source, tests, scaffolding, or live installation has started.
+All eight decision/research tickets are closed with no remaining in-scope question or fog. On 2026-09-29 the user accepted retaining the architecture, strict offline `status --check`, and narrow owned checkout line-ending policy. [Revisit Design After Existing Repositories](tickets/revisit-design-after-existing-repos.md) records the approved refinements alongside the [original contract](tickets/choose-distribution-contract.md). The [ExecPlan](../agent-asset-installer/ExecPlan.md) incorporates both refinements throughout interfaces, records, ownership, milestones, and acceptance. All three test boundaries remain accepted. Implementation is still explicitly on hold, and all seven milestones remain open. No source, tests, scaffolding, or live installation has started.
 
 ## Next step
 
-Receive the user's decision on the architecture recommendation and two refinements in [Review Existing Agent Asset Distributors](existing-repos-review.md). Record only agreed amendments in the decision ticket and synchronize the ExecPlan; close the live ticket only after that exchange. Planning acceptance does not lift the implementation hold. Continue waiting for an explicit implementation request. Accepted test seams are public CLI/file effects, Bash/PowerShell entry points, and native discovery/hook execution; do not ask again.
+Wait for an explicit implementation request. Do not reopen the architecture, strict verification, checkout policy, or accepted test boundaries. When requested, load `exec-plans` and `tdd` and begin milestone 1 through the accepted public CLI seam: one pinned skill, team records, and narrow owned text attributes in a disposable repository. Add one failing public test and minimal implementation at a time. Planning acceptance does not lift the hold; do not write source, tests, or scaffolding yet.
 
 ## Important boundaries
 
@@ -29,21 +29,21 @@ Receive the user's decision on the architecture recommendation and two refinemen
 - APM supports committed payloads and an audit-only CI pattern, correcting the supplied research's manifest-only framing. Its normal install overwrites managed files, and its resolution transaction excludes native target outputs; an ownership wrapper would duplicate substantial lifecycle responsibility.
 - ECC's catalog and semantic hook IDs are useful references. Its ordinary successful upgrade replaces managed files. Kimi-specific preflight is stronger but can finish partially. Deselection pruning was not verified.
 - Skills-lock reinforces pins and content digests; frozen install still writes payloads. Superpowers and wshobson reinforce client adapters/native packages later. Skillet is skills-only and has inconsistent update maturity claims.
-- APM's audit motivates checking committed files before any repair. Git's documented checkout conversion motivates declaring line-ending policy, retaining exact hashes, and testing fresh Windows clones. The comparison holds concrete proposals and evidence limits.
+- APM's audit motivates checking committed files before any repair. Git's documented checkout conversion motivates declaring line-ending policy, retaining exact hashes, and testing fresh Windows clones. The comparison holds the accepted refinements and evidence limits.
 
 ## Verification
 
-`rtk proxy ./scripts/lint-okf.py` and `rtk git diff --check` pass. A read-only validator checks 23 Markdown files, 92 local links, seven closed tickets with one resolution each, the live decision's exact closed dependencies, the implementation hold, seven synchronized open milestones, and preserved canonical frontmatter. Only research/planning documents and two existing canonical routing entries changed. No implementation tests have run. Research inspected first-party documentation and code without executing third-party installers or clients. Some citations use moving upstream `main`; release evidence is distinguished from inspected source.
+`rtk proxy ./scripts/lint-okf.py` and `rtk git diff --check` pass. A read-only validator checks 23 Markdown files, 93 local links, eight closed ticket resolutions, no remaining planning question, the explicit hold, seven synchronized open implementation milestones, and the exact six-document scope. Only planning documents and one file-map phrase changed. No implementation tests have run. Research inspected first-party documentation and code without executing third-party installers or clients. Some citations use moving upstream `main`; release evidence is distinguished from inspected source.
 
 No live client installation was run. Codex hosted/cloud customization, Gemini extension-packaged agent maturity, and uniform native-plugin pinning remain unverified research limits. The local release-policy probe did not inspect remote hosting; see the source inventory's scoped findings.
 
 ## Documentation pass
 
-- Added: Four tickets, three findings files, and the existing-repository comparison under the retained distribution effort.
-- Changed: Map, research routing, feature handoff, and ExecPlan review state; canonical repository/file-map routing points to the current comparison and approved contract.
+- Added: None.
+- Changed: Refinement ticket, decision map, comparison, feature handoff, and ExecPlan to reflect accepted decisions; file-map wording remains independent of proposal status.
 - Split or moved: None. Retained research stays at the user-requested `docs/` location.
-- Deduplicated: Detailed source evidence remains in the assigned findings files; the comparison holds synthesis and proposals, while the live ticket holds decision state.
-- Index updates: Distribution map includes three closed research tickets. Existing canonical file-map routing is updated; memory INDEX remains unchanged because no memory file was added, removed, renamed, or repurposed.
+- Deduplicated: Accepted decisions live in the closed refinement ticket; execution requirements are incorporated in the self-contained ExecPlan.
+- Index updates: Distribution map includes the closed refinement ticket. Existing canonical file-map wording is updated; memory INDEX remains unchanged because no memory file was added, removed, renamed, or repurposed.
 - Remaining documentation quality TODOs: None.
 
 Canonical targets are [repository instructions](../../.agents/instructions/repo.md), type `Agent Instruction`, and [the file map](../../.agents/memory/FILE_MAP.md), type `Agent Memory`. Frontmatter and unrelated content are preserved. OKF authoring uses the [profile branch](../../.agents/skills/okf-authoring/references/profile.md); the source-summary branch is not applicable.
