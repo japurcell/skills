@@ -29,13 +29,14 @@ An implementation-ready specification for a reusable, autonomous context managem
 - [Context Retrieval Contract](tickets/context-retrieval-contract.md): Scoped guidance arrives before dependent work, preserves meaning and uncertainty, and is checked and restored across context changes.
 - [Lifecycle Guarantees](tickets/lifecycle-guarantees.md): Codex desktop and three CLIs require automatic stages, verified completion, next-event recovery, and separately certified native or fallback paths.
 - [Context Organization and Skill Boundary](tickets/context-organization-and-skill-boundary.md): Indexed knowledge and the cooperative agent-brain skill/CLI use foreground semantics, compact metadata, and separately certified native adapters.
+- [Maintenance Scheduling and Pruning](tickets/maintenance-scheduling-and-pruning.md): Foreground dream uses periodic bounded review with rotating coverage, evidenced pruning, and retention that protects unfinished work and reversible history.
 
 ## Not yet specified
 
 <!-- FOG START -->
 
-- Capability certification may expose an unexpected interaction between native events, invocation-context binding, and foreground continuation that requires a new integration choice. Revisit only exceptions not already settled by the selected design and unsupported-path policy.
-- A concrete legacy-repository pilot may expose unanticipated interactions among protected documents, existing metadata, custom hooks, and worktree state. Ordinary setup, recovery, and pilot validation are covered by the live tickets; newly exposed exceptions may need another decision.
+- Capability certification may expose an unexpected interaction among native events, invocation-context binding, and foreground continuation that requires another integration choice. Revisit exceptions beyond the selected lifecycle and scheduling contracts and the unsupported-path policy.
+- A concrete legacy-repository pilot may expose unanticipated interactions among protected documents, existing metadata, custom hooks, and worktree state. Ordinary setup, batch limits, retention implementation, recovery, and pilot validation belong to the live tickets; newly exposed exceptions may need another decision.
 
 <!-- FOG END -->
 

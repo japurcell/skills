@@ -17,6 +17,8 @@ Implement the verified-completion, visible-incomplete, pending-work, and next-el
 
 Implement [Context Organization and Skill Boundary](context-organization-and-skill-boundary.md): bind invocation context to workspace/worktree, task, agent, and stage; define issuance, validation, expiry, and restoration without trusting a provider-named environment variable. Invalid learn/dream context fails before mutation. Separate CLI dispatch/process success from validated completed, no-change, or incomplete stage outcomes. Choose actual outcome checks, publication/rollback, and durable ignored-state records. Preserve stable unit references and context availability when knowledge moves or changes during active, resumed, or delegated work, without detailed usage attribution.
 
+Implement [Maintenance Scheduling and Pruning](maintenance-scheduling-and-pruning.md): distinguish the due review cycle, assigned required batch, reviewed coverage, and remaining routine work. Choose durable ownership and progress records across concurrent agents/worktrees, interruption, source revisions, and repeated native events. Verify scoped no-change without claiming full-cycle completion; only verified cycle completion resets its clock. Preserve pending obligations, unresolved candidates, active recovery records, and required evidence through cleanup. Completed unreferenced operational records expire after 30 days unless still needed for recovery or validation. Keep foreground execution and respect existing pause/cancellation rules; do not add idle model jobs.
+
 ---
 
 <!-- Resolution will be appended here. -->
