@@ -37,6 +37,10 @@ Success is observable from a disposable project: install a review workflow, see 
 ## Surprises & Discoveries
 
 
+M6 independent review finds that borrowing a compatible metadata checkout rule does not remove the audit obligation. After a borrowed `.gitattributes text eol=lf` rule changes to CRLF, strict status initially passes despite the required effective policy changing. The public reproduction confirms no audit writes or index refresh. The original M6 writer repairs validation for owned and borrowed policy without claiming user rules; the independent recheck and full 99-case run are pending.
+
+The fresh M7 documentation launch also fails with `collab spawn failed: agent thread limit reached`. Its private worktree is prepared, but no worker or documentation implementation starts. Keep the selected Fast route as planned, unapplied, and retry a fresh implementer after the active M6 review/repair frees capacity. Do not reassign an existing implementer to this distinct node.
+
 M5 independent review reproduces two cross-scope/privacy defects. Team-owned Codex agents were rejected as unmanaged before authenticated companion ownership reached native-name preflight; the public red/green repair covers both initial and mutex checks, borrowing, and promotion without file replacement. A later negated Git ignore rule could expose local files while strict status passed. Effective-ignore validation before planning, under the mutex, and during strict status is required; the original M5 writer completed that repair before final approval. Its historical 93-case passing checkpoint precedes the effective-ignore repair and is not final approval.
 
 The optional Codex isolation research launch fails with `collab spawn failed: agent thread limit reached`; no new agent or acceptance result exists. Preserve this resource failure rather than claiming the selected route ran. Reuse the completed read-only M4 reviewer for this related feasibility research, retaining its actual model and effort; distinct implementation nodes still require fresh implementers when the runtime permits.
