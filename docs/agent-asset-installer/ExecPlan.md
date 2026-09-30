@@ -31,7 +31,7 @@ Success is observable from a disposable project: install a review workflow, see 
 - [x] (2026-09-30 02:34Z) [milestone-3] Deliver preview, update, recorded restoration, strict read-only verification, conflict protection, and safe pruning. All 64 public cases and 14 runner cases pass; independent final review approves.
 - [x] (2026-09-30 03:25Z) [milestone-4] Deliver native repository adapters for Codex, Copilot CLI/VS Code, and Gemini CLI.
 - [x] (2026-09-30 04:41Z) [milestone-5] Deliver local and personal installations, verified adoption, and legacy entry-point integration. All 94 public CLI cases and independent source review pass; approved implementation is rebased unchanged onto the frozen parent checkpoint.
-- [ ] [milestone-6] Prove Windows, Linux, macOS, and installed client behavior.
+- [ ] (2026-09-30 04:48Z) [milestone-6] Implement native platform safety, clone/CI checks and client validation. M5 is integrated; local implementation begins in a fresh worktree. Native Windows/Linux, Python 3.11 and normal client discovery/event proof remain unmet.
 - [ ] [milestone-7] Publish usage documentation, synchronize canonical knowledge, and finish acceptance.
 
 ## Surprises & Discoveries
@@ -222,6 +222,8 @@ Rationale: Filesystem integrity needs connected reasoning and independent verifi
 
 ## Outcomes & Retrospective
 
+
+M5 integrates at `865470e148acdca77835d1215ce0807e1d6e2266`, with identical base/private tips and clean status. The zero-conflict rebase preserves all 27 non-plan patches byte for byte; seven synchronized milestones, 35 Markdown documents/180 local links, OKF and whitespace pass. Its clean worktree and branch are removed. M1 through M5 are done; M6 starts at the frontier, with M7 remaining open. The post-M5 aggregate is pending. Read-only Codex feasibility research completes in the retained probes worktree without client execution; credential-free provider configuration is documented, while containment, onboarding, trust and native event proof remain unverified. The bundled desktop runtime is Python 3.12.14, providing another locally available interpreter but no Python 3.11 proof.
 
 M5 private-branch rebase checkpoint, 2026-09-30 04:41Z: the exclusive merger's actual route is Standard `gpt-6.1-sol`, effort `high`; the launch succeeded. The approved original commit `1161818f3003b310f391e6ee4e6154561d94aee3` is historical. Its implementation is rebased onto frozen parent checkpoint `13bb1cc8d7589f7aea1f537d34be7a65f9b9bda5` without conflicts. All 27 non-plan patches remain byte-for-byte identical, including source, public tests, hook registrations and scoped canonical documentation. Milestones 1 through 5 are done with acceptance met and checked progress; milestones 6 and 7 remain open with acceptance not met. Validation passes seven synchronized milestones, preserved parent research/routes/review checkpoints, 35 Markdown documents and 180 local links including heading and line anchors, full-corpus OKF lint, and parent-range whitespace checks. Source tests are not rerun because no source conflict or source-patch change occurred. Serialized parent integration remains pending. No native operating-system or client-delivery acceptance is added. The formal documentation pass finds no additional durable knowledge change.
 
@@ -416,7 +418,7 @@ Independent review exposed two additional public failures. Identical Codex agent
 ### Milestone 6: Validate operating systems and native loading
 
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
