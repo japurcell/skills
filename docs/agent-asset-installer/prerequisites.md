@@ -9,7 +9,7 @@ Commands were discovered with `command -v` and queried using `--version` only. P
 | Command | Observed |
 | --- | --- |
 | Python (`python3`) | 3.14.6; resolves through `/Users/adam/.pyenv/shims/python3`. |
-| Additional Python | 3.13.14 is installed and reports that version. No additional-version test acceptance is inferred. |
+| Additional Python | 3.13.14 is installed. The complete current 64-case public installer suite passes on this runtime in 64.547 seconds. This is macOS evidence only. |
 | flock | 0.4.0 at `/Users/adam/homebrew/bin/flock`, installed by the user. |
 | Git | 2.50.1 (Apple Git-155). |
 | Bash | GNU bash 3.2.57(1)-release (arm64-apple-darwin25). |
