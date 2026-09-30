@@ -41,3 +41,7 @@ fi
   "skills/accessibility/" "skills/web-accessibility" \
   "skills/best-practices/" "skills/web-best-practices" \
   "skills/performance/" "skills/web-performance" \
+
+"$SCRIPT_DIR/copy-from-git.sh" \
+  "https://github.com/humanlayer/skills.git" \
+  "plugins/show-me/skills/show-me" "skills"
