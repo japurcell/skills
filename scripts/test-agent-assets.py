@@ -18,7 +18,7 @@ SCRIPT = Path(__file__).with_name("agent-assets.py")
 SKILL = b"---\nname: caveman\ndescription: Speak briefly\n---\nFixture skill.\n"
 
 
-class TeamInstallTests(unittest.TestCase):
+class Fixture(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="agent assets ")
         self.root = Path(self.temporary.name)
@@ -66,6 +66,7 @@ class TeamInstallTests(unittest.TestCase):
         return {p.relative_to(self.target).as_posix(): p.read_bytes()
                 for p in self.target.rglob("*") if p.is_file() and ".git" not in p.relative_to(self.target).parts}
 
+class TeamInstallTests(Fixture):
     def test_installs_one_committed_skill_with_provenance_and_untouched_index(self):
         index = self.git(self.target, "ls-files", "--stage")
         result = self.install()
@@ -375,13 +376,355 @@ class TeamInstallTests(unittest.TestCase):
         self.assertNotEqual(json.loads(first.stdout)["source"]["digest"], json.loads(second.stdout)["source"]["digest"])
 
 
+class SelectionTests(Fixture):
+    def fingerprint(self):
+        return {p.relative_to(self.target).as_posix(): (p.lstat().st_mode, p.lstat().st_mtime_ns,
+                                                      p.read_bytes() if p.is_file() else None)
+                for p in self.target.rglob("*")}
+
+    def save_catalog(self, catalog):
+        self.source.joinpath("distribution/catalog.json").write_text(json.dumps(catalog), encoding="utf-8")
+        self.git(self.source, "add", ".")
+        self.git(self.source, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-m", "selection fixture")
+
+    def catalog(self):
+        return json.loads(self.source.joinpath("distribution/catalog.json").read_text())
+
+    def add_skill(self, catalog, name, requires=()):
+        path = f"skills/{name}/SKILL.md"
+        target = self.source / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(f"Skill {name}.\n", encoding="utf-8")
+        catalog["assets"][f"skill:{name}"] = {
+            "source_paths": [{"path": path, "content": "text", "line_endings": "lf"}],
+            "requires": list(requires), "clients": ["codex"], "rendering": "skill", "os": [], "runtime": [],
+        }
+
+    def test_bundle_installs_literal_transitive_shared_closure(self):
+        catalog = self.catalog()
+        self.add_skill(catalog, "left", ["skill:caveman"])
+        self.add_skill(catalog, "right", ["skill:caveman"])
+        self.add_skill(catalog, "review", ["skill:left", "skill:right"])
+        catalog["bundles"]["review"] = ["skill:review"]
+        self.save_catalog(catalog)
+        result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                          "--client", "codex", "--bundle", "review", "--format", "json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        lock = json.loads(self.target.joinpath(".agent-assets/lock.json").read_bytes())
+        self.assertEqual(lock["assets"], ["skill:caveman", "skill:left", "skill:review", "skill:right"])
+        selection = json.loads(self.target.joinpath(".agent-assets/selection.json").read_bytes())
+        self.assertEqual(selection["assets"], [])
+        self.assertEqual(selection["bundles"], ["review"])
+        self.assertEqual(self.target.joinpath(".agents/skills/left/SKILL.md").read_bytes(), b"Skill left.\n")
+        self.assertEqual(self.target.joinpath(".agents/skills/right/SKILL.md").read_bytes(), b"Skill right.\n")
+        self.assertEqual(self.target.joinpath(".agents/skills/review/SKILL.md").read_bytes(), b"Skill review.\n")
+        self.assertEqual(self.target.joinpath(".agents/skills/caveman/SKILL.md").read_bytes(), SKILL)
+
+    def test_list_and_install_report_every_missing_dependency_chain_without_writes(self):
+        catalog = self.catalog()
+        self.add_skill(catalog, "left", ["skill:domain-modeling"])
+        self.add_skill(catalog, "right", ["skill:domain-modeling"])
+        self.add_skill(catalog, "workflow", ["skill:left", "skill:right"])
+        catalog["assets"]["skill:domain-modeling"] = {
+            "source_paths": [], "requires": [], "clients": ["codex"], "rendering": "skill",
+            "os": [], "runtime": [], "unavailable_reason": "Required skill has no maintained source.",
+        }
+        self.save_catalog(catalog)
+        before = self.fingerprint()
+        result = self.cli("list", "--source", str(self.source), "--client", "codex", "--format", "json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        asset = json.loads(result.stdout)["assets"]["skill:workflow"]
+        self.assertFalse(asset["available"])
+        self.assertEqual([entry["chain"] for entry in asset["missing"]], [
+            ["skill:workflow", "skill:left", "skill:domain-modeling"],
+            ["skill:workflow", "skill:right", "skill:domain-modeling"],
+        ])
+        result = self.install("--asset", "skill:workflow")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_DEPENDENCY_MISSING", result.stderr)
+        self.assertIn("skill:workflow -> skill:left -> skill:domain-modeling", result.stderr)
+        self.assertIn("skill:workflow -> skill:right -> skill:domain-modeling", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_all_six_clients_install_at_documented_skill_paths(self):
+        catalog = self.catalog()
+        catalog["assets"]["skill:caveman"]["clients"] = ["codex", "copilot", "gemini", "claude", "cursor", "opencode"]
+        self.save_catalog(catalog)
+        for client, prefix in [("codex", ".agents"), ("copilot", ".agents"), ("gemini", ".agents"),
+                               ("claude", ".claude"), ("cursor", ".agents"), ("opencode", ".agents")]:
+            with self.subTest(client=client):
+                target = self.root / client
+                target.mkdir()
+                self.git(target, "init", "-b", "main")
+                result = self.cli("install", "--repo", str(target), "--source", str(self.source),
+                                  "--client", client, "--asset", "skill:caveman", "--format", "json")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(target.joinpath(f"{prefix}/skills/caveman/SKILL.md").read_bytes(), SKILL)
+                lock = json.loads(target.joinpath(".agent-assets/lock.json").read_bytes())
+                self.assertEqual([item["destination"] for item in lock["items"]], [f"{prefix}/skills/caveman/SKILL.md"])
+
+    def test_hooks_and_agents_refuse_skills_only_clients_and_pending_renderers(self):
+        catalog = self.catalog()
+        for asset_id, rendering in [("hook:tool-guard", "hook"), ("agent:reviewer", "agent")]:
+            catalog["assets"][asset_id] = {"source_paths": [], "requires": [], "clients": ["codex", "copilot", "gemini"],
+                                         "rendering": rendering, "os": [], "runtime": []}
+        self.save_catalog(catalog)
+        before = self.fingerprint()
+        for asset_id in ["hook:tool-guard", "agent:reviewer"]:
+            for client in ["claude", "cursor", "opencode", "codex", "copilot", "gemini"]:
+                with self.subTest(asset=asset_id, client=client):
+                    result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                                      "--client", client, "--asset", asset_id, "--format", "json")
+                    self.assertEqual(result.returncode, 1, result.stderr)
+                    expected = "ASSET_CLIENT_UNSUPPORTED" if client in ["claude", "cursor", "opencode"] else "ASSET_RENDERER_UNAVAILABLE"
+                    self.assertIn(expected, result.stderr)
+                    self.assertEqual(self.fingerprint(), before)
+        result = self.cli("list", "--source", str(self.source), "--client", "codex", "--format", "json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(json.loads(result.stdout)["assets"]["hook:tool-guard"]["installable"])
+
+    def test_malformed_catalog_is_rejected_by_list_before_writes(self):
+        cases = [
+            ("bundles", [], "bundles"),
+            ("schema_version", True, "schema"),
+            ("asset-field", ("requires", "skill:absent"), "requires"),
+            ("asset-field", ("clients", ["unknown-client"]), "clients"),
+            ("asset-field", ("runtime", "python"), "runtime"),
+            ("asset-field", ("os", ["unknown-os"]), "os"),
+            ("asset-field", ("rendering", "import-python"), "rendering"),
+            ("asset-field", ("source_root", "outside/caveman"), "source_root"),
+            ("asset-field", ("source_root", ".agents/skills/other"), "source_root"),
+            ("asset-field", ("source_root", "../skills/caveman"), "source_root"),
+            ("asset-field", ("source_paths", [{"path": "../escape", "content": "text", "line_endings": "lf"}]), "path"),
+            ("asset-field", ("source_paths", [{"path": "skills/caveman/evals/output.md", "content": "text", "line_endings": "lf"}]), "eval output"),
+            ("asset-field", ("source_paths", []), "missing skill entry point"),
+        ]
+        for field, value, hint in cases:
+            with self.subTest(field=field, hint=hint):
+                catalog = self.catalog()
+                if field == "asset-field":
+                    key, data = value
+                    catalog["assets"]["skill:caveman"][key] = data
+                else:
+                    catalog[field] = value
+                self.save_catalog(catalog)
+                before = self.fingerprint()
+                result = self.cli("list", "--source", str(self.source), "--format", "json")
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("ASSET_CATALOG_INVALID", result.stderr)
+                self.assertEqual(self.fingerprint(), before)
+                # Start the next public case from the original committed fixture.
+                self.git(self.source, "reset", "--hard", self.commit)
+
+    def test_preserves_shared_reference_and_license_for_requested_skills(self):
+        catalog = self.catalog()
+        self.add_skill(catalog, "secure", ["reference:security-checklist", "notice:repository-license"])
+        catalog["assets"]["skill:caveman"]["requires"] = ["notice:repository-license"]
+        for asset_id, path, data, rendering in [
+            ("reference:security-checklist", "references/security-checklist.md", b"Security checklist.\n", "reference"),
+            ("notice:repository-license", "LICENSE", b"Fixture license notice.\n", "notice"),
+        ]:
+            self.source.joinpath(path).parent.mkdir(parents=True, exist_ok=True)
+            self.source.joinpath(path).write_bytes(data)
+            catalog["assets"][asset_id] = {
+                "source_paths": [{"path": path, "content": "text", "line_endings": "lf"}],
+                "requires": [], "clients": ["codex"], "os": [], "runtime": [], "rendering": rendering,
+            }
+        self.save_catalog(catalog)
+        result = self.install("--asset", "skill:secure")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.target.joinpath(".agents/references/security-checklist.md").read_bytes(), b"Security checklist.\n")
+        self.assertEqual(self.target.joinpath(".agent-assets/notices/LICENSE").read_bytes(), b"Fixture license notice.\n")
+        lock = json.loads(self.target.joinpath(".agent-assets/lock.json").read_bytes())
+        self.assertEqual(lock["assets"], ["notice:repository-license", "reference:security-checklist", "skill:caveman", "skill:secure"])
+
+    def test_undeclared_runtime_file_refuses_the_entire_selection(self):
+        runtime = self.source / "skills/caveman/scripts/needed.py"
+        runtime.parent.mkdir()
+        runtime.write_text("print('required runtime')\n", encoding="utf-8")
+        self.git(self.source, "add", ".")
+        self.git(self.source, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-m", "undeclared runtime")
+        before = self.fingerprint()
+        result = self.install()
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_CATALOG_INVALID", result.stderr)
+        self.assertIn("skills/caveman/scripts/needed.py", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_maintained_catalog_lists_bundle_roots_and_required_missing_workflows(self):
+        checkout = SCRIPT.parent.parent
+        catalog = json.loads(checkout.joinpath("distribution/catalog.json").read_bytes())
+        for asset in catalog["assets"].values():
+            for spec in asset["source_paths"]:
+                path = self.source / spec["path"]
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(checkout.joinpath(spec["path"]).read_bytes())
+        self.save_catalog(catalog)
+        before = self.fingerprint()
+        result = self.cli("list", "--source", str(self.source), "--client", "codex", "--format", "json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["bundles"], {"review": ["skill:code-review"],
+                                             "security-hooks": ["hook:tool-guard", "hook:scan-secrets"],
+                                             "required-context": ["hook:required-skills", "skill:caveman"]})
+        self.assertIn("skill:domain-modeling", report["assets"])
+        self.assertFalse(report["assets"]["skill:wayfinder"]["available"])
+        self.assertIn(["skill:wayfinder", "skill:domain-modeling"],
+                      [item["chain"] for item in report["assets"]["skill:wayfinder"]["missing"]])
+        self.assertEqual(report["assets"]["skill:code-review"]["requires"], [
+            "agent:addy-code-reviewer", "agent:addy-security-auditor", "agent:addy-test-engineer",
+            "skill:addy-code-review-and-quality", "skill:addy-security-and-hardening", "skill:delegate-to-subagents",
+            "notice:repository-license",
+        ])
+        self.assertIn("skill:caveman", report["assets"]["hook:required-skills"]["requires"])
+        self.assertFalse(report["assets"]["hook:required-skills"]["installable"])
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_shared_skill_paths_are_materialized_once_for_five_clients(self):
+        catalog = self.catalog()
+        catalog["assets"]["skill:caveman"]["clients"] = ["codex", "copilot", "gemini", "cursor", "opencode"]
+        self.save_catalog(catalog)
+        result = self.install("--client", "copilot", "--client", "gemini", "--client", "cursor", "--client", "opencode")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        lock = json.loads(self.target.joinpath(".agent-assets/lock.json").read_bytes())
+        self.assertEqual([item["destination"] for item in lock["items"]], [".agents/skills/caveman/SKILL.md"])
+
+    def test_dependency_cycle_is_invalid_even_outside_selection(self):
+        catalog = self.catalog()
+        self.add_skill(catalog, "left", ["skill:right"])
+        self.add_skill(catalog, "right", ["skill:left"])
+        self.save_catalog(catalog)
+        before = self.fingerprint()
+        for command in [("list", "--source", str(self.source)),
+                        ("install", "--source", str(self.source), "--client", "codex", "--asset", "skill:caveman")]:
+            result = self.cli(*command, "--format", "json")
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("Dependency cycle: skill:left -> skill:right -> skill:left", result.stderr)
+            self.assertEqual(self.fingerprint(), before)
+
+    def test_unknown_requested_asset_is_malformed_selection(self):
+        before = self.fingerprint()
+        result = self.install("--asset", "skill:typo")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_SELECTION_INVALID", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_casefold_collision_across_assets_is_rejected_before_materialization(self):
+        catalog = self.catalog()
+        for asset_id, path in [("reference:first", "references/Case.md"), ("reference:second", "references/case.md")]:
+            catalog["assets"][asset_id] = {"source_paths": [{"path": path, "content": "text", "line_endings": "lf"}],
+                                         "requires": [], "clients": ["codex"], "rendering": "reference", "os": [], "runtime": []}
+        self.source.joinpath("references").mkdir()
+        self.source.joinpath("references/Case.md").write_text("case fixture\n", encoding="utf-8")
+        self.save_catalog(catalog)
+        before = self.fingerprint()
+        result = self.install("--asset", "reference:first", "--asset", "reference:second")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_CATALOG_INVALID", result.stderr)
+        self.assertIn("Case-colliding", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_declared_missing_source_is_unavailable_with_dependency_chain(self):
+        catalog = self.catalog()
+        self.add_skill(catalog, "workflow", ["skill:caveman"])
+        catalog["assets"]["skill:caveman"]["source_paths"].append({
+            "path": "skills/caveman/references/required.md", "content": "text", "line_endings": "lf",
+        })
+        self.save_catalog(catalog)
+        before = self.fingerprint()
+        listed = self.cli("list", "--source", str(self.source), "--format", "json")
+        self.assertEqual(listed.returncode, 0, listed.stderr)
+        entry = json.loads(listed.stdout)["assets"]["skill:workflow"]
+        self.assertFalse(entry["available"])
+        self.assertEqual(entry["missing"][0]["chain"], ["skill:workflow", "skill:caveman"])
+        self.assertIn("skills/caveman/references/required.md", entry["missing"][0]["reason"])
+        result = self.install("--asset", "skill:workflow")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_DEPENDENCY_MISSING", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_explicit_repo_local_workflow_dependency_preserves_native_name_and_support(self):
+        catalog = self.catalog()
+        self.add_skill(catalog, "workflow", ["skill:exec-plans"])
+        for relative, data in [("SKILL.md", b"Maintained execution plan skill.\n"),
+                               ("references/requirements.md", b"Plan requirements.\n")]:
+            path = self.source / ".agents/skills/exec-plans" / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        catalog["assets"]["skill:exec-plans"] = {
+            "source_root": ".agents/skills/exec-plans", "source_paths": [
+                {"path": ".agents/skills/exec-plans/SKILL.md", "content": "text", "line_endings": "lf"},
+                {"path": ".agents/skills/exec-plans/references/requirements.md", "content": "text", "line_endings": "lf"},
+            ], "requires": [], "clients": ["codex"], "rendering": "skill", "os": [], "runtime": [],
+        }
+        self.save_catalog(catalog)
+        result = self.install("--asset", "skill:workflow")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.target.joinpath(".agents/skills/exec-plans/SKILL.md").read_bytes(), b"Maintained execution plan skill.\n")
+        self.assertEqual(self.target.joinpath(".agents/skills/exec-plans/references/requirements.md").read_bytes(), b"Plan requirements.\n")
+
+    def test_declared_os_restriction_refuses_before_any_write(self):
+        catalog = self.catalog()
+        catalog["assets"]["skill:caveman"]["os"] = ["linux" if sys.platform == "win32" else "windows"]
+        self.save_catalog(catalog)
+        before = self.fingerprint()
+        result = self.install()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_PLATFORM_UNSUPPORTED", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_repo_local_root_preflights_unlisted_filters_before_git_status(self):
+        catalog = self.catalog()
+        root = ".agents/skills/exec-plans"
+        self.source.joinpath(root).mkdir(parents=True)
+        self.source.joinpath(root, "SKILL.md").write_text("Execution plans.\n", encoding="utf-8")
+        unlisted = self.source.joinpath(root, "unlisted.txt")
+        unlisted.write_bytes(b"baseline\n")
+        self.source.joinpath(".gitattributes").write_text(f"{root}/unlisted.txt filter=unsafe\n", encoding="utf-8")
+        catalog["assets"]["skill:exec-plans"] = {
+            "source_root": root, "source_paths": [{"path": root + "/SKILL.md", "content": "text", "line_endings": "lf"}],
+            "requires": [], "clients": ["codex"], "rendering": "skill", "os": [], "runtime": [],
+        }
+        self.save_catalog(catalog)
+        marker = self.root / "filter-executed"
+        self.git(self.source, "config", "filter.unsafe.clean", f"touch '{marker}'; cat")
+        unlisted.write_bytes(b"baseLINE\n")
+        before = self.fingerprint()
+        result = self.install("--asset", "skill:exec-plans")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_SOURCE_INVALID", result.stderr)
+        self.assertFalse(marker.exists(), "Unlisted repo-local source file executed a Git filter")
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_shared_declared_file_keeps_both_owners(self):
+        catalog = self.catalog()
+        path = "references/shared.md"
+        self.source.joinpath("references").mkdir()
+        self.source.joinpath(path).write_bytes(b"Shared support.\n")
+        for name in ["first", "second"]:
+            catalog["assets"]["reference:" + name] = {
+                "source_paths": [{"path": path, "content": "text", "line_endings": "lf"}],
+                "requires": [], "clients": ["codex"], "os": [], "runtime": [], "rendering": "reference",
+            }
+        self.save_catalog(catalog)
+        result = self.install("--asset", "reference:first", "--asset", "reference:second")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        lock = json.loads(self.target.joinpath(".agent-assets/lock.json").read_bytes())
+        shared = next(item for item in lock["items"] if item["destination"] == ".agents/references/shared.md")
+        self.assertEqual(shared["owners"], ["reference:first", "reference:second"])
+        self.assertEqual(self.target.joinpath(shared["destination"]).read_bytes(), b"Shared support.\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--group", choices=("team-install", "selection", "lifecycle", "providers", "scopes"))
     args, remaining = parser.parse_known_args()
-    if args.group not in (None, "team-install"):
+    if args.group not in (None, "team-install", "selection"):
         parser.error(f"group {args.group} has no implemented cases yet")
-    unittest.main(argv=[sys.argv[0], *remaining])
+    groups = {"team-install": TeamInstallTests, "selection": SelectionTests}
+    unittest.main(argv=[sys.argv[0], *([groups[args.group].__name__] if args.group else []), *remaining])
 
 
 if __name__ == "__main__":

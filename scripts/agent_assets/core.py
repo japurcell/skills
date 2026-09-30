@@ -4,46 +4,35 @@ from __future__ import annotations
 
 import os
 from pathlib import Path, PurePosixPath
-import re
 import stat
 import tempfile
 import uuid
 
 from .sources import AssetError, acquire, canonical, digest, git, read_json
 from . import attributes
+from .catalog import resolve, installation_restrictions, validate_runtime_files, skill_source_root
+from .providers import skill_roots
+from .paths import safe_path
 
 
-def safe_path(value: str) -> str:
-    if not isinstance(value, str):
-        raise AssetError("ASSET_CATALOG_INVALID", "Catalog paths must be strings.")
-    path = PurePosixPath(value)
-    reserved = r"^(CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:\.|$)"
-    if path.is_absolute() or ".." in path.parts or "\\" in value or not path.parts or value != path.as_posix() or any(
-        part.endswith((".", " ")) or re.match(reserved, part, re.IGNORECASE) or
-        any(ord(c) < 32 or c in '<>:"|?*' for c in part) for part in path.parts
-    ):
-        raise AssetError("ASSET_CATALOG_INVALID", "Catalog path must be a safe relative path.")
-    return path.as_posix()
 
 
 def render(snapshot, catalog, assets, clients):
     files, inputs = {}, []
     for asset_id in assets:
         asset = catalog["assets"].get(asset_id)
-        if not asset or asset.get("rendering") != "skill":
-            raise AssetError("ASSET_DEPENDENCY_MISSING", f"Unavailable skill: {asset_id}", 1)
+        if not asset or asset.get("rendering") not in ("skill", "reference", "notice"):
+            raise AssetError("ASSET_RENDERER_UNAVAILABLE", f"Unavailable rendering: {asset_id}", 1)
         if any(client not in asset["clients"] for client in clients):
             raise AssetError("ASSET_DEPENDENCY_MISSING", f"Skill is unavailable for a selected client: {asset_id}", 1)
-        if asset.get("requires"):
-            raise AssetError("ASSET_DEPENDENCY_MISSING", f"Required assets are unavailable: {asset_id}", 1)
         name = asset_id.removeprefix("skill:")
         names = [safe_path(spec["path"]).casefold() for spec in asset["source_paths"]]
         if len(set(names)) != len(names):
             raise AssetError("ASSET_CATALOG_INVALID", f"Case-colliding output paths: {asset_id}")
         for spec in asset["source_paths"]:
             path = safe_path(spec["path"])
-            prefix = f"skills/{name}/"
-            if not path.startswith(prefix):
+            prefix = skill_source_root(asset_id, asset) + "/"
+            if asset["rendering"] == "skill" and not path.startswith(prefix):
                 raise AssetError("ASSET_CATALOG_INVALID", f"Skill path is outside its declared root: {path}")
             data, executable = snapshot.read(path)
             inputs.append({"path": path, "type": "file", "executable": executable, "digest": digest(data)})
@@ -55,8 +44,22 @@ def render(snapshot, catalog, assets, clients):
                 data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
                 if endings == "crlf":
                     data = data.replace(b"\n", b"\r\n")
-            destination = ".agents/" + path
-            files[destination] = (data, 0o755 if executable else 0o644, asset_id, spec)
+            roots = [".agent-assets/notices"] if asset["rendering"] == "notice" else skill_roots(clients)
+            for root in roots:
+                if asset["rendering"] == "notice":
+                    destination = root + "/" + path
+                elif asset["rendering"] == "reference":
+                    destination = root.removesuffix("/skills") + "/" + path
+                else:
+                    destination = root + "/" + name + "/" + path.removeprefix(prefix)
+                mode = 0o755 if executable else 0o644
+                owners = [asset_id]
+                if destination in files:
+                    previous_data, previous_mode, previous_owners, previous_spec = files[destination]
+                    if (previous_data, previous_mode, previous_spec) != (data, mode, spec):
+                        raise AssetError("ASSET_CATALOG_INVALID", f"Conflicting declared output: {destination}.")
+                    owners = sorted(set([*previous_owners, asset_id]))
+                files[destination] = (data, mode, owners, spec)
     return files, inputs
 
 
@@ -111,14 +114,21 @@ def read_records(selection_path: Path, lock_path: Path):
 
 def install(args):
     root = Path(git(Path(args.repo or "."), "rev-parse", "--show-toplevel").decode().strip()).resolve()
-    clients, assets = sorted(set(args.client)), sorted(set(args.asset))
+    clients, requested, bundles = sorted(set(args.client)), sorted(set(args.asset)), sorted(set(args.bundle))
     with acquire(args.source, args.branch, args.revision) as snapshot:
         catalog, catalog_bytes = snapshot.catalog()
+        assets = resolve(catalog, requested, bundles)
+        restrictions = installation_restrictions(catalog, assets, clients)
+        if restrictions:
+            first = restrictions[0]
+            raise AssetError(first["code"], first["asset"] + ": " + first["reason"], 1)
+        validate_runtime_files(snapshot, catalog, assets)
         files, inputs = render(snapshot, catalog, assets, clients)
         for path in [*files, ".gitattributes", ".agent-assets/selection.json", ".agent-assets/lock.json"]:
             inspect_destination(root, path)
         if snapshot.source["kind"] == "local":
-            selected_roots = [f"skills/{asset.removeprefix('skill:')}" for asset in assets]
+            selected_roots = [skill_source_root(asset, catalog["assets"][asset]) for asset in assets if asset.startswith("skill:")]
+            selected_roots.extend(entry["path"] for entry in inputs if not entry["path"].startswith("skills/"))
             tracked = git(snapshot.repo, "ls-files", "-z", "--", "distribution/catalog.json", *selected_roots)
             inspected = sorted({"distribution/catalog.json", *[entry["path"] for entry in inputs],
                                 *[path.decode("utf-8") for path in tracked.split(b"\0") if path]})
@@ -133,6 +143,10 @@ def install(args):
         source = {**snapshot.source, "commit": snapshot.commit,
                   "digest": digest(canonical([{"path": "distribution/catalog.json", "type": "file", "executable": snapshot.tree["distribution/catalog.json"][0] == "100755",
                                                "digest": digest(catalog_bytes)}, *sorted(inputs, key=lambda i: i["path"])]))}
+        runtime = sorted({requirement for asset in assets for requirement in catalog["assets"][asset]["runtime"]})
+        warnings = ["Native client discovery and trust have not been verified."]
+        if runtime:
+            warnings.append("Runtime requirements must be supplied by the consumer: " + ", ".join(runtime))
         existing = None
         selection_path = root / ".agent-assets/selection.json"
         lock_path = root / ".agent-assets/lock.json"
@@ -140,10 +154,10 @@ def install(args):
             existing = read_records(selection_path, lock_path)
         installation_id = existing[0]["installation_id"] if existing else str(uuid.uuid4())
         selection = {"schema_version": 1, "installation_id": installation_id, "scope": "repo", "mode": "team",
-                     "clients": clients, "assets": assets, "bundles": [], "source": snapshot.source}
-        items = [{"destination": path, "type": "file", "mode": mode, "owners": [asset],
+                     "clients": clients, "assets": requested, "bundles": bundles, "source": snapshot.source}
+        items = [{"destination": path, "type": "file", "mode": mode, "owners": owners,
                   "baseline_digest": digest(data), "content": spec["content"], "line_endings": spec["line_endings"]}
-                 for path, (data, mode, asset, spec) in sorted(files.items())]
+                 for path, (data, mode, owners, spec) in sorted(files.items())]
         attribute_bytes, owned_attributes = attributes.plan(root, files, existing)
         lock = {"schema_version": 1, "renderer_version": 1, "installation_id": installation_id,
                 "source": source, "assets": assets, "items": items, "selection_digest": digest(canonical(selection)),
@@ -156,8 +170,9 @@ def install(args):
                 if not target.is_file() or target.read_bytes() != data or (os.name != "nt" and target.stat().st_mode & 0o777 != mode):
                     raise AssetError("ASSET_CONFLICT", f"Managed file changed: {path}. Restore recorded content and rerun.", 1)
             return {"schema_version": 1, "command": "install", "source": source, "selection": selection,
+                    "resolved_assets": assets,
                     "changes": {"added": 0, "updated": 0, "retained": len(files), "removed": 0},
-                    "conflicts": [], "warnings": ["Native client discovery and trust have not been verified."]}
+                    "conflicts": [], "warnings": warnings}
         for path in files:
             if (root / path).exists():
                 raise AssetError("ASSET_CONFLICT", f"Unowned destination already exists: {path}. Resolve it explicitly before installing.", 1)
@@ -168,5 +183,6 @@ def install(args):
         write_atomic(root / ".agent-assets/selection.json", canonical(selection) + b"\n")
         write_atomic(root / ".agent-assets/lock.json", canonical(lock) + b"\n")
         return {"schema_version": 1, "command": "install", "source": source, "selection": selection,
+                "resolved_assets": assets,
                 "changes": {"added": len(files), "updated": 0, "retained": 0, "removed": 0},
-                "conflicts": [], "warnings": ["Native client discovery and trust have not been verified."]}
+                "conflicts": [], "warnings": warnings}

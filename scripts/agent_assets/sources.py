@@ -104,4 +104,10 @@ class Snapshot:
         catalog = read_json(data, "ASSET_CATALOG_INVALID")
         if not isinstance(catalog, dict) or type(catalog.get("schema_version")) is not int or catalog["schema_version"] != 1 or not isinstance(catalog.get("assets"), dict):
             raise AssetError("ASSET_CATALOG_INVALID", "Unsupported catalog schema; use a compatible command checkout.")
+        from .catalog import validate
+        validate(catalog)
+        for asset in catalog["assets"].values():
+            absent = [spec["path"] for spec in asset["source_paths"] if spec["path"] not in self.tree]
+            if absent and not asset.get("unavailable_reason"):
+                asset["unavailable_reason"] = "Required committed source files are missing: " + ", ".join(absent)
         return catalog, data

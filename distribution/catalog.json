@@ -1,25 +1,2715 @@
 {
   "schema_version": 1,
   "assets": {
-    "skill:caveman": {
+    "skill:addy-code-review-and-quality": {
       "source_paths": [
         {
-          "path": "skills/caveman/SKILL.md",
+          "path": "skills/addy-code-review-and-quality/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:addy-security-and-hardening",
+        "reference:security-checklist",
+        "reference:performance-checklist",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:addy-code-simplification": {
+      "source_paths": [
+        {
+          "path": "skills/addy-code-simplification/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:addy-performance-optimization": {
+      "source_paths": [
+        {
+          "path": "skills/addy-performance-optimization/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "reference:performance-checklist",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:addy-security-and-hardening": {
+      "source_paths": [
+        {
+          "path": "skills/addy-security-and-hardening/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "reference:security-checklist",
+        "skill:addy-debugging-and-error-recovery",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:adversarial-review": {
+      "source_paths": [
+        {
+          "path": "skills/adversarial-review/SKILL.md",
           "content": "text",
           "line_endings": "lf"
         },
         {
+          "path": "skills/adversarial-review/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:subagent-model-router",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents"
+      ],
+      "rendering": "skill"
+    },
+    "skill:agents-md-improver": {
+      "source_paths": [
+        {
+          "path": "skills/agents-md-improver/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/agents-md-improver/references/quality-criteria.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/agents-md-improver/references/templates.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/agents-md-improver/references/update-guidelines.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:architecture-design-contest": {
+      "source_paths": [
+        {
+          "path": "skills/architecture-design-contest/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/architecture-design-contest/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:explore",
+        "skill:delegate-to-subagents",
+        "agent:code-explorer",
+        "agent:code-architect",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents"
+      ],
+      "rendering": "skill"
+    },
+    "skill:caveman": {
+      "source_paths": [
+        {
           "path": "skills/caveman/README.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/caveman/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:code-modernization": {
+      "source_paths": [
+        {
+          "path": "skills/code-modernization/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/assets/topology-viewer-screenshot.jpg",
+          "content": "binary",
+          "line_endings": "none"
+        },
+        {
+          "path": "skills/code-modernization/assets/topology-viewer.html",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/commands/modernize-assess.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/commands/modernize-brief.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/commands/modernize-extract-rules.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/commands/modernize-harden.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/commands/modernize-map.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/commands/modernize-preflight.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/commands/modernize-reimagine.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/commands/modernize-status.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/commands/modernize-transform.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/commands/modernize-uplift.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/workflows/extract-rules.js",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/workflows/harden-scan.js",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/workflows/portfolio-assess.js",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/workflows/reimagine-scaffold.js",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/workflows/uplift-deltas.js",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-modernization/workflows/uplift-migrate.js",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "agent:legacy-analyst",
+        "agent:business-rules-extractor",
+        "agent:test-engineer",
+        "agent:security-auditor",
+        "agent:architecture-critic",
+        "agent:scaffolder",
+        "agent:version-delta-analyst",
+        "agent:uplift-migrator",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents",
+        "workflow-orchestration",
+        "nodejs"
+      ],
+      "rendering": "skill"
+    },
+    "skill:code-review": {
+      "source_paths": [
+        {
+          "path": "skills/code-review/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-review/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-review/references/code-smells.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-review/references/false-positive-rubric.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-review/references/large-change-triage.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-review/references/maintainability-criteria.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-review/references/output-formats.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-review/references/pr-protocol.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-review/references/standards-files.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "agent:addy-code-reviewer",
+        "agent:addy-security-auditor",
+        "agent:addy-test-engineer",
+        "skill:addy-code-review-and-quality",
+        "skill:addy-security-and-hardening",
+        "skill:delegate-to-subagents",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents",
+        "runtime-generalist-agent",
+        "fast-tier-subagents",
+        "explicit-skill-invocation"
+      ],
+      "rendering": "skill"
+    },
+    "skill:code-review-biaxis": {
+      "source_paths": [
+        {
+          "path": "skills/code-review-biaxis/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/code-review-biaxis/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents"
+      ],
+      "rendering": "skill"
+    },
+    "skill:code-simplify": {
+      "source_paths": [
+        {
+          "path": "skills/code-simplify/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:addy-code-simplification",
+        "skill:delegate-to-subagents",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:codebase-design": {
+      "source_paths": [
+        {
+          "path": "skills/codebase-design/DEEPENING.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/codebase-design/DESIGN-IT-TWICE.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/codebase-design/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/codebase-design/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:commit": {
+      "source_paths": [
+        {
+          "path": "skills/commit/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/commit/references/branch-names.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/commit/references/dry-run.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/commit/references/message.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/commit/references/pr.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:create-agentsmd": {
+      "source_paths": [
+        {
+          "path": "skills/create-agentsmd/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/create-agentsmd/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:create-skill": {
+      "source_paths": [
+        {
+          "path": "skills/create-skill/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:skill-creator",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:delegate-to-subagents": {
+      "source_paths": [
+        {
+          "path": "skills/delegate-to-subagents/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:subagent-model-router",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents"
+      ],
+      "rendering": "skill"
+    },
+    "skill:dotnet": {
+      "source_paths": [
+        {
+          "path": "skills/dotnet/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet/references/aspnet-core.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet/references/async-performance.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet/references/dependency-injection.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet/references/ef-core.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:dotnet-ui-app": {
+      "source_paths": [
+        {
+          "path": "skills/dotnet-ui-app/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/configs/winui-config.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/_sections.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/avalonia/avalonia-controls-and-compiled-bindings.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/avalonia/build-run-and-launch-verification.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/avalonia/community-ecosystem-controls-and-helpers.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/avalonia/foundation-avalonia-app-structure.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/avalonia/foundation-environment-audit-and-remediation.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/avalonia/foundation-setup-and-project-selection.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/avalonia/foundation-template-first-recovery.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/avalonia/platform-targets-and-deployment.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/avalonia/shell-navigation-and-windowing.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/avalonia/styling-resources-and-theme-variants.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/common/accessibility-input-and-localization.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/common/controls-layout-and-adaptive-ui.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/common/motion-animations-and-polish.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/common/performance-diagnostics-and-responsiveness.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/common/styling-theming-and-icons.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/common/testing-debugging-and-review-checklists.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/winui/build-run-and-launch-verification.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/winui/community-toolkit-controls-and-helpers.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/winui/foundation-environment-audit-and-remediation.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/winui/foundation-setup-and-project-selection.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/winui/foundation-template-first-recovery.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/winui/foundation-winui-app-structure.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/winui/shell-navigation-and-windowing.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/dotnet-ui-app/references/winui/windows-app-sdk-lifecycle-notifications-and-deployment.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:dotnet",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:execplan-implement": {
+      "source_paths": [
+        {
+          "path": "skills/execplan-implement/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/execplan-implement/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/execplan-implement/references/message.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:exec-plans",
+        "skill:delegate-to-subagents",
+        "skill:tdd",
+        "skill:code-review",
+        "skill:commit",
+        "skill:handoff",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:explore": {
+      "source_paths": [
+        {
+          "path": "skills/explore/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:delegate-to-subagents",
+        "agent:code-explorer",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents"
+      ],
+      "rendering": "skill"
+    },
+    "skill:fixing-accessibility": {
+      "source_paths": [
+        {
+          "path": "skills/fixing-accessibility/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:frontend-design": {
+      "source_paths": [
+        {
+          "path": "skills/frontend-design/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:gh-cli": {
+      "source_paths": [
+        {
+          "path": "skills/gh-cli/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:grilling": {
+      "source_paths": [
+        {
+          "path": "skills/grilling/ADR-FORMAT.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/grilling/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/grilling/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:delegate-to-subagents",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:handoff": {
+      "source_paths": [
+        {
+          "path": "skills/handoff/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:harness-analysis": {
+      "source_paths": [
+        {
+          "path": "skills/harness-analysis/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/harness-analysis/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:improve-codebase-architecture": {
+      "source_paths": [
+        {
+          "path": "skills/improve-codebase-architecture/HTML-REPORT.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/improve-codebase-architecture/REFERENCE.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/improve-codebase-architecture/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/improve-codebase-architecture/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:codebase-design",
+        "skill:grilling",
+        "skill:domain-modeling",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents"
+      ],
+      "rendering": "skill"
+    },
+    "skill:improve-repo-harness": {
+      "source_paths": [
+        {
+          "path": "skills/improve-repo-harness/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/improve-repo-harness/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:improve-skill": {
+      "source_paths": [
+        {
+          "path": "skills/improve-skill/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:official-sources": {
+      "source_paths": [
+        {
+          "path": "skills/official-sources/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:delegate-to-subagents",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:prd": {
+      "source_paths": [
+        {
+          "path": "skills/prd/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/prd/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:delegate-to-subagents",
+        "skill:explore",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:prd-ralph": {
+      "source_paths": [
+        {
+          "path": "skills/prd-ralph/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/prd-ralph/references/browser-verification.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/prd-ralph/references/commit.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/prd-ralph/references/failures.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/prd-ralph/references/progress.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/prd-ralph/references/verification.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:tdd",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:prd-ralph-loop": {
+      "source_paths": [
+        {
+          "path": "skills/prd-ralph-loop/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:delegate-to-subagents",
+        "skill:prd-ralph",
+        "skill:self-improve",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:prototype": {
+      "source_paths": [
+        {
+          "path": "skills/prototype/LOGIC.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/prototype/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/prototype/UI.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/prototype/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:research": {
+      "source_paths": [
+        {
+          "path": "skills/research/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/research/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:resolving-merge-conflicts": {
+      "source_paths": [
+        {
+          "path": "skills/resolving-merge-conflicts/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/resolving-merge-conflicts/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:retro": {
+      "source_paths": [
+        {
+          "path": "skills/retro/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/retro/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:writing-for-agents",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:self-improve": {
+      "source_paths": [
+        {
+          "path": "skills/self-improve/DURABLE_LEARNINGS.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/self-improve/INSTRUCTION_STRUCTURE.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/self-improve/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:skill-creator": {
+      "source_paths": [
+        {
+          "path": "skills/skill-creator/LICENSE.txt",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/assets/eval_review.html",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/eval-viewer/generate_review.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/eval-viewer/viewer.html",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/references/schemas.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/scripts/__init__.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/scripts/aggregate_benchmark.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/scripts/generate_report.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/scripts/improve_description.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/scripts/package_skill.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/scripts/quick_validate.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/scripts/run_eval.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/scripts/run_loop.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/skill-creator/scripts/utils.py",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "agent:grader",
+        "agent:comparator",
+        "agent:analyzer",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents",
+        "python3",
+        "claude-cli",
+        "pyyaml"
+      ],
+      "rendering": "skill"
+    },
+    "skill:spec-to-tasks": {
+      "source_paths": [
+        {
+          "path": "skills/spec-to-tasks/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/spec-to-tasks/references/prd-handling.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/spec-to-tasks/references/task-schema.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/spec-to-tasks/references/validation.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:delegate-to-subagents",
+        "skill:explore",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:subagent-model-router": {
+      "source_paths": [
+        {
+          "path": "skills/subagent-model-router/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/subagent-model-router/reference/escalation-policy.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/subagent-model-router/reference/model-catalog.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/subagent-model-router/reference/patterns.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/subagent-model-router/reference/pricing.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/subagent-model-router/reference/review-routing.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "model-selection"
+      ],
+      "rendering": "skill"
+    },
+    "skill:tdd": {
+      "source_paths": [
+        {
+          "path": "skills/tdd/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/tdd/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/tdd/mocking.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/tdd/refactoring.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/tdd/tests.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:codebase-design",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:teach": {
+      "source_paths": [
+        {
+          "path": "skills/teach/GLOSSARY-FORMAT.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/teach/LEARNING-RECORD-FORMAT.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/teach/MISSION-FORMAT.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/teach/RESOURCES-FORMAT.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/teach/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/teach/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:techdebt": {
+      "source_paths": [
+        {
+          "path": "skills/techdebt/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/techdebt/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:delegate-to-subagents",
+        "skill:explore",
+        "agent:code-explorer",
+        "skill:tdd",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents"
+      ],
+      "rendering": "skill"
+    },
+    "skill:to-issues": {
+      "source_paths": [
+        {
+          "path": "skills/to-issues/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:setup-matt-pocock-skills",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:wayfinder": {
+      "source_paths": [
+        {
+          "path": "skills/wayfinder/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/wayfinder/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:grilling",
+        "skill:domain-modeling",
+        "skill:research",
+        "skill:prototype",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [
+        "parallel-subagents"
+      ],
+      "rendering": "skill"
+    },
+    "skill:web-accessibility": {
+      "source_paths": [
+        {
+          "path": "skills/web-accessibility/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/web-accessibility/references/A11Y-PATTERNS.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/web-accessibility/references/WCAG.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:web-best-practices": {
+      "source_paths": [
+        {
+          "path": "skills/web-best-practices/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/web-best-practices/references/SECURITY.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:web-performance": {
+      "source_paths": [
+        {
+          "path": "skills/web-performance/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/web-performance/references/MEASUREMENT.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/web-performance/references/RUM.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "skill:writing-for-agents": {
+      "source_paths": [
+        {
+          "path": "skills/writing-for-agents/SKILL-MECHANICS.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/writing-for-agents/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/writing-for-agents/agents/openai.yaml",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    },
+    "agent:addy-code-reviewer": {
+      "source_paths": [
+        {
+          "path": "agents/addy-code-reviewer.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license",
+        "skill:addy-code-review-and-quality"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:addy-security-auditor": {
+      "source_paths": [
+        {
+          "path": "agents/addy-security-auditor.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:addy-test-engineer": {
+      "source_paths": [
+        {
+          "path": "agents/addy-test-engineer.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:analyzer": {
+      "source_paths": [
+        {
+          "path": "agents/analyzer.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:architecture-critic": {
+      "source_paths": [
+        {
+          "path": "agents/architecture-critic.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:business-rules-extractor": {
+      "source_paths": [
+        {
+          "path": "agents/business-rules-extractor.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:code-architect": {
+      "source_paths": [
+        {
+          "path": "agents/code-architect.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:code-explorer": {
+      "source_paths": [
+        {
+          "path": "agents/code-explorer.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:code-reviewer": {
+      "source_paths": [
+        {
+          "path": "agents/code-reviewer.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:code-simplifier": {
+      "source_paths": [
+        {
+          "path": "agents/code-simplifier.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:comparator": {
+      "source_paths": [
+        {
+          "path": "agents/comparator.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:grader": {
+      "source_paths": [
+        {
+          "path": "agents/grader.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:legacy-analyst": {
+      "source_paths": [
+        {
+          "path": "agents/legacy-analyst.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:scaffolder": {
+      "source_paths": [
+        {
+          "path": "agents/scaffolder.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:security-auditor": {
+      "source_paths": [
+        {
+          "path": "agents/security-auditor.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:test-engineer": {
+      "source_paths": [
+        {
+          "path": "agents/test-engineer.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:ui-auditor": {
+      "source_paths": [
+        {
+          "path": "agents/ui-auditor.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:uplift-migrator": {
+      "source_paths": [
+        {
+          "path": "agents/uplift-migrator.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "agent:version-delta-analyst": {
+      "source_paths": [
+        {
+          "path": "agents/version-delta-analyst.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "native-custom-agents"
+      ],
+      "rendering": "agent"
+    },
+    "reference:security-checklist": {
+      "source_paths": [
+        {
+          "path": "references/security-checklist.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "reference"
+    },
+    "reference:performance-checklist": {
+      "source_paths": [
+        {
+          "path": "references/performance-checklist.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "reference"
+    },
+    "notice:repository-license": {
+      "source_paths": [
+        {
+          "path": "LICENSE",
           "content": "text",
           "line_endings": "lf"
         }
       ],
       "requires": [],
-      "clients": ["codex"],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "notice"
+    },
+    "skill:domain-modeling": {
+      "source_paths": [],
+      "requires": [],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill",
+      "unavailable_reason": "Required workflow skill domain-modeling has no maintained source in this repository."
+    },
+    "skill:addy-debugging-and-error-recovery": {
+      "source_paths": [],
+      "requires": [],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill",
+      "unavailable_reason": "The required privacy-incident branch invokes addy-debugging-and-error-recovery, which has no maintained source."
+    },
+    "skill:exec-plans": {
+      "source_root": ".agents/skills/exec-plans",
+      "source_paths": [
+        {
+          "path": ".agents/skills/exec-plans/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
       "os": [],
       "runtime": [],
       "rendering": "skill"
+    },
+    "skill:setup-matt-pocock-skills": {
+      "source_paths": [],
+      "requires": [],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini",
+        "claude",
+        "cursor",
+        "opencode"
+      ],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill",
+      "unavailable_reason": "Required tracker-setup branch invokes setup-matt-pocock-skills, which has no maintained source."
+    },
+    "hook:tool-guard": {
+      "source_paths": [
+        {
+          "path": ".codex/hooks/tool-guard.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/tool-guard.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/tool-guard.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/helpers/common.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/common.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/common.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "python3",
+        "native-hook-trust",
+        "writable-audit-state"
+      ],
+      "rendering": "hook"
+    },
+    "hook:scan-secrets": {
+      "source_paths": [
+        {
+          "path": ".codex/hooks/scan-secrets.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/scan-secrets.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/scan-secrets.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/helpers/common.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/common.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/common.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "python3",
+        "native-hook-trust",
+        "writable-audit-state",
+        "git"
+      ],
+      "rendering": "hook"
+    },
+    "hook:required-skills": {
+      "source_paths": [
+        {
+          "path": ".codex/hooks/load-required-skills.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/load-required-skills.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/skill-context-injector.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/helpers/common.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".codex/hooks/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/common.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".copilot/hooks/scripts/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/common.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/audit.py",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [
+        "skill:caveman",
+        "notice:repository-license"
+      ],
+      "clients": [
+        "codex",
+        "copilot",
+        "gemini"
+      ],
+      "os": [],
+      "runtime": [
+        "python3",
+        "native-hook-trust",
+        "writable-audit-state"
+      ],
+      "rendering": "hook"
     }
   },
-  "bundles": {}
+  "bundles": {
+    "review": [
+      "skill:code-review"
+    ],
+    "security-hooks": [
+      "hook:tool-guard",
+      "hook:scan-secrets"
+    ],
+    "required-context": [
+      "hook:required-skills",
+      "skill:caveman"
+    ]
+  }
 }
