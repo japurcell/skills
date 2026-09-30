@@ -28,7 +28,7 @@ Success is observable from a disposable project: install a review workflow, see 
 - [x] (2026-09-30 01:23Z) [milestone-2] Deliver asset selection, required dependencies, and curated bundles. Selection acceptance has 17 passing public cases; the combined suite has 41 passing cases.
 - [ ] [aggregate-observability] Repair Gemini observability SQLite fixture flakiness and related provider test-state isolation. The resumed aggregate reports `Error: stepping, database is locked (5)` and capture attempts against inherited personal state. Preserve all runtime/assertion behavior and isolate disposable state. This independent repair blocks final validation and overlapping provider changes.
 - [ ] [aggregate-fixtures] Repair macOS temporary-path expectations and protected-checkout fixture placement; close observed delivery-probe streams. Preserve semantic assertions and run focused public cases.
-- [ ] [milestone-3] Deliver preview, update, recorded restoration, strict read-only verification, conflict protection, and safe pruning (completed in isolated worktree: initial lifecycle/recovery and source-policy repair; remaining: regular-directory movement, authenticated pruning ownership, final review/validation/integration).
+- [ ] [milestone-3] Deliver preview, update, recorded restoration, strict read-only verification, conflict protection, and safe pruning (completed in isolated worktree: lifecycle/recovery, source agreement, immutable ownership authentication, concurrent directory/leaf protection, and 63 public cases; remaining: independent final review and integration).
 - [ ] [milestone-4] Deliver native repository adapters for Codex, Copilot CLI/VS Code, and Gemini CLI.
 - [ ] [milestone-5] Deliver local and personal installations, verified adoption, and legacy entry-point integration.
 - [ ] [milestone-6] Prove Windows, Linux, macOS, and installed client behavior.
@@ -71,6 +71,10 @@ The existing-repository review found that APM supports committing generated payl
 
 ## Decision Log
 
+
+Decision: Route final independent M3 review to Premium `gpt-6-astra`, effort `high`, different from replacement writer `gpt-6.1-sol`. File ownership, atomic writes, and ambiguous recovery remain high-stakes after three demonstrated integrity defects; the earlier reviewers ended with service flags before a verdict. Use public acceptance and direct source review rather than presumed capability. Exact runtime ID is applied. Escalate any integrity finding back to the existing implementer; same-tier unavailable fallback is `gpt-6-sol`, effort `xhigh`. Billing assumptions remain provisional; published Copilot rates are not runtime API prices.
+
+Rationale: Independent verification is required before integration, with no safety or test requirement waived. Date/author: 2026-09-29, Codex orchestration.
 
 Decision: Route bounded aggregate fixture portability and stream cleanup to Fast `gpt-6-luna`, effort `medium`, in a private worktree. Explicit files are `scripts/test-repo-root.sh`, `scripts/test_helpers.py`, and `scripts/test-probe-provider-hook-delivery.py`; no production behavior changes are authorized for this node. Escalate ambiguous public behavior or repeated test failures to Standard `gpt-6.1-sol`, effort `high`; same-tier unavailable fallback is `gpt-5.6-luna`, effort `medium`. Model selection is applied; task fit and platform cost remain provisional.
 
@@ -138,6 +142,10 @@ Rationale: Filesystem integrity needs connected reasoning and independent verifi
 
 ## Outcomes & Retrospective
 
+
+Current repair evidence: M3 public acceptance passes 63 cases (24 team, 17 selection, 22 lifecycle), runner acceptance passes 14, and compilation/OKF/whitespace pass. Independent final review is pending. The separate fixture repair passes the root shell suite, 14 helper tests with deprecation warnings as errors, and 10 delivery-probe tests with resource warnings as errors. Its reviewed private commit is ready for serialized integration. Operational-provider isolation and the deliberate-maintenance SQLite fixture repair remain under final validation. Native Codex prerequisite inspection is recorded in `docs/agent-asset-installer/codex-cli-prerequisites.md`; CLI help is not discovery/event proof.
+
+Resumed aggregate baseline: all 37 registered suites run in 315.6 seconds, with 34 passing and three failing: Gemini observability (SQLite lock, exit 5), repository-root shell fixture (macOS `/var` alias, exit 1), and helper audit fixture (protected checkout directory, exit 1). Native-Windows-only suites report their existing host skips and are not Windows proof. Separate isolated repair worktrees preserve assertions. The resumed review worker also ended with a service content flag before a final verdict; its three communicated integrity findings remain required and preserved for replacement review.
 
 Execution resumed, 2026-09-30 02:09Z: the user installed `flock` and explicitly requested continuation. `/Users/adam/homebrew/bin/flock` reports 0.4.0; aggregate dependency preflight now passes and all 37 registered suites are scheduled. The original M3 implementer and replacement reviewer resume their unfinished node without discarding work. Both required findings remain acceptance blockers until repaired and independently verified. Native Windows/Linux and absent-client gates remain unmet.
 
@@ -293,6 +301,8 @@ Run `rtk proxy python3 scripts/test-agent-assets.py --group scopes`, `rtk proxy 
 Status: open
 
 Acceptance: not met
+
+M3 currently refuses all non-POSIX mutations and recovery with `ASSET_PLATFORM_UNSUPPORTED`. Implement native Windows safe operations before claiming Windows support: refuse reparse traversal, keep parent identity stable through staging and replacement, authenticate ownership, and preserve recovery evidence on ambiguous concurrent changes. Do not replace the fail-closed behavior with an unsafe path-only fallback. Native Windows tests must exercise the actual Windows implementation; macOS PowerShell cannot prove it.
 
 Add `.github/workflows/agent-assets.yml` for public subprocess tests on macOS/Linux/native Windows with Python 3.11 and the supported newer Python. Resolve action versions against conventions/official sources during implementation. Register the suite in existing native Windows coverage as appropriate, without replacing current tests. Prove path quoting, reserved/case-colliding names, reparse refusal where supported, replacement/recovery, and PowerShell forwarding on native Windows. PowerShell on macOS is not Windows acceptance.
 
