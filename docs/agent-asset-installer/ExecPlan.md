@@ -86,6 +86,10 @@ The existing-repository review found that APM supports committing generated payl
 ## Decision Log
 
 
+Decision: Route independent M4 review to Premium `gpt-6.1-sol`, effort `xhigh`, different from writer `gpt-6-astra`. Review native executable packaging, semantic configuration ownership, immutable-source authentication, relocation/state separation, and transaction boundaries across all three providers. Exact exposed runtime ID and effort are applied. Require public evidence for findings; return required repairs to the existing M4 implementer. Unavailable same-tier fallback is `gpt-6-sol`, effort `xhigh`. Billing assumptions and model-specific task fit remain provisional.
+
+Rationale: Executable runtime distribution and shared configuration updates interact with previously demonstrated integrity defects, warranting demanding independent review before integration. Date/author: 2026-09-29, Codex orchestration.
+
 Decision: Route a bounded read-only CI/runtime inventory to Fast `gpt-6-luna`, effort `medium`, ahead of M6. Save exact existing workflow/test/prerequisite anchors at the retained probes worktree, without source edits or native security design. Exact runtime ID is applied. Ambiguous Windows semantics go to the M6 implementer, not inferred from macOS; unavailable fallback is `gpt-5.6-luna`, effort `medium`. Task fit and billing remain provisional.
 
 Rationale: Inventory existing native workflows independently while M4 owns adapter implementation. Date/author: 2026-09-29, Codex orchestration.
