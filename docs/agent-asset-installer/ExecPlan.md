@@ -32,7 +32,7 @@ Success is observable from a disposable project: install a review workflow, see 
 - [x] (2026-09-30 03:25Z) [milestone-4] Deliver native repository adapters for Codex, Copilot CLI/VS Code, and Gemini CLI.
 - [x] (2026-09-30 04:41Z) [milestone-5] Deliver local and personal installations, verified adoption, and legacy entry-point integration. All 94 public CLI cases and independent source review pass; approved implementation is rebased unchanged onto the frozen parent checkpoint.
 - [ ] (2026-09-30 04:48Z) [milestone-6] Implement native platform safety, clone/CI checks and client validation. M5 is integrated; local implementation begins in a fresh worktree. Native Windows/Linux, Python 3.11 and normal client discovery/event proof remain unmet.
-- [ ] [milestone-7] Publish usage documentation, synchronize canonical knowledge, and finish acceptance.
+- [ ] (2026-09-30 05:07Z) [milestone-7] Document stable implemented interfaces and limited platform/client evidence; final acceptance remains dependent on unfinished M6 native safety and proof.
 
 ## Surprises & Discoveries
 
@@ -95,6 +95,10 @@ The existing-repository review found that APM supports committing generated payl
 
 ## Decision Log
 
+
+Decision: Begin the independent usage-documentation portion of M7 against frozen implemented CLI interfaces while M6 source review runs. Keep M6 Windows implementation/native proof and M7 final acceptance unfinished; this does not satisfy or remove the original dependency. Route the bounded documentation node to a fresh Fast `gpt-6-luna` implementer, effort `medium`, in its own private worktree. Own README, usage documentation and its scoped knowledge additions; use public help, accepted contract and observed evidence, with an explicit limited support matrix. Do not edit M6 source/workflow or claim green native acceptance. Exact exposed model/effort are planned for launch. Escalate ambiguous ownership/platform claims to the primary and independent reviewer; same-tier unavailable fallback is `gpt-5.6-luna`, effort `medium`. Billing and task fit remain provisional.
+
+Rationale: All public lifecycle flags and scope behavior are implemented and frozen. Preparing accurate usage documentation is authorized independent work while unavailable native environments prevent final acceptance. Date/author: 2026-09-29, Codex orchestration.
 
 Decision: Route independent M6 source review to Premium `gpt-6.1-sol`, effort `xhigh`, different from writer `gpt-6-astra`. Review exact metadata checkout policy, legacy-record migration/authentication, clone audit before repair, relocated launchers, CI provenance and explicit native gaps across all five review axes. Windows source implementation and native acceptance remain unfinished unless actual safe operations/evidence exist; review approval can cover locally implemented source without closing those gates. Exact exposed model/effort are planned for launch, with the actual result recorded afterward. Escalate demonstrated ownership/audit or platform-boundary defects to the original M6 implementer; same-tier unavailable fallback is `gpt-6-sol`, effort `xhigh`. Billing and task fit remain provisional.
 
@@ -443,7 +447,7 @@ Run `rtk proxy python3 scripts/test-agent-assets.py` on every OS, targeted nativ
 ### Milestone 7: Document usage and close acceptance
 
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
