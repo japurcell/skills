@@ -24,14 +24,15 @@ An implementation-ready specification for a reusable, autonomous context managem
 
 - [Provider Lifecycle Capabilities](tickets/provider-lifecycle-capabilities.md): Providers differ in context delivery, continuation, shutdown, and idle execution; supported surfaces need deployed-version proof.
 - [Reference Evidence](tickets/reference-evidence.md): ACE directly evaluates incremental external-context adaptation; nested instruction discovery and autonomous publication require separate contracts.
+- [Success Criteria](tickets/success-criteria.md): Quality and recovery gates accompany measurable context savings, bounded latency, and paired longitudinal evidence on every supported surface.
 
 ## Not yet specified
 
 <!-- FOG START -->
 
-- Provider-specific exceptions may expose new decisions when documented capabilities are exercised on selected deployed versions and harnesses.
+- Provider-specific exceptions may expose new decisions when documented capabilities and acceptance measurements are exercised on selected deployed versions and harnesses. Whether native context delivery and maintenance work are fully observable may depend on those selections.
 - A concrete walkthrough of the selected lifecycle may reveal missing knowledge states, recovery cases, or task boundaries that cannot yet be specified.
-- Repository-specific migration exceptions and the shape of a minimal pilot remain unclear until the knowledge representation and lifecycle contracts are selected.
+- Repository-specific migration exceptions and the shape of a minimal pilot remain unclear until the knowledge representation and lifecycle contracts are selected. The final scenario mix may expose further gaps in the accepted quality checks and repeated-cycle evidence.
 
 <!-- FOG END -->
 
