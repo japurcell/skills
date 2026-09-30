@@ -26,8 +26,8 @@ Success is observable from a disposable project: install a review workflow, see 
 - [x] (2026-09-30 00:25Z) [orchestration] User explicitly requests full implementation. Lift the prior hold and start isolated milestone worktrees.
 - [x] (2026-09-30 00:51Z) [milestone-1] Deliver one committed, pinned skill installation through the public CLI. Public subprocess acceptance has 24 passing cases; aggregate-runner CLI acceptance has 14 passing cases.
 - [x] (2026-09-30 01:23Z) [milestone-2] Deliver asset selection, required dependencies, and curated bundles. Selection acceptance has 17 passing public cases; the combined suite has 41 passing cases.
-- [ ] [aggregate-observability] Repair Gemini observability SQLite fixture flakiness and related provider test-state isolation. The resumed aggregate reports `Error: stepping, database is locked (5)` and capture attempts against inherited personal state. Preserve all runtime/assertion behavior and isolate disposable state. This independent repair blocks final validation and overlapping provider changes.
-- [ ] [aggregate-fixtures] Repair macOS temporary-path expectations and protected-checkout fixture placement; close observed delivery-probe streams. Preserve semantic assertions and run focused public cases.
+- [x] (2026-09-30 02:34Z) [aggregate-observability] Repair Gemini observability SQLite fixture flakiness and related provider test-state isolation. The resumed aggregate reports `Error: stepping, database is locked (5)` and capture attempts against inherited personal state. Preserve all runtime/assertion behavior and isolate disposable state. This independent repair blocks final validation and overlapping provider changes.
+- [x] (2026-09-30 02:34Z) [aggregate-fixtures] Repair macOS temporary-path expectations and protected-checkout fixture placement; close observed delivery-probe streams. Preserve semantic assertions and run focused public cases.
 - [ ] [milestone-3] Deliver preview, update, recorded restoration, strict read-only verification, conflict protection, and safe pruning (completed in isolated worktree: lifecycle/recovery, source agreement, immutable ownership authentication, concurrent directory/leaf protection, and 63 public cases; remaining: independent final review and integration).
 - [ ] [milestone-4] Deliver native repository adapters for Codex, Copilot CLI/VS Code, and Gemini CLI.
 - [ ] [milestone-5] Deliver local and personal installations, verified adoption, and legacy entry-point integration.
@@ -36,6 +36,10 @@ Success is observable from a disposable project: install a review workflow, see 
 
 ## Surprises & Discoveries
 
+
+Final M3 review reproduced an owned-path shortcut bypassing unsupported `filter`, `working-tree-encoding`, `ident`, and `crlf` rules. Update succeeded but strict verification immediately reported drift. The repaired preflight checks transforms before the owned-path shortcut and in its proposed mirror; the public four-rule case now refuses without writes. The final independent reviewer approves the repair.
+
+Fixture-worker shell calls initially inherited the base checkout instead of the assigned worktree. Only its three test edits and note were copied by verified hashes into the private worktree, then exactly those base paths were restored. Other changes were preserved. Subsequent calls explicitly set the worktree and verify branch before mutations. This correction is recorded in the fixture note and must inform future delegation.
 
 The resumed aggregate also finds `test-repo-root.sh` comparing macOS `/var` and normalized `/private/var` strings, and `test_helpers.py` trying to create fixtures under protected `.agents/scratchpad`. The delivery-probe suite emits unclosed subprocess stream warnings on Python 3.14. A separate bounded fixture repair owns those three tests. Observability inspection confirms several provider tests inherit personal capture state instead of explicitly isolating it; repair that in the observability node before running those fixtures again.
 
@@ -71,6 +75,10 @@ The existing-repository review found that APM supports committing generated payl
 
 ## Decision Log
 
+
+Decision: Give M3 conflict-prone rebase to a fresh merger using Standard `gpt-6.1-sol`, effort `high`, after its writer finishes and the worktree is clean. The merger has exclusive ownership of the existing private M3 worktree and never changes base. Preserve the parent repair graph/checkpoints and the completed node evidence. For documentation-only conflicts run the affected plan/OKF/whitespace validation; source conflicts require corresponding public tests. Escalate semantic integrity ambiguity to the original replacement implementer; same-tier unavailable fallback is `gpt-6-sol`, effort `high`. Exact available runtime ID is applied; cost/capability remain provisional.
+
+Rationale: Parent and writer both changed the plan during repairs; resolve that conflict explicitly without concurrent writes or loss of evidence. Date/author: 2026-09-29, Codex orchestration.
 
 Decision: Route final independent M3 review to Premium `gpt-6-astra`, effort `high`, different from replacement writer `gpt-6.1-sol`. File ownership, atomic writes, and ambiguous recovery remain high-stakes after three demonstrated integrity defects; the earlier reviewers ended with service flags before a verdict. Use public acceptance and direct source review rather than presumed capability. Exact runtime ID is applied. Escalate any integrity finding back to the existing implementer; same-tier unavailable fallback is `gpt-6-sol`, effort `xhigh`. Billing assumptions remain provisional; published Copilot rates are not runtime API prices.
 
@@ -142,6 +150,8 @@ Rationale: Filesystem integrity needs connected reasoning and independent verifi
 
 ## Outcomes & Retrospective
 
+
+Integrated aggregate repairs: fixture portability and bounded subprocess cleanup are reviewed and integrated at `82943218bbc2a484295337334df53c0e80f8b908`. Observability test isolation and maintenance coordination are reviewed and integrated at `40f06f865ee4b6849b5b5585e3c89411438742a7`. Both clean private worktrees and branches are removed after verified fast-forward, with no conflict reruns. The final full aggregate will run after M3 integration. M3 final public suite passes 64 (24 team, 17 selection, 23 lifecycle); independent final review approves after fixing unsupported checkout transforms on owned paths. Private M3 commit/integration remain pending.
 
 Current repair evidence: M3 public acceptance passes 63 cases (24 team, 17 selection, 22 lifecycle), runner acceptance passes 14, and compilation/OKF/whitespace pass. Independent final review is pending. The separate fixture repair passes the root shell suite, 14 helper tests with deprecation warnings as errors, and 10 delivery-probe tests with resource warnings as errors. Its reviewed private commit is ready for serialized integration. Operational-provider isolation and the deliberate-maintenance SQLite fixture repair remain under final validation. Native Codex prerequisite inspection is recorded in `docs/agent-asset-installer/codex-cli-prerequisites.md`; CLI help is not discovery/event proof.
 

@@ -25,3 +25,5 @@ fixture, and the probe suite passed while emitting two unclosed-reader warnings.
 After repair, the root test passes, all 14 helper tests pass with deprecation
 warnings treated as errors, and all 10 probe tests pass with resource warnings
 treated as errors.
+
+Orchestration correction: the worker initially used the base checkout because subsequent shell calls inherited the default working directory. Its four owned files were copied by verified SHA-256 into the assigned private worktree; only the exact three tracked base test files and copied note were restored or removed. Other edits were preserved. Every subsequent command explicitly sets its worktree and checks its branch before mutation.
