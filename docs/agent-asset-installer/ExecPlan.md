@@ -86,6 +86,10 @@ The existing-repository review found that APM supports committing generated payl
 ## Decision Log
 
 
+Decision: Route a bounded read-only CI/runtime inventory to Fast `gpt-6-luna`, effort `medium`, ahead of M6. Save exact existing workflow/test/prerequisite anchors at the retained probes worktree, without source edits or native security design. Exact runtime ID is applied. Ambiguous Windows semantics go to the M6 implementer, not inferred from macOS; unavailable fallback is `gpt-5.6-luna`, effort `medium`. Task fit and billing remain provisional.
+
+Rationale: Inventory existing native workflows independently while M4 owns adapter implementation. Date/author: 2026-09-29, Codex orchestration.
+
 Decision: Route M4 native adapters to Premium `gpt-6-astra`, effort `high`, in a fresh private worktree. Semantic configuration ownership, executable hook packaging, runtime/state relocation, strict canonical conversion, and three native event surfaces interact with reviewed lifecycle invariants. Earlier demonstrated integrity defects require explicit verification; separate a different-model final review. Exact available model/effort are applied. Escalate repeated integrity/semantic failures through public evidence; unavailable fallback is `gpt-6.1-sol`, effort `xhigh`. Platform billing and task-specific capability remain provisional.
 
 Rationale: This connected security-sensitive adapter node warrants demanding autonomous reasoning rather than routing by file count. Date/author: 2026-09-29, Codex orchestration.
@@ -172,6 +176,8 @@ Rationale: Filesystem integrity needs connected reasoning and independent verifi
 
 ## Outcomes & Retrospective
 
+
+Integrated macOS aggregate acceptance on 2026-09-30 UTC: `rtk proxy ./scripts/test-all.py` completes all 37 registered suites with 37 passed and zero failed in 378.4 seconds. The 64 installer public cases pass within it. Previous SQLite, path, protected-fixture, personal capture-state, and resource-warning issues are repaired without weakening assertions. Existing native-Windows-only host skips are reported and do not establish Windows evidence. Python 3.13.14 is also available locally; no extra version acceptance is inferred. Updated prerequisite evidence is promoted to `docs/agent-asset-installer/prerequisites.md`.
 
 M3 is integrated at `b1bcc63257ba3a32bf61d58f865ea5854eef15d5`. Exclusive merger resolves only the plan, validates 25 documents/168 links, preserves all status/progress and repair evidence, and proves the source/test patch unchanged. Clean base matches the verified rebased branch; the original M3 worktree and branch are removed. The final aggregate is running after both repair nodes and M3. M4 is the ready frontier and starts in a fresh private worktree.
 

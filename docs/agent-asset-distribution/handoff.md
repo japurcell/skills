@@ -10,7 +10,7 @@ Independent aggregate repairs are integrated: fixture portability/pipe cleanup a
 
 ## Next step
 
-Complete M4 native repository agents/hooks, explicit runtime configuration and relocated state, selective native configuration ownership, and installed-hook subprocess proof. Review, validate, commit, and serialize integration. The full aggregate after M3 and both test repairs is running; record its result and repair any observed failure without weakening tests. Follow [the ExecPlan](../agent-asset-installer/ExecPlan.md). M5 depends on M4, then M6 native OS/client proof and M7 final documentation remain.
+Complete M4 native repository agents/hooks, explicit runtime configuration and relocated state, selective native configuration ownership, and installed-hook subprocess proof. Review, validate, commit, and serialize integration. The full aggregate after M3 and both test repairs is green: 37 passed, zero failed in 378.4 seconds. Preserve that baseline and run affected checks for new source changes. Follow [the ExecPlan](../agent-asset-installer/ExecPlan.md). M5 depends on M4, then M6 native OS/client proof and M7 final documentation remain.
 
 ## Decisions and constraints
 
@@ -32,12 +32,12 @@ A fixture worker initially edited base due inherited cwd. Exactly its four files
 
 ## Verification and external gates
 
-M3: 64 public cases, 14 runner cases, compilation, OKF, whitespace, and final independent review pass. M2's original 17 selection and M1's 24 team cases remain unchanged. The resumed aggregate baseline ran all 37 suites in 315.6 seconds: 34 passed, three failed. Both repair nodes now pass focused tests; the combined aggregate after integration is still required. Existing host-specific Windows skips do not establish Windows acceptance.
+M3: 64 public cases, 14 runner cases, compilation, OKF, whitespace, and final independent review pass. M2's original 17 selection and M1's 24 team cases remain unchanged. The resumed aggregate baseline ran all 37 suites in 315.6 seconds: 34 passed, three failed. Both repair nodes now pass focused tests; the combined aggregate after integration passes all 37 suites with zero failures in 378.4 seconds. Existing host-specific Windows skips do not establish Windows acceptance.
 
 This Mac has Python 3.14.6 (`/Users/adam/.pyenv/versions/3.14.6/bin/python3`), Git 2.50.1, Bash 3.2.57, PowerShell 7.6.6, RTK 0.50.0, Codex CLI 0.159.0, and user-installed flock 0.4.0 (`/Users/adam/homebrew/bin/flock`). Other advertised client commands and native Windows/Linux runners are unavailable. No native client discovery/hook event or native Windows/Linux job has run. [Codex prerequisite inspection](../agent-asset-installer/codex-cli-prerequisites.md) distinguishes CLI options and native trust from actual acceptance. No agent installed dependencies or changed real home. No push or publication occurred.
 
 ## Retained artifacts and documentation
 
-Keep `/private/tmp/agent-assets-m4` until verified integration; the completed M3 worktree is removed. `/private/tmp/agent-assets-probes/docs/agent-asset-installer/prerequisites.md` and `provider-runtime-audit.md` hold exploration notes for M4/M6; promote corrected relevant content before cleaning that worktree. The older temporary catalog audit is superseded by the committed [catalog audit](../agent-asset-installer/catalog-audit.md). Routing and service-error context are preserved at `/private/tmp/agent-assets-routing.json` and `/private/tmp/agent-assets-review-failure.txt`.
+Keep `/private/tmp/agent-assets-m4` until verified integration; the completed M3 worktree is removed. Updated prerequisites are promoted to `docs/agent-asset-installer/prerequisites.md`. The temporary original prerequisite note is historical. `/private/tmp/agent-assets-probes/docs/agent-asset-installer/provider-runtime-audit.md` remains for M4 promotion; the CI/runtime explorer adds `ci-runtime-audit.md` for M6. Promote corrected relevant content before cleaning that worktree. The older temporary catalog audit is superseded by the committed [catalog audit](../agent-asset-installer/catalog-audit.md). Routing and service-error context are preserved at `/private/tmp/agent-assets-routing.json` and `/private/tmp/agent-assets-review-failure.txt`.
 
 Node-specific canonical script and observability docs are synchronized with implemented behavior. The primary final `update-agent-docs` pass remains due at session end after all implementation/review. Preserve protected AGENTS sections, apply OKF authoring to canonical Markdown, synchronize the plan before stopping, and keep this feature-scoped handoff current.
