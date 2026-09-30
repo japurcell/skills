@@ -86,6 +86,10 @@ The existing-repository review found that APM supports committing generated payl
 ## Decision Log
 
 
+Decision: Route read-only native Windows filesystem contract research to Premium `gpt-6.1-sol`, effort `high`. Collect first-party API/source evidence for parent-handle stability, reparse refusal, atomic replacement, and ambiguous recovery before M6 implementation. Save one note in the retained probes worktree; do not implement source or claim native proof. Exact runtime ID/effort are applied. Escalate unsupported guarantees to the M6 implementer, retaining fail-closed behavior. Same-tier unavailable fallback is `gpt-6-sol`, effort `high`; billing and task fit are provisional.
+
+Rationale: The pending native safety design involves destructive file authority and must not inherit unverified POSIX assumptions. Independent read-only API research can proceed while M4 review runs. Date/author: 2026-09-29, Codex orchestration.
+
 Decision: Route independent M4 review to Premium `gpt-6.1-sol`, effort `xhigh`, different from writer `gpt-6-astra`. Review native executable packaging, semantic configuration ownership, immutable-source authentication, relocation/state separation, and transaction boundaries across all three providers. Exact exposed runtime ID and effort are applied. Require public evidence for findings; return required repairs to the existing M4 implementer. Unavailable same-tier fallback is `gpt-6-sol`, effort `xhigh`. Billing assumptions and model-specific task fit remain provisional.
 
 Rationale: Executable runtime distribution and shared configuration updates interact with previously demonstrated integrity defects, warranting demanding independent review before integration. Date/author: 2026-09-29, Codex orchestration.
