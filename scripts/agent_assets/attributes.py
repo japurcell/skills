@@ -23,14 +23,17 @@ def plan(root: Path, files, existing):
               for name, value in files.items()}
     current = observed(root, list(policy))
     owned = existing[1]["attributes"] if existing else []
+    owned_names = {entry["destination"] for entry in owned}
     for name, values in current.items():
+        if any(values[key] != "unspecified" for key in ("filter", "working-tree-encoding", "ident", "crlf")):
+            raise AssetError("ASSET_CONFLICT", f"Unsupported checkout transform: {name}. Resolve Git attributes first.", 1)
+        if name in owned_names:
+            continue
         expected = policy[name]
         if values["text"] not in (("unspecified", "unset") if expected == ["-text"] else ("unspecified", "set", "auto")) or (
             values["eol"] not in (("unspecified",) if expected == ["-text"] else ("unspecified", expected[1].split("=")[1]))
         ):
             raise AssetError("ASSET_CONFLICT", f"Incompatible checkout policy: {name}. Resolve Git attributes first.", 1)
-        if any(values[key] != "unspecified" for key in ("filter", "working-tree-encoding", "ident", "crlf")):
-            raise AssetError("ASSET_CONFLICT", f"Unsupported checkout transform: {name}. Resolve Git attributes first.", 1)
     if existing:
         begin, end = b"# agent-assets begin\n", b"# agent-assets end\n"
         if owned and (original.count(begin) != 1 or original.count(end) != 1 or original.index(begin) > original.index(end)):
@@ -40,11 +43,12 @@ def plan(root: Path, files, existing):
             line = ('"' + entry["destination"] + '" ' + " ".join(entry["values"]) + "\n").encode()
             if original.count(line) != 1 or block.count(line) != 1:
                 raise AssetError("ASSET_CONFLICT", "Owned checkout rules changed; restore recorded rules and rerun.", 1)
-        if any(not compatible(policy[name], v) for name, v in current.items()):
-            raise AssetError("ASSET_CONFLICT", "Effective managed checkout policy changed; resolve attributes and rerun.", 1)
-        return original, owned
+        for entry in owned:
+            original = original.replace(('"' + entry["destination"] + '" ' + " ".join(entry["values"]) + "\n").encode(), b"")
+        if owned:
+            original = original.replace(begin, b"").replace(end, b"")
     new = [{"destination": name, "values": values} for name, values in sorted(policy.items())
-           if not compatible(values, current[name])]
+           if name in owned_names or not compatible(values, current[name])]
     if not new:
         return original, []
     if b"# agent-assets begin" in original or b"# agent-assets end" in original:
@@ -76,7 +80,9 @@ def plan(root: Path, files, existing):
                 absolute = str((root / configured).resolve()) if not Path(configured).is_absolute() else configured
                 git(mirror, "config", "core.attributesFile", absolute)
         resulting = observed(mirror, list(policy))
-        if any(not compatible(policy[name], values) for name, values in resulting.items()):
+        if any(not compatible(policy[name], values)
+               or any(values[key] != "unspecified" for key in ("filter", "working-tree-encoding", "ident", "crlf"))
+               for name, values in resulting.items()):
             raise AssetError("ASSET_CONFLICT", "Higher-precedence Git attributes prevent declared checkout bytes; resolve the rules first.", 1)
     return proposed, new
 
@@ -85,3 +91,23 @@ def compatible(policy, values):
     if policy == ["-text"]:
         return values["text"] == "unset" and values["eol"] == "unspecified"
     return values["text"] in ("set", "auto") and values["eol"] == policy[1].split("=")[1]
+
+
+def verify(root, lock):
+    original = root.joinpath(".gitattributes").read_bytes() if root.joinpath(".gitattributes").exists() else b""
+    begin, end = b"# agent-assets begin\n", b"# agent-assets end\n"
+    owned = lock["attributes"]
+    if owned:
+        if original.count(begin) != 1 or original.count(end) != 1 or original.index(begin) > original.index(end):
+            raise AssetError("ASSET_DRIFT", "Owned checkout markers changed.", 1)
+        block = original.split(begin, 1)[1].split(end, 1)[0]
+        for entry in owned:
+            line = ('"' + entry["destination"] + '" ' + " ".join(entry["values"]) + "\n").encode()
+            if original.count(line) != 1 or block.count(line) != 1:
+                raise AssetError("ASSET_DRIFT", "Owned checkout rule changed: " + entry["destination"], 1)
+    current = observed(root, [item["destination"] for item in lock["items"]])
+    for item in lock["items"]:
+        policy = ["-text"] if item["content"] == "binary" else ["text", "eol=" + item["line_endings"]]
+        values = current[item["destination"]]
+        if not compatible(policy, values) or any(values[key] != "unspecified" for key in ("filter", "working-tree-encoding", "ident", "crlf")):
+            raise AssetError("ASSET_DRIFT", "Effective checkout policy changed: " + item["destination"], 1)

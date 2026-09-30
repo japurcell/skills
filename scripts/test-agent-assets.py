@@ -7,10 +7,12 @@ import argparse
 import hashlib
 import json
 import os
+import signal
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 
@@ -717,13 +719,654 @@ class SelectionTests(Fixture):
         self.assertEqual(self.target.joinpath(shared["destination"]).read_bytes(), b"Shared support.\n")
 
 
+class LifecycleTests(Fixture):
+    def fingerprint(self):
+        return {p.relative_to(self.target).as_posix(): (p.read_bytes(), p.stat().st_mode,
+                p.stat().st_mtime_ns, p.stat().st_ino)
+                for p in self.target.rglob("*") if p.is_file()}
+
+    def advance(self, data):
+        self.source.joinpath("skills/caveman/SKILL.md").write_bytes(data)
+        self.git(self.source, "add", ".")
+        self.git(self.source, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-m", "advance")
+        return self.git(self.source, "rev-parse", "HEAD").strip()
+
+    def lifecycle(self, command, *args):
+        return self.cli(command, "--repo", str(self.target), "--format", "json", *args)
+
+    def test_interrupted_update_is_read_only_error_then_recovers_before_new_plan(self):
+        catalog_path = self.source / "distribution/catalog.json"
+        catalog = json.loads(catalog_path.read_bytes())
+        specs = catalog["assets"]["skill:caveman"]["source_paths"]
+        for number in range(160):
+            path = f"skills/caveman/file-{number:03}.txt"
+            self.source.joinpath(path).write_bytes(b"A" * 32768)
+            specs.append({"path": path, "content": "text", "line_endings": "lf"})
+        catalog_path.write_text(json.dumps(catalog))
+        self.advance(SKILL)
+        self.assertEqual(self.install().returncode, 0)
+        before_files = self.files()
+        for number in range(160):
+            self.source.joinpath(f"skills/caveman/file-{number:03}.txt").write_bytes(b"B" * 32768)
+        self.advance(b"Revision B.\n")
+        journal = Path(self.git(self.target, "rev-parse", "--path-format=absolute", "--git-path", "agent-assets-journal.json").strip())
+        process = subprocess.Popen([sys.executable, str(SCRIPT), "update", "--repo", str(self.target), "--format", "json"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        deadline = time.monotonic() + 20
+        interrupted = False
+        while time.monotonic() < deadline and process.poll() is None:
+            if journal.exists() and self.target.joinpath(".agents/skills/caveman/file-000.txt").read_bytes() == b"B" * 32768:
+                process.kill()
+                interrupted = True
+                break
+            time.sleep(0.001)
+        stdout, stderr = process.communicate()
+        self.assertTrue(interrupted, (stdout, stderr))
+        before = self.fingerprint()
+        result = self.lifecycle("status", "--check")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_INTERRUPTED", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        changed = self.target / ".agents/skills/caveman/file-000.txt"
+        changed.write_bytes(b"External edit during interruption.\n")
+        before = self.fingerprint()
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_INTERRUPTED", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        changed.write_bytes(b"B" * 32768)
+        outside = self.root / "external-recovery-file"
+        outside.write_bytes(b"Do not touch.\n")
+        changed.unlink()
+        changed.symlink_to(outside)
+        before = self.fingerprint()
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_INTERRUPTED", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        self.assertEqual(outside.read_bytes(), b"Do not touch.\n")
+        changed.unlink()
+        changed.write_bytes(b"B" * 32768)
+        original_journal = journal.read_bytes()
+        for destination in (".git/config", ".agent-assets/local/lock.json", "../victim"):
+            forged = json.loads(original_journal)
+            forged["entries"][0]["destination"] = destination
+            journal.write_text(json.dumps(forged))
+            before = self.fingerprint()
+            result = self.lifecycle("update")
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertEqual(self.fingerprint(), before)
+        forged = json.loads(original_journal)
+        forged["entries"][0]["after"]["digest"] = "0" * 64
+        journal.write_text(json.dumps(forged))
+        before = self.fingerprint()
+        self.assertEqual(self.lifecycle("update").returncode, 2)
+        self.assertEqual(self.fingerprint(), before)
+        journal.write_bytes(original_journal)
+        result = self.lifecycle("update", "--revision", "missing-ref")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_SOURCE_ERROR", result.stderr)
+        self.assertEqual(self.files(), before_files)
+        self.assertFalse(journal.exists())
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.target.joinpath(".agents/skills/caveman/file-159.txt").read_bytes(), b"B" * 32768)
+        self.assertFalse(journal.exists())
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process suspension and directory-descriptor race")
+    def test_directory_swap_during_atomic_write_cannot_touch_external_files(self):
+        catalog_path = self.source / "distribution/catalog.json"
+        catalog = json.loads(catalog_path.read_bytes())
+        catalog["assets"]["skill:caveman"]["source_paths"].append({
+            "path": "skills/caveman/bulk.bin", "content": "binary", "line_endings": "none"})
+        catalog_path.write_text(json.dumps(catalog))
+        self.source.joinpath("skills/caveman/bulk.bin").write_bytes(b"A" * (32 * 1024 * 1024))
+        self.advance(SKILL)
+        self.assertEqual(self.install().returncode, 0)
+        self.source.joinpath("skills/caveman/bulk.bin").write_bytes(b"B" * (32 * 1024 * 1024))
+        self.advance(SKILL)
+        directory = self.target / ".agents/skills/caveman"
+        external = self.root / "external"
+        external.mkdir()
+        external.joinpath("bulk.bin").write_bytes(b"External file must survive.\n")
+        process = subprocess.Popen([sys.executable, str(SCRIPT), "update", "--repo", str(self.target)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        deadline = time.monotonic() + 30
+        staged = None
+        try:
+            while time.monotonic() < deadline and process.poll() is None:
+                paths = list(directory.glob(".agent-assets-*"))
+                if paths:
+                    process.send_signal(signal.SIGSTOP)
+                    _, stopped = os.waitpid(process.pid, os.WUNTRACED)
+                    self.assertTrue(os.WIFSTOPPED(stopped))
+                    staged = paths[0].name
+                    break
+                time.sleep(0.0001)
+            self.assertIsNotNone(staged, "Update finished before the atomic-write race was exercised")
+            directory.rename(self.root / "parked skill")
+            directory.symlink_to(external, target_is_directory=True)
+            external.joinpath(staged).write_bytes(b"External staging name must survive.\n")
+            before = {p.name: (p.read_bytes(), p.stat().st_mode) for p in external.iterdir()}
+            process.send_signal(signal.SIGCONT)
+            stdout, stderr = process.communicate(timeout=30)
+            self.assertEqual({p.name: (p.read_bytes(), p.stat().st_mode) for p in external.iterdir()}, before)
+            self.assertNotEqual(process.returncode, 0, (stdout, stderr))
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.communicate()
+
+    def test_forged_owned_item_cannot_authorize_pruning_a_personal_file(self):
+        self.assertEqual(self.install().returncode, 0)
+        private = self.target / ".agents/skills/personal/private.txt"
+        private.parent.mkdir()
+        private.write_bytes(b"Personal, never installed.\n")
+        lock_path = self.target / ".agent-assets/lock.json"
+        lock = json.loads(lock_path.read_bytes())
+        forged = dict(lock["items"][0])
+        forged["destination"] = ".agents/skills/personal/private.txt"
+        forged["baseline_digest"] = hashlib.sha256(private.read_bytes()).hexdigest()
+        forged["mode"] = private.stat().st_mode & 0o777
+        lock["items"].append(forged)
+        lock_path.write_text(json.dumps(lock))
+        before = self.fingerprint()
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_SOURCE_MISMATCH", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        self.assertEqual(private.read_bytes(), b"Personal, never installed.\n")
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process suspension and directory identity")
+    def test_regular_directory_swap_refuses_success_and_ambiguous_recovery(self):
+        catalog_path = self.source / "distribution/catalog.json"
+        catalog = json.loads(catalog_path.read_bytes())
+        catalog["assets"]["skill:caveman"]["source_paths"].append({
+            "path": "skills/caveman/bulk.bin", "content": "binary", "line_endings": "none"})
+        catalog_path.write_text(json.dumps(catalog))
+        self.source.joinpath("skills/caveman/bulk.bin").write_bytes(b"A" * (32 * 1024 * 1024))
+        baseline = self.advance(SKILL)
+        self.assertEqual(self.install().returncode, 0)
+        self.source.joinpath("skills/caveman/bulk.bin").write_bytes(b"B" * (32 * 1024 * 1024))
+        self.advance(SKILL)
+        directory = self.target / ".agents/skills/caveman"
+        external = self.root / "ordinary replacement"
+        external.mkdir()
+        external.joinpath("bulk.bin").write_bytes(b"A" * (32 * 1024 * 1024))
+        external.joinpath("SKILL.md").write_bytes(SKILL)
+        external.joinpath("personal.txt").write_bytes(b"Unrelated directory and files must survive.\n")
+        journal = Path(self.git(self.target, "rev-parse", "--path-format=absolute", "--git-path", "agent-assets-journal.json").strip())
+        process = subprocess.Popen([sys.executable, str(SCRIPT), "update", "--repo", str(self.target)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        deadline = time.monotonic() + 30
+        try:
+            while time.monotonic() < deadline and process.poll() is None:
+                if list(directory.glob(".agent-assets-*")):
+                    process.send_signal(signal.SIGSTOP)
+                    _, stopped = os.waitpid(process.pid, os.WUNTRACED)
+                    self.assertTrue(os.WIFSTOPPED(stopped))
+                    break
+                time.sleep(0.0001)
+            else:
+                self.fail("Update finished before directory substitution was exercised")
+            directory.rename(self.root / "parked skill")
+            external.rename(directory)
+            before = {p.name: (p.read_bytes(), p.stat().st_mode, p.stat().st_ino) for p in directory.iterdir()}
+            process.send_signal(signal.SIGCONT)
+            stdout, stderr = process.communicate(timeout=30)
+            self.assertEqual({p.name: (p.read_bytes(), p.stat().st_mode, p.stat().st_ino) for p in directory.iterdir()}, before)
+            self.assertEqual(process.returncode, 2, (stdout, stderr))
+            self.assertIn(b"ASSET_INTERRUPTED", stderr)
+            self.assertTrue(journal.exists())
+            lock = json.loads(self.target.joinpath(".agent-assets/lock.json").read_bytes())
+            self.assertEqual(lock["source"]["commit"], baseline)
+            before = self.fingerprint()
+            recovered = self.lifecycle("update")
+            self.assertEqual(recovered.returncode, 2, recovered.stderr)
+            self.assertIn("ASSET_INTERRUPTED", recovered.stderr)
+            self.assertEqual(self.fingerprint(), before)
+            self.assertTrue(journal.exists())
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.communicate()
+
+    def test_source_policy_disagreement_is_drift_and_blocks_mutation(self):
+        self.assertEqual(self.install().returncode, 0)
+        lock_path = self.target / ".agent-assets/lock.json"
+        original = lock_path.read_bytes()
+        for field, value in (("policy", {"kind": "branch", "value": "other"}),
+                             ("location", str(self.root / "other source")),
+                             ("kind", "git")):
+            lock = json.loads(original)
+            lock["source"][field] = value
+            if field == "kind":
+                lock["source"]["location"] = self.source.as_uri()
+            lock_path.write_text(json.dumps(lock))
+            before = self.fingerprint()
+            result = self.lifecycle("status", "--check")
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("ASSET_DRIFT", result.stderr)
+            self.assertEqual(self.fingerprint(), before)
+            for command in ("update", "restore"):
+                result = self.lifecycle(command)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("ASSET_RECORD_INVALID", result.stderr)
+                self.assertEqual(self.fingerprint(), before)
+
+    def test_recorded_origin_must_render_the_retained_baseline(self):
+        self.advance(b"Different immutable baseline.\n")
+        self.assertEqual(self.install().returncode, 0)
+        lock_path = self.target / ".agent-assets/lock.json"
+        lock = json.loads(lock_path.read_bytes())
+        lock["items"][0]["origin_commit"] = self.commit
+        lock_path.write_text(json.dumps(lock))
+        before = self.fingerprint()
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_SOURCE_MISMATCH", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_owned_checkout_paths_still_refuse_unsupported_transforms(self):
+        self.assertEqual(self.install().returncode, 0)
+        self.advance(b"Changed upstream bytes.\n")
+        info = self.target / ".git/info/attributes"
+        for rule in ("filter=unsupported", "working-tree-encoding=UTF-8", "ident", "crlf"):
+            with self.subTest(rule=rule):
+                info.write_text(".agents/skills/caveman/SKILL.md " + rule + "\n")
+                before = self.fingerprint()
+                result = self.lifecycle("update")
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertIn("ASSET_CONFLICT", result.stderr)
+                self.assertEqual(self.fingerprint(), before)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process suspension and final destination check")
+    def test_concurrent_file_replacement_during_staging_is_preserved(self):
+        catalog_path = self.source / "distribution/catalog.json"
+        catalog = json.loads(catalog_path.read_bytes())
+        catalog["assets"]["skill:caveman"]["source_paths"].append({
+            "path": "skills/caveman/bulk.bin", "content": "binary", "line_endings": "none"})
+        catalog_path.write_text(json.dumps(catalog))
+        self.source.joinpath("skills/caveman/bulk.bin").write_bytes(b"A" * (32 * 1024 * 1024))
+        baseline = self.advance(SKILL)
+        self.assertEqual(self.install().returncode, 0)
+        self.source.joinpath("skills/caveman/bulk.bin").write_bytes(b"B" * (32 * 1024 * 1024))
+        self.advance(SKILL)
+        directory = self.target / ".agents/skills/caveman"
+        payload = directory / "bulk.bin"
+        external = self.root / "unrelated file"
+        external.write_bytes(b"Concurrent edit must survive.\n")
+        external.chmod(0o600)
+        journal = Path(self.git(self.target, "rev-parse", "--path-format=absolute", "--git-path", "agent-assets-journal.json").strip())
+        process = subprocess.Popen([sys.executable, str(SCRIPT), "update", "--repo", str(self.target)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        deadline = time.monotonic() + 30
+        try:
+            while time.monotonic() < deadline and process.poll() is None:
+                if list(directory.glob(".agent-assets-*")):
+                    process.send_signal(signal.SIGSTOP)
+                    _, stopped = os.waitpid(process.pid, os.WUNTRACED)
+                    self.assertTrue(os.WIFSTOPPED(stopped))
+                    break
+                time.sleep(0.0001)
+            else:
+                self.fail("Update finished before destination substitution was exercised")
+            parked = self.root / "parked payload"
+            payload.rename(parked)
+            payload.symlink_to(external)
+            external_before = (external.read_bytes(), external.stat().st_mode, external.stat().st_ino)
+            process.send_signal(signal.SIGCONT)
+            stdout, stderr = process.communicate(timeout=30)
+            self.assertEqual(process.returncode, 2, (stdout, stderr))
+            self.assertIn(b"ASSET_INTERRUPTED", stderr)
+            self.assertTrue(payload.is_symlink())
+            self.assertEqual((external.read_bytes(), external.stat().st_mode, external.stat().st_ino), external_before)
+            self.assertTrue(journal.exists())
+            self.assertEqual(json.loads(self.target.joinpath(".agent-assets/lock.json").read_bytes())["source"]["commit"], baseline)
+            before = self.fingerprint()
+            self.assertEqual(self.lifecycle("update").returncode, 2)
+            self.assertEqual(self.fingerprint(), before)
+            payload.unlink()
+            parked.rename(payload)
+            result = self.lifecycle("update")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(payload.read_bytes(), b"B" * (32 * 1024 * 1024))
+            self.assertFalse(journal.exists())
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.communicate()
+
+    def test_offline_check_rejects_credential_bearing_record_without_echoing_it(self):
+        self.assertEqual(self.install().returncode, 0)
+        lock_path = self.target / ".agent-assets/lock.json"
+        lock = json.loads(lock_path.read_bytes())
+        lock["source"]["kind"] = "git"
+        lock["source"]["location"] = "https://private-token@example.invalid/repo.git"
+        lock_path.write_text(json.dumps(lock))
+        before = self.fingerprint()
+        result = self.lifecycle("status", "--check")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertNotIn("private-token", result.stdout + result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_saved_bundle_recalculates_membership_and_shared_dependency(self):
+        catalog_path = self.source / "distribution/catalog.json"
+        catalog = json.loads(catalog_path.read_bytes())
+        for name in ("alpha", "beta", "shared"):
+            path = self.source / f"skills/{name}/SKILL.md"
+            path.parent.mkdir(parents=True)
+            path.write_bytes((name + " A\n").encode())
+            catalog["assets"]["skill:" + name] = {
+                "source_paths": [{"path": f"skills/{name}/SKILL.md", "content": "text", "line_endings": "lf"}],
+                "requires": ["skill:shared"] if name != "shared" else [], "clients": ["codex"],
+                "rendering": "skill", "os": [], "runtime": []}
+        catalog["bundles"]["workflow"] = ["skill:alpha"]
+        catalog_path.write_text(json.dumps(catalog))
+        self.advance(SKILL)
+        result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                          "--client", "codex", "--bundle", "workflow", "--format", "json")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        catalog["bundles"]["workflow"] = ["skill:beta"]
+        catalog_path.write_text(json.dumps(catalog))
+        self.source.joinpath("skills/shared/SKILL.md").write_bytes(b"shared B\n")
+        self.advance(SKILL)
+        before = self.fingerprint()
+        preview = self.lifecycle("update", "--preview")
+        self.assertEqual(preview.returncode, 0, preview.stderr)
+        self.assertEqual(json.loads(preview.stdout)["changes"], {"added": 1, "updated": 1, "removed": 1, "retained": 0})
+        self.assertEqual(self.fingerprint(), before)
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["resolved_assets"], ["skill:beta", "skill:shared"])
+        self.assertFalse(self.target.joinpath(".agents/skills/alpha").exists())
+        self.assertEqual(self.target.joinpath(".agents/skills/beta/SKILL.md").read_bytes(), b"beta A\n")
+        self.assertEqual(self.target.joinpath(".agents/skills/shared/SKILL.md").read_bytes(), b"shared B\n")
+        self.assertEqual(self.lifecycle("status", "--check").returncode, 0)
+
+    def test_human_status_names_drift_without_running_a_git_filter(self):
+        self.assertEqual(self.install().returncode, 0)
+        path = self.target / ".agents/skills/caveman/SKILL.md"
+        path.write_bytes(b"Edited.\n")
+        marker = self.root / "filter-executed"
+        self.git(self.target, "config", "filter.unsafe.clean", f"touch '{marker}'; cat")
+        with self.target.joinpath(".gitattributes").open("ab") as output:
+            output.write(b".agents/skills/caveman/SKILL.md filter=unsafe\n")
+        before = self.fingerprint()
+        result = self.cli("status", "--repo", str(self.target), "--check")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn(".agents/skills/caveman/SKILL.md", result.stdout)
+        self.assertIn("modified", result.stdout)
+        self.assertIn(".gitattributes", result.stdout)
+        self.assertFalse(marker.exists())
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_future_scope_records_cannot_be_ignored_while_pruning(self):
+        self.assertEqual(self.install().returncode, 0)
+        local = self.target / ".agent-assets/local"
+        local.mkdir()
+        local.joinpath("lock.json").write_text('{"schema_version":99}')
+        self.advance(b"Changed source.\n")
+        before = self.fingerprint()
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_RECORD_INVALID", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_restore_refuses_rendered_baseline_tampering(self):
+        self.assertEqual(self.install().returncode, 0)
+        lock_path = self.target / ".agent-assets/lock.json"
+        lock = json.loads(lock_path.read_bytes())
+        lock["items"][0]["baseline_digest"] = "0" * 64
+        lock_path.write_text(json.dumps(lock))
+        before = self.fingerprint()
+        result = self.lifecycle("restore")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_SOURCE_MISMATCH", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_edited_removal_or_attribute_stops_whole_selection_change(self):
+        catalog_path = self.source / "distribution/catalog.json"
+        catalog = json.loads(catalog_path.read_bytes())
+        catalog["assets"]["skill:next"] = {
+            "source_paths": [{"path": "skills/next/SKILL.md", "content": "text", "line_endings": "lf"}],
+            "requires": [], "clients": ["codex"], "rendering": "skill", "os": [], "runtime": []}
+        self.source.joinpath("skills/next").mkdir()
+        self.source.joinpath("skills/next/SKILL.md").write_bytes(b"Next skill.\n")
+        catalog_path.write_text(json.dumps(catalog))
+        self.advance(SKILL)
+        self.assertEqual(self.install().returncode, 0)
+        for relative, modified in ((".agents/skills/caveman/SKILL.md", b"Local edit.\n"),
+                                   (".gitattributes", b"# edited owned rules\n")):
+            path = self.target / relative
+            original = path.read_bytes()
+            path.write_bytes(modified)
+            before = self.fingerprint()
+            result = self.cli("install", "--repo", str(self.target), "--source", str(self.source),
+                              "--client", "codex", "--asset", "skill:next", "--format", "json")
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("ASSET_CONFLICT", result.stderr)
+            self.assertEqual(self.fingerprint(), before)
+            path.write_bytes(original)
+
+    def test_pins_branch_overrides_and_failed_policy_changes(self):
+        self.assertEqual(self.install("--revision", self.commit).returncode, 0)
+        newer = self.advance(b"Newer branch bytes.\n")
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["source"]["commit"], self.commit)
+        before = self.fingerprint()
+        result = self.lifecycle("update", "--branch", "missing")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        result = self.lifecycle("update", "--branch", "main")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["source"]["commit"], newer)
+        self.assertEqual(json.loads(result.stdout)["selection"]["source"]["policy"], {"kind": "branch", "value": "main"})
+        result = self.lifecycle("update", "--revision", self.commit)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.target.joinpath(".agents/skills/caveman/SKILL.md").read_bytes(), SKILL)
+        self.assertEqual(json.loads(result.stdout)["selection"]["source"]["policy"], {"kind": "revision", "value": self.commit})
+
+    def test_busy_mutex_refuses_without_changes_in_linked_worktree(self):
+        self.assertEqual(self.install().returncode, 0)
+        self.git(self.target, "add", ".")
+        self.git(self.target, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-m", "installation")
+        linked = self.root / "linked target"
+        self.git(self.target, "worktree", "add", "-b", "linked", str(linked))
+        self.target = linked
+        mutex = Path(self.git(linked, "rev-parse", "--path-format=absolute", "--git-path", "agent-assets.mutex").strip())
+        mutex.write_bytes(b"0")
+        script = """import os,sys
+f=open(sys.argv[1], 'r+b')
+if os.name == 'nt':
+ import msvcrt
+ msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+else:
+ import fcntl
+ fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+print('locked', flush=True)
+sys.stdin.read()
+"""
+        holder = subprocess.Popen([sys.executable, "-c", script, str(mutex)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+        try:
+            self.assertEqual(holder.stdout.readline().strip(), "locked")
+            self.advance(b"New desired bytes.\n")
+            before = self.fingerprint()
+            result = self.lifecycle("update")
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("ASSET_CONFLICT", result.stderr)
+            self.assertEqual(self.fingerprint(), before)
+        finally:
+            holder.communicate("")
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(linked.joinpath(".agents/skills/caveman/SKILL.md").read_bytes(), b"New desired bytes.\n")
+
+    def test_tampered_ownership_never_authorizes_destructive_paths(self):
+        self.assertEqual(self.install().returncode, 0)
+        lock_path = self.target / ".agent-assets/lock.json"
+        original = lock_path.read_bytes()
+        for destination in (".git/config", ".agent-assets/selection.json", "README.md", ".agents/../victim", ".agents/skills/x/.git/config"):
+            with self.subTest(destination=destination):
+                lock = json.loads(original)
+                lock["items"][0]["destination"] = destination
+                lock_path.write_text(json.dumps(lock))
+                before = self.fingerprint()
+                for command in (("status", "--check"), ("update",), ("restore",)):
+                    result = self.lifecycle(*command)
+                    self.assertEqual(result.returncode, 2, result.stderr)
+                    self.assertIn("ASSET_RECORD_INVALID", result.stderr)
+                    self.assertEqual(self.fingerprint(), before)
+        lock_path.write_bytes(original)
+
+    def test_check_distinguishes_selection_and_attribute_drift_from_invalid_records(self):
+        self.assertEqual(self.install().returncode, 0)
+        selection_path = self.target / ".agent-assets/selection.json"
+        original = selection_path.read_bytes()
+        selection = json.loads(original)
+        selection["assets"] = ["skill:different"]
+        selection_path.write_text(json.dumps(selection))
+        before = self.fingerprint()
+        result = self.lifecycle("status", "--check")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ASSET_DRIFT", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        selection_path.write_bytes(original)
+        attrs = self.target / ".gitattributes"
+        original = attrs.read_bytes()
+        attrs.write_bytes(original + b"*.png -text\n")
+        self.assertEqual(self.lifecycle("status", "--check").returncode, 0)
+        attrs.write_bytes(original.replace(b"eol=lf", b"eol=crlf"))
+        before = self.fingerprint()
+        result = self.lifecycle("status", "--check")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        lock_path = self.target / ".agent-assets/lock.json"
+        lock = json.loads(lock_path.read_bytes())
+        lock["renderer_version"] = 999
+        lock_path.write_text(json.dumps(lock))
+        before = self.fingerprint()
+        result = self.lifecycle("status", "--check")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_restore_uses_recorded_commit_and_digest_without_changing_policy(self):
+        self.assertEqual(self.install().returncode, 0)
+        before = self.files()
+        self.advance(b"Unrequested newer revision.\n")
+        self.target.joinpath(".agents/skills/caveman/SKILL.md").unlink()
+        result = self.lifecycle("restore")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.files(), before)
+        lock_path = self.target / ".agent-assets/lock.json"
+        lock = json.loads(lock_path.read_bytes())
+        lock["source"]["digest"] = "0" * 64
+        lock_path.write_text(json.dumps(lock))
+        before = self.fingerprint()
+        result = self.lifecycle("restore")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("ASSET_SOURCE_MISMATCH", result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_retained_edits_preserve_baseline_origin_and_later_conflict(self):
+        self.assertEqual(self.install().returncode, 0)
+        target = self.target / ".agents/skills/caveman/SKILL.md"
+        target.write_bytes(b"Local edit.\n")
+        self.source.joinpath("unrelated.md").write_bytes(b"Advance without payload change.\n")
+        revision = self.advance(SKILL)
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        lock = json.loads(self.target.joinpath(".agent-assets/lock.json").read_bytes())
+        self.assertEqual(lock["source"]["commit"], revision)
+        self.assertEqual(lock["items"][0]["origin_commit"], self.commit)
+        self.assertEqual(lock["items"][0]["baseline_digest"], hashlib.sha256(SKILL).hexdigest())
+        self.assertEqual(target.read_bytes(), b"Local edit.\n")
+        self.assertEqual(self.lifecycle("status", "--check").returncode, 1)
+        self.advance(b"Upstream edit.\n")
+        before = self.fingerprint()
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        target.write_bytes(b"Upstream edit.\n")
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.lifecycle("status", "--check").returncode, 0)
+
+    def test_strict_status_is_offline_read_only_and_reports_all_payload_drift(self):
+        self.assertEqual(self.install().returncode, 0)
+        moved = self.root / "unavailable source"
+        self.source.rename(moved)
+        before = self.fingerprint()
+        result = self.lifecycle("status", "--check")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(result.stdout)["verification"]["passed"])
+        self.assertEqual(self.fingerprint(), before)
+        for data in (b"Deliberate local edit.\n", None):
+            path = self.target / ".agents/skills/caveman/SKILL.md"
+            path.write_bytes(data) if data is not None else path.unlink()
+            before = self.fingerprint()
+            result = self.lifecycle("status", "--check")
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("ASSET_DRIFT", result.stderr)
+            self.assertFalse(json.loads(result.stdout)["verification"]["passed"])
+            self.assertEqual(self.fingerprint(), before)
+        result = self.lifecycle("status")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_selection_change_prunes_only_unused_owned_paths_and_rules(self):
+        catalog_path = self.source / "distribution/catalog.json"
+        catalog = json.loads(catalog_path.read_bytes())
+        for name in ("alpha", "beta", "shared"):
+            path = self.source / f"skills/{name}/SKILL.md"
+            path.parent.mkdir(parents=True)
+            path.write_bytes((name + "\n").encode())
+            catalog["assets"]["skill:" + name] = {
+                "source_paths": [{"path": f"skills/{name}/SKILL.md", "content": "text", "line_endings": "lf"}],
+                "requires": ["skill:shared"] if name != "shared" else [], "clients": ["codex"],
+                "rendering": "skill", "os": [], "runtime": []}
+        catalog_path.write_text(json.dumps(catalog))
+        self.advance(SKILL)
+        self.target.joinpath(".gitattributes").write_bytes(b"*.png -text\n")
+        result = self.install("--asset", "skill:alpha", "--asset", "skill:beta")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        unrelated = self.target / ".agents/skills/alpha/personal.txt"
+        unrelated.write_bytes(b"Keep me.\n")
+        result = self.install("--asset", "skill:beta")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["changes"]["removed"], 1)
+        self.assertFalse(self.target.joinpath(".agents/skills/alpha/SKILL.md").exists())
+        self.assertEqual(unrelated.read_bytes(), b"Keep me.\n")
+        self.assertEqual(self.target.joinpath(".agents/skills/shared/SKILL.md").read_bytes(), b"shared\n")
+        rules = self.target.joinpath(".gitattributes").read_bytes()
+        self.assertTrue(rules.startswith(b"*.png -text\n"))
+        self.assertNotIn(b'alpha/SKILL.md', rules)
+        self.assertIn(b'shared/SKILL.md', rules)
+
+    def test_preview_and_update_follow_saved_remote_branch(self):
+        remote = self.root / "remote.git"
+        self.git(self.source, "clone", "--bare", str(self.source), str(remote))
+        result = self.install("--source", remote.as_uri())
+        self.assertEqual(result.returncode, 0, result.stderr)
+        revision = self.advance(b"Revision B.\n")
+        self.git(self.source, "push", str(remote), "main")
+        before = self.fingerprint()
+        preview = self.lifecycle("update", "--preview")
+        self.assertEqual(preview.returncode, 0, preview.stderr)
+        self.assertEqual(json.loads(preview.stdout)["changes"]["updated"], 1)
+        self.assertEqual(self.fingerprint(), before)
+        result = self.lifecycle("update")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["source"]["commit"], revision)
+        self.assertEqual(self.target.joinpath(".agents/skills/caveman/SKILL.md").read_bytes(), b"Revision B.\n")
+        self.assertEqual(self.git(self.target, "ls-files"), "")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--group", choices=("team-install", "selection", "lifecycle", "providers", "scopes"))
     args, remaining = parser.parse_known_args()
-    if args.group not in (None, "team-install", "selection"):
+    if args.group not in (None, "team-install", "selection", "lifecycle"):
         parser.error(f"group {args.group} has no implemented cases yet")
-    groups = {"team-install": TeamInstallTests, "selection": SelectionTests}
+    groups = {"team-install": TeamInstallTests, "selection": SelectionTests, "lifecycle": LifecycleTests}
     unittest.main(argv=[sys.argv[0], *([groups[args.group].__name__] if args.group else []), *remaining])
 
 

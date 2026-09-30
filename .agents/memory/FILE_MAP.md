@@ -48,7 +48,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | Path | Why it matters |
 | --- | --- |
 | `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, `~/.gemini`, and `~/.codex` targets, including generated Codex agents at `${CODEX_HOME:-$HOME/.codex}/agents`. |
-| `scripts/agent-assets.py`, `scripts/agent_assets/` | Selected team CLI and internal catalog/dependency, committed-source, ownership, and Git-attribute preflight modules. `catalog.py` validates/solves selection, `providers.py` maps documented skill roots, and `paths.py` validates portable paths. |
+| `scripts/agent-assets.py`, `scripts/agent_assets/` | Selected team CLI and internal catalog/dependency, committed-source, ownership, and Git-attribute preflight modules. `catalog.py` validates/solves selection, `providers.py` maps documented skill roots, `paths.py` validates portable paths, and `transaction.py` owns worktree-resolved writer exclusion, one interrupted-operation journal, and validated staging recovery. |
 | `distribution/catalog.json` | Version 1 explicit maintained skill/agent/hook/reference/notice inventory, required dependencies, unavailable workflows, client/runtime constraints, and three curated bundles. |
 | `scripts/test-agent-assets.py` | Disposable Git subprocess acceptance for selected installations; registered in the aggregate runner. |
 | `docs/agent-asset-installer/catalog-audit.md` | Verified dependency/source inventory and explicit required-versus-optional classification for the installer catalog; read before changing bundle membership or workflow dependencies. |
