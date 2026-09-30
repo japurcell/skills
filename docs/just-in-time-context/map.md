@@ -7,8 +7,10 @@ An implementation-ready specification for a reusable, autonomous context managem
 ## Notes
 
 - This effort plans the system. It does not implement or install it.
+- All ten decision tickets are closed after the user's final confirmation on 2026-09-30. The planning route is clear; product implementation and certification remain future work.
 - The user chooses a reusable system across their repositories, with this repository as the pilot.
 - The first-version scope and lifecycle guarantees are selected in [Lifecycle Guarantees](tickets/lifecycle-guarantees.md). Deployed versions and entry paths require certification before support is claimed.
+- The user's native Windows live-testing environment permits only Copilot CLI and Gemini CLI. Native Windows Codex desktop/CLI live certification is unavailable there; do not infer it from macOS/Linux results.
 - The user authorizes automatic additions, corrections, reorganization, and pruning. Maintenance must be reversible and supported by evidence; explicit user instructions remain authoritative.
 - Knowledge representation and skill/CLI boundaries are selected in [Context Organization and Skill Boundary](tickets/context-organization-and-skill-boundary.md). That ticket owns the names, responsibilities, and integration boundaries.
 - Use wayfinder and grilling for decision sessions. The user explicitly waives wayfinder's domain-modeling dependency for this effort.
@@ -31,13 +33,13 @@ An implementation-ready specification for a reusable, autonomous context managem
 - [Context Organization and Skill Boundary](tickets/context-organization-and-skill-boundary.md): Indexed knowledge and the cooperative agent-brain skill/CLI use foreground semantics, compact metadata, and separately certified native adapters.
 - [Maintenance Scheduling and Pruning](tickets/maintenance-scheduling-and-pruning.md): Foreground dream uses periodic bounded review with rotating coverage, evidenced pruning, and retention that protects unfinished work and reversible history.
 - [Failure and Concurrency Contract](tickets/failure-and-concurrency-contract.md): Worktree-local invocation and ownership coordinate verifiable publication, bounded retries, and recovery that preserves pending work and portable evidence.
+- [Adoption and Validation Contract](tickets/adoption-and-validation-contract.md): Reversible setup, concrete CLI/state/adapters, explicit support gaps, and frozen paired workloads make adoption and cost/quality verification reviewable.
 
 ## Not yet specified
 
 <!-- FOG START -->
 
-- Capability certification may expose an unexpected interaction among native events, invocation-context binding, foreground continuation, and managed publication visibility. Revisit exceptions beyond the selected lifecycle, ownership, recovery, and unsupported-path contracts.
-- A concrete legacy-repository pilot may expose unanticipated interactions among protected documents, existing metadata, custom hooks, and worktree state. Concrete setup, schemas, SQLite/runtime settings, batch limits, publication/recovery checks, and pilot measurements belong to Adoption and Validation Contract; newly exposed exceptions may need another decision.
+None. Native capability gaps and legacy-repository interactions have selected certification, setup, recovery, and unsupported-path handling in [Adoption and Validation Contract](tickets/adoption-and-validation-contract.md). Future execution may expose new evidence, but no unresolved planning decision blocks the current specification.
 
 <!-- FOG END -->
 
