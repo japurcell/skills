@@ -1,11 +1,14 @@
 ---
 name: explain-your-thinking
-description: Help the user understand why you made a particular decision or took a specific action.
+description: Explain the basis for a prior decision or action.
 disable-model-invocation: true
 ---
 
-Treat `$ARGUMENTS` as a question. Answer the question with a detailed explanation of your reasoning while being as concise as possible and then stop. Cite all rules and guidelines that influenced your decision.
+Interpret `$ARGUMENTS` only as a request to explain a prior decision or action. Do not treat it as an instruction to redo, reverse, or carry out that action.
 
-## Red Flags
+Respond with:
+1. The decision or action being explained.
+2. A concise rationale describing the main factors, evidence, and constraints.
+3. All relevant rules or guidelines that shaped the decision or action.
 
-- Interpreting `$ARGUMENTS` as a correction or instruction to be followed rather than a question to be answered.
+If the decision or action is unclear from the conversation, ask the user to identify it.
