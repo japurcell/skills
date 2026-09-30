@@ -20,7 +20,7 @@ test_send_event_does_not_wait_for_stdin_close() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
 
   python3 - "$home" <<'PY'
 import os
@@ -177,7 +177,7 @@ test_structured_observability_records_session_rollup_and_mutation() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   obs_log="$home/.gemini/hooks/logs/observability.ndjson"
   long_tail="$(python3 - <<'PY'
 print("x" * 2000, end="")
@@ -253,7 +253,7 @@ test_observability_lock_wait_and_disable_are_fail_open() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   obs_log="$home/.gemini/hooks/logs/observability.ndjson"
   mkdir -p "$(dirname "$obs_log")"
 
@@ -313,7 +313,7 @@ test_audit_log_secure_file_permissions() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
 
   python3 - "$home" <<'PY'
 import os
@@ -355,7 +355,7 @@ test_observability_log_rotation() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   
   if [[ "$0" == *"gemini"* ]]; then
     obs_log="$home/.gemini/hooks/logs/observability.ndjson"
@@ -417,7 +417,7 @@ test_observability_log_rotation_pruning_and_precedence() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   
   if [[ "$0" == *"gemini"* ]]; then
     obs_log="$home/.gemini/hooks/logs/observability.ndjson"
@@ -502,7 +502,7 @@ test_observability_log_rotation_unconditional_prune() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   
   if [[ "$0" == *"gemini"* ]]; then
     obs_log="$home/.gemini/hooks/logs/observability.ndjson"
@@ -559,7 +559,7 @@ test_observability_log_rotation_max_bytes_zero_disables_active_rotation() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
 
   if [[ "$0" == *"gemini"* ]]; then
     obs_log="$home/.gemini/hooks/logs/observability.ndjson"
@@ -616,7 +616,7 @@ test_observability_log_rotation_sub_512() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   
   if [[ "$0" == *"gemini"* ]]; then
     obs_log="$home/.gemini/hooks/logs/observability.ndjson"
@@ -664,7 +664,7 @@ test_observability_log_rotation_generic_fallback() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   
   if [[ "$0" == *"gemini"* ]]; then
     obs_log="$home/.gemini/hooks/logs/observability.ndjson"
@@ -711,7 +711,7 @@ test_sqlite_observability_persistence() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   db_path="$home/.gemini/hooks/logs/observability_v1.db"
 
   if [[ -f "$db_path" ]]; then
@@ -891,7 +891,7 @@ test_sqlite_span_sequencing_and_child_linkage() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   db_path="$home/.gemini/hooks/logs/observability_v1.db"
 
   # 1. Verify Parent-side subagentStart writes registry file and backfills parent session
@@ -1050,7 +1050,7 @@ test_sqlite_finalization_and_transcripts() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   db_path="$home/.gemini/hooks/logs/observability_v1.db"
 
   # --- TEST 1: Saving, merging active chunks to .jsonl, sequence numbers and ISO 8601 timestamps ---
@@ -1182,15 +1182,17 @@ test_sqlite_finalization_and_transcripts() {
   local keep_err_ms=$((now_ms - 85 * 24 * 3600 * 1000))
   local keep_succ_ms=$((now_ms - 10 * 24 * 3600 * 1000))
 
-  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('exp-err-sess', '$home', 'gemini', 'success', $exp_err_ms, 1, '$home/.gemini/hooks/logs/transcripts/saved/exp-err-sess.jsonl');"
-  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('exp-succ-sess', '$home', 'gemini', 'success', $exp_succ_ms, 0, '$home/.gemini/hooks/logs/transcripts/saved/exp-succ-sess.jsonl');"
-  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('keep-err-sess', '$home', 'gemini', 'success', $keep_err_ms, 1, '$home/.gemini/hooks/logs/transcripts/saved/keep-err-sess.jsonl');"
-  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('keep-succ-sess', '$home', 'gemini', 'success', $keep_succ_ms, 0, '$home/.gemini/hooks/logs/transcripts/saved/keep-succ-sess.jsonl');"
+  # The sentinel marks child startup; maintenance can still hold a writer lock.
+  # Wait at the fixture client boundary while retaining the concurrent worker.
+  sqlite3 -cmd ".timeout 5000" "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('exp-err-sess', '$home', 'gemini', 'success', $exp_err_ms, 1, '$home/.gemini/hooks/logs/transcripts/saved/exp-err-sess.jsonl');"
+  sqlite3 -cmd ".timeout 5000" "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('exp-succ-sess', '$home', 'gemini', 'success', $exp_succ_ms, 0, '$home/.gemini/hooks/logs/transcripts/saved/exp-succ-sess.jsonl');"
+  sqlite3 -cmd ".timeout 5000" "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('keep-err-sess', '$home', 'gemini', 'success', $keep_err_ms, 1, '$home/.gemini/hooks/logs/transcripts/saved/keep-err-sess.jsonl');"
+  sqlite3 -cmd ".timeout 5000" "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('keep-succ-sess', '$home', 'gemini', 'success', $keep_succ_ms, 0, '$home/.gemini/hooks/logs/transcripts/saved/keep-succ-sess.jsonl');"
 
-  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('exp-err-span', 'exp-err-sess', 1, 'preToolUse', 'completed');"
-  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('exp-succ-span', 'exp-succ-sess', 1, 'preToolUse', 'completed');"
-  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('keep-err-span', 'keep-err-sess', 1, 'preToolUse', 'completed');"
-  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('keep-succ-span', 'keep-succ-sess', 1, 'preToolUse', 'completed');"
+  sqlite3 -cmd ".timeout 5000" "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('exp-err-span', 'exp-err-sess', 1, 'preToolUse', 'completed');"
+  sqlite3 -cmd ".timeout 5000" "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('exp-succ-span', 'exp-succ-sess', 1, 'preToolUse', 'completed');"
+  sqlite3 -cmd ".timeout 5000" "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('keep-err-span', 'keep-err-sess', 1, 'preToolUse', 'completed');"
+  sqlite3 -cmd ".timeout 5000" "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('keep-succ-span', 'keep-succ-sess', 1, 'preToolUse', 'completed');"
 
   mkdir -p "$home/.gemini/hooks/logs/transcripts/saved"
   echo "exp-err" > "$home/.gemini/hooks/logs/transcripts/saved/exp-err-sess.jsonl"
@@ -1302,7 +1304,7 @@ test_sqlite_adversarial_hardening() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   db_path="$home/.gemini/hooks/logs/observability_v1.db"
 
   # 1. Trigger sessionStart to create database and WAL/SHM files
@@ -1443,7 +1445,7 @@ test_sqlite_additional_observability_scenarios() {
   workdir="$(setup_test_workdir)"
   trap 'python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   db_path="$home/.gemini/hooks/logs/observability_v1.db"
 
   # --- Gap 1 Test: Finalization Timeout and failed-finalization State Transition ---
@@ -1747,7 +1749,7 @@ test_sqlite_finalization_maintenance_resume() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
   db_path="$home/.gemini/hooks/logs/observability_v1.db"
 
   payload="$(jq -nc '{
@@ -1818,7 +1820,7 @@ test_observability_log_rotation_fail_open() {
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
-  install_into_temp_home "$home"
+  install_observability_test_home "$home" gemini
 
   if [[ "$0" == *"gemini"* ]]; then
     obs_log="$home/.gemini/hooks/logs/observability.ndjson"

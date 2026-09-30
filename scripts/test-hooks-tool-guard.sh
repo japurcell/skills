@@ -4,6 +4,8 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
+setup_hook_observability_test_state
+
 run_tool_guard() {
   local log_dir="$1"
   local mode="$2"

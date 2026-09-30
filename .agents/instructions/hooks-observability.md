@@ -7,6 +7,7 @@ description: Hook observability and trace-store rules; load only when changing e
 
 Load this file only for observability, trace-store, transcript, log-rotation, or maintenance work. General hook contracts remain in [hooks.md](hooks.md).
 
+- Before operational shell suites invoke hooks, call `setup_hook_observability_test_state` from `scripts/test-common.sh`. Its provider-specific log overrides keep capture enabled and isolate inherited subprocesses; it seeds maintenance sentinels and cleans state on exit. Dedicated observability fixtures use disposable installed homes and fresh sentinels except when deliberately testing detached maintenance.
 - Keep `send-event.py` registered for every supported Copilot and Gemini event, including Gemini lifecycle events with no other operational behavior.
 - `send-event.py` and the Copilot/Gemini observability helpers are generated from canonical `hooks/families/` sources. Regenerate with `python3 scripts/generate-hooks.py --write` and require a clean `--check`; their installed copies remain runtime-local and self-contained.
 - Create primary and shadow audit files with `0o600` at descriptor creation. Create shadow parents first and keep paired writes inside one lock section.

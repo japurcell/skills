@@ -4,12 +4,30 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
+setup_hook_observability_test_state
+
 run_rtk_hook() {
   local audit_log="$1"
   local payload="$2"
   shift 2
 
   env AUDIT_LOG="$audit_log" "$@" python3 "$REPO_ROOT/.gemini/hooks/scripts/rtk-hook-gemini.py" <<<"$payload"
+}
+
+test_observability_capture_uses_disposable_state() {
+  local output
+  local trace_log="${HOOK_OBSERVABILITY_TEST_ROOT}/gemini/observability.ndjson"
+
+  mock_bin "$HOOK_OBSERVABILITY_TEST_ROOT" "rtk" '#!/usr/bin/env bash
+printf "%s\n" "{}"'
+  output="$(run_rtk_hook "$HOOK_OBSERVABILITY_TEST_ROOT/audit.log" \
+    '{"session_id":"disposable-capture","tool_name":"read_file"}' \
+    "PATH=$HOOK_OBSERVABILITY_TEST_ROOT/bin:$PATH" \
+    OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_DISABLE=0 \
+    GEMINI_OBSERVABILITY_DISABLE=0 OBSERVABILITY_FORCE_NDJSON=1)"
+  assert_equals '{}' "$output" "Expected the neutral RTK rewrite response."
+  assert_file_contains "$trace_log" 'disposable-capture' \
+    "Expected operational hook capture to stay inside its disposable trace directory."
 }
 
 test_valid_rewrite_is_forwarded_and_stdin_is_preserved() {
@@ -508,6 +526,7 @@ PY
 }
 
 main() {
+  test_observability_capture_uses_disposable_state
   test_valid_rewrite_is_forwarded_and_stdin_is_preserved
   test_open_pipe_completion_and_exact_input_bytes
   test_invalid_json_degrades_to_noop_json

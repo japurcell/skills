@@ -4,6 +4,8 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
+setup_hook_observability_test_state
+
 run_installed_auto_ingest_hook() {
   local home="$1"
   local payload="$2"

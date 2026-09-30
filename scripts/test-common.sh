@@ -41,6 +41,23 @@ setup_test_workdir() {
   echo "$workdir"
 }
 
+# Operational hook suites keep capture enabled in a provider-specific temporary
+# directory, including subprocesses that inherit the shell environment.
+cleanup_hook_observability_test_state() {
+  rm -rf -- "$HOOK_OBSERVABILITY_TEST_ROOT"
+}
+
+setup_hook_observability_test_state() {
+  HOOK_OBSERVABILITY_TEST_ROOT="$(mktemp -d)"
+  export HOOK_OBSERVABILITY_TEST_ROOT
+  export COPILOT_OBSERVABILITY_LOG_PATH="$HOOK_OBSERVABILITY_TEST_ROOT/copilot/observability.ndjson"
+  export GEMINI_OBSERVABILITY_LOG_PATH="$HOOK_OBSERVABILITY_TEST_ROOT/gemini/observability.ndjson"
+  mkdir -p "$HOOK_OBSERVABILITY_TEST_ROOT/copilot" "$HOOK_OBSERVABILITY_TEST_ROOT/gemini"
+  touch "$HOOK_OBSERVABILITY_TEST_ROOT/copilot/.maintenance_last_run" \
+    "$HOOK_OBSERVABILITY_TEST_ROOT/gemini/.maintenance_last_run"
+  trap cleanup_hook_observability_test_state EXIT
+}
+
 # Usage: mock_bin <workdir> <command_name> <script_content>
 # Example: mock_bin "$workdir" "dotnet" '#!/bin/env bash\nexit 0'
 mock_bin() {
@@ -106,6 +123,16 @@ install_into_temp_home() {
 
   mkdir -p "$home"
   TMPDIR="$REPO_ROOT/.tmp" HOME="$home" "$REPO_ROOT/scripts/install.sh" >/dev/null
+}
+
+# Keep explicit maintenance scenarios in control of when a worker starts.
+install_observability_test_home() {
+  local test_home_root="$1"
+  local runtime="$2"
+
+  install_into_temp_home "$test_home_root"
+  mkdir -p "$test_home_root/.$runtime/hooks/logs"
+  touch "$test_home_root/.$runtime/hooks/logs/.maintenance_last_run"
 }
 
 write_required_skill_fixtures() {

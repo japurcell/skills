@@ -4,6 +4,8 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
+setup_hook_observability_test_state
+
 assert_caveman_context_shape() {
   local context="$1"
 

@@ -4,6 +4,8 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
+setup_hook_observability_test_state
+
 create_fixture_repo() {
   local repo="$1"
 

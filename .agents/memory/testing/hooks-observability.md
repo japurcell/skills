@@ -14,7 +14,7 @@ For canonical observability renderer changes, also run `python3 scripts/test-gen
 
 The suites exercise installed hook copies and validate event capture, span records, transcript rollup, lock-wait fail-open behavior, redaction and capping, rotation, and the kill switch. They keep stdin open after compact or multiline JSON, require prompt exit, reject buffered trailing data, verify owner-only primary and shadow logs, test runtime-specific variable precedence over generic fallbacks, and keep stale-backup pruning active when a zero-byte maximum disables rotation.
 
-Keep each test subprocess under its disposable `HOME`. In rotation fixtures unrelated to maintenance, create a fresh `.maintenance_last_run` sentinel before `SessionEnd` so detached maintenance does not race cleanup. Leave intentional maintenance tests without that sentinel.
+Keep each test subprocess under its disposable `HOME`. In installed fixtures unrelated to maintenance, create a fresh `.maintenance_last_run` sentinel before session startup or termination so detached maintenance does not race SQLite mutation or cleanup. Both provider suites centralize this in `install_observability_test_home` from `scripts/test-common.sh`; intentional maintenance launch coverage removes the sentinel explicitly. Operational shell suites use the common setup described in [observability rules](../../instructions/hooks-observability.md), and the two RTK suites assert that capture remains active in their disposable trace directories.
 
 Use installed-path benchmarks for Gemini Tool Guardian; direct repo invocation can miss the `<40ms` target even when installed behavior passes.
 

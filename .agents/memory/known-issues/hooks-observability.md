@@ -53,6 +53,10 @@ Ignore payloads with `type: progress` in `complete_hook_capture`. Finalize captu
 
 An empty file selected through `GEMINI_OBSERVABILITY_LOG_PATH` does not by itself prove that Gemini skipped a hook. If the CLI does not pass that variable to the hook process, the emitter falls back to `$HOME/.gemini/hooks/logs/observability.ndjson`. Check that default log, then invoke the installed emitter directly with the override before classifying the failure as event dispatch, environment propagation, or emitter failure.
 
-## Detached maintenance can race test cleanup
+## Detached maintenance can race fixture mutation and cleanup
 
-A `SessionEnd` hook can launch detached maintenance when a disposable home's maintenance sentinel is absent. A test that immediately removes that home can fail with `Directory not empty`. For tests unrelated to maintenance, create a fresh sentinel in that disposable home's hook log directory before invoking the event. Scope mocked locking subprocesses to the disposable `HOME`; otherwise they can write a trace database in the real user home.
+Both session startup and termination can launch detached maintenance when a disposable home's sentinel is absent. The child can contend with raw SQLite fixture writes, retention-prune historical test sessions, or recreate files during cleanup. Its sentinel means the child started, not that maintenance completed. Unrelated SQLite fixtures seed a fresh sentinel; intentional launch coverage removes it explicitly.
+
+## Audit overrides do not isolate trace storage
+
+`AUDIT_LOG` controls the audit destination but does not control observability SQLite, transcript, or registry paths. Operational hook subprocesses inherit the real home unless provider-specific `COPILOT_OBSERVABILITY_LOG_PATH` and `GEMINI_OBSERVABILITY_LOG_PATH` overrides reach them. A sandbox may report `attempt to write a readonly database` while a less restricted run writes real user state. The common shell test-state setup isolates both providers, including embedded Python subprocess fixtures.
