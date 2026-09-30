@@ -9,9 +9,10 @@ description: Repo structure, install flows, and how top-level areas relate
 
 | Path | Role | Main consumer |
 | --- | --- | --- |
-| `skills/` | Source of reusable task skills built around `SKILL.md` entry points. | Installed to `~/.agents/skills` by `scripts/install.sh` (PowerShell: `scripts/install.ps1`) |
-| `agents/` | Canonical Markdown source of custom agent definitions. | Copied to `~/.copilot/agents` and `~/.gemini/agents`; top-level files are converted to managed TOML in `~/.codex/agents` or `$CODEX_HOME/agents`. |
-| `references/` | Optional shared reference material shipped with this repo. | Installed to `~/.agents/references` when that target exists |
+| `skills/` | Source of reusable task skills built around `SKILL.md` entry points. | Selected native repo/personal paths through `scripts/agent-assets.py`, or legacy `~/.agents/skills` copying through Bash/PowerShell installers. |
+| `agents/` | Canonical Markdown source of custom agent definitions. | Selected native repo/personal adapters and legacy personal copies; Codex uses rendered TOML. |
+| `references/` | Optional shared reference material shipped with this repo. | Selected catalog support files, or legacy `~/.agents/references` copying when that target exists. |
+| `distribution/` | Explicit committed catalog of assets, dependencies, bundles and byte/checkout policies. | Selected-asset lifecycle engine; source availability differs from native client proof. |
 | `.github/` | Repository-level Copilot config, including repo-local hooks. | Loaded directly from the workspace by Copilot |
 | `.copilot/` | Copilot-specific instructions and hooks. | Installed to `~/.copilot/` |
 | `.gemini/` | Gemini-specific instructions and hooks. | Installed to `~/.gemini/` |
@@ -28,7 +29,13 @@ description: Repo structure, install flows, and how top-level areas relate
 
 1. Edit source under `skills/`, `agents/`, `.github/`, `.copilot/`, `.gemini/`, `.codex/`, `references/`, or `scripts/`.
 2. Run narrow validation for changed area from `.agents/memory/TESTING_STRATEGY.md` and any matching `testing/<area>.md` file.
-3. If installed behavior matters, run `./scripts/install.sh` (or `pwsh scripts/install.ps1`) before live checks because Codex, Copilot, and Gemini read installed copies from home-directory targets, not repository source files. Codex reads `.codex/AGENTS.md` from `$HOME/.codex/AGENTS.md` and uses generated TOML under `${CODEX_HOME:-$HOME/.codex}/agents`; Copilot and Gemini use Markdown copies.
+3. Validate the installed representation in a disposable target through the selected lifecycle command or the affected legacy fixture. Native checks additionally require normal client trust and isolated state. A source edit alone does not refresh an installed copy; do not run a real-home refresh as an automated test. Legacy personal Codex instructions come from `.codex/AGENTS.md`, agents use `${CODEX_HOME:-$HOME/.codex}/agents`, and Copilot/Gemini use personal Markdown copies.
+
+### Selected-asset distribution flow
+
+`scripts/agent-assets.py` resolves catalog selection and required dependencies at an immutable committed source revision. It reads acquired source as bytes and renders native files/configuration through trusted command-checkout code. Team mode materializes selected payloads and paired records for review and commit; a consuming clone receives those payloads without source acquisition. Private repository and personal modes use the same ownership/lifecycle engine with different layouts.
+
+Explicit update follows saved branch or pin policy, preserves unchanged-upstream local edits, and prunes only authenticated unchanged unused ownership. Current-record restore uses the recorded revision. Strict status audits installed bytes, effective checkout policy and record agreement offline before any repair; it does not authenticate an adversarial rewrite of the entire committed authority. Native settings retain unrelated entries. POSIX writers pin parent descriptors and retain an interrupted-operation journal; Windows mutation/recovery remains unsupported pending a safe native backend. File/protocol acceptance does not establish native trust, discovery or event delivery. See [public interfaces](API_MAP.md), [script rules](../instructions/scripts.md) and [usage](../../docs/agent-asset-installer/usage.md).
 
 ### Generated provider-hook flow
 

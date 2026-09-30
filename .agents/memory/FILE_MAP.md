@@ -53,8 +53,9 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `distribution/catalog.json` | Version 1 explicit maintained skill/agent/hook/reference/notice inventory, required dependencies, unavailable workflows, client/runtime constraints, and three curated bundles. |
 | `scripts/test-agent-assets.py` | Disposable Git subprocess acceptance for selected installations; registered in the aggregate runner. |
 | `.github/workflows/agent-assets.yml` | POSIX public suites, immutable cross-OS clone/audit jobs, and visibly unmet native Windows mutation acceptance. |
-| `docs/agent-asset-installer/client-validation.md` | Measured platform/protocol evidence, native client trust prerequisites, and unverified advertised surfaces; companion CI, Windows filesystem, and Codex isolation research remain beside it. |
-| `docs/agent-asset-installer/catalog-audit.md` | Verified dependency/source inventory and explicit required-versus-optional classification for the installer catalog; read before changing bundle membership or workflow dependencies. |
+| `docs/agent-asset-installer/client-validation.md` | Measured platform/protocol evidence, native trust prerequisites and unmet surfaces; companion CI, Windows filesystem and Codex isolation research remain beside it. |
+| `docs/agent-asset-installer/codex-native-probe.md` | Local macOS filesystem/network containment and normal trust UI evidence; managed-preference synchronization blocks trust persistence before discovery/events. Read before further native Codex acceptance. |
+| `docs/agent-asset-installer/catalog-audit.md` | Historical milestone-2 dependency/source inventory and required-versus-optional classification; read before changing dependencies, and use the current CLI for current installability. |
 | `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout, including `$CODEX_HOME/agents` when set (run with `pwsh scripts/install.ps1`). |
 | `scripts/canonical_agents.py` | Side-effect-free canonical agent parser and Codex TOML renderer shared by both installation paths. |
 | `scripts/install-codex-agents.py` | Strict, transactional converter from top-level `agents/*.md` sources to manifest-managed personal Codex TOML agents. |

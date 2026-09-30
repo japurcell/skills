@@ -6,6 +6,7 @@ description: Rules and conventions for repository helper scripts under `scripts/
 # Shell Scripts Conventions
 
 - New owned checkout blocks also require an effective LF policy for `.gitattributes` itself. Record the narrow self-rule when needed, borrow compatible preexisting policy, and refuse conflicting transforms without changing unrelated text. Record the metadata requirement separately from rule ownership so strict checks validate borrowed rules too. Authentic older records remain valid and acquire the requirement during explicit update/restore. Never normalize arbitrary bytes during strict verification. Platform CI lives in `.github/workflows/agent-assets.yml`; distinguish clone/refusal checks from its explicitly unmet Windows mutation job and from live client acceptance in `docs/agent-asset-installer/client-validation.md`.
+- Before native Codex acceptance, read [the isolated native probe](../../docs/agent-asset-installer/codex-native-probe.md). Establish actual filesystem/network confinement and normal trust persistence without personal-state access; a disposable profile alone is insufficient. Project trust and hook-definition review are separate gates. Do not fabricate either approval or substitute direct hook invocation for client delivery.
 
 - Follow existing shebang style for shell helper scripts: `#!/usr/bin/env bash` or `#!/usr/bin/env python3`.
 - Keep scripts directly executable and simple.
