@@ -13,6 +13,8 @@ Define pending-work ownership, duplicate trigger handling, partial-write recover
 
 Preserve [Context Retrieval Contract](context-retrieval-contract.md): attempt focused recovery automatically, expose incomplete delivery, and pause only work dependent on missing policy or a material unresolved fact while independent work continues. Choose retry, recovery, publication, and concurrency mechanisms within that boundary; do not reopen it as a blanket task-stop policy.
 
+Implement the verified-completion, visible-incomplete, pending-work, and next-eligible-event semantics in [Lifecycle Guarantees](lifecycle-guarantees.md). Respect explicit pauses/cancellation without restarting canceled user work, keep retries bounded, and do not equate provider termination with successful completion. Define how automatically invoked maintenance agents avoid recursively scheduling themselves. Choose ownership and records without weakening those agreed boundaries.
+
 ---
 
 <!-- Resolution will be appended here. -->

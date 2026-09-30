@@ -2,12 +2,12 @@
 
 ## Goal and status
 
-Context Retrieval Contract is closed after the user confirms its contract on 2026-09-29. The map contains ten tickets: five closed and five open, with no active claims. Lifecycle Guarantees is the only frontier ticket. Only Context Retrieval Contract is resolved in this decision session; prior closed decisions remain intact.
+Lifecycle Guarantees is closed after the user confirms its contract on 2026-09-29. The map contains ten tickets: six closed and four open, with no active claims. The frontier contains Context Organization and Skill Boundary and Maintenance Scheduling and Pruning. Only Lifecycle Guarantees is resolved in this decision session; other closed contracts remain authoritative.
 
 ## Agreed constraints
 
 - Reusable across the user's repositories, piloted here.
-- First version supports Codex, Copilot, and Gemini; exact surfaces and guarantees remain open.
+- First-version targets are Codex desktop, Codex CLI, Copilot CLI, and Gemini CLI; both VS Code harnesses are deferred. Entry paths include fresh interactive, resume, compaction, noninteractive CLI, and supported delegation. Exact deployed versions and paths require certification.
 - Additions, corrections, reorganization, and pruning run automatically with reversible, evidenced maintenance.
 - Explicit user instructions remain authoritative.
 - The user says domain-modeling is not needed. Do not block on that missing dependency.
@@ -16,7 +16,7 @@ Context Retrieval Contract is closed after the user confirms its contract on 202
 
 ## Next step
 
-Start a new Wayfinder decision session with tickets/lifecycle-guarantees.md. Verify its exact blockers, provider-lifecycle-capabilities.md and success-criteria.md, are closed. Claim it with a six-character assignee ID before work. Apply the closed Context Retrieval Contract while grilling supported surfaces, task/turn/session/work-session boundaries, automatic events, completion signals, enforcement, and provider fallbacks. Resolve only that human ticket and update this handoff before stopping.
+Start a new Wayfinder decision session with tickets/context-organization-and-skill-boundary.md. Verify its exact blockers, reference-evidence.md, context-retrieval-contract.md, and lifecycle-guarantees.md, are closed. Claim it with a six-character assignee ID before work. Use grilling to select knowledge representation, semantic-unit and evidence metadata, component ownership, skill packaging, and provider integration under the closed contracts. Compare indexed, nested, and hybrid approaches without assuming universal native discovery. Resolve only that human ticket and update this handoff before stopping. Maintenance Scheduling and Pruning is independently available for a separate session.
 
 ## Artifacts and verification
 
@@ -24,10 +24,11 @@ Start a new Wayfinder decision session with tickets/lifecycle-guarantees.md. Ver
 - tickets/ contains questions and their exact dependency filenames.
 - baseline.md records current source-inspected behavior. Research documents official contracts; installed-version behavior remains unverified.
 - brief.md retains the original idea, agreed scope, and source references.
-- This session starts at commit f2633bf with a clean worktree on codex/plan-just-in-time-context. Changes close Context Retrieval Contract, update the map's index and fog, refine three dependent questions, refresh this handoff, and refine the existing hook known issue. No product source, hook configuration, or installed behavior changes.
-- Both research investigations are complete. Validation confirms ten tickets, five closed and five open, no active claims, exact valid blockers, an acyclic dependency graph, a closed-only map index, and forty valid local Markdown links across the effort and touched canonical document. Only Context Retrieval Contract changes status; Lifecycle Guarantees is the only frontier ticket. No live provider probe, paper reproduction, or acceptance measurement is performed.
+- This session starts at commit 03b9e00 with a clean worktree on codex/plan-just-in-time-context. Changes close Lifecycle Guarantees, update the map's index/fog/scope, refine four dependent questions, and refresh this handoff. No product source, hook configuration, or installed behavior changes.
+- Both research investigations remain complete. A read-only briefing from the existing provider researcher reconciles documented lifecycle capabilities and unverified boundaries; the source of detail remains research/provider-lifecycle-capabilities/findings.md. No new research file, live provider probe, or acceptance measurement is produced.
+- Validation confirms ten tickets, six closed and four open, no active claims, exact valid blockers and research paths, an acyclic dependency graph, a closed-only map index, and fifty-five valid local Markdown links in the effort. Only Lifecycle Guarantees changes status. The frontier is named above.
 - `rtk proxy python3 scripts/lint-okf.py` exits 0 across both canonical bundles. `rtk git diff --check` passes. No product build or runtime test is needed for these documentation-only changes.
-- The formal update-agent-docs pass is complete. Existing routing in repo.md and FILE_MAP.md remains accurate. Only .agents/memory/known-issues/hooks.md changes, preserving its path, purpose, frontmatter, and nearby guidance. No index update is needed. OKF authoring loads the shared profile for the Known Issue type and passes lint; no source-summary branch applies. Feature decisions remain in their tickets.
+- The formal update-agent-docs pass is complete. Existing routing in repo.md and FILE_MAP.md remains accurate; no source behavior, canonical rule, file location, API, or index changes. No canonical edit is needed. Feature decisions remain in their tickets; the OKF representation pass is not applicable because no canonical document changes.
 - Planning artifacts and synchronized knowledge documentation belong in one commit under the repository's validation contract. No push is requested.
 
 ## Execution findings

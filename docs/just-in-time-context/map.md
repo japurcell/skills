@@ -8,7 +8,7 @@ An implementation-ready specification for a reusable, autonomous context managem
 
 - This effort plans the system. It does not implement or install it.
 - The user chooses a reusable system across their repositories, with this repository as the pilot.
-- The first version supports Codex, Copilot, and Gemini. Exact supported surfaces and guarantees require evidence.
+- The first-version scope and lifecycle guarantees are selected in [Lifecycle Guarantees](tickets/lifecycle-guarantees.md). Deployed versions and entry paths require certification before support is claimed.
 - The user authorizes automatic additions, corrections, reorganization, and pruning. Maintenance must be reversible and supported by evidence; explicit user instructions remain authoritative.
 - A unified skill with recall, learn, and dream entry points and nested AGENTS.md files are hypotheses, not selected architecture.
 - Use wayfinder and grilling for decision sessions. The user explicitly waives wayfinder's domain-modeling dependency for this effort.
@@ -27,19 +27,21 @@ An implementation-ready specification for a reusable, autonomous context managem
 - [Success Criteria](tickets/success-criteria.md): Quality and recovery gates accompany measurable context savings, bounded latency, and paired longitudinal evidence on every supported surface.
 - [Knowledge Evidence Policy](tickets/knowledge-evidence-policy.md): Compact, proportional evidence preserves explicit policy; uncertain claims remain candidates and pruning requires evidence beyond inactivity.
 - [Context Retrieval Contract](tickets/context-retrieval-contract.md): Scoped guidance arrives before dependent work, preserves meaning and uncertainty, and is checked and restored across context changes.
+- [Lifecycle Guarantees](tickets/lifecycle-guarantees.md): Codex desktop and three CLIs require automatic stages, verified completion, next-event recovery, and separately certified native or fallback paths.
 
 ## Not yet specified
 
 <!-- FOG START -->
 
-- Provider-specific exceptions may expose new decisions when documented capabilities and acceptance measurements are exercised on selected deployed versions and harnesses. Limits in native delivery or context visibility may reveal exceptions to the selected mechanisms.
-- A concrete walkthrough of the selected lifecycle may reveal exceptional combinations of scope growth, knowledge changes, compaction, delegation, and disputed-source investigation that cannot yet be specified. Revisit these combinations after lifecycle and representation choices.
-- Repository-specific migration exceptions and the shape of a minimal pilot remain unclear until the knowledge representation and lifecycle contracts are selected. The final scenario mix may expose further gaps in the accepted quality checks and repeated-cycle evidence.
+- Provider-specific exceptions may expose new decisions when capability certification exercises the selected deployed versions and entry paths. Limits in native delivery or context visibility may reveal gaps that require extending the selected automatic integration.
+- A concrete walkthrough of the selected representation and components may reveal exceptional combinations of scope growth, knowledge changes, compaction, delegation, and disputed-source investigation that cannot yet be specified. Revisit these combinations after the representation choices.
+- Repository-specific migration exceptions and the shape of a minimal pilot remain unclear until the knowledge representation is selected. The final scenario mix may expose further gaps in the accepted quality checks and repeated-cycle evidence.
 
 <!-- FOG END -->
 
 ## Out of scope
 
 - Product implementation, installation, rollout, and migration execution in this planning effort.
+- First-version VS Code Local and Copilot Agent Host support is deferred to a later version by [Lifecycle Guarantees](tickets/lifecycle-guarantees.md).
 - Changes to model weights or model training. Self-improving context means improving external knowledge and its management.
 - The other ideas in docs/ideas.md, except evidence relevant to this context management system.
