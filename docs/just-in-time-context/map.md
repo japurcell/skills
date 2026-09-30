@@ -26,13 +26,14 @@ An implementation-ready specification for a reusable, autonomous context managem
 - [Reference Evidence](tickets/reference-evidence.md): ACE directly evaluates incremental external-context adaptation; nested instruction discovery and autonomous publication require separate contracts.
 - [Success Criteria](tickets/success-criteria.md): Quality and recovery gates accompany measurable context savings, bounded latency, and paired longitudinal evidence on every supported surface.
 - [Knowledge Evidence Policy](tickets/knowledge-evidence-policy.md): Compact, proportional evidence preserves explicit policy; uncertain claims remain candidates and pruning requires evidence beyond inactivity.
+- [Context Retrieval Contract](tickets/context-retrieval-contract.md): Scoped guidance arrives before dependent work, preserves meaning and uncertainty, and is checked and restored across context changes.
 
 ## Not yet specified
 
 <!-- FOG START -->
 
-- Provider-specific exceptions may expose new decisions when documented capabilities and acceptance measurements are exercised on selected deployed versions and harnesses. Whether native context delivery and maintenance work are fully observable may depend on those selections.
-- A concrete walkthrough of the selected lifecycle may reveal missing knowledge states, recovery cases, or task boundaries that cannot yet be specified, including exceptional transitions involving candidates and disputed sources.
+- Provider-specific exceptions may expose new decisions when documented capabilities and acceptance measurements are exercised on selected deployed versions and harnesses. Limits in native delivery or context visibility may reveal exceptions to the selected mechanisms.
+- A concrete walkthrough of the selected lifecycle may reveal exceptional combinations of scope growth, knowledge changes, compaction, delegation, and disputed-source investigation that cannot yet be specified. Revisit these combinations after lifecycle and representation choices.
 - Repository-specific migration exceptions and the shape of a minimal pilot remain unclear until the knowledge representation and lifecycle contracts are selected. The final scenario mix may expose further gaps in the accepted quality checks and repeated-cycle evidence.
 
 <!-- FOG END -->
