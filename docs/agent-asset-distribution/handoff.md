@@ -10,7 +10,7 @@ Independent aggregate repairs are integrated: fixture portability/pipe cleanup a
 
 ## Next step
 
-Complete M6 platform safety, committed-clone verification, CI wiring and client validation in its isolated worktree. Retain fail-closed Windows operations wherever safe native primitives are unverified. Promote retained CI, Windows filesystem and Codex isolation notes; record exact native gates rather than treating missing environments as green. The post-M5 aggregate is pending; the post-M4 aggregate passes all 37 suites in 412.7 seconds. Follow [the ExecPlan](../agent-asset-installer/ExecPlan.md). Stable implemented interfaces can support independent M7 documentation, while final acceptance still requires the native OS/client gates.
+Complete M6 committed-clone/metadata-policy repair, CI wiring, concrete Windows experiments and client validation in its isolated worktree, followed by independent source review. Its public red reproduces untouched `.gitattributes` drift with `core.autocrlf=true`; preserve exact-byte strictness and old-record authentication. Windows implementation itself remains unfinished, with production mutation/recovery fail-closed. Promote retained research and record actual native gates. Post-M5 aggregate passes all 37 suites with zero failures in 548.7 seconds; all 94 cases separately pass on Python 3.12.14 in 129.547 seconds. Follow [the ExecPlan](../agent-asset-installer/ExecPlan.md). Stable implemented interfaces can support M7 documentation, while final acceptance still requires safe native Windows implementation and OS/client proof.
 
 ## Decisions and constraints
 
