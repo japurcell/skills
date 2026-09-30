@@ -92,6 +92,10 @@ The existing-repository review found that APM supports committing generated payl
 ## Decision Log
 
 
+Decision: Route focused Codex isolation/normal-trust feasibility research to Premium `gpt-6.1-sol`, effort `high`, while M5 review runs. Start with existing local prerequisite findings and installed-code evidence; use official OpenAI documentation only for missing facts. Save a new note in the probes worktree. Evaluate disposable client state and harmless native validation without credential copying or real-home changes; do not execute a client/model session or claim acceptance. Exact available model/effort are applied. Unsupported isolation facts remain M6 gates; same-tier unavailable fallback is `gpt-6-sol`, effort `high`. Billing and model task fit remain provisional.
+
+Rationale: Native proof needs a concrete isolated trust/state workflow before any client execution, with credential handling and personal configuration boundaries verified. Date/author: 2026-09-29, Codex orchestration.
+
 Decision: Route independent M5 review to Premium `gpt-6.1-sol`, effort `xhigh`, different from writer `gpt-6-astra`. Review cross-scope authority, shared files and Git excludes, immutable legacy adoption, external Codex destination authority, journal recovery, wrapper refresh, and selected runtime preflight. Exact exposed model/effort are applied. Require public reproductions for substantive findings and return repairs to the existing M5 implementer. Same-tier unavailable fallback is `gpt-6-sol`, effort `xhigh`; billing and model task fit remain provisional.
 
 Rationale: Scope sharing and verified adoption extend authority over existing files and operation metadata, requiring demanding independent integrity review before integration. Date/author: 2026-09-29, Codex orchestration.
