@@ -24,7 +24,7 @@ Success is observable from a disposable project: install a review workflow, see 
 - [x] (2026-09-29 23:47Z) [planning] Complete the six-repository comparison and record the evidence-backed recommendation without changing the approved design.
 - [x] (2026-09-30 00:01Z) [planning] User accepts retaining the architecture, strict verification, and declared checkout line-ending policy on 2026-09-29 local time. Incorporate the agreed refinements; implementation remains on hold.
 - [x] (2026-09-30 00:25Z) [orchestration] User explicitly requests full implementation. Lift the prior hold and start isolated milestone worktrees.
-- [ ] [milestone-1] Deliver one committed, pinned skill installation through the public CLI.
+- [x] (2026-09-30 00:51Z) [milestone-1] Deliver one committed, pinned skill installation through the public CLI. Public subprocess acceptance has 24 passing cases; aggregate-runner CLI acceptance has 14 passing cases.
 - [ ] [milestone-2] Deliver asset selection, required dependencies, and curated bundles.
 - [ ] [milestone-3] Deliver preview, update, recorded restoration, strict read-only verification, conflict protection, and safe pruning.
 - [ ] [milestone-4] Deliver native repository adapters for Codex, Copilot CLI/VS Code, and Gemini CLI.
@@ -34,6 +34,10 @@ Success is observable from a disposable project: install a review workflow, see 
 
 ## Surprises & Discoveries
 
+
+Milestone 1 found that a read-only-looking Git `status` refreshes the source index's stat cache. The public index test initially failed on source inode/mtime; `--no-optional-locks` and disabled fsmonitor now preserve both source and target index bytes, inode, and mtime. Dirty-source preflight covers every selected-root index path, not only catalog inputs: review reproduced an unlisted tracked file's clean filter executing for an equal-length `baseline` to `baseLINE` edit. The added CLI case failed because its marker existed, then passed after checking attributes for all selected-root tracked paths before `status`. Verification rejects clean filters and unsupported content encodings without executing them.
+
+Milestone 1 also reproduced a nested `!text !eol` rule cancelling a root policy. Proposed attributes are now evaluated in a disposable Git mirror that carries relevant nested, information-directory, and configured attribute policy before target writes. Compatible existing policy is borrowed without ownership. Catalog executable intent is part of the source digest, including catalog mode itself; a mode-only CLI case failed until that metadata was included.
 
 The Bash installer derives destinations from `HOME` at `scripts/install.sh:26`. PowerShell has an empty parameter declaration at `scripts/install.ps1:29`. Neither implements selection or repository scope. Preserve personal entry points while adding one lifecycle engine.
 
@@ -103,7 +107,9 @@ Rationale: Standard meets the task's connected-code requirements; Premium is not
 ## Outcomes & Retrospective
 
 
-Planning, test-seam approval, and the six-repository review are complete. The user accepted retaining the architecture, strict read-only verification, and declared checkout line-ending policy. No planning question remains. Implementation is now authorized by the user's explicit execution request. Milestone 1 is in progress; milestones 2 through 7 remain open. Seven verifiable milestones cover commands, catalog/dependencies, ownership, provider constraints, personal adoption, and OS/client acceptance. No installer, installed home, runtime, or workflow has changed. Planning does not establish live support.
+Planning, test-seam approval, and the six-repository review are complete. Implementation is authorized by the user's explicit execution request. Milestone 1 is complete: the isolated `codex/agent-assets-m1` worktree adds one selected committed skill installation for Codex with provenance, exact files, narrow checkout policy, whole-operation conflict preflight, unchanged indexes, and no-write repetition. Milestones 2 through 7 remain open. No real home, client, hook runtime, or legacy installer has changed. Native support and interruption recovery are later acceptance gates.
+
+Milestone 1 validation on 2026-09-30 UTC: `rtk proxy python3 scripts/test-agent-assets.py --group team-install` passes 24 public CLI/file-effects cases, including pinned revisions and disposable Git-URL acquisition. `rtk proxy python3 scripts/test_test_all.py` passes 14 cases after synchronizing both maintained-suite registries. `rtk proxy python3 -m compileall -q scripts/agent-assets.py scripts/agent_assets scripts/test-agent-assets.py scripts/test-all.py scripts/test_test_all.py`, `rtk proxy ./scripts/lint-okf.py`, and `rtk git diff --check` pass. The real `rtk proxy ./scripts/test-all.py` exits `2` before suites because `flock` is unavailable on this macOS host, matching the baseline; no prerequisite was weakened. Initial red proof was the missing public CLI; later red cases verified actual repetition writes, source-index churn, unsupported checkout rules, marker removal, credential URL validation, output reporting, source executable intent, and filter execution. The catalog currently contains only `skill:caveman` for Codex. Dependencies, bundles, lifecycle/status, other adapters/scopes, transactional recovery, native Windows/Linux, and live-client acceptance remain unimplemented.
 
 Planning validation on 2026-09-29: `rtk proxy ./scripts/lint-okf.py` exits `0`, `rtk git diff --check` passes, and a read-only validator checks 15 Markdown documents, 69 local links, all required plan sections, seven open milestones with matching unchecked progress, and four closed decision resolutions. Canonical edits are limited to the existing repository-instruction and file-map routing entries. No implementation test command has run.
 
@@ -157,15 +163,15 @@ Declare text/binary content and expected line endings for every delivered file i
 ### Milestone 1: Install one pinned skill into a team repository
 
 
-Status: in progress
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
 Add subprocess suite `scripts/test-agent-assets.py` using disposable source/target Git repositories. The test seams are already accepted. First invoke the new CLI for `skill:caveman` and Codex. Assert native content, requested selection, immutable commit, and SHA-256. Observe failure, then add only the CLI/catalog/acquisition/copying slice needed to pass. Add repetition behavior after the first case passes.
 
 Write `.agents/skills/caveman/`, both team records with matching selection identity, and narrowly owned LF attributes for delivered text. Preserve an existing attribute file and refuse incompatible rules before writes. Do not invoke hooks/clients, alter the target index, commit output, or configure personal RTK. Acquire committed content only. Dirty selected source paths fail before installation. Unrelated uncommitted docs need not prevent it. Register the suite in `scripts/test-all.py`.
 
-Run `rtk proxy python3 scripts/test-agent-assets.py --group team-install` and `rtk proxy python3 scripts/test_test_all.py`. Acceptance is one selected skill without other trees, provenance, unchanged index, and repetition reporting no changes. These commands/behaviors are future work, not planning verification.
+Run `rtk proxy python3 scripts/test-agent-assets.py --group team-install` and `rtk proxy python3 scripts/test_test_all.py`. These now pass 24 and 14 cases respectively. Acceptance is met for one selected skill without other provider trees, provenance, unchanged source/target indexes, and repetition reporting no writes. See Outcomes for red evidence and remaining later-milestone limitations.
 
 ### Milestone 2: Resolve bundles and required assets
 
@@ -359,3 +365,5 @@ Revision note, 2026-09-29 local date (2026-09-30 00:01Z): Recorded the user's ac
 
 
 Revision note, 2026-09-30 00:25Z: The user requests full implementation through `execplan-implement`. Lift the hold, record task dependencies and model routing, and begin milestone 1 in an isolated private worktree. Historical hold decisions remain as history.
+
+Revision note, 2026-09-30 00:51Z: Complete milestone 1 in its isolated worktree, atomically synchronize its status and checkbox, and record actual public acceptance, source-index/filter discoveries, canonical doc pass, and the missing aggregate prerequisite. Leave all later milestone behavior and native acceptance open.

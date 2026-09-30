@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "assets": {
+    "skill:caveman": {
+      "source_paths": [
+        {
+          "path": "skills/caveman/SKILL.md",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": "skills/caveman/README.md",
+          "content": "text",
+          "line_endings": "lf"
+        }
+      ],
+      "requires": [],
+      "clients": ["codex"],
+      "os": [],
+      "runtime": [],
+      "rendering": "skill"
+    }
+  },
+  "bundles": {}
+}

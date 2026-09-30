@@ -102,6 +102,7 @@ class TestTestAll(unittest.TestCase):
             if path.name not in ("test-common.sh", "test-rtk-stable-windows.ps1")
         }
         expected.add("scripts/test-codex-agents.py")
+        expected.add("scripts/test-agent-assets.py")
         expected.add("scripts/test-generate-hooks.py")
         expected.add("scripts/test-install-codex-hooks.py")
         expected.add("scripts/test-probe-provider-hook-delivery.py")

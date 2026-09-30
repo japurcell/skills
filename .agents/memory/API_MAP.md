@@ -5,6 +5,11 @@ description: Public validation entry points and provider adapter contracts for t
 
 # API Map
 
+## Selected team-skill installer
+
+- `scripts/agent-assets.py install [--repo PATH] --client codex --asset skill:caveman [--source PATH_OR_GIT_URL] [--branch NAME | --revision TAG_OR_COMMIT] [--format human|json]` installs declared committed regular files into a Git repository. Repository scope and team mode are the current defaults and only supported scopes. Default source is the command checkout; a local source follows its named current branch unless explicitly pinned, while a Git URL resolves its default branch. Detached local sources require an explicit reference. Selection and ownership records contain installation identity, source policy/full commit/SHA-256, normalized requested assets/clients, exact rendered baselines, and selection fingerprint.
+- JSON stdout uses one version 1 document with `command`, `source`, `selection`, `changes`, `conflicts`, and `warnings`; diagnostics use stderr. Exit `0` means install or no-write repetition, `1` means overlap/checkout-policy conflict or unavailable selected asset, and `2` means invalid input/catalog/records, dirty selected source, or acquisition failure. Stable diagnostics include `ASSET_CONFLICT`, `ASSET_DEPENDENCY_MISSING`, `ASSET_SOURCE_DIRTY`, `ASSET_SOURCE_INVALID`, `ASSET_SOURCE_ERROR`, `ASSET_CATALOG_INVALID`, `ASSET_RECORD_INVALID`, and `ASSET_INPUT_INVALID`. Dependency closure, bundles, lifecycle/status, provider adapters, and local/personal modes remain unimplemented.
+
 ## Codex custom-agent installer
 
 - `scripts/install-codex-agents.py --source-dir PATH --destination-dir PATH` converts valid top-level canonical agent Markdown into personal Codex TOML. It owns only TOML paths listed in `.skills-repo-agents.json`, removes stale manifest-owned output, and preserves unmanaged personal agents. It reports a concise install/update/unchanged/removal summary on stdout; status and failures use stderr. Exit `0` is success, `1` is a validation or installation failure, and argparse usage failures use `2`.

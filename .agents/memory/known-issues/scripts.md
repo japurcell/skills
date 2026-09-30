@@ -6,6 +6,7 @@ description: Real shell-specific runtime gotchas; PowerShell-specific issues liv
 # Shell Scripts - Known Issues
 
 - Keep shell and PowerShell guidance separate so agents load only the rules relevant to the current task.
+- Git `status` can rewrite the source index's stat cache even when reporting a clean checkout. Agent-asset Git reads use `--no-optional-locks` and disable fsmonitor. Dirty checks inspect entire selected skill roots, including tracked files absent from the catalog, so transform preflight must cover all their index paths before `status`. A same-length edit can invoke a clean filter where a different-length edit avoids it. `check-attr` does not invoke clean filters. A root attribute rule can be cancelled by a nested or `info/attributes` rule with `!text !eol`, so installer preflight evaluates proposed rules in a disposable Git mirror rather than assuming a root append wins.
 - `bash`-specific logic should not silently rely on POSIX shell behavior. `[[ ... ]]` is bash-only; use portable `[ ... ]` or explicit bash conditions when the script is intentionally bash-specific.
 - `grep -R` follows symlinks by default, so shell checks that search repo trees can produce false positives through preserved symlinks. Prefer `find <tree> -type f -exec grep -l <needle> {} +` when proving "no regular file under the tree contains X".
 - Temporary files must be created under a controlled path and cleaned up with `trap`/`rm -f` so failed shell scripts do not leave stale state behind; do not rely on ad hoc `mktemp` usage without cleanup logic.

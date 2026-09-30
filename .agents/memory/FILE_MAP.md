@@ -30,6 +30,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `docs/<effort>/` | repo docs | Active research and execution plans that need version history while work is in progress. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `scripts/` | scripts | Installers, importers, the aggregate test runner, validation helpers, and shared shell utilities. |
+| `distribution/` | scripts | Committed asset catalog with explicit source-file and checkout policy declarations. |
 | `references/` | references | Optional shared reference material shipped with installs. |
 
 ## Knowledge and top-level docs
@@ -47,6 +48,9 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | Path | Why it matters |
 | --- | --- |
 | `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, `~/.gemini`, and `~/.codex` targets, including generated Codex agents at `${CODEX_HOME:-$HOME/.codex}/agents`. |
+| `scripts/agent-assets.py`, `scripts/agent_assets/` | Selected team-skill CLI and internal committed-source, ownership, and Git-attribute preflight modules. |
+| `distribution/catalog.json` | Version 1 explicit source catalog; currently declares only `skill:caveman` for Codex. |
+| `scripts/test-agent-assets.py` | Disposable Git subprocess acceptance for selected installations; registered in the aggregate runner. |
 | `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout, including `$CODEX_HOME/agents` when set (run with `pwsh scripts/install.ps1`). |
 | `scripts/install-codex-agents.py` | Strict, transactional converter from top-level `agents/*.md` sources to manifest-managed personal Codex TOML agents. |
 | `scripts/install-codex-hooks.py` | Atomically and idempotently merges exact maintained Codex `SessionStart`, `PreToolUse`, and `Stop` handlers into user-global `hooks.json`. |
