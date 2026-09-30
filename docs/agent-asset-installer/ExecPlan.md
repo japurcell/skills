@@ -92,6 +92,10 @@ The existing-repository review found that APM supports committing generated payl
 ## Decision Log
 
 
+Decision: Route M5 local/personal scopes and legacy transition to a fresh Premium `gpt-6-astra` implementer, effort `high`, in an isolated private worktree. Cross-scope borrowing/pruning, exact Git excludes, authenticated adoption, semantic native configuration, and saved-selection wrapper refresh interact with ownership and recovery invariants. Exact exposed model/effort are applied at launch. Require public red/green behavior and a separate different-model review. Escalate demonstrated authority/conflict failures through public evidence; unavailable fallback is `gpt-6.1-sol`, effort `xhigh`. Billing and task fit remain provisional.
+
+Rationale: Verified adoption and shared team/local ownership can change authority over preexisting developer files, making this a connected integrity-sensitive node. Date/author: 2026-09-29, Codex orchestration.
+
 Decision: Route the M4 documentation-conflict rebase to a fresh exclusive merger using Standard `gpt-6.1-sol`, effort `high`, after the writer commits and its private worktree is clean. Preserve completed adapter evidence and all parent runtime/research/review routing checkpoints. Rebase only the private branch; never change base. Documentation-only conflicts require plan, local-link, OKF, and whitespace checks plus unchanged source/test patch proof; source conflicts require corresponding public checks. Exact available runtime ID/effort will be applied at launch. Escalate semantic ambiguity to the original M4 writer; same-tier unavailable fallback is `gpt-6-sol`, effort `high`. Billing and task fit remain provisional.
 
 Rationale: Parent checkpoints and M4 both edit the ExecPlan, requiring serialized conflict resolution without concurrent worktree writers. Date/author: 2026-09-29, Codex orchestration.
@@ -198,6 +202,8 @@ Rationale: Filesystem integrity needs connected reasoning and independent verifi
 
 ## Outcomes & Retrospective
 
+
+M4 integrates at `5f78d78a77ec147d7c85ddf6119312a4a81ce55a` after an exclusive rebase onto parent checkpoint `57dab80165623a85789726c32feb2bc0546cf115`. Only two ExecPlan hunks conflict; the merger preserves completed acceptance and parent evidence, proves all 33 non-plan patches unchanged byte for byte, and passes seven synchronized milestones, 34 Markdown documents/177 local links, full OKF, and commit-range whitespace checks. Base and private tips match after fast-forward. The clean M4 worktree/branch are removed. M1 through M4 are done; M5 starts in a fresh private worktree, with M6 and M7 still open. The post-M4 aggregate runs independently of the M5 private worktree.
 
 M4 private-branch rebase checkpoint: Milestones 1 through 4 are done with acceptance met after final independent M4 approval. The exclusive merger rebases the approved M4 change onto parent checkpoint `57dab80165623a85789726c32feb2bc0546cf115`, resolving only two ExecPlan conflict hunks. All source, tests, generated outputs, the provider audit, and canonical documentation patches remain byte-for-byte identical to the reviewed change. Seven milestone statuses and progress entries, 34 Markdown documents with 177 local links, full-corpus OKF lint, and whitespace checks pass. The formal documentation pass finds no additional durable knowledge change. Serialized parent integration remains pending; the parent feature handoff retains its already-reviewed checkpoint until orchestration advances it. Milestone 5 is the next ready implementation node after integration; milestones 5 through 7 remain open, and all native operating-system/client delivery gates remain unmet.
 
@@ -353,7 +359,7 @@ M4 implementation evidence: `scripts/canonical_agents.py` now supplies strict si
 ### Milestone 5: Add private repository and personal lifecycle support
 
 
-Status: open
+Status: in progress
 
 Acceptance: not met
 
