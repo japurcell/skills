@@ -1,57 +1,75 @@
 # Routing Patterns
 
-Use when examples help.
+These examples illustrate the authoritative rules in:
 
-Use named defaults from [the catalog](model-catalog.md#task-defaults).
+- [`../SKILL.md`](../SKILL.md)
+- [`review-routing.md`](review-routing.md)
+- [`escalation-policy.md`](escalation-policy.md)
+- [`model-catalog.md`](model-catalog.md)
 
-## Reuse vs fresh routing
+If an example conflicts with an authoritative rule, follow the authoritative rule.
 
-Reuse a route only when work class, stakes, ambiguity, touched areas, review history, and model constraints are unchanged.
+## Reuse versus fresh routing
 
-| Situation | Decision |
+| Situation | Illustrative decision |
 | --- | --- |
-| Same deterministic fixture checks across workers | Route once as Fast; reuse. |
-| Similar reviews with same risk/model constraints | Route once; reuse while constraints match. |
-| Tests change to architecture analysis | Fresh route. |
-| Prior same-class review missed a bug | Fresh route; escalate one tier. |
+| Multiple workers perform the same deterministic fixture checks under the same constraints | Route once as Fast and reuse the route. |
+| Multiple reviews have materially identical scope, risk, affected behavior, history, and runtime constraints | Reuse the route while those conditions remain unchanged. |
+| A task changes from test execution to architecture analysis | Route again because the work class and reasoning requirement changed. |
+| A non-review task previously missed an important constraint | Route again and apply the non-review prior-miss rule in `escalation-policy.md`. |
+| A prior materially similar review missed an important issue | Route again with the Premium floor required by `review-routing.md`. |
+| Runtime availability or supported effort changes | Route again because the model constraints changed. |
 
-## Examples
+## Execution and analysis examples
 
-| Request | Route |
+| Request | Illustrative route | Why |
+| --- | --- | --- |
+| Run tests and summarize explicit failures | Fast | Mechanical execution with bounded summarization. |
+| Search a repository for token-lifecycle code | Fast | Bounded exploration without a judgment-heavy conclusion. |
+| Format files or apply a specified mechanical edit | Fast | Deterministic transformation with straightforward verification. |
+| Rename a symbol mechanically across many files | Fast | File count alone does not raise the tier when verification is straightforward. |
+| Change behavior shared across connected files | Standard | Requires cross-file behavioral reasoning. |
+| Debug an interaction among several components | Standard | Requires substantive diagnosis and reasoning. |
+| Debug an authentication, cache, or concurrency interaction with subtle correctness or security impact | Premium | Security sensitivity or high-stakes subtle correctness establishes a Premium floor. |
+| Produce a long-horizon autonomous implementation plan and execute it across a large codebase | Premium | Requires sustained planning, reasoning, and verification. |
+
+## Review examples
+
+Review tiers are governed by [`review-routing.md`](review-routing.md).
+
+| Request | Illustrative route | Why |
+| --- | --- | --- |
+| Review whitespace-only or comment-only changes | Fast | Non-semantic changes with straightforward verification. |
+| Review a generated-file refresh whose generator output can be reproduced | Fast | Mechanical change with direct verification. |
+| Review a substantive one-file feature change | Standard | Substantive review is at least Standard regardless of file count. |
+| Review an ordinary bounded feature PR | Standard with the budget-review default | Clear scope but meaningful behavioral judgment is required. |
+| Review a backend and frontend behavior change | Standard with the general-work default | Broader cross-component reasoning is required. |
+| Review test assertions or guard logic | Standard | Substantive review is required even if only tests changed. |
+| Review subtle false-pass behavior in security-sensitive tests | Premium | Security and subtle correctness establish a Premium floor. |
+| Review authentication callbacks or redirect validation | Premium | Security-sensitive review. |
+| Conduct a security audit | Premium | Security review always has a Premium floor. |
+| Repeat a materially similar review after an important issue was missed | Premium | Prior important review miss establishes a Premium floor. |
+
+## Failure examples
+
+| Situation | Illustrative response |
 | --- | --- |
-| Run tests and summarize failures | Fast |
-| Search repo for token lifecycle code | Fast |
-| Format files or apply mechanical edits | Fast |
-| Edit connected files | Standard |
-| Debug multi-file behavior | Standard |
-| Debug auth/cache/concurrency interaction | Premium when security or subtle correctness is involved |
-| Review whitespace/comment-only single-file diff | Fast |
-| Review bounded ordinary feature PR | Standard + budget-review default |
-| Review backend + frontend PR | Standard + general-work default |
-| Review tests/guard logic | Standard; Premium if false-pass risk is subtle |
-| Review auth callback or redirect validation | Premium |
-| Run security audit | Premium |
-
-## Availability fallback
-
-When a model is unavailable:
-
-1. Keep the same tier if possible.
-2. Pick the next cheapest suitable model in that tier.
-3. Change tier only if no same-tier model fits or task requirements changed.
-4. Mention the availability-driven fallback.
-
-For review:
-
-- Preserve the review floor.
-- Do not fall back to the bounded-work default unless the review is single-file or style-only.
-- If the demanding-review default is unavailable, choose another Premium code/security reasoning model.
+| Tests fail because the implementation is incorrect | Keep the current tier while diagnosing; the failure alone does not justify escalation. |
+| Tests cannot run because a dependency is missing | Fix or report the environment problem before considering escalation. |
+| The selected model is unavailable | Choose a capable same-tier fallback and report the availability-driven change. |
+| Verification repeatedly exposes missed constraints after the environment and instructions are checked | Escalate according to `escalation-policy.md`. |
+| A Fast task turns out to require cross-file behavioral reasoning | Reclassify the floor as Standard and route again. |
+| A Standard task becomes security-sensitive | Reclassify the floor as Premium rather than treating this as an optional escalation. |
+| A Premium worker still fails | Try a better-fitting Premium configuration, split the task, strengthen verification, or request human review. |
 
 ## Token-shape examples
 
-| Request | Optimize for |
+Use [`pricing.md`](pricing.md) for the authoritative cost rules.
+
+| Request shape | Primary cost consideration |
 | --- | --- |
-| Huge logs, short diagnosis | input cost |
-| Long proposal from short prompt | output cost |
-| Same repo context across subagents | actual cache reuse; budget uncached input if unconfirmed |
-| Reusable context on models charging cache writes | cache write + cached input |
+| Very large logs with a short diagnosis | Input cost, context thresholds, and the likelihood of needing retries |
+| Short prompt requiring a long proposal | Output cost |
+| Repeated use of the same repository context | Confirmed cache reuse; assume uncached input if reuse is not verified |
+| Reusable context on a model with cache-write charges | Initial cache-write cost plus subsequent cached-input cost |
+| Cheap model likely to require multiple retries | Expected total retry and verification cost rather than the first-request rate |
