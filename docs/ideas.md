@@ -6,25 +6,6 @@ research, planning, or implementation artifact.
 
 ## Inbox
 
-- [ ] An agent was failing to apply the subagent model from the subagent-router-skill. When asked why it recommended these skill changes:
-  1. delegate-to-subagents/SKILL.md
-
-     Replace pre-launch check with:
-
-     Verify that final spawn arguments contain the routed model and specified effort. If explicit user approval is needed, request approval for those exact values before launching. If the route cannot be applied, stop and obtain approval before using defaults or a fallback. Never describe an omitted override as an applied route.
-
-     Reason: Exact named-model request worked here. Approval gate prevents silently inheriting Sol.
-
-  2. subagent-model-router/SKILL.md
-
-     Add reporting rule:
-
-     Distinguish recommended settings, configured launch settings, and runtime-confirmed settings. A recommendation does not establish configuration; accepted configuration does not independently verify execution. Record unknown values explicitly.
-
-     Reason: Earlier records showed Luna recommendations while actual launches used defaults.
-
-     These changes prevent silent defaulting. They cannot override model availability or permission limits.
-
 - [ ] **Tool guardian tuning**: Tool guardian hook is excessively blocking file write operations because of input size. Check you own session logs to see this happening.
 
 - [ ] **Just-in-time context**: The agents kb/memory management system is currently spread across AGENTS.md, .agents/skills/clean-agent-docs, .agents/skills/update-agent-docs. It tries to guide agents through a workflow:

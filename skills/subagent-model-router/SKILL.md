@@ -45,6 +45,8 @@ Return:
 - escalation_trigger, if any:
 - fallback, if any:
 
+Report recommended, configured, and runtime-confirmed model/effort separately; mark unknowns explicitly. Accepted configuration does not prove execution.
+
 ## Red Flags
 
 - Defaulting to Standard or Premium without justifying escalation.

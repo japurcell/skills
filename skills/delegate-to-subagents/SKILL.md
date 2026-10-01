@@ -11,10 +11,7 @@ For each task:
 
 1. Define the tasks's **objective** including: context, constraints, deliverable, verification, and allowed files.
 2. Activate the `subagent-model-router` skill and record its full result.
-
-   Before launch, confirm the runtime will apply the chosen model. If runtime rules prevent a model override, report that routing cannot be enforced; do not treat an omitted model as the selected Fast model.
-
-3. Apply `model` through the runtime's spawn configuration. Apply the effort/reasoning level if provided.
+3. Launch with the routed model and any specified effort using native tool arguments or agent configuration. If either cannot be applied, ask the user before substituting.
 4. Subagent prompt:
    - Provide the subagent with the task's **objective**.
    - Keep the router result out of the subagent prompt.

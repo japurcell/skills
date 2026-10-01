@@ -90,5 +90,6 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `docs/adr/0004-generated-provider-hooks.md` | Records why shared hook behavior will use canonical build-time sources while runtime scripts remain provider-local. |
 | `.nvmrc` | Node version hint for local tooling. |
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
+| [docs/subagent-launching/research.md](../../docs/subagent-launching/research.md) | Cited provider controls, community portability patterns, and concise model/effort launch recommendations. |
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |
 | `.agents/skills/ingest-source/SKILL.md` | The canonical repo-local `/ingest-source` recovery skill used by the pending-ingest gate. |

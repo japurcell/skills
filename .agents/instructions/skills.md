@@ -48,3 +48,4 @@ python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspa
 ## Subagent router maintenance
 
 - `skills/subagent-model-router/reference/model-catalog.md` owns tier membership and the task-default model table. Other routing references use named defaults instead of copying preferred model IDs.
+- For provider-specific launch controls, consult [subagent research](../../docs/subagent-launching/research.md); recheck cited versions before changing delegation guidance.
