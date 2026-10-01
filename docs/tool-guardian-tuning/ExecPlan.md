@@ -20,7 +20,7 @@ The hook runs frequently. New functionality must not add measurable latency to e
 - [ ] [milestone-3 repair] Remove repeatable startup and writer regressions from all frozen candidates, including the final B/C/C/B comparison; preserve failed reports and all security protections before retiming.
 - [ ] [optimization proof] Independently validate optional helper and suffix optimizations through public decisions and repeated complete-hook ablations; revert optional complexity without measured benefit.
 - [ ] [milestone-4] Set measured resource bounds, validate security and latency, and regenerate all three providers.
-- [ ] [milestone-4] Update the old Gemini 33,000-byte native-write banner assertion to verify truthful overflow beyond the new 65,536-byte native bound, while retaining unsupported-input 32,768-byte strict-limit coverage.
+- [x] (2026-10-01 23:45Z) [milestone-4] Update the old Gemini 33,000-byte native-write banner assertion to verify truthful overflow beyond the new 65,536-byte native bound, while retaining unsupported-input 32,768-byte strict-limit coverage.
 - [ ] [milestone-5] Synchronize documentation and deliver repository changes with user-run installation instructions.
 
 ## Surprises & Discoveries
@@ -145,7 +145,7 @@ This milestone is complete when the observed shell writers, safe searches, and h
 
 ### Milestone 4: Validate resource limits, security, and runtime across providers
 
-Status: correctness and matched raw reports complete in private f47d51d; resource collection and latency repair remain open
+Status: source, correctness and finite resource evidence integrated at 84eae394; overall latency repair remains open
 Acceptance: not met
 
 Separate bounds on accepted native data from bounds on executable inspection work. Keep finite limits for aggregate bytes, structure, normalized text, commands, tokens, and language-parser work. Native body line count must not consume an executable-command budget. Choose the smallest validated limits that admit every preserved incident fixture with documented headroom. Record actual selected constants, worst-case memory and runtime evidence, and the reason for each change in this plan. Do not globally multiply every bound or add an environment setting that disables inspection. Partial-input acceptance, skipped overflow, and timeout-based allow responses are unacceptable.
@@ -271,3 +271,5 @@ Revision note, 2026-10-01: Completed milestone 1 with sanitized provider-native 
 Revision note, 2026-10-01 22:43Z: Began independent static security review and milestone 4 boundary-test preparation while milestone 3 measures a frozen candidate snapshot. The initial native review reached its deadline without a verified artifact; it supplies no approval evidence. Candidate reports produced with different sample settings or source edits during measurement are exploratory only. No candidate latency gate has passed.
 
 Revision note, 2026-10-01 23:02Z: Integrated the shell/Python implementation at 0003737c after a conflict-free rebase, with 144 corpus checks, 11 focused shell test methods, 13 native test methods, and 25 generator tests passing. The original worker reproduced and repaired three independent-review bypass classes before integration. Both retained frozen candidates fail latency acceptance; the second predates the final narrow launcher and interpreter-option hardening. Removed the clean integrated worker checkout and branch. Rebased milestone 4 preparation without conflicts and granted that worker exclusive ownership of resource-bound repairs. No final security or performance approval is implied by integration.
+
+Revision note, 2026-10-01 23:45Z: Integrated milestone 4 at 84eae394 after conflict-free rebases and verified matching branch tips. Retained all four failed no-regression reports plus per-case comparison and the successful 90-case finite resource report. Source fingerprints and decisions match. Maximum measured/first runtime was 60.986583 ms and peak RSS 28229632 bytes under the documented 500 ms ceiling; raw-envelope universal memory remains outside this claim. Correctness and truthful native overflow coverage pass. Removed the clean integrated worker checkout and branch. Startup repair and independent optional optimizer proof remain open.
