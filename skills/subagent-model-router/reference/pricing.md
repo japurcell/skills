@@ -1,58 +1,36 @@
 # Pricing Reference
 
-Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing).
+Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Source snapshot: **2026-09-29**.
 
-Verified **2026-09-29**.
+Prices are USD per 1 million tokens for GitHub Copilot. They are not direct-provider API prices. Where GitHub AI Credits are used, 1 credit = $0.01 USD.
 
-All prices are USD per 1 million tokens for GitHub Copilot. These are not direct-provider API prices and do not apply automatically to other platforms.
+Pricing does not establish capability or availability. Compare only configurations that satisfy the capability floor and are accepted by the target runtime.
 
-If prices are shown in GitHub AI Credits:
+## Cost rule
 
-> 1 credit = $0.01 USD
-
-Pricing does not establish model availability or capability. Determine the task floor using `SKILL.md` and, for review, [`review-routing.md`](review-routing.md). Then compare only configurations that satisfy that floor and are available in the target runtime.
-
-## Expected-cost calculation
-
-Minimize expected total cost of successful completion, including:
-
-- uncached input
-- cached input
-- cache writes
-- output
-- retries
-- tool use
-- verification
-- additional workers or reviewers
-
-A simplified estimate is:
+Estimate:
 
 ```text
 expected_cost =
-    uncached_input_cost
-  + cached_input_cost
-  + cache_write_cost
-  + output_cost
-  + expected_retry_cost
-  + expected_verification_cost
+    uncached_input
+  + cached_input
+  + cache_write
+  + output
+  + retries
+  + verification
 ```
 
-Use the dominant token cost as a shortcut only when the other factors are materially comparable.
+Also consider tool use and additional workers. Use a dominant token rate as a shortcut only when other factors are comparable.
 
-Shared repository context across workers does not guarantee cache hits. Verify cache behavior for the platform, model, and request shape. If cache reuse is uncertain, budget uncached input.
+Assume uncached input unless cache reuse is confirmed for the platform, model, and request shape. A higher token rate may cost less overall when it reduces retries, token volume, or verification.
 
-A configuration with a somewhat higher token rate can be cheaper overall if it reduces retries, tool calls, output volume, or verification effort.
-
-## Token-shape guidance
-
-| Token shape | Primary comparison |
+| Token shape | Compare primarily |
 | --- | --- |
-| Reads much more than it writes | Input and cached-input cost |
-| Writes a large response | Output cost |
-| Reuses a large context | Confirmed cached-input savings plus cache-write cost |
-| Uses a model with cache-write charges | Cache-write cost and expected number of later cache hits |
-| Has uncertain task fit | Retry and verification cost as well as token rates |
-| Crosses a long-context threshold | The matching long-context pricing row |
+| Large input, short output | Input and cached-input rates |
+| Large output | Output rate |
+| Reused context | Cache write plus confirmed cached-input savings |
+| Uncertain task fit | Retries and verification |
+| Input crossing a threshold | The matching long-context row |
 
 ## Prices
 
@@ -110,30 +88,17 @@ A configuration with a somewhat higher token rate can be cheaper overall if it r
 
 ## Notes
 
-- Conditions represent input-token thresholds. Select the matching row before comparing costs.
-- Pricing thresholds are not necessarily context-window limits. Confirm the actual context limit in the target runtime.
-- This table preserves published rates for some retired or restricted models. Check [`model-catalog.md`](model-catalog.md) and the supported-models source before routing.
-- Claude Sonnet 4 is retired.
-- Claude Sonnet 4.6 has restricted legacy availability.
+- Conditions are input-token thresholds, not necessarily context-window limits.
+- Check [`model-catalog.md`](model-catalog.md) and the supported-models source before routing; this table may retain retired or restricted entries.
+- Claude Sonnet 4 is retired; Claude Sonnet 4.6 has restricted legacy availability.
 - GPT-5.4 Nano is limited to the Codex VS Code extension on Copilot Pro+.
-- GPT-6.1 Sol matches GPT-6 Sol's input, output, and cache-write rates, with half the cached-input rate.
-- Anthropic models, GPT-5.6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-6 Astra, GPT-6 Luna, GPT-6 Sol, and GPT-6.1 Sol have published cache-write charges.
-- Earlier OpenAI models in this table do not have listed cache-write charges.
-- Gemini 3.6, 3.7, and 3.8 Flash promotional rates apply through **2026-12-31**; recheck afterward.
-- Existing annual Copilot Pro or Pro+ subscriptions still using request-based billing have [legacy model multipliers](https://docs.github.com/en/copilot/reference/copilot-billing/request-based-billing-legacy/model-multipliers-for-annual-plans).
-- The cheapest configuration within a tier varies by input/output mix, cache behavior, context threshold, retries, and verification.
-- If the platform automatically selects models, do not claim precise per-model cost control.
-- Copilot rates do not apply to other platforms. Use the target platform's pricing.
+- GPT-6.1 Sol matches GPT-6 Sol's input, output, and cache-write rates and has half its cached-input rate.
+- Anthropic models and the listed GPT-5.6/GPT-6 families have published cache-write charges; earlier OpenAI models shown do not.
+- Gemini 3.6, 3.7, and 3.8 Flash promotional rates apply through **2026-12-31**.
+- Legacy annual Copilot Pro or Pro+ plans may use [request multipliers](https://docs.github.com/en/copilot/reference/copilot-billing/request-based-billing-legacy/model-multipliers-for-annual-plans).
+- If the platform selects models automatically, do not claim precise per-model cost control.
+- Use the target platform's prices outside GitHub Copilot.
 
-## Refresh procedure
+## Refresh
 
-When refreshing prices:
-
-1. fetch the live pricing source directly
-2. reconcile every published row
-3. preserve context thresholds and cache charges
-4. record promotional expiration dates
-5. distinguish retired pricing entries from selectable routing candidates
-6. verify the target billing model, including legacy request multipliers
-7. bypass stale caches before claiming that a price is absent
-8. update the verification date
+Fetch the live pricing source, reconcile all rows and thresholds, preserve cache charges and promotion dates, distinguish selectable from retired entries, verify the applicable billing model, bypass stale caches before claiming a price is absent, and update the snapshot date.

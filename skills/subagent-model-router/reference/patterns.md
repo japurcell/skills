@@ -1,75 +1,61 @@
 # Routing Patterns
 
-These examples illustrate the authoritative rules in:
+These examples are non-authoritative. If they conflict with `SKILL.md`, [`review-routing.md`](review-routing.md), or [`escalation-policy.md`](escalation-policy.md), follow the authoritative rule.
 
-- [`../SKILL.md`](../SKILL.md)
-- [`review-routing.md`](review-routing.md)
-- [`escalation-policy.md`](escalation-policy.md)
-- [`model-catalog.md`](model-catalog.md)
+## Reuse
 
-If an example conflicts with an authoritative rule, follow the authoritative rule.
-
-## Reuse versus fresh routing
-
-| Situation | Illustrative decision |
+| Situation | Route |
 | --- | --- |
-| Multiple workers perform the same deterministic fixture checks under the same constraints | Route once as Fast and reuse the route. |
-| Multiple reviews have materially identical scope, risk, affected behavior, history, and runtime constraints | Reuse the route while those conditions remain unchanged. |
-| A task changes from test execution to architecture analysis | Route again because the work class and reasoning requirement changed. |
-| A non-review task previously missed an important constraint | Route again and apply the non-review prior-miss rule in `escalation-policy.md`. |
-| A prior materially similar review missed an important issue | Route again with the Premium floor required by `review-routing.md`. |
-| Runtime availability or supported effort changes | Route again because the model constraints changed. |
+| Identical deterministic checks under unchanged constraints | Reuse a Fast route |
+| Reviews with unchanged scope, risk, behavior, history, and runtime constraints | Reuse the route |
+| Execution changes to architecture analysis | Route again |
+| A non-review task previously missed an important constraint | Route again and apply general escalation |
+| A similar review previously missed an important issue | Route again with a Premium floor |
+| Runtime model or effort availability changes | Route again |
 
-## Execution and analysis examples
+## Task examples
 
-| Request | Illustrative route | Why |
-| --- | --- | --- |
-| Run tests and summarize explicit failures | Fast | Mechanical execution with bounded summarization. |
-| Search a repository for token-lifecycle code | Fast | Bounded exploration without a judgment-heavy conclusion. |
-| Format files or apply a specified mechanical edit | Fast | Deterministic transformation with straightforward verification. |
-| Rename a symbol mechanically across many files | Fast | File count alone does not raise the tier when verification is straightforward. |
-| Change behavior shared across connected files | Standard | Requires cross-file behavioral reasoning. |
-| Debug an interaction among several components | Standard | Requires substantive diagnosis and reasoning. |
-| Debug an authentication, cache, or concurrency interaction with subtle correctness or security impact | Premium | Security sensitivity or high-stakes subtle correctness establishes a Premium floor. |
-| Produce a long-horizon autonomous implementation plan and execute it across a large codebase | Premium | Requires sustained planning, reasoning, and verification. |
+| Request | Tier |
+| --- | --- |
+| Run tests and summarize explicit failures | Fast |
+| Search a repository for relevant code | Fast |
+| Apply formatting or a specified mechanical edit | Fast |
+| Rename a symbol mechanically across many files | Fast |
+| Change behavior across connected files | Standard |
+| Debug a multi-component interaction | Standard |
+| Analyze subtle authentication, cache, or concurrency risk | Premium |
+| Perform long-horizon autonomous work over a large codebase | Premium |
 
 ## Review examples
 
-Review tiers are governed by [`review-routing.md`](review-routing.md).
-
-| Request | Illustrative route | Why |
-| --- | --- | --- |
-| Review whitespace-only or comment-only changes | Fast | Non-semantic changes with straightforward verification. |
-| Review a generated-file refresh whose generator output can be reproduced | Fast | Mechanical change with direct verification. |
-| Review a substantive one-file feature change | Standard | Substantive review is at least Standard regardless of file count. |
-| Review an ordinary bounded feature PR | Standard with the budget-review default | Clear scope but meaningful behavioral judgment is required. |
-| Review a backend and frontend behavior change | Standard with the general-work default | Broader cross-component reasoning is required. |
-| Review test assertions or guard logic | Standard | Substantive review is required even if only tests changed. |
-| Review subtle false-pass behavior in security-sensitive tests | Premium | Security and subtle correctness establish a Premium floor. |
-| Review authentication callbacks or redirect validation | Premium | Security-sensitive review. |
-| Conduct a security audit | Premium | Security review always has a Premium floor. |
-| Repeat a materially similar review after an important issue was missed | Premium | Prior important review miss establishes a Premium floor. |
+| Request | Tier or default |
+| --- | --- |
+| Review whitespace, comments, or reproducible generated output | Fast |
+| Review a substantive one-file change | Standard |
+| Review an ordinary bounded feature change | Standard; budget-review default |
+| Review cross-component behavior | Standard; general-work default |
+| Review tests or guard logic | Standard |
+| Review security-sensitive false-pass behavior | Premium |
+| Review authentication, authorization, redirects, or trust boundaries | Premium |
+| Conduct a security audit | Premium |
+| Repeat a similar review after an important miss | Premium |
 
 ## Failure examples
 
-| Situation | Illustrative response |
+| Situation | Response |
 | --- | --- |
-| Tests fail because the implementation is incorrect | Keep the current tier while diagnosing; the failure alone does not justify escalation. |
-| Tests cannot run because a dependency is missing | Fix or report the environment problem before considering escalation. |
-| The selected model is unavailable | Choose a capable same-tier fallback and report the availability-driven change. |
-| Verification repeatedly exposes missed constraints after the environment and instructions are checked | Escalate according to `escalation-policy.md`. |
-| A Fast task turns out to require cross-file behavioral reasoning | Reclassify the floor as Standard and route again. |
-| A Standard task becomes security-sensitive | Reclassify the floor as Premium rather than treating this as an optional escalation. |
-| A Premium worker still fails | Try a better-fitting Premium configuration, split the task, strengthen verification, or request human review. |
+| Tests fail | Diagnose before escalating |
+| A dependency is missing | Fix or report the environment problem |
+| The selected configuration is unavailable | Reroute within the same tier; move higher only if no same-tier configuration qualifies |
+| Verification repeatedly exposes reasoning gaps | Apply the escalation policy |
+| A task becomes security-sensitive | Reclassify the floor as Premium |
+| Premium work still fails | Change Premium configuration, split the task, strengthen verification, or seek human review |
 
-## Token-shape examples
+## Cost examples
 
-Use [`pricing.md`](pricing.md) for the authoritative cost rules.
-
-| Request shape | Primary cost consideration |
+| Request shape | Primary consideration |
 | --- | --- |
-| Very large logs with a short diagnosis | Input cost, context thresholds, and the likelihood of needing retries |
-| Short prompt requiring a long proposal | Output cost |
-| Repeated use of the same repository context | Confirmed cache reuse; assume uncached input if reuse is not verified |
-| Reusable context on a model with cache-write charges | Initial cache-write cost plus subsequent cached-input cost |
-| Cheap model likely to require multiple retries | Expected total retry and verification cost rather than the first-request rate |
+| Large input, short answer | Input and context-threshold cost |
+| Short input, long answer | Output cost |
+| Reused context | Confirmed cache behavior and cache-write cost |
+| Likely retries | Expected retry and verification cost |

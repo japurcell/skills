@@ -1,87 +1,74 @@
 # Escalation Policy
 
-This file owns general escalation policy. For code review, PR review, auditing, or security review, first establish the review floor using [`review-routing.md`](review-routing.md).
+This file owns escalation policy. For review work, first establish the floor using [`review-routing.md`](review-routing.md).
 
-Use the named defaults in [`model-catalog.md#task-defaults`](model-catalog.md#task-defaults) after determining the required tier.
+## Escalation triggers
 
-## Escalate when
+Escalate when:
 
-Escalate when a concrete capability or risk trigger applies, including:
-
-- verification exposes a reasoning or correctness gap after instructions, inputs, dependencies, and environment have been checked
-- the worker repeatedly misses material constraints
-- the reasoning is too shallow for the demonstrated task complexity
-- the required context cannot fit in any suitable same-tier configuration
-- no available same-tier configuration can satisfy the task floor
-- the user explicitly requests a stronger tier or best-quality routing
+- verification reveals a reasoning or correctness gap after instructions, inputs, and environment are checked
+- material constraints are repeatedly missed
+- reasoning is inadequate for the demonstrated complexity
+- required context cannot fit in a suitable same-tier configuration
+- new task evidence raises the capability floor
+- the user requests a stronger tier or best quality
 - stakes, ambiguity, or security sensitivity materially increase
-- repeated failures show that the current configuration is not capable of completing the task reliably
+- repeated failures demonstrate inadequate capability
 
-For non-review work, a prior important miss on materially similar work normally justifies escalation by one tier. Escalate directly to Premium when the miss also establishes high stakes, security sensitivity, or unusually difficult reasoning.
+For non-review work, a prior important miss on materially similar work normally raises the route one tier. Move directly to Premium when the miss establishes high stakes, security sensitivity, or unusually difficult reasoning.
 
-For review work, prior-miss rules are owned by [`review-routing.md`](review-routing.md).
+For review work, follow the prior-miss rule in [`review-routing.md`](review-routing.md).
 
-## Diagnose before escalating
+## Diagnose first
 
-Do not treat every failure as evidence that a stronger model is needed.
+Before escalating, check:
 
-Before escalating, check whether the problem is caused by:
+- instructions and inputs
+- files and context
+- dependencies and permissions
+- tools and environment
+- model and effort availability
+- whether the task should be split
+- whether verification is adequate
 
-- unclear or conflicting instructions
-- missing files or context
-- unavailable dependencies
-- insufficient permissions
-- an unsupported or unavailable model
-- environment or tool failures
-- an ordinary test failure caused by the code under test
-- a task that should be split into smaller units
-- missing or inadequate verification
+A failing test ordinarily indicates a code or environment issue, not a model-capability issue.
 
-An unsupported or unavailable model normally calls for an available same-tier fallback.
+Do not escalate merely because:
 
-A failing test is evidence about the code or environment, not automatically evidence that the worker needs more reasoning capability. Escalate only when diagnosis reveals a reasoning gap, an unmet capability requirement, or greater task risk.
+- tests, lint, builds, formatting, scripts, search, or file enumeration are being executed mechanically
+- the work is deterministic and directly verifiable
+- several files or languages are involved
+- a newer or more expensive model exists
+- an ordinary correction is required
+- the preferred model is unavailable but a capable same-tier alternative exists
 
-## Do not escalate merely because
-
-- the work mechanically executes tests, lint, builds, scripts, formatting, search, or file enumeration
-- the work is a deterministic transformation with clear verification
-- multiple files or languages are involved
-- a more expensive or newer model exists
-- the preferred model is unavailable but a capable same-tier fallback exists
-- the initial output requires an ordinary correction that does not reveal a capability gap
-
-Authoring, reviewing, or diagnosing tests, scripts, or build logic may still require Standard or Premium when substantial judgment, subtle correctness, or security risk is involved.
+Authoring, reviewing, or diagnosing tests, scripts, or build logic may still require a higher tier when substantial judgment or risk is involved.
 
 ## Escalation path
 
-| Current tier | Normal next step |
+| Current tier | Next action |
 | --- | --- |
 | Fast | Standard |
 | Standard | Premium |
-| Premium | Better-fitting Premium configuration, more context, task decomposition, independent verification, or human review |
+| Premium | Better-fitting Premium configuration, more context, task decomposition, stronger verification, or human review |
 
-A task may move directly to Premium when its capability floor becomes Premium. Do not force stepwise escalation when security sensitivity, high stakes, or another Premium requirement is already established.
+Move directly to the tier required by a changed capability floor; stepwise escalation is not mandatory.
 
-## Before escalating
+Before escalating the capability floor, confirm that the change addresses a specific capability, context, or risk gap.
 
-Confirm that:
+## Availability
 
-- instructions are clear and internally consistent
-- required files and context are available
-- dependencies, permissions, tools, and environment have been checked
-- task decomposition has been considered
-- appropriate verification exists
-- the current model-and-effort configuration satisfies the current floor
-- the proposed higher tier addresses a specific observed gap
+When a configuration is unavailable:
 
-## Availability fallback
+1. preserve the capability floor
+2. choose the lowest-cost capable same-tier configuration
+3. resolve it to an exact model and effort
+4. report the availability-driven fallback
 
-When a model or effort setting is unavailable:
+If no same-tier configuration is available, choose the lowest-cost available higher-tier configuration that satisfies the floor and current-request constraints. Report the availability-driven tier increase.
 
-1. Preserve the task's capability floor.
-2. Choose another available configuration in the same tier when possible.
-3. Prefer the lowest expected-cost configuration with adequate task fit.
-4. Change the route only if no available same-tier configuration can satisfy the floor.
-5. Report that the fallback was caused by availability.
+If no qualifying configuration is available, return `dispatchable: false`.
 
-Availability never justifies routing below the established floor.
+Never select a configuration below the capability floor.
+
+Selecting a higher-tier configuration solely because no same-tier configuration is available is an availability-driven promotion, not evidence that the task's capability floor increased.
