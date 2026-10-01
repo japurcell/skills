@@ -17,6 +17,52 @@ copilot_helpers_path = repo_root / ".copilot" / "hooks" / "scripts"
 
 
 class TestHookHelpers(unittest.TestCase):
+    def test_run_command_preserves_arguments_environment_and_process_results(self):
+        import json
+        import subprocess
+        import tempfile
+
+        helper_paths = (github_helpers_path, gemini_helpers_path, copilot_helpers_path,
+                        repo_root / ".codex" / "hooks")
+        with tempfile.TemporaryDirectory(prefix="common-command-") as directory:
+            for path in helper_paths:
+                with self.subTest(provider=path.parts[-3]):
+                    common = self._get_common_module(path)
+                    args = [sys.executable, "-c",
+                            "import json,os,sys; print(json.dumps([os.getcwd(),os.environ['COMMON_TEST'],sys.argv[1:]])); print('stderr value',file=sys.stderr)",
+                            "literal ; $(ignored)", "snowman \u2603"]
+                    result = common.run_command(args, cwd=directory,
+                                                env={**os.environ, "COMMON_TEST": "provided"},
+                                                check=True, capture_output=True)
+                    self.assertIsInstance(result, subprocess.CompletedProcess)
+                    self.assertEqual(result.args, args)
+                    self.assertEqual(result.returncode, 0)
+                    self.assertEqual(json.loads(result.stdout),
+                                     [str(Path(directory).resolve()), "provided", args[3:]])
+                    self.assertEqual(result.stderr, "stderr value\n")
+
+    def test_run_command_preserves_failures_timeout_and_bytes_output(self):
+        import subprocess
+
+        helper_paths = (github_helpers_path, gemini_helpers_path, copilot_helpers_path,
+                        repo_root / ".codex" / "hooks")
+        for path in helper_paths:
+            with self.subTest(provider=path.parts[-3]):
+                common = self._get_common_module(path)
+                args = [sys.executable, "-c", "import sys; sys.stdout.buffer.write(b'output'); sys.exit(7)"]
+                result = common.run_command(args, capture_output=True, text=False)
+                self.assertEqual((result.returncode, result.stdout, result.stderr), (7, b"output", b""))
+                with self.assertRaises(subprocess.CalledProcessError) as failure:
+                    common.run_command(args, check=True, capture_output=True)
+                self.assertEqual((failure.exception.returncode, failure.exception.stdout), (7, "output"))
+                with self.assertRaises(subprocess.TimeoutExpired):
+                    common.run_command([sys.executable, "-c", "import time; time.sleep(5)"], timeout=0.05)
+                with self.assertRaises(FileNotFoundError):
+                    common.run_command(["guardian-nonexistent-executable-" + uuid4().hex])
+                for invalid in ("echo safe", b"echo safe"):
+                    with self.assertRaises(TypeError):
+                        common.run_command(invalid)
+
     def _get_common_module(self, path: Path):
         """
         Helper method to cleanly load/reload the helpers.common module

@@ -314,7 +314,7 @@ class GenerateHooksTests(unittest.TestCase):
             rendered = next(output.content.decode("utf-8") for output in outputs if output.target.output_path.as_posix() == target)
             self.assertEqual(rendered, expected)
 
-    def test_common_and_audit_renderings_preserve_pre_generation_runtime_bodies(self) -> None:
+    def test_common_and_audit_preserve_runtime_bodies_except_lazy_process_import(self) -> None:
         generator = load_generator()
         rendered = {
             output.target.output_path.as_posix(): output.content
@@ -333,7 +333,21 @@ class GenerateHooksTests(unittest.TestCase):
                     lines[1],
                     f"# Generated from hooks/families/{'common' if target.endswith('common.py') else 'audit'}.py by scripts/generate-hooks.py. Do not edit.\n",
                 )
-                self.assertEqual(sha256("".join(lines[2:]).encode("utf-8")).hexdigest(), expected_digest)
+                body = "".join(lines[2:])
+                if target.endswith("common.py"):
+                    # Keep the historical fingerprint for every byte outside the
+                    # three intentional subprocess import placement changes.
+                    import_changes = (
+                        ("import sys\n", "import subprocess\nimport sys\n"),
+                        ("from typing import TYPE_CHECKING, Any, Sequence\n\nif TYPE_CHECKING:\n    import subprocess\n",
+                         "from typing import Any, Sequence\n"),
+                        ("\n    import subprocess\n\n    return subprocess.run(",
+                         "\n    return subprocess.run("),
+                    )
+                    for current, historical in import_changes:
+                        self.assertEqual(body.count(current), 1)
+                        body = body.replace(current, historical)
+                self.assertEqual(sha256(body.encode("utf-8")).hexdigest(), expected_digest)
 
     def test_observability_renderings_have_only_named_provider_differences(self) -> None:
         generator = load_generator()
