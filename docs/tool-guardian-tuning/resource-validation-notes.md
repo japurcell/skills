@@ -127,6 +127,30 @@ entrypoints, local Python helpers, and canonical source before/after and rejects
 source mutation during the run. Results preserve every raw elapsed sample and
 peak RSS in macOS bytes. No resource run has yet been retained.
 
+The final combined source also passes focused correctness on native macOS Python
+3.13.14: 144 corpus checks, 11 shell tests, 13 native tests, and 16 resource tests.
+Final generation freshness confirms 26 outputs. This cross-version check does
+not establish native Windows acceptance.
+
+The retained final measurement sequence is `final-baseline-1.json`,
+`final-candidate-1.json`, `final-candidate-2.json`, `final-baseline-2.json`, all under
+`docs/tool-guardian-tuning/evidence/`. Each report completed with 147 scenarios,
+25 measured samples, three discarded warmups, and four-worker clean concurrency.
+Both baseline runs use the immutable snapshot; both candidate runs use the final
+combined classifier and startup helper. Performance interpreter is Python 3.14.6
+at `/Users/adam/.pyenv/versions/3.14.6/bin/python3`. No hook probes overlapped these
+measurements. `final-candidate-scripts.sha256.json` fingerprints final scripts,
+helpers, and canonical classifier source. Final timing finished at 23:27 UTC.
+
+The performance gate remains open pending per-provider/per-scenario median,
+p95, first-run, concurrency, and MAD comparison. No retained resource measurement
+has run. Root continuation should execute the unchanged resource CLI with 25
+samples and three warmups against the final combined source. A proposed 500 ms
+ceiling is 3.72 times the maximum observed existing retained workload sample,
+134.263375 ms (`codex.guard.large` in `baseline-1.json`), and below both configured
+10-second deadlines. Validate that ceiling and peak RSS empirically, then record
+the actual outcome. Do not treat this proposed ceiling as passing evidence.
+
 Codex's registered guardian deadline is 10 seconds; Copilot's is 10 seconds.
 Gemini's guardian registration has no explicit timeout, so this document does not
 invent one. Complete hook subprocess timing excludes provider launch and delivery.
