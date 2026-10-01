@@ -27,6 +27,6 @@ The user selected static review plus targeted safe OpenAI baselines, followed by
 
 Planned authoring improvements preserve intended behavior and approval rules; behavior redesigns are presented separately. The source idea above remains historical context; use the map and resolved tickets for current scope.
 
-The requested model set is 5.6, 6, and 6.1 Sol; 5.6 and 6 Luna; Astra; and Terra. The evidence ticket verifies exact IDs, effort values, and availability. The unavailable `domain-modeling` dependency is explicitly waived.
+The [evidence decision](tickets/set-audit-evidence-and-model-coverage.md#resolution) defines the exact native Codex CLI matrix: GPT-5.6, GPT-6, and GPT-6.1 Sol; GPT-5.6 and GPT-6 Luna; GPT-6 Astra; and GPT-5.6 Terra, all at explicit `medium` effort. The CLI catalog advertises these configurations; account execution remains untested. The unavailable `domain-modeling` dependency is explicitly waived.
 
 Policy detail and its evidence live in the tickets until incorporated into the final audit and ExecPlan. Implementation, installation, and publication of improvements follow this planning effort.

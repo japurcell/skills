@@ -12,7 +12,7 @@ Complete an evidence-backed audit of non-imported maintained skills in `skills/`
 - Consider the complete Claude authoring guidance, including recommendations beyond the original examples. Apply it unless incompatible with Codex, Copilot, or Gemini; document adaptations and exclusions with evidence.
 - The completed audit includes static review of every in-scope skill plus targeted OpenAI behavioral baselines where safe fixtures and existing evals support them. The ExecPlan defines broader validation.
 - Planned authoring improvements preserve intended behavior and approval rules. Present behavior redesigns separately for human decision.
-- The requested OpenAI model set is 5.6, 6, and 6.1 Sol; 5.6 and 6 Luna; Astra; and Terra. Verify exact model IDs, supported effort values, and availability per client surface in the evidence ticket. Do not silently substitute an unavailable model.
+- The human-confirmed native Codex CLI matrix uses GPT-5.6, GPT-6, and GPT-6.1 Sol; GPT-5.6 and GPT-6 Luna; GPT-6 Astra; and GPT-5.6 Terra, all at explicit `medium` effort. Exact IDs and runtime evidence obligations live in the evidence ticket. The CLI catalog advertises the matrix; successful execution and account access remain untested. Do not silently substitute an unavailable model.
 - The initial inventory contains 55 maintained entry points under `skills/` and five under `.agents/skills/`. Exclude benchmark snapshots, generated outputs, and fixture skills. [Inventory evidence](local-inventory.md) records the baseline and exceptions.
 - On 2026-10-01 the user excluded imported skills from this effort. Current importer mappings identify 23 excluded entry points, leaving 32 published and five repository-local audit candidates. Remove any additional imports established by clear evidence. Check shared resources only as dependencies of included skills. Do not carry imported-derivative maintenance, historical provenance recovery, or a lasting provenance ledger into this effort.
 - Research tickets use Research and Official Sources. For Codex-specific facts, use OpenAI Docs and current official OpenAI documentation. Grilling tickets require live human decisions; do not answer the human's side.
@@ -28,11 +28,12 @@ Complete an evidence-backed audit of non-imported maintained skills in `skills/`
 - [Establish Provider Compatibility Constraints](tickets/establish-provider-compatibility-constraints.md): Shared metadata does not imply shared invocation, permission, or loading behavior; model and client verification gaps are recorded.
 - [Set Adoption Rules and Protected Behavior](tickets/set-adoption-rules-and-protected-behavior.md): Apply contextual dispositions, preserve intended contracts, document exceptions, and rank findings by consequence with explicit evidence.
 - [Decide Skill Ownership and Import Handling](tickets/decide-skill-ownership-and-import-handling.md): Exclude 23 configured imports; review 37 remaining candidates across both roots with scoped dependency checks and no provenance-ledger work.
+- [Set Audit Evidence and Model Coverage](tickets/set-audit-evidence-and-model-coverage.md): Use native Codex CLI, seven models at medium effort, three fresh runs per case, a small safe sample, and explicit trace-backed evidence gaps.
 
 ## Not yet specified
 
 <!-- FOG START -->
-The audit batches for the reduced candidate pool will emerge after the evidence contract and report format are settled. Their size and review depth depend on actual skill content and risk; additional clear import evidence may reduce the pool further.
+Specific review and baseline investigations will become tickets after the batch/report decision and content review identify their exact targets. Actual skill risk, fixture readiness, and additional clear import evidence may change those targets. Native discovery isolation, complete run setup, and existing grader suitability remain unverified; later bounded baseline work must resolve the selected prerequisites or surface them as required evidence gaps.
 
 The findings may expose interactions between skills, shared reference changes, missing safe evaluation fixtures, or improvements to authoring and validation tools. Expand the map only when an investigation can be bounded around an actual finding.
 
