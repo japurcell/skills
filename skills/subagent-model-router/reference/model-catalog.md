@@ -55,6 +55,7 @@ Fast review is limited to mechanical or non-semantic changes with straightforwar
 | OpenAI | `gpt-5.6-terra` | `medium` | GA | Connected coding and broader analysis |
 | OpenAI | `gpt-5.3-codex` | `high` | GA | Agentic coding and review |
 | Anthropic | `claude-sonnet-5.5` | `high` | GA | General coding and agent tasks; fallback to `claude-sonnet-5` |
+| Anthropic | `claude-sonnet-5` | `high` | GA | General coding and agent tasks; fallback for `claude-sonnet-5.5` |
 | Moonshot AI | `kimi-k2.7-code` | `high` | GA; retires 2026-10-02 | Versatile code work |
 | Google | `gemini-3.6-flash` | `high` | GA; retires 2026-10-02 | Versatile work; promotional pricing |
 | Google | `gemini-3.7-flash` | `high` | GA | Versatile work; promotional pricing |

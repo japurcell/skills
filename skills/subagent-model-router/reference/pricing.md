@@ -34,6 +34,8 @@ Assume uncached input unless cache reuse is confirmed for the platform, model, a
 
 ## Prices
 
+`default` in the `Condition` column identifies the ordinary pricing row. It is not a model or reasoning-effort dispatch value and does not authorize default-based routing.
+
 `N/A` means not listed or not applicable.
 
 | Provider | Model | Condition | Input | Cached input | Cache write | Output |

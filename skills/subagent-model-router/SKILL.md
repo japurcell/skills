@@ -15,9 +15,7 @@ A dispatchable route contains:
 - one exact model ID accepted by the dispatch interface
 - one exact reasoning-effort value accepted by the dispatch interface
 
-Do not return an implicit, inherited, conditional, ranged, or unresolved value as dispatchable.
-
-The following are not dispatchable routing values:
+Implicit, inherited, conditional, ranged, or unresolved values are not dispatchable. This includes:
 
 - `default`
 - `auto`
@@ -29,21 +27,25 @@ The following are not dispatchable routing values:
 - “if applicable”
 - an unexpanded placeholder
 
-If configured defaults are explicitly requested, resolve them to their concrete model and effort values. If exact accepted values cannot be confirmed, return `dispatchable: false`.
+If exact accepted values cannot be confirmed, return `dispatchable: false`.
 
-## Selection precedence
+## Selection precedence and independence
 
 Apply selection rules in this order:
 
-1. Explicit constraints in the current user request, including an explicit request to use configured defaults.
+1. Explicit model or effort constraints already stated by the user before the current routing attempt.
 2. The capability and cost rules in this skill.
 3. No implicit, inherited, configured, or runtime default.
 
-Persistent configuration is a fallback default, not a current-request constraint. It does not override this router.
+Absent model or effort instructions mean `none`; they are not ambiguity. Independently select the route without asking the user to choose, approve, confirm, or restate a model, effort, or configured default.
 
-When used for delegation, the selected model and effort must be explicitly applied to the dispatch. No separate permission to override configured defaults is required.
+Persistent configuration does not override the router. If the user explicitly requested configured defaults before the attempt, resolve them to exact values and verify that they satisfy the capability floor.
 
-If a current-request constraint prevents the capability floor from being met, return `dispatchable: false` and explain the conflict.
+A routing attempt uses the task facts, runtime capabilities, and user constraints already in scope when it begins. A solicited model preference cannot retroactively justify that attempt. If constraints change, begin a fresh attempt.
+
+If essential task facts are missing, request only those facts. If exact runtime values cannot be determined or an explicit constraint prevents the floor from being met, return `dispatchable: false`.
+
+For delegation, the returned model and effort must be explicitly applied. No separate model-selection permission or confirmation is required.
 
 ## Capability tiers
 
@@ -55,7 +57,7 @@ Tiers classify task requirements and model-and-effort configurations—not price
 
 File count, language mix, platform scope, and test count do not determine a tier by themselves.
 
-The capability floor is the lowest permitted tier. If availability requires a higher-tier configuration, report the tier of the selected configuration and explain the availability-driven increase.
+The capability floor is the lowest permitted tier. If availability requires a higher-tier configuration, report the selected configuration's tier and explain the availability-driven increase.
 
 ## Routing procedure
 
@@ -66,14 +68,14 @@ The capability floor is the lowest permitted tier. If availability requires a hi
    - expected context size
    - review history
    - verification approach
-   - current-request constraints
+   - model or effort constraints already in scope, or `none`
    - exact models and effort values accepted by the dispatch interface
 2. For code review, PR review, auditing, or security review, determine the floor using [`reference/review-routing.md`](reference/review-routing.md).
 3. Otherwise, determine the floor from risk, ambiguity, reasoning, context, and verification needs.
 4. Apply [`reference/escalation-policy.md`](reference/escalation-policy.md).
 5. Identify eligible configurations using [`reference/model-catalog.md`](reference/model-catalog.md).
-6. Restrict candidates to exact model and effort values accepted by the dispatch interface.
-7. Among capable candidates, use [`reference/pricing.md`](reference/pricing.md) to minimize expected total cost of successful completion.
+6. Restrict candidates to exact configurations accepted by the dispatch interface.
+7. Among capable candidates, use [`reference/pricing.md`](reference/pricing.md) to minimize expected completion cost.
 8. Select one exact configuration and, when available, one exact same-tier fallback.
 9. Return `dispatchable: false` if the selected model or effort cannot be resolved exactly.
 
@@ -81,7 +83,8 @@ Capability floors override price, convenience, and defaults. Availability never 
 
 ## Selection rules
 
-- Reuse a route only when work class, stakes, security sensitivity, ambiguity, affected behavior, review history, context, verification, current-request constraints, and runtime capabilities are materially unchanged.
+- Return the route as a decision, not an approval request.
+- Reuse a route only when work class, stakes, security sensitivity, ambiguity, affected behavior, review history, context, verification, constraints, and runtime capabilities are materially unchanged.
 - Use the catalog's task defaults as provisional starting points.
 - Resolve every catalog entry to one exact model and effort accepted by the dispatch interface.
 - Prefer Fast for bounded, low-risk work unless a concrete requirement establishes a higher floor.
@@ -89,7 +92,7 @@ Capability floors override price, convenience, and defaults. Availability never 
 - Cross-file behavioral reasoning is normally at least Standard.
 - For large context, first seek a same-tier configuration confirmed to support it.
 - Prefer a same-tier fallback when the first configuration is unavailable.
-- If no same-tier configuration is available, use the lowest-cost capable higher-tier configuration unless a current-request constraint prohibits it.
+- If none is available, use the lowest-cost capable higher-tier configuration unless a user constraint prohibits it.
 - Prefer the latest model version unless an older version has lower expected cost or demonstrated better task fit.
 - Do not infer capability from price, recency, provider, or model name.
 - Optimize expected completion cost, including tokens, cache behavior, retries, tool use, and verification.
@@ -122,7 +125,9 @@ fallback:
 
 Use `fallback: none` when no exact same-tier fallback exists.
 
-For an availability-driven higher-tier selection, `tier` is the selected configuration's tier. Explain the lower capability floor and the availability-driven increase in `reason`.
+For an availability-driven higher-tier selection, report the selected tier and explain the lower capability floor and availability-driven increase in `reason`.
+
+A dispatchable result is a routing decision, not an approval request. Do not mark it tentative or pending confirmation.
 
 Example:
 
@@ -132,7 +137,7 @@ tier: Standard
 model: gpt-6-luna
 reasoning_effort: max
 reason: A bounded substantive review requires Standard capability. This provisional budget-review configuration is accepted by the current dispatch interface.
-escalation_trigger: Escalate if verification exposes an unresolved reasoning gap or the task becomes security-sensitive.
+escalation_trigger: Escalate if verification exposes a reasoning gap or the task becomes security-sensitive.
 fallback:
   model: gpt-5.6-luna
   reasoning_effort: max
