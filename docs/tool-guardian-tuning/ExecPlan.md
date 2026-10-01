@@ -17,12 +17,15 @@ The hook runs frequently. New functionality must not add measurable latency to e
 - [x] (2026-10-01 22:18Z) [milestone-1] Preserve 47 sanitized fixtures, reproduce baseline failures through 144 public provider checks, and retain two sequential complete-hook timing runs with 147 scenarios each.
 - [x] (2026-10-01 22:16Z) [milestone-2] Separate recognized native tool content and search data from executable instructions; reviewed native change integrated at e373690d.
 - [ ] [milestone-3] Support the observed shell and Python forms without broad interpreter exemptions, and remove repeated or quadratic scanning work.
+- [ ] [milestone-3 repair] Remove the measured small-input and Python-writer startup regressions from the first frozen candidate; preserve the failed timing report and verify wrapped pipeline protections before retiming.
 - [ ] [milestone-4] Set measured resource bounds, validate security and latency, and regenerate all three providers.
 - [ ] [milestone-4] Update the old Gemini 33,000-byte native-write banner assertion to verify truthful overflow beyond the new 65,536-byte native bound, while retaining unsupported-input 32,768-byte strict-limit coverage.
 - [ ] [milestone-5] Synchronize documentation and deliver repository changes with user-run installation instructions.
 
 ## Surprises & Discoveries
 
+
+The first valid frozen candidate passed all 147 benchmark decisions but failed latency acceptance. Clean-input medians were 30.815, 31.159, and 28.420 milliseconds for Copilot, Gemini, and Codex. Python-writer medians were about 32-33 milliseconds, above the corresponding baseline observations. Large-input scanning improved substantially, but that improvement cannot offset slower frequent paths. The original shell implementer owns the repair and subsequent frozen retiming. Independent review also reproduced missing download-execution findings for execution-preserving pipeline wrappers; those protections must be restored before the candidate is accepted.
 
 Milestone 1 public-entrypoint controls exposed existing execution-sink gaps: protected-branch force push inside shell substitution and a Python execution sink was allowed by all three baseline hooks. Baseline expectations preserve those observations; candidate expectations still require denial. Native provider equivalents also have different pre-fix decisions for some literal examples, so the shared corpus records provider-specific baseline expectations.
 
