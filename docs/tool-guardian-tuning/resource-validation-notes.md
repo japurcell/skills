@@ -57,6 +57,10 @@ items before structure validation and structure traversal pushing every child
 before enforcing its node bound. Source repairs await exclusive canonical-source
 ownership after milestone 3 integration. The public response may already deny a
 large list; that alone does not prove bounded auxiliary inspection work.
+Static Python preflight review found the quoted-literal branch increments its
+token counter and then continues without checking the threshold. Adjacent string
+literals ending at EOF can exceed 1024 syntax tokens while parsing to a single
+constant. The public suite includes 1024 and 1025 adjacent literal tokens.
 
 ## Comparison method and acceptance
 
@@ -89,6 +93,16 @@ elapsed runtime and complete-process peak resident memory with the operating
 system resource collector. Select and enforce a ceiling based on the measured
 existing workload plus documented margin, then compare it with configured
 deadlines. Parser-only timings cannot establish this ceiling.
+
+`scripts/benchmark-tool-guard-resources.py` implements this separate resource pass.
+It uses the same direct `sys.executable` script launch as the fixed corpus runner
+for elapsed samples, then starts a separate `/usr/bin/time -l` process for peak
+resident memory. The time wrapper is excluded from elapsed samples. Default
+sampling is 25 measured launches and three discarded warmups. Its required
+`--ceiling-ms` argument must have a documented measured basis. It fingerprints
+entrypoints, local Python helpers, and canonical source before/after and rejects
+source mutation during the run. Results preserve every raw elapsed sample and
+peak RSS in macOS bytes. No resource run has yet been retained.
 
 Codex's registered guardian deadline is 10 seconds; Copilot's is 10 seconds.
 Gemini's guardian registration has no explicit timeout, so this document does not

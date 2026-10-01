@@ -147,6 +147,7 @@ class ResourceLimitTests(unittest.TestCase):
             return {'command': 'python3 -c ' + shlex.quote(source)}
         cases = (('(' * 32 + '0' + ')' * 32, '(' * 33 + '0' + ')' * 33, 'python_syntax_depth', '33 levels'),
                  ('f(' + ','.join(['0'] * 511) + ')', 'f(' + ','.join(['0'] * 511) + ')+', 'python_syntax_tokens', '1025 tokens'),
+                 ('"x"' * 1024, '"x"' * 1025, 'python_syntax_tokens', '1025 tokens'),
                  ('x+' * 29 + 'x', 'x+' * 30 + 'x', 'python_ast_depth', '33 levels'))
         for provider in PROVIDERS:
             for maximum, overflow, rule, count in cases:
@@ -159,6 +160,15 @@ class ResourceLimitTests(unittest.TestCase):
             value = {'command': operation}
             self.assert_decision(self.invoke(provider, tool, value), 'deny')
             self.assert_decision(self.invoke(provider, tool, value, allowlist=True), 'allow')
+
+    def test_python_resolved_string_maximum_and_first_rejected_byte(self) -> None:
+        maximum = "a='" + 'x' * 1024 + "';b=a+a;c=b+b;d=c+c;e=d+d;f=e+e"
+        overflow = maximum + ';g=f+"x"'
+        for provider in PROVIDERS:
+            self.assert_boundary(provider, SHELL_TOOLS[provider],
+                                 {'command': 'python3 -c ' + shlex.quote(maximum)},
+                                 {'command': 'python3 -c ' + shlex.quote(overflow)},
+                                 'python_resolved_bytes', '32769 bytes', valid_allowlist=True)
 
     def test_encoding_failure_precedes_valid_allowlist_in_warn_mode(self) -> None:
         for provider in PROVIDERS:
