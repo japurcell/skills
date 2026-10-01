@@ -34,7 +34,7 @@ The scanner applies shell-style segmentation to every string leaf and to a secon
 
 An exploratory in-memory measurement found about 9.5, 35.4, 136.9, and 521.3 milliseconds for 256, 512, 1,024, and 2,048 repeated command tokens. This suggests approximately quadratic work in repeated tail scans. These numbers are diagnostic evidence, not a whole-hook baseline or a production timing guarantee.
 
-Current native-write handling has no semantic model for patch deletion or movement and no general destination protection. Saved script contents are not read when a script is invoked. Do not describe the current guardian as a general code security analyzer or claim protections that it does not provide.
+The original native-write handling had no semantic model for patch deletion or movement. Milestone 2 now parses validated Codex patch operations and applies equivalent existing source-removal rules. It does not add general destination protection. Saved script contents are not read when a script is invoked. Do not describe the guardian as a general code security analyzer or claim protections that it does not provide.
 
 Plan authoring reproduced another file-write false positive: the SQL rule's keyword matched a harmless English past-tense inflection in prose about complete inspection. Preserve that content case separately from the original incident count.
 
@@ -42,7 +42,7 @@ Plan authoring reproduced another file-write false positive: the SQL rule's keyw
 
 
 - Decision: Measure unchanged hooks from an immutable external baseline while native-classifier work proceeds in its isolated candidate worktree.
-  Rationale: The copied baseline preserves unchanged runtime code independently of candidate edits. Milestone 2 integration waits for milestone 1 fixtures and baseline completion.
+  Rationale: The copied baseline preserves unchanged runtime code independently of candidate edits. Milestone 2 integration followed the frozen incident corpus and first complete unchanged-runtime report; the second sequential baseline and milestone 1 commit then integrated without conflicts.
   Date/Author: 2026-10-01, implementation orchestrator.
 - Decision: Fix all known false positives, including related read-only operations, across Codex, Copilot, and Gemini.
   Rationale: Observed failures share scanner defects, and the three provider outputs derive from one canonical implementation.
@@ -79,7 +79,7 @@ The inbox item has moved into this plan. The file map, repository routing, and c
 
 Work from the repository root. `hooks/families/tool_guard.py` is the canonical renderer and contains policy source embedded in a generated Python script. `hooks/manifest.py` lists its three outputs: `.codex/hooks/tool-guard.py`, `.copilot/hooks/scripts/tool-guard.py`, and `.gemini/hooks/scripts/tool-guard.py`. Change the canonical source, then use `scripts/generate-hooks.py` to regenerate outputs. Never edit generated scripts directly or introduce cross-provider runtime imports.
 
-The relevant functions are `read_tool_scan_inputs`, `_command_segments`, `build_threats`, `build_input_threats`, the individual rule matchers, and `main`. `KNOWN_TOOL_FIELDS` currently labels a few trusted fields for diagnostics only. It is not a semantic tool schema. Structured input is traversed before text scanning, with limits of 32,768 cumulative UTF-8 string bytes, 32 levels, 256 nodes, and 128 strings. Text scanning also bounds characters and bytes at 32,768, segments at 128, and tokens per segment at 256.
+The relevant functions are `read_tool_scan_inputs`, `_command_segments`, `build_threats`, `build_input_threats`, the individual rule matchers, and `main`. `KNOWN_TOOL_FIELDS` labels trusted fields for diagnostics only. Milestone 2 adds a separate `NativeToolInput` classification for exact provider aliases and validated schemas. Validated native data has a provisional 65,536-byte aggregate bound, including keys and metadata, pending milestone 4 measurement. Unsupported inputs retain the original 32,768-byte inspection bound. Structural bounds remain 32 levels, 256 nodes, and 128 strings. Executable text still bounds characters and bytes at 32,768, segments at 128, and tokens per segment at 256 until measured changes prove necessary.
 
 `scripts/test-security-banners.py` supplies cross-provider public-input and response assertions. The provider suites are `scripts/test-codex-hooks-tool-guard.sh`, `scripts/test-hooks-tool-guard.sh`, and `scripts/test-gemini-hooks-tool-guard.sh`. `scripts/test-all.py` owns the explicit test registry. `scripts/benchmark-high-rate-hooks.py` already measures full subprocess runtime on macOS with disposable repositories, log paths, and homes. Its results include median, 95th percentile, median absolute deviation, a first-run sample, and a concurrent batch. Median absolute deviation measures ordinary variation around the median. Provider delivery latency is distinct from subprocess runtime.
 
@@ -122,7 +122,7 @@ Eliminate redundant serialized-object rescanning only after tests show every exe
 
 ### Milestone 3: Classify observed shell forms and remove expensive scanning work
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Replace punctuation-only shell segmentation with a bounded tokenizer that respects quotes, escapes, command separators, substitutions, redirections, and heredoc boundaries. A heredoc is a shell construct that passes multiline input to a command. A quoted delimiter suppresses shell expansion of that body, but the destination interpreter can still execute it. Do not treat every quoted argument or heredoc as inert: arguments to an interpreter's command option and bodies supplied to a shell remain executable. Executable substitutions inside apparent data must be inspected.
@@ -253,5 +253,7 @@ Keep standard-library runtime dependencies and the existing generated-script pro
 The proposed shared regression suite owns sanitized incident and paired-danger fixtures. The existing benchmark runner adds `--guard-only`, `--script-root PATH`, and `--expected-behavior baseline|candidate` while preserving its current invocation defaults. Add a focused benchmark CLI test at `scripts/test-benchmark-high-rate-hooks.py`, register it beside the new regression suite, and validate its public flags without invoking the full high-rate benchmark recursively. Any final interface change must update this plan and area-scoped API/testing documentation before completion.
 
 Revision note, 2026-10-01: Recorded the user-confirmed scope and security contract, all-provider coverage, strict fallback, user-run installation, and no-added-latency requirement. Replaced the inbox's limit-only hypothesis with incident-driven operation classification and measured resource tuning. Implementation remains unstarted.
+
+Revision note, 2026-10-01 22:21Z: Integrated the reviewed native classifier and immutable-baseline corpus, synchronized historical versus current operation handling, and recorded the active shell implementation frontier. Native byte limits remain provisional and candidate latency acceptance remains open.
 
 Revision note, 2026-10-01: Completed milestone 1 with sanitized provider-native fixture equivalents, immutable baseline fingerprints, exact baseline/candidate permission modes, public benchmark CLI coverage, two complete sequential baseline runs, per-case variation, and retained exploratory evidence. Updated the orchestrator-confirmed milestone 2 integration state and the milestone 4 truthful-limit test repair item. The plan is retained as explicitly requested.
