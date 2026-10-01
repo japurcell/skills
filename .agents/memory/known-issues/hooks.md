@@ -11,11 +11,15 @@ Load this file for general provider-hook work. For source scanners, manifests, s
 
 Tool Guardian scans patch, search, replacement, and cleanup payloads. Raw dangerous command strings can block safe policy edits or tests; multiline serialized text can also create false matches across escaped newlines. Construct required threat strings dynamically, keep unrelated dangerous lines outside replacement hunks, and keep deletion-target matching bounded to one logical line and a short distance.
 
+Harmless prose, literal search patterns, native file bodies, and JSON stdin test fixtures can match command rules because the current guardian does not distinguish their data roles from executable instructions. Increasing size limits alone does not correct these pattern-based false blocks.
+
 Secret scanning has the same self-edit risk for realistic fake credentials. Use unmistakably fake values such as `fake-api-key`; never write a real secret.
 
 ## Structured input can reach its byte limit before text scanning
 
 Tool Guardian traverses structured input before matching command text. A large `write_file.content` value therefore reports `structured_bytes` first, with its 32768-byte threshold and measured UTF-8 byte count. The generic scan-text limit applies to later text scanning and includes the tool name prefix. Keep those counts and units distinct when adding rule details or tests.
+
+The segment splitter reports at most 129 segments when the 128-segment bound is exceeded. Literal escaped newlines and punctuation inside file data can consume this budget, so the reported count is not the physical line count or the complete uncapped segment count.
 
 ## Same-named hook modules confuse mypy
 

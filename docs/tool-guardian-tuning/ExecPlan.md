@@ -1,0 +1,245 @@
+# Fix Tool Guardian false positives without adding hook latency
+
+This ExecPlan is a living document. Maintain `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` according to the `exec-plans` skill. Its repository path is `docs/tool-guardian-tuning/ExecPlan.md`.
+
+## Purpose / Big Picture
+
+
+Users must be able to write documentation, source, and tests, search for command examples, and run the observed harmless analysis scripts without Tool Guardian rejecting their data as executable instructions. Fix every known false-positive category across Codex, Copilot, and Gemini. Preserve detection of actual dangerous operations, complete inspection of executable input, resource bounds, and existing provider response contracts.
+
+The hook runs frequently. New functionality must not add measurable latency to existing inputs. Measure the entire hook subprocess, including startup, input decoding, policy evaluation, logging, and response emission. Do not hide a regression behind a parser-only improvement. The user will run the installer after repository validation. Agents must not update real installed hooks as part of this plan.
+
+## Progress
+
+
+- [x] (2026-10-01) [planning] Review accessible session and guardian logs and identify false-positive categories.
+- [x] (2026-10-01) [planning] Obtain user agreement on scope, security boundaries, fallback behavior, delivery, and latency requirements.
+- [ ] [milestone-1] Preserve sanitized incident fixtures, reproduce failures through public provider entrypoints, and capture a repeatable latency baseline.
+- [ ] [milestone-2] Separate recognized native tool content and search data from executable instructions.
+- [ ] [milestone-3] Support the observed shell and Python forms without broad interpreter exemptions, and remove repeated or quadratic scanning work.
+- [ ] [milestone-4] Set measured resource bounds, validate security and latency, and regenerate all three providers.
+- [ ] [milestone-5] Synchronize documentation and deliver repository changes with user-run installation instructions.
+
+## Surprises & Discoveries
+
+
+The initial inbox description suggested a size-limit problem. Review found at least 23 falsely blocked file-write invocations: 12 input-limit failures and 11 command-pattern failures in inert documentation, source, or test text. The broader review also found false read-only search and analysis blocks. Raising limits alone cannot fix the accepted scope.
+
+The first complete guardian-log snapshot contained 19 denials: 15 false file-write blocks, one false search block, and three actual forbidden operations. Eleven older transcript-only denials added eight false patch writes and three shell cases. The latter resolve to one genuine protected-branch force push, one harmless hook-fixture survey, and one harmless search. Correlate the historical search against the earlier search finding before publishing a combined unique-incident total. Two survey-generated read-only false blocks, and a further read-only search block during plan preparation, belong in separate evidence rather than silently increasing the original snapshot count.
+
+The scanner applies shell-style segmentation to every string leaf and to a second serialized representation of structured input. It splits actual and escaped newlines and punctuation without first establishing whether the text is executable syntax. One 7,271-byte patch had 124 physical lines but 142 parsed segments. The reported count of 129 is the bounded splitter's overflow indicator, not the uncapped segment count.
+
+An exploratory in-memory measurement found about 9.5, 35.4, 136.9, and 521.3 milliseconds for 256, 512, 1,024, and 2,048 repeated command tokens. This suggests approximately quadratic work in repeated tail scans. These numbers are diagnostic evidence, not a whole-hook baseline or a production timing guarantee.
+
+Current native-write handling has no semantic model for patch deletion or movement and no general destination protection. Saved script contents are not read when a script is invoked. Do not describe the current guardian as a general code security analyzer or claim protections that it does not provide.
+
+Plan authoring reproduced another file-write false positive: the SQL rule's keyword matched a harmless English past-tense inflection in prose about complete inspection. Preserve that content case separately from the original incident count.
+
+## Decision Log
+
+
+- Decision: Fix all known false positives, including related read-only operations, across Codex, Copilot, and Gemini.
+  Rationale: Observed failures share scanner defects, and the three provider outputs derive from one canonical implementation.
+  Date/Author: 2026-10-01, user and planning agent.
+- Decision: Treat recognized file content as data regardless of extension and retain checks on executable instructions.
+  Rationale: Documentation, source, and test examples are not operations performed by the tool. The user accepted an operation-based guard without adding a general code-content scanner.
+  Date/Author: 2026-10-01, user.
+- Decision: Keep existing strict scanning for unrecognized inputs, including its resource bounds.
+  Rationale: Only reliably classified data may be excluded from executable-command matching. Arbitrary shell or Python bodies receive no blanket exemption.
+  Date/Author: 2026-10-01, user.
+- Decision: Do not add measurable latency to existing hook workloads.
+  Rationale: This hook runs frequently. Security, correctness, and speed are simultaneous acceptance gates, not trade-offs to relax silently.
+  Date/Author: 2026-10-01, user.
+- Decision: Deliver repository changes and regenerated provider outputs, leaving real installation to the user.
+  Rationale: The user explicitly chose to run the installer personally.
+  Date/Author: 2026-10-01, user.
+- Decision: Choose numeric resource changes from complete-hook measurements and incident coverage rather than multiplying every constant.
+  Rationale: Existing bounds protect inspection cost, and the parser exhibits adverse scaling. Preserve a fail-closed boundary beyond validated limits.
+  Date/Author: 2026-10-01, planning agent, implementing the agreed security and latency constraints.
+
+## Outcomes & Retrospective
+
+
+Planning is complete. No guardian implementation, threshold changes, generated output changes, or real installation has occurred. Investigation corrected the original limit-only hypothesis. Implementation acceptance remains unmet until the public-entrypoint reproductions pass, actual dangerous operations remain blocked, and repeated full-hook benchmarks establish no measurable regression.
+
+The inbox item has moved into this plan. The file map, repository routing, and current guardian known issues are synchronized. Canonical-document lint, generator freshness, and whitespace checks pass. These document checks do not establish implementation or performance acceptance.
+
+## Context and Orientation
+
+
+Work from the repository root. `hooks/families/tool_guard.py` is the canonical renderer and contains policy source embedded in a generated Python script. `hooks/manifest.py` lists its three outputs: `.codex/hooks/tool-guard.py`, `.copilot/hooks/scripts/tool-guard.py`, and `.gemini/hooks/scripts/tool-guard.py`. Change the canonical source, then use `scripts/generate-hooks.py` to regenerate outputs. Never edit generated scripts directly or introduce cross-provider runtime imports.
+
+The relevant functions are `read_tool_scan_inputs`, `_command_segments`, `build_threats`, `build_input_threats`, the individual rule matchers, and `main`. `KNOWN_TOOL_FIELDS` currently labels a few trusted fields for diagnostics only. It is not a semantic tool schema. Structured input is traversed before text scanning, with limits of 32,768 cumulative UTF-8 string bytes, 32 levels, 256 nodes, and 128 strings. Text scanning also bounds characters and bytes at 32,768, segments at 128, and tokens per segment at 256.
+
+`scripts/test-security-banners.py` supplies cross-provider public-input and response assertions. The provider suites are `scripts/test-codex-hooks-tool-guard.sh`, `scripts/test-hooks-tool-guard.sh`, and `scripts/test-gemini-hooks-tool-guard.sh`. `scripts/test-all.py` owns the explicit test registry. `scripts/benchmark-high-rate-hooks.py` already measures full subprocess runtime on macOS with disposable repositories, log paths, and homes. Its results include median, 95th percentile, median absolute deviation, a first-run sample, and a concurrent batch. Median absolute deviation measures ordinary variation around the median. Provider delivery latency is distinct from subprocess runtime.
+
+Load `.agents/instructions/hooks.md`, `.agents/memory/known-issues/hooks.md`, `.agents/memory/testing/hooks.md`, and the corresponding scripts guidance before implementation. Activate `tdd` for source changes and the security and performance skills for their respective validation. Read the applicable official provider references before changing provider schemas or delivery behavior. Existing output schemas and registrations do not need redesign for this effort.
+
+## Plan of Work
+
+
+### Milestone 1: Reproduce incidents and establish the performance baseline
+
+Status: open
+Acceptance: not met
+
+Begin with end-to-end reproductions at the generated provider scripts' stdin/stdout boundary. These scripts receive a provider-shaped JSON tool event and emit the provider's permission decision. They must not execute the represented tool operation. Use disposable destinations and audit paths, never real home-directory hooks. Add a shared public-envelope regression suite at `scripts/test-tool-guard-false-positives.py` and register it in `scripts/test-all.py`. Reuse existing security-banner fixture helpers where appropriate without turning semantic acceptance into banner-string assertions.
+
+Preserve sanitized fixture cases for long patches, actual and escaped newline content, UTF-8 byte growth, command examples in documentation/source/tests, native edit replacements, native writes, safe searches, the two Python writers, the repository-hook survey, and the survey-generated analysis scripts. Attach each fixture to an incident category and source metadata. Do not copy private session contents into version control. Reconstruct the same operation, data role, and relevant size rather than retaining unrelated conversation text. Deduplicate matching log and transcript records by invocation identity where available, otherwise by provider, timestamp, tool, and matched failure. Do not count a test's captured guardian output as a denial of the test runner.
+
+Include a 46,899-byte native patch, a 330-line patch, and the 124-line patch shape that produced 142 naive segments. The shell writers use a quoted Python heredoc, fixed pathlib reads/writes, literal text replacements, and a large literal body. One represented command measured 8,787 characters and 183 naive segments. Another had 120 physical lines and 139 naive segments, including 18 semicolons in literal data. The safe hook survey passes destructive-command examples as JSON stdin to fixed hook scripts rather than executing those examples. Searches pass matching vocabulary as literal patterns. Reproduce these roles, not just their lengths.
+
+Add the harmless English inflection found during plan authoring, constructing the SQL rule keyword from its existing numeric fixture representation and appending the past-tense ending. It must be accepted as native-write prose while an actual database operation remains covered by the paired protection tests.
+
+For each harmless fixture, add a nearby dangerous executable counterpart that must still be denied. Cover all current rule families, especially protected-branch force push, destructive Git cleanup, installer pipelines, protected removal targets, database operations, outbound upload, elevated operations, unsafe permissions, and package publication. Include commands before and after long data, executable shell substitutions inside arguments, interpreter execution sinks, malformed schemas, extra fields, and Unicode normalization. Construct threat examples using the existing numeric-string fixture convention so the installed old guardian does not block test authoring. Never disable it for maintenance.
+
+Capture the unchanged runtime before modifying policy. Extend the existing benchmark runner to reuse the sanitized guard corpus and select a script root so the same runner and inputs can test an isolated baseline snapshot and candidate. Preserve current default behavior and add `--guard-only`, `--script-root PATH`, and `--expected-behavior baseline|candidate` options. The last option validates the known baseline denials separately from the desired candidate permissions. Add public CLI coverage for these options using temporary fixture scripts. Retain raw timing samples and explicit expected decisions. Copy generated baseline scripts and required local helpers into a disposable root before any policy changes. Never install this snapshot.
+
+Run identical inputs and logging conditions for all three providers, including currently allowed calls, actual denials, and formerly blocked legitimate calls. Record Python version, machine, environment, input sizes, and first-run definition. Use 25 measured samples and three discarded warmups initially, repeat paired baseline/candidate runs in alternating order, and increase sampling only when noise prevents a decision. Each measured invocation starts a new Python process. Also retain the existing concurrency scenario and compare its results. Do not call an operating-system cache-warm first-run sample fully cold.
+
+This milestone is complete when public fixtures reproduce current failures without executing dangerous operations, true-positive controls pass on the baseline, incident deduplication is documented, and complete-hook baseline data is retained for comparison.
+
+### Milestone 2: Establish native tool and search data boundaries
+
+Status: open
+Acceptance: not met
+
+In `hooks/families/tool_guard.py`, introduce a bounded classification stage before command matching. Recognize exact provider tool aliases and validated input shapes for patch, edit, native write, and search operations. Use the schemas established by current provider fixtures and confirmed event envelopes. Tool name alone is not authority to exempt arbitrary fields. Unknown aliases, invalid types, additional executable-looking fields, and unsupported shapes must retain strict scanning.
+
+Represent operation metadata, inert content, executable text, and unclassified text separately. Check structural and total input bounds before exempting content from command-pattern matching. Patch additions, edit old/new text, native write bodies, and literal search patterns are data regardless of extension. Parse patch operation headers separately so deletion or movement cannot disappear inside the content exemption. Preserve equivalent existing operation rules where applicable without inventing a general destination allowlist or claiming an existing native-path protection. Native file edits must not become a blanket exemption for arbitrary nested input.
+
+Eliminate redundant serialized-object rescanning only after tests show every executable or unclassified string still reaches inspection. Dictionary keys, malformed structures, and unexpected fields must not provide a route around checks. Exact-match allowlist semantics and provider input precedence must remain intact. Tests must establish that inert command vocabulary is accepted while the corresponding actual operation is still blocked across all three providers.
+
+### Milestone 3: Classify observed shell forms and remove expensive scanning work
+
+Status: open
+Acceptance: not met
+
+Replace punctuation-only shell segmentation with a bounded tokenizer that respects quotes, escapes, command separators, substitutions, redirections, and heredoc boundaries. A heredoc is a shell construct that passes multiline input to a command. A quoted delimiter suppresses shell expansion of that body, but the destination interpreter can still execute it. Do not treat every quoted argument or heredoc as inert: arguments to an interpreter's command option and bodies supplied to a shell remain executable. Executable substitutions inside apparent data must be inspected.
+
+Support the observed Python forms through a bounded abstract syntax tree, Python's parsed representation of statements and expressions. Use standard-library parsing only when the command actually invokes Python with inline code or a heredoc. Recognize fixed pathlib imports, literal destinations, reads/writes, and constrained ordinary string transformations. Recognize the harmless survey only when the fixed hook subprocess target and its JSON stdin role are established. Inspect dangerous operations at execution sinks. Dynamic execution, arbitrary subprocess targets, dynamic imports, unresolved aliases, unsupported syntax, and language features outside the proven subset retain full strict scanning. Do not grant an exemption to Python, search commands, or test scripts as a class.
+
+Tokenize each executable input once and reuse that representation across rules. Replace repeated suffix traversal with bounded linear processing where the same rule semantics can be proven. Keep unsupported constructs on the strict path rather than attempting general shell or Python interpretation. Avoid new runtime dependencies, network calls, helper subprocesses, or unconditional parser imports. Lazy-load language-specific parsing only for relevant inputs and measure its startup cost. Each optimization must have independent correctness and full-hook timing evidence.
+
+This milestone is complete when the observed shell writers, safe searches, and hook-fixture surveys pass, their dangerous counterparts fail, and repeated-token stress no longer exhibits the diagnosed quadratic growth.
+
+### Milestone 4: Validate resource limits, security, and runtime across providers
+
+Status: open
+Acceptance: not met
+
+Separate bounds on accepted native data from bounds on executable inspection work. Keep finite limits for aggregate bytes, structure, normalized text, commands, tokens, and language-parser work. Native body line count must not consume an executable-command budget. Choose the smallest validated limits that admit every preserved incident fixture with documented headroom. Record actual selected constants, worst-case memory and runtime evidence, and the reason for each change in this plan. Do not globally multiply every bound or add an environment setting that disables inspection. Partial-input acceptance, skipped overflow, and timeout-based allow responses are unacceptable.
+
+Boundary tests must check the accepted maximum and the first rejected input for each resource class, including UTF-8 and normalized text expansion. Update old numeric assertions to the new truthful boundaries without removing overflow tests or weakening fail-closed behavior. Input-limit and inspection-failure denials still precede allowlisting and still deny in warn mode. Incomplete inspection is not a benign unknown construct. Known dangerous operations retain their existing block/warn semantics, severity, rule identities, safe banners, and log redaction. Normal passes remain silent.
+
+Regenerate the provider outputs through `scripts/generate-hooks.py --write`. Run generator freshness checks, generator tests, the new false-positive suite, all three provider guard suites, security-banner tests, and benchmark-runner CLI tests. Run a native Windows public-envelope check if execution is available. A macOS skip or simulated Windows branch is not native Windows evidence. Report unavailable platform proof explicitly without silently changing the supported surface.
+
+Use the same benchmark runner and corpus against the saved baseline and candidate. Add the raised-limit boundaries and adverse repeated-token, nested-input, quoting, and normalization cases. Retain measured data, not only rounded summaries. Compare median and 95th-percentile elapsed time per existing scenario and provider, first-run samples across repeated independent runs, and concurrency. Do not pool providers or scenarios in a way that hides a slower frequent path. Quantify run-to-run variation with median absolute deviation and repeated baseline runs. A reproducible slowdown fails acceptance. An inconclusive comparison also does not establish the latency gate: repeat or improve measurement, then optimize rather than relax the requirement.
+
+Formerly denied legitimate inputs belong in the same-input comparison, not an unmeasured exception. Newly supported boundary sizes must have a documented bounded runtime ceiling based on the existing measured workload and configured hook deadlines. The exploratory parser-only measurements cannot supply that ceiling. Full subprocess timing does not prove provider-delivery timing. No real installer or live installed-hook timing is performed by the agent because installation is the user's step.
+
+### Milestone 5: Synchronize documentation and deliver the repository change
+
+Status: open
+Acceptance: not met
+
+Run `update-agent-docs` once at the end of implementation. Refresh hook conventions, known issues, testing routes, file and API maps as applicable, and this plan's actual constants, decisions, benchmark results, and milestone state. Preserve historical investigation facts but distinguish them from corrected behavior. The current self-maintenance workaround remains applicable until installed hooks are updated. Do not record an implemented capability while this plan is still open.
+
+Deliver the canonical change, regenerated outputs, regression tests, documented benchmark comparisons, and user-run installer instructions. The user runs `rtk proxy ./scripts/install.sh` from the repository root, or the supported PowerShell installer on Windows. They review changed non-managed Codex hook definitions through `/hooks` before live validation. Do not bypass trust, disable guardian protections, rewrite unrelated registrations, or install into the real user home on the user's behalf. Repository validation and later installed/live validation are separate evidence.
+
+## Concrete Steps
+
+
+From the repository root, the baseline planning checks are read-only:
+
+    rtk proxy python3 scripts/generate-hooks.py --check
+    rtk proxy python3 scripts/test-all.py --list
+
+During milestone 1, extend and test the shared benchmark runner before policy changes, then capture isolated baseline runtime using its new script-root and expected-behavior options. The following baseline options become executable after that milestone implements them:
+
+    rtk proxy python3 scripts/benchmark-high-rate-hooks.py --guard-only --script-root /private/tmp/tool-guardian-baseline --expected-behavior baseline --samples 25 --warmups 3 --output /private/tmp/tool-guardian-before.json
+
+After canonical source changes, regenerate and validate:
+
+    rtk proxy python3 scripts/generate-hooks.py --write
+    rtk proxy python3 scripts/generate-hooks.py --check
+    rtk proxy python3 scripts/test-generate-hooks.py
+    rtk proxy python3 scripts/test-tool-guard-false-positives.py
+    rtk proxy python3 scripts/test-security-banners.py
+    rtk proxy bash scripts/test-codex-hooks-tool-guard.sh
+    rtk proxy bash scripts/test-hooks-tool-guard.sh
+    rtk proxy bash scripts/test-gemini-hooks-tool-guard.sh
+    rtk proxy python3 scripts/generate-hooks.py --check
+    rtk proxy python3 scripts/benchmark-high-rate-hooks.py --guard-only --script-root . --expected-behavior candidate --samples 25 --warmups 3 --output /private/tmp/tool-guardian-after.json
+
+The new regression suite and benchmark options do not exist at planning time. Add the regression suite and benchmark CLI test route to `scripts/test-all.py` and update these commands when their final paths or interfaces change. Each correctness command must exit zero with no failed assertions. The baseline false-positive reproductions are expected to demonstrate the bug before policy fixes. The candidate must allow legitimate cases and deny paired actual operations. Performance JSON must retain per-case decisions, input sizes, samples, timing summaries, and environment metadata. Exit zero from a benchmark is not proof of no regression: compare the paired measurements explicitly.
+
+## Validation and Acceptance
+
+
+Acceptance requires all preserved harmless incident shapes to receive an allow response from all supported provider entrypoints, with no extra pass message. Dangerous counterparts must receive the expected deny response in block mode without executing represented operations. Data classifications must survive realistic multiline JSON, aliases, escaped literals, literal search patterns, fixed Python writers, and hook fixtures. Unrecognized executable input must still receive strict inspection. Add cases where execution is hidden beside or inside apparently inert data and require the relevant protections to remain effective.
+
+Over-limit, malformed, and uninspectable input must fail closed with accurate, redacted diagnostics. Allowlisting and warn mode must not bypass incomplete inspection. Existing banner bounds, credential redaction, and banner/log agreement must remain covered. Keep protections for actual force push, destructive cleanup, installer pipelines, and every other current rule family. Do not replace an execution test with a string-only assertion of the new classifier's implementation.
+
+No measurable latency regression is allowed on the fixed existing corpus. Check complete subprocess runtime per provider and per case, including process startup and repeated first runs. Measurements inside ordinary variation show no measurable change, not a claimed speedup. Retain functionality fixes that meet the agreed no-regression gate, but discard optional optimization complexity that buys no measured improvement. Reject repeatable slowdowns, hidden extra processes, or false speedups from omitted required inspection. Raised resource limits must additionally pass bounded worst-case runtime and memory checks.
+
+## Idempotence and Recovery
+
+
+Public-entrypoint fixtures represent operations without performing them. Keep all fixtures, logs, baseline copies, and benchmark reports in disposable directories or maintained sanitized test assets. Use fixture-local Git configuration and disable signing only for fixture commands. Do not globally change Git settings, hook modes, allowlists, trust, or user-installed files. Do not repurpose the shell's home variable for real installation.
+
+Generator write mode is deterministic and may be rerun after canonical edits. If a correctness or timing gate fails, fix or revert the candidate changes while retaining the baseline, incident fixtures, and failed-attempt evidence. Never delete, disable, or weaken a failing protection test to pass acceptance. Restore generated outputs from the canonical renderer rather than manually repairing them. Remove only exact owned temporary paths after recording results.
+
+## Artifacts and Notes
+
+
+The original log corpus covered August 19 through October 1, 2026, with two nonempty provider guardian logs, 4,703 Codex records, and 922 Copilot records. Investigation searched 387 active Codex transcripts, two archived transcripts, and 30 primary Copilot event files. Eight saved Copilot transcript copies were excluded from primary counting. Retain these as survey coverage, not a claim that every historical invocation was available.
+
+Useful original evidence is the Codex guardian log at `~/.codex/hooks/tool-guardian/guard.log`: line 348 records the 46,899-byte patch rejection, line 3272 the short patch's segment rejection, and lines 1565 and 3482 the Python writer rejections. Log lines can change or disappear, so implementation must preserve sanitized reproductions rather than depend on these files. The historical hook-fixture survey occurred at 2026-09-25T00:15:50Z. The protected-branch force-push denial occurred at 2026-09-23T22:55:41Z. No raw tool payloads or secrets belong in maintained evidence.
+
+Keep before/after performance reports with the implementation evidence and describe exactly which input corpus and entrypoints they measure. Report known timing limitations. Source validation does not certify user-installed behavior. Update this plan's outcomes only when the corresponding acceptance is actually met.
+
+Investigation dispatch audit follows. The selected and submitted configurations matched. The dispatch system did not report executed model or effort, so both remain unconfirmed. Active orchestrator deadline checks enforced runtime limits. The contract exploration was deliberately interrupted to answer the user's question, and a later exploration completed the remaining incident classifications.
+
+    dispatches:
+      - subtask_id: guardian_evidence
+        selected: &selection {model: gpt-6.1-sol, reasoning_effort: high}
+        submitted: *selection
+        executed: &execution {model: unconfirmed, reasoning_effort: unconfirmed}
+        runtime_limit: &limit {value: 10 minutes, mechanism: Active deadline monitoring with interruption at deadline}
+        status: completed
+        output_verified: true
+        routing_compliant: true
+      - subtask_id: all_write_denials
+        selected: *selection
+        submitted: *selection
+        executed: *execution
+        runtime_limit: *limit
+        status: completed
+        output_verified: true
+        routing_compliant: true
+      - subtask_id: guardian_contract
+        selected: *selection
+        submitted: *selection
+        executed: *execution
+        runtime_limit: *limit
+        status: cancelled
+        output_verified: true
+        routing_compliant: true
+      - subtask_id: remaining_incidents
+        selected: *selection
+        submitted: *selection
+        executed: *execution
+        runtime_limit: {value: 5 minutes, mechanism: Active deadline monitoring with interruption at deadline}
+        status: completed
+        output_verified: true
+        routing_compliant: true
+
+## Interfaces and Dependencies
+
+
+Keep standard-library runtime dependencies and the existing generated-script provider adapters. The bounded classifier returns validated operation metadata, data payloads with byte accounting, executable fragments, and unclassified fragments with an explicit strict-fallback marker. Do not rely on user-provided labels such as a claimed safe mode to establish these roles. The matcher consumes a shared bounded command representation and emits the existing threat dictionaries used by banners and audit logs. Preserve fail-closed `ScanLimitExceeded` and inspection-failure handling.
+
+The proposed shared regression suite owns sanitized incident and paired-danger fixtures. The existing benchmark runner adds `--guard-only`, `--script-root PATH`, and `--expected-behavior baseline|candidate` while preserving its current invocation defaults. Add a focused benchmark CLI test at `scripts/test-benchmark-high-rate-hooks.py`, register it beside the new regression suite, and validate its public flags without invoking the full high-rate benchmark recursively. Any final interface change must update this plan and area-scoped API/testing documentation before completion.
+
+Revision note, 2026-10-01: Recorded the user-confirmed scope and security contract, all-provider coverage, strict fallback, user-run installation, and no-added-latency requirement. Replaced the inbox's limit-only hypothesis with incident-driven operation classification and measured resource tuning. Implementation remains unstarted.
