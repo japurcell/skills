@@ -9,7 +9,7 @@ description: Repo-wide workflow for top-level docs, install refresh, and documen
 - Keep `README.md` aligned when install, validation, or hook behavior changes, and keep `AGENTS.md` aligned with the `.agents/` loading contract.
 - Keep top-level docs short. Put durable rules in `.agents/instructions/` and durable repo facts in `.agents/memory/`.
 - Put repository-local workflow skills under `.agents/skills/`; put publishable skills installed into user environments under `skills/`. Confirm which boundary a new skill belongs to before applying generic skill workspace or installation conventions.
-- Put active research and planning artifacts that require version control under a focused `docs/<effort>/` subtree; keep transient, disposable working state under `.agents/scratchpad/` unless the user explicitly promotes it.
+- Put active research and planning artifacts under a focused `docs/<effort>/` subtree. Keep Wayfinder maps, tickets, research, and planning handoffs there, overriding the skill's scratchpad default. Reserve `.agents/scratchpad/` for transient, disposable working state.
 - For Tool Guardian false-positive repair, follow the active [execution plan](../../docs/tool-guardian-tuning/ExecPlan.md), including its security and latency gates. The user owns real installation for this effort.
 - When a user explicitly promotes a feature handoff into `docs/<effort>/`, keep it at `docs/<effort>/handoff.md` and limit it to current status, remaining work, and exact resume instructions.
 - Keep the generated-provider-hooks architectural decision at `docs/adr/0004-generated-provider-hooks.md`.

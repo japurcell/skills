@@ -28,7 +28,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
 | `skills/dotnet-upgrade/` | skills | Explicitly invoked .NET upgrade source bundle with standalone templates, dated route research and provenance; its document-only acceptance record is [references/document-review.md](../../skills/dotnet-upgrade/references/document-review.md). Use [skills instructions](../instructions/skills.md#dotnet-upgrade) for approval and review boundaries. |
 | `agents/` | agents | Canonical Markdown custom-agent prompt files for Copilot, Gemini, and generated Codex TOML. |
-| `docs/<effort>/` | repo docs | Active research and execution plans that need version history while work is in progress. |
+| `docs/<effort>/` | repo docs | Active research, Wayfinder maps and tickets, planning handoffs, and execution plans. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `scripts/` | scripts | Installers, importers, the aggregate test runner, validation helpers, and shared shell utilities. |
 | `references/` | references | Optional shared reference material shipped with installs. |
@@ -40,6 +40,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.agents/instructions/` | canonical | Agent-facing workflow rules and area conventions. |
 | `.agents/memory/` | canonical | Durable repo facts, file maps, testing routes, and known issues. |
 | `docs/ideas.md` | companion | Lightweight inbox for one-line ideas that are not ready for research or planning. |
+| [docs/skill-audit/map.md](../../docs/skill-audit/map.md) | active map | Decision map toward a completed authoring audit of both skill roots and an implementation ExecPlan. |
 | [docs/tool-guardian-tuning/ExecPlan.md](../../docs/tool-guardian-tuning/ExecPlan.md) | active plan | Incident-based guardian false-positive repair across three providers, with security and no-added-latency acceptance gates. |
 | `README.md` | companion | Repo overview and install entry point. |
 | `AGENTS.md` | companion | Quickstart, loading contract, and top-level links for agents. |
