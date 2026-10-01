@@ -17,13 +17,16 @@ The hook runs frequently. New functionality must not add measurable latency to e
 - [x] (2026-10-01 22:18Z) [milestone-1] Preserve 47 sanitized fixtures, reproduce baseline failures through 144 public provider checks, and retain two sequential complete-hook timing runs with 147 scenarios each.
 - [x] (2026-10-01 22:16Z) [milestone-2] Separate recognized native tool content and search data from executable instructions; reviewed native change integrated at e373690d.
 - [ ] [milestone-3] Support the observed shell and Python forms without broad interpreter exemptions, and remove repeated or quadratic scanning work.
-- [ ] [milestone-3 repair] Remove the measured small-input and Python-writer startup regressions from the first frozen candidate; preserve the failed timing report and verify wrapped pipeline protections before retiming.
+- [ ] [milestone-3 repair] Remove repeatable startup and writer regressions from all frozen candidates, including the final B/C/C/B comparison; preserve failed reports and all security protections before retiming.
+- [ ] [optimization proof] Independently validate optional helper and suffix optimizations through public decisions and repeated complete-hook ablations; revert optional complexity without measured benefit.
 - [ ] [milestone-4] Set measured resource bounds, validate security and latency, and regenerate all three providers.
 - [ ] [milestone-4] Update the old Gemini 33,000-byte native-write banner assertion to verify truthful overflow beyond the new 65,536-byte native bound, while retaining unsupported-input 32,768-byte strict-limit coverage.
 - [ ] [milestone-5] Synchronize documentation and deliver repository changes with user-run installation instructions.
 
 ## Surprises & Discoveries
 
+
+The final matched B/C/C/B sequence also fails latency acceptance. Clean medians increased by 3.053/4.906 ms for Copilot, 3.667/3.210 ms for Gemini, and 2.157/3.426 ms for Codex in the two pairings. The repeated baseline median spans are only 0.807, 0.799, and 0.655 ms respectively. Large-input improvements do not offset these frequent-path regressions. Root retained a complete descriptive comparison externally pending integration. Native macOS resource collection initially failed because the sandbox denied `/usr/bin/time -l` access to `sysctl kern.clockrate`; the hook emitted its correct allow decision. The harmless approved collector probe succeeds, and the unchanged resource run uses approved native collection.
 
 The first valid frozen candidate passed all 147 benchmark decisions but failed latency acceptance. Clean-input medians were 30.815, 31.159, and 28.420 milliseconds for Copilot, Gemini, and Codex. Python-writer medians were about 32-33 milliseconds, above the corresponding baseline observations. Large-input scanning improved substantially, but that improvement cannot offset slower frequent paths. The original shell implementer owns the repair and subsequent frozen retiming. Independent review also reproduced missing download-execution findings for execution-preserving pipeline wrappers; those protections must be restored before the candidate is accepted.
 
@@ -138,7 +141,7 @@ This milestone is complete when the observed shell writers, safe searches, and h
 
 ### Milestone 4: Validate resource limits, security, and runtime across providers
 
-Status: in progress (static boundary-test preparation; execution waits for the retained milestone 3 timing run)
+Status: correctness and matched raw reports complete in private f47d51d; resource collection and latency repair remain open
 Acceptance: not met
 
 Separate bounds on accepted native data from bounds on executable inspection work. Keep finite limits for aggregate bytes, structure, normalized text, commands, tokens, and language-parser work. Native body line count must not consume an executable-command budget. Choose the smallest validated limits that admit every preserved incident fixture with documented headroom. Record actual selected constants, worst-case memory and runtime evidence, and the reason for each change in this plan. Do not globally multiply every bound or add an environment setting that disables inspection. Partial-input acceptance, skipped overflow, and timeout-based allow responses are unacceptable.
