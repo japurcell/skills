@@ -36,6 +36,8 @@ No source finding was dropped, broadened beyond its recorded applicability, or r
 
 The destination knowledge base now links this record from the scoped `skills` instructions, top-level file map entry for `skills/dotnet-upgrade/`, and skills testing guidance. Existing guidance about the retained validator incompatibility and unverified client controls was reconciled, not duplicated or weakened.
 
+Follow-up portability correction (2026-10-01): the tracked-source inventory example originally embedded a machine-specific absolute checkout path. It now uses `WORKPLAN_SOURCE`; the immutable source commit hash remains the historical identity.
+
 ## Non-mutating checks and results
 
 From the destination repository root:
@@ -45,9 +47,9 @@ From the destination repository root:
     rtk git diff --check
     rtk proxy ./scripts/lint-okf.py
 
-The JSON parses, scoped whitespace checks are clean, and the existing canonical OKF linter passes. A non-retained inline Python audit used immutable `git show` objects to verify the 45 source digests, prompt digest, finding count, destination anchors and relative Markdown links; it reported zero mismatches. The tracked source inventory command was:
+The JSON parses, scoped whitespace checks are clean, and the existing canonical OKF linter passes. A non-retained inline Python audit used immutable `git show` objects to verify the 45 source digests, prompt digest, finding count, destination anchors and relative Markdown links; it reported zero mismatches. For a portable rerun, set `WORKPLAN_SOURCE` to the WorkPlanReports checkout containing the immutable source revision and use:
 
-    rtk proxy git -C /home/adam/dev/fs/workplan-reports.worktrees/copilot-dotnet10-upgrade-playbook ls-tree -r --name-only 25f3f822d56a6468bc50e52ac16d6331df6604c4 -- docs/dotnet-10-upgrade/
+    rtk proxy git -C "$WORKPLAN_SOURCE" ls-tree -r --name-only 25f3f822d56a6468bc50e52ac16d6331df6604c4 -- docs/dotnet-10-upgrade/
 
 It returned 45 paths. These checks verify document/data structure and navigation, not migration behavior.
 
