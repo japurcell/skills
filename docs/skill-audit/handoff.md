@@ -2,7 +2,7 @@
 
 ## Goal and Status
 
-Charting is complete. The destination is a completed audit of all maintained skills plus a self-contained implementation ExecPlan. The six-ticket map contains two closed primary-source research tickets and four open human decision tickets. No human decision ticket was resolved during charting.
+The destination is a completed audit of all maintained skills plus a self-contained implementation ExecPlan. The seven-ticket map contains two closed primary-source research tickets, one closed human decision ticket, and four open human decision tickets. No ticket remains claimed.
 
 All planning artifacts are feature-scoped under `docs/skill-audit/`, as the user explicitly requested. Resume from [Skill Authoring Audit](map.md).
 
@@ -18,17 +18,25 @@ All planning artifacts are feature-scoped under `docs/skill-audit/`, as the user
 
 ## Next Focus
 
-Claim [Set Adoption Rules and Protected Behavior](tickets/set-adoption-rules-and-protected-behavior.md) and work it with the human through Wayfinder and Grilling. Verify that its two exact blocking tickets are closed before claiming it. [Set Audit Evidence and Model Coverage](tickets/set-audit-evidence-and-model-coverage.md) is also unblocked and can be worked by a separate session.
+Claim [Decide Skill Ownership and Import Handling](tickets/decide-skill-ownership-and-import-handling.md), the first open unblocked ticket in filename order. Verify that its exact blocker, `set-adoption-rules-and-protected-behavior.md`, is closed. Work the ownership/import decision with the human through Wayfinder and Grilling. Do not claim or resolve it in the session that closed the adoption ticket.
+
+[Set Adoption Rules and Protected Behavior](tickets/set-adoption-rules-and-protected-behavior.md#resolution) holds the human-confirmed rubric, behavior contracts, exception policy, finding severities, and evidence fields. It was resolved in two rounds on 2026-10-01 and indexed in the map. [Set Audit Evidence and Model Coverage](tickets/set-audit-evidence-and-model-coverage.md) is also unblocked and may be worked by a separate session.
+
+The resolved rubric makes [Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md) precise. This new ticket remains blocked by the adoption and batch/report decisions. The map's fog is updated; actual audit batches and finding-specific decisions still depend on later evidence.
 
 Read the [authoring checklist](research/authoring-checklist/findings.md) and [provider comparison](research/provider-compatibility/findings.md) as needed. The latter distinguishes client contracts from model support and records unverified client execution and model aliases. Confirm the intended Terra target before selecting a concrete evaluation command.
 
 ## Verification
 
-The complete six-ticket graph passes checks for exact dependencies, cycles, metadata, research findings, resolutions, relative links, and whitespace. Both research resolutions are indexed in the map. `rtk git diff --check` passes. The canonical documentation pass updates `.agents/instructions/repo.md` with the Wayfinder location rule and `.agents/memory/FILE_MAP.md` with the active map pointer. `rtk proxy python3 scripts/lint-okf.py` exits 0. No behavioral baseline, full skill audit, or implementation acceptance run has occurred.
+The seven-ticket graph passes a read-only Python check for metadata, exact dependencies, cycles, closed-ticket resolutions and map links, research findings, effort links, and fog delimiters. The frontier contains the ownership/import and evidence/model decisions. `rtk git diff --check` passes. No behavioral baseline, full skill audit, or implementation acceptance run has occurred.
+
+The formal agent-document pass finds no new durable repository knowledge or routing changes. The existing `.agents/instructions/repo.md` location rule and `.agents/memory/FILE_MAP.md` map pointer cover the new ticket; canonical agent docs need no edits. The earlier charting pass ran `rtk proxy python3 scripts/lint-okf.py` successfully. This session changes only planning documents.
 
 ## Resolved Execution Friction
 
 Tool Guardian rejected an oversized multi-file patch because its input exceeded the command-segment limit. Smaller patches succeeded. The protected scratchpad parent required an approved directory creation; files were subsequently moved into the user-requested docs location. Keep future patches bounded and use the docs location directly.
+
+The resumed session's temporary commit-message replacement used delete and add operations for the same path in one patch. `apply_patch` rejected the duplicate target; a single update operation succeeded. Use one operation per path within a patch.
 
 `rtk --version` reports 0.50.0, and the binary resolves to `/Users/adam/homebrew/bin/rtk`. `rtk gain` cannot open its tracking database in this sandbox; ordinary RTK commands work. This does not block planning.
 

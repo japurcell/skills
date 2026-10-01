@@ -25,15 +25,16 @@ Complete an evidence-backed audit of every maintained skill in `skills/` and `.a
 
 - [Extract the Complete Authoring Checklist](tickets/extract-complete-authoring-checklist.md): The full source guidance is captured with conditional checks and distinctions between Claude requirements and authoring advice.
 - [Establish Provider Compatibility Constraints](tickets/establish-provider-compatibility-constraints.md): Shared metadata does not imply shared invocation, permission, or loading behavior; model and client verification gaps are recorded.
+- [Set Adoption Rules and Protected Behavior](tickets/set-adoption-rules-and-protected-behavior.md): Apply contextual dispositions, preserve intended contracts, document exceptions, and rank findings by consequence with explicit evidence.
 
 ## Not yet specified
 
 <!-- FOG START -->
-The audit batches will emerge after the adoption rubric, evidence contract, ownership rules, and report format are settled. Their size and review depth depend on actual skill content and risk.
+The audit batches will emerge after the evidence contract, ownership rules, and report format are settled. Their size and review depth depend on actual skill content and risk.
 
 The findings may expose interactions between skills, shared reference changes, missing safe evaluation fixtures, or improvements to authoring and validation tools. Expand the map only when an investigation can be bounded around an actual finding.
 
-The accepted improvements will determine implementation order, baseline and candidate comparisons, provider checks, rollback strategy, and the precise milestones of the final ExecPlan. Judge audit completion and implementation readiness from that evidence before closing the route.
+The accepted improvements will determine implementation order, baseline and candidate comparisons, provider checks, rollback strategy, and the precise milestones of the final ExecPlan. Finding-specific behavior decisions, missing-evidence work, and additional acceptance decisions will become tickets when actual audit findings make them precise.
 <!-- FOG END -->
 
 ## Out of scope
