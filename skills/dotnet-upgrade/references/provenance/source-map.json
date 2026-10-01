@@ -2,10 +2,34 @@
   "source_repository": "WorkPlanReports",
   "source_revision": "25f3f822d56a6468bc50e52ac16d6331df6604c4",
   "schema_version": 1,
-  "ledger_state": "milestone-1-extraction",
+  "ledger_state": "milestone-2-bundled-knowledge",
   "extraction_date": "2026-09-30",
   "destination_base": "skills/dotnet-upgrade/",
-  "coverage_statement": "All enumerated inputs were read before extraction. This is a substantive extraction ledger, not final source-to-bundle coverage certification. Destinations and anchors name intended headings for Milestones 2 and 3 and may not exist yet. Milestone 2 must reconcile retained meaning and resolve destinations. Milestone 4 owns integrated document acceptance.",
+  "coverage_statement": "All 45 immutable Git artifacts and the separately captured prompt were read before Milestone 2 extraction. All 184 stable findings retain their summaries, classifications, applicability and verification scope. Each destination and anchor resolves to bundled Milestone 2 knowledge, including historical detail formerly routed to Milestone 3 templates. The route retains 30 research documents with full version-specific category assessments. Document/data/whitespace review is not migration execution, vendor revalidation or client enforcement proof. Milestone 4 owns integrated acceptance and destination knowledge-base synchronization.",
+  "reconciliation_date": "2026-10-01",
+  "milestone_2_review_record": {
+    "method": "Read immutable source artifacts, author standalone retained meaning, compare Git bytes and ledger metadata, review Markdown navigation and document scope. No application execution or live evaluation.",
+    "document_acceptance_before": "All 184 planned finding destinations were absent at integrated Milestone 1 commit 14cb22852e24d23a9e0b2410b109c0e43bbafd69.",
+    "document_acceptance_after": "All 184 findings resolve to existing bundled destinations and headings.",
+    "digest_reconciliation": "45 full-file Git SHA-256 digests and the 929-byte selected prompt SHA-256 match original values.",
+    "finding_reconciliation": "184 unique stable IDs; original summaries, classifications, applicability, verification scope and source hashes unchanged. Seven destinations moved from future templates to retained knowledge.",
+    "classification_counts": {
+      "observed": 46,
+      "researched": 113,
+      "project-decision": 20,
+      "unverified": 5
+    },
+    "scope": "37 owned reference files: 36 Markdown documents and this JSON ledger. No executable runner or credentials shipped.",
+    "deferred": "Milestone 4 integrated acceptance and destination .agents synchronization; client enforcement, runtime gates and live vendor refresh remain outside this document review."
+  },
+  "milestone_2_acceptance": [
+    "Documentation seam agreed by the request: missing bundled references/anchors before authoring, complete standalone knowledge afterward; no .NET or live evaluations.",
+    "Preserve exactly 46 artifacts, 184 unique stable findings and original digests, with retained substantive meaning and version-specific categories.",
+    "Resolve every finding to an owned bundled reference rather than requiring unowned interface, templates, evals, client documents or the application checkout.",
+    "Keep researched proposals, accepted strategy, observed stage results and unverified gates distinct; retain final 302 passes, one existing ignore, 383 warnings and 46.86 percent line coverage without claiming repeated provider/image gates.",
+    "Review documents, JSON data, source digests, destinations/anchors, relative links, scope and whitespace only. No validator, runner, package, install, model or migration execution."
+  ],
+  "destination_reconciliation": "WPR-INV-006/007 now resolve to the historical case inventory. WPR-TKT-AUTHOR-001 and WPR-TKT-GATE-001/002/003 and WPR-TKT-EXT-003 resolve to retained playbook authoring, gate and owner guidance. No finding ID, digest, original summary or evidence label was removed. The original Milestone 1 acceptance criteria below remain historical extraction criteria, not the current edit boundary.",
   "digest_policy": "SHA-256 of original git show bytes without decoding, redaction, line-ending conversion or RTK filtering. Prompt digest covers only embedded selected text stripped of four-space display indentation, LF endings and one final LF.",
   "date_policy": "Research, source publication, execution, capture and extraction dates are distinct. Null means unknown or not reverified. .NET 10 categories inherit the 2026-09-23 overview snapshot. .NET 9 files do not explicitly date their research. No upstream URL or application behavior was refreshed or exercised here.",
   "classification_policy": {
@@ -491,7 +515,7 @@
           "id": "WPR-INV-006",
           "summary": "Docker Node24.15 Alpine and independent .NET8 Alpine SDK/runtime,ICU/invariant=false, no root global.json COPY. Compose builds root context,starts SQLServer2022,mounts DataProtection keys,Development. build.sh frontend then publish deletes dist. IIS in-process web.config invokes DLL, not runtime installer. Launch profiles have environments not pins.",
           "classification": "observed",
-          "destination": "assets/templates/inventory.md",
+          "destination": "references/case-studies/workplan-reports.md",
           "anchor": "publishing-images-and-hosting",
           "applicability": "Identify independent images/frontend/hosting surfaces without operational values.",
           "verification_scope": "Source configuration only, no external runtime proof."
@@ -500,7 +524,7 @@
           "id": "WPR-INV-007",
           "summary": "VSCode launch hardcodes net8 path, tasks/Playwright inherit CLI SDK/target. Copilot/Gemini verify/format hooks no hardcoded major, cache uses SDK/global.json/props. No tracked CI/publish profile. README SDK minimum conflicts with root pin. Inspect Startup proxy/health/Swagger,async helpers,EF histories,MailAddress and docs. Commands must cover full solution and both tools separately,temporary publish/image,never shared migrations.",
           "classification": "observed",
-          "destination": "assets/templates/inventory.md",
+          "destination": "references/case-studies/workplan-reports.md",
           "anchor": "entry-points-behavior-and-external-controls",
           "applicability": "Target-specific discovery checklist.",
           "verification_scope": "Historical source risks/commands, not observed gate passes."
@@ -2406,7 +2430,7 @@
           "id": "WPR-TKT-AUTHOR-001",
           "summary": "Plan authorship depends on strategy/edits/owners/gates,embeds context,exactcommands/results,recovery,livingsections,milestoneacceptance/rationale. Source inspection corrected Local->Development image smoke. Initial implementation remained open,no migration during wayfinding.",
           "classification": "project-decision",
-          "destination": "assets/templates/execplan.md",
+          "destination": "references/playbook.md",
           "anchor": "standalone-plan-authoring-contract",
           "applicability": "Standalone future template,not companion requirement.",
           "verification_scope": "Historical authorship resolution only."
@@ -2481,8 +2505,8 @@
           "id": "WPR-TKT-GATE-001",
           "summary": "Two green checkpoints,9undeployed. Original decision9.0.305/10.0.401 latestMinor,9runtime>=9.0.20 initiallyonly9.0.9. Later10.0.302 minimum does not rewrite selected evidence. Fullsolution includesAuthServer,bothtools,nonemptydiscovery/coverage,sequential tests. Focused health/auth/API/browser/OpenIddict/jobs/10enumemail.",
           "classification": "project-decision",
-          "destination": "assets/templates/stage-evidence.md",
-          "anchor": "toolchain-solution-and-contract-gates",
+          "destination": "references/playbook.md",
+          "anchor": "measurable-stage-gates",
           "applicability": "Parameterize real target commands/versions.",
           "verification_scope": "Requirements not execution."
         },
@@ -2490,8 +2514,8 @@
           "id": "WPR-TKT-GATE-002",
           "summary": "Snapshotchecks,reviewedSQL,disposableSQLServer/SQLiteupdates before persist/auth,10timestampsUTC/nonUTC. Angular staging before uniqueReleasepublish,verify config/web/assemblies/assets,avoid destructivebuild.sh. RealDocker automatedboundedHTTPsmoke,culture/runtime/stop,controlledOracle200 not synthetic503. MissingDocker/provider/runtime blocks. Resolve newwarnings/NU1510/audit/failures/skips,retainoldignore,inspecttransitives. No autoDBdowngrade.",
           "classification": "project-decision",
-          "destination": "assets/templates/stage-evidence.md",
-          "anchor": "providers-publish-images-failures-and-recovery",
+          "destination": "references/playbook.md",
+          "anchor": "measurable-stage-gates",
           "applicability": "Approved measurable gates.",
           "verification_scope": "No command-presence pass,external services excluded.",
           "official_sources": [
@@ -2504,7 +2528,7 @@
           "id": "WPR-TKT-GATE-003",
           "summary": "Record stage versions/commands/results/coverage/providers/images/warnings/deviations and safe disposable config,no secrets. CI/CD WindowsAdmin AWSchecklists mandatoryplan content butnonblockinglocal. Do not claim Jenkins/IIS/Fargate/Lambda verified or trustall rejects spoofing. Recover source/image checkpoint via reviewed changes,not schema downgrade.",
           "classification": "project-decision",
-          "destination": "assets/templates/stage-evidence.md",
+          "destination": "references/playbook.md",
           "anchor": "local-versus-deployment-readiness",
           "applicability": "Targetowner boundary must be explicit.",
           "verification_scope": "External results absent.",
@@ -2569,8 +2593,8 @@
           "id": "WPR-TKT-EXT-003",
           "summary": "FutureECSFargate, Lambda suitable parts only,long-livedHangfire needs separate decomposition/adapter. AWSowns architecture/platform/pull/resources/network/secrets/SQL/Oracle/identity/SMTP/Hangfire/DataProtection/health/ICU/stop. Local image readiness not liveFargate. Supplied Lambda/API Gateway article does not prove app unchanged onLambda. Named nonblocking ownerchecklists required,actual delivery/results deferred.",
           "classification": "project-decision",
-          "destination": "assets/templates/stage-evidence.md",
-          "anchor": "external-owner-checklists",
+          "destination": "references/playbook.md",
+          "anchor": "local-versus-deployment-readiness",
           "applicability": "Owner-selected deployment boundaries.",
           "verification_scope": "No liveFargate/Lambda or externalverification.",
           "official_sources": [
