@@ -125,7 +125,7 @@ Eliminate redundant serialized-object rescanning only after tests show every exe
 
 ### Milestone 3: Classify observed shell forms and remove expensive scanning work
 
-Status: in progress
+Status: implementation integrated at 0003737c; growth and final latency acceptance remain open
 Acceptance: not met
 
 Replace punctuation-only shell segmentation with a bounded tokenizer that respects quotes, escapes, command separators, substitutions, redirections, and heredoc boundaries. A heredoc is a shell construct that passes multiline input to a command. A quoted delimiter suppresses shell expansion of that body, but the destination interpreter can still execute it. Do not treat every quoted argument or heredoc as inert: arguments to an interpreter's command option and bodies supplied to a shell remain executable. Executable substitutions inside apparent data must be inspected.
@@ -262,3 +262,5 @@ Revision note, 2026-10-01 22:21Z: Integrated the reviewed native classifier and 
 Revision note, 2026-10-01: Completed milestone 1 with sanitized provider-native fixture equivalents, immutable baseline fingerprints, exact baseline/candidate permission modes, public benchmark CLI coverage, two complete sequential baseline runs, per-case variation, and retained exploratory evidence. Updated the orchestrator-confirmed milestone 2 integration state and the milestone 4 truthful-limit test repair item. The plan is retained as explicitly requested.
 
 Revision note, 2026-10-01 22:43Z: Began independent static security review and milestone 4 boundary-test preparation while milestone 3 measures a frozen candidate snapshot. The initial native review reached its deadline without a verified artifact; it supplies no approval evidence. Candidate reports produced with different sample settings or source edits during measurement are exploratory only. No candidate latency gate has passed.
+
+Revision note, 2026-10-01 23:02Z: Integrated the shell/Python implementation at 0003737c after a conflict-free rebase, with 144 corpus checks, 11 focused shell test methods, 13 native test methods, and 25 generator tests passing. The original worker reproduced and repaired three independent-review bypass classes before integration. Both retained frozen candidates fail latency acceptance; the second predates the final narrow launcher and interpreter-option hardening. Removed the clean integrated worker checkout and branch. Rebased milestone 4 preparation without conflicts and granted that worker exclusive ownership of resource-bound repairs. No final security or performance approval is implied by integration.
