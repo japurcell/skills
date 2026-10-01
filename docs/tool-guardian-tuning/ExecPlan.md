@@ -14,14 +14,17 @@ The hook runs frequently. New functionality must not add measurable latency to e
 
 - [x] (2026-10-01) [planning] Review accessible session and guardian logs and identify false-positive categories.
 - [x] (2026-10-01) [planning] Obtain user agreement on scope, security boundaries, fallback behavior, delivery, and latency requirements.
-- [ ] [milestone-1] Preserve sanitized incident fixtures, reproduce failures through public provider entrypoints, and capture a repeatable latency baseline.
-- [ ] [milestone-2] Separate recognized native tool content and search data from executable instructions.
+- [x] (2026-10-01 22:18Z) [milestone-1] Preserve 47 sanitized fixtures, reproduce baseline failures through 144 public provider checks, and retain two sequential complete-hook timing runs with 147 scenarios each.
+- [x] (2026-10-01 22:16Z) [milestone-2] Separate recognized native tool content and search data from executable instructions; reviewed native change integrated at e373690d.
 - [ ] [milestone-3] Support the observed shell and Python forms without broad interpreter exemptions, and remove repeated or quadratic scanning work.
 - [ ] [milestone-4] Set measured resource bounds, validate security and latency, and regenerate all three providers.
+- [ ] [milestone-4] Update the old Gemini 33,000-byte native-write banner assertion to verify truthful overflow beyond the new 65,536-byte native bound, while retaining unsupported-input 32,768-byte strict-limit coverage.
 - [ ] [milestone-5] Synchronize documentation and deliver repository changes with user-run installation instructions.
 
 ## Surprises & Discoveries
 
+
+Milestone 1 public-entrypoint controls exposed existing execution-sink gaps: protected-branch force push inside shell substitution and a Python execution sink was allowed by all three baseline hooks. Baseline expectations preserve those observations; candidate expectations still require denial. Native provider equivalents also have different pre-fix decisions for some literal examples, so the shared corpus records provider-specific baseline expectations.
 
 The initial inbox description suggested a size-limit problem. Review found at least 23 falsely blocked file-write invocations: 12 input-limit failures and 11 command-pattern failures in inert documentation, source, or test text. The broader review also found false read-only search and analysis blocks. Raising limits alone cannot fix the accepted scope.
 
@@ -38,6 +41,9 @@ Plan authoring reproduced another file-write false positive: the SQL rule's keyw
 ## Decision Log
 
 
+- Decision: Measure unchanged hooks from an immutable external baseline while native-classifier work proceeds in its isolated candidate worktree.
+  Rationale: The copied baseline preserves unchanged runtime code independently of candidate edits. Milestone 2 integration waits for milestone 1 fixtures and baseline completion.
+  Date/Author: 2026-10-01, implementation orchestrator.
 - Decision: Fix all known false positives, including related read-only operations, across Codex, Copilot, and Gemini.
   Rationale: Observed failures share scanner defects, and the three provider outputs derive from one canonical implementation.
   Date/Author: 2026-10-01, user and planning agent.
@@ -60,7 +66,11 @@ Plan authoring reproduced another file-write false positive: the SQL rule's keyw
 ## Outcomes & Retrospective
 
 
-Planning is complete. No guardian implementation, threshold changes, generated output changes, or real installation has occurred. Investigation corrected the original limit-only hypothesis. Implementation acceptance remains unmet until the public-entrypoint reproductions pass, actual dangerous operations remain blocked, and repeated full-hook benchmarks establish no measurable regression.
+Milestone 1 is complete. The shared corpus verifies 144 public-entrypoint checks in baseline mode, including all 20 direct rule controls. The candidate contract remains intentionally red on unchanged hooks. The benchmark CLI regression suite passes, the registry contract includes the new suites, and generator freshness is unchanged. Two sequential final baseline reports each retain 147 scenarios, 3,675 raw timing samples, first-run observations, and three four-worker concurrency scenarios. Per-case variation is retained in `evidence/baseline-variation.json`; these are baseline measurements rather than proof of candidate latency acceptance. An earlier adapter revision with briefly overlapping measurement is preserved separately as exploratory evidence and excluded from comparison. No policy or real installed hook was modified by milestone 1.
+
+The reviewed native-classification change has separately been integrated by the orchestrator at e373690d. Its focused native suite is registered here for that integration. Remaining shell classification, truthful raised-native-limit banner coverage, adversarial verification, and candidate timing gates remain open. The formal agent-document pass is deferred until the entire implementation session ends.
+
+Planning established the original unchanged guardian snapshot before implementation. At that checkpoint no guardian implementation, threshold changes, generated output changes, or real installation had occurred. Investigation corrected the original limit-only hypothesis. Implementation acceptance remains unmet until the public-entrypoint reproductions pass, actual dangerous operations remain blocked, and repeated full-hook benchmarks establish no measurable regression.
 
 The inbox item has moved into this plan. The file map, repository routing, and current guardian known issues are synchronized. Canonical-document lint, generator freshness, and whitespace checks pass. These document checks do not establish implementation or performance acceptance.
 
@@ -80,8 +90,8 @@ Load `.agents/instructions/hooks.md`, `.agents/memory/known-issues/hooks.md`, `.
 
 ### Milestone 1: Reproduce incidents and establish the performance baseline
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Begin with end-to-end reproductions at the generated provider scripts' stdin/stdout boundary. These scripts receive a provider-shaped JSON tool event and emit the provider's permission decision. They must not execute the represented tool operation. Use disposable destinations and audit paths, never real home-directory hooks. Add a shared public-envelope regression suite at `scripts/test-tool-guard-false-positives.py` and register it in `scripts/test-all.py`. Reuse existing security-banner fixture helpers where appropriate without turning semantic acceptance into banner-string assertions.
 
@@ -101,8 +111,8 @@ This milestone is complete when public fixtures reproduce current failures witho
 
 ### Milestone 2: Establish native tool and search data boundaries
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 In `hooks/families/tool_guard.py`, introduce a bounded classification stage before command matching. Recognize exact provider tool aliases and validated input shapes for patch, edit, native write, and search operations. Use the schemas established by current provider fixtures and confirmed event envelopes. Tool name alone is not authority to exempt arbitrary fields. Unknown aliases, invalid types, additional executable-looking fields, and unsupported shapes must retain strict scanning.
 
@@ -243,3 +253,5 @@ Keep standard-library runtime dependencies and the existing generated-script pro
 The proposed shared regression suite owns sanitized incident and paired-danger fixtures. The existing benchmark runner adds `--guard-only`, `--script-root PATH`, and `--expected-behavior baseline|candidate` while preserving its current invocation defaults. Add a focused benchmark CLI test at `scripts/test-benchmark-high-rate-hooks.py`, register it beside the new regression suite, and validate its public flags without invoking the full high-rate benchmark recursively. Any final interface change must update this plan and area-scoped API/testing documentation before completion.
 
 Revision note, 2026-10-01: Recorded the user-confirmed scope and security contract, all-provider coverage, strict fallback, user-run installation, and no-added-latency requirement. Replaced the inbox's limit-only hypothesis with incident-driven operation classification and measured resource tuning. Implementation remains unstarted.
+
+Revision note, 2026-10-01: Completed milestone 1 with sanitized provider-native fixture equivalents, immutable baseline fingerprints, exact baseline/candidate permission modes, public benchmark CLI coverage, two complete sequential baseline runs, per-case variation, and retained exploratory evidence. Updated the orchestrator-confirmed milestone 2 integration state and the milestone 4 truthful-limit test repair item. The plan is retained as explicitly requested.

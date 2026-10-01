@@ -1,0 +1,3115 @@
+{
+  "method": "two sequential unchanged baseline runs; per-case variation, no provider/scenario pooling; two runs are descriptive, not a confidence interval",
+  "results": [
+    {
+      "case": "copilot.guard.clean",
+      "median_ms": [
+        30.097459,
+        26.887375
+      ],
+      "p95_ms": [
+        31.146,
+        29.801
+      ],
+      "sample_mad_ms": [
+        0.637,
+        0.157
+      ],
+      "first_run_ms": [
+        31.371958,
+        27.2705
+      ],
+      "run_to_run_median_mad_ms": 1.605042000000001,
+      "median_delta_ms": -3.210084000000002
+    },
+    {
+      "case": "copilot.guard.finding",
+      "median_ms": [
+        31.639208,
+        30.262667
+      ],
+      "p95_ms": [
+        33.36,
+        33.428
+      ],
+      "sample_mad_ms": [
+        0.806,
+        0.888
+      ],
+      "first_run_ms": [
+        31.366834,
+        27.717458
+      ],
+      "run_to_run_median_mad_ms": 0.6882704999999998,
+      "median_delta_ms": -1.3765409999999996
+    },
+    {
+      "case": "copilot.guard.large",
+      "median_ms": [
+        77.014209,
+        73.511666
+      ],
+      "p95_ms": [
+        84.354,
+        75.722
+      ],
+      "sample_mad_ms": [
+        0.722,
+        1.015
+      ],
+      "first_run_ms": [
+        75.427833,
+        76.957667
+      ],
+      "run_to_run_median_mad_ms": 1.7512714999999943,
+      "median_delta_ms": -3.5025429999999886
+    },
+    {
+      "case": "copilot.guard.failure",
+      "median_ms": [
+        27.916208,
+        27.145834
+      ],
+      "p95_ms": [
+        28.517,
+        28.758
+      ],
+      "sample_mad_ms": [
+        0.508,
+        0.427
+      ],
+      "first_run_ms": [
+        28.180792,
+        28.644458
+      ],
+      "run_to_run_median_mad_ms": 0.38518700000000017,
+      "median_delta_ms": -0.7703740000000003
+    },
+    {
+      "case": "gemini.guard.clean",
+      "median_ms": [
+        28.634,
+        27.724458
+      ],
+      "p95_ms": [
+        30.481,
+        29.917
+      ],
+      "sample_mad_ms": [
+        0.414,
+        0.459
+      ],
+      "first_run_ms": [
+        32.371125,
+        30.250375
+      ],
+      "run_to_run_median_mad_ms": 0.4547710000000009,
+      "median_delta_ms": -0.9095420000000018
+    },
+    {
+      "case": "gemini.guard.finding",
+      "median_ms": [
+        30.862916,
+        28.663333
+      ],
+      "p95_ms": [
+        32.016,
+        29.555
+      ],
+      "sample_mad_ms": [
+        0.593,
+        0.13
+      ],
+      "first_run_ms": [
+        30.5555,
+        28.430875
+      ],
+      "run_to_run_median_mad_ms": 1.0997914999999985,
+      "median_delta_ms": -2.199582999999997
+    },
+    {
+      "case": "gemini.guard.large",
+      "median_ms": [
+        122.221416,
+        118.63475
+      ],
+      "p95_ms": [
+        129.105,
+        120.856
+      ],
+      "sample_mad_ms": [
+        0.894,
+        1.247
+      ],
+      "first_run_ms": [
+        119.643958,
+        116.444917
+      ],
+      "run_to_run_median_mad_ms": 1.793333000000004,
+      "median_delta_ms": -3.586666000000008
+    },
+    {
+      "case": "gemini.guard.failure",
+      "median_ms": [
+        27.993166,
+        25.815584
+      ],
+      "p95_ms": [
+        29.274,
+        26.058
+      ],
+      "sample_mad_ms": [
+        0.596,
+        0.173
+      ],
+      "first_run_ms": [
+        28.575666,
+        26.463833
+      ],
+      "run_to_run_median_mad_ms": 1.0887909999999987,
+      "median_delta_ms": -2.1775819999999975
+    },
+    {
+      "case": "codex.guard.clean",
+      "median_ms": [
+        25.954625,
+        25.7155
+      ],
+      "p95_ms": [
+        28.023,
+        26.469
+      ],
+      "sample_mad_ms": [
+        0.708,
+        0.674
+      ],
+      "first_run_ms": [
+        25.778291,
+        25.209084
+      ],
+      "run_to_run_median_mad_ms": 0.11956250000000068,
+      "median_delta_ms": -0.23912500000000136
+    },
+    {
+      "case": "codex.guard.finding",
+      "median_ms": [
+        28.44875,
+        27.380875
+      ],
+      "p95_ms": [
+        29.208,
+        27.881
+      ],
+      "sample_mad_ms": [
+        0.35,
+        0.159
+      ],
+      "first_run_ms": [
+        28.841166,
+        27.794875
+      ],
+      "run_to_run_median_mad_ms": 0.5339375000000004,
+      "median_delta_ms": -1.0678750000000008
+    },
+    {
+      "case": "codex.guard.large",
+      "median_ms": [
+        120.160833,
+        116.468333
+      ],
+      "p95_ms": [
+        132.299,
+        119.317
+      ],
+      "sample_mad_ms": [
+        1.377,
+        1.167
+      ],
+      "first_run_ms": [
+        117.584167,
+        114.693666
+      ],
+      "run_to_run_median_mad_ms": 1.8462499999999977,
+      "median_delta_ms": -3.6924999999999955
+    },
+    {
+      "case": "codex.guard.failure",
+      "median_ms": [
+        26.664208,
+        24.511708
+      ],
+      "p95_ms": [
+        35.641,
+        25.154
+      ],
+      "sample_mad_ms": [
+        0.203,
+        0.294
+      ],
+      "first_run_ms": [
+        25.986709,
+        25.268541
+      ],
+      "run_to_run_median_mad_ms": 1.07625,
+      "median_delta_ms": -2.1525
+    },
+    {
+      "case": "copilot.guard.patch.bytes-46899",
+      "median_ms": [
+        31.37325,
+        27.357042
+      ],
+      "p95_ms": [
+        36.051,
+        27.712
+      ],
+      "sample_mad_ms": [
+        0.804,
+        0.127
+      ],
+      "first_run_ms": [
+        35.396875,
+        27.86325
+      ],
+      "run_to_run_median_mad_ms": 2.0081039999999994,
+      "median_delta_ms": -4.016207999999999
+    },
+    {
+      "case": "copilot.guard.patch.lines-330",
+      "median_ms": [
+        28.887,
+        27.237
+      ],
+      "p95_ms": [
+        29.899,
+        27.433
+      ],
+      "sample_mad_ms": [
+        0.726,
+        0.089
+      ],
+      "first_run_ms": [
+        30.423834,
+        27.448917
+      ],
+      "run_to_run_median_mad_ms": 0.8250000000000011,
+      "median_delta_ms": -1.6500000000000021
+    },
+    {
+      "case": "copilot.guard.patch.lines-124-segments-142",
+      "median_ms": [
+        29.562166,
+        27.122541
+      ],
+      "p95_ms": [
+        30.77,
+        27.638
+      ],
+      "sample_mad_ms": [
+        0.66,
+        0.179
+      ],
+      "first_run_ms": [
+        28.692083,
+        27.041875
+      ],
+      "run_to_run_median_mad_ms": 1.2198125000000015,
+      "median_delta_ms": -2.439625000000003
+    },
+    {
+      "case": "copilot.guard.write.actual-newlines",
+      "median_ms": [
+        29.380375,
+        28.532958
+      ],
+      "p95_ms": [
+        30.745,
+        29.433
+      ],
+      "sample_mad_ms": [
+        1.046,
+        0.85
+      ],
+      "first_run_ms": [
+        29.507125,
+        27.482333
+      ],
+      "run_to_run_median_mad_ms": 0.42370850000000004,
+      "median_delta_ms": -0.8474170000000001
+    },
+    {
+      "case": "copilot.guard.write.escaped-newlines",
+      "median_ms": [
+        28.50075,
+        28.652167
+      ],
+      "p95_ms": [
+        30.022,
+        29.347
+      ],
+      "sample_mad_ms": [
+        0.737,
+        0.518
+      ],
+      "first_run_ms": [
+        27.848542,
+        28.743583
+      ],
+      "run_to_run_median_mad_ms": 0.07570849999999929,
+      "median_delta_ms": 0.15141699999999858
+    },
+    {
+      "case": "copilot.guard.write.utf8-growth",
+      "median_ms": [
+        28.750042,
+        27.074208
+      ],
+      "p95_ms": [
+        29.839,
+        27.623
+      ],
+      "sample_mad_ms": [
+        0.353,
+        0.159
+      ],
+      "first_run_ms": [
+        29.184334,
+        27.994792
+      ],
+      "run_to_run_median_mad_ms": 0.8379170000000009,
+      "median_delta_ms": -1.6758340000000018
+    },
+    {
+      "case": "copilot.guard.write.examples.md",
+      "median_ms": [
+        29.900666,
+        28.628833
+      ],
+      "p95_ms": [
+        32.182,
+        29.124
+      ],
+      "sample_mad_ms": [
+        0.444,
+        0.196
+      ],
+      "first_run_ms": [
+        31.116041,
+        28.868459
+      ],
+      "run_to_run_median_mad_ms": 0.6359165000000004,
+      "median_delta_ms": -1.2718330000000009
+    },
+    {
+      "case": "copilot.guard.write.examples.py",
+      "median_ms": [
+        29.963333,
+        28.776541
+      ],
+      "p95_ms": [
+        31.763,
+        29.623
+      ],
+      "sample_mad_ms": [
+        0.559,
+        0.292
+      ],
+      "first_run_ms": [
+        29.547959,
+        28.633291
+      ],
+      "run_to_run_median_mad_ms": 0.5933959999999985,
+      "median_delta_ms": -1.186791999999997
+    },
+    {
+      "case": "copilot.guard.write.examples.test.py",
+      "median_ms": [
+        31.074834,
+        30.377459
+      ],
+      "p95_ms": [
+        31.965,
+        30.835
+      ],
+      "sample_mad_ms": [
+        0.792,
+        0.201
+      ],
+      "first_run_ms": [
+        31.177834,
+        28.901875
+      ],
+      "run_to_run_median_mad_ms": 0.3486874999999987,
+      "median_delta_ms": -0.6973749999999974
+    },
+    {
+      "case": "copilot.guard.edit.replacement",
+      "median_ms": [
+        29.988791,
+        28.942792
+      ],
+      "p95_ms": [
+        31.006,
+        30.41
+      ],
+      "sample_mad_ms": [
+        0.365,
+        0.445
+      ],
+      "first_run_ms": [
+        30.880625,
+        30.858208
+      ],
+      "run_to_run_median_mad_ms": 0.5229994999999992,
+      "median_delta_ms": -1.0459989999999983
+    },
+    {
+      "case": "copilot.guard.search.literal",
+      "median_ms": [
+        29.274792,
+        28.556375
+      ],
+      "p95_ms": [
+        30.433,
+        29.076
+      ],
+      "sample_mad_ms": [
+        0.25,
+        0.136
+      ],
+      "first_run_ms": [
+        29.247125,
+        28.6715
+      ],
+      "run_to_run_median_mad_ms": 0.35920850000000115,
+      "median_delta_ms": -0.7184170000000023
+    },
+    {
+      "case": "copilot.guard.search.shell-literal",
+      "median_ms": [
+        28.919291,
+        27.1345
+      ],
+      "p95_ms": [
+        33.374,
+        27.43
+      ],
+      "sample_mad_ms": [
+        1.157,
+        0.133
+      ],
+      "first_run_ms": [
+        28.898167,
+        28.23425
+      ],
+      "run_to_run_median_mad_ms": 0.892395500000001,
+      "median_delta_ms": -1.784791000000002
+    },
+    {
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "median_ms": [
+        29.75825,
+        27.156167
+      ],
+      "p95_ms": [
+        31.4,
+        27.628
+      ],
+      "sample_mad_ms": [
+        0.259,
+        0.151
+      ],
+      "first_run_ms": [
+        30.59225,
+        27.4425
+      ],
+      "run_to_run_median_mad_ms": 1.3010415000000002,
+      "median_delta_ms": -2.6020830000000004
+    },
+    {
+      "case": "copilot.guard.writer.lines-120-segments-139",
+      "median_ms": [
+        29.75325,
+        28.923542
+      ],
+      "p95_ms": [
+        40.726,
+        29.441
+      ],
+      "sample_mad_ms": [
+        0.733,
+        0.178
+      ],
+      "first_run_ms": [
+        29.230667,
+        27.088334
+      ],
+      "run_to_run_median_mad_ms": 0.41485400000000006,
+      "median_delta_ms": -0.8297080000000001
+    },
+    {
+      "case": "copilot.guard.survey.json-stdin",
+      "median_ms": [
+        29.993542,
+        28.999625
+      ],
+      "p95_ms": [
+        31.116,
+        30.459
+      ],
+      "sample_mad_ms": [
+        0.314,
+        0.264
+      ],
+      "first_run_ms": [
+        35.641167,
+        30.781708
+      ],
+      "run_to_run_median_mad_ms": 0.49695849999999986,
+      "median_delta_ms": -0.9939169999999997
+    },
+    {
+      "case": "copilot.guard.survey.python-subprocess",
+      "median_ms": [
+        30.354084,
+        29.81
+      ],
+      "p95_ms": [
+        32.678,
+        30.451
+      ],
+      "sample_mad_ms": [
+        0.32,
+        0.279
+      ],
+      "first_run_ms": [
+        30.166709,
+        29.576833
+      ],
+      "run_to_run_median_mad_ms": 0.2720420000000008,
+      "median_delta_ms": -0.5440840000000016
+    },
+    {
+      "case": "copilot.guard.survey.analysis-source",
+      "median_ms": [
+        29.757917,
+        29.292709
+      ],
+      "p95_ms": [
+        32.697,
+        29.64
+      ],
+      "sample_mad_ms": [
+        0.266,
+        0.197
+      ],
+      "first_run_ms": [
+        33.588083,
+        29.24975
+      ],
+      "run_to_run_median_mad_ms": 0.23260400000000025,
+      "median_delta_ms": -0.4652080000000005
+    },
+    {
+      "case": "copilot.guard.write.english-inflection",
+      "median_ms": [
+        31.095541,
+        29.082083
+      ],
+      "p95_ms": [
+        31.525,
+        31.037
+      ],
+      "sample_mad_ms": [
+        0.199,
+        0.179
+      ],
+      "first_run_ms": [
+        32.986333,
+        29.589208
+      ],
+      "run_to_run_median_mad_ms": 1.006729,
+      "median_delta_ms": -2.013458
+    },
+    {
+      "case": "copilot.guard.danger.recursive_remove_root",
+      "median_ms": [
+        30.663209,
+        30.472292
+      ],
+      "p95_ms": [
+        32.743,
+        31.002
+      ],
+      "sample_mad_ms": [
+        1.109,
+        0.282
+      ],
+      "first_run_ms": [
+        30.536958,
+        30.356708
+      ],
+      "run_to_run_median_mad_ms": 0.09545849999999945,
+      "median_delta_ms": -0.1909169999999989
+    },
+    {
+      "case": "copilot.guard.danger.recursive_remove_home",
+      "median_ms": [
+        30.141667,
+        29.169042
+      ],
+      "p95_ms": [
+        31.625,
+        35.469
+      ],
+      "sample_mad_ms": [
+        0.745,
+        0.706
+      ],
+      "first_run_ms": [
+        30.430709,
+        29.877542
+      ],
+      "run_to_run_median_mad_ms": 0.48631250000000037,
+      "median_delta_ms": -0.9726250000000007
+    },
+    {
+      "case": "copilot.guard.danger.recursive_remove_current",
+      "median_ms": [
+        29.274542,
+        28.875
+      ],
+      "p95_ms": [
+        30.157,
+        31.751
+      ],
+      "sample_mad_ms": [
+        0.194,
+        0.264
+      ],
+      "first_run_ms": [
+        29.402416,
+        28.812834
+      ],
+      "run_to_run_median_mad_ms": 0.19977100000000014,
+      "median_delta_ms": -0.3995420000000003
+    },
+    {
+      "case": "copilot.guard.danger.recursive_remove_parent",
+      "median_ms": [
+        30.630625,
+        28.479167
+      ],
+      "p95_ms": [
+        31.015,
+        28.974
+      ],
+      "sample_mad_ms": [
+        0.333,
+        0.07
+      ],
+      "first_run_ms": [
+        28.899459,
+        28.652208
+      ],
+      "run_to_run_median_mad_ms": 1.075728999999999,
+      "median_delta_ms": -2.151457999999998
+    },
+    {
+      "case": "copilot.guard.danger.remove_env_file",
+      "median_ms": [
+        30.377666,
+        29.884583
+      ],
+      "p95_ms": [
+        32.01,
+        30.648
+      ],
+      "sample_mad_ms": [
+        0.65,
+        0.634
+      ],
+      "first_run_ms": [
+        31.374166,
+        29.266542
+      ],
+      "run_to_run_median_mad_ms": 0.24654150000000108,
+      "median_delta_ms": -0.49308300000000216
+    },
+    {
+      "case": "copilot.guard.danger.remove_git_metadata",
+      "median_ms": [
+        29.082125,
+        29.611333
+      ],
+      "p95_ms": [
+        29.406,
+        30.51
+      ],
+      "sample_mad_ms": [
+        0.122,
+        0.588
+      ],
+      "first_run_ms": [
+        29.47225,
+        30.096625
+      ],
+      "run_to_run_median_mad_ms": 0.2646039999999985,
+      "median_delta_ms": 0.529207999999997
+    },
+    {
+      "case": "copilot.guard.danger.force_push_protected_branch",
+      "median_ms": [
+        29.280959,
+        28.555917
+      ],
+      "p95_ms": [
+        29.799,
+        29.021
+      ],
+      "sample_mad_ms": [
+        0.128,
+        0.095
+      ],
+      "first_run_ms": [
+        30.058042,
+        28.486583
+      ],
+      "run_to_run_median_mad_ms": 0.3625209999999992,
+      "median_delta_ms": -0.7250419999999984
+    },
+    {
+      "case": "copilot.guard.danger.hard_reset",
+      "median_ms": [
+        29.11575,
+        28.520166
+      ],
+      "p95_ms": [
+        29.424,
+        28.828
+      ],
+      "sample_mad_ms": [
+        0.102,
+        0.122
+      ],
+      "first_run_ms": [
+        28.986458,
+        28.602667
+      ],
+      "run_to_run_median_mad_ms": 0.2977919999999994,
+      "median_delta_ms": -0.5955839999999988
+    },
+    {
+      "case": "copilot.guard.danger.forced_git_clean",
+      "median_ms": [
+        30.8075,
+        28.4205
+      ],
+      "p95_ms": [
+        31.118,
+        28.879
+      ],
+      "sample_mad_ms": [
+        0.163,
+        0.136
+      ],
+      "first_run_ms": [
+        29.180167,
+        28.530209
+      ],
+      "run_to_run_median_mad_ms": 1.1935000000000002,
+      "median_delta_ms": -2.3870000000000005
+    },
+    {
+      "case": "copilot.guard.danger.drop_table",
+      "median_ms": [
+        29.27075,
+        30.249375
+      ],
+      "p95_ms": [
+        30.447,
+        30.757
+      ],
+      "sample_mad_ms": [
+        0.175,
+        0.163
+      ],
+      "first_run_ms": [
+        30.71175,
+        28.877291
+      ],
+      "run_to_run_median_mad_ms": 0.4893125000000005,
+      "median_delta_ms": 0.978625000000001
+    },
+    {
+      "case": "copilot.guard.danger.drop_database",
+      "median_ms": [
+        29.084208,
+        28.842416
+      ],
+      "p95_ms": [
+        29.446,
+        30.334
+      ],
+      "sample_mad_ms": [
+        0.135,
+        0.317
+      ],
+      "first_run_ms": [
+        29.300291,
+        30.811417
+      ],
+      "run_to_run_median_mad_ms": 0.12089600000000011,
+      "median_delta_ms": -0.24179200000000023
+    },
+    {
+      "case": "copilot.guard.danger.truncate_table",
+      "median_ms": [
+        29.093666,
+        28.88025
+      ],
+      "p95_ms": [
+        29.674,
+        31.84
+      ],
+      "sample_mad_ms": [
+        0.229,
+        0.243
+      ],
+      "first_run_ms": [
+        28.838708,
+        28.933542
+      ],
+      "run_to_run_median_mad_ms": 0.10670799999999936,
+      "median_delta_ms": -0.21341599999999872
+    },
+    {
+      "case": "copilot.guard.danger.delete_without_where",
+      "median_ms": [
+        29.12225,
+        31.67925
+      ],
+      "p95_ms": [
+        30.764,
+        41.099
+      ],
+      "sample_mad_ms": [
+        0.246,
+        3.052
+      ],
+      "first_run_ms": [
+        28.990708,
+        29.093083
+      ],
+      "run_to_run_median_mad_ms": 1.2784999999999993,
+      "median_delta_ms": 2.5569999999999986
+    },
+    {
+      "case": "copilot.guard.danger.recursive_world_writable",
+      "median_ms": [
+        31.025125,
+        30.037917
+      ],
+      "p95_ms": [
+        31.658,
+        32.046
+      ],
+      "sample_mad_ms": [
+        0.263,
+        0.631
+      ],
+      "first_run_ms": [
+        31.806083,
+        36.498792
+      ],
+      "run_to_run_median_mad_ms": 0.4936039999999995,
+      "median_delta_ms": -0.987207999999999
+    },
+    {
+      "case": "copilot.guard.danger.world_writable",
+      "median_ms": [
+        30.2965,
+        29.723584
+      ],
+      "p95_ms": [
+        32.077,
+        31.801
+      ],
+      "sample_mad_ms": [
+        0.796,
+        0.502
+      ],
+      "first_run_ms": [
+        31.516375,
+        31.7685
+      ],
+      "run_to_run_median_mad_ms": 0.28645800000000143,
+      "median_delta_ms": -0.5729160000000029
+    },
+    {
+      "case": "copilot.guard.danger.download_execute_bash",
+      "median_ms": [
+        31.894625,
+        28.356125
+      ],
+      "p95_ms": [
+        43.856,
+        30.146
+      ],
+      "sample_mad_ms": [
+        1.35,
+        0.248
+      ],
+      "first_run_ms": [
+        31.677916,
+        29.919375
+      ],
+      "run_to_run_median_mad_ms": 1.7692500000000013,
+      "median_delta_ms": -3.5385000000000026
+    },
+    {
+      "case": "copilot.guard.danger.download_execute_sh",
+      "median_ms": [
+        30.778667,
+        28.209666
+      ],
+      "p95_ms": [
+        32.889,
+        28.644
+      ],
+      "sample_mad_ms": [
+        0.506,
+        0.097
+      ],
+      "first_run_ms": [
+        31.089208,
+        28.465292
+      ],
+      "run_to_run_median_mad_ms": 1.2845005,
+      "median_delta_ms": -2.569001
+    },
+    {
+      "case": "copilot.guard.danger.upload_local_data",
+      "median_ms": [
+        31.943917,
+        28.234875
+      ],
+      "p95_ms": [
+        32.445,
+        28.763
+      ],
+      "sample_mad_ms": [
+        0.229,
+        0.157
+      ],
+      "first_run_ms": [
+        30.704125,
+        28.277208
+      ],
+      "run_to_run_median_mad_ms": 1.854521,
+      "median_delta_ms": -3.709042
+    },
+    {
+      "case": "copilot.guard.danger.privileged_command",
+      "median_ms": [
+        32.335625,
+        28.747042
+      ],
+      "p95_ms": [
+        35.677,
+        30.463
+      ],
+      "sample_mad_ms": [
+        1.724,
+        0.203
+      ],
+      "first_run_ms": [
+        32.410042,
+        28.811333
+      ],
+      "run_to_run_median_mad_ms": 1.7942915,
+      "median_delta_ms": -3.588583
+    },
+    {
+      "case": "copilot.guard.danger.publish_package",
+      "median_ms": [
+        31.14475,
+        28.985916
+      ],
+      "p95_ms": [
+        41.193,
+        30.477
+      ],
+      "sample_mad_ms": [
+        1.029,
+        0.425
+      ],
+      "first_run_ms": [
+        31.174708,
+        28.698584
+      ],
+      "run_to_run_median_mad_ms": 1.0794169999999994,
+      "median_delta_ms": -2.158833999999999
+    },
+    {
+      "case": "copilot.guard.danger.writer-before",
+      "median_ms": [
+        32.188167,
+        27.246792
+      ],
+      "p95_ms": [
+        32.994,
+        28.016
+      ],
+      "sample_mad_ms": [
+        0.806,
+        0.214
+      ],
+      "first_run_ms": [
+        31.152334,
+        28.706958
+      ],
+      "run_to_run_median_mad_ms": 2.4706875000000004,
+      "median_delta_ms": -4.941375000000001
+    },
+    {
+      "case": "copilot.guard.danger.writer-after",
+      "median_ms": [
+        29.922834,
+        27.143167
+      ],
+      "p95_ms": [
+        31.397,
+        28.084
+      ],
+      "sample_mad_ms": [
+        0.235,
+        0.12
+      ],
+      "first_run_ms": [
+        30.650125,
+        27.544042
+      ],
+      "run_to_run_median_mad_ms": 1.3898335000000017,
+      "median_delta_ms": -2.7796670000000034
+    },
+    {
+      "case": "copilot.guard.danger.substitution",
+      "median_ms": [
+        28.298625,
+        27.473541
+      ],
+      "p95_ms": [
+        30.943,
+        28.351
+      ],
+      "sample_mad_ms": [
+        0.39,
+        0.25
+      ],
+      "first_run_ms": [
+        31.092084,
+        27.386875
+      ],
+      "run_to_run_median_mad_ms": 0.4125420000000002,
+      "median_delta_ms": -0.8250840000000004
+    },
+    {
+      "case": "copilot.guard.danger.interpreter-sink",
+      "median_ms": [
+        28.220958,
+        27.480458
+      ],
+      "p95_ms": [
+        29.586,
+        28.296
+      ],
+      "sample_mad_ms": [
+        0.271,
+        0.205
+      ],
+      "first_run_ms": [
+        31.719792,
+        27.961792
+      ],
+      "run_to_run_median_mad_ms": 0.3702500000000004,
+      "median_delta_ms": -0.7405000000000008
+    },
+    {
+      "case": "copilot.guard.danger.unicode-normalization",
+      "median_ms": [
+        30.46025,
+        29.241875
+      ],
+      "p95_ms": [
+        30.999,
+        30.822
+      ],
+      "sample_mad_ms": [
+        0.466,
+        0.761
+      ],
+      "first_run_ms": [
+        29.313958,
+        29.044375
+      ],
+      "run_to_run_median_mad_ms": 0.6091874999999991,
+      "median_delta_ms": -1.2183749999999982
+    },
+    {
+      "case": "copilot.guard.danger.extra-field",
+      "median_ms": [
+        29.716916,
+        28.994542
+      ],
+      "p95_ms": [
+        31.152,
+        30.087
+      ],
+      "sample_mad_ms": [
+        0.322,
+        0.259
+      ],
+      "first_run_ms": [
+        29.380291,
+        30.208625
+      ],
+      "run_to_run_median_mad_ms": 0.36118700000000104,
+      "median_delta_ms": -0.7223740000000021
+    },
+    {
+      "case": "copilot.guard.danger.malformed-schema",
+      "median_ms": [
+        29.413958,
+        28.703375
+      ],
+      "p95_ms": [
+        29.979,
+        29.803
+      ],
+      "sample_mad_ms": [
+        0.178,
+        0.189
+      ],
+      "first_run_ms": [
+        29.309375,
+        28.491542
+      ],
+      "run_to_run_median_mad_ms": 0.35529149999999987,
+      "median_delta_ms": -0.7105829999999997
+    },
+    {
+      "case": "gemini.guard.patch.bytes-46899",
+      "median_ms": [
+        28.288375,
+        27.768041
+      ],
+      "p95_ms": [
+        28.863,
+        28.144
+      ],
+      "sample_mad_ms": [
+        0.119,
+        0.207
+      ],
+      "first_run_ms": [
+        28.491375,
+        28.021334
+      ],
+      "run_to_run_median_mad_ms": 0.26016699999999915,
+      "median_delta_ms": -0.5203339999999983
+    },
+    {
+      "case": "gemini.guard.patch.lines-330",
+      "median_ms": [
+        29.743541,
+        27.504417
+      ],
+      "p95_ms": [
+        33.491,
+        27.94
+      ],
+      "sample_mad_ms": [
+        1.15,
+        0.14
+      ],
+      "first_run_ms": [
+        28.724208,
+        27.518167
+      ],
+      "run_to_run_median_mad_ms": 1.1195620000000002,
+      "median_delta_ms": -2.2391240000000003
+    },
+    {
+      "case": "gemini.guard.patch.lines-124-segments-142",
+      "median_ms": [
+        29.498458,
+        28.674583
+      ],
+      "p95_ms": [
+        33.486,
+        29.24
+      ],
+      "sample_mad_ms": [
+        1.557,
+        0.46
+      ],
+      "first_run_ms": [
+        29.870709,
+        27.504166
+      ],
+      "run_to_run_median_mad_ms": 0.4119375000000005,
+      "median_delta_ms": -0.823875000000001
+    },
+    {
+      "case": "gemini.guard.write.actual-newlines",
+      "median_ms": [
+        29.450542,
+        27.426708
+      ],
+      "p95_ms": [
+        36.504,
+        28.561
+      ],
+      "sample_mad_ms": [
+        0.474,
+        0.164
+      ],
+      "first_run_ms": [
+        30.907166,
+        27.690875
+      ],
+      "run_to_run_median_mad_ms": 1.0119169999999986,
+      "median_delta_ms": -2.0238339999999972
+    },
+    {
+      "case": "gemini.guard.write.escaped-newlines",
+      "median_ms": [
+        28.415625,
+        27.504875
+      ],
+      "p95_ms": [
+        30.442,
+        27.824
+      ],
+      "sample_mad_ms": [
+        0.295,
+        0.143
+      ],
+      "first_run_ms": [
+        32.453042,
+        27.361625
+      ],
+      "run_to_run_median_mad_ms": 0.4553750000000001,
+      "median_delta_ms": -0.9107500000000002
+    },
+    {
+      "case": "gemini.guard.write.utf8-growth",
+      "median_ms": [
+        27.862209,
+        28.871458
+      ],
+      "p95_ms": [
+        28.814,
+        32.217
+      ],
+      "sample_mad_ms": [
+        0.136,
+        1.451
+      ],
+      "first_run_ms": [
+        27.918333,
+        27.418458
+      ],
+      "run_to_run_median_mad_ms": 0.5046245000000003,
+      "median_delta_ms": 1.0092490000000005
+    },
+    {
+      "case": "gemini.guard.write.examples.md",
+      "median_ms": [
+        30.948625,
+        29.132041
+      ],
+      "p95_ms": [
+        31.853,
+        31.443
+      ],
+      "sample_mad_ms": [
+        0.634,
+        0.346
+      ],
+      "first_run_ms": [
+        29.762417,
+        29.845875
+      ],
+      "run_to_run_median_mad_ms": 0.9082919999999994,
+      "median_delta_ms": -1.8165839999999989
+    },
+    {
+      "case": "gemini.guard.write.examples.py",
+      "median_ms": [
+        30.107417,
+        30.020625
+      ],
+      "p95_ms": [
+        35.548,
+        30.933
+      ],
+      "sample_mad_ms": [
+        0.607,
+        0.667
+      ],
+      "first_run_ms": [
+        30.156292,
+        29.2865
+      ],
+      "run_to_run_median_mad_ms": 0.04339600000000132,
+      "median_delta_ms": -0.08679200000000264
+    },
+    {
+      "case": "gemini.guard.write.examples.test.py",
+      "median_ms": [
+        30.57125,
+        28.984875
+      ],
+      "p95_ms": [
+        32.923,
+        29.933
+      ],
+      "sample_mad_ms": [
+        0.706,
+        0.11
+      ],
+      "first_run_ms": [
+        34.839625,
+        29.49425
+      ],
+      "run_to_run_median_mad_ms": 0.7931875000000002,
+      "median_delta_ms": -1.5863750000000003
+    },
+    {
+      "case": "gemini.guard.edit.replacement",
+      "median_ms": [
+        30.932541,
+        29.279125
+      ],
+      "p95_ms": [
+        32.34,
+        43.96
+      ],
+      "sample_mad_ms": [
+        0.481,
+        0.124
+      ],
+      "first_run_ms": [
+        30.691792,
+        29.316333
+      ],
+      "run_to_run_median_mad_ms": 0.826708,
+      "median_delta_ms": -1.653416
+    },
+    {
+      "case": "gemini.guard.search.literal",
+      "median_ms": [
+        30.084791,
+        28.796
+      ],
+      "p95_ms": [
+        31.364,
+        29.144
+      ],
+      "sample_mad_ms": [
+        0.728,
+        0.155
+      ],
+      "first_run_ms": [
+        30.940375,
+        29.014459
+      ],
+      "run_to_run_median_mad_ms": 0.6443954999999999,
+      "median_delta_ms": -1.2887909999999998
+    },
+    {
+      "case": "gemini.guard.search.shell-literal",
+      "median_ms": [
+        28.7235,
+        27.69625
+      ],
+      "p95_ms": [
+        30.388,
+        33.734
+      ],
+      "sample_mad_ms": [
+        0.629,
+        0.304
+      ],
+      "first_run_ms": [
+        30.947541,
+        27.511583
+      ],
+      "run_to_run_median_mad_ms": 0.5136250000000011,
+      "median_delta_ms": -1.0272500000000022
+    },
+    {
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "median_ms": [
+        28.064792,
+        29.917625
+      ],
+      "p95_ms": [
+        34.34,
+        31.85
+      ],
+      "sample_mad_ms": [
+        0.311,
+        0.605
+      ],
+      "first_run_ms": [
+        29.850792,
+        29.268458
+      ],
+      "run_to_run_median_mad_ms": 0.9264165000000002,
+      "median_delta_ms": 1.8528330000000004
+    },
+    {
+      "case": "gemini.guard.writer.lines-120-segments-139",
+      "median_ms": [
+        27.812666,
+        27.496792
+      ],
+      "p95_ms": [
+        28.43,
+        30.328
+      ],
+      "sample_mad_ms": [
+        0.142,
+        0.276
+      ],
+      "first_run_ms": [
+        28.121333,
+        30.71575
+      ],
+      "run_to_run_median_mad_ms": 0.15793700000000044,
+      "median_delta_ms": -0.3158740000000009
+    },
+    {
+      "case": "gemini.guard.survey.json-stdin",
+      "median_ms": [
+        29.826875,
+        29.191
+      ],
+      "p95_ms": [
+        31.169,
+        29.639
+      ],
+      "sample_mad_ms": [
+        0.213,
+        0.167
+      ],
+      "first_run_ms": [
+        29.583375,
+        29.09
+      ],
+      "run_to_run_median_mad_ms": 0.3179375000000011,
+      "median_delta_ms": -0.6358750000000022
+    },
+    {
+      "case": "gemini.guard.survey.python-subprocess",
+      "median_ms": [
+        33.147583,
+        29.668875
+      ],
+      "p95_ms": [
+        34.451,
+        29.945
+      ],
+      "sample_mad_ms": [
+        0.661,
+        0.062
+      ],
+      "first_run_ms": [
+        30.387416,
+        29.901417
+      ],
+      "run_to_run_median_mad_ms": 1.7393539999999987,
+      "median_delta_ms": -3.4787079999999975
+    },
+    {
+      "case": "gemini.guard.survey.analysis-source",
+      "median_ms": [
+        31.158042,
+        29.827584
+      ],
+      "p95_ms": [
+        32.724,
+        31.178
+      ],
+      "sample_mad_ms": [
+        0.789,
+        0.763
+      ],
+      "first_run_ms": [
+        32.964125,
+        29.159833
+      ],
+      "run_to_run_median_mad_ms": 0.6652289999999983,
+      "median_delta_ms": -1.3304579999999966
+    },
+    {
+      "case": "gemini.guard.write.english-inflection",
+      "median_ms": [
+        31.15575,
+        29.000959
+      ],
+      "p95_ms": [
+        35.871,
+        29.977
+      ],
+      "sample_mad_ms": [
+        1.746,
+        0.143
+      ],
+      "first_run_ms": [
+        30.256875,
+        30.468584
+      ],
+      "run_to_run_median_mad_ms": 1.0773954999999997,
+      "median_delta_ms": -2.1547909999999995
+    },
+    {
+      "case": "gemini.guard.danger.recursive_remove_root",
+      "median_ms": [
+        30.394167,
+        28.894
+      ],
+      "p95_ms": [
+        32.262,
+        29.059
+      ],
+      "sample_mad_ms": [
+        0.898,
+        0.108
+      ],
+      "first_run_ms": [
+        30.361333,
+        28.903875
+      ],
+      "run_to_run_median_mad_ms": 0.7500835000000006,
+      "median_delta_ms": -1.5001670000000011
+    },
+    {
+      "case": "gemini.guard.danger.recursive_remove_home",
+      "median_ms": [
+        31.01825,
+        28.792208
+      ],
+      "p95_ms": [
+        34.347,
+        29.461
+      ],
+      "sample_mad_ms": [
+        0.908,
+        0.146
+      ],
+      "first_run_ms": [
+        31.5585,
+        29.00325
+      ],
+      "run_to_run_median_mad_ms": 1.1130209999999998,
+      "median_delta_ms": -2.2260419999999996
+    },
+    {
+      "case": "gemini.guard.danger.recursive_remove_current",
+      "median_ms": [
+        29.491,
+        28.78575
+      ],
+      "p95_ms": [
+        31.584,
+        29.211
+      ],
+      "sample_mad_ms": [
+        0.299,
+        0.139
+      ],
+      "first_run_ms": [
+        31.456167,
+        29.178917
+      ],
+      "run_to_run_median_mad_ms": 0.35262499999999974,
+      "median_delta_ms": -0.7052499999999995
+    },
+    {
+      "case": "gemini.guard.danger.recursive_remove_parent",
+      "median_ms": [
+        29.151458,
+        30.046875
+      ],
+      "p95_ms": [
+        30.052,
+        30.84
+      ],
+      "sample_mad_ms": [
+        0.124,
+        0.674
+      ],
+      "first_run_ms": [
+        30.43625,
+        28.962209
+      ],
+      "run_to_run_median_mad_ms": 0.4477084999999992,
+      "median_delta_ms": 0.8954169999999984
+    },
+    {
+      "case": "gemini.guard.danger.remove_env_file",
+      "median_ms": [
+        29.1925,
+        28.78475
+      ],
+      "p95_ms": [
+        29.597,
+        29.759
+      ],
+      "sample_mad_ms": [
+        0.145,
+        0.155
+      ],
+      "first_run_ms": [
+        29.521541,
+        28.840291
+      ],
+      "run_to_run_median_mad_ms": 0.20387500000000003,
+      "median_delta_ms": -0.40775000000000006
+    },
+    {
+      "case": "gemini.guard.danger.remove_git_metadata",
+      "median_ms": [
+        30.43975,
+        28.902167
+      ],
+      "p95_ms": [
+        31.965,
+        29.133
+      ],
+      "sample_mad_ms": [
+        0.681,
+        0.126
+      ],
+      "first_run_ms": [
+        29.663208,
+        28.885833
+      ],
+      "run_to_run_median_mad_ms": 0.7687915000000007,
+      "median_delta_ms": -1.5375830000000015
+    },
+    {
+      "case": "gemini.guard.danger.force_push_protected_branch",
+      "median_ms": [
+        30.504375,
+        28.811542
+      ],
+      "p95_ms": [
+        31.098,
+        29.121
+      ],
+      "sample_mad_ms": [
+        0.395,
+        0.109
+      ],
+      "first_run_ms": [
+        31.260958,
+        28.984334
+      ],
+      "run_to_run_median_mad_ms": 0.8464165000000001,
+      "median_delta_ms": -1.6928330000000003
+    },
+    {
+      "case": "gemini.guard.danger.hard_reset",
+      "median_ms": [
+        29.281291,
+        29.05875
+      ],
+      "p95_ms": [
+        30.445,
+        32.278
+      ],
+      "sample_mad_ms": [
+        0.146,
+        0.46
+      ],
+      "first_run_ms": [
+        29.690334,
+        29.437209
+      ],
+      "run_to_run_median_mad_ms": 0.11127049999999983,
+      "median_delta_ms": -0.22254099999999966
+    },
+    {
+      "case": "gemini.guard.danger.forced_git_clean",
+      "median_ms": [
+        30.067333,
+        29.342125
+      ],
+      "p95_ms": [
+        36.346,
+        30.552
+      ],
+      "sample_mad_ms": [
+        0.635,
+        0.607
+      ],
+      "first_run_ms": [
+        30.2175,
+        30.891166
+      ],
+      "run_to_run_median_mad_ms": 0.36260400000000104,
+      "median_delta_ms": -0.7252080000000021
+    },
+    {
+      "case": "gemini.guard.danger.drop_table",
+      "median_ms": [
+        29.328916,
+        28.914792
+      ],
+      "p95_ms": [
+        30.161,
+        30.198
+      ],
+      "sample_mad_ms": [
+        0.141,
+        0.176
+      ],
+      "first_run_ms": [
+        30.061542,
+        28.736
+      ],
+      "run_to_run_median_mad_ms": 0.20706200000000052,
+      "median_delta_ms": -0.41412400000000105
+    },
+    {
+      "case": "gemini.guard.danger.drop_database",
+      "median_ms": [
+        29.098958,
+        28.867167
+      ],
+      "p95_ms": [
+        29.593,
+        29.306
+      ],
+      "sample_mad_ms": [
+        0.108,
+        0.123
+      ],
+      "first_run_ms": [
+        29.124792,
+        29.292459
+      ],
+      "run_to_run_median_mad_ms": 0.1158955000000006,
+      "median_delta_ms": -0.2317910000000012
+    },
+    {
+      "case": "gemini.guard.danger.truncate_table",
+      "median_ms": [
+        30.118959,
+        31.127916
+      ],
+      "p95_ms": [
+        31.13,
+        32.348
+      ],
+      "sample_mad_ms": [
+        0.656,
+        0.971
+      ],
+      "first_run_ms": [
+        29.299292,
+        28.985334
+      ],
+      "run_to_run_median_mad_ms": 0.5044784999999994,
+      "median_delta_ms": 1.0089569999999988
+    },
+    {
+      "case": "gemini.guard.danger.delete_without_where",
+      "median_ms": [
+        29.447584,
+        30.560417
+      ],
+      "p95_ms": [
+        32.481,
+        32.149
+      ],
+      "sample_mad_ms": [
+        0.402,
+        0.988
+      ],
+      "first_run_ms": [
+        29.422583,
+        31.006667
+      ],
+      "run_to_run_median_mad_ms": 0.556416500000001,
+      "median_delta_ms": 1.112833000000002
+    },
+    {
+      "case": "gemini.guard.danger.recursive_world_writable",
+      "median_ms": [
+        29.13675,
+        29.33575
+      ],
+      "p95_ms": [
+        29.471,
+        33.757
+      ],
+      "sample_mad_ms": [
+        0.156,
+        0.524
+      ],
+      "first_run_ms": [
+        32.138625,
+        30.646916
+      ],
+      "run_to_run_median_mad_ms": 0.09950000000000081,
+      "median_delta_ms": 0.19900000000000162
+    },
+    {
+      "case": "gemini.guard.danger.world_writable",
+      "median_ms": [
+        30.404,
+        28.7455
+      ],
+      "p95_ms": [
+        33.192,
+        29.334
+      ],
+      "sample_mad_ms": [
+        1.077,
+        0.143
+      ],
+      "first_run_ms": [
+        29.057583,
+        29.522166
+      ],
+      "run_to_run_median_mad_ms": 0.82925,
+      "median_delta_ms": -1.6585
+    },
+    {
+      "case": "gemini.guard.danger.download_execute_bash",
+      "median_ms": [
+        29.825791,
+        28.491667
+      ],
+      "p95_ms": [
+        31.305,
+        28.806
+      ],
+      "sample_mad_ms": [
+        0.909,
+        0.16
+      ],
+      "first_run_ms": [
+        29.292125,
+        28.745042
+      ],
+      "run_to_run_median_mad_ms": 0.6670619999999996,
+      "median_delta_ms": -1.3341239999999992
+    },
+    {
+      "case": "gemini.guard.danger.download_execute_sh",
+      "median_ms": [
+        29.010083,
+        28.498875
+      ],
+      "p95_ms": [
+        29.85,
+        29.095
+      ],
+      "sample_mad_ms": [
+        0.239,
+        0.188
+      ],
+      "first_run_ms": [
+        31.266,
+        28.430791
+      ],
+      "run_to_run_median_mad_ms": 0.25560399999999994,
+      "median_delta_ms": -0.5112079999999999
+    },
+    {
+      "case": "gemini.guard.danger.upload_local_data",
+      "median_ms": [
+        28.912333,
+        29.629791
+      ],
+      "p95_ms": [
+        29.987,
+        30.839
+      ],
+      "sample_mad_ms": [
+        0.121,
+        0.899
+      ],
+      "first_run_ms": [
+        29.334458,
+        28.423584
+      ],
+      "run_to_run_median_mad_ms": 0.3587290000000003,
+      "median_delta_ms": 0.7174580000000006
+    },
+    {
+      "case": "gemini.guard.danger.privileged_command",
+      "median_ms": [
+        29.30725,
+        28.781625
+      ],
+      "p95_ms": [
+        32.756,
+        29.467
+      ],
+      "sample_mad_ms": [
+        0.161,
+        0.127
+      ],
+      "first_run_ms": [
+        29.322875,
+        28.673916
+      ],
+      "run_to_run_median_mad_ms": 0.2628125000000008,
+      "median_delta_ms": -0.5256250000000016
+    },
+    {
+      "case": "gemini.guard.danger.publish_package",
+      "median_ms": [
+        29.647709,
+        28.655042
+      ],
+      "p95_ms": [
+        32.559,
+        29.283
+      ],
+      "sample_mad_ms": [
+        0.648,
+        0.103
+      ],
+      "first_run_ms": [
+        30.793125,
+        28.889292
+      ],
+      "run_to_run_median_mad_ms": 0.49633349999999865,
+      "median_delta_ms": -0.9926669999999973
+    },
+    {
+      "case": "gemini.guard.danger.writer-before",
+      "median_ms": [
+        29.207375,
+        27.166834
+      ],
+      "p95_ms": [
+        31.673,
+        27.403
+      ],
+      "sample_mad_ms": [
+        0.339,
+        0.1
+      ],
+      "first_run_ms": [
+        31.686625,
+        27.47725
+      ],
+      "run_to_run_median_mad_ms": 1.0202704999999987,
+      "median_delta_ms": -2.0405409999999975
+    },
+    {
+      "case": "gemini.guard.danger.writer-after",
+      "median_ms": [
+        28.552208,
+        27.375917
+      ],
+      "p95_ms": [
+        31.051,
+        27.902
+      ],
+      "sample_mad_ms": [
+        0.503,
+        0.129
+      ],
+      "first_run_ms": [
+        31.211959,
+        27.307958
+      ],
+      "run_to_run_median_mad_ms": 0.5881454999999995,
+      "median_delta_ms": -1.176290999999999
+    },
+    {
+      "case": "gemini.guard.danger.substitution",
+      "median_ms": [
+        28.287167,
+        28.820041
+      ],
+      "p95_ms": [
+        31.209,
+        29.468
+      ],
+      "sample_mad_ms": [
+        0.473,
+        0.622
+      ],
+      "first_run_ms": [
+        28.554333,
+        27.48775
+      ],
+      "run_to_run_median_mad_ms": 0.2664369999999998,
+      "median_delta_ms": 0.5328739999999996
+    },
+    {
+      "case": "gemini.guard.danger.interpreter-sink",
+      "median_ms": [
+        30.672584,
+        27.615
+      ],
+      "p95_ms": [
+        31.385,
+        28.45
+      ],
+      "sample_mad_ms": [
+        0.712,
+        0.134
+      ],
+      "first_run_ms": [
+        28.148791,
+        27.791875
+      ],
+      "run_to_run_median_mad_ms": 1.528792000000001,
+      "median_delta_ms": -3.057584000000002
+    },
+    {
+      "case": "gemini.guard.danger.unicode-normalization",
+      "median_ms": [
+        29.927125,
+        28.973458
+      ],
+      "p95_ms": [
+        31.024,
+        30.11
+      ],
+      "sample_mad_ms": [
+        0.339,
+        0.23
+      ],
+      "first_run_ms": [
+        30.938583,
+        28.866833
+      ],
+      "run_to_run_median_mad_ms": 0.4768334999999997,
+      "median_delta_ms": -0.9536669999999994
+    },
+    {
+      "case": "gemini.guard.danger.extra-field",
+      "median_ms": [
+        29.683375,
+        29.005084
+      ],
+      "p95_ms": [
+        31.408,
+        29.373
+      ],
+      "sample_mad_ms": [
+        0.356,
+        0.174
+      ],
+      "first_run_ms": [
+        30.951958,
+        29.159542
+      ],
+      "run_to_run_median_mad_ms": 0.33914550000000077,
+      "median_delta_ms": -0.6782910000000015
+    },
+    {
+      "case": "gemini.guard.danger.malformed-schema",
+      "median_ms": [
+        29.620209,
+        28.814875
+      ],
+      "p95_ms": [
+        34.173,
+        29.126
+      ],
+      "sample_mad_ms": [
+        0.367,
+        0.17
+      ],
+      "first_run_ms": [
+        30.090625,
+        28.797125
+      ],
+      "run_to_run_median_mad_ms": 0.4026669999999992,
+      "median_delta_ms": -0.8053339999999984
+    },
+    {
+      "case": "codex.guard.patch.bytes-46899",
+      "median_ms": [
+        25.4125,
+        25.76125
+      ],
+      "p95_ms": [
+        27.601,
+        26.457
+      ],
+      "sample_mad_ms": [
+        0.217,
+        0.617
+      ],
+      "first_run_ms": [
+        26.424125,
+        26.711334
+      ],
+      "run_to_run_median_mad_ms": 0.1743749999999995,
+      "median_delta_ms": 0.348749999999999
+    },
+    {
+      "case": "codex.guard.patch.lines-330",
+      "median_ms": [
+        27.656333,
+        24.730125
+      ],
+      "p95_ms": [
+        29.722,
+        25.825
+      ],
+      "sample_mad_ms": [
+        0.44,
+        0.215
+      ],
+      "first_run_ms": [
+        25.717584,
+        24.482542
+      ],
+      "run_to_run_median_mad_ms": 1.4631039999999995,
+      "median_delta_ms": -2.926207999999999
+    },
+    {
+      "case": "codex.guard.patch.lines-124-segments-142",
+      "median_ms": [
+        25.703958,
+        24.572
+      ],
+      "p95_ms": [
+        29.364,
+        25.019
+      ],
+      "sample_mad_ms": [
+        0.387,
+        0.102
+      ],
+      "first_run_ms": [
+        31.086708,
+        24.480209
+      ],
+      "run_to_run_median_mad_ms": 0.5659790000000005,
+      "median_delta_ms": -1.131958000000001
+    },
+    {
+      "case": "codex.guard.write.actual-newlines",
+      "median_ms": [
+        25.082334,
+        24.553458
+      ],
+      "p95_ms": [
+        25.522,
+        25.089
+      ],
+      "sample_mad_ms": [
+        0.114,
+        0.08
+      ],
+      "first_run_ms": [
+        24.964667,
+        24.876167
+      ],
+      "run_to_run_median_mad_ms": 0.2644380000000002,
+      "median_delta_ms": -0.5288760000000003
+    },
+    {
+      "case": "codex.guard.write.escaped-newlines",
+      "median_ms": [
+        25.206208,
+        24.565292
+      ],
+      "p95_ms": [
+        27.488,
+        24.812
+      ],
+      "sample_mad_ms": [
+        0.298,
+        0.107
+      ],
+      "first_run_ms": [
+        25.127583,
+        24.686167
+      ],
+      "run_to_run_median_mad_ms": 0.32045800000000035,
+      "median_delta_ms": -0.6409160000000007
+    },
+    {
+      "case": "codex.guard.write.utf8-growth",
+      "median_ms": [
+        24.83125,
+        25.87075
+      ],
+      "p95_ms": [
+        25.109,
+        26.42
+      ],
+      "sample_mad_ms": [
+        0.136,
+        0.311
+      ],
+      "first_run_ms": [
+        25.082958,
+        24.873875
+      ],
+      "run_to_run_median_mad_ms": 0.5197500000000002,
+      "median_delta_ms": 1.0395000000000003
+    },
+    {
+      "case": "codex.guard.write.examples.md",
+      "median_ms": [
+        26.599625,
+        25.257334
+      ],
+      "p95_ms": [
+        27.091,
+        26.023
+      ],
+      "sample_mad_ms": [
+        0.296,
+        0.167
+      ],
+      "first_run_ms": [
+        25.864917,
+        26.350292
+      ],
+      "run_to_run_median_mad_ms": 0.6711454999999997,
+      "median_delta_ms": -1.3422909999999995
+    },
+    {
+      "case": "codex.guard.write.examples.py",
+      "median_ms": [
+        26.432542,
+        24.935458
+      ],
+      "p95_ms": [
+        27.111,
+        25.362
+      ],
+      "sample_mad_ms": [
+        0.468,
+        0.081
+      ],
+      "first_run_ms": [
+        26.721792,
+        25.098583
+      ],
+      "run_to_run_median_mad_ms": 0.7485420000000005,
+      "median_delta_ms": -1.497084000000001
+    },
+    {
+      "case": "codex.guard.write.examples.test.py",
+      "median_ms": [
+        25.496333,
+        26.61125
+      ],
+      "p95_ms": [
+        26.62,
+        27.483
+      ],
+      "sample_mad_ms": [
+        0.247,
+        0.51
+      ],
+      "first_run_ms": [
+        25.310833,
+        24.837
+      ],
+      "run_to_run_median_mad_ms": 0.5574584999999992,
+      "median_delta_ms": 1.1149169999999984
+    },
+    {
+      "case": "codex.guard.edit.replacement",
+      "median_ms": [
+        26.654042,
+        26.706042
+      ],
+      "p95_ms": [
+        27.183,
+        27.688
+      ],
+      "sample_mad_ms": [
+        0.352,
+        0.399
+      ],
+      "first_run_ms": [
+        25.578166,
+        28.503792
+      ],
+      "run_to_run_median_mad_ms": 0.0259999999999998,
+      "median_delta_ms": 0.0519999999999996
+    },
+    {
+      "case": "codex.guard.search.literal",
+      "median_ms": [
+        25.212708,
+        24.864625
+      ],
+      "p95_ms": [
+        25.967,
+        26.354
+      ],
+      "sample_mad_ms": [
+        0.166,
+        0.182
+      ],
+      "first_run_ms": [
+        25.030333,
+        25.077667
+      ],
+      "run_to_run_median_mad_ms": 0.17404149999999952,
+      "median_delta_ms": -0.34808299999999903
+    },
+    {
+      "case": "codex.guard.search.shell-literal",
+      "median_ms": [
+        25.122958,
+        25.137458
+      ],
+      "p95_ms": [
+        25.283,
+        26.427
+      ],
+      "sample_mad_ms": [
+        0.072,
+        0.238
+      ],
+      "first_run_ms": [
+        25.395375,
+        26.123917
+      ],
+      "run_to_run_median_mad_ms": 0.0072499999999990905,
+      "median_delta_ms": 0.014499999999998181
+    },
+    {
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "median_ms": [
+        25.215375,
+        24.865625
+      ],
+      "p95_ms": [
+        25.539,
+        25.658
+      ],
+      "sample_mad_ms": [
+        0.163,
+        0.215
+      ],
+      "first_run_ms": [
+        25.132875,
+        25.871958
+      ],
+      "run_to_run_median_mad_ms": 0.1748750000000001,
+      "median_delta_ms": -0.3497500000000002
+    },
+    {
+      "case": "codex.guard.writer.lines-120-segments-139",
+      "median_ms": [
+        25.118291,
+        24.727375
+      ],
+      "p95_ms": [
+        25.614,
+        25.09
+      ],
+      "sample_mad_ms": [
+        0.19,
+        0.14
+      ],
+      "first_run_ms": [
+        24.84975,
+        24.779417
+      ],
+      "run_to_run_median_mad_ms": 0.19545800000000035,
+      "median_delta_ms": -0.3909160000000007
+    },
+    {
+      "case": "codex.guard.survey.json-stdin",
+      "median_ms": [
+        27.040375,
+        26.525834
+      ],
+      "p95_ms": [
+        28.709,
+        27.111
+      ],
+      "sample_mad_ms": [
+        0.347,
+        0.161
+      ],
+      "first_run_ms": [
+        27.360416,
+        26.469958
+      ],
+      "run_to_run_median_mad_ms": 0.2572705000000006,
+      "median_delta_ms": -0.5145410000000012
+    },
+    {
+      "case": "codex.guard.survey.python-subprocess",
+      "median_ms": [
+        27.870958,
+        27.275792
+      ],
+      "p95_ms": [
+        29.595,
+        28.156
+      ],
+      "sample_mad_ms": [
+        0.515,
+        0.255
+      ],
+      "first_run_ms": [
+        28.657084,
+        27.080459
+      ],
+      "run_to_run_median_mad_ms": 0.29758300000000126,
+      "median_delta_ms": -0.5951660000000025
+    },
+    {
+      "case": "codex.guard.survey.analysis-source",
+      "median_ms": [
+        27.32175,
+        28.153209
+      ],
+      "p95_ms": [
+        30.057,
+        28.68
+      ],
+      "sample_mad_ms": [
+        0.332,
+        0.356
+      ],
+      "first_run_ms": [
+        29.565917,
+        26.846292
+      ],
+      "run_to_run_median_mad_ms": 0.4157294999999994,
+      "median_delta_ms": 0.8314589999999988
+    },
+    {
+      "case": "codex.guard.write.english-inflection",
+      "median_ms": [
+        29.585375,
+        26.643916
+      ],
+      "p95_ms": [
+        30.747,
+        27.617
+      ],
+      "sample_mad_ms": [
+        0.833,
+        0.207
+      ],
+      "first_run_ms": [
+        29.891916,
+        26.822458
+      ],
+      "run_to_run_median_mad_ms": 1.4707294999999991,
+      "median_delta_ms": -2.9414589999999983
+    },
+    {
+      "case": "codex.guard.danger.recursive_remove_root",
+      "median_ms": [
+        28.812084,
+        26.207167
+      ],
+      "p95_ms": [
+        31.301,
+        26.438
+      ],
+      "sample_mad_ms": [
+        0.966,
+        0.112
+      ],
+      "first_run_ms": [
+        28.445208,
+        26.239667
+      ],
+      "run_to_run_median_mad_ms": 1.3024585000000002,
+      "median_delta_ms": -2.6049170000000004
+    },
+    {
+      "case": "codex.guard.danger.recursive_remove_home",
+      "median_ms": [
+        28.953084,
+        25.992959
+      ],
+      "p95_ms": [
+        30.462,
+        26.495
+      ],
+      "sample_mad_ms": [
+        0.828,
+        0.116
+      ],
+      "first_run_ms": [
+        27.881125,
+        25.90625
+      ],
+      "run_to_run_median_mad_ms": 1.4800625000000007,
+      "median_delta_ms": -2.9601250000000014
+    },
+    {
+      "case": "codex.guard.danger.recursive_remove_current",
+      "median_ms": [
+        26.823917,
+        26.220708
+      ],
+      "p95_ms": [
+        27.655,
+        26.641
+      ],
+      "sample_mad_ms": [
+        0.272,
+        0.219
+      ],
+      "first_run_ms": [
+        27.280125,
+        26.318542
+      ],
+      "run_to_run_median_mad_ms": 0.3016045000000016,
+      "median_delta_ms": -0.6032090000000032
+    },
+    {
+      "case": "codex.guard.danger.recursive_remove_parent",
+      "median_ms": [
+        26.34125,
+        27.3265
+      ],
+      "p95_ms": [
+        26.815,
+        27.812
+      ],
+      "sample_mad_ms": [
+        0.104,
+        0.332
+      ],
+      "first_run_ms": [
+        27.258416,
+        26.191708
+      ],
+      "run_to_run_median_mad_ms": 0.4926250000000003,
+      "median_delta_ms": 0.9852500000000006
+    },
+    {
+      "case": "codex.guard.danger.remove_env_file",
+      "median_ms": [
+        26.494458,
+        26.23425
+      ],
+      "p95_ms": [
+        26.838,
+        27.097
+      ],
+      "sample_mad_ms": [
+        0.098,
+        0.189
+      ],
+      "first_run_ms": [
+        27.067583,
+        26.187042
+      ],
+      "run_to_run_median_mad_ms": 0.1301040000000011,
+      "median_delta_ms": -0.2602080000000022
+    },
+    {
+      "case": "codex.guard.danger.remove_git_metadata",
+      "median_ms": [
+        26.572334,
+        26.107916
+      ],
+      "p95_ms": [
+        27.098,
+        27.161
+      ],
+      "sample_mad_ms": [
+        0.124,
+        0.233
+      ],
+      "first_run_ms": [
+        26.384083,
+        26.43225
+      ],
+      "run_to_run_median_mad_ms": 0.232209000000001,
+      "median_delta_ms": -0.464418000000002
+    },
+    {
+      "case": "codex.guard.danger.force_push_protected_branch",
+      "median_ms": [
+        26.678208,
+        26.110416
+      ],
+      "p95_ms": [
+        28.247,
+        26.6
+      ],
+      "sample_mad_ms": [
+        0.445,
+        0.153
+      ],
+      "first_run_ms": [
+        26.948792,
+        26.713417
+      ],
+      "run_to_run_median_mad_ms": 0.28389600000000037,
+      "median_delta_ms": -0.5677920000000007
+    },
+    {
+      "case": "codex.guard.danger.hard_reset",
+      "median_ms": [
+        29.060291,
+        26.154125
+      ],
+      "p95_ms": [
+        30.312,
+        26.629
+      ],
+      "sample_mad_ms": [
+        0.767,
+        0.107
+      ],
+      "first_run_ms": [
+        27.823583,
+        26.132042
+      ],
+      "run_to_run_median_mad_ms": 1.4530829999999995,
+      "median_delta_ms": -2.906165999999999
+    },
+    {
+      "case": "codex.guard.danger.forced_git_clean",
+      "median_ms": [
+        26.598666,
+        27.291458
+      ],
+      "p95_ms": [
+        27.015,
+        27.58
+      ],
+      "sample_mad_ms": [
+        0.205,
+        0.289
+      ],
+      "first_run_ms": [
+        26.638959,
+        26.333042
+      ],
+      "run_to_run_median_mad_ms": 0.3463959999999986,
+      "median_delta_ms": 0.6927919999999972
+    },
+    {
+      "case": "codex.guard.danger.drop_table",
+      "median_ms": [
+        28.520959,
+        26.299125
+      ],
+      "p95_ms": [
+        29.877,
+        27.101
+      ],
+      "sample_mad_ms": [
+        0.427,
+        0.232
+      ],
+      "first_run_ms": [
+        27.415708,
+        27.140333
+      ],
+      "run_to_run_median_mad_ms": 1.1109170000000006,
+      "median_delta_ms": -2.221834000000001
+    },
+    {
+      "case": "codex.guard.danger.drop_database",
+      "median_ms": [
+        28.666708,
+        26.08175
+      ],
+      "p95_ms": [
+        29.677,
+        26.514
+      ],
+      "sample_mad_ms": [
+        0.438,
+        0.153
+      ],
+      "first_run_ms": [
+        29.175875,
+        26.156166
+      ],
+      "run_to_run_median_mad_ms": 1.2924790000000002,
+      "median_delta_ms": -2.5849580000000003
+    },
+    {
+      "case": "codex.guard.danger.truncate_table",
+      "median_ms": [
+        29.374791,
+        26.221917
+      ],
+      "p95_ms": [
+        32.888,
+        27.848
+      ],
+      "sample_mad_ms": [
+        0.922,
+        0.23
+      ],
+      "first_run_ms": [
+        29.779875,
+        26.29875
+      ],
+      "run_to_run_median_mad_ms": 1.5764369999999985,
+      "median_delta_ms": -3.152873999999997
+    },
+    {
+      "case": "codex.guard.danger.delete_without_where",
+      "median_ms": [
+        28.46275,
+        26.091459
+      ],
+      "p95_ms": [
+        38.319,
+        26.478
+      ],
+      "sample_mad_ms": [
+        0.447,
+        0.124
+      ],
+      "first_run_ms": [
+        32.921625,
+        26.276041
+      ],
+      "run_to_run_median_mad_ms": 1.1856454999999997,
+      "median_delta_ms": -2.3712909999999994
+    },
+    {
+      "case": "codex.guard.danger.recursive_world_writable",
+      "median_ms": [
+        27.189334,
+        26.336167
+      ],
+      "p95_ms": [
+        44.5,
+        27.743
+      ],
+      "sample_mad_ms": [
+        0.558,
+        0.273
+      ],
+      "first_run_ms": [
+        27.253083,
+        26.279958
+      ],
+      "run_to_run_median_mad_ms": 0.42658349999999956,
+      "median_delta_ms": -0.8531669999999991
+    },
+    {
+      "case": "codex.guard.danger.world_writable",
+      "median_ms": [
+        30.109417,
+        26.286333
+      ],
+      "p95_ms": [
+        37.584,
+        27.231
+      ],
+      "sample_mad_ms": [
+        2.342,
+        0.191
+      ],
+      "first_run_ms": [
+        42.379875,
+        27.512541
+      ],
+      "run_to_run_median_mad_ms": 1.9115420000000007,
+      "median_delta_ms": -3.8230840000000015
+    },
+    {
+      "case": "codex.guard.danger.download_execute_bash",
+      "median_ms": [
+        28.610584,
+        25.854583
+      ],
+      "p95_ms": [
+        30.436,
+        26.329
+      ],
+      "sample_mad_ms": [
+        1.218,
+        0.142
+      ],
+      "first_run_ms": [
+        28.333208,
+        27.106
+      ],
+      "run_to_run_median_mad_ms": 1.3780004999999989,
+      "median_delta_ms": -2.7560009999999977
+    },
+    {
+      "case": "codex.guard.danger.download_execute_sh",
+      "median_ms": [
+        27.397042,
+        25.803625
+      ],
+      "p95_ms": [
+        28.667,
+        26.188
+      ],
+      "sample_mad_ms": [
+        0.674,
+        0.114
+      ],
+      "first_run_ms": [
+        28.298709,
+        25.710375
+      ],
+      "run_to_run_median_mad_ms": 0.7967084999999994,
+      "median_delta_ms": -1.5934169999999988
+    },
+    {
+      "case": "codex.guard.danger.upload_local_data",
+      "median_ms": [
+        26.842333,
+        25.710292
+      ],
+      "p95_ms": [
+        29.428,
+        26.341
+      ],
+      "sample_mad_ms": [
+        0.459,
+        0.133
+      ],
+      "first_run_ms": [
+        26.500292,
+        26.116959
+      ],
+      "run_to_run_median_mad_ms": 0.5660205000000005,
+      "median_delta_ms": -1.132041000000001
+    },
+    {
+      "case": "codex.guard.danger.privileged_command",
+      "median_ms": [
+        27.40525,
+        26.093834
+      ],
+      "p95_ms": [
+        29.494,
+        26.513
+      ],
+      "sample_mad_ms": [
+        0.316,
+        0.179
+      ],
+      "first_run_ms": [
+        28.512166,
+        26.270084
+      ],
+      "run_to_run_median_mad_ms": 0.6557079999999988,
+      "median_delta_ms": -1.3114159999999977
+    },
+    {
+      "case": "codex.guard.danger.publish_package",
+      "median_ms": [
+        27.591208,
+        26.76175
+      ],
+      "p95_ms": [
+        31.685,
+        27.688
+      ],
+      "sample_mad_ms": [
+        0.857,
+        0.62
+      ],
+      "first_run_ms": [
+        31.171041,
+        27.719292
+      ],
+      "run_to_run_median_mad_ms": 0.41472900000000124,
+      "median_delta_ms": -0.8294580000000025
+    },
+    {
+      "case": "codex.guard.danger.writer-before",
+      "median_ms": [
+        25.226,
+        24.688042
+      ],
+      "p95_ms": [
+        25.622,
+        25.591
+      ],
+      "sample_mad_ms": [
+        0.176,
+        0.12
+      ],
+      "first_run_ms": [
+        25.485125,
+        24.513958
+      ],
+      "run_to_run_median_mad_ms": 0.26897899999999986,
+      "median_delta_ms": -0.5379579999999997
+    },
+    {
+      "case": "codex.guard.danger.writer-after",
+      "median_ms": [
+        25.817541,
+        24.688209
+      ],
+      "p95_ms": [
+        26.814,
+        25.118
+      ],
+      "sample_mad_ms": [
+        0.752,
+        0.153
+      ],
+      "first_run_ms": [
+        26.910875,
+        24.872834
+      ],
+      "run_to_run_median_mad_ms": 0.564665999999999,
+      "median_delta_ms": -1.129331999999998
+    },
+    {
+      "case": "codex.guard.danger.substitution",
+      "median_ms": [
+        25.443209,
+        24.828667
+      ],
+      "p95_ms": [
+        26.491,
+        25.146
+      ],
+      "sample_mad_ms": [
+        0.227,
+        0.076
+      ],
+      "first_run_ms": [
+        25.224167,
+        25.003416
+      ],
+      "run_to_run_median_mad_ms": 0.30727100000000007,
+      "median_delta_ms": -0.6145420000000001
+    },
+    {
+      "case": "codex.guard.danger.interpreter-sink",
+      "median_ms": [
+        26.446666,
+        24.808583
+      ],
+      "p95_ms": [
+        27.973,
+        25.253
+      ],
+      "sample_mad_ms": [
+        0.94,
+        0.132
+      ],
+      "first_run_ms": [
+        25.588458,
+        24.829542
+      ],
+      "run_to_run_median_mad_ms": 0.8190415000000009,
+      "median_delta_ms": -1.6380830000000017
+    },
+    {
+      "case": "codex.guard.danger.unicode-normalization",
+      "median_ms": [
+        27.498792,
+        27.2765
+      ],
+      "p95_ms": [
+        29.746,
+        27.789
+      ],
+      "sample_mad_ms": [
+        0.53,
+        0.508
+      ],
+      "first_run_ms": [
+        28.23925,
+        26.358875
+      ],
+      "run_to_run_median_mad_ms": 0.11114600000000152,
+      "median_delta_ms": -0.22229200000000304
+    },
+    {
+      "case": "codex.guard.danger.extra-field",
+      "median_ms": [
+        26.783209,
+        26.45425
+      ],
+      "p95_ms": [
+        27.078,
+        27.094
+      ],
+      "sample_mad_ms": [
+        0.117,
+        0.239
+      ],
+      "first_run_ms": [
+        26.929,
+        26.628083
+      ],
+      "run_to_run_median_mad_ms": 0.16447950000000056,
+      "median_delta_ms": -0.3289590000000011
+    },
+    {
+      "case": "codex.guard.danger.malformed-schema",
+      "median_ms": [
+        27.95375,
+        26.08
+      ],
+      "p95_ms": [
+        28.773,
+        26.503
+      ],
+      "sample_mad_ms": [
+        0.592,
+        0.156
+      ],
+      "first_run_ms": [
+        26.456583,
+        26.569834
+      ],
+      "run_to_run_median_mad_ms": 0.9368750000000006,
+      "median_delta_ms": -1.8737500000000011
+    }
+  ],
+  "concurrency": [
+    {
+      "case": "copilot.guard.clean",
+      "batch_ms": [
+        138.798583,
+        88.636458
+      ]
+    },
+    {
+      "case": "gemini.guard.clean",
+      "batch_ms": [
+        57.677292,
+        46.352291
+      ]
+    },
+    {
+      "case": "codex.guard.clean",
+      "batch_ms": [
+        86.953584,
+        84.854792
+      ]
+    }
+  ]
+}
