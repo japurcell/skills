@@ -152,6 +152,10 @@ The existing-repository review found that APM supports committing generated payl
 ## Decision Log
 
 
+Decision: After the blocked verification report, the user confirms current ordinary-rights Windows execution only, explicitly leaving link-dependent gates blocked, and reports no authorized POSIX host or exported clone bundle. Keep those prerequisites unmet; do not request them again without changed evidence or substitute skipped tests, elevation, provisioning or a fabricated bundle.
+
+Rationale: Required link and cross-OS clone acceptance cannot be demonstrated in the currently authorized environment. Other bounded repairs remain unfinished and no replacement is running; this checkpoint is incomplete implementation, not final support approval. Date/Author: 2026-10-01 / user confirmation, Copilot recording.
+
 Decision: Preserve the resumed writer checkpoint without production commit or integration. Record actual acquisition verification and reopen the newly demonstrated Windows blockers. Do not resume the timed-out workflow with a larger limit without authorization; do not approve support from intermittent green reruns or source presence.
 
 Rationale: The writer report supplies useful public evidence but explicitly reports blocked acceptance. Symlink authority and an authentic POSIX bundle are unavailable prerequisites, while repeated provider/local/adoption failures and unexplained extended attributes need bounded repairs. The implicit Python-manager auto-install violates the intended validation constraints and must be disclosed, not hidden behind the passing corrected wrapper run. Date/Author: 2026-10-01 / Copilot.
@@ -809,3 +813,5 @@ Closing documentation verification, 2026-10-01: full-corpus `rtk proxy python sc
 Revision note, 2026-10-01 20:17Z: Record the user's explicit resume, isolated writer ownership and applied route/runtime enforcement. Reopen execution without changing milestone acceptance, historical evidence, approved metadata scope or native-client restrictions; require verification and independent review before candidate commit or integration.
 
 Revision note, 2026-10-01: Replace launch-only state with the timed-out writer's actual report and independently inspected command evidence. Check off acquisition verification only, reopen concrete Windows acceptance blockers, disclose unintended Python-manager provisioning and corrected runtime resolution, and preserve all unfinished source and unmet milestone gates. A report surviving workflow timeout is evidence to inspect, not permission to increase the runtime ceiling or integrate a failing candidate.
+
+Revision note, 2026-10-01: Record the user's confirmed ordinary-rights-only host and unavailable POSIX bundle. Preserve explicit blocked prerequisites and incomplete M6/M7 acceptance rather than repeating prerequisite requests or bypassing the approved environment constraints.
