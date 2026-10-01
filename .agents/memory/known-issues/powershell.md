@@ -5,6 +5,7 @@ description: PowerShell (`pwsh`) gotchas hit while writing `scripts/install.ps1`
 
 # PowerShell - Known Issues
 
+- Windows Python install-manager aliases can auto-provision a runtime after `USERPROFILE`/`LOCALAPPDATA` are redirected, even when an existing interpreter is installed. For no-install disposable wrapper tests, exclude WindowsApps aliases, set `PYTHON_MANAGER_AUTOMATIC_INSTALL=false`, and resolve absolute existing executable paths against the child PATH before launch. Changing only the child's PATH does not establish which executable Windows `subprocess` selected. A run containing automatic installation is not no-install acceptance; inspect its effects rather than assuming profile redirection contained the bootstrap.
 - PowerShell creates/updates module-analysis caches while launching. Public installer refusal fingerprints must redirect `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, and `XDG_DATA_HOME` to separate disposable paths so runtime cache writes cannot masquerade as installer mutations; retain complete destination fingerprints.
 - Wrapper managed-record detection uses `Get-Item -Force`, including broken symbolic links. `Test-Path` alone can miss a broken record link and incorrectly enter legacy copying.
 - The PS7 automatic `$HOME` is fixed at process start. Setting `$env:HOME` inside a running pwsh session does not change `$HOME`, so tests cannot redirect the installer's home in-session. Redirect by setting the `HOME` (and `USERPROFILE`, for Windows) environment variable for the child process before launch.
