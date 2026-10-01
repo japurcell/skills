@@ -1,0 +1,21 @@
+{
+  "created_utc": "2026-10-01T22:41:49.634505+00:00",
+  "files": {
+    ".codex/hooks/tool-guard.py": "2eb407f19644a1aa393622e596b0348f85a1af641c587e92515df3379996b659",
+    ".copilot/hooks/scripts/tool-guard.py": "f93da5839b8302dc5ca516ddcd69016ba215e08673a3c4a40103af5a97a8f183",
+    ".gemini/hooks/scripts/tool-guard.py": "45bf36a29218c69981b9ac8b7a26a3e09255ec0630545313281febf50c472790",
+    ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+    ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+    ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+    ".copilot/hooks/scripts/helpers/common.py": "4dcd1602f64f468dd433007c7db6e64f4a690d284b30ff901a7ca5a83ed2b953",
+    ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+    ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+    ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+    ".gemini/hooks/scripts/helpers/common.py": "50ee0409772654054af7b53372a526dde181db16280de692ebacba7e82d621f9",
+    ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+    ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+    ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+    ".codex/hooks/helpers/common.py": "4dcd1602f64f468dd433007c7db6e64f4a690d284b30ff901a7ca5a83ed2b953",
+    ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a"
+  }
+}
