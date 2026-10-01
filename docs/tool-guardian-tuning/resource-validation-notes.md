@@ -54,13 +54,36 @@ test reproduced six overflow failures before source changes.
 
 Static review additionally found Copilot search-list schema checks traversing all
 items before structure validation and structure traversal pushing every child
-before enforcing its node bound. Source repairs await exclusive canonical-source
-ownership after milestone 3 integration. The public response may already deny a
+before enforcing its node bound. The repair validates schema cardinality before
+scanning lists and traverses structures through lazy iterators. The public response may already deny a
 large list; that alone does not prove bounded auxiliary inspection work.
 Static Python preflight review found the quoted-literal branch increments its
 token counter and then continues without checking the threshold. Adjacent string
 literals ending at EOF can exceed 1024 syntax tokens while parsing to a single
 constant. The public suite includes 1024 and 1025 adjacent literal tokens.
+
+After milestone 3 integration, the public interface also reproduced quoted
+unproved argument overflows across all three providers in block/warn modes, and
+an adjacent literal-token overflow in a proven fixed writer. The latter fixture
+includes prefix tokens so its total preflight counts are exactly 1024/1025.
+Inspection now charges flattened strict matcher tokens, redirection operands,
+unproved heredocs, unsupported shell/Python source, constants, and SQL operands
+against the aggregate 256-token budget while crediting already counted lexical
+slots. Proven data remains excluded. The public limits suite reports 16 passed;
+the fixed incident/protection corpus reports 144 checks passed. Shell, native,
+and security-banner suites report 11, 13, and 13 passed respectively.
+Generator freshness covers 26 outputs and its suite reports 25 passed. All three
+provider Bash guard suites exit zero. The benchmark CLI suite reports two passed;
+the aggregate registry contract reports 14 passed. Copilot/Gemini Bash fixtures
+also print existing readonly observability-database diagnostics; their guardian
+assertions pass. This is not evidence of installed observability correctness.
+
+Structural limits bound inspection after provider JSON decoding. Existing common
+readers do not provide a universal raw-envelope byte limit before decoding;
+Codex's reader has no explicit total raw-byte cap. A 30000-node resource fixture
+therefore measures that finite envelope only. Its RSS result cannot establish a
+universal memory ceiling for arbitrarily large raw JSON. A raw-reader limit is
+separate work outside this canonical classifier repair.
 
 ## Comparison method and acceptance
 

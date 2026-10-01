@@ -676,11 +676,13 @@ class NativeToolInput:
 
 def _matches_native_schema(value: dict, required: dict[str, type], optional: dict[str, type] | None = None) -> bool:
     fields = {**required, **(optional or {})}
+    if not len(required) <= len(value) <= len(fields):
+        return False
     return required.keys() <= value.keys() <= fields.keys() and all(type(child) is fields[key] for key, child in value.items())
 
 
 def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
-    if not isinstance(value, dict):
+    if not isinstance(value, dict) or len(value) > MAX_STRUCTURED_NODES:
         return None
     shell_tools = {"codex": {"Bash", "exec_command", "functions.exec_command"}, "copilot": {"bash"}, "gemini": {"run_shell_command"}}
     if tool_name in shell_tools.get(TOOL_PROVIDER, set()):
@@ -719,7 +721,9 @@ def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
                 if key == pattern_key:
                     continue
                 allowed_types = fields[key] if isinstance(fields[key], tuple) else (fields[key],)
-                if type(child) not in allowed_types or (type(child) is list and any(type(item) is not str for item in child)):
+                if type(child) not in allowed_types or (type(child) is list and (
+                    len(child) > MAX_STRUCTURED_NODES or any(type(item) is not str for item in child)
+                )):
                     return None
             return NativeToolInput("search", (), tuple(child for child in value.values() if isinstance(child, str)))
     return None
@@ -770,10 +774,14 @@ def _parse_native_patch(patch: str) -> NativeToolInput | None:
 def _native_operation_threats(native: NativeToolInput) -> list[dict[str, str]]:
     threats: list[dict[str, str]] = []
     seen: set[str] = set()
+    normalized_bytes = 0
     for operation, path in native.operations:
         # Move removes its source. Apply the existing environment/Git removal
         # rules to that operation without treating a filename as shell code.
         normalized = unicodedata.normalize("NFKC", path).casefold().replace("\\", "/")
+        normalized_bytes += len(normalized.encode("utf-8"))
+        if normalized_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("normalized_operation_bytes", MAX_SCAN_TEXT, normalized_bytes, "bytes")
         for suffix, rule_id, cause in ((".env", "remove_env_file", "removal targets an environment file"),
                                      (".git", "remove_git_metadata", "removal targets Git metadata")):
             start = 0
@@ -800,13 +808,28 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
     native = _native_tool_shape(tool_name, value)
     byte_limit = MAX_NATIVE_DATA_BYTES if native and native.kind != "shell" else MAX_SCAN_TEXT
     known_fields = KNOWN_TOOL_FIELDS.get(tool_name.casefold(), frozenset())
-    stack: list[tuple[object, int, str]] = [(value, 0, "tool input")]
+    stack = [iter(((value, 0, "tool input"),))]
     strings: list[str] = []
     node_count = 0
     total_string_bytes = 0
     keys: list[str] = []
+
+    def dictionary_children(mapping, depth):
+        for key, child in mapping.items():
+            keys.append(key)
+            field = f"{tool_name.casefold()}.{key}" if depth == 0 and key in known_fields and isinstance(child, str) else "tool input"
+            yield child, depth + 1, field
+
+    def sequence_children(sequence, depth):
+        for child in sequence:
+            yield child, depth + 1, "tool input"
+
     while stack:
-        current, depth, field = stack.pop()
+        try:
+            current, depth, field = next(stack[-1])
+        except StopIteration:
+            stack.pop()
+            continue
         node_count += 1
         if node_count > MAX_STRUCTURED_NODES:
             raise ScanLimitExceeded("structured_nodes", MAX_STRUCTURED_NODES, node_count, "nodes")
@@ -822,13 +845,9 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
                 source = field if current_bytes > byte_limit else "tool input"
                 raise ScanLimitExceeded("structured_bytes", byte_limit, total_string_bytes, "bytes", source)
         elif isinstance(current, dict):
-            keys.extend(current)
-            stack.extend(
-                (child, depth + 1, f"{tool_name.casefold()}.{key}" if depth == 0 and key in known_fields and isinstance(child, str) else "tool input")
-                for key, child in reversed(tuple(current.items()))
-            )
+            stack.append(dictionary_children(current, depth))
         elif isinstance(current, (list, tuple)):
-            stack.extend((child, depth + 1, "tool input") for child in reversed(current))
+            stack.append(sequence_children(current, depth))
 
     key_bytes = sum(len(key.encode("utf-8")) for key in keys)
     if native:
@@ -876,6 +895,11 @@ class _InspectionBudget:
         if self.bytes > MAX_SCAN_TEXT:
             raise ScanLimitExceeded("executable_bytes", MAX_SCAN_TEXT, self.bytes, "bytes")
         return source
+
+    def matcher_tokens(self, segments, charged=0):
+        self.tokens += max(0, sum(len(segment) for segment in segments) - charged)
+        if self.tokens > MAX_COMMAND_TOKENS:
+            raise ScanLimitExceeded("command_tokens", MAX_COMMAND_TOKENS, self.tokens, "tokens")
 
 
 def _shell_representation(source: str, budget: _InspectionBudget):
@@ -1108,6 +1132,8 @@ def _python_preflight(source):
                 raise InspectionFailure("unterminated Python literal")
             index += len(delimiter)
             tokens += 1
+            if tokens > 1024:
+                raise ScanLimitExceeded("python_syntax_tokens", 1024, tokens, "tokens")
             continue
         if char in "([{":
             depth += 1
@@ -1300,10 +1326,15 @@ def _python_threats(source, budget, depth, permit_data=True):
     source = budget.source(source, depth)
     proven, sinks, constants = _python_inspection(source)
     proven = proven and permit_data
-    threats = [] if proven else _strict_threats(source)
+    threats = []
     if not proven:
+        segments = _command_segments(source)
+        budget.matcher_tokens(segments, 1)
+        threats.extend(_strict_threats(source, segments))
         for constant in constants:
-            threats.extend(_strict_threats(constant))
+            segments = _command_segments(constant)
+            budget.matcher_tokens(segments)
+            threats.extend(_strict_threats(constant, segments))
     for language, sink in sinks:
         if language == "python":
             threats.extend(_python_threats(sink, budget, depth + 1))
@@ -1356,9 +1387,11 @@ def _shell_threats(source, budget, depth=0):
         threats.extend(_shell_threats(fragment, budget, depth + 1))
     if strict:
         if windows:
-            threats.extend(_strict_threats(source, [[token for word in command.words for token in word.value.split()] for command in commands]))
+            segments = [[token for word in command.words for token in word.value.split()] for command in commands]
         else:
-            threats.extend(_strict_threats(source))
+            segments = _command_segments(source)
+        budget.matcher_tokens(segments, sum(len(command.words) + len(command.redirects) for command in commands))
+        threats.extend(_strict_threats(source, segments))
         # Unsupported surrounding syntax cannot hide established interpreter operands.
         for command in commands:
             for offset in range(len(command.words)):
@@ -1444,7 +1477,9 @@ def _shell_threats(source, budget, depth=0):
                 if operand is not None:
                     if not operand.literal:
                         raise InspectionFailure("unresolved SQL interpreter operand")
-                    threats.extend(_strict_threats(operand.value))
+                    sql_segments = _command_segments(operand.value)
+                    budget.matcher_tokens(sql_segments, 1)
+                    threats.extend(_strict_threats(operand.value, sql_segments))
         if python_code is not None:
             threats.extend(_python_threats(python_code, budget, depth + 1))
             proven = True
@@ -1454,13 +1489,19 @@ def _shell_threats(source, budget, depth=0):
         if python_code is None and shell_code is None and not proven and (id(command) in unsafe_pipeline or not _literal_search(command)):
             rendered.append(" ".join(words) + (" |" if command.pipe else ""))
             # Unproved consumers retain strict inspection of complete literal values.
-            segments.append([token for value in words for token in value.split()])
+            flattened = [token for value in words for token in value.split()]
+            budget.matcher_tokens([flattened], len(words))
+            segments.append(flattened)
         for operator, operand in command.redirects:
             if operator not in {"<<", "<<-"}:
-                threats.extend(_strict_threats(operand.value))
+                operand_segments = _command_segments(operand.value)
+                budget.matcher_tokens(operand_segments, 1)
+                threats.extend(_strict_threats(operand.value, operand_segments))
         if command.heredocs and (python_code is None and shell_code is None and not proven or len(stdin) != 1 or words[1:2] == ["-c"]):
             for heredoc, _quoted in command.heredocs:
-                threats.extend(_strict_threats(heredoc))
+                heredoc_segments = _command_segments(heredoc)
+                budget.matcher_tokens(heredoc_segments)
+                threats.extend(_strict_threats(heredoc, heredoc_segments))
     if rendered:
         threats.extend(_strict_threats("\n".join(rendered), segments, pipelines))
     order = {rule: index for index, (rule, _cause) in enumerate(RULE_DETAILS)}

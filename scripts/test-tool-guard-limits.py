@@ -132,6 +132,24 @@ class ResourceLimitTests(unittest.TestCase):
                 (';'.join(['x x'] * 128), ';'.join(['x x'] * 127 + ['x x x']), 'command_tokens', '257 tokens')):
                 self.assert_boundary(provider, tool, {'command': maximum}, {'command': overflow}, rule, count, valid_allowlist=True)
 
+    def test_unproved_quoted_argument_first_rejected_matcher_token(self) -> None:
+        for provider in PROVIDERS:
+            maximum = {'command': "echo '" + 'x ' * 255 + "'"}
+            overflow = {'command': "echo '" + 'x ' * 256 + "'"}
+            self.assert_boundary(provider, SHELL_TOOLS[provider], maximum, overflow,
+                                 'command_tokens', '257 tokens', valid_allowlist=True)
+
+    def test_redirection_and_unproved_heredoc_spend_aggregate_matcher_tokens(self) -> None:
+        for provider in PROVIDERS:
+            tool = SHELL_TOOLS[provider]
+            # The redirection's one lexical slot already accounts for its operand.
+            self.assert_boundary(provider, tool, {'command': "echo > '" + 'x ' * 255 + "'"},
+                                 {'command': "echo > '" + 'x ' * 256 + "'"},
+                                 'command_tokens', '257 tokens', valid_allowlist=True)
+            self.assert_boundary(provider, tool, {'command': "cat <<'EOF'\n" + 'x ' * 254 + '\nEOF'},
+                                 {'command': "cat <<'EOF'\n" + 'x ' * 255 + '\nEOF'},
+                                 'command_tokens', '257 tokens')
+
     def test_executable_byte_budget_and_substitution_depth(self) -> None:
         for provider in PROVIDERS:
             tool = SHELL_TOOLS[provider]
@@ -145,9 +163,11 @@ class ResourceLimitTests(unittest.TestCase):
     def test_python_parser_depth_token_and_ast_depth_maxima(self) -> None:
         def command(source: str) -> dict:
             return {'command': 'python3 -c ' + shlex.quote(source)}
+        writer = 'from pathlib import Path;Path("x").write_text('
+        assignment = 'from pathlib import Path;Path("x").write_text("safe");a='
         cases = (('(' * 32 + '0' + ')' * 32, '(' * 33 + '0' + ')' * 33, 'python_syntax_depth', '33 levels'),
-                 ('f(' + ','.join(['0'] * 511) + ')', 'f(' + ','.join(['0'] * 511) + ')+', 'python_syntax_tokens', '1025 tokens'),
-                 ('"x"' * 1024, '"x"' * 1025, 'python_syntax_tokens', '1025 tokens'),
+                 (writer + '"x"' * 1011 + ')', writer + '"x"' * 1012 + ')', 'python_syntax_tokens', '1025 tokens'),
+                 (assignment + '"x"' * 1007, assignment + '"x"' * 1008, 'python_syntax_tokens', '1025 tokens'),
                  ('x+' * 29 + 'x', 'x+' * 30 + 'x', 'python_ast_depth', '33 levels'))
         for provider in PROVIDERS:
             for maximum, overflow, rule, count in cases:

@@ -36,16 +36,22 @@ def fixtures(provider: str) -> list[tuple[str, str, object, str]]:
         ('tokens-overflow', shell, {'command': ' '.join(['x'] * 257)}, 'deny'),
         ('commands-max', shell, {'command': ';'.join(['x'] * 128)}, 'allow'),
         ('commands-overflow', shell, {'command': ';'.join(['x'] * 129)}, 'deny'),
+        ('quoted-tokens-max', shell, {'command': "echo '" + 'x ' * 255 + "'"}, 'allow'),
+        ('quoted-tokens-overflow', shell, {'command': "echo '" + 'x ' * 256 + "'"}, 'deny'),
+        ('heredoc-tokens-max', shell, {'command': "cat <<'EOF'\n" + 'x ' * 254 + '\nEOF'}, 'allow'),
+        ('heredoc-tokens-overflow', shell, {'command': "cat <<'EOF'\n" + 'x ' * 255 + '\nEOF'}, 'deny'),
         ('structure-nodes-max', 'unknown_tool', [0] * 255, 'allow'),
         ('structure-wide-overflow', 'unknown_tool', [0] * 30000, 'deny'),
         ('substitution-depth-max', shell, {'command': 'echo $(' * 16 + 'x' + ')' * 16}, 'allow'),
         ('substitution-depth-overflow', shell, {'command': 'echo $(' * 17 + 'x' + ')' * 17}, 'deny'),
     ]
+    writer = 'from pathlib import Path;Path("x").write_text('
+    assignment = 'from pathlib import Path;Path("x").write_text("safe");a='
     for name, source, expected in (
-        ('python-syntax-max', 'f(' + ','.join(['0'] * 511) + ')', 'allow'),
-        ('python-syntax-overflow', 'f(' + ','.join(['0'] * 511) + ')+', 'deny'),
-        ('python-literal-token-max', '"x"' * 1024, 'allow'),
-        ('python-literal-token-overflow', '"x"' * 1025, 'deny'),
+        ('python-syntax-max', writer + '"x"' * 1011 + ')', 'allow'),
+        ('python-syntax-overflow', writer + '"x"' * 1012 + ')', 'deny'),
+        ('python-literal-token-max', assignment + '"x"' * 1007, 'allow'),
+        ('python-literal-token-overflow', assignment + '"x"' * 1008, 'deny'),
         ('python-ast-depth-max', 'x+' * 29 + 'x', 'allow'),
         ('python-ast-depth-overflow', 'x+' * 30 + 'x', 'deny'),
         ('python-decoded-literal', "x='" + '\\u754c' * 2000 + "'", 'allow')):
