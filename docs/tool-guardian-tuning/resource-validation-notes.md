@@ -1,7 +1,8 @@
 # Resource and latency validation
 
-Milestone 4 acceptance is open. This document records the public hook boundaries,
-measurement method, and observed failures. Unfinished checks are not passing evidence.
+Milestone 4 acceptance is not met: correctness and the finite resource workload
+pass, but the paired fixed-corpus latency gate fails. This document records the
+public hook boundaries, measurement method, and retained evidence.
 
 The maintained limits suite uses the generated provider stdin/stdout interface. It
 passes represented operations as JSON and never executes them. Every accepted
@@ -16,7 +17,7 @@ allowlist entry and do not claim to prove that precedence.
 
 The candidate retains 32768 bytes/characters for strict text, 128 executable
 commands, 256 total executable tokens, structural depth 32, nodes 256, and strings
-128. Native aggregate data is provisionally 65536 UTF-8 bytes including destination
+128. Native aggregate data is 65536 UTF-8 bytes including destination
 and dictionary keys. The preserved 46899-byte patch occupies 71.6% of that budget,
 leaving 18637 bytes before key accounting. Native body line count does not consume
 the executable command limit. Parser work is separately bounded before parsing:
@@ -36,8 +37,8 @@ Normalized native operation paths need a separate bound on their final NFKC,
 casefolded form. This only bounds inspected metadata; it does not inspect native
 body text as executable code or introduce destination policy. The test fixtures
 include ASCII, U+FDFA compatibility expansion, and U+0390 casefold expansion.
-The proposed final-form byte maximum is 32768. It is provisional until correctness
-and complete subprocess resource checks pass.
+The validated final-form byte maximum is 32768. Correctness and full subprocess
+resource checks pass for the maintained finite workload.
 The budget is aggregate across all inspected delete/move paths in one patch;
 several separately bounded paths must not multiply normalization work. Patch
 allowlist entries contain escaped newline separators and are invalid under the
@@ -107,7 +108,8 @@ pool providers or workloads or exclude correctness fixes from the comparison.
 
 The first frozen milestone 3 exploratory report failed the no-regression gate
 for clean calls and Python writers. It is failure evidence, not acceptance.
-Subsequent optimizations and paired reports remain outstanding.
+The final paired reports also fail, as recorded below. Further optimization and
+new frozen measurements are required before acceptance can be met.
 
 For raised limits, run the exact generated scripts in full subprocesses on accepted
 and rejected boundary inputs, repeated tokens, nested structures, quotes,
@@ -125,7 +127,8 @@ sampling is 25 measured launches and three discarded warmups. Its required
 `--ceiling-ms` argument must have a documented measured basis. It fingerprints
 entrypoints, local Python helpers, and canonical source before/after and rejects
 source mutation during the run. Results preserve every raw elapsed sample and
-peak RSS in macOS bytes. No resource run has yet been retained.
+peak RSS in macOS bytes. The approved completed resource run is retained as
+`docs/tool-guardian-tuning/evidence/final-resources.json`.
 
 The final combined source also passes focused correctness on native macOS Python
 3.13.14: 144 corpus checks, 11 shell tests, 13 native tests, and 16 resource tests.
@@ -142,14 +145,56 @@ at `/Users/adam/.pyenv/versions/3.14.6/bin/python3`. No hook probes overlapped t
 measurements. `final-candidate-scripts.sha256.json` fingerprints final scripts,
 helpers, and canonical classifier source. Final timing finished at 23:27 UTC.
 
-The performance gate remains open pending per-provider/per-scenario median,
-p95, first-run, concurrency, and MAD comparison. No retained resource measurement
-has run. Root continuation should execute the unchanged resource CLI with 25
-samples and three warmups against the final combined source. A proposed 500 ms
-ceiling is 3.72 times the maximum observed existing retained workload sample,
-134.263375 ms (`codex.guard.large` in `baseline-1.json`), and below both configured
-10-second deadlines. Validate that ceiling and peak RSS empirically, then record
-the actual outcome. Do not treat this proposed ceiling as passing evidence.
+## Retained resource result
+
+The approved resource CLI run completed 90 scenarios with 25 measured samples,
+three discarded warmups, and a separate peak-RSS pass for each scenario. Every
+expected decision and the 500 ms runtime ceiling passed. The report's script and
+helper fingerprints match `final-candidate-scripts.sha256.json`, identifying the
+exact source frozen for the original `f47d51dd` checkpoint.
+
+The maximum elapsed sample or first run was 60.986583 ms for
+`gemini.resources.strict-max`. Maximum peak resident memory was 28229632 bytes for
+`copilot.resources.native-wide-paths-overflow`. These are full subprocess
+measurements of the 90 finite fixtures after normal provider JSON decoding;
+they do not bound arbitrary raw envelopes or provider launch/delivery.
+
+The first sandboxed collector attempt failed when macOS `/usr/bin/time -l`
+could not perform its kernel `sysctl` resource query. That failed collection is
+not passing evidence. An approved retry against the same frozen source completed
+successfully and produced the retained report. No source repair was needed for
+the collector permission issue.
+
+The 500 ms ceiling is 3.72 times the maximum observed existing retained workload
+sample, 134.263375 ms (`codex.guard.large` in `baseline-1.json`), and below both
+configured 10-second deadlines. Passing that resource ceiling does not establish
+the separate no-added-latency requirement.
+
+## Failed paired latency gate
+
+`docs/tool-guardian-tuning/evidence/final-comparison.json` preserves all 147
+provider/scenario rows with paired median deltas, p95 values, within-run MAD,
+baseline median span, repeated first runs, and all four concurrency batches.
+The report describes variation rather than claiming inferential significance.
+Both paired median deltas are positive in 135 of 147 rows. Formerly denied
+legitimate inputs remain included in that same-input comparison.
+
+The clean-call regression is reproducible across all three providers. The
+candidate-minus-baseline median deltas exceed the baseline median span and the
+individual within-run MAD values:
+
+| Provider | First paired delta (ms) | Second paired delta (ms) | Baseline median span (ms) | Within-run MAD range (ms) |
+| --- | ---: | ---: | ---: | ---: |
+| Copilot | +3.053 | +4.906 | 0.807 | 0.187-0.697 |
+| Gemini | +3.667 | +3.210 | 0.799 | 0.111-0.694 |
+| Codex | +2.157 | +3.426 | 0.655 | 0.151-0.592 |
+
+Clean-call p95 is also higher in both candidate runs for every provider. Repeated
+first runs and the noisy four-worker batches remain separately retained; they
+are not pooled to obscure these slower sequential paths. The no-measurable-
+regression gate therefore fails. Resource success and corrected false positives
+do not waive that failed gate. Milestone 4 and full implementation acceptance
+remain not met pending optimization and another frozen paired comparison.
 
 Codex's registered guardian deadline is 10 seconds; Copilot's is 10 seconds.
 Gemini's guardian registration has no explicit timeout, so this document does not
